@@ -410,9 +410,21 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
    msOWSPrintMetadata(stdout, lp->metadata, "wms_abstract", OWS_NOERR,
                  "        <Abstract>%s</Abstract>\n", NULL);
 
-   msOWSPrintMetadataList(stdout, lp->metadata, "wms_keywordlist", 
-                     "        <KeywordList>\n", "        </KeywordList>\n",
-                     "          <Keyword>%s</Keyword>\n");
+   if (strcasecmp(wmtver, "1.0.0") == 0)
+   {
+       // <Keywords> in V 1.0.0
+       // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
+       msOWSPrintMetadataList(stdout, lp->metadata, "wms_keywordlist", 
+                              "        <Keywords>", "        </Keywords>\n",
+                              "%s ");
+   }
+   else
+   {
+       // <KeywordList><Keyword> ... in V1.0.6+
+       msOWSPrintMetadataList(stdout, lp->metadata, "wms_keywordlist", 
+                              "        <KeywordList>\n", "        </KeywordList>\n",
+                              "          <Keyword>%s</Keyword>\n");
+   }
 
    if (msGetEPSGProj(&(map->projection),map->web.metadata,MS_FALSE) == NULL)
    {
@@ -529,73 +541,27 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   else
     printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url_encoded);
 
-  msOWSPrintMetadataList(stdout, map->web.metadata, "wms_keywordlist", 
-                    "  <KeywordList>\n", "  </KeywordList>\n",
-                    "    <Keyword>%s</Keyword>\n");
-  
+  if (strcasecmp(wmtver, "1.0.0") == 0)
+  {
+      // <Keywords> in V 1.0.0
+      // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
+      msOWSPrintMetadataList(stdout, map->web.metadata, "wms_keywordlist", 
+                             "        <Keywords>", "        </Keywords>\n",
+                             "%s ");
+  }
+  else
+  {
+      // <KeywordList><Keyword> ... in V1.0.6+
+      msOWSPrintMetadataList(stdout, map->web.metadata, "wms_keywordlist", 
+                             "        <KeywordList>\n", "        </KeywordList>\n",
+                             "          <Keyword>%s</Keyword>\n");
+  }
+
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
   // In 1.1.0, ContactInformation becomes optional.
   msOWSPrintContactInfo(stdout, "  ", wmtver, map->web.metadata);
-/*
-  if (strcasecmp(wmtver, "1.0.0") > 0) 
-  {
-    printf("  <ContactInformation>\n");
-    if(msLookupHashTable(map->web.metadata, "wms_contactperson") ||
-       msLookupHashTable(map->web.metadata, "wms_contactorganization")) 
-    {
-      // ContactPersonPrimary is optional, but when present then all its 
-      // sub-elements are mandatory
-      printf("    <ContactPersonPrimary>\n");
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_contactperson", 
-                  OWS_WARN, "      <ContactPerson>%s</ContactPerson>\n", NULL);
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_contactorganization", 
-             OWS_WARN, "      <ContactOrganization>%s</ContactOrganization>\n",
-             NULL);
-      printf("    </ContactPersonPrimary>\n");
-    }
 
-    msOWSPrintMetadata(stdout, map->web.metadata, "wms_contactposition", 
-               OWS_NOERR, "    <ContactPosition>%s</ContactPosition>\n", NULL);
-
-    if(msLookupHashTable(map->web.metadata, "wms_addresstype") || 
-       msLookupHashTable(map->web.metadata, "wms_address") || 
-       msLookupHashTable(map->web.metadata, "wms_city") ||
-       msLookupHashTable(map->web.metadata, "wms_stateorprovince") || 
-       msLookupHashTable(map->web.metadata, "wms_postcode") ||
-       msLookupHashTable(map->web.metadata, "wms_country")) 
-    {
-      // ContactAdress is optional, but when present then all its 
-      // sub-elements are mandatory
-      printf("    <ContactAddress>\n");
-      msOWSPrintMetadata(stdout,map->web.metadata, "wms_addresstype", OWS_WARN,
-                    "      <AddressType>%s</AddressType>\n", NULL);
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_address", OWS_WARN,
-                    "      <Address>%s</Address>\n", NULL);
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_city", OWS_WARN,
-                    "      <City>%s</City>\n", NULL);
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_stateorprovince", 
-           OWS_WARN,"      <StateOrProvince>%s</StateOrProvince>\n", NULL);
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_postcode", OWS_WARN,
-                    "      <PostCode>%s</PostCode>\n", NULL);
-      msOWSPrintMetadata(stdout, map->web.metadata, "wms_country", OWS_WARN,
-                    "      <Country>%s</Country>\n", NULL);
-      printf("    </ContactAddress>\n");
-    }
-
-    msOWSPrintMetadata(stdout, map->web.metadata, "wms_contactvoicetelephone", 
-           OWS_NOERR,"    <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
-           NULL);
-    msOWSPrintMetadata(stdout, map->web.metadata, 
-                  "wms_contactfacsimiletelephone", OWS_NOERR,
-                  "    <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL);
-    msOWSPrintMetadata(stdout, map->web.metadata, 
-                  "wms_contactelectronicmailaddress", OWS_NOERR,
-                  "    <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL);
-
-    printf("  </ContactInformation>\n");
-  }
-*/
   msOWSPrintMetadata(stdout, map->web.metadata, "wms_accessconstraints", 
              OWS_NOERR, "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
   msOWSPrintMetadata(stdout, map->web.metadata, "wms_fees", OWS_NOERR,

@@ -24,6 +24,8 @@ Version 4.0-dev (CVS)
 
 - Fixed problem with reference map marker symbol not showing up (bug 378)
 
+- Use <Keywords> in WMS 1.0.0 capabilities instead of <KeywordList> (bug 129)
+
 
 Version 4.0-beta2 (2003-07-11)
 ------------------------------
