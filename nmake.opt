@@ -358,7 +358,7 @@ JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
 
 # Setup GDAL includes and libraries
 !IFDEF GDAL
-GDAL_INC = -I$(GDAL_DIR)/core -I$(GDAL_DIR)/alg
+GDAL_INC = -I$(GDAL_DIR)/gcore -I$(GDAL_DIR)/alg
 GDAL_LIB = $(GDAL_DIR)/gdal_i.lib
 !ENDIF
 
