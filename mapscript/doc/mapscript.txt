@@ -41,6 +41,7 @@
 ..  The next heading encountered becomes our H2
 ..
 
+.. sectnum::
 
 .. contents::
     :depth: 2
@@ -84,8 +85,8 @@ fooObj
 
 A paragraph or two about class fooObj.
 
-Attributes
-----------
+fooObj Attributes
+-----------------
 
 attribute : type [access]
     Concise description of the attribute.
@@ -98,8 +99,8 @@ meaningless, and even dangerous attributes are creeping into objects.  See
 outputFormatObj.refcount for example.  Until we get a grip on the structure
 members we are exposing to SWIG this problem will continue to grow.
 
-Methods
--------
+fooObj Methods
+--------------
 
 method(type mandatory_parameter [, type optional_parameter=default]) : type
     Description of the method including elaboration on the method
@@ -132,7 +133,6 @@ msCleanup() : void
 =============================================================================
  Mapscript Classes
 =============================================================================
-
 
 -----------------------------------------------------------------------------
  classObj
@@ -169,8 +169,8 @@ labelObj_, and hashTableObj_.
 Multiple class styles are now supported in 4.1.  See the styleObj_ section
 for details on use of multiple class styles.
 
-Attributes
-----------
+classObj Attributes
+-------------------
 
 debug : int
     MS_TRUE or MS_FALSE
@@ -212,28 +212,20 @@ title : string
 type : int
     The layer type of its parent layer
 
-Methods
--------
-
-.. _new classObj:
+classObj Methods
+----------------
 
 new classObj( layerObj_ parent_layer ) : classObj
     Create a new child classObj instance at the tail (highest index) of 
     the class array of the *parent_layer*.
 
-.. _createLegendIcon:
- 
 createLegendIcon( mapObj_ map, layerObj_ layer, int width, int height ) : imageObj_
     Draw and return a new legend icon.
-
-.. _drawLegendIcon:
 
 drawLegendIcon( mapObj_ map, layerObj_ layer, int width, int height, imageObj_ image, int dstx, int dsty ) : int
     Draw the legend icon onto *image* at *dstx*, *dsty*.  Returns 
     MS_SUCCESS or MS_FAILURE.
 
-.. _getExpressionString:
-  
 getExpressionString() : string
     Return a string representation of the expression enclosed in the quote
     characters appropriate to the expression type.
@@ -293,8 +285,8 @@ Since the 4.0 release, MapServer colors are instances of colorObj.  A colorObj
 may be a lone object or an attribute of other objects and have no other
 associations.
 
-Attributes
-----------
+colorObj Attributes
+-------------------
 
 blue : int
     Blue component of color in range [0-255]
@@ -312,28 +304,20 @@ pen : int
    components is unreliable.  Best practice is to use setRGB(), setHex(),
    or assign to a new instance of colorObj().
 
-Methods
--------
-
-.. _`new colorObj`:
+colorObj Methods
+----------------
 
 new colorObj( [ int red=0, int green=0, int blue=0, int pens=-4 ] ) : colorObj_ 
     Create a new instance.  The color arguments are optional.
     
-.. _setRGB:
-
 setRGB( int red, int green, int blue ) : int 
     Set all three RGB components.  Returns MS_SUCCESS or MS_FAILURE.
     
-.. _setHex:
-
 setHex( string hexcolor ) : int 
     Set the color to values specified in case-independent hexadecimal
     notation.  Calling setHex('#ffffff') assigns values of 255 to each
     color component.  Returns MS_SUCCESS or MS_FAILURE.
     
-.. _toHex:
-
 toHex() : string 
     Compliments setHex, returning a hexadecimal representation of the
     color components.
@@ -345,8 +329,8 @@ toHex() : string
 
 A fontSetObj is always an attribute of a mapObj_.
 
-Attributes
-----------
+fontSetObj Attributes
+---------------------
 
 filename : string immutable
     Path to the fontset file on disk.
@@ -357,8 +341,8 @@ fonts : hashTableObj_
 numfonts : int immutable
     Number of fonts in set.
 
-Methods
--------
+fontSetObj Methods
+------------------
 
 None
 
@@ -372,14 +356,14 @@ single string values.  Map, Layer, and Class *metadata* have always been
 hash hables and now these are exposed directly.  This is a limited hash
 that can contain no more than 41 values.
 
-Attributes
-----------
+hashTableObj Attributes
+-----------------------
 
 numitems : int immutable
     Number of hash items.
 
-Methods
--------
+hashTableObj Methods
+--------------------
 
 clear( ) : void
     Empties the table of all items.
@@ -405,8 +389,8 @@ set( string key, string value ) : int
 
 An image object is a wrapper for GD and GDAL images.
 
-Attributes
-----------
+imageObj Attributes
+-------------------
 
 format : outputFormatObj_
     Image format.
@@ -431,8 +415,8 @@ width : int immutable
     Image width in pixels.
 
 
-Methods
--------
+imageObj Methods
+----------------
 
 new imageObj( int width, int height [, string driver=NULL [, string filename=NULL [, mapObj_ map=NULL ] ] ] ) : imageObj
     Create new instance of imageObj.  If *filename* is specified, an imageObj
@@ -469,8 +453,8 @@ A labelObj is associated with a classObj, a scalebarObj, or a legendObj.
                          | Legend   |
                          +----------+ 
                            
-Attributes
-----------
+labelObj Attributes
+-------------------
 
 angle : float
     **TODO**
@@ -558,8 +542,8 @@ wrap : string
     Character on which legend text will be broken to make multi-line
     legends.
    
-Methods
--------
+labelObj Methods
+----------------
 
 None
 
@@ -595,8 +579,8 @@ and hashTableObj_
                          +-----------+
 
 
-Attributes
-----------
+layerObj Attributes
+-------------------
 
 **TODO**
 
@@ -741,8 +725,8 @@ type : int
 units : int
     Units of the layer.  See MS_UNITS in map.h.
 
-Methods
--------
+layerObj Methods
+----------------
 
 **TODO**
 
@@ -867,8 +851,6 @@ getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, 
     Returns "" and outputs a warning if layer is not a WMS layer 
     or if it is not queriable.
     
-.. _layerObj.getShape :
-
 getShape( shapeObj_ shape, int tileindex, int shapeindex ) : int
     Get a shape from layer data.
 
@@ -1007,8 +989,8 @@ and with labelObj_.
      | Legend | ---------> | Label |
      +--------+            +-------+
 
-Attributes
-----------
+legendObj Attributes
+--------------------
 
 imagecolor : colorObj_
     Legend background color.
@@ -1046,8 +1028,8 @@ status : int
 template : string
     Path to template file.
 
-Methods
--------
+legendObj Methods
+-----------------
 
 None
 
@@ -1064,14 +1046,14 @@ A lineObj is composed of one or more pointObj_ instances.
     | Line | ---------> | Point |
     +------+            +-------+
 
-Attributes
-----------
+lineObj Attributes
+------------------
 
 numpoints : int immutable
     Number of points in the line.
 
-Methods
--------
+lineObj Methods
+---------------
 
 add(pointObj_ point) : int
     Add *point* to the line.  Returns MS_SUCCESS or MS_FAILURE.
@@ -1131,8 +1113,8 @@ outputFormatObj_.
      +-----+            +------------- + 
                            
 
-Attributes
-----------
+mapObj Attributes
+-----------------
 
 **TODO**
 
@@ -1145,8 +1127,8 @@ outputformat : outputFormatObj_
 web : webObj_
     Application configuration.
 
-Methods
--------
+mapObj Methods
+--------------
 
 **TODO**
 
@@ -1251,8 +1233,8 @@ An outputFormatObj is associated with a mapObj_
 
 and can also be an attribute of an imageObj_.
 
-Attributes
-----------
+outputFormatObj Attributes
+--------------------------
 
 **TODO**
 
@@ -1279,22 +1261,16 @@ renderer : int
 transparent : int
     MS_ON or MS_OFF.
 
-Methods
--------
-
-.. _new outputFormatObj:
+outputFormatObj Methods
+-----------------------
 
 new outputFormatObj( string driver [, string name=driver ] ) : outputFormatObj_
     Create new instance.  If *name* is not provided, the value of *driver*
     is used as a name.
     
-.. _getOption:
-
 getOption( string key [, string value="" ] ) : string
     Return the option at *key* or *value* if *key* is not a valid
     hash index.
-
-.. _setExtension:
 
 setExtension( string extension ) : void
     Set file extension for output format such as 'png' or 'jpg'.  Method 
@@ -1334,8 +1310,8 @@ Using it permits creation of lightweight WMS services:
     img = wms_map.draw()
 
 
-Attributes
-----------
+OWSRequest Attributes
+---------------------
 
 NumParams : int immutable
     Number of request parameters.  Eventually should be changed to numparams
@@ -1348,8 +1324,8 @@ type : int
     MS_GET_REQUEST or MS_POST_REQUEST.
 
     
-Methods
--------
+OWSRequest Methods
+------------------
 
 new OWSRequest( ) : OWSRequest
     Create a new instance.
@@ -1387,8 +1363,8 @@ A pointObj instance may be associated with a lineObj_.
     | Point | <--------- | Line |
     +-------+            +------+
 
-Attributes
-----------
+pointObj Attributes
+-------------------
 
 m : float
     Measure.  Meaningful only for measured shapefiles.
@@ -1399,38 +1375,26 @@ x : float
 y : float
     Northing
     
-Methods
--------
-
-.. _new pointObj:
+pointObj Methods
+----------------
 
 new pointObj( [ float x=0.0, float y=0.0, float m=2e-38 ] ) : pointObj
     Create new instance.  Easting, northing, and measure arguments are
     optional.
 
-.. _distanceToPoint:
-
 distanceToPoint( pointObj point ) : float
     Returns the distance to *point*.
    
-.. _distanceToSegment:
-
 distanceToSegment( pointObj point1, pointObj point2 ) : float
     Returns the minimum distance to a hypothetical line segment connecting 
     *point1* and *point2*.
    
-.. _distanceToShape:
-
 distanceToShape( shapeObj_ shape ) : float
     Returns the minimum distance to *shape*.
-
-.. _pointObj.draw:
 
 draw( mapObj_ map, layerObj_ layer, imageObj_ image, int classindex, string text ) : int
     Draw the point using the styles defined by the *classindex* class of
     *layer* and labeled with string *text*.  Returns MS_SUCCESS or MS_FAILURE.
-
-.. _pointObj.project:
 
 project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject point from *proj_in* to *proj_out*.  Transformation
@@ -1475,14 +1439,14 @@ some round-a-bout logic like this
 
 to project a point from map to layer reference system.
 
-Attributes
-----------
+projectionObj Attributes
+------------------------
 
 numargs : int immutable
     Number of PROJ.4 arguments.  
 
-Methods
--------
+projectionObj Methods
+---------------------
 
 new projectionObj( string proj4 ) : projectionObj
     Create new instance of projectionObj.  Input parameter *proj4* is a 
@@ -1495,8 +1459,8 @@ new projectionObj( string proj4 ) : projectionObj
 A rectObj may be a lone object or an attribute of another object and has no
 other associations.
    
-Attributes
-----------
+rectObj Attributes
+------------------
 
 maxx : float
     Maximum easting
@@ -1510,10 +1474,8 @@ minx : float
 miny : float
     Minimum northing
     
-Methods
--------
-
-.. _new rectObj:
+rectObj Methods
+---------------
 
 new rectObj( [ float minx=-1.0, float miny=-1.0, float maxx=-1.0, float maxy=-1.0, int imageunits=MS_FALSE ] ) : rectObj
     Create new instance.  The four easting and northing arguments
@@ -1521,21 +1483,15 @@ new rectObj( [ float minx=-1.0, float miny=-1.0, float maxx=-1.0, float maxy=-1.
     which allows creation of rectangles in image (pixel/line) units which
     are also tested for validity.
 
-.. _rectObj.draw:
-
 draw( mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text ) : int
     Draw rectangle into *img* using style defined by the *classindex* class
     of *layer*.  The rectangle is labeled with the string *text*.  Returns 
     MS_SUCCESS or MS_FAILURE.
 
-.. _rectObj.project:
-
 project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject rectangle from *proj_in* to *proj_out*.  Transformation
     is done in place.  Returns MS_SUCCESS or MS_FAILURE.
     
-.. _toPolygon:
-
 toPolygon() : shapeObj_
     Convert to a polygon of five vertices.
 
@@ -1568,8 +1524,8 @@ A referenceMapObj is associated with mapObj_.
      | ReferenceMap | <--------> | Map |
      +--------------+            +-----+
 
-Attributes
-----------
+referenceMapObj Attributes
+--------------------------
 
 color : colorObj_
     Color of reference box.
@@ -1610,8 +1566,8 @@ status : int
 width : int
     In pixels.
 
-Methods
--------
+referenceMapObj Methods
+-----------------------
 
 None
 
@@ -1624,8 +1580,8 @@ Has no associations with other Mapscript classes and has no methods.
 By using several indexes, a resultCacheMemberObj refers to a single layer
 feature.
 
-Attributes
-----------
+resultCacheMemberObj Attributes
+-------------------------------
 
 classindex : int immutable
     The index of the layer class into which the feature has been classified.
@@ -1657,8 +1613,8 @@ and also with labelObj_
      | Scalebar | ---------> | Label |
      +----------+            +-------+
 
-Attributes
-----------
+scalebarObj Attributes
+----------------------
 
 backgroundcolor : colorObj_
     Scalebar background color.
@@ -1699,8 +1655,8 @@ units : int
 width : int
     Pixels.
 
-Methods
--------
+scalebarObj Methods
+-------------------
 
 None
 
@@ -1709,8 +1665,8 @@ None
  shapefileObj
 -----------------------------------------------------------------------------
 
-Attributes
-----------
+shapefileObj Attributes
+-----------------------
 
 bounds : rectObj_
     Extent of shapes
@@ -1721,8 +1677,8 @@ numshapes : int
 type : int
     See mapshape.h for values of type.
 
-Methods
--------
+shapefileObj Methods
+--------------------
 
 new shapefileObj( string filename [, int type=-1 ] ) : shapefileObj
     Create a new instance.  Omit the *type* argument or use a value of -1
@@ -1754,8 +1710,8 @@ closed lineObj_.
     | Shape | --------> | Line |
     +-------+           +------+
 
-Attributes
-----------
+shapeObj Attributes
+-------------------
 
 bounds : rectObj_
     Bounding box of shape.
@@ -1781,16 +1737,12 @@ tileindex : int
 type : int
     MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, or MS_SHAPE_NULL.
  
-Methods
--------
-
-.. _new shapeObj:
+shapeObj Methods
+----------------
 
 new shapeObj( int type ) : shapeObj
     Return a new shapeObj of the specified *type*.  See the type attribute
     above.
-
-.. _shapeObj.add:
 
 add( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
@@ -1798,8 +1750,6 @@ add( lineObj_ line ) : int
 .. admonition:: Next Generation API
 
    addLine( lineObj_ line ) : int
-
-.. _contains:
 
 contains( pointObj_ point ) : int
     Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
@@ -1817,12 +1767,8 @@ distanceToPoint( pointObj_ point ) : float
 distanceToShape( shapeObj shape ) : float
     Return the minimum distance to *shape*.
 
-.. _shapeObj.draw:
-
 draw( mapObj_ map, layerObj_ layer, imageObj_ img ) : int
     Draws the individual shape using layer.  Returns MS_SUCCESS or MS_FAILURE.
-
-.. _shapeObj.get:
 
 get( int index ) : lineObj_
     Returns a reference to part at *index*.  Reference is valid
@@ -1832,17 +1778,11 @@ get( int index ) : lineObj_
 
    getLine( int index ) : lineObj_
 
-.. _getValue:
-
 getValue( int i ) : string
     Return the shape attribute at index *i*.
 
-.. _shapeObj.intersects:
-
 intersects( shapeObj shape ) : int
     Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
-
-.. _shapeObj.project:
 
 project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject shape from *proj_in* to *proj_out*.  Transformation
@@ -1891,8 +1831,8 @@ The more standard use case
 remains supported.  These will be the only ways to access the styles of
 a class.  Programmers should no longer directly access the styles attribute.
 
-Attributes
-----------
+styleObj Attributes
+-------------------
 
 backgroundcolor : colorObj_
     Background pen color.
@@ -1925,10 +1865,8 @@ symbolname : string immutable
     Name of the style's symbol.
 
 
-Methods
--------
-
-.. _new styleObj:
+styleObj Methods
+-----------------
 
 new styleObj( [ classObj_ parent_class ] ) : styleObj
     Returns new default style Obj instance.  The *parent_class* is
@@ -1950,8 +1888,8 @@ A symbolObj is associated with one symbolSetObj_.
 A styleObj_ will often refer to a symbolObj by name or index, but this is
 not really an object association, is it?
 
-Attributes
-----------
+symbolObj Attributes
+--------------------
 
 antialias : int
     MS_TRUE or MS_FALSE.
@@ -2008,8 +1946,8 @@ type : int
     MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP,
     MS_SYMBOL_TRUETYPE, or MS_SYMBOL_CARTOLINE.
     
-Methods
--------
+symbolObj Methods
+-----------------
 
 **TODO**
 
@@ -2040,14 +1978,14 @@ of symbolObj_.
     | SymbolSet | --------> | Symbol |
     +-----------+           +--------+
 
-Attributes
-----------
+symbolSetObj Attributes
+-----------------------
 
 numsymbols : int immutable
     Number of symbols in the set.
 
-Methods
--------
+symbolSetObj Methods
+--------------------
 
 new symbolSetObj( [ string symbolfile ] ) : symbolSetObj
     Create new instance.  If *symbolfile* is specified, symbols will be 
@@ -2080,8 +2018,8 @@ Has no other existence than as an attribute of a mapObj.  Serves as a
 container for various run-time web application definitions like temporary
 file paths, template paths, etc.
 
-Attributes
-----------
+webObj Attributes
+-----------------
 
 empty : string
     **TODO**
@@ -2132,8 +2070,8 @@ template : string
     Path to template document.
 
 
-Methods
--------
+webObj Methods
+--------------
 
 None.
 
@@ -2153,8 +2091,7 @@ API.  For example
 The API changes in the next generation classes result
 from efforts to merge the best of the PHP-Mapscript and SWIG mapscript
 interfaces (Bugzilla issue 575 - 
-http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see
-the documentation of `layerObj.getShape`_.
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).
 
 
 =========
