@@ -1012,6 +1012,8 @@ void returnOneToManyJoin(int j)
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH], substr[MS_BUFFER_LENGTH], *outstr;
 
+  if(Query->joins[j].numrecords == 0) return; // nothing to do
+
   if(Query->joins[j].header != NULL) {
     if((stream = fopen(Query->joins[j].header, "r")) == NULL) {
       msSetError(MS_IOERR, Query->joins[j].header, "returnOneToManyJoin()");
@@ -1315,13 +1317,15 @@ void returnHTML(char *html)
 	} /* next item */
 
 	for(i=0; i<Query->numjoins; i++) {
-	  if(Query->joins[i].type == MS_MULTIPLE) {
+	  if(Query->joins[i].type == MS_MULTIPLE) {	   
 	    sprintf(substr, "[%s]", Query->joins[i].name);
 	    if(strstr(outstr, substr)) {
 	      outstr = gsub(outstr, substr, "");
 	      returnOneToManyJoin(i);
 	    }
-	  }
+
+	    if(Query->joins[i].numrecords == 0) continue;
+	  }          
 
 	  // some common data may exist for all matches so multiples are allowed here
 	  for(j=0;j<Query->joins[i].numitems; j++) { 
