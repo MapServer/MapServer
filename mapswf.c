@@ -2623,7 +2623,11 @@ int msSaveImageSWF(imageObj *image, char *filename)
                                                "OUTPUT_MOVIE",""), 
                        "MULTIPLE") != 0)
         {
+#ifdef MING_VERSION_03
+            iSaveResult = SWFMovie_save(image->img.swf->sMainMovie, filename, -1);
+#else
             iSaveResult = SWFMovie_save(image->img.swf->sMainMovie, filename);
+#endif
             if (iSaveResult > 0)
               return(MS_SUCCESS);
             else
@@ -2757,8 +2761,11 @@ int msSaveImageSWF(imageObj *image, char *filename)
             SWFMovie_setBackground(image->img.swf->pasMovies[i], 
                                    0xff, 0xff, 0xff);
             
-            SWFMovie_save(image->img.swf->pasMovies[i], gszFilename);  
-            
+#ifdef MING_VERSION_03
+            SWFMovie_save(image->img.swf->pasMovies[i], gszFilename, -1);  
+#else
+             SWFMovie_save(image->img.swf->pasMovies[i], gszFilename);
+#endif
 
             //test
             //sprintf(gszFilename, "%s%d.swf", "layer_", i);
@@ -2776,7 +2783,11 @@ int msSaveImageSWF(imageObj *image, char *filename)
             //SWFMovie_add(image->img.swf->sMainMovie, oAction);
         }
         
-        SWFMovie_save(image->img.swf->sMainMovie, filename);  
+#ifdef MING_VERSION_03
+        SWFMovie_save(image->img.swf->sMainMovie, filename, -1); 
+#else
+        SWFMovie_save(image->img.swf->sMainMovie, filename); 
+#endif
         //test
         //SWFMovie_save(image->img.swf->sMainMovie, "c:/tmp/ms_tmp/main.swf");  
   
