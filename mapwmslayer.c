@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.43  2002/12/17 21:33:54  dan
+ * Enable following redirections with libcurl (requires libcurl 7.10.1+)
+ *
  * Revision 1.42  2002/12/17 05:30:17  dan
  * Fixed HTTP timeout value (in secs, not msecs) for WMS/WFS requests
  *
@@ -679,7 +682,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     if (iReq == numRequests)
         return MS_SUCCESS;  // This layer was skipped... nothing to do.
 
-    if (pasReqInfo[iReq].nStatus != 200)
+    if ( !MS_HTTP_SUCCESS( pasReqInfo[iReq].nStatus ) )
     {
 /* ==================================================================== 
       Failed downloading layer... we still return SUCCESS here so that 

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2002/12/17 21:33:54  dan
+ * Enable following redirections with libcurl (requires libcurl 7.10.1+)
+ *
  * Revision 1.6  2002/12/17 05:30:17  dan
  * Fixed HTTP timeout value (in secs, not msecs) for WMS/WFS requests
  *
@@ -558,7 +561,7 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
 
     }
 
-    if (psInfo->nStatus != 200)
+    if ( !MS_HTTP_SUCCESS( psInfo->nStatus ) )
     {
         msSetError(MS_MISCERR, 
                    "Got HTTP status %d downloading WFS layer (%s)", 

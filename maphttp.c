@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2002/12/17 21:33:54  dan
+ * Enable following redirections with libcurl (requires libcurl 7.10.1+)
+ *
  * Revision 1.3  2002/12/16 21:32:59  dan
  * Made CURLOPT_NOSIGNAL setting optional for now to work with libcurl 7.9.6+
  *
@@ -270,6 +273,10 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests)
         /* set URL, note that curl keeps only a ref to our string buffer */
         curl_easy_setopt(http_handle, CURLOPT_URL, pasReqInfo[i].pszGetUrl );
 
+        /* Enable following redirections.  Requires libcurl 7.10.1 at least */
+        curl_easy_setopt(http_handle, CURLOPT_FOLLOWLOCATION, 1 );
+        curl_easy_setopt(http_handle, CURLOPT_MAXREDIRS, 10 );
+
         /* Set timeout.*/
         curl_easy_setopt(http_handle, CURLOPT_TIMEOUT, nTimeout );
 
@@ -427,7 +434,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests)
             pasReqInfo[i].nStatus = lVal;
         }
 
-        if (pasReqInfo[i].nStatus != 200)
+        if (!MS_HTTP_SUCCESS(pasReqInfo[i].nStatus))
         {
             nStatus = MS_FAILURE;
 

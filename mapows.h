@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.10  2002/12/17 21:33:54  dan
+ * Enable following redirections with libcurl (requires libcurl 7.10.1+)
+ *
  * Revision 1.9  2002/12/16 20:35:00  dan
  * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
  *
@@ -45,6 +48,8 @@
 /*====================================================================
  *   maphttp.c
  *====================================================================*/
+
+#define MS_HTTP_SUCCESS(status)  (status == 200)
 
 typedef struct http_request_info
 {
