@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/04/27 16:53:52  frank
+ * added max result support
+ *
  * Revision 1.3  2004/04/08 20:32:18  frank
  * now substantially complete
  *
@@ -54,6 +57,7 @@ typedef struct {
     int query_results;
     int query_alloc_max;
     int query_request_max;
+    int query_result_hard_max;
     int raster_query_mode;
     int band_count;
 
@@ -195,6 +199,14 @@ static void msRasterLayerInfoInitialize( layerObj *layer )
     // as shapefile access info because the default connectiontype is
     // MS_SHAPEFILE.
     layer->connectiontype = MS_RASTER;
+
+    rlinfo->query_result_hard_max = 1000000;
+    if( CSLFetchNameValue( layer->processing, "RASTER_QUERY_MAX_RESULT" ) 
+        != NULL )
+    {
+        rlinfo->query_result_hard_max = 
+            atoi(CSLFetchNameValue( layer->processing, "RASTER_QUERY_MAX_RESULT" ));
+    }
 }
 
 /************************************************************************/
@@ -207,6 +219,9 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
 {
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
     int red = 0, green = 0, blue = 0, nodata = FALSE;
+
+    if( rlinfo->query_results == rlinfo->query_result_hard_max )
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Is this our first time in?  If so, do an initial allocation     */
@@ -573,6 +588,9 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
         for( iPixel = 0; iPixel < nWinXSize; iPixel++ )
         {
             pointObj  sPixelLocation;
+
+            if( rlinfo->query_results == rlinfo->query_result_hard_max )
+                break;
 
             /* transform pixel/line to georeferenced */
             sPixelLocation.x = 
