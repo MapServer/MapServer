@@ -305,7 +305,7 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
 
   // optional metadataLink
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "metadatalink", OWS_NOERR, "  <metadataLink metadataType=\"other\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", NULL);  
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "metadatalink_href", OWS_NOERR, "  <metadataLink metadataType=\"other\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", NULL);  
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "name", OWS_NOERR, "  <name>%s</name>\n", "MapServer WCS");
@@ -384,7 +384,7 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
   msIO_printf("  <CoverageOfferingBrief>\n"); // is this tag right? (I hate schemas without ANY examples)
 
   // optional metadataLink
-  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "metadatalink", OWS_NOERR, "  <metadataLink metadataType=\"other\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", NULL);  
+  msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "metadatalink_href", OWS_NOERR, "  <metadataLink metadataType=\"other\" xlink:type=\"simple\" xlink:href=\"%s\"/>\n", NULL);  
 
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
