@@ -936,6 +936,44 @@ AC_SUBST(POSTGIS_ENABLED,$POSTGIS_ENABLED)
 AC_SUBST(POSTGIS_INC,$POSTGIS_INC)
 AC_SUBST(POSTGIS_LIB,$POSTGIS_LIB)
 
+dnl --------------------------------------------------------------------------- 
+dnl Try to find out if OracleSpatial support requested. 
+dnl ---------------------------------------------------------------------------  
+
+AC_MSG_CHECKING(if OracleSpatial support requested)  
+AC_ARG_WITH(oraclespatial,
+[  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)],,) 
+
+if test "$with_oraclespatial" = "no" -o "$with_oraclespatial" = ""; then
+  AC_MSG_RESULT([no])
+  ORA_HOME="no"
+elif test "$with_oraclespatial" = "yes"; then 
+  if test -d "$ORACLE_HOME"; then 
+    AC_MSG_RESULT([yes, set from ORACLE_HOME environment variable])
+    ORA_HOME="$ORACLE_HOME" 
+  else
+    ORA_HOME="no" 
+    AC_MSG_ERROR([ORACLE_HOME variable is not properly set])
+  fi
+else
+  AC_MSG_RESULT([yes, user supplied ORACLE_HOME])
+  ORA_HOME=$with_oraclespatial
+fi 
+
+if test "$ORA_HOME" = "no" ; then 
+  ORACLESPATIAL_ENABLED=
+  ORACLESPATIAL_INC=
+  ORACLESPATIAL_LIB=
+else
+  ORACLESPATIAL_ENABLED=-DUSE_ORACLESPATIAL 
+  ORACLESPATIAL_LIB="-L$ORA_HOME/lib"
+  ORACLESPATIAL_INC="-I$ORA_HOME/rdbms/demo -I$ORA_HOME/rdbms/public" 
+fi
+
+AC_SUBST(ORACLESPATIAL_ENABLED,$ORACLESPATIAL_ENABLED)
+AC_SUBST(ORACLESPATIAL_INC,$ORACLESPATIAL_INC)
+AC_SUBST(ORACLESPATIAL_LIB,$ORACLESPATIAL_LIB)
+
 dnl ---------------------------------------------------------------------
 dnl WMS Compatibility - Enabled by default if PROJ.4 is there.
 dnl Can be explicitly disabled using --without-wms

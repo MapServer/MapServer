@@ -565,7 +565,7 @@ int msSDELayerGetItems(layerObj *layer) {
 
   layer->iteminfo = (SE_COLUMN_DEF *) calloc(layer->numitems, sizeof(SE_COLUMN_DEF));
   if(!layer->iteminfo) {
-    msSetError(MS_MEMERR, "Error allocating SDE item information.", "msSDELayerInitItemInfo()");
+    msSetError(MS_MEMERR, "Error allocating SDE item information.", "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
 

@@ -29,9 +29,10 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"Expression parser error.",
 						"SDE error.",
 						"OGR error.",
-						"Query error."
-						"WMS server error."
-						"WMS connection error."
+						"Query error.",
+						"WMS server error.",
+						"WMS connection error.",
+						"OracleSpatial error."
 };
 
 errorObj ms_error = {-1, "", ""};
@@ -125,6 +126,9 @@ char *msGetVersion() {
 #endif
 #ifdef USE_POSTGIS
   strcat(version, " INPUT=POSTGIS");
+#endif
+#ifdef USE_ORACLESPATIAL
+  strcat(version, " INPUT=ORACLESPATIAL"); 
 #endif
 #ifdef USE_OGR
   strcat(version, " INPUT=OGR");

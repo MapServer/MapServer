@@ -817,6 +817,17 @@ void msSDELayerFreeItemInfo(layerObj *layer);
 char *msSDELayerGetSpatialColumn(layerObj *layer);
 char *msSDELayerGetRowIDColumn();
 
+int msOracleSpatialLayerOpen(layerObj *layer);
+int msOracleSpatialLayerClose(layerObj *layer);
+int msOracleSpatialLayerWhichShapes(layerObj *layer, rectObj rect);
+int msOracleSpatialLayerNextShape(layerObj *layer, shapeObj *shape);
+int msOracleSpatialLayerGetItems(layerObj *layer);
+int msOracleSpatialLayerGetShape(layerObj *layer, shapeObj *shape, long record);
+int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent);
+int msOracleSpatialLayerInitItemInfo(layerObj *layer);
+void msOracleSpatialLayerFreeItemInfo(layerObj *layer);
+int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);  
+
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
 const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
                              int bReturnOnlyFirstOne);

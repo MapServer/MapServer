@@ -8,9 +8,8 @@
 ** helper functions below initialize and free that structure member which is used locally by layer
 ** specific functions.
 */
-static int layerInitItemInfo(layerObj *layer) {
-  int status;
-
+static int layerInitItemInfo(layerObj *layer) 
+{
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):
@@ -22,19 +21,16 @@ static int layerInitItemInfo(layerObj *layer) {
     return(MS_SUCCESS); // inline shapes have no items
     break;
   case(MS_OGR):
-    return msOGRLayerInitItemInfo(layer);
+    return(msOGRLayerInitItemInfo(layer));
     break;
   case(MS_POSTGIS):
-    return msPOSTGISLayerInitItemInfo(layer);
-    break;
-  case(MS_TILED_OGR):
+    return(msPOSTGISLayerInitItemInfo(layer));
     break;
   case(MS_SDE):
-    status = msSDELayerInitItemInfo(layer);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
-    return(MS_SUCCESS);
+    return(msSDELayerInitItemInfo(layer));
     break;
   case(MS_ORACLESPATIAL):
+    return(msOracleSpatialLayerInitItemInfo(layer));
     break;
   default:
     break;
@@ -66,6 +62,7 @@ static void layerFreeItemInfo(layerObj *layer)
     msSDELayerFreeItemInfo(layer);
     break;
   case(MS_ORACLESPATIAL):
+    msOracleSpatialLayerFreeItemInfo(layer);
     break;
   default:
     break;
@@ -99,17 +96,16 @@ int msLayerOpen(layerObj *layer, char *shapepath)
     return(MS_SUCCESS);
     break;
   case(MS_OGR):
-    return msOGRLayerOpen(layer);
+    return(msOGRLayerOpen(layer));
     break;
   case(MS_POSTGIS):
-    return msPOSTGISLayerOpen(layer);
-    break;
-  case(MS_TILED_OGR):
+    return(msPOSTGISLayerOpen(layer));
     break;
   case(MS_SDE):
-    return msSDELayerOpen(layer);
+    return(msSDELayerOpen(layer));
     break;
   case(MS_ORACLESPATIAL):
+    return(msOracleSpatialLayerOpen(layer));
     break;
   default:
     break;
@@ -163,17 +159,16 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     return(MS_SUCCESS);
     break;
   case(MS_OGR):
-    return msOGRLayerWhichShapes(layer, rect);
+    return(msOGRLayerWhichShapes(layer, rect));
     break;
   case(MS_POSTGIS):
-    return msPOSTGISLayerWhichShapes(layer, rect);
-    break;
-  case(MS_TILED_OGR):
+    return(msPOSTGISLayerWhichShapes(layer, rect));
     break;
   case(MS_SDE):
     return(msSDELayerWhichShapes(layer, rect));
     break;
   case(MS_ORACLESPATIAL):
+    return(msOracleSpatialLayerWhichShapes(layer, rect));
     break;
   default:
     break;
@@ -226,17 +221,16 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     return(MS_SUCCESS);
     break;
   case(MS_OGR):
-    return msOGRLayerNextShape(layer, shape);
+    return(msOGRLayerNextShape(layer, shape));
     break;
   case(MS_POSTGIS):
-    return msPOSTGISLayerNextShape(layer, shape);
-    break;
-  case(MS_TILED_OGR):
+    return(msPOSTGISLayerNextShape(layer, shape));
     break;
   case(MS_SDE):
     return(msSDELayerNextShape(layer, shape));
     break;
   case(MS_ORACLESPATIAL):
+    return(msOracleSpatialLayerNextShape(layer, shape));
     break;
   default:
     break;
@@ -269,15 +263,16 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     return(MS_FAILURE);
     break;
   case(MS_OGR):
-    return msOGRLayerGetShape(layer, shape, tile, record);
+    return(msOGRLayerGetShape(layer, shape, tile, record));
     break;
   case(MS_POSTGIS):
-    return msPOSTGISLayerGetShape(layer, shape, record);
-    break;
-  case(MS_TILED_OGR):
+    return(msPOSTGISLayerGetShape(layer, shape, record));
     break;
   case(MS_SDE):
     return(msSDELayerGetShape(layer, shape, record));
+    break;
+  case(MS_ORACLESPATIAL):
+    return(msOracleSpatialLayerGetShape(layer, shape, record));
     break;
   default:
     break;
@@ -315,12 +310,11 @@ void msLayerClose(layerObj *layer)
   case(MS_POSTGIS):
     msPOSTGISLayerClose(layer);
     break;
-  case(MS_TILED_OGR):
-    break;
   case(MS_SDE):
     msSDELayerClose(layer);
     break;
   case(MS_ORACLESPATIAL):
+    msOracleSpatialLayerClose(layer);
     break;
   default:
     break;
@@ -361,12 +355,11 @@ int msLayerGetItems(layerObj *layer)
   case(MS_POSTGIS):
     return(msPOSTGISLayerGetItems(layer));
     break;
-  case(MS_TILED_OGR):
-    break;
   case(MS_SDE):
     return(msSDELayerGetItems(layer));
     break;
   case(MS_ORACLESPATIAL):
+    return(msOracleSpatialLayerGetItems(layer));
     break;
   default:
     break;
@@ -399,12 +392,11 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent) {
   case(MS_POSTGIS):
     return(msPOSTGISLayerGetExtent(layer, extent));
     break;
-  case(MS_TILED_OGR):
-    break;
   case(MS_SDE):
     return(msSDELayerGetExtent(layer, extent));
     break;
   case(MS_ORACLESPATIAL):
+    return(msOracleSpatialLayerGetExtent(layer, extent));
     break;
   default:
     break;
