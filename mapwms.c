@@ -966,12 +966,12 @@ int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, in
       if (strcasecmp(names[i], "SLD") == 0 && 
           values[i] && strlen(values[i]) > 0) 
       {
-          msSLDApplySLDURL(map, values[i], -1);
+          msSLDApplySLDURL(map, values[i], -1, NULL);
       }
       else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
                values[i] && strlen(values[i]) > 0)
       {
-          msSLDApplySLD(map, values[i], -1);
+          msSLDApplySLD(map, values[i], -1, NULL);
       }
         
   }
