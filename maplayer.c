@@ -460,6 +460,8 @@ void msLayerClose(layerObj *layer)
 */
 int msLayerGetItems(layerObj *layer) 
 {
+  shapefileObj *shpfile;
+
   // clean up any previously allocated instances
   layerFreeItemInfo(layer);
   if(layer->items) {
@@ -470,6 +472,19 @@ int msLayerGetItems(layerObj *layer)
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
+    shpfile = layer->layerinfo;
+
+    if(!shpfile) {
+      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerGetItems()");
+      return(MS_FAILURE);
+    }
+
+    layer->numitems = msDBFGetFieldCount(shpfile->hDBF);
+    layer->items = msDBFGetItems(shpfile->hDBF);    
+    if(!layer->items) return(MS_FAILURE);
+    layerInitItemInfo(layer);
+    return(MS_SUCCESS);
+    break;
   case(MS_TILED_SHAPEFILE):    
     layer->numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
     layer->items = msDBFGetItems(layer->shpfile.hDBF);    

@@ -2238,6 +2238,8 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
   regex_t re; /* compiled regular expression to be matched */ 
   char szPath[MS_MAXPATHLEN];
 
+  fprintf(stderr, "working on %s\n", html);
+
   if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
     msSetError(MS_REGEXERR, NULL, "msReturnPage()");
     return MS_FAILURE;
