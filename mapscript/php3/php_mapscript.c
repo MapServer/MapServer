@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.208  2004/07/28 22:03:50  dan
+ * Added layer->getFilter() to PHP MapScript (bug 787)
+ *
  * Revision 1.207  2004/07/26 14:45:52  dan
  * Fixed php_mapscript to work with PHP5 (bug 718, patch from Sylvain Pasche)
  *
@@ -438,6 +441,7 @@ DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getFilter(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS);
@@ -920,6 +924,7 @@ function_entry php_layer_class_functions[] = {
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
     {"removemetadata",     php3_ms_lyr_removeMetaData,        NULL},
     {"setfilter",       php3_ms_lyr_setFilter,          NULL},
+    {"getfilter",       php3_ms_lyr_getFilter,          NULL},
     {"getwmsfeatureinfourl", php3_ms_lyr_getWMSFeatureInfoURL, NULL},
     {"getitems",        php3_ms_lyr_getItems,           NULL},
     {"setprocessing",   php3_ms_lyr_setProcessing,           NULL},
@@ -6983,15 +6988,8 @@ DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pThis;
     int     nStatus = -1;
 
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
-
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pFilterString) != SUCCESS)
@@ -7012,6 +7010,47 @@ DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(nStatus);
 }
 /* }}} */
+
+
+/**********************************************************************
+ *                        layer->getFilter()
+ **********************************************************************/
+
+/* {{{ proto int layer.getProjection()
+    Return the layer's filter expression. Returns FALSE on error. */
+
+DLEXPORT void php3_ms_lyr_getFilter(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj    *self;
+    pval        *pThis = NULL;
+    char        *pszFilterString = NULL;
+
+    HashTable   *list=NULL;
+    pThis = getThis();
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    ;
+    if ((pszFilterString = layerObj_getFilter(self)) == NULL)
+    {
+        RETURN_FALSE;
+    }
+    else
+    {
+        RETVAL_STRING(pszFilterString, 1);
+        free(pszFilterString);
+    }
+}
 
 /**********************************************************************
  *                        layer->setProjection()
@@ -7125,15 +7164,8 @@ DLEXPORT void php3_ms_lyr_getProjection(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis = NULL;
     char        *pszPojString = NULL;
 
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
-
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {

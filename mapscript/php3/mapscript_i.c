@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.83  2004/07/28 22:03:50  dan
+ * Added layer->getFilter() to PHP MapScript (bug 787)
+ *
  * Revision 1.82  2004/07/28 21:45:10  assefa
  * Function msImageCreate have an additional argument (map object).
  *
@@ -148,7 +151,7 @@ imageObj *mapObj_prepareImage(mapObj* self) {
     else if( MS_RENDERER_RAWDATA(self->outputformat) )
     {
         img = msImageCreate(self->width, self->height, self->outputformat,
-                            self->web.imagepath, self->web.imageurl. self);
+                            self->web.imagepath, self->web.imageurl, self);
     }
 #ifdef USE_MING_FLASH
     else if( MS_RENDERER_SWF(self->outputformat) )
@@ -486,8 +489,15 @@ int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
   }
 
 int layerObj_setFilter(layerObj *self, char *string) {
-    return loadExpressionString(&self->filter, string);
+    if (!string || strlen(string) == 0) {
+        freeExpression(&self->filter);
+        return MS_SUCCESS;
+    }
+    else return loadExpressionString(&self->filter, string);
+  }
 
+char *layerObj_getFilter(layerObj *self) {
+    return msLayerGetFilterString(self);
   }
 
 int layerObj_setWKTProjection(layerObj *self, char *string) {

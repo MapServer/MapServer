@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/07/28 22:03:50  dan
+ * Added layer->getFilter() to PHP MapScript (bug 787)
+ *
  * Revision 1.45  2004/07/26 14:12:37  dan
  * Created hashtable_i.c for new hashTableObj
  *
@@ -169,6 +172,7 @@ int             layerObj_queryByFeatures(layerObj *self, mapObj *map,
 int             layerObj_queryByShape(layerObj *self, mapObj *map, 
                                       shapeObj *shape);
 int             layerObj_setFilter(layerObj *self, char *string);
+char*           layerObj_getFilter(layerObj *self);
 int             layerObj_setWKTProjection(layerObj *self, char *string);
 char*           layerObj_getProjection(layerObj *self);
 int             layerObj_setProjection(layerObj *self, char *string);

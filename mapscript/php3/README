@@ -354,7 +354,7 @@ and the MapServer Map File documentation at:
         Use absolute path. If a relative path is used, then it will be 
         relative to the mapfile location.
 
-   char getProjection()
+   string getProjection()
         Returns a string represenation of the projection. If no 
         projection is set, MS_FALSE is returned.
 
@@ -483,7 +483,7 @@ and the MapServer Map File documentation at:
         sld document and the map file will be done using the layer's name.
         See SLD How to for more information on the SLD support.
 
-  char generateSLD()
+  string generateSLD()
         Returns an SLD XML string based on all the classes found in all the layers.
 
  LayerObj Class:
@@ -619,7 +619,10 @@ and the MapServer Map File documentation at:
    int setFilter(string expression)
         Set layer filter expression.
 
-   char getProjection()
+   string getFilter()
+        Returns the expression for this layer.
+
+   string getProjection()
         Returns a string represenation of the projection. If no 
         projection is set, MS_FALSE is returned.
 
@@ -715,17 +718,17 @@ and the MapServer Map File documentation at:
         the layer.
         See SLD How to for more information on the SLD support.
 
-  char generateSLD()
+  string generateSLD()
         Returns an SLD XML string based on all the classes found in the layers.
 
- int moveclassup(int index)
+  int moveclassup(int index)
        The class specified by the class index will be moved up into
        the array of layers. Returns MS_SUCCESS or MS_FAILURE.
        ex layer->moveclassup(1) will have the effect of moving class 1
           up to postion 0, and the class at position 0 will be moved
           to position 1.
 
- int moveclassdown(int index)
+  int moveclassdown(int index)
        The class specified by the class index will be moved down into
        the array of layers. Returns MS_SUCCESS or MS_FAILURE.
        ex layer->moveclassdown(0) will have the effect of moving class 0
@@ -763,10 +766,10 @@ and the MapServer Map File documentation at:
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
 
-   int setexpression(string expression)
+   int setExpression(string expression)
         Set the expression string for the class object.
    
-   char getexpression(string expression)
+   string getExpression()
         Returns the expression string for the class object.
             
    int settext(string text)
