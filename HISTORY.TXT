@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.2
 --------------------------
 
+- Construct proper polygon spatial filters.  Otherwise no features will be
+  returned by OGR for GEOS enabled builds of OGR.
+
 - Bug 1304: Avoid putting newlines and extra blanks or tabs in 
   <gml:coordinates> text in mapgml.c.
 
