@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.366  2004/11/04 21:45:28  frank
+ * Added msDrawWMSLayerPDF() prototype.
+ *
  * Revision 1.365  2004/11/03 21:04:44  dan
  * Update for 4.4.0-beta2
  *
@@ -1577,6 +1580,9 @@ MS_DLL_EXPORT int msSaveImagePDF(imageObj *image, char *filename);
 MS_DLL_EXPORT void msFreeImagePDF(imageObj *image);
 MS_DLL_EXPORT int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
+MS_DLL_EXPORT int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo, 
+                                    int numRequests, mapObj *map, 
+                                    layerObj *layer, imageObj *image);
 #endif
 
 /* ==================================================================== */
