@@ -278,7 +278,19 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     rectObj     searchrect;
     char        cache=MS_FALSE;
     int         retcode=MS_SUCCESS;
+
     featureListNodeObjPtr shpcache=NULL, current=NULL;
+
+/* ==================================================================== */
+/*      For Flash, we use a metadata called SWFOUTPUT that              */
+/*      is used to render vector layers as rasters.                     */
+/* ==================================================================== */
+ #ifdef USE_MING_FLASH
+    if (image &&  MS_RENDERER_SWF(image->format) && 
+        msLookupHashTable(layer->metadata, "SWFOUTPUT") &&
+        strcasecmp(msLookupHashTable(layer->metadata, "SWFOUTPUT"), "RASTER")==0)
+      return  msDrawVectorLayerAsRasterSWF(map, layer, image);
+#endif
 
     annotate = msEvalContext(map, layer->labelrequires);
     if(map->scale > 0) 
@@ -295,7 +307,18 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
         return MS_FAILURE;
   
     // build item list
-    status = msLayerWhichItems(layer, MS_TRUE, annotate);
+/* ==================================================================== */
+/*      For Flash, we use a metadata called SWFDUMPATTRIBUTES that      */
+/*      contains a list of attributes that we want to write to the      */
+/*      flash movie for query purpose.                                  */
+/* ==================================================================== */
+    if (image && MS_RENDERER_SWF(image->format))
+        status = msLayerWhichItems(layer, MS_TRUE, annotate, 
+                                   msLookupHashTable(layer->metadata, 
+                                                     "SWFDUMPATTRIBUTES"));
+    else        
+        status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL);
+
     if(status != MS_SUCCESS) 
         return MS_FAILURE;
   
@@ -491,7 +514,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // build item list
-  status = msLayerWhichItems(layer, MS_FALSE, annotate); // FIX: results have already been classified (this may change)
+  status = msLayerWhichItems(layer, MS_FALSE, annotate, NULL); // FIX: results have already been classified (this may change)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   msInitShape(&shape);
@@ -607,6 +630,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape,
   cliprect.maxx = map->extent.maxx + 2*map->cellsize;
   cliprect.maxy = map->extent.maxy + 2*map->cellsize;
 */
+
+  msDrawStartShape(map, layer, image, shape);
 
   c = shape->classindex;
 
@@ -922,6 +947,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape,
     return(MS_FAILURE);
   }
 
+
   return(MS_SUCCESS);
 }
 
@@ -1204,3 +1230,47 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 #endif
     }
 }
+
+
+/**
+ * Generic function to tell the underline device that layer 
+ * drawing is ending
+ */
+
+void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image)
+{
+}
+
+/**
+ * Generic function to tell the underline device that shape 
+ * drawing is stating
+ */
+
+void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
+                      shapeObj *shape)
+{
+    if (image)
+    {
+
+#ifdef USE_MING_FLASH
+          if( MS_RENDERER_SWF(map->outputformat) )
+            msDrawStartShapeSWF(map, layer, image, shape);
+#endif
+               
+    }
+}
+
+
+/**
+ * Generic function to tell the underline device that shape 
+ * drawing is ending
+ */
+
+void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image, 
+                    shapeObj *shape)
+{
+}
+
+
+
+

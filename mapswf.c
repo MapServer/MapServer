@@ -18,6 +18,13 @@
 #include "map.h"
 
 static char gszFilename[128];
+static char gszAction[256];
+static char gszTmp[256];
+
+#define MOUSEUP 1
+#define MOUSEDOWN 2
+#define MOUSEOVER 3
+#define MOUSEOUT 4
 
 
 /************************************************************************/
@@ -417,6 +424,8 @@ SWFButton BuildButtonFromGD(gdImagePtr img, colorObj *psHighlightColor)
     SWFShape oShape;
     SWFButton oButton;
 
+    //TODO : highlight of the pixmap symbol
+
     if (!img)
         return NULL;
 
@@ -424,7 +433,7 @@ SWFButton BuildButtonFromGD(gdImagePtr img, colorObj *psHighlightColor)
     
     oButton = newSWFButton();
     SWFButton_addShape(oButton, oShape, 
-                       SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_DOWN);
+                       SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_DOWN | SWFBUTTON_OVER);
 
     return oButton;
 }
@@ -491,7 +500,8 @@ SWFShape BuildEllipseShape(int nX, int nY, int nWidth, int nHeight,
 /************************************************************************/
 SWFButton BuildEllipseButton(int nX, int nY, int nWidth, int nHeight,
                              colorObj *psFillColor, colorObj *psOutlineColor,
-                             colorObj *psHightlightColor)
+                             colorObj *psHightlightColor,
+                             int nLayerIndex, int nShapeIndex)
 {
     SWFShape oShape;
     SWFButton oButton;
@@ -513,9 +523,76 @@ SWFButton BuildEllipseButton(int nX, int nY, int nWidth, int nHeight,
                                    NULL);
     SWFButton_addShape(oButton, oShape, SWFBUTTON_OVER);
     
+    if (nLayerIndex >=0 && nShapeIndex >= 0)
+    {
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEUP);
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEUP);
+
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEDOWN);
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEDOWN);
+
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEOVER);
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEOVER);
+        
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEOUT);
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEOUT);
+    }
+
+
     return oButton;
 }
 
+
+/************************************************************************/
+/*                        SWFShape BuildPolygonShape                    */
+/*                                                                      */
+/*      Build a polygon shape.                                          */
+/************************************************************************/
+SWFShape BuildPolygonShape(shapeObj *p, colorObj *psFillColor, 
+                           colorObj *psOutlineColor)
+{
+    int i, j;
+    SWFShape oShape;
+
+    if (p && p->numlines > 0 && (psFillColor !=NULL || psOutlineColor != NULL))
+    {
+        oShape = newSWFShape();
+        if (psOutlineColor)
+            SWFShape_setLine(oShape, 0, psOutlineColor->red, 
+                             psOutlineColor->green, psOutlineColor->blue, 0xff);
+        if (psFillColor)
+            SWFShape_setRightFill(oShape,
+                                  SWFShape_addSolidFill(oShape, 
+                                                        psFillColor->red, 
+                                                        psFillColor->green, 
+                                                        psFillColor->blue,
+                                                        0xff));
+
+       for (i = 0; i < p->numlines; i++)
+       {
+           if (p->line[i].numpoints)
+           {
+               SWFShape_movePenTo(oShape, (float)p->line[i].point[0].x, 
+                                  (float)p->line[i].point[0].y); 
+           }
+           for(j=1; j<p->line[i].numpoints; j++)
+           {
+               SWFShape_drawLineTo(oShape, (float)p->line[i].point[j].x,
+                                    (float)p->line[i].point[j].y);
+           }
+       }                                                 
+       return oShape;
+    }
+    return NULL;
+}
 /************************************************************************/
 /*          SWFShape  BuildShape(gdPoint adfPoints[], int nPoints,      */
 /*                           colorObj *psFillColor,                     */
@@ -615,10 +692,13 @@ SWFShape  BuildShapeLine(gdPoint adfPoints[], int nPoints,
 SWFButton   BuildButtonPolygon(gdPoint adfPoints[], int nPoints, 
                                colorObj *psFillColor, 
                                colorObj *psOutlineColor,
-                               colorObj *psHighlightColor)
+                               colorObj *psHighlightColor,
+                               int nLayerIndex, int nShapeIndex)
+                               
 {
     SWFButton b;
     //int bFill = 0;
+
 
     b = newSWFButton();
 
@@ -638,25 +718,28 @@ SWFButton   BuildButtonPolygon(gdPoint adfPoints[], int nPoints,
                                 SWFBUTTON_OVER);
     }
     
-    //SWFButton_addShape(b, BuildShape(adfPoints, nPoints, 
-    //                                    bFill, psColor), SWFBUTTON_HIT);
-    //    SWFButton_addShape(b, BuildShape(adfPoints, nPoints, 
-    //                                     bFill, psColor), SWFBUTTON_DOWN);
+    if (nLayerIndex >=0 && nShapeIndex >= 0)
+    {
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEUP);
+        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEUP);
 
-    
-    SWFButton_addAction(b, compileSWFActionCode("_root.MouseEnter();"),
-                        SWFBUTTON_MOUSEOVER);
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEDOWN);
+        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEDOWN);
 
-
-    SWFButton_addAction(b, compileSWFActionCode("_root.text1=\"mouse_out\";"),
-                        SWFBUTTON_MOUSEOUT);
-  
-    //SWFButton_addAction(b, compileSWFActionCode("_root.MouseOut();"),
-    //                    SWFBUTTON_MOUSEOUT);
-
-    //SWFButton_addAction(b, compileSWFActionCode("_root.MouseOut();"),
-    //                     SWFBUTTON_MOUSEOUT);
-    
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEOVER);
+        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEOVER);
+        
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEOUT);
+        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEOUT);
+    }
 
     return b;
 }
@@ -670,7 +753,8 @@ SWFButton   BuildButtonPolygon(gdPoint adfPoints[], int nPoints,
 /************************************************************************/
 SWFButton   BuildButtonLine(gdPoint adfPoints[], int nPoints, 
                             colorObj *psFillColor, 
-                            colorObj *psHighlightColor)
+                            colorObj *psHighlightColor,
+                            int nLayerIndex, int nShapeIndex)
 {
     SWFButton b;
     //int bFill = 0;
@@ -686,31 +770,34 @@ SWFButton   BuildButtonLine(gdPoint adfPoints[], int nPoints,
 
     if (psHighlightColor)
     {
-        SWFButton_addShape(b, BuildShapeLine(adfPoints, nPoints, 
-                                             psHighlightColor), 
-                           SWFBUTTON_OVER);
+      SWFButton_addShape(b, BuildShapeLine(adfPoints, nPoints, 
+                                           psHighlightColor), 
+                         SWFBUTTON_OVER);
     }
     
-    //SWFButton_addShape(b, BuildShape(adfPoints, nPoints, 
-    //                                    bFill, psColor), SWFBUTTON_HIT);
-    //    SWFButton_addShape(b, BuildShape(adfPoints, nPoints, 
-    //                                     bFill, psColor), SWFBUTTON_DOWN);
+    if (nLayerIndex >=0 && nShapeIndex >= 0)
+    {
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEUP);
+        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEUP);
 
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEDOWN);
+        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEDOWN);
+
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEOVER);
+        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEOVER);
+        
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEOUT);
+        SWFButton_addAction(b, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEOUT);
+    }
     
-    //SWFButton_addAction(b, compileSWFActionCode("_root.MouseEnter();"),
-    //                    SWFBUTTON_MOUSEDOWN);
-
-
-    //SWFButton_addAction(b, compileSWFActionCode("_root.text1=\"bbbbbbb\";"),
-    //                    SWFBUTTON_MOUSEDOWN);
-  
-    //SWFButton_addAction(b, compileSWFActionCode("_root.MouseOut();"),
-    //                    SWFBUTTON_MOUSEOUT);
-
-    //SWFButton_addAction(b, compileSWFActionCode("_root.MouseOut();"),
-    //                     SWFBUTTON_MOUSEOUT);
-    
-
     return b;
 }
 
@@ -726,7 +813,6 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     imageObj *image = NULL;
 
     assert( strcasecmp(format->driver,"SWF") == 0 );
-
     image = (imageObj *)calloc(1,sizeof(imageObj));
 
     image->format = format;
@@ -749,6 +835,9 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     image->img.swf = (SWFObj *)malloc(sizeof(SWFObj));    
     image->img.swf->map = map;
 
+    image->img.swf->nCurrentLayerIdx = -1;
+    image->img.swf->nCurrentShapeIdx = -1;
+
     image->img.swf->nLayerMovies = 0;
     image->img.swf->pasMovies = NULL;
     image->img.swf->nCurrentMovie = -1;
@@ -769,7 +858,14 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
 /************************************************************************/
 void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 {
-    int nTmp = 0;
+    int         nTmp = 0;
+    char        szAction[200];
+    SWFAction   oAction;
+    int         i = 0;
+    int         n = -1;
+    char        **tokens;
+    char        *metadata;
+
     if (image && MS_DRIVER_SWF(image->format) )
     {
         image->img.swf->nLayerMovies++;
@@ -792,6 +888,171 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
         SWFMovie_setDimension(image->img.swf->pasMovies[nTmp -1], 
                               (float)image->width, (float)image->height);
         
+        image->img.swf->nCurrentLayerIdx = layer->index;
+        //msLayerGetItems(layer);
+
+/* -------------------------------------------------------------------- */
+/*      Start the Element array that will contain the values of the     */
+/*      attributes.                                                     */
+/* -------------------------------------------------------------------- */
+        if (metadata=msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES"))
+        {
+            tokens = split(metadata, ',', &n);
+            if (tokens && n > 0)
+            {
+                sprintf(gszAction, "nAttributes=%d;", n);
+                oAction = compileSWFActionCode(gszAction);
+                SWFMovie_add(image->img.swf->pasMovies[nTmp -1], oAction);
+
+                sprintf(gszAction, "%s", "Attributes=new Array();");
+                oAction = compileSWFActionCode(gszAction);
+                SWFMovie_add(image->img.swf->pasMovies[nTmp -1], oAction);
+                
+                for (i=0; i<n; i++)
+                {
+                    sprintf(gszAction, "Attributes[%d]=\"%s\";", i, tokens[i]);
+                    oAction = compileSWFActionCode(gszAction);
+                    SWFMovie_add(image->img.swf->pasMovies[nTmp -1], oAction);
+                }
+                
+                sprintf(szAction, "%s", "Element=new Array();");
+                oAction = compileSWFActionCode(szAction);
+                SWFMovie_add(image->img.swf->pasMovies[nTmp -1], oAction);
+            }
+        }
+    }
+}
+
+
+/************************************************************************/
+/*                         void msDrawStartShapeSWF                     */
+/*                                                                      */
+/*      Strat rendering a shape.                                        */
+/************************************************************************/
+void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
+                         shapeObj *shape)
+{
+    char *metadata = NULL;
+    int  *panIndex = NULL;
+    int  iIndex = 0;
+    int i,j = 0;
+    int bFound = 0;
+    SWFAction   oAction;
+    int nTmp = 0;
+    
+    int nttt;
+    int sttt = NULL;
+
+    //nttt = strlen(sttt);
+    if (image &&  MS_DRIVER_SWF(image->format))
+    {
+        image->img.swf->nCurrentShapeIdx = shape->index;
+
+        nTmp = image->img.swf->nCurrentMovie;
+
+/* -------------------------------------------------------------------- */
+/*      get an array of indexes corresponding to the attributes. We     */
+/*      will use this array to retreive the values.                     */
+/* -------------------------------------------------------------------- */
+        if (metadata=msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES"))
+        {
+            char **tokens;
+            int n = 0;
+            tokens = split(metadata, ',', &n);
+            if (tokens && n > 0)
+            {
+                panIndex = (int *)malloc(sizeof(int)*n);
+                iIndex = 0;
+                for (i=0; i<n; i++)
+                {
+                    bFound = 0;
+                    for (j=0; j<layer->numitems; j++)
+                    {
+                        if (strcmp(tokens[i], layer->items[j]) == 0)
+                        {
+                            bFound = 1;
+                            break;
+                        }
+                    }
+                    if (bFound)
+                    {
+                        panIndex[iIndex] = j;
+                        iIndex++;
+                    }
+                }
+            }
+        }
+/* -------------------------------------------------------------------- */
+/*      Build the value string for the specified attributes.            */
+/* -------------------------------------------------------------------- */
+        if (panIndex)
+        {
+            sprintf(gszAction, "Element[%d]=new Array();", shape->index);
+            oAction = compileSWFActionCode(gszAction);
+            SWFMovie_add(image->img.swf->pasMovies[nTmp], oAction);
+
+            for (i=0; i<iIndex; i++)
+            {
+                sprintf(gszAction, "Element[%d][%d]=\"%s\";", shape->index,
+                        i, shape->values[panIndex[i]]);
+                oAction = compileSWFActionCode(gszAction);
+                SWFMovie_add(image->img.swf->pasMovies[nTmp], oAction);
+                
+            }
+        }
+    }
+    else
+        image->img.swf->nCurrentShapeIdx = -1;   
+}
+
+
+void msDrawStartShapeUsingIdxSWF(mapObj *map, layerObj *layer, imageObj *image,
+                                 int shapeidx)
+{
+    shapeObj shape;
+
+    if (map && layer && image && shapeidx >=0)
+    {
+        msInitShape(&shape);
+        msLayerGetShape(layer, &shape, -1, shapeidx);
+        return msDrawStartShapeSWF(map, layer, image, &shape);
+    }
+}
+
+void msDrawEndShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
+                       shapeObj *shape)
+{
+    if (image && MS_DRIVER_SWF(image->format) )
+    {
+        image->img.swf->nCurrentShapeIdx = -1;
+    }
+}
+
+
+
+void AddMouseActions(SWFButton oButton, int nLayerIndex, int nShapeIndex)
+{
+    if (nLayerIndex >=0 && nShapeIndex >= 0)
+    {
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEUP);
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEUP);
+
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEDOWN);
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEDOWN);
+
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEOVER);
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEOVER);
+        
+        sprintf(gszAction, "_root.ElementSelected(%d,%d,%d);", nLayerIndex, 
+                nShapeIndex, MOUSEOUT);
+        SWFButton_addAction(oButton, compileSWFActionCode(gszAction),
+                            SWFBUTTON_MOUSEOUT);
     }
 }
 
@@ -829,11 +1090,17 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     colorObj *psFillColor = NULL;
     colorObj *psOutlineColor = NULL;
     
-    mapObj *map;
-    int nTmp = 0;
+    mapObj      *map;
+    layerObj    *psLayerTmp = NULL;
 
+    int nTmp = 0;
+    
     FILE *out;
 
+
+    int nLayerIndex = -1;
+    int nShapeIndex = -1;
+   
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -861,17 +1128,24 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     sColorHighlightObj.red = 0xff;
     sColorHighlightObj.green = 0;//0xff;
     sColorHighlightObj.blue = 0;
-    
-/*
-    sFc.red = 0xff;
-    sFc.green = 0; 
-    sFc.blue = 0;
-    
-    sOc.red = 0;
-    sOc.green = 0; 
-    sOc.blue = 0;
-*/
 
+
+/* -------------------------------------------------------------------- */
+/*      the layer index and shape index will be set if the layer has    */
+/*      the metadata SWFDUMPATTRIBUTES set.                             */
+/*                                                                      */
+/*      If they are set, we will write the Action Script (AS) for       */
+/*      the attributes of the shape.                                    */
+/* -------------------------------------------------------------------- */
+    psLayerTmp = 
+      &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
+
+    if (psLayerTmp->metadata, "SWFDUMPATTRIBUTES")
+    {
+        nLayerIndex = image->img.swf->nCurrentLayerIdx;
+        nShapeIndex = image->img.swf->nCurrentShapeIdx;
+    }
+    
 /* -------------------------------------------------------------------- */
 /*      Render the diffrent type of symbols.                            */
 /* -------------------------------------------------------------------- */
@@ -906,6 +1180,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
              gdImageStringTTF(imgtmp, bbox, ((symbol->antialias)?(fc):-(fc)), 
                               font, sz, 0, 1, 1, symbol->character);
              oButton = BuildButtonFromGD(imgtmp, NULL);
+             AddMouseActions(oButton, nLayerIndex, nShapeIndex);
              //oShape = gdImage2Shape(imgtmp);
              oDisplay = SWFMovie_add(image->img.swf->pasMovies[nTmp], 
                                      oButton);
@@ -917,8 +1192,9 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                             font, sz, 0, 1, 1, symbol->character);
             //oShape = gdImage2Shape(imgtmp);
             oButton = BuildButtonFromGD(imgtmp, NULL);
+            AddMouseActions(oButton, nLayerIndex, nShapeIndex);
             oDisplay = SWFMovie_add(image->img.swf->pasMovies[nTmp], 
-                                     oButton);
+                                    oButton);
             SWFDisplayItem_moveTo(oDisplay, (float)x, (float)y);
 #endif
 
@@ -935,7 +1211,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 //gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, 
                 //           symbol->img->sx, symbol->img->sy);
                 oButton = BuildButtonFromGD(symbol->img, NULL);
-                
+                AddMouseActions(oButton, nLayerIndex, nShapeIndex);
+
                 oDisplay = SWFMovie_add(image->img.swf->pasMovies[nTmp], 
                                         oButton);
                 SWFDisplayItem_moveTo(oDisplay, (float)offset_x, 
@@ -956,12 +1233,13 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                    symbol->img->sy*scale, symbol->img->sx, 
                                    symbol->img->sy);
             
-                out = fopen("e:/tmp/ms_tmp/test.jpg", "wb");
+                //out = fopen("c:/tmp/ms_tmp/test.jpg", "wb");
                 /* And save the image  -- could also use gdImageJpeg */
-                gdImageJpeg(imgtmp, out, 0);
+                //gdImageJpeg(imgtmp, out, 0);
 
                 oButton = BuildButtonFromGD(imgtmp, NULL);
-                
+                AddMouseActions(oButton, nLayerIndex, nShapeIndex);
+
                 oDisplay = SWFMovie_add(image->img.swf->pasMovies[nTmp], 
                                         oButton);
                 SWFDisplayItem_moveTo(oDisplay, (float)offset_x, 
@@ -995,11 +1273,12 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 if (!symbol->filled)
                     psFillColor = NULL;
                 oButton = 
-                    BuildEllipseButton(offset_x, offset_y,
-                                       MS_NINT(scale*symbol->points[0].x),
-                                       MS_NINT(scale*symbol->points[0].y),
-                                       psFillColor, psOutlineColor,
-                                       &sColorHighlightObj);
+                  BuildEllipseButton(offset_x, offset_y,
+                                     MS_NINT(scale*symbol->points[0].x),
+                                     MS_NINT(scale*symbol->points[0].y),
+                                     psFillColor, psOutlineColor,
+                                     &sColorHighlightObj,
+                                       nLayerIndex, nShapeIndex);
                 SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
             } 
             else 
@@ -1011,7 +1290,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                            MS_NINT(scale*symbol->points[0].x),
                                            MS_NINT(scale*symbol->points[0].y),
                                            psFillColor, NULL, 
-                                           &sColorHighlightObj);
+                                           &sColorHighlightObj,
+                                           nLayerIndex, nShapeIndex);
 
                     SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
                 }
@@ -1049,7 +1329,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                 
                 oButton = BuildButtonPolygon(mPoints, symbol->numpoints,  
                                              psFillColor,  psOutlineColor,
-                                             &sColorHighlightObj);
+                                             &sColorHighlightObj,
+                                             nLayerIndex, nShapeIndex);
                     
                 SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
 
@@ -1071,7 +1352,8 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
                 oButton = BuildButtonLine(mPoints, symbol->numpoints,  
                                           psFillColor,
-                                          &sColorHighlightObj);
+                                          &sColorHighlightObj,
+                                          nLayerIndex, nShapeIndex);
                 SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
 
             } /* end if-then-else */
@@ -1126,40 +1408,79 @@ SWFShape DrawShapePolyline(shapeObj *p, colorObj *psColor)
 SWFShape DrawShapeFilledPolygon(shapeObj *p, colorObj *psFillColor, 
                                 colorObj *psOutlineColor)
 {
-    int i, j;
-    SWFShape oShape;
-
-    if (p && p->numlines > 0 && (psFillColor !=NULL || psOutlineColor != NULL))
-    {
-        oShape = newSWFShape();
-        if (psOutlineColor)
-            SWFShape_setLine(oShape, 0, psOutlineColor->red, 
-                             psOutlineColor->green, psOutlineColor->blue, 0xff);
-        if (psFillColor)
-            SWFShape_setRightFill(oShape,
-                                  SWFShape_addSolidFill(oShape, 
-                                                        psFillColor->red, 
-                                                        psFillColor->green, 
-                                                        psFillColor->blue,
-                                                        0xff));
-       for (i = 0; i < p->numlines; i++)
-       {
-           if (p->line[i].numpoints)
-           {
-               SWFShape_movePenTo(oShape, (float)p->line[i].point[0].x, 
-                                  (float)p->line[i].point[0].y); 
-           }
-           for(j=1; j<p->line[i].numpoints; j++)
-           {
-               SWFShape_drawLineTo(oShape, (float)p->line[i].point[j].x,
-                                    (float)p->line[i].point[j].y);
-           }
-       }                                                 
-       return oShape;
-    }
-    return NULL;
+    return BuildPolygonShape(p, psFillColor, psOutlineColor);
 }
  
+
+
+/************************************************************************/
+/*                         DrawButtonFilledPolygon                      */
+/*                                                                      */
+/*      returns a button with a polygon shape in it.                    */
+/************************************************************************/
+SWFButton DrawButtonFilledPolygon(shapeObj *p, colorObj *psFillColor, 
+                                  colorObj *psOutlineColor, 
+                                  colorObj *psHighlightColor, int nLayerIndex,
+                                  int nShapeIndex)
+{
+    SWFButton b;
+    
+    b = newSWFButton();
+
+    SWFButton_addShape(b, BuildPolygonShape(p, psFillColor, psOutlineColor),
+                       SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_DOWN);
+
+    if (psHighlightColor)
+    {
+        if(psFillColor)
+            SWFButton_addShape(b, BuildPolygonShape(p, psHighlightColor, NULL), 
+                               SWFBUTTON_OVER);
+        else if (psOutlineColor)
+             SWFButton_addShape(b, BuildPolygonShape(p, NULL, psHighlightColor), 
+                                SWFBUTTON_OVER);
+    }
+
+    if (nLayerIndex >=0 && nShapeIndex >= 0)
+    {
+        //sprintf(gszAction, "_root.ElementSelected(%d,%d);", nLayerIndex, 
+        //        nShapeIndex);
+        //SWFButton_addAction(b, compileSWFActionCode(gszAction),
+        //                    SWFBUTTON_MOUSEDOWN);
+        AddMouseActions(b, nLayerIndex, nShapeIndex);
+    }
+
+     return b;
+}
+
+
+SWFButton DrawButtonPolyline(shapeObj *p, colorObj *psColor, 
+                             colorObj *psHighlightColor, int nLayerIndex,
+                             int nShapeIndex)
+{
+    SWFButton b;
+    
+    b = newSWFButton();
+
+    SWFButton_addShape(b, DrawShapePolyline(p, psColor),
+                       SWFBUTTON_UP | SWFBUTTON_HIT | SWFBUTTON_DOWN);
+
+    if (psHighlightColor)
+    {
+        SWFButton_addShape(b, DrawShapePolyline(p, psHighlightColor),
+                           SWFBUTTON_OVER);
+    }
+
+    if (nLayerIndex >=0 && nShapeIndex >= 0)
+    {
+        //sprintf(gszAction, "_root.ElementSelected(%d,%d);", nLayerIndex, 
+        //        nShapeIndex);
+        //SWFButton_addAction(b, compileSWFActionCode(gszAction),
+        //                    SWFBUTTON_MOUSEDOWN);
+        AddMouseActions(b, nLayerIndex, nShapeIndex);
+    }
+
+     return b;
+}
 
 /************************************************************************/
 /*    SWFText DrawText(char *string, int nX, int nY, char *pszFontFile, */
@@ -1208,10 +1529,15 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 {
     colorObj    sFc;
     colorObj    sBc;
+    colorObj    sColorHighlightObj;
     mapObj      *map = NULL;
     int         nTmp = 0;
     SWFShape    oShape;
-    
+    SWFButton   oButton;
+    int         nLayerIndex = -1;
+    int         nShapeIndex = -1;
+    layerObj    *psLayerTmp = NULL;
+
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -1219,13 +1545,13 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         return;
 
     if(p == NULL || p->numlines <= 0)
-        return;
+      return;
 
     if(sy > symbolset->numsymbols || sy < 0) // no such symbol, 0 is OK
-        return;
+      return;
     
     if(fc < 0)// || (fc >= gdImageColorsTotal(img))) // invalid color
-       return;
+      return;
 
 /* -------------------------------------------------------------------- */
 /*      extract the colors.                                             */
@@ -1236,12 +1562,42 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
     nTmp = image->img.swf->nCurrentMovie;
 
+/* -------------------------------------------------------------------- */
+/*      the layer index and shape index will be set if the layer has    */
+/*      the metadata SWFDUMPATTRIBUTES set.                             */
+/*                                                                      */
+/*      If they are set, we will write the Action Script (AS) for       */
+/*      the attributes of the shape.                                    */
+/* -------------------------------------------------------------------- */
+    psLayerTmp = 
+      &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
+
+    if (msLookupHashTable(psLayerTmp->metadata, "SWFDUMPATTRIBUTES"))
+    {
+        nLayerIndex = image->img.swf->nCurrentLayerIdx;
+        nShapeIndex = image->img.swf->nCurrentShapeIdx;
+    }
+
+    //TODO : this should come from the map file.
+    sColorHighlightObj.red = 0xff;
+    sColorHighlightObj.green = 0;//0xff;
+    sColorHighlightObj.blue = 0;
+
     //For now just draw lines without symbols.
     if(1)//sy == 0) 
     { 
         // just draw a single width line
-        oShape = DrawShapePolyline(p, &sFc);
-        SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+        if (nLayerIndex < 0 || nShapeIndex < 0)
+        {
+            oShape = DrawShapePolyline(p, &sFc);
+            SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+        }
+        else
+        {
+            oButton = DrawButtonPolyline(p, &sFc, &sColorHighlightObj, nLayerIndex, 
+                                         nShapeIndex);
+            SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
+        }
         return;
     }
 
@@ -1263,16 +1619,26 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     colorObj    sBc;
     colorObj    sOc;
     mapObj      *map = NULL;
+    layerObj    *psLayerTmp = NULL;
     SWFShape    oShape;
+    SWFButton   oButton;
+
     int         nTmp = 0;
     colorObj    *psFillColor = NULL;
     colorObj    *psOutlineColor = NULL;
-    
+   colorObj    *psBackgroungColor = NULL;
+
+    colorObj    sColorHighlightObj;
+
     gdImagePtr  tile = NULL;
     //int         bDestroyImage = 0;
     unsigned char *data, *dbldata;
     int         size;
     int         bytesPerColor;
+    
+    int         nLayerIndex = -1;
+    int         nShapeIndex = -1;
+
 
     FILE        *out;
 
@@ -1295,12 +1661,33 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
         return;
 
 /* -------------------------------------------------------------------- */
+/*      the layer index and shape index will be set if the layer has    */
+/*      the metadata SWFDUMPATTRIBUTES set.                             */
+/*                                                                      */
+/*      If they are set, we will write the Action Script (AS) for       */
+/*      the attributes of the shape.                                    */
+/* -------------------------------------------------------------------- */
+    psLayerTmp = 
+      &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
+
+    if (msLookupHashTable(psLayerTmp->metadata, "SWFDUMPATTRIBUTES"))
+    {
+        nLayerIndex = image->img.swf->nCurrentLayerIdx;
+        nShapeIndex = image->img.swf->nCurrentShapeIdx;
+    }
+ 
+/* -------------------------------------------------------------------- */
 /*      extract the colors.                                             */
 /* -------------------------------------------------------------------- */
     map = image->img.swf->map;
     getRgbColor(map, fc, &sFc.red, &sFc.green, &sFc.blue);
     getRgbColor(map, bc, &sBc.red, &sBc.green, &sBc.blue);
     getRgbColor(map, oc, &sOc.red, &sOc.green, &sOc.blue);
+
+    //TODO : this should come from the map file.
+    sColorHighlightObj.red = 0xff;
+    sColorHighlightObj.green = 0;//0xff;
+    sColorHighlightObj.blue = 0;
 
     if (fc > -1)
         psFillColor = &sFc;
@@ -1311,8 +1698,18 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     
     if (sy == 0)
     {
-        oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor);
-        SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+        if (nLayerIndex < 0 ||  nShapeIndex < 0)
+        {
+            oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor);
+            SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+        }
+        else
+        {
+            oButton = DrawButtonFilledPolygon(p, psFillColor, psOutlineColor,
+                                              &sColorHighlightObj, nLayerIndex, 
+                                              nShapeIndex);
+            SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
+        }
 
         return;
     }
@@ -1328,9 +1725,9 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
     if (tile)
     {
-        out = fopen("e:/tmp/ms_tmp/tile.jpg", "wb");
+        //out = fopen("c:/tmp/ms_tmp/tile.jpg", "wb");
                 /* And save the image  -- could also use gdImageJpeg */
-        gdImageJpeg(tile, out, 95);
+        //gdImageJpeg(tile, out, 95);
     }
 
 
@@ -1345,11 +1742,21 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     {
         if (fc > -1 || oc > -1)
         {
-            oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor);
-           
+            if (nLayerIndex < 0 ||  nShapeIndex < 0)
+            {
+                oShape = DrawShapeFilledPolygon(p, psFillColor, psOutlineColor);
+                SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+            }
+            else
+            {
+                oButton = DrawButtonFilledPolygon(p, psFillColor, psOutlineColor,
+                                                  &sColorHighlightObj, nLayerIndex, 
+                                                  nShapeIndex);
+                SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
+            }
         }
     }
-    SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+    
 }
 
 
@@ -1556,6 +1963,27 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 /*      using the correct SWF handle.                                   */
 /* ==================================================================== */
         image->img.swf->nCurrentMovie = cachePtr->layeridx;
+        
+        //msImageStartLayerSWF(map, layerPtr, image);
+        image->img.swf->nCurrentLayerIdx = cachePtr->layeridx;
+/* ==================================================================== */
+/*      at this point the layer (at the shape level is closed). So      */
+/*      we will open it if necessary.                                   */
+/* ==================================================================== */
+        if (msLookupHashTable(layerPtr->metadata, "SWFDUMPATTRIBUTES") &&
+            layerPtr->numitems <= 0)
+        {
+            msLayerOpen(layerPtr, map->shapepath);
+            msLayerWhichItems(layerPtr, MS_TRUE, MS_FALSE, 
+                              msLookupHashTable(layerPtr->metadata, 
+                                                "SWFDUMPATTRIBUTES"));
+            //bLayerOpen = 1;
+        }
+        
+        
+        //image->img.swf->nCurrentShapeIdx = cachePtr->shapeidx;
+        msDrawStartShapeUsingIdxSWF(map, layerPtr, image,  cachePtr->shapeidx);
+           
         
         classPtr = &(cachePtr->class);
         labelPtr = &(cachePtr->class.label);
@@ -1768,9 +2196,11 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         //    billboard(img, cachePtr->poly, labelPtr);
 
         draw_textSWF(image, p, cachePtr->string, labelPtr, &(map->fontset)); /* actually draw the label */
-
+        msLayerClose(layerPtr);
+        
     } /* next in cache */
 
+    
     image->img.swf->nCurrentMovie = nCurrentMovie;
 
     return(0);
@@ -1886,6 +2316,36 @@ int msSaveImageSWF(imageObj *image, char *filename)
     if (image && MS_DRIVER_SWF(image->format) && filename)
     {
         
+/* -------------------------------------------------------------------- */
+/*      write some AS related to the map file.                          */
+/* -------------------------------------------------------------------- */
+        sprintf(szAction, "%s", "mapObj=new Object();");
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+
+        sprintf(szAction, "mapObj.name=\"%s\";", image->img.swf->map->name);
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        
+        sprintf(szAction, "mapObj.width=%d;", image->img.swf->map->width);
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        
+        sprintf(szAction, "mapObj.height=%d;", 
+                image->img.swf->map->height);
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        
+        sprintf(szAction, "mapObj.numlayers=%d;", 
+                image->img.swf->map->numlayers);
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        
+        
+        sprintf(szAction, "%s", "mapObj.layers=new Array();"); 
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        
         nLayers = image->img.swf->nLayerMovies;
         
 /* -------------------------------------------------------------------- */
@@ -1912,6 +2372,10 @@ int msSaveImageSWF(imageObj *image, char *filename)
             strcpy(szExt, filename+i+1);
         } 
         
+
+/* -------------------------------------------------------------------- */
+/*      save layers.                                                    */
+/* -------------------------------------------------------------------- */
         for (i=0; i<nLayers; i++)
         {
             sprintf(szTmp, "%s%d", "_layer_", i);
@@ -1921,15 +2385,30 @@ int msSaveImageSWF(imageObj *image, char *filename)
             strcat(gszFilename, ".");
             strcat(gszFilename, szExt);
 
+            //test
+            //sprintf(gszFilename, "%s%d.swf", "c:/tmp/ms_tmp/layer_", i);
+
             SWFMovie_setBackground(image->img.swf->pasMovies[i], 
                                    0xff, 0xff, 0xff);
+            
             SWFMovie_save(image->img.swf->pasMovies[i], gszFilename);  
-            sprintf(szAction, "loadMovie(\"%s\",%d);", gszFilename, i+1);
+            
+
+            //test
+            //sprintf(gszFilename, "%s%d.swf", "layer_", i);
+            
+            sprintf(szAction, "mapObj.layers[%d]=\"%s\";", i, gszFilename);
             oAction = compileSWFActionCode(szAction);
             SWFMovie_add(image->img.swf->sMainMovie, oAction);
-        }
 
+            //sprintf(szAction, "loadMovie(\"%s\",%d);", gszFilename, i+1);
+            //oAction = compileSWFActionCode(szAction);
+            //SWFMovie_add(image->img.swf->sMainMovie, oAction);
+        }
+        
         SWFMovie_save(image->img.swf->sMainMovie, filename);  
+        //test
+        //SWFMovie_save(image->img.swf->sMainMovie, "c:/tmp/ms_tmp/main.swf");  
   
         return(MS_SUCCESS);
     }
@@ -1985,6 +2464,64 @@ void msTransformShapeSWF(shapeObj *shape, rectObj extent, double cellsize)
         }      
         return;
     }
+}
+
+/************************************************************************/
+/*                     int msDrawVectorLayerAsRasterSWF                 */
+/*                                                                      */
+/*      Draw a vector line as raster in a temporary GD image and        */
+/*      save it.                                                        */
+/************************************************************************/
+int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
+{
+    imageObj    *imagetmp;
+    int         nTmp = -1;
+    SWFShape    oShape;
+    char        *driver = strdup("GD/GIF");
+
+#ifdef USE_GD_GIF
+    driver = strdup("GD/GIF");
+#else  
+
+#ifdef USE_GD_PNG
+     driver = strdup("GD/PNG");
+#else
+
+#ifdef USE_GD_JPEG
+     driver = strdup("GD/JPEG");
+#else
+
+#ifdef USE_GD_WBMP
+     driver = strdup("GD/WBMP");
+#endif 
+
+#endif
+#endif
+#endif
+
+
+    if (!image || !MS_DRIVER_SWF(image->format) )
+      return MS_FAILURE;
+
+   
+    imagetmp = msImageCreateGD(map->width, map->height,  
+                               msCreateDefaultOutputFormat(map, driver),
+                               map->web.imagepath, map->web.imageurl);
+
+    if (imagetmp)
+    {
+        msLoadPalette(imagetmp->img.gd, &(map->palette), map->imagecolor);
+        msDrawVectorLayer(map, layer, imagetmp);
+        
+        oShape = gdImage2Shape(imagetmp->img.gd);
+        nTmp = image->img.swf->nCurrentMovie;
+        SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+        
+        msFreeImage(imagetmp);
+        return MS_SUCCESS;
+    }
+
+    return MS_FAILURE;
 }
 
 #endif

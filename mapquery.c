@@ -300,7 +300,7 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // build item list (no annotation) since we do have to classify the shape
-  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
@@ -390,7 +390,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   if(status != MS_SUCCESS) return(MS_FAILURE);
   
   // build item list (no annotation)
-  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // identify target shapes
@@ -522,7 +522,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
@@ -676,7 +676,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
     // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
     // for each selection shape
@@ -858,7 +858,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
@@ -986,7 +986,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE, NULL);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes

@@ -759,6 +759,8 @@ typedef struct
     int nLayerMovies;
     SWFMovie *pasMovies;
     int nCurrentMovie;
+    int nCurrentLayerIdx;
+    int nCurrentShapeIdx;
     
 } SWFObj; 
 
@@ -974,7 +976,7 @@ void msFlipBit(char *array, int index);
 int msLayerOpen(layerObj *layer, char *shapepath); // in maplayer.c
 void msLayerClose(layerObj *layer);
 int msLayerWhichShapes(layerObj *layer, rectObj rect);
-int msLayerWhichItems(layerObj *layer, int classify, int annotate);
+int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadata);
 int msLayerNextShape(layerObj *layer, shapeObj *shape);
 int msLayerGetItems(layerObj *layer);
 int msLayerSetItems(layerObj *layer, char **items, int numitems);
@@ -1089,6 +1091,15 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                        int sy, int fc, int bc, int oc, double sz);
 
 void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image);
+void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image);
+
+
+void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,  
+                      shapeObj *shape);
+void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
+                    shapeObj *shape);
+
+
 
 /* ==================================================================== */
 /*      End of Prototypes for functions in mapdraw.c                    */
