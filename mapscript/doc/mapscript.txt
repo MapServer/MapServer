@@ -1244,8 +1244,9 @@ and hashTableObj_
 layerObj Attributes
 -------------------
 
-bandsitem : ?
-    **TODO**
+bandsitem : string
+    The attribute from the index file used to select the source
+    raster band(s) to be used.  Normally NULL for default bands processing.
 
 classitem : string
     The attribute used to classify layer data.
@@ -1803,8 +1804,10 @@ mapObj Attributes
 cellsize : float
     Pixel size in map units.
 
-configoptions : ?
-    **TODO**
+configoptions : hashObj
+    A hash table of configuration options from CONFIG keywords in the .map. 
+    Direct access to config options is discouraged.  Use the setConfigOption()
+    and getConfigOption() methods instead.
     
 datapattern : string
     **TODO** not sure this is meaningful for mapscript. 
@@ -2204,8 +2207,11 @@ and can also be an attribute of an imageObj_.
 outputFormatObj Attributes
 --------------------------
 
-bands : ?
-    **TODO**
+bands : int
+    The number of bands in the raster.  Only used for the "raw" modes, 
+    MS_IMAGEMODE_BYTE, MS_IMAGEMODE_INT16, and MS_IMAGEMODE_FLOAT32.  Normally
+    set via the BAND_COUNT formatoption ... this field should be considered
+    read-only.
 
 driver : string
     A string such as 'GD/PNG' or 'GDAL/GTiff'.
@@ -2240,7 +2246,7 @@ new outputFormatObj( string driver [, string name=driver ] ) : outputFormatObj_
     is used as a name.
     
 getOption( string key [, string value="" ] ) : string
-    Return the option at *key* or *value* if *key* is not a valid
+    Return the format option at *key* or *value* if *key* is not a valid
     hash index.
 
 setExtension( string extension ) : void
@@ -2253,7 +2259,8 @@ setMimetype( string mimetype ) : void
     mutable.
     
 setOption( string key, string value ) : void
-    Set the option at *key* to *value*.
+    Set the format option at *key* to *value*.  Format options are mostly 
+    driver specific.  
 
 validate() : int
     Checks some internal consistency issues, and returns MS_TRUE if things
