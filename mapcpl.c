@@ -10,7 +10,7 @@
 #include <assert.h>
 #include "map.h"
 
-/* should be size of larged possible filename */
+/* should be size of largest possible filename */
 #define MS_PATH_BUF_SIZE 2048
 static char     szStaticResult[MS_PATH_BUF_SIZE]; 
 
