@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.39  2004/09/14 15:15:01  assefa
+ * Correct bug related to sld generation for polygon layers (Bug 866)
+ *
  * Revision 1.38  2004/08/17 17:53:01  assefa
  * Correct bug when generating sld filters based on expressions.
  *
@@ -2721,12 +2724,12 @@ void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
 /************************************************************************/
 char *msSLDGenerateSLD(mapObj *map, int iLayer)
 {
+
 #ifdef USE_OGR
     char szTmp[500];
     int i = 0;
     char *pszTmp = NULL;
     char *pszSLD = NULL;
-
 
     if (map)
     {
@@ -2779,7 +2782,8 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
 /*                                                                      */
 /*      Get an SLD dor a sytle containg a symbol (Mark or external).    */
 /************************************************************************/
-char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
+char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
+                         int bNeedMarkSybol)
 {
     char *pszSLD = NULL;
     int nSymbol = -1;
@@ -2803,7 +2807,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
 
         bGenerateDefaultSymbol = 0;
 
-        if (nSymbol <=0 || nSymbol >=  psLayer->map->symbolset.numsymbols)
+        if (bNeedMarkSybol && 
+            (nSymbol <=0 || nSymbol >=  psLayer->map->symbolset.numsymbols))
           bGenerateDefaultSymbol = 1;
 
         if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
@@ -3216,7 +3221,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
         
         
 
-        pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer);
+        pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0);
         if (pszGraphicSLD)
         {
              sprintf(szTmp, "%s\n",  "<GraphicFill>");
@@ -3256,7 +3261,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
         if (psStyle->color.red == -1 && psStyle->color.green == -1 &&
             psStyle->color.blue == -1)
         {
-            pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer);
+            pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 0);
             if (pszGraphicSLD)
             {
                 sprintf(szTmp, "%s\n",  "<GraphicFill>");
@@ -3304,7 +3309,7 @@ char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer)
     sprintf(szTmp, "%s\n",  "<PointSymbolizer>");
     pszSLD = strcatalloc(pszSLD, szTmp);
 
-    pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer);
+    pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer, 1);
     if (pszGraphicSLD)
     {
         pszSLD = strcatalloc(pszSLD, pszGraphicSLD);
