@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2003/02/28 20:02:54  frank
+ * fixed sizing of srcImage
+ *
  * Revision 1.40  2003/02/25 21:41:19  frank
  * fixed bug with asymmetric rounding around zero
  *
@@ -821,6 +824,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     void	*pACBData;
     int         anCMap[256];
     char       **papszAlteredProcessing = NULL;
+    int        nLoadImgXSize, nLoadImgYSize;
 
 /* -------------------------------------------------------------------- */
 /*      We will require source and destination to have a valid          */
@@ -930,6 +934,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     else
         sDummyMap.cellsize = dfNominalCellSize;
 
+    nLoadImgXSize = MAX(1,(sSrcExtent.maxx - sSrcExtent.minx) 
+                        * (dfNominalCellSize / sDummyMap.cellsize));
+    nLoadImgYSize = MAX(1,(sSrcExtent.maxy - sSrcExtent.miny) 
+                        * (dfNominalCellSize / sDummyMap.cellsize));
+
     if( layer->debug )
         msDebug( "msResampleGDALToMap in effect: cellsize = %f\n", 
                  sDummyMap.cellsize );
@@ -1002,8 +1011,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      Setup a dummy map object we can use to read from the source     */
 /*      raster, with the newly established extents, and resolution.     */
 /* -------------------------------------------------------------------- */
-    srcImage = msImageCreate( sSrcExtent.maxx - sSrcExtent.minx,
-                              sSrcExtent.maxy - sSrcExtent.miny,
+    srcImage = msImageCreate( nLoadImgXSize, nLoadImgYSize,
                               sDummyMap.outputformat, NULL, NULL );
 
     if (srcImage == NULL)
