@@ -192,6 +192,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>to                      { return(TO); }
 <INITIAL,OBJECT_STRING>tolerance               { return(TOLERANCE); }
 <INITIAL,OBJECT_STRING>toleranceunits          { return(TOLERANCEUNITS); }
+<INITIAL,OBJECT_STRING>transparency            { return(TRANSPARENCY); }
 <INITIAL,OBJECT_STRING>transparent             { return(TRANSPARENT); }
 <INITIAL,OBJECT_STRING>transform               { return(TRANSFORM); }
 <INITIAL,OBJECT_STRING>type		       { return(TYPE); }

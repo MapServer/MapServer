@@ -590,6 +590,8 @@ typedef struct {
   char *labelrequires;
 
   hashTableObj metadata;
+  
+  int transparency; // transparency value 0-100 
 
   int dump;
 } layerObj;

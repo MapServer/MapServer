@@ -151,4 +151,6 @@
 #define LINEJOIN 1128
 #define LINEJOINMAXSIZE 1129
 
+#define TRANSPARENCY 1130
+
 #endif /* MAPFILE_H */

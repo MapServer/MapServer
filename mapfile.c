@@ -1595,6 +1595,8 @@ int initLayer(layerObj *layer)
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
 
+  layer->transparency = 0;
+  
   return(0);
 }
 
@@ -1759,6 +1761,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(OFFSITE):
       if(getInteger(&(layer->offsite)) == -1) return(-1); /* using an index rather than an actual color */        
+      break;
+    case(TRANSPARENCY):
+      if(getInteger(&(layer->transparency)) == -1) return(-1);         
       break;
     case(POSTLABELCACHE):
       if((layer->postlabelcache = getSymbol(2, MS_TRUE, MS_FALSE)) == -1) return(-1);
