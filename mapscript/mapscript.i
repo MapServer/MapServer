@@ -5,11 +5,20 @@
 // language specific initialization
 #ifdef SWIGTCL8
 %module Mapscript
+%{
+
+/* static global copy of Tcl interp */
+static Tcl_Interp *SWIG_TCL_INTERP;
+
+%}
+
 %init %{
 #ifdef USE_TCL_STUBS
   if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
     return TCL_ERROR;
   }
+  /* save Tcl interp pointer to be used in getImageToVar() */
+  SWIG_TCL_INTERP = interp;
 #endif
 %}
 #endif
@@ -179,6 +188,94 @@
     return msDrawLabelCache(img, self);
   }
 
+  int getImageToVar(gdImagePtr img, char *varname) {
+    // set a scripting language variable by name with image data
+    int size = 0;
+    unsigned char *imgbytes;
+
+    // Tcl implementation to define needed variables, initialization
+    #ifdef SWIGTCL8
+      Tcl_Obj *imgobj;
+      int flags = TCL_LEAVE_ERR_MSG;
+      /* no other initialization needed */
+    #endif
+
+    // Perl implementation to define needed variables, initialization
+    #ifdef SWIGPERL
+    #endif
+
+    // Python implementation to define needed variables, initialization
+    #ifdef SWIGPYTHON
+    #endif
+
+    // generic code to get imgbytes, size
+    switch (self->imagetype) {
+      case(MS_GIF):
+        #ifdef USE_GD_GIF
+          // GD /w gif doesn't have gdImageGifPtr()
+          msSetError(MS_MISCERR, "GIF output is not available.",
+                              "getImageToVar()");
+          return(MS_FAILURE);
+        #endif
+        break;
+      case(MS_PNG):
+        #ifdef USE_GD_PNG
+          imgbytes = gdImagePngPtr(img, &size);
+        #else
+          msSetError(MS_MISCERR, "PNG output is not available.",
+                              "getImageToVar()");
+          return(MS_FAILURE);
+        #endif
+        break;
+      case(MS_JPEG):
+        #ifdef USE_GD_JPEG
+          imgbytes = gdImageJpegPtr(img, &size, self->imagequality);
+        #else
+          msSetError(MS_MISCERR, "JPEG output is not available.",
+                              "getImageToVar()");
+          return(MS_FAILURE);
+        #endif
+        break;
+      case(MS_WBMP):
+        #ifdef USE_GD_WBMP
+          imgbytes = gdImageWBMPPtr(img, &size, 1);
+        #else
+          msSetError(MS_MISCERR, "WBMP output is not available.",
+                              "getImageToVar()");
+          return(MS_FAILURE);
+        #endif
+        break;
+      default:
+        msSetError(MS_MISCERR, "Unknown output image type.",
+                              "getImageToVar()");
+        return(MS_FAILURE);
+    }
+
+
+    // Tcl implementation to set variable
+    #ifdef SWIGTCL8
+      imgobj = Tcl_NewByteArrayObj(imgbytes, size);
+      Tcl_IncrRefCount(imgobj);
+      Tcl_SetVar2Ex(SWIG_TCL_INTERP, varname, (char *)NULL, imgobj, flags);
+      Tcl_DecrRefCount(imgobj);
+      gdFree(imgbytes);
+      return MS_SUCCESS;
+    #endif
+
+    // Perl implementation to set variable
+    #ifdef SWIGPERL
+    #endif
+
+    // Python implementation to set variable
+    #ifdef SWIGPYTHON
+    #endif
+
+    // return failure for unsupported swig languages
+    msSetError(MS_MISCERR, "Unsupported scripting language.",
+                              "getImageToVar()");
+    return MS_FAILURE;
+  }
+
   labelCacheMemberObj *nextLabel() {
     static int i=0;
 
@@ -247,7 +344,12 @@
   }
 
   int open(char *path) {
-    return msLayerOpen(self, path);
+    int status;
+    status =  msLayerOpen(self, path);
+    if (status == MS_SUCCESS) {
+        return msLayerGetItems(self);
+    }
+    return status;
   }
 
   void close() {
@@ -270,6 +372,13 @@
   classObj *getClass(int i) { // returns an EXISTING class
     if(i >= 0 && i < self->numclasses)
       return &(self->class[i]); 
+    else
+      return NULL;
+  }
+
+  char *getItem(int i) { // returns an EXISTING item
+    if(i >= 0 && i < self->numitems)
+      return (self->items[i]);
     else
       return NULL;
   }
@@ -516,6 +625,13 @@
 
   int copy(shapeObj *dest) {
     return(msCopyShape(self, dest));
+  }
+
+  char *getValue(int i) { // returns an EXISTING value
+    if(i >= 0 && i < self->numvalues)
+      return (self->values[i]);
+    else
+      return NULL;
   }
 
   int contains(pointObj *point) {
