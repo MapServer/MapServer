@@ -23,6 +23,18 @@ typedef struct {
   char *table, *column, *row_id_column;
 } msSDELayerInfo;
 
+static void msSDECloseConnection( void *conn_handle )
+
+{
+  long status;
+  
+  status= SE_connection_free_all_locks ((SE_CONNECTION)conn_handle);
+  if (status == SE_SUCCESS) {
+    SE_connection_free((SE_CONNECTION)conn_handle);
+  }
+}
+
+
 /*
 ** Start SDE/MapServer helper functions.
 */
@@ -306,7 +318,7 @@ int msSDELayerOpen(layerObj *layer) {
   SE_STATEINFO state;
   SE_VERSIONINFO version;
 
-  msSDELayerInfo *sde, *same_sde;  
+  msSDELayerInfo *sde;
 
   if(layer->layerinfo) return(MS_SUCCESS); // layer already open, silently return
 
@@ -321,8 +333,11 @@ int msSDELayerOpen(layerObj *layer) {
   sde->table = sde->column = NULL;
  
   // status = MS_FAILURE;
-  status = msCheckConnection(layer);  
-  if(status != MS_SUCCESS) { // no existing connection to use, open a new one    
+//  status = msCheckConnection(layer);  
+  sde->connection = (SE_CONNECTION) msConnPoolRequest( layer );
+  if (!(sde->connection)) {
+
+  //if(status != MS_SUCCESS) { // no existing connection to use, open a new one    
     if(layer->debug) msDebug("msSDELayerOpen(): Layer %s opened from scratch.\n", layer->name);
 
     params = split(layer->connection, ',', &numparams);
@@ -341,77 +356,23 @@ int msSDELayerOpen(layerObj *layer) {
       sde_error(status, "msSDELayerOpen()", "SE_connection_create()");
       return(MS_FAILURE);
     }
-    status = SE_versioninfo_create (&(version));
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msSDELayerOpen()", "SE_versioninfo_create()");
-      return(MS_FAILURE);
-    }
-    if (numparams < 6){ 
-    	//User didn't specify a version, we'll use SDE.DEFAULT
-      status = SE_version_get_info(sde->connection, "SDE.DEFAULT", version);
-    } 
-    else {
-     status = SE_version_get_info(sde->connection, params[5], version);
-    }
 
-    
-    if(status != SE_SUCCESS) {
-    	  if (status == SE_INVALID_RELEASE) {
-    	    // The user has incongruent versions of SDE, ie 8.2 client and 8.3 server
-    		  // set the state_id to SE_DEFAULT_STATE_ID, which means no version queries are done
-    		  sde->state_id = SE_DEFAULT_STATE_ID;
-
-    	  }
-    	  else {
-    	  	sde_error(status, "msSDELayerOpen()", "SE_version_get_info()");
-          return(MS_FAILURE);
-        }
-    }
-    if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
-		  //Get the STATEID from the given version and set the stream to 
-		  //that if we didn't already set it to SE_DEFAULT_STATE_ID.
-		  status = SE_versioninfo_get_state_id(version, &sde->state_id);
-		  if(status != SE_SUCCESS) {
-		    sde_error(status, "msSDELayerOpen()", "SE_versioninfo_get_state_id()");
-		    return(MS_FAILURE);
-		  }
-		  status = SE_stateinfo_create (&state);
-		  if(status != SE_SUCCESS) {
-		    sde_error(status, "msSDELayerOpen()", "SE_stateinfo_create()");
-		    return(MS_FAILURE);
-		  }    
-		  status = SE_state_get_info(sde->connection, sde->state_id, state);
-		  if(status != SE_SUCCESS) {
-		    sde_error(status, "msSDELayerOpen()", "SE_state_get_info()");
-		    return(MS_FAILURE);
-		  }  
-		  if (SE_stateinfo_is_open (state)) {
-		  	//If the state is open for edits, we shouldn't be querying from it
-		    sde_error(status, "msSDELayerOpen()", "SE_stateinfo_is_open() -- State for version is open");
-		    return(MS_FAILURE);
-		  }
-		  SE_stateinfo_free (state); 
-		}
-	  SE_versioninfo_free(version);
+		  msConnPoolRegister( layer, sde->connection, msSDECloseConnection );
+		
+	  
 	  
 	     
 	  msFreeCharArray(params, numparams); // done with parameter list
-
-  } else { // we can share another layers connection
-    if(layer->debug) msDebug("msSDELayerOpen(): Layer %s sharing connection with layer %s.\n", layer->name, layer->sameconnection->name);    
-	    same_sde = layer->sameconnection->layerinfo;
-	    sde->connection = same_sde->connection;   
-	    sde->state_id = same_sde->state_id; 
-	    sde->row_id_column = same_sde->row_id_column;
   }
-
+  
+ 
   params = split(layer->data, ',', &numparams);
   if(!params) {
     msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msSDELayerOpen()");
     return(MS_FAILURE);
   }
 
-  if(numparams != 2) {
+  if(numparams < 2) {
     msSetError(MS_SDEERR, "Not enough SDE layer parameters specified.", "msSDELayerOpen()");
     return(MS_FAILURE);
   }
@@ -419,6 +380,60 @@ int msSDELayerOpen(layerObj *layer) {
   sde->table = params[0]; // no need to free params
   sde->column = params[1];
 
+  status = SE_versioninfo_create (&(version));
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_versioninfo_create()");
+    return(MS_FAILURE);
+  }
+  if (numparams < 3){ 
+  	//User didn't specify a version, we'll use SDE.DEFAULT
+  	if (layer->debug) msDebug("msSDELayerOpen(): Layer %s did not have a specified version.  Using SDE.DEFAULT.\n", layer->name);
+    status = SE_version_get_info(sde->connection, "SDE.DEFAULT", version);
+    
+  } 
+  else {
+    if (layer->debug) msDebug("msSDELayerOpen(): Layer %s specified version %s.\n", layer->name, params[2]);
+    status = SE_version_get_info(sde->connection, params[2], version);
+  }
+   
+  if(status != SE_SUCCESS) {
+  	  if (status == SE_INVALID_RELEASE) {
+  	    // The user has incongruent versions of SDE, ie 8.2 client and 8.3 server
+  		  // set the state_id to SE_DEFAULT_STATE_ID, which means no version queries are done
+  		  sde->state_id = SE_DEFAULT_STATE_ID;
+
+  	  }
+  	  else {
+  	  	sde_error(status, "msSDELayerOpen()", "SE_version_get_info()");
+        return(MS_FAILURE);
+      }
+  }
+  if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
+	  //Get the STATEID from the given version and set the stream to 
+	  //that if we didn't already set it to SE_DEFAULT_STATE_ID.
+	  status = SE_versioninfo_get_state_id(version, &sde->state_id);
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msSDELayerOpen()", "SE_versioninfo_get_state_id()");
+	    return(MS_FAILURE);
+	  }
+	  status = SE_stateinfo_create (&state);
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msSDELayerOpen()", "SE_stateinfo_create()");
+	    return(MS_FAILURE);
+	  }    
+	  status = SE_state_get_info(sde->connection, sde->state_id, state);
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msSDELayerOpen()", "SE_state_get_info()");
+	    return(MS_FAILURE);
+	  }  
+	  if (SE_stateinfo_is_open (state)) {
+	  	//If the state is open for edits, we shouldn't be querying from it
+	    sde_error(status, "msSDELayerOpen()", "SE_stateinfo_is_open() -- State for version is open");
+	    return(MS_FAILURE);
+	  }
+	  SE_stateinfo_free (state); 
+	  SE_versioninfo_free(version);
+  }
   status = SE_layerinfo_create(NULL, &(sde->layerinfo));
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerOpen()", "SE_layerinfo_create()");
@@ -466,7 +481,7 @@ int msSDELayerOpen(layerObj *layer) {
 
 void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
-	long status=-1;
+
   msSDELayerInfo *sde=NULL;
 
   sde = layer->layerinfo;
@@ -476,22 +491,14 @@ void msSDELayerClose(layerObj *layer) {
 	
   if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
   if (sde->coordref) SE_coordref_free(sde->coordref);
-  //if (sde->connection) { 
-  	//We need to provoke SDE into telling us whether or 
-  	//not the connection object is valid.  
-  //	status= SE_connection_free_all_locks (sde->connection);
-  //	if (status == SE_SUCCESS) {
-  //		if (sde->stream) SE_stream_free(sde->stream);
-  //		SE_connection_free(sde->connection);
- // 	}
-//}
   if(sde->table) free(sde->table);
   if(sde->column) free(sde->column);
   if(sde->row_id_column) free(sde->row_id_column);
-  
+
+  msConnPoolRelease( layer, sde->connection );  
   free(layer->layerinfo);
   layer->layerinfo = NULL;
-
+  sde->connection = NULL;
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
   return;
@@ -962,11 +969,9 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
 
 	  SE_reginfo_free(registration);
 	  if (row_id_column){
-	    if(layer->debug) msDebug("msSDELayerGetRowIDColumn(): Had row_id_column...setting to , %s.\n", row_id_column);
 	    return (strdup(row_id_column)); 
 	  }
 	  else {
-	    if(layer->debug) msDebug("msSDELayerGetRowIDColumn(): Didn't have row_id_column...setting to , %s.\n", MS_SDE_ROW_ID_COLUMN);
 	    return(strdup(MS_SDE_ROW_ID_COLUMN));
 	  }
 }
@@ -975,3 +980,4 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
   return(NULL);
 #endif
 }
+
