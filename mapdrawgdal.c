@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/11/21 19:51:03  frank
+ * avoid warnings
+ *
  * Revision 1.2  2002/11/20 05:27:38  frank
  * initial 24 to 8 bit dithering
  *
@@ -68,10 +71,12 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,
                int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
                GByte *pabyBuffer, int dst_xsize, int dst_ysize );
 
+#ifdef ENABLE_DITHER
 static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
                          GByte *pabyDithered, int xsize, int ysize, 
                          int bTransparent, colorObj transparentColor,
                          gdImagePtr gdImg );
+#endif
 
 /*
  * Stuff for allocating color cubes, and mapping between RGB values and
@@ -757,7 +762,7 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer,
     
 {
     CPLErr eErr;
-    double dfScaleMin, dfScaleMax, dfScaleRatio;
+    double dfScaleMin=0.0, dfScaleMax=255.0, dfScaleRatio;
     const char *pszScaleInfo;
     float *pafRawData;
     int   nPixelCount = dst_xsize * dst_ysize, i;
