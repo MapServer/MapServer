@@ -184,8 +184,6 @@ imageObj *msDrawLegend(mapObj *map)
     size_y += MS_MAX(heights[i], map->legend.keysizey);
   }
 
-  // printf("size: %d,%d\n", size_x, size_y);
-
   /*
   ** Initialize the legend image
   */
@@ -201,6 +199,8 @@ imageObj *msDrawLegend(mapObj *map)
   /* Set background */
   if(image != NULL)
     msImageInitGD(image, &(map->legend.imagecolor));
+
+  msClearPenValues(map); // just in case the mapfile has already been screwed with
 
   pnt.y = VMARGIN;
     

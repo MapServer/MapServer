@@ -30,7 +30,6 @@ int main(int argc, char *argv[])
   msSaveImage(NULL, img, argv[2]);
 
   msFreeImage(img);
-
   msFreeMap(map);
   
   return(MS_TRUE);

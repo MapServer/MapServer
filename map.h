@@ -792,7 +792,6 @@ typedef struct {
 int msSaveImage(mapObj *map, imageObj *img, char *filename);
 void msFreeImage(imageObj *img);
 
-
 // Function prototypes, not wrapable
 
 #ifndef SWIG
@@ -1036,19 +1035,15 @@ int msGMLWriteQuery(mapObj *map, char *filename); // mapgml.c
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
+void msClearPenValues(mapObj *map);
 imageObj *msDrawMap(mapObj *map);
-
 imageObj *msDrawQueryMap(mapObj *map);
-
 int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image);
-
 int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image);
-
 int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
-
 int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image);
 
-int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int overlay);
+int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, int style);
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, int classindex, char *labeltext);
 
 void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *p, double r, styleObj *style, double scalefactor);
@@ -1057,22 +1052,16 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
 void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
 void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
 
-int msDrawLabel(imageObj *image, pointObj labelPnt, char *string, 
-                labelObj *label, fontSetObj *fontset, double scalefactor);
-
-int msDrawText(imageObj *image, pointObj labelPnt, char *string, 
-              labelObj *label, fontSetObj *fontset, double scalefactor);
-
+int msDrawLabel(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 int msDrawLabelCache(imageObj *image, mapObj *map);
 
 void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image);
 void msImageEndLayer(mapObj *map, layerObj *layer, imageObj *image);
 
 
-void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,  
-                      shapeObj *shape);
-void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
-                    shapeObj *shape);
+void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
+void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
 
 
 
