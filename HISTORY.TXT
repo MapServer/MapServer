@@ -15,7 +15,8 @@ the CVS logs is updated daily at the following URL:
 
 
 Version 4.0.1 (2003-10-09)
-------------------------
+--------------------------
+
 - Fixed problem with cloned mapObj's fontset->filename pointing to the
   original mapObj's fontset->filename
 
