@@ -118,6 +118,7 @@ imageObj *msDrawMap(mapObj *map)
         return(NULL);
     }
 
+    msApplyMapConfigOptions( map );
     msInitLabelCache(&(map->labelcache)); // this clears any previously allocated cache
 
     if(!map->outputformat) {
@@ -1182,7 +1183,19 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 #ifdef USE_PROJ
     if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) 
-      msProjectShape(&layer->projection, &map->projection, shape);
+    {
+        if( msProjectShape(&layer->projection, &map->projection, shape)
+            == MS_FAILURE )
+        {
+#ifdef notdef 
+            msSetError(MS_PROJERR, 
+                       "Reprojecting a shape failed.", "msDrawShape()" );
+            return MS_FAILURE;
+#else
+            return MS_SUCCESS;
+#endif
+        }
+    }
     else
       layer->project = MS_FALSE;
 #endif
