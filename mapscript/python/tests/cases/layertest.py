@@ -39,6 +39,13 @@ import unittest
 from testing import mapscript
 from testing import MapTestCase
 
+# Base class
+class MapLayerTestCase(MapTestCase):
+
+    def setUp(self):
+        MapTestCase.setUp(self)
+        self.layer = self.map.getLayer(0)
+
 # ===========================================================================
 # Test begins now
 
@@ -62,25 +69,26 @@ class LayerConstructorTestCase(unittest.TestCase):
      
 
 class LayerExtentTestCase(MapTestCase):
-    
+   
+    def setUp(self):
+        MapTestCase.setUp(self)
+        self.layer = self.map.getLayerByName('POLYGON')
+
     def testPolygonGetExtent(self):
         """LayerExtentTestCase.testPolygonGetExtent: retrieve the extent of a polygon layer"""
-        layer = self.map.getLayerByName('POLYGON')
         e = mapscript.rectObj(-0.25, 51.227222, 0.25, 51.727222)
-        self.assertRectsEqual(e, layer.getExtent())
+        self.assertRectsEqual(e, self.layer.getExtent())
         
     def testSetExtentBadly(self):
         """LayerExtentTestCase.testSetExtentBadly: test layer.setExtent() to provoke it to raise an error when given a bogus extent"""
-        layer = self.map.getLayerByName('POLYGON')
-        self.assertRaises(mapscript.MapServerError, layer.setExtent,
+        self.assertRaises(mapscript.MapServerError, self.layer.setExtent,
                           1.0, -2.0, -3.0, 4.0)
     
     def testGetPresetExtent(self):
         """LayerExtentTestCase.testGetPresetExtent: test layer.setExtent() and layer.getExtent() to return preset instead of calculating extents"""
-        layer = self.map.getLayerByName('POLYGON')
         minx, miny, maxx, maxy = 1.0, 1.0, 3.0, 3.0
-        layer.setExtent(minx, miny, maxx, maxy)
-        rect = layer.getExtent()
+        self.layer.setExtent(minx, miny, maxx, maxy)
+        rect = self.layer.getExtent()
         assert minx == rect.minx
         assert miny == rect.miny
         assert maxx == rect.maxx
@@ -94,72 +102,65 @@ class LayerExtentTestCase(MapTestCase):
 
     def testReBindingExtent(self):
         """LayerExtentTestCase.testReBindingExtent: rebind a layer's extent"""
-        layer = self.map.getLayerByName('POLYGON')
         rect1 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
         rect2 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
-        layer.extent = rect1
-        assert str(layer.extent) != str(rect1)
+        self.layer.extent = rect1
+        assert str(self.layer.extent) != str(rect1)
         del rect1
-        self.assertRectsEqual(layer.extent, rect2)
-        self.assertRectsEqual(layer.getExtent(), rect2)
+        self.assertRectsEqual(self.layer.extent, rect2)
+        self.assertRectsEqual(self.layer.getExtent(), rect2)
        
     def testDirectExtentAccess(self):
         """LayerExtentTestCase.testDirectExtentAccess: direct access to a layer's extent works properly"""
-        layer = self.map.getLayerByName('POINT')
-        rect = layer.extent
-        assert str(layer.extent) == str(rect), (layer.extent, rect)
+        pt_layer = self.map.getLayerByName('POINT')
+        rect = pt_layer.extent
+        assert str(pt_layer.extent) == str(rect), (pt_layer.extent, rect)
         e = mapscript.rectObj(-0.5, 51.0, 0.5, 52.0)
         self.assertRectsEqual(e, rect)
         
-class LayerRasterProcessingTestCase(MapTestCase):
+class LayerRasterProcessingTestCase(MapLayerTestCase):
     
     def testSetProcessing(self):
         """LayerRasterProcessingTestCase.testSetProcessing: setting a layer's processing directive works"""
-        layer = self.map.getLayer(0)
-        layer.setProcessing('directive0=foo')
-        assert layer.numprocessing == 1, layer.numprocessing
-        layer.setProcessing('directive1=bar')
-        assert layer.numprocessing == 2, layer.numprocessing
-        directives = [layer.getProcessing(i) \
-                      for i in range(layer.numprocessing)]
+        self.layer.setProcessing('directive0=foo')
+        assert self.layer.numprocessing == 1, self.layer.numprocessing
+        self.layer.setProcessing('directive1=bar')
+        assert self.layer.numprocessing == 2, self.layer.numprocessing
+        directives = [self.layer.getProcessing(i) \
+                      for i in range(self.layer.numprocessing)]
         assert directives == ['directive0=foo', 'directive1=bar']
 
     def testClearProcessing(self):
-        """LayerRasterProcessingTestCase.testClearProcessing: clearing a layer's processing directive works"""
-        layer = self.map.getLayer(0)
-        layer.setProcessing('directive0=foo')
-        assert layer.numprocessing == 1, layer.numprocessing
-        layer.setProcessing('directive1=bar')
-        assert layer.numprocessing == 2, layer.numprocessing
-        assert layer.clearProcessing() == mapscript.MS_SUCCESS
+        """LayerRasterProcessingTestCase.testClearProcessing: clearing a self.layer's processing directive works"""
+        self.layer.setProcessing('directive0=foo')
+        assert self.layer.numprocessing == 1, self.layer.numprocessing
+        self.layer.setProcessing('directive1=bar')
+        assert self.layer.numprocessing == 2, self.layer.numprocessing
+        assert self.layer.clearProcessing() == mapscript.MS_SUCCESS
 
-class RemoveClassTestCase(MapTestCase):
+class RemoveClassTestCase(MapLayerTestCase):
 
     def testRemoveClass1NumClasses(self):
         """RemoveClassTestCase.testRemoveClass1NumClasses: removing the layer's first class by index leaves one class left"""
-        layer = self.map.getLayer(0)
-        layer.removeClass(0)
-        assert layer.numclasses == 1
+        self.layer.removeClass(0)
+        assert self.layer.numclasses == 1
     
     def testRemoveClass1ClassName(self):
         """RemoveClassTestCase.testRemoveClass1ClassName: confirm removing the layer's first class reverts the name of the second class"""
-        layer = self.map.getLayer(0)
-        c2name = layer.getClass(1).name
-        layer.removeClass(0)
-        assert layer.getClass(0).name == c2name
+        c2name = self.layer.getClass(1).name
+        self.layer.removeClass(0)
+        assert self.layer.getClass(0).name == c2name
     
     def testRemoveClass2NumClasses(self):
         """RemoveClassTestCase.testRemoveClass2NumClasses: removing the layer's second class by index leaves one class left"""
-        layer = self.map.getLayer(0)
-        layer.removeClass(1)
-        assert layer.numclasses == 1
+        self.layer.removeClass(1)
+        assert self.layer.numclasses == 1
     
     def testRemoveClass2ClassName(self):
         """RemoveClassTestCase.testRemoveClass2ClassName: confirm removing the layer's second class reverts the name of the first class"""
-        layer = self.map.getLayer(0)
-        c1name = layer.getClass(0).name
-        layer.removeClass(1)
-        assert layer.getClass(0).name == c1name
+        c1name = self.layer.getClass(0).name
+        self.layer.removeClass(1)
+        assert self.layer.getClass(0).name == c1name
 
 class LayerTestCase(MapTestCase):
     def testLayerConstructorOwnership(self):
@@ -179,52 +180,90 @@ class LayerTestCase(MapTestCase):
 
 # Layer removal tests
 class RemoveLayerTestCase(MapTestCase):
+    
     def testRemoveLayer1NumLayers(self):
-        """RemoveLayerTestCase.testRemoveLayer1NumLayers: removing the first layer by index from the mapfile leaves three layers left"""
+        """removing the first layer by index from the mapfile leaves three"""
         self.map.removeLayer(0)
         assert self.map.numlayers == 3
+    
     def testRemoveLayer1LayerName(self):
-        """RemoveLayerTestCase.testRemoveLayer1LayerName: confirm removing of the first layer reverts it to the second layer's name"""
+        """removing first layer reverts it to the second layer's name"""
         l2name = self.map.getLayer(1).name
         self.map.removeLayer(0)
         assert self.map.getLayer(0).name == l2name
+    
     def testRemoveLayer2NumLayers(self):
-        """RemoveLayerTestCase.testRemoveLayer2NumLayers: removing the second layer by index from the mapfile leaves three layers left"""
+        """removing second layer by index from mapfile leaves three layers"""
         self.map.removeLayer(1)
         assert self.map.numlayers == 3
+    
     def testRemoveLayer2LayerName(self):
-        """RemoveLayerTestCaseconfirm.testRemoveLayer2LayerName: removing of the second layer reverts it to the first layer's name"""
+        """removing of the second layer reverts it to the first layer's name"""
         l1name = self.map.getLayer(0).name
         self.map.removeLayer(1)
         assert self.map.getLayer(0).name == l1name
 
-class ExpressionTestCase(MapTestCase):
+class ExpressionTestCase(MapLayerTestCase):
+    
     def testClearExpression(self):
-        """ExpressionTestCase.testClearExpression: layer expression can be properly cleared"""
-        self.map.getLayer(0).setFilter('')
-        fs = self.map.getLayer(0).getFilterString()
+        """layer expression can be properly cleared"""
+        self.layer.setFilter('')
+        fs = self.layer.getFilterString()
         assert fs == '"(null)"', fs
+    
     def testSetStringExpression(self):
-        """ExpressionTestCase.testSetStringExpression: layer expression can be set to string"""
-        self.map.getLayer(0).setFilter('foo')
-        fs = self.map.getLayer(0).getFilterString()
+        """layer expression can be set to string"""
+        self.layer.setFilter('foo')
+        fs = self.layer.getFilterString()
         assert fs == '"foo"', fs
+    
     def testSetQuotedStringExpression(self):
-        """ExpressionTestCase.testSetQuotedStringExpression: layer expression string can be quoted"""
-        self.map.getLayer(0).setFilter('"foo"')
-        fs = self.map.getLayer(0).getFilterString()
+        """layer expression string can be quoted"""
+        self.layer.setFilter('"foo"')
+        fs = self.layer.getFilterString()
         assert fs == '"foo"', fs
+    
     def testSetRegularExpression(self):
-        """ExpressionTestCase.testSetRegularExpression: layer expression can be regular expression"""
-        self.map.getLayer(0).setFilter('/foo/')
-        fs = self.map.getLayer(0).getFilterString()
+        """layer expression can be regular expression"""
+        self.layer.setFilter('/foo/')
+        fs = self.layer.getFilterString()
         assert fs == '/foo/', fs
+    
     def testSetLogicalExpression(self):
-        """ExpressionTestCase.testSetLogicalExpression: layer expression can be logical expression"""
-        self.map.getLayer(0).setFilter('([foo] >= 2)')
-        fs = self.map.getLayer(0).getFilterString()
+        """layer expression can be logical expression"""
+        self.layer.setFilter('([foo] >= 2)')
+        fs = self.layer.getFilterString()
         assert fs == '([foo] >= 2)', fs
-        
+       
+
+class LayerQueryTestCase(MapLayerTestCase):
+
+    def testRectQuery(self):
+        qrect = mapscript.rectObj(-10.0, 45.0, 10.0, 55.0)
+        self.layer.template = 'foo'
+        self.layer.queryByRect(self.map, qrect)
+        assert self.layer.getNumResults() == 1
+
+    def testShapeQuery(self):
+        qrect = mapscript.rectObj(-10.0, 45.0, 10.0, 55.0)
+        qshape = qrect.toPolygon()
+        self.layer.template = 'foo'
+        self.layer.queryByShape(self.map, qshape)
+        assert self.layer.getNumResults() == 1
+
+    def testPointQuery(self):
+        qpoint = mapscript.pointObj(0.0, 51.5)
+        self.layer.template = 'foo'
+        self.layer.queryByPoint(self.map, qpoint, 0, 2.0)
+        assert self.layer.getNumResults() == 1
+    
+    def testRectQueryNoResults(self):
+        qrect = mapscript.rectObj(-101.0, 0.0, -100.0, 1.0)
+        self.layer.template = 'foo'
+        self.layer.queryByRect(self.map, qrect)
+        assert self.layer.getNumResults() == 0
+
+
 # ===========================================================================
 # Run the tests outside of the main suite
 
