@@ -21,6 +21,9 @@ Version 3.6.4-dev
 
 - Added missing MS_LAYER_CIRCLE and MS_CC constants in PHP MapScript
 
+- Fixed bad memory corruption bug with WMS SRS parameter value mapwms.c
+  (Thanks to Ed M. for finding it)
+
 
 Version 3.6.3 (2002-10-07)
 --------------------------
