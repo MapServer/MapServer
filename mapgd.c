@@ -1242,6 +1242,7 @@ static void billboardGD(gdImagePtr img, shapeObj *shape, labelObj *label)
 int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
 {
   int x, y;
+  int oldAlphaBlending;
 
   if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);
@@ -1301,7 +1302,16 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       }
     }
 
+    if( gdImageTrueColor(img) )
+    {
+        oldAlphaBlending = img->alphaBlendingFlag;
+        gdImageAlphaBlending( img, 1 );
+    }
     gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
+
+    if( gdImageTrueColor(img) )
+        gdImageAlphaBlending( img, oldAlphaBlending );
+
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextGD()");
     return(-1);
