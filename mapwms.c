@@ -305,7 +305,10 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
 {
   int i, adjust_extent = MS_FALSE;
   int iUnits = -1;
-
+  char **papszGroups;
+  int nGroupNames;
+  int nLayerOrder = 0;
+   
   // Some of the getMap parameters are actually required depending on the 
   // request, but for now we assume all are optional and the map file 
   // defaults will apply.
@@ -327,33 +330,64 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       if (map->layerorder)
          free(map->layerorder);
 
-      map->layerorder = (int*)malloc(sizeof(int) * map->numlayers + 1);
-      for(j=0; j<map->numlayers; j++)
+      map->layerorder = (int*)malloc(sizeof(int) * map->numlayers);
+       
+      papszGroups = msGetAllGroupNames(map, &nGroupNames);
+       
+      for(j=0; j<map->numlayers; j++) 
+      {
          map->layerorder[j] = -1;
 
-      for(j=0; j<map->numlayers; j++)
-      {
         // Keep only layers with status=DEFAULT by default
         if (map->layers[j].status != MS_DEFAULT)
            map->layers[j].status = MS_OFF;
-
-        for(k=0; k<numlayers; k++)
-        {
-          // Turn on selected layers only.
-          // Note: map->name is the root layer.  If root layer is requested
-          // then all map layers should be turned on.
-          if (strcasecmp(map->layers[j].name, layers[k]) == 0 ||
-              (map->name && strcasecmp(map->name, layers[k]) == 0) ) {
-            map->layers[j].status = MS_DEFAULT;
-            
-            if (map->name && strcasecmp(map->name, layers[k]) == 0)
-               map->layerorder[j] = j;
-            else
-               map->layerorder[k] = j;
-          }
-        }
       }
+       
+      for(k=0; k<numlayers; k++)
+      {
+         for(j=0; j<map->numlayers; j++)
+         {         
+            // Turn on selected layers only.
+            if (strcasecmp(map->layers[j].name, layers[k]) == 0) 
+            {
+               map->layers[j].status = MS_DEFAULT;
+               map->layerorder[nLayerOrder] = j;
+               
+               nLayerOrder++;
+            }
+         }
 
+         for(j=0; j<map->numlayers; j++)
+         {         
+            // Note: map->name is the root layer.  If root layer is requested
+            // then all map layers should be turned on.
+            if (map->name && strcasecmp(map->name, layers[k]) == 0) 
+            {
+               map->layers[j].status = MS_DEFAULT;
+               map->layerorder[j] = j;
+            }
+         }
+
+         for(j=0; j<map->numlayers; j++)
+         {                  
+            // Look for group name
+            if (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0)
+            {
+               map->layers[j].status = MS_DEFAULT;
+               map->layerorder[nLayerOrder] = j;
+               
+               nLayerOrder++;
+            }
+         }
+      }
+       
+      if (papszGroups) {
+         for (j=0; j<nGroupNames; j++)
+           free(papszGroups[j]);
+
+         free(papszGroups);
+      }
+       
       msFreeCharArray(layers, numlayers);
     }
     else if (strcasecmp(names[i], "STYLES") == 0) {
