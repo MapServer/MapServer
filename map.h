@@ -134,14 +134,23 @@ typedef struct {
 } fontSetObj;
 #endif
 
-// FEATURE OBJECT - for inline features (implemented as a linked list)
-struct featureObj {
+// FEATURE OBJECT and FEATURE LIST OBJECT - for inline features, shape caches and queries
+typedef struct {
   shapeObj shape; /* can handle all cases- point, line and polygon */
   char *class; /* string to classify with */
+
   int classindex;
-  char *text; /* string to annotate with */
-  struct featureObj *next;
-};
+  int queryindex;
+
+  char *text; /* string to annotate with */ 
+} featureObj;
+
+typedef struct featureListNodeObj {
+  featureObj feature;
+  struct featureListNodeObj *next;
+}
+
+typedef featureListNodeObj * featureListNodeObjPtr;
 
 // COLOR OBJECT
 typedef struct {
@@ -476,7 +485,7 @@ typedef struct {
 
   projectionObj projection; /* projection information for the layer */
 
-  struct featureObj *features; /* linked list so we don't need a counter */
+  featureListNodeObjPtr features; /* linked list so we don't need a counter */
 
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
