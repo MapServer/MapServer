@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- mapraster.c: fixed problem with leaks in tileindexed case where the
+  tile index is missing.  (bug 713)
+
 - Oracle Spatial:
   Implemented connection pool support for Oracle Spatial. New layer data
   parameters to support query functions, added "using unique <column name>".
