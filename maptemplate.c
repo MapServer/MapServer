@@ -933,10 +933,10 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
          sprintf(pszStatus, "%d", map->layers[map->layerorder[j]].status);
          msInsertHashTable(myHashTable, "layer_status", pszStatus);
    
-         if (processIf(pszTemp, myHashTable) != MS_SUCCESS)
+         if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
          
-         if (processIf(pszTemp, map->layers[map->layerorder[j]].metadata) != MS_SUCCESS)
+         if (processIf(pszTemp, map->layers[map->layerorder[j]].metadata, MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
 
          if (processMetadata(pszTemp, map->layers[map->layerorder[j]].metadata) != MS_SUCCESS)
@@ -956,7 +956,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
    /*
     * check for if tag
    */
-   if (processIf(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
      return MS_FAILURE;
    
    /*
@@ -1063,13 +1063,13 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
    
-   if (processIf(pszTemp, myHashTable) != MS_SUCCESS)
+   if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->layers[nIdxLayer].metadata, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
 
    msFreeHashTable(myHashTable);
@@ -1190,13 +1190,13 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
    
-   if (processIf(pszTemp, myHashTable) != MS_SUCCESS)
+   if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->layers[nIdxLayer].metadata, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
 
    msFreeHashTable(myHashTable);   
