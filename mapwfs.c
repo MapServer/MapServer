@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.36  2004/06/04 14:10:06  assefa
+ * Changes schema location for DescribeFeature
+ *
  * Revision 1.35  2004/05/11 01:25:16  assefa
  * Remove unused metadata gml_uri : Bug 527.
  *
@@ -624,7 +627,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 
     printf("\n"
            "  <import namespace=\"http://www.opengis.net/gml\" \n"
-           "          schemaLocation=\"%s/gml/2.1.1/feature.xsd\" />\n",
+           "          schemaLocation=\"%s/gml/2.1.2/feature.xsd\" />\n",
            msOWSGetSchemasLocation(map));
 
     /*
