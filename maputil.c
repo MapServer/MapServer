@@ -14,6 +14,8 @@ extern int msyyresult; // result of parsing, true/false
 extern int msyystate;
 extern char *msyystring;
 
+static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
+
 int msEvalContext(mapObj *map, char *context)
 {
   int i, status;
@@ -322,22 +324,27 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
 
   if(layer->symbolscale > 0 && map->scale > 0) scalefactor = layer->symbolscale/map->scale;
 
-  layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
-  layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
-  layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
-  layer->class[c].overlaysizescaled = layer->class[c].sizescaled - (layer->class[c].size - layer->class[c].overlaysize);
-  // layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
-  layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
-  layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
+  if(layer->sizeunits != MS_PIXELS) {
+    layer->class[c].sizescaled = layer->class[c].size * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
+    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]); 
+  } else {
+    layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
+    layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
+    layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
+    layer->class[c].overlaysizescaled = layer->class[c].sizescaled - (layer->class[c].size - layer->class[c].overlaysize); // layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
+    layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
+    layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
+  }
+
+  if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
+
 #ifdef USE_GD_TTF
   if(layer->class[c].label.type == MS_TRUETYPE) { 
     layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
     layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
     layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
   }
-#endif
-
-  if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
+#endif  
 
 #ifdef USE_PROJ
     if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -410,22 +417,27 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
   if(layer->symbolscale > 0 && map->scale > 0) scalefactor = layer->symbolscale/map->scale;
 
-  layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
-  layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
-  layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
-  layer->class[c].overlaysizescaled = layer->class[c].sizescaled - (layer->class[c].size - layer->class[c].overlaysize);
-  // layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
-  layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
-  layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
+  if(layer->sizeunits != MS_PIXELS) {
+    layer->class[c].sizescaled = layer->class[c].size * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
+    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]); 
+  } else {
+    layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
+    layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
+    layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
+    layer->class[c].overlaysizescaled = layer->class[c].sizescaled - (layer->class[c].size - layer->class[c].overlaysize); // layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);    
+    layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
+    layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
+  }
+
+  if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
+
 #ifdef USE_GD_TTF
   if(layer->class[c].label.type == MS_TRUETYPE) { 
     layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
     layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
     layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
   }
-#endif
-
-  if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
+#endif  
 
 #ifdef USE_PROJ
   if((layer->projection.numargs > 0) && (map->projection.numargs > 0))

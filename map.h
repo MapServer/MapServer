@@ -479,6 +479,8 @@ typedef struct {
   double minscale, maxscale;
   double labelminscale, labelmaxscale;
 
+  int sizeunits; // applies to all classes
+
   int maxfeatures;
 
   int offsite; // transparent pixel value for raster images

@@ -139,4 +139,6 @@
 
 #define RESOLUTION 1122
 
+#define SIZEUNITS 1123
+
 #endif /* MAPFILE_H */

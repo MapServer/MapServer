@@ -1395,6 +1395,8 @@ int initLayer(layerObj *layer)
   layer->maxscale = -1.0;
   layer->minscale = -1.0;
 
+  layer->sizeunits = MS_PIXELS;
+
   layer->maxfeatures = -1; /* no quota */
 
   layer->header = NULL;  
@@ -1641,6 +1643,9 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(REQUIRES):
       if((layer->requires = getString()) == NULL) return(-1);
       break;
+    case(SIZEUNITS):
+      if((layer->sizeunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
+      break;
     case(STATUS):
       if((layer->status = getSymbol(3, MS_ON,MS_OFF,MS_DEFAULT)) == -1) return(-1);
       break;
@@ -1835,6 +1840,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     free(layer->requires);
     layer->requires = strdup(value);
     break;
+  case(SIZEUNITS):
+    msyystate = 2; msyystring = value;
+    if((layer->sizeunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return;
+    break;
   case(MS_STRING):    
     for(i=0;i<layer->numclasses; i++) {
       if(!layer->class[i].name) /* skip it */
@@ -1916,6 +1925,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   writeProjection(&(layer->projection), stream, "    ");
   if(layer->requires) fprintf(stream, "    REQUIRES \"%s\"\n", layer->requires);
+  fprintf(stream, "    SIZEUNITS %s\n", msUnits[layer->sizeunits]);
   fprintf(stream, "    STATUS %s\n", msStatus[layer->status]);
   if(layer->symbolscale > -1) fprintf(stream, "    SYMBOLSCALE %g\n", layer->symbolscale);
   if(layer->tileindex) {
