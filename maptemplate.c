@@ -1967,6 +1967,8 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   
   sprintf(repstr, "%f", msObj->Map->scale);
   outstr = gsub(outstr, "[scale]", repstr);
+  sprintf(repstr, "%f", msObj->Map->cellsize);
+  outstr = gsub(outstr, "[cellsize]", repstr);
   
   sprintf(repstr, "%.1f %.1f", (msObj->Map->width-1)/2.0, (msObj->Map->height-1)/2.0);
   outstr = gsub(outstr, "[center]", repstr);
