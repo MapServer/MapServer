@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.68  2004/03/09 17:25:23  frank
+ * added msOGRCleanup(), expose msCleanup() to swig
+ *
  * Revision 1.67  2004/02/03 23:45:11  assefa
  * Add utility function msOGRGeometryToShape.
  *
@@ -753,6 +756,8 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
  * Open an OGR connection, and initialize a msOGRFileInfo.
  **********************************************************************/
 
+static int bOGRDriversRegistered = MS_FALSE;
+
 static msOGRFileInfo *
 msOGRFileOpen(layerObj *layer, const char *connection ) 
 
@@ -760,10 +765,11 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 /* ------------------------------------------------------------------
  * Register OGR Drivers, only once per execution
  * ------------------------------------------------------------------ */
-  static int bDriversRegistered = MS_FALSE;
-  if (!bDriversRegistered)
+  if (!bOGRDriversRegistered)
+  {
       OGRRegisterAll();
-  bDriversRegistered = MS_TRUE;
+      bOGRDriversRegistered = MS_TRUE;
+  }
 
 /* ------------------------------------------------------------------
  * Parse connection string into dataset name, and layer name. 
@@ -2130,3 +2136,21 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
 #endif /* USE_OGR */
 }
+
+/************************************************************************/
+/*                           msOGRLCleanup()                            */
+/************************************************************************/
+
+void msOGRCleanup( void )
+
+{
+#if defined(USE_OGR)
+    if( bOGRDriversRegistered == MS_TRUE )
+    {
+        delete OGRSFDriverRegistrar::GetRegistrar();
+        CPLFinderClean();
+        bOGRDriversRegistered = MS_FALSE;
+    }
+#endif
+}
+

@@ -888,6 +888,7 @@ typedef struct {
 // Function prototypes, wrapable
 int msSaveImage(mapObj *map, imageObj *img, char *filename);
 void msFreeImage(imageObj *img);
+void msCleanup();
 
 // Function prototypes, not wrapable
 
@@ -970,7 +971,7 @@ void msCloseConnections(mapObj *map);
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c
 #endif
 
-void msCleanup();
+void msOGRCleanup();
 void msGDALCleanup();
 void msGDALInitialize();
    

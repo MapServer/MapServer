@@ -3839,6 +3839,9 @@ int msFreeLabelCache(labelCacheObj *cache) {
    when all maps are destroyed, like Registered GDAL drivers, and so forth. */
 void msCleanup()
 {
+#ifdef USE_OGR
+    msOGRCleanup();
+#endif    
 #ifdef USE_GDAL
     msGDALCleanup();
 #endif    
