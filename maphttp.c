@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2004/03/18 23:11:12  dan
+ * Added detailed reporting (using msDebug) of layer rendering times
+ *
  * Revision 1.14  2004/03/11 22:45:39  dan
  * Added pszPostContentType in httpRequestObj instead of using hardcoded
  * text/html mime type for all post requests.
@@ -169,7 +172,14 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         pasReqInfo[i].nStatus = 0;
         pasReqInfo[i].pszContentType = NULL;
         pasReqInfo[i].pszErrBuf = NULL;
+
         pasReqInfo[i].debug = MS_FALSE;
+        pasReqInfo[i].start_tv.tv_sec = 0;
+        pasReqInfo[i].start_tv.tv_usec = 0;
+        pasReqInfo[i].firstpacket_tv.tv_sec = 0;
+        pasReqInfo[i].firstpacket_tv.tv_usec = 0;
+        pasReqInfo[i].end_tv.tv_sec = 0;
+        pasReqInfo[i].end_tv.tv_usec = 0;
 
         pasReqInfo[i].curl_handle = NULL;
         pasReqInfo[i].fp = NULL;
@@ -234,8 +244,15 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
     psReq = (httpRequestObj *)reqInfo;
 
     if (psReq->debug)
+    {
         msDebug("msHTTPWriteFct(id=%d, %d bytes)\n",
                 psReq->nLayerId, size*nmemb);
+        if (psReq->firstpacket_tv.tv_sec == 0)
+        {
+            /* Keep track of when the first bit of data arrived */
+            gettimeofday(&(psReq->firstpacket_tv), NULL);
+        }
+    }
 
     return fwrite(buffer, size, nmemb, psReq->fp);
 }
@@ -270,14 +287,22 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
      * We use the longest timeout value in the array of requests 
      */
     nTimeout = pasReqInfo[0].nTimeout;
-    for (i=1; i<numRequests; i++)
+    for (i=0; i<numRequests; i++)
     {
         if (pasReqInfo[i].nTimeout > nTimeout)
             nTimeout = pasReqInfo[i].nTimeout;
+
+        if (pasReqInfo[i].debug)
+            debug = MS_TRUE;  /* For the download loop */
     }
 
     if (nTimeout <= 0)
         nTimeout = 30;
+
+    if (debug)
+    {
+        msDebug("HTTP: Starting to prepare HTTP requests.\n");
+    }
 
     /* Alloc a curl-multi handle, and add a curl-easy handle to it for each
      * file to download.
@@ -307,7 +332,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         {
             msDebug("HTTP request: id=%d, %s\n", 
                     pasReqInfo[i].nLayerId, pasReqInfo[i].pszGetUrl);
-            debug = MS_TRUE;  /* For the download loop */
+
+            /* Init start time for this request */
+            gettimeofday(&(pasReqInfo[i].start_tv), NULL);
         }
 
         /* Reset some members */
@@ -405,7 +432,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     }
 
     if (debug)
+    {
         msDebug("HTTP: Before download loop\n");
+    }
 
     /* DOWNLOAD LOOP ... inspired from multi-double.c example */
 
@@ -428,8 +457,8 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         FD_ZERO(&fdexcep);
 
         /* set a suitable timeout to play around with */
-        timeout.tv_sec = 1;
-        timeout.tv_usec = 0;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 100000;
 
         /* get file descriptors from the transfers */
         curl_multi_fdset(multi_handle, &fdread, &fdwrite, &fdexcep, &maxfd);
@@ -582,10 +611,38 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         curl_easy_cleanup(http_handle);
         psReq->curl_handle = NULL;
 
+        /* Mark the end time for this request... we should do this elsewhere
+         * if/when we find a way to detect the end of each request
+         */
+        if (psReq->debug)
+            gettimeofday(&(psReq->end_tv), NULL);
     }
 
     /* Cleanup multi handle, each handle had to be cleaned up individually */
     curl_multi_cleanup(multi_handle);
+
+    /* Report download times foreach layer, in debug mode */
+    if (debug)
+    {
+        msDebug("msHTTPExecuteRequests() timing summary per layer (time_to_first_packet + download_time = total_time in seconds)\n");
+        for (i=0; i<numRequests; i++)
+        {
+            httpRequestObj *psReq;
+            psReq = &(pasReqInfo[i]);
+
+            if (psReq->debug)
+            {
+                double dStart, dFirstPacket, dEnd;
+                dStart = psReq->start_tv.tv_sec +psReq->start_tv.tv_usec/1.0e6;
+                dFirstPacket = psReq->firstpacket_tv.tv_sec + 
+                                     psReq->firstpacket_tv.tv_usec/1.0e6;
+                dEnd = psReq->end_tv.tv_sec + psReq->end_tv.tv_usec/1.0e6;
+
+                msDebug("Layer %d: %.3fs + %.3fs = %.3fs\n", psReq->nLayerId,
+                        dFirstPacket-dStart, dEnd-dFirstPacket, dEnd-dStart);
+            }
+        }
+    }
 
     return nStatus;
 }

@@ -105,6 +105,8 @@ imageObj *msDrawMap(mapObj *map)
     layerObj *lp=NULL;
     int status;
     imageObj *image = NULL;
+    struct timeval mapstarttime, mapendtime;
+    struct timeval starttime, endtime;
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
@@ -112,6 +114,11 @@ imageObj *msDrawMap(mapObj *map)
 
     msHTTPInitRequestObj(asOWSReqInfo, MS_MAXLAYERS+1);
 #endif
+
+    if (map->debug)
+    {
+        gettimeofday(&mapstarttime, NULL);
+    }
 
     if(map->width == -1 || map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
@@ -227,10 +234,16 @@ imageObj *msDrawMap(mapObj *map)
 
     for(i=0; i<map->numlayers; i++) {
 
+        if (map->debug)
+            gettimeofday(&starttime, NULL);
+
         if (map->layerorder[i] != -1) {
             lp = &(map->layers[ map->layerorder[i]]);
 
             if(lp->postlabelcache) // wait to draw
+                continue;
+
+            if (!msLayerIsVisible(map, lp))
                 continue;
 
             if (lp->connectiontype == MS_WMS) 
@@ -274,6 +287,15 @@ imageObj *msDrawMap(mapObj *map)
                 return(NULL);
             }
         }
+
+        if (map->debug)
+        {
+            gettimeofday(&endtime, NULL);
+            msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
+                    map->layerorder[i], lp->name?lp->name:"(null)",
+                    (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+                    (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+        }
     }
 
     
@@ -283,8 +305,20 @@ imageObj *msDrawMap(mapObj *map)
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
     msEmbedLegend(map, image->img.gd); //TODO  
 
+  if (map->debug)
+      gettimeofday(&starttime, NULL);
+
   if(msDrawLabelCache(image, map) == -1)
     return(NULL);
+
+  if (map->debug)
+  {
+      gettimeofday(&endtime, NULL);
+      msDebug("msDrawMap(): Drawing Label Cache, %.3fs\n", 
+              (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+              (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+  }
+
 
   for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
 
@@ -292,6 +326,12 @@ imageObj *msDrawMap(mapObj *map)
 
     if(!lp->postlabelcache)
       continue;
+
+    if (!msLayerIsVisible(map, lp))
+      continue;
+
+    if (map->debug)
+        gettimeofday(&starttime, NULL);
 
     if (lp->connectiontype == MS_WMS)  
     { 
@@ -322,6 +362,16 @@ imageObj *msDrawMap(mapObj *map)
     else 
         status = msDrawLayer(map, lp, image);
     if(status == MS_FAILURE) return(NULL);
+
+    if (map->debug)
+    {
+        gettimeofday(&endtime, NULL);
+        msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
+                map->layerorder[i], lp->name?lp->name:"(null)",
+                (endtime.tv_sec+endtime.tv_usec/1.0e6)-
+                (starttime.tv_sec+starttime.tv_usec/1.0e6) );
+    }
+
   }
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
@@ -334,6 +384,14 @@ imageObj *msDrawMap(mapObj *map)
   // Cleanup WMS/WFS Request stuff
   msHTTPFreeRequestObj(asOWSReqInfo, numOWSRequests);
 #endif
+
+  if (map->debug)
+  {
+      gettimeofday(&mapendtime, NULL);
+      msDebug("msDrawMap() total time: %.3fs\n", 
+              (mapendtime.tv_sec+mapendtime.tv_usec/1.0e6)-
+              (mapstarttime.tv_sec+mapstarttime.tv_usec/1.0e6) );
+  }
 
   return(image);
 }

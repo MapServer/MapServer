@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.23  2004/03/18 23:11:12  dan
+ * Added detailed reporting (using msDebug) of layer rendering times
+ *
  * Revision 1.22  2004/03/11 22:45:39  dan
  * Added pszPostContentType in httpRequestObj instead of using hardcoded
  * text/html mime type for all post requests.
@@ -32,48 +35,10 @@
  * Do not call msDebug() unless debug flag is turned on
  *
  * Revision 1.14  2003/01/10 06:39:06  sdlime
- * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c to mapstring.c so they can be used a bit more freely.
+ * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c 
+ * to mapstring.c so they can be used a bit more freely.
  *
- * Revision 1.13  2002/12/19 06:30:59  dan
- * Enable caching WMS/WFS request using tmp filename built from URL
- *
- * Revision 1.12  2002/12/19 05:17:09  dan
- * Report WFS exceptions, and do not fail on WFS requests returning 0 features
- *
- * Revision 1.11  2002/12/18 16:45:49  dan
- * Fixed WFS capabilities to validate against schema
- *
- * Revision 1.10  2002/12/17 21:33:54  dan
- * Enable following redirections with libcurl (requires libcurl 7.10.1+)
- *
- * Revision 1.9  2002/12/16 20:35:00  dan
- * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
- *
- * Revision 1.8  2002/12/13 00:57:31  dan
- * Modified WFS implementation to behave more as a real vector data source
- *
- * Revision 1.7  2002/11/20 21:22:32  dan
- * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
- *
- * Revision 1.6  2002/11/20 17:17:21  julien
- * Support version 0.1.2 of MapContext
- * Remove warning from tags
- * Encode and decode all url
- *
- * Revision 1.5  2002/10/28 20:31:20  dan
- * New support for WMS Map Context (from Julien)
- *
- * Revision 1.2  2002/10/22 20:03:57  julien
- * Add the mapcontext support
- *
- * Revision 1.4  2002/10/09 02:29:03  dan
- * Initial implementation of WFS client support.
- *
- * Revision 1.3  2002/10/08 02:40:08  dan
- * Added WFS DescribeFeatureType
- *
- * Revision 1.2  2002/10/04 21:29:41  dan
- * WFS: Added GetCapabilities and basic GetFeature (still some work to do)
+ * ...
  *
  * Revision 1.1  2002/09/03 03:19:51  dan
  * Set the bases for WFS Server support + moved some WMS/WFS stuff to mapows.c
@@ -82,6 +47,9 @@
 
 #ifndef MAPOWS_H
 #define MAPOWS_H
+
+#include <time.h>
+#include <sys/time.h>
 
 /*====================================================================
  *   maphttp.c
@@ -99,9 +67,14 @@ typedef struct http_request_info
     int         nStatus;       /* 200=success, value < 0 if request failed */
     char      * pszContentType;
     char      * pszErrBuf;     /* Buffer where curl can write errors */
-    int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
     char        *pszPostRequest;     /* post request content (NULL for GET) */
     char        *pszPostContentType; /* post request MIME type */
+
+    /* For debugging/profiling */
+    int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
+    struct timeval start_tv;       /* Time when download started */
+    struct timeval firstpacket_tv; /* Time when first packet arrived */
+    struct timeval end_tv;         /* Time when download completed */
 
     /* Private members */
     void      * curl_handle;   /* CURLM * handle */
@@ -120,6 +93,7 @@ typedef  struct
   char *pszOutputFormat; //only used with DescibeFeatureType
 
 } wfsParamsObj;
+
 
 int msHTTPInit();
 void msHTTPCleanup();
