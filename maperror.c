@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2005/01/26 14:42:13  frank
+ * Removed msWebDebug() ... really this time!
+ *
  * Revision 1.59  2005/01/07 18:51:09  sdlime
  * Added MS_GMLERR code.
  *
@@ -523,25 +526,6 @@ char *msGetVersion() {
 #endif
 
   return(version);
-}
-
-void msWebDebug( const char * pszFormat, ... )
-{
-#ifndef _WIN32
-    va_list args;
-    struct timeval tv;
-
-    msIO_fprintf(stdout, "Content-type: text/html%c%c",10,10);
-
-    msGettimeofday(&tv, NULL);
-    msIO_fprintf(stdout, "[%s].%ld ", chop(ctime(&(tv.tv_sec))), tv.tv_usec);
-
-    va_start(args, pszFormat);
-    msIO_vfprintf(stdout, pszFormat, args);
-    va_end(args);
-
-    exit(0);
-#endif
 }
 
 void msDebug( const char * pszFormat, ... )
