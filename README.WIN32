@@ -127,6 +127,22 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
  - directory ./mapserver/gdft should not be compiled with DEBUG option
 
 --------------------------------------------------------------------
+      Notes on the proj module
+-------------------------------------------------------------------- 
+  - The Proj.4 (cartographic projection routines) is located at 
+        http://www.remotesensing.org/proj/
+
+  Note on the epsg files location and the nad directory :
+
+   * there is an environnemnt variable PROJ_LIB_DIR that can be set to locate 
+     the directory where the epsg file is located
+   * if you build this module, at the top of the makefile (./src/makefile.vc), you
+     can set the PROJ_LIB variable and this setting will be used to locates the
+     files.  
+
+  
+
+--------------------------------------------------------------------
       Notes libwww : used to support WMS client connection
 -------------------------------------------------------------------- 
   - the libaray is located at  http://www.w3.org/Library/ 
@@ -142,7 +158,8 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
   - you can then compile by opening the libwww/windows/world.dsw workspace 
     and do a batch build of the whole thing.
 
- other notes :  I had to define #define WWW_MSWINDOWS 1 in wwwsys.h before compiling.
+ other notes :  I had to define #define WWW_MSWINDOWS 1 in wwwsys.h 
+ before compiling.
 
  Notes on mapserver's makefile.vc modifications :
 
@@ -153,9 +170,39 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
 
  Installation :
 
+ - The best way is to get a precomiled binaries from the site. There is an 
+   windows install available at :  
+        ftp://ftp.idm.ru/libwww/Libwww_V5.3.2.exe
+
  - copy the following dll to a location where dll's can be loaded 
   (ex : c:/winnt/syetem32) : gnu_regex.dll xmlparse.dll xmltok.dll 
-   (these dlls should be in .libwww/library/external after the build)
+   (these dlls should be in .libwww/library/external after the build or 
+    available in your install directory)
+
+ - You also needs the following dll files. These file are installed in your system directory when you install Libwww :
+
+        * wwwapp.dll
+        * wwwcache.dll
+        * wwwcore.dll
+        * wwwdir.dll
+        * wwwdll.dll
+        * wwwfile.dll
+        * wwwftp.dll
+        * wwwgophe.dll
+        * wwwhtml.dll
+        * wwwhttp.dll
+        * wwwinit.dll
+        * wwwmime.dll
+        * wwwmux.dll
+        * wwwnews.dll
+        * wwwstream.dll
+        * wwwtelnt.dll
+        * wwwtrans.dll
+        * wwwutils.dll
+        * wwwwais.dll
+        * wwwxml.dll
+        * wwwzip.dll
+
 ----------------
 $Id$
 ----------------
