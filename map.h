@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.381  2004/11/22 15:51:52  dan
+ * Updated MS_VERSION for 4.4.0-beta3
+ *
  * Revision 1.380  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -198,7 +201,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "4.4.0-beta2"
+#define MS_VERSION "4.4.0-beta3"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
