@@ -922,7 +922,7 @@ int getDouble(double *d);
 int getInteger(int *i);
 int getSymbol(int n, ...);
 int getCharacter(char *c);
-int  hex2int(char *hex);
+MS_DLL_EXPORT int  hex2int(char *hex);
 
 MS_DLL_EXPORT void initSymbol(symbolObj *s);
 MS_DLL_EXPORT int initMap(mapObj *map);
@@ -1068,6 +1068,13 @@ MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);
 MS_DLL_EXPORT int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 MS_DLL_EXPORT void msFreeSymbolSet(symbolSetObj *symbolset);
 MS_DLL_EXPORT int msAddNewSymbol(mapObj *map, char *name);
+MS_DLL_EXPORT int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol);
+MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset,
+                                        int nSymbolIndex);
+MS_DLL_EXPORT int msSaveSymbolSet(symbolSetObj *symbolset,
+                                  const char *filename);
+MS_DLL_EXPORT int msLoadImageSymbol(symbolObj *symbol, const char *filename);
+
 
 MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
 MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);
@@ -1126,6 +1133,8 @@ MS_DLL_EXPORT int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 MS_DLL_EXPORT void msLayerAddProcessing( layerObj *layer, const char *directive );
 MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key, 
                                             const char *value);
+MS_DLL_EXPORT char *msLayerGetProcessing( layerObj *layer, int proc_index);
+MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
 
 // maplayer.c
 MS_DLL_EXPORT int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);
@@ -1155,6 +1164,8 @@ MS_DLL_EXPORT int msOGRGeometryToShape(OGRGeometryH hGeometry, shapeObj *shape,
                          OGRwkbGeometryType type);
 #endif
 
+// mapgml.c
+MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename);
 
 MS_DLL_EXPORT int msPOSTGISLayerOpen(layerObj *layer); // in mappostgis.c
 MS_DLL_EXPORT void msPOSTGISLayerFreeItemInfo(layerObj *layer);
@@ -1288,6 +1299,7 @@ MS_DLL_EXPORT int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 /* ==================================================================== */
 /*      Prototypes for functions in mapgd.c                             */
 /* ==================================================================== */
+MS_DLL_EXPORT imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver);
 MS_DLL_EXPORT int msCompareColors(colorObj *c1, colorObj *c2);
 MS_DLL_EXPORT imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
@@ -1360,6 +1372,9 @@ MS_DLL_EXPORT int msMoveClassDown(layerObj *layer, int nClassIndex);
 MS_DLL_EXPORT int msMoveStyleUp(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msMoveStyleDown(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int iStyleIndex);
+MS_DLL_EXPORT int msInsertStyle(classObj *class, styleObj *style,
+                                int nStyleIndex);
+MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *class, int nStyleIndex);
 
 MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
 
