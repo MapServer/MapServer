@@ -2985,6 +2985,10 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       free(map->shapepath);
       map->shapepath = strdup(value);
       break;
+    case(STATUS):
+      msyystate = 2; msyystring = value;
+      if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;      
+      break;
     case(MS_STRING):
       i = msGetLayerIndex(map, msyytext);
       if(i>=map->numlayers || i<0) break;
