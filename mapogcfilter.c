@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.25  2004/02/20 22:18:29  assefa
+ * Make sure that arrays are  sorted at th end of the And/Or functions.
+ *
  * Revision 1.24  2004/02/20 00:58:08  assefa
  * The layer->template was not set in some cases.
  *
@@ -570,6 +573,7 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
       if (iResult > 0)
       {
           panResults = (int *)realloc(panResults, sizeof(int)*iResult);
+          qsort(panResults, iResult, sizeof(int), compare_ints);
           *pnResult = iResult;
       }
 
@@ -671,6 +675,7 @@ int *FLTArraysOr(int *aFirstArray, int nSizeFirst,
         if (iResult > 0)
         {
             panResults = (int *)realloc(panResults, sizeof(int)*iResult);
+            qsort(panResults, iResult, sizeof(int), compare_ints);
             *pnResult = iResult;
             return panResults;
         }
@@ -717,8 +722,8 @@ int *FLTArraysAnd(int *aFirstArray, int nSizeFirst,
                         panResults[iResult++] = aFirstArray[i];
                         break;
                     }
-                    if (aFirstArray[i] < aSecondArray[j])
-                      break;
+                    //if (aFirstArray[i] < aSecondArray[j])
+                    // break;
                 }
             }
         }
@@ -733,8 +738,8 @@ int *FLTArraysAnd(int *aFirstArray, int nSizeFirst,
                          panResults[iResult++] = aSecondArray[i];
                          break;
                      }
-                     if (aSecondArray[i] < aFirstArray[j])
-                       break;
+                     //if (aSecondArray[i] < aFirstArray[j])
+                     //  break;
                 }
             }
         }
@@ -742,6 +747,7 @@ int *FLTArraysAnd(int *aFirstArray, int nSizeFirst,
         if (iResult > 0)
         {
             panResults = (int *)realloc(panResults, sizeof(int)*iResult);
+            qsort(panResults, iResult, sizeof(int), compare_ints);
             *pnResult = iResult;
             return panResults;
         }
@@ -764,18 +770,17 @@ int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
 {
     int *panResults = NULL, *panLeftResults=NULL, *panRightResults=NULL;
     int nLeftResult=0, nRightResult=0, nResults = 0;
-    
-    
 
     if (psNode->eType == FILTER_NODE_TYPE_LOGICAL)
     {
         if (psNode->psLeftNode)
           panLeftResults =  FLTGetQueryResults(psNode->psLeftNode, map, 
                                              iLayerIndex, &nLeftResult);
-        if (psNode->psRightNode)
+
+       if (psNode->psRightNode)
           panRightResults =  FLTGetQueryResults(psNode->psRightNode, map,
                                                iLayerIndex, &nRightResult);
-        
+
         if (psNode->pszValue && strcasecmp(psNode->pszValue, "AND") == 0)
           panResults = FLTArraysAnd(panLeftResults, nLeftResult, 
                                   panRightResults, nRightResult, &nResults);
