@@ -31,12 +31,13 @@ layer.status = MS_ON
 layer.data = shapename
 
 cls = ClassObj.new(layer)
-style = StyleObj.new(cls)
+style = StyleObj.new()
 color = ColorObj.new()
 color.red = 107
 color.green = 158
 color.blue = 160
 style.color = color
+cls.insertStyle(style)
 
 #map.save(shapename+'.map')
 img = map.draw
