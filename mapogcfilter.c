@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.39.2.2  2005/02/21 20:41:33  assefa
+ * Correct buffer initialization problem (Bug 1252).
+ *
  * Revision 1.39.2.1  2005/01/06 00:44:08  assefa
  * Bug 1143 : missing call to msInitShape before using a shape object.
  *
@@ -2557,6 +2560,7 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 /*      classitem.                                                      */
 /* -------------------------------------------------------------------- */
     szBuffer[0] = '/';
+    szBuffer[1] = '\0';
     //   szBuffer[1] = '^';
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);

@@ -15,6 +15,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.2
 --------------------------
 
+- Fixed ogcfilter bug #1252  
+
 - Fixed configure's --enable-runpath switch (bug 1233)
 
 - Fixed configure error message when APACHE_VERSION is not set.
