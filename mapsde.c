@@ -70,7 +70,26 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   
   SE_shape_get_type(inshp, &type);
 
-  if(type == SG_NIL_SHAPE) return(0); // skip null shapes
+  if(type == SG_NIL_SHAPE) return(MS_SUCCESS); // skip null shapes  
+  switch(type) {
+  case(SG_POINT_SHAPE):
+  case(SG_MULTI_POINT_SHAPE):
+    outshp->type = MS_POINT;
+    break;
+  case(SG_LINE_SHAPE):
+  case(SG_SIMPLE_LINE_SHAPE): 
+  case(SG_MULTI_LINE_SHAPE):
+  case(SG_MULTI_SIMPLE_LINE_SHAPE):
+    outshp->type = MS_LINE;
+    break;
+  case(SG_AREA_SHAPE):
+  case(SG_MULTI_AREA_SHAPE):
+    outshp->type = MS_POLYGON;
+    break;
+  default:
+    msSetError(MS_SDEERR, "Unsupported SDE shape type.", "sdeCopyShape()");
+    return(MS_FAILURE);
+  }
 
   SE_shape_get_num_points(inshp, 0, 0, &numpoints);
   SE_shape_get_num_parts(inshp, &numparts, &numsubparts);
@@ -78,22 +97,22 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   if(numsubparts > 0) {
     subparts = (long *)malloc(numsubparts*sizeof(long));
     if(!subparts) {
-      msSetError(MS_MEMERR, "Unable to allocate parts array.", "sdeTransformShape()");
-      return(-1);
+      msSetError(MS_MEMERR, "Unable to allocate parts array.", "sdeCopyShape()");
+      return(MS_FAILURE);
     }
     
   }
 
   points = (SE_POINT *)malloc(numpoints*sizeof(SE_POINT));
   if(!points) {
-    msSetError(MS_MEMERR, "Unable to allocate points array.", "sdeTransformShape()");
-    return(-1);
+    msSetError(MS_MEMERR, "Unable to allocate points array.", "sdeCopyShape()");
+    return(MS_FAILURE);
   }
 
   status = SE_shape_get_all_points(inshp, SE_DEFAULT_ROTATION, NULL, subparts, points, NULL, NULL);
   if(status != SE_SUCCESS) {
-    sde_error(status, "sdeTransformShape()", "SE_shape_get_all_points()");
-    return(-1);
+    sde_error(status, "sdeCopyShape()", "SE_shape_get_all_points()");
+    return(MS_FAILURE);
   }
 
   k = 0; // overall point counter
@@ -107,7 +126,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
     line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
     if(!line.point) {
       msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", "sdeShapeCopy()");
-      return(-1);
+      return(MS_FAILURE);
     }
      
     for(j=0; j < line.numpoints; j++) {
@@ -123,7 +142,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   free(subparts);
   free(points);
 
-  return(0);
+  return(MS_SUCCESS);
 }
 
 /*
@@ -307,8 +326,10 @@ int msSDELayerOpen(layerObj *layer) {
 
   sdeLayerObj *sde;
 
-  if (layer->sdelayer) return MS_SUCCESS; // layer already open
- 
+  if(layer->sdelayer) return MS_SUCCESS; // layer already open
+
+  msDebug("Opening SDE layer...\n");
+
   params = split(layer->connection, ',', &numparams);
   if(!params) {
     msSetError(MS_MEMERR, "Error spliting SDE connection information.", "msSDELayerOpen()");
@@ -356,6 +377,11 @@ int msSDELayerOpen(layerObj *layer) {
   sde->column = params[1];
 
   SE_layerinfo_create(NULL, &(sde->layerinfo));
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_layerinfo_create()");
+    return(MS_FAILURE);
+  }
+
   status = SE_layer_get_info(sde->connection, params[0], params[1], sde->layerinfo);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerOpen()", "SE_layer_get_info()");
@@ -395,6 +421,8 @@ void msSDELayerClose(layerObj *layer) {
 
   msFreeCharArray(sde->items, sde->numitems);
   SE_stream_free(sde->stream);
+  SE_layerinfo_free(sde->layerinfo);
+  SE_coordref_free(sde->coordref);
   SE_connection_free(sde->connection);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
@@ -417,11 +445,15 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   sde = layer->sdelayer;
 
+  msDebug("in msSDELayerWhichShapes\n");
+
   status = SE_shape_create(sde->coordref, &shape); // allocate early, might be threading problems
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_shape_create()");
     return(MS_FAILURE);
   }
+
+  msDebug("SE_shape_create ran ok...\n");
 
   status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
   if(status != SE_SUCCESS) {

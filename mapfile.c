@@ -1365,6 +1365,8 @@ int initLayer(layerObj *layer)
   layer->connection = NULL;
   layer->connectiontype = MS_SHAPEFILE;
 
+  layer->ogrlayerinfo = layer->sdelayer = NULL;
+
   layer->items = NULL;
   layer->itemindexes = NULL;
   layer->numitems = 0;
