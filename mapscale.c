@@ -135,6 +135,8 @@ imageObj *msDrawScalebar(mapObj *map)
   if(msLoadPalette(img, &(map->palette), map->scalebar.imagecolor) == -1)  
     return(NULL);
   
+  msImageInitGD( image, map->scalebar.imagecolor );
+
   ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); // center the computed scalebar
   oy = VMARGIN;
 

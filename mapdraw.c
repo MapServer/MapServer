@@ -33,6 +33,8 @@ imageObj *msDrawMap(mapObj *map)
             && msLoadPalette(image->img.gd, &(map->palette), map->imagecolor) == -1)
             return(NULL);
 
+        if( image != NULL )
+            msImageInitGD( image, map->imagecolor );
     }
 #ifdef USE_MING_FLASH
     else if( MS_RENDERER_SWF(map->outputformat) )
@@ -129,6 +131,9 @@ imageObj *msDrawQueryMap(mapObj *map)
       if(image != NULL
        && msLoadPalette(image->img.gd, &(map->palette), map->imagecolor) == -1)
           return(NULL);
+      
+      if( image != NULL )
+          msImageInitGD( image, map->imagecolor );
   }
   
   if(!image) {

@@ -330,6 +330,10 @@ imageObj *msDrawLegend(mapObj *map)
   */
   if(msLoadPalette(img, &map->palette, map->legend.imagecolor) == -1)
      return(NULL);
+  
+  /* Set background */
+  if( image != NULL )
+      msImageInitGD( image, map->legend.imagecolor );
 
   pnt.y = VMARGIN;
     

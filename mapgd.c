@@ -106,6 +106,46 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
 }
 
 /**
+ * Utility function to initialize the color of an image.  The background
+ * color is passed, but the outputFormatObj is consulted to see if the
+ * transparency should be set (for RGBA images).   Note this function only
+ * affects TrueColor images. 
+ */  
+
+void msImageInitGD( imageObj *image, colorObj background )
+
+{
+    if( image->format->imagemode == MS_IMAGEMODE_PC256 )
+        return;
+
+#if GD2_VERS > 1
+    {
+        int		pen, pixels, line;
+        int             *tpixels;
+
+        if( image->format->imagemode == MS_IMAGEMODE_RGBA )
+            pen = gdTrueColorAlpha( background.red, 
+                                    background.green, 
+                                    background.blue,
+                                    image->format->transparent ? 127 : 0 );
+        else
+            pen = gdTrueColor( background.red, 
+                               background.green, 
+                               background.blue );
+
+        for( line = 0; line < image->img.gd->sy; line++ )
+        {
+            pixels = image->img.gd->sx;
+            tpixels = image->img.gd->tpixels[line];
+
+            while( pixels-- > 0 )
+                *(tpixels++) = pen;
+        }
+    }
+#endif
+}
+
+/**
  * Utility function to load an image in a GD supported format, and
  * return it as a valid imageObj.
  */  

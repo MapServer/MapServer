@@ -1112,6 +1112,7 @@ void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
 imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
                           char *imagepath, char *imageurl);
 imageObj *msImageLoadGD( const char *filename );
+void      msImageInitGD( imageObj *image, colorObj background );
 
 int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
 int msSaveImageGD_LL(gdImagePtr img, char *filename, int type,
