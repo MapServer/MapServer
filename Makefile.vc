@@ -37,7 +37,7 @@ STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP
 # Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
 PROJ_LIB=../proj/src/proj.lib
 PROJ_INC=-I../proj/src
-PROJ=-DUSE_PROJ
+PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
 
 #Use this flag to compile with WMS support
 WMS=-DUSE_WMS
