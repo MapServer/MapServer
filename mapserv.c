@@ -27,6 +27,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.132  2004/10/28 19:12:51  frank
+ * Implemented signal catching on unix (non-win32) platforms.  The signal
+ * catcher calls msCleanup() which most importantly will close database
+ * connections open in the pool.  This is most useful for the fastcgi case, but
+ * it could be good in a pure cgi case too where a long running cgi is
+ * killed for some reason.
+ *
  * Revision 1.131  2004/10/28 18:16:17  dan
  * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
  * when requested layer was out of scale (bug 1006)
@@ -42,6 +49,10 @@
 #endif
 
 #include "mapserv.h"
+
+#ifndef WIN32
+#include <signal.h>
+#endif
 
 MS_CVSID("$Id$")
 
@@ -976,6 +987,20 @@ void returnCoordinate()
   writeError();
 }
 
+#ifndef WIN32
+void msCleanupOnSignal( int nInData )
+
+{
+    // For some reason, the fastcgi message code does not seem to work
+    // from within the signal handler on Unix.  So we force output through
+    // normal stdio functions.
+    msIO_installHandlers( NULL, NULL, NULL );
+    msIO_fprintf( stderr, "In msCleanupOnSignal.\n" );
+    msCleanup();
+    exit( 3 );
+}
+#endif
+
 // FIX: need to consider 5% shape extent expansion
 
 /*
@@ -1021,6 +1046,11 @@ int main(int argc, char *argv[]) {
       buf = strdup(argv[1]);
       putenv(buf);
     }
+
+#ifndef WIN32
+    signal( SIGUSR1, msCleanupOnSignal );
+    signal( SIGTERM, msCleanupOnSignal );
+#endif
 
 #ifdef USE_FASTCGI
     msIO_installFastCGIRedirect();
