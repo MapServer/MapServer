@@ -1,5 +1,7 @@
 #include "map.h"
 
+#define ROW_ALLOCATION_SIZE 10
+
 // DBF/XBase function prototypes
 int msDBFJoinConnect(layerObj *layer, joinObj *join);
 int msDBFJoinPrepare(joinObj *join, shapeObj *shape);
@@ -205,7 +207,7 @@ int msDBFJoinNext(joinObj *join)
     
   if(i == n) { // unable to do the join
     if((join->values = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
-      msSetError(MS_MEMERR, NULL, "msDBFJoinTable()");
+      msSetError(MS_MEMERR, NULL, "msDBFJoinNext()");
       return(MS_FAILURE);
     }
     for(i=0; i<join->numitems; i++)
@@ -254,7 +256,8 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
   msCSVJoinInfo *joininfo;
-  char *buffer;
+  char buffer[MS_BUFFER_LENGTH];
+  int numRowsAllocated = 0;
 
   if(join->joininfo) return(MS_SUCCESS); // already open
     
@@ -279,7 +282,28 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
     }
   }
 
+  // allocate base storage for the array of rows
+  joininfo->rows = (char ***) malloc(ROW_ALLOCATION_SIZE*sizeof(char **));  
+  if(!joininfo->rows) {
+    msSetError(MS_MEMERR, "Error allocating rows.", "msCSVJoinConnect()");
+    return(MS_FAILURE);
+  }
+  numRowsAllocated = ROW_ALLOCATION_SIZE;
+
   // load the rows
+  joininfo->numrows = 0;
+  while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {
+    // make sure there is enough space for the next row
+    if(joininfo->numrows == numRowsAllocated) {
+      joininfo->rows = (char ***) realloc(joininfo->rows, ROW_ALLOCATION_SIZE*sizeof(char **));  
+      if(!joininfo->rows) {
+        msSetError(MS_MEMERR, "Error making space for more rows.", "msCSVJoinConnect()");
+        return(MS_FAILURE);
+      }
+      numRowsAllocated += ROW_ALLOCATION_SIZE;
+    }
+    joininfo->rows[joininfo->numrows] = split(buffer, ',', &(joininfo->numcols));
+  }
 
   // get "from" item index  
   for(i=0; i<layer->numitems; i++) {
@@ -292,6 +316,23 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   if(i == layer->numitems) {
     msSetError(MS_JOINERR, "Item %s not found in layer %s.", "msCSVJoinConnect()", join->from, layer->name); 
     return(MS_FAILURE);
+  }
+
+  // get "to" index (for now the user tells us which column, 1..n)
+  joininfo->toindex = atoi(join->to) - 1;
+  if(joininfo->toindex < 0 || joininfo->toindex > joininfo->numcols) {
+    msSetError(MS_JOINERR, "Invalid column index %s.", "msCSVJoinConnect()", join->to); 
+    return(MS_FAILURE);
+  }
+
+  // store away the column names (1..n)
+  if((join->items = (char **) malloc(sizeof(char *)*joininfo->numcols)) == NULL) {
+    msSetError(MS_MEMERR, "Error allocating space for join item names.", "msCSVJoinConnect()");
+    return(MS_FAILURE);
+  }
+  for(i=0; i<joininfo->numcols; i++) {
+    join->items[i] = (char *) malloc(16); // plenty of space
+    snprintf(join->items[i], 16, "%d", i+1);
   }
 
   return(MS_SUCCESS);
@@ -326,6 +367,7 @@ int msCSVJoinPrepare(joinObj *join, shapeObj *shape)
 
 int msCSVJoinNext(joinObj *join) 
 {
+  int i,j;
   msCSVJoinInfo *joininfo = join->joininfo;
 
   if(!joininfo) {
@@ -333,14 +375,50 @@ int msCSVJoinNext(joinObj *join)
     return(MS_FAILURE);
   }
 
+  // clear any old data
+  if(join->values) { 
+    msFreeCharArray(join->values, join->numitems);
+    join->values = NULL;
+  }
+    
+  for(i=joininfo->nextrow; i<joininfo->numrows; i++) { // find a match
+    if(strcmp(joininfo->target, joininfo->rows[i][joininfo->toindex]) == 0) break;
+  }  
+
+  if((join->values = (char ** )malloc(sizeof(char *)*joininfo->numcols)) == NULL) {
+    msSetError(MS_MEMERR, NULL, "msCSVJoinNext()");
+    return(MS_FAILURE);
+  }
+  
+  if(i == joininfo->numrows) { // unable to do the join    
+    for(j=0; j<join->numitems; j++)
+      join->values[j] = strdup("\0"); // intialize to zero length strings
+
+    joininfo->nextrow = joininfo->numrows;
+    return(MS_DONE);
+  } 
+
+  for(j=0; j<joininfo->numcols; j++)
+    join->values[j] = strdup(joininfo->rows[i][j]);
+
+  joininfo->nextrow = i+1; // so we know where to start looking next time through
+
   return(MS_SUCCESS);
 }
 
 int msCSVJoinClose(joinObj *join) 
 { 
+  int i;
   msCSVJoinInfo *joininfo = join->joininfo;
 
   if(!joininfo) return(MS_SUCCESS); // already closed
+
+  for(i=0; i<joininfo->numrows; i++)
+    msFreeCharArray(joininfo->rows[i], joininfo->numcols);
+  free(joininfo->rows);
+  if(joininfo->target) free(joininfo->target);
+  free(joininfo);
+  joininfo = NULL;
 
   return(MS_SUCCESS);
 }
