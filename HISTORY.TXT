@@ -13,6 +13,12 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.5
+-----------
+
+- Change the output of the expression when using a wild card for
+  PropertyIsLike (Bug 1107).
+
 Version 4.4.0 (2004-11-29)
 --------------------------
 
