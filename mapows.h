@@ -5,6 +5,13 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.30.2.2  2004/05/11 05:36:50  sean
+ * Added prototypes to map.h, small changes to mapscript.i so that mapscript builds with very few warnings.  Also changed the getMetaData methods of several classes to use msLookupHashTable but raise their own errors.
+ *
+ * Revision 1.30.2.1  2004/05/03 03:46:14  dan
+ * Include map= param in default onlineresource of GetCapabilties if it
+ * was explicitly set in QUERY_STRING (bug 643)
+ *
  * Revision 1.30  2004/04/14 07:31:40  dan
  * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
  *
@@ -129,8 +136,8 @@ typedef  struct
   int          numparams;
 } wmsParamsObj;
 
-int msHTTPInit();
-void msHTTPCleanup();
+int msHTTPInit(void);
+void msHTTPCleanup(void);
 
 void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
 void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
@@ -148,7 +155,7 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
 
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
-MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
+MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 
 // OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata()
@@ -214,7 +221,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
 /*====================================================================
  *   mapwms.c
  *====================================================================*/
-int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); 
+int msWMSDispatch(mapObj *map, cgiRequestObj *req); 
 
 
 /*====================================================================
@@ -241,7 +248,7 @@ MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
  *====================================================================*/
 int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj);
 void msWFSParseRequest(cgiRequestObj *, wfsParamsObj *);
-wfsParamsObj *msWFSCreateParamsObj();
+wfsParamsObj *msWFSCreateParamsObj(void);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
 
 #ifdef USE_WFS_SVR
