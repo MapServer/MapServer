@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/10/28 02:14:16  frank
+ * Also enable MS_ERRORFILE if -all_debug selected.
+ *
  * Revision 1.12  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -137,6 +140,8 @@ int main(int argc, char *argv[])
         for(j=0; j<map->numlayers; j++) {
             map->layers[j].debug = debug_level;
         }
+        if( getenv( "MS_ERRORFILE" ) == NULL )
+            putenv( "MS_ERRORFILE=stderr" );
     }
     
     if(strncmp(argv[i], "-map_debug", 10) == 0) /* debug */
