@@ -1,0 +1,190 @@
+#
+# makefile.vc - Main MapServer makefile for MSVC++
+#
+# This VC++ makefile will build MAPSERVER.LIB, MAPSERV.EXE, and the other
+# MapServer command-line programs.
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+
+#OPTFLAGS =	/nologo /Zi /W3 /DDEBUG
+OPTFLAGS =	/nologo /Zi
+BASE_CFLAGS = 	$(OPTFLAGS) 
+
+
+#
+# If you want to ignore missing datafile errors uncomment the following
+# line. This is especially useful with large tiled datasets that may not
+# have complete data for each tile.
+#
+#IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
+
+#
+# Apparently these aren't as commonplace as I'd hoped. Edit the
+# following line to reflect the missing functions on your platform.
+#
+#STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
+STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP
+
+# Freetype distribution (TrueType font support). Available at http://www.freetype.org/. (RECOMMENDED)
+TTF_INC=-I../freetype/lib -I./gdft
+TTF_LIB=../freetype/lib/freetype.lib ./gdft/gdft.lib
+TTF=-DUSE_TTF
+TTF_GD=gdft
+
+# Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
+PROJ_LIB=../proj/src/proj.lib
+PROJ_INC=-I../proj/src
+PROJ=-DUSE_PROJ
+
+# GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
+#
+#   - Version 1.2 is included and writes LZW GIF (-DUSE_GD_1_2).
+#   - Versions 1.3 to 1.5 write non-LZW GIF (-DUSE_GD_1_3).
+#   - Versions 1.6 and greater write PNG (-DUSE_GD_1_6). Add -lpng -lz to GD_LIB line.
+#
+GDFONT_OBJ=	gd-1.2/gdfontt.obj gd-1.2/gdfonts.obj gd-1.2/gdfontmb.obj \
+		gd-1.2/gdfontl.obj gd-1.2/gdfontg.obj
+GD_INC=	-I./gd-1.2
+GD_LIB=	gd-1.2/gd.lib
+GD= -DUSE_GD_1_2
+MAKE_GD=gd
+
+# TIFF distribution (raster support for TIFF and GEOTIFF imagery).(RECOMMENDED)
+TIFF_INC=-I../tiff-v3.5.4/libtiff
+TIFF_LIB=../tiff-v3.5.4/libtiff/libtiff.lib
+TIFF=-DUSE_TIFF
+
+# JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
+#JPEG_INC=
+#JPEG_LIB=-ljpeg
+#JPEG=-DUSE_JPEG
+
+# EPPL7 Support (this activates ERDAS as well) Included in the distribution. Probably the best raster alternative if
+# you've got EPPL7 laying around. See http://www.lmic.state.mn.us/ for more information. (RECOMMENDED)
+EPPL=-DUSE_EPPL
+EPPL_OBJ=epplib.obj
+
+#
+# UofMN GIS/Image Processing Extension (very experimental)
+#
+#EGIS=-DUSE_EGIS
+
+#ERR_OBJ=./errLog/errLog.o
+#ERR_INC=-I./errLog
+#ERR_LIB=-L./errLog -lerrLog
+
+#IMGGEN_OBJ=./imgSrc/imgLib.o
+#IMGGEN_INC=-I./imgSrc
+#IMGGEN_LIB=-L./imgSrc -limgGEN
+
+#
+# VC++ does not include the REGEX library... so we must provide our one.
+# GNU regex-0.12 should be included in the source distribution.
+# If not, then you can get it from:
+#    ftp://ftp.gnu.org/pub/gnu/regex/regex-0.12.tar.gz
+#
+REGEX_OBJ=./regex-0.12/regex.obj
+REGEX_INC=-I./regex-0.12
+
+#
+# IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
+#
+# If you want to compile the PHP_MAPSCRIPT module, then you have to make
+# MapServer uses the same version of the REGEX library that PHP was 
+# compiled with:
+#
+#PHP_REGEX=../php-3.0.14/regex
+#REGEX_OBJ=$(PHP_REGEX)/regcomp.obj $(PHP_REGEX)/regerror.obj \
+#          $(PHP_REGEX)/regexec.obj $(PHP_REGEX)/regfree.obj
+#REGEX_INC=-I$(PHP_REGEX)
+
+#
+# REGEX needs some special flags... here they are for VC++ 6.0
+#
+REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
+
+#
+# --- You shouldn't have to edit anything else. ---
+#
+
+#
+# Main MapServer library.
+#
+MS_LIB  =	mapserver.lib
+MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
+		mapparser.obj maplexer.obj mapindex.obj maptree.obj \
+		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
+		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
+		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
+		mapraster.obj cgiutil.obj $(EPPL_OBJ) $(REGEX_OBJ)
+MS_HDRS = 	map.h mapfile.h
+
+MS_EXE = 	mapserv.exe shp2img.exe sym2img.exe legend.exe shpindex.exe \
+		shptree.exe scalebar.exe sortshp.exe
+
+#
+#
+#
+LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) $(TTF_LIB) \
+		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB)
+
+INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) $(TTF_INC) \
+		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC)
+
+CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
+		$(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) 
+
+default: 	all
+
+all:		$(MAKE_GD) $(TTF_GD) $(MS_LIB) $(MS_EXE)
+
+$(MS_OBJS):	$(MS_HDRS)
+
+$(MS_LIB):	$(MS_OBJS)
+	lib /out:$(MS_LIB) $(MS_OBJS)
+
+$(MS_EXE):	$(LIBS)
+
+gd::
+	cd gd-1.2
+	nmake /f makefile.vc OPTFLAGS="$(OPTFLAGS)"
+	cd ..
+
+gdft::
+	cd gdft
+	nmake /f makefile.vc OPTFLAGS="$(OPTFLAGS)"
+	cd ..
+
+.c.obj:	
+	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
+
+.cpp.obj:	
+	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
+
+.c.exe:
+	$(CC) $(CFLAGS) $*.c $(LIBS)
+
+.cpp.exe:
+	$(CC) $(CFLAGS) $*.cpp $(LIBS)
+
+
+clean:
+	del *.obj
+	del regex-0.12\regex.obj
+	del $(MS_LIB)
+	del $(MS_EXE)
+	del *.pdb
+	del *.exp
+	del *.ilk
+	cd gd-1.2
+	 nmake -f makefile.vc clean
+	 cd ..
+	cd gdft
+	 nmake -f makefile.vc clean
+	 cd ..
