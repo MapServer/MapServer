@@ -702,6 +702,15 @@ void loadForm()
     }
 #endif
 
+    if(strcasecmp(Entries[i].name,"shapeindex") == 0) { // used for index queries
+      ShapeIndex = getNumeric(re, Entries[i].val);
+      continue;
+    }
+    if(strcasecmp(Entries[i].name,"tileindex") == 0) {
+      TileIndex = getNumeric(re, Entries[i].val);
+      continue;
+    }
+
     if(strcasecmp(Entries[i].name,"mode") == 0) { // set operation mode
       if(strcasecmp(Entries[i].val,"browse") == 0) {
         Mode = BROWSE;
@@ -757,6 +766,16 @@ void loadForm()
         Mode = NQUERYMAP;
         continue;
       }
+
+      if(strcasecmp(Entries[i].val,"indexquery") == 0) {
+        Mode = INDEXQUERY;
+        continue;
+      }
+      if(strcasecmp(Entries[i].val,"indexquerymap") == 0) {
+        Mode = INDEXQUERYMAP;
+        continue;
+      }
+
       if(strcasecmp(Entries[i].val,"map") == 0) {
         Mode = MAP;
         continue;
@@ -1801,7 +1820,10 @@ int main(int argc, char *argv[]) {
 	  writeError();
 	  break;
 	}
-
+	break;
+      case INDEXQUERY:
+      case INDEXQUERYMAP:
+	if((status = msQueryByIndex(Map, QueryLayerIndex, ShapeIndex, TileIndex)) != MS_SUCCESS) writeError();
 	break;
       } // end mode switch
 
@@ -1814,7 +1836,7 @@ int main(int argc, char *argv[]) {
 	img = msDrawQueryMap(Map);
 	if(!img) writeError();
 	
-	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP) { // just return the image
+	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP || Mode == INDEXQUERYMAP) { // just return the image
 	  printf("Content-type: image/%s%c%c",MS_IMAGE_MIME_TYPE(Map->imagetype), 10,10);
 	  status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 	  if(status != MS_SUCCESS) writeError();

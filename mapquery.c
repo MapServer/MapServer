@@ -249,6 +249,56 @@ int msLoadQuery(mapObj *map, char *filename) {
   return(MS_SUCCESS);
 }
 
+int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
+{
+  layerObj *lp;
+  int status;
+  
+  shapeObj shape;
+
+  if(qlayer < 0 || qlayer >= map->numlayers) {
+    msSetError(MS_MISCERR, "No query layer defined.", "msQueryByIndex()"); 
+    return(MS_FAILURE);
+  }
+
+  lp = &(map->layers[qlayer]);
+  msInitShape(&shape);
+
+  // open this layer
+  status = msLayerOpen(lp, map->shapepath);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
+  lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
+  lp->resultcache->results = NULL;
+  lp->resultcache->numresults = lp->resultcache->cachesize = 0;
+  lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+
+  status = msLayerGetShape(lp, &shape, tileindex, shapeindex);
+  if(status != MS_SUCCESS) {
+    msSetError(MS_NOTFOUND, "Not valid record request.", "msQueryByIndex()"); 
+    return(MS_FAILURE);
+  }
+
+  shape.classindex = msShapeGetClass(lp, &shape);
+  if(shape.classindex == -1) { // not a valid shape
+    msFreeShape(&shape);
+    msSetError(MS_NOTFOUND, "Shape not valid against layer classification.", "msQueryByIndex()"); 
+    return(MS_FAILURE);
+  }
+    
+  if(!(lp->class[shape.classindex].template)) { // no valid template
+    msFreeShape(&shape);
+    msSetError(MS_NOTFOUND, "Shape does not have a valid template, no way to present results.", "msQueryByIndex()"); 
+    return(MS_FAILURE);
+  }
+
+  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+  lp->resultcache->bounds = shape.bounds;
+    
+  msFreeShape(&shape);
+  return(MS_SUCCESS);
+}
+
 int msQueryByAttributes(mapObj *map, int qlayer)
 {
   layerObj *lp;
