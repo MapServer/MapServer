@@ -2043,13 +2043,17 @@ dnl Check --enable-runpath to request including -Wl,-R for runtime
 dnl lib path in link command (disabled by default)
 dnl ---------------------------------------------------------------------
 
-AC_ARG_ENABLE(debug,
+AC_MSG_CHECKING([if --enable-runpath requested])
+AC_ARG_ENABLE(runpath,
 [  --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
                           Required on *BSD systems.
   --disable-runpath       Do not link with runtime lib path (the default).],,)
 
 if test "$enable_runpath" != "yes" ; then
   RPATHS=""
+  AC_MSG_RESULT([no])
+else
+  AC_MSG_RESULT([yes ($RPATHS)])
 fi
 
 

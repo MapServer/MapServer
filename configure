@@ -10618,14 +10618,21 @@ APACHE_INC=$APACHE_INC
 
 
 
-# Check whether --enable-debug or --disable-debug was given.
-if test "${enable_debug+set}" = set; then
-  enableval="$enable_debug"
+echo "$as_me:$LINENO: checking if --enable-runpath requested" >&5
+echo $ECHO_N "checking if --enable-runpath requested... $ECHO_C" >&6
+# Check whether --enable-runpath or --disable-runpath was given.
+if test "${enable_runpath+set}" = set; then
+  enableval="$enable_runpath"
 
 fi;
 
 if test "$enable_runpath" != "yes" ; then
   RPATHS=""
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+else
+  echo "$as_me:$LINENO: result: yes ($RPATHS)" >&5
+echo "${ECHO_T}yes ($RPATHS)" >&6
 fi
 
 
