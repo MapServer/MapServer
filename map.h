@@ -891,7 +891,8 @@ void msFreeCharArray(char **array, int num_items);
 int msLoadMapString(mapObj *map, char *object, char *value);
 void msFree(void *p);
 char **msTokenizeMap(char *filename, int *numtokens);
-
+int msInitLabelCache(labelCacheObj *cache);
+int msFreeLabelCache(labelCacheObj *cache);
 
 #if defined USE_PDF
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c
@@ -992,7 +993,6 @@ void msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
                       imageObj *image);
 void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize);
 void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
-void msImagePolyline(gdImagePtr img, shapeObj *p, int c);
 void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c);
 void msImageFilledPolygon(gdImagePtr img, shapeObj *p, int c);
 void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, int c, double sz, int captype, int jointype, double joinmaxsize);

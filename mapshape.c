@@ -846,7 +846,7 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
     if( psSHP->panRecSize[hEntity] == 4 ) {
       msSetError(MS_SHPERR, "NULL feature encountered.", "msSHPReadPoint()");
       return(MS_FAILURE);
-    }
+    }   
 
     /* -------------------------------------------------------------------- */
     /*      Ensure our record buffer is large enough.                       */
@@ -890,8 +890,10 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     if( hEntity < 0 || hEntity >= psSHP->nRecords )
       return;
 
-    if( psSHP->panRecSize[hEntity] == 4 )
+    if( psSHP->panRecSize[hEntity] == 4 ) {      
+      shape->type = MS_SHAPE_NULL;
       return;
+    }
 
     /* -------------------------------------------------------------------- */
     /*      Ensure our record buffer is large enough.                       */

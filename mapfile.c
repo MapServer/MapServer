@@ -3145,22 +3145,13 @@ int initMap(mapObj *map)
   map->interlace = MS_NOOVERRIDE;
   map->imagequality = MS_NOOVERRIDE;
 
-  map->labelcache.labels = (labelCacheMemberObj *)malloc(sizeof(labelCacheMemberObj)*MS_LABELCACHEINITSIZE);
-  if(map->labelcache.labels == NULL) {
-    msSetError(MS_MEMERR, "Malloc() error.", "initMap()");
-    return(-1);
-  }
-  map->labelcache.cachesize = MS_LABELCACHEINITSIZE;
+  map->labelcache.labels = NULL; // cache is initialize at draw time
+  map->labelcache.cachesize = 0;
   map->labelcache.numlabels = 0;
-
-  map->labelcache.markers = (markerCacheMemberObj *)malloc(sizeof(markerCacheMemberObj)*MS_LABELCACHEINITSIZE);
-  if(map->labelcache.markers == NULL) {
-    msSetError(MS_MEMERR, "Malloc() error.", "initMap()");
-    return(-1);
-  }
-  map->labelcache.markercachesize = MS_LABELCACHEINITSIZE;
+  map->labelcache.markers = NULL;
+  map->labelcache.markercachesize = 0;
   map->labelcache.nummarkers = 0;
- 
+
   map->fontset.filename = NULL;
   map->fontset.numfonts = 0;  
   map->fontset.fonts = NULL;
@@ -3187,16 +3178,66 @@ int initMap(mapObj *map)
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
 #endif
 
-  //Initialize the layer order list (used to modify the order in 
-  //which the layers are drawn).
+  // Initialize the layer order list (used to modify the order in which the layers are drawn).
   map->layerorder = (int *)malloc(sizeof(int)*MS_MAXLAYERS);
 
 
   return(0);
 }
 
+int msInitLabelCache(labelCacheObj *cache) {
+
+  if(cache->labels || cache->markers) msFreeLabelCache(cache);
+
+  cache->labels = (labelCacheMemberObj *)malloc(sizeof(labelCacheMemberObj)*MS_LABELCACHEINITSIZE);
+  if(cache->labels == NULL) {
+    msSetError(MS_MEMERR, NULL, "msInitLabelCache()");
+    return(MS_FAILURE);
+  }
+  cache->cachesize = MS_LABELCACHEINITSIZE;
+  cache->numlabels = 0;
+
+  cache->markers = (markerCacheMemberObj *)malloc(sizeof(markerCacheMemberObj)*MS_LABELCACHEINITSIZE);
+  if(cache->markers == NULL) {
+    msSetError(MS_MEMERR, NULL, "msInitLabelCache()");
+    return(MS_FAILURE);
+  }
+  cache->markercachesize = MS_LABELCACHEINITSIZE;
+  cache->nummarkers = 0;
+
+  return(MS_SUCCESS);
+}
+
+int msFreeLabelCache(labelCacheObj *cache) {
+  int i, j;
+
+  // free the labels
+  for(i=0; i<cache->numlabels; i++) {
+    msFree(cache->labels[i].string);
+    msFreeShape(cache->labels[i].poly); // empties the shape
+    msFree(cache->labels[i].poly); // free's the pointer
+    for(j=0;j<cache->labels[i].numstyles; j++) freeStyle(&(cache->labels[i].styles[j]));
+    msFree(cache->labels[i].styles);
+  }
+  msFree(cache->labels);
+  cache->labels = NULL;
+  cache->cachesize = 0;
+  cache->numlabels = 0;
+  
+  // free the markers
+  for(i=0; i<cache->nummarkers; i++) {
+    msFreeShape(cache->markers[i].poly);
+    msFree(cache->markers[i].poly);
+  }
+  msFree(cache->markers);
+  cache->markercachesize = 0;
+  cache->nummarkers = 0;
+
+  return(MS_SUCCESS);
+}
+
 void msFreeMap(mapObj *map) {
-  int i,j;
+  int i;
 
   if(!map) return;
 
@@ -3210,15 +3251,7 @@ void msFreeMap(mapObj *map) {
   msFreeProjection(&(map->projection));
   msFreeProjection(&(map->latlon));
 
-  for(i=0; i<map->labelcache.numlabels; i++) {
-    msFree(map->labelcache.labels[i].string);
-    msFreeShape(map->labelcache.labels[i].poly);
-    msFree(map->labelcache.labels[i].poly);
-    for(j=0;j<map->labelcache.labels[i].numstyles;j++)
-      freeStyle(&(map->labelcache.labels[i].styles[j]));
-    msFree(map->labelcache.labels[i].styles);
-  }
-  msFree(map->labelcache.labels);
+  msFreeLabelCache(&(map->labelcache));
 
   if( map->outputformat && --map->outputformat->refcount < 1 )
       msFreeOutputFormat( map->outputformat );
@@ -3230,12 +3263,6 @@ void msFreeMap(mapObj *map) {
       msFree( map->outputformatlist );
 
   msFree( map->imagetype );
-
-  for(i=0; i<map->labelcache.nummarkers; i++) {
-    msFreeShape(map->labelcache.markers[i].poly);
-    msFree(map->labelcache.markers[i].poly);
-  }
-  msFree(map->labelcache.markers);
 
   msFreeFontSet(&(map->fontset));
 

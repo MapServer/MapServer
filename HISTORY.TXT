@@ -16,6 +16,28 @@ the CVS logs is updated daily at the following URL:
 Version 3.7-dev (CVS)
 ---------------------
 
+- Added offset support (styleObj) for raster based output (GD for sure, not quite 
+  sure how OGR output is created although I believe is uses GD anyway). This allows
+  for feature drop shadows and support for cool linear symbols like used to be
+  supported in pre-3.4 versions. These offsets are not scalable at the moment.
+
+- Null shapes (attributes but no vertices) are skipped for shapefiles using
+  the msLayerNextShape interface. Otherwise applications should check the
+  shapeObj type member for MS_SHAPE_NULL.
+
+- Changed where label cache is allocated and cleared. Now it isn't allocated 
+  until drawing takes place. Any old cache is cleared before a new one is
+  allocated. The cache is still intact following rendering for post-processing
+  using MapScript.
+
+- Fixed screw up in pre-processing of logical expressions for item lists. Under
+  certain circumstances that list could get corrupted and expressions would
+  fail.
+
+- Added NOT operator to expression parser.
+
+- Added layer and map level DEBUG options to map file.
+
 - Major changes to support vector output (PDF, SWF, GML, ...):
    - imageObj is used by all rendering functions instead of gdImagePtr
    - New msSaveImage() prototype

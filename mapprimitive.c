@@ -514,15 +514,6 @@ void msImageScanline(gdImagePtr im, int x1, int x2, int y, int c)
     gdImageSetPixel(im, x, y, c);
 }
 
-void msImagePolyline(gdImagePtr im, shapeObj *p, int c)
-{
-  int i, j;
-  
-  for (i = 0; i < p->numlines; i++)
-    for(j=1; j<p->line[i].numpoints; j++)
-      gdImageLine(im, (int)p->line[i].point[j-1].x, (int)p->line[i].point[j-1].y, (int)p->line[i].point[j].x, (int)p->line[i].point[j].y, c);
-}
-
 /*
 ** Not a generic intersection test, we KNOW the lines aren't parallel or coincident. To be used with the next
 ** buffering code only. See code in mapsearch.c for a boolean test for intersection.

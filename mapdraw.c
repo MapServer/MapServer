@@ -59,6 +59,8 @@ imageObj *msDrawMap(mapObj *map)
         return(NULL);
     }
 
+    msInitLabelCache(&(map->labelcache)); // this clears any previously allocated cache
+
     if( MS_RENDERER_GD(map->outputformat) )
     {
         image = msImageCreateGD(map->width, map->height, map->outputformat, 
@@ -245,6 +247,8 @@ imageObj *msDrawQueryMap(mapObj *map)
     msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawQueryMap()");
     return(NULL);
   }
+
+  msInitLabelCache(&(map->labelcache)); // this clears any previously allocated cache
 
   if( MS_RENDERER_GD(map->outputformat) )
   {

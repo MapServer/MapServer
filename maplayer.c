@@ -179,6 +179,8 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
 /*
 ** Called after msWhichShapes has been called to actually retrieve shapes within a given area
 ** and matching a vendor specific filter (i.e. layer FILTER attribute).
+**
+** Shapefiles: NULL shapes (shapes with attributes but NO vertices are skipped)
 */
 int msLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
@@ -207,6 +209,10 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     } while(!filter_passed);  // Loop until both spatial and attribute filters match
 
     msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
+
+    // skip NULL shapes (apparently valid for shapefiles, at least ArcView doesn't care)
+    if(shape->type == MS_SHAPE_NULL) return(msLayerNextShape(layer, shape));
+
     shape->values = values;
     shape->numvalues = layer->numitems;
     return(MS_SUCCESS);

@@ -241,6 +241,48 @@ imageObj *msImageLoadGD( const char *filename )
   return image;
 }
 
+// TODO: might be a way to optimize this (halve the number of additions)
+static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
+{
+  int i, j;
+  double dx, dy;
+  int ox=0, oy=0;
+
+  if(offsety == -99) { // old-style offset (version 3.3 and earlier)
+    for (i = 0; i < p->numlines; i++) {
+      for(j=1; j<p->line[i].numpoints; j++) {        
+	dx = abs(p->line[i].point[j-1].x - p->line[i].point[j].x);
+	dy = abs(p->line[i].point[j-1].y - p->line[i].point[j].y);
+	if(dx<=dy)
+	  ox=offsetx;
+	else
+	  oy=offsetx;
+        
+        gdImageLine(img, (int)p->line[i].point[j-1].x+ox, (int)p->line[i].point[j-1].y+oy, (int)p->line[i].point[j].x+ox, (int)p->line[i].point[j].y+oy, color);
+        ox=0;
+        oy=0;
+      }
+    }
+  } else { // normal offset (eg. drop shadow)
+    for (i = 0; i < p->numlines; i++)
+      for(j=1; j<p->line[i].numpoints; j++)
+        gdImageLine(img, (int)p->line[i].point[j-1].x+offsetx, (int)p->line[i].point[j-1].y+offsety, (int)p->line[i].point[j].x+offsetx, (int)p->line[i].point[j].y+offsety, color);
+  }
+}
+
+static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
+{
+  int i, j;
+  
+  if(offsetx != 0 || offsetx != 0) 
+    imageOffsetPolyline(img, p, color, offsetx, offsety);
+  else {
+    for (i = 0; i < p->numlines; i++)
+      for(j=1; j<p->line[i].numpoints; j++)
+        gdImageLine(img, (int)p->line[i].point[j-1].x, (int)p->line[i].point[j-1].y, (int)p->line[i].point[j].x, (int)p->line[i].point[j].y, color);
+  }
+}
+
 /* ---------------------------------------------------------------------------*/
 /*       Stroke an ellipse with a line symbol of the specified size and color */
 /* ---------------------------------------------------------------------------*/
@@ -792,7 +834,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   if(size < 1) return; // size too small
 
   if(style->symbol == 0) { // just draw a single width line
-    msImagePolyline(img, p, fc);
+    imagePolyline(img, p, fc, style->offsetx, style->offsety);
     return;
   }
 
@@ -897,14 +939,14 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     gdImageSetStyle(img, styleDashed, k);
 
     if(!brush && !symbol->img)
-      msImagePolyline(img, p, gdStyled);
+      imagePolyline(img, p, gdStyled, style->offsetx, style->offsety);
     else 
-      msImagePolyline(img, p, gdStyledBrushed);
+      imagePolyline(img, p, gdStyledBrushed, style->offsetx, style->offsety);
   } else {
     if(!brush && !symbol->img)
-      msImagePolyline(img, p, fc);
+      imagePolyline(img, p, fc, style->offsetx, style->offsety);
     else
-      msImagePolyline(img, p, gdBrushed);
+      imagePolyline(img, p, gdBrushed, style->offsetx, style->offsety);
   }
 
   return;
@@ -956,7 +998,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color */    
     msImageFilledPolygon(img, p, fc);
-    if(oc>-1) msImagePolyline(img, p, oc);
+    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
     return;
   }
   
@@ -991,7 +1033,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img,p,gdTiled);
-    if(oc>-1) msImagePolyline(img, p, oc);
+    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
     gdImageDestroy(tile);
 #endif
 
@@ -1000,7 +1042,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     
     gdImageSetTile(img, symbol->img);
     msImageFilledPolygon(img, p, gdTiled);
-    if(oc>-1) msImagePolyline(img, p, oc);
+    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
 
     break;
   case(MS_SYMBOL_ELLIPSE):    
@@ -1010,7 +1052,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     if((x <= 1) && (y <= 1)) { /* No sense using a tile, just fill solid */
       msImageFilledPolygon(img, p, fc);
-      if(oc>-1) msImagePolyline(img, p, oc);
+      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
       return;
     }
 
@@ -1038,7 +1080,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     */
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img,p,gdTiled);
-    if(oc>-1) msImagePolyline(img, p, oc);
+    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
     gdImageDestroy(tile);
 
     break;
@@ -1049,7 +1091,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     if((x <= 1) && (y <= 1)) { /* No sense using a tile, just fill solid */
       msImageFilledPolygon(img, p, fc);
-      if(oc>-1) msImagePolyline(img, p, oc);
+      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
       return;
     }
 
@@ -1106,7 +1148,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img, p, gdTiled);
     if(oc>-1)
-      msImagePolyline(img, p, oc);
+      imagePolyline(img, p, oc, style->offsetx, style->offsety);
 
     break;
   default:
@@ -1498,7 +1540,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
       }
     } /* end position if-then-else */
 
-    /* msImagePolyline(img, cachePtr->poly, 1); */
+    /* imagePolyline(img, cachePtr->poly, 1, 0, 0); */
 
     if(!cachePtr->status)
       continue; /* next label */
