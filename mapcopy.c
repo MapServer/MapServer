@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2004/11/15 19:16:53  sean
+ * Do not copy layerinfo, wfslayerinfo, or ogrlayerinfo in msCopyLayer (bug 1055).
+ *
  * Revision 1.32  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -669,7 +672,6 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 {
     int i, return_value;
     featureListNodeObjPtr current;
-    //  char szPath[MS_MAXPATHLEN];
 
     MS_COPYSTELEM(index);
     MS_COPYSTRING(dst->classitem, src->classitem);
@@ -704,9 +706,6 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTRING(dst->_template, src->_template);
 #endif
 
-    //copyProperty(&(dst->resultcache), &(src->resultcache),
-    //sizeof(resultCacheObj *));
-    //
     MS_COPYSTRING(dst->name, src->name); 
     MS_COPYSTRING(dst->group, src->group); 
     MS_COPYSTRING(dst->data, src->data); 
@@ -765,12 +764,9 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTELEM(connectiontype);
     MS_COPYSTELEM(sameconnection);
 
-    //msSHPOpenFile(&(dst->shpfile), "rb", msBuildPath(szPath, src->map->shapepath, src->data));
-    //msSHPOpenFile(&(dst->tileshpfile), "rb", msBuildPath(szPath, src->map->shapepath, src->tileindex));
-
-    MS_COPYSTELEM(layerinfo);
-    MS_COPYSTELEM(ogrlayerinfo); 
-    MS_COPYSTELEM(wfslayerinfo);
+    //MS_COPYSTELEM(layerinfo);
+    //MS_COPYSTELEM(ogrlayerinfo); 
+    //MS_COPYSTELEM(wfslayerinfo);
     MS_COPYSTELEM(numitems);
 
     for (i = 0; i < dst->numitems; i++) {
@@ -795,7 +791,6 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTRING(dst->labelrequires, src->labelrequires);
 
     if (&(src->metadata)) {
-        //dst->metadata = msCreateHashTable();
         msCopyHashTable(&(dst->metadata), &(src->metadata));
     }
 
