@@ -202,7 +202,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   int	dst_xoff, dst_yoff, dst_xsize, dst_ysize;
   int	src_xoff, src_yoff, src_xsize, src_ysize;
   double llx, lly, urx, ury;
-  rectObj copyRect;
+  rectObj copyRect, mapRect;
   unsigned char *pabyRaw;
 
   GDALColorTableH hColorMap;
@@ -218,12 +218,14 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   GDALGetGeoTransform( hDS, adfGeoTransform );
   InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
 
-  copyRect = map->extent;
-/*
-  msDebug( "map->extent=%.10e,%.10e,%.10e,%.10e\n", 
-           copyRect.minx, copyRect.miny, 
-           copyRect.maxx, copyRect.maxy );
-*/
+  mapRect = map->extent;
+
+  mapRect.minx -= map->cellsize*0.5;
+  mapRect.maxx += map->cellsize*0.5;
+  mapRect.miny -= map->cellsize*0.5;
+  mapRect.maxy += map->cellsize*0.5;
+
+  copyRect = mapRect;
 
   if( copyRect.minx < GEO_TRANS(adfGeoTransform,0,src_ysize) )
       copyRect.minx = GEO_TRANS(adfGeoTransform,0,src_ysize);
@@ -238,13 +240,6 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   if( copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy )
       return 0;
 
-/*
-  msDebug( "copyRect=%.10e,%.10e,%.10e,%.10e\n", 
-           copyRect.minx, copyRect.miny, 
-           copyRect.maxx, copyRect.maxy );
-
-  msDebug( "cellsize=%.13e\n", map->cellsize );
-*/
   /*
    * Copy the source and destination raster coordinates.
    */
@@ -263,8 +258,8 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   if( src_xsize == 0 || src_ysize == 0 )
       return 0;
 
-  dst_xoff = (int) ((copyRect.minx - map->extent.minx) / map->cellsize);
-  dst_yoff = (int) ((map->extent.maxy - copyRect.maxy) / map->cellsize);
+  dst_xoff = (int) ((copyRect.minx - mapRect.minx) / map->cellsize);
+  dst_yoff = (int) ((mapRect.maxy - copyRect.maxy) / map->cellsize);
   dst_xsize = (int) ((copyRect.maxx - copyRect.minx) / map->cellsize + 0.5);
   dst_xsize = MIN(MAX(1,dst_xsize),gdImageSX(img) - dst_xoff);
   dst_ysize = (int) ((copyRect.maxy - copyRect.miny) / map->cellsize + 0.5);
@@ -272,11 +267,6 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
 
   if( dst_xsize == 0 || dst_ysize == 0 )
       return 0;
-/*
-  msDebug( "src=%d,%d,%d,%d dst=%d,%d,%d,%d\n", 
-           src_xoff, src_yoff, src_xsize, src_ysize, 
-           dst_xoff, dst_yoff, dst_xsize, dst_ysize );
-*/  
 
   /*
    * Fetch the band(s).  For now we just operate on the first band of
