@@ -108,8 +108,8 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>imagecolor	       { return(IMAGECOLOR); }
 <INITIAL,OBJECT_STRING>imagetype	       { return(IMAGETYPE); }
 <INITIAL,OBJECT_STRING>imagequality	       { return(IMAGEQUALITY); }
-<INITIAL>imagepath			       { return(IMAGEPATH); }
-<INITIAL>imageurl			       { return(IMAGEURL); }
+<INITIAL,OBJECT_STRING>imagepath	       { return(IMAGEPATH); }
+<INITIAL,OBJECT_STRING>imageurl		       { return(IMAGEURL); }
 <INITIAL,OBJECT_STRING>index                   { return(INDEX); }
 <INITIAL,OBJECT_STRING>interlace               { return(INTERLACE); }
 <INITIAL,OBJECT_STRING>intervals               { return(INTERVALS); } 
