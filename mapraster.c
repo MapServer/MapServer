@@ -100,7 +100,7 @@ static int getClass(layerObj *layer, char *str)
 ** an exact match, then tries to add it to the end of the existing color map,
 ** and if all else fails it finds the closest color.
 */
-static int add_color(gdImagePtr img, int r, int g, int b)
+static int add_color(mapObj *map, gdImagePtr img, int r, int g, int b)
 {
   int c; 
   int ct = -1;
@@ -108,12 +108,53 @@ static int add_color(gdImagePtr img, int r, int g, int b)
   long rd, gd, bd, dist;
   long mindist = 3*255*255;  /* init to max poss dist */
   
+  /*
+  ** We want to avoid using a color that matches a transparent background
+  ** color exactly.  If this is the case, we will permute the value slightly.
+  ** When perterbing greyscale images we try to keep them greyscale, otherwise
+  ** we just perterb the red component.
+  */
+  if( map->transparent 
+      && map->imagecolor.red == r 
+      && map->imagecolor.green == g 
+      && map->imagecolor.blue == b )
+  {
+      if( r == 0 && g == 0 && b == 0 )
+      {
+          r = g = b = 1;
+      }
+      else if( r == g && r == b )
+      {
+          r = g = b = r-1;
+      }
+      else if( r == 0 )
+      {
+          r = 1;
+      }
+      else
+      {
+          r = r-1;
+      }
+  }
+
+  /* 
+  ** Find the nearest color in the color table.  If we get an exact match
+  ** return it right away.
+  */
   for (c = 0; c < img->colorsTotal; c++) {
+
     if (img->open[c]) {
       op = c; /* Save open slot */
       continue; /* Color not in use */
     }
     
+    /* don't try to use the transparent color */
+    if (map->transparent 
+        && img->red  [c] == map->imagecolor.red
+        && img->green[c] == map->imagecolor.green
+        && img->blue [c] == map->imagecolor.blue )
+        continue;
+
     rd = (long)(img->red  [c] - r);
     gd = (long)(img->green[c] - g);
     bd = (long)(img->blue [c] - b);
@@ -275,7 +316,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
 	  cmap[i] = -1;
 	else {
 	  if(layer->class[c].color == -1) /* use raster color */
-	    cmap[i] = add_color(img, sEntry.c1, sEntry.c2, sEntry.c3);
+	    cmap[i] = add_color(map, img, sEntry.c1, sEntry.c2, sEntry.c3);
 	  else
 	    cmap[i] = layer->class[c].color; /* use class color */
 	}
@@ -289,7 +330,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
         GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
 
         if(i != layer->offsite && sEntry.c4 != 0) 
-            cmap[i] = add_color(img, sEntry.c1, sEntry.c2, sEntry.c3);
+            cmap[i] = add_color(map,img, sEntry.c1, sEntry.c2, sEntry.c3);
         else
             cmap[i] = -1;
     }
@@ -508,7 +549,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	    cmap[i] = -1;
 	  else {
 	    if(layer->class[c].color == -1) /* use raster color */
-	      cmap[i] = add_color(img, CVT(red[i]), CVT(green[i]), CVT(blue[i]));
+	      cmap[i] = add_color(map,img, CVT(red[i]), CVT(green[i]), CVT(blue[i]));
 	    else
 	      if(layer->class[c].color == -255) /* make transparent */
 		cmap[i] = -1;
@@ -521,7 +562,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
     } else {
       for(i=0; i<MAXCOLORS; i++) {
 	if(i != layer->offsite)
-	  cmap[i] = add_color(img, CVT(red[i]), CVT(green[i]), CVT(blue[i]));
+	  cmap[i] = add_color(map,img, CVT(red[i]), CVT(green[i]), CVT(blue[i]));
         else
 	  cmap[i] = -1;
       }
@@ -532,21 +573,21 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
       if(layer->offsite >= 0)
 	cmap[layer->offsite] = -1;
       if(layer->offsite != 0)
-	cmap[0]=add_color(img,0,0,0);
+	cmap[0]=add_color(map,img,0,0,0);
       if(layer->offsite != 1)
-	cmap[1]=add_color(img,255,255,255);
+	cmap[1]=add_color(map,img,255,255,255);
     } else { 
       if (nbits==4) {
 	for (i=0; i<16; i++) {
 	  if(i != layer->offsite)
-	    cmap[i]=add_color(img,i*17,i*17,i*17);
+	    cmap[i]=add_color(map,img,i*17,i*17,i*17);
 	  else
 	    cmap[i] = -1;
 	}
       } else { /* 8-bit */
 	for (i=0; i<256; i++) {
 	  if(i != layer->offsite)
-	    cmap[i]=add_color(img,(i>>4)*17,(i>>4)*17,(i>>4)*17);
+	    cmap[i]=add_color(map,img,(i>>4)*17,(i>>4)*17,(i>>4)*17);
 	  else
 	    cmap[i] = -1;
 	}
@@ -558,9 +599,9 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
       if(layer->offsite >= 0)
 	cmap[layer->offsite] = -1;
       if(layer->offsite != 0)
-	cmap[0]=add_color(img,255,255,255);	
+	cmap[0]=add_color(map,img,255,255,255);	
       if(layer->offsite != 1)
-	cmap[1]=add_color(img,0,0,0);
+	cmap[1]=add_color(map,img,0,0,0);
     }
     else {
       msSetError(MS_IMGERR,"Can't do inverted grayscale images","drawTIFF()");
@@ -710,7 +751,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  cmap[i] = -1;
 	else {
 	  if(layer->class[c].color == -1) /* use raster color */
-	    cmap[i] = add_color(img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i));
+	    cmap[i] = add_color(map,img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i));
 	  else
 	    cmap[i] = layer->class[c].color; /* use class color */
 	}
@@ -720,7 +761,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   } else {
     for(i=0; i<gdImageColorsTotal(png); i++) {
       if(i != layer->offsite) 
-	cmap[i] = add_color(img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i));
+	cmap[i] = add_color(map,img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i));
       else
 	cmap[i] = -1;
       /* fprintf(stderr, "\t\t%d %d\n", i, cmap[i]); */
@@ -813,7 +854,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  cmap[i] = -1;
 	else {
 	  if(layer->class[c].color == -1) /* use raster color */
-	    cmap[i] = add_color(img, gdImageRed(gif,i), gdImageGreen(gif,i), gdImageBlue(gif,i));
+	    cmap[i] = add_color(map,img, gdImageRed(gif,i), gdImageGreen(gif,i), gdImageBlue(gif,i));
 	  else
 	    cmap[i] = layer->class[c].color; /* use class color */
 	}
@@ -823,7 +864,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   } else {
     for(i=0; i<gdImageColorsTotal(gif); i++) {
       if(i != layer->offsite) 
-	cmap[i] = add_color(img, gdImageRed(gif,i), gdImageGreen(gif,i), gdImageBlue(gif,i));
+	cmap[i] = add_color(map,img, gdImageRed(gif,i), gdImageGreen(gif,i), gdImageBlue(gif,i));
       else
 	cmap[i] = -1;
       /* fprintf(stderr, "\t\t%d %d\n", i, cmap[i]); */
@@ -899,7 +940,7 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   // set up the color map
   for (i=0; i<256; i++) {
     if(i != layer->offsite)
-      cmap[i]=add_color(img,(i>>4)*17,(i>>4)*17,(i>>4)*17);
+      cmap[i]=add_color(map,img,(i>>4)*17,(i>>4)*17,(i>>4)*17);
     else
       cmap[i] = -1;
   }
@@ -1052,7 +1093,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	      cmap[i] = -1;
 	    else {
 	      if(layer->class[c].color == -1) /* use raster color */
-		cmap[i] = add_color(img, rc[i], gc[i], bc[i]);
+		cmap[i] = add_color(map,img, rc[i], gc[i], bc[i]);
 	      else
 		cmap[i] = layer->class[c].color; /* use class color */
 	    }
@@ -1062,7 +1103,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       } else {
 	for(i=0; i<hd.nclass; i++) {
 	  if(i != layer->offsite) 
-	    cmap[i] = add_color(img, rc[i], gc[i], bc[i]);
+	    cmap[i] = add_color(map,img, rc[i], gc[i], bc[i]);
 	  else
 	    cmap[i] = -1;
 	}
@@ -1073,7 +1114,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     for (i=0; i<hd.nclass; i++) {  /* no trailer file, make gray, classes are not honored */
       if(i != layer->offsite) {
 	j=((i*16)/hd.nclass)*17; 
-	cmap[i] = add_color(img, j, j, j);
+	cmap[i] = add_color(map,img, j, j, j);
       } else
 	cmap[i] = -1;
     } 
@@ -1164,7 +1205,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     for (i=epp.minval; i<=epp.maxval; i++) {
       if(i != layer->offsite) {
 	j=(((i-epp.minval)*16) / (epp.maxval-epp.minval+1))*17; 
-	cmap[i]=add_color(img,j,j,j);
+	cmap[i]=add_color(map,img,j,j,j);
       }
     }  
   } else {
@@ -1180,7 +1221,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  if(c != -1) {
 	    if(layer->class[c].color == -1) { /* use raster color */
 	      clrget(&clr,i,&color);
-	      cmap[i] = add_color(img, color.red, color.green, color.blue);
+	      cmap[i] = add_color(map,img, color.red, color.green, color.blue);
 	    } else
 	      cmap[i] = layer->class[c].color; /* use class color */
 	  }
@@ -1190,7 +1231,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       for (i=epp.minval; i<=epp.maxval; i++) {
 	if(i != layer->offsite) {
 	  clrget(&clr,i,&color);
-	  cmap[i] = add_color(img, color.red, color.green, color.blue);
+	  cmap[i] = add_color(map,img, color.red, color.green, color.blue);
 	}
       }
     }
@@ -1348,7 +1389,7 @@ static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       		if(i != layer->offsite)
 		{
 			j = (i * 16) / 255 * 17;
-			cmap[i] = add_color(img, j, j, j); 
+			cmap[i] = add_color(map, img, j, j, j); 
 		}
 		else
 			cmap[i] = -1;
