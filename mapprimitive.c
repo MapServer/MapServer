@@ -876,11 +876,20 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
   return(MS_SUCCESS);
 }
 
-/* msRectToFormattedString */
+/* ===========================================================================
+   Pretty printing of primitive objects
+   ======================================================================== */
+
 void msRectToFormattedString(rectObj *rect, char *format, char *buffer, 
                              int buffer_length) 
 {
     snprintf(buffer, buffer_length, format,
              rect->minx, rect->miny, rect->maxx, rect->maxy);
+}
+
+void msPointToFormattedString(pointObj *point, char *format, char *buffer, 
+                             int buffer_length) 
+{
+    snprintf(buffer, buffer_length, format, point->x, point->y);
 }
 
