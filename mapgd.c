@@ -84,6 +84,41 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
 }
 
 /*
+ * Take a pass through the mapObj and pre-allocate colors for layers that are ON or DEFAULT. This replicates the pre-4.0 behavior of
+ * MapServer and should be used only with paletted images.
+ */
+void msPreAllocateColorsGD(imageObj *image, mapObj *map) {
+  int i, j, k;
+  layerObj *lp;
+  classObj *cp;
+  styleObj *sp;
+
+  if(!image) return; // nothing to do
+  if(gdImageTrueColor(image->img.gd)) return;
+
+  for(i=0; i<map->numlayers; i++) {
+    lp = &(map->layers[i]);
+    if(lp->status == MS_ON || lp->status == MS_DEFAULT) {
+      for(j=0; j<lp->numclasses; j++) {
+        cp = &(lp->class[j]);
+	msImageSetPenGD(image->img.gd, &(cp->label.backgroundcolor));
+	msImageSetPenGD(image->img.gd, &(cp->label.backgroundshadowcolor));
+	msImageSetPenGD(image->img.gd, &(cp->label.color)); 
+	msImageSetPenGD(image->img.gd, &(cp->label.outlinecolor));
+	msImageSetPenGD(image->img.gd, &(cp->label.shadowcolor));
+
+	for(k=0; k<cp->numstyles; k++) {
+          sp = &(cp->styles[k]);
+	  msImageSetPenGD(image->img.gd, &(sp->backgroundcolor));
+          msImageSetPenGD(image->img.gd, &(sp->color));
+	  msImageSetPenGD(image->img.gd, &(sp->outlinecolor));
+	}
+      }
+    }
+  }
+}
+
+/*
  * Utility function to create a GD image. Returns
  * a pointer to an imageObj structure.
  */  

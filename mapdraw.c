@@ -121,6 +121,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         image = msImageCreateGD(map->width, map->height, map->outputformat, 
 				map->web.imagepath, map->web.imageurl);        
         if( image != NULL ) msImageInitGD( image, &map->imagecolor );
+        msPreAllocateColorsGD(image, map);
     }
     else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
     {

@@ -1371,6 +1371,7 @@ MS_DLL_EXPORT int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 /* ==================================================================== */
 MS_DLL_EXPORT imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver);
 MS_DLL_EXPORT int msCompareColors(colorObj *c1, colorObj *c2);
+MS_DLL_EXPORT void msPreAllocateColorsGD(imageObj *image, mapObj *map);
 MS_DLL_EXPORT imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
 MS_DLL_EXPORT void msImageInitGD( imageObj *image, colorObj *background );
