@@ -528,8 +528,13 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   printf("\n<!-- %s -->\n\n", msGetVersion());
 
   // WMS definition
-  printf("<Service> <!-- a service IS a MapServer mapfile -->\n");
-  printf("  <Name>GetMap</Name> <!-- WMT defined -->\n");
+  printf("<Service>\n");
+
+  // Service name is defined by the spec and changed at v1.0.0
+  if (strcasecmp(wmtver, "1.0.7") <= 0) 
+      printf("  <Name>GetMap</Name>\n");  // v 1.0.0 to 1.0.7
+  else
+      printf("  <Name>OGC:WMS</Name>\n"); // v 1.1.0+
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
   msOWSPrintMetadata(stdout, map->web.metadata, "wms_title", OWS_WARN,
