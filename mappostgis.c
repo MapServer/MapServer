@@ -121,7 +121,14 @@ char *strstrIgnoreCase(char *haystack, char *needle)
 }
 
 
-//void postresql_NOTICE_HANDLER(void *arg, const char *message);
+void postresql_NOTICE_HANDLER(void *arg, const char *message)
+{
+    layerObj *lp;
+    lp = (layerObj*)arg;
+
+    if (lp->debug)
+        msDebug("%s", message);
+}
 
 
 char *DATAERRORMESSAGE(char *dString, char *preamble)
@@ -211,7 +218,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	  return(MS_FAILURE);
     }
 
-//	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layerinfo);
+	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layer);
 
 
 
