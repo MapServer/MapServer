@@ -3,6 +3,7 @@
  */
 
 
+#include <assert.h>
 #include "map.h"
 
 static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
@@ -323,7 +324,8 @@ imageObj *msDrawQueryMap(mapObj *map)
 int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
   int i;
-  gdImagePtr img_cache=NULL;
+  imageObj *image_draw = image;
+  outputFormatObj *transFormat = NULL;
   int retcode=MS_SUCCESS;
 
   msImageStartLayer(map, layer, image);
@@ -360,17 +362,23 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     // annotate = MS_FALSE;
   }
 
-  if ( MS_RENDERER_GD(map->outputformat) ) {
+  if ( MS_RENDERER_GD(image_draw->format) ) {
     // Create a temp image for this layer tranparency
     if (layer->transparency > 0) {
-      img_cache = image->img.gd;
-      image->img.gd = gdImageCreate(img_cache->sx, img_cache->sy);
-      if(!image->img.gd) {
+      msApplyOutputFormat( &transFormat, image->format, 
+                           MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+      /* really we need an image format with transparency enabled, right? */
+      image_draw = msImageCreateGD( image->width, image->height, 
+                                    transFormat,
+                                    image->imagepath, image->imageurl );
+      if(!image_draw) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
         return(MS_FAILURE);
       }
-      msImageInitGD(image, &map->imagecolor);
-      gdImageColorTransparent(image->img.gd, 0);
+      msImageInitGD(image_draw, &map->imagecolor);
+      /* We really just do this because gdImageCopyMerge() needs it later */
+      if( image_draw->format == MS_IMAGEMODE_PC256 )
+          gdImageColorTransparent(image_draw->img.gd, 0);
     }
   }
 
@@ -378,7 +386,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if(layer->connectiontype == MS_WMS) 
   {
 #ifdef USE_WMS_LYR
-      retcode = msDrawWMSLayer(map, layer, image);
+      retcode = msDrawWMSLayer(map, layer, image_draw);
 #else  
       retcode = MS_FAILURE;
 #endif
@@ -386,24 +394,33 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   else if(layer->connectiontype == MS_WFS) 
   {
 #ifdef USE_WFS_LYR
-      retcode = msDrawWFSLayer(map, layer, image);
+      retcode = msDrawWFSLayer(map, layer, image_draw);
 #else  
       retcode = MS_FAILURE;
 #endif
   }
   else if(layer->type == MS_LAYER_RASTER) 
   {
-      retcode = msDrawRasterLayer(map, layer, image);
+      retcode = msDrawRasterLayer(map, layer, image_draw);
   }
   //Must be a Vector layer
   else
-      retcode = msDrawVectorLayer(map, layer, image);
+      retcode = msDrawVectorLayer(map, layer, image_draw);
 
   // Destroy the temp image for this layer tranparency
-  if( MS_RENDERER_GD(map->outputformat) && layer->transparency > 0 ) {
-    gdImageCopyMerge(img_cache, image->img.gd, 0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, layer->transparency);
-    gdImageDestroy(image->img.gd);
-    image->img.gd = img_cache;
+  if( MS_RENDERER_GD(image_draw->format) && layer->transparency > 0 ) {
+    gdImageCopyMerge(image->img.gd, image_draw->img.gd, 
+                     0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
+                     layer->transparency);
+    msFreeImage( image_draw );
+
+    // deref and possibly free temporary transparent output format. 
+    msApplyOutputFormat( &transFormat, NULL, 
+                         MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+  }
+  else
+  {
+      assert( image == image_draw );
   }
 
   return(retcode);
