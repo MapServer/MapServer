@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/02/02 17:15:32  frank
+ * class pens being reused inappropriately - bug 504
+ *
  * Revision 1.14  2004/01/26 15:20:11  frank
  * added msGetGDALGeoTransform
  *
@@ -440,7 +443,19 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       if( alpha_band != 0 )
           hBandAlpha = GDALGetRasterBand( hDS, alpha_band );
   }
-      
+
+  /*
+   * Wipe pen indicators for all our layer class colors if they exist.  
+   * Sometimes temporary gdImg'es are used in which case previously allocated
+   * pens won't generally apply.  See Bug 504.
+   */
+  if( gdImg && !truecolor )
+  {
+      int iClass;
+      for( iClass = 0; iClass < layer->numclasses; iClass++ )
+          layer->class[iClass].styles[0].color.pen = MS_PEN_UNSET;
+  }
+
   /*
    * Get colormap for this image.  If there isn't one, and we have only
    * one band create a greyscale colormap. 
