@@ -17,15 +17,24 @@ enum MS_REQUEST_TYPE {MS_GET_REQUEST, MS_POST_REQUEST};
 //structure to hold request information
 typedef struct
 {
+#ifndef SWIG
   char **ParamNames;
   char **ParamValues;
+#endif
+
+#ifdef SWIG
+%immutable;
+#endif
   int NumParams;
+#ifdef SWIG
+%mutable;
+#endif
 
   enum MS_REQUEST_TYPE type;
   char *contenttype;
 
   char *postrequest;
-}cgiRequestObj;
+} cgiRequestObj;
       
 
 /*
