@@ -671,7 +671,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   unsigned short *red, *green, *blue;
   int cmap[MAXCOLORS];
 
-  int startx, starty; /* this is where we start out reading */
+  double startx, starty; /* this is where we start out reading */
   int st,strip;  /* current strip */
   int xi,yi,startj,endj,boffset,vv;
 
@@ -884,7 +884,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
   int pixel;
 
-  int startx, starty; /* this is where we start out reading */
+  double startx, starty; /* this is where we start out reading */
 
   double ulx, uly; /* upper left-hand coordinates */
   double skipx,skipy; /* skip factors (x and y) */  
@@ -952,10 +952,10 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
   y=starty;
   for(i=0; i<img->sy; i++) { /* for each row */
-    if((y >= 0) && (y < h)) {
+    if((y >= -0.5) && (y < h)) {
       x = startx;
       for(j=0; j<img->sx; j++) {
-	if((x >= 0) && (x < w)) {
+	if((x >= -0.5) && (x < w)) {
 	  pixel = png->pixels[MS_NINT(y)][MS_NINT(x)];	  
 	  if(cmap[pixel] != -1)
 	    img->pixels[i][j] = cmap[pixel];
@@ -987,7 +987,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
   int pixel;
 
-  int startx, starty; /* this is where we start out reading */
+  double startx, starty; /* this is where we start out reading */
 
   double ulx, uly; /* upper left-hand coordinates */
   double skipx,skipy; /* skip factors (x and y) */  
@@ -1055,10 +1055,10 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
   y=starty;
   for(i=0; i<img->sy; i++) { /* for each row */
-    if((y >= 0) && (y < h)) {
+    if((y >= -0.5) && (y < h)) {
       x = startx;
       for(j=0; j<img->sx; j++) {
-	if((x >= 0) && (x < w)) {
+	if((x >= -0.5) && (x < w)) {
 	  pixel = gif->pixels[MS_NINT(y)][MS_NINT(x)];	  
 	  if(cmap[pixel] != -1)
 	    img->pixels[i][j] = cmap[pixel];
@@ -1088,7 +1088,7 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   unsigned char pixel;
   JSAMPARRAY buffer;
 
-  int startx, starty; /* this is where we start out reading */
+  double startx, starty; /* this is where we start out reading */
   double skipx,skipy; /* skip factors (x and y) */ 
   double x,y;
 
@@ -1164,13 +1164,13 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   y=starty;
 
   for(i=0; i<img->sy; i++) { /* for each row */
-    if((y >= 0) && (y < cinfo.output_height)) {
+    if((y >= -0.5) && (y < cinfo.output_height)) {
       
       jpeg_read_scanlines(&cinfo, buffer, 1);
       
       x = startx;
       for(j=0; j<img->sx; j++) {
-	if((x >= 0) && (x < cinfo.output_width)) {
+	if((x >= -0.5) && (x < cinfo.output_width)) {
 	  pixel = buffer[0][MS_NINT(x)];
 	  if(cmap[pixel] != -1)
 	    img->pixels[i][j] = cmap[pixel];
@@ -1469,7 +1469,7 @@ static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   	int w, h;
 
   	int pixel;
-  	int startx, starty; 	/* this is where we start out reading */
+  	double startx, starty; 	/* this is where we start out reading */
 
   	double ulx, uly; 	/* upper left-hand coordinates */
   	double skipx,skipy; 	/* skip factors (x and y) */  
