@@ -67,6 +67,7 @@ char *msGetErrorString(char *delimiter);
 #ifndef SWIG
 void msSetError(int code, const char *message, const char *routine, ...);
 void msWriteError(FILE *stream);
+void msWriteErrorXML(FILE *stream);
 char *msGetErrorCodeString(int code);
 
 struct map_obj;

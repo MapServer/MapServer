@@ -288,6 +288,17 @@ void msWriteError(FILE *stream)
   }
 }
 
+void msWriteErrorXML(FILE *stream)
+{
+  errorObj *ms_error = msGetErrorObj();
+
+  while (ms_error && ms_error->code != MS_NOERR)
+  {
+      fprintf(stream, "%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+      ms_error = ms_error->next;
+  }
+}
+
 void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   gdFontPtr font = gdFontSmall;
   gdImagePtr img=NULL;
