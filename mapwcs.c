@@ -47,6 +47,8 @@ static int msWCSException(const char *version)
   // printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
   printf("Content-type: text/xml%c%c",10,10);
 
+  // TODO: see WCS specific exception schema (Appendix 6)
+
   printf("<ServiceExceptionReport\n");
   printf("xmlns=\"http://www.opengis.net/ogc\" ");
   printf("xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
@@ -589,6 +591,21 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
     imageObj   *image;
     layerObj   *layer;
     int         status, i;
+
+    // Did we get a TIME value (support only a single value for now)
+    
+    /*
+    ** Time support is ONLY valid with layer-based TILEINDEXes. Basically we end up setting the filter and filteritem
+    ** values in the appropriate layer.
+    */
+    
+    // Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands)
+    
+    /*
+    ** Note that we'll support filtering based on band, pixel values and potentially on arbitrary TILEINDEX attributes.
+    ** The xxxxx_item will tell us which of the 3 cases we are dealing with. Here we are setting TILEINDEX filter and/or
+    ** layer processing values.
+    */
 
     // Did we get BBOX values?  
 
