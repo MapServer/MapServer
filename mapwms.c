@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.127  2004/10/27 10:20:04  assefa
+ * Correct bug with format in GetLegendGraphic (Bug 991).
+ *
  * Revision 1.126  2004/10/25 17:38:44  julien
  * Remove debug info tag.
  *
@@ -2195,59 +2198,61 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
                     pszFormat);
          return msWMSException(map, nVersion, "InvalidFormat");
      }
+     msApplyOutputFormat(&(map->outputformat), psFormat, 0,
+                          MS_NOOVERRIDE, MS_NOOVERRIDE );
 
-	 if ( psRule == NULL )
-	 {
-		 // turn off all other layers
-		 for (i=0; i<map->numlayers; i++)
-		 {
-				 if (map->layers[i].name &&
-						 strcasecmp(map->layers[i].name, pszLayer) != 0)
-				 {
-						 map->layers[i].status = MS_OFF;
-				 }
-			}
-
-		 // if SCALE was provided in request, calculate an extent and use a default width and height
-		 if ( psScale != NULL )
-		 {
-			 double center_y, scale, cellsize;
-
-			 scale = atof(psScale);
-			 map->width = 600;
-			 map->height = 600;
-			 center_y = 0.0;
-
-			 cellsize = (scale/map->resolution)/msInchesPerUnit(map->units, center_y);
-
-			 map->extent.minx = 0.0 - cellsize*map->width/2.0;
-			 map->extent.miny = 0.0 - cellsize*map->height/2.0;
-		     map->extent.maxx = 0.0 + cellsize*map->width/2.0;
-		     map->extent.maxy = 0.0 + cellsize*map->height/2.0;
-		 }
-		 img = msDrawLegend(map);
-	 }
-	 else
-	 {
-     //set the map legend parameters
-     if (nWidth < 0)
+     if ( psRule == NULL )
      {
-         if (map->legend.keysizex > 0)
-           nWidth = map->legend.keysizex;
-         else
-           nWidth = 20; //default values : this in not defined in the specs
-     }
-     if (nHeight < 0)
-     {
-         if (map->legend.keysizey > 0)
-           nHeight = map->legend.keysizey;
-         else
-           nHeight = 20;
-     }
+         // turn off all other layers
+         for (i=0; i<map->numlayers; i++)
+         {
+             if (map->layers[i].name &&
+                 strcasecmp(map->layers[i].name, pszLayer) != 0)
+             {
+                 map->layers[i].status = MS_OFF;
+             }
+         }
 
-     img = msCreateLegendIcon(map, &map->layers[iLayerIndex], NULL,
-                              nWidth, nHeight);
-	 }
+         // if SCALE was provided in request, calculate an extent and use a default width and height
+         if ( psScale != NULL )
+         {
+             double center_y, scale, cellsize;
+
+             scale = atof(psScale);
+             map->width = 600;
+             map->height = 600;
+             center_y = 0.0;
+
+             cellsize = (scale/map->resolution)/msInchesPerUnit(map->units, center_y);
+
+             map->extent.minx = 0.0 - cellsize*map->width/2.0;
+             map->extent.miny = 0.0 - cellsize*map->height/2.0;
+             map->extent.maxx = 0.0 + cellsize*map->width/2.0;
+             map->extent.maxy = 0.0 + cellsize*map->height/2.0;
+         }
+         img = msDrawLegend(map);
+     }
+     else
+     {
+         //set the map legend parameters
+         if (nWidth < 0)
+         {
+             if (map->legend.keysizex > 0)
+               nWidth = map->legend.keysizex;
+             else
+               nWidth = 20; //default values : this in not defined in the specs
+         }
+         if (nHeight < 0)
+         {
+             if (map->legend.keysizey > 0)
+               nHeight = map->legend.keysizey;
+             else
+               nHeight = 20;
+         }
+
+         img = msCreateLegendIcon(map, &map->layers[iLayerIndex], NULL,
+                                  nWidth, nHeight);
+     }
 
      if (img == NULL)
       return msWMSException(map, nVersion, NULL);
