@@ -1259,6 +1259,8 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
     char *path, *fullPath;
     int i;
 
+    if(fontset == NULL) return(0);
+    if(fontset->filename == NULL) return(0);
     path = getPath(fontset->filename);
 
     stream = fopen(fontset->filename, "r");

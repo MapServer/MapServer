@@ -731,7 +731,7 @@ int msDBFGetItemIndex(DBFHandle dbffile, char *name)
   }
 
   sprintf(ms_error.message, "Item %s not found.", name);
-  msSetError(MS_DBFERR, ms_error.message, "msFindRecords()");  
+  msSetError(MS_DBFERR, ms_error.message, "msDBFGetItemIndex()");  
   return(-1); /* item not found */
 }
 

@@ -160,7 +160,7 @@ OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: $(MAKE_GD) $(MAKE_EGIS) libmap.a shp2img legend \
+all: $(MAKE_GD) $(MAKE_EGIS) libmap.a shp2img shp2pdf legend \
 	mapserv shptree shptreevis shptreetst scalebar sortshp perlvars \
 	tile4ms @MAKE_PHPMS@
 
@@ -190,6 +190,9 @@ libmap: libmap.a
 libmap.a: map.h $(OBJS) map.h
 	$(AR) libmap.a $(OBJS)
 	$(RANLIB) libmap.a
+
+shp2pdf: libmap.a shp2pdf.o map.h
+	$(CC) $(CFLAGS) shp2pdf.o $(LDFLAGS) $(STATIC_LIBS) -o shp2pdf
 
 shp2img: libmap.a  shp2img.o map.h
 	$(CC) $(CFLAGS) shp2img.o $(LDFLAGS) $(STATIC_LIBS) -o shp2img
@@ -245,7 +248,7 @@ install: libmap.a
 	cp -f map.h $(HEADER_INSTALL)
 
 clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
-	rm -f libmap.a *.o shp2img mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars
+	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars
 
 sorta-clean:
 	rm -f *.o
