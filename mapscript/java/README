@@ -1,0 +1,31 @@
+Java mapscript
+==============
+
+Before you begin, the JAVA_HOME environment variable must be properly set
+and the Java programs "java" and "javac" must be on your path.
+
+SWIG wrappers
+-------------
+
+MapServer releases, beginning with 4.2.4, contain pre-generated wrapper code
+(mapscript/java/mapscript_wrap.c) and class files (mapscript/java/edu).  You
+may generate your own using the "interface" target in the Java Makefile.
+
+Installation
+------------
+
+After MapServer is configured and compiled, change directory to the Java
+mapscript location and execute::
+
+    $ cd mapscript/java
+    $ make
+    $ make test
+
+Copy the shared libmapscript and mapscript.jar to the appropriate location.
+
+Windows
+-------
+
+If any user has a robust win32 Makefile or build script to contribute to the
+MapServer project, we would be delighted to incorporate it.
+
