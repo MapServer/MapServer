@@ -347,7 +347,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
 
   if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
 
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF) 
   if(layer->class[c].label.type == MS_TRUETYPE) { 
     layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
     layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
@@ -440,7 +440,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
   if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
 
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
   if(layer->class[c].label.type == MS_TRUETYPE) { 
     layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
     layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
