@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/10/21 10:54:17  assefa
+ * Add postgis date_trunc support.
+ *
  * Revision 1.7  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -52,6 +55,19 @@ void msGettimeofday(struct mstimeval *t, void *__not_used_here__);
 #  define  msGettimeofday(t,u) gettimeofday(t,u)
 #endif
 
+typedef enum 
+{
+    TIME_RESOLUTION_UNDEFINED = -1,
+    TIME_RESOLUTION_MICROSECOND =0,
+    TIME_RESOLUTION_MILLISECOND =1,
+    TIME_RESOLUTION_SECOND =2,
+    TIME_RESOLUTION_MINUTE =3,
+    TIME_RESOLUTION_HOUR =4,
+    TIME_RESOLUTION_DAY =5,
+    TIME_RESOLUTION_MONTH =6,
+    TIME_RESOLUTION_YEAR =7
+}MS_TIME_RESOLUTION;
+
 // function prototypes
 void msTimeInit(struct tm *time);
 int msDateCompare(struct tm *time1, struct tm *time2);
@@ -61,5 +77,6 @@ int msParseTime(const char *string, struct tm *tm);
 int msTimeMatchPattern(char *timestring, char *pattern);
 void msSetLimitedPattersToUse(char *patternstring);
 void msUnsetLimitedPatternToUse();
+int msTimeGetResolution(const char *timestring);
 
 #endif /* MAPTIME_H */

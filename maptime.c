@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/10/21 10:54:17  assefa
+ * Add postgis date_trunc support.
+ *
  * Revision 1.13  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -47,24 +50,25 @@ typedef struct {
   regex_t *regex;
   char  format[32];  
   char userformat[32];
+  MS_TIME_RESOLUTION resolution;
 } timeFormatObj;
 
 #define MS_NUMTIMEFORMATS 13
 
 timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
-  {"^[0-9]{8}", NULL, "%Y%m%d","YYYYMMDD"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}", NULL, "%Y-%m-%dT%H", "YYYY-MM-DDTHH"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}", NULL, "%Y-%m-%d %H", "YYYY-MM-DD HH"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}", NULL, "%Y-%m-%d", "YYYY-MM-DD"},
-  {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM"},
-  {"^[0-9]{4}", NULL, "%Y", "YYYY"},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ"},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SSZ"},
+  {"^[0-9]{8}", NULL, "%Y%m%d","YYYYMMDD",TIME_RESOLUTION_DAY},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ",TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS",TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS", TIME_RESOLUTION_SECOND},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM",TIME_RESOLUTION_MINUTE},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM",TIME_RESOLUTION_MINUTE},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}", NULL, "%Y-%m-%dT%H", "YYYY-MM-DDTHH",TIME_RESOLUTION_HOUR},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}", NULL, "%Y-%m-%d %H", "YYYY-MM-DD HH",TIME_RESOLUTION_HOUR},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}", NULL, "%Y-%m-%d", "YYYY-MM-DD", TIME_RESOLUTION_DAY},
+  {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM",TIME_RESOLUTION_MONTH},
+  {"^[0-9]{4}", NULL, "%Y", "YYYY",TIME_RESOLUTION_YEAR},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ",TIME_RESOLUTION_SECOND},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SSZ", TIME_RESOLUTION_SECOND},
 };
 
 int *ms_limited_pattern = NULL;
@@ -277,4 +281,36 @@ int msParseTime(const char *string, struct tm *tm) {
 
   msSetError(MS_REGEXERR, "Unrecognized date or time format (%s).", "msParseTime()", string);
   return(MS_FALSE);
+}
+
+/**
+ * Parse the time string and return the reslution
+ */
+int msTimeGetResolution(const char *timestring)
+{
+    int i=0;
+
+    if (!timestring)
+      return -1;
+
+     for(i=0; i<MS_NUMTIMEFORMATS; i++)
+     {
+         if(!ms_timeFormats[i].regex) 
+         {
+             ms_timeFormats[i].regex = (regex_t *) malloc(sizeof(regex_t));                
+             if(regcomp(ms_timeFormats[i].regex, ms_timeFormats[i].pattern, 
+                        REG_EXTENDED|REG_NOSUB) != 0) 
+             {
+                 msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[i].pattern);
+                 return -1;
+             }
+         }
+         // test the expression against the string
+         if(regexec(ms_timeFormats[i].regex, timestring, 0, NULL, 0) == 0) 
+         { // match   
+             return ms_timeFormats[i].resolution;
+         }
+     }
+      
+     return -1;
 }

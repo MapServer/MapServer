@@ -27,12 +27,16 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2004/10/21 10:54:17  assefa
+ * Add postgis date_trunc support.
+ *
  * Revision 1.95  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
  */
 
 #include "map.h"
+#include "maptime.h"
 
 MS_CVSID("$Id$")
 
@@ -1104,6 +1108,237 @@ int msLayerClearProcessing( layerObj *layer ) {
     return layer->numprocessing;
 }
 
+
+int msPOSTGISLayerSetTimeFilter(layerObj *lp, 
+                                const char *timestring, 
+                                const char *timefield)
+{
+    char *tmpstimestring = NULL;
+    char *timeresolution = NULL;
+    int timesresol = -1;
+    char **atimes, **tokens = NULL;
+    int numtimes,i, ntmp = 0;
+    char buffer[512];
+
+    buffer[0] = '\0';
+
+    if (!lp || !timestring || !timefield)
+      return MS_FALSE;
+
+    if (strstr(timestring, ",") == NULL && 
+        strstr(timestring, "/") == NULL) //discrete time
+      tmpstimestring = strdup(timestring);
+    else
+    {
+        atimes = split (timestring, ',', &numtimes);
+        if (atimes == NULL || numtimes < 1)
+          return MS_FALSE;
+
+        if (numtimes >= 1)
+        {
+            tokens = split(atimes[0],  '/', &ntmp);
+            if (ntmp == 2) //ranges
+            {
+                tmpstimestring = strdup(tokens[0]);
+                msFreeCharArray(tokens, ntmp);
+            }
+            else if (ntmp == 1) //multiple times
+            {
+                tmpstimestring = strdup(atimes[0]);
+            }
+        }
+        msFreeCharArray(atimes, numtimes);
+    }
+    if (!tmpstimestring)
+      return MS_FALSE;
+        
+    timesresol = msTimeGetResolution((const char*)tmpstimestring);
+    if (timesresol < 0)
+      return MS_FALSE;
+
+    free(tmpstimestring);
+
+    switch (timesresol)
+    {
+        case (TIME_RESOLUTION_SECOND):
+          timeresolution = strdup("second");
+          break;
+
+        case (TIME_RESOLUTION_MINUTE):
+          timeresolution = strdup("minute");
+          break;
+
+        case (TIME_RESOLUTION_HOUR):
+          timeresolution = strdup("hour");
+          break;
+
+        case (TIME_RESOLUTION_DAY):
+          timeresolution = strdup("day");
+          break;
+
+        case (TIME_RESOLUTION_MONTH):
+          timeresolution = strdup("month");
+          break;
+
+        case (TIME_RESOLUTION_YEAR):
+          timeresolution = strdup("year");
+          break;
+
+        default:
+          break;
+    }
+
+    if (!timeresolution)
+      return MS_FALSE;
+
+    //where date_trunc('month', _cwctstamp) = '2004-08-01'
+    if (strstr(timestring, ",") == NULL && 
+        strstr(timestring, "/") == NULL) //discrete time
+    {
+        if(lp->filteritem) free(lp->filteritem);
+        lp->filteritem = strdup(timefield);
+        if (&lp->filter)
+          freeExpression(&lp->filter);
+        
+
+        strcat(buffer, "(");
+
+        strcat(buffer, "date_trunc('");
+        strcat(buffer, timeresolution);
+        strcat(buffer, "', ");        
+        strcat(buffer, timefield);
+        strcat(buffer, ")");        
+        
+         
+        strcat(buffer, " = ");
+        strcat(buffer,  "'");
+        strcat(buffer, timestring);
+        
+        strcat(buffer,  "'");
+
+        strcat(buffer, ")");
+        
+        //loadExpressionString(&lp->filter, (char *)timestring);
+        loadExpressionString(&lp->filter, buffer);
+
+        free(timeresolution);
+        return MS_TRUE;
+    }
+    
+    atimes = split (timestring, ',', &numtimes);
+    if (atimes == NULL || numtimes < 1)
+      return MS_FALSE;
+
+    if (numtimes >= 1)
+    {
+        //check to see if we have ranges by parsing the first entry
+        tokens = split(atimes[0],  '/', &ntmp);
+        if (ntmp == 2) //ranges
+        {
+            msFreeCharArray(tokens, ntmp);
+            for (i=0; i<numtimes; i++)
+            {
+                tokens = split(atimes[i],  '/', &ntmp);
+                if (ntmp == 2)
+                {
+                    if (strlen(buffer) > 0)
+                      strcat(buffer, " OR ");
+                    else
+                      strcat(buffer, "(");
+
+                    strcat(buffer, "(");
+                    
+                    strcat(buffer, "date_trunc('");
+                    strcat(buffer, timeresolution);
+                    strcat(buffer, "', ");        
+                    strcat(buffer, timefield);
+                    strcat(buffer, ")");        
+ 
+                    strcat(buffer, " >= ");
+                    
+                    strcat(buffer,  "'");
+
+                    strcat(buffer, tokens[0]);
+                    
+                    strcat(buffer,  "'");
+                    strcat(buffer, " AND ");
+
+                    
+                    strcat(buffer, "date_trunc('");
+                    strcat(buffer, timeresolution);
+                    strcat(buffer, "', ");        
+                    strcat(buffer, timefield);
+                    strcat(buffer, ")");  
+
+                    strcat(buffer, " <= ");
+                    
+                    strcat(buffer,  "'");
+                    strcat(buffer, tokens[1]);
+                    
+                    strcat(buffer,  "'");
+                    strcat(buffer, ")");
+                }
+                 
+                msFreeCharArray(tokens, ntmp);
+            }
+            if (strlen(buffer) > 0)
+              strcat(buffer, ")");
+        }
+        else if (ntmp == 1) //multiple times
+        {
+            msFreeCharArray(tokens, ntmp);
+            strcat(buffer, "(");
+            for (i=0; i<numtimes; i++)
+            {
+                if (i > 0)
+                  strcat(buffer, " OR ");
+
+                strcat(buffer, "(");
+                  
+                strcat(buffer, "date_trunc('");
+                strcat(buffer, timeresolution);
+                strcat(buffer, "', ");        
+                strcat(buffer, timefield);
+                strcat(buffer, ")");   
+
+                strcat(buffer, " = ");
+                  
+                strcat(buffer,  "'");
+
+                strcat(buffer, atimes[i]);
+                
+                strcat(buffer,  "'");
+                strcat(buffer, ")");
+            } 
+            strcat(buffer, ")");
+        }
+        else
+        {
+            msFreeCharArray(atimes, numtimes);
+            return MS_FALSE;
+        }
+
+        msFreeCharArray(atimes, numtimes);
+
+        //load the string to the filter
+        if (strlen(buffer) > 0)
+        {
+            if(lp->filteritem) 
+              free(lp->filteritem);
+            lp->filteritem = strdup(timefield);     
+            if (&lp->filter)
+              freeExpression(&lp->filter);
+            loadExpressionString(&lp->filter, buffer);
+        }
+
+        free(timeresolution);
+        return MS_TRUE;
+                 
+    }
+    
+    return MS_FALSE;
+}
+     
 /**
   set the filter parameter for a time filter
 **/
@@ -1117,10 +1352,16 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
     char buffer[512];
     int addtimebacktics = 0;
 
+
     buffer[0] = '\0';
 
     if (!lp || !timestring || !timefield)
       return MS_FALSE;
+
+    if (lp->connectiontype == MS_POSTGIS)
+    {
+        return msPOSTGISLayerSetTimeFilter(lp,timestring, timefield);
+    }
 
     //for shape and ogr files time expressions are
     //delimited using backtics (ex `[TIME]` eq `2004-01-01`)
@@ -1185,9 +1426,6 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
 
     if (numtimes >= 1)
     {
-        
-        
-
         //check to see if we have ranges by parsing the first entry
         tokens = split(atimes[0],  '/', &ntmp);
         if (ntmp == 2) //ranges
