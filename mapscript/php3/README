@@ -314,7 +314,16 @@ and the MapServer Map File documentation at:
         Move layer up in the hierarcy of drawing. 
 
    boolean moveLayerDown(int layerindex)
-        Move layer down in the hierarcy of drawing.     
+        Move layer down in the hierarcy of drawing.
+
+   array   getlayersdrawingorder()
+        Return an array containing layer's index in the order which they
+        are drawn.
+
+   boolean  setlayersdrawingorder(array layeryindex)
+        Set the layer's order array. The argument passed must be a valid
+        array with all the layer's index. 
+        Return TRUE on success or else FALSE.
 
  LayerObj Class:
  ---------------

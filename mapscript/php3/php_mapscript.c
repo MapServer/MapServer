@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.73  2002/01/17 16:33:03  assefa
+ * Add function setlayersdrawingorder.
+ *
  * Revision 1.72  2002/01/17 03:36:43  dan
  * Added imageObj->pasteImage()
  *
@@ -240,6 +243,7 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_moveLayerDown(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -503,6 +507,7 @@ function_entry php_map_class_functions[] = {
     {"movelayerup",     php3_ms_map_moveLayerUp,        NULL},
     {"movelayerdown",   php3_ms_map_moveLayerDown,      NULL},
     {"getlayersdrawingorder",   php3_ms_map_getLayersDrawingOrder,  NULL},
+    {"setlayersdrawingorder",   php3_ms_map_setLayersDrawingOrder,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -3832,6 +3837,116 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 }
+
+/**********************************************************************
+ *                        map->setLayersDrawingOrder()
+ *
+ * Set the array used for the drawing order. 
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_getLayersDrawingOrder(array_layer_index)
+   array_layers_index : an array containing all the layer's index ordered
+                        by the drawing priority.
+                        Ex : for 3 layers in the map file, if 
+                            array[0] = 2
+                            array[1] = 0
+                            array[2] = 1
+                            will set the darwing order to layer 2, layer 0,
+                            and then layer 1.
+   Return TRUE on success or FALSE.
+   Note : the first element in the array is the one drawn first.*/
+DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis, *pArrayIndexes;
+    mapObj      *self=NULL;
+    int         nElements = 0;
+    int         i,j = 0;
+    int         bFound = 0;
+    int         *panIndexes = NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+    pval        **pValue = NULL;
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (ZEND_NUM_ARGS() != 1 || getParameters(ht,1,&pArrayIndexes)==FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+    
+        
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self == NULL)
+      RETURN_FALSE;
+
+    if (pArrayIndexes->type != IS_ARRAY) 
+    {
+        php_error(E_WARNING, 
+                  "setLayersDrawingOrder : expected array as parameter");
+        RETURN_FALSE;
+    }
+
+    nElements = zend_hash_num_elements(pArrayIndexes->value.ht);
+
+/* -------------------------------------------------------------------- */
+/*      validate that the array of index given has the same size as     */
+/*      the number of layers and also the the indexs are valid.         */
+/* -------------------------------------------------------------------- */
+    if (self->numlayers != nElements)
+    {
+        RETURN_FALSE;
+    }
+    panIndexes = (int *)malloc(sizeof(int)*nElements);
+    for (i=0; i<nElements; i++)
+    {
+        if (zend_hash_index_find(pArrayIndexes->value.ht, i, 
+                                 (void **)&pValue) == FAILURE)
+        {
+            RETURN_FALSE;
+        }
+        convert_to_long((*pValue));
+        panIndexes[i] = (*pValue)->value.lval;
+    }
+    
+    for (i=0; i<nElements; i++)
+    {
+        bFound = 0;
+        for (j=0; j<nElements; j++)
+        {
+            if (panIndexes[j] == i)
+            {
+                bFound = 1;
+                break;
+            }
+        }
+        if (!bFound)
+          RETURN_FALSE;
+    }
+/* -------------------------------------------------------------------- */
+/*    At this point the array is valid so update the layers order array.*/
+/* -------------------------------------------------------------------- */
+    for (i=0; i<nElements; i++)
+    {
+         self->layerorder[i] = panIndexes[i];
+    }
+
+    RETURN_TRUE;
+}       
+
+
 /* }}} */
 
 /*=====================================================================
