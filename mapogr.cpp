@@ -29,6 +29,11 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.42  2002/01/15 01:00:51  dan
+ * Attempt at fixing thick polygon outline problem (bug 92).  Also rewrote
+ * the symbol mapping for brushes and pens at the same time to use the same
+ * rules as point symbols.
+ *
  * Revision 1.41  2002/01/09 05:10:28  frank
  * avoid use of ms_error global
  *
@@ -1344,6 +1349,44 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
 }
 
 
+/**********************************************************************
+ *                     msOGRGetSymbolId()
+ *
+ * Returns a MapServer symbol number matching one of the symbols from
+ * the OGR symbol id string.  If not found then try to locate the
+ * default symbol name, and if not found return 0.
+ **********************************************************************/
+#ifdef USE_OGR
+static int msOGRGetSymbolId(symbolSetObj *symbolset, const char *pszSymbolId, 
+                            const char *pszDefaultSymbol)
+{
+    // Symbol name mapping:
+    // First look for the native symbol name, then the ogr-...
+    // generic name, and in last resort try pszDefaultSymbol if
+    // provided by user.
+    char  **params;
+    int   numparams;
+    int   nSymbol = -1;
+
+    if (pszSymbolId && pszSymbolId[0] != '\0' &&
+        (params = split(pszSymbolId, '.', &numparams))!=NULL)
+    {
+        for(int j=0; j<numparams && nSymbol == -1; j++)
+        {
+            nSymbol = msGetSymbolIndex(symbolset, params[j]);
+        }
+        msFreeCharArray(params, numparams);
+    }
+    if (nSymbol == -1 && pszDefaultSymbol)
+    {
+        nSymbol = msGetSymbolIndex(symbolset, (char*)pszDefaultSymbol);
+    }
+    if (nSymbol == -1)
+        nSymbol = 0;
+
+    return nSymbol;
+}
+#endif
 
 /**********************************************************************
  *                     msOGRLayerGetAutoStyle()
@@ -1480,40 +1523,59 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
               bIsPen = TRUE;
 
+              const char *pszPenName = poPenStyle->Id(bIsNull);
+              if (bIsNull) pszPenName = NULL;
+              int nPenColor = -1;
+              int nPenSymbol = 0;
+              int nPenSize = 1;
+
               // Check for Pen Pattern "ogr-pen-1": the invisible pen
               // If that's what we have then set pen color to -1
-              const char *pszName;
-              if ((pszName = poPenStyle->Id(bIsNull)) != NULL && 
-                  !bIsNull && strstr(pszName, "ogr-pen-1") != NULL)
+              if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL)
               {
-                  if (bIsBrush)
-                      c->outlinecolor = -1;
-                  else
-                      c->outlinecolor = c->color = -1;
+                  nPenColor = -1;
               }
               else
               {
                   if (poPenStyle->GetRGBFromString(poPenStyle->
                                                Color(bIsNull),r,g,b,t))
                   {
-                      // With multipart symbology, a pen color defines the 
-                      // outline color of a polygon
-                      if (bIsBrush)
-                          c->outlinecolor = msAddColor(map, r,g,b);
-                      else
-                          c->outlinecolor = c->color = msAddColor(map, r,g,b);
-                      // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, c->outlinecolor);
+                      nPenColor = msAddColor(map, r,g,b);
+                      // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, nPenColor);
                   }
 
-                  c->size = (int)poPenStyle->Width(bIsNull);
-                  if (c->size > 1 && !bIsNull)
+                  nPenSize = (int)poPenStyle->Width(bIsNull);
+                  if (bIsNull)
+                      nPenSize = 1;
+                  if (pszPenName!=NULL || nPenSize > 1)
                   {
-                      // If user provided a "default-circle" symbol then we'll
-                      // use it for producing thick lines.  Otherwise symbol 
-                      // will be set to -1 and line will be 1 pixel wide.
-                      c->symbol = msGetSymbolIndex(&(map->symbolset), 
-                                                   "default-circle");
+                      // Thick line or patterned line style
+                      //
+                      // First try to match pen name in symbol file
+                      // If not found then look for a "default-circle" symbol
+                      // that we'll use for producing thick lines.  
+                      // Otherwise symbol will be set to 0 and line will 
+                      // be 1 pixel wide.
+                      nPenSymbol = msOGRGetSymbolId(&(map->symbolset),
+                                                    pszPenName, 
+                                           (nPenSize>1)?"default-circle":NULL);
                   }
+              }
+
+              if (bIsBrush)
+              {
+                  // This is a multipart symbology, so pen defn goes in the
+                  // overlaysymbol params (also set outlinecolor just in case)
+                  c->outlinecolor = c->overlayoutlinecolor = nPenColor;
+                  c->overlaysize = nPenSize;
+                  c->overlaysymbol = nPenSymbol;
+              }
+              else
+              {
+                  // Single part symbology
+                  c->outlinecolor = c->color = nPenColor;
+                  c->symbol = nPenSymbol;
+                  c->size = nPenSize;
               }
 
           }
@@ -1532,8 +1594,19 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                                  BackColor(bIsNull),r,g,b,t) 
                   && !bIsNull)
               {
-                  c->label.backgroundcolor = msAddColor(map, r,g,b);
+                  c->backgroundcolor = msAddColor(map, r,g,b);
               }
+
+              // Symbol name mapping:
+              // First look for the native symbol name, then the ogr-...
+              // generic name.  
+              // If none provided or found then use 0: solid fill
+              
+              const char *pszName = poBrushStyle->Id(bIsNull);
+              if (bIsNull)
+                  pszName = NULL;
+              c->symbol = msOGRGetSymbolId(&(map->symbolset), pszName, NULL);
+
           }
           else if (poStylePart->GetType() == OGRSTCSymbol)
           {
@@ -1551,29 +1624,13 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               // First look for the native symbol name, then the ogr-...
               // generic name, and in last resort try "default-marker" if
               // provided by user.
-              const char *pszName;
-              char  **params;
-              int   numparams;
-              if ((pszName = poSymbolStyle->Id(bIsNull)) != NULL && 
-                  !bIsNull && pszName[0] != '\0' &&
-                  (params = split(pszName, '.', &numparams))!=NULL)
-              {
-                  c->symbol = -1;
-                  for(int j=0; j<numparams && c->symbol == -1; j++)
-                  {
-                      c->symbol = msGetSymbolIndex(&(map->symbolset), 
-                                                   params[j]);
-                  }
-                  msFreeCharArray(params, numparams);
-              }
-              if (c->symbol == -1)
-              {
-                  c->symbol = msGetSymbolIndex(&(map->symbolset),
-                                               "default-marker");
-              }
-              if (c->symbol == -1)
-                  c->symbol = 0;
+              const char *pszName = poSymbolStyle->Id(bIsNull);
+              if (bIsNull)
+                  pszName = NULL;
 
+              c->symbol = msOGRGetSymbolId(&(map->symbolset),
+                                           pszName, 
+                                           "default-marker");
           }
 
           delete poStylePart;
