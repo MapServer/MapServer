@@ -42,6 +42,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   long numparts, numsubparts, numpoints;
   long *subparts=NULL;
   SE_POINT *points=NULL;
+  SE_ENVELOPE envelope;
   long type, status;
 
   lineObj line={0,NULL};
@@ -121,6 +122,13 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 
   free(subparts);
   free(points);
+
+  // finally copy the bounding box for the entire shape
+  SE_shape_get_extent(inshp, 0, &envelope);
+  outshp->bounds.minx = envelope.minx;
+  outshp->bounds.miny = envelope.miny;
+  outshp->bounds.maxx = envelope.maxx;
+  outshp->bounds.maxy = envelope.maxy;
 
   return(MS_SUCCESS);
 }

@@ -53,11 +53,11 @@ macros = [(x[2:], None) for x in ms_macros]
 # Had to specify 'extra_link_args = ["-static", "-lgd"]' because
 # mapscript requires the gd library, which on my system is static.
 setup(name = "mapscript",
-      version = "3.6.3",
+      version = "3.7",
       description = "Enables Python to manipulate shapefiles.",
       author = "Mapserver project - SWIGged MapScript library.",
       url = "http://mapserver.gis.umn.edu",
-      ext_modules = [Extension("_mapscript", ["mapscript.c"],
+      ext_modules = [Extension("_mapscript", ["mapscript_wrap.c"],
                                include_dirs = [sysconfig.get_python_inc()],
                                library_dirs = lib_dirs,
                                libraries = libs,
