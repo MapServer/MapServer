@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.31  2004/09/17 16:31:38  assefa
+ * Correct bug with spatial filters Dwithin and Intersect.
+ *
  * Revision 1.30  2004/08/17 17:42:04  assefa
  * Correct bug in FLTGetQueryResultsForNode.
  *
@@ -2178,10 +2181,16 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /* ==================================================================== */
     if (psFilterNode->psLeftNode && psFilterNode->psRightNode &&
         ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") == 0) ||
-         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") == 0)))
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") == 0) ||
+         (strcasecmp(psFilterNode->psLeftNode->pszValue, "DWithin") == 0) ||
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "DWithin") == 0) ||
+         (strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") == 0) ||
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "Intersect") == 0)))
     {
         strcat(szBuffer, " (");
-        if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0)
+        if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0 &&
+            strcasecmp(psFilterNode->psLeftNode->pszValue, "DWithin") != 0 &&
+            strcasecmp(psFilterNode->psLeftNode->pszValue, "Intersect") != 0)
           pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
         else
           pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
@@ -2571,7 +2580,7 @@ int FTLHasSpatialFilter(FilterEncodingNode *psNode)
           return MS_TRUE;
     }
     else if (FLTIsBBoxFilter(psNode) || FLTIsPointFilter(psNode) ||
-             FLTIsLineFilter(psNode))
+             FLTIsLineFilter(psNode) || FLTIsPolygonFilter(psNode))
       return MS_TRUE;
 
 
