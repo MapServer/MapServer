@@ -13,40 +13,50 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-Version 3.7-dev (CVS)
----------------------
+Version 4.0-dev (CVS)
+------------------------------
 
-- Added imagemap outputformat, which makes possible use of client-side imagemaps in browsers
+-
+
+Version 4.0-beta1 (2003-06-06)
+------------------------------
+
+- Added imagemap outputformat, which makes possible use of client-side 
+  imagemaps in browsers
 
 - Added MySQL support for non-spatial OpenGIS Simple Features SQL stored data
 
-- msQueryByShape and msQueryByFeature honor layer tolerances. In effect you can to buffered
-  queries now. At the momoment only polygon select features are supported, but there's nothing
-  inherent in the underlying computations that says lines won't work as well.
+- msQueryByShape and msQueryByFeature honor layer tolerances. In effect you
+  can to buffered queries now. At the momoment only polygon select features
+  are supported, but there's nothing inherent in the underlying computations
+  that says lines won't work as well.
 
-- Simple one-to-one joins are working again. Reworked the join code so that table connections
-  are persistant within a join (across joins is a todo). Joins, like layers are wrapped with
-  a connection neutral front end, that sets us up to do MySQL or whatever in addition to XBase.
+- Simple one-to-one joins are working again. Reworked the join code so that
+  table connections are persistant within a join (across joins is a todo).
+  Joins, like layers are wrapped with a connection neutral front end, that
+  sets us up to do MySQL or whatever in addition to XBase.
 
-- Removed shapepath argument to all layer access functions (affects MapScript). It's still used
-  but we leverage the layer pointer back to the parent mapObj so the API is cleaner.
+- Removed shapepath argument to all layer access functions (affects MapScript).
+  It's still used but we leverage the layer pointer back to the parent mapObj
+  so the API is cleaner.
 
-- Changed default presentation of feature attributes to escape a few problematic
-  characters for HTML display (eg. > becomes &gt;). Added [itemname_raw] substitution
-  to allow access to unaltered data.
+- Changed default presentation of feature attributes to escape a few 
+  problematic characters for HTML display (eg. > becomes &gt;). 
+  Added [itemname_raw] substitution to allow access to unaltered data.
 
 - Added initial version of Jan Hartman's connection pooling code.
 
 - Replaced libwww with libcurl for WMS/WFS client HTTP requests.
   (libcurl 7.10 required, see http://curl.haxx.se/libcurl/c/)
 
-- Added CONNECTION to the list of mapfile parameters that can accept %variable% substitutions
-  when processed by the cgi version. This is useful for passing in username and/or passwords
-  to database data sources.
+- Added CONNECTION to the list of mapfile parameters that can accept 
+  %variable% substitutions when processed by the cgi version. This is useful
+  for passing in username and/or passwords to database data sources.
 
-- Added support for DATA and TEMPLATE (header/footer/etc...) filtering using an
-  regex declared in the mapfile (DATAPATTERN and TEMPLATEPATTERN). Certain parameters
-  in a mapfile cannot be changed via a URL without first being filtered.
+- Added support for DATA and TEMPLATE (header/footer/etc...) filtering using
+  an regex declared in the mapfile (DATAPATTERN and TEMPLATEPATTERN). 
+  Certain parameters in a mapfile cannot be changed via a URL without first
+  being filtered.
 
 - Added support for enviroment variable MS_MAPFILE_PATTERN. This allows you to
   override the default regex in favor of one more restrictive (I would hope) of
@@ -54,13 +64,15 @@ Version 3.7-dev (CVS)
 
 - Disabled CGI SAVEMAP option.
 
-- Removed CGI TEMPLATE option since you can use the  map_web_template syntax. Simplifies 
-  security maintenance by only having to deal with this option in a single place.
+- Removed CGI TEMPLATE option since you can use the map_web_template syntax.
+  Simplifies security maintenance by only having to deal with this option 
+  in a single place.
 
-- Added offset support (styleObj) for raster based output (GD for sure, not quite 
-  sure how OGR output is created although I believe is uses GD anyway). This allows
-  for feature drop shadows and support for cool linear symbols like used to be
-  supported in pre-3.4 versions. These offsets are not scalable at the moment.
+- Added offset support (styleObj) for raster based output (GD for sure, not
+  quite sure how OGR output is created although I believe is uses GD anyway).
+  This allows for feature drop shadows and support for cool linear symbols
+  like used to be supported in pre-3.4 versions. These offsets are not 
+  scalable at the moment.
 
 - Null shapes (attributes but no vertices) are skipped for shapefiles using
   the msLayerNextShape interface. Otherwise applications should check the
@@ -71,9 +83,9 @@ Version 3.7-dev (CVS)
   allocated. The cache is still intact following rendering for post-processing
   using MapScript.
 
-- Fixed screw up in pre-processing of logical expressions for item lists. Under
-  certain circumstances that list could get corrupted and expressions would
-  fail.
+- Fixed screw up in pre-processing of logical expressions for item lists.
+  Under certain circumstances that list could get corrupted and expressions
+  would fail.
 
 - Added NOT operator to expression parser.
 
