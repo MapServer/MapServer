@@ -65,10 +65,10 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
   }
   else if (strcasecmp(wms_exception_format, "WMS_XML") == 0) // Only in V1.0.0 
   {
-    printf("Content-type: text/xml%c%c",10,10);
-    printf("<WMTException version=\"1.0.0\">\n");
+    msIO_printf("Content-type: text/xml%c%c",10,10);
+    msIO_printf("<WMTException version=\"1.0.0\">\n");
     msWriteErrorXML(stdout);
-    printf("</WMTException>\n");
+    msIO_printf("</WMTException>\n");
   }
   else // XML error, the default: SE_XML (1.0.1 to 1.0.7)
        // or application/vnd.ogc.se_xml (1.0.8, 1.1.0 and later)
@@ -76,52 +76,52 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     if (nVersion <= OWS_1_0_7)
     {
       // In V1.0.1 to 1.0.7, the MIME type was text/xml
-      printf("Content-type: text/xml%c%c",10,10);
+      msIO_printf("Content-type: text/xml%c%c",10,10);
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                          NULL, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
-      printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
+      msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
 
-      printf("<ServiceExceptionReport version=\"1.0.1\">\n");
+      msIO_printf("<ServiceExceptionReport version=\"1.0.1\">\n");
     }
     else if (nVersion <= OWS_1_1_0)
     {
       // In V1.0.8, 1.1.0 and later, we have OGC-specific MIME types
       // we cannot return anything else than application/vnd.ogc.se_xml here.
-      printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+      msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                          NULL, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                          "ISO-8859-1");
 
-       printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n");
+       msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n");
 
-      printf("<ServiceExceptionReport version=\"1.1.0\">\n");        
+      msIO_printf("<ServiceExceptionReport version=\"1.1.0\">\n");        
     }
     else //1.1.1
     {
-        printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+        msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
         msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                            NULL, "wms_encoding", OWS_NOERR,
                   "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                            "ISO-8859-1");
 
-        printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
-        printf("<ServiceExceptionReport version=\"1.1.1\">\n");  
+        msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
+        msIO_printf("<ServiceExceptionReport version=\"1.1.1\">\n");  
     }
 
 
     if (exception_code)
-      printf("<ServiceException code=\"%s\">\n", exception_code);
+      msIO_printf("<ServiceException code=\"%s\">\n", exception_code);
     else
-      printf("<ServiceException>\n");
+      msIO_printf("<ServiceException>\n");
     msWriteErrorXML(stdout);
-    printf("</ServiceException>\n");
-    printf("</ServiceExceptionReport>\n");
+    msIO_printf("</ServiceException>\n");
+    msIO_printf("</ServiceExceptionReport>\n");
   }
 
   return MS_FAILURE; // so that we can call 'return msWMSException();' anywhere
@@ -504,7 +504,7 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
   const char *fmt;
   char *encoded;
 
-  printf("    <%s>\n", request);
+  msIO_printf("    <%s>\n", request);
 
   // We expect to receive a NULL-terminated args list of formats
   va_start(argp, formats);
@@ -523,27 +523,27 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
           encoded = msEncodeHTMLEntities(fmt);
       }
 
-      printf("      <Format>%s</Format>\n", encoded);
+      msIO_printf("      <Format>%s</Format>\n", encoded);
       msFree(encoded);
 
       fmt = va_arg(argp, const char *);
   }
   va_end(argp);
 
-  printf("      <DCPType>\n");
-  printf("        <HTTP>\n");
+  msIO_printf("      <DCPType>\n");
+  msIO_printf("        <HTTP>\n");
   // The URL should already be HTML encoded.
   if (nVersion == OWS_1_0_0) {
-    printf("          <Get onlineResource=\"%s\" />\n", script_url);
-    printf("          <Post onlineResource=\"%s\" />\n", script_url);
+    msIO_printf("          <Get onlineResource=\"%s\" />\n", script_url);
+    msIO_printf("          <Post onlineResource=\"%s\" />\n", script_url);
   } else {
-    printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", script_url);
-    printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", script_url);
+    msIO_printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", script_url);
+    msIO_printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", script_url);
   }
 
-  printf("        </HTTP>\n");
-  printf("      </DCPType>\n");
-  printf("    </%s>\n", request);
+  msIO_printf("        </HTTP>\n");
+  msIO_printf("      </DCPType>\n");
+  msIO_printf("    </%s>\n", request);
 }
 
 
@@ -572,10 +572,10 @@ void msWMSPrintScaleHint(const char *tabspace, double minscale,
 
   if (scalehintmin > 0.0 || scalehintmax > 0.0)
   {
-      printf("%s<ScaleHint min=\"%g\" max=\"%g\" />\n", 
+      msIO_printf("%s<ScaleHint min=\"%g\" max=\"%g\" />\n", 
              tabspace, scalehintmin, scalehintmax);
       if (scalehintmax == 0.0)
-          printf("%s<!-- WARNING: Only MINSCALE and no MAXSCALE specified in "
+          msIO_printf("%s<!-- WARNING: Only MINSCALE and no MAXSCALE specified in "
                  "the mapfile. A default value of 0 has been returned for the "
                  "Max ScaleHint but this is probably not what you want. -->\n",
                  tabspace);
@@ -597,7 +597,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
 
    if (nVersion <= OWS_1_0_7)
    {
-       printf("%s    <Layer queryable=\"%d\">\n", 
+       msIO_printf("%s    <Layer queryable=\"%d\">\n", 
               indent, msIsLayerQueryable(lp));
    }
    else
@@ -609,7 +609,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        if (lp->connectiontype == MS_WMS)
            cascaded = 1;
 
-       printf("%s    <Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
+       msIO_printf("%s    <Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
               indent, msIsLayerQueryable(lp), opaque, cascaded);
    }
 
@@ -650,7 +650,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
            projstring = msGetEPSGProj(&(lp->projection), &(lp->metadata), 
                                       MS_FALSE);
            if (!projstring)
-             fprintf(stdout, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata");
+             msIO_fprintf(stdout, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata");
            else
            {
                tokens = split(projstring, ' ', &n);
@@ -659,7 +659,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                    for(i=0; i<n; i++)
                    {
                        encoded = msEncodeHTMLEntities(tokens[i]);
-                       fprintf(stdout, "        <SRS>%s</SRS>\n", encoded);
+                       msIO_fprintf(stdout, "        <SRS>%s</SRS>\n", encoded);
                        msFree(encoded);
                    }
 
@@ -690,7 +690,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                    for(i=0; i<n; i++)
                    {
                        encoded = msEncodeHTMLEntities(tokens[i]);
-                       fprintf(stdout, "        <SRS>%s</SRS>\n", encoded);
+                       msIO_fprintf(stdout, "        <SRS>%s</SRS>\n", encoded);
                        msFree(encoded);
                    }
 
@@ -728,7 +728,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
 
    msWMSPrintScaleHint("        ", lp->minscale, lp->maxscale, map->resolution);
     
-   printf("%s    </Layer>\n", indent);
+   msIO_printf("%s    </Layer>\n", indent);
       
    return MS_SUCCESS;
 }
@@ -781,36 +781,36 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   }
 
   if (nVersion <= OWS_1_0_7) 
-      printf("Content-type: text/xml%c%c",10,10);  // 1.0.0 to 1.0.7
+      msIO_printf("Content-type: text/xml%c%c",10,10);  // 1.0.0 to 1.0.7
   else
-      printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.0.8, 1.1.0 and later
+      msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.0.8, 1.1.0 and later
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                      NULL, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                 "ISO-8859-1");
-  printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
-  printf(" [\n");
+  msIO_printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
+  msIO_printf(" [\n");
 
   // some mapserver specific declarations will go here
-  printf(" <!ELEMENT VendorSpecificCapabilities EMPTY>\n");
+  msIO_printf(" <!ELEMENT VendorSpecificCapabilities EMPTY>\n");
 
-  printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
+  msIO_printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
 
-  printf("<WMT_MS_Capabilities version=\"%s\">\n", 
+  msIO_printf("<WMT_MS_Capabilities version=\"%s\">\n", 
          msOWSGetVersionString(nVersion, szVersionBuf));
 
   // Report MapServer Version Information
-  printf("\n<!-- %s -->\n\n", msGetVersion());
+  msIO_printf("\n<!-- %s -->\n\n", msGetVersion());
 
   // WMS definition
-  printf("<Service>\n");
+  msIO_printf("<Service>\n");
 
   // Service name is defined by the spec and changed at v1.0.0
   if (nVersion <= OWS_1_0_7) 
-      printf("  <Name>GetMap</Name>\n");  // v 1.0.0 to 1.0.7
+      msIO_printf("  <Name>GetMap</Name>\n");  // v 1.0.0 to 1.0.7
   else
-      printf("  <Name>OGC:WMS</Name>\n"); // v 1.1.0+
+      msIO_printf("  <Name>OGC:WMS</Name>\n"); // v 1.1.0+
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wms_title", 
@@ -839,9 +839,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   }
 
   if (nVersion== OWS_1_0_0)
-    printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+    msIO_printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
   else
-    printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url_encoded);
+    msIO_printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url_encoded);
 
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
@@ -855,11 +855,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                            "wms_accessconstraints", OWS_NOERR, 
                         "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
  
-  printf("</Service>\n\n");
+  msIO_printf("</Service>\n\n");
 
   // WMS capabilities definitions
-  printf("<Capability>\n");
-  printf("  <Request>\n");
+  msIO_printf("<Capability>\n");
+  msIO_printf("  <Request>\n");
 
   if (nVersion <= OWS_1_0_7)
   {
@@ -927,28 +927,28 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                     NULL );
   }
 
-  printf("  </Request>\n");
+  msIO_printf("  </Request>\n");
 
-  printf("  <Exception>\n");
+  msIO_printf("  <Exception>\n");
   if (nVersion <= OWS_1_0_7) 
-      printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
+      msIO_printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
   else
   {
       // 1.0.8, 1.1.0 and later
-      printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
-      printf("    <Format>application/vnd.ogc.se_inimage</Format>\n");
-      printf("    <Format>application/vnd.ogc.se_blank</Format>\n");
+      msIO_printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
+      msIO_printf("    <Format>application/vnd.ogc.se_inimage</Format>\n");
+      msIO_printf("    <Format>application/vnd.ogc.se_blank</Format>\n");
   }
-  printf("  </Exception>\n");
+  msIO_printf("  </Exception>\n");
 
 
-  printf("  <VendorSpecificCapabilities />\n"); // nothing yet
+  msIO_printf("  <VendorSpecificCapabilities />\n"); // nothing yet
 
   //SLD support
-  printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
+  msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
 
   // Top-level layer with map extents and SRS, encloses all map layers
-  printf("  <Layer>\n");
+  msIO_printf("  <Layer>\n");
 
   // Layer Name is optional but title is mandatory.
   msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR, 
@@ -1001,7 +1001,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
          else
          {
              // Beginning of a new group... enclose the group in a layer block
-             printf("    <Layer>\n");
+             msIO_printf("    <Layer>\n");
 
              // Layer Name is optional but title is mandatory.
              msOWSPrintEncodeParam(stdout, "GROUP.NAME", lp->group, 
@@ -1023,17 +1023,17 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
              }
 
              // Close group layer block
-             printf("    </Layer>\n");
+             msIO_printf("    </Layer>\n");
          }
      }
 
      free(pabLayerProcessed);
   } 
    
-  printf("  </Layer>\n");
+  msIO_printf("  </Layer>\n");
 
-  printf("</Capability>\n");
-  printf("</WMT_MS_Capabilities>\n");
+  msIO_printf("</Capability>\n");
+  msIO_printf("</WMT_MS_Capabilities>\n");
 
   free(script_url);
   free(script_url_encoded);
@@ -1212,9 +1212,10 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       return msWMSException(map, nVersion, NULL);
 
   if (MS_DRIVER_SWF(map->outputformat))
-    printf("Content-type: text/html%c%c", 10,10);
+      msIO_printf("Content-type: text/html%c%c", 10,10);
   else
-    printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+      msIO_printf("Content-type: %s%c%c", 
+                  MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
   if (msSaveImage(map, img, NULL) != MS_SUCCESS)
       return msWMSException(map, nVersion, NULL);
 
@@ -1240,7 +1241,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
       if(msLayerOpen(lp) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
         return msWMSException(map, nVersion, NULL);
 
-      printf("\nLayer '%s'\n", lp->name);
+      msIO_printf("\nLayer '%s'\n", lp->name);
 
       for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++) {
         shapeObj shape;
@@ -1249,10 +1250,10 @@ int msDumpResult(mapObj *map, int bFormatHtml, int nVersion, int feature_count)
         if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
           return msWMSException(map, nVersion, NULL);
 
-        printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
+        msIO_printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
         
         for(k=0; k<lp->numitems; k++)
-	  printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
+	  msIO_printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
 
         msFreeShape(&shape);
         numresults++;
@@ -1370,20 +1371,20 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     // MIME response... we're free to use any valid MIME type
     int numresults = 0;
 
-    printf("Content-type: text/plain%c%c", 10,10);
-    printf("GetFeatureInfo results:\n");
+    msIO_printf("Content-type: text/plain%c%c", 10,10);
+    msIO_printf("GetFeatureInfo results:\n");
 
     numresults = msDumpResult(map, 0, nVersion, feature_count);
      
-    if (numresults == 0) printf("\n  Search returned no results.\n");
+    if (numresults == 0) msIO_printf("\n  Search returned no results.\n");
 
   } else if (strncasecmp(info_format, "GML", 3) == 0 ||  // accept GML.1 or GML
              strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
 
     if (nVersion <= OWS_1_0_7)
-        printf("Content-type: text/xml%c%c", 10,10);
+        msIO_printf("Content-type: text/xml%c%c", 10,10);
     else
-        printf("Content-type: application/vnd.ogc.gml%c%c", 10,10);
+        msIO_printf("Content-type: application/vnd.ogc.gml%c%c", 10,10);
     
     msGMLWriteQuery(map, NULL); // default is stdout
 
@@ -1451,8 +1452,8 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
                       NULL, "wms_encoding", OWS_NOERR,
                       "<?xml version='1.0' encoding=\"%s\"?>\n",
                       "ISO-8859-1");
-   printf("<!DOCTYPE WMS_DescribeLayerResponse>\n");
-   printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
+   msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse>\n");
+   msIO_printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
       
    //check if map-level metadata wfs_onlineresource is available
    pszOnlineResMap = msLookupHashTable(&(map->web.metadata),"wfs_onlineresource");
@@ -1482,10 +1483,10 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
              pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyr);
              pszLayerName = msEncodeHTMLEntities(lp->name);
 
-             printf("<LayerDescription name=\"%s\" wfs=\"%s\">\n",
+             msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\">\n",
                     pszLayerName, pszOnlineResEncoded);
-             printf("<Query typeName=\"%s\" />\n", pszLayerName);
-             printf("</LayerDescription>\n");
+             msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
+             msIO_printf("</LayerDescription>\n");
 
              msFree(pszOnlineResEncoded);
              msFree(pszLayerName);
@@ -1495,7 +1496,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
              char *pszLayerName;
              pszLayerName = msEncodeHTMLEntities(lp->name);
 
-             printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
+             msIO_printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
                     pszLayerName);
 
              msFree(pszLayerName);
@@ -1505,7 +1506,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
        }
    }
 
-   printf("</WMS_DescribeLayerResponse>\n");
+   msIO_printf("</WMS_DescribeLayerResponse>\n");
 
    if (layers)
      msFreeCharArray(layers, numlayers);
@@ -1621,7 +1622,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      if (img == NULL)
       return msWMSException(map, nVersion, NULL);
 
-     printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+     msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
      if (msSaveImage(map, img, NULL) != MS_SUCCESS)
        return msWMSException(map, nVersion, NULL);
 
@@ -1685,11 +1686,11 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
         return msWMSException(map, nVersion, "LayerNotDefined");
     }
 
-    printf("Content-type: application/vnd.ogc.sld+xml%c%c",10,10);
+    msIO_printf("Content-type: application/vnd.ogc.sld+xml%c%c",10,10);
     sld = msSLDGenerateSLD(map, -1);
     if (sld)
     {
-        printf("%s\n", sld);
+        msIO_printf("%s\n", sld);
         free(sld);
     }
 
@@ -1790,7 +1791,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
           return msWMSException(map, nVersion, NULL);
-      printf("Content-type: text/xml\n\n");
+      msIO_printf("Content-type: text/xml\n\n");
       if ( msWriteMapContext(map, stdout) != MS_SUCCESS )
           return msWMSException(map, nVersion, NULL);
       // Request completed
@@ -1800,8 +1801,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
            format && strcasecmp(format,  "image/txt") == 0)
   {
       // Until someone adds full support for ASCII graphics this should do. ;)
-      printf("Content-type: text/plain\n\n");
-      printf(".\n               ,,ggddY\"\"\"Ybbgg,,\n          ,agd888b,_ "
+      msIO_printf("Content-type: text/plain\n\n");
+      msIO_printf(".\n               ,,ggddY\"\"\"Ybbgg,,\n          ,agd888b,_ "
              "\"Y8, ___'\"\"Ybga,\n       ,gdP\"\"88888888baa,.\"\"8b    \""
              "888g,\n     ,dP\"     ]888888888P'  \"Y     '888Yb,\n   ,dP\""
              "      ,88888888P\"  db,       \"8P\"\"Yb,\n  ,8\"       ,8888"
@@ -1862,7 +1863,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
     return msWMSFeatureInfo(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams);
   else if (strcasecmp(request, "DescribeLayer") == 0)
   {
-      printf("Content-type: text/xml\n\n");
+      msIO_printf("Content-type: text/xml\n\n");
       return msWMSDescribeLayer(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams);
   }
 
