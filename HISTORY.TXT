@@ -15,42 +15,49 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.4.0-beta3 ()
 ----------------------
-- Output warning in capabilities document if layer,group,map names have
-  space in them. (Bug 486).
 
-- maporaclespatial.c: fixed declarations problems. (bug #1044)
+- Avoid passing FILE* to GD library by utilizing GD's gdIOCtx interface
+  (bug 1047).
+  
+- Output warning in capabilities document if layer,group,map names have
+  space in them (bug 486).
+
+- maporaclespatial.c: fixed declarations problems (bug 1044).
 
 - Allow use of msOWSPrintURLType with no metadata. In this case the default 
-  parameters will be used. (For bug 1001)
+  parameters will be used (bug 1001).
 
 - Ensure the outputFormatObj attached to msImageLoadGDStream() results reflect
   the interlacedness of the loaded image.  Also ensure that the RGB PNG
-  reference images work (make imagemode match gdImg). (bug 1039)
+  reference images work (make imagemode match gdImg) (bug 1039).
 
-- Fixed support for non-square pixels in WCS. (bug 1014)
+- Fixed support for non-square pixels in WCS (bug 1014).
 
-- Expose only GD formats for GetLegendGraphic in the capabilities (Bug 1001)
-  Check for supported formats when process a GetLegendGraphic request (Bug 1030)
+- Expose only GD formats for GetLegendGraphic in the capabilities (bug 1001).
+
+- Check for supported formats when process a GetLegendGraphic request 
+  (bug 1030).
 
 - mapraster.c: fixed problem with leaks in tileindexed case where the
-  tile index is missing.  (bug 713)
+  tile index is missing (bug 713).
 
-- Oracle Spatial:
-  Implemented connection pool support for Oracle Spatial. New layer data
-  parameters to support query functions, added "using unique <column name>".
-  Added "FILTER", "RELATE" and "GEOMRELATE" parameters, now permit users
-  choose the Oracle Spatial Filter. Modified the internal SQL to always
-  apply FILTER function. And improve the Oracle Spatial performance.
+- Oracle Spatial: implemented connection pool support for Oracle Spatial. 
+  New layer data parameters to support query functions, added 
+  "using unique <column name>".  Added "FILTER", "RELATE" and "GEOMRELATE" 
+  parameters, now permit users to choose the Oracle Spatial Filter. Modified 
+  the internal SQL to always apply FILTER function. And improve the Oracle 
+  Spatial performance.
 
 - Centralize "stdout binary mode setting" for win32 in msIO_needBinaryStdout().
   Use it when writing GDAL files to stdout in mapgdal.c.  Fixes problems with
   output of binary files from GDAL outputformat drivers on win32 via WMS/WCS.
 
--  MapServer now provides one default style named (default), title and LegendURL   when generating capabilities.
-   Added also the possibility to use the keyword default for STYLES 
-   parameter when doing a GetMap (..&STYLES=default,defeault,...). Bug 1001.
+- MapServer now provides one default style named (default), title and 
+  LegendURL when generating capabilities.  Added also the possibility to use
+  the keyword default for STYLES parameter when doing a GetMap 
+  (..&STYLES=default,defeault,...) (bug 1001).
 
-- Add xlink:type="simple" in WMS MetadataURL (bug 1027)
+- Add xlink:type="simple" in WMS MetadataURL (bug 1027).
 
 
 Version 4.4.0-beta2 (2004-11-03)
@@ -75,34 +82,34 @@ Version 4.4.0-beta2 (2004-11-03)
   map context named park, the layer name generated would possibly be l:2:park).
   Now the loadmapcontext takes a 2nd optional argument to force the creation
   of the unique names. The default behaviour is now to have the layer name
-  equals to the name found in the context file. (Bug 1023)   
+  equals to the name found in the context file (bug 1023).   
 
 - Fixed problem with WMS GetCapabilities aborting when wms_layer_group is
-  used for some layers but not for all. (bug 1024)
+  used for some layers but not for all (bug 1024).
 
 - Changed raster queries to return the list of all pixel values as an 
   attribute named "value_list" rather than "values" to avoid conflict with
   special [values] substitution rule in maptemplate.c.
 
 - Fixed raster queries to reproject results back to map projection, and to
-  do point queries distance checking against the correct projection. (bug 1021)
+  do point queries distance checking against the correct projection (bug 1021).
 
 - Get rid of WMS 1.0.8 support. It's not an officially supported verison
-  of the spec anyway: it's synonymous for 1.1.0 (bug 1022)
+  of the spec anyway: it's synonymous for 1.1.0 (bug 1022).
 
-- Allow use of '=' inside HTML template tag parser. (Bug 978)
+- Allow use of '=' inside HTML template tag parser (bug 978).
 
-- Use metadata ows_schema_location for WMS/WFS/WCS/SLD (Bug 999, 1013, 938)
-  (The default value if metadata is not found is 
-   http://schemas.opengeospatial.net)
+- Use metadata ows_schema_location for WMS/WFS/WCS/SLD (bugs 999, 1013, 938).
+  The default value if metadata is not found is 
+  http://schemas.opengeospatial.net)
  
-- Generate a RULE <Name> tag when generating an SLD. (Bug 1010)
+- Generate a RULE <Name> tag when generating an SLD (bug 1010).
 
 - WMS GetLegendGraphic uses now the RULE value to return an icon for
-  a class that has the same name as the RULE value (Bug 843)
+  a class that has the same name as the RULE value (bug 843).
  
 - Add msOWSPrintURLType: This funciton is a generic URL printing fuction for 
-  OGC specification metadata (WMS, WFS, WCS, WMC, etc.) (Bug 944).
+  OGC specification metadata (WMS, WFS, WCS, WMC, etc.) (bug 944).
 
 - Support MetadataURL, DataURL and LegendURL tags in WMS capabilities 
   document and MetadataURL in WFS capabilities.
