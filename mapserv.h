@@ -27,7 +27,7 @@
 extern int enter_string;
 
 // output image extensions
-static char *outputImageType[3]={"gif", "png", "jpg"};
+static char *outputImageType[4]={"gif", "png", "jpg", "wbmp"};
 
 /*
 ** Macros
