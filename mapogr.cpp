@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2001/03/02 05:05:19  dan
+ * Fixed problem reading LOCAL_CS SpatialRef. Handle as if no PROJECTION was set
+ *
  * Revision 1.18  2001/03/02 03:48:08  frank
  * fixed to ensure it compiles with gdal and without ogr
  *
@@ -613,10 +616,10 @@ int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
   proj->projargs = NULL;
   proj->numargs = 0;
 
-  if (poSRS == NULL)
+  if (poSRS == NULL || poSRS->IsLocal())
   {
-      // Dataset had no set projection... Nothing else to do.
-      // Leave proj empty and no reprojections will happen!
+      // Dataset had no set projection or is NonEarth (LOCAL_CS)... 
+      // Nothing else to do. Leave proj empty and no reprojection will happen!
       return MS_SUCCESS;  
   }
 
@@ -866,9 +869,6 @@ int msOGRLayerWhichShapes(layerObj *layer, char *shapepath,
 /* ------------------------------------------------------------------
  * Set Spatial filter... this may result in no features being returned
  * if layer does not overlap current view.
- *
- * __TODO__: for now we assume rect is in same proj as data
- * __TODO__: Do we need to handle expression filter at this point???
  * ------------------------------------------------------------------ */
   OGRLinearRing oSpatialFilter;
 
