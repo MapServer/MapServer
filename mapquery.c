@@ -413,7 +413,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     // Raster layers are handled specially.
     if( lp->type == MS_LAYER_RASTER )
     {
-        if( msRasterQueryByRect( map, map->layers+qlayer, rect ) == MS_FAILURE)
+        if( msRasterQueryByRect( map, lp, rect ) == MS_FAILURE)
             return MS_FAILURE;
 
         continue;
@@ -786,7 +786,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 
     // Raster layers are handled specially. 
     if( lp->type == MS_LAYER_RASTER ) {
-        if( msRasterQueryByPoint( map, map->layers+qlayer, mode, p, buffer )
+        if( msRasterQueryByPoint( map, lp, mode, p, buffer )
             == MS_FAILURE )
             return MS_FAILURE;
         continue;
@@ -935,7 +935,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     // Raster layers are handled specially.
     if( lp->type == MS_LAYER_RASTER )
     {
-        if( msRasterQueryByShape( map, map->layers+qlayer, selectshape )
+        if( msRasterQueryByShape( map, lp, selectshape )
             == MS_FAILURE )
             return MS_FAILURE;
 
