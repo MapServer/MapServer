@@ -12,9 +12,9 @@ extern "C" {
 
 struct sdeLayerObj { 
   SE_CONNECTION connection;
-  SE_STREAM stream;
-  SE_COORDREF coordref;
   SE_LAYERINFO layerinfo;
+  SE_COORDREF coordref;  
+  SE_STREAM stream;
 };
 
 #endif

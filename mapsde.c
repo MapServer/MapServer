@@ -115,7 +115,8 @@ int msSDELayerOpen(layer) {
   int numparams;
 
   SE_ERROR error;
-  sdeLayerObj *sde;	
+
+  sdeLayerObj *sde;
 
   if (layer->sdelayerinfo) return MS_SUCCESS; // layer already open
  
@@ -145,37 +146,6 @@ int msSDELayerOpen(layer) {
 
   msFreeCharArray(params, numparams);
 
-  SE_layerinfo_create(NULL, &(sde->layerinfo));
-
-  params = split(layer->data, ',', &numparams);
-  if(!params) {
-    msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msSDELayerOpen()");
-    return(MS_FAILURE);
-  }
-
-  if(numparams < 2) {
-    msSetError(MS_SDEERR, "Not enough SDE layer parameters specified.", "msSDELayerOpen()");
-    return(MS_FAILURE);
-  }
-
-  status = SE_layer_get_info(connection, params[0], params[1], sde->layerinfo);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerOpen()", "SE_layer_get_info()");
-    return(MS_FAILURE);
-  }
-
-  SE_coordref_create(&(sde->coordref));
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerOpen()", "SE_coordref_create()");
-    return(MS_FAILURE);
-  }
-
-  status = SE_layerinfo_get_coordref(sde->layerinfo, sde->coordref);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerOpen()", "SE_layerinfo_get_coordref()");
-    return(MS_FAILURE);
-  }
-
   return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerOpen()");
@@ -185,7 +155,8 @@ int msSDELayerOpen(layer) {
 
 void msSDELayerClose(layer) {
 #ifdef USE_SDE
-
+  SE_stream_free(layer->sdelayerinfo->stream);
+  SE_connection_free(layer->sdelayerinfo->connection);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
   return;
@@ -194,7 +165,25 @@ void msSDELayerClose(layer) {
 
 int msSDELayerNextShape(layer, shape) {
 #ifdef USE_SDE
+  long id, status;
+  sdeLayerObj *sde=NULL;
 
+  sde = layer->sdelayerinfo;
+
+  // fetch the next record from the stream
+  status = SE_stream_fetch(sde->stream);
+  if(status == SE_FINISHED)
+    return(MS_DONE);
+  else if(status != MS_SUCCESS) {
+    sde_error(status, "msSDELayerNextShape()", "SE_stream_fetch()");
+    return(MS_FAILURE);
+  }
+
+  // get the shape and attributes (first column is the shape, second is the shape id)
+
+  if(SE_shape_is_nil(shape)) 
+    return(msSDELayerNextShape(layer, shape));
+  
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerNextShape()");
   return(MS_FAILURE);
@@ -203,514 +192,161 @@ int msSDELayerNextShape(layer, shape) {
 
 int msSDELayerGetShape(layerObj *layer, shapeObj *shape, int record, int allitems) {
 #ifdef USE_SDE
-
+  return(MS_FAILURE);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetShape()");
   return(MS_FAILURE);
 #endif
-}
+}	
 
-int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj)
+int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj) {
 #ifdef USE_SDE
+  int i;
+  long status;
+  char **params, **columns;
+  int numparams, numcolumns;
+
+  SE_ERROR error;
   SE_ENVELOPE envelope;
   SE_SHAPE shape=0;
   SE_SQL_CONSTRUCT *sql;
-  SE_FILTER filter;
+  SE_FILTER constraint;
 
-  rectObj searchrect;
+  sdeLayerObj *sde=NULL;
 
-  if(!layer->sdelayerinfo) {
-    msSetError(MS_MISCERR, "SDE layer has not been opened.", "msSDELayerWhichShapes()");
-    return(MS_FAILURE);
-  }
+  sde = layer->sdelayerinfo;
 
-  searchrect = rect; // copy search shape
-
-#ifdef USE_PROJ
-  if((in->numargs > 0) && (out->numargs > 0))
-    msProjectRect(out->proj, in->proj, &searchrect); // project the search_rect to layer coordinates
-#endif
-
-  status = SE_shape_create(coordref, &shape);
+  status = SE_shape_create(sde->coordref, &shape); // allocate early, might be threading problems
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_shape_create()");
     return(MS_FAILURE);
   }
 
-   status = SE_layerinfo_get_envelope(layerinfo, &envelope);
+  params = split(layer->data, ',', &numparams);
+  if(!params) {
+    msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msSDELayerWhichShapes()");
+    return(MS_FAILURE);
+  }
+
+  if(numparams < 2) {
+    msSetError(MS_SDEERR, "Not enough SDE layer parameters specified.", "msSDELayerWhichShapes()");
+    return(MS_FAILURE);
+  }
+
+  SE_layerinfo_create(NULL, &(sde->layerinfo));
+  status = SE_layer_get_info(connection, params[0], params[1], sde->layerinfo);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_layer_get_info()");
+    return(MS_FAILURE);
+  }
+
+  SE_coordref_create(&(sde->coordref));
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_coordref_create()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_layerinfo_get_coordref(sde->layerinfo, sde->coordref);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_layerinfo_get_coordref()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_layerinfo_get_envelope()");
     return(MS_FAILURE);
   }
+  
+  if(envelope.minx > rect.maxx) return(MS_DONE); // there is NO overlap, return MS_DONE (FIX: use this in ALL which shapes functions)
+  if(envelope.maxx < rect.minx) return(MS_DONE);
+  if(envelope.miny > rect.maxy) return(MS_DONE);
+  if(envelope.maxy < rect.miny) return(MS_DONE);
 
+  // set spatial constraint search shape
+  envelope.minx = MS_MAX(rect.minx, envelope.minx); // crop against SDE layer extent *argh*
+  envelope.miny = MS_MAX(rect.miny, envelope.miny);
+  envelope.maxx = MS_MIN(rect.maxx, envelope.maxx);
+  envelope.maxy = MS_MIN(rect.maxy, envelope.maxy);
+
+  status = SE_shape_generate_rectangle(&envelope, shape);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_shape_generate_rectangle()");
+    return(MS_FAILURE);
+  }
+  constraint.filter.shape = shape;
+
+  // set spatial constraint column and table
+  strcpy(constraint.table, param[0]);
+  strcpy(constraint.column, param[1]);
+
+  // set a couple of other spatial constraint properties
+  constraint.method = SM_ENVP;
+  constraint.filter_type = SE_SHAPE_FILTER;
+  constraint.truth = TRUE;
+
+  // set up the SQL statement
+  status = SE_sql_construct_alloc((numparams-1), &sql);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_sql_construct_alloc()");
+    return(-1);
+  }
+
+  strcpy(sql->tables[0], params[0]); // main table
+  for(i=2; i<numparams; i++)
+    strcpy(sql->tables[i-1], params[i]); // joined tables  
+
+  numcolumns = layer->numitems + 2;
+  columns = (char **)malloc(numcolumns*sizeof(char *));
+  if(!columns) {
+    msSetError(MS_MEMERR, "Error allocating columns array.", "msSDELayerWhichShapes()");
+    return(MS_FAILURE);
+  }
+
+  column[0] = strdup(params[1]); // the shape  
+  column[1] = strdup("SE_ROW_ID"); // row id
+  for(i=0; i<layer->numitems; i++)
+    column[i+2] = strdup(layer->items[i]); // any other items needed for labeling or classification
+
+  // set the "where" clause
+  if(!(layer->filter.string))
+    sql->where = strdup("");
+  else
+    sql->where = strdup(layer->filter.string);
+
+  status = SE_stream_create(sde->connection, &(sde->stream));
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_create()");
+    return(MS_FAILURE);
+  }
+    
+  status = SE_stream_query(sde->stream, numcolumns, columns, sql);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_query()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_stream_set_spatial_constraints(sde->stream, SE_SPATIAL_FIRST, FALSE, 1, &constraints);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_set_spatial_constraints()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_stream_execute(sde->stream); // *should* be ready to step through shapes now
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_query()");
+    return(MS_FAILURE);
+  }
+
+  // clean-up
+  SE_shape_free(shape);
+  SE_sql_construct_free(sql);
+  msFreeCharArray(params, numparams);
+  msFreeCharArray(columns, numcolumns);
+
+  return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerWhichShapes()");
   return(MS_FAILURE);
-#endif
-}
-
-int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
-#ifdef USE_SDE
-  int i,j;
-
-  SE_COLUMN_DEF annotation_def;
-  short annotate=MS_TRUE;
-  char *annotation=NULL;
-  long annotation_long;
-  double annotation_double;
-  short annotation_is_null;
-
-  const char *columns[2]; // at most 2 - the shape, and optionally an annotation
-  int numcolumns;
-  
-  char **params;
-  int numparams;
-
-  status = SE_layerinfo_get_envelope(layerinfo, &rect);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_layerinfo_get_envelope()");
-    return(-1);
-  }
-  
-  if(rect.minx > map->extent.maxx) return(0); // i.e. msRectOverlap()
-  if(rect.maxx < map->extent.minx) return(0);
-  if(rect.miny > map->extent.maxy) return(0);
-  if(rect.maxy < map->extent.miny) return(0);
-
-  /*
-  ** initialize a few shapes
-  */
-  status = SE_shape_create(coordref, &shape);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_shape_create()");
-    return(-1);
-  }
-
-  status = SE_shape_create(coordref, &clippedshape);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_shape_create()");
-    return(-1);
-  }
-
-  SE_shape_create(coordref, &filtershape);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_shape_create()");
-    return(-1);
-  }
-
-  /* 
-  ** define the spatial filter, used with all classes
-  */ 
-  rect.minx = MS_MAX(map->extent.minx - 2*map->cellsize, rect.minx); /* just a bit larger than the map extent */
-  rect.miny = MS_MAX(map->extent.miny - 2*map->cellsize, rect.miny);
-  rect.maxx = MS_MIN(map->extent.maxx + 2*map->cellsize, rect.maxx);
-  rect.maxy = MS_MIN(map->extent.maxy + 2*map->cellsize, rect.maxy);
-
-  status = SE_shape_generate_rectangle(&rect, filtershape);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_shape_generate_rectangle()");
-    return(-1);
-  }
-
-  strcpy(filter.table, params[0]);
-  strcpy(filter.column, params[1]);
-  filter.filter.shape = filtershape;
-  filter.method = SM_ENVP;
-  filter.filter_type = SE_SHAPE_FILTER;
-  filter.truth = TRUE;
-
-  /* can't set the spatial constraints here, must wait till after SE_stream_query() is called */ 
-
-  /*
-  ** define a portion of the SQL construct here, the where clause changes with each class
-  */
-  status = SE_sql_construct_alloc((numparams-1), &sql);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_sql_construct_alloc()");
-    return(-1);
-  }
-
-  strcpy(sql->tables[0], params[0]);
-  for(i=2; i<numparams; i++)
-    strcpy(sql->tables[i-1], params[i]); // add any joined tables  
-  
-  /*
-  ** set up column list
-  */
-  numcolumns = 1;
-  columns[0] = strdup(params[1]);  
-
-  if(layer->labelitem && annotate) {
-    numcolumns = 2;
-    columns[1] = strdup(layer->labelitem);    
-  }  
-
-  msFreeCharArray(params, numparams);
-
-  /*
-  ** each class is a SQL statement, no expression means all features
-  */
-  for(i=0; i<layer->numclasses; i++) {
-
-    if(layer->class[i].sizescaled == 0) return(-1);
-
-    /*
-    ** should be able to move this outside the loop, but the
-    ** stream reset function doesn't want to work as advertised *sigh*
-    */
-    status = SE_stream_create(connection, &stream);
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msDrawSDELayer()", "SE_stream_create()");
-      return(-1);
-    }
-    
-    if(!(layer->class[i].expression.string))
-      sql->where = strdup("");
-    else
-      sql->where = strdup(layer->class[i].expression.string);
-
-    status = SE_stream_query(stream, numcolumns, columns, sql);
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msDrawSDELayer()", "SE_stream_query()");
-      return(-1);
-    }
-
-    status = SE_stream_set_spatial_constraints(stream, SE_SPATIAL_FIRST, FALSE, 1, &filter);
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msDrawSDELayer()", "SE_stream_set_spatial_constraints()");
-      return(-1);
-    }
-
-    status = SE_stream_bind_output_column(stream, 1, shape, &shape_is_null);
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msDrawSDELayer()", "SE_stream_bind_output_column()");
-      return(-1);
-    }
-
-    /*
-    ** bind the annotation column, and allocate memory
-    */
-    if(numcolumns == 2) {
-      status = SE_stream_describe_column(stream, 2, &annotation_def);
-      if(status != SE_SUCCESS) {
-    	sde_error(status, "msDrawSDELayer()", "SE_stream_describe_column()");
-    	return(-1);
-      }
-
-      // don't know if this makes sense for non-string columns but it seems to work
-      annotation = (char *)malloc(annotation_def.size);
-      if(!annotation) {
-	msSetError(MS_SDEERR, "Can only annotate with numeric or character types.", "msDrawSDELayer()");
-	return(-1);
-      }
-
-      switch(annotation_def.sde_type) {
-      case 1: // integers
-      case 2:
-	status = SE_stream_bind_output_column(stream, 2, &annotation_long, &annotation_is_null);
-	break;
-      case 3: // floats
-      case 4:
-	status = SE_stream_bind_output_column(stream, 2, &annotation_double, &annotation_is_null);
-	break;
-      case 5: // string
-	status = SE_stream_bind_output_column(stream, 2, annotation, &annotation_is_null);
-	break;
-      default:
-	msSetError(MS_SDEERR, "Can only annotate with numeric or character types.", "msDrawSDELayer()");
-	return(-1);
-	break;
-      }
-      if(status != SE_SUCCESS) {
-    	sde_error(status, "msDrawSDELayer()", "SE_stream_bind_output_column()");
-    	return(-1);
-      }
-    }
-
-    status = SE_stream_execute(stream);
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msDrawSDELayer()", "SE_stream_query()");
-      return(-1);
-    }
-
-    switch(layer->type) {
-    case MS_ANNOTATION:
-      msSetError(MS_SDEERR, "SDE annotation layers are not yet supported.", "msDrawSDELayer()");
-      return(-1);
-      break;
-    case MS_POINT:
-      while(status == SE_SUCCESS) {
-	status = SE_stream_fetch(stream);
-	if(status == SE_SUCCESS) {
-
-	  if(SE_shape_is_nil(shape)) continue;
-	  
-	  if(sdeTransformShapePoints(map->extent, map->cellsize, shape, &transformedshape) == -1) continue;
-
-	  for(j=0; j<transformedshape.line[0].numpoints; j++) {
-	    pnt = &(transformedshape.line[0].point[j]); /* point to the correct point */
-
-	    msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
-	    if(layer->class[i].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
-
-	    if(annotate) {	      
-	      if(numcolumns == 2) {
-		switch(annotation_def.sde_type) {
-		case 1: // integers
-		case 2:
-		  sprintf(annotation, "%ld", annotation_long);
-		  break;
-		case 3: // floats
-		case 4:
-		  sprintf(annotation, "%g", annotation_double);
-		  break;
-		default:	     
-		  break;
-		}
-	      } else {
-		annotation = layer->class[i].text.string;
-	      }
-
-	      if(annotation) {
-		if(layer->labelcache)
-		  msAddLabel(map, layer->index, i, -1, -1, *pnt, annotation, -1);
-		else
-		  msDrawLabel(img, *pnt, annotation, &(layer->class[i].label), &map->fontset);
-	      }
-	    }
-	  }
-	  
-	  msFreeShape(&transformedshape);
-	} else {
-	  if(status != SE_FINISHED) {
-	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
-	    return(-1);
-          }
-	}
-      }
-      break;
-    case MS_LINE:
-
-      while(status == SE_SUCCESS) {
-	status = SE_stream_fetch(stream);
-	if(status == SE_SUCCESS) {
-
-	  if(SE_shape_is_nil(shape)) continue;
-
-	  status = SE_shape_clip(shape, &rect, clippedshape);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msDrawSDELayer()", "SE_shape_clip()");
-	    return(-1);
-          }
-
-	  if(SE_shape_is_nil(clippedshape)) continue;
-	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
-
-	  msDrawLineSymbol(&map->symbolset, img, &transformedshape, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
-
-	  if(annotate) {
-	    if(msPolylineLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize, &angle, &length) != -1) {
-
-	      if(layer->class[i].label.autoangle)
-		layer->class[i].label.angle = angle;
-
-	      if(numcolumns == 2) {
-		switch(annotation_def.sde_type) {
-		case 1: // integers
-		case 2:
-		  sprintf(annotation, "%ld", annotation_long);
-		  break;
-		case 3: // floats
-		case 4:
-		  sprintf(annotation, "%g", annotation_double);
-		  break;
-		default:	     
-		  break;
-		}
-	      } else {
-		annotation = layer->class[i].text.string;
-	      }
-
-	      if(annotation) {
-		if(layer->labelcache)
-		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, length);
-		else
-		  msDrawLabel(img, annopnt, annotation, &(layer->class[i].label), &map->fontset);
-	      }
-	    }
-	  }
-
-	  if(layer->class[i].overlaysymbol >= 0) { // cache shape
-	    transformedshape.classindex = i;
-	    if(insertFeatureList(&shpcache, &transformedshape) == NULL) return(-1);
-	  }
-
-	  msFreeShape(&transformedshape);
-	} else {
-	  if(status != SE_FINISHED) {
-	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
-	    return(-1);
-          }
-	}
-      }
-
-      if(shpcache) {	
-	for(current=shpcache; current; current=current->next) {
-	  i = current->shape.classindex;
-	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
-	}
-	freeFeatureList(shpcache);
-	shpcache = NULL;
-      }
-
-      break;
-    case MS_POLYLINE:
-      while(status == SE_SUCCESS) {
-	status = SE_stream_fetch(stream);
-	if(status == SE_SUCCESS) {
-
-	  if(SE_shape_is_nil(shape)) continue;
-
-	  status = SE_shape_clip(shape, &rect, clippedshape);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msDrawSDELayer()", "SE_shape_clip()");
-	    return(-1);
-          }
-
-	  if(SE_shape_is_nil(clippedshape)) continue;
-	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
-
-	  msDrawLineSymbol(&map->symbolset, img, &transformedshape, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
-
-	  if(annotate) {
-	    if(msPolygonLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize) != -1) {
-	      if(numcolumns == 2) {
-		switch(annotation_def.sde_type) {
-		case 1: // integers
-		case 2:
-		  sprintf(annotation, "%ld", annotation_long);
-		  break;
-		case 3: // floats
-		case 4:
-		  sprintf(annotation, "%g", annotation_double);
-		  break;
-		default:	     
-		  break;
-		}
-	      } else {
-		annotation = layer->class[i].text.string;
-	      }
-
-	      if(annotation) {
-		if(layer->labelcache)
-		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
-		else
-		  msDrawLabel(img, annopnt, annotation, &(layer->class[i].label), &map->fontset);
-	      }
-	    }
-	  }
-
- 	  if(layer->class[i].overlaysymbol >= 0) { // cache shape
-	    transformedshape.classindex = i;
-	    if(insertFeatureList(&shpcache, &transformedshape) == NULL) return(-1);
-	  }
-
-	  msFreeShape(&transformedshape);
-	} else {
-	  if(status != SE_FINISHED) {
-	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
-	    return(-1);
-          }
-	}
-      }
-
-      if(shpcache) {	
-	for(current=shpcache; current; current=current->next) {
-	  i = current->shape.classindex;
-	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
-	}
-	freeFeatureList(shpcache);
-	shpcache = NULL;
-      }
-
-      break;
-    case MS_POLYGON:
-      while(status == SE_SUCCESS) {
-	status = SE_stream_fetch(stream);
-	if(status == SE_SUCCESS) {
-
-	  if(SE_shape_is_nil(shape)) continue;
-
-	  status = SE_shape_clip(shape, &rect, clippedshape);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msDrawSDELayer()", "SE_shape_clip()");
-	    return(-1);
-          }
-
-	  if(SE_shape_is_nil(clippedshape)) continue;
-	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
-
-
-	  msDrawShadeSymbol(&map->symbolset, img, &transformedshape, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
-	  if(layer->class[i].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, &transformedshape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
-      
-	  if(annotate) {
-	    if(msPolygonLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize) != -1) {
-	      if(numcolumns == 2) {
-		switch(annotation_def.sde_type) {
-		case 1: // integers
-		case 2:
-		  sprintf(annotation, "%ld", annotation_long);
-		  break;
-		case 3: // floats
-		case 4:
-		  sprintf(annotation, "%g", annotation_double);
-		  break;
-		default:	     
-		  break;
-		}
-	      } else {
-		annotation = layer->class[i].text.string;
-	      }
-
-	      if(annotation) {
-		if(layer->labelcache)
-		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
-		else
-		  msDrawLabel(img, annopnt, annotation, &(layer->class[i].label), &map->fontset);
-	      }
-	    }
-	  }
-	  
-	  msFreeShape(&transformedshape);
-	} else {
-	  if(status != SE_FINISHED) {
-	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
-	    return(-1);
-          }
-	}
-      }
-      break;
-    default:
-      msSetError(MS_MISCERR, "Unknown or unsupported layer type.", "msDrawSDELayer()");
-      return(-1);
-    }
-
-    if(annotate && numcolumns == 2) free(annotation);
-    free(sql->where);
-    SE_stream_free(stream);   
-  }
-
-  SE_shape_free(shape);
-  SE_shape_free(clippedshape);  
-  SE_shape_free(filtershape);
-  SE_connection_free(connection);
-
-  for(i=0; i<numcolumns; i++) free(columns[i]);
-
-  return(0);
-#else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msDrawSDELayer()");
-  return(-1);
 #endif
 }
