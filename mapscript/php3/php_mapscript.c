@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.45  2001/07/23 19:11:56  dan
+ * Added missing "background..." properties in label_setProperty().
+ *
  * Revision 1.44  2001/07/20 13:50:27  dan
  * Call zend_list_addref() when creating resource member variables
  *
@@ -119,7 +122,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Jul 20, 2001)"
+#define PHP3_MS_VERSION "(Jul 23, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -4506,6 +4509,10 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "shadowcolor",  self->shadowcolor)
     else IF_SET_LONG(  "shadowsizex",  self->shadowsizex)
     else IF_SET_LONG(  "shadowsizey",  self->shadowsizey)
+    else IF_SET_LONG(  "backgroundcolor",       self->backgroundcolor)
+    else IF_SET_LONG(  "backgroundshadowcolor", self->backgroundshadowcolor)
+    else IF_SET_LONG(  "backgroundshadowsizex", self->backgroundshadowsizex)
+    else IF_SET_LONG(  "backgroundshadowsizey", self->backgroundshadowsizey)
     else IF_SET_LONG(  "size",         self->size)
     else IF_SET_LONG(  "minsize",      self->minsize)
     else IF_SET_LONG(  "maxsize",      self->maxsize)
