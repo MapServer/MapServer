@@ -2009,6 +2009,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msyystate = 2; msyystring = value;
     if((layer->sizeunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return;
     break;
+  case(STATUS): // enables turning a layer OFF
+    msyystate = 2; msyystring = value;
+    if((layer->status = getSymbol(3, MS_ON,MS_OFF,MS_DEFAULT)) == -1) return;
+    break;
   case(MS_STRING):    
     for(i=0;i<layer->numclasses; i++) {
       if(!layer->class[i].name) /* skip it */
@@ -2038,6 +2042,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   case(TOLERANCEUNITS):
     msyystate = 2; msyystring = value;
     if((layer->toleranceunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return;
+    break;
+  case(TRANSFORM):
+    msyystate = 2; msyystring = value;
+    if((layer->transform = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;
   case(TYPE):
     msyystate = 2; msyystring = value;
