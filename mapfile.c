@@ -334,6 +334,7 @@ void freeJoin(joinObj *join)
   msFree(join->from);
   msFree(join->to);
 
+
   msFree(join->header);
   msFree(join->template);
   msFree(join->footer);
@@ -342,7 +343,6 @@ void freeJoin(joinObj *join)
   for(i=0; i<join->numrecords; i++)
     msFreeCharArray(join->values[i], join->numitems);
   msFree(join->values);
-
   join->numrecords = join->numitems = 0;
 
   msFree(join->connection);
@@ -625,17 +625,15 @@ static int loadGrid( layerObj *pLayer )
 
 static void writeGrid( graticuleObj *pGraticule, FILE *stream) 
 {
-	fprintf(stream,  "    FEATURE\n");
 	fprintf( stream, "      GRID\n");
 	fprintf( stream, "        MINSUBDIVIDE %d\n", (int)	pGraticule->minsubdivides		);
 	fprintf( stream, "        MAXSUBDIVIDE %d\n", (int)	pGraticule->maxsubdivides		);
 	fprintf( stream, "        MININCREMENT %f\n",		pGraticule->minincrement		);
 	fprintf( stream, "        MAXINCREMENT %f\n",		pGraticule->maxincrement		);
-	fprintf( stream, "        MINARCS %g\n",		pGraticule->maxarcs				);
-	fprintf( stream, "        MAXARCS %g\n",		pGraticule->maxarcs				);
+	fprintf( stream, "        MINARCS %g\n",			pGraticule->maxarcs				);
+	fprintf( stream, "        MAXARCS %g\n",			pGraticule->maxarcs				);
 	fprintf( stream, "        LABELFORMAT %s\n",		pGraticule->labelformat			);
 	fprintf( stream, "      END\n");
-	fprintf( stream, "    END\n");
 }
 
 /*
@@ -1334,8 +1332,10 @@ int loadExpressionString(expressionObj *exp, char *value)
 
   freeExpression(exp); // we're totally replacing the old expression so free then init to start over
   // initExpression(exp);
+
   if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
   exp->string = strdup(msyytext);
+  
   // if(exp->type == MS_REGEX) {
   //   if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
   //     sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
@@ -2588,7 +2588,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if(layer->tileindex) {
     fprintf(stream, "    TILEINDEX \"%s\"\n", layer->tileindex);
     if(layer->tileitem) fprintf(stream, "    TILEITEM \"%s\"\n", layer->tileitem);
-  }
+  } 
   fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
