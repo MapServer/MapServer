@@ -813,7 +813,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	int				result,t,size;
 	char				*temp1,*temp2;
 
-fprintf(stderr,"msPOSTGISLayerGetShape called for record = %i\n",record);
+fprintf(stderr,"msPOSTGISLayerGetShape called for record = %ld\n",record);
 
 	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
 	if (layerinfo == NULL)
