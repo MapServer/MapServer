@@ -1208,15 +1208,13 @@ void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *
 {
     if (image)
     {
-printf("format %s",image->format);
-	    
-	    if( MS_RENDERER_GD(image->format) )
+        if( MS_RENDERER_GD(image->format) )
             msCircleDrawLineSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
             msCircleDrawLineSymbolIM(symbolset, image, p, r, style, scalefactor);
         else
-             msSetError(MS_MISCERR, "Unknown image type", 
-                        "msCircleDrawLineSymbol()");
+            msSetError(MS_MISCERR, "Unknown image type", 
+                       "msCircleDrawLineSymbol()");
     }
 }
 
@@ -1224,7 +1222,6 @@ void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj 
 {
     if (image)
     {
-printf("format %s",image->format);
         if( MS_RENDERER_GD(image->format) )
             msCircleDrawShadeSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
