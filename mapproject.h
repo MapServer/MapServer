@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/11/16 21:56:18  dan
+ * msGetEPSGProj() obsolete, replaced by msOWSGetEPSGProj() (bug 568)
+ *
  * Revision 1.23  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -85,8 +88,6 @@ MS_DLL_EXPORT int msInitProjection(projectionObj *p);
 MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
 MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, char *value);
 MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
-
-MS_DLL_EXPORT const char *msGetEPSGProj(projectionObj *proj, hashTableObj *metadata, int bReturnOnlyFirstOne);
 
 MS_DLL_EXPORT void msSetPROJ_LIB( const char * );
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2004/11/16 21:56:18  dan
+ * msGetEPSGProj() obsolete, replaced by msOWSGetEPSGProj() (bug 568)
+ *
  * Revision 1.36  2004/10/29 20:27:06  dan
  * Rewritten msGetProjectionString() to avoid multiple reallocs
  *
@@ -512,60 +515,6 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
         return 0;
 }
 #endif /* def USE_PROJ */
-
-/*
-** msGetEPSGProj()
-**
-** Extract projection code for this layer/map.  
-** First look for a wms_srs metadata, then wfs_srs and gml_srs.  If not 
-** found then look for an EPSG code in projectionObj, and if not found then 
-** return NULL.
-**
-** If bReturnOnlyFirstOne=TRUE and metadata contains multiple EPSG codes
-** then only the first one (which is assumed to be the layer's default
-** projection) is returned.
-*/
-const char *msGetEPSGProj(projectionObj *proj, hashTableObj *metadata, int bReturnOnlyFirstOne)
-{
-#ifdef USE_PROJ
-  static char epsgCode[20] ="";
-  static char *value;
-
-  if (metadata &&
-      ((value = msLookupHashTable(metadata, "wms_srs")) != NULL ||
-       (value = msLookupHashTable(metadata, "wfs_srs")) != NULL ||
-       (value = msLookupHashTable(metadata, "gml_srs")) != NULL ) )
-  {
-    // Metadata value should already be in format "EPSG:n" or "AUTO:..."
-    if (!bReturnOnlyFirstOne)
-        return value;
-
-    // Caller requested only first projection code.
-    strncpy(epsgCode, value, 19);
-    epsgCode[19] = '\0';
-    if ((value=strchr(epsgCode, ' ')) != NULL)
-        *value = '\0';
-    return epsgCode;
-  }
-  else if (proj && proj->numargs > 0 && 
-           (value = strstr(proj->args[0], "init=epsg:")) != NULL &&
-           strlen(value) < 20)
-  {
-    sprintf(epsgCode, "EPSG:%s", value+10);
-    return epsgCode;
-  }
-  else if (proj && proj->numargs > 0 && 
-           strncasecmp(proj->args[0], "AUTO:", 5) == 0 )
-  {
-    return proj->args[0];
-  }
-
-  return NULL;
-#else
-  msSetError(MS_PROJERR, "Projection support is not available.", "msGetEPSGProj()");
-  return(MS_FAILURE);
-#endif
-}
 
 static char *ms_proj_lib = NULL;
 static char *last_filename = NULL;
