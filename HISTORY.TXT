@@ -20,6 +20,7 @@ Version 3.6.6-dev
   Make install now outputs quick installation instructions for mapserv.
   (Bug 280)
 
+- Raster layers are set to be not queryable.
 
 Version 3.6.5 (2003--3-18)
 --------------------------
