@@ -38,11 +38,8 @@ import unittest
 import cases
 
 from cases.recttest import RectObjTestCase
-
 from cases.hashtest import HashTableTestCase
-
 from cases.owstest import OWSRequestTestCase
-
 from cases.clonetest import MapCloningTestCase
 
 from cases.maptest import MapConstructorTestCase
@@ -56,6 +53,9 @@ from cases.layertest import LayerRasterProcessingTestCase
 from cases.zoomtest import ZoomPointTestCase
 from cases.zoomtest import ZoomRectangleTestCase
 from cases.zoomtest import ZoomScaleTestCase
+
+from cases.symboltest import SymbolTestCase, MapSymbolTestCase
+from cases.symbolsettest import SymbolSetTestCase, MapSymbolSetTestCase
 
 # Create a test suite
 suite = unittest.TestSuite()
@@ -77,6 +77,10 @@ suite.addTests([LayerConstructorTestCase,
 suite.addTests([ZoomPointTestCase,
                 ZoomRectangleTestCase,
                 ZoomScaleTestCase])
+            
+suite.addTests([SymbolTestCase, MapSymbolTestCase,
+                SymbolSetTestCase, MapSymbolSetTestCase])
+
 
 # If module is run as a script, execute every test case in the suite
 if __name__ == '__main__':

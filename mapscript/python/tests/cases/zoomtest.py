@@ -1,7 +1,7 @@
 # $Id$
 #
 # Project:  MapServer
-# Purpose:  xUnit style Python mapscript tests of Map
+# Purpose:  xUnit style Python mapscript tests of Map "zooming"
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
@@ -28,7 +28,7 @@
 #
 # Execute this module as a script from mapserver/mapscript/python
 #
-#     python tests/cases/maptest.py -v
+#     python tests/cases/zoomtest.py -v
 #
 # ===========================================================================
 
@@ -36,7 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript, MapTestCase, TESTMAPFILE, MapZoomTestCase
+from testing import mapscript, MapZoomTestCase
 
 # ===========================================================================
 # Test begins now
