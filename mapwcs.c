@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2004/10/26 04:26:28  sdlime
+ * Fixed bug 989, metadataLink for the CoverageOffering section of the WCS capabilities.
+ *
  * Revision 1.52  2004/10/25 17:30:38  julien
  * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
  *
@@ -344,11 +347,11 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs %s/wcs/%s/wcsCapabilities.xsd\">\n", params->version, msOWSGetSchemasLocation(map), params->version);
 
   // optional metadataLink
-  msOWSPrintURLType(stdout, &(map->web.metadata), "COM", "metadatalink", 
-                    OWS_NOERR, 
-                    "  <metadataLink%s%s%s xlink:type=\"simple\"%s/>", 
-                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,  
-                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE, 
+  msOWSPrintURLType(stdout, &(map->web.metadata), "COM", "metadatalink",
+                    OWS_NOERR,
+                    "  <metadataLink%s%s%s xlink:type=\"simple\"%s/>",
+                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
+                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
                     MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
@@ -599,7 +602,14 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   // start the Coverage section
   msIO_printf("  <CoverageOffering>\n");
 
-  // TODO: add MetadataLink (optional)
+  // optional metadataLink
+  msOWSPrintURLType(stdout, &(layer->metadata), "COM", "metadatalink",
+                    OWS_NOERR,
+                    "  <metadataLink%s%s%s xlink:type=\"simple\"%s/>",
+                    NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
+                    " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
+                    MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
+
   
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
