@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.170  2003/06/26 18:32:45  assefa
+ * Add layer processing string related function/memeber/doc.
+ *
  * Revision 1.169  2003/06/11 17:55:00  dan
  * Modified PHP SAPI test to accept 'cli' as well
  *
@@ -380,6 +383,9 @@ DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_lyr_getProcessing(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -764,6 +770,9 @@ function_entry php_layer_class_functions[] = {
     {"setfilter",       php3_ms_lyr_setFilter,          NULL},
     {"getwmsfeatureinfourl", php3_ms_lyr_getWMSFeatureInfoURL, NULL},
     {"getitems",        php3_ms_lyr_getItems,           NULL},
+    {"setprocessing",   php3_ms_lyr_setProcessing,           NULL},
+    {"getprocessing",   php3_ms_lyr_getProcessing,           NULL},
+    {"clearprocessing", php3_ms_lyr_clearProcessing,           NULL},
     {NULL, NULL, NULL}
 };
 
@@ -5898,7 +5907,8 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
     add_property_long(return_value,   "transparency",player->transparency);
     PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
-
+    add_property_long(return_value,   "num_processing",player->num_processing);
+    
     MAKE_STD_ZVAL(new_obj_ptr);
     _phpms_build_color_object(&(player->offsite),list, new_obj_ptr);
     _phpms_add_property_object(return_value, "offsite", new_obj_ptr, E_ERROR);
@@ -7179,6 +7189,133 @@ DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 }
+
+/**********************************************************************
+ *                        layer->setProcessing()
+ *
+ * set a processing string to the layer
+ **********************************************************************/
+
+/* {{{ boolean layer.setProcessing(string)
+  set a processing string to the layer*/
+
+DLEXPORT void php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis, *pString;
+    layerObj    *layer=NULL;
+
+    HashTable   *list=NULL;
+    pThis = getThis();
+    
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pString) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pString);
+
+    layer = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+    
+    if (!layer)
+      RETURN_FALSE;
+
+    layer->num_processing++;
+    if(layer->num_processing == 1)
+      layer->processing = (char **) malloc(2*sizeof(char *));
+    else
+      layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->num_processing+1));
+    layer->processing[layer->num_processing-1] = strdup(pString->value.str.val);
+    layer->processing[layer->num_processing] = NULL;
+    
+    _phpms_set_property_long(pThis, "num_processing", layer->num_processing, E_ERROR);
+
+    RETURN_TRUE;
+}    
+
+/**********************************************************************
+ *                        layer->getProcessing()
+ *
+ * Return an array of string containing all the layer items
+ **********************************************************************/
+
+/* {{{ proto char** layer.getProcessing()
+   Return an array containing all the processing strings.*/
+DLEXPORT void php3_ms_lyr_getProcessing(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis;
+    layerObj    *self=NULL;
+    int         i = 0;
+
+    HashTable   *list=NULL;
+    pThis = getThis();
+
+
+    if (pThis == NULL)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (array_init(return_value) == FAILURE)
+      RETURN_FALSE;
+    
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+   
+    if (self == NULL || self->num_processing <= 0)
+      RETURN_FALSE;
+
+   
+    for (i=0; i<self->num_processing; i++)
+    {
+          add_next_index_string(return_value, self->processing[i], 1);
+    }
+}
+
+/**********************************************************************
+ *                        layer->clearProcessing()
+ *
+ * clear the processing strings in the layer
+ **********************************************************************/
+
+/* {{{ boolean layer.clearProcessing()
+  clear the processing strings in the layer*/
+
+DLEXPORT void php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis;
+    layerObj    *layer=NULL;
+    int         i = 0;
+
+    HashTable   *list=NULL;
+    pThis = getThis();
+    
+
+    if (pThis == NULL)
+        WRONG_PARAM_COUNT;
+
+    layer = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                            list TSRMLS_CC);
+    
+    if (!layer)
+      RETURN_FALSE;
+    
+    if (layer->num_processing > 0)
+    {
+        for(i=0; i<layer->num_processing; i++)
+          free(layer->processing[i]);
+
+        layer->num_processing = 0;
+        free(layer->processing);
+
+        _phpms_set_property_long(pThis, "num_processing", layer->num_processing, E_ERROR);
+
+    }
+}        
+
 /* }}} */
 
 /*=====================================================================
