@@ -78,7 +78,15 @@
 	return msMapSetExtent( self, minx, miny, maxx, maxy );
     }
 
-    int setRotation( double rotation_angle ) {
+    /* recent rotation work makes setSize the only reliable 
+       method for changing the image size.  direct access is deprecated. */
+    int setSize(int width, int height) 
+    {
+        return msMapSetSize(self, width, height);
+    }
+    
+    int setRotation( double rotation_angle ) 
+    {
         return msMapSetRotation( self, rotation_angle );
     }
  

@@ -15,6 +15,12 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.3 (CVS)
 -----------------
+
+- SWIG mapscript: map's output image width and height should be set 
+  simultaneously using new mapObj::setSize() method.  This performs
+  necessary map geotransform computation.  Direct setting of map width
+  and height is deprecated (bug 836).
+
 - Fixed bug 832 (validate srs value) : When the SRS parameter in a GetMap 
   request contains a SRS that is valid for some, but not all of the layers 
   being requested, then the server shall throw a Service Exception 

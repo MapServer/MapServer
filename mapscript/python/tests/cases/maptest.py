@@ -251,7 +251,21 @@ class MapFontSetTestCase(MapTestCase):
         """expect fontset file to be 'fonts.txt'"""
         file = self.map.fontset.filename
         assert file == 'fonts.txt', file
-        
+   
+
+class MapSizeTestCase(MapTestCase):
+
+    def testDefaultSize(self):
+        assert self.map.width == 200
+        assert self.map.height == 200
+
+    def testSetSize(self):
+        retval = self.map.setSize(480, 480)
+        assert retval == mapscript.MS_SUCCESS, retval
+        assert self.map.width == 480
+        assert self.map.height == 480
+
+
 # ===========================================================================
 # Run the tests outside of the main suite
 

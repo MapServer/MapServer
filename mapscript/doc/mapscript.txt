@@ -1118,6 +1118,12 @@ mapObj Attributes
 
 **TODO**
 
+height : int
+    Map's output image height in pixels.
+
+.. note:: direct setting of *height* is deprecated in MapServer version 4.3.
+   Users should set width and height simultaneously using setSize().
+    
 numoutputformats : int
     Number of output formats.
 
@@ -1127,6 +1133,12 @@ outputformat : outputFormatObj_
 web : webObj_
     Application configuration.
 
+width : int
+    Map's output image width in pixels.
+
+.. note:: direct setting of *width* is deprecated in MapServer version 4.3.
+   Users should set width and height simultaneously using setSize().
+   
 mapObj Methods
 --------------
 
@@ -1219,6 +1231,10 @@ setRotation( float rotation_angle ) : int
     will be rotated by the angle in the clockwise direction.
     Returns MS_SUCCESS or MS_FAILURE.
 
+setSize( int width, int height ) : int
+    Set map's image width and height together and carry out the necessary
+    subsequent geotransform computation.  Returns MS_SUCCESS or MS_FAILURE.
+    
 -----------------------------------------------------------------------------
  outputFormatObj
 -----------------------------------------------------------------------------
