@@ -377,9 +377,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return; // map deconstructor takes care of it
   }
 
-  int open(char *path) {
+  int open() {
     int status;
-    status =  msLayerOpen(self, path);
+    status =  msLayerOpen(self);
     if (status == MS_SUCCESS) {
         return msLayerGetItems(self);
     }
@@ -515,6 +515,23 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   int setExpression(char *string) {    
     return loadExpressionString(&self->expression, string);
+  }
+
+  %newobject getExpression;
+  char *getExpression() {
+    char exprstring[256];
+    switch(self->expression.type) {
+    case(MS_REGEX):
+      snprintf(exprstring, 255, "/%s/", self->expression.string);
+      break;
+    case(MS_STRING):
+      snprintf(exprstring, 255, "\"%s\"", self->expression.string);
+      break;
+    case(MS_EXPRESSION):
+      snprintf(exprstring, 255, "(%s)", self->expression.string);
+      break;
+    }
+    return strdup(exprstring);
   }
 
   int setText(layerObj *layer, char *string) {
@@ -798,9 +815,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
 
     if(type == -1)
-      status = msSHPOpenFile(shapefile, "rb", shapepath, filename);
+      status = msSHPOpenFile(shapefile, "rb", filename);
     else if(type == -2)
-      status = msSHPOpenFile(shapefile, "rb+", shapepath, filename);
+      status = msSHPOpenFile(shapefile, "rb+", filename);
     else
       status = msSHPCreateFile(shapefile, filename, type);
 
