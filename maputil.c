@@ -874,8 +874,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   char annotate=MS_TRUE, cache=MS_FALSE;
   shapeObj shape;
   rectObj searchrect;
-  gdImagePtr img_cache;
-  int retcode;
+  gdImagePtr img_cache=NULL;
+  int retcode=MS_SUCCESS;
 
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
@@ -907,10 +907,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     img = gdImageCreate(img_cache->sx, img_cache->sy);
     if(!img) {
       msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLayer()");
-      return(NULL);
+      return(MS_FAILURE);
     }
     if(msLoadPalette(img, &(map->palette), map->imagecolor) == -1)
-      return(NULL);
+      return(MS_FAILURE);
     gdImageColorTransparent(img, 0);
   }
   
