@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.74  2002/01/17 16:44:43  assefa
+ * setlayersdrawingorder only available for PHP4.
+ *
  * Revision 1.73  2002/01/17 16:33:03  assefa
  * Add function setlayersdrawingorder.
  *
@@ -3857,6 +3860,7 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
    Note : the first element in the array is the one drawn first.*/
 DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
 {
+#ifdef PHP4
     pval        *pThis, *pArrayIndexes;
     mapObj      *self=NULL;
     int         nElements = 0;
@@ -3942,7 +3946,7 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
     {
          self->layerorder[i] = panIndexes[i];
     }
-
+#endif
     RETURN_TRUE;
 }       
 
