@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.399  2005/03/03 15:31:40  assefa
+ * Add compressed parameter in the SVG object.
+ *
  * Revision 1.398  2005/02/23 04:40:17  sdlime
  * Added wrapper for creating convex hulls to GEOS support. Added to MapScript as well.
  *
@@ -1084,6 +1087,7 @@ typedef struct  {
   FILE *stream;
   char *filename;
   int streamclosed; /* track if a save image is done */
+  int compressed; /*track if output is set to be svgz */
 } SVGObj;
 #endif
 
