@@ -216,6 +216,7 @@ ESRI SDE Support:
 -----------------
 
   --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
+  --with-sde-version[80,81,82,83,90] Specify the version of the SDE client lib
 
   ESRI SDE support is optional, and is not included by default.  
 
