@@ -230,7 +230,8 @@ int msGetLayerIndex(mapObj *map, char *name)
 }
 
 /* inserts a feature at the end of the list, can create a new list */
-featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj shape) {
+featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj shape)
+{
   featureListNodeObjPtr node, current, previous;
   int i=0;
 

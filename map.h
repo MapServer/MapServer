@@ -578,7 +578,8 @@ int initLayer(layerObj *layer);
 int initClass(classObj *_class);
 int initQuery(queryObj *query);
 
-/* NEED TEMPLATES HERE! (for feature lists) */
+featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj shape);
+void freeFeatureList(featureListNodeObjPtr list);
 
 int loadProjectionString(projectionObj *p, char *value);
 int loadExpressionString(expressionObj *exp, char *value);

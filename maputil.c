@@ -966,10 +966,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
     }   
 
-    printf("done main loop %d\n", overlay);
-
     if(overlay) {
-      printf("in overlay loop...\n");
       for(current=layer->features; current; current=current->next) {
 	c = current->shape.classindex;
 	if(layer->class[c].overlaysymbol >= 0) {	  
@@ -1106,8 +1103,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
   double scalefactor=1;
 
-  short overlay=MS_FALSE;
-  featureListNodeObjPtr shpcache;
+  featureListNodeObjPtr shpcache=NULL, current=NULL;
 
   if(!layer->data && !layer->tileindex)
     return(0);
@@ -1473,9 +1469,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	return(-1);
       }
 
-      for(i=0; i<layer->numclasses; i++) // are there some overlayed symbols
-	if(layer->class[i].overlaysymbol >= 0) overlay = MS_TRUE;
-      
       for(i=start_feature;i<shpfile.numshapes;i++) {
 
 	if(!msGetBit(status,i)) continue; /* next shape */
@@ -1522,10 +1515,22 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	    free(annotxt);
 	  }
 	}
-	
-	msFreeShape(&shape);
+
+	if(layer->class[c].overlaysymbol >= 0) { // cache shape
+	  shape.classindex = c;
+	  if(insertFeatureList(&shpcache, shape) == NULL) return(-1);
+	} else
+	  msFreeShape(&shape);
       }
-      
+
+      if(shpcache) {	
+	for(current=shpcache; current; current=current->next) {
+	  c = current->shape.classindex;
+	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	}
+	freeFeatureList(shpcache);
+      }
+
       break;
 
     case MS_POLYLINE:
@@ -1535,9 +1540,6 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	return(-1);
       }
       
-      for(i=0; i<layer->numclasses; i++) // are there some overlayed symbols
-	if(layer->class[i].overlaysymbol >= 0) overlay = MS_TRUE;
-
       for(i=start_feature;i<shpfile.numshapes;i++) {
 	
 	if(!msGetBit(status,i)) continue; /* next shape */
@@ -1580,10 +1582,22 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	    free(annotxt);
 	  }
 	}
-	
-	msFreeShape(&shape);
+
+	if(layer->class[c].overlaysymbol >= 0) { // cache shape
+	  shape.classindex = c;
+	  if(insertFeatureList(&shpcache, shape) == NULL) return(-1);
+	} else
+	  msFreeShape(&shape);
       }	
       
+      if(shpcache) {	
+	for(current=shpcache; current; current=current->next) {
+	  c = current->shape.classindex;
+	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	}
+	freeFeatureList(shpcache);
+      }
+
       break;
 
     case MS_POLYGON:
