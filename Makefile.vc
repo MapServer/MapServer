@@ -40,7 +40,7 @@ PROJ_INC=-I../proj/src
 PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
 
 #Use this flag to compile with WMS support
-WMS=-DUSE_WMS
+WMS=-DUSE_WMS_SVR
 
 #Use this flag to compile with WMS Client support
 #you need the libwww from http://www.w3.org/Library/.
@@ -48,6 +48,9 @@ WMS=-DUSE_WMS
 
 #WWWLIB_INC=-I../Libwww/library/src -I../libwww/modules/expat/xmlparse
 #WWWLIB_LIB=../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
+
+#Use this flag to compile with WFS support, requires OGR and PROJ4
+#WFS=-DUSE_WFS_SVR
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
@@ -164,6 +167,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
         maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
         mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
         mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapgdal.obj \
+        mapwfs.obj mapows.obj \
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
@@ -183,7 +187,7 @@ INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
                 $(WWWLIB_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) \
+		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(WFS) \
                 $(PRIOLIST)
 
 default: 	all

@@ -106,9 +106,13 @@ MING_INC=@MING_INC@
 WWW_INC= @WWW_INC@
 WWW_LIB= @WWW_LIB@
 
-# OGC WMS Compatibility:  -DUSE_WMS (Requires PROJ4 support)
+# OWS: OGC Web Services support
+# OGC WMS Server:  -DUSE_WMS_SVR (Requires PROJ4 support)
 # OGC WMS Client Connections:  -DUSE_WMS_LYR (Requires PROJ4 and libwww)
-WMS=	  @WMS_ENABLED@ @WMS_LYR_ENABLED@
+# OGC WFS Server: -DUSE_WFS_SVR (Requires OGR, PROJ4 recommended)
+# OGC WFS Client: -DUSE_WFS_LYR (Requires OGR, PROJ4 and libwww)
+
+OWS=	  @WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@
 
 #
 # UofMN GIS/Image Processing Extension (very experimental)
@@ -148,7 +152,7 @@ XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
 CFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
-        $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(WMS) $(MING) \
+        $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(OWS) $(MING) \
 	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) \
 	$(POSTGIS) $(MPATROL) $(THREAD) \
 	$(GD_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
@@ -166,7 +170,7 @@ STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)
 
 RM= /bin/rm -f
 
-OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o $(EPPL_OBJ) $(REGEX_OBJ) $(PDF_OBJ)
+OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapows.o mapwfs.o $(EPPL_OBJ) $(REGEX_OBJ) $(PDF_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---

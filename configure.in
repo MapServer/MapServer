@@ -1145,7 +1145,7 @@ dnl WMS Compatibility - Enabled by default if PROJ.4 is there.
 dnl Can be explicitly disabled using --without-wms
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include WMS support...)
+AC_CHECKING(whether we should include WMS Server support...)
 AC_ARG_WITH(wms,
 [  --without-wms           Disable OGC WMS Compatibility (enabled by default).],,)
 
@@ -1159,14 +1159,14 @@ elif test -z "$PROJ_ENABLED" ; then
 
 else
 
-  WMS_ENABLED="-DUSE_WMS"
-  AC_MSG_RESULT([        OGC WMS compatibility enabled ($WMS_ENABLED).])
+  WMS_SVR_ENABLED="-DUSE_WMS_SVR"
+  AC_MSG_RESULT([        OGC WMS compatibility enabled ($WMS_SVR_ENABLED).])
 
 fi
 
-AC_SUBST(WMS_ENABLED,$WMS_ENABLED)
+AC_SUBST(WMS_SVR_ENABLED,$WMS_SVR_ENABLED)
 
-ALL_ENABLED="$WMS_ENABLED $ALL_ENABLED"
+ALL_ENABLED="$WMS_SVR_ENABLED $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
@@ -1247,6 +1247,40 @@ AC_SUBST(WWW_LIB,    $WWW_LIB)
 ALL_ENABLED="$WMS_LYR_ENABLED $ALL_ENABLED"
 ALL_INC="$WWW_INC $ALL_INC"
 ALL_LIB="$WWW_LIB $ALL_LIB"
+
+
+
+dnl ---------------------------------------------------------------------
+dnl WFS Server support - Requires OGR and PROJ required
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should include WFS Server support...)
+AC_ARG_WITH(wfs,
+[  --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).],,)
+
+if test "$with_wfs" != "yes" ; then
+
+  AC_MSG_RESULT([        OGC WFS Server support not requested.])
+
+elif test -z "$OGR_ENABLED" ; then
+
+  AC_MSG_ERROR([OGC WFS Server support cannot be enabled: missing OGR which is required).])
+
+elif test -z "$PROJ_ENABLED" ; then
+
+  AC_MSG_ERROR([OGC WFS Server support cannot be enabled: missing PROJ4 which is required).])
+
+elif test "$with_wfs" = "yes" ; then
+
+  WFS_SVR_ENABLED="-DUSE_WFS_SVR"
+  AC_MSG_RESULT([        OGC WFS Server support enabled ($WFS_SVR_ENABLED).])
+
+fi
+
+AC_SUBST(WFS_SVR_ENABLED,$WFS_SVR_ENABLED)
+
+ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
+
 
 
 dnl ---------------------------------------------------------------------

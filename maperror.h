@@ -32,8 +32,10 @@ extern "C" {
 #define MS_WMSERR 24      /* WMS server error */
 #define MS_WMSCONNERR 25  /* WMS connectiontype error */
 #define MS_ORACLESPATIALERR 26
+#define MS_WFSERR 27      /* WFS server error */
+#define MS_WFSCONNERR 28  /* WFS connectiontype error */
 
-#define MS_NUMERRORCODES 27
+#define MS_NUMERRORCODES 29
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

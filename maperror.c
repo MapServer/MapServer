@@ -33,7 +33,9 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"Query error.",
 						"WMS server error.",
 						"WMS connection error.",
-						"OracleSpatial error."
+						"OracleSpatial error.",
+						"WFS server error.",
+						"WFS connection error."
 };
 
 #ifndef USE_THREAD
@@ -187,11 +189,17 @@ char *msGetVersion() {
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
   strcat(version, " SUPPORTS=TTF");
 #endif
-#ifdef USE_WMS
+#ifdef USE_WMS_SVR
   strcat(version, " SUPPORTS=WMS_SERVER");
 #endif
 #ifdef USE_WMS_LYR
   strcat(version, " SUPPORTS=WMS_CLIENT");
+#endif
+#ifdef USE_WFS_SVR
+  strcat(version, " SUPPORTS=WFS_SERVER");
+#endif
+#ifdef USE_WFS_LYR
+  strcat(version, " SUPPORTS=WFS_CLIENT");
 #endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");

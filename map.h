@@ -1029,10 +1029,6 @@ int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent);
 int msOracleSpatialLayerInitItemInfo(layerObj *layer);
 void msOracleSpatialLayerFreeItemInfo(layerObj *layer);
 int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);   
-   
-int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
-
-int msGMLWriteQuery(mapObj *map, char *filename); // mapgml.c
 
 
 /* ==================================================================== */
@@ -1105,32 +1101,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */
 /* ==================================================================== */
-
-//in mapwmslayer.c
-
-typedef struct http_request_info
-{
-    int         nLayerId;
-    void      * request;  /* HTRequest * */
-    char      * pszGetUrl;
-    char      * pszOutputFile;
-    int         nStatus;
-    int         nTimeout;
-    rectObj     bbox;
-} httpRequestObj;
-
-void msFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
-                             httpRequestObj *pasReqInfo, int *numRequests);
-int msWMSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests);
-int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
-                      int numRequests, mapObj *map, layerObj *lp, 
-                      imageObj *img);
-
-char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
-                             int nClickX, int nClickY, int nFeatureCount,
-                             const char *pszInfoFormat); 
-
 
 /* ==================================================================== */
 /*      Prototypes for functions in maputil.c                           */
@@ -1248,6 +1218,11 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 /* ==================================================================== */
 /*      End of prototypes for functions in mapoutput.c                  */
 /* ==================================================================== */
+
+/* ==================================================================== */
+/*      include definitions from mapows.h                               */
+/* ==================================================================== */
+#include "mapows.h"
 
 #endif
 

@@ -1025,16 +1025,18 @@ int main(int argc, char *argv[]) {
     msObj->Map = loadMap();
 
     /*
-    ** Start by calling the WMS Dispatcher.  If it fails then we'll process
-    ** this as a regular MapServer request.
+    ** Start by calling the WMS/WFS Dispatchers.  If they fail then we'll 
+    ** process this as a regular MapServer request.
     */
-#ifdef USE_WMS
-
-    if ((status = msWMSDispatch(msObj->Map, msObj->ParamNames, msObj->ParamValues, msObj->NumParams)) != MS_DONE) {
-       
-       if (status != MS_SUCCESS)
-         writeError();
-      /* This was a WMS request... cleanup and exit */
+#if defined(USE_WMS_SVR) || defined(USE_WFS_SVR)
+    if ((status = msOWSDispatch(msObj->Map, msObj->ParamNames, 
+                                msObj->ParamValues, 
+                                msObj->NumParams)) != MS_DONE  ) 
+    {
+      /* This was a WMS/WFS request... cleanup and exit 
+       * At this point any error has already been handled
+       * as an XML exception by the OGC service.
+       */
       msFreeMap(msObj->Map);
       msFreeCharArray(msObj->ParamNames, msObj->NumParams);
       msFreeCharArray(msObj->ParamValues, msObj->NumParams);
