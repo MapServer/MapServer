@@ -33,6 +33,12 @@ dnl ---------------------------------------------------------------------
 AC_HEADER_STDC
 
 dnl ---------------------------------------------------------------------
+dnl Add -fPIC to compiler flags if appropriate
+dnl ---------------------------------------------------------------------
+AC_COMPILER_PIC
+CFLAGS="$CFLAGS $C_PIC"
+
+dnl ---------------------------------------------------------------------
 dnl Check for some string functions
 dnl ---------------------------------------------------------------------
 AC_CHECK_FUNC(strcasecmp, ,  STRINGS="-DNEED_STRCASECMP $STRINGS")
