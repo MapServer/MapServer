@@ -52,7 +52,7 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
     FILE *stream;
     char buffer[MS_BUFFER_LENGTH];
     char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
-    char *path, *fullPath, szPath[MS_MAXPATHLEN];
+    char *path=NULL, *fullPath, szPath[MS_MAXPATHLEN];
     int i;
 
     if(fontset == NULL) return(0);
@@ -109,10 +109,12 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
         i++;
     }
 
-fclose(stream); /* close the file */
-//free(path);
+    fclose(stream); /* close the file */
 
-return(0);
+    if( path )
+        free(path);
+
+    return(0);
 }
 
 /************************************************************************/

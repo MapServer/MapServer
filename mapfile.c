@@ -567,11 +567,24 @@ static int loadProjection(projectionObj *p)
       msSetError(MS_EOFERR, NULL, "loadProjection()");      
       return(-1);
     case(END):
-      p->numargs = i;
-      if(p->numargs != 0)
-          return msProcessProjection(p);
+      if( i == 1 && strstr(p->args[0],"+") != NULL )
+      {
+          char *one_line_def = p->args[0];
+          int result;
+
+          p->args[0] = NULL;
+          result = msLoadProjectionString( p, one_line_def );
+          free( one_line_def );
+          return result;
+      }
       else
-          return 0;
+      {
+          p->numargs = i;
+          if(p->numargs != 0)
+              return msProcessProjection(p);
+          else
+              return 0;
+      }
       break;    
     case(MS_STRING):
     case(MS_AUTO):
@@ -3502,8 +3515,12 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       map->mappath = strdup(
           msBuildPath(szPath, szCWDPath, strdup(new_mappath)));
   else
-      map->mappath = strdup(
-          msBuildPath(szPath, szCWDPath, getPath(filename)));
+  {
+      char *path = getPath(filename);
+      map->mappath = strdup(msBuildPath(szPath, szCWDPath, path));
+      if( path )
+          free( path );
+  }
 
   for(;;) {
 
