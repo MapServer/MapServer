@@ -335,8 +335,6 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
   if( layer->transform )
   {
-      char szPath[MS_MAXPATHLEN];
-
       if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
           GDALReadWorldFile((char *)GDALGetDescription(hDS),
                             "wld", adfGeoTransform);
@@ -899,18 +897,17 @@ static int readWorldFile(char *filename, double *ulx, double *uly, double *cx, d
 
 /* read georeferencing info from geoTIFF header, if it exists */
 #ifdef USE_TIFF 
-static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *cy, char *szCurDir)
+static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *cy)
 {
   short entries;
   int i,fpos,swap,tiepos,cellpos;
   double tie[6],cell[6];
   TIFFDirEntry tdir;
   FILE *f;
-  char szPath[MS_MAXPATHLEN];
   
   swap=TIFFIsByteSwapped(tif);
   fpos=TIFFCurrentDirOffset(tif);
-  f=fopen(msBuildPath(szPath, szCurDir, (char*)TIFFFileName(tif)),"rb");
+  f=fopen((char*)TIFFFileName(tif),"rb");
   if (f==NULL) return(-1);
   fseek(f,fpos,0);
   fread(&entries,2,1,f);
@@ -984,8 +981,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
     return(-1);
   }
   
-  if(readGEOTiff(tif, &ulx, &uly, &cx, &cy, 
-                 msBuildPath(szPath, map->mappath, map->shapepath)) != 0) {
+  if(readGEOTiff(tif, &ulx, &uly, &cx, &cy ) != 0) {
     if(readWorldFile(msBuildPath3(szPath,map->mappath,map->shapepath,filename),
                      &ulx, &uly, &cx, &cy) != 0) {
       TIFFClose(tif);
