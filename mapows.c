@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.37  2004/09/23 19:18:10  julien
+ * Encode all metadata and parameter printed in an XML document (Bug 802)
+ *
  * Revision 1.36  2004/08/03 23:26:24  dan
  * Cleanup OWS version tests in the code, mapwms.c (bug 799)
  *
@@ -569,6 +572,7 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
                             const char *format, const char *default_value) 
 {
     const char *value;
+    char *encoded;
     int status = MS_NOERR;
     int i;
 
@@ -578,7 +582,9 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
        {
          if((value = msOWSLookupMetadata(&(map->layers[i].metadata), namespaces, name)))
          { 
-            fprintf(stream, format, value);
+            encoded = msEncodeHTMLEntities(value);
+            fprintf(stream, format, encoded);
+            msFree(encoded);
             return status;
          }
        }
@@ -591,7 +597,11 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
     }
 
     if (default_value)
-       fprintf(stream, format, default_value);
+    {
+       encoded = msEncodeHTMLEntities(default_value);
+       fprintf(stream, format, encoded);
+       msFree(encoded);
+    }
    
     return status;
 }
@@ -625,6 +635,42 @@ int msOWSPrintParam(FILE *stream, const char *name, const char *value,
     return status;
 }
 
+/* msOWSPrintEncodeParam()
+**
+** Same as printEncodeMetadata() but applied to mapfile parameters.
+**/
+int msOWSPrintEncodeParam(FILE *stream, const char *name, const char *value, 
+                          int action_if_not_found, const char *format, 
+                          const char *default_value) 
+{
+    int status = MS_NOERR;
+    char *encode;
+
+    if(value && strlen(value) > 0)
+    { 
+        encode = msEncodeHTMLEntities(value);
+        fprintf(stream, format, encode);
+        msFree(encode);
+    }
+    else
+    {
+        if (action_if_not_found == OWS_WARN)
+        {
+            fprintf(stream, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", name);
+            status = action_if_not_found;
+        }
+
+        if (default_value)
+        {
+            encode = msEncodeHTMLEntities(default_value);
+            fprintf(stream, format, encode);
+            msFree(encode);
+        }
+    }
+
+    return status;
+}
+
 /* msOWSPrintMetadataList()
 **
 ** Prints comma-separated lists metadata.  (e.g. keywordList)
@@ -648,6 +694,43 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
 	    if(startTag) fprintf(stream, "%s", startTag);
 	    for(kw=0; kw<numkeywords; kw++) 
             fprintf(stream, itemFormat, keywords[kw]);
+	    if(endTag) fprintf(stream, "%s", endTag);
+	    msFreeCharArray(keywords, numkeywords);
+      }
+      return MS_TRUE;
+    }
+    return MS_FALSE;
+}
+
+/* msOWSPrintEncodeMetadataList()
+**
+** Prints comma-separated lists metadata.  (e.g. keywordList)
+** This will print HTML encoded values.
+**/
+int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata, 
+                                 const char *namespaces, const char *name, 
+                                 const char *startTag, 
+                                 const char *endTag, const char *itemFormat,
+                                 const char *default_value) 
+{
+    const char *value;
+    char *encoded;
+    if((value = msOWSLookupMetadata(metadata, namespaces, name)) ||
+       (value = default_value) != NULL ) 
+    {
+      char **keywords;
+      int numkeywords;
+      
+      keywords = split(value, ',', &numkeywords);
+      if(keywords && numkeywords > 0) {
+        int kw;
+	    if(startTag) fprintf(stream, "%s", startTag);
+	    for(kw=0; kw<numkeywords; kw++)
+            {
+                encoded = msEncodeHTMLEntities(keywords[kw]);
+                fprintf(stream, itemFormat, encoded);
+                msFree(encoded);
+            }
 	    if(endTag) fprintf(stream, "%s", endTag);
 	    msFreeCharArray(keywords, numkeywords);
       }
@@ -692,6 +775,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
                            hashTableObj *metadata ) 
 {
     const char	*value, *resx, *resy;
+    char *encoded, *encoded_resx, *encoded_resy;
 
     /* Look for EPSG code in PROJECTION block only.  "wms_srs" metadata cannot be
      * used to establish the native projection of a layer for BoundingBox purposes.
@@ -700,16 +784,24 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
     
     if( value != NULL )
     {
+        encoded = msEncodeHTMLEntities(value);
         fprintf(stream, "%s<BoundingBox SRS=\"%s\"\n"
                "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
-               tabspace, value, 
+               tabspace, encoded, 
                tabspace, extent->minx, extent->miny, 
                extent->maxx, extent->maxy);
+        msFree(encoded);
 
         if( (resx = msOWSLookupMetadata( metadata, "MFO", "resx" )) != NULL &&
             (resy = msOWSLookupMetadata( metadata, "MFO", "resy" )) != NULL )
+        {
+            encoded_resx = msEncodeHTMLEntities(resx);
+            encoded_resy = msEncodeHTMLEntities(resy);
             fprintf( stream, "\n%s            resx=\"%s\" resy=\"%s\"",
-                    tabspace, resx, resy );
+                    tabspace, encoded_resx, encoded_resy );
+            msFree(encoded_resx);
+            msFree(encoded_resy);
+        }
  
         fprintf( stream, " />\n" );
     }
@@ -742,9 +834,10 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       // ContactPersonPrimary is optional, but when present then all its 
       // sub-elements are mandatory
       fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
-      msOWSPrintMetadata(stream, metadata, NULL, "wms_contactperson", 
+
+      msOWSPrintEncodeMetadata(stream, metadata, "OWS", "contactperson", 
                   OWS_WARN, "      <ContactPerson>%s</ContactPerson>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, NULL,"wms_contactorganization", 
+      msOWSPrintEncodeMetadata(stream, metadata, "OWS", "contactorganization", 
              OWS_WARN, "      <ContactOrganization>%s</ContactOrganization>\n",
              NULL);
       fprintf(stream, "%s  </ContactPersonPrimary>\n", tabspace);
@@ -752,7 +845,8 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 
     if(bEnableContact == 0)
     {
-        if(msOWSPrintMetadata(stream, metadata, NULL, "wms_contactposition", 
+
+        if(msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactposition",
                            OWS_NOERR, 
      "    <ContactInformation>\n      <ContactPosition>%s</ContactPosition>\n",
                               NULL) != 0)
@@ -760,7 +854,8 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     }
     else
     {
-        msOWSPrintMetadata(stream, metadata, NULL, "wms_contactposition", 
+
+        msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactposition", 
                     OWS_NOERR, "      <ContactPosition>%s</ContactPosition>\n",
                            NULL);
     }
@@ -781,17 +876,18 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       // ContactAdress is optional, but when present then all its 
       // sub-elements are mandatory
       fprintf(stream, "%s  <ContactAddress>\n", tabspace);
-      msOWSPrintMetadata(stream, metadata, NULL, "wms_addresstype", OWS_WARN,
-                    "        <AddressType>%s</AddressType>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, NULL, "wms_address", OWS_WARN,
-                    "        <Address>%s</Address>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, NULL, "wms_city", OWS_WARN,
+
+      msOWSPrintEncodeMetadata(stream, metadata, "OMF","addresstype", OWS_WARN,
+                              "        <AddressType>%s</AddressType>\n", NULL);
+      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "address", OWS_WARN,
+                       "        <Address>%s</Address>\n", NULL);
+      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "city", OWS_WARN,
                     "        <City>%s</City>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, NULL, "wms_stateorprovince", 
+      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "stateorprovince", 
            OWS_WARN,"        <StateOrProvince>%s</StateOrProvince>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, NULL, "wms_postcode", OWS_WARN,
+      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "postcode", OWS_WARN,
                     "        <PostCode>%s</PostCode>\n", NULL);
-      msOWSPrintMetadata(stream, metadata, NULL, "wms_country", OWS_WARN,
+      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "country", OWS_WARN,
                     "        <Country>%s</Country>\n", NULL);
       fprintf(stream, "%s  </ContactAddress>\n", tabspace);
     }
@@ -799,46 +895,53 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 
     if(bEnableContact == 0)
     {
-        if(msOWSPrintMetadata(stream, metadata, NULL, "wms_contactvoicetelephone", 
-                           OWS_NOERR,
-                           "    <ContactInformation>\n      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
-                              NULL) != 0)
+        if(msOWSPrintEncodeMetadata(stream, metadata, "OMF", 
+                                    "contactvoicetelephone", OWS_NOERR,
+                                    "    <ContactInformation>\n"
+                   "      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
+                                    NULL) != 0)
             bEnableContact = 1;
     }
     else
     {
-        msOWSPrintMetadata(stream, metadata, NULL, "wms_contactvoicetelephone", 
-                           OWS_NOERR,
+        msOWSPrintEncodeMetadata(stream, metadata, "OMF", 
+                                 "contactvoicetelephone", OWS_NOERR,
                    "      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
                            NULL);
     }
 
     if(bEnableContact == 0)
     {
-        if(msOWSPrintMetadata(stream, metadata,
-                           NULL, "wms_contactfacsimiletelephone", OWS_NOERR,
-                              "    <ContactInformation>\n     <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL) != 0)
+        if(msOWSPrintEncodeMetadata(stream, metadata,
+                           "OMF", "contactfacsimiletelephone", OWS_NOERR,
+                              "    <ContactInformation>\n     "
+                 "<ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n",
+                                    NULL) != 0)
             bEnableContact = 1;
     }
     else
     {
-        msOWSPrintMetadata(stream, metadata, 
-                           NULL, "wms_contactfacsimiletelephone", OWS_NOERR,
-                           "      <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL);
+        msOWSPrintEncodeMetadata(stream, metadata, 
+                           "OMF", "contactfacsimiletelephone", OWS_NOERR,
+           "      <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n",
+                                 NULL);
     }
 
     if(bEnableContact == 0)
     {
-        if(msOWSPrintMetadata(stream, metadata, 
-                           NULL, "wms_contactelectronicmailaddress", OWS_NOERR,
-                              "    <ContactInformation>\n     <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL) != 0)
+        if(msOWSPrintEncodeMetadata(stream, metadata, 
+                           "OMF", "contactelectronicmailaddress", OWS_NOERR,
+                              "    <ContactInformation>\n     "
+           "<ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n",
+                                    NULL) != 0)
             bEnableContact = 1;
     }
     else
     {
-        msOWSPrintMetadata(stream, metadata, 
-                           NULL, "wms_contactelectronicmailaddress", OWS_NOERR,
-                           "  <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL);
+        msOWSPrintEncodeMetadata(stream, metadata, 
+                           "OMF", "contactelectronicmailaddress", OWS_NOERR,
+         "  <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n",
+                                 NULL);
     }
 
 

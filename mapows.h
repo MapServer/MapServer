@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.40  2004/09/23 19:18:10  julien
+ * Encode all metadata and parameter printed in an XML document (Bug 802)
+ *
  * Revision 1.39  2004/09/08 14:33:30  sean
  * declared MS_DLL_EXPORT for hex2int and msGMLWriteQuery (bug 851).
  *
@@ -222,11 +225,19 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
 int msOWSPrintParam(FILE *stream, const char *name, const char *value, 
                     int action_if_not_found, const char *format, 
                     const char *default_value);
+int msOWSPrintEncodeParam(FILE *stream, const char *name, const char *value, 
+                          int action_if_not_found, const char *format, 
+                          const char *default_value);
 int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata, 
                            const char *namespaces, const char *name, 
                            const char *startTag, 
                            const char *endTag, const char *itemFormat,
                            const char *default_value);
+int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata, 
+                                 const char *namespaces, const char *name, 
+                                 const char *startTag, 
+                                 const char *endTag, const char *itemFormat,
+                                 const char *default_value);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
                                  rectObj *extent, projectionObj *srcproj,
                                  int nService);

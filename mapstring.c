@@ -529,6 +529,9 @@ char *msEncodeHTMLEntities(const char *string)
     char *newstring;
     const char *c;
 
+    if(string == NULL)
+        return NULL;
+
     // Start with 100 extra chars for replacements... 
     // should be good enough for most cases
     buflen = strlen(string) + 100;

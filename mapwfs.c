@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.41  2004/09/23 19:18:10  julien
+ * Encode all metadata and parameter printed in an XML document (Bug 802)
+ *
  * Revision 1.40  2004/08/18 12:53:51  dan
  * Produce an exception if typename specified in request doesn't exist or
  * cannot be served as a WFS layer (bug 824)
@@ -208,6 +211,7 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
 {
   va_list argp;
   const char *fmt;
+  char *encoded;
 
   printf("    <%s>\n", request);
 
@@ -219,7 +223,10 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
     fmt = formats;
     while(fmt != NULL)
     {
-      printf("        <%s/>\n", fmt);
+      encoded = msEncodeHTMLEntities(fmt);
+      printf("        <%s/>\n", encoded);
+      msFree(encoded);
+
       fmt = va_arg(argp, const char *);
     }
     va_end(argp);
@@ -321,18 +328,20 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    
    printf("    <FeatureType>\n");
 
-   msOWSPrintParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
-              "        <Name>%s</Name>\n", NULL);
+   msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
+                         "        <Name>%s</Name>\n", NULL);
 
-   msOWSPrintMetadata(stdout, &(lp->metadata), NULL, "wfs_title", OWS_WARN,
-                 "        <Title>%s</Title>\n", lp->name);
+   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), NULL, "wfs_title", 
+                            OWS_WARN, "        <Title>%s</Title>\n", lp->name);
 
-   msOWSPrintMetadata(stdout, &(lp->metadata), NULL, "wfs_abstract", OWS_NOERR,
-                 "        <Abstract>%s</Abstract>\n", NULL);
+   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), NULL, "wfs_abstract", 
+                         OWS_NOERR, "        <Abstract>%s</Abstract>\n", NULL);
 
-   msOWSPrintMetadataList(stdout, &(lp->metadata), NULL, "wfs_keywordlist", 
-                     "        <Keywords>\n", "        </Keywords>\n",
-                     "          %s\n", NULL);
+   msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), NULL, 
+                                "wfs_keywordlist", 
+                                "        <Keywords>\n", 
+                                "        </Keywords>\n",
+                                "          %s\n", NULL);
 
    // __TODO__ Add optional metadataURL with type, format, etc.
 
@@ -350,14 +359,14 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    if (msGetEPSGProj(&(map->projection),&(map->web.metadata), MS_TRUE) != NULL)
    {
        // Map has a SRS.  Use it for all layers.
-       msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
+       msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
                   msGetEPSGProj(&(map->projection),&(map->web.metadata),MS_TRUE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
    else
    {
        // Map has no SRS.  Use layer SRS or produce a warning.
-       msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
+       msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
                   msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
@@ -409,7 +418,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
 
   printf("Content-type: text/xml%c%c",10,10); 
 
-  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
                 "ISO-8859-1");
 
@@ -433,21 +442,24 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
  printf("  <Name>MapServer WFS</Name>\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_title", OWS_WARN,
-                "  <Title>%s</Title>\n", map->name);
-  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_abstract", OWS_NOERR,
-                "  <Abstract>%s</Abstract>\n", NULL);
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_title", 
+                           OWS_WARN, "  <Title>%s</Title>\n", map->name);
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_abstract", 
+                           OWS_NOERR, "  <Abstract>%s</Abstract>\n", NULL);
 
-  msOWSPrintMetadataList(stdout, &(map->web.metadata), NULL, "wfs_keywordlist", 
-                    "  <Keywords>\n", "  </Keywords>\n",
-                    "    %s\n", NULL);
+  msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), NULL, 
+                               "wfs_keywordlist", 
+                               "  <Keywords>\n", "  </Keywords>\n",
+                               "    %s\n", NULL);
   printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
 
-  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_fees", OWS_NOERR,
-                "  <Fees>%s</Fees>\n", NULL);
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_fees", 
+                           OWS_NOERR, "  <Fees>%s</Fees>\n", NULL);
   
-  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_accessconstraints", OWS_NOERR,
-                "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, 
+                           "wfs_accessconstraints", OWS_NOERR,
+                           "  <AccessConstraints>%s</AccessConstraints>\n", 
+                           NULL);
 
   printf("</Service>\n\n");
 
@@ -542,6 +554,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     int n=0;
     char *user_namespace_prefix = NULL;
     char *user_namespace_uri = NULL;
+    char *encoded_name = NULL, *encoded;
 
     if(paramsObj->pszTypeName && numlayers == 0) 
     {
@@ -604,15 +617,14 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     */
     printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
-
-    user_namespace_prefix =  
-      msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix");
-    user_namespace_uri =  
-      msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri");
+    user_namespace_prefix = msEncodeHTMLEntities( 
+      msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix") );
+    user_namespace_uri = msEncodeHTMLEntities( 
+      msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri") );
     
     if (user_namespace_prefix && user_namespace_uri)
     {
@@ -637,11 +649,12 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                "   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
                "http://www.ttt.org/myns", "http://www.ttt.org/myns"); 
     
-
+    encoded = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     printf("\n"
            "  <import namespace=\"http://www.opengis.net/gml\" \n"
            "          schemaLocation=\"%s/gml/2.1.2/feature.xsd\" />\n",
-           msOWSGetSchemasLocation(map));
+           encoded);
+    msFree(encoded);
 
     /*
     ** loop through layers 
@@ -666,27 +679,29 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             /*
             ** OK, describe this layer
             */
-
+            encoded_name = msEncodeHTMLEntities( lp->name );
             if (user_namespace_prefix)
               printf("\n"
                    "  <element name=\"%s\" \n"
                    "           type=\"%s:%s_Type\" \n"
                    "           substitutionGroup=\"gml:_Feature\" />\n\n",
-                   lp->name, user_namespace_prefix, lp->name);
+                   encoded_name, user_namespace_prefix, encoded_name);
             else
               printf("\n"
                      "  <element name=\"%s\" \n"
                      "           type=\"myns:%s_Type\" \n"
                      "           substitutionGroup=\"gml:_Feature\" />\n\n",
-                     lp->name, lp->name);
+                     encoded_name, encoded_name);
 
-            printf("  <complexType name=\"%s_Type\">\n", lp->name);
+            printf("  <complexType name=\"%s_Type\">\n", encoded_name);
             printf("    <complexContent>\n");
             printf("      <extension base=\"gml:AbstractFeatureType\">\n");
             printf("        <sequence>\n");
 
+            encoded = msEncodeHTMLEntities( msWFSGetGeomElementName(map, lp) );
             printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n",
-                   msWFSGetGeomElementName(map, lp));
+                   encoded);
+            msFree(encoded);
             /*
              printf("          <element name=\"%s\" \n"
                    "                   type=\"gml:%s\" \n"
@@ -710,8 +725,10 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                            continue;
                           if (description_gml && strcmp(description_gml,  lp->items[k]) == 0)
                             continue;
-                        printf("          <element name=\"%s\" type=\"string\" />\n",
-                               lp->items[k] );
+                          encoded = msEncodeHTMLEntities( lp->items[k] );
+                          printf("          <element name=\"%s\" type=\"string\" />\n",
+                                 encoded );
+                          msFree(encoded);
                     }
                 }
 
@@ -720,7 +737,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             else
             {
                 printf("\n\n<!-- ERROR: Failed openinig layer %s -->\n\n", 
-                       lp->name);
+                       encoded_name);
             }
 
             printf("        </sequence>\n");
@@ -735,6 +752,10 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     ** Done!
     */
     printf("\n</schema>\n");
+
+    msFree(encoded_name);
+    msFree(user_namespace_prefix);
+    msFree(user_namespace_uri);
 
     if (layers)
         msFreeCharArray(layers, numlayers);
@@ -765,6 +786,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     char *pszNameSpace = NULL;
     char *user_namespace_prefix = NULL;
     char *user_namespace_uri = NULL;
+    char *encoded, *encoded_typename, *encoded_schema;
 
     // Default filter is map extents
     bbox = map->extent;
@@ -1107,22 +1129,30 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
-                       "<?xml version='1.0' encoding=\"%s\" ?>\n",
-                       "ISO-8859-1");
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, 
+                             "wfs_encoding", OWS_NOERR,
+                             "<?xml version='1.0' encoding=\"%s\" ?>\n",
+                             "ISO-8859-1");
 
-    user_namespace_uri =  
-      msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri");
+    user_namespace_uri = msLookupHashTable(&(map->web.metadata), 
+                                           "wfs_namespace_uri");
+    if(user_namespace_uri != NULL)
+        user_namespace_uri = msEncodeHTMLEntities( user_namespace_uri );
 
-    user_namespace_prefix = 
-      msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix");
+    user_namespace_prefix = msLookupHashTable(&(map->web.metadata), 
+                                              "wfs_namespace_prefix");
+    if(user_namespace_prefix != NULL)
+        user_namespace_prefix = msEncodeHTMLEntities( user_namespace_prefix );
+
     if (user_namespace_prefix && user_namespace_uri)
       pszNameSpace = strdup(user_namespace_prefix);
     //else
     //  pszNameSpace = strdup("myns");
 
      
-
+    encoded = msEncodeHTMLEntities( paramsObj->pszVersion );
+    encoded_typename = msEncodeHTMLEntities( typename );
+    encoded_schema = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
     if (user_namespace_prefix && user_namespace_uri)
     {
         printf("<wfs:FeatureCollection\n"
@@ -1135,8 +1165,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYP\
 ENAME=%s\">\n",
               user_namespace_prefix, user_namespace_uri,
-               msOWSGetSchemasLocation(map), paramsObj->pszVersion,
-               user_namespace_uri, script_url_encoded, paramsObj->pszVersion, typename);
+              encoded_schema, encoded, user_namespace_uri, 
+              script_url_encoded, encoded, encoded_typename);
     }
     else
       printf("<wfs:FeatureCollection\n"
@@ -1150,8 +1180,12 @@ ENAME=%s\">\n",
              "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYP\
 ENAME=%s\">\n",
            "http://www.ttt.org/myns", "http://www.ttt.org/myns",
-           msOWSGetSchemasLocation(map), paramsObj->pszVersion,
-           "http://www.ttt.org/myns", script_url_encoded, paramsObj->pszVersion, typename);
+            encoded_schema, encoded, "http://www.ttt.org/myns", 
+            script_url_encoded, encoded, encoded_typename);
+
+    msFree(encoded);
+    msFree(encoded_schema);
+    msFree(encoded_typename);
 
 
     /* __TODO__ WFS expects homogenous geometry types, but our layers can
@@ -1183,6 +1217,9 @@ ENAME=%s\">\n",
     free(script_url_encoded);
     if (pszNameSpace)
       free(pszNameSpace);
+    msFree(user_namespace_uri);
+    msFree(user_namespace_prefix);
+
 
     return MS_SUCCESS;
 }

@@ -291,12 +291,18 @@ void msWriteError(FILE *stream)
 
 void msWriteErrorXML(FILE *stream)
 {
+  char *message;
   errorObj *ms_error = msGetErrorObj();
 
   while (ms_error && ms_error->code != MS_NOERR)
   {
-      fprintf(stream, "%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+      message = msEncodeHTMLEntities(ms_error->message);
+
+      fprintf(stream, "%s: %s %s\n", ms_error->routine, 
+              ms_errorCodes[ms_error->code], message);
       ms_error = ms_error->next;
+
+      msFree(message);
   }
 }
 

@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Encode all metadatas and mapfile parameters outputed in a xml document.
+  (Bug 802)
+
 - Implement the ENCODING label parameter to support internationalization.
   Note this require the iconv library (Bug 858).
 
