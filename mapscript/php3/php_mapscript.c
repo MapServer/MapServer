@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.127  2002/12/16 19:08:43  assefa
+ * Remove unuses vraiables.
+ *
  * Revision 1.126  2002/12/13 19:33:25  julien
  * zoomScale receive a double instead of an integer
  *
@@ -4963,7 +4966,6 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval   *pFname, *pThis;
     imageObj *im = NULL;
-    mapObj      *map = NULL;
     int retVal = 0;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -4988,7 +4990,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     if(pFname->value.str.val != NULL && strlen(pFname->value.str.val) > 0)
     {
         if (im == NULL ||
-            (retVal = msSaveImage(map, im, pFname->value.str.val) != 0))
+            (retVal = msSaveImage(NULL, im, pFname->value.str.val) != 0))
         {
           _phpms_report_mapserver_error(E_WARNING);
           php3_error(E_ERROR, "Failed writing image to %s", 
@@ -5114,7 +5116,6 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pThis;
 
     imageObj *im = NULL;
-    mapObj      *map = NULL;
 
     char *pImagepath, *pImageurl, *pBuf;
     int nBufSize, nLen1, nLen2;
@@ -5154,7 +5155,7 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     /* Save the image... 
      */
     if (im == NULL || 
-        msSaveImage(map, im, pBuf) != 0 )
+        msSaveImage(NULL, im, pBuf) != 0 )
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "Failed writing image to %s", 
@@ -7570,6 +7571,8 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     imageObj    *im;
     int         nRetVal=MS_FAILURE;
 
+
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -7579,6 +7582,7 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
+
 
     if (pThis == NULL ||
         getParameters(ht, 5, &pMap, &pLayer, &pImg, &pClass, &pText) !=SUCCESS)
@@ -9241,6 +9245,7 @@ DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *poLayer;
     imageObj    *im;
     int         nRetVal=MS_FAILURE;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -9250,6 +9255,7 @@ DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
+
 
     if (pThis == NULL ||
         getParameters(ht, 5, &pMap, &pLayer, &pImg, &pClass, &pText) !=SUCCESS)
