@@ -246,7 +246,7 @@ for (0..@{$shape->{Shapes}}-1){
              $sth->execute($string);
             $sth->finish;
             ($minx, $miny, $maxx, $maxy) = rect($object{x0}, $object{y0}, $object{x1}, $object{y1});
-            $dbh->do("insert into $sh (id, layer, vertices, GID, x1, y1, x2, y2 $appendvars) values ('$feat', '$layer{$sh}', 1, '$gid', '$minx', '$miny', '$maxx', '$maxy' $appenddata)");
+            $dbh->do("insert into $sh (id, layer, vertices, GID, x1, y1, x2, y2 $appendvars) values ('$feat', '$layer{$sh}', 1, '$gid', '$minx', '$miny', '$maxx', '$maxy' $appenddata)") if $vrt eq 0;
 
 	 } elsif ($shape->{Shapetype} eq POINT){
 		$object{x0} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt][0];
@@ -282,7 +282,8 @@ for (0..@{$shape->{Shapes}}-1){
             $sth->execute(wkb(1, $ENDIAN, $WKB_POLYGON, 1, $#vertex+1, @vertices));
             $sth->finish;
             undef @vertices;
-            $dbh->do("insert into $sh (id, layer, vertices, GID, x1, y1, x2, y2 $appendvars) values ('$feat', '$layer{$sh}', '$#vertex', '$gid', '$minx', '$miny', '$maxx', '$maxy' $appenddata)");
+            $dbh->do("insert into $sh (id, layer, vertices, GID, x1, y1, x2, y2 $appendvars) values ('$feat', '$layer{$sh}', '$#vertex', '$gid', '$minx', '$miny', '$maxx', '$maxy' $appenddata)") if $vrt eq 0;
+	    $vrt = $#vertex;
 	 }
 
 	}
