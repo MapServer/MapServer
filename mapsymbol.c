@@ -359,7 +359,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
   }
 
   if((stream = fopen(filename, "rb")) == NULL) {
-    msSetError(MS_IOERR, NULL, "msAddImageSymbol()");
+    msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", filename);
     return(-1);
   }
 
