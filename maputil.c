@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.167  2005/01/20 00:53:47  sean
+ * protect against labelitemindex < 0
+ *
  * Revision 1.166  2004/12/07 21:33:28  sean
  * protect against getting a shape value when values is NULL in msShapeGetAnnotation().  also implement setValue for mapscript::shapeObj so we can define labels for inline features (bug 1114)
  *
@@ -360,7 +363,7 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
       break;
     }
   } else {
-    if (shape->values)
+    if (shape->values && layer->labelitemindex > 0)
         tmpstr = strdup(shape->values[layer->labelitemindex]);
   }
 
