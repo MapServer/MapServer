@@ -310,11 +310,12 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   else
     fprintf(stream, "<msGMLOutput "); // default root element name
   
-  if(msLookupHashTable(map->web.metadata, "gml_uri"))  fprintf(stream, "xmlns=\"%s\"\n", msLookupHashTable(map->web.metadata, "gml_uri"));
-  fprintf(stream, "\t xmlns:gml=\"http://www.opengis.net/gml\"\n" );
-  fprintf(stream, "\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n");
-  fprintf(stream, "\t xmlns:xsi=\"http://www.w3.org/2000/10/XMLSchema-instance\"\n");  
-  if(msLookupHashTable(map->web.metadata, "gml_schema")) fprintf(stream, "\t xsi:schemaLocation=\"%s\">\n", msLookupHashTable(map->web.metadata, "gml_schema"));
+  if(msLookupHashTable(map->web.metadata, "gml_uri"))  fprintf(stream, "xmlns=\"%s\"", msLookupHashTable(map->web.metadata, "gml_uri"));
+  fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
+  fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
+  fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2000/10/XMLSchema-instance\"");  
+  if(msLookupHashTable(map->web.metadata, "gml_schema")) fprintf(stream, "\n\t xsi:schemaLocation=\"%s\"", msLookupHashTable(map->web.metadata, "gml_schema"));
+  fprintf(stream, ">\n");
 
   // a schema *should* be required
   if(msLookupHashTable(map->web.metadata, "gml_description")) fprintf(stream, "\t<gml:description>%s</gml:description>\n", msLookupHashTable(map->web.metadata, "gml_description"));
