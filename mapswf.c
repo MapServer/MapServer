@@ -2588,6 +2588,14 @@ int msSaveImageSWF(imageObj *image, char *filename)
         oAction = compileSWFActionCode(szAction);
         SWFMovie_add(image->img.swf->sMainMovie, oAction);
         
+        sprintf(szAction, "mapObj.extent=\"%f,%f,%f,%f\";", 
+                image->img.swf->map->extent.minx,
+                image->img.swf->map->extent.maxx,
+                image->img.swf->map->extent.maxx,
+                image->img.swf->map->extent.maxy);
+        oAction = compileSWFActionCode(szAction);
+        SWFMovie_add(image->img.swf->sMainMovie, oAction);
+
         sprintf(szAction, "mapObj.numlayers=%d;", 
                 image->img.swf->map->numlayers);
         oAction = compileSWFActionCode(szAction);
@@ -2615,7 +2623,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
 /* -------------------------------------------------------------------- */
         nLength = strlen(filename);
         iPointPos = -1;
-        for (i=0; i< nLength; i++)
+        for (i=nLength-1; i>=0; i--)
         {
             if (filename[i] == '.')
             {
@@ -2629,7 +2637,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
         {
             strncpy(szBase, filename, iPointPos);
             szBase[iPointPos] = '\0';
-            strcpy(szExt, filename+i+1);
+            strcpy(szExt, filename+iPointPos+1);
         } 
         
 
