@@ -56,8 +56,6 @@ static void layerFreeItemInfo(layerObj *layer)
   case(MS_POSTGIS):
     msPOSTGISLayerFreeItemInfo(layer);
     break;
-  case(MS_TILED_OGR):
-    break;
   case(MS_SDE):
     msSDELayerFreeItemInfo(layer);
     break;
@@ -635,7 +633,6 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):
   case(MS_INLINE):
-  case(MS_TILED_OGR):
   case(MS_POSTGIS):
   case(MS_SDE):
   case(MS_ORACLESPATIAL):
