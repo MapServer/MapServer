@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.155  2003/04/17 20:48:05  assefa
+ * Update php object when a select output format is done.
+ *
  * Revision 1.154  2003/04/17 13:21:02  assefa
  * Register destructor for outputformat object.
  *
@@ -5174,6 +5177,7 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self=NULL;
     HashTable   *list=NULL;
     int         nStatus = MS_SUCCESS;
+    pval       **pOutputformat;
 
     pThis = getThis();
 
@@ -5203,8 +5207,33 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
         php3_error(E_WARNING, "Unable to set output format to '%s'", 
                    pImageType->value.str.val);
     }
-    else if(self->imagetype)
-        _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
+    else
+    {
+        if(self->imagetype)
+          _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
+        
+        if (zend_hash_find(pThis->value.obj.properties, "outputformat", 
+                           sizeof("outputformat"), 
+                           (void **)&pOutputformat) == SUCCESS)
+        {
+            _phpms_set_property_string((*pOutputformat),"name", 
+                                       self->outputformat->name,
+                                       E_ERROR);
+            _phpms_set_property_string((*pOutputformat),"mimetype", 
+                                       self->outputformat->mimetype,
+                                        E_ERROR);
+            _phpms_set_property_string((*pOutputformat),"driver", 
+                                       self->outputformat->driver,
+                                       E_ERROR);
+            _phpms_set_property_string((*pOutputformat),"extension", 
+                                       self->outputformat->extension,
+                                       E_ERROR);
+            _phpms_set_property_long((*pOutputformat),"renderer", 
+                                     self->outputformat->renderer, E_ERROR); 
+            _phpms_set_property_long((*pOutputformat),"imagemode", 
+                                     self->outputformat->imagemode, E_ERROR); 
+        }
+    }
 
     RETURN_LONG(nStatus);
 }
