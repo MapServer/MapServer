@@ -170,8 +170,9 @@ static int gBYTE_ORDER = 0;
 // ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv"
 int msPOSTGISLayerOpen(layerObj *layer)
 {
-	msPOSTGISLayerInfo	*layerinfo;
+	msPOSTGISLayerInfo	*layerinfo, *previous_layerinfo;
         int			order_test = 1;
+	int			status;
 
 
 if (layer->debug)
@@ -204,20 +205,33 @@ if (layer->debug)
 	layerinfo->query_result= NULL;
 	layerinfo->urid_name= NULL;
 	layerinfo->user_srid= NULL;
+	status = msCheckConnection(layer);
 
-	layerinfo->conn = PQconnectdb( layer->connection );
+	if(status == MS_SUCCESS)
+	{
+	    if(layer->debug)
+		msDebug("msPOSTGISLayerOpen -- connection can be shared.\n");
+	    previous_layerinfo = layer->sameconnection->layerinfo;
+	    layerinfo->conn = previous_layerinfo->conn;
+	}
+	else
+	{
+	    if(layer->debug)
+		msDebug("MSPOSTGISLayerOpen -- connection cannot be shared.\n");
+	    	    
+	    layerinfo->conn = PQconnectdb( layer->connection );
 
-    if (PQstatus(layerinfo->conn) == CONNECTION_BAD)
-    {
-        msSetError(MS_QUERYERR, "couldnt make connection to DB with connect string '%s'.\n<br>\nError reported was '%s'.\n<br>\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n<br>\nMost commonly this is caused by <br>\n(1) incorrect connection string <br>\n(2) you didnt specify a 'user=...' in your connection string <br>\n(3) the postmaster (postgresql server) isnt running <br>\n(4) you are not allowing TCP/IP connection to the postmaster <br>\n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' <br>\n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster <br>\n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine<br>\n(8) you made a typo <br>\n  ",
+            if (PQstatus(layerinfo->conn) == CONNECTION_BAD)
+            {
+                msSetError(MS_QUERYERR, "couldnt make connection to DB with connect string '%s'.\n<br>\nError reported was '%s'.\n<br>\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n<br>\nMost commonly this is caused by <br>\n(1) incorrect connection string <br>\n(2) you didnt specify a 'user=...' in your connection string <br>\n(3) the postmaster (postgresql server) isnt running <br>\n(4) you are not allowing TCP/IP connection to the postmaster <br>\n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' <br>\n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster <br>\n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine<br>\n(8) you made a typo <br>\n  ",
                  "msPOSTGISLayerOpen()", layer->connection,PQerrorMessage(layerinfo->conn) );
 
-	  free(layerinfo);
-	  return(MS_FAILURE);
-    }
+	        free(layerinfo);
+	        return(MS_FAILURE);
+           }
 
-	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layer);
-
+	   PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layer);
+	}
 
 
 	setPostGISLayerInfo(layer,   layerinfo);
@@ -597,6 +611,21 @@ if (layer->debug)
 
     return(MS_SUCCESS);
 }
+// Releases the cursor and closes the results of the given layer
+int msPOSTGISLayerResultClose(layerObj *layer)
+{
+	msPOSTGISLayerInfo	*layerinfo;
+	PGresult		*res;
+	layerinfo = getPostGISLayerInfo(layer);
+	if (layer->debug)
+		msDebug("msPOSTGISLayerResultClose: %s\n",layer->data);
+	if(layerinfo != NULL) {
+		res = PQexec(layerinfo->conn, "COMMIT");
+		PQclear(res);
+		PQclear(layerinfo->query_result);
+		layerinfo->query_result = NULL;
+	}
+}
 
 // Close the postgis record set and connection
 int msPOSTGISLayerClose(layerObj *layer)
@@ -613,11 +642,31 @@ int msPOSTGISLayerClose(layerObj *layer)
 
 	if (layerinfo != NULL)
 	{
-            PQclear(layerinfo->query_result);
-            layerinfo->query_result = NULL;
+	    if(layerinfo->query_result != NULL)
+	    {
+		if(layer->debug)
+		    msDebug("msPOSTGISLayerClose -- closing query_result\n");
+		PQclear(layerinfo->query_result);
+		layerinfo->query_result = NULL;
+	    }
+	    else
+	    {
+		if(layer->debug)
+	    	    msDebug("msPOSTGISLayerClose -- query_result is NULL\n");
+	    }
 
-            PQfinish(layerinfo->conn);
-            layerinfo->conn = NULL;
+	    if(layer->sameconnection)
+	    {
+		if(layer->debug)
+		    msDebug("msPOSTGISLayerClose -- shared connection x%x already closed.\n", layerinfo->conn);
+	    }
+	    else
+	    {
+		if(layer->debug)
+		    msDebug("msPOSTGISLayerClose -- closing connection x%x.\n", layerinfo->conn);
+                PQfinish(layerinfo->conn);
+                layerinfo->conn = NULL;
+	    }
 
             if (layerinfo->urid_name != NULL)
               free(layerinfo->urid_name );
@@ -1660,6 +1709,12 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 		msSetError(MS_QUERYERR, "msPOSTGISLayerWhichShapes called but unimplemented!(mapserver not compiled with postgis support)",
                  "msPOSTGISLayerWhichShapes()");
 		return(MS_FAILURE);
+}
+
+int msPOSTGISLayerResultClose(layerObj *layer)
+{
+    msSetError(MS_QUERYERR, "msPOSTGISLayerResultClose called but unimplemented!(mapserver not compiled with postgis support)", "msPOSTGISLayerResultClose()");
+    return(MS_FAILURE);
 }
 
 int msPOSTGISLayerClose(layerObj *layer)
