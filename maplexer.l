@@ -118,7 +118,7 @@ int msyyreturncomments = 0;
 <INITIAL>end			               { return(END); }
 <INITIAL,OBJECT_STRING>error		       { return(ERROR); }
 <INITIAL,OBJECT_STRING>expression              { return(EXPRESSION); }
-<INITIAL>extent		                       { return(EXTENT); }
+<INITIAL,OBJECT_STRING>extent		       { return(EXTENT); }
 <INITIAL,OBJECT_STRING>extension	       { return(EXTENSION); }
 <INITIAL,OBJECT_STRING>feature                 { return(FEATURE); }
 <INITIAL>filled                                { return(FILLED); }
@@ -135,7 +135,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>graticule               { return(GRATICULE); }
 <INITIAL,OBJECT_STRING>group                   { return(GROUP); }
 <INITIAL,OBJECT_STRING>header		       { return(HEADER); }
-<INITIAL>image			               { return(IMAGE); }
+<INITIAL,OBJECT_STRING>image		       { return(IMAGE); }
 <INITIAL,OBJECT_STRING>imagecolor	       { return(IMAGECOLOR); }
 <INITIAL,OBJECT_STRING>imagetype	       { return(IMAGETYPE); }
 <INITIAL,OBJECT_STRING>imagequality	       { return(IMAGEQUALITY); }
