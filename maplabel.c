@@ -498,6 +498,30 @@ static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
 
   return(MS_FALSE);
 }
+
+void billboard(gdImagePtr img, shapeObj *shape, labelObj *label) 
+{
+  int i;
+  shapeObj temp={0,NULL,{-1,-1,-1,-1},MS_NULL};
+
+  msAddLine(&temp, &shape->line[0]);
+
+  if(label->backgroundshadowcolor >= 0) {
+    for(i=0; i<temp.line[0].numpoints; i++) {
+      temp.line[0].point[i].x += label->backgroundshadowsizex;
+      temp.line[0].point[i].y += label->backgroundshadowsizey;
+    }
+    msImageFilledPolygon(img, &temp, label->backgroundshadowcolor);
+    for(i=0; i<temp.line[0].numpoints; i++) {
+      temp.line[0].point[i].x -= label->backgroundshadowsizex;
+      temp.line[0].point[i].y -= label->backgroundshadowsizey;
+    }
+  }
+
+  msImageFilledPolygon(img, &temp, label->backgroundcolor);
+  
+  msFreeShape(&temp);
+}
  
 int msDrawLabelCache(gdImagePtr img, mapObj *map)
 {
@@ -718,6 +742,9 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
     if(draw_marker) /* need to draw a marker */
       msDrawMarkerSymbol(&map->markerset, img, &(cachePtr->point), classPtr);
+
+    if(label.backgroundcolor >= 0)
+      billboard(img, cachePtr->poly, &label);
 
     draw_text(img, p, cachePtr->string, &label, &(map->fontset)); /* actually draw the label */
 

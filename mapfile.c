@@ -475,8 +475,13 @@ static void initLabel(labelObj *label)
 
   label->color = 1;
   label->outlinecolor = -1; /* don't use it */
+
   label->shadowcolor = -1; /* don't use it */
   label->shadowsizex = label->shadowsizey = 1;
+
+  label->backgroundcolor = -1; /* don't use it */
+  label->backgroundshadowcolor = -1; /* don't use it */
+  label->backgroundshadowsizex = label->backgroundshadowsizey = 1;
 
   label->font = NULL;
   label->type = MS_BITMAP;
@@ -523,6 +528,22 @@ static int loadLabel(labelObj *label, mapObj *map)
       break;
     case(ANTIALIAS):
       label->antialias = 1;
+      break;
+    case(BACKGROUNDCOLOR):
+      if(getInteger(&(red)) == -1) return(-1);
+      if(getInteger(&(green)) == -1) return(-1);
+      if(getInteger(&(blue)) == -1) return(-1);
+      label->backgroundcolor = msAddColor(map,red,green,blue);
+      break;
+    case(BACKGROUNDSHADOWCOLOR):
+      if(getInteger(&(red)) == -1) return(-1);
+      if(getInteger(&(green)) == -1) return(-1);
+      if(getInteger(&(blue)) == -1) return(-1);
+      label->backgroundshadowcolor = msAddColor(map,red,green,blue);
+      break;
+   case(BACKGROUNDSHADOWSIZE):
+      if(getInteger(&(label->backgroundshadowsizex)) == -1) return(-1);
+      if(getInteger(&(label->backgroundshadowsizey)) == -1) return(-1);
       break;
     case(BUFFER):
       if(getInteger(&(label->buffer)) == -1) return(-1);
@@ -573,7 +594,6 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getInteger(&(label->offsety)) == -1) return(-1);
       break;
     case(OUTLINECOLOR):
-    case(BACKGROUNDCOLOR):
       if(getInteger(&(red)) == -1) return(-1);
       if(getInteger(&(green)) == -1) return(-1);
       if(getInteger(&(blue)) == -1) return(-1);
@@ -646,6 +666,25 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     msyystate = 2; msyystring = value;
     if(getInteger(&(label->buffer)) == -1) break;
     break;
+  case(BACKGROUNDCOLOR):
+    msyystate = 2; msyystring = value;
+    if(getInteger(&(red)) == -1) return;
+    if(getInteger(&(green)) == -1) return;
+    if(getInteger(&(blue)) == -1) return;
+    label->backgroundcolor = msAddColor(map,red,green,blue);     
+    break;
+  case(BACKGROUNDSHADOWCOLOR):
+    msyystate = 2; msyystring = value;
+    if(getInteger(&(red)) == -1) return;
+    if(getInteger(&(green)) == -1) return;
+    if(getInteger(&(blue)) == -1) return;
+    label->backgroundshadowcolor = msAddColor(map,red,green,blue);     
+    break;
+  case(BACKGROUNDSHADOWSIZE):
+    msyystate = 2; msyystring = value;
+    if(getInteger(&(label->backgroundshadowsizex)) == -1) return;
+    if(getInteger(&(label->backgroundshadowsizey)) == -1) return;
+    break;
   case(COLOR):
     msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
@@ -698,7 +737,6 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     if(getInteger(&(label->offsety)) == -1) return;
     break;  
   case(OUTLINECOLOR):
-  case(BACKGROUNDCOLOR):
     msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
@@ -765,6 +803,14 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sSIZE %d\n", tab, label->size);
     fprintf(stream, "  %sTYPE TRUETYPE\n", tab);
   }  
+
+  if(label->backgroundcolor > -1) {
+    fprintf(stream, "  %sBACKGROUNDCOLOR %d %d %d\n", tab, map->palette.colors[label->backgroundcolor].red, map->palette.colors[label->backgroundcolor].green, map->palette.colors[label->backgroundcolor].blue);
+    if(label->backgroundshadowcolor > -1) {
+      fprintf(stream, "  %sBACKGROUNDSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->backgroundshadowcolor].red, map->palette.colors[label->backgroundshadowcolor].green, map->palette.colors[label->backgroundshadowcolor].blue);
+      fprintf(stream, "  %sBACKGROUNDSHADOWSIZE %d %d\n", tab, label->backgroundshadowsizex, label->backgroundshadowsizey);
+    }
+  }
 
   fprintf(stream, "  %sBUFFER %d\n", tab, label->buffer);
   if(label->color > -1) fprintf(stream, "  %sCOLOR %d %d %d\n", tab, map->palette.colors[label->color].red, map->palette.colors[label->color].green, map->palette.colors[label->color].blue);

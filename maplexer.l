@@ -73,6 +73,9 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>angle                   { return(ANGLE); }
 <INITIAL,OBJECT_STRING>antialias               { return(ANTIALIAS); }
 <INITIAL,OBJECT_STRING>backgroundcolor	       { return(BACKGROUNDCOLOR); }
+<INITIAL,OBJECT_STRING>backgroundshadowcolor   { return(BACKGROUNDSHADOWCOLOR); }
+<INITIAL,OBJECT_STRING>backgroundshadowsize    { return(BACKGROUNDSHADOWSIZE); }
+
 <INITIAL,OBJECT_STRING>buffer                  { return(BUFFER); }
 <INITIAL>character		               { return(CHARACTER); }
 <INITIAL,OBJECT_STRING>class		       { return(CLASS); }

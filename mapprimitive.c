@@ -249,9 +249,9 @@ void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out)
   double tinx,tiny,  toutx,touty,  tin1, tin2,  tout;
   double x1,y1, x2,y2;
 
-  shapeObj tmp={0,NULL};
+  shapeObj tmp={0,NULL,{-1,-1,-1,-1},MS_NULL};
   lineObj line={0,NULL};
-
+  
   if(in->numlines == 0) /* nothing to clip */
     return;
    

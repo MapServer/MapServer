@@ -251,8 +251,13 @@ typedef struct {
 
   int color;
   int outlinecolor;
+
   int shadowcolor;
   int shadowsizex, shadowsizey;
+
+  int backgroundcolor;
+  int backgroundshadowcolor;
+  int backgroundshadowsizex, backgroundshadowsizey;
 
   int size;
   int sizescaled;
