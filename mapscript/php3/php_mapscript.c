@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.5  2002/10/28 21:47:53  dan
+ * Added missing MS_LAYER_CIRCLE and MS_CC constants
+ *
  * Revision 1.104.2.4  2002/07/08 20:04:58  dan
  * Added symbolsetfilename and fontsetfilename in PHP MapScript's mapObj
  *
@@ -800,6 +803,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_LAYER_RASTER",MS_LAYER_RASTER, const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_ANNOTATION",MS_LAYER_ANNOTATION,const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_QUERY",MS_LAYER_QUERY, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_CIRCLE",MS_LAYER_CIRCLE, const_flag);
 
     /* layer status constants (see also MS_ON, MS_OFF) */
     REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
@@ -826,6 +830,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_CL",         MS_CL,          const_flag);
     REGISTER_LONG_CONSTANT("MS_UC",         MS_UC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_LC",         MS_LC,          const_flag);
+    REGISTER_LONG_CONSTANT("MS_CC",         MS_CC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
     REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
 
