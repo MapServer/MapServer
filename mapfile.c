@@ -2481,7 +2481,7 @@ static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
   if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
   fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[legend->transparent]);
-  if (legend->template) fprintf(stream, "    TEMPLATE %s\n", legend->template);
+  if (legend->template) fprintf(stream, "    TEMPLATE \"%s\"\n", legend->template);
   fprintf(stream, "  END\n\n");
 }
 
