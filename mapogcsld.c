@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2003/12/10 17:36:03  assefa
+ * Add partly support for Expressions.
+ * Correct bug with symbol outline.
+ *
  * Revision 1.9  2003/12/05 04:02:33  assefa
  * Add generation of SLD for points and text.
  *
@@ -587,6 +591,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer,
                                         bNewClass);
             psPolygonSymbolizer = psPolygonSymbolizer->psNext;
+            nSymbolizer++;
         }
         //Point Symbolizer
         psPointSymbolizer = CPLGetXMLNode(psRoot, "PointSymbolizer");
@@ -602,6 +607,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
               bNewClass = 0;
             msSLDParsePointSymbolizer(psPointSymbolizer, psLayer, bNewClass);
             psPointSymbolizer = psPointSymbolizer->psNext;
+            nSymbolizer++;
         }
         //Text symbolizer
 /* ==================================================================== */
@@ -1061,7 +1067,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
     char *psColor=NULL, *psColorName = NULL;
     int nLength = 0;
     char *pszSymbolName = NULL;
-    int bFilled = 0; 
+    int bFilled = 0, bStroked=0; 
 
     if (psRoot && psStyle && map)
     {
@@ -1119,63 +1125,88 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                     else
                       bFilled = 0;
 
-                    //set the default color if not already set
-                    if (bFilled)
-                    {
-                        if (psStyle->color.red == -1 ||
-                            psStyle->color.green == -1 ||
-                            psStyle->color.blue == -1)
-                        {
-                            psStyle->color.red = 128;
-                            psStyle->color.green = 128;
-                            psStyle->color.blue = 128;
-                        }
-                    }
+                    if (psStroke)
+                      bStroked = 1;
                     else
-                    {
-                        if (psStyle->outlinecolor.red == -1 ||
-                            psStyle->outlinecolor.green == -1 ||
-                            psStyle->outlinecolor.blue == -1)
-                        {
-                            psStyle->outlinecolor.red = 128;
-                            psStyle->outlinecolor.green = 128;
-                            psStyle->outlinecolor.blue = 128;
-                        }
-                    }
+                      bStroked = 0;
 
-                    psCssParam =  CPLGetXMLNode(psFill, "CssParameter");
-                    while (psCssParam && psCssParam->pszValue && 
-                           strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                    if (psFill)
                     {
-                        psColorName = 
-                          (char*)CPLGetXMLValue(psCssParam, "name", NULL);
-                        if (psColorName && 
-                            (strcasecmp(psColorName, "fill") == 0 ||
-                             strcasecmp(psColorName, "stroke") == 0)) 
+                        psCssParam =  CPLGetXMLNode(psFill, "CssParameter");
+                        while (psCssParam && psCssParam->pszValue && 
+                               strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
                         {
-                            if(psCssParam->psChild && 
-                               psCssParam->psChild->psNext && 
-                               psCssParam->psChild->psNext->pszValue)
-                              psColor = psCssParam->psChild->psNext->pszValue;
-
-                            if (psColor)
+                            psColorName = 
+                              (char*)CPLGetXMLValue(psCssParam, "name", NULL);
+                            if (psColorName && 
+                                strcasecmp(psColorName, "fill") == 0)
                             {
-                                nLength = strlen(psColor);
-                                if (nLength == 7 && psColor[0] == '#')
+                                if(psCssParam->psChild && 
+                                   psCssParam->psChild->psNext && 
+                                   psCssParam->psChild->psNext->pszValue)
+                                  psColor = psCssParam->psChild->psNext->pszValue;
+
+                                if (psColor)
                                 {
-                                    if (bFilled)
-                                      msSLDSetColorObject(psColor,
-                                                          &psStyle->color);
-                                    else
-                                      msSLDSetColorObject(psColor,
-                                                          &psStyle->outlinecolor);
+                                    nLength = strlen(psColor);
+                                    if (nLength == 7 && psColor[0] == '#')
+                                    {
+                                        msSLDSetColorObject(psColor,
+                                                            &psStyle->color);
+                                    }
                                 }
+                                break;
                             }
-                            break;
+                        
+                            psCssParam = psCssParam->psNext;
                         }
-                        else
-                          psCssParam = psCssParam->psNext;
                     }
+                    if (psStroke)
+                    {
+                        psCssParam =  CPLGetXMLNode(psStroke, "CssParameter");
+                        while (psCssParam && psCssParam->pszValue && 
+                               strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                        {
+                            psColorName = 
+                              (char*)CPLGetXMLValue(psCssParam, "name", NULL);
+                            if (psColorName && 
+                                strcasecmp(psColorName, "stroke") == 0) 
+                            {
+                                if(psCssParam->psChild && 
+                                   psCssParam->psChild->psNext && 
+                                   psCssParam->psChild->psNext->pszValue)
+                                  psColor = psCssParam->psChild->psNext->pszValue;
+
+                                if (psColor)
+                                {
+                                    nLength = strlen(psColor);
+                                    if (nLength == 7 && psColor[0] == '#')
+                                    {
+                                        msSLDSetColorObject(psColor,
+                                                            &psStyle->outlinecolor);
+                                    }
+                                }
+                                break;
+                            }
+                        
+                            psCssParam = psCssParam->psNext;
+                        }
+                    }
+                    
+
+                     //set the default color if color is not not already set
+                    if ((psStyle->color.red < 0 || 
+                        psStyle->color.green == -1 ||
+                         psStyle->color.blue == -1) &&
+                        (psStyle->outlinecolor.red == -1 ||
+                         psStyle->outlinecolor.green == -1 ||
+                         psStyle->outlinecolor.blue == -1))
+                    {
+                        psStyle->color.red = 128;
+                        psStyle->color.green = 128;
+                        psStyle->color.blue = 128;
+                    }
+                    
                 }
                 //Get the corresponding symbol id 
                 psStyle->symbol = msSLDGetMarkSymbol(map, pszSymbolName, 
@@ -1527,14 +1558,15 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         //cross is like plus (+) since there is also X symbol ??
         else if (strcasecmp(pszSymbolName, "cross") == 0)
         {
-            if (bFilled)
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_CROSS_FILLED);
-            else
+            //NEVER FILL CROSS
+            //if (bFilled)
+            //  psSymbol->name = strdup(SLD_MARK_SYMBOL_CROSS_FILLED);
+            //else
               psSymbol->name = strdup(SLD_MARK_SYMBOL_CROSS);
             
             psSymbol->type = MS_SYMBOL_VECTOR;
-            if (bFilled)
-              psSymbol->filled = MS_TRUE;
+            //if (bFilled)
+            // psSymbol->filled = MS_TRUE;
 
             psSymbol->points[psSymbol->numpoints].x = 0.5;
             psSymbol->points[psSymbol->numpoints].y = 0;
@@ -1554,14 +1586,15 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         }
         else if (strcasecmp(pszSymbolName, "x") == 0)
         {
-            if (bFilled)
-              psSymbol->name = strdup(SLD_MARK_SYMBOL_X_FILLED);
-            else
+            //NEVER FILL X
+            //if (bFilled)
+            //  psSymbol->name = strdup(SLD_MARK_SYMBOL_X_FILLED);
+            //else
               psSymbol->name = strdup(SLD_MARK_SYMBOL_X);
             
             psSymbol->type = MS_SYMBOL_VECTOR;
-            if (bFilled)
-              psSymbol->filled = MS_TRUE;
+            //if (bFilled)
+            //  psSymbol->filled = MS_TRUE;
             psSymbol->points[psSymbol->numpoints].x = 0;
             psSymbol->points[psSymbol->numpoints].y = 0;
             psSymbol->numpoints++;
@@ -2250,7 +2283,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
     char *pszURL = NULL;
     char szFormat[4];
     int i = 0, nLength = 0;
-    
+    int bColorAvailable = 0;
+
     if (psStyle && psLayer && psLayer->map)
     {
         nSymbol = -1;
@@ -2289,71 +2323,46 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
                             psSymbol->name);
                     pszSLD = strcatalloc(pszSLD, szTmp);
 
-                    if (psSymbol->filled && 
-                        psStyle->color.red != -1 && 
-                        psStyle->color.green != -1 &&
-                        psStyle->color.blue != -1)
-                      sprintf(szTmp, "%s\n", "<Fill>");
-                    else
-                      sprintf(szTmp, "%s\n", "<Stroke>");
-
-                    pszSLD = strcatalloc(pszSLD, szTmp);
-
                     if (psStyle->color.red != -1 && 
                         psStyle->color.green != -1 &&
                         psStyle->color.blue != -1)
                     {
-                        if (psSymbol->filled)
-                          sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
-                                   psStyle->color.red,
-                                  psStyle->color.green,
-                                   psStyle->color.blue);
-                        else
-                          sprintf(szTmp, "<CssParameter name=\"stroke\">#%02x%02x%02x</CssParameter>\n",
+                        sprintf(szTmp, "%s\n", "<Fill>");
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
                                    psStyle->color.red,
                                   psStyle->color.green,
                                    psStyle->color.blue);
                         pszSLD = strcatalloc(pszSLD, szTmp);
+                        sprintf(szTmp, "%s\n", "</Fill>");
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        bColorAvailable = 1;
                     }
-                    else if (psStyle->outlinecolor.red != -1 && 
-                             psStyle->outlinecolor.green != -1 &&
-                             psStyle->outlinecolor.blue != -1)
+                    if (psStyle->outlinecolor.red != -1 && 
+                        psStyle->outlinecolor.green != -1 &&
+                        psStyle->outlinecolor.blue != -1)    
                     {
-                        if (psSymbol->filled)
-                          sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
-                                  psStyle->outlinecolor.red,
-                                  psStyle->outlinecolor.green,
-                                  psStyle->outlinecolor.blue);
-                        else
-                          sprintf(szTmp, "<CssParameter name=\"stroke\">#%02x%02x%02x</CssParameter>\n",
-                                  psStyle->outlinecolor.red,
-                                  psStyle->outlinecolor.green,
-                                  psStyle->outlinecolor.blue);
+                        sprintf(szTmp, "%s\n", "<Stroke>");
                         pszSLD = strcatalloc(pszSLD, szTmp);
+                        sprintf(szTmp, "<CssParameter name=\"Stroke\">#%02x%02x%02x</CssParameter>\n",
+                                   psStyle->outlinecolor.red,
+                                  psStyle->outlinecolor.green,
+                                   psStyle->outlinecolor.blue);
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        sprintf(szTmp, "%s\n", "</Stroke>");
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        bColorAvailable = 1;
                     }
-                    else
+                    if (!bColorAvailable)
                     {       
                         //default color
-                        if (psSymbol->filled)
-                          sprintf(szTmp, 
-                                   "<CssParameter name=\"fill\">%s</CssParameter>\n",
-                                   "#808080");
-                        else
-                          sprintf(szTmp, 
-                                   "<CssParameter name=\"stroke\">%s</CssParameter>\n",
-                                   "#808080");
-
+                        sprintf(szTmp, 
+                                "<CssParameter name=\"fill\">%s</CssParameter>\n",
+                                "#808080");
+                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        sprintf(szTmp, "%s\n", "</Fill>");
                         pszSLD = strcatalloc(pszSLD, szTmp);
                     }
-
-                    if (psSymbol->filled &&  
-                        psStyle->color.red != -1 && 
-                        psStyle->color.green != -1 &&
-                        psStyle->color.blue != -1)
-                      sprintf(szTmp, "%s\n", "</Fill>");
-                    else
-                      sprintf(szTmp, "%s\n", "</Stroke>");
-                    pszSLD = strcatalloc(pszSLD, szTmp);
 
                     sprintf(szTmp, "%s\n%s\n", "</Mark>", "</Graphic>");
                     pszSLD = strcatalloc(pszSLD, szTmp);
@@ -2895,9 +2904,9 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 sprintf(szTmp, "%s\n",  "<Rule>");
                 pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
-                /* -------------------------------------------------------------------- */
-                /*      get the Filter if there is a class expression.                  */
-                /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      get the Filter if there is a class expression.                  */
+/* -------------------------------------------------------------------- */
                 pszFilter = msSLDGetFilter(&psLayer->class[i]);
                     
                 if (pszFilter)
@@ -2905,13 +2914,13 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                     pszFinalSLD = strcatalloc(pszFinalSLD, pszFilter);
                     free(pszFilter);
                 }
-                /* -------------------------------------------------------------------- */
-                /*      Line symbolizer.                                                */
-                /*                                                                      */
-                /*      Right now only generates a stoke element containing css         */
-                /*      parameters.                                                     */
-                /*      Lines using symbols TODO (specially for dash lines)             */
-                /* -------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
+/*      Line symbolizer.                                                */
+/*                                                                      */
+/*      Right now only generates a stoke element containing css         */
+/*      parameters.                                                     */
+/*      Lines using symbols TODO (specially for dash lines)             */
+/* -------------------------------------------------------------------- */
                 if (psLayer->type == MS_LAYER_LINE)
                 {
                     for (j=0; j<psLayer->class[i].numstyles; j++)
@@ -2999,7 +3008,8 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
  * OGR Support not included...
  * ------------------------------------------------------------------ */
 
-    msSetError(MS_MISCERR, "OGR support is not available.", "msSLDGenerateSLDLayer()");
+    msSetError(MS_MISCERR, "OGR support is not available.", 
+               "msSLDGenerateSLDLayer()");
     return NULL;
 
 #endif /* USE_OGR */
@@ -3007,6 +3017,830 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 
 #ifdef USE_OGR
 
+
+char *msSLDSimplifyExpression(char *pszExpression)
+{
+  return NULL;
+}
+
+
+
+char *msSLDGetComparisonValue(char *pszExpression)
+{
+    char *pszValue = NULL;
+    if (!pszExpression)
+      return NULL;
+
+    if (strstr(pszExpression, "=") || strstr(pszExpression, " eq "))
+      pszValue = strdup("PropertyIsEqualTo");
+    else if (strstr(pszExpression, "!=") || strstr(pszExpression, " ne "))
+      pszValue = strdup("PropertyIsNotEqualTo");
+    else if (strstr(pszExpression, "<") || strstr(pszExpression, " lt "))
+      pszValue = strdup("PropertyIsLessThan");
+    else if (strstr(pszExpression, ">") || strstr(pszExpression, " gt "))
+      pszValue = strdup("PropertyIsGreaterThan");
+    else if (strstr(pszExpression, "<=") || strstr(pszExpression, " le "))
+      pszValue = strdup("PropertyIsLessThanOrEqualTo");
+    else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
+      pszValue = strdup("PropertyIsGreaterThanOrEqualTo");
+
+    return pszValue;
+}
+
+char *msSLDGetLogicalOperator(char *pszExpression)
+{
+    char *pszOper = NULL;
+    if (!pszExpression)
+      return NULL;
+
+    //TODO for NOT
+
+    if(strstr(pszExpression, " AND ") || strstr(pszExpression, "AND("))
+      return strdup("AND");
+    
+    if(strstr(pszExpression, " OR ") || strstr(pszExpression, "OR("))
+      return strdup("AND");
+
+    return NULL;
+}
+
+char *msSLDGetRightExpressionOfOperator(char *pszExpression)
+{
+    char *pszAnd = NULL, *pszOr = NULL;
+
+    pszAnd = strstr(pszExpression, " AND "); 
+    if (!pszAnd)
+      strstr(pszExpression, " and ");
+  
+    if (pszAnd)
+      return strdup(pszAnd+4);
+    else
+    {
+        pszOr = strstr(pszExpression, " OR "); 
+        if (!pszOr)
+          strstr(pszExpression, " or ");
+
+        if (pszOr)
+          return strdup(pszOr+3);
+    }
+    return NULL;
+        
+}
+
+char *msSLDGetLeftExpressionOfOperator(char *pszExpression)
+{
+    char *pszReturn = NULL;
+    int nLength = 0, i =0, iReturn=0;
+
+    if (!pszExpression || (nLength = strlen(pszExpression)) <=0)
+      return NULL;
+
+    pszReturn = (char *)malloc(sizeof(char)*(nLength+1));
+    pszReturn[0] = '\0';
+    if (strstr(pszExpression, " AND ") || strstr(pszExpression, " and "))
+    {
+        for (i=0; i<nLength-5; i++)
+        {
+            if (pszExpression[i] == ' ' && 
+                (pszExpression[i+1] == 'A' || pszExpression[i] == 'a') &&
+                (pszExpression[i+2] == 'N' || pszExpression[i] == 'n') &&
+                (pszExpression[i+3] == 'D' || pszExpression[i] == 'd') &&
+                (pszExpression[i+4] == ' '))
+              break;
+            else
+            {
+                pszReturn[iReturn++] = pszExpression[i];
+            }
+            pszReturn[iReturn] = '\0';
+        }
+    }
+    else if (strstr(pszExpression, "AND(") || strstr(pszExpression, "and("))
+    {
+        for (i=0; i<nLength-4; i++)
+        {
+            if ((pszExpression[i] == 'A' || pszExpression[i] == 'a') &&
+                (pszExpression[i+1] == 'N' || pszExpression[i] == 'n') &&
+                (pszExpression[i+2] == 'D' || pszExpression[i] == 'd') &&
+                (pszExpression[i+3] == '('))
+              break;
+            else
+            {
+                pszReturn[iReturn++] = pszExpression[i];
+            }
+            pszReturn[iReturn] = '\0';
+        }
+    }
+    else if (strstr(pszExpression, " OR ") || strstr(pszExpression, " or "))
+    {
+        for (i=0; i<nLength-4; i++)
+        {
+            if (pszExpression[i] == ' ' && 
+                (pszExpression[i+1] == 'O' || pszExpression[i] == 'o') &&
+                (pszExpression[i+2] == 'R' || pszExpression[i] == 'r') &&
+                pszExpression[i+3] == ' ')
+              break;
+            else
+            {
+                pszReturn[iReturn++] = pszExpression[i];
+            }
+            pszReturn[iReturn] = '\0';
+        }
+    }
+    else if (strstr(pszExpression, "OR(") || strstr(pszExpression, " or("))
+    {
+        for (i=0; i<nLength-3; i++)
+        {
+            if ((pszExpression[i] == 'O' || pszExpression[i] == 'o') &&
+                (pszExpression[i+1] == 'R' || pszExpression[i] == 'r') &&
+                pszExpression[i+2] == '(')
+              break;
+            else
+            {
+                pszReturn[iReturn++] = pszExpression[i];
+            }
+            pszReturn[iReturn] = '\0';
+        }
+    }
+    else
+      return NULL;
+
+    return pszReturn;
+}
+
+
+int msSLDNumberOfLogicalOperators(char *pszExpression)
+{
+    char *pszAnd = NULL;
+    char *pszOr = NULL;
+    char *pszSecondAnd=NULL, *pszSecondOr=NULL;
+    if (!pszExpression)
+      return 0;
+
+    pszAnd = strstr(pszExpression, " AND ");
+    if (!pszAnd)
+       pszAnd = strstr(pszExpression, " and ");
+
+    pszOr = strstr(pszExpression, " OR ");
+    if (!pszOr)
+      pszOr = strstr(pszExpression, " or ");
+    //TODO for NOT
+
+    if (!pszAnd && !pszOr)
+    {
+        pszAnd = strstr(pszExpression, "AND(");
+        if (!pszAnd)
+          pszAnd = strstr(pszExpression, "and(");
+        
+        pszOr = strstr(pszExpression, "OR(");
+        if (!pszOr)
+          strstr(pszExpression, "or(");
+    }
+
+    if (!pszAnd && !pszOr)
+      return 0;
+
+    //doen not matter how many exactly if there are 2 or more
+    if (pszAnd && pszOr) 
+      return 2;
+
+    if (pszAnd)
+    {
+        pszSecondAnd = strstr(pszAnd+3, " AND ");
+        if (!pszSecondAnd)
+           pszSecondAnd = strstr(pszAnd+3, " and ");
+
+        pszSecondOr = strstr(pszAnd+3, " OR ");
+        if (!pszSecondOr)
+          strstr(pszAnd+3, " or ");
+    }
+    else if (pszOr)
+    {
+        pszSecondAnd = strstr(pszOr+2, " AND ");
+        if (!pszSecondAnd)
+          pszSecondAnd = strstr(pszOr+2, " and ");
+
+        pszSecondOr = strstr(pszOr+2, " OR ");
+        if (!pszSecondOr)
+          pszSecondOr = strstr(pszOr+2, " or ");
+
+    }
+
+    if (!pszSecondAnd && !pszSecondOr)
+      return 1;
+    else
+      return 2;
+}
+
+
+char *msSLDGetAttributeNameOrValue(char *pszExpression, 
+                                   char *pszComparionValue,
+                                   int bReturnName)
+{
+    char **aszValues = NULL;
+    char *pszAttributeName = NULL;
+    char *pszAttributeValue = NULL;
+    char cCompare;
+    char szCompare[3];
+    char szCompare2[3];
+    int bOneCharCompare = -1, nTokens = 0, nLength =0;
+    int iValue=0, i=0, iValueIndex =0;
+    int bStartCopy=0, iAtt=0;
+    char *pszFinalAttributeName=NULL, *pszFinalAttributeValue=NULL;
+    int bSingleQuote = 0, bDoubleQuote = 0;
+
+    if (!pszExpression || !pszComparionValue || strlen(pszExpression) <=0)
+      return NULL;
+
+    if (strcasecmp(pszComparionValue, "PropertyIsEqualTo") == 0)
+    {
+        cCompare = '=';
+        szCompare[0] = 'e';
+        szCompare[1] = 'q';
+        szCompare[2] = '\0';
+
+        bOneCharCompare =1;
+    }
+    if (strcasecmp(pszComparionValue, "PropertyIsNotEqualTo") == 0)
+    {
+        szCompare[0] = 'n';
+        szCompare[1] = 'e';
+        szCompare[2] = '\0';
+
+        szCompare2[0] = '!';
+        szCompare2[1] = '=';
+        szCompare2[2] = '\0';
+
+        bOneCharCompare =0;
+    }
+    else if (strcasecmp(pszComparionValue, "PropertyIsLessThan") == 0)
+    {
+        cCompare = '<';
+        szCompare[0] = 'l';
+        szCompare[1] = 't';
+        szCompare[2] = '\0';
+        bOneCharCompare =1;
+    }
+    else if (strcasecmp(pszComparionValue, "PropertyIsLessThanOrEqualTo") == 0)
+    {
+        szCompare[0] = 'l';
+        szCompare[1] = 'e';
+        szCompare[2] = '\0';
+
+        szCompare2[0] = '<';
+        szCompare2[1] = '=';
+        szCompare2[2] = '\0';
+
+        bOneCharCompare =0;
+    }
+    else if (strcasecmp(pszComparionValue, "PropertyIsGreaterThan") == 0)
+    {
+        cCompare = '>';
+        szCompare[0] = 'g';
+        szCompare[1] = 't';
+        szCompare[2] = '\0';
+        bOneCharCompare =1;
+    }
+    else if (strcasecmp(pszComparionValue, "PropertyIsGreaterThanOrEqualTo") == 0)
+    {
+        szCompare[0] = 'g';
+        szCompare[1] = 'e';
+        szCompare[2] = '\0';
+
+        szCompare2[0] = '>';
+        szCompare2[1] = '=';
+        szCompare2[2] = '\0';
+
+        bOneCharCompare =0;
+    }
+
+    if (bOneCharCompare == 1)
+    {
+        aszValues= split (pszExpression, cCompare, &nTokens);
+        if (nTokens >= 1)
+        {
+            pszAttributeName = strdup(aszValues[0]);
+            pszAttributeValue =  strdup(aszValues[1]);
+            msFreeCharArray(aszValues, nTokens);
+        }
+        else
+        {
+            nLength = strlen(pszExpression);
+            pszAttributeName = (char *)malloc(sizeof(char)*(nLength+1));
+            iValue = 0;
+            for (i=0; i<nLength-2; i++)
+            {
+                if (pszExpression[i] != szCompare[0] || 
+                    pszExpression[i] != toupper(szCompare[0]))
+                {
+                    pszAttributeName[iValue++] = pszExpression[i];
+                }
+                else
+                {
+                    if ((pszExpression[i+1] == szCompare[1] || 
+                         pszExpression[i+1] == toupper(szCompare[1])) &&
+                        (pszExpression[i+2] == ' '))
+                    {
+                        iValueIndex = i+3;
+                        pszAttributeValue = strdup(pszExpression+iValueIndex);
+                        break;
+                    }
+                    else
+                      pszAttributeName[iValue++] = pszExpression[i];
+                }
+                pszAttributeName[iValue] = '\0';
+            }
+        }
+    }
+    else if (bOneCharCompare == 0)
+    {
+        nLength = strlen(pszExpression);
+        pszAttributeName = (char *)malloc(sizeof(char)*(nLength+1));
+        iValue = 0;
+        for (i=0; i<nLength-2; i++)
+        {
+            if ((pszExpression[i] != szCompare[0] || 
+                 pszExpression[i] != toupper(szCompare[0])) &&
+                (pszExpression[i] != szCompare2[0] || 
+                 pszExpression[i] != toupper(szCompare2[0])))
+                
+            {
+                pszAttributeName[iValue++] = pszExpression[i];
+            }
+            else
+            {
+                if (((pszExpression[i+1] == szCompare[1] || 
+                     pszExpression[i+1] == toupper(szCompare[1])) ||
+                    (pszExpression[i+1] == szCompare2[1] || 
+                     pszExpression[i+1] == toupper(szCompare2[1]))) &&
+                    (pszExpression[i+2] == ' '))
+                {
+                    iValueIndex = i+3;
+                    pszAttributeValue = strdup(pszExpression+iValueIndex);
+                    break;
+                }
+                else
+                  pszAttributeName[iValue++] = pszExpression[i];
+            }
+            pszAttributeName[iValue] = '\0';
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Return the name of the attribute : It is supposed to be         */
+/*      inside []                                                       */
+/* -------------------------------------------------------------------- */
+    if (bReturnName)
+    {
+        if (!pszAttributeName)
+          return NULL;
+
+        nLength = strlen(pszAttributeName);
+        pszFinalAttributeName = (char *)malloc(sizeof(char)*(nLength+1));
+        bStartCopy= 0;
+        iAtt = 0;
+        for (i=0; i<nLength; i++)
+        {
+            if (pszAttributeName[i] == ' ' && bStartCopy == 0)
+              continue;
+
+            if (pszAttributeName[i] == '[')
+            {
+                bStartCopy = 1;
+                continue;
+            }
+            if (pszAttributeName[i] == ']')
+              break;
+            if (bStartCopy)
+            {
+                pszFinalAttributeName[iAtt++] = pszAttributeName[i];
+            }
+            pszFinalAttributeName[iAtt] = '\0';
+        }
+
+        return pszFinalAttributeName;
+    }
+    else
+    {
+        
+        if (!pszAttributeValue)
+          return NULL;
+        nLength = strlen(pszAttributeValue);
+        pszFinalAttributeValue = (char *)malloc(sizeof(char)*(nLength+1));
+        bStartCopy= 0;
+        iAtt = 0;
+        for (i=0; i<nLength; i++)
+        {
+            if (pszAttributeValue[i] == ' ' && bStartCopy == 0)
+              continue;
+
+            if (pszAttributeValue[i] == '\'' && bStartCopy == 0)
+            {
+                bSingleQuote = 1;
+                bStartCopy = 1;
+                continue;
+            }
+            else if (pszAttributeValue[i] == '"' && bStartCopy == 0)
+            {
+                bDoubleQuote = 1;
+                bStartCopy = 1;
+                continue;
+            }
+            else
+              bStartCopy =1;
+
+            if (bStartCopy)
+            {
+                if (pszAttributeValue[i] == '\'' && bSingleQuote)
+                  break;
+                else if (pszAttributeValue[i] == '"' && bDoubleQuote)
+                  break;
+                else if (pszAttributeValue[i] == ')')
+                  break;
+                pszFinalAttributeValue[iAtt++] = pszAttributeValue[i];
+            }
+            pszFinalAttributeValue[iAtt] = '\0';
+        }
+            
+        return pszFinalAttributeValue;
+    }
+}
+
+
+char *msSLDGetAttributeName(char *pszExpression, 
+                         char *pszComparionValue)
+{
+    return msSLDGetAttributeNameOrValue(pszExpression, pszComparionValue, 1);
+}
+
+char *msSLDGetAttributeValue(char *pszExpression, 
+                             char *pszComparionValue)
+{
+    return msSLDGetAttributeNameOrValue(pszExpression, pszComparionValue, 0);
+}
+
+
+FilterEncodingNode *BuildExpressionTree(char *pszExpression, 
+                                        FilterEncodingNode *psNode)
+{
+    char *apszExpression[20]; 
+    int nLength = 0;
+    int bInsideExpression = 0;
+    int i =0, nOperators=0;
+    char *pszFinalExpression = NULL;
+    int iFinal = 0, iIndiceExp=0, nOpeningBrackets=0, nIndice=0;
+    char szTmp[6];
+    int iExpression = 0;
+    char *pszSimplifiedExpression = NULL;
+    char *pszComparionValue=NULL, *pszAttibuteName=NULL;
+    char *pszAttibuteValue=NULL;
+    char *pszLeftExpression=NULL, *pszRightExpression=NULL, *pszOperator=NULL;
+
+    if (!pszExpression || (nLength = strlen(pszExpression)) <=0)
+      return NULL;
+
+    for (i=0; i<20; i++)
+      apszExpression[i] = (char *)malloc(sizeof(char)*(nLength+1));
+
+    pszFinalExpression = (char *)malloc(sizeof(char)*(nLength+1));
+    pszFinalExpression[0] = '\0';
+
+    iExpression = -1; //first incremnt will put it to 0;
+    iFinal = 0;
+    iIndiceExp = 0;
+    nOpeningBrackets = 0;
+
+/* -------------------------------------------------------------------- */
+/*      First we check how many logical operators are there :           */
+/*       - if none : It means It is a coamrision operator (like =,      */
+/*      >, >= .... We get the comparison value as well as the           */
+/*      attribute and the attribut's value and assign it to the node    */
+/*      passed in argument.                                             */
+/*       - if there is one operator, we assign the operator to the      */
+/*      node and adds the expressions into the left and right nodes.    */
+/* -------------------------------------------------------------------- */
+    nOperators = msSLDNumberOfLogicalOperators(pszExpression);
+    if (nOperators == 0)
+    {
+        if (!psNode)
+          psNode = FLTCreateFilterEncodingNode();
+
+        pszComparionValue = msSLDGetComparisonValue(pszExpression);
+        pszAttibuteName = msSLDGetAttributeName(pszExpression, pszComparionValue);
+        pszAttibuteValue = msSLDGetAttributeValue(pszExpression, pszComparionValue);
+        if (pszComparionValue && pszAttibuteName && pszAttibuteValue)
+        {
+            psNode->eType = FILTER_NODE_TYPE_COMPARISON;
+            psNode->pszValue = strdup(pszComparionValue);
+
+            psNode->psLeftNode = FLTCreateFilterEncodingNode();
+            psNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+            psNode->psLeftNode->pszValue = strdup(pszAttibuteName);
+
+            psNode->psRightNode = FLTCreateFilterEncodingNode();
+            psNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
+            psNode->psRightNode->pszValue = strdup(pszAttibuteValue);
+
+            free(pszComparionValue);
+            free(pszAttibuteName);
+            free(pszAttibuteValue);
+        }
+        return psNode;
+        
+    }
+    else if (nOperators == 1)
+    {
+        pszOperator = msSLDGetLogicalOperator(pszExpression);
+        if (pszOperator)
+        {
+            if (!psNode)
+                  psNode = FLTCreateFilterEncodingNode();
+
+            psNode->eType = FILTER_NODE_TYPE_LOGICAL;
+            psNode->pszValue = strdup(pszOperator);
+            free(pszOperator);
+
+            pszLeftExpression = msSLDGetLeftExpressionOfOperator(pszExpression);
+            pszRightExpression = msSLDGetRightExpressionOfOperator(pszExpression);
+            
+            if (pszLeftExpression && pszRightExpression)
+            {
+                pszComparionValue = msSLDGetComparisonValue(pszLeftExpression);
+                pszAttibuteName = msSLDGetAttributeName(pszLeftExpression, 
+                                                        pszComparionValue);
+                pszAttibuteValue = msSLDGetAttributeValue(pszLeftExpression, 
+                                                          pszComparionValue);
+
+                if (pszComparionValue && pszAttibuteName && pszAttibuteValue)
+                {
+                    psNode->psLeftNode = FLTCreateFilterEncodingNode();
+                    psNode->psLeftNode->eType = FILTER_NODE_TYPE_COMPARISON;
+                    psNode->psLeftNode->pszValue = strdup(pszComparionValue);
+
+                    psNode->psLeftNode->psLeftNode = FLTCreateFilterEncodingNode();
+                    psNode->psLeftNode->psLeftNode->eType = 
+                      FILTER_NODE_TYPE_PROPERTYNAME;
+                    psNode->psLeftNode->psLeftNode->pszValue = strdup(pszAttibuteName);
+
+                    psNode->psLeftNode->psRightNode = FLTCreateFilterEncodingNode();
+                    psNode->psLeftNode->psRightNode->eType = 
+                      FILTER_NODE_TYPE_LITERAL;
+                    psNode->psLeftNode->psRightNode->pszValue = 
+                      strdup(pszAttibuteValue);
+
+                    free(pszComparionValue);
+                    free(pszAttibuteName);
+                    free(pszAttibuteValue);
+                }
+                
+                pszComparionValue = msSLDGetComparisonValue(pszRightExpression);
+                pszAttibuteName = msSLDGetAttributeName(pszRightExpression, 
+                                                        pszComparionValue);
+                pszAttibuteValue = msSLDGetAttributeValue(pszRightExpression, 
+                                                          pszComparionValue);
+
+                if (pszComparionValue && pszAttibuteName && pszAttibuteValue)
+                {
+                    psNode->psRightNode = FLTCreateFilterEncodingNode();
+                    psNode->psRightNode->eType = FILTER_NODE_TYPE_COMPARISON;
+                    psNode->psRightNode->pszValue = strdup(pszComparionValue);
+
+                    psNode->psRightNode->psLeftNode = FLTCreateFilterEncodingNode();
+                    psNode->psRightNode->psLeftNode->eType = 
+                      FILTER_NODE_TYPE_PROPERTYNAME;
+                    psNode->psRightNode->psLeftNode->pszValue = strdup(pszAttibuteName);
+
+                    psNode->psRightNode->psRightNode = FLTCreateFilterEncodingNode();
+                    psNode->psRightNode->psRightNode->eType = 
+                      FILTER_NODE_TYPE_LITERAL;
+                    psNode->psRightNode->psRightNode->pszValue = 
+                      strdup(pszAttibuteValue);
+
+                    free(pszComparionValue);
+                    free(pszAttibuteName);
+                    free(pszAttibuteValue);
+                }
+            }
+        }
+
+        return psNode;
+    }
+    else
+      return NULL;
+
+    /*
+    for (i=0; i<nLength; i++)
+    {
+        if (pszExpression[i] == '(')
+        {
+            if (bInsideExpression)
+            {
+                pszFinalExpression[iFinal++] = pszExpression[i];
+                nOpeningBrackets++;
+            }
+            else
+            {
+                bInsideExpression = 1;
+                iExpression++;
+                iIndiceExp = 0;
+            }
+        }
+        else if (pszExpression[i] == ')')
+        {
+            if (bInsideExpression)
+            {
+                if (nOpeningBrackets > 0)
+                {
+                    nOpeningBrackets--;
+                    apszExpression[iExpression][iIndiceExp++] = pszExpression[i];
+                }
+                else
+                {
+                    //end of an expression
+                    pszFinalExpression[iFinal++] = ' ';
+                    pszFinalExpression[iFinal] = '\0';
+                    sprintf(szTmp, "exp%d ", iExpression);
+                    strcat(pszFinalExpression,szTmp);
+                    if (iExpression < 10)
+                      iFinal+=5;
+                    else
+                      iFinal+=6;
+                    bInsideExpression = 0;
+                }
+            }
+        }
+        else
+        {
+            if (bInsideExpression)
+            {
+                apszExpression[iExpression][iIndiceExp++] = pszExpression[i];
+            }
+            else
+            {
+                pszFinalExpression[iFinal++] =  pszExpression[i];
+            }
+        }
+
+        if (iExpression >=0 && iIndiceExp >0)
+          apszExpression[iExpression][iIndiceExp] = '\0';
+        if (iFinal > 0)
+          pszFinalExpression[iFinal] = '\0';
+    }
+
+    if (msSLDHasMoreThatOneLogicalOperator(pszFinalExpression))
+    {
+        pszSimplifiedExpression = 
+          msSLDSimplifyExpression(pszFinalExpression);
+        free(pszFinalExpression);
+        
+        //increase the size so it can fit the brakets () that will be added
+        pszFinalExpression = (char *)malloc(sizeof(char)*(nLength+3));
+        if(iExpression > 0)
+        {
+            nLength = strlen(pszSimplifiedExpression);
+            iFinal = 0;
+            for (i=0; i<nLength; i++)
+            {
+                if (i < nLength-4)
+                {
+                    if (pszSimplifiedExpression[i] == 'e' &&
+                        pszSimplifiedExpression[i+1] == 'x' &&
+                        pszSimplifiedExpression[i+2] == 'p')
+                    {
+                        nIndice = atoi(pszSimplifiedExpression[i+3]);
+                        if (nIndice >=0 && nIndice < iExpression)
+                        {
+                            strcat(pszFinalExpression, 
+                                   apszExpression[nIndice]);
+                            iFinal+= strlen(apszExpression[nIndice]);
+                        }
+                    }
+                }
+                else
+                {
+                    pszFinalExpression[iFinal++] = pszSimplifiedExpression[i];
+                }
+            }    
+        }
+        else
+          pszFinalExpression = strdup(pszFinalExpression);
+
+        return BuildExpressionTree(pszFinalExpression, psNode);
+    }
+    pszLogicalOper = msSLDGetLogicalOperator(pszFinalExpression);
+    //TODO : NOT operator
+    if (pszLogicalOper)
+    {
+        if (strcasecmp(pszLogicalOper, "AND") == 0 ||
+            strcasecmp(pszLogicalOper, "OR") == 0)
+        {
+            if (!psNode)
+              psNode = FLTCreateFilterEncodingNode();
+        
+            psNode->eType = FILTER_NODE_TYPE_LOGICAL;
+            if (strcasecmp(pszLogicalOper, "AND") == 0)
+              psNode->pszValue = "AND";
+            else
+              psNode->pszValue = "OR";
+                
+            psNode->psLeftNode =  FLTCreateFilterEncodingNode();
+            psNode->psRightNode =  FLTCreateFilterEncodingNode();
+
+            psLeftExpresion = 
+              msSLDGetLogicalOperatorExpression(pszFinalExpression, 0);
+            psRightExpresion = 
+              msSLDGetLogicalOperatorExpression(pszFinalExpression, 0);
+            
+            BuildExpressionTree(psNode->psLeftNode, psLeftExpresion);
+
+            BuildExpressionTree(psNode->psRightNode,psRightExpresion);
+
+            if (psLeftExpresion)
+              free(psLeftExpresion);
+            if (psRightExpresion)
+              free(psRightExpresion);
+        }
+    }
+    else //means it is a simple expression with comaprison
+    {
+
+    */
+    
+}   
+    
+char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
+{
+    char *pszTmp = NULL;
+    char szTmp[200];
+    char *pszExpression = NULL;
+
+    if (!psNode)
+      return NULL;
+
+    if (psNode->eType == FILTER_NODE_TYPE_COMPARISON && 
+        psNode->pszValue && psNode->psLeftNode && psNode->psLeftNode->pszValue &&
+        psNode->psRightNode && psNode->psRightNode->pszValue)
+    {
+        sprintf(szTmp," <%s><PropertyName>%s</PropertyName><Literal>%s</Literal></%s>",
+                psNode->pszValue, psNode->psLeftNode->pszValue,
+                psNode->psRightNode->pszValue, psNode->pszValue);
+        pszExpression = strdup(szTmp);
+    }
+    else if (psNode->eType == FILTER_NODE_TYPE_LOGICAL && 
+             psNode->pszValue && psNode->psLeftNode && psNode->psLeftNode->pszValue &&
+             psNode->psRightNode && psNode->psRightNode->pszValue)
+    {
+        sprintf(szTmp, "<%s>", psNode->pszValue);
+        pszExpression = strcatalloc(pszExpression, szTmp);
+        pszTmp = msSLDBuildFilterEncoding(psNode->psLeftNode);
+        if (pszTmp)
+        {
+            pszExpression = strcatalloc(pszExpression, pszTmp); 
+            free(pszTmp);
+        }
+        pszTmp = msSLDBuildFilterEncoding(psNode->psRightNode);
+        if (pszTmp)
+        {
+            pszExpression = strcatalloc(pszExpression, pszTmp); 
+            free(pszTmp);
+        }
+
+        sprintf(szTmp, "</%s>", psNode->pszValue);
+        pszExpression = strcatalloc(pszExpression, szTmp);
+    }
+    return pszExpression;
+}
+
+      
+
+char *msSLDParseLogicalExpression(char *pszExpression)
+{
+    FilterEncodingNode *psNode = NULL;
+    char *pszFLTExpression = NULL;
+    char *pszTmp = NULL;
+
+    if (!pszExpression || strlen(pszExpression) <=0)
+      return NULL;
+
+    //psNode = BuildExpressionTree(pszExpression, NULL);
+    psNode = BuildExpressionTree(pszExpression, NULL);
+    
+    if (psNode)
+    {
+        pszFLTExpression = msSLDBuildFilterEncoding(psNode);
+        if (pszFLTExpression)
+        {
+            pszTmp = strcatalloc(pszTmp, "<Filter>");
+            pszTmp = strcatalloc(pszTmp, pszFLTExpression);
+            pszTmp = strcatalloc(pszTmp, "</Filter>");
+
+            free(pszFLTExpression);
+            pszFLTExpression = pszTmp;
+        }
+            
+    }
+    
+    return pszFLTExpression;
+}
 
 /************************************************************************/
 /*             char *msSLDParseExpression(char *pszExpression)          */
@@ -3117,6 +3951,11 @@ char *msSLDGetFilter(classObj *psClass)
     char *pszFilter = NULL;
     char szBuffer[500];
 
+    int nttt =0;
+    char *sttt = NULL;
+      
+    //nttt = strlen(sttt);
+
     if (psClass && psClass->expression.string)
     {   
         //string expression
@@ -3131,7 +3970,16 @@ char *msSLDGetFilter(classObj *psClass)
         }
         else if (psClass->expression.type == MS_EXPRESSION)
         {
-            pszFilter = msSLDParseExpression(psClass->expression.string);
+            pszFilter = msSLDParseLogicalExpression(psClass->expression.string);
+        }
+        else if (psClass->expression.type == MS_REGEX)
+        {
+            if (psClass->layer && psClass->layer->classitem)
+            {
+                sprintf(szBuffer, "<Filter><PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><PropertyName>%s</PropertyName><Literal>%s</Literal></PropertyIsLike></Filter>\n", 
+                        psClass->layer->classitem, psClass->expression.string);
+                pszFilter = strdup(szBuffer);
+            }
         }
     }
 
