@@ -716,7 +716,7 @@ static int processCoords(char **line, shapeObj *shape)
   char *pointFormat;
   int pointFormatLength;
 
-  char *xh="", *xf=","; // various header and footers
+  char *xh=" ", *xf=" "; // various header and footers
   char *yh="", *yf="";  
   char *ph="", *pf=""; // part
   char *sh="", *sf=""; // shape 
@@ -2576,8 +2576,9 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
   }
 
   if(papszBuffer && pszMimeType) {
-    sprintf(buffer, "Content-type: %s%c%c <!-- %s -->\n", pszMimeType, 10, 10, msGetVersion());
-      
+    sprintf(buffer, "Content-type: %s%c%c\n", pszMimeType, 10, 10);
+    // sprintf(buffer, "<!-- %s -->\n",  msGetVersion());     
+
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
       (*papszBuffer) = (char *)realloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);
@@ -2587,7 +2588,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
     nCurrentSize += strlen(buffer);
   } else if(pszMimeType) {
     printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
-    printf("<!-- %s -->\n", msGetVersion());
+    // printf("<!-- %s -->\n", msGetVersion());
     fflush(stdout);
   }
 
