@@ -29,6 +29,10 @@ Version 3.6.4-dev
 	  - lots of help if you make a mistake
 	  - more functionality
 
+- Fixed problem in space-delimited wms_srs metadata with WMS client mode
+  where the last SRS in the string was never used even if it would have
+  been a best match.  Causing unnecessary WMS reprojections in several cases.
+
 
 Version 3.6.3 (2002-10-07)
 --------------------------
