@@ -1389,6 +1389,14 @@ int main(int argc, char *argv[]) {
       fflush(stdout);
       exit(0);
     }
+    else if (argc > 1 && strncmp(argv[1], "QUERY_STRING=", 13) == 0) {
+      /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
+      char *buf;
+      buf = strdup("REQUEST_METHOD=GET");
+      putenv(buf);
+      buf = strdup(argv[1]);
+      putenv(buf);
+    }
 
     sprintf(Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
 
