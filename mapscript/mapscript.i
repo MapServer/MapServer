@@ -100,7 +100,7 @@
     return msAddColor(self, r, g, b);
   }
 
-  int getSymbolByName(int type, char *name) {
+  int getSymbolByName(char *name) {
     int symbol;
 
     if((symbol = msGetSymbolIndex(&self->symbolset, name)) == -1)
