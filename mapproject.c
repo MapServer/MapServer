@@ -131,6 +131,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   */
   if( failure > 0 )
   {
+      msDebug( "msProjectRect(): some points failed to reproject, doing internal sampling.\n" );
       for(x=rect->minx + dx; x<=rect->maxx; x+=dx) {
           for(y=rect->miny + dy; y<=rect->maxy; y+=dy) {
               prj_point.x = x;
