@@ -71,7 +71,7 @@ void initSymbol(symbolObj *s)
   s->position = MS_CC;
 
   s->linecap = MS_CJC_BUTT;
-  s->linejoin = MS_CJC_ROUND;
+  s->linejoin = MS_CJC_NONE;
   s->linejoinmaxsize = 3;
 }
 
