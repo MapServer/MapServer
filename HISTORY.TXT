@@ -13,7 +13,7 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-Current Version (CVS)
+Version 4.0.2 (2004-04-06)
 --------------------------
 
 - Modified tile4ms to check that all DBFs in tile index have the exact
