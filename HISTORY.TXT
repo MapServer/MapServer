@@ -13,6 +13,13 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 4.2.2 (cvs)
+-------------------
+
+- Fix a buffer overflow when building post request for WFS layers with 
+  long wfs_filter (Bug 775).
+
+
 Version 4.2.1 (2004-07-12)
 --------------------------
 

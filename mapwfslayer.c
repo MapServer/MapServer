@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20.2.2  2004/07/14 14:53:09  julien
+ * Fix a buffer overflow when building post request for WFS layers with
+ * long wfs_filter (Bug 775).
+ *
  * Revision 1.20.2.1  2004/04/28 15:36:16  assefa
  * Change metatadata name from wms_request_method to wfs_request_method.
  *
@@ -301,13 +305,13 @@ char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
         return NULL;
     } 
     
-    pszPostReq = (char *)malloc(sizeof(char)*1000);
+
 
     if (psParams->pszFilter)
       pszFilter = psParams->pszFilter;
     else
     {
-        pszFilter = (char *)malloc(sizeof(char)*250);
+        pszFilter = (char *)malloc(sizeof(char)*500);
         sprintf(pszFilter, "<Filter>\n"
 "<BBOX>\n"
 "<PropertyName>Geometry</PropertyName>\n"
@@ -318,6 +322,7 @@ char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 "</Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
     }
 
+    pszPostReq = (char *)malloc(sizeof(char)*(strlen(pszFilter)+500));
     if (psParams->nMaxFeatures > 0)
       sprintf(pszPostReq, "<?xml version=\"1.0\" ?>\n"
 "<GetFeature\n"
