@@ -27,8 +27,8 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.47  2005/02/22 23:14:13  pramsey
- * Applied Jerrys latest patch for bug1199.
+ * Revision 1.48  2005/03/04 20:04:34  pramsey
+ * Added the ability to identify a tables primary key for use as a unique identifier (Bug 1234)
  *
  * Revision 1.46  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
@@ -177,7 +177,7 @@ char *strstrIgnoreCase(const char *haystack, const char *needle)
     return (char *) (match < 0 ? NULL : haystack + match);
 }
 
-static int msPOSTGISLayerParseData(const char *data, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, int debug);
+static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, int debug);
 
 #ifndef USE_THREAD
 static void msPOSTGISCloseConnection(void *conn_handle)
@@ -587,9 +587,10 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
         return MS_FAILURE;
     }
 
-    msPOSTGISLayerParseData(layer->data, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
 
     set_up_result = prepare_database(table_name, geom_column_name, layer, &(layerinfo->query_result), rect, &query_str, urid_name, user_srid);
+
 
     free(user_srid);
     free(urid_name);
@@ -1141,7 +1142,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
         return MS_FAILURE;
     }
 
-    msPOSTGISLayerParseData(layer->data, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
 
     if(layer->numitems == 0) {
         /* Don't need the oid since its really record */
@@ -1396,7 +1397,7 @@ int msPOSTGISLayerGetItems(layerObj *layer)
     }
     /* get the table name and geometry column name */
 
-    msPOSTGISLayerParseData(layer->data, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
+    msPOSTGISLayerParseData(layer, &geom_column_name, &table_name, &urid_name, &user_srid, layer->debug);
 
     /* two cases here.  One, its a table (use select * from table) otherwise, just use the select clause */
     sql = (char *) malloc(36 + strlen(table_name) + 1);
@@ -1558,15 +1559,188 @@ PGresult   *query_result;
 
 }
 
+int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int *minor, int *point) {
+    PGresult *query_result;
+    char sql[75];
+    msPOSTGISLayerInfo *layerinfo;
+    char *tmp;
+
+    strcpy(sql, "select substring(version() from 12 for (position('on' in version()) - 13))");
+
+    if(debug) {
+        msDebug("msPOSTGISLayerRetrievePGVersion(): query = %s\n", sql);
+    }
+  
+    layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+
+    if(layerinfo->conn == NULL) {
+        char tmp1[42] = "Layer does not have a postgis connection.";
+        msSetError(MS_QUERYERR, tmp1, "msPOSTGISLayerRetrievePGVersion()\n");
+        return(MS_FAILURE);
+    }
+
+    query_result = PQexec(layerinfo->conn, sql);
+    if(!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK) {
+        char tmp1[63]; 
+        strcat(tmp1, "Error executing POSTGIS statement (msPOSTGISLayerRetrievePGVersion():");
+        char tmp2[strlen(tmp1) + strlen(sql)];
+        strcat(tmp2, tmp1);
+        strcat(tmp2, sql);
+        msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePGVersion()");
+        if(debug) {
+          msDebug("msPOSTGISLayerRetrievePGVersion: No results returned.\n");
+        }
+        return(MS_FAILURE);
+    }
+    if(PQntuples(query_result) < 1) {
+        if(debug) {
+            msDebug("msPOSTGISLayerRetrievePGVersion: No results found.\n");
+        }
+        PQclear(query_result);
+        return MS_FAILURE;
+    } 
+    if(PQgetisnull(query_result, 0, 0)) {
+        if(debug) {
+            msDebug("msPOSTGISLayerRetrievePGVersion: Null result returned.\n");
+        }
+        PQclear(query_result);
+        return MS_FAILURE;
+    }
+
+    tmp = PQgetvalue(query_result, 0, 0);
+
+    if(debug) {
+        msDebug("msPOSTGISLayerRetrievePGVersion: Version String: %s\n", tmp);
+    }
+
+    *major = atoi(tmp);
+    *minor = atoi(tmp + 2);
+    *point = atoi(tmp + 4);
+  
+    if(debug) {
+        msDebug("msPOSTGISLayerRetrievePGVersion(): Found version %i, %i, %i\n", *major, *minor, *point);
+    }
+
+    PQclear(query_result);
+    return MS_SUCCESS;
+}
+
+int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name, int debug) 
+{
+    PGresult   *query_result;
+    char        *sql;
+    msPOSTGISLayerInfo *layerinfo;
+    int major, minor, point, tmpint;
+    
+    if(msPOSTGISLayerRetrievePGVersion(layer, debug, &major, &minor, &point) == MS_FAILURE) 
+    {
+        if(debug)
+        {
+            msDebug("msPOSTGISLayerRetrievePK(): Unabled to retrieve version.\n");
+        }
+        return MS_FAILURE;
+    }
+    if(major < 7) 
+    {
+        if(debug)
+        {
+            msDebug("msPOSTGISLayerRetrievePK(): Major version below 7.\n");
+        }
+        return MS_FAILURE;
+    }
+    else if(major == 7 && minor < 2) 
+    {
+        if(debug)
+        {
+            msDebug("msPOSTGISLayerRetrievePK(): Version below 7.3.\n");
+        }
+        return MS_FAILURE;
+    }
+    if(major == 7 && minor == 2) {
+        /*
+         * PostgreSQL v7.2 has a different representation of primary keys that
+         * later versions.  This currently does not explicitly exclude
+         * multicolumn primary keys.
+         */
+        sql = malloc(strlen(table_name) + 234);
+        sprintf(sql, "select b.attname from pg_class as a, pg_attribute as b, (select oid from pg_class where relname = '%s') as c, pg_index as d where d.indexrelid = a.oid and d.indrelid = c.oid and d.indisprimary and b.attrelid = a.oid and a.relnatts = 1", table_name);
+    } else {
+        /*
+         * PostgreSQL v7.3 and later treat primary keys as constraints.
+         * We only support single column primary keys, so multicolumn
+         * pks are explicitly excluded from the query.
+         */
+        sql = malloc(strlen(table_name) + 288); 
+        sprintf(sql, "select attname from pg_attribute, pg_constraint, pg_class where pg_constraint.conrelid = pg_class.oid and pg_class.oid = pg_attribute.attrelid and pg_constraint.contype = 'p' and pg_constraint.conkey[1] = pg_attribute.attnum and pg_class.relname = '%s' and pg_constraint.conkey[2] is null", table_name);
+    }
+
+    if (debug)
+    {
+       msDebug("msPOSTGISLayerRetrievePK: query = %s\n", sql);
+    }
+
+    layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+
+    if(layerinfo->conn == NULL) 
+    {
+      char tmp1[42] = "Layer does not have a postgis connection.";
+      msSetError(MS_QUERYERR, tmp1, "msPOSTGISLayerRetrievePK()");
+      return(MS_FAILURE);
+    }
+
+    query_result = PQexec(layerinfo->conn, sql);
+    if(!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK) 
+    {
+      char tmp1[63]; 
+      strcat(tmp1, "Error executing POSTGIS statement (msPOSTGISLayerRetrievePK():");
+      char tmp2[strlen(tmp1) + strlen(sql)];
+      strcat(tmp2, tmp1);
+      strcat(tmp2, sql);
+      msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
+      return(MS_FAILURE);
+    }
+
+    if(PQntuples(query_result) < 1) 
+    {
+      if(debug) 
+      {
+        msDebug("msPOSTGISLayerRetrievePK: No results found.\n");
+      }
+      PQclear(query_result);
+      return MS_FAILURE;
+    }
+
+    if(PQgetisnull(query_result, 0, 0)) 
+    {
+      if(debug) 
+      {
+        msDebug("msPOSTGISLayerRetrievePK: Null result returned.\n");
+      }
+      PQclear(query_result);
+      return MS_FAILURE;
+    }
+
+    tmpint = PQgetvalue(query_result, 0, 0);
+    msDebug("msPOSTGISLayerRetrievePK: field length = $i", tmpint);
+    urid_name = (char *)malloc(tmpint + 1);
+    strcpy(urid_name, PQgetvalue(query_result, 0, 0));
+
+    PQclear(query_result);
+    return MS_SUCCESS;
+}
+
 /* Function to parse the Mapserver DATA parameter for geometry
  * column name, table name and name of a column to serve as a
  * unique record id
  */
 
-static int msPOSTGISLayerParseData(const char *data, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, int debug)
+static int msPOSTGISLayerParseData(layerObj *layer, char **geom_column_name, char **table_name, char **urid_name, char **user_srid, int debug)
 {
-    char    *pos_opt, *pos_scn, *tmp, *pos_srid;
-    int     slength;
+    char    *pos_opt, *pos_scn, *tmp, *pos_srid, *data;
+    int     slength, urid_found;
+
+    data = layer->data;
+    urid_found = 0;
 
     /* given a string of the from 'geom from ctivalues' or 'geom from () as foo'
      * return geom_column_name as 'geom'
@@ -1589,6 +1763,8 @@ static int msPOSTGISLayerParseData(const char *data, char **geom_column_name, ch
         *urid_name = (char *) malloc((tmp - (pos_opt + 14)) + 1);
         strncpy(*urid_name, pos_opt + 14, tmp - (pos_opt + 14));
         (*urid_name)[tmp - (pos_opt + 14)] = 0;
+
+        urid_found = 1;
     }
 
     /* Find the srid */
@@ -1648,6 +1824,10 @@ static int msPOSTGISLayerParseData(const char *data, char **geom_column_name, ch
         msSetError(MS_QUERYERR, DATA_ERROR_MESSAGE, "msPOSTGISLayerParseData()", "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find a geometry_column or table/subselect).  More help: <br><br>\n\n", data);
 
         return MS_FAILURE;
+    }
+
+    if(!urid_found) {
+      msPOSTGISLayerRetrievePK(layer, urid_name, *table_name, debug);
     }
 
     if(debug) {
