@@ -7,26 +7,42 @@ void msProjectPoint(PJ *in, PJ *out, pointObj *point)
 {
   projUV p;
 
-  p.u = point->x;
-  p.v = point->y;
+  if( in && out )
+  {
+      if( pj_is_latlong(in) )
+      {
+          point->x *= DEG_TO_RAD;
+          point->y *= DEG_TO_RAD;
+      }
 
-  if(in==NULL) { /* input coordinates are lat/lon */
-    p.u *= DEG_TO_RAD; /* convert to radians */
-    p.v *= DEG_TO_RAD;  
-    p = pj_fwd(p, out);
-  } else {
-    if(out==NULL) { /* output coordinates are lat/lon */
-      p = pj_inv(p, in);
-      p.u *= RAD_TO_DEG; /* convert to decimal degrees */
-      p.v *= RAD_TO_DEG;
-    } else { /* need to go from one projection to another */
-      p = pj_inv(p, in);
-      p = pj_fwd(p, out);
-    }
+      pj_transform( in, out, 1, 0, &(point->x), &(point->y), NULL );
+
+      if( pj_is_latlong(out) )
+      {
+          point->x *= RAD_TO_DEG;
+          point->y *= RAD_TO_DEG;
+      }
   }
+  else
+  {
+      if(in==NULL) { /* input coordinates are lat/lon */
+          p.u *= DEG_TO_RAD; /* convert to radians */
+          p.v *= DEG_TO_RAD;  
+          p = pj_fwd(p, out);
+      } else {
+          if(out==NULL) { /* output coordinates are lat/lon */
+              p = pj_inv(p, in);
+              p.u *= RAD_TO_DEG; /* convert to decimal degrees */
+              p.v *= RAD_TO_DEG;
+          } else { /* need to go from one projection to another */
+              p = pj_inv(p, in);
+              p = pj_fwd(p, out);
+          }
+      }
 
-  point->x = p.u;
-  point->y = p.v;
+      point->x = p.u;
+      point->y = p.v;
+  }
   return;
 }
 
