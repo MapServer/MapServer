@@ -1271,7 +1271,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   }
 
   // Only GDAL supports 24bit GD output.
-  if(gdImageTrueColor(img)){
+  if(img != NULL && gdImageTrueColor(img)){
 #ifndef USE_GDAL
     msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
     return MS_FAILURE;
