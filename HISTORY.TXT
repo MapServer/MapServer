@@ -15,6 +15,7 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.3 (CVS)
 ----------------- 
+- Fixed bug 834: SE_ROW_ID in SDE not initialized for unregistered SDE tables
 
 - Fixed bug 823 : adding a validation of the SRS parameter when doing
   a GetMap request on a wms server. Here is the OGC statement :
