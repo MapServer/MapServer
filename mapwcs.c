@@ -5,11 +5,6 @@
 #include "cpl_string.h" // GDAL string handling
 
 #ifdef USE_WCS_SVR
-
-typedef struct {
-  // TODO: union?
-} rangeObj; 
-
 /*
 ** Structure to hold metadata taken from the image or image tile index
 */
@@ -369,7 +364,14 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
   const char *value;
   char tag[100]; // should be plenty of space
   
-  printf("        <AxisDescription>\n"); // TODO: there are some optional attributes
+  printf("        <AxisDescription");
+  snprintf(tag, 100, "%s_semantic", id); // optional attributes follow (should escape?)
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
+  snprintf(tag, 100, "%s_refsys", id);
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " refSys=\"%s\"", NULL);
+  snprintf(tag, 100, "%s_refsyslabel", id);
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " refSysLabel=\"%s\"", NULL);
+  printf(">\n");
   
   // TODO: add MetadataLink (optional)
   
@@ -382,14 +384,19 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
   msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_WARN, "          <Label>%s</Label>\n", NULL);
   
   // Values
-  printf("          <Values>\n"); // TODO: there are some optional attributes
+  printf("          <Values");
+  snprintf(tag, 100, "%s_values_semantic", id); // optional attributes follow (should escape?)
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
+  snprintf(tag, 100, "%s_values_type", id);
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " refSys=\"%s\"", NULL);
+  printf(">\n");
   
-  // single values
+  // single values, we do not support optional type and semantic attributes
   snprintf(tag, 100, "%s_values", id);
   if(msOWSLookupMetadata(layer->metadata, "CO", tag))
-    msOWSPrintMetadataList(stdout, layer->metadata, "CO", tag, NULL, NULL, "            <SingleValue>%s</SingleValue>\n", NULL); // TODO: there are some optional attributes
+    msOWSPrintMetadataList(stdout, layer->metadata, "CO", tag, NULL, NULL, "            <SingleValue>%s</SingleValue>\n", NULL);
   
-  // intervals, only one per axis for now
+  // intervals, only one per axis for now, we do not support optional type, atomic and semantic attributes
   snprintf(tag, 100, "%s_interval", id);
   if((value = msOWSLookupMetadata(layer->metadata, "CO", tag)) != NULL) {
     char **tokens;
@@ -397,13 +404,15 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
 
      tokens = split(value, ',', &numtokens);
      if(tokens && numtokens > 0) {
-       printf("          <Interval>\n"); // TODO: there are some optional attributes
-       if(numtokens >= 1) printf("          <Min>%s</Min>\n", tokens[0]);
+       printf("          <Interval>\n");
+       if(numtokens >= 1) printf("          <Min>%s</Min>\n", tokens[0]); // TODO: handle closure
        if(numtokens >= 2) printf("          <Max>%s</Max>\n", tokens[1]);
        if(numtokens >= 3) printf("          <Res>%s</Res>\n", tokens[2]);
        printf("          </Interval>\n"); 
      }
   }
+  
+  // TODO: add default (optional)
   
   printf("          </Values>\n");
   
