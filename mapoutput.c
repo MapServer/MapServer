@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/10/20 20:46:51  frank
+ * msOutputFormatValidate() now also fixes stuff up including setting
+ * imagemode to MS_RENDER_WITH_RAWDATA if appropriate, and setting
+ * imagemode to MS_IMAGEMODE_RGBA from RGB if transparent enabled.
+ * See Bugs 724 and 425/977.
+ *
  * Revision 1.23  2004/04/23 16:44:54  frank
  * msRemoteOutputFormat() now frees output formats if refcount==0
  *
@@ -829,32 +835,33 @@ void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime )
 /*                       msOutputFormatValidate()                       */
 /*                                                                      */
 /*      Do some validation of the output format, and report to debug    */
-/*      output if it doesn't seem valid.                                */
+/*      output if it doesn't seem valid.  Fixup in place as best as     */
+/*      possible.                                                       */
 /************************************************************************/
 
 int msOutputFormatValidate( outputFormatObj *format )
 
 {
+    int result = MS_TRUE;
+
     format->bands = 
             atoi(msGetOutputFormatOption( format, "BAND_COUNT", "1" ));
 
     if( format->transparent && format->imagemode == MS_IMAGEMODE_RGB )
     {
-        msSetError( MS_MISCERR, 
-                    "OUTPUTFORMAT %s has TRANSPARENT set ON, but an IMAGEMODE of RGB instead of RGBA.", 
-                    "msOutputFormatValidate()",
-                    format->name );
-        return MS_FALSE;
+        msDebug( "OUTPUTFORMAT %s has TRANSPARENT set ON, but an IMAGEMODE\n"
+                 " of RGB instead of RGBA.  Changing imagemode to RGBA.", 
+                 format->name );
+        format->imagemode = MS_IMAGEMODE_RGBA;
+        result = MS_FALSE;
     }
 
-    if( !format->transparent && format->imagemode == MS_IMAGEMODE_RGBA )
-    {
-        msSetError( MS_MISCERR, 
-                    "OUTPUTFORMAT %s has TRANSPARENT set OFF, but an IMAGEMODE of RGBA instead of RGB.", 
-                    "msOutputFormatValidate()",
-                    format->name );
-        return MS_FALSE;
-    }
+    /* see bug 724 */
+    if( ( format->imagemode == MS_IMAGEMODE_INT16 
+          || format->imagemode == MS_IMAGEMODE_FLOAT32 
+          || format->imagemode == MS_IMAGEMODE_BYTE )
+        && format->renderer != MS_RENDER_WITH_RAWDATA )
+        format->renderer = MS_RENDER_WITH_RAWDATA;
 
     return MS_TRUE;
 }
