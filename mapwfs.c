@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.26  2003/10/08 13:10:17  assefa
+ * Modify msWFSGetGeomElementName to return the gml propertytype.
+ *
  * Revision 1.25  2003/10/08 00:01:35  assefa
  * Correct IsLikePropery with an OR.
  * Use of namespace if given in metadata.
@@ -222,17 +225,20 @@ static int msWFSIsLayerSupported(layerObj *lp)
 */
 const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp)
 {
-  const char *name;
 
-    if ((name = msLookupHashTable(lp->metadata,
-                                  "wfs_geometry_element_name")) == NULL &&
-        (name = msLookupHashTable(map->web.metadata,
-                                  "wfs_geometry_element_name")) == NULL )
+    switch(lp->type)
     {
-        name = "MS_GEOMETRY";
+        case MS_LAYER_POINT:
+          return "pointProperty";
+        case MS_LAYER_LINE:
+          return "lineStringProperty";
+        case MS_LAYER_POLYGON:
+          return "polygonProperty";
+        default:
+          break;
     }
 
-    return name;
+    return "???unknown???";
     
 }
 
