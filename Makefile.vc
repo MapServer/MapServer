@@ -65,7 +65,7 @@ $(MS_LIB):	$(MS_OBJS)
 		$(MS_OBJS) $(EXTERNAL_LIBS)\
 		 /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
 
-$(MS_EXE):	$(LIBS)
+$(MS_EXE):	$(MS_LIB)
 
 gd::
 	cd gd-1.2
