@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.39  2004/09/27 19:11:15  dan
+ * Fixed small leak in msOWSParseVersionString()
+ *
  * Revision 1.38  2004/09/25 17:16:31  julien
  * Don't encode XML tag (Bug 897)
  * Don't compile mapgml.c function if not necessary (Bug 896)
@@ -375,6 +378,8 @@ int msOWSParseVersionString(const char *pszVersion)
                        "Invalid version (%s). OWS version must be in the "
                        "format 'x.y' or 'x.y.z'",
                        "msOWSParseVersionString()", pszVersion);
+            if (digits)
+                msFreeCharArray(digits, numDigits);
             return -1;
         }
 
@@ -382,6 +387,8 @@ int msOWSParseVersionString(const char *pszVersion)
         nVersion += atoi(digits[1])*0x0100;
         if (numDigits > 2)
             nVersion += atoi(digits[2]);
+
+        msFreeCharArray(digits, numDigits);
 
         return nVersion;
     }
