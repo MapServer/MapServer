@@ -1774,7 +1774,11 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   case(MINSCALE):
     msyystate = 2; msyystring = value;
     getDouble(&(class->minscale));
-    break;    
+    break;
+  case(NAME):
+    msFree(class->name);
+    class->name = strdup(value);
+    break;
   case(STATUS):
     msyystate = 2; msyystring = value;
     if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;      
@@ -2440,7 +2444,11 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   case(MINSCALE):
     msyystate = 2; msyystring = value;
     if(getDouble(&(layer->minscale)) == -1) return;
-    break;    
+    break;
+  case(NAME):
+    msFree(layer->name);
+    layer->name = strdup(value);
+    break; 
   case(OFFSITE):
     msyystate = 2; msyystring = value;
     if(loadColor(&(layer->offsite)) != MS_SUCCESS) return;
