@@ -190,7 +190,193 @@ class ExpressionTestCase(unittest.TestCase):
         self.mapobj1.getLayer(0).setFilter('"foo"')
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '"foo"', fs
-        
+       
+class ZoomPointTestCase(unittest.TestCase):
+    "testing new zoom* methods that we are adapting from the PHP MapScript"
+    
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+        # Change the extent for purposes of zoom testing
+        rect = rectObj()
+        rect.minx, rect.miny, rect.maxx, rect.maxy = (-50.0, -50.0, 50.0, 50.0)
+        self.mapobj1.extent = rect
+        # Change height/width as well
+        self.mapobj1.width, self.mapobj1.height = (100, 100)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testRecenter(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomPoint(1, p, w, h, extent, None)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == -50.0, new_extent.minx
+        assert new_extent.miny == -50.0, new_extent.miny
+        assert new_extent.maxx == 50.0, new_extent.maxx
+        assert new_extent.maxy == 50.0, new_extent.maxy
+    def testZoomInPoint(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomPoint(2, p, w, h, extent, None)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == -25.0, new_extent.minx
+        assert new_extent.miny == -25.0, new_extent.miny
+        assert new_extent.maxx == 25.0, new_extent.maxx
+        assert new_extent.maxy == 25.0, new_extent.maxy
+    def testZoomOutPoint(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomPoint(-2, p, w, h, extent, None)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == -100.0, new_extent.minx
+        assert new_extent.miny == -100.0, new_extent.miny
+        assert new_extent.maxx == 100.0, new_extent.maxx
+        assert new_extent.maxy == 100.0, new_extent.maxy
+    def testZoomOutPointConstrained(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        max = rectObj()
+        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomPoint(-4, p, w, h, extent, max)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == max.minx, new_extent.minx
+        assert new_extent.miny == max.miny, new_extent.miny
+        assert new_extent.maxx == max.maxx, new_extent.maxx
+        assert new_extent.maxy == max.maxy, new_extent.maxy
+    def testZoomBadSize(self):
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        extent = self.mapobj1.extent
+        w = 0
+        h = -1
+        self.assertRaises(MapServerError, 
+            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
+    def testZoomBadExtent(self):
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        extent = self.mapobj1.extent
+        extent.maxx = extent.maxx - 1000000
+        w = 100
+        h = 100
+        self.assertRaises(MapServerError, 
+            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
+
+class ZoomRectangleTestCase(unittest.TestCase):
+    "testing new zoom* methods that we are adapting from the PHP MapScript"
+    
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+        # Change the extent for purposes of zoom testing
+        rect = rectObj()
+        rect.minx, rect.miny, rect.maxx, rect.maxy = (-50.0, -50.0, 50.0, 50.0)
+        self.mapobj1.extent = rect
+        # Change height/width as well
+        self.mapobj1.width, self.mapobj1.height = (100, 100)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testZoomRectangle(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        r = rectObj()
+        r.minx, r.miny, r.maxx, r.maxy = (0, 25, 25, 0)
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomRectangle(r, w, h, extent, None)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == -50.0, new_extent.minx
+        assert new_extent.miny == 25.0, new_extent.miny
+        assert new_extent.maxx == -25.0, new_extent.maxx
+        assert new_extent.maxy == 50.0, new_extent.maxy
+    def testZoomRectangleConstrained(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        max = rectObj()
+        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
+        r = rectObj()
+        r.minx, r.miny, r.maxx, r.maxy = (0, 200, 200, 0)
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomRectangle(r, w, h, extent, max)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == max.minx, new_extent.minx
+        assert new_extent.miny == max.miny, new_extent.miny
+        assert new_extent.maxx == max.maxx, new_extent.maxx
+        assert new_extent.maxy == max.maxy, new_extent.maxy
+    def testZoomRectangleBadly(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        r = rectObj()
+        r.minx, r.miny, r.maxx, r.maxy = (0, 0, 200, 200)
+        extent = self.mapobj1.extent
+        self.assertRaises(MapServerError, 
+            self.mapobj1.zoomRectangle, r, w, h, extent, None)
+
+class ZoomScaleTestCase(unittest.TestCase):
+    "testing new zoom* methods that we are adapting from the PHP MapScript"
+   
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+        # Change the extent for purposes of zoom testing
+        rect = rectObj()
+        rect.minx, rect.miny, rect.maxx, rect.maxy = (-50.0, -50.0, 50.0, 50.0)
+        self.mapobj1.extent = rect
+        # Change height/width as well
+        self.mapobj1.width, self.mapobj1.height = (100, 100)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testRecenter(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        scale = 2834.6472
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == -50.0, new_extent.minx
+        assert new_extent.miny == -50.0, new_extent.miny
+        assert new_extent.maxx == 50.0, new_extent.maxx
+        assert new_extent.maxy == 50.0, new_extent.maxy
+    def testZoomInScale(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        scale = 1417.3236
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == -25.0, new_extent.minx
+        assert new_extent.miny == -25.0, new_extent.miny
+        assert new_extent.maxx == 25.0, new_extent.maxx
+        assert new_extent.maxy == 25.0, new_extent.maxy
+    def testZoomOutScale(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        scale = 5669.2944
+        extent = self.mapobj1.extent
+        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == -100.0, new_extent.minx
+        assert new_extent.miny == -100.0, new_extent.miny
+        assert new_extent.maxx == 100.0, new_extent.maxx
+        assert new_extent.maxy == 100.0, new_extent.maxy
+    def testZoomOutPointConstrained(self):
+        w, h = (self.mapobj1.width, self.mapobj1.height)
+        max = rectObj()
+        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
+        p = pointObj()
+        p.x, p.y = (50, 50)
+        extent = self.mapobj1.extent
+        scale = 10000
+        self.mapobj1.zoomScale(scale, p, w, h, extent, max)
+        new_extent = self.mapobj1.extent
+        assert new_extent.minx == max.minx, new_extent.minx
+        assert new_extent.miny == max.miny, new_extent.miny
+        assert new_extent.maxx == max.maxx, new_extent.maxx
+        assert new_extent.maxy == max.maxy, new_extent.maxy
+
 if __name__ == '__main__':
     unittest.main()
 

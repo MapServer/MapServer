@@ -56,6 +56,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
 
+// Map zooming convenience methods included here
+%include "../mapzoom.i"
+
 // Language-specific extensions to mapserver classes are included here
 
 #ifdef SWIGPYTHON
@@ -425,6 +428,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   char *processQueryTemplate(char **names, char **values, int numentries) {
     return msProcessQueryTemplate(self, 1, names, values, numentries);
   }
+
 }
 
 %extend symbolSetObj {
