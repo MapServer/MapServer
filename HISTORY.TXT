@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.1 (CVS)
 ------------------------
 
+- Modified configure to disable native TIFF/PNG/JPEG/GIF support by default
+  if GDAL is enabled.  You can still enable them explicitly if you like.
+
 - Replace wms_style_%s_legendurl, wms_logourl, wms_descriptionurl, wms_dataurl 
   and wms_metadataurl metadata by four new metadata by metadata replaced. The 
   new metadata are called legendurl_width, legendurl_height, legendurl_format, 
