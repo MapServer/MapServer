@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2005/02/05 00:07:14  assefa
+ * Add support for lables with encoding.
+ *
  * Revision 1.2  2005/02/03 00:07:39  assefa
  * Add partial text and raster support.
  *
@@ -452,7 +455,7 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
             }
             else //fill color valid 
             {
-                msIO_fprintf(fp, "<polygon fill=\"rgb(%d %d %d)\" stroke=\"rgb(%d %d %d)\"  stroke-width=\"%d\" %s points=\"",
+                msIO_fprintf(fp, "<polygon fill=\"rgb(%d %d %d)\" points=\"",
                              psFillColor->red, psFillColor->green, 
                              psFillColor->blue);
                            
@@ -533,21 +536,123 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 
 }
 
+#define Tcl_UniChar int
+#define TCL_UTF_MAX 3
+
+static int gdTcl_UtfToUniChar (char *str, Tcl_UniChar * chPtr)
+{
+  int byte;
+  
+  /*
+   * Unroll 1 to 3 byte UTF-8 sequences, use loop to handle longer ones.
+   */
+
+  byte = *((unsigned char *) str);
+
+  if (byte < 0xC0)
+    {
+      /*
+       * Handles properly formed UTF-8 characters between
+       * 0x01 and 0x7F.  Also treats \0 and naked trail
+       * bytes 0x80 to 0xBF as valid characters representing
+       * themselves.
+       */
+
+      *chPtr = (Tcl_UniChar) byte;
+      return 1;
+    }
+  else if (byte < 0xE0)
+    {
+      if ((str[1] & 0xC0) == 0x80)
+	{
+	  /*
+	   * Two-byte-character lead-byte followed
+	   * by a trail-byte.
+	   */
+
+	  *chPtr = (Tcl_UniChar) (((byte & 0x1F) << 6) | (str[1] & 0x3F));
+	  return 2;
+	}
+      /*
+       * A two-byte-character lead-byte not followed by trail-byte
+       * represents itself.
+       */
+
+      *chPtr = (Tcl_UniChar) byte;
+      return 1;
+    }
+  else if (byte < 0xF0)
+    {
+      if (((str[1] & 0xC0) == 0x80) && ((str[2] & 0xC0) == 0x80))
+	{
+	  /*
+	   * Three-byte-character lead byte followed by
+	   * two trail bytes.
+	   */
+
+	  *chPtr = (Tcl_UniChar) (((byte & 0x0F) << 12)
+				  | ((str[1] & 0x3F) << 6) | (str[2] & 0x3F));
+	  return 3;
+	}
+      /*
+       * A three-byte-character lead-byte not followed by
+       * two trail-bytes represents itself.
+       */
+
+      *chPtr = (Tcl_UniChar) byte;
+      return 1;
+    }
+#if TCL_UTF_MAX > 3
+  else
+    {
+      int ch, total, trail;
+
+      total = totalBytes[byte];
+      trail = total - 1;
+      if (trail > 0)
+	{
+	  ch = byte & (0x3F >> trail);
+	  do
+	    {
+	      str++;
+	      if ((*str & 0xC0) != 0x80)
+		{
+		  *chPtr = byte;
+		  return 1;
+		}
+	      ch <<= 6;
+	      ch |= (*str & 0x3F);
+	      trail--;
+	    }
+	  while (trail > 0);
+	  *chPtr = ch;
+	  return total;
+	}
+    }
+#endif
+
+  *chPtr = (Tcl_UniChar) byte;
+  return 1;
+}
 
 static void drawSVGText(FILE *fp, int x, int y, char *string, double size, 
                         colorObj *psColor, colorObj *psOutlineColor,
                         char *pszFontFamilily,  char *pszFontStyle,
                         char *pszFontWeight, int nAnchorPosition,
-                        double dfAngle)
+                        double dfAngle, int bEncoding)
 {
     char *pszFontStyleString = NULL;
     char *pszFontWeightString = NULL;
     char *pszFillString = NULL, *pszStrokeString = NULL;
     char *pszAngleString=NULL, *pszAngleAnchorString=NULL;
-     char szTmp[100];
+    char *pszFinalString=NULL;
+    char *pszTmpStr = NULL;
+    char szTmp[100];
+    char *next;
+    int len, i, ch;
 
     pszFontStyleString = strcatalloc(pszFontStyleString, "");
-    pszFontWeightString = strcatalloc(pszFontWeight, "");
+    pszFontWeightString = strcatalloc(pszFontWeightString, "");
     pszAngleString = strcatalloc(pszAngleString, "");
     pszAngleAnchorString = strcatalloc(pszAngleAnchorString, "");
 
@@ -611,14 +716,46 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
         pszAngleAnchorString = strcatalloc(pszAngleAnchorString, szTmp);
     }
 
-    
+    if (bEncoding)
+    {
+        pszTmpStr = strcatalloc(pszTmpStr, string);
+        next = pszTmpStr;
+        for (i=0; *next; i++)
+        {
+            ch = *next;
+            
+            
+            len = gdTcl_UtfToUniChar (next, &ch);
+            next += len;
+        
+            sprintf(szTmp, "&#x%x;",ch);
+            pszFinalString = strcatalloc(pszFinalString, szTmp);
+        }
+    }
+    else
+      pszFinalString = string;
+
     //TODO : font size set to unit pt
-    msIO_fprintf(fp, "<text  x=\"%d\" y=\"%d\" font-famility=\"%s\" font-size=\"%fpt\" %s %s %s %s %s %s>%s</text>\n",
+    msIO_fprintf(fp, "<text  x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%fpt\" %s %s %s %s %s %s>%s</text>\n",
                  x, y, pszFontFamilily, size, 
                  pszFontStyleString, pszFontWeightString, 
                  pszFillString, pszStrokeString, pszAngleString, 
-                 pszAngleAnchorString, string);
+                 pszAngleAnchorString, pszFinalString);
 
+    if (pszFontStyleString)
+      msFree(pszFontStyleString);
+    if (pszFontWeightString)
+      msFree(pszFontWeightString);
+    if (pszFillString)
+      msFree(pszFillString);
+    if (pszStrokeString)
+      msFree(pszStrokeString);
+    if (pszAngleString)
+      msFree(pszAngleString);
+    if (pszAngleAnchorString)
+      msFree(pszAngleAnchorString);
+    if (bEncoding && pszFinalString)
+      msFree(pszFinalString);
     
 }
 
@@ -629,13 +766,14 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
 int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string, 
                  labelObj *label, fontSetObj *fontset, double scalefactor)
 {
-    char *error=NULL, *font=NULL;
+    char  *font=NULL;
     double size;
     colorObj sColor, sOutlineColor;
     char **aszFontsParts = NULL;
     int nFontParts= 0;
     char *pszFontFamily = NULL, *pszFontStyle=NULL, *pszFontWeight=NULL;
     int x, y;
+    int bEncoding = 0;
 
 /* -------------------------------------------------------------------- */
 /*      if not svg or invaid inputs, return.                            */
@@ -644,10 +782,12 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
         !MS_DRIVER_SVG(image->format) )
       return (0);
 
-    if( 0)//label->encoding != NULL ) 
+    if(label->encoding != NULL ) 
     { /* converting the label encoding */
+        
         string = msGetEncodedString(string, label->encoding);
         if(string == NULL) return(-1);
+        bEncoding = 1;
     }
 
     //TODO : not transform it to integer is layer transform is false
@@ -727,7 +867,7 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
 /*        - font-weight (normal | bold | bolder | lighter | 100 | 200 ..*/
 /* -------------------------------------------------------------------- */
         //parse font string : 
-        aszFontsParts = split(label->font, '-', &nFontParts);
+        aszFontsParts = split(label->font, '_', &nFontParts);
  
         pszFontFamily = aszFontsParts[0];
         if (nFontParts == 3)
@@ -748,9 +888,9 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
         drawSVGText(image->img.svg->stream, x, y, string, size, 
                     &sColor, &sOutlineColor,
                     pszFontFamily,  pszFontStyle, pszFontWeight,
-                    label->position, label->angle);
+                    label->position, label->angle, bEncoding);
 
-        msFreeCharArray(aszFontsParts, nFontParts);
+        //msFreeCharArray(aszFontsParts, nFontParts);
 
         return 0;
     }
@@ -1027,9 +1167,6 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
     FILE *fp = NULL;
     unsigned char block[4000];
     int bytes_read;
-    char *sttt = NULL;
-
-    //strlen(sttt);
 
     if (image && MS_DRIVER_SVG(image->format))// && filename)
     {
@@ -1064,7 +1201,6 @@ int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
 {
     outputFormatObj *format = NULL;
     imageObj    *imagetmp = NULL;
-    int         bFreeImage = 0;
     char        *pszTmpfile = NULL;
     char        *pszURL = NULL;
 
