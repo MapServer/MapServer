@@ -284,9 +284,6 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     columns[1] = strdup(layer->labelitem);    
   }  
 
-  for(i=0; i<numcolumns; i++)
-    fprintf(stderr, "%s\n",  columns[i]);
-
   msFreeCharArray(params, numparams);
 
   /*

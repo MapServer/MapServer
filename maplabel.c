@@ -514,8 +514,6 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
 
-  int start_position;
-
   for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
     cachePtr = &(map->labelcache.labels[l]); /* point to right spot in cache */
@@ -555,60 +553,107 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
     }
     
     if(label.position == MS_AUTO) {
-      
-      if(layerPtr->type == MS_LINE)
-	start_position = 6; /* positions 6 and 7 are UC and LC */
-      else
-	start_position = 0;
-      
-      for(j=start_position; j<=7; j++) { /* loop through the outer label positions */	  
 
-	msFreeShape(cachePtr->poly);
-	cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+      if(layerPtr->type == MS_LINE) {
 
-	p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+	for(j=0; j<2; j++) { /* two angles, 1 position - UC */
 
-	if(draw_marker) 
-	  msRect2Polygon(marker_rect, cachePtr->poly); // save marker bounding polygon
-	
-	if(!label.partials) { // check against image first
-	  if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
-	    cachePtr->status = MS_FALSE;
+	  msFreeShape(cachePtr->poly);
+	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+	  
+	  p = get_metrics(&(cachePtr->point), MS_UC, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), (label.angle + j*MS_DEG_TO_RAD*180.0), label.buffer, cachePtr->poly);
+	  
+	  if(draw_marker) 
+	    msRect2Polygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+	  
+	  if(!label.partials) { // check against image first
+	    if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
+	      cachePtr->status = MS_FALSE;
+	      continue; // next angle
+	    }
+	  }
+	  
+	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
+	    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
+	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+		cachePtr->status = MS_FALSE;
+		break;
+	      }
+	    }
+	  }
+	  
+	  if(!cachePtr->status)
+	    continue; // next angle
+	  
+	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
+	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+	      
+	      if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
+		cachePtr->status = MS_FALSE;
+		break;
+	      }
+	      
+	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+		cachePtr->status = MS_FALSE;
+		break;
+	      }
+	    }
+	  }	
+	  
+	  if(cachePtr->status) // found a suitable place for this label
+	    break;
+
+	} // next angle
+
+      } else {
+	for(j=0; j<=7; j++) { /* loop through the outer label positions */	  
+	  
+	  msFreeShape(cachePtr->poly);
+	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+	  
+	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+	  
+	  if(draw_marker) 
+	    msRect2Polygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+	  
+	  if(!label.partials) { // check against image first
+	    if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
+	      cachePtr->status = MS_FALSE;
+	      continue; // next position
+	    }
+	  }
+	  
+	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
+	    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
+	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+		cachePtr->status = MS_FALSE;
+		break;
+	      }
+	    }
+	  }
+	  
+	  if(!cachePtr->status)
 	    continue; // next position
-	  }
-	}
-
-	for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-	  if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
-	    if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-	      cachePtr->status = MS_FALSE;
-	      break;
+	  
+	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
+	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+	      
+	      if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
+		cachePtr->status = MS_FALSE;
+		break;
+	      }
+	      
+	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+		cachePtr->status = MS_FALSE;
+		break;
+	      }
 	    }
-	  }
-	}
-
-	if(!cachePtr->status)
-	  continue; // next position
-	
-	for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
-	  if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-	    
-	    if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
-	      cachePtr->status = MS_FALSE;
-	      break;
-	    }
-	    
-	    if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
-	      cachePtr->status = MS_FALSE;
-	      break;
-	    }
-	  }
-	}	
-
-	if(cachePtr->status) // found a suitable place for this label
-	  break;
-      } // next position      
-
+	  }	
+	  
+	  if(cachePtr->status) // found a suitable place for this label
+	    break;
+	} // next position      
+      }
     } else {
 
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
