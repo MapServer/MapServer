@@ -707,7 +707,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 }
 
 /*
-** Function to draw a layer IF it already has a result cache associated with it. Called by msDrawQuery and via MapScript.
+** Function to draw a layer IF it already has a result cache associated with it. Called by msDrawQueryMap and via MapScript.
 */
 int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
@@ -719,6 +719,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
   colorObj colorbuffer[MS_MAXCLASSES];
+  int mindistancebuffer[MS_MAXCLASSES];
 
   if(!layer->resultcache || map->querymap.style == MS_NORMAL)
     return(msDrawLayer(map, layer, image));
@@ -749,7 +750,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   // reset layer pen values just in case the map has been previously processed
   msClearLayerPenValues(layer);
 
-  // if MS_HILITE, alter the first class (always at least 1 class)
+  // if MS_HILITE, alter the first class (always at least 1 class), and set a MINDISTANCE for the labelObj to avoid duplicates
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
       if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color)) {
@@ -759,6 +760,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 	colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor; // if no color, save the outlinecolor from the TOP style
         layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = map->querymap.color;
       }
+
+      mindistancebuffer[i] = layer->class[i].label.mindistance;
+      layer->class[i].label.mindistance = MS_MAX(0, layer->class[i].label.mindistance);
     }
   }
 
@@ -825,7 +829,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     shpcache = NULL;  
   }
 
-  // if MS_HILITE, restore values
+  // if MS_HILITE, restore color and mindistance values
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
       if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color))
@@ -833,6 +837,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
       else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor))
 	layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = colorbuffer[i]; // if no color, restore outlinecolor for the TOP style
     }
+    layer->class[i].label.mindistance = mindistancebuffer[i];
   }
 
   msLayerClose(layer);
