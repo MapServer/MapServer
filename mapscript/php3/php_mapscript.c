@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.27  2001/01/09 20:21:17  dan
+ * Use PHP's virtual_cwd to open a .map file ONLY on WINNT
+ *
  * Revision 1.26  2001/01/09 05:24:41  dan
  * Fixes to build with PHP 4.0.4
  *
@@ -136,7 +139,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Jan 8, 2001)"
+#define PHP3_MS_VERSION "(Jan 9, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -867,8 +870,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     /* Attempt to open the MAP file 
      */
     convert_to_string(pFname);
-#ifdef PHP4
-    /* With PHP4, we have to use the virtual_cwd API... for now we'll
+#if defined(PHP4) && defined(WIN32)
+    /* With PHP4 on WINNT, we have to use the virtual_cwd API... for now we'll
      * just make sure that the .map file path is absolute, but what we
      * should really do is make all of MapServer use the V_* macros and
      * avoid calling setcwd() from anywhere.
@@ -880,11 +883,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
         char    szFname[MAXPATHLEN];
         if (virtual_getcwd(szFname, MAXPATHLEN) != NULL)
         {
-#ifdef WIN32
             strcat(szFname, "\\");
-#else
-            strcat(szFname, "/");
-#endif
             strcat(szFname, pFname->value.str.val);
             pNewObj = mapObj_new(szFname);
         }
