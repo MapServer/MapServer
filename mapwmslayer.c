@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2001/08/22 15:56:58  dan
+ * Added wms_latlonboundingbox metadata to check if layer overlaps.
+ *
  * Revision 1.6  2001/08/22 04:48:34  dan
  * Create wld file for the WMS map slide so that it can be reprojected by GDAL
  *
@@ -408,9 +411,36 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     }
 
 /* ------------------------------------------------------------------
- * __TODO__ check if layer overlaps current view window
+ * Check if layer overlaps current view window (using wms_latlonboundingbox)
  * ------------------------------------------------------------------ */
+    if ((pszTmp = msLookupHashTable(lp->metadata, 
+                                    "wms_latlonboundingbox")) != NULL)
+    {
+        char **tokens;
+        int n;
+        rectObj ext;
 
+        tokens = split(pszTmp, ' ', &n);
+        if (tokens==NULL || n != 4) {
+            msSetError(MS_WMSCONNERR, "Wrong number of arguments for 'wms_latlonboundingbox' metadata.",
+                       "msDrawWMSLayer()");
+            return MS_FAILURE;
+        }
+
+        ext.minx = atof(tokens[0]);
+        ext.miny = atof(tokens[1]);
+        ext.maxx = atof(tokens[2]);
+        ext.maxy = atof(tokens[3]);
+
+        msFreeCharArray(tokens, n);
+
+        // Reproject latlonboundingbox to the selected SRS for the layer and
+        // check if it overlaps the bbox that we calculated for the request
+
+        msProjectRect(&(map->latlon), &(lp->projection), &ext);
+        if (!msRectOverlap(&bbox, &ext))
+            return MS_SUCCESS;  // No overlap.
+    }
 
 /* ------------------------------------------------------------------
  * Build the request URL.
