@@ -10,7 +10,7 @@ the top of the list.)
 For a complete change history, please see the CVS log comments.  A copy of
 the CVS logs is updated daily at the following URL:
 
-  http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
+  http://maptools.org/dl/mapserver_Changelog.txt
 
 
 Version 4.2.2 (cvs)
@@ -23,6 +23,10 @@ Version 4.2.2 (cvs)
 
 - A few fixes to allow php_mapscript to work with both PHP4 and PHP5.
   PHP5 support should still be considered experimental. (bug 718)
+
+- Backported fix for bug 767: SDE layers with shared connections 
+  were stomping on each other when they were freeing resources and this
+  caused truncated WMS GetCapabilities (bug 779)
 
 
 Version 4.2.1 (2004-07-12)
