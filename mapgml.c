@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/10/28 18:54:05  dan
+ * USe OWS_NOERR instead of MS_NOERR in calls to msOWSPrint*()
+ *
  * Revision 1.42  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -378,24 +381,24 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   // charset encoding: lookup "gml_encoding" metadata first, then 
   // "wms_encoding", and if not found then use "ISO-8859-1" as default.
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), "GM", "encoding", 
-                      MS_NOERR, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", 
+                      OWS_NOERR, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", 
                            "ISO-8859-1");
 
   msOWSPrintValidateMetadata(stream, &(map->web.metadata),NULL, "gml_rootname",
-                      MS_NOERR, "<%s ", "msGMLOutput");
+                      OWS_NOERR, "<%s ", "msGMLOutput");
 
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, "gml_uri", 
-                      MS_NOERR, "xmlns=\"%s\"", NULL);
+                      OWS_NOERR, "xmlns=\"%s\"", NULL);
   msIO_fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
   msIO_fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
   msIO_fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, "gml_schema", 
-                      MS_NOERR, "\n\t xsi:schemaLocation=\"%s\"", NULL);
+                      OWS_NOERR, "\n\t xsi:schemaLocation=\"%s\"", NULL);
   msIO_fprintf(stream, ">\n");
 
   // a schema *should* be required
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                           "gml_description", MS_NOERR, 
+                           "gml_description", OWS_NOERR, 
                            "\t<gml:description>%s</gml:description>\n", NULL);
 
   // step through the layers looking for query results
@@ -410,7 +413,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
       msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                 "gml_layername", MS_NOERR, "\t<%s>\n", value);
+                                 "gml_layername", OWS_NOERR, "\t<%s>\n", value);
       msFree(value);
 
       // actually open the layer
@@ -437,7 +440,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
         value = (char*) malloc(strlen(lp->name)+9);
         sprintf(value, "%s_feature", lp->name);
         msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                   "gml_featurename", MS_NOERR, 
+                                   "gml_featurename", OWS_NOERR, 
                                    "\t\t<%s>\n", value);
         msFree(value);
 
@@ -482,7 +485,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
         value = (char*) malloc(strlen(lp->name)+9);
         sprintf(value, "%s_feature", lp->name);
         msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                   "gml_featurename", MS_NOERR, 
+                                   "gml_featurename", OWS_NOERR, 
                                    "\t\t</%s>\n", value);
         msFree(value);
 
@@ -495,7 +498,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
       msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
-                                 "gml_layername", MS_NOERR, "\t</%s>\n", value);
+                                 "gml_layername", OWS_NOERR, "\t</%s>\n", value);
       msFree(value);
 
       msLayerClose(lp);
@@ -504,7 +507,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
   // end this document
   msOWSPrintValidateMetadata(stream, &(map->web.metadata),NULL, "gml_rootname",
-                             MS_NOERR, "</%s>\n", "msGMLOutput");
+                             OWS_NOERR, "</%s>\n", "msGMLOutput");
 
   if(filename && strlen(filename) > 0) fclose(stream);
 
