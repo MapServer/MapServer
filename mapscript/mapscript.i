@@ -203,6 +203,7 @@ memory.") const char * {
     msFreeMap(self);
   }
 
+  %newobject clone;
   mapObj *clone() {
     mapObj *dstMap;
     dstMap = msNewMapObj();
@@ -269,6 +270,7 @@ memory.") const char * {
     if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
   }
 
+  %newobject prepareImage;
   imageObj *prepareImage() {
     int i, status;
     imageObj *image=NULL;
@@ -360,22 +362,27 @@ memory.") const char * {
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
 
+  %newobject draw;
   imageObj *draw() {
     return msDrawMap(self);
   }
 
+  %newobject drawQuery;
   imageObj *drawQuery() {
     return msDrawQueryMap(self);
   }
 
+  %newobject drawLegend;
   imageObj *drawLegend() {
     return msDrawLegend(self);
   }
 
+  %newobject drawScalebar;
   imageObj *drawScalebar() {
     return msDrawScalebar(self);
   }
 
+  %newobject drawReferenceMap;
   imageObj *drawReferenceMap() {
     return msDrawReferenceMap(self);
   }
@@ -797,7 +804,8 @@ memory.") const char * {
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
     return msDrawLegendIcon(map, layer, self, width, height, dstImage->img.gd, dstX, dstY);
   }
-  
+ 
+  %newobject createLegendIcon;
   imageObj *createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
     return msCreateLegendIcon(map, layer, self, width, height);
   }  

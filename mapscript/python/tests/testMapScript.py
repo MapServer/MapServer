@@ -142,32 +142,49 @@ class TestMapExceptionTestCase(unittest.TestCase):
         self.assertRaises(MapServerNotFoundError, \
                          self.mapobj1.queryByPoint, p, MS_SINGLE, 1.0)
 
+class TestMapCloneTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testCloneMap(self):
+        mapobj_clone = self.mapobj1.clone()
+        assert mapobj_clone.thisown == 1
+        assert mapobj_clone.name == self.mapobj1.name
+        assert mapobj_clone.numlayers == self.mapobj1.numlayers
+        del mapobj_clone
+
 # If PIL is available, use it to test the saveToString() method
 
-#have_image = 0
-#try:
-#    import Image
-#    have_image = 1
-#except ImportError:
-#    pass
-#    
-#from StringIO import StringIO
-#
-#class SaveToStringTestCase(unittest.TestCase):
-#    def setUp(self):
-#        self.mapobj1 = mapObj(testMapfile)
-#    def tearDown(self):
-#        self.mapobj1 = None
-#    def testSaveToString(self):
-#        msimg = self.mapobj1.draw()
-#        data = StringIO(msimg.saveToString())
-#        if have_image:
-#            pyimg = Image.open(data)
-#            assert pyimg.format == 'PNG'
-#            assert pyimg.size == (600, 600)
-#            assert pyimg.mode == 'P'
-#        else:
-#            assert 1
+have_image = 0
+try:
+    from PIL import Image
+    have_image = 1
+except ImportError:
+    pass
+    
+from StringIO import StringIO
+
+class SaveToStringTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testSaveToString(self):
+        msimg = self.mapobj1.draw()
+        assert msimg.thisown == 1
+        data = msimg.saveToString()
+        filename = 'testSaveToString.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
+        if have_image:
+            pyimg = Image.open(filename)
+            assert pyimg.format == 'PNG'
+            assert pyimg.size == (600, 600)
+            assert pyimg.mode == 'P'
+        else:
+            assert 1
 
 class NoFontSetTestCase(unittest.TestCase):
     def setUp(self):
