@@ -1265,7 +1265,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
    
     switch(layer->type) {
     case MS_ANNOTATION:
-      
+
       if(!annotate) break;
       
       switch(shpfile.type) {

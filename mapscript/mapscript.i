@@ -491,6 +491,10 @@
     return;
   }
 
+  int copy(shapeObj *dest) {
+    return(msCopyShape(self, dest));
+  }
+
   int contains(pointObj *point) {
     if(self->type == MS_POLYGON)
       return msIntersectPointPolygon(point, self);
