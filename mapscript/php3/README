@@ -30,8 +30,17 @@ For more complete information, see the MapScript documentation at:
 and the MapServer Map File documentation at:
 	http://mapserver.gis.umn.edu/mapfile.html
 
-Very important note: Constant names and class member variable names are
-                     case-sensitive in PHP.
+  Very important notes:
+  ---------------------
+
+  - Constant names and class member variable names are case-sensitive in PHP.
+
+  - Several MapScript functions (all those that access files in the back end
+    such as ms_newMapObj(), drawMap(), etc) will affect the value of the 
+    current working directory (CWD) in the PHP environment. This will be 
+    fixed eventually but in the meantime you should be careful about these 
+    side-effects.
+
 
   Constants:
   ----------
