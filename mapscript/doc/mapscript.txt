@@ -2759,7 +2759,8 @@ shapeObj Methods
 
 new shapeObj( int type ) : shapeObj
     Return a new shapeObj of the specified *type*.  See the type attribute
-    above.
+    above.  Shapes created from this constructor contain 4 default values
+    initialized to empty strings "".
 
 add( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
@@ -2801,7 +2802,11 @@ setBounds : void
     added.
 
     **TODO**: should return int and set msSetError.
-    
+
+setValue( int i, string value ) : int
+    Set the shape value at index *i* to *value*.
+
+
 -----------------------------------------------------------------------------
  styleObj
 -----------------------------------------------------------------------------
