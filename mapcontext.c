@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.36  2002/12/20 20:21:13  julien
+ * wms_style__title is now set correctly
+ *
  * Revision 1.35  2002/12/19 19:26:11  julien
  * Don't set the projection for each layer
  *
@@ -891,8 +894,13 @@ int msLoadMapContext(mapObj *map, char *filename)
                           free(pszStyle);
                       }
                       else
+                      {
+                          pszStyle = (char*)malloc(strlen(pszStyleName)+20);
+                          sprintf(pszStyle,"wms_style_%s_title",pszStyleName);
                           msInsertHashTable(layer->metadata, pszStyle, 
                                             layer->name);
+                          free(pszStyle);
+                      }
                       // SLD
                       pszValue = (char*)CPLGetXMLValue(psStyle, 
                                         "SLD.OnlineResource.xlink:href", NULL);
