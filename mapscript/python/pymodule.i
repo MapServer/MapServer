@@ -14,6 +14,22 @@
  *
  *****************************************************************************/
 
+/******************************************************************************
+ * Simple Typemaps
+ *****************************************************************************/
+
+// Translates Python None to C NULL for strings
+%typemap(in,parse="z") char * "";
+
+// Translate Python's built-in file object to FILE *
+%typemap(python,in) FILE * {
+    if (!PyFile_Check($input)) {
+        PyErr_SetString(PyExc_TypeError, "Input is not file");
+        return NULL;
+    }
+    $1 = PyFile_AsFile($input);
+}
+
 /**************************************************************************
  * MapServer Errors and Python Exceptions
  **************************************************************************
@@ -119,4 +135,6 @@ MapServerError = _mapscript.MapServerError
 MapServerNotFoundError = _mapscript.MapServerNotFoundError
 MapServerChildError = _mapscript.MapServerChildError
 %}
+
+
 

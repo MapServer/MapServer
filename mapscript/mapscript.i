@@ -1281,26 +1281,42 @@ memory.") const char * {
 //
 //TODO : should take image type as argument ??
 %extend imageObj {
-  imageObj(int width, int height, const char *filename=NULL) {
-    imageObj *image=NULL;
-    outputFormatObj *format;
+   
+    /* imageObj constructor now takes filename as an optional argument.
+     * If the target language is Python, we ignore this constructor and
+     * instead use the one in python/pymodule.i. */
+#ifndef SWIGPYTHON
+    imageObj(int width, int height, const char *driver, const char *file=NULL)
+    {
+        imageObj *image=NULL;
+        outputFormatObj *format;
 
-    if (filename) {
-        return msImageLoadGD(filename);
+        if (file) {
+            return msImageLoadGD(file);
+        }
+        else {
+            if (driver) {
+                format = msCreateDefaultOutputFormat(NULL, driver);
+            }
+            else {
+                format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
+                if (format == NULL)
+                    format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
+                if (format == NULL)
+                    format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
+                if (format == NULL)
+                    format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
+            }
+            if (format == NULL) {
+                msSetError(MS_IMGERR, "Could not create output format %s",
+                           "imageObj()", driver);
+                return NULL;
+            }
+            image = msImageCreate(width, height, format, NULL, NULL);
+            return image;
+        }
     }
-    else {
-        format = msCreateDefaultOutputFormat(NULL,"image/gif");
-        if( format == NULL )
-            format = msCreateDefaultOutputFormat(NULL,"image/png");
-        if( format == NULL )
-            format = msCreateDefaultOutputFormat(NULL,"image/jpeg");
-        if( format == NULL )
-            format = msCreateDefaultOutputFormat(NULL,"image/wbmp");
-    
-        image = msImageCreate(width, height, format, NULL, NULL);    
-        return(image);
-    }
-  }
+#endif // SWIGPYTHON
 
   ~imageObj() {
     msFreeImage(self);    

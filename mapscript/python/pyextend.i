@@ -74,12 +74,64 @@
             
 }*/
 
+/****************************************************************************
+ * Support for bridging Python file-like objects and GD through IOCtx
+ ***************************************************************************/
+
 /******************************************************************************
  * Extensions to imageObj
  *****************************************************************************/
-
+    
 %extend imageObj {
 
+    /* New imageObj constructor taking an optional PyFile-ish object
+     * argument.
+     *
+     * Furthermore, we are defaulting width and height so that in case
+     * anyone wants to swig mapscript with the -keyword option, they can
+     * omit width and height.  Work done as part of Bugzilla issue 550. */
+
+    imageObj(int width, int height, const char *driver=NULL,
+             PyObject *file=Py_None)
+    {
+        imageObj *image=NULL;
+        outputFormatObj *format;
+
+        if (file == Py_None) {
+            if (driver) {
+                format = msCreateDefaultOutputFormat(NULL, driver);
+            }
+            else {
+                format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
+                if (format == NULL)
+                    format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
+                if (format == NULL)
+                    format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
+                if (format == NULL)
+                    format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
+            }
+            if (format == NULL) {
+                msSetError(MS_IMGERR, "Could not create output format %s",
+                           "imageObj()", driver);
+                return NULL;
+            }
+            image = msImageCreate(width, height, format, NULL, NULL);
+            return image;
+        }
+        // Is file a filename?
+        else if (PyString_Check(file)) {
+            return msImageLoadGD((char *) PyString_AsString(file));
+        }
+        // Is a file-like object
+        else if (file && driver) {
+            return createImageObjFromPyFile(width, height, file, driver);
+        }
+        else {
+            msSetError(MS_IMGERR, "Failed to create image (%s, %s)", "imageObj()", file, driver);
+            return NULL;
+        }
+    }
+   
     PyObject *saveToString() {
         unsigned char *imgbytes;
         int size;
