@@ -154,3 +154,35 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
   return(MS_FAILURE);
 #endif
 }
+
+
+/*
+** Compare two projections, and return MS_TRUE if they differ. 
+**
+** For now this is implemented by exact comparison of the projection
+** arguments, but eventually this should call a PROJ.4 function with
+** more awareness of the issues.
+**
+** NOTE: MS_FALSE is returned if either of the projection objects
+** has no arguments, since reprojection won't work anyways.
+*/
+
+int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
+
+{
+    int		i;
+
+    if( proj1->numargs == 0 || proj2->numargs == 0 )
+        return MS_FALSE;
+
+    if( proj1->numargs != proj2->numargs )
+        return MS_TRUE;
+
+    for( i = 0; i < proj1->numargs; i++ )
+    {
+        if( strcmp(proj1->args[i],proj2->args[i]) != 0 )
+            return MS_TRUE;
+    }
+
+    return MS_FALSE;
+}

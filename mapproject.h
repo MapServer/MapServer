@@ -29,6 +29,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point);
 int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
 int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
 int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect);
+int msProjectionsDiffer(projectionObj *, projectionObj *);
 
 int msOGCWKT2ProjectionObj( const char *pszWKT, 
                             projectionObj *proj );

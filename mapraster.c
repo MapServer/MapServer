@@ -1768,6 +1768,8 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         hDS = GDALOpen( filename, GA_ReadOnly );
         if( hDS != NULL )
         {
+            double	adfGeoTransform[6];
+
             if (layer->projection.numargs > 0 && 
                 EQUAL(layer->projection.args[0], "auto"))
             {
@@ -1796,7 +1798,19 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
                 }
             }
 
-            if( map->projection.numargs > 0 && layer->projection.numargs > 0 )
+            GDALGetGeoTransform( hDS, adfGeoTransform );
+
+            /* 
+            ** We want to resample if the source image is rotated, or if
+            ** the projections differ.  However, due to limitations in 
+            ** msResampleGDALToMap() we can only resample rotated images
+            ** if they also have fully defined projections.
+            */
+            if( ((adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0)
+                 && map->projection.proj != NULL 
+                 && layer->projection.proj != NULL)
+                || msProjectionsDiffer( &(map->projection), 
+                                        &(layer->projection) ) )
                 status = msResampleGDALToMap( map, layer, img, hDS );
             else
                 status = drawGDAL(map, layer, img, hDS );
