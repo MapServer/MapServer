@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "map.h"
 #include "maperror.h"
 #include "mapthread.h"
@@ -244,7 +246,11 @@ void msWriteError(FILE *stream)
 {
   errorObj *ms_error = msGetErrorObj();
 
-  fprintf(stream, "%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+  while (ms_error && ms_error->code != MS_NOERR)
+  {
+      fprintf(stream, "%s: %s %s <br>\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+      ms_error = ms_error->next;
+  }
 }
 
 void msWriteErrorImage(mapObj *map, char *filename, int blank) {
