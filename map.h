@@ -387,6 +387,8 @@ typedef struct {
   hashTableObj metadata;
 #endif
 
+  double minscale, maxscale;
+
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc

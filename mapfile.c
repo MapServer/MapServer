@@ -1189,6 +1189,8 @@ int initClass(classObj *class)
 
   class->metadata = NULL;
 
+  class->maxscale = class->minscale = -1.0;
+
   return(0);
 }
 
@@ -1286,11 +1288,17 @@ int loadClass(classObj *class, mapObj *map)
       class->label.sizescaled = class->label.size = MS_MEDIUM; // only set a default if the LABEL section is present
       if(loadLabel(&(class->label), map) == -1) return(-1);
       break;
+    case(MAXSCALE):      
+      if(getDouble(&(class->maxscale)) == -1) return(-1);
+      break;
     case(MAXSIZE):
       if(getInteger(&(class->maxsize)) == -1) return(-1);
       break;
     case(METADATA):
       if(loadHashTable(&(class->metadata)) != MS_SUCCESS) return(-1);
+      break;
+    case(MINSCALE):      
+      if(getDouble(&(class->minscale)) == -1) return(-1);
       break;
     case(MINSIZE):      
       if(getInteger(&(class->minsize)) == -1) return(-1);
@@ -1405,9 +1413,17 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   case(LABEL):
     loadLabelString(map, &(class->label), value);
     break;
+  case(MAXSCALE):
+    msyystate = 2; msyystring = value;
+    getDouble(&(class->maxscale));
+    break;
   case(MAXSIZE):
     msyystate = 2; msyystring = value;
     getInteger(&(class->maxsize));
+    break; 
+  case(MINSCALE):
+    msyystate = 2; msyystring = value;
+    getDouble(&(class->minscale));
     break;
   case(MINSIZE):
     msyystate = 2; msyystring = value;
@@ -1484,8 +1500,10 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
   for(i=0; i<class->numjoins; i++)
     writeJoin(&(class->joins[i]), stream);
   writeLabel(map, &(class->label), stream, "      ");
+  if(class->maxscale > -1) fprintf(stream, "      MAXSCALE %g\n", class->maxscale);
   if(class->maxsize > -1) fprintf(stream, "      MAXSIZE %d\n", class->maxsize);
   if(class->metadata) writeHashTable(class->metadata, stream, "      ", "METADATA");
+  if(class->minscale > -1) fprintf(stream, "      MINSCALE %g\n", class->minscale);
   if(class->minsize > -1) fprintf(stream, "      MINSIZE %d\n", class->minsize);
   if(class->outlinecolor > -1) fprintf(stream, "      OUTLINECOLOR %d %d %d\n", map->palette.colors[class->outlinecolor-1].red, map->palette.colors[class->outlinecolor-1].green, map->palette.colors[class->outlinecolor-1].blue);
   if(class->overlaycolor > -1) {
