@@ -4,7 +4,8 @@ MapServer Revision History
 This is a human-readable revision history which will attempt to document
 required changes for users to migrate from one version of MapServer to the
 next.  Developers are strongly encouraged to document their changes and
-their impacts on the users here.  (Please add the most recent changes to the top of the list.)
+their impacts on the users here.  (Please add the most recent changes to 
+the top of the list.)
 
 For a complete change history, please see the CVS log comments.  A copy of
 the CVS logs is updated daily at the following URL:
