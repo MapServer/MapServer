@@ -278,8 +278,8 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   // identify target shapes
   searchrect = map->extent;
 #ifdef USE_PROJ     
-  if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-    msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+  if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+    msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
   status = msLayerWhichShapes(lp, map->shapepath, searchrect);
   if(status != MS_SUCCESS) {
@@ -369,8 +369,8 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     // identify target shapes
     searchrect = rect;
 #ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-      msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+    if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+      msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
     status = msLayerWhichShapes(lp, map->shapepath, searchrect);
     if(status != MS_SUCCESS) {
@@ -398,7 +398,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
 #ifdef USE_PROJ
       if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(lp->projection.proj, map->projection.proj, shape);
+	msProjectPolyline(lp->projection.proj, map->projection.proj, &shape);
 #endif
 
       if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
@@ -517,8 +517,8 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     // identify target shapes
     searchrect = rect;
 #ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-      msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+    if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+      msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
     status = msLayerWhichShapes(lp, map->shapepath, rect);
     if(status != MS_SUCCESS) { 
@@ -545,7 +545,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 
 #ifdef USE_PROJ
       if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(lp->projection.proj, map->projection.proj, shape);
+	msProjectPolyline(lp->projection.proj, map->projection.proj, &shape);
 #endif
 
       if(shape.type == MS_POINT)
@@ -649,8 +649,8 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     // identify target shapes
     searchrect = searchshape->bounds;
 #ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-      msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+    if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+      msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
     status = msLayerWhichShapes(lp, map->shapepath, searchrect);
     if(status != MS_SUCCESS) {
@@ -678,7 +678,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
 
 #ifdef USE_PROJ
       if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(lp->projection.proj, map->projection.proj, shape);
+	msProjectPolyline(lp->projection.proj, map->projection.proj, &shape);
 #endif
 
       switch(shape.type) { // make sure shape actually intersects the shape
