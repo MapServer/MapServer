@@ -139,12 +139,11 @@ imageObj *createImageObjFromPyFile(int width, int height,
                                    PyObject *file, const char *driver)
 {
     imageObj *image=NULL;
-    outputFormatObj *format;
     struct PyFileIfaceObj_gdIOCtx *pctx;
     
     if (file) {
         pctx = alloc_PyFileIfaceObj_IOCtx(file);
-        image = (imageObj *) msImageLoadGDCtx(pctx, driver);
+        image = (imageObj *) msImageLoadGDCtx((gdIOCtx *) pctx, driver);
         free_PyFileIfaceObj_IOCtx(pctx);
         return image;
     }
