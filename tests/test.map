@@ -18,14 +18,14 @@ MAP
   END
  
   PROJECTION
-    "init=EPSG:4326"
+    "init=epsg:4326"
   END
   
   LAYER
     NAME "POLYGON"
     TYPE POLYGON
     PROJECTION
-      "init=EPSG:4326"
+      "init=epsg:4326"
     END
     STATUS DEFAULT
     DATA "polygon"
@@ -67,7 +67,7 @@ MAP
     NAME "LINE"
     TYPE LINE
     PROJECTION
-      "init=EPSG:4326"
+      "init=epsg:4326"
     END
     STATUS DEFAULT
     DATA "line"
@@ -95,7 +95,7 @@ MAP
     NAME "POINT"
     TYPE POINT
     PROJECTION
-      "init=EPSG:4326"
+      "init=epsg:4326"
     END
     STATUS DEFAULT
     DATA "point"
@@ -135,7 +135,7 @@ MAP
     NAME "INLINE"
     TYPE POINT
     PROJECTION
-      "init=EPSG:4326"
+      "init=epsg:4326"
     END
     STATUS DEFAULT
     FEATURE
