@@ -73,9 +73,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
     }
 
     if( format == NULL )
-        format = msCreateDefaultOutputFormat( NULL, "image/gif" );
-    if( format == NULL )
-        format = msCreateDefaultOutputFormat( NULL, "image/png" );
+        format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
 
     img = gdImageCreate(width, height);
     color = gdImageColorAllocate(img, 255,255,255);  // BG color
