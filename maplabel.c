@@ -105,7 +105,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     rect.miny = MS_NINT(point->y - .5 * h);
     rect.maxx = rect.minx + (w-1);
     rect.maxy = rect.miny + (h-1);
-    msRectToPolygon(rect, map->labelcache.markers[i].poly);
+    msRectToPolygon(rect, map->labelcache.markers[i].poly);    
     map->labelcache.markers[i].id = map->labelcache.numlabels;
 
     map->labelcache.nummarkers++;
@@ -409,6 +409,7 @@ pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, do
     line.point[4].y = line.point[0].y;
 
     msAddLine(poly, &line);
+    msComputeBounds(poly);
     free(line.point);
   }
 
@@ -444,6 +445,10 @@ int labelInImage(int width, int height, shapeObj *lpoly, int buffer)
 int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
   int c1,v1,c2,v2;
   pointObj *point;
+
+  /* STEP 0: check bounding boxes */
+  if(!msRectOverlap(&p1->bounds, &p2->bounds)) // from alans@wunderground.com
+    return MS_FALSE;
 
   /* STEP 1: look for intersecting line segments */
   for(c1=0; c1<p1->numlines; c1++)

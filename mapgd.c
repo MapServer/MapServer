@@ -16,7 +16,8 @@ static void msFixedImageCopy (gdImagePtr dst, gdImagePtr src, int dstX, int dstY
 static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
 static unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
 
-int msImageSetPenGD(gdImagePtr img, colorObj *color) {
+int msImageSetPenGD(gdImagePtr img, colorObj *color) 
+{
   if(MS_VALID_COLOR(*color))
     color->pen = gdImageColorResolve(img, color->red, color->green, color->blue);
   else
@@ -25,7 +26,8 @@ int msImageSetPenGD(gdImagePtr img, colorObj *color) {
   return(MS_SUCCESS);
 }
 
-static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int color, int size) {
+static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int color, int size) 
+{
   struct imageCacheObj *icp;
 
   icp = ic;
@@ -37,7 +39,8 @@ static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int col
   return(NULL);
 }
 
-static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, int symbol, int color, int size, gdImagePtr img) {
+static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, int symbol, int color, int size, gdImagePtr img) 
+{
   struct imageCacheObj *icp;
 
   if(*icsize > MS_IMAGECACHESIZE) { // remove last element, size stays the same
@@ -66,52 +69,39 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
  * Utility function to create a GD image. Returns
  * a pointer to an imageObj structure.
  */  
-imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
-                          char *imagepath, char *imageurl)
+imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl) 
 {
-    imageObj  *image;
+  imageObj  *image;
 
-    if (width > 0 && height > 0)
-    {
-        image = (imageObj *)calloc(1,sizeof(imageObj));
+  if(width > 0 && height > 0) {
+    image = (imageObj *)calloc(1,sizeof(imageObj));
 
-        if( format->imagemode == MS_IMAGEMODE_RGB || format->imagemode == MS_IMAGEMODE_RGBA ) {
-            image->img.gd = gdImageCreateTrueColor(width, height);
-        } else
-            image->img.gd = gdImageCreate(width, height);
+    if(format->imagemode == MS_IMAGEMODE_RGB || format->imagemode == MS_IMAGEMODE_RGBA) {
+      image->img.gd = gdImageCreateTrueColor(width, height);
+      gdImageAlphaBlending( image->img.gd, 0); // off by default, from alans@wunderground.com
+    } else
+      image->img.gd = gdImageCreate(width, height);
     
-        if (image->img.gd)
-        {
-            image->format = format;
-            format->refcount++;
+    if(image->img.gd) {
+      image->format = format;
+      format->refcount++;
 
-            image->width = width;
-            image->height = height;
-            image->imagepath = NULL;
-            image->imageurl = NULL;
+      image->width = width;
+      image->height = height;
+      image->imagepath = NULL;
+      image->imageurl = NULL;
             
-            if (imagepath)
-            {
-                image->imagepath = strdup(imagepath);
-            }
-            if (imageurl)
-            {
-                image->imageurl = strdup(imageurl);
-            }
-            
-            return image;
-        }
-        else
-            free( image );   
-    }
-    else
-    {
-        msSetError(MS_IMGERR, 
-                   "Cannot create GD image of size %d x %d.", 
-                   "msImageCreateGD()", width, height );
-    }
+      if(imagepath) image->imagepath = strdup(imagepath);
+      if(imageurl) image->imageurl = strdup(imageurl);
+       
+      return image;
+    } else
+      free(image);   
+  } else {
+    msSetError(MS_IMGERR, "Cannot create GD image of size %d x %d.", "msImageCreateGD()", width, height );
+  }
 
-    return NULL;
+  return NULL;
 }
 
 /**
@@ -123,34 +113,28 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
 
 void msImageInitGD( imageObj *image, colorObj *background )
 {
-    if( image->format->imagemode == MS_IMAGEMODE_PC256 ) {
-        gdImageColorAllocate(image->img.gd, background->red, background->green, background->blue);
-        return;
+  if(image->format->imagemode == MS_IMAGEMODE_PC256) {
+    gdImageColorAllocate(image->img.gd, background->red, background->green, background->blue);
+    return;
+  }
+
+  {
+    int	pen, pixels, line;
+    int *tpixels;
+
+    if(image->format->imagemode == MS_IMAGEMODE_RGBA)
+      pen = gdTrueColorAlpha(background->red, background->green, background->blue, image->format->transparent ? 127:0);
+    else
+      pen = gdTrueColor(background->red, background->green, background->blue);
+
+    for(line = 0; line < image->img.gd->sy; line++ ) {
+      pixels = image->img.gd->sx;
+      tpixels = image->img.gd->tpixels[line];
+
+      while(pixels-- > 0)
+        *(tpixels++) = pen;
     }
-
-    {
-        int		pen, pixels, line;
-        int             *tpixels;
-
-        if( image->format->imagemode == MS_IMAGEMODE_RGBA )
-            pen = gdTrueColorAlpha( background->red, 
-                                    background->green, 
-                                    background->blue,
-                                    image->format->transparent ? 127 : 0 );
-        else
-            pen = gdTrueColor( background->red, 
-                               background->green, 
-                               background->blue );
-
-        for( line = 0; line < image->img.gd->sy; line++ )
-        {
-            pixels = image->img.gd->sx;
-            tpixels = image->img.gd->tpixels[line];
-
-            while( pixels-- > 0 )
-                *(tpixels++) = pen;
-        }
-    }
+  }
 }
 
 /**
@@ -2096,8 +2080,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
-       msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextGD()",
-                  label->font);
+       msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextGD()", label->font);
       return(-1);
     }
 
