@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.31  2004/06/18 16:13:33  assefa
+ * Set Scale/Title/Name for Else filter (Bug 735)
+ *
  * Revision 1.30  2004/06/17 20:26:33  assefa
  * Comment lines between Rules (or betwwen Symbolizers) was causing the
  * rest of the Rules to be ignored. Bug 731.
@@ -454,6 +457,85 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 }
 
 
+
+/************************************************************************/
+/*                           _SLDApplyRuleValues                        */
+/*                                                                      */
+/*      Utility function top set the scale, title/name for the          */
+/*      classes created by a Rule.                                      */
+/************************************************************************/
+void  _SLDApplyRuleValues(CPLXMLNode *psRule, layerObj *psLayer, 
+                          int nNewClasses)
+{
+    int         i=0;
+    CPLXMLNode *psMinScale=NULL, *psMaxScale=NULL;
+    CPLXMLNode *psName=NULL, *psTitle=NULL;
+    double dfMinScale=0, dfMaxScale=0;
+    char *pszName=NULL, *pszTitle=NULL;
+
+    if (psRule && psLayer && nNewClasses > 0)
+    {
+/* -------------------------------------------------------------------- */
+/*      parse minscale and maxscale.                                    */
+/* -------------------------------------------------------------------- */
+        psMinScale = CPLGetXMLNode(psRule, 
+                                   "MinScaleDenominator");
+        if (psMinScale && psMinScale->psChild && 
+            psMinScale->psChild->pszValue)
+          dfMinScale = atof(psMinScale->psChild->pszValue);
+
+        psMaxScale = CPLGetXMLNode(psRule, 
+                                   "MaxScaleDenominator");
+        if (psMaxScale && psMaxScale->psChild && 
+            psMaxScale->psChild->pszValue)
+          dfMaxScale = atof(psMaxScale->psChild->pszValue);
+
+/* -------------------------------------------------------------------- */
+/*      parse name and title.                                           */
+/* -------------------------------------------------------------------- */
+        psName = CPLGetXMLNode(psRule, "Name");  
+        if (psName && psName->psChild && 
+            psName->psChild->pszValue)
+          pszName = psName->psChild->pszValue;
+
+        psTitle = CPLGetXMLNode(psRule, "Title");  
+        if (psTitle && psTitle->psChild && 
+            psTitle->psChild->pszValue)
+          pszTitle = psTitle->psChild->pszValue;
+
+/* -------------------------------------------------------------------- */
+/*      set the scale to all the classes created by the rule.           */
+/* -------------------------------------------------------------------- */
+        if (dfMinScale > 0 || dfMaxScale > 0)
+        {
+            for (i=0; i<nNewClasses; i++)
+            {
+                if (dfMinScale > 0)
+                  psLayer->class[psLayer->numclasses-1-i].minscale = dfMinScale;
+                if (dfMaxScale)
+                  psLayer->class[psLayer->numclasses-1-i].maxscale = dfMaxScale;
+            }                           
+        }
+/* -------------------------------------------------------------------- */
+/*      set name and title to the classes created by the rule.          */
+/* -------------------------------------------------------------------- */
+        if (pszName || pszTitle)
+        {
+            for (i=0; i<nNewClasses; i++)
+            {
+                if (pszName)
+                  psLayer->class[psLayer->numclasses-1-i].name = 
+                    strdup(pszName);
+                if (pszTitle)
+                  psLayer->class[psLayer->numclasses-1-i].title = 
+                    strdup(pszTitle);
+            }                           
+        }
+    }
+        
+}
+
+
 /************************************************************************/
 /*                           msSLDParseNamedLayer                       */
 /*                                                                      */
@@ -463,8 +545,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
     CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle;
     CPLXMLNode *psElseFilter = NULL, *psFilter=NULL;
-    CPLXMLNode *psMinScale=NULL, *psMaxScale=NULL;
-    CPLXMLNode *psName=NULL, *psTitle=NULL;
     CPLXMLNode *psTmpNode = NULL;
     FilterEncodingNode *psNode = NULL;
     char *szExpression = NULL;
@@ -472,8 +552,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     int i=0, nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
     int nClassAfterRule=0, nClassBeforeRule=0;
     char *pszTmpFilter = NULL;
-    double dfMinScale=0, dfMaxScale=0;
-    char *pszName=NULL, *pszTitle=NULL;
 
     if (psRoot && psLayer)
     {
@@ -504,15 +582,21 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 /* -------------------------------------------------------------------- */
                     while (psRule)
                     {
-                        if (!psRule->pszValue || strcasecmp(psRule->pszValue, "Rule") != 0)
+                        if (!psRule->pszValue || 
+                            strcasecmp(psRule->pszValue, "Rule") != 0)
                         {
                             psRule = psRule->psNext;
                             continue;
                         }
                         psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
                         if (psElseFilter)
-                           msSLDParseRule(psRule, psLayer);
-                         psRule = psRule->psNext;
+                        {
+                            msSLDParseRule(psRule, psLayer);
+                            _SLDApplyRuleValues(psRule, psLayer, 1);
+                        }
+                        psRule = psRule->psNext;
+
+                        
                     }
 /* -------------------------------------------------------------------- */
 /*      Parse rules with no Else filter.                                */
@@ -520,7 +604,8 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                     psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
                     while (psRule)
                     {
-                        if (!psRule->pszValue || strcasecmp(psRule->pszValue, "Rule") != 0)
+                        if (!psRule->pszValue || 
+                            strcasecmp(psRule->pszValue, "Rule") != 0)
                         {
                             psRule = psRule->psNext;
                             continue;
@@ -569,7 +654,8 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                 {
                                     szClassItem = 
                                       FLTGetMapserverExpressionClassItem(psNode);
-                                    nNewClasses = nClassAfterFilter - nClassBeforeFilter;
+                                    nNewClasses = 
+                                      nClassAfterFilter - nClassBeforeFilter;
                                     for (i=0; i<nNewClasses; i++)
                                     {
                                         loadExpressionString(&psLayer->
@@ -581,64 +667,11 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                 }
                             }
                         }
-/* -------------------------------------------------------------------- */
-/*      parse minscale and maxscale.                                    */
-/* -------------------------------------------------------------------- */
-                        psMinScale = CPLGetXMLNode(psRule, "MinScaleDenominator");
-                        if (psMinScale && psMinScale->psChild && 
-                            psMinScale->psChild->pszValue)
-                          dfMinScale = atof(psMinScale->psChild->pszValue);
+                        nClassAfterRule = psLayer->numclasses;
+                        nNewClasses = nClassAfterRule - nClassBeforeRule;
 
-                        psMaxScale = CPLGetXMLNode(psRule, "MaxScaleDenominator");
-                        if (psMaxScale && psMaxScale->psChild && 
-                            psMaxScale->psChild->pszValue)
-                          dfMaxScale = atof(psMaxScale->psChild->pszValue);
-
-/* -------------------------------------------------------------------- */
-/*      parse name and title.                                           */
-/* -------------------------------------------------------------------- */
-                      psName = CPLGetXMLNode(psRule, "Name");  
-                      if (psName && psName->psChild && 
-                            psName->psChild->pszValue)
-                          pszName = psName->psChild->pszValue;
-
-                      psTitle = CPLGetXMLNode(psRule, "Title");  
-                      if (psTitle && psTitle->psChild && 
-                            psTitle->psChild->pszValue)
-                          pszTitle = psTitle->psChild->pszValue;
-
-
-                      nClassAfterRule = psLayer->numclasses;
-/* -------------------------------------------------------------------- */
-/*      set the scale to all the classes created by the rule.           */
-/* -------------------------------------------------------------------- */
-                        if (dfMinScale > 0 || dfMaxScale > 0)
-                        {
-                            nNewClasses = nClassAfterRule - nClassBeforeRule;
-                            for (i=0; i<nNewClasses; i++)
-                            {
-                                if (dfMinScale > 0)
-                                  psLayer->class[psLayer->numclasses-1-i].minscale = dfMinScale;
-                                if (dfMaxScale)
-                                  psLayer->class[psLayer->numclasses-1-i].maxscale = dfMaxScale;
-                            }                           
-                        }
-/* -------------------------------------------------------------------- */
-/*      set name and title to the classes created by the rule.          */
-/* -------------------------------------------------------------------- */
-                        if (pszName || pszTitle)
-                        {
-                            nNewClasses = nClassAfterRule - nClassBeforeRule;
-                            for (i=0; i<nNewClasses; i++)
-                            {
-                                if (pszName)
-                                  psLayer->class[psLayer->numclasses-1-i].name = 
-                                    strdup(pszName);
-                                if (pszTitle)
-                                  psLayer->class[psLayer->numclasses-1-i].title = 
-                                    strdup(pszTitle);
-                            }                           
-                        }
+                        //apply scale and title to newly created classes
+                        _SLDApplyRuleValues(psRule, psLayer, nNewClasses);
 
                         //TODO : parse legendgraphic
                         psRule = psRule->psNext;
