@@ -35,7 +35,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"WMS connection error.",
 						"OracleSpatial error.",
 						"WFS server error.",
-						"WFS connection error."
+						"WFS connection error.",
+						"WMS Map Context error"
 };
 
 #ifndef USE_THREAD

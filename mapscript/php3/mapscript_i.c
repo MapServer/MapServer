@@ -7,6 +7,12 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.51  2002/10/28 20:31:21  dan
+ * New support for WMS Map Context (from Julien)
+ *
+ * Revision 1.3  2002/10/22 20:03:57  julien
+ * Add the mapcontext support
+ *
  * Revision 1.50  2002/10/24 18:10:08  assefa
  * Add map argument to initLayer function.
  *
@@ -16,7 +22,8 @@
  * Correct PrepareImage and PasteImage functions.
  *
  * Revision 1.48  2002/09/17 13:08:30  julien
- * Remove all chdir() function and replace them with the new msBuildPath function.
+ * Remove all chdir() function and replace them with the new msBuildPath 
+ * function.
  * This have been done to make MapServer thread safe. (Bug 152)
  *
  * Revision 1.47  2002/08/09 22:55:38  assefa
@@ -464,6 +471,17 @@ int mapObj_setFontSet(mapObj *self, char *szFileName)
 
     return msLoadFontSet(&(self->fontset), self);
 }
+
+int mapObj_saveMapContext(mapObj *self, char *szFilename)
+{
+    return msSaveMapContext(self, szFilename);
+}
+
+int mapObj_loadMapContext(mapObj *self, char *szFilename)
+{
+    return msLoadMapContext(self, szFilename);
+}
+
 
 int mapObj_selectOutputFormat(mapObj *self,
                               const char *imagetype)

@@ -34,8 +34,9 @@ extern "C" {
 #define MS_ORACLESPATIALERR 26
 #define MS_WFSERR 27      /* WFS server error */
 #define MS_WFSCONNERR 28  /* WFS connectiontype error */
+#define MS_MAPCONTEXTERR 29 /* Map Context error */
 
-#define MS_NUMERRORCODES 29
+#define MS_NUMERRORCODES 30
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

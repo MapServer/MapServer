@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2002/10/28 20:31:22  dan
+ * New support for WMS Map Context (from Julien)
+ *
+ * Revision 1.3  2002/10/22 20:03:57  julien
+ * Add the mapcontext support
+ *
  * Revision 1.13  2002/03/08 23:16:41  assefa
  * Add PHP4.1 support.
  *
@@ -678,7 +684,6 @@ int _phpms_object_init(pval *return_value, int  handle_id,
                        void *zend_class_entry_ptr)
 {
 #ifdef PHP4
-    void ***tsrm_ls = NULL; 
     zend_class_entry *new_class_entry_ptr;
     new_class_entry_ptr = (zend_class_entry *)zend_class_entry_ptr;
 

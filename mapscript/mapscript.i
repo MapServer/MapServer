@@ -311,6 +311,16 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msLoadFontSet(&(self->fontset), self);
   }
 
+  int saveMapContext(char *szFileName)
+  {
+    return msSaveMapContext(self, szFileName);
+  }
+
+  int loadMapContext(char *szFileName)
+  {
+    return msLoadMapContext(self, szFileName);
+  }
+
   int  moveLayerup(int layerindex) {
         return msMoveLayerUp(self, layerindex);
   }

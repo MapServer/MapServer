@@ -399,6 +399,19 @@ and the MapServer Map File documentation at:
                parameter in the output format structure and then to
                the name parameter in the structure. 
 
+   int saveMapContext(string filename)
+        Available only if WMS support is enabled.
+        Save current map object state in WMS Map Context format. 
+        Only WMS layers are saved in the WMS Map Context XML file.
+        Returns -1 on error.
+
+   int loadMapContext(string filename)
+        Available only if WMS support is enabled.
+        Load a WMS Map Context XML file into the current mapObj.
+        If the map already contains some layers then the layers defined
+        in the WMS Map context document are added to the current map.
+        Returns -1 on error.
+
 
  LayerObj Class:
  ---------------

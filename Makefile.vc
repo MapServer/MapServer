@@ -181,7 +181,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
 		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj\
 		mapgdal.obj mapwfs.obj mapwfslayer.obj mapows.obj maphttp.obj\
-		mappdf.obj \
+		mappdf.obj mapcontext.obj \
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h

@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.119  2002/10/28 20:31:21  dan
+ * New support for WMS Map Context (from Julien)
+ *
+ * Revision 1.3  2002/10/22 20:03:57  julien
+ * Add the mapcontext support
+ *
  * Revision 1.118  2002/10/28 17:03:33  assefa
  * Add a getstyle function on the class object.
  *
@@ -311,6 +317,9 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void  php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -615,7 +624,9 @@ function_entry php_map_class_functions[] = {
     {"setsymbolset",   php3_ms_map_setSymbolSet,  NULL},
     {"getnumsymbols",   php3_ms_map_getNumSymbols,  NULL},
     {"setfontset",      php3_ms_map_setFontSet,  NULL},
-    {"selectoutputformat",      php3_ms_map_selectOutputFormat,  NULL},
+    {"savemapcontext",  php3_ms_map_saveMapContext,     NULL},
+    {"loadmapcontext",  php3_ms_map_loadMapContext,     NULL},
+    {"selectoutputformat", php3_ms_map_selectOutputFormat, NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1112,7 +1123,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     pval        *new_obj_ptr;
     new_obj_ptr = &new_obj_param;
 #endif
-    
+
 
 #if defined(PHP4)
     /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
@@ -4665,6 +4676,132 @@ DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        map->saveMapContext(szFileName)
+ *
+ * Save mapfile under the Map Context format
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_saveMapContext(fileName)*/
+
+DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamFileName;
+    mapObj      *self=NULL;
+    int         retVal=0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (getParameters(ht,1,&pParamFileName) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pParamFileName);
+   
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+        RETURN_FALSE;
+
+    if(pParamFileName->value.str.val != NULL && 
+       strlen(pParamFileName->value.str.val) > 0)
+    {
+        if ((retVal = mapObj_saveMapContext(self, 
+                                        pParamFileName->value.str.val)) != 0)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "Failed saving map context from %s",
+                       pParamFileName->value.str.val);
+        }
+    }
+
+    RETURN_LONG(retVal);
+#endif
+}
+/* }}} */
+
+/**********************************************************************
+ *                        map->loadMapContext(szFileName)
+ *
+ * Save mapfile under the Map Context format
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_loadMapContext(fileName)*/
+
+DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamFileName;
+    mapObj      *self=NULL;
+    int         retVal=0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (getParameters(ht,1,&pParamFileName) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pParamFileName);
+   
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+        RETURN_FALSE;
+
+    if(pParamFileName->value.str.val != NULL && 
+       strlen(pParamFileName->value.str.val) > 0)
+    {
+        if ((retVal = mapObj_loadMapContext(self, 
+                                        pParamFileName->value.str.val)) != 0)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "Failed saving map context from %s",
+                       pParamFileName->value.str.val);
+        }
+    }
+
+    RETURN_LONG(retVal);
+#endif
+}
+/* }}} */
+
 
 /**********************************************************************
  *                        map->selectoutputformat(type)
@@ -4677,7 +4814,6 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis;
     pval        *pImageType;
     mapObj      *self=NULL;
-    int         retVal=0;
     HashTable   *list=NULL;
 
     pThis = getThis();
@@ -7364,8 +7500,6 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *poLayer;
     imageObj    *im;
     int         nRetVal=MS_FAILURE;
-    int         nttt;
-    char        *sttt = NULL;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -7376,8 +7510,6 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
-
-    //nttt = strlen(sttt);
 
     if (pThis == NULL ||
         getParameters(ht, 5, &pMap, &pLayer, &pImg, &pClass, &pText) !=SUCCESS)

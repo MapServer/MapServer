@@ -29,6 +29,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2002/10/28 20:31:21  dan
+ * New support for WMS Map Context (from Julien)
+ *
+ * Revision 1.2  2002/10/22 20:03:57  julien
+ * Add the mapcontext support
+ *
  * Revision 1.6  2002/10/28 15:26:42  dan
  * Fixed typo in DescribeFeatureType schemaLocation
  *
@@ -227,16 +233,16 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    
    printf("    <FeatureType>\n");
 
-   msOWSPrintParam("LAYER.NAME", lp->name, OWS_WARN, 
+   msOWSPrintParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
               "        <Name>%s</Name>\n", NULL);
 
-   msOWSPrintMetadata(lp->metadata, "wfs_title", OWS_WARN,
+   msOWSPrintMetadata(stdout, lp->metadata, "wfs_title", OWS_WARN,
                  "        <Title>%s</Title>\n", lp->name);
 
-   msOWSPrintMetadata(lp->metadata, "wfs_abstract", OWS_NOERR,
+   msOWSPrintMetadata(stdout, lp->metadata, "wfs_abstract", OWS_NOERR,
                  "        <Abstract>%s</Abstract>\n", NULL);
 
-   msOWSPrintMetadataList(lp->metadata, "wfs_keywordlist", 
+   msOWSPrintMetadataList(stdout, lp->metadata, "wfs_keywordlist", 
                      "        <Keywords>\n", "        </Keywords>\n",
                      "          %s\n");
 
@@ -247,14 +253,14 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    if (msGetEPSGProj(&(lp->projection),lp->metadata, MS_FALSE) != NULL)
    {
        // If layer has a srs then try using it
-       msOWSPrintParam("(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
+       msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
                   msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
    else
    {
        // Layer has no SRS, try using map SRS or produce warning
-       msOWSPrintParam("(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
+       msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
                   msGetEPSGProj(&(map->projection), map->web.metadata, MS_FALSE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
@@ -264,11 +270,13 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    {
        if(lp->projection.numargs > 0) 
        {
-           msOWSPrintLatLonBoundingBox("        ", &(ext), &(lp->projection));
+           msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
+                                       &(lp->projection));
        } 
        else 
        {
-           msOWSPrintLatLonBoundingBox("        ", &(ext), &(map->projection));
+           msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
+                                       &(map->projection));
        }
    }
    else
@@ -304,7 +312,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
 
   printf("Content-type: text/xml%c%c",10,10); 
 
-  msOWSPrintMetadata(map->web.metadata, "wfs_encoding", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
                 "ISO-8859-1");
 
@@ -325,19 +333,19 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
   printf("  <Name>MapServer WFS</Name>\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  msOWSPrintMetadata(map->web.metadata, "wfs_title", OWS_WARN,
+  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_title", OWS_WARN,
                 "  <Title>%s</Title>\n", map->name);
-  msOWSPrintMetadata(map->web.metadata, "wfs_abstract", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_abstract", OWS_NOERR,
                 "  <Abstract>%s</Abstract>\n", NULL);
   printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
 
-  msOWSPrintMetadataList(map->web.metadata, "wfs_keywordlist", 
+  msOWSPrintMetadataList(stdout, map->web.metadata, "wfs_keywordlist", 
                     "  <Keywords>\n", "  </Keywords>\n",
                     "    %s\n");
   
-  msOWSPrintMetadata(map->web.metadata, "wfs_accessconstraints", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_accessconstraints", OWS_NOERR,
                 "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
-  msOWSPrintMetadata(map->web.metadata, "wfs_fees", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_fees", OWS_NOERR,
                 "  <Fees>%s</Fees>\n", NULL);
 
   printf("</Service>\n\n");
@@ -450,7 +458,7 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
     */
     printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintMetadata(map->web.metadata, "wfs_encoding", OWS_NOERR,
+    msOWSPrintMetadata(stdout, map->web.metadata, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
@@ -697,7 +705,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
 
     printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintMetadata(map->web.metadata, "wfs_encoding", OWS_NOERR,
+    msOWSPrintMetadata(stdout, map->web.metadata, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 

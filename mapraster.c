@@ -860,7 +860,7 @@ static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *
   
   swap=TIFFIsByteSwapped(tif);
   fpos=TIFFCurrentDirOffset(tif);
-  f=fopen(msBuildPath(szPath, szCurDir, TIFFFileName(tif)),"rb");
+  f=fopen(msBuildPath(szPath, szCurDir, (char*)TIFFFileName(tif)),"rb");
   if (f==NULL) return(-1);
   fseek(f,fpos,0);
   fread(&entries,2,1,f);

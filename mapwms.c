@@ -173,7 +173,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
       // In V1.0.1 to 1.0.7, the MIME type was text/xml
       printf("Content-type: text/xml%c%c",10,10);
 
-      msOWSPrintMetadata(map->web.metadata, "wms_encoding", OWS_NOERR,
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
       printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
@@ -186,7 +186,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
       // we cannot return anything else than application/vnd.ogc.se_xml here.
       printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
-      msOWSPrintMetadata(map->web.metadata, "wms_encoding", OWS_NOERR,
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
       printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n");
@@ -488,30 +488,30 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
               indent, msIsLayerQueryable(lp), opaque, cascaded);
    }
 
-   msOWSPrintParam("LAYER.NAME", lp->name, OWS_WARN, 
+   msOWSPrintParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
               "        <Name>%s</Name>\n", NULL);
    // the majority of this section is dependent on appropriately named metadata in the LAYER object
-   msOWSPrintMetadata(lp->metadata, "wms_title", OWS_WARN,
+   msOWSPrintMetadata(stdout, lp->metadata, "wms_title", OWS_WARN,
                  "        <Title>%s</Title>\n", lp->name);
 
-   msOWSPrintMetadata(lp->metadata, "wms_abstract", OWS_NOERR,
+   msOWSPrintMetadata(stdout, lp->metadata, "wms_abstract", OWS_NOERR,
                  "        <Abstract>%s</Abstract>\n", NULL);
 
-   msOWSPrintMetadataList(lp->metadata, "wms_keywordlist", 
+   msOWSPrintMetadataList(stdout, lp->metadata, "wms_keywordlist", 
                      "        <KeywordList>\n", "        </KeywordList>\n",
                      "          <Keyword>%s</Keyword>\n");
 
    if (msGetEPSGProj(&(map->projection),map->web.metadata,MS_FALSE) == NULL)
    {
        // If map has no proj then every layer MUST have one or produce a warning
-       msOWSPrintParam("(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata", 
+       msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata", 
                   msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
    else
    {
        // No warning required in this case since there's at least a map proj.
-       msOWSPrintParam(" LAYER.PROJECTION (or wms_srs metadata)", 
+       msOWSPrintParam(stdout, " LAYER.PROJECTION (or wms_srs metadata)", 
                   msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
                   OWS_NOERR, "        <SRS>%s</SRS>\n", NULL);
    }
@@ -521,14 +521,16 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
    {
        if(lp->projection.numargs > 0) 
        {
-           msOWSPrintLatLonBoundingBox("        ", &(ext), &(lp->projection));
-           msOWSPrintBoundingBox( "        ", &(ext), &(lp->projection), 
+           msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
+                                       &(lp->projection));
+           msOWSPrintBoundingBox( stdout,"        ", &(ext), &(lp->projection),
                                   lp->metadata );
        } 
        else 
        {
-           msOWSPrintLatLonBoundingBox("        ", &(ext), &(map->projection));
-           msOWSPrintBoundingBox( "        ", &(ext), &(map->projection), 
+           msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
+                                       &(map->projection));
+           msOWSPrintBoundingBox(stdout,"        ", &(ext), &(map->projection),
                                   map->web.metadata );
        }
    }
@@ -584,7 +586,7 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   else
       printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.0.8, 1.1.0 and later
 
-  msOWSPrintMetadata(map->web.metadata, "wms_encoding", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                 "ISO-8859-1");
   printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
@@ -605,22 +607,24 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   printf("  <Name>GetMap</Name> <!-- WMT defined -->\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  msOWSPrintMetadata(map->web.metadata, "wms_title", OWS_WARN,
+  msOWSPrintMetadata(stdout, map->web.metadata, "wms_title", OWS_WARN,
                 "  <Title>%s</Title>\n", map->name);
-  msOWSPrintMetadata(map->web.metadata, "wms_abstract", OWS_NOERR,
+  msOWSPrintMetadata(stdout, map->web.metadata, "wms_abstract", OWS_NOERR,
                 "  <Abstract>%s</Abstract>\n", NULL);
   if (strcasecmp(wmtver, "1.0.0") == 0)
     printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
   else
     printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url_encoded);
 
-  msOWSPrintMetadataList(map->web.metadata, "wms_keywordlist", 
+  msOWSPrintMetadataList(stdout, map->web.metadata, "wms_keywordlist", 
                     "  <KeywordList>\n", "  </KeywordList>\n",
                     "    <Keyword>%s</Keyword>\n");
   
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
   // In 1.1.0, ContactInformation becomes optional.
+  msOWSPrintContactInfo(stdout, "  ", wmtver, map->web.metadata);
+/*
   if (strcasecmp(wmtver, "1.0.0") > 0) 
   {
     printf("  <ContactInformation>\n");
@@ -630,15 +634,16 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
       // ContactPersonPrimary is optional, but when present then all its 
       // sub-elements are mandatory
       printf("    <ContactPersonPrimary>\n");
-      msOWSPrintMetadata(map->web.metadata, "wms_contactperson", OWS_WARN,
-                    "      <ContactPerson>%s</ContactPerson>\n", NULL);
-      msOWSPrintMetadata(map->web.metadata, "wms_contactorganization", OWS_WARN,
-                    "      <ContactOrganization>%s</ContactOrganization>\n", NULL);
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_contactperson", 
+                  OWS_WARN, "      <ContactPerson>%s</ContactPerson>\n", NULL);
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_contactorganization", 
+             OWS_WARN, "      <ContactOrganization>%s</ContactOrganization>\n",
+             NULL);
       printf("    </ContactPersonPrimary>\n");
     }
 
-    msOWSPrintMetadata(map->web.metadata, "wms_contactposition", OWS_NOERR,
-                  "    <ContactPosition>%s</ContactPosition>\n", NULL);
+    msOWSPrintMetadata(stdout, map->web.metadata, "wms_contactposition", 
+               OWS_NOERR, "    <ContactPosition>%s</ContactPosition>\n", NULL);
 
     if(msLookupHashTable(map->web.metadata, "wms_addresstype") || 
        msLookupHashTable(map->web.metadata, "wms_address") || 
@@ -650,34 +655,37 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
       // ContactAdress is optional, but when present then all its 
       // sub-elements are mandatory
       printf("    <ContactAddress>\n");
-      msOWSPrintMetadata(map->web.metadata, "wms_addresstype", OWS_WARN,
+      msOWSPrintMetadata(stdout,map->web.metadata, "wms_addresstype", OWS_WARN,
                     "      <AddressType>%s</AddressType>\n", NULL);
-      msOWSPrintMetadata(map->web.metadata, "wms_address", OWS_WARN,
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_address", OWS_WARN,
                     "      <Address>%s</Address>\n", NULL);
-      msOWSPrintMetadata(map->web.metadata, "wms_city", OWS_WARN,
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_city", OWS_WARN,
                     "      <City>%s</City>\n", NULL);
-      msOWSPrintMetadata(map->web.metadata, "wms_stateorprovince", OWS_WARN,
-                    "      <StateOrProvince>%s</StateOrProvince>\n", NULL);
-      msOWSPrintMetadata(map->web.metadata, "wms_postcode", OWS_WARN,
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_stateorprovince", 
+           OWS_WARN,"      <StateOrProvince>%s</StateOrProvince>\n", NULL);
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_postcode", OWS_WARN,
                     "      <PostCode>%s</PostCode>\n", NULL);
-      msOWSPrintMetadata(map->web.metadata, "wms_country", OWS_WARN,
+      msOWSPrintMetadata(stdout, map->web.metadata, "wms_country", OWS_WARN,
                     "      <Country>%s</Country>\n", NULL);
       printf("    </ContactAddress>\n");
     }
 
-    msOWSPrintMetadata(map->web.metadata, "wms_contactvoicetelephone", OWS_NOERR,
-                  "    <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n", NULL);
-    msOWSPrintMetadata(map->web.metadata, "wms_contactfacsimiletelephone", OWS_NOERR,
+    msOWSPrintMetadata(stdout, map->web.metadata, "wms_contactvoicetelephone", 
+           OWS_NOERR,"    <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
+           NULL);
+    msOWSPrintMetadata(stdout, map->web.metadata, 
+                  "wms_contactfacsimiletelephone", OWS_NOERR,
                   "    <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL);
-    msOWSPrintMetadata(map->web.metadata, "wms_contactelectronicmailaddress", OWS_NOERR,
+    msOWSPrintMetadata(stdout, map->web.metadata, 
+                  "wms_contactelectronicmailaddress", OWS_NOERR,
                   "    <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL);
 
     printf("  </ContactInformation>\n");
   }
-
-  msOWSPrintMetadata(map->web.metadata, "wms_accessconstraints", OWS_NOERR,
-                "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
-  msOWSPrintMetadata(map->web.metadata, "wms_fees", OWS_NOERR,
+*/
+  msOWSPrintMetadata(stdout, map->web.metadata, "wms_accessconstraints", 
+             OWS_NOERR, "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
+  msOWSPrintMetadata(stdout, map->web.metadata, "wms_fees", OWS_NOERR,
                 "  <Fees>%s</Fees>\n", NULL);
 
   printf("</Service>\n\n");
@@ -770,19 +778,21 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   printf("  <Layer>\n");
 
   // Layer Name is optional but title is mandatory.
-  msOWSPrintParam("MAP.NAME", map->name, OWS_NOERR, "    <Name>%s</Name>\n", NULL);
-  msOWSPrintMetadata(map->web.metadata, "wms_title", OWS_WARN,
+  msOWSPrintParam(stdout, "MAP.NAME", map->name, OWS_NOERR, 
+                  "    <Name>%s</Name>\n", NULL);
+  msOWSPrintMetadata(stdout, map->web.metadata, "wms_title", OWS_WARN,
                 "    <Title>%s</Title>\n", map->name);
 
   // According to normative comments in the 1.0.7 DTD, the root layer's SRS tag
   // is REQUIRED.  It also suggests that we use an empty SRS element if there
   // is no common SRS.
-  msOWSPrintParam("MAP.PROJECTION (or wms_srs metadata)",
+  msOWSPrintParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
              msGetEPSGProj(&(map->projection), map->web.metadata, MS_FALSE),
              OWS_WARN, "    <SRS>%s</SRS>\n", "");
 
-  msOWSPrintLatLonBoundingBox("    ", &(map->extent), &(map->projection));
-  msOWSPrintBoundingBox( "    ", &(map->extent), &(map->projection),
+  msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent), 
+                              &(map->projection));
+  msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
                          map->web.metadata );
   msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale,
                       map->resolution);
@@ -821,9 +831,9 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
              printf("    <Layer>\n");
 
              // Layer Name is optional but title is mandatory.
-             msOWSPrintParam("GROUP.NAME", lp->group, OWS_NOERR, 
+             msOWSPrintParam(stdout, "GROUP.NAME", lp->group, OWS_NOERR, 
                         "      <Name>%s</Name>\n", NULL);
-             msOWSPrintGroupMetadata(map, lp->group, "WMS_GROUP_TITLE", OWS_WARN, 
+             msOWSPrintGroupMetadata(stdout, map, lp->group, "WMS_GROUP_TITLE", OWS_WARN, 
                                 "      <Title>%s</Title>\n", lp->group);
 
              // Dump all layers for this group

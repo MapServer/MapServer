@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.27  2002/10/28 20:31:22  dan
+ * New support for WMS Map Context (from Julien)
+ *
+ * Revision 1.3  2002/10/22 20:03:57  julien
+ * Add the mapcontext support
+ *
  * Revision 1.26  2002/10/23 19:44:08  assefa
  * Add setcolor functions for style and label objects.
  * Add function to select the output format.
@@ -188,8 +194,11 @@ char            *mapObj_processQueryTemplate(mapObj *self,
 int             mapObj_setSymbolSet(mapObj *self, char *szFileName);
 int             mapObj_getNumSymbols(mapObj *self);
 int             mapObj_setFontSet(mapObj *self, char *szFileName);
+int             mapObj_saveMapContext(mapObj *self, char *szFileName);
+int             mapObj_loadMapContext(mapObj *self, char *szFileName);
 int             mapObj_selectOutputFormat(mapObj *self,
                                           const char *imagetype);
+
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 int             layerObj_open(layerObj *self, char *path);

@@ -5,6 +5,12 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.5  2002/10/28 20:31:20  dan
+ * New support for WMS Map Context (from Julien)
+ *
+ * Revision 1.2  2002/10/22 20:03:57  julien
+ * Add the mapcontext support
+ *
  * Revision 1.4  2002/10/09 02:29:03  dan
  * Initial implementation of WFS client support.
  *
@@ -35,24 +41,26 @@ char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
 #define OWS_NOERR   0
 #define OWS_WARN    1
 
-int msOWSPrintMetadata(hashTableObj metadata, const char *name, 
+int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name, 
                        int action_if_not_found, const char *format, 
                        const char *default_value);
-int msOWSPrintGroupMetadata(mapObj *map, char* pszGroupName, const char *name, 
-                            int action_if_not_found, const char *format, 
-                            const char *default_value);
-int msOWSPrintParam(const char *name, const char *value, 
+int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName, 
+                            const char *name, int action_if_not_found, 
+                            const char *format, const char *default_value);
+int msOWSPrintParam(FILE *stream, const char *name, const char *value, 
                     int action_if_not_found, const char *format, 
                     const char *default_value);
-int msOWSPrintMetadataList(hashTableObj metadata, const char *name, 
-                           const char *startTag, const char *endTag,
-                           const char *itemFormat);
-void msOWSPrintLatLonBoundingBox(const char *tabspace, 
+int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata, 
+                           const char *name, const char *startTag, 
+                           const char *endTag, const char *itemFormat);
+void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
                                  rectObj *extent, projectionObj *srcproj);
-void msOWSPrintBoundingBox(const char *tabspace, 
+void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,
                            hashTableObj metadata );
+void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
+                           const char *wmtver, hashTableObj metadata );
 char *msEncodeHTMLEntities(const char *string);
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
 
@@ -131,6 +139,14 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 int msDrawWFSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, mapObj *map, layerObj *lp, 
                       imageObj *img);
+
+
+/*====================================================================
+ *   mapcontext.c
+ *====================================================================*/
+
+int msSaveMapContext(mapObj *map, char *filename);
+int msLoadMapContext(mapObj *map, char *filename);
 
 #endif /* MAPOWS_H */
 
