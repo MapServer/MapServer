@@ -16,6 +16,18 @@
 #include "libpq-fe.h"
 #include <string.h>
 
+
+typedef struct ms_POSTGIS_layer_info_t
+{
+	char		*sql;		//sql query to send to DB
+	PGconn     *conn; 	//connection to db
+	long	 	row_num;  	//what row is the NEXT to be read (for random access)
+ 	PGresult   *query_result;//for fetching rows from the db
+	char		*urid_name; // name of user-specified unique identifier or OID
+	char		*user_srid; //zero length = calculate, non-zero means using this value!
+
+} msPOSTGISLayerInfo;
+
 #if !defined(_WIN32)
 char tolower(char c)
 {
@@ -25,6 +37,49 @@ char tolower(char c)
 
 }
 #endif
+
+
+
+msPOSTGISLayerInfo *getPostGISLayerInfo(layerObj *layer)
+{
+	return layer->layerinfo;	
+}
+
+void setPostGISLayerInfo(layerObj *layer,msPOSTGISLayerInfo *postgislayerinfo )
+{
+	 layer->layerinfo = (void*)postgislayerinfo;
+}
+
+
+//remove white space
+//dont send in empty strings or strings with just " " in them!
+char* removeWhite(char *str)
+{
+	int initial;
+	char *orig,*loc;
+
+	initial = strspn(str, " ");
+	if (initial != 0)
+	{
+		memmove(str, str+ initial, strlen(str) - initial+1);
+	}
+	//now final
+	if (strlen(str) == 0)
+		return str;
+	if (str[ strlen(str)-1] == ' ')
+	{
+		//have to remove from end
+		orig = str;
+		loc = &str[ strlen(str)-1];
+		while (( *loc = ' ') && (loc >orig) )
+		{
+			*loc = 0;
+			loc--;
+		}
+	}
+	return str;
+}
+
 
 char *strstrIgnoreCase(char *haystack, char *needle)
 {
@@ -65,7 +120,7 @@ char *strstrIgnoreCase(char *haystack, char *needle)
 }
 
 
-void postresql_NOTICE_HANDLER(void *arg, const char *message);
+//void postresql_NOTICE_HANDLER(void *arg, const char *message);
 
 
 char *DATAERRORMESSAGE(char *dString, char *preamble)
@@ -92,7 +147,7 @@ char *DATAERRORMESSAGE(char *dString, char *preamble)
 		strcat(m,tmp);
 
 
-		sprintf(tmp,"Mappostgis.c - version of Nov 15/2002.\n");
+		sprintf(tmp,"Mappostgis.c - version of June 12/2003.\n");
 		strcat(m,tmp);
 
 //printf("%s",m);
@@ -103,63 +158,12 @@ char *DATAERRORMESSAGE(char *dString, char *preamble)
 
 }
 
-typedef struct ms_POSTGIS_layer_info_t
-{
-	char		*sql;		//sql query to send to DB
-	PGconn     *conn; 	//connection to db
-	long	 	row_num;  	//what row is the NEXT to be read (for random access)
- 	PGresult   *query_result;//for fetching rows from the db
-	char	     *fields;	 // results from EXPLAIN VERBOSE (or null)
-	char		*urid_name; // name of user-specified unique identifier or OID
-	char		*user_srid; //zero length = calculate, non-zero means using this value!
 
-} msPOSTGISLayerInfo;
 
 
 int msPOSTGISLayerParseData(char *data, char *geom_column_name,
 					char *table_name, char *urid_name,char *user_srid);
 
-void postresql_NOTICE_HANDLER(void *arg, const char *message)
-{
-	char	*str,*str2;
-	char  *result;
-
-	if (strstr(message,"QUERY DUMP"))
-	{
-		if (	((msPOSTGISLayerInfo *) arg)->fields)
-		{
-			free(((msPOSTGISLayerInfo *) arg)->fields); 	// free up space
-
-		}
-			result = malloc ( 6000) ;
-			((msPOSTGISLayerInfo *) arg)->fields = result;
-			result[0] = 0; //null terminate it
-
-		//need to parse it a bit
-		str = (char *) message;
-		while (str != NULL)
-		{
-			str = strstr(str," :resname ");
-			if (str != NULL)
-			{
-				str++; // now points at ":"
-				str= strstr(str," ");	//now points to last " "
-				str++; //now points to start of next word
-
-				str2 = strstr(str," ");	//points to end of next word
-				if (strncmp(str, "<>", (str2-str))) { // Not a bogus resname
-				if (strlen(result) > 0)
-				{
-					strcat(result,",");
-				}
-
-					strncat(result,str, (str2-str) );
-				}
-			}
-		}
-		//fprintf(stderr,"notice returns: %s\n",result);
-	}
-}
 
 
 static int gBYTE_ORDER = 0;
@@ -172,7 +176,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
         int			order_test = 1;
 
 //fprintf(stderr,"msPOSTGISLayerOpen called\n");
-	if (layer->layerinfo)
+	if (getPostGISLayerInfo(layer))
 		return MS_SUCCESS;	//already open
 
         if( layer->data == NULL )
@@ -192,7 +196,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	layerinfo->sql = NULL; //calc later
 	layerinfo->row_num=0;
 	layerinfo->query_result= NULL;
-	layerinfo->fields = NULL;
+
 
 	layerinfo->conn = PQconnectdb( layer->connection );
 
@@ -205,11 +209,11 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	  return(MS_FAILURE);
     }
 
-	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layerinfo);
+//	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layerinfo);
 
 
 
-	layer->layerinfo = (void *) layerinfo;
+	setPostGISLayerInfo(layer,   layerinfo);
 
         if( ((char *) &order_test)[0] == 1 )
             gBYTE_ORDER = LITTLE_ENDIAN;
@@ -282,7 +286,6 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	char	temp[5000];
 	char	tmp[5000];
 	char	tmp2[5000];
-	char	query_string_0_5[6000];
 	char	query_string_0_6[6000];
 	int	t;
 	char	box3d[200];
@@ -290,10 +293,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	char *pos_from, *pos_ftab, *pos_space, *pos_paren;
 	char f_table_name[5000];
 
-	memset(f_table_name,0,5000);            //zero it out!!!
-
-
-	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+	layerinfo =  getPostGISLayerInfo(layer);
 
 	/* Set the urid name */
 	layerinfo->urid_name = urid_name;
@@ -320,11 +320,12 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 		pos_space = strstr(pos_ftab, " "); // First space
 		//pos_paren = strstr(pos_ftab, ")"); // Closing paren of clause
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+
+		#if defined(_WIN32) && !defined(__CYGWIN__)
                 pos_paren = strrchr(pos_ftab,')');
-#else
-		pos_paren = rindex(pos_ftab,')');
-#endif
+		#else
+				pos_paren = rindex(pos_ftab,')');
+		#endif 
 
 
 		if (  (pos_space ==NULL)  || (pos_paren ==NULL) ) {
@@ -337,9 +338,11 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 		}
 		if (pos_paren < pos_space) { // closing parenthesis preceeds any space
 			strncpy(f_table_name, pos_ftab, pos_paren - pos_ftab);
+			f_table_name[pos_paren - pos_ftab] = '\0';
 		}
 		else {
 			strncpy(f_table_name, pos_ftab, pos_space - pos_ftab);
+			f_table_name[pos_space - pos_ftab] = '\0';
 		}
 	}
 
@@ -393,12 +396,10 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
 	if (layer->filter.string == NULL)
 	{
-		sprintf(query_string_0_5,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && %s",
-						columns_wanted,geom_table,geom_column,box3d);
 		if (strlen(user_srid) == 0)
 		{
 			sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )",
-						columns_wanted,geom_table,geom_column,box3d,f_table_name,geom_column);
+						columns_wanted,geom_table,geom_column,box3d,removeWhite(f_table_name),removeWhite(geom_column));
 		}
 		else	//use the user specified version
 		{
@@ -408,12 +409,10 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	}
 	else
 	{
-		sprintf(query_string_0_5,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && %s)",
-						columns_wanted,geom_table,layer->filter.string,geom_column,box3d);
 		if (strlen(user_srid) == 0)
 		{
 			sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))",
-						columns_wanted,geom_table,layer->filter.string,geom_column,box3d,f_table_name,geom_column);
+						columns_wanted,geom_table,layer->filter.string,geom_column,box3d,removeWhite(f_table_name),removeWhite(geom_column));
 		}
 		else
 		{
@@ -423,18 +422,6 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 		}
 	}
 
-
-	//allow index searching
-    result  = PQexec(layerinfo->conn, "set enable_seqscan = off");
-    if (!(result) || PQresultStatus(result) != PGRES_COMMAND_OK)
-    {
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  'set enable_seqscan off'   statement.",
-                 "msPOSTGISLayerWhichShapes()");
-
-        	PQclear(result);
-	  	layerinfo->query_result = NULL;
-		return(MS_FAILURE);			//totally screwed!
-    }
 
 
 	//start transaction required by cursor
@@ -460,7 +447,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
     if ( (result!=NULL) && (PQresultStatus(result) == PGRES_COMMAND_OK) )
     {
-	   	PQclear(result);
+	   	//PQclear(result);
 		*sql_results = result;
 		strcpy(query_string, query_string_0_6 );
  		return (MS_SUCCESS);
@@ -478,9 +465,6 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
     {
 	      msSetError(MS_QUERYERR, "Couldnt recover from a bad query: \n'%s'\n",
                  "prep_DB()",query_string_0_6);
-
-
-
         	PQclear(result);
 	  	layerinfo->query_result = NULL;
 		return(MS_FAILURE);		// totally screwed
@@ -491,23 +475,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 //fprintf (stderr,"prep_DB:query_string_0_5:%s\n",query_string_0_5);
 
 
-    result = PQexec(layerinfo->conn, query_string_0_5 );
-
-    if ( (result!=NULL) && (PQresultStatus(result) == PGRES_COMMAND_OK) )
-    {
-	   	PQclear(result);
-		*sql_results = result;
-		strcpy(query_string, query_string_0_5 );
- 		return (MS_SUCCESS);
-    }
-		//sprintf(tmp,"Error executing POSTGIS  DECLARE (the actual query) statement: '%s' <br><br>\n\nPostgresql reports the error '%s'<br><br>\n\nMore Help:<br><br>\n\n",
-		//			query_string_0_6,
-		//			PQerrorMessage(layerinfo->conn)
-		//	   );
-
-
-		//for some reason it crashes if you have big strings as arguments:
-
+ 
 		sprintf(tmp2, "Error executing POSTGIS  DECLARE (the actual query) statement: '%s' <br><br>\n\nPostgresql reports the error '%s'<br><br>\n\nMore Help:<br><br>\n\n",
 				query_string_0_6,
 					PQerrorMessage(layerinfo->conn)
@@ -542,18 +510,24 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 {
 	char	*query_str;
-	char	table_name[5000];
-	char	geom_column_name[5000];
-	char	urid_name[5000];
-	char	user_srid[5000];
-
+	char	*table_name;
+	char	*geom_column_name;
+	char	*urid_name;
+	char	*user_srid;
+	msPOSTGISLayerInfo	*layerinfo;
 	int	set_up_result;
 
-	msPOSTGISLayerInfo	*layerinfo;
+	table_name = malloc(500);
+	geom_column_name = malloc(500);
+	urid_name = malloc(500);
+	user_srid = malloc(500);
+
+
 
 //fprintf(stderr,"msPOSTGISLayerWhichShapes called\n");
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+	layerinfo = getPostGISLayerInfo( layer);
+
 	if (layerinfo == NULL)
 	{
 		//layer not opened yet
@@ -576,6 +550,11 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
 
 	set_up_result= prep_DB(table_name,geom_column_name, layer, &(layerinfo->query_result), rect,query_str, urid_name,user_srid);
+
+	free(user_srid);
+	free(geom_column_name);
+	free(table_name);
+
 	if (set_up_result != MS_SUCCESS)
 		return set_up_result; //relay error
 	layerinfo->sql = query_str;
@@ -611,7 +590,7 @@ int msPOSTGISLayerClose(layerObj *layer)
 	msPOSTGISLayerInfo	*layerinfo;
 
 //fprintf(stderr,"msPOSTGISLayerClose called\n");
-	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+	layerinfo = getPostGISLayerInfo( layer);
 
 
 	if (layerinfo != NULL)
@@ -622,8 +601,14 @@ int msPOSTGISLayerClose(layerObj *layer)
 			PQfinish(layerinfo->conn);
 			layerinfo->conn = NULL;
 
+			if (layerinfo->urid_name != NULL)
+				free(layerinfo->urid_name );
+
+			if (layerinfo->sql != NULL)
+				free (layerinfo->sql);
+			
 		free(layerinfo);
-		layer->layerinfo = NULL;
+		setPostGISLayerInfo(layer, NULL);
 	}
 
 	return(MS_SUCCESS);
@@ -930,7 +915,7 @@ int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
 
 	msPOSTGISLayerInfo	*layerinfo;
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+	layerinfo = getPostGISLayerInfo(layer);
 
 
 //fprintf(stderr,"msPOSTGISLayerNextShape called\n");
@@ -965,7 +950,7 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 	long				record_oid;
 
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+	layerinfo = getPostGISLayerInfo( layer);
 
 //fprintf(stderr,"msPOSTGISLayerGetShapeRandom : called row %li\n",record);
 
@@ -1089,7 +1074,8 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
 //fprintf(stderr,"msPOSTGISLayerGetShape called for record = %i\n",record);
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+	layerinfo = getPostGISLayerInfo( layer) ;
+
 	if (layerinfo == NULL)
 	{
 		//layer not opened yet
@@ -1290,12 +1276,15 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 
 	PGresult   *query_result;
 	int		t;
-	char		*str,*str2;
+	char	*col;
+	char found_geom = 0;
+
+	int item_num;
 
 
 //fprintf(stderr, "in msPOSTGISLayerGetItems  (find column names)\n");
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+	layerinfo = getPostGISLayerInfo( layer);
 
 	if (layerinfo == NULL)
 	{
@@ -1316,84 +1305,65 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid);
 
 	// two cases here.  One, its a table (use select * from table) otherwise, just use the select clause
-	sprintf(sql,"EXPLAIN VERBOSE SELECT * FROM %s",table_name);
-		// this will call the postresql_NOTICE_HANDLER() callback!  layer->fields will be populated
+	sprintf(sql,"SELECT * FROM %s LIMIT 0",table_name); // attempt the query, but dont actually do much (this might take some time if there is an order by!)
+	
 	query_result = PQexec(layerinfo->conn, sql );
-
-
-    if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
+    if (!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK)
     {
 		char tmp[4000];
 
-				sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s\n-%s\n", sql,PQerrorMessage(layerinfo->conn) );
+				sprintf(tmp, "Error executing POSTGIS  SQL   statement (in msPOSTGISLayerGetItems): %s\n-%s\n", sql,PQerrorMessage(layerinfo->conn) );
 
 
           msSetError(MS_QUERYERR,
 				 	DATAERRORMESSAGE("",tmp),
-					"msPOSTGISLayerGetShape()");
+					"msPOSTGISLayerGetItems()");
 
-        	PQclear(query_result);
+        PQclear(query_result);
 	  	query_result = NULL;
 		return(MS_FAILURE);
     }
-	//layerinfo->fields is a string with a list of all the columns
 
-		// # of items is number of "," in string + 1
-		//layerinfo->fields looks like "geo_value,geo_id,desc"
-			//since we dont want to return the geometry column, we remove it.
-				// # columns is reduced by 1
-
-		str = layerinfo->fields;
-		t = 0;
-		while ((str = strstr(str,",")))
-		{
-			str++;
-			t++;
-		}
-
-
-	layer->numitems =  t; // one less because dont want to do anything with geometry column
-	layer->items = malloc (sizeof(char *) * layer->numitems);
-
-
-	str = layerinfo->fields ;
-	t = 0;
-	while (str != NULL)
+	layer->numitems = PQnfields(query_result)-1; //dont include the geometry column
+	layer->items = malloc (sizeof(char *) * (layer->numitems+1) ); // +1 incase there is a problem finding goeometry column 
+																// it will return an error if there is no geometry column found,
+																// so this isnt a problem
+	
+		found_geom = 0; //havent found the geom field
+		item_num = 0;
+	for (t=0;t<PQnfields(query_result);t++)
 	{
-		str2 = strstr(str,","); //NULL or points to the next ","
-		if (str2 != NULL)
+		col = PQfname(query_result,t);
+		if (strcmp(col, geom_column_name) != 0) // this isnt the geometry column
 		{
-
-			if (strncmp(geom_column_name, str, str2-str) != 0)
-			{
-				//its not the geometry column
-				layer->items[t] = malloc(str2-str +1) ;
-				memset(layer->items[t],0, str2-str +1);
-				strncpy(layer->items[t], str, str2-str);
-					//memset will null terminate it
-				t++;
-			}
+			layer->items[item_num] = (char*)malloc(strlen(col)+1);
+			strcpy(layer->items[item_num], col);
+			item_num++;
 		}
 		else
 		{
-			if (strcmp(geom_column_name, str) != 0)
-			{
-				layer->items[t] = malloc( strlen(str)+1 )  ;
-				memset(layer->items[t],0, strlen(str) +1);
-				strcpy(layer->items[t], str);
-				t++;
-			}
-		}
-		if (str2 != NULL)
-		{
-			str = str2;
-			str++;
-		}
-		else
-		{
-			str = NULL;
+			found_geom = 1;
 		}
 	}
+	PQclear(query_result);
+	query_result = NULL;
+	if (!(found_geom))
+	{
+		char tmp[4000];
+
+		sprintf(tmp, "msPOSTGISLayerGetItems: tried to find the geometry column in the results from the database, but couldnt find it.  Is it miss-capitialized? '%s'", geom_column_name );
+
+
+          msSetError(MS_QUERYERR,
+				 	tmp,
+					"msPOSTGISLayerGetItems()");
+
+        PQclear(query_result);
+	  	query_result = NULL;
+		return(MS_FAILURE);
+	}
+
+
 
 	return msPOSTGISLayerInitItemInfo(layer);
 }
@@ -1448,7 +1418,7 @@ PGresult   *query_result;
 
 
 
-  layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
+  layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
 
    msPOSTGISLayerParseData(layer->data, geom_column_name,table_name, urid_name,user_srid);
 
