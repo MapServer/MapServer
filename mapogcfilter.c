@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2003/09/19 21:55:54  assefa
+ * Strip namespaces.
+ *
  * Revision 1.1  2003/09/10 19:54:27  assefa
  * Renamed from fileterencoding.c/h
  *
@@ -74,9 +77,12 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
       return NULL;
 
     psRoot = CPLParseXMLString(szXMLString);
+    
     if( psRoot == NULL)
        return NULL;
 
+    //strip namespaces
+    CPLStripXMLNamespace(psRoot, NULL, 1);
 /* -------------------------------------------------------------------- */
 /*      get the root element (Filter).                                  */
 /* -------------------------------------------------------------------- */
