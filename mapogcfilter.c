@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2003/09/29 18:24:27  assefa
+ * Add test if value is valid in FLTGetMapserverExpressionClassItem.
+ *
  * Revision 1.8  2003/09/29 14:19:06  assefa
  * Correct srsname extraction from the Box element.
  *
@@ -906,7 +909,8 @@ char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode)
     if (!psFilterNode)
       return NULL;
 
-    if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
+    if (psFilterNode->pszValue && 
+        strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
     {
         if (psFilterNode->psLeftNode)
           return psFilterNode->psLeftNode->pszValue;
