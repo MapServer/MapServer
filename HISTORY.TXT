@@ -31,6 +31,9 @@ Version 4.5
   also supports multipolygon, multilinestring and geometrycollection. 
   bug 1124. 
 
+- Added support for passing OGR layer FILTER queries down to OGR via the
+  SetAttributeFilter() method if prefixed with WHERE keyword.  Bug 1126.
+
 
 Version 4.4.0 (2004-11-29)
 --------------------------

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.81  2004/12/13 07:57:58  frank
+ * bug 1126: support passing FILTER to OGR if prefixed with WHERE
+ *
  * Revision 1.80  2004/12/13 03:57:17  frank
  * modifed to handle all ogr geometry types in ogrGeomPoints per bug 1124
  *
@@ -1142,6 +1145,28 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
   psInfo->rect = rect;
 
 /* ------------------------------------------------------------------
+ * Apply an attribute filter if we have one prefixed with a WHERE 
+ * keyword in the filter string.  Otherwise, ensure the attribute
+ * filter is clear. 
+ * ------------------------------------------------------------------ */
+  if( layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6) )
+  {
+      CPLErrorReset();
+      if( psInfo->poLayer->SetAttributeFilter( layer->filter.string+6 )
+          != OGRERR_NONE )
+      {
+          msSetError(MS_OGRERR,
+                     "SetAttributeFilter(%s) failed on layer %s.\n%s", 
+                     "msOGRFileWhichShapes()",
+                     layer->filter.string+6, layer->name, 
+                     CPLGetLastErrorMsg() );
+          return MS_FAILURE;
+      }
+  }
+  else
+      psInfo->poLayer->SetAttributeFilter( NULL );
+
+/* ------------------------------------------------------------------
  * Reset current feature pointer
  * ------------------------------------------------------------------ */
   psInfo->poLayer->ResetReading();
@@ -1235,8 +1260,11 @@ msOGRFileNextShape(layerObj *layer, shapeObj *shape,
           }
       }
 
-      if (msEvalExpression(&(layer->filter), layer->filteritemindex, 
-                           shape->values, layer->numitems) == MS_TRUE)
+      // Check the expression unless it is a WHERE clause already 
+      // handled by OGR. 
+      if( (layer->filter.string && EQUALN(layer->filter.string,"WHERE ",6))
+          || msEvalExpression(&(layer->filter), layer->filteritemindex, 
+                              shape->values, layer->numitems) == MS_TRUE)
       {
           // Feature matched filter expression... process geometry
           // shape->type will be set if geom is compatible with layer type
