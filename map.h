@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.369  2004/11/10 16:40:33  sean
+ * eliminate msSaveImageStreamGD and instead pipe GD output through new
+ * msSaveImageGDCtx function.  This avoids passing a FILE* to GD (bug 1047).
+ *
  * Revision 1.368  2004/11/05 16:29:40  assefa
  * add function msGetOutputFormatMimeListGD.
  *
@@ -1449,7 +1453,7 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 MS_DLL_EXPORT int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
 MS_DLL_EXPORT unsigned char *msSaveImageBufferGD(gdImagePtr img, int *bufsize, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageStreamGD(gdImagePtr img, FILE *file, outputFormatObj *format);
+MS_DLL_EXPORT int msSaveImageGDCtx(gdImagePtr img, gdIOCtx* ctx, outputFormatObj *format);
 MS_DLL_EXPORT int msSaveImageGD_LL(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
 MS_DLL_EXPORT void msFreeImageGD(gdImagePtr img);
 

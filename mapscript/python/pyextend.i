@@ -188,9 +188,11 @@
     int write( PyObject *file=Py_None )
     {
         FILE *stream;
+        gdIOCtx *ctx;
         unsigned char *imgbuffer;
         int imgsize;
         PyObject *noerr;
+        int retval=MS_FAILURE;
        
         /* Return immediately if image driver is not GD */
         if ( !MS_DRIVER_GD(self->format) )
@@ -202,15 +204,20 @@
 
         if (file == Py_None) /* write to stdout */
         {
-            stream = NULL;
-            return msSaveImageStreamGD(self->img.gd, stream, self->format);
+            if ( msIO_needBinaryStdout() == MS_FAILURE )
+                return MS_FAILURE;
+            ctx = gdNewFileCtx(stdout);
+            retval = msSaveImageGDCtx(self->img.gd, ctx, self->format);
+            ctx->gd_free(ctx);
         }
         else if (PyFile_Check(file)) /* a Python (C) file */
         {
             stream = PyFile_AsFile(file);
-            return msSaveImageStreamGD(self->img.gd, stream, self->format);
+            ctx = gdNewFileCtx(stream);
+            retval = msSaveImageGDCtx(self->img.gd, ctx, self->format);
+            ctx->gd_free(ctx);
         }
-        else /* presume a Python gdIOCtx object */
+        else /* presume a Python file-like object */
         {
             imgbuffer = msSaveImageBufferGD(self->img.gd, &imgsize,
                                             self->format);
@@ -227,9 +234,10 @@
                 return MS_FAILURE;
             else
                 Py_DECREF(noerr);
+            retval = MS_SUCCESS;
         }
 
-        return MS_SUCCESS;
+        return retval;
     }
 
     /* Deprecated */  

@@ -89,14 +89,36 @@
 #ifndef SWIGPYTHON
     int write( FILE *file=NULL )
     {
+        gdIOCtx *ctx=NULL;
+        int retval=MS_FAILURE;
+        
         if ( MS_DRIVER_GD(self->format) )
-            return msSaveImageStreamGD(self->img.gd, file, self->format);
+        {
+            if (file)
+            {
+                /* gdNewFileCtx is a semi-documented function from 
+                   gd_io_file.c */
+                ctx = gdNewFileCtx(file);
+            }
+            else /* create a gdIOCtx interface to stdout */
+            {
+                if ( msIO_needBinaryStdout() == MS_FAILURE )
+                    return MS_FAILURE;
+                ctx = gdNewFileCtx(stdout);
+            }
+            
+            /* we wrap msSaveImageGDCtx in the same way that 
+               gdImageJpeg() wraps gdImageJpegCtx()  (bug 1047). */
+            retval = msSaveImageGDCtx(self->img.gd, ctx, self->format);
+            ctx->gd_free(ctx);
+        }
         else
         {
             msSetError(MS_IMGERR, "Writing of %s format not implemented",
                        "imageObj::write");
-            return MS_FAILURE;
         }
+
+        return retval;
     }
 #endif
 

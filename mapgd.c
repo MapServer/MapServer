@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2004/11/10 16:40:33  sean
+ * eliminate msSaveImageStreamGD and instead pipe GD output through new
+ * msSaveImageGDCtx function.  This avoids passing a FILE* to GD (bug 1047).
+ *
  * Revision 1.82  2004/11/09 16:13:43  frank
  * avoid casting warnings
  *
@@ -2847,11 +2851,12 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
    msSaveImageGD
    
    Save an image to a file named filename, if filename is NULL it goes to
-   stdout.  This function wraps msSaveImageStreamGD.  --SG
+   stdout.  This function wraps msSaveImageGDCtx.  --SG
    ======================================================================== */
 int msSaveImageGD( gdImagePtr img, char *filename, outputFormatObj *format )
 {
-    FILE *stream;
+    FILE *stream=NULL;
+    gdIOCtx *ctx = NULL;
     int retval=MS_FAILURE;
 
     /* Try to open a file handle */
@@ -2864,117 +2869,105 @@ int msSaveImageGD( gdImagePtr img, char *filename, outputFormatObj *format )
                        "msSaveImageGD()", filename);
             return MS_FAILURE;
         }
-    
-        retval = msSaveImageStreamGD( img, stream, format );
+
+        /* we wrap msSaveImageGDCtx in the same way that 
+           gdImageJpeg() wraps gdImageJpegCtx()  (bug 1047). */
+        /* gdNewFileCtx is a semi-documented function from gd_io_file.c */
+        ctx = gdNewFileCtx(stream);
+        retval = msSaveImageGDCtx( img, ctx, format );
+        ctx->gd_free(ctx);
         fclose(stream);
-    } 
+    }
     /* Fall back on standard output, or MAPIO's replacement */
     else 
     {
-        return msSaveImageStreamGD(img, NULL, format);
+        if ( msIO_needBinaryStdout() == MS_FAILURE )
+            return MS_FAILURE;
+        stream = stdout;
+        ctx = gdNewFileCtx(stream);
+#ifdef USE_MAPIO
+        ctx = msIO_getGDIOCtx( stream );
+#endif
+    
+        /* we wrap msSaveImageGDCtx in the same way that 
+           gdImageJpeg() wraps gdImageJpegCtx()  (bug 1047). */
+        retval = msSaveImageGDCtx( img, ctx, format );
+        if ( ctx != NULL )
+            free( ctx );
     }
 
     return retval;
 }
 
 /* ===========================================================================
-   msSaveImageStreamGD
+   msSaveImageGDCtx
 
-   Save image data to an open file variable, or if this NULL, stdout.
+   Save image data through gdIOCtx only.  All mapio conditional compilation
+   definitions have been moved up to msSaveImageGD (bug 1047).
    ======================================================================== */
-int msSaveImageStreamGD( gdImagePtr img, FILE *file, outputFormatObj *format)
+int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 {
-  FILE *stream;
-  gdIOCtx *gd_ctx = NULL;
 
-  if( format->imagemode == MS_IMAGEMODE_RGBA )
-    gdImageSaveAlpha( img, 1 );
-  else if( format->imagemode == MS_IMAGEMODE_RGB )
-    gdImageSaveAlpha( img, 0 );
+    if ( format->imagemode == MS_IMAGEMODE_RGBA )
+        gdImageSaveAlpha( img, 1 );
+    else if ( format->imagemode == MS_IMAGEMODE_RGB )
+        gdImageSaveAlpha( img, 0 );
 
-  /* first, try output to file */
-  if (file)
-    stream = file;
-  /* else use standard output, or mapio's replacement for stdout */
-  else 
-  {
-      if( msIO_needBinaryStdout() == MS_FAILURE )
-          return MS_FAILURE;
+    if ( strcasecmp("ON", msGetOutputFormatOption( format, "INTERLACE", "ON" )) == 0 )
+        gdImageInterlace(img, 1);
 
-      stream = stdout;
-#ifdef USE_MAPIO
-      gd_ctx = msIO_getGDIOCtx( stream );
-#endif
-  }
+    if (format->transparent)
+        gdImageColorTransparent(img, 0);
 
-  if( strcasecmp("ON",msGetOutputFormatOption( format, "INTERLACE", "ON" ))
-      == 0 )
-      gdImageInterlace(img, 1);
-
-  if(format->transparent)
-    gdImageColorTransparent(img, 0);
-
-  if( strcasecmp(format->driver,"gd/gif") == 0 )
-  {
+    if ( strcasecmp(format->driver,"gd/gif") == 0 )
+    {
 #ifdef USE_GD_GIF
-      if( gd_ctx != NULL )
-          gdImageGifCtx( img, gd_ctx );
-      else
-          gdImageGif(img, stream);
+        gdImageGifCtx( img, ctx );
 #else
-    msSetError(MS_MISCERR, "GIF output is not available.", "msSaveImage()");
-    return(MS_FAILURE);
+        msSetError(MS_MISCERR, "GIF output is not available.",
+                   "msSaveImageGDCtx()");
+        return(MS_FAILURE);
 #endif
-  }
-  else if( strcasecmp(format->driver,"gd/png") == 0 )
-  {
+    }
+    else if ( strcasecmp(format->driver,"gd/png") == 0 )
+    {
 #ifdef USE_GD_PNG
-      if( gd_ctx != NULL )
-          gdImagePngCtx( img, gd_ctx );
-      else
-          gdImagePng(img, stream);
+        gdImagePngCtx( img, ctx );
 #else
-      msSetError(MS_MISCERR, "PNG output is not available.", "msSaveImage()");
-      return(MS_FAILURE);
+        msSetError(MS_MISCERR, "PNG output is not available.",
+                   "msSaveImageGDCtx()");
+        return(MS_FAILURE);
 #endif
-  }
-  else if( strcasecmp(format->driver,"gd/jpeg") == 0 )
-  {
+    }
+    else if ( strcasecmp(format->driver,"gd/jpeg") == 0 )
+    {
 #ifdef USE_GD_JPEG
-      if( gd_ctx != NULL )
-          gdImageJpegCtx(img, gd_ctx, 
-                      atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
-      else
-          gdImageJpeg(img, stream, 
-                      atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+        gdImageJpegCtx(img, ctx, 
+                       atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
 #else
-     msSetError(MS_MISCERR, "JPEG output is not available.", "msSaveImage()");
-     return(MS_FAILURE);
+        msSetError(MS_MISCERR, "JPEG output is not available.", 
+                   "msSaveImageGDCtx()");
+        return(MS_FAILURE);
 #endif
-  }
-  else if( strcasecmp(format->driver,"gd/wbmp") == 0 )
-  {
+    }
+    else if ( strcasecmp(format->driver,"gd/wbmp") == 0 )
+    {
 #ifdef USE_GD_WBMP
-      if( gd_ctx != NULL )
-          gdImageWBMPCtx(img, 1, gd_ctx);
-      else
-          gdImageWBMP(img, 1, stream);
+        gdImageWBMPCtx(img, 1, ctx);
 #else
-      msSetError(MS_MISCERR, "WBMP output is not available.", "msSaveImage()");
-      return(MS_FAILURE);
+        msSetError(MS_MISCERR, "WBMP output is not available.",
+                   "msSaveImageGDCtx()");
+        return(MS_FAILURE);
 #endif
-  }
-  else
-  {
-      msSetError(MS_MISCERR, "Unknown output image type driver: %s.", 
-                 "msSaveImage()", format->driver );
-      return(MS_FAILURE);
-  }
+    }
+    else
+    {
+        msSetError(MS_MISCERR, "Unknown output image type driver: %s.", 
+                   "msSaveImageGDCtx()", format->driver );
+        return(MS_FAILURE);
+    }
 
-  if( gd_ctx != NULL )
-      free( gd_ctx );
-
-  return(MS_SUCCESS);
+    return(MS_SUCCESS);
 }
 
 /* ===========================================================================
@@ -2984,7 +2977,8 @@ int msSaveImageStreamGD( gdImagePtr img, FILE *file, outputFormatObj *format)
    to merge this with msSaveImageStreamGD function.
    ======================================================================== */
 
-unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr, outputFormatObj *format)
+unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr,
+                                   outputFormatObj *format)
 {
     unsigned char *imgbytes;
     
