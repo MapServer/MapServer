@@ -1905,10 +1905,7 @@ memory.") const char * {
         if (!color)
             return(NULL);
     
-        color->red = red;
-        color->green = green;
-        color->blue = blue;
-        color->pen = MS_PEN_UNSET;
+        MS_INIT_COLOR(*color, red, green, blue);
 
         return(color);    	
     }
@@ -1924,10 +1921,7 @@ memory.") const char * {
             return MS_FAILURE;
         }
     
-        self->red = red;
-        self->green = green;
-        self->blue = blue;
-        self->pen = MS_PEN_UNSET;
+        MS_INIT_COLOR(*self, red, green, blue);
         return MS_SUCCESS;
     }
 
@@ -1941,10 +1935,8 @@ memory.") const char * {
                 msSetError(MS_MISCERR, "Invalid color index.", "setHex()");
                 return MS_FAILURE;
             }
-            self->red = red;
-            self->green = green;
-            self->blue = blue;
-            self->pen = MS_PEN_UNSET;
+
+            MS_INIT_COLOR(*self, red, green, blue);
             return MS_SUCCESS;
         }
         else {
