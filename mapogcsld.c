@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.52  2005/02/28 15:24:49  assefa
+ * SLD generation bug 1150 : replacing <AND> tag to <ogc:And>
+ *
  * Revision 1.51  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -4855,7 +4858,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
             if (psClass->layer && psClass->layer->classitem)
             {
                 if (pszWfsFilter)
-                  sprintf(szBuffer, "<ogc:Filter><AND>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></AND></ogc:Filter>\n", 
+                  sprintf(szBuffer, "<ogc:Filter><ogc:And>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:And></ogc:Filter>\n", 
                         pszWfsFilter, psClass->layer->classitem, psClass->expression.string);
                 else
                   sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:Filter>\n", 

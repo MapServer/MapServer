@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- SLD generation bug 1150 : replacing <AND> tag to <ogc:And>  
+
 - Fixed bug 1118 in msOWSGetLayerExtent() (mapows.c). 
 
 - Fixed ogcfilter bug #1252  
