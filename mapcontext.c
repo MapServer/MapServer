@@ -29,6 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.51  2003/12/23 20:40:38  julien
+ * Replace legendurl, logourl, descriptionurl, dataurl and metadataurl metadata
+ * by four new metadata by metadata replaced. The new metadata are called
+ * legendurl_width, legendurl_height, legendurl_format, legendurl_href,
+ * logourl_width, etc...
+ * Old dependancy to the metadata with four value, space separated, are kept.
+ *
  * Revision 1.50  2003/12/22 17:00:21  julien
  * Implement DataURL, MetadataURL and DescriptionURL (Bug 523)
  *
@@ -412,56 +419,6 @@ int msGetMapContextXMLFloatValue( CPLXMLNode *psRoot, char *pszXMLPath,
   return MS_SUCCESS;
 }
 
-
-/*
-**msCombineXMLValueInHash()
-**
-**Get 4 xml value and put it in a hash table, space separated
-**Note that the fourth value will be decoded.
-*/
-int msCombineXMLValueInHash( CPLXMLNode *psRoot, 
-                             char *pszXMLPath1, char *pszXMLPath2, 
-                             char *pszXMLPath3, char *pszXMLPath4, 
-                             hashTableObj *metadata, char *pszMetadata )
-{
-    char *pszValue1=NULL, *pszValue2=NULL, *pszValue3=NULL, *pszValue4=NULL;
-    char *pszCombined=NULL;
-
-    pszValue1 = (char*)CPLGetXMLValue( psRoot, pszXMLPath1, "");
-    pszValue2 = (char*)CPLGetXMLValue( psRoot, pszXMLPath2, "");
-    pszValue3 = (char*)CPLGetXMLValue( psRoot, pszXMLPath3, "");
-    pszValue4 = (char*)CPLGetXMLValue( psRoot, pszXMLPath4, "");
-
-    if( pszValue1 != NULL || pszValue2 != NULL || 
-        pszValue3 != NULL || pszValue4 != NULL )
-    {
-        if(metadata != NULL)
-        {
-            msDecodeHTMLEntities(pszValue4); // Normally this should be an url
-            pszCombined = (char*)malloc(strlen(pszValue1)+
-                                        strlen(pszValue2)+
-                                        strlen(pszValue3)+
-                                        strlen(pszValue4)+6);
-            sprintf(pszCombined, "%s %s %s %s", pszValue1,pszValue2,
-                    pszValue3, pszValue4);
-
-            msInsertHashTable( *metadata, pszMetadata, pszCombined );
-
-            free(pszCombined);
-        }
-        else
-        {
-            return MS_FAILURE;
-        }
-    }
-    else
-    {
-        return MS_FAILURE;
-    }
-
-    return MS_SUCCESS;
-}
-
 #endif
 
 /* msLoadMapContext()
@@ -746,28 +703,27 @@ int msLoadMapContext(mapObj *map, char *filename)
 
   // LogoURL
   // The logourl have a width, height, format and an URL
-  // The metadata will be structured like this: "width height format logourl"
-  psChild = CPLGetXMLNode(psMapContext, "General.LogoURL");
-  if(psChild != NULL)
-  {
-      msCombineXMLValueInHash(psChild, "width", "height", "format", 
-                              "OnlineResource.xlink:href", 
-                              &(map->web.metadata), "wms_logourl");
-  }
+  msGetMapContextXMLHashValue(psMapContext, "General.LogoURL.width", 
+                              &(map->web.metadata), "wms_logourl_width");
+  msGetMapContextXMLHashValue(psMapContext, "General.LogoURL.height", 
+                              &(map->web.metadata), "wms_logourl_height");
+  msGetMapContextXMLHashValue(psMapContext, "General.LogoURL.format", 
+                              &(map->web.metadata), "wms_logourl_format");
+  msGetMapContextXMLHashValue(psMapContext, 
+                              "General.LogoURL.OnlineResource.xlink:href", 
+                              &(map->web.metadata), "wms_logourl_href");
 
   // DescriptionURL
   // The descriptionurl have a width, height, format and an URL
-  // The metadata will be structured like this: "width height format logourl"
-  if(strcasecmp(pszVersion, "1.0.0") >= 0)
-  {
-      psChild = CPLGetXMLNode(psMapContext, "General.DescriptionURL");
-      if(psChild != NULL)
-      {
-          msCombineXMLValueInHash(psChild, "width", "height", "format", 
-                                  "OnlineResource.xlink:href", 
-                                  &(map->web.metadata), "wms_descriptionurl");
-      }
-  }
+  msGetMapContextXMLHashValue(psMapContext, "General.DescriptionURL.width", 
+                             &(map->web.metadata), "wms_descriptionurl_width");
+  msGetMapContextXMLHashValue(psMapContext, "General.DescriptionURL.height", 
+                            &(map->web.metadata), "wms_descriptionurl_height");
+  msGetMapContextXMLHashValue(psMapContext, "General.DescriptionURL.format", 
+                            &(map->web.metadata), "wms_descriptionurl_format");
+  msGetMapContextXMLHashValue(psMapContext, 
+                            "General.DescriptionURL.OnlineResource.xlink:href",
+                              &(map->web.metadata), "wms_descriptionurl_href");
 
   // Contact Info
   psContactInfo = CPLGetXMLNode(psMapContext, "General.ContactInformation");
@@ -839,7 +795,7 @@ int msLoadMapContext(mapObj *map, char *filename)
               if(pszValue !=NULL && atoi(pszValue) == 1)
                   layer->template = strdup("ttt");
 
-              // Others
+              // Name and Title
               pszValue = (char*)CPLGetXMLValue(psLayer, "Name", NULL);
               if(pszValue != NULL)
               {
@@ -884,38 +840,35 @@ int msLoadMapContext(mapObj *map, char *filename)
               else
               {
                   // The DataURL have a width, height, format and an URL
-                  // The metadata will be structured like this: 
-                  // "width height format url"
-                  // Note: version 0.1.7 does not contains height and width, 
-                  // but they are include in the metadata for consistency with
-                  // the URLType.
-                  psChild = CPLGetXMLNode(psLayer, "DataURL");
-                  if(psChild != NULL)
-                  {
-                      msCombineXMLValueInHash(psChild, 
-                                              "width", "height", "format", 
-                                              "OnlineResource.xlink:href", 
+                  // Width and height are not used, but they are included to
+                  // be consistent with the spec.
+                  msGetMapContextXMLHashValue(psLayer, "DataURL.width", 
                                               &(layer->metadata), 
-                                              "wms_dataurl");
-                  }
+                                              "wms_dataurl_width");
+                  msGetMapContextXMLHashValue(psLayer, "DataURL.height", 
+                                              &(layer->metadata), 
+                                              "wms_dataurl_height");
+                  msGetMapContextXMLHashValue(psLayer, "DataURL.format", 
+                                              &(layer->metadata), 
+                                              "wms_dataurl_format");
+                  msGetMapContextXMLHashValue(psLayer, 
+                                           "DataURL.OnlineResource.xlink:href",
+                                              &(layer->metadata), 
+                                              "wms_dataurl_href");
               }
 
-              // MetadataURL
-              if(strcasecmp(pszVersion, "1.0.0") >= 0)
-              {
-                  // The MetadataURL have a width, height, format and an URL
-                  // The metadata will be structured like this: 
-                  // "width height format url"
-                  psChild = CPLGetXMLNode(psLayer, "MetadataURL");
-                  if(psChild != NULL)
-                  {
-                      msCombineXMLValueInHash(psChild, 
-                                              "width", "height", "format", 
-                                              "OnlineResource.xlink:href", 
-                                              &(layer->metadata), 
-                                              "wms_metadataurl");
-                  }
-              }
+              // The MetadataURL have a width, height, format and an URL
+              // Width and height are not used, but they are included to
+              // be consistent with the spec.
+              msGetMapContextXMLHashValue(psLayer, "MetadataURL.width", 
+                               &(layer->metadata), "wms_metadataurl_width");
+              msGetMapContextXMLHashValue(psLayer, "MetadataURL.height", 
+                               &(layer->metadata), "wms_metadataurl_height");
+              msGetMapContextXMLHashValue(psLayer, "MetadataURL.format", 
+                               &(layer->metadata), "wms_metadataurl_format");
+              msGetMapContextXMLHashValue(psLayer, 
+                               "MetadataURL.OnlineResource.xlink:href",
+                               &(layer->metadata), "wms_metadataurl_href");
 
 
               // Server
@@ -1258,15 +1211,31 @@ int msLoadMapContext(mapObj *map, char *filename)
                       }
                       if(pszValue != NULL)
                       {
-                          pszStyle = (char*)malloc(strlen(pszStyleName)+25);
-                          sprintf(pszStyle, "wms_style_%s_legendurl",
+                          pszStyle = (char*)malloc(strlen(pszStyleName)+35);
+                          sprintf(pszStyle, "wms_style_%s_legendurl_width",
                                   pszStyleName);
-                          msCombineXMLValueInHash(psStyle, 
-                                                  "LegendURL.width", 
-                                                  "LegendURL.height", 
-                                                  "LegendURL.format", 
+                          msGetMapContextXMLHashValue(psStyle, 
+                                                      "LegendURL.width", 
+                                                      &(layer->metadata), 
+                                                      pszStyle);
+                          sprintf(pszStyle, "wms_style_%s_legendurl_height",
+                                  pszStyleName);
+                          msGetMapContextXMLHashValue(psStyle,
+                                                      "LegendURL.height", 
+                                                      &(layer->metadata), 
+                                                      pszStyle);
+                          sprintf(pszStyle, "wms_style_%s_legendurl_format",
+                                  pszStyleName);
+                          msGetMapContextXMLHashValue(psStyle,
+                                                      "LegendURL.format", 
+                                                      &(layer->metadata), 
+                                                      pszStyle);
+                          sprintf(pszStyle, "wms_style_%s_legendurl_href",
+                                  pszStyleName);
+                          msGetMapContextXMLHashValue(psStyle,
                                          "LegendURL.OnlineResource.xlink:href",
-                                                 &(layer->metadata), pszStyle);
+                                                      &(layer->metadata), 
+                                                      pszStyle);
                           free(pszStyle);
                       }
 
@@ -1379,9 +1348,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
   const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
-  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL, *pszLogoURL;
-  char *pszLegendItem, *pszEncodedVal, *pszLogoItem, *pszDataURL, *pszDataItem;
-  char *pszDescriptionURL, *pszDescriptionItem;
+  char *pszStyle, *pszCurrent, *pszStyleItem;
+  char *pszEncodedVal;
   int i, nValue;
 
   // Decide which version we're going to return...
@@ -1531,90 +1499,46 @@ int msWriteMapContext(mapObj *map, FILE *stream)
 
   // LogoURL
   // The LogoURL have a width, height, format and an URL
-  // The metadata is structured like this: "width height format url"
-  pszLogoURL = msLookupHashTable(map->web.metadata, "wms_logourl");
-  if(pszLogoURL != NULL)
+  pszURL = msLookupHashTable(map->web.metadata, "wms_logourl_href");
+  if(pszURL != NULL)
   {
-      pszLogoItem = strdup(pszLogoURL);
-
-      // logourl width
-      pszChar = strchr(pszLogoItem, ' ');
-      if(pszChar != NULL)
-          pszLogoItem[pszChar - pszLogoItem] = '\0';
-      fprintf(stream, "    <LogoURL width=\"%s\"", pszLogoItem);
-
-      // logourl height
-      pszLogoURL += strlen(pszLogoItem) + 1;
-      strcpy(pszLogoItem, pszLogoURL);
-      pszChar = strchr(pszLogoItem, ' ');
-      if(pszChar != NULL)
-          pszLogoItem[pszChar - pszLogoItem] = '\0';
-      fprintf(stream, " height=\"%s\"", pszLogoItem);
-
-      // logourl format
-      pszLogoURL += strlen(pszLogoItem) + 1;
-      strcpy(pszLogoItem, pszLogoURL);
-      pszChar = strchr(pszLogoItem, ' ');
-      if(pszChar != NULL)
-          pszLogoItem[pszChar - pszLogoItem] = '\0';
-      fprintf(stream, " format=\"%s\">\n", pszLogoItem);
-
-      // logourl url
-      pszLogoURL += strlen(pszLogoItem) + 1;
-      strcpy(pszLogoItem, pszLogoURL);
-      pszChar = strchr(pszLogoItem, ' ');
-      if(pszChar != NULL)
-          pszLogoItem[pszChar - pszLogoItem] = '\0';
-      pszEncodedVal = msEncodeHTMLEntities(pszLogoItem);
-      fprintf(stream, "      <OnlineResource xlink:type=\"simple\" ");
-      fprintf(stream, "xlink:href=\"%s\"/>\n    </LogoURL>\n",
-              pszEncodedVal);
-
-      free(pszLogoItem);
+      fprintf( stream, "    <LogoURL");
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl_width",
+                               OWS_NOERR,
+                               " width=\"%s\"", NULL);
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl_height",
+                               OWS_NOERR,
+                               " height=\"%s\"", NULL);
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl_format",
+                               OWS_NOERR,
+                               " format=\"%s\"", NULL);
+      fprintf( stream, ">\n");
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl_href",
+                               OWS_NOERR,
+          "      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
+                               NULL);
+      fprintf( stream, "    </LogoURL>\n");
   }
 
   // DescriptionURL
   // The DescriptionURL have a width, height, format and an URL
   // The metadata is structured like this: "width height format url"
-  pszDescriptionURL=msLookupHashTable(map->web.metadata, "wms_descriptionurl");
-  if(pszDescriptionURL != NULL && strcasecmp(version, "1.0.0") >= 0)
+  pszURL = msLookupHashTable(map->web.metadata, "wms_descriptionurl_href");
+  if(pszURL != NULL && strcasecmp(version, "1.0.0") >= 0)
   {
-      pszDescriptionItem = strdup(pszDescriptionURL);
-
-      // descriptionurl width
-      pszChar = strchr(pszDescriptionItem, ' ');
-      if(pszChar != NULL)
-          pszDescriptionItem[pszChar - pszDescriptionItem] = '\0';
-      fprintf(stream, "    <DescriptionURL width=\"%s\"", pszDescriptionItem);
-
-      // descriptionurl height
-      pszDescriptionURL += strlen(pszDescriptionItem) + 1;
-      strcpy(pszDescriptionItem, pszDescriptionURL);
-      pszChar = strchr(pszDescriptionItem, ' ');
-      if(pszChar != NULL)
-          pszDescriptionItem[pszChar - pszDescriptionItem] = '\0';
-      fprintf(stream, " height=\"%s\"", pszDescriptionItem);
-
-      // descriptionurl format
-      pszDescriptionURL += strlen(pszDescriptionItem) + 1;
-      strcpy(pszDescriptionItem, pszDescriptionURL);
-      pszChar = strchr(pszDescriptionItem, ' ');
-      if(pszChar != NULL)
-          pszDescriptionItem[pszChar - pszDescriptionItem] = '\0';
-      fprintf(stream, " format=\"%s\">\n", pszDescriptionItem);
-
-      // descriptionurl url
-      pszDescriptionURL += strlen(pszDescriptionItem) + 1;
-      strcpy(pszDescriptionItem, pszDescriptionURL);
-      pszChar = strchr(pszDescriptionItem, ' ');
-      if(pszChar != NULL)
-          pszDescriptionItem[pszChar - pszDescriptionItem] = '\0';
-      pszEncodedVal = msEncodeHTMLEntities(pszDescriptionItem);
-      fprintf(stream, "      <OnlineResource xlink:type=\"simple\" ");
-      fprintf(stream, "xlink:href=\"%s\"/>\n    </DescriptionURL>\n",
-              pszEncodedVal);
-
-      free(pszDescriptionItem);
+      fprintf( stream, "    <DescriptionURL");
+      msOWSPrintEncodeMetadata(stream, map->web.metadata,
+              "wms_descriptionurl_width", OWS_NOERR, " width=\"%s\"", NULL);
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, 
+              "wms_descriptionurl_height", OWS_NOERR, " height=\"%s\"", NULL);
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, 
+              "wms_descriptionurl_format", OWS_NOERR, " format=\"%s\"", NULL);
+      fprintf( stream, ">\n");
+      msOWSPrintEncodeMetadata(stream, map->web.metadata, 
+              "wms_descriptionurl_href", OWS_NOERR,
+          "      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
+                               NULL);
+      fprintf( stream, "    </DescriptionURL>\n");
   }
 
   // Contact Info
@@ -1713,51 +1637,26 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               // Note: in version 0.1.7 the width and height are not included 
               // in the Context file, but they are included in the metadata for
               // for consistency with the URLType.
-              pszDataURL = msLookupHashTable( map->layers[i].metadata,
-                                              "wms_dataurl");
-              if(pszDataURL != NULL)
+              pszURL = msLookupHashTable( map->layers[i].metadata,
+                                          "wms_dataurl_href");
+              if(pszURL != NULL)
               {
-                  pszDataItem = strdup(pszDataURL);
-
-                  // dataurl width
-                  pszChar = strchr(pszDataItem, ' ');
-                  if(pszChar != NULL)
-                      pszDataItem[pszChar - pszDataItem] = '\0';
-                  if(strcasecmp(version, "0.1.7") <= 0)
-                      fprintf(stream, "      <DataURL");
-                  else
-                      fprintf(stream, "      <DataURL width=\"%s\"", 
-                              pszDataItem);
-
-                  // dataurl height
-                  pszDataURL += strlen(pszDataItem) + 1;
-                  strcpy(pszDataItem, pszDataURL);
-                  pszChar = strchr(pszDataItem, ' ');
-                  if(pszChar != NULL)
-                      pszDataItem[pszChar - pszDataItem] = '\0';
-                  if(strcasecmp(version, "0.1.7") > 0)
-                      fprintf(stream, " height=\"%s\"", pszDataItem);
-
-                  // dataurl format
-                  pszDataURL += strlen(pszDataItem) + 1;
-                  strcpy(pszDataItem, pszDataURL);
-                  pszChar = strchr(pszDataItem, ' ');
-                  if(pszChar != NULL)
-                      pszDataItem[pszChar - pszDataItem] = '\0';
-                  fprintf(stream, " format=\"%s\">\n", pszDataItem);
-
-                  // dataurl url
-                  pszDataURL += strlen(pszDataItem) + 1;
-                  strcpy(pszDataItem, pszDataURL);
-                  pszChar = strchr(pszDataItem, ' ');
-                  if(pszChar != NULL)
-                      pszDataItem[pszChar - pszDataItem] = '\0';
-                  pszEncodedVal = msEncodeHTMLEntities(pszDataItem);
-                  fprintf(stream, "        <OnlineResource xlink:type=\"simple\" ");
-                  fprintf(stream, "xlink:href=\"%s\"/>\n      </DataURL>\n",
-                          pszEncodedVal);
-
-                  free(pszDataItem);
+                  fprintf( stream, "      <DataURL");
+                  msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
+                                           "wms_dataurl_width", OWS_NOERR,
+                                           " width=\"%s\"", NULL);
+                  msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
+                                           "wms_dataurl_height", OWS_NOERR,
+                                           " height=\"%s\"", NULL);
+                  msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
+                                           "wms_dataurl_format", OWS_NOERR,
+                                           " format=\"%s\"", NULL);
+                  fprintf( stream, ">\n");
+                  msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
+                                           "wms_dataurl_href", OWS_NOERR,
+                                           "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
+                                           NULL);
+                  fprintf( stream, "      </DataURL>\n");
               }
           }
 
@@ -1765,55 +1664,32 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           // The MetadataURL have a width, height, format and an URL
           // The metadata will be structured like this: 
           // "width height format url"
-          if(strcasecmp(version, "1.0.0") >= 0)
+          pszURL = msLookupHashTable(map->layers[i].metadata,
+                                     "wms_metadataurl_href");
+          if(pszURL != NULL)
           {
-              pszDataURL = msLookupHashTable( map->layers[i].metadata,
-                                              "wms_metadataurl");
-              if(pszDataURL != NULL)
-              {
-                  pszDataItem = strdup(pszDataURL);
-
-                  // metadataurl width
-                  pszChar = strchr(pszDataItem, ' ');
-                  if(pszChar != NULL)
-                      pszDataItem[pszChar - pszDataItem] = '\0';
-                  fprintf(stream, "      <MetadataURL width=\"%s\"",pszDataItem);
-
-                  // metadataurl height
-                  pszDataURL += strlen(pszDataItem) + 1;
-                  strcpy(pszDataItem, pszDataURL);
-                  pszChar = strchr(pszDataItem, ' ');
-                  if(pszChar != NULL)
-                      pszDataItem[pszChar - pszDataItem] = '\0';
-                  fprintf(stream, " height=\"%s\"", pszDataItem);
-
-                  // metadataurl format
-                  pszDataURL += strlen(pszDataItem) + 1;
-                  strcpy(pszDataItem, pszDataURL);
-                  pszChar = strchr(pszDataItem, ' ');
-                  if(pszChar != NULL)
-                      pszDataItem[pszChar - pszDataItem] = '\0';
-                  fprintf(stream, " format=\"%s\">\n", pszDataItem);
-
-                  // metadataurl url
-                  pszDataURL += strlen(pszDataItem) + 1;
-                  strcpy(pszDataItem, pszDataURL);
-                  pszChar = strchr(pszDataItem, ' ');
-                  if(pszChar != NULL)
-                      pszDataItem[pszChar - pszDataItem] = '\0';
-                  pszEncodedVal = msEncodeHTMLEntities(pszDataItem);
-                  fprintf(stream, 
-                          "        <OnlineResource xlink:type=\"simple\" ");
-                  fprintf(stream,"xlink:href=\"%s\"/>\n      </MetadataURL>\n",
-                          pszEncodedVal);
-
-                  free(pszDataItem);
-              }
+              fprintf( stream, "      <MetadataURL");
+              msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
+                                       "wms_metadataurl_width", OWS_NOERR,
+                                       " width=\"%s\"", NULL);
+              msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
+                                       "wms_metadataurl_height", OWS_NOERR,
+                                       " height=\"%s\"", NULL);
+              msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
+                                       "wms_metadataurl_format", OWS_NOERR,
+                                       " format=\"%s\"", NULL);
+              fprintf( stream, ">\n");
+              msOWSPrintEncodeMetadata(stream, map->layers[i].metadata, 
+                                       "wms_metadataurl_href", OWS_NOERR,
+                                       "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
+                                       NULL);
+              fprintf( stream, "      </MetadataURL>\n");
           }
 
           // Format
           if(msLookupHashTable(map->layers[i].metadata,"wms_formatlist")==NULL)
           {
+              pszURL = NULL;
               if(map->layers[i].connection)
                   pszURL = strdup( map->layers[i].connection );
               else
@@ -1870,6 +1746,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
           // Style
           if(msLookupHashTable(map->layers[i].metadata,"wms_stylelist") ==NULL)
           {
+              pszURL = "";
               if(map->layers[i].connection)
                   pszURL = strdup( map->layers[i].connection );
               else
@@ -1972,59 +1849,57 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                       else
                       {
                           free(pszStyleItem);
+                          // Name
                           fprintf(stream, "          <Name>%s</Name>\n", 
                                   pszStyle);
                           pszStyleItem = (char*)malloc(strlen(pszStyle)+10+8);
                           sprintf(pszStyleItem, "wms_style_%s_title",pszStyle);
+                          // Title
                           msOWSPrintMetadata(stream, map->layers[i].metadata, 
                                              pszStyleItem, OWS_NOERR, 
                                              "          <Title>%s</Title>\n", 
                                              NULL);
                           free(pszStyleItem);
 
-                          pszStyleItem = (char*)malloc(strlen(pszStyle)+10+15);
-                          sprintf(pszStyleItem, "wms_style_%s_legendurl",
+                          // LegendURL
+                          pszStyleItem = (char*)malloc(strlen(pszStyle)+10+20);
+                          sprintf(pszStyleItem, "wms_style_%s_legendurl_href",
                                   pszStyle);
-                          pszLegendURL = msLookupHashTable(
-                              map->layers[i].metadata, pszStyleItem);
-                          if(pszLegendURL != NULL)
+                          pszURL = msLookupHashTable(map->layers[i].metadata, 
+                                                     pszStyleItem);
+                          if(pszURL != NULL)
                           {
-                              fprintf(stream, "          <LegendURL ");
-                              // width
-                              pszLegendItem = strdup(pszLegendURL);
-                              pszChar = strchr(pszLegendItem, ' ');
-                              if(pszChar != NULL)
-                                  pszLegendItem[pszChar-pszLegendItem] = '\0';
-                              fprintf(stream, "width=\"%s\" ", pszLegendItem);
-                              // height
-                              pszLegendURL+=strlen(pszLegendItem)+1;
-                              strcpy(pszLegendItem, pszLegendURL);
-                              pszChar = strchr(pszLegendItem, ' ');
-                              if(pszChar != NULL)
-                                  pszLegendItem[pszChar-pszLegendItem] = '\0';
-                              fprintf(stream, "height=\"%s\" ", pszLegendItem);
-                              // format
-                              pszLegendURL+=strlen(pszLegendItem)+1;
-                              strcpy(pszLegendItem, pszLegendURL);
-                              pszChar = strchr(pszLegendItem, ' ');
-                              if(pszChar != NULL)
-                                  pszLegendItem[pszChar-pszLegendItem] = '\0';
-                              fprintf(stream,"format=\"%s\">\n",pszLegendItem);
-                              // URL
-                              pszLegendURL+=strlen(pszLegendItem)+1;
-                              strcpy(pszLegendItem, pszLegendURL);
-                              pszChar = strchr(pszLegendItem, ' ');
-                              if(pszChar != NULL)
-                                  pszLegendItem[pszChar-pszLegendItem] = '\0';
-                              pszEncodedVal = msEncodeHTMLEntities(
-                                  pszLegendItem);
-                              fprintf(stream, 
-     "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
-                                      pszEncodedVal);
-                              free(pszEncodedVal);
-                              free(pszLegendItem);
-
-                              fprintf(stream,  "          </LegendURL>\n");
+                              fprintf( stream, "          <LegendURL");
+                              sprintf(pszStyleItem, 
+                                      "wms_style_%s_legendurl_width",pszStyle);
+                              msOWSPrintEncodeMetadata(stream, 
+                                                       map->layers[i].metadata,
+                                                       pszStyleItem,
+                                                       OWS_NOERR,
+                                                       " width=\"%s\"", NULL);
+                              sprintf(pszStyleItem, 
+                                     "wms_style_%s_legendurl_height",pszStyle);
+                              msOWSPrintEncodeMetadata(stream, 
+                                                       map->layers[i].metadata,
+                                                       pszStyleItem,
+                                                       OWS_NOERR,
+                                                       " height=\"%s\"", NULL);
+                              sprintf(pszStyleItem, 
+                                     "wms_style_%s_legendurl_format",pszStyle);
+                              msOWSPrintEncodeMetadata(stream, 
+                                                       map->layers[i].metadata,
+                                                       pszStyleItem,
+                                                       OWS_NOERR,
+                                                       " format=\"%s\"", NULL);
+                              fprintf( stream, ">\n");
+                              sprintf(pszStyleItem, 
+                                     "wms_style_%s_legendurl_href", pszStyle);
+                              msOWSPrintEncodeMetadata(stream, 
+                                                       map->layers[i].metadata,
+                                                       pszStyleItem, OWS_NOERR,
+                                                       "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
+                                                       NULL);
+                              fprintf( stream, "          </LegendURL>\n");
                           }
                           free(pszStyleItem);
                       }
