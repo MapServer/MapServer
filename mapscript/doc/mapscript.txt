@@ -109,61 +109,6 @@ method(type mandatory_parameter [, type optional_parameter=default]) : type
 Class method names are camel case with a leading lower case character
 like *getExpressionString*.
 
------------------------
-Next Generation Classes
------------------------
-
-By defining the preprocessor symbol *NEXT_GENERATION_API* when running
-SWIG to produce wrapper code, one can use the 'next generation' mapscript
-API.  For example
-
-::
-
-    swig -python -shadow -modern -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
-
-The API changes in the next generation classes result
-from efforts to merge the best of the PHP-Mapscript and SWIG mapscript
-interfaces (Bugzilla issue 575 - 
-http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see
-the documentation of `layerObj.getShape`_.
-
-Additionally, programmers can experiment with better mapscript class naming
-by defining the symbol *NEXT_GENERATION_NAMES*.  
-
-::
-
-    swig -python -shadow -modern -DNEXT_GENERATION_NAMES -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
-
-The next generation class names are in capitalized camel case form: *Map*,
-*Layer*, *OutputFormat*, and so on rather than the standard *--Obj*
-names which are not clearly distinguished from
-class method names.  We're all using object-oriented languages, so the *Obj*
-suffix is redundant.  It is also a cross-language convention (see CPAN and
-the Python standard library) that package and class names be capitalized.
-Forming class names in a way distinctly different from class attributes and
-methods improves API clarity.
-
-The features enabled by *NEXT_GENERATION_API* will almost certainly become
-standard in a future release.  The next generation class names are more
-controversial and more likely to remain an option for users.  Python users
-want them, and can easily port existing code to use the new names.  For 
-example:
-
-::
-
-    import mapscript
-    
-    # Rename the next generation classes for use with older code
-    mapscript.mapObj = mapscript.Map
-
-    # Continue with older code
-    mapobj = mapscript.mapObj('foo.map')
-    ...
-
-
-Now that the style of the documentation has been introduced, on to the
-module itself.
-
 
 =============================================================================
  Mapscript Variables
@@ -241,7 +186,10 @@ layer : layerObj_ immutable
 
 maxscale : float
     The maximum scale at which class is drawn
-    
+   
+metadata : hashTableObj_
+    class metadata hash table.
+
 minscale : float
     The minimum scale at which class is drawn
 
@@ -1178,24 +1126,11 @@ outputFormatObj_.
      | Map | ---------> | OutputFormat |
      +-----+            +------------- + 
                            
-and hashTableObj_
-
-::
-
-     +-----+ 1        1 +-----------+
-     | Map | ---------> | HashTable |
-     +-----+            |    --     |
-                        | metadata  |
-                        +-----------+
-
 
 Attributes
 ----------
 
 **TODO**
-
-metadata : hashTableObj_
-    Map metadata.
 
 numoutputformats : int
     Number of output formats.
@@ -1203,13 +1138,16 @@ numoutputformats : int
 outputformat : outputFormatObj_
     The currently selected output format.
 
+web : webObj_
+    Application configuration.
+
 Methods
 -------
 
 **TODO**
 
 new mapObj( [ string filename='' ] ) : mapObj
-    Create a new instance of mapObj.
+    Create a new instance of mapObj.  Note that the filename is now optional.
     
 appendOutputFormat( outputFormatObj_ format ) : int
     Attach *format* to the map's output format list.  Returns the updated
@@ -2052,6 +1990,96 @@ removeSymbol( int index ) : symbolObj_
 
 save( string filename ) : int
     Save symbol set to a file.  Returns MS_SUCCESS or MS_FAILURE.
+
+------------------------------------------------------------------------------
+ webObj
+------------------------------------------------------------------------------
+
+Has no other existence than as an attribute of a mapObj.  Serves as a 
+container for various run-time web application definitions like temporary
+file paths, template paths, etc.
+
+Attributes
+----------
+
+empty : string
+    **TODO**
+
+error : string
+    **TODO**
+
+extent : rectObj_
+    Clipping extent.
+    
+footer : string
+    Path to footer document.
+
+header : string
+    Path to header document.
+    
+imagepath : string
+    Filesystem path to temporary image location.
+
+imageurl : string
+    URL to temporary image location.
+    
+log : string
+    **TODO**
+
+map : mapObj
+    Reference to parent mapObj.
+
+maxscale : float
+    Maximum map scale.
+
+maxtemplate : string
+    **TODO**
+   
+metadata : hashTableObj_
+    metadata hash table.
+
+minscale : float
+    Minimum map scale.
+
+mintemplate : string
+    **TODO**
+
+queryformat : string
+    **TODO**
+    
+template : string
+    Path to template document.
+
+
+Methods
+-------
+
+None.
+
+
+=======================
+Next Generation Classes
+=======================
+
+By defining the preprocessor symbol *NEXT_GENERATION_API* when running
+SWIG to produce wrapper code, one can use the 'next generation' mapscript
+API.  For example
+
+::
+
+    swig -python -shadow -modern -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
+
+The API changes in the next generation classes result
+from efforts to merge the best of the PHP-Mapscript and SWIG mapscript
+interfaces (Bugzilla issue 575 - 
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see
+the documentation of `layerObj.getShape`_.
+
+
+=========
+Footnotes
+=========
+    
 
 ..  [1] This **really** needs to be changed in the future.  In fact a layer
     is much more re-useable than a map.  We don't keep redundant street
