@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2003/11/27 15:04:30  assefa
+ * Remove unused varaibeles.
+ *
  * Revision 1.4  2003/11/27 13:57:09  assefa
  * Add min/max scale.
  *
@@ -150,7 +153,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 {
     CPLXMLNode *psRoot = NULL;
     CPLXMLNode *psSLD, *psNamedLayer, *psChild, *psName;
-    layerObj *pasLayers;
+    layerObj *pasLayers = NULL;
     int iLayer = 0;
     int nLayers = 0;
 
@@ -211,6 +214,8 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 
     if (nLayers > 0)
       pasLayers = (layerObj *)malloc(sizeof(layerObj)*nLayers);
+    else
+      return NULL;
 
     psNamedLayer = CPLGetXMLNode(psSLD, "NamedLayer");
     if (psNamedLayer)
@@ -874,7 +879,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
 {
     CPLXMLNode  *psCssParam, *psGraphic, *psExternalGraphic, *psMark, *psSize;
     CPLXMLNode *psWellKnownName, *psStroke, *psFill;
-    char *psColor=NULL, *psColorName = NULL, *psFillName=NULL;
+    char *psColor=NULL, *psColorName = NULL;
     int nLength = 0;
     char *pszSymbolName = NULL;
     int bFilled = 0; 
@@ -1040,7 +1045,6 @@ int msSLDGetLineSymbol(mapObj *map)
 /************************************************************************/
 int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
 {
-    int nSymbolId = 0;
     symbolObj *psSymbol = NULL;
     char **aszValues = NULL;
     int nDash, i;
@@ -1641,7 +1645,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psCla
     int  nFontSize = 10;
     int bFontSet = 0;
 
-    CPLXMLNode *psLabel=NULL, *psPropertyName=NULL, *psFont=NULL;
+    CPLXMLNode *psLabel=NULL, *psFont=NULL;
     CPLXMLNode *psCssParam = NULL;
     char *pszName=NULL, *pszFontFamily=NULL, *pszFontStyle=NULL;
     char *pszFontWeight=NULL; 
@@ -1932,7 +1936,6 @@ void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
 /************************************************************************/
 void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
 {
-    int nLength = 0;
     if (psHexColor && psColor && strlen(psHexColor)== 7 && 
         psHexColor[0] == '#')
     {
