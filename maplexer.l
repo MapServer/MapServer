@@ -282,6 +282,7 @@ int msyyreturncomments = 0;
 <INITIAL,VALUE_STRING>point		       { return(MS_LAYER_POINT); }
 <INITIAL,VALUE_STRING>polygon 		       { return(MS_LAYER_POLYGON); }
 <INITIAL,VALUE_STRING>postgis		       { return(MS_POSTGIS); }
+<INITIAL,VALUE_STRING>mygis		       { return(MS_MYGIS); }
 <INITIAL,VALUE_STRING>query                    { return(MS_LAYER_QUERY); }
 <INITIAL,VALUE_STRING>raster		       { return(MS_LAYER_RASTER); }
 <INITIAL,VALUE_STRING>round		       { return(MS_CJC_ROUND); }

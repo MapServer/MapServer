@@ -9,7 +9,7 @@
 ** specific functions.
 */
 static int layerInitItemInfo(layerObj *layer) 
-{ 
+{
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):
@@ -30,6 +30,9 @@ static int layerInitItemInfo(layerObj *layer)
     break;
   case(MS_POSTGIS):
     return(msPOSTGISLayerInitItemInfo(layer));
+    break;
+  case(MS_MYGIS):
+    return(msMYGISLayerInitItemInfo(layer));
     break;
   case(MS_SDE):
     return(msSDELayerInitItemInfo(layer));
@@ -63,6 +66,9 @@ static void layerFreeItemInfo(layerObj *layer)
     break;
   case(MS_POSTGIS):
     msPOSTGISLayerFreeItemInfo(layer);
+    break;
+  case(MS_MYGIS):
+    msMYGISLayerFreeItemInfo(layer);
     break;
   case(MS_SDE):
     msSDELayerFreeItemInfo(layer);
@@ -115,6 +121,9 @@ int msLayerOpen(layerObj *layer)
     break;
   case(MS_POSTGIS):
     return(msPOSTGISLayerOpen(layer));
+    break;
+  case(MS_MYGIS):
+    return(msMYGISLayerOpen(layer));
     break;
   case(MS_SDE):
     return(msSDELayerOpen(layer));
@@ -183,6 +192,9 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     break;
   case(MS_POSTGIS):
     return(msPOSTGISLayerWhichShapes(layer, rect));
+    break;
+  case(MS_MYGIS):
+    return(msMYGISLayerWhichShapes(layer, rect));
     break;
   case(MS_SDE):
     return(msSDELayerWhichShapes(layer, rect));
@@ -255,6 +267,9 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   case(MS_POSTGIS):
     return(msPOSTGISLayerNextShape(layer, shape));
     break;
+  case(MS_MYGIS):
+    return(msMYGISLayerNextShape(layer, shape));
+    break;
   case(MS_SDE):
     return(msSDELayerNextShape(layer, shape));
     break;
@@ -311,6 +326,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   case(MS_POSTGIS):
     return(msPOSTGISLayerGetShape(layer, shape, record));
     break;
+  case(MS_MYGIS):
+    return(msMYGISLayerGetShape(layer, shape, record));
+    break;
   case(MS_SDE):
     return(msSDELayerGetShape(layer, shape, record));
     break;
@@ -342,7 +360,6 @@ void msLayerClose(layerObj *layer)
     layer->items = NULL;
     layer->numitems = 0;
   }  
-
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     msSHPCloseFile(&(layer->shpfile));
@@ -360,6 +377,9 @@ void msLayerClose(layerObj *layer)
     break;
   case(MS_POSTGIS):
     msPOSTGISLayerClose(layer);
+    break;
+  case(MS_MYGIS):
+    msMYGISLayerClose(layer);
     break;
   case(MS_SDE):
     // using pooled connections for SDE, closed when map file is closed
@@ -412,6 +432,9 @@ int msLayerGetItems(layerObj *layer)
   case(MS_POSTGIS):
     return(msPOSTGISLayerGetItems(layer));
     break;
+  case(MS_MYGIS):
+    return(msMYGISLayerGetItems(layer));
+    break;
   case(MS_SDE):
     return(msSDELayerGetItems(layer));
     break;
@@ -454,6 +477,9 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
     break;
   case(MS_POSTGIS):
     return(msPOSTGISLayerGetExtent(layer, extent));
+    break;
+  case(MS_MYGIS):
+    return(msMYGISLayerGetExtent(layer, extent));
     break;
   case(MS_SDE):
     return(msSDELayerGetExtent(layer, extent));
@@ -603,8 +629,9 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   if(annotate && layer->labelitem) nt++;
   if(annotate && layer->labelsizeitem) nt++;
   if(annotate && layer->labelangleitem) nt++;
-
   ne = 0;
+
+  
   if(classify && layer->filter.type == MS_EXPRESSION) { 
     ne = countChars(layer->filter.string, '[');
     if(ne > 0) {
@@ -740,7 +767,6 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 int msLayerSetItems(layerObj *layer, char **items, int numitems)
 {
   int i;
-
   // Cleanup any previous item selection
   layerFreeItemInfo(layer);
   if(layer->items) {
@@ -784,6 +810,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, lon
   case(MS_TILED_SHAPEFILE):
   case(MS_INLINE):
   case(MS_POSTGIS):
+  case(MS_MYGIS):
   case(MS_SDE):
   case(MS_ORACLESPATIAL):
   case(MS_WFS):

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/03/14 13:12:11  attila
+ * Introduce MySQL generic support, enabled with --with-mygis when configuring
+ *
  * Revision 1.17  2003/02/20 19:49:14  frank
  * fixed implicit setting of JPEG quality from IMAGEQUALITY keyword
  *
@@ -291,6 +294,14 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         }
     }
 #endif
+    if( strcasecmp(driver,"imagemap") == 0 )
+    {
+        format = msAllocOutputFormat( map, "imagemap", driver );
+        format->mimetype = strdup("text/html");
+        format->extension = strdup("html");
+        format->imagemode = 0;
+        format->renderer = MS_RENDER_WITH_IMAGEMAP;
+    }
 
     return format;
 }
@@ -326,6 +337,9 @@ void msApplyDefaultOutputFormats( mapObj *map )
 
     if( msSelectOutputFormat( map, "swf" ) == NULL )
         msCreateDefaultOutputFormat( map, "swf" );
+
+    if( msSelectOutputFormat( map, "imagemap" ) == NULL )
+        msCreateDefaultOutputFormat( map, "imagemap" );
 
     if( msSelectOutputFormat( map, "pdf" ) == NULL )
         msCreateDefaultOutputFormat( map, "pdf" );
