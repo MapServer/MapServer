@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.60  2004/11/29 04:09:23  sdlime
+ * Fixed bug 954, added ResponsibleParty output to the service block. Supports new wcs_responsibleparty_* metadata tags or tries to use WMS contact metadata.
+ *
  * Revision 1.59  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -355,6 +358,102 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
   return MS_SUCCESS;
 }
 
+static void msWCSGetCapabilities_Service_ResponsibleParty(mapObj *map)
+{
+  int bEnableTelephone=MS_FALSE, bEnableAddress=MS_FALSE, bEnableOnlineResource=MS_FALSE;
+
+  // the WCS-specific way
+  if(msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_individualname") || 
+     msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_organizationname")) {
+
+    msIO_printf("<responsibleParty>\n");
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_individualname", OWS_NOERR, "    <individualName>%s</individualName>\n", NULL);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_organizationname", OWS_NOERR, "    <organisationName>%s</oranisationName>\n", NULL);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_positionname", OWS_NOERR, "    <positiontionName>%s</positionName>\n", NULL);
+
+    if(msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_phone_voice") ||
+       msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_phone_facimile")) bEnableTelephone = MS_TRUE;
+
+    if(msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_address_deliverypoint") ||
+       msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_address_city") ||
+       msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_address_administrativearea") ||
+       msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_address_postalcode") ||
+       msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_address_country") ||
+       msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_address_electronicmailaddress")) bEnableAddress = MS_TRUE;
+ 
+    if(msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_onlineresource")) bEnableOnlineResource = MS_TRUE;
+
+    if(bEnableTelephone || bEnableAddress || bEnableOnlineResource) {
+      msIO_printf("  <contactInfo>\n");
+      if(bEnableTelephone) {
+	msIO_printf("    <phone>\n");
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_phone_voice", OWS_NOERR, "    <voice>%s</voice>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_phone_facimile", OWS_NOERR, "    <facsimile>%s</facsimile>\n", NULL);
+	msIO_printf("    </phone>\n");
+      }
+      if(bEnableAddress) {
+	msIO_printf("    <address>\n");
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_address_deliverypoint", OWS_NOERR, "    <deliveryPoint>%s</deliveryPoint>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_address_city", OWS_NOERR, "    <city>%s</city>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_address_administrativearea", OWS_NOERR, "    <administrativeArea>%s</administrativeArea>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_address_postalcode", OWS_NOERR, "    <postalCode>%s</postalCode>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_address_country", OWS_NOERR, "    <country>%s</country>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_address_electronicmailaddress", OWS_NOERR, "    <electronicMailAddress>%s</electronicMailAddress>\n", NULL);
+	msIO_printf("    </address>\n");
+      }
+      msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_onlineresource", OWS_NOERR, "    <onlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n", NULL);
+      msIO_printf("  </contactInfo>\n");
+    }
+
+    msIO_printf("</responsibleParty>\n");
+
+  } else if(msOWSLookupMetadata(&(map->web.metadata), "COM", "contactperson") ||
+       msOWSLookupMetadata(&(map->web.metadata), "COM", "contactorganization")) { // leverage WMS contact information
+
+    msIO_printf("<responsibleParty>\n");
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactperson", OWS_NOERR, "    <individualName>%s</individualName>\n", NULL);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactorganization", OWS_NOERR, "    <organisationName>%s</oranisationName>\n", NULL);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactposition", OWS_NOERR, "    <positiontionName>%s</positionName>\n", NULL);
+
+    if(msOWSLookupMetadata(&(map->web.metadata), "COM", "contactvoicetelephone") ||
+       msOWSLookupMetadata(&(map->web.metadata), "COM", "contactfacimiletelephone")) bEnableTelephone = MS_TRUE;
+
+    if(msOWSLookupMetadata(&(map->web.metadata), "COM", "address") ||
+       msOWSLookupMetadata(&(map->web.metadata), "COM", "city") ||
+       msOWSLookupMetadata(&(map->web.metadata), "COM", "stateorprovince") ||
+       msOWSLookupMetadata(&(map->web.metadata), "COM", "postcode") ||
+       msOWSLookupMetadata(&(map->web.metadata), "COM", "country") ||
+       msOWSLookupMetadata(&(map->web.metadata), "COM", "contactelectronicmailaddress")) bEnableAddress = MS_TRUE;
+
+    if(msOWSLookupMetadata(&(map->web.metadata), "COM", "responsibleparty_onlineresource")) bEnableOnlineResource = MS_TRUE;
+
+    if(bEnableTelephone || bEnableAddress || bEnableOnlineResource) {
+      msIO_printf("  <contactInfo>\n");
+      if(bEnableTelephone) {
+        msIO_printf("    <phone>\n");
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactvoicetelephone", OWS_NOERR, "    <voice>%s</voice>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactfacimiletelephone", OWS_NOERR, "    <facsimile>%s</facsimile>\n", NULL);
+        msIO_printf("    </phone>\n");
+      }
+      if(bEnableAddress) {
+        msIO_printf("    <address>\n");
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "address", OWS_NOERR, "    <deliveryPoint>%s</deliveryPoint>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "city", OWS_NOERR, "    <city>%s</city>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "stateorprovince", OWS_NOERR, "    <administrativeArea>%s</administrativeArea>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "postcode", OWS_NOERR, "    <postalCode>%s</postalCode>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "country", OWS_NOERR, "    <country>%s</country>\n", NULL);
+        msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactelectronicmailaddress", OWS_NOERR, "    <electronicMailAddress>%s</electronicMailAddress>\n", NULL);
+        msIO_printf("    </address>\n");
+      }
+      msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "responsible_onlineresource", OWS_NOERR, "    <onlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n", NULL);
+      msIO_printf("  </contactInfo>\n");
+    }
+    msIO_printf("</responsibleParty>\n");
+  }
+
+  return;
+}
+
 static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
 {
   // start the Service section, only need the full start tag if this is the only section requested
@@ -385,7 +484,7 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
   // we are not supporting the optional keyword type, at least not yet
   msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "COM", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
 
-  // TODO: add responsibleParty (optional)
+  msWCSGetCapabilities_Service_ResponsibleParty(map);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "fees", OWS_NOERR, "  <fees>%s</fees>\n", "NONE");
   msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "COM", "accessconstraints", "  <accessConstraints>\n", "  </accessConstraints>\n", "    %s\n", "NONE");
@@ -638,7 +737,6 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
                     NULL, " metadataType=\"%s\"", NULL, NULL, NULL,
                     " xlink:href=\"%s\"", MS_FALSE, MS_FALSE, MS_FALSE,
                     MS_FALSE, MS_TRUE, "other", NULL, NULL, NULL, NULL, NULL);
-
   
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
   msOWSPrintEncodeMetadata(stdout, &(layer->metadata), "COM", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
