@@ -786,7 +786,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(layer->class[c].label.autoangle) layer->class[c].label.angle = angle;
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
 	  if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
             for(s=0; s<layer->class[c].numstyles; s++)
@@ -811,7 +811,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
 	  if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
             for(s=0; s<layer->class[c].numstyles; s++)
@@ -838,7 +838,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 	  if(shape->text) {
 	    if(layer->labelcache) {
-	      if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	      if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1) != MS_SUCCESS) return(MS_FAILURE);
 	    } else {
 	      if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
                 for(s=0; s<layer->class[c].numstyles; s++)
@@ -878,7 +878,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	  if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);   
 
 	  if(layer->labelcache) {
-	    if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	    if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1) != MS_SUCCESS) return(MS_FAILURE);
 	  } else
 	    msDrawLabel(image, *point, shape->text, &layer->class[c].label, &map->fontset, layer->scalefactor);
 	}
@@ -917,7 +917,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(layer->class[c].label.autoangle) layer->class[c].label.angle = angle;
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length) != MS_SUCCESS) return(MS_FAILURE);
 	} else
           msDrawLabel(image, annopnt, shape->text, &layer->class[c].label, &map->fontset, layer->scalefactor);
       }
@@ -950,7 +950,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, -1) != MS_SUCCESS) return(MS_FAILURE);
 	} else
 	  msDrawLabel(image, annopnt, shape->text, &layer->class[c].label, &map->fontset, layer->scalefactor);
       }
@@ -991,7 +991,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 
     if(labeltext) {
       if(layer->labelcache) {
-	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1) != MS_SUCCESS) return(MS_FAILURE);
       } else {
 	if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
           for(s=0; s<layer->class[c].numstyles; s++)
@@ -1014,7 +1014,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 
     if(labeltext) {
       if(layer->labelcache) {
-	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1) != MS_SUCCESS) return(MS_FAILURE);
       } else
 	msDrawLabel(image, *point, labeltext, &layer->class[c].label, &map->fontset, layer->scalefactor);
     }

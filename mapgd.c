@@ -801,7 +801,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if(bc == -1) bc = gdTransparent;
     break;
   case(MS_SYMBOL_TRUETYPE):
-    msImageTruetypePolyline(img, p, symbol, fc, size, symbolset->fontset);
+    msImageTruetypePolyline(symbolset, img, p, style, scalefactor);
     return;
     break;
   case(MS_SYMBOL_CARTOLINE):

@@ -920,13 +920,12 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	  if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	    cmap[i] = -1;
 	  else {
-	    if(layer->class[c].color == -1) /* use raster color */
-	      cmap[i] = add_color(map,img, CVT(red[i]), CVT(green[i]), CVT(blue[i]));
+	    if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) 
+	      cmap[i] = add_color(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	    else if(MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color))) 
+	      cmap[i] = -1; // make transparent
 	    else
-	      if(layer->class[c].color == -255) /* make transparent */
-		cmap[i] = -1;
-	      else
-		cmap[i] = layer->class[c].color; /* use class color */
+              cmap[i] = add_color(map,img, CVT(red[i]), CVT(green[i]), CVT(blue[i])); // use raster color
 	  }
 	} else
 	  cmap[i] = -1;
@@ -1122,10 +1121,12 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
 	else {
-	  if(layer->class[c].color == -1) /* use raster color */
-	    cmap[i] = add_color(map,img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i));
+          if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) 
+	    cmap[i] = add_color(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	  else if(MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color))) 
+	    cmap[i] = -1; // make transparent
 	  else
-	    cmap[i] = layer->class[c].color; /* use class color */
+            cmap[i] = add_color(map,img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i)); // use raster color	  
 	}
       } else
 	cmap[i] = -1;
@@ -1465,10 +1466,12 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	    if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	      cmap[i] = -1;
 	    else {
-	      if(layer->class[c].color == -1) /* use raster color */
-		cmap[i] = add_color(map,img, rc[i], gc[i], bc[i]);
+	      if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) 
+	        cmap[i] = add_color(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	      else if(MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color))) 
+	        cmap[i] = -1; // make transparent
 	      else
-		cmap[i] = layer->class[c].color; /* use class color */
+                cmap[i] = add_color(map,img, rc[i], gc[i], bc[i]); // use raster color
 	    }
 	  } else
 	    cmap[i] = -1;
@@ -1591,12 +1594,17 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  sprintf(tmpstr,"%d", i);
 	  c = getClass(layer, tmpstr);
 	  
-	  if(c != -1) {
-	    if(layer->class[c].color == -1) { /* use raster color */
+	  if(c == -1) 
+	    cmap[i] = -1;
+	  else {
+	    if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) 
+	      cmap[i] = add_color(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	    else if(MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color))) 
+	      cmap[i] = -1; // make transparent
+	    else {              
 	      clrget(&clr,i,&color);
-	      cmap[i] = add_color(map,img, color.red, color.green, color.blue);
-	    } else
-	      cmap[i] = layer->class[c].color; /* use class color */
+	      cmap[i] = add_color(map,img, color.red, color.green, color.blue); // use raster color
+	    }
 	  }
 	}
       }
