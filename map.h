@@ -1002,6 +1002,7 @@ char *getPath(char *fn);
 char *msBuildPath(char *pszReturnPath, char *abs_path, char *path);
 char *msBuildPath3(char *pszReturnPath,char *abs_path,char *path1,char *path2);
 char *msTryBuildPath(char *szReturnPath, char *abs_path, char *path);
+char *msTryBuildPath3(char *szReturnPath, char *abs_path, char *path1, char *path2);
 char **split(const char *string, char cd, int *num_tokens);
 int countChars(char *str, char ch);
 char *long2string(long value);
