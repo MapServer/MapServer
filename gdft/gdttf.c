@@ -892,7 +892,7 @@ char * imageStringTTF(gdImage *im, int *brect, int fg, char *fontname, double pt
     
     /* carriage returns */
     if (ch == '\r') {
-      advance_x = 0;
+      advance_x = 0;      
       next++;
       continue;
     }
