@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.35  2003/10/28 16:50:25  assefa
+ * Add functions removeMetaData on map and layer.
+ *
  * Revision 1.34  2003/07/03 15:31:47  assefa
  * Add the possibility to generate image for function
  * processquerytemplate (bug 341).
@@ -206,6 +209,7 @@ int             mapObj_setProjection(mapObj* self, char *string);
 int             mapObj_save(mapObj* self, char *filename);
 char            *mapObj_getMetaData(mapObj *self, char *name);
 int             mapObj_setMetaData(mapObj *self, char *name, char *value);
+int             mapObj_removeMetaData(mapObj *self, char *name);
 void            mapObj_freeQuery(mapObj *self, int qlayer);
 int             mapObj_moveLayerup(mapObj *self, int layerindex);
 int             mapObj_moveLayerdown(mapObj *self, int layerindex);
@@ -257,6 +261,7 @@ int             layerObj_setProjection(layerObj *self, char *string);
 int             layerObj_addFeature(layerObj *self, shapeObj *shape);
 char            *layerObj_getMetaData(layerObj *self, char *name);
 int             layerObj_setMetaData(layerObj *self, char *name, char *value);
+int             layerObj_removeMetaData(layerObj *self, char *name);
 char            *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map, 
                                                int click_x, int click_y,     
                                                int feature_count, 

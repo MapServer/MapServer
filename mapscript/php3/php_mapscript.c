@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.181  2003/10/28 16:50:24  assefa
+ * Add functions removeMetaData on map and layer.
+ *
  * Revision 1.180  2003/10/20 21:46:06  dan
  * Fixed PHP MapScript's pasteImage() to work with GD 2.x.  The transparent
  * color value is now a 0xrrggbb value instead of a color index.
@@ -287,6 +290,7 @@ DLEXPORT void php3_ms_map_freequery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS);
@@ -340,6 +344,7 @@ DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS);
@@ -690,6 +695,7 @@ function_entry php_map_class_functions[] = {
     {"getlatlongextent", php3_ms_map_getLatLongExtent,  NULL},
     {"getmetadata",     php3_ms_map_getMetaData,        NULL},
     {"setmetadata",     php3_ms_map_setMetaData,        NULL},
+    {"removemetadata",     php3_ms_map_removeMetaData,        NULL},
     {"prepareimage",    php3_ms_map_prepareImage,       NULL},
     {"preparequery",    php3_ms_map_prepareQuery,       NULL},
     {"movelayerup",     php3_ms_map_moveLayerUp,        NULL},
@@ -773,6 +779,7 @@ function_entry php_layer_class_functions[] = {
     {"getshape",        php3_ms_lyr_getShape,           NULL},
     {"getmetadata",     php3_ms_lyr_getMetaData,        NULL},
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
+    {"removemetadata",     php3_ms_lyr_removeMetaData,        NULL},
     {"setfilter",       php3_ms_lyr_setFilter,          NULL},
     {"getwmsfeatureinfourl", php3_ms_lyr_getWMSFeatureInfoURL, NULL},
     {"getitems",        php3_ms_lyr_getItems,           NULL},
@@ -4428,6 +4435,44 @@ DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
+
+/**********************************************************************
+ *                        map->removeMetaData()
+ **********************************************************************/
+
+/* {{{ proto int map.removeMetaData(string name)
+   Remove MetaData entry using by name.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_map_removeMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj *self;
+    pval   *pThis, *pName;
+    int    nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pName) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = mapObj_removeMetaData(self, 
+                                         pName->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
+
 /**********************************************************************
  *                        map->movelayerup()
  *
@@ -7086,6 +7131,44 @@ DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
         (nStatus = layerObj_setMetaData(self, 
                                         pName->value.str.val,  
                                         pValue->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        layer->removeMetaData()
+ **********************************************************************/
+
+/* {{{ proto int layer.removeMetaData(string name)
+   Remove MetaData entry by name.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_lyr_removeMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pThis, *pName;
+    int    nStatus = MS_FAILURE;
+    HashTable   *list=NULL;
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pName) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+    if (self == NULL || 
+        (nStatus = layerObj_removeMetaData(self, 
+                                        pName->value.str.val)) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
     }

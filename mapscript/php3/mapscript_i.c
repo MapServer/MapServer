@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.68  2003/10/28 16:50:25  assefa
+ * Add functions removeMetaData on map and layer.
+ *
  * Revision 1.67  2003/09/04 16:05:15  assefa
  * Add msClearLayerPenValues in classObj_drawLegendIcon.
  *
@@ -477,6 +480,9 @@ int mapObj_setMetaData(mapObj *self, char *name, char *value) {
     return MS_SUCCESS;
   }
 
+int mapObj_removeMetaData(mapObj *self, char *name) {
+    return(msRemoveHashTable(self->web.metadata, name));
+}
 
 int mapObj_moveLayerup(mapObj *self, int layerindex){
     return msMoveLayerUp(self, layerindex);
@@ -692,12 +698,17 @@ char *layerObj_getMetaData(layerObj *self, char *name) {
     return(msLookupHashTable(self->metadata, name));
   }
 
+
 int layerObj_setMetaData(layerObj *self, char *name, char *value) {
     if (!self->metadata)
         self->metadata = msCreateHashTable();
     if (msInsertHashTable(self->metadata, name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
+  }
+
+int layerObj_removeMetaData(layerObj *self, char *name) {
+    return(msRemoveHashTable(self->metadata, name));
   }
 
 char *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map, int click_x, int click_y,     

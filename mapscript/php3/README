@@ -364,6 +364,10 @@ and the MapServer Map File documentation at:
         Set a metadata entry for the map (stored in the WEB object in the map
         file).  Returns MS_SUCCESS/MS_FAILURE.
 
+   int removeMetaData(string name)
+        Remove a metadata entry for the map (stored in the WEB object in the map
+        file).  Returns MS_SUCCESS/MS_FAILURE.
+
    array getLayersIndexByGroup(string groupname)
         Return an array containing all the layer's indexes given
         a group name.
@@ -626,6 +630,9 @@ and the MapServer Map File documentation at:
 
    int setMetaData(string name, string value)
         Set a metadata entry for the layer.  Returns MS_SUCCESS/MS_FAILURE.
+
+   int removeMetaData(string name)
+        Remove a metadata entry for the layer.  Returns MS_SUCCESS/MS_FAILURE.
 
    int getWMSFeatureInfoURL(int clickX, int clickY, int featureCount, 
                             string infoFormat)
