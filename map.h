@@ -1366,6 +1366,7 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 #define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
 
 MS_DLL_EXPORT int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
+MS_DLL_EXPORT int msSaveImageStreamGD(gdImagePtr img, FILE *file, outputFormatObj *format);
 MS_DLL_EXPORT int msSaveImageGD_LL(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
 MS_DLL_EXPORT void msFreeImageGD(gdImagePtr img);
 

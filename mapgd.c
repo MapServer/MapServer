@@ -2714,11 +2714,47 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
   return(0);
 }
 
-/*
-** Save an image to a file named filename, if filename is NULL it goes to stdout
-*/
+/* ===========================================================================
+   msSaveImageGD
+   
+   Save an image to a file named filename, if filename is NULL it goes to
+   stdout.  This function wraps msSaveImageStreamGD.  --SG
+   ======================================================================== */
+int msSaveImageGD( gdImagePtr img, char *filename, outputFormatObj *format )
+{
+    FILE *stream;
+    int retval=MS_FAILURE;
 
-int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
+    /* Try to open a file handle */
+    if (filename != NULL && strlen(filename) > 0)
+    {
+        stream = fopen(filename, "wb");
+        if (!stream)
+        {
+            msSetError(MS_IOERR, "Unable to open file %s for writing",
+                       "msSaveImageGD()", filename);
+            return MS_FAILURE;
+        }
+    
+        retval = msSaveImageStreamGD( img, stream, format );
+        fclose(stream);
+    } 
+    /* Fall back on standard output, or MAPIO's replacement */
+    else 
+    {
+        return msSaveImageStreamGD(img, NULL, format);
+    }
+
+    return retval;
+}
+
+/* ===========================================================================
+   msSaveImageStreamGD
+
+   Save image data to an open file handle, or to stdout if the handle
+   is NULL.
+   ======================================================================== */
+int msSaveImageStreamGD( gdImagePtr img, FILE *file, outputFormatObj *format )
 {
   FILE *stream;
   gdIOCtx *gd_ctx = NULL;
@@ -2727,14 +2763,11 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
     gdImageSaveAlpha( img, 1 );
   else if( format->imagemode == MS_IMAGEMODE_RGB )
     gdImageSaveAlpha( img, 0 );
-
-  if(filename != NULL && strlen(filename) > 0) {
-    stream = fopen(filename, "wb");
-    if(!stream) {
-      msSetError(MS_IOERR, "(%s)", "msSaveImage()", filename);
-      return(MS_FAILURE);
-    }
-  } else { /* use stdout */
+ 
+  if (file)
+    stream = file;
+  else 
+  { /* use stdout */
 
 #if defined(_WIN32) && !defined(USE_FASTCGI)
     /*
@@ -2824,7 +2857,6 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
       return(MS_FAILURE);
   }
 
-  if(filename != NULL && strlen(filename) > 0) fclose(stream);
   if( gd_ctx != NULL )
       free( gd_ctx );
 

@@ -79,6 +79,24 @@
         msSaveImage(map, self, filename );
     }
 
+    /* ======================================================================
+       write()
+
+       Write image data to an open file handle.  Intended to replace
+       saveToString.
+    ====================================================================== */
+    int write( FILE *file=NULL )
+    {
+        if ( MS_DRIVER_GD(self->format) )
+            return msSaveImageStreamGD(self->img.gd, file, self->format);
+        else
+        {
+            msSetError(MS_IMGERR, "Writing of %s format not implemented",
+                       "imageObj::write");
+            return MS_FAILURE;
+        }
+    }
+    
     // Method saveToString renders the imageObj into image data and returns
     // it as a string. Questions and comments to 
     // Sean Gillies <sgillies@frii.com>
