@@ -863,8 +863,10 @@ char *strcatalloc(char* pszDest, char* pszSrc)
 */
 int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, char **pszTemp, char* pszPrefix)
 {
+   hashTableObj myHashTable;
+   char pszStatus[3];   
    char *pszClassImg;
-   int i;
+   int i, j;
 
    *pszTemp = NULL;
    
@@ -884,6 +886,32 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
     */
    *pszTemp = gsub(*pszTemp, "[leg_group_name]", pszGroupName);
 
+   
+   /*
+    * Create a hash table that contain info
+    * on current layer
+    */
+   myHashTable = msCreateHashTable();
+   
+   /*
+    * Check for the first layer
+    * that belong to this group.
+    * Get his status and check for if.
+    */
+   for (j=0; j<map->numlayers; j++) 
+   {
+      if (map->layers[j].group && strcmp(map->layers[j].group, pszGroupName) == 0) 
+      {
+         sprintf(pszStatus, "%d", map->layers[j].status);
+         msInsertHashTable(myHashTable, "layer_status", pszStatus);
+   
+         if (processMetadata(pszTemp, myHashTable) != MS_SUCCESS)
+           return MS_FAILURE;
+         
+         break;
+      }
+   }
+  
    /*
     * Process all metadata tags
     * only web object is accessible
