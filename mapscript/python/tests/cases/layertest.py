@@ -49,23 +49,23 @@ class MapLayerTestCase(MapTestCase):
 # ===========================================================================
 # Test begins now
 
-class LayerConstructorTestCase(unittest.TestCase):
+class LayerConstructorTestCase(MapLayerTestCase):
 
     def testLayerConstructorNoArg(self):
-        """LayerConstructorTestCase.testLayerConstructorNoArg: test layer constructor with no argument"""
+        """test layer constructor with no argument"""
         layer = mapscript.layerObj()
         t = type(layer)
         assert str(t) == "<class 'mapscript.layerObj'>", t
         assert layer.thisown == 1
+        assert layer.index == -1
     
     def testLayerConstructorMapArg(self):
-        """LayerConstructorTestCase.testLayerConstructorMapArg: test layer constructor with map argument"""
-        test_map = mapscript.mapObj()
-        layer = mapscript.layerObj(test_map)
+        """test layer constructor with map argument"""
+        layer = mapscript.layerObj(self.map)
         t = type(layer)
         assert str(t) == "<class 'mapscript.layerObj'>", t
         assert layer.thisown == 1
-        assert str(layer) == str(test_map.getLayer(0))
+        assert str(layer) == str(self.map.getLayer(self.map.numlayers-1))
      
 
 class LayerExtentTestCase(MapTestCase):

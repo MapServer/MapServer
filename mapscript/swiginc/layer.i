@@ -46,6 +46,7 @@
             } 
             result = initLayer(layer, NULL);
             if (result == MS_SUCCESS) {
+                layer->index = -1;
                 return layer;
             }
             else {
