@@ -200,7 +200,7 @@ int msGetLayerIndex(mapObj *map, char *name)
 }
 
 // converts a 2 character hexidecimal string to an integer
-static int hex2int(char *hex) {
+int hex2int(char *hex) {
   int number;
 
   number = (hex[0] >= 'A' ? ((hex[0] & 0xdf) - 'A')+10 : (hex[0] - '0'));

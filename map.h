@@ -891,6 +891,7 @@ int getDouble(double *d);
 int getInteger(int *i);
 int getSymbol(int n, ...);
 int getCharacter(char *c);
+int  hex2int(char *hex);
 
 void initSymbol(symbolObj *s);
 int initMap(mapObj *map);
@@ -921,6 +922,8 @@ void copyProperty(void *dst, void *src, int size);
 char *copyStringProperty(char **dst, char *src);
 int msCopyMap(mapObj *, mapObj *);
 int msCopyLayer(layerObj *, layerObj *);
+int msCopyClass(classObj *dst, classObj *src, layerObj *layer);
+
 
 // For maplabel and mappdf
 int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
