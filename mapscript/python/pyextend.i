@@ -22,10 +22,7 @@
 
     %newobject __str__;
     char *__str__() {
-        char buffer[256];
-        char fmt[]="{ 'x': %f , 'y': %f }";
-        msPointToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
-        return strdup(buffer);
+        return pointObj_toString( self );
     }
     
 }
