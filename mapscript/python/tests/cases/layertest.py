@@ -1,7 +1,7 @@
 # $Id$
 #
 # Project:  MapServer
-# Purpose:  Comprehensive xUnit style Python mapscript test suite
+# Purpose:  xUnit style Python mapscript tests of Layer
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
@@ -28,31 +28,40 @@
 #
 # Execute this module as a script from mapserver/mapscript/python
 #
-#     python tests/runtests.py -v
+#     python tests/cases/layertest.py -v
 #
 # ===========================================================================
 
+import os, sys
 import unittest
 
-# Import test cases
-from cases.hashtest import HashTableTestCase
-from cases.owstest import OWSRequestTestCase 
-from cases.clonetest import MapCloningTestCase
-from cases.maptest import MapConstructorTestCase, MapLayersTestCase
-from cases.layertest import LayerConstructorTestCase
+# the testing module helps us import the pre-installed mapscript
+from testing import mapscript
 
-# Create a test suite
-suite = unittest.TestSuite()
+# ===========================================================================
+# Test begins now
 
-# Add tests to the suite
-suite.addTest(HashTableTestCase)
-suite.addTest(MapCloningTestCase)
-suite.addTest(OWSRequestTestCase)
-suite.addTest(MapConstructorTestCase)
-suite.addTest(MapLayersTestCase)
-suite.addTest(LayerConstructorTestCase)
+class LayerConstructorTestCase(unittest.TestCase):
 
-# If module is run as a script, execute every test case in the suite
+    def testLayerConstructorNoArg(self):
+        "test layer constructor with no argument"
+        layer = mapscript.layerObj()
+        t = type(layer)
+        assert str(t) == "<class 'mapscript.layerObj'>", t
+        assert layer.thisown == 1
+    
+    def testLayerConstructorMapArg(self):
+        "test layer constructor with map argument"
+        test_map = mapscript.mapObj()
+        layer = mapscript.layerObj(test_map)
+        t = type(layer)
+        assert str(t) == "<class 'mapscript.layerObj'>", t
+        assert layer.thisown == 1
+        assert str(layer) == str(test_map.getLayer(0))
+            
+# ===========================================================================
+# Run the tests outside of the main suite
+
 if __name__ == '__main__':
     unittest.main()
-
+    

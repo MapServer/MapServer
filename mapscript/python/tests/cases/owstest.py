@@ -79,19 +79,19 @@ class OWSRequestTestCase(MapTestCase):
         request.setParameter("SRS", "EPSG:4326")
         request.setParameter("HEIGHT", "60")
         request.setParameter("WIDTH", "60")
-        for i in range(self.mapobj1.numlayers):
-            self.mapobj1.getLayer(i).status = mapscript.MS_ON
-        status = self.mapobj1.loadOWSParameters("1.1.0", request)
+        for i in range(self.map.numlayers):
+            self.map.getLayer(i).status = mapscript.MS_ON
+        status = self.map.loadOWSParameters("1.1.0", request)
         assert status == mapscript.MS_SUCCESS, status
-        self.assertEqual(self.mapobj1.height, 60)
-        self.assertEqual(self.mapobj1.width, 60)
-        self.assertEqual(self.mapobj1.getProjection(), "init=epsg:4326")
+        self.assertEqual(self.map.height, 60)
+        self.assertEqual(self.map.width, 60)
+        self.assertEqual(self.map.getProjection(), "init=epsg:4326")
         # MapServer extents are from middle of the pixel
-        self.assertAlmostEqual(self.mapobj1.extent.minx, -0.295)
-        self.assertAlmostEqual(self.mapobj1.extent.miny, 51.205)
-        self.assertAlmostEqual(self.mapobj1.extent.maxx, 0.295)
-        self.assertAlmostEqual(self.mapobj1.extent.maxy, 51.795)
-        img = self.mapobj1.draw()
+        self.assertAlmostEqual(self.map.extent.minx, -0.295)
+        self.assertAlmostEqual(self.map.extent.miny, 51.205)
+        self.assertAlmostEqual(self.map.extent.maxx, 0.295)
+        self.assertAlmostEqual(self.map.extent.maxy, 51.795)
+        img = self.map.draw()
         img.save("test_load_ows_request.png")
 
 

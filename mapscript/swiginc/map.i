@@ -29,31 +29,46 @@
    ===========================================================================
 */
 
-%extend mapObj {
-  mapObj(char *filename) {
-    if(filename && strlen(filename))
-      return msLoadMap(filename, NULL);
-    else { /* create an empty map, no layers etc... */
-      return msNewMapObj();
-    }      
-  }
+%extend mapObj 
+{
 
-  ~mapObj() {
-    msFreeMap(self);
-  }
-
-  %newobject clone;
-  mapObj *clone() {
-    mapObj *dstMap;
-    dstMap = msNewMapObj();
-    if (msCopyMap(dstMap, self) != MS_SUCCESS)
+    mapObj(const char *filename="") 
     {
-        msFreeMap(dstMap);
-        dstMap = NULL;
+        if (filename && strlen(filename))
+            return msLoadMap(filename, NULL);
+        else { /* create an empty map, no layers etc... */
+            return msNewMapObj();
+        }      
     }
-    return dstMap;
-  }
 
+    ~mapObj() 
+    {
+        msFreeMap(self);
+    }
+
+    %newobject clone;
+    mapObj *clone() 
+    {
+        mapObj *dstMap;
+        dstMap = msNewMapObj();
+        if (msCopyMap(dstMap, self) != MS_SUCCESS) {
+            msFreeMap(dstMap);
+            dstMap = NULL;
+        }
+        return dstMap;
+    }
+
+    int insertLayer(layerObj *layer, int index=-1) 
+    {
+        return msInsertLayer(self, layer, index);  
+    }
+    
+    %newobject removeLayer;
+    layerObj *removeLayer(int index) 
+    {
+        return msRemoveLayer(self, index);
+    }
+    
     int setExtent(double minx, double miny, double maxx, double maxy) {	
 	return msMapSetExtent( self, minx, miny, maxx, maxy );
     }
@@ -65,7 +80,7 @@
   /* removeLayer() adjusts the layers array, the indices of
    * the remaining layers, the layersdrawing order, and numlayers
    */
-  int removeLayer(int index) {
+  /*int removeLayer(int index) {
     int i, drawindex = MS_MAXLAYERS + 1;
     if ((index < 0) || (index >= self->numlayers)) {
       return MS_FAILURE;
@@ -86,7 +101,7 @@
     self->numlayers--;
     self->layerorder[self->numlayers] = 0;
     return MS_SUCCESS;
-  }
+  }*/
 
   layerObj *getLayer(int i) {
     if(i >= 0 && i < self->numlayers)	

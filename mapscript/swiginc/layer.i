@@ -32,24 +32,53 @@
 %extend layerObj 
 {
 
-    layerObj(mapObj *map) 
+    layerObj(mapObj *map=NULL) 
     {
-        if (map->numlayers == MS_MAXLAYERS) // no room
-            return(NULL);
+        layerObj *layer;
+        int result;
+        
+        if (!map) {
+            layer = (layerObj *) malloc(sizeof(layerObj));
+            if (!layer) {
+                msSetError(MS_MEMERR, "Failed to initialize Layer",
+                                       "layerObj()");
+                return NULL;
+            } 
+            result = initLayer(layer, NULL);
+            if (result == MS_SUCCESS) {
+                return layer;
+            }
+            else {
+                msSetError(MS_MEMERR, "Failed to initialize Layer",
+                                       "layerObj()");
+                return NULL;
+            }
+        }
+        else { // parent map exists
+            if (map->numlayers == MS_MAXLAYERS) { // no room
+                msSetError(MS_CHILDERR, "Max number of layers exceeded",
+                                        "layerObj()");
+                return(NULL);
+            }
 
-        if (initLayer(&(map->layers[map->numlayers]), map) == -1)
-            return(NULL);
+            if (initLayer(&(map->layers[map->numlayers]), map) == -1)
+                return(NULL);
 
-        map->layers[map->numlayers].index = map->numlayers;
-        map->layerorder[map->numlayers] = map->numlayers;
-        map->numlayers++;
+            map->layers[map->numlayers].index = map->numlayers;
+            map->layerorder[map->numlayers] = map->numlayers;
+            map->numlayers++;
 
-        return &(map->layers[map->numlayers-1]);
+            return &(map->layers[map->numlayers-1]);
+        }
     }
 
     ~layerObj() 
     {
-        return; // map deconstructor takes care of it
+        if (!self->map) {
+            freeLayer(self);
+            //free(self);
+        }
+        // else map deconstructor takes care of it
     }
 
     /* removeClass() */

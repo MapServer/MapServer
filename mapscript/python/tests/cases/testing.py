@@ -158,11 +158,11 @@ class MapPrimitivesTestCase(MapscriptTestCase):
 class MapTestCase(MapPrimitivesTestCase):
     """Base class for testing with a map fixture"""
     def setUp(self):
-        self.mapobj1 = mapscript.mapObj(TESTMAPFILE)
+        self.map = mapscript.mapObj(TESTMAPFILE)
         #self.xmarks_image = xmarks_image
         #self.test_image = test_image
     def tearDown(self):
-        self.mapobj1 = None
+        self.map = None
 
 class MapZoomTestCase(MapPrimitivesTestCase):
     "Testing new zoom* methods that we are adapting from the PHP MapScript"
