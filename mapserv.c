@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.142  2004/12/09 21:20:19  frank
+ * clear error list before processing new request in fastcgi mode
+ *
  * Revision 1.141  2004/11/11 19:55:24  sdlime
  * Fixed enhancement request 1004, plus a bit more. ERROR and EMPTY properties are now treated as URL templates so for example you could pass the map xy value for a bombed query (perhaps to another service). Also added [errmsg] and [errmsg_esc] tags to the templating code so that the current error stack can be output. Various error messages are delimited by semi-colons.
  *
@@ -1169,6 +1172,7 @@ int main(int argc, char *argv[]) {
 
 #ifdef USE_FASTCGI
       /* FCGI_ --- return to top of loop */
+      msResetErrorList();
       continue;
 #else
       /* normal case, processing is complete */
@@ -1562,6 +1566,7 @@ int main(int argc, char *argv[]) {
     msFreeMapServObj(msObj);
 
 #ifdef USE_FASTCGI
+    msResetErrorList();
     }
 #endif
 
