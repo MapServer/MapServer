@@ -158,9 +158,7 @@ mapObj *loadMap()
   // services can take advantage of these "vendor specific" extensions
   for(i=0;i<msObj->NumParams;i++) {
     if(strncasecmp(msObj->ParamNames[i],"map_",4) == 0) { // check to see if there are any additions to the mapfile
-      if(msLoadMapString(msObj->Map, msObj->ParamNames[i], msObj->ParamValues[i]) == -1)
-	writeError();
-      continue;
+      if(msLoadMapString(map, msObj->ParamNames[i], msObj->ParamValues[i]) == -1) writeError();
     }
 
     tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->ParamNames[i]) + 3);
@@ -734,9 +732,9 @@ void loadForm()
     }
 
     // check to see if there are any additions to the mapfile, this has been moved to loadMap()
-    //  if(strncasecmp(msObj->ParamNames[i],"map_",4) == 0) { 
+    // if(strncasecmp(msObj->ParamNames[i],"map_",4) == 0) { 
     //   if(msLoadMapString(msObj->Map, msObj->ParamNames[i], msObj->ParamValues[i]) == -1)
-    //	 writeError();
+    //     writeError();
     //   continue;
     // }
 
