@@ -46,8 +46,11 @@ WMS=-DUSE_WMS_SVR
 #you need the libcurl library from http://curl.haxx.se/library/c/
 #WMSCLIENT= -DUSE_WMS_LYR
 
+#Use thses flags to compile with libcurl
 #CURL_INC = -I../curl-7.10.2/include
-#CURL_LIB = ../curl-7.10.2/?????
+#CURL_LIB = ../curl-7.10.2/lib/Debug/libcurl.lib
+#WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
+
 
 # Use -DUSE_WFS_SVR to compile with WFS server support, requires OGR and PROJ4
 # Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
@@ -194,7 +197,8 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
 		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB) \
-                $(CURL_LIB) $(ECW_LIB) $(MING_LIB) $(PDF_LIB)
+                $(CURL_LIB) $(ECW_LIB) $(MING_LIB) $(PDF_LIB) \
+                $(WINSOCK_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC) \
