@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.32  2004/05/12 20:59:48  dan
+ * Fixed typo in OWS namespace code in msOWSGetLayerExtent() and added an
+ * assert() in msOWSLookupMetadata() to catch that in the future (bug 661)
+ *
  * Revision 1.31  2004/05/03 03:45:42  dan
  * Include map= param in default onlineresource of GetCapabilties if it
  * was explicitly set in QUERY_STRING (bug 643)
@@ -13,10 +17,14 @@
  * avoid const warnings
  *
  * Revision 1.29  2004/04/21 13:02:42  sdlime
- * Updated msOWSPrintMetadataList() so that NULL values for startTag/endTag are valid.
+ * Updated msOWSPrintMetadataList() so that NULL values for startTag/endTag
+ * are valid.
  *
  * Revision 1.28  2004/04/20 05:41:20  sdlime
- * Getting very close to a usable WCS implementation. Still need to add domain and range set to DescribeCoverage, and need to be able to interpret requests based on them. However, we'll keep it simple for now, operating on bands and some temporal subsetting.
+ * Getting very close to a usable WCS implementation. Still need to add 
+ * domain and range set to DescribeCoverage, and need to be able to interpret
+ * requests based on them. However, we'll keep it simple for now, operating
+ * on bands and some temporal subsetting.
  *
  * Revision 1.26  2004/04/14 07:31:40  dan
  * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
@@ -115,6 +123,7 @@
 
 #include <ctype.h> /* isalnum() */
 #include <stdarg.h> 
+#include <assert.h>
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
 
@@ -380,6 +389,14 @@ const char *msOWSLookupMetadata(hashTableObj metadata,
                 buf[1] = 'm';
                 buf[2] = 'l';
                 break;
+              default:
+                // We should never get here unless an invalid code (typo) is
+                // present in the code, but since this happened before...
+                msSetError(MS_WMSERR, 
+                           "Unsupported metadata namespace code (%c).",
+                           "msOWSLookupMetadata()", *namespaces );
+                assert(FALSE);
+                return NULL;
             }
 
             value = msLookupHashTable(metadata, buf);
@@ -778,7 +795,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
 {
   static const char *value;
 
-  if ((value = msOWSLookupMetadata(lp->metadata, "WFCO", "extent")) != NULL)
+  if ((value = msOWSLookupMetadata(lp->metadata, "MFCO", "extent")) != NULL)
   {
     char **tokens;
     int n;
