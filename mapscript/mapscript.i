@@ -726,6 +726,14 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return -1;
   }
 
+  double distanceToPoint(pointObj *point) {
+    return msDistancePointToShape(point, self);
+  }
+
+  double distanceToShape(shapeObj *shape) {
+    return msDistanceShapeToShape(self, shape);
+  }
+
   int intersects(shapeObj *shape) {
     switch(self->type) {
     case(MS_SHAPE_LINE):
