@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.149  2004/11/11 14:41:27  assefa
+ * Send a warning if the layer ststus is set to default (Bug 638).
+ *
  * Revision 1.148  2004/11/11 01:03:33  assefa
  * You can now use wms_group_abstarct metedata for capabilities output (Bug 754)
  *
@@ -1112,7 +1115,11 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL, *pszStyle=NULL;
    const char *pszLegendURL=NULL;
    char *pszMetadataName=NULL, *mimetype=NULL;
-       
+   
+   //if the layer status is set to MS_DEFAULT, output a warning
+   if (lp->status == MS_DEFAULT)
+     msIO_fprintf(stdout, "<!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->\n");
+ 
    if (nVersion <= OWS_1_0_7)
    {
        msIO_printf("%s    <Layer queryable=\"%d\">\n",
