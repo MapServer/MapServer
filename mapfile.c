@@ -1768,6 +1768,12 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
     current = current->next;
   }
 
+  if(layer->filter.string) {
+    fprintf(stream, "      FILTER ");
+    writeExpression(&(layer->filter), stream);
+    fprintf(stream, "\n");
+  }
+
   if(layer->footer) fprintf(stream, "    FOOTER \"%s\"\n", layer->footer);
   if(layer->group) fprintf(stream, "    GROUP \"%s\"\n", layer->group);
   if(layer->header) fprintf(stream, "    HEADER \"%s\"\n", layer->header);
