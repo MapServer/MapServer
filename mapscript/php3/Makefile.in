@@ -65,7 +65,7 @@ MS_LIBS =   $(RUNPATHS) @MS_LIB@ @ALL_LIB@ @XTRALIBS@ $(MS_STATIC)
 # The rest of the file should not have to be edited...
 #
 
-CFLAGS := $(CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC)
+CFLAGS112 = $(CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC)
 
 all: php_mapscript.so
 
@@ -81,7 +81,7 @@ php_proj.so:  $(PHPPROJ_OBJS)
 	$(LD) -o $@ $(PHPPROJ_OBJS) $(MS_LIBS)
 
 %.o: %.c php_mapscript_util.h php_mapscript.h
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS112) -c -o $@ $<
 
 
 clean:
