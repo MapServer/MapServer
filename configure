@@ -271,7 +271,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP STRINGS FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GDAL_CONFIG OGR_ENABLED OGR_INC OGR_LIB GDAL_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS C_PIC LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP STRINGS FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS C_PIC LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -7614,135 +7614,11 @@ fi
 
 if test -n "$GDAL_CONFIG" -a "$with_ogr" != "no" ; then
 
-  saved_LIBS="$LIBS"
-  LIBS="$LIBS `$GDAL_CONFIG --libs`"
-  echo "$as_me:$LINENO: checking for OGRRegisterAll in -lgdal" >&5
-echo $ECHO_N "checking for OGRRegisterAll in -lgdal... $ECHO_C" >&6
-if test "${ac_cv_lib_gdal_OGRRegisterAll+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgdal  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
 
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char OGRRegisterAll ();
-int
-main ()
-{
-OGRRegisterAll ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_gdal_OGRRegisterAll=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_gdal_OGRRegisterAll=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gdal_OGRRegisterAll" >&5
-echo "${ECHO_T}$ac_cv_lib_gdal_OGRRegisterAll" >&6
-if test $ac_cv_lib_gdal_OGRRegisterAll = yes; then
-  OGR_ENABLED=-DUSE_OGR
-fi
-
-  if test -z "$OGR_ENABLED" ; then
-        echo "$as_me:$LINENO: checking for OGRRegisterAll in -lgdal.1.1" >&5
-echo $ECHO_N "checking for OGRRegisterAll in -lgdal.1.1... $ECHO_C" >&6
-if test "${ac_cv_lib_gdal_1_1_OGRRegisterAll+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgdal.1.1  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char OGRRegisterAll ();
-int
-main ()
-{
-OGRRegisterAll ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_gdal_1_1_OGRRegisterAll=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_gdal_1_1_OGRRegisterAll=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_gdal_1_1_OGRRegisterAll" >&5
-echo "${ECHO_T}$ac_cv_lib_gdal_1_1_OGRRegisterAll" >&6
-if test $ac_cv_lib_gdal_1_1_OGRRegisterAll = yes; then
-  OGR_ENABLED=-DUSE_OGR
-fi
-
-  fi
-  LIBS="$saved_LIBS"
-
-  HAVE_GDAL_LIB=yes
-
-  if test -n "$OGR_ENABLED" ; then
-      OGR_LIB="`$GDAL_CONFIG --libs`"
-      OGR_INC="`$GDAL_CONFIG --cflags`"
-      echo "$as_me:$LINENO: result:         OGR enabled ($OGR_LIB)." >&5
-echo "${ECHO_T}        OGR enabled ($OGR_LIB)." >&6
+  if test x`$GDAL_CONFIG --ogr-enabled` = "xyes" ; then
+      OGR_ENABLED=-DUSE_OGR
+      echo "$as_me:$LINENO: result:         OGR enabled ($OGR_ENABLED)." >&5
+echo "${ECHO_T}        OGR enabled ($OGR_ENABLED)." >&6
   else
       { echo "$as_me:$LINENO: WARNING:         OGR not available." >&5
 echo "$as_me: WARNING:         OGR not available." >&2;}
@@ -7753,17 +7629,6 @@ else
   echo "$as_me:$LINENO: result:         OGR support not requested." >&5
 echo "${ECHO_T}        OGR support not requested." >&6
 fi
-
-OGR_ENABLED=$OGR_ENABLED
-
-OGR_INC=$OGR_INC
-
-OGR_LIB=$OGR_LIB
-
-
-ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
-ALL_INC="$OGR_INC $ALL_INC"
-ALL_LIB="$OGR_LIB $ALL_LIB"
 
 
 echo "$as_me:$LINENO: checking if GDAL support requested" >&5
@@ -7834,6 +7699,8 @@ echo "$as_me: error: couldn't find gdal-config" >&2;}
    { (exit 1); exit 1; }; }
   fi
 
+  GDAL_ENABLED=-DUSE_GDAL
+
 elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
 
   GDAL_CONFIG=$with_gdal
@@ -7847,6 +7714,7 @@ echo "$as_me: error: '$GDAL_CONFIG' is not an executable.  Make sure you use --w
    { (exit 1); exit 1; }; }
   fi
 
+  GDAL_ENABLED=-DUSE_GDAL
 
 else
 
@@ -7855,25 +7723,24 @@ echo "${ECHO_T}no" >&6
 
 fi
 
-if test -n "$GDAL_CONFIG" ; then
 
-  if test "$HAVE_GDAL_LIB" != "yes" ; then
-    GDAL_LIB=`$GDAL_CONFIG --libs`
-  fi
+if test -n "$GDAL_ENABLED" -o "$OGR_ENABLED"; then
 
+  GDAL_LIB=`$GDAL_CONFIG --libs`
   GDAL_INC=`$GDAL_CONFIG --cflags`
-  GDAL_ENABLED=-DUSE_GDAL
 
 fi
 
 GDAL_ENABLED=$GDAL_ENABLED
+
+OGR_ENABLED=$OGR_ENABLED
 
 GDAL_INC=$GDAL_INC
 
 GDAL_LIB=$GDAL_LIB
 
 
-ALL_ENABLED="$GDAL_ENABLED $ALL_ENABLED"
+ALL_ENABLED="$GDAL_ENABLED $OGR_ENABLED $ALL_ENABLED"
 ALL_INC="$GDAL_INC $ALL_INC"
 ALL_LIB="$GDAL_LIB $ALL_LIB"
 
@@ -9928,10 +9795,8 @@ s,@MPATROL_ENABLED@,$MPATROL_ENABLED,;t t
 s,@MPATROL_INC@,$MPATROL_INC,;t t
 s,@MPATROL_LIB@,$MPATROL_LIB,;t t
 s,@GDAL_CONFIG@,$GDAL_CONFIG,;t t
-s,@OGR_ENABLED@,$OGR_ENABLED,;t t
-s,@OGR_INC@,$OGR_INC,;t t
-s,@OGR_LIB@,$OGR_LIB,;t t
 s,@GDAL_ENABLED@,$GDAL_ENABLED,;t t
+s,@OGR_ENABLED@,$OGR_ENABLED,;t t
 s,@GDAL_INC@,$GDAL_INC,;t t
 s,@GDAL_LIB@,$GDAL_LIB,;t t
 s,@TIFF_ENABLED@,$TIFF_ENABLED,;t t
