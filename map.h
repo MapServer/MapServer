@@ -1006,6 +1006,7 @@ char *msEncodeUrl(const char*);
 char *msEncodeHTMLEntities(const char *string);
 void msDecodeHTMLEntities(const char *string);
 char *strcatalloc(char *pszDest, char *pszSrc);
+char *msHashString(const char *pszStr);
 
 #ifdef NEED_STRDUP
 char *strdup(char *s);

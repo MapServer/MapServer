@@ -602,3 +602,34 @@ char *strcatalloc(char *pszDest, char *pszSrc)
    
    return pszDest;
 }
+
+
+#define HASH_SIZE  16
+/*
+ * Return a hashed string for a given input string.
+ * The caller should free the return value.
+*/
+char *msHashString(const char *pszStr)
+{
+    unsigned char sums[HASH_SIZE] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    char *pszOutBuf = NULL;
+    int i=0, j=0;
+
+    pszOutBuf = (char*)malloc( (HASH_SIZE*2+1)*sizeof(char) );
+    if (pszOutBuf == NULL)
+    {
+        // msSetError(MS_MEMERR, ...);
+    }
+
+    for(i=0; pszStr && pszStr[i]; i++)
+    {
+        sums[i%HASH_SIZE] += (unsigned char)(pszStr[i]);
+    }
+
+    for(i=0; i<HASH_SIZE; i++)
+    {
+        sprintf(pszOutBuf + i*2, "%02x", sums[i]);
+    }
+
+    return pszOutBuf;
+}
