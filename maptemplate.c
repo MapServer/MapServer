@@ -1336,8 +1336,6 @@ char *generateLegendTemplate(mapservObj *msObj)
                     if (nLegendOrder < 0)
                       continue;
                  }
-                 else
-                    nLegendOrder = 0;
               }
 
               if (msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
@@ -1354,16 +1352,6 @@ char *generateLegendTemplate(mapservObj *msObj)
                  // concatenate to final result
                  pszResult = strcatalloc(pszResult, legLayerHtmlCopy);
 
-/*                 
-                 if (!pszResult)
-                 {
-                    if (pszResult)
-                      free(pszResult);
-                    pszResult=NULL;
-                    goto error;
-                 }
-*/            
-                  
                  if (legLayerHtmlCopy)
                  {
                     free(legLayerHtmlCopy);
@@ -1390,16 +1378,6 @@ char *generateLegendTemplate(mapservObj *msObj)
                        // concatenate to final result
                        pszResult = strcatalloc(pszResult, legClassHtmlCopy);
 
-/*                       
-                       if (!pszResult)
-                       {
-                          if (pszResult)
-                            free(pszResult);
-                          pszResult=NULL;
-                          goto error;
-                       }
-*/               
-
                        if (legClassHtmlCopy) {
                          free(legClassHtmlCopy);
                          legClassHtmlCopy = NULL;
@@ -1410,7 +1388,7 @@ char *generateLegendTemplate(mapservObj *msObj)
            }
          }
          else
-         if (legClassHtml){
+         if (legClassHtml){ // no layer template specified but class and group template
            for (j=0; j<msObj->Map->numlayers; j++) {
               /*
                * if order_metadata is set and the order
@@ -1424,18 +1402,9 @@ char *generateLegendTemplate(mapservObj *msObj)
                     if (nLegendOrder < 0)
                       continue;
                  }
-                 else
-                    nLegendOrder = 0;
               }
 
               if (msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
-                 if (legLayerHtmlCopy)
-                 {
-                    free(legLayerHtmlCopy);
-                    legLayerHtmlCopy = NULL;
-                 }
-                 
-            
                  // for all classes in layer
                  if (legClassHtml) {
                     for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
@@ -1454,16 +1423,6 @@ char *generateLegendTemplate(mapservObj *msObj)
                
                        // concatenate to final result
                        pszResult = strcatalloc(pszResult, legClassHtmlCopy);
-
-/*                       
-                       if (!pszResult)
-                       {
-                          if (pszResult)
-                            free(pszResult);
-                          pszResult=NULL;
-                          goto error;
-                       }
-*/               
 
                        if (legClassHtmlCopy) {
                          free(legClassHtmlCopy);
@@ -1508,16 +1467,6 @@ char *generateLegendTemplate(mapservObj *msObj)
             // concatenate to final result
             pszResult = strcatalloc(pszResult, legLayerHtmlCopy);
 
-/*            
-            if (!pszResult)
-            {
-               if (pszResult)
-                 free(pszResult);
-               pszResult=NULL;
-               goto error;
-            }
-*/  
-
             if (legLayerHtmlCopy) {
                free(legLayerHtmlCopy);
                legLayerHtmlCopy = NULL;
@@ -1542,16 +1491,6 @@ char *generateLegendTemplate(mapservObj *msObj)
                   // concatenate to final result
                   pszResult = strcatalloc(pszResult, legClassHtmlCopy);
   
-/*                  
-                  if (!pszResult)
-                  {
-                     if (pszResult)
-                       free(pszResult);
-                     pszResult=NULL;
-                     goto error;
-                  }
-*/              
-               
                   if (legClassHtmlCopy) {
                     free(legClassHtmlCopy);
                     legClassHtmlCopy = NULL;
@@ -1576,7 +1515,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                        continue;
                   }
                }
-               
+
                for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
                   if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
                     continue;
@@ -1592,15 +1531,6 @@ char *generateLegendTemplate(mapservObj *msObj)
                
                   pszResult = strcatalloc(pszResult, legClassHtmlCopy);
 
-/*                  
-                  if (!pszResult)
-                  {
-                     if (pszResult)
-                       free(pszResult);
-                     pszResult=NULL;
-                     goto error;
-                  }
-*/
                   if (legClassHtmlCopy) {
                     free(legClassHtmlCopy);
                     legClassHtmlCopy = NULL;
