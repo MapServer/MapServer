@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.82  2004/11/09 16:13:43  frank
+ * avoid casting warnings
+ *
  * Revision 1.81  2004/11/08 05:38:27  frank
  * Make sure that if an RGB PNG file is loaded with msImageLoadGD() that the
  * attached format will also be MS_IMAGEMODE_PNG.  Also Bug 1039.
@@ -486,7 +489,7 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x2 = (int)clip->minx; // 0
     y2 = (int)clip->miny; // 0
     y1 = (int)clip->maxy-1; // height-1 
-    x1 = x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle);
+    x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
 
     while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -497,7 +500,7 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x2 = (int)clip->minx; // 0
     y2 = (int)clip->maxy-1; // height-1
     y1 = (int)clip->miny; // 0
-    x1 = x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle);
+    x1 = (int) (x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle));
 
     while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -508,7 +511,7 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x1 = (int)clip->minx; // 0
     y1 = (int)clip->miny; // 0
     x2 = (int)clip->maxx-1; // width-1
-    y2 = y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle);
+    y2 = (int)(y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
 
     while(y2 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -519,7 +522,7 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x2 = (int)clip->maxx-1; // width-1
     y2 = (int)clip->miny; // 0
     x1 = (int)clip->minx; // 0
-    y1 = y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle);
+    y1 = (int) (y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle));
 
     while(y1 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -644,15 +647,15 @@ static void imageFilledCircle(gdImagePtr im, pointObj *p, int r, int c)
   int ymin, ymax, xmin, xmax;
   double dx, dy;
 
-  ymin = MS_MAX((p->y - r), 0);
-  ymax = MS_MIN((p->y + r), (gdImageSY(im)-1));
+  ymin = (int) (MS_MAX((p->y - r), 0));
+  ymax = (int) (MS_MIN((p->y + r), (gdImageSY(im)-1)));
 
   for(y=ymin; y<=ymax; y++) {
     dy = MS_ABS(p->y - y);
     dx = sqrt((r*r) - (dy*dy));
 
-    xmin = MS_MAX((p->x - dx), 0);
-    xmax = MS_MIN((p->x + dx), (gdImageSX(im)-1));
+    xmin = (int)(MS_MAX((p->x - dx), 0));
+    xmax = (int)(MS_MIN((p->x + dx), (gdImageSX(im)-1)));
 
     imageScanline(im, xmin, xmax, y, c);
   }
@@ -665,7 +668,7 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
   int i, j, first;
   int dx, dy, dx0=0, dy0=0,  ox=0, oy=0, limit;
   double x, y, x0=0.0, y0=0.0, k=0.0, k0=0.0, q=0.0, q0=0.0;
-  float par=0.71;
+  float par=(float)0.71;
 
   if(offsety == -99) {
     limit = offsetx*offsetx/4;
@@ -673,8 +676,8 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
       first = 1;
       for(j=1; j<p->line[i].numpoints; j++) {        
         ox=0; oy=0;
-        dx = p->line[i].point[j].x - p->line[i].point[j-1].x;
-        dy = p->line[i].point[j].y - p->line[i].point[j-1].y;
+        dx = (int)(p->line[i].point[j].x - p->line[i].point[j-1].x);
+        dy = (int)(p->line[i].point[j].y - p->line[i].point[j-1].y);
         //offset setting - quick approximation, may be changed with goniometric functions
         if(dx==0) { //vertical line
           if(dy==0) continue; //checking unique points
@@ -685,10 +688,10 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
             oy = (dx>0) ? offsetx : -offsetx;
           } else {
             if (MS_ABS(k)<2.1) {
-              oy = (dx>0) ? offsetx*par : -offsetx*par;
-              ox = (dy>0) ? -offsetx*par : offsetx*par;
+              oy = (int) ((dx>0) ? offsetx*par : -offsetx*par);
+              ox = (int) ((dy>0) ? -offsetx*par : offsetx*par);
             } else
-              ox = (dy>0) ? -offsetx : offsetx;
+              ox = (int)((dy>0) ? -offsetx : offsetx);
           }
           q = p->line[i].point[j-1].y+oy - k*(p->line[i].point[j-1].x+ox);
         }
@@ -779,7 +782,7 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
   xintersect = (int *)calloc(n, sizeof(int));
   
   /* Find the min and max Y */
-  ymin = p->line[0].point[0].y;
+  ymin = (int)(p->line[0].point[0].y);
   ymax = ymin;
   
   for(l=0,j=0; j<p->numlines; j++) {
@@ -791,10 +794,10 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
 	slope[l] = 0.0;
       } else {
 	horiz[l] = 0;
-	slope[l] = (float) (point2->x - point1->x) / (point2->y - point1->y);
+	slope[l] = (float)((point2->x - point1->x) / (point2->y - point1->y));
       }
-      ymin = MS_MIN(ymin, point1->y);
-      ymax = MS_MAX(ymax, point2->y);
+      ymin = (int) (MS_MIN(ymin, point1->y));
+      ymax = (int) (MS_MAX(ymax, point2->y));
       point1 = point2;
     }
   }  
@@ -828,15 +831,15 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
 	    else
 	      testpoint1 = &( p->line[j].point[p->line[j].numpoints-1] );
 	    testpoint2 = &( p->line[j].point[k] );
-	    sign = (testpoint2->y - testpoint1->y) *
-	      (point2->y - point1->y);
+	    sign = (int) ((testpoint2->y - testpoint1->y) *
+                          (point2->y - point1->y));
 	    if(sign < 0)
-	      xintersect[nfound++] = point1->x;
+                xintersect[nfound++] = (int) point1->x;
 	    /* All done for point matching case */
 	  } else {  
 	    /* Not at the first point,
 	       find the intersection*/
-	    x = ROUND(point1->x + (y - point1->y)*slope[l]);
+	    x = (int)(ROUND(point1->x + (y - point1->y)*slope[l]));
 	    xintersect[nfound++] = x;
 	  }
 	}                 /* End of checking this edge */
@@ -1096,13 +1099,13 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     if(!font) return;
 
     if(msGetCharacterSize(symbol->character, (int) size, font, &rect) != MS_SUCCESS) return;
-    x = rect.maxx - rect.minx;
-    y = rect.maxy - rect.miny;
+    x = (int)(rect.maxx - rect.minx);
+    y = (int)(rect.maxy - rect.miny);
 
     tile = createBrush(img, x, y, style, &tile_fc, &tile_bc); // create the tile image
 
-    x = -rect.minx; // center the glyph
-    y = -rect.miny;
+    x = (int) -rect.minx; // center the glyph
+    y = (int) -rect.miny;
 
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
     gdImageSetTile(img, tile);
@@ -1274,8 +1277,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 
     if(msGetCharacterSize(symbol->character, (int)size, font, &rect) != MS_SUCCESS) return;
 
-    x = p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx;
-    y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
+    x = (int)(p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx);
+    y = (int)(p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2);
 
     // ============== MOD BY DHC MAR 14, 2003 -- Can we get outline color (and rotation) for truetype symbols?
     if( oc >= 0 ) {
@@ -1444,7 +1447,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   if(fc < 0 && symbol->type != MS_SYMBOL_PIXMAP) return; // nothing to do (color not required for a pixmap symbol)
   if(size < 1) return; // size too small
   ox = MS_NINT(style->offsetx*scalefactor);
-  oy = (style->offsety == -99) ? -99 : style->offsety*scalefactor;
+  oy = (style->offsety == -99) ? -99 : (int)(style->offsety*scalefactor);
 
   if(style->symbol == 0) { // just draw a single width line
     imagePolyline(img, p, fc, ox, oy);
@@ -1644,15 +1647,15 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     if(!font) return;
 
     if(msGetCharacterSize(symbol->character, (int)size, font, &rect) != MS_SUCCESS) return;
-    x = rect.maxx - rect.minx;
-    y = rect.maxy - rect.miny;
+    x = (int)(rect.maxx - rect.minx);
+    y = (int)(rect.maxy - rect.miny);
     
     // create tile image
     tile = createBrush(img, x, y, style, &tile_fc, &tile_bc);
 
     // center the glyph
-    x = -rect.minx;
-    y = -rect.miny;
+    x = (int)-rect.minx;
+    y = (int)-rect.miny;
 
     // TODO, should style->antialias be used here (it'd be nice to ditch antialias from symbols)
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
@@ -1871,7 +1874,9 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
     
     /* Line rendering */
     first = 1;
-    for (db_line = -1*d_step_coef; db_line++ < MS_ABS(db); b += db_px_coef) {
+    for (db_line = (int)(-1*d_step_coef);
+         db_line++ < MS_ABS(db);
+         b += db_px_coef) {
     
       /* Set the start of the first pixel */
       an = a - da_pxn*(size-1)/2;
