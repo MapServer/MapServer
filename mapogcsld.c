@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2003/11/27 13:57:09  assefa
+ * Add min/max scale.
+ *
  * Revision 1.3  2003/11/25 03:21:44  assefa
  * Add test support.
  * Add filter support.
@@ -46,6 +49,7 @@
 #include "mapogcsld.h"
 #include "mapogcfilter.h"
 #include "map.h"
+#include "cpl_string.h"
 
 #ifdef USE_OGR
 
@@ -232,6 +236,9 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
     if (pnLayers)
       *pnLayers = nLayers;
 
+    if (psRoot)
+      CPLDestroyXMLNode(psRoot);
+
     return pasLayers;
 }
 
@@ -245,11 +252,17 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
     CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle;
     CPLXMLNode *psElseFilter = NULL, *psFilter=NULL;
+    CPLXMLNode *psMinScale=NULL, *psMaxScale=NULL;
+    CPLXMLNode *psTmpNode = NULL;
     FilterEncodingNode *psNode = NULL;
     char *szExpression = NULL;
     char *szClassItem = NULL;
-    int i=0, nNewClasses=0, nClassBefore=0, nClassAfter=0;
+    int i=0, nNewClasses=0, nClassBeforeFilter=0, nClassAfterFilter=0;
+    int nClassAfterRule=0, nClassBeforeRule=0;
+    char *pszTmpFilter = NULL;
+    double dfMinScale=0, dfMaxScale=0;
     
+
     if (psRoot && psLayer)
     {
         psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
@@ -284,11 +297,14 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                     while (psRule && psRule->pszValue && 
                            strcasecmp(psRule->pszValue, "Rule") == 0)
                     {
+                        //used for scale setting
+                        nClassBeforeRule = psLayer->numclasses;
+
                         psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
-                        nClassBefore = psLayer->numclasses;
+                        nClassBeforeFilter = psLayer->numclasses;
                         if (psElseFilter == NULL)
                           msSLDParseRule(psRule, psLayer);
-                        nClassAfter = psLayer->numclasses;
+                        nClassAfterFilter = psLayer->numclasses;
 
 /* -------------------------------------------------------------------- */
 /*      Parse the filter and apply it to the latest class created by    */
@@ -299,16 +315,34 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                         if (psFilter && psFilter->psChild && 
                             psFilter->psChild->pszValue)
                         {
-                            psNode = 
-                              FLTParseFilterEncoding(psFilter->psChild->pszValue);
+                            //clone the tree and set the next node to null
+                            //so we only have the Filter node
+                            psTmpNode = CPLCloneXMLTree(psFilter);
+                            psTmpNode->psNext = NULL;
+                            pszTmpFilter = CPLSerializeXMLTree(psTmpNode);
+                            CPLDestroyXMLNode(psTmpNode);
+
+                            if (pszTmpFilter)
+                            {
+                            //nTmp = strlen(psFilter->psChild->pszValue)+17;
+                            //pszTmpFilter = malloc(sizeof(char)*nTmp);
+                            //sprintf(pszTmpFilter,"<Filter>%s</Filter>",
+                            //        psFilter->psChild->pszValue);
+                            //pszTmpFilter[nTmp-1]='\0';
+                                psNode = FLTParseFilterEncoding(pszTmpFilter);
+                            
+                                CPLFree(pszTmpFilter);
+                            }
+
                             if (psNode)
                             {
+                              //TODO layer->classitem
                                 szExpression = FLTGetMapserverExpression(psNode);
                                 if (szExpression)
                                 {
                                     szClassItem = 
                                       FLTGetMapserverExpressionClassItem(psNode);
-                                    nNewClasses = nClassAfter - nClassBefore;
+                                    nNewClasses = nClassAfterFilter - nClassBeforeFilter;
                                     for (i=0; i<nNewClasses; i++)
                                     {
                                         loadExpressionString(&psLayer->
@@ -320,7 +354,39 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                 }
                             }
                         }
+/* -------------------------------------------------------------------- */
+/*      parse minscale and maxscale.                                    */
+/* -------------------------------------------------------------------- */
+                        psMinScale = CPLGetXMLNode(psRule, "MinScaleDenominator");
+                        if (psMinScale && psMinScale->psChild && 
+                            psMinScale->psChild->pszValue)
+                          dfMinScale = atof(psMinScale->psChild->pszValue);
+
+                        psMaxScale = CPLGetXMLNode(psRule, "MaxScaleDenominator");
+                        if (psMaxScale && psMaxScale->psChild && 
+                            psMaxScale->psChild->pszValue)
+                          dfMaxScale = atof(psMaxScale->psChild->pszValue);
+
+                        
+/* -------------------------------------------------------------------- */
+/*      set the scale to all the classes created by the rule.           */
+/* -------------------------------------------------------------------- */
+                        if (dfMinScale > 0 || dfMaxScale > 0)
+                        {
+                            nClassAfterRule = psLayer->numclasses;
+
+                            nNewClasses = nClassAfterRule - nClassBeforeRule;
+                            for (i=0; i<nNewClasses; i++)
+                            {
+                                if (dfMinScale > 0)
+                                  psLayer->class[psLayer->numclasses-1-i].minscale = dfMinScale;
+                                if (dfMaxScale)
+                                  psLayer->class[psLayer->numclasses-1-i].maxscale = dfMaxScale;
+                            }                           
+                        }
+
                         psRule = psRule->psNext;
+
                     }
                     psFeatureTypeStyle = psFeatureTypeStyle->psNext;
                 }
@@ -1589,7 +1655,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psCla
     if (psRoot && psClass && psLayer)
     {
         //label 
-        //TODO support only literal expression instead of propertyname
+        //support only literal expression instead of propertyname
         psLabel = CPLGetXMLNode(psRoot, "Label");
         if (psLabel )
         {
