@@ -2172,15 +2172,15 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->footer = getString()) == NULL) return(-1);
       break;
     case(GRID):
-		layer->connectiontype				= MS_GRATICULE;
-		layer->layerinfo			= (void *) malloc( sizeof( graticuleObj ) );
+      layer->connectiontype = MS_GRATICULE;
+      layer->layerinfo = (void *) malloc(sizeof(graticuleObj));
 
-		if( layer->layerinfo == NULL )
-			return -1;
+      if(layer->layerinfo == NULL)
+	return(-1);
 
-		initGrid( (graticuleObj *) layer->layerinfo );
-		loadGrid( layer );
-		break;
+      initGrid((graticuleObj *) layer->layerinfo);
+      loadGrid(layer);
+      break;
     case(GROUP):
       if((layer->group = getString()) == NULL) return(-1);
       break;
@@ -2477,6 +2477,31 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     if(layer->postlabelcache)
       layer->labelcache = MS_OFF;
     break;
+  case(PROCESSING):
+    // only certain PROCESSING options can be changed (at the moment just bands)
+    if(strncasecmp("bands", value, 5) == 0) {
+      int len;
+
+      len = strcspn(value, "="); // we only want to compare characters up to the equal sign
+      for(i=0; i<layer->num_processing; i++) { // check to see if option is already set
+        if(strncasecmp(value, layer->processing[i], len) == 0) {
+	  free(layer->processing[i]);
+	  layer->processing[i] = strdup(value);
+          break;
+        }
+      }
+
+      if(i == layer->num_processing) { // option didn't already exist, so add it to the end
+        layer->num_processing++;
+        if(layer->num_processing == 1)
+          layer->processing = (char **) malloc(2*sizeof(char *));
+        else
+          layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->num_processing+1));
+        layer->processing[layer->num_processing-1] = strdup(value);
+        layer->processing[layer->num_processing] = NULL;
+      } 
+    }
+    break;
   case(PROJECTION):
     msLoadProjectionString(&(layer->projection), value);
     layer->project = MS_TRUE;
@@ -2605,6 +2630,14 @@ static void writeLayer(layerObj *layer, FILE *stream)
   fprintf(stream, "    NAME \"%s\"\n", layer->name);
   writeColor(&(layer->offsite), stream, "OFFSITE", "    ");
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
+
+  if(layer->num_processing > 0) {
+    fprintf(stream, "    PROCESSING\n");
+    for(i=0; i<layer->num_processing; i++)
+      if(layer->header) fprintf(stream, "    \"%s\"\n", layer->processing[i]);
+    fprintf(stream, "    END\n");
+  }
+
   writeProjection(&(layer->projection), stream, "    ");
   if(layer->requires) fprintf(stream, "    REQUIRES \"%s\"\n", layer->requires);
   fprintf(stream, "    SIZEUNITS %s\n", msUnits[layer->sizeunits]);
@@ -2628,14 +2661,13 @@ static void writeLayer(layerObj *layer, FILE *stream)
   for(i=0; i<layer->numclasses; i++) writeClass(&(layer->class[i]), stream);
 
   if( layer->layerinfo )
-	  writeGrid( (graticuleObj *) layer->layerinfo, stream );
-  else
-  {
-	  current = layer->features;
-	  while(current != NULL) {
-		writeFeature(&(current->shape), stream);
-		current = current->next;
-	  }
+    writeGrid( (graticuleObj *) layer->layerinfo, stream );
+  else {
+    current = layer->features;
+    while(current != NULL) {
+      writeFeature(&(current->shape), stream);
+      current = current->next;
+    }
   }
 
   fprintf(stream, "  END\n\n");
