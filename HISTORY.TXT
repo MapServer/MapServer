@@ -38,6 +38,9 @@ Version 4.3 (CVS)
 - Fixed an issue with annotation label overlap. There was an issue with
   the way msRectToPolygon was computing it's bounding box. (bug 618)
 
+- Removed "xbasewohoo" debug output when using JOINs and fixed a few 
+  error messages related to MySQL joins (bug 652)
+
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
