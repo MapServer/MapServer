@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.194.2.2  2004/04/30 13:03:10  dan
+ * OOpps... fixed the fix to pasteImage()
+ *
  * Revision 1.194.2.1  2004/04/30 12:57:09  dan
  * Fixed problem with PHP's pasteImage() method when angle=0
  *
@@ -6137,7 +6140,7 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
         nOldTransparentColor = gdImageGetTransparent(imgSrc->img.gd);
         gdImageColorTransparent(imgSrc->img.gd, nNewTransparentColor);
 
-        if (bAngleSet)
+        if (!bAngleSet)
             gdImageCopy(imgDst->img.gd, imgSrc->img.gd, nDstX, nDstY, 
                         0, 0, imgSrc->img.gd->sx, imgSrc->img.gd->sy);
         else
