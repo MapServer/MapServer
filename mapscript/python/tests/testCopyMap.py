@@ -1,21 +1,27 @@
+# $Id$
+#
+# Unit tests concerning the clone() extension to mapObj
 
 import os, sys
 import distutils.util
 import unittest
 
-# Construct the distutils build path
+# Construct the distutils build path, allowing us to test before
+# installing the module
 platformdir = '-'.join((distutils.util.get_platform(), 
                        '.'.join(map(str, sys.version_info[0:2]))))
 sys.path.insert(0, 'build/lib.' + platformdir)
 
+# The testing mapfile
 testMapfile = 'tests/test.map'
 
+# Import mapscript and define test case classes
 from mapscript import *
 
 class CopyMapObjTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile)
-        self.mapobj2 = self.mapobj1.copy()
+        self.mapobj2 = self.mapobj1.clone()
     def tearDown(self):
         self.mapobj2 = None
     def testtemplatepattern(self):
