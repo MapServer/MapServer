@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2003/01/21 04:16:41  frank
+ * allways ensure InvGeoTransform is available
+ *
  * Revision 1.36  2003/01/21 04:15:13  frank
  * shift USE_PROJ ifdefs to avoid build warnings without PROJ.4
  *
@@ -338,43 +341,6 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
     }
 
     return 0;
-}
-
-/************************************************************************/
-/*                          InvGeoTransform()                           */
-/*                                                                      */
-/*      Invert a standard 3x2 "GeoTransform" style matrix with an       */
-/*      implicit [1 0 0] final row.                                     */
-/************************************************************************/
-
-int InvGeoTransform( double *gt_in, double *gt_out )
-
-{
-    double	det, inv_det;
-
-    /* we assume a 3rd row that is [1 0 0] */
-
-    /* Compute determinate */
-
-    det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
-
-    if( fabs(det) < 0.000000000000001 )
-        return 0;
-
-    inv_det = 1.0 / det;
-
-    /* compute adjoint, and devide by determinate */
-
-    gt_out[1] =  gt_in[5] * inv_det;
-    gt_out[4] = -gt_in[4] * inv_det;
-
-    gt_out[2] = -gt_in[2] * inv_det;
-    gt_out[5] =  gt_in[1] * inv_det;
-
-    gt_out[0] = ( gt_in[2] * gt_in[3] - gt_in[0] * gt_in[5]) * inv_det;
-    gt_out[3] = (-gt_in[1] * gt_in[3] + gt_in[0] * gt_in[4]) * inv_det;
-
-    return 1;
 }
 
 /************************************************************************/
@@ -1077,4 +1043,41 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 
 #endif /* def USE_GDAL */
 
+
+/************************************************************************/
+/*                          InvGeoTransform()                           */
+/*                                                                      */
+/*      Invert a standard 3x2 "GeoTransform" style matrix with an       */
+/*      implicit [1 0 0] final row.                                     */
+/************************************************************************/
+
+int InvGeoTransform( double *gt_in, double *gt_out )
+
+{
+    double	det, inv_det;
+
+    /* we assume a 3rd row that is [1 0 0] */
+
+    /* Compute determinate */
+
+    det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
+
+    if( fabs(det) < 0.000000000000001 )
+        return 0;
+
+    inv_det = 1.0 / det;
+
+    /* compute adjoint, and devide by determinate */
+
+    gt_out[1] =  gt_in[5] * inv_det;
+    gt_out[4] = -gt_in[4] * inv_det;
+
+    gt_out[2] = -gt_in[2] * inv_det;
+    gt_out[5] =  gt_in[1] * inv_det;
+
+    gt_out[0] = ( gt_in[2] * gt_in[3] - gt_in[0] * gt_in[5]) * inv_det;
+    gt_out[3] = (-gt_in[1] * gt_in[3] + gt_in[0] * gt_in[4]) * inv_det;
+
+    return 1;
+}
 
