@@ -1148,7 +1148,6 @@ styleObj Class
   int           symbol
   string        symbolname
   int           size
-  int           sizescaled
   int           minsize 
   int           maxsize 
   int           offsetx
