@@ -119,7 +119,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
   int nLayerOrder = 0;
   int transparent = MS_NOOVERRIDE;
   outputFormatObj *format = NULL;
-  int validlayer = 0;
+  int validlayers = 0;
   char *styles = NULL;
   int numlayers = 0;
   char **layers = NULL;
@@ -158,17 +158,17 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
        
       for (k=0; k<numlayers; k++)
       {
-          
           for (j=0; j<map->numlayers; j++)
           {   
               // Turn on selected layers only.
-              if ((map->layers[j].name && strcasecmp(map->layers[j].name, layers[k]) == 0) ||
+              if ((map->layers[j].name && 
+                   strcasecmp(map->layers[j].name, layers[k]) == 0) ||
                   (map->name && strcasecmp(map->name, layers[k]) == 0) ||
                   (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0))
               {
                   map->layers[j].status = MS_ON;
                   map->layerorder[nLayerOrder++] = j;
-                  validlayer =1;
+                  validlayers++;
               }
             
           }
@@ -312,7 +312,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
 
   //validate all layers given. If an invalid layer is sent, return an exception. 
-  if (validlayer == 0)
+  if (validlayers == 0 || validlayers != numlayers)
   {
       msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
                  "msWMSLoadGetMapParams()");
