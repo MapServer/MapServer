@@ -204,8 +204,8 @@
 
         if (file == Py_None) /* write to stdout */
         {
-            if ( msIO_needBinaryStdout() == MS_FAILURE )
-                return MS_FAILURE;
+            //if ( msIO_needBinaryStdout() == MS_FAILURE )
+            //    return MS_FAILURE;
             ctx = gdNewFileCtx(stdout);
             retval = msSaveImageGDCtx(self->img.gd, ctx, self->format);
             ctx->gd_free(ctx);

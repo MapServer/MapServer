@@ -102,8 +102,8 @@
             }
             else /* create a gdIOCtx interface to stdout */
             {
-                if ( msIO_needBinaryStdout() == MS_FAILURE )
-                    return MS_FAILURE;
+                //if ( msIO_needBinaryStdout() == MS_FAILURE )
+                //    return MS_FAILURE;
                 ctx = gdNewFileCtx(stdout);
             }
             
