@@ -28,8 +28,12 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.29  2002/11/15 06:15:28  dan
- * Temporary patch for bug 214 (WMS transparency issue)
+ * Revision 1.30  2002/11/18 15:36:54  frank
+ * For pseudocolored GD images, avoid copying the destination colormap to
+ * temporary imageObj.  Instead remap colors during resampling.  Also ensure
+ * source image has a transparent color.
+ * Unrelated fixes made to resamping code for RGBA GD buffers so that alpha
+ * blending is done.  Previously alpha issues were being ignored during overlay.
  *
  * Revision 1.28  2002/11/14 04:06:48  dan
  * Fixed test for !gdImageTrueColor() in msResampleGDALToMap() to copy
@@ -149,7 +153,7 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *img,
 
 static int 
 msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite, 
-                         imageObj *psDstImage,
+                         imageObj *psDstImage, int *panCMap,
                          SimpleTransformer pfnTransform, void *pCBData,
                          int debug )
 
@@ -203,9 +207,9 @@ msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
             {
                 if( !gdImageTrueColor(psSrcImage->img.gd) )
                 {
-                    nValue = srcImg->pixels[nSrcY][nSrcX];
+                    nValue = panCMap[srcImg->pixels[nSrcY][nSrcX]];
 
-                    if( nValue == nOffsite )
+                    if( nValue == -1 )
                         continue;
 
                     nSetPoints++;
@@ -214,10 +218,43 @@ msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
 #if GD2_VERS > 1
                 else
                 {
-                    nValue = srcImg->tpixels[nSrcY][nSrcX];
+                    int gd_alpha = 
+                        gdTrueColorGetAlpha(srcImg->tpixels[nSrcY][nSrcX]);
 
-                    nSetPoints++;
-                    dstImg->tpixels[nDstY][nDstX] = nValue; 
+                    /* overlay opaque RGBA value */
+                    if( gd_alpha == 0 )
+                    {
+                        nSetPoints++;
+                        dstImg->tpixels[nDstY][nDstX] = 
+                            srcImg->tpixels[nSrcY][nSrcX]; 
+                    }
+                    /* overlay translucent RGBA value */
+                    else if( gd_alpha < 127 )
+                    {
+                        int gd_original_alpha, gd_new_alpha;
+                        
+                        gd_original_alpha = 
+                          gdTrueColorGetAlpha( dstImg->tpixels[nDstX][nDstY] );
+
+                        /* I assume a fairly simple additive model for 
+                           opaqueness.  Note that gdAlphaBlend() always returns
+                           opaque values (alpha byte is 0). */
+                        
+                        gd_new_alpha = (127 - gd_alpha) 
+                                     + (127 - gd_original_alpha);
+                        gd_new_alpha = MAX(0,127 - gd_new_alpha);
+                        
+                        nSetPoints++;
+                        dstImg->tpixels[nDstY][nDstX] = 
+                            gdAlphaBlend( dstImg->tpixels[nDstX][nDstY], 
+                                          srcImg->tpixels[nSrcX][nSrcY] );
+                        dstImg->tpixels[nDstY][nDstX] &= 0x00ffffff;
+                        dstImg->tpixels[nDstY][nDstX] |= gd_new_alpha << 24;
+                    }
+                    else
+                    {
+                        /* pixel is transparent, doesn't effect dst pixel */
+                    }
                 }
 #endif
             }
@@ -746,6 +783,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     imageObj   *srcImage;
     void	*pTCBData;
     void	*pACBData;
+    int         anCMap[256];
 
 /* -------------------------------------------------------------------- */
 /*      We will require source and destination to have a valid          */
@@ -883,34 +921,20 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         image->format, NULL, NULL );
 
 /* -------------------------------------------------------------------- */
-/*      Copy over the paletted.  For now we avoid                       */
-/*      gdImagePaletteCopy() because it had some problems in            */
-/*      gd-1.8.4. (see bug 1002 at DMSolutions).                        */
+/*      If we are working in 256 color GD mode, allocate 0 as the       */
+/*      transparent color on the temporary image so it will be          */
+/*      initialized to see-through.  We pick an arbitrary rgb tuple     */
+/*      as our transparent color, but ensure it is initalized in the    */
+/*      map so that normal transparent avoidance will apply.            */
 /* -------------------------------------------------------------------- */
-
     if( MS_RENDERER_GD(srcImage->format)
         && !gdImageTrueColor( srcImage->img.gd ) )
     {
-#ifndef TEST_PALETTE_COPY
-        gdImagePaletteCopy( srcImage->img.gd, image->img.gd );
-#else
-        int nColorCount, iColor;
-        gdImagePtr srcImg = srcImage->img.gd;
-        gdImagePtr img = image->img.gd;
+        int nTrColor;
 
-        nColorCount = gdImageColorsTotal( img );
-        for( iColor = 0; iColor < nColorCount; iColor++ )
-        {
-            int nResultColor;
-
-            nResultColor = gdImageColorAllocate( srcImg, 
-                                                 gdImageRed( img, iColor ),
-                                                 gdImageGreen( img, iColor ),
-                                                 gdImageBlue( img, iColor ) );
-            assert( nResultColor == iColor );
-        }
-        gdImageColorTransparent( srcImg, gdImageGetTransparent( img ) );
-#endif
+        nTrColor = msAddColorGD( &sDummyMap, srcImage->img.gd, 117, 17, 103 );
+        gdImageColorTransparent( srcImage->img.gd, nTrColor );
+        assert( nTrColor == 0 );
     }
 
 /* -------------------------------------------------------------------- */
@@ -918,6 +942,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      temporary image with this color otherwise applying the          */
 /*      offsite twice results in a solid color in the offsite area      */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     if( MS_VALID_COLOR(layer->offsite)
         && MS_RENDERER_GD(srcImage->format) )
     {
@@ -926,9 +951,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
                                srcImage->width, srcImage->height,
                                layer->offsite.pen );
     }
+#endif
 
 /* -------------------------------------------------------------------- */
-/*      Draw into it, and then copy out the updated palette.            */
+/*      Draw into the temporary image.                                  */
 /* -------------------------------------------------------------------- */
     result = drawGDAL( &sDummyMap, layer, srcImage, hDS );
     if( result )
@@ -937,40 +963,29 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         return result;
     }
 
-#ifdef __DEBUG_COLORS__
-    {
-        FILE *fp;
-        char szBuf[200];
-        sprintf(szBuf, "/tmp/test_%s.gif", layer->name);
-        fp= fopen(szBuf, "w");
-        gdImageGif(srcImage->img.gd, fp);
-        fclose(fp);
-    }
-#endif
-
+/* -------------------------------------------------------------------- */
+/*      Do we need to generate a colormap remapping, potentially        */
+/*      allocating new colors on the destination color map?             */
+/* -------------------------------------------------------------------- */
     if( MS_RENDERER_GD(srcImage->format)
         && !gdImageTrueColor( srcImage->img.gd ) )
     {
-#ifndef TEST_PALETTE_COPY
-        gdImagePaletteCopy( image->img.gd, srcImage->img.gd );
-#else
-        int nColorCount, iColor;
-        gdImagePtr srcImg = srcImage->img.gd;
-        gdImagePtr img = image->img.gd;
+        int  iColor, nColorCount;
 
-        nColorCount = gdImageColorsTotal( srcImg );
+        nColorCount = gdImageColorsTotal( srcImage->img.gd );
         for( iColor = 0; iColor < nColorCount; iColor++ )
         {
-            int nResultColor;
-
-            nResultColor = gdImageColorAllocate( img, 
-                                               gdImageRed( srcImg, iColor ),
-                                               gdImageGreen( srcImg, iColor ),
-                                               gdImageBlue( srcImg, iColor ) );
-            assert( nResultColor == iColor );
+            if( gdImageGetTransparent( srcImage->img.gd ) == iColor )
+                anCMap[iColor] = -1;
+            else
+                anCMap[iColor] = 
+                    msAddColorGD( map, image->img.gd, 
+                                  gdImageRed( srcImage->img.gd, iColor ),
+                                  gdImageGreen( srcImage->img.gd, iColor ),
+                                  gdImageBlue( srcImage->img.gd, iColor ) );
         }
-        gdImageColorTransparent( img, gdImageGetTransparent( srcImg ) );
-#endif
+        for( iColor = nColorCount; iColor < 256; iColor++ )
+            anCMap[iColor] = -1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -1006,25 +1021,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
-// See bug 214 ... I'm not sure why but the default code used to pass 
-// the offsite parameter as layer->offsite.red
-// For sure with a 8 bits GIF we need to pass layer->offsite.pen otherwise
-// we lose transparency of overlayed WMS layers, so we'll put this test 
-// in here for now and ask Frank to confirm what the correct fix is.
 
-    if( MS_RENDERER_GD(srcImage->format)
-        && !gdImageTrueColor( srcImage->img.gd ) )
-    {
-        result = msSimpleRasterResampler( srcImage, layer->offsite.pen, image, 
-                                          msApproxTransformer, pACBData,
-                                          layer->debug );
-    }
-    else
-    {
-        result = msSimpleRasterResampler( srcImage, layer->offsite.red, image, 
-                                          msApproxTransformer, pACBData,
-                                          layer->debug );
-    }
+    result = msSimpleRasterResampler( srcImage, layer->offsite.pen, image, 
+                                      anCMap, msApproxTransformer, pACBData,
+                                      layer->debug );
 
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
