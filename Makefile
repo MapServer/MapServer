@@ -57,9 +57,9 @@ EPPL_OBJ=epplib.o
 # on your system someplace. The actual SDE server you wish to connect to can
 # be elsewhere.
 #SDE=-DUSE_SDE
-#SDE_HOME=/opt/arcsde801
-#SDE_LIB=-L$(SDE_HOME)/lib -lsde30 -lpe -lsg -lpthread -lsocket
-#SDE_INC=-I$(SDE_HOME)/include
+#SDE_HOME=/opt/arcsde801_coverages/arcexe80
+#SDE_LIB=-L$(SDE_HOME)/lib -lsde80 -lpe80 -lsg80 -lpthread -lsocket
+#SDE_INC=-I$(SDE_HOME)/arcsde/coverages/include
 
 #
 # UofMN GIS/Image Processing Extension (very experimental)
@@ -81,12 +81,12 @@ YACC= bison
 
 XTRALIBS= -lm 
 
-CFLAGS= -Wall -O $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(EGIS) $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC)
-LDFLAGS= -L. -lmap $(GD_LIB) $(PROJ_LIB) $(TTF_LIB) $(TIFF_LIB) $(JPEG_LIB) $(EGIS_LIB) $(XTRALIBS)
+CFLAGS= -Wall -O $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(EGIS) $(SDE) $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC)
+LDFLAGS= -L. -lmap $(GD_LIB) $(PROJ_LIB) $(TTF_LIB) $(TIFF_LIB) $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(XTRALIBS)
 
 RM= /bin/rm -f
 
-OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o mapindex.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o $(EPPL_OBJ)
+OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o mapindex.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o $(EPPL_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---
@@ -150,8 +150,8 @@ sortshp: sortshp.o
 perlvars:
 	touch perlvars
 	pwd > perlvars
-	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) >> perlvars
-	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) >> perlvars
+	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE)>> perlvars
+	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) >> perlvars
 	echo $(LDFLAGS) >> perlvars
 
 gd_clean:

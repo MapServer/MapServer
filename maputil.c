@@ -392,14 +392,25 @@ gdImagePtr msDrawMap(mapObj *map)
     if(lp->postlabelcache) // wait to draw
       continue;
 
-    if(lp->features)
+    // check for inline data
+    if(lp->features) {
       msDrawInlineLayer(map, lp, img);
-    else
-      if(lp->type == MS_RASTER) {
-	if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
-      } else {	
-	if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
-      }
+      continue;
+    }
+
+    // check for remote data
+    if(lp->connection && lp->connectiontype == MS_SDE) {
+      if(msDrawSDELayer(map, lp, img) == -1) return(NULL);
+      continue;
+    }
+
+    // must be local files
+    if(lp->type == MS_RASTER) {
+      if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
+    } else {	
+      if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+    }
+
   }
 
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
@@ -415,14 +426,24 @@ gdImagePtr msDrawMap(mapObj *map)
     if(!lp->postlabelcache) 
       continue;
 
-    if(lp->features)
+    // check for inline data
+    if(lp->features) {
       msDrawInlineLayer(map, lp, img);
-    else
-      if(lp->type == MS_RASTER) {
-	if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
-      } else {	
-	if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
-      }
+      continue;
+    }
+
+    // check for remote data
+    if(lp->connection && lp->connectiontype == MS_SDE) {
+      if(msDrawSDELayer(map, lp, img) == -1) return(NULL);
+      continue;
+    }
+
+    // must be local files
+    if(lp->type == MS_RASTER) {
+      if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
+    } else {	
+      if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+    }
   }
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
