@@ -776,10 +776,31 @@ memory.") const char * {
 
 }
 
+// See Bugzilla issue 548 about work on styleObj and classObj
+%extend styleObj {
+
+    styleObj() {
+        styleObj *style;
+        int result;
+        style = (styleObj *)calloc(1, sizeof(styleObj));
+        if (!style) return NULL;
+        result = initStyle(style);
+        if (result == MS_SUCCESS) {
+            return style;
+        }
+        else {
+            msSetError(MS_MISCERR, "Failed to initialize styleObj", "styleObj()");
+            return NULL;
+        }
+    }
+    
+}
+
 //
 // Class extensions for classObj, always within the context of a layer
 //
 %extend classObj {
+
   classObj(layerObj *layer) {
     if(layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
@@ -845,7 +866,72 @@ memory.") const char * {
   %newobject createLegendIcon;
   imageObj *createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
     return msCreateLegendIcon(map, layer, self, width, height);
-  }  
+  } 
+
+    // See Bugzilla issue 548 for more details about the *Style methods
+
+    styleObj *getStyle(int i) {
+        if (i >= 0 && i < self->numstyles)	
+            return &(self->styles[i]);
+        else return NULL;
+    }
+
+    int insertStyle(styleObj *style, int index=-1) {
+        int i;
+        // Possible to add another style?
+        if (self->numstyles == MS_MAXSTYLES) {
+            msSetError(MS_CHILDERR, "Maximum number of class styles, %d, has been reached", "insertStyle()", MS_MAXSTYLES);
+            return -1;
+        }
+        // Catch attempt to insert past end of styles array
+        else if (index >= MS_MAXSTYLES) {
+            msSetError(MS_CHILDERR, "Cannot insert style beyond index %d", "insertStyle()", MS_MAXSTYLES-1);
+            return -1;
+        }
+        else if (index < 0) { // Insert at the end by default
+            msCopyStyle(&(self->styles[self->numstyles]), style);
+            self->numstyles++;
+            return self->numstyles-1;
+        }
+        else if (index >= 0 && index < MS_MAXSTYLES) {
+            // Move styles existing at the specified index or greater
+            // to a higher index
+            for (i=self->numstyles-1; i>=index; i--) {
+                self->styles[i+1] = self->styles[i];
+            }
+            msCopyStyle(&(self->styles[index]), style);
+            self->numstyles++;
+            return index;
+        }
+        else {
+            msSetError(MS_CHILDERR, "Invalid index", "insertStyle()");
+            return -1;
+        }
+    }
+
+    %newobject removeStyle;
+    styleObj *removeStyle(int index) {
+        int i;
+        styleObj *style;
+        if (self->numstyles == 1) {
+            msSetError(MS_CHILDERR, "Cannot remove a class's sole style", "removeStyle()");
+            return NULL;
+        }
+        else if (index < 0 || index >= self->numstyles) {
+            msSetError(MS_CHILDERR, "Cannot remove style, invalid index %d", "removeStyle()", index);
+            return NULL;
+        }
+        else {
+            style = (styleObj *)malloc(sizeof(styleObj));
+            msCopyStyle(style, &(self->styles[index]));
+            for (i=index+1; i<self->numstyles; i++) {
+                self->styles[i-1] = self->styles[i];
+            }
+            self->numstyles--;
+            return style;
+        }
+    }
+    
 }
 
 //

@@ -682,7 +682,91 @@ class ImageObjTestCase(unittest.TestCase):
         imgobj = imageObj(0, 0, test_image)
         assert imgobj.height == 200
         assert imgobj.width == 200
-    
+
+class NewStylesTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testStyleConstructor(self):
+        new_style = styleObj()
+        assert new_style.color.red == -1
+        assert new_style.color.green == -1
+        assert new_style.color.blue == -1
+    def testStyleColorSettable(self):
+        new_style = styleObj()
+        new_style.color.setRGB(1,2,3)
+        assert new_style.color.red == 1
+        assert new_style.color.green == 2
+        assert new_style.color.blue == 3
+    def testAppendNewStyle(self):
+        p_layer = self.mapobj1.getLayerByName('POINT')
+        class0 = p_layer.getClass(0)
+        assert class0.numstyles == 2, class0.numstyles
+        new_style = styleObj()
+        new_style.color.setRGB(0, 0, 0)
+        new_style.symbol = 1
+        new_style.size = 3
+        index = class0.insertStyle(new_style)
+        assert index == 2, index
+        assert class0.numstyles == 3, class0.numstyles
+        msimg = self.mapobj1.draw()
+        assert msimg.thisown == 1
+        data = msimg.saveToString()
+        filename = 'testAppendNewStyle.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
+    def testInsertNewStyleAtIndex0(self):
+        l_layer = self.mapobj1.getLayerByName('LINE')
+        class0 = l_layer.getClass(0)
+        new_style = styleObj()
+        new_style.color.setRGB(255, 255, 0)
+        new_style.symbol = 1
+        new_style.size = 7
+        index = class0.insertStyle(new_style, 0)
+        assert index == 0, index
+        assert class0.numstyles == 2, class0.numstyles
+        msimg = self.mapobj1.draw()
+        assert msimg.thisown == 1
+        data = msimg.saveToString()
+        filename = 'testInsertNewStyleAtIndex0.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
+    def testRemovePointStyle(self):
+        p_layer = self.mapobj1.getLayerByName('POINT')
+        class0 = p_layer.getClass(0)
+        rem_style = class0.removeStyle(1)
+        assert class0.numstyles == 1, class0.numstyles
+        msimg = self.mapobj1.draw()
+        filename = 'testRemovePointStyle.png'
+        msimg.save(filename)
+    def testModifyMultipleStyle(self):
+        p_layer = self.mapobj1.getLayerByName('POINT')
+        class0 = p_layer.getClass(0)
+        style1 = class0.getStyle(1)
+        style1.color.setRGB(255, 255, 0)
+        msimg = self.mapobj1.draw()
+        filename = 'testModifyMutiplePointStyle.png'
+        msimg.save(filename)
+    def testInsertTooManyStyles(self):
+        p_layer = self.mapobj1.getLayerByName('POINT')
+        class0 = p_layer.getClass(0)
+        new_style = styleObj()
+        # Add three styles successfully
+        index = class0.insertStyle(new_style)
+        index = class0.insertStyle(new_style)
+        index = class0.insertStyle(new_style)
+        assert class0.numstyles == MS_MAXSTYLES
+        # We've reached the maximum, next attempt should raise exception
+        self.assertRaises(MapServerChildError, class0.insertStyle, new_style)
+    def testInsertStylePastEnd(self):
+        p_layer = self.mapobj1.getLayerByName('POINT')
+        class0 = p_layer.getClass(0)
+        new_style = styleObj()
+        self.assertRaises(MapServerChildError, class0.insertStyle, new_style, 6)
+
 if __name__ == '__main__':
     unittest.main()
 

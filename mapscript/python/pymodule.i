@@ -37,6 +37,7 @@
 %{
 PyObject *MSExc_MapServerError;
 PyObject *MSExc_MapServerNotFoundError;
+PyObject *MSExc_MapServerChildError;
 %}
 
 %init %{
@@ -50,6 +51,11 @@ if (MSExc_MapServerError != NULL)
 MSExc_MapServerNotFoundError = PyErr_NewException("_mapscript.MapServerNotFoundError", NULL, NULL);
 if (MSExc_MapServerNotFoundError != NULL)
     PyDict_SetItemString(d, "MapServerNotFoundError", MSExc_MapServerNotFoundError);
+
+// MapServer query MS_CHILD error
+MSExc_MapServerChildError = PyErr_NewException("_mapscript.MapServerChildError", NULL, NULL);
+if (MSExc_MapServerChildError != NULL)
+    PyDict_SetItemString(d, "MapServerChildError", MSExc_MapServerChildError);
 
 %}
 
@@ -80,6 +86,9 @@ if (MSExc_MapServerNotFoundError != NULL)
             case MS_NOTFOUND:
                 PyErr_SetString(MSExc_MapServerNotFoundError, msGetErrorString("\n"));
                 break;
+            case MS_CHILDERR:
+                PyErr_SetString(MSExc_MapServerChildError, msGetErrorString("\n"));
+                break;
             default:
                 PyErr_SetString(MSExc_MapServerError, msGetErrorString("\n"));
                 break;
@@ -108,5 +117,6 @@ if (MSExc_MapServerNotFoundError != NULL)
 %pythoncode %{
 MapServerError = _mapscript.MapServerError
 MapServerNotFoundError = _mapscript.MapServerNotFoundError
+MapServerChildError = _mapscript.MapServerChildError
 %}
 
