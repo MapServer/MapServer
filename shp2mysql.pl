@@ -6,7 +6,8 @@
 $|=1;
 
 use DBI;
-use Shape qw/:all/;
+use Geo::Shapelib qw/:all/;
+#use Shape qw/:all/; # use this if you have an older shapelib version installed and the above line fails (also change line 29)
 
 $dbname = "changeme";
 $host = "localhost";
@@ -24,7 +25,8 @@ $dbh->{RaiseError} = 1;
 
 die "Usage: shp2mysql shpname\n\nwhere shpname is the name (with path) to the base name of the shape file (do not include file name extensions !)\n" unless $ARGV[0];
 die "Shapefile $ARGV[0] not found !" unless -f "$ARGV[0].shp";
-$shape = new Shape $ARGV[0];
+$shape = new Geo::Shapelib $ARGV[0];
+#$shape = new Shape $ARGV[0];
 
 $WKB_POINT = 1;
 $WKB_LINESTRING = 2;
