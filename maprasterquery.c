@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/05/12 20:55:49  frank
+ * don't wipe query results cache between tiles
+ *
  * Revision 1.4  2004/04/27 16:53:52  frank
  * added max result support
  *
@@ -410,25 +413,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     rasterLayerInfo *rlinfo;
     rectObj     searchrect;
 
-    msRasterLayerInfoInitialize( layer );
     rlinfo = (rasterLayerInfo *) layer->layerinfo;
-
-/* -------------------------------------------------------------------- */
-/*      Clear old results cache.                                        */
-/* -------------------------------------------------------------------- */
-    if(layer->resultcache) {
-      if(layer->resultcache->results) free(layer->resultcache->results);
-      free(layer->resultcache);
-      layer->resultcache = NULL;
-    }
-
-/* -------------------------------------------------------------------- */
-/*      Initialize the results cache.                                   */
-/* -------------------------------------------------------------------- */
-    layer->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
-    layer->resultcache->results = NULL;
-    layer->resultcache->numresults = layer->resultcache->cachesize = 0;
-    layer->resultcache->bounds.minx = layer->resultcache->bounds.miny = layer->resultcache->bounds.maxx = layer->resultcache->bounds.maxy = -1;
 
 /* -------------------------------------------------------------------- */
 /*      Reproject the search rect into the projection of this           */
@@ -664,6 +649,23 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 /* -------------------------------------------------------------------- */
     msRasterLayerInfoInitialize( layer );
     rlinfo = (rasterLayerInfo *) layer->layerinfo;
+
+/* -------------------------------------------------------------------- */
+/*      Clear old results cache.                                        */
+/* -------------------------------------------------------------------- */
+    if(layer->resultcache) {
+      if(layer->resultcache->results) free(layer->resultcache->results);
+      free(layer->resultcache);
+      layer->resultcache = NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Initialize the results cache.                                   */
+/* -------------------------------------------------------------------- */
+    layer->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
+    layer->resultcache->results = NULL;
+    layer->resultcache->numresults = layer->resultcache->cachesize = 0;
+    layer->resultcache->bounds.minx = layer->resultcache->bounds.miny = layer->resultcache->bounds.maxx = layer->resultcache->bounds.maxy = -1;
 
 /* -------------------------------------------------------------------- */
 /*      Check if we should really be acting on this layer and           */
@@ -1081,7 +1083,6 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
                 sprintf( szWork, "%.8g", 
                          rlinfo->qc_values[record*rlinfo->band_count+iValue] );
             }
-            // TODO: Should this be the class name? 
             else if( EQUAL(layer->items[i],"class") && rlinfo->qc_class ) 
             {
                 int p_class = rlinfo->qc_class[record];
