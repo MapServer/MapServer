@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.194.2.3  2004/05/13 21:37:44  dan
+ * Use MS_INIT_COLOR() in setRGB() (bug 663)
+ *
  * Revision 1.194.2.2  2004/04/30 13:03:10  dan
  * OOpps... fixed the fix to pasteImage()
  *
@@ -8853,9 +8856,7 @@ DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pG);
     convert_to_long(pB);
 
-    self->red =   pR->value.lval;
-    self->green = pG->value.lval;
-    self->blue =  pB->value.lval;
+    MS_INIT_COLOR(*self, pR->value.lval, pG->value.lval, pB->value.lval);
 
     _phpms_set_property_long(pThis, "red",   self->red, E_ERROR);
     _phpms_set_property_long(pThis, "green", self->green, E_ERROR);
