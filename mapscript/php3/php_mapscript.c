@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2000/09/12 13:52:57  dan
+ * Fixed img.saveImage() to use php_write() when sending output to stdout.
+ *
  * Revision 1.11  2000/09/08 21:27:13  dan
  * Added map/layer setProjection() + missing members in several classes
  *
@@ -128,7 +131,6 @@
 #include "php_mapscript.h"
 #include "php_mapscript_util.h"
 
-
 #ifdef PHP4
 #include "php.h"
 #include "php_globals.h"
@@ -137,6 +139,7 @@
 #else
 #include "phpdl.h"
 #include "php3_list.h"
+#include "functions/head.h"   /* php3_header() */
 #endif
 
 #include "maperror.h"
@@ -149,7 +152,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Sep 8, 2000)"
+#define PHP3_MS_VERSION "(Sep 12, 2000)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -2181,7 +2184,7 @@ static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
  **********************************************************************/
 
 /* {{{ proto int img.saveImage(string filename, int transparent, int interlace)
-   Writes image object to specifed filename. Returns -1 on error. */
+   Writes image object to specifed filename.  If filename is empty then write to stdout.  Returns -1 on error. */
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -2210,14 +2213,95 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
     im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list);
 
-    if (im == NULL ||
-        (retVal = msSaveImage(im, pFname->value.str.val, 
-                              pTransparent->value.lval, 
-                              pInterlace->value.lval) ) != 0)
+    if(pFname->value.str.val != NULL && strlen(pFname->value.str.val) > 0)
     {
-        _phpms_report_mapserver_error(E_WARNING);
-        php3_error(E_ERROR, "Failed writing image to %s", 
-                   pFname->value.str.val);
+        if (im == NULL ||
+            (retVal = msSaveImage(im, pFname->value.str.val, 
+                                  pTransparent->value.lval, 
+                                  pInterlace->value.lval) ) != 0)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "Failed writing image to %s", 
+                       pFname->value.str.val);
+        }
+    }
+    else
+    {           /* no filename - stdout */
+        int size=0;
+#if defined(USE_GD_1_2) || defined(USE_GD_1_3) 
+        int   b;
+        FILE *tmp;
+        char  buf[4096];
+#else
+        void *iptr;
+#endif
+
+        retVal = 0;
+
+#ifdef PHP4
+        php_header();
+#else
+        php3_header();
+#endif
+
+        if(pInterlace->value.lval)
+            gdImageInterlace(im, 1);
+
+        if(pTransparent->value.lval)
+            gdImageColorTransparent(im, 0);
+
+#if defined(USE_GD_1_2) || defined(USE_GD_1_3) 
+
+        /* there is no gdImageGifPtr function */
+
+        tmp = tmpfile(); /* temporary file */
+        if (tmp == NULL) 
+        {
+            php3_error(E_WARNING, "Unable to open temporary file");
+            retVal = -1;
+        } 
+        else
+        {
+            gdImageGif (im, tmp);
+            size = ftell(tmp);
+            fseek(tmp, 0, SEEK_SET);
+
+#if APACHE && defined(CHARSET_EBCDIC)
+            /* This is a binary file already: avoid EBCDIC->ASCII conversion */
+            ap_bsetflag(php3_rqst->connection->client, B_EBCDIC2ASCII, 0);
+#endif
+
+            while ((b = fread(buf, 1, sizeof(buf), tmp)) > 0) 
+            {
+#ifdef PHP4
+                php_write(buf, b);
+#else
+                php3_write(buf, b);
+#endif
+            }
+
+            fclose(tmp); /* the temporary file is automatically deleted */
+        }
+#else
+
+        iptr = gdImagePngPtr(im, &size);
+        if (size == 0) {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "Failed writing image to stdout");
+            retVal = -1;
+        } 
+        else
+        {
+#ifdef PHP4
+                php_write(iptr, size);
+#else
+                php3_write(iptr, size);
+#endif
+            retVal = size;
+            free(iptr);
+        }
+#endif
+
     }
 
     RETURN_LONG(retVal);
