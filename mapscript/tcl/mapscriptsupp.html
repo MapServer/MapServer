@@ -1,0 +1,122 @@
+<HTML>
+<HEAD>
+<TITLE>
+mapscript_supp.c</TITLE>
+<BODY BGCOLOR="#ffffff">
+<H1>mapscriptsupp.tcl</H1>
+
+<HR><H1> Mapscript Supplemental Procedures </H1>
+<UL>
+<LI> 1. proc mapscript::featureObjRef
+<LI> 2. proc mapscript::colorObjRef
+<LI> 3. proc mapscript::queryObjRef
+<LI> 4. proc mapscript::shapeResultObjRef
+<LI> 5. proc mapscript::queryResultObjRef
+<LI> 6. proc mapscript::queryMapObjRef
+<LI> 7. proc mapscript::labelObjRef
+<LI> 8. proc mapscript::webObjRef
+<LI> 9. proc mapscript::classObjRef
+<LI> 10. proc mapscript::labelCacheMemberObjRef
+<LI> 11. proc mapscript::markerCacheMemberObjRef
+<LI> 12. proc mapscript::labelCacheObjRef
+<LI> 13. proc mapscript::symbolSetObjRef
+<LI> 14. proc mapscript::referenceMapObjRef
+<LI> 15. proc mapscript::scalebarObjRef
+<LI> 16. proc mapscript::legendObjRef
+<LI> 17. proc mapscript::layerObjRef
+<LI> 18. proc mapscript::mapObjRef
+<LI> 19. proc mapscript::errorObjRef
+<LI> 20. proc mapscript::rectObjRef
+<LI> 21. proc mapscript::pointObjRef
+<LI> 22. proc mapscript::lineObjRef
+<LI> 23. proc mapscript::shapeObjRef
+<LI> 24. proc mapscript::DBFInfoRef
+<LI> 25. proc mapscript::shapefileObjRef
+</UL>
+
+<H2> Usage </H2>
+<P> 
+These procedures allow methods to be invoked on object references 
+(i.e., pointers), without having to convert a reference into an object.
+A valid object reference is required; procedures check for valid object types.
+<P>
+General syntax:
+<BLOCKQUOTE>
+objectRefProc  $objectPtr  args
+</BLOCKQUOTE>
+<P>
+Sample:
+<BLOCKQUOTE>
+set map [mapscript::mapObj -args $mapFile]
+<BR>
+set rectPtr [$map cget -extent]
+<BR>
+set minx [<B>mapscript::rectObjRef</B> $rectPtr cget -minx]
+<BR>
+set miny [<B>mapscript::rectObjRef</B> $rectPtr cget -miny]
+<BR>
+</BLOCKQUOTE>
+<P>
+Notes:  each of the <EM>objectRef</EM> procedures is just a shortcut to invoke a
+SWIG generated method name. 
+<BLOCKQUOTE>
+mapscript::rectObjRef $rectPtr cget -minx
+</BLOCKQUOTE>
+is the same as:
+<BLOCKQUOTE>
+mapscript::rectObj_minx_get $rectPtr
+</BLOCKQUOTE>
+
+<HR><H1> Mapscript Convenience Procedures </H1>
+<UL>
+<LI> 1. proc mapscript::getDBFNames
+<LI> 2. proc mapscript::getDBFTypes
+<LI> 3. proc mapscript::getDBFValues
+<LI> 4. proc mapscript::getDBFQueryInfo
+</UL>
+
+<H2> Usage </H2>
+<P><b>mapscript::getDBFNames <em> DBFInfo_handle </em></b><br>
+getDBFNames returns a list of field names from a DBF file handle.  The
+<em> DBFInfo_handle </em> must be a valid DBFInfo handle returned from
+the DBFInfo constructor.
+
+<P><b>mapscript::getDBFTypes <em> DBFInfo_handle </em></b><br>
+getDBFTypes returns a list of field types and lengths from a DBF file handle.  
+The <em> DBFInfo_handle </em> must be a valid DBFInfo handle returned from
+the DBFInfo constructor.  Each list element is itself a list of field type
+and field length.  Valid field types are returned as: <b>string</b>,
+<b>integer</b>, and <b>double</b>. 
+
+<P><b>mapscript::getDBFValues <em> DBFInfo_handle record_number </em></b><br>
+getDBFValues returns a list of field values from a DBF file handle.  The
+<em> DBFInfo_handle </em> must be a valid DBFInfo handle returned from
+the DBFInfo constructor.  <em>Record_number</em> is the record number of the
+row to fetch.
+
+<P><b>mapscript::getDBFQueryInfo <em> mapObj_pointer  queryObj_pointer 
+</em></b><br>
+getDBFQueryInfo returns a list of layer names and DBF record name-value
+pairs from each layer that map query has generated.  Multiple layer names / 
+DBF record name-value pairs may exist in the returned list.
+<em> mapObj_pointer</em> and <em>queryObj_pointer</em> must be valid 
+mapObj and queryObj pointers.
+
+
+<BR>
+<HR>
+<H1>See also</H1>
+<P>
+See <A HREF="mapscript_wrap.html">mapscript_wrap.html</A> for the full
+Mapscript Tcl interface.
+<P>
+Note also that the Mapscript objects described in mapscript_wrap.html are
+defined in the <b> mapscript </b> namespace.
+<P>
+Tom Poindexter
+<BR>
+tpoindex@nyx.net
+<BR>
+
+</BODY>
+</HTML>

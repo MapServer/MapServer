@@ -1,0 +1,66 @@
+Mapscript Tcl Interface
+
+WHAT
+It' a Tcl interface for Mapserver.  You can write Tcl scripts to generate
+maps, read/write shapefiles, etc.
+
+
+HOW
+A simple 'configure' script and Makefile is included.  The configure is hand
+built, rather than being derived from GNU autoconf.  Normally you can just 
+type:
+	configure
+	make
+	make install
+
+    to build and install the interface.  Two options are supported:
+
+	configure --with-tcl=[dir]  --with-swig=[dir]
+
+	--with-tcl=[dir]    specify the directory where you installed Tcl,
+			    the default is /usr/local.  'configure' looks for
+			    $dir/lib/tclConfig.sh for Tcl configure info.
+
+	--with-swig=[dir]   specify the directory where you installed Swig,
+			    the default is /usr/local.  'configure' looks for
+			    $dir/include/swig.h and $dir/lib/libswig.a.
+
+	** Mapscript source code is presumed to be two directory levels above
+	this directory, and uses various .h files from Mapscript, along	
+	with ../mapscript.i.
+
+	** Mapscript/Tcl normally builds as a Tcl stubbed dynamic library.
+	The makefile includes a target 'nostublib' if you want to build
+	with a Tcl version dependent library.
+
+	** Tested with Tcl/Tk version 8.3.2, and Swig version 1.1-883
+
+
+REQUIREMENTS
+You must have Tcl (tcl.sourceforge.net) installed and optionally, Swig 
+installed also (www.swig.org).
+
+The current mapscript.i Swig interface definition file is designed for
+Swig 1.1 versions.  Newer versions of Swig may require mapscript.i changes.
+You should have Tcl 8.3 or greater installed, as the Makefile normally builds
+with the Tcl dynamic stubs library.  Tcl 8.3.2 (or current release) is 
+recommended.  Additionally, you probably want the Img Tcl extension to
+support upcoming Mapserver images (PNG, JPG, etc.)
+
+
+DOCS
+Swig generated documentation, plus and additional doc page for Tcl coded 
+helper functions are available as HTML.
+
+
+EXAMPLES
+See the ./examples directory.  
+
+	shpinfo.tcl    - print rudimentary info about a shape file.
+
+
+WHO
+Tom Poindexter
+tpoindex@nyx.net
+
+
