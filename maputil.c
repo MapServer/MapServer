@@ -920,15 +920,17 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       return(MS_SUCCESS);
 
     // now check class scale boundaries (all layers *must* pass these tests)
-    for(i=0; i<layer->numclasses; i++) {
-      if((layer->class[i].maxscale > 0) && (map->scale > layer->class[i].maxscale))
-        continue; // can skip this one, next class
-      if((layer->class[i].minscale > 0) && (map->scale <= layer->class[i].minscale))
-        continue; // can skip this one, next class
+    if(layer->numclasses > 0) {
+      for(i=0; i<layer->numclasses; i++) {
+        if((layer->class[i].maxscale > 0) && (map->scale > layer->class[i].maxscale))
+          continue; // can skip this one, next class
+        if((layer->class[i].minscale > 0) && (map->scale <= layer->class[i].minscale))
+          continue; // can skip this one, next class
 
-      break; // can't skip this class (or layer for that matter)
-    } 
-    if(i == layer->numclasses) return(MS_SUCCESS);
+        break; // can't skip this class (or layer for that matter)
+      } 
+      if(i == layer->numclasses) return(MS_SUCCESS);
+    }
 
     if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
       annotate = MS_FALSE;
