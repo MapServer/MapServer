@@ -350,3 +350,18 @@ cgiRequestObj *msAllocCgiObj()
     return request;
 }
       
+void msFreeCgiObj(cgiRequestObj *request)
+{
+    msFreeCharArray(request->ParamNames, request->NumParams);
+    msFreeCharArray(request->ParamValues, request->NumParams);
+    request->ParamNames = NULL;
+    request->ParamValues = NULL;
+    request->NumParams = 0;
+    request->type = -1;
+    msFree(request->contenttype);
+    msFree(request->postrequest);
+    request->contenttype = NULL;
+    request->postrequest = NULL;
+
+    msFree(request);
+}

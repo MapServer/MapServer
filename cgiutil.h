@@ -55,5 +55,6 @@ int ind(char *, char);
 void escape_shell_cmd(char *);
 
 cgiRequestObj *msAllocCgiObj(void);
+void msFreeCgiObj(cgiRequestObj *request);
 
 #endif /* CGIUTIL_H */

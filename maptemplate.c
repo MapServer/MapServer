@@ -2903,8 +2903,8 @@ void msFreeMapServObj(mapservObj* msObj)
   if(msObj) {
     msFreeMap(msObj->Map);
 
-    msFreeCharArray(msObj->request->ParamNames, msObj->request->NumParams);
-    msFreeCharArray(msObj->request->ParamValues, msObj->request->NumParams);
+    msFreeCgiObj(msObj->request);
+    msObj->request = NULL;
 
     for(i=0;i<msObj->NumLayers;i++) free(msObj->Layers[i]);
 
