@@ -1880,11 +1880,14 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       return(0);
   }
 
-  force_gdal = FALSE;
+  force_gdal = MS_FALSE;
   if( MS_RENDERER_GD(image->format) )
       img = image->img.gd;
   else
+  {
       img = NULL;
+      force_gdal = MS_TRUE;
+  }
 
   // Only GDAL supports 24bit GD output.
 #if GD2_VERS > 1
@@ -1894,7 +1897,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
       return -1;
 #else
-      force_gdal = TRUE;
+      force_gdal = MS_TRUE;
 #endif
   }
 #endif /* def GD2_VERS */
@@ -1907,14 +1910,14 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
       return -1;
 #else
-      force_gdal = TRUE;
+      force_gdal = MS_TRUE;
 #endif
   }
 
   // This force use of GDAL if available.  This is usually but not always a
   // good idea.  Remove this line for local builds if necessary.
 #ifdef USE_GDAL 
-  force_gdal = TRUE;
+  force_gdal = MS_TRUE;
 #endif
 
   getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
