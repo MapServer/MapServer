@@ -332,7 +332,7 @@ Methods
 
 .. _new imageObj:
 
-new imageObj(int width, int height, string driver [, string filename]) : imageObj_
+new imageObj(int width, int height [, string driver=NULL [, string filename=NULL]]) : imageObj_
     Create new instance of imageObj.  If *filename* is specified, an imageObj
     is created from the file and any specified *width*, *height*, and
     *driver* parameters will be overridden by values of the image in 
