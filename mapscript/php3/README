@@ -704,7 +704,17 @@ Constructor:
 
    int     type      (read-only)
    int     numlines  (read-only)
-   rectObj bounds
+   int     index     (read-only)
+   int     tileindex (read-only)
+   int     classindex (read-only)
+   rectObj bounds    (read-only)
+   int     numvalues (read-only)
+   array   values    (read-only)
+
+   The values array is an associative array with the attribute values for
+   this shape.  It is set only on shapes obtained from layer->getShape().
+   The key to the values in the array is the attribute name, e.g. 
+     $population = $shape->values["Population"];
 
  Methods:
 
