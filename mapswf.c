@@ -2193,13 +2193,13 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         //classPtr = &(cachePtr->class);
         labelPtr = &(cachePtr->label);
 
-        if(!cachePtr->string)
+        if(!cachePtr->text)
             continue; /* not an error, just don't want to do anything */
 
-        if(strlen(cachePtr->string) == 0)
+        if(strlen(cachePtr->text) == 0)
             continue; /* not an error, just don't want to do anything */
 
-        if(msGetLabelSizeSWF(cachePtr->string, labelPtr, &r, 
+        if(msGetLabelSizeSWF(cachePtr->text, labelPtr, &r, 
                              &(map->fontset), layerPtr->scalefactor) == -1)
             return(-1);
 
@@ -2275,7 +2275,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
                         if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -2325,7 +2325,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
                         if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
                             
-                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -2381,7 +2381,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
                 for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
                     if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-                        if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
+                        if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text, map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
                             cachePtr->status = MS_FALSE;
                             break;
                         }
@@ -2410,7 +2410,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         //if(labelPtr->backgroundcolor >= 0)
         //    billboard(img, cachePtr->poly, labelPtr);
 
-        draw_textSWF(image, p, cachePtr->string, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
+        draw_textSWF(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
 
         if (bLayerOpen)
           msLayerClose(layerPtr);

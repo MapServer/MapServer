@@ -44,13 +44,13 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   cachePtr->point.x = MS_NINT(cachePtr->point.x);
   cachePtr->point.y = MS_NINT(cachePtr->point.y);
 
-  cachePtr->string = strdup(string); // the actual text
+  cachePtr->text = strdup(string); // the actual text
 
   // GD/Freetype recognizes \r\n as a true line wrap so we must turn the wrap character into that pattern
   if(classPtr->label.type != MS_BITMAP && classPtr->label.wrap != '\0') {
     wrap[0] = classPtr->label.wrap;
     wrap[1] = '\0';
-    cachePtr->string = gsub(cachePtr->string, wrap, "\r\n");
+    cachePtr->text = gsub(cachePtr->text, wrap, "\r\n");
   }
 
   // copy the styles (only if there is an accompanying marker)

@@ -423,13 +423,13 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         //classPtr = &(cachePtr->class);
         labelPtr = &(cachePtr->label);
 
-        if(!cachePtr->string)
+        if(!cachePtr->text)
             continue; /* not an error, just don't want to do anything */
 
-        if(strlen(cachePtr->string) == 0)
+        if(strlen(cachePtr->text) == 0)
             continue; /* not an error, just don't want to do anything */
 
-        if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
+        if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
             return(-1);
 
         if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
@@ -533,7 +533,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                             /* check if label is a duplicate */
                             if((labelPtr->mindistance != -1) &&
                                 (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
-                                (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) &&
+                                (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) &&
                                 (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance))
                             {
                                 cachePtr->status = MS_FALSE;
@@ -622,7 +622,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                             /* check if label is a duplicate */
                             if((labelPtr->mindistance != -1) &&
                                (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
-                               (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) &&
+                               (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) &&
                                (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance))
                             {
                                 cachePtr->status = MS_FALSE;
@@ -724,7 +724,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                         /* check if label is a duplicate */
                         if((labelPtr->mindistance != -1) &&
                            (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
-                           (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) &&
+                           (strcmp(cachePtr->text, map->labelcache.labels[i].text) == 0) &&
                            (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point))
                                                         <= labelPtr->mindistance))
                         {
@@ -763,7 +763,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         //if(labelPtr->backgroundcolor >= 0)
         //    billboardPDF(img, cachePtr->poly, labelPtr);
 
-        msDrawTextPDF(image, p, cachePtr->string,
+        msDrawTextPDF(image, p, cachePtr->text,
                       labelPtr, &(map->fontset), layerPtr->scalefactor);
 
     } /* next in cache */

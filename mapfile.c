@@ -3917,7 +3917,7 @@ int msFreeLabelCache(labelCacheObj *cache) {
 
   // free the labels
   for(i=0; i<cache->numlabels; i++) {
-    msFree(cache->labels[i].string);
+    msFree(cache->labels[i].text);
     msFreeShape(cache->labels[i].poly); // empties the shape
     msFree(cache->labels[i].poly); // free's the pointer
     for(j=0;j<cache->labels[i].numstyles; j++) freeStyle(&(cache->labels[i].styles[j]));

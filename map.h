@@ -472,7 +472,7 @@ typedef struct class_obj{
 %immutable;
 #endif
 typedef struct {
-  char *string;
+  char *text;
   double featuresize;
 
   styleObj *styles; // copied from the classObj, only present if there is a marker to be drawn

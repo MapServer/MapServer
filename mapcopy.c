@@ -435,7 +435,7 @@ int msCopyLabelCacheMember(labelCacheMemberObj *dst,
 {
     int i;
 
-    MS_COPYSTRING(dst->string, src->string);
+    MS_COPYSTRING(dst->text, src->text);
     MS_COPYSTELEM(featuresize);
     MS_COPYSTELEM(numstyles);
 
