@@ -144,6 +144,7 @@ styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
             return NULL;
         }
         msCopyStyle(style, &(class->styles[nStyleIndex]));
+        style->isachild = MS_FALSE;
         for (i=nStyleIndex; i<class->numstyles-1; i++) {
              msCopyStyle(&class->styles[i], &class->styles[i+1]);
         }
