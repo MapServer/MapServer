@@ -704,20 +704,25 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
           k = 0;
           for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
           {
-              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ )
               {
                   int	cc_index;
                   
-                  if( pabyRawAlpha == NULL || pabyRawAlpha[k] != 0 )
-                  {
-                      cc_index= RGB_INDEX(pabyRaw1[k],pabyRaw2[k],pabyRaw3[k]);
+                  if( MS_VALID_COLOR( layer->offsite )
+                      && pabyRaw1[k] == layer->offsite.red
+                      && pabyRaw2[k] == layer->offsite.green
+                      && pabyRaw3[k] == layer->offsite.blue )
+                      continue;
+                  
+                  if( pabyRawAlpha != NULL && pabyRawAlpha[k] == 0 )
+                      continue;
+
+                  cc_index= RGB_INDEX(pabyRaw1[k],pabyRaw2[k],pabyRaw3[k]);
 #ifndef USE_GD_1_2
-                      gdImg->pixels[i][j] = anColorCube[cc_index];
+                  gdImg->pixels[i][j] = anColorCube[cc_index];
 #else
-                      gdImg->pixels[j][i] = anColorCube[cc_index];
+                  gdImg->pixels[j][i] = anColorCube[cc_index];
 #endif
-                  }
-                  k++;
               }
           }
       }
@@ -727,8 +732,14 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
           k = 0;
           for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
           {
-              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++, k++ )
               {
+                  if( MS_VALID_COLOR( layer->offsite )
+                      && pabyRaw1[k] == layer->offsite.red
+                      && pabyRaw2[k] == layer->offsite.green
+                      && pabyRaw3[k] == layer->offsite.blue )
+                      continue;
+                  
                   if( pabyRawAlpha == NULL || pabyRawAlpha[k] == 255 )
                   {
                       gdImg->tpixels[i][j] = 
@@ -757,7 +768,6 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
                       
                       
                   }
-                  k++;
               }
           }
       }
