@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/01/30 16:55:42  assefa
+ * Fixed a problem while compiling on windows.
+ *
  * Revision 1.44  2004/01/29 18:10:16  frank
  * msTransformMapToSource() improved to support using an internal grid if
  * the outer edge has some failures.  Also, now grows the region if some points
@@ -742,6 +745,8 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                                    int bUseGrid )
 
 {
+    int nFailures = 0;
+
 #define EDGE_STEPS    10
 #define MAX_SIZE      ((EDGE_STEPS+1)*(EDGE_STEPS+1))
 
@@ -853,7 +858,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 /* -------------------------------------------------------------------- */
 /*      transform to layer raster coordinates, and collect bounds.      */
 /* -------------------------------------------------------------------- */
-    int nFailures = 0;
     for( i = 0; i < nSamples; i++ )
     {
         double		x_out, y_out; 
