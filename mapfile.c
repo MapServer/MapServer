@@ -30,7 +30,7 @@ static int loadGrid( layerObj *pLayer );
 ** Must be kept in sync with enumerations and defines found in map.h.
 */
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
-static char *msLayerTypes[7]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE"};
+static char *msLayerTypes[8]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE", "TILEINDEX"};
 static char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
 static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
@@ -1989,6 +1989,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->labelminscale = -1;
 
   layer->tileitem = strdup("location");
+  layer->tileitemindex = -1;
   layer->tileindex = NULL;
 
   layer->currentfeature = layer->features = NULL;

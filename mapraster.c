@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.112  2004/04/06 06:44:59  sdlime
+ * Working version of layer-based tiling for raster data. The layer does not have to be a shapefile.
+ *
  * Revision 1.111  2004/03/31 14:44:48  frank
  * Added my standard headers so I can see the log messages.
  *
@@ -1304,25 +1307,23 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   return(-1);
 #endif  
 }
-
-int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
-
-  /*
-  ** Check for various file types and act appropriately.
-  */
-  int status;
+ 
+/*
+** Check for various file types and act appropriately.
+*/
+int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) 
+{
+  int status, i, done;
   FILE *f;  
   char dd[8];
-  char *filename=NULL;
+  char *filename=NULL, tilename[MS_MAXPATHLEN];
 
-  int t;
-  int tileitemindex=-1;
-  shapefileObj tilefile;
-  char tilename[MS_PATH_LENGTH];
-  int numtiles=1; /* always at least one tile */
+  layerObj *tlp=NULL; // pointer to the tile layer either real or temporary
+  int tileitemindex=-1, tilelayerindex=-1;
+  shapeObj tshp;
+
   int force_gdal;
-  char szPath[MS_MAXPATHLEN];
-  char cwd[MS_MAXPATHLEN];
+  char szPath[MS_MAXPATHLEN], cwd[MS_MAXPATHLEN];
 
   rectObj searchrect;
   gdImagePtr img;
@@ -1364,7 +1365,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   // Only GDAL supports 24bit GD output.
   if(img != NULL && gdImageTrueColor(img)){
 #ifndef USE_GDAL
-    msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
+    msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayerLow()" );
     return MS_FAILURE;
 #else
     force_gdal = MS_TRUE;
@@ -1374,7 +1375,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   // Only GDAL support image warping.
   if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
 #ifndef USE_GDAL
-    msSetError(MS_MISCERR, "Attempt to render raster layer that requires reprojection but\nwithout GDAL available.  Image reprojection requires GDAL.", "msDrawRasterLayer()" );
+    msSetError(MS_MISCERR, "Attempt to render raster layer that requires reprojection but\nwithout GDAL available.  Image reprojection requires GDAL.", "msDrawRasterLayerLow()" );
     return MS_FAILURE;
 #else
     force_gdal = MS_TRUE;
@@ -1387,41 +1388,77 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   force_gdal = MS_TRUE;
 #endif
 
-  if(layer->tileindex) { /* we have in index file */
-    if(msSHPOpenFile(&tilefile, "rb", msBuildPath3(szPath, map->mappath, map->shapepath, layer->tileindex)) == -1) 
-      if(msSHPOpenFile(&tilefile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex)) == -1) 
-        return(MS_FAILURE);    
+  if(layer->tileindex) { // we have an index file
+    
+    msInitShape(&tshp);
+    
+    tilelayerindex = msGetLayerIndex(layer->map, layer->tileindex);
+    if(tilelayerindex == -1) { // the tileindex references a file, not a layer
 
-    if((tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
+      // so we create a temporary layer
+      tlp = (layerObj *) malloc(sizeof(layerObj));
+      if(!tlp) {
+        msSetError(MS_MEMERR, "Error allocating temporary layerObj.", "msDrawRasterLayerLow()");
+        return(MS_FAILURE);
+      }
+      initLayer(tlp, map);
+
+      // set a few parameters for a very basic shapefile-based layer
+      tlp->name = strdup("TILE");
+      tlp->type = MS_LAYER_TILEINDEX;
+      tlp->data = strdup(layer->tileindex);
+    } else
+      tlp = &(layer->map->layers[tilelayerindex]);
+      
+    status = msLayerOpen(tlp);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+
+    // build item list (no annotation) since we may have to classify the shape, plus we want the tileitem
+    status = msLayerWhichItems(tlp, MS_TRUE, MS_FALSE, layer->tileitem);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+ 
+    // get the tileitem index
+    for(i=0; i<tlp->numitems; i++) {
+      if(strcasecmp(tlp->items[i], layer->tileitem) == 0) {
+        tileitemindex = i;
+        break;
+      }
+    }
+    if(i == tlp->numitems) { // didn't find it
+      msSetError(MS_MEMERR, "Could not find attribute %s in tileindex.", "msDrawRasterLayerLow()", layer->tileitem);
+      return(MS_FAILURE);
+    }
+ 
     searchrect = map->extent;
 #ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-      msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
+    // if necessary, project the searchrect to source coords
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) msProjectRect(&map->projection, &layer->projection, &searchrect);
 #endif
-    status = msSHPWhichShapes(&tilefile, searchrect, layer->debug);
-    if(status != MS_SUCCESS) 
-      numtiles = 0; // could be MS_DONE or MS_FAILURE
-    else
-      numtiles = tilefile.numshapes;
+    status = msLayerWhichShapes(tlp, searchrect);
+    if(status != MS_SUCCESS) return(MS_FAILURE); // TODO: probably need more clean up here
   }
 
-  for(t=0; t<numtiles; t++) { /* for each tile, always at least 1 tile */
-
+  done = MS_FALSE;
+  while(done != MS_TRUE) { 
     if(layer->tileindex) {
-      if(!msGetBit(tilefile.status,t)) continue; /* on to next tile */
-      if(layer->data == NULL) /* assume whole filename is in attribute field */
-	filename = (char*)msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex);
+      status = msLayerNextShape(tlp, &tshp);
+      if(status == MS_FAILURE) return(MS_FAILURE);
+      if(status == MS_DONE) break; // no more tiles/images
+       
+      if(layer->data == NULL) // assume whole filename is in attribute field
+  	    filename = tshp.values[tileitemindex];
       else {  
-	sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex) , layer->data);
-	filename = tilename;
-      }
+	    sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
+	    filename = tilename;
+      }      
     } else {
       filename = layer->data;
+      done = MS_TRUE; // only one image so we're done after this
     }
 
     if(strlen(filename) == 0) continue;
 
-    msBuildPath3( szPath, map->mappath, map->shapepath, filename );
+    msBuildPath3(szPath, map->mappath, map->shapepath, filename);
 
     f = fopen( szPath, "rb");
     if(!f) {
@@ -1471,7 +1508,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       }
       status = drawERD(map, layer, img, filename);
       if(status == -1) {
-	return(MS_FAILURE);
+  	    return(MS_FAILURE);
       }
       continue;
     }
@@ -1575,14 +1612,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
 #ifndef IGNORE_MISSING_DATA
       if( layer->debug || map->debug )
-          msDebug( "Unable to open file %s for layer %s ... fatal error.\n", 
-                   filename, layer->name );
+          msDebug( "Unable to open file %s for layer %s ... fatal error.\n", filename, layer->name );
 
       return(MS_FAILURE);
 #else
       if( layer->debug || map->debug )
-          msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", 
-                   filename, layer->name );
+          msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
 
       continue; // skip it, next tile
 #endif
@@ -1600,11 +1635,16 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     continue;
   } // next tile
 
-  if(layer->tileindex) /* tiling clean-up */
-    msSHPCloseFile(&tilefile);    
+  if(layer->tileindex) { // tiling clean-up
+    msLayerClose(tlp);
+    if(tileitemindex == -1) {
+      freeLayer(tlp);
+      free(tlp);
+    }
+    msFreeShape(&tshp);
+  }
 
   return 0;
-  
 }
 
 //TODO : this will msDrawReferenceMapGD
