@@ -101,6 +101,14 @@ static void writeHeader( SHPHandle psSHP )
   ByteCopy( &dValue, abyHeader+60, 8 );
   if( bBigEndian ) SwapWord( 8, abyHeader+60 );
   
+  dValue = psSHP->adBoundsMin[3];			/* m */
+  ByteCopy( &dValue, abyHeader+84, 8 );
+  if( bBigEndian ) SwapWord( 8, abyHeader+84 );
+
+  dValue = psSHP->adBoundsMax[3];
+  ByteCopy( &dValue, abyHeader+92, 8 );
+  if( bBigEndian ) SwapWord( 8, abyHeader+92 );
+
   /* -------------------------------------------------------------------- */
   /*      Write .shp file header.                                         */
   /* -------------------------------------------------------------------- */
@@ -262,6 +270,13 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   memcpy( &dValue, pabyBuf+60, 8 );
   psSHP->adBoundsMax[1] = dValue;
   
+  if( bBigEndian ) SwapWord( 8, pabyBuf+84 );		/* m */
+  memcpy( &dValue, pabyBuf+84, 8 );
+  psSHP->adBoundsMin[3] = dValue;
+
+  if( bBigEndian ) SwapWord( 8, pabyBuf+92 );
+  memcpy( &dValue, pabyBuf+92, 8 );
+  psSHP->adBoundsMax[3] = dValue;
   free( pabyBuf );
   
   /* -------------------------------------------------------------------- */
@@ -575,7 +590,6 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   uchar	*pabyRec;
   int32	i32, nPoints, nParts;
   double dfMMin, dfMMax = 0;
-
   psSHP->bUpdated = MS_TRUE;
   
   /* -------------------------------------------------------------------- */
@@ -790,14 +804,17 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   if( psSHP->nRecords == 1 ) {
     psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = shape->line[0].point[0].x;
     psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = shape->line[0].point[0].y;
+    psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = shape->line[0].point[0].m;
   }
   
   for( i=0; i<shape->numlines; i++ ) {
     for( j=0; j<shape->line[i].numpoints; j++ ) {
       psSHP->adBoundsMin[0] = MS_MIN(psSHP->adBoundsMin[0], shape->line[i].point[j].x);
       psSHP->adBoundsMin[1] = MS_MIN(psSHP->adBoundsMin[1], shape->line[i].point[j].y);
+      psSHP->adBoundsMin[3] = MS_MIN(psSHP->adBoundsMin[3], shape->line[i].point[j].m);
       psSHP->adBoundsMax[0] = MS_MAX(psSHP->adBoundsMax[0], shape->line[i].point[j].x);
       psSHP->adBoundsMax[1] = MS_MAX(psSHP->adBoundsMax[1], shape->line[i].point[j].y);
+      psSHP->adBoundsMax[3] = MS_MAX(psSHP->adBoundsMax[3], shape->line[i].point[j].m);
     }
   }
   

@@ -49,8 +49,8 @@ typedef	struct {
     int		*panRecOffset;
     int		*panRecSize;
 
-    double	adBoundsMin[2];
-    double	adBoundsMax[2];
+    double	adBoundsMin[4];
+    double	adBoundsMax[4];
 
     int		bUpdated;
 
