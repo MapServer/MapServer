@@ -113,7 +113,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
             {
                 papszLines[i] = 
                     (char *)malloc((nMaxCharsPerLine+1)*sizeof(char));
-                papszLines[i][0] = '0';
+                papszLines[i][0] = '\0';
             }
         }
         for (i=0; i<nLines; i++)
@@ -126,8 +126,8 @@ int msWMSException(mapObj *map, const char *wmtversion)
                     nEnd = nTextLength;
                 nLength = nEnd-nStart;
 
-                memcpy(papszLines[i],errormsg+nStart, nLength);
-                papszLines[i][nLength+1] = '0';
+                strncpy(papszLines[i], errormsg+nStart, nLength);
+                papszLines[i][nLength+1] = '\0';
             }
         }
     }
