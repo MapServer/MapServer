@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.139  2003/01/16 17:32:23  dan
+ * Applied new phpinfo function using PHP4 formatting (from Jeremy G.)
+ *
  * Revision 1.138  2003/01/13 20:37:50  dan
  * Set $line->numpoints and $shape->numlines after add() calls (bug 69)
  *
@@ -140,15 +143,11 @@
 #include "php_mapscript.h"
 #include "php_mapscript_util.h"
 
-#ifdef PHP4
 #include "php.h"
 #include "php_globals.h"
 #include "SAPI.h"
-#else
-#include "phpdl.h"
-#include "php3_list.h"
-#include "functions/head.h"   /* php3_header() */
-#endif
+#include "ext/standard/info.h"
+#include "ext/standard/head.h"
 
 #include "maperror.h"
 
@@ -174,11 +173,7 @@
  *                         Prototypes
  *====================================================================*/
 
-#ifdef ZEND_VERSION
 PHP_MINFO_FUNCTION(mapscript);
-#else
-DLEXPORT void php3_info_mapscript(void);
-#endif
 
 DLEXPORT int  php3_init_mapscript(INIT_FUNC_ARGS);
 DLEXPORT int  php3_end_mapscript(SHUTDOWN_FUNC_ARGS);
@@ -490,11 +485,7 @@ php3_module_entry php3_ms_module_entry = {
 #endif
     "MapScript", php3_ms_functions, php3_init_mapscript, php3_end_mapscript,
     NULL, NULL,
-#ifdef ZEND_VERSION
     PHP_MINFO(mapscript),
-#else
-    php3_info_mapscript,
-#endif
 #if ZEND_MODULE_API_NO >= 20010901
     PHP3_MS_VERSION,          /* extension version number (string) */
 #endif
@@ -703,15 +694,14 @@ function_entry php_style_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
-#ifdef ZEND_VERSION 
 PHP_MINFO_FUNCTION(mapscript)
-#else
-DLEXPORT void php3_info_mapscript(void) 
-#endif
 {
-    php3_printf("MapScript Version %s<br>\n", PHP3_MS_VERSION);
-    php3_printf("%s<br>\n", msGetVersion());
+  php_info_print_table_start();
+  php_info_print_table_row(2, "MapServer Version", msGetVersion());
+  php_info_print_table_row(2, "PHP MapScript Version", PHP3_MS_VERSION);
+  php_info_print_table_end();
 }
+
 
 DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 {
