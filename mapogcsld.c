@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2003/11/25 03:21:44  assefa
+ * Add test support.
+ * Add filter support.
+ *
  * Revision 1.2  2003/11/07 21:35:07  assefa
  * Add PointSymbolizer.
  * Add External Graphic symbol support.
@@ -40,6 +44,7 @@
  **********************************************************************/
 
 #include "mapogcsld.h"
+#include "mapogcfilter.h"
 #include "map.h"
 
 #ifdef USE_OGR
@@ -73,34 +78,58 @@ void msSLDApplySLD(mapObj *map, const char *wmtver, char *psSLDXML)
     int nLayers = 0;
     layerObj *pasLayers = NULL;
     int i, j, k, iClass;
-    
+
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
+
+
     if (pasLayers && nLayers > 0)
     {
+
         for (i=0; i<map->numlayers; i++)
         {
             for (j=0; j<nLayers; j++)
             {
+                    
+/* -------------------------------------------------------------------- */
+/*      copy :  - class                                                 */
+/*              - layer's labelitem                                     */
+/* -------------------------------------------------------------------- */
                 if (strcasecmp(map->layers[i].name, pasLayers[j].name) == 0)
                 {
+/* -------------------------------------------------------------------- */
+/*      copy classes in reverse order : the Rule priority is the        */
+/*      first rule is the most important (mapserver uses the painter    */
+/*      model)                                                          */
+/* -------------------------------------------------------------------- */
                     map->layers[i].numclasses = 0;
-                    //copy in reverse order : the Rule priority is 
-                    //the first rule is the most important (mapserver
-                    //uses the painter model)
                     iClass = 0;
                     for (k=pasLayers[j].numclasses-1; k>=0; k--)
                     {
                         initClass(&map->layers[i].class[iClass]);
                         msCopyClass(&map->layers[i].class[iClass], 
                                     &pasLayers[j].class[k], NULL);
+                        map->layers[i].class[iClass].layer = &map->layers[i];
+                        map->layers[i].class[iClass].type = map->layers[i].type;
                         map->layers[i].numclasses++;
                         iClass++;
                     }
+
+                    if (pasLayers[j].labelitem)
+                    {
+                        if (map->layers[i].labelitem)
+                          free(map->layers[i].labelitem);
+
+                        map->layers[i].labelitem = strdup(pasLayers[j].labelitem);
+                    }
+
                     break;
                 }
             }
         }
     }
+
+    //test
+    msSaveMap(map, "c:/msapps/ogc_cite/map/sld_map2.map");
 }
                         
     
@@ -202,6 +231,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 
     if (pnLayers)
       *pnLayers = nLayers;
+
     return pasLayers;
 }
 
@@ -214,7 +244,12 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
 void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
     CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle;
- 
+    CPLXMLNode *psElseFilter = NULL, *psFilter=NULL;
+    FilterEncodingNode *psNode = NULL;
+    char *szExpression = NULL;
+    char *szClassItem = NULL;
+    int i=0, nNewClasses=0, nClassBefore=0, nClassAfter=0;
+    
     if (psRoot && psLayer)
     {
         psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
@@ -228,10 +263,63 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                   "FeatureTypeStyle") == 0)
                 {
                     psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
+/* -------------------------------------------------------------------- */
+/*      First parse rules with the else filter. These rules will        */
+/*      create the classes that are placed at the end of class          */
+/*      list. (See how classes are applied to layers in function        */
+/*      msSLDApplySLD).                                                 */
+/* -------------------------------------------------------------------- */
                     while (psRule && psRule->pszValue && 
                            strcasecmp(psRule->pszValue, "Rule") == 0)
                     {
-                        msSLDParseRule(psRule, psLayer);
+                        psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
+                        if (psElseFilter)
+                           msSLDParseRule(psRule, psLayer);
+                         psRule = psRule->psNext;
+                    }
+/* -------------------------------------------------------------------- */
+/*      Parse rules with no Else filter.                                */
+/* -------------------------------------------------------------------- */
+                    psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
+                    while (psRule && psRule->pszValue && 
+                           strcasecmp(psRule->pszValue, "Rule") == 0)
+                    {
+                        psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
+                        nClassBefore = psLayer->numclasses;
+                        if (psElseFilter == NULL)
+                          msSLDParseRule(psRule, psLayer);
+                        nClassAfter = psLayer->numclasses;
+
+/* -------------------------------------------------------------------- */
+/*      Parse the filter and apply it to the latest class created by    */
+/*      the rule.                                                       */
+/*      NOTE : Spatial Filter is not supported.                         */
+/* -------------------------------------------------------------------- */
+                        psFilter = CPLGetXMLNode(psRule, "Filter");
+                        if (psFilter && psFilter->psChild && 
+                            psFilter->psChild->pszValue)
+                        {
+                            psNode = 
+                              FLTParseFilterEncoding(psFilter->psChild->pszValue);
+                            if (psNode)
+                            {
+                                szExpression = FLTGetMapserverExpression(psNode);
+                                if (szExpression)
+                                {
+                                    szClassItem = 
+                                      FLTGetMapserverExpressionClassItem(psNode);
+                                    nNewClasses = nClassAfter - nClassBefore;
+                                    for (i=0; i<nNewClasses; i++)
+                                    {
+                                        loadExpressionString(&psLayer->
+                                                             class[psLayer->numclasses-1-i].
+                                                             expression, szExpression);
+                                    }
+                                    if (szClassItem)
+                                      psLayer->classitem = strdup(szClassItem);
+                                }
+                            }
+                        }
                         psRule = psRule->psNext;
                     }
                     psFeatureTypeStyle = psFeatureTypeStyle->psNext;
@@ -252,6 +340,10 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
     CPLXMLNode *psLineSymbolizer = NULL;
     CPLXMLNode *psPolygonSymbolizer = NULL;
     CPLXMLNode *psPointSymbolizer = NULL;
+    CPLXMLNode *psTextSymbolizer = NULL;
+    CPLXMLNode *psMaxScale=NULL, *psMinScale=NULL;
+    int i = 0;
+    int bSymbolizer = 0;
 
     if (psRoot && psLayer)
     {
@@ -266,6 +358,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
                strcasecmp(psLineSymbolizer->pszValue, 
                           "LineSymbolizer") == 0)
         {
+            bSymbolizer = 1;
             msSLDParseLineSymbolizer(psLineSymbolizer, psLayer);
             psLineSymbolizer = psLineSymbolizer->psNext;
         }
@@ -276,18 +369,58 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
                strcasecmp(psPolygonSymbolizer->pszValue, 
                           "PolygonSymbolizer") == 0)
         {
+            bSymbolizer = 1;
             msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer);
             psPolygonSymbolizer = psPolygonSymbolizer->psNext;
         }
-
         //Point Symbolizer
         psPointSymbolizer = CPLGetXMLNode(psRoot, "PointSymbolizer");
         while (psPointSymbolizer && psPointSymbolizer->pszValue && 
                strcasecmp(psPointSymbolizer->pszValue, 
                           "PointSymbolizer") == 0)
         {
+            bSymbolizer = 1;
             msSLDParsePointSymbolizer(psPointSymbolizer, psLayer);
             psPointSymbolizer = psPointSymbolizer->psNext;
+        }
+        //Text symbolizer
+/* ==================================================================== */
+/*      For text symbolizer, here is how it is translated into          */
+/*      mapserver classes :                                             */
+/*        - If there are other symbolizers(line, polygon, symbol),      */
+/*      the label object created will be created in the same class      */
+/*      (the last class) as the  symbolizer. This allows o have for     */
+/*      example of point layer with labels.                             */
+/*        - If there are no other symbolizers, a new clas will be       */
+/*      created ocontain the label object.                              */
+/* ==================================================================== */
+        psTextSymbolizer = CPLGetXMLNode(psRoot, "TextSymbolizer");
+        while (psTextSymbolizer && psTextSymbolizer->pszValue && 
+               strcasecmp(psTextSymbolizer->pszValue, 
+                          "TextSymbolizer") == 0)
+        {
+            msSLDParseTextSymbolizer(psTextSymbolizer, psLayer, bSymbolizer);
+            psTextSymbolizer = psTextSymbolizer->psNext;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Parse the minscale and maxscale and applt it to all classes     */
+/*      in the layer.                                                   */
+/* -------------------------------------------------------------------- */
+        psMinScale =  CPLGetXMLNode(psRoot, "MinScaleDenominator");
+        if (psMinScale && psMinScale->psChild && 
+            psMinScale->psChild->pszValue)
+        {
+            for (i=0; i<psLayer->numclasses; i++)
+              psLayer->class[i].minscale = atof(psMinScale->psChild->pszValue);
+        }
+
+        psMaxScale =  CPLGetXMLNode(psRoot, "MaxScaleDenominator");
+        if (psMaxScale && psMaxScale->psChild && 
+            psMaxScale->psChild->pszValue)
+        {
+            for (i=0; i<psLayer->numclasses; i++)
+              psLayer->class[i].maxscale = atof(psMaxScale->psChild->pszValue);
         }
 
     }
@@ -1175,6 +1308,12 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
 }
 
 extern unsigned char PNGsig[8];
+/************************************************************************/
+/*                          msSLDGetGraphicSymbol                       */
+/*                                                                      */
+/*      Create a symbol entry for an inmap pixmap symbol. Returns       */
+/*      the symbol id.                                                  */
+/************************************************************************/
 int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName)
 {
     FILE *fp;
@@ -1256,8 +1395,15 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 }
 
 
-void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle, 
-                               mapObj *map)
+/************************************************************************/
+/*                        msSLDParseExternalGraphic                     */
+/*                                                                      */
+/*      Parse extrenal graphic node : download the symbol referneced    */
+/*      by the URL and create a PIXMAP inmap symbol. Only GIF and       */
+/*      PNG are supported.                                              */
+/************************************************************************/
+void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, 
+                               styleObj *psStyle,  mapObj *map)
 {
     char *pszFormat = NULL;
     CPLXMLNode *psURL=NULL, *psFormat=NULL;
@@ -1293,6 +1439,420 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, styleObj *psStyle,
             }
         }
     }
+}
+
+
+/************************************************************************/
+/*                         msSLDParseTextSymbolizer                     */
+/*                                                                      */
+/*      Parse text symbolizer.                                          */
+/*                                                                      */
+/*      <xs:element name="TextSymbolizer">                              */
+/*      <xs:complexType>                                                */
+/*      <xs:sequence>                                                   */
+/*      <xs:element ref="sld:Geometry" minOccurs="0"/>                  */
+/*      <xs:element ref="sld:Label" minOccurs="0"/>                     */
+/*      <xs:element ref="sld:Font" minOccurs="0"/>                      */
+/*      <xs:element ref="sld:LabelPlacement" minOccurs="0"/>            */
+/*      <xs:element ref="sld:Halo" minOccurs="0"/>                      */
+/*      <xs:element ref="sld:Fill" minOccurs="0"/>                      */
+/*      </xs:sequence>                                                  */
+/*      </xs:complexType>                                               */
+/*      </xs:element>                                                   */
+/*                                                                      */
+/*      <xs:element name="Label" type="sld:ParameterValueType"/         */
+/*                                                                      */
+/*      <xs:element name="Font">                                        */
+/*      <xs:complexType>                                                */
+/*      <xs:sequence>                                                   */
+/*      <xs:element ref="sld:CssParameter" minOccurs="0"                */
+/*      maxOccurs="unbounded"/>                                         */
+/*      </xs:sequence>                                                  */
+/*      </xs:complexType>                                               */
+/*      </xs:element>                                                   */
+/*                                                                      */
+/*      Four types of CssParameter are allowed, font-family, font-style,*/ 
+/*      fontweight,and font-size.                                       */
+/*                                                                      */
+/*      <xs:element name="LabelPlacement">                              */
+/*      <xs:complexType>                                                */
+/*      <xs:choice>                                                     */
+/*      <xs:element ref="sld:PointPlacement"/>                          */
+/*      <xs:element ref="sld:LinePlacement"/>                           */
+/*      </xs:choice>                                                    */
+/*      </xs:complexType>                                               */
+/*      </xs:element>                                                   */
+/*                                                                      */
+/*      <xs:element name="PointPlacement">                              */
+/*      <xs:complexType>                                                */
+/*      <xs:sequence>                                                   */
+/*      <xs:element ref="sld:AnchorPoint" minOccurs="0"/>               */
+/*      <xs:element ref="sld:Displacement" minOccurs="0"/>              */
+/*      <xs:element ref="sld:Rotation" minOccurs="0"/>                  */
+/*      </xs:sequence>                                                  */
+/*      </xs:complexType>                                               */
+/*      </xs:element>                                                   */
+/*                                                                      */
+/*      <xs:element name="AnchorPoint">                                 */
+/*      <xs:complexType>                                                */
+/*      <xs:sequence>                                                   */
+/*      <xs:element ref="sld:AnchorPointX"/>                            */
+/*      <xs:element ref="sld:AnchorPointY"/>                            */
+/*      </xs:sequence>                                                  */
+/*      </xs:complexType>                                               */
+/*      </xs:element>                                                   */
+/*      <xs:element name="AnchorPointX" type="sld:ParameterValueType"/> */
+/*      <xs:element name="AnchorPointY"                                 */
+/*      type="sld:ParameterValueType"/>                                 */
+/*                                                                      */
+/*      The coordinates are given as two floating-point numbers in      */
+/*      the AnchorPointX and AnchorPointY elements each with values     */
+/*      between 0.0 and 1.0 inclusive. The bounding box of the label    */
+/*      to be rendered is considered to be in a coorindate space        */
+/*      from 0.0 (lowerleft corner) to 1.0 (upper-right corner), and    */
+/*      the anchor position is specified as a point in  this            */
+/*      space. The default point is X=0, Y=0.5, which is at the         */
+/*      middle height of the lefthand side of the label.                */
+/*                                                                      */
+/*      <xs:element name="Displacement">                                */
+/*      <xs:complexType>                                                */
+/*      <xs:sequence>                                                   */
+/*      <xs:element ref="sld:DisplacementX"/>                           */
+/*      <xs:element ref="sld:DisplacementY"/>                           */
+/*      </xs:sequence>                                                  */
+/*      </xs:complexType>                                               */
+/*      </xs:element>                                                   */
+/*      <xs:element name="DisplacementX" type="sld:ParameterValueType"/>*/
+/*      <xs:element name="DisplacementY"                                */
+/*      type="sld:ParameterValueType"/>                                 */
+/*                                                                      */
+/*      <xs:element name="LinePlacement">                               */
+/*      <xs:complexType>                                                */
+/*      <xs:sequence>                                                   */
+/*      <xs:element ref="sld:PerpendicularOffset" minOccurs="0"/>       */
+/*      </xs:sequence>                                                  */
+/*      </xs:complexType>                                               */
+/*      </xs:element>                                                   */
+/************************************************************************/
+void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+                              int bOtherSymboliser)
+{
+    int nStyleId=0, nClassId=0;
+
+    if (psRoot && psLayer)
+    {
+        if (!bOtherSymboliser)
+        {
+            initClass(&(psLayer->class[psLayer->numclasses]));
+            nClassId = psLayer->numclasses;
+            psLayer->numclasses++;
+            initStyle(&(psLayer->class[nClassId].styles[0]));
+            psLayer->class[nClassId].numstyles = 1;
+            nStyleId = 0;
+        }
+        else
+        {
+            nClassId = psLayer->numclasses - 1;
+            if (nClassId >= 0)//should always be true
+              nStyleId = psLayer->class[nClassId].numstyles -1;
+        }
+
+        if (nStyleId >= 0 && nClassId >= 0) //should always be true
+          msSLDParseTextParams(psRoot, psLayer,
+                               &psLayer->class[nClassId]);
+    }
+}
+
+
+/************************************************************************/
+/*                           msSLDParseTextParams                       */
+/*                                                                      */
+/*      Parse text paramaters like font, placement and color.           */
+/************************************************************************/
+void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psClass)
+{
+    char szFontName[100];
+    int  nFontSize = 10;
+    int bFontSet = 0;
+
+    CPLXMLNode *psLabel=NULL, *psPropertyName=NULL, *psFont=NULL;
+    CPLXMLNode *psCssParam = NULL;
+    char *pszName=NULL, *pszFontFamily=NULL, *pszFontStyle=NULL;
+    char *pszFontWeight=NULL; 
+    CPLXMLNode *psLabelPlacement=NULL, *psPointPlacement=NULL, *psLinePlacement=NULL;
+    CPLXMLNode *psFill = NULL;
+    int nLength = 0;
+    char *pszColor = NULL;
+
+    szFontName[0]='\0';
+
+    if (psRoot && psClass && psLayer)
+    {
+        //label 
+        //TODO support only literal expression instead of propertyname
+        psLabel = CPLGetXMLNode(psRoot, "Label");
+        if (psLabel )
+        {
+            if (psLabel->psChild && psLabel->psChild->pszValue)
+            //psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
+              //if (psPropertyName && psPropertyName->psChild &&
+              //psPropertyName->psChild->pszValue)
+            {
+                if (psLayer->labelitem)
+                  free (psLayer->labelitem);
+                psLayer->labelitem = strdup(psLabel->psChild->pszValue);
+                  //strdup(psPropertyName->psChild->pszValue);
+
+                //font
+                psFont = CPLGetXMLNode(psRoot, "Font");
+                if (psFont)
+                {
+                    psCssParam =  CPLGetXMLNode(psFont, "CssParameter");
+                    while (psCssParam && psCssParam->pszValue && 
+                           strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                    {
+                        pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
+                        if (pszName)
+                        {
+                            if (strcasecmp(pszName, "font-family") == 0)
+                            {
+                                if(psCssParam->psChild && psCssParam->psChild->psNext && 
+                                  psCssParam->psChild->psNext->pszValue)
+                                  pszFontFamily = psCssParam->psChild->psNext->pszValue;
+                            }
+                            //normal, italic, oblique
+                            else if (strcasecmp(pszName, "font-style") == 0)
+                            {
+                                if(psCssParam->psChild && psCssParam->psChild->psNext && 
+                                   psCssParam->psChild->psNext->pszValue)
+                                  pszFontStyle = psCssParam->psChild->psNext->pszValue;
+                            }
+                            //normal or bold
+                            else if (strcasecmp(pszName, "font-weight") == 0)
+                            {
+                                 if(psCssParam->psChild && psCssParam->psChild->psNext && 
+                                   psCssParam->psChild->psNext->pszValue)
+                                  pszFontWeight = psCssParam->psChild->psNext->pszValue;
+                            }
+                            //default is 10 pix
+                            else if (strcasecmp(pszName, "font-size") == 0)
+                            {
+
+                                 if(psCssParam->psChild && psCssParam->psChild->psNext && 
+                                    psCssParam->psChild->psNext->pszValue)
+                                   nFontSize = atoi(psCssParam->psChild->psNext->pszValue); 
+                                 if (nFontSize <=0)
+                                   nFontSize = 10;
+                            }
+                        }
+                        psCssParam = psCssParam->psNext;
+                    }
+                }
+/* -------------------------------------------------------------------- */
+/*      build the font name using the font font-family, font-style      */
+/*      and font-weight. The name building uses a - between these       */
+/*      parameters and the resulting name is compared to the list of    */
+/*      available fonts. If the name exists, it will be used else we    */
+/*      go to the bitmap fonts.                                         */
+/* -------------------------------------------------------------------- */
+                if (pszFontFamily)
+                {
+                    sprintf(szFontName, "%s", pszFontFamily);
+                    if (pszFontWeight)
+                    {
+                        strcat(szFontName, "-");
+                        strcat(szFontName, pszFontWeight);
+                    }
+                    if (pszFontStyle)
+                    {
+                        strcat(szFontName, "-");
+                        strcat(szFontName, pszFontStyle);
+                    }
+                        
+                    if ((msLookupHashTable(psLayer->map->fontset.fonts, szFontName) !=NULL))
+                    {
+                        bFontSet = 1;
+                        psClass->label.font = strdup(szFontName);
+                        psClass->label.type = MS_TRUETYPE;
+                        psClass->label.size = nFontSize;
+                    }
+                }       
+                if (!bFontSet)
+                {
+                    psClass->label.type = MS_BITMAP;
+                    psClass->label.size = MS_MEDIUM;
+                }
+/* -------------------------------------------------------------------- */
+/*      parse the label placement.                                      */
+/* -------------------------------------------------------------------- */
+                psLabelPlacement = CPLGetXMLNode(psRoot, "LabelPlacement");
+                if (psLabelPlacement)
+                {
+                    psPointPlacement = CPLGetXMLNode(psLabelPlacement, 
+                                                     "PointPlacement");
+                    psLinePlacement = CPLGetXMLNode(psLabelPlacement, 
+                                                     "LinePlacement");
+                    if (psPointPlacement)
+                      ParseTextPointPlacement(psPointPlacement, psClass);
+                    if (psLinePlacement)
+                      ParseTextLinePlacement(psPointPlacement, psClass);
+                }
+
+                
+/* -------------------------------------------------------------------- */
+/*      Parse the color                                                 */
+/* -------------------------------------------------------------------- */
+                psFill = CPLGetXMLNode(psRoot, "Fill");
+                if (psFill)
+                {
+                    psCssParam =  CPLGetXMLNode(psFill, "CssParameter");
+                    while (psCssParam && psCssParam->pszValue && 
+                           strcasecmp(psCssParam->pszValue, "CssParameter") == 0)
+                    {
+                        pszName = (char*)CPLGetXMLValue(psCssParam, "name", NULL);
+                        if (pszName)
+                        {
+                            if (strcasecmp(pszName, "fill") == 0)
+                            {
+                                if(psCssParam->psChild && psCssParam->psChild->psNext && 
+                                   psCssParam->psChild->psNext->pszValue)
+                                  pszColor = psCssParam->psChild->psNext->pszValue;
+
+                                if (pszColor)
+                                {
+                                    nLength = strlen(pszColor);
+                                    //expecting hexadecimal ex : #aaaaff
+                                    if (nLength == 7 && pszColor[0] == '#')
+                                    {
+                                        psClass->label.color.red = hex2int(pszColor+1);
+                                        psClass->label.color.green = hex2int(pszColor+3);
+                                        psClass->label.color.blue = hex2int(pszColor+5);
+                                    }
+                                }
+                            }
+                        }
+                        psCssParam = psCssParam->psNext;
+                    }
+                }
+            
+            }//labelitem
+        }
+    }
+}
+
+/************************************************************************/
+/*                         ParseTextPointPlacement                      */
+/*                                                                      */
+/*      point plavament node ifor the text symbolizer.                  */
+/************************************************************************/
+void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
+{
+    CPLXMLNode *psAnchor, *psAnchorX, *psAnchorY;
+    double dfAnchorX=0, dfAnchorY=0;
+    CPLXMLNode *psDisplacement, *psDisplacementX, *psDisplacementY;
+    CPLXMLNode *psRotation;
+
+    if (psRoot && psClass)
+    {
+        //init the label with the default position
+        psClass->label.position = MS_CL;
+
+/* -------------------------------------------------------------------- */
+/*      parse anchor point. see function msSLDParseTextSymbolizer       */
+/*      for documentation.                                              */
+/* -------------------------------------------------------------------- */
+        psAnchor = CPLGetXMLNode(psRoot, "AnchorPoint");
+        if (psAnchor)
+        {
+            psAnchorX = CPLGetXMLNode(psAnchor, "AnchorPointX");
+            psAnchorY = CPLGetXMLNode(psAnchor, "AnchorPointY");
+            //psCssParam->psChild->psNext->pszValue)
+            if (psAnchorX &&
+                psAnchorX->psChild && 
+                psAnchorX->psChild->pszValue &&
+                psAnchorY && 
+                psAnchorY->psChild && 
+                psAnchorY->psChild->pszValue)
+            {
+                dfAnchorX = atof(psAnchorX->psChild->pszValue);
+                dfAnchorY = atof(psAnchorY->psChild->pszValue);
+
+                if ((dfAnchorX == 0 || dfAnchorX == 0.5 || dfAnchorX == 1) &&
+                    (dfAnchorY == 0 || dfAnchorY == 0.5 || dfAnchorY == 1))
+                {
+                    if (dfAnchorX == 0 && dfAnchorY == 0)
+                      psClass->label.position = MS_LL;
+                    if (dfAnchorX == 0 && dfAnchorY == 0.5)
+                      psClass->label.position = MS_CL;
+                    if (dfAnchorX == 0 && dfAnchorY == 1)
+                      psClass->label.position = MS_UL;
+
+                    if (dfAnchorX == 0.5 && dfAnchorY == 0)
+                      psClass->label.position = MS_LC;
+                    if (dfAnchorX == 0.5 && dfAnchorY == 0.5)
+                      psClass->label.position = MS_CC;
+                    if (dfAnchorX == 0.5 && dfAnchorY == 1)
+                      psClass->label.position = MS_UC;
+
+                    if (dfAnchorX == 1 && dfAnchorY == 0)
+                      psClass->label.position = MS_LR;
+                    if (dfAnchorX == 1 && dfAnchorY == 0.5)
+                      psClass->label.position = MS_CR;
+                    if (dfAnchorX == 1 && dfAnchorY == 1)
+                      psClass->label.position = MS_UR;
+                }
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      Parse displacement                                              */
+/* -------------------------------------------------------------------- */
+        psDisplacement = CPLGetXMLNode(psRoot, "Displacement");
+        if (psDisplacement)
+        {
+            psDisplacementX = CPLGetXMLNode(psDisplacement, "DisplacementX");
+            psDisplacementY = CPLGetXMLNode(psDisplacement, "DisplacementY");
+            //psCssParam->psChild->psNext->pszValue)
+            if (psDisplacementX &&
+                psDisplacementX->psChild && 
+                psDisplacementX->psChild->pszValue &&
+                psDisplacementY && 
+                psDisplacementY->psChild && 
+                psDisplacementY->psChild->pszValue)
+            {
+                psClass->label.offsetx = atoi(psDisplacementX->psChild->pszValue);
+                psClass->label.offsety = atoi(psDisplacementY->psChild->pszValue);
+            }
+        }
+
+/* -------------------------------------------------------------------- */
+/*      parse rotation.                                                 */
+/* -------------------------------------------------------------------- */
+        psRotation = CPLGetXMLNode(psRoot, "Rotation");
+        if (psRotation && psRotation->psChild && psRotation->psChild->pszValue)
+          psClass->label.angle = atof(psRotation->psChild->pszValue);
+    }
+           
+}
+
+/************************************************************************/
+/*                          ParseTextLinePlacement                      */
+/*                                                                      */
+/*      Lineplacement node fro the text symbolizer.                     */
+/************************************************************************/
+void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass)
+{
+    CPLXMLNode *psOffset = NULL;
+    if (psRoot && psClass)
+    {
+        psOffset = CPLGetXMLNode(psRoot, "PerpendicularOffset");
+        if (psOffset && psOffset->psChild && psOffset->psChild->pszValue)
+        {
+            psClass->label.offsetx = atoi(psOffset->psChild->pszValue);
+            psClass->label.offsety = atoi(psOffset->psChild->pszValue);
+        }
+    }
+            
 }
 
 
