@@ -526,7 +526,7 @@ void msImagePolyline(gdImagePtr im, shapeObj *p, int c)
 ** Not a generic intersection test, we KNOW the lines aren't parallel or coincident. To be used with the next
 ** buffering code only. See code in mapsearch.c for a boolean test for intersection.
 */
-pointObj generateLineIntersection(pointObj a, pointObj b, pointObj c, pointObj d) 
+static pointObj generateLineIntersection(pointObj a, pointObj b, pointObj c, pointObj d) 
 {
   pointObj p;
   double r;
@@ -613,6 +613,28 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
     free(outside.point);
   }
   
+  return;
+}
+
+void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c)
+{
+  int y;
+  int ymin, ymax, xmin, xmax;
+  double dx, dy;
+
+  ymin = MS_MAX((p->y - r), 0);
+  ymax = MS_MIN((p->y + r), (gdImageSY(im)-1));
+
+  for(y=ymin; y<=ymax; y++) {
+    dy = MS_ABS(p->y - y);
+    dx = sqrt((r*r) - (dy*dy));
+
+    xmin = MS_MAX((p->x - dx), 0);
+    xmax = MS_MIN((p->x + dx), (gdImageSX(im)-1));
+
+    msImageScanline(im, xmin, xmax, y, c);
+  }
+
   return;
 }
 

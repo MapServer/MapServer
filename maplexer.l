@@ -192,6 +192,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>auto                     { return(MS_AUTO); }
 <INITIAL>bitmap			               { return(MS_BITMAP); }
 <INITIAL,VALUE_STRING>cc                       { return(MS_CC); }
+<INITIAL,VALUE_STRING>circle                   { return(MS_LAYER_CIRCLE); }
 <INITIAL,VALUE_STRING>cl                       { return(MS_CL); }
 <INITIAL,VALUE_STRING>cr                       { return(MS_CR); }
 <INITIAL,VALUE_STRING>default		       { return(MS_DEFAULT); }
@@ -226,7 +227,6 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>png		       { return(MS_PNG); }
 <INITIAL,VALUE_STRING>point		       { return(MS_LAYER_POINT); }
 <INITIAL,VALUE_STRING>polygon 		       { return(MS_LAYER_POLYGON); }
-<INITIAL,VALUE_STRING>polyline		       { return(MS_LAYER_POLYLINE); }
 <INITIAL,VALUE_STRING>postgis		       { return(MS_POSTGIS); }
 <INITIAL,VALUE_STRING>query                    { return(MS_LAYER_QUERY); }
 <INITIAL,VALUE_STRING>raster		       { return(MS_LAYER_RASTER); }

@@ -13,7 +13,8 @@
 gdImagePtr msDrawLegend(mapObj *map)
 {
   int status;
-  shapeObj p;
+  shapeObj box, zigzag;
+  pointObj marker;
   gdImagePtr img; /* image data structure */
   int i,j; /* loop counters */
   pointObj pnt;
@@ -27,11 +28,16 @@ gdImagePtr msDrawLegend(mapObj *map)
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
   if(status != MS_SUCCESS) return(NULL);
 
-  /* Initialize the polygon/polyline */
-  p.line = (lineObj *)malloc(sizeof(lineObj));
-  p.numlines = 1;
-  p.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
-  p.line[0].numpoints = 5;
+  // initialize the shapes used to render the legend
+  box.line = (lineObj *)malloc(sizeof(lineObj));
+  box.numlines = 1;
+  box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
+  box.line[0].numpoints = 5;
+
+  zigzag.line = (lineObj *)malloc(sizeof(lineObj));
+  zigzag.numlines = 1;
+  zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
+  zigzag.line[0].numpoints = 4;
 
   /*
   ** allocate heights array
@@ -125,79 +131,93 @@ gdImagePtr msDrawLegend(mapObj *map)
       
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
 
+      // compute shapes used to render individual legend pieces
+      marker.x = MS_NINT(HMARGIN + (map->legend.keysizex/2.0)) - 1;
+      marker.y = MS_NINT(pnt.y + (map->legend.keysizey/2.0)) - 1;
+
+      zigzag.line[0].point[0].x = HMARGIN;
+      zigzag.line[0].point[0].y = pnt.y + map->legend.keysizey - 1;
+      zigzag.line[0].point[1].x = HMARGIN + MS_NINT(map->legend.keysizex/3.0) - 1;
+      zigzag.line[0].point[1].y = pnt.y;
+      zigzag.line[0].point[2].x = HMARGIN + MS_NINT(2*map->legend.keysizex/3.0) - 1;
+      zigzag.line[0].point[2].y = pnt.y + map->legend.keysizey - 1;
+      zigzag.line[0].point[3].x = HMARGIN + map->legend.keysizex - 1;
+      zigzag.line[0].point[3].y = pnt.y;
+      zigzag.line[0].numpoints = 4;
+
+      box.line[0].point[0].x = HMARGIN;
+      box.line[0].point[0].y = pnt.y;
+      box.line[0].point[1].x = HMARGIN + map->legend.keysizex - 1;
+      box.line[0].point[1].y = pnt.y;
+      box.line[0].point[2].x = HMARGIN + map->legend.keysizex - 1;
+      box.line[0].point[2].y = pnt.y + map->legend.keysizey - 1;
+      box.line[0].point[3].x = HMARGIN;
+      box.line[0].point[3].y = pnt.y + map->legend.keysizey - 1;
+      box.line[0].point[4].x = box.line[0].point[0].x;
+      box.line[0].point[4].y = box.line[0].point[0].y;
+      box.line[0].numpoints = 5;
+
       /* 
       ** now draw the appropriate color/symbol/size combination 
       */      
       switch(lp->type) {
       case MS_LAYER_POINT:            
-	p.line[0].point[0].x = MS_NINT(HMARGIN + (map->legend.keysizex/2.0)) - 1;
-	p.line[0].point[0].y = MS_NINT(pnt.y + (map->legend.keysizey/2.0)) - 1;
-	p.line[0].numpoints = 1;
-	msDrawMarkerSymbol(&map->symbolset, img, &(p.line[0].point[0]), lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
-	if(lp->class[j].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &(p.line[0].point[0]), lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
+	msDrawMarkerSymbol(&map->symbolset, img, &marker, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
+	if(lp->class[j].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &marker, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
 	break;
-      case MS_LAYER_LINE:
-      case MS_LAYER_POLYLINE:
-	p.line[0].point[0].x = HMARGIN;
-	p.line[0].point[0].y = pnt.y + map->legend.keysizey - 1;
-	p.line[0].point[1].x = HMARGIN + MS_NINT(map->legend.keysizex/3.0) - 1;
-	p.line[0].point[1].y = pnt.y;
-	p.line[0].point[2].x = HMARGIN + MS_NINT(2*map->legend.keysizex/3.0) - 1;
-	p.line[0].point[2].y = pnt.y + map->legend.keysizey - 1;
-	p.line[0].point[3].x = HMARGIN + map->legend.keysizex - 1;
-	p.line[0].point[3].y = pnt.y;
-	p.line[0].numpoints = 4;
-	msDrawLineSymbol(&map->symbolset, img, &p, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
-	if(lp->class[j].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, &p, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlayoutlinecolor, lp->class[j].overlaysizescaled);
+      case MS_LAYER_LINE:	
+	msDrawLineSymbol(&map->symbolset, img, &zigzag, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].sizescaled);
+	if(lp->class[j].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, &zigzag, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlaysizescaled);
 	break;
+      case MS_LAYER_CIRCLE:
       case MS_LAYER_RASTER:
       case MS_LAYER_POLYGON:
-        p.line[0].point[0].x = HMARGIN;
-	p.line[0].point[0].y = pnt.y;
-	p.line[0].point[1].x = HMARGIN + map->legend.keysizex - 1;
-	p.line[0].point[1].y = pnt.y;
-	p.line[0].point[2].x = HMARGIN + map->legend.keysizex - 1;
-	p.line[0].point[2].y = pnt.y + map->legend.keysizey - 1;
-	p.line[0].point[3].x = HMARGIN;
-	p.line[0].point[3].y = pnt.y + map->legend.keysizey - 1;
-	p.line[0].point[4].x = p.line[0].point[0].x;
-	p.line[0].point[4].y = p.line[0].point[0].y;
-	p.line[0].numpoints = 5;
-	msDrawShadeSymbol(&map->symbolset, img, &p, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
-	if(lp->class[j].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, &p, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlayoutlinecolor, lp->class[j].overlaysizescaled);	
-	break;
+
+	if(lp->class[j].color >= 0) { // use the box
+	  msDrawShadeSymbol(&map->symbolset, img, &box, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
+
+          if(lp->class[j].overlaysymbol >= 0) {
+            if(lp->class[j].overlaycolor < 0)
+	      msDrawLineSymbol(&map->symbolset, img, &box, lp->class[j].overlaysymbol, lp->class[j].overlayoutlinecolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlaysizescaled);
+            else
+              msDrawShadeSymbol(&map->symbolset, img, &box, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlayoutlinecolor, lp->class[j].overlaysizescaled);
+          }
+        } else if(lp->class[j].overlaycolor >= 0) { // use the box
+	  if(lp->class[j].color < 0)
+            msDrawLineSymbol(&map->symbolset, img, &box, lp->class[j].symbol, lp->class[j].outlinecolor, lp->class[j].backgroundcolor, lp->class[j].sizescaled);
+          else
+            msDrawShadeSymbol(&map->symbolset, img, &box, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
+
+	  msDrawShadeSymbol(&map->symbolset, img, &box, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlayoutlinecolor, lp->class[j].overlaysizescaled);
+        } else { // use the zigzag
+          msDrawLineSymbol(&map->symbolset, img, &zigzag, lp->class[j].symbol, lp->class[j].outlinecolor, lp->class[j].backgroundcolor, lp->class[j].sizescaled);
+	  if(lp->class[j].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, &zigzag, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlaysizescaled);
+        }
+
+        break;
       default:
 	break;
      } /* end symbol drawing */
 
-      /* Draw the outline if a color is specified */
-      if(map->legend.outlinecolor > 0) { /* 0 is background, so who cares about drawing it. */
-	p.line[0].point[0].x = HMARGIN;
-        p.line[0].point[0].y = pnt.y;
-	p.line[0].point[1].x = HMARGIN + map->legend.keysizex - 1;
-        p.line[0].point[1].y = pnt.y;
-        p.line[0].point[2].x = HMARGIN + map->legend.keysizex - 1;
-        p.line[0].point[2].y = pnt.y + map->legend.keysizey - 1;
-        p.line[0].point[3].x = HMARGIN;
-        p.line[0].point[3].y = pnt.y + map->legend.keysizey - 1;
-	p.line[0].point[4].x = p.line[0].point[0].x;
-	p.line[0].point[4].y = p.line[0].point[0].y;
-	msImagePolyline(img, &p, map->legend.outlinecolor);
-      }
+      // Draw the outline if a color is specified (0 is background, so who cares about drawing it)
+      if(map->legend.outlinecolor > 0)
+	msImagePolyline(img, &box, map->legend.outlinecolor);
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
       msDrawLabel(img, pnt, lp->class[j].name, &(map->legend.label), &map->fontset);
 
       pnt.y += map->legend.keyspacingy; /* bump y for next label */
 	
-    } /* next label */
-  } /* next layer please */
+    } // next label
+  } // next layer please
 
   free(heights);
-  free(p.line[0].point);
-  free(p.line);
+  free(box.line[0].point);
+  free(box.line);
+  free(zigzag.line[0].point);
+  free(zigzag.line);
 
-  return(img);  /* return image */
+  return(img);
 }
 
 int msEmbedLegend(mapObj *map, gdImagePtr img)

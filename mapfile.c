@@ -23,7 +23,7 @@ extern int loadSymbol(symbolObj *s); // in mapsymbol.c
 */
 static char *msOutputImageType[5]={"GIF", "PNG", "JPEG", "WBMP", "GML"};
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
-static char *msLayerTypes[8]={"POINT", "LINE", "POLYGON", "POLYLINE", "RASTER", "ANNOTATION", "QUERY", "ELLIPSE"};
+static char *msLayerTypes[7]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE"};
 static char *msLabelPositions[10]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO"};
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
 static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
@@ -33,11 +33,8 @@ static char *msTrueFalse[2]={"FALSE", "TRUE"};
 // static char *msYesNo[2]={"NO", "YES"};
 static char *msJoinType[2]={"SINGLE", "MULTIPLE"};
 
-void msFree(void *p) {  
-  if(p) {
-    free(p);
-    p = NULL;
-  }
+void msFree(void *p) {
+  if(p) free(p);
 }
 
 /*
@@ -717,7 +714,8 @@ static int loadLabel(labelObj *label, mapObj *map)
 	label->autoangle = MS_TRUE;
       break;
     case(ANTIALIAS):
-      label->antialias = 1;
+      if((label->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) 
+	return(-1);
       break;
     case(BACKGROUNDCOLOR):
       if(getInteger(&(red)) == -1) return(-1);
@@ -850,7 +848,8 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
       label->autoangle = MS_TRUE;
     break;
   case(ANTIALIAS):
-    label->antialias = 1;
+    msyystate = 2; msyystring = value;
+    if((label->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;  
   case(BUFFER):
     msyystate = 2; msyystring = value;
@@ -983,7 +982,7 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
       fprintf(stream, "  %sANGLE AUTO\n", tab);
     else
       fprintf(stream, "  %sANGLE %f\n", tab, label->angle);
-    if(label->antialias) fprintf(stream, "  %sANTIALIAS\n", tab);
+    if(label->antialias) fprintf(stream, "  %sANTIALIAS TRUE\n", tab);
     fprintf(stream, "  %sFONT %s\n", tab, label->font);
     fprintf(stream, "  %sMAXSIZE %d\n", tab, label->maxsize);
     fprintf(stream, "  %sMINSIZE %d\n", tab, label->minsize);
@@ -1369,7 +1368,7 @@ int loadClass(classObj *class, mapObj *map)
       }
       break;
     case(TYPE):
-      if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION)) == -1) return(-1);
+      if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return(-1);
       break;
     default:
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
@@ -1452,7 +1451,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     if((class->text.type != MS_STRING) && (class->text.type != MS_EXPRESSION)) msSetError(MS_MISCERR, "Text expressions support constant or replacement strings." , "loadClass()");
   case(TYPE):
     msyystate = 2; msyystring = value;
-    if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION)) == -1) return;
+    if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return;
     break;
   default:
     break;
@@ -1686,7 +1685,7 @@ int loadLayer(layerObj *layer, mapObj *map)
 	return(-1);
       }
 
-      if(layer->type == MS_LAYER_POLYGON || layer->type == MS_LAYER_POLYLINE)
+      if(layer->type == MS_LAYER_POLYGON)
 	type = MS_SHAPE_POLYGON;
       else if(layer->type == MS_LAYER_LINE)
 	type = MS_SHAPE_LINE;
@@ -1792,7 +1791,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->transform = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
     case(TYPE):
-      if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_ELLIPSE)) == -1) return(-1);
+      if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE)) == -1) return(-1);
       break;    
     case(UNITS):
       if((layer->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
@@ -1832,7 +1831,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->data = strdup(value);
     break;
   case(FEATURE):    
-    if(layer->type == MS_LAYER_POLYGON || layer->type == MS_LAYER_POLYLINE)
+    if(layer->type == MS_LAYER_POLYGON)
       type = MS_SHAPE_POLYGON;
     else if(layer->type == MS_LAYER_LINE)
       type = MS_SHAPE_LINE;
@@ -1911,7 +1910,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(LABELANGLEITEM):
     msFree(layer->labelangleitem);
-    layer->labelangleitem = strdup(value);
+    if(strcasecmp(value, "null") == 0) 
+      layer->labelangleitem = NULL;
+    else
+      layer->labelangleitem = strdup(value); 
     break;
   case(LABELCACHE):
     msyystate = 2; msyystring = value;
@@ -1919,7 +1921,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(LABELITEM):
     msFree(layer->labelitem);
-    layer->labelitem = strdup(value);
+    if(strcasecmp(value, "null") == 0) 
+      layer->labelitem = NULL;
+    else
+      layer->labelitem = strdup(value);
     break;
   case(LABELMAXSCALE):
     msyystate = 2; msyystring = value;
@@ -1935,7 +1940,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(LABELSIZEITEM):
     msFree(layer->labelsizeitem);
-    layer->labelsizeitem = strdup(value);
+    if(strcasecmp(value, "null") == 0) 
+      layer->labelsizeitem = NULL;
+    else
+      layer->labelsizeitem = strdup(value);
     break;
   case(MAXFEATURES):
     msyystate = 2; msyystring = value;
@@ -2002,7 +2010,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(TYPE):
     msyystate = 2; msyystring = value;
-    if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_ELLIPSE)) == -1) return;
+    if((layer->type = getSymbol(7, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE)) == -1) return;
     break;
   case(UNITS):
     msyystate = 2; msyystring = value;

@@ -76,7 +76,7 @@ void initSymbol(symbolObj *s)
   s->name = NULL;
   s->gap = 0;
 
-  s->antialias = -1;
+  s->antialias = MS_FALSE;
   s->font = NULL;
   s->character = '\0';
 }
@@ -99,7 +99,8 @@ int loadSymbol(symbolObj *s)
   for(;;) {
     switch(msyylex()) {
     case(ANTIALIAS):
-      s->antialias = 1;
+      if((s->antialias = getSymbol(2,MS_TRUE,MS_FALSE)) == -1)
+	return(-1);
       break;
     case(CHARACTER):
       if((s->character = getString()) == NULL) return(-1);
@@ -123,8 +124,9 @@ int loadSymbol(symbolObj *s)
       msSetError(MS_EOFERR, NULL, "loadSymbol()");      
       return(-1);
       break;
-    case(FILLED):
-      s->filled = MS_TRUE;
+    case(FILLED):      
+      if((s->filled = getSymbol(2,MS_TRUE,MS_FALSE)) == -1)
+	return(-1);
       break;
     case(FONT):
       if((s->font = getString()) == NULL) return(-1);
@@ -507,9 +509,9 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int
     y = -rect.miny;
 
 #ifdef USE_GD_TTF
-    gdImageStringTTF(tile, bbox, symbol->antialias*tile_fg, font, sz, 0, x, y, symbol->character);
+    gdImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fg):-(tile_fg)), font, sz, 0, x, y, symbol->character);
 #else
-    gdImageStringFT(tile, bbox, symbol->antialias*tile_fg, font, sz, 0, x, y, symbol->character);
+    gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fg):-(tile_fg)), font, sz, 0, x, y, symbol->character);
 #endif    
 
     gdImageSetTile(img, tile);
@@ -754,9 +756,9 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
     y = p->y - rect.maxy + (rect.maxy - rect.miny)/2;  
 
 #ifdef USE_GD_TTF
-    gdImageStringTTF(img, bbox, symbol->antialias*fc, font, sz, 0, x, y, symbol->character);
+    gdImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, sz, 0, x, y, symbol->character);
 #else
-    gdImageStringFT(img, bbox, symbol->antialias*fc, font, sz, 0, x, y, symbol->character);
+    gdImageStringFT(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, sz, 0, x, y, symbol->character);
 #endif
 
 #endif
@@ -858,7 +860,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
 /* ------------------------------------------------------------------------------- */
 /*       Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------------- */
-void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz)
+void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, double sz)
 {
   int i, j;
   symbolObj *symbol;
@@ -873,16 +875,16 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int 
   if(p->numlines <= 0)
     return;
 
-  if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
+  if(sy > symbolset->numsymbols || sy < 0) // no such symbol, 0 is OK
     return;
 
-  if((fc < 0) || (fc >= gdImageColorsTotal(img))) /* invalid color */
+  if((fc < 0) || (fc >= gdImageColorsTotal(img))) // invalid color
     return;
 
-  if(sz < 1) /* size too small */
+  if(sz < 1) // size too small
     return;
 
-  if(sy == 0) { /* just draw a single width line */
+  if(sy == 0) { // just draw a single width line
     msImagePolyline(img, p, fc);
     return;
   }
@@ -988,6 +990,346 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int 
       msImagePolyline(img, p, fc);
     else
       msImagePolyline(img, p, gdBrushed);
+  }
+
+  return;
+}
+
+/* ------------------------------------------------------------------------------- */
+/*       Fill a circle with a shade symbol of the specified size and color       */
+/* ------------------------------------------------------------------------------- */
+void msCircleDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, int sy, int fc, int bc, int oc, double sz)
+{
+  symbolObj *symbol;
+  int i;
+  gdPoint oldpnt,newpnt;
+  gdPoint sPoints[MS_MAXVECTORPOINTS];
+  gdImagePtr tile=NULL;
+  int x,y;
+  int tile_bg=-1, tile_fg=-1; /* colors (background and foreground) */
+  
+  double scale=1.0;
+  
+  int bbox[8];
+  rectObj rect;
+  char *font=NULL;
+
+  if(!p) return;
+  if(sy > symbolset->numsymbols || sy < 0) return; // no such symbol, 0 is OK
+  if(fc >= gdImageColorsTotal(img)) return; // invalid color, -1 is valid
+  if(sz < 1) return; // size too small
+      
+  if(sy == 0) { // simply draw a single pixel of the specified color
+    if(fc>-1)
+      msImageFilledCircle(img, p, r, fc);
+    if(oc>-1)
+      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
+    return;
+  }
+
+  if(fc<0) {
+    if(oc>-1)
+      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
+    return;
+  }
+
+  symbol = &(symbolset->symbol[sy]);
+
+  switch(symbol->type) {
+  case(MS_SYMBOL_TRUETYPE):    
+    
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+    font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[sy].font);
+    if(!font) return;
+
+    if(getCharacterSize(symbol->character, sz, font, &rect) == -1) return;
+    x = rect.maxx - rect.minx;
+    y = rect.maxy - rect.miny;
+
+    tile = gdImageCreate(x, y);
+    if(bc >= 0)
+      tile_bg = gdImageColorAllocate(tile, gdImageRed(img, bc), gdImageGreen(img, bc), gdImageBlue(img, bc));
+    else {
+      tile_bg = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
+      gdImageColorTransparent(tile,0);
+    }    
+    tile_fg = gdImageColorAllocate(tile, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+    
+    x = -rect.minx;
+    y = -rect.miny;
+
+#ifdef USE_GD_TTF
+    gdImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fg):-(tile_fg)), font, sz, 0, x, y, symbol->character);
+#else
+    gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fg):-(tile_fg)), font, sz, 0, x, y, symbol->character);
+#endif    
+
+    gdImageSetTile(img, tile);
+#endif
+
+    break;
+  case(MS_SYMBOL_PIXMAP):
+    
+    gdImageSetTile(img, symbol->img);
+
+    break;
+  case(MS_SYMBOL_ELLIPSE):    
+   
+    scale = sz/symbol->sizey; // sz ~ height in pixels
+    x = MS_NINT(symbol->sizex*scale)+1;
+    y = MS_NINT(symbol->sizey*scale)+1;
+
+    if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid
+      msImageFilledCircle(img, p, r, fc);
+      if(oc>-1)
+        gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
+      return;
+    }
+
+    tile = gdImageCreate(x, y);
+    if(bc >= 0)
+      tile_bg = gdImageColorAllocate(tile, gdImageRed(img, bc), gdImageGreen(img, bc), gdImageBlue(img, bc));
+    else {
+      tile_bg = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
+      gdImageColorTransparent(tile,0);
+    }    
+    tile_fg = gdImageColorAllocate(tile, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+    
+    x = MS_NINT(tile->sx/2);
+    y = MS_NINT(tile->sy/2);
+
+    /*
+    ** draw in the tile image
+    */
+    gdImageArc(tile, x, y, MS_NINT(scale*symbol->points[0].x), MS_NINT(scale*symbol->points[0].y), 0, 360, tile_fg);
+    if(symbol->filled)
+      gdImageFillToBorder(tile, x, y, tile_fg, tile_fg);
+
+    /*
+    ** Fill the polygon in the main image
+    */
+    gdImageSetTile(img, tile);
+ 
+    break;
+  case(MS_SYMBOL_VECTOR):
+
+    if(fc < 0)
+      return;
+
+    scale = sz/symbol->sizey; // sz ~ height in pixels
+    x = MS_NINT(symbol->sizex*scale)+1;    
+    y = MS_NINT(symbol->sizey*scale)+1;
+
+    if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid
+      msImageFilledCircle(img, p, r, fc);
+      if(oc>-1)
+        gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
+      return;
+    }
+
+    /*
+    ** create tile image
+    */
+    tile = gdImageCreate(x, y);
+    if(bc >= 0)
+      tile_bg = gdImageColorAllocate(tile, gdImageRed(img, bc), gdImageGreen(img, bc), gdImageBlue(img, bc));
+    else {
+      tile_bg = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
+      gdImageColorTransparent(tile,0);
+    }
+    tile_fg = gdImageColorAllocate(tile, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+   
+    /*
+    ** draw in the tile image
+    */
+    if(symbol->filled) {
+
+      for(i=0;i < symbol->numpoints;i++) {
+	sPoints[i].x = MS_NINT(scale*symbol->points[i].x);
+	sPoints[i].y = MS_NINT(scale*symbol->points[i].y);
+      }
+      gdImageFilledPolygon(tile, sPoints, symbol->numpoints, tile_fg);      
+
+    } else  { /* shade is a vector drawing */
+      
+      oldpnt.x = MS_NINT(scale*symbol->points[0].x); /* convert first point in shade smbol */
+      oldpnt.y = MS_NINT(scale*symbol->points[0].y);
+
+      /* step through the shade sy */
+      for(i=1;i < symbol->numpoints;i++) {
+	if((symbol->points[i].x < 0) && (symbol->points[i].y < 0)) {
+	  oldpnt.x = MS_NINT(scale*symbol->points[i].x);
+	  oldpnt.y = MS_NINT(scale*symbol->points[i].y);
+	} else {
+	  if((symbol->points[i-1].x < 0) && (symbol->points[i-1].y < 0)) { /* Last point was PENUP, now a new beginning */
+	    oldpnt.x = MS_NINT(scale*symbol->points[i].x);
+	    oldpnt.y = MS_NINT(scale*symbol->points[i].y);
+	  } else {
+	    newpnt.x = MS_NINT(scale*symbol->points[i].x);
+	    newpnt.y = MS_NINT(scale*symbol->points[i].y);
+	    gdImageLine(tile, oldpnt.x, oldpnt.y, newpnt.x, newpnt.y, tile_fg);
+	    oldpnt = newpnt;
+	  }
+	}
+      } /* end for loop */
+    }
+
+    /*
+    ** Fill the polygon in the main image
+    */
+    gdImageSetTile(img, tile);
+ 
+    break;
+  default:
+    break;
+  }
+
+  /*
+  ** Fill the polygon in the main image
+  */
+  msImageFilledCircle(img, p, r, gdTiled);
+  if(oc>-1)
+    gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
+
+  if(tile) gdImageDestroy(tile);
+
+  return;
+}
+
+/* ------------------------------------------------------------------------------- */
+/*       Stroke an ellipse with a line symbol of the specified size and color      */
+/* ------------------------------------------------------------------------------- */
+void msCircleDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, int sy, int fc, int bc, double sz)
+{
+  int i, j;
+  symbolObj *symbol;
+  int styleDashed[100];
+  int x, y;
+  int brush_bc, brush_fc;
+  gdImagePtr brush=NULL;
+  gdPoint points[MS_MAXVECTORPOINTS];
+
+  double scale=1.0;
+  
+  if(!p) return;
+
+  if(sy > symbolset->numsymbols || sy < 0) // no such symbol, 0 is OK
+    return;
+
+  if((fc < 0) || (fc >= gdImageColorsTotal(img))) // invalid color
+    return;
+
+  if(sz < 1) // size too small
+    return;
+
+  if(sy == 0) { // just draw a single width line
+    gdImageArc(img, (int)p->x, (int)p->y, (int)r, (int)r, 0, 360, fc);
+    return;
+  }
+
+  symbol = &(symbolset->symbol[sy]);
+
+  switch(symbol->type) {
+  case(MS_SYMBOL_SIMPLE):
+    if(bc == -1) bc = gdTransparent;
+    break;
+  case(MS_SYMBOL_TRUETYPE):
+    // msImageTruetypePolyline(img, p, symbol, fc, sz, symbolset->fontset);
+    return;
+    break;
+  case(MS_SYMBOL_ELLIPSE):
+    bc = gdTransparent;
+
+    scale = (sz)/symbol->sizey;
+    x = MS_NINT(symbol->sizex*scale);    
+    y = MS_NINT(symbol->sizey*scale);
+    
+    if((x < 2) && (y < 2)) break;
+    
+    // create the brush image
+    if((brush = searchImageCache(symbolset->imagecache, sy, fc, sz)) == NULL) { // not in cache, create
+      brush = gdImageCreate(x, y);
+      brush_bc = gdImageColorAllocate(brush,gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));    
+      gdImageColorTransparent(brush,0);
+      brush_fc = gdImageColorAllocate(brush, gdImageRed(img,fc), gdImageGreen(img,fc), gdImageBlue(img,fc));
+      
+      x = MS_NINT(brush->sx/2); // center the ellipse
+      y = MS_NINT(brush->sy/2);
+      
+      // draw in the brush image
+      gdImageArc(brush, x, y, MS_NINT(scale*symbol->points[0].x), MS_NINT(scale*symbol->points[0].y), 0, 360, brush_fc);
+      if(symbol->filled)
+	gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
+      
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, sy, fc, sz, brush);
+    }
+
+    gdImageSetBrush(img, brush);
+    fc = 1; bc = 0;
+    break;
+  case(MS_SYMBOL_PIXMAP):
+    gdImageSetBrush(img, symbol->img);
+    fc = 1; bc = 0;
+    break;
+  case(MS_SYMBOL_VECTOR):
+    if(bc == -1) bc = gdTransparent;
+
+    scale = sz/symbol->sizey;
+    x = MS_NINT(symbol->sizex*scale);    
+    y = MS_NINT(symbol->sizey*scale);
+
+    if((x < 2) && (y < 2)) break;
+
+    // create the brush image
+    if((brush = searchImageCache(symbolset->imagecache, sy, fc, sz)) == NULL) { // not in cache, create
+      brush = gdImageCreate(x, y);
+      if(bc >= 0)
+	brush_bc = gdImageColorAllocate(brush, gdImageRed(img,bc), gdImageGreen(img,bc), gdImageBlue(img,bc));
+      else {
+	brush_bc = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));
+	gdImageColorTransparent(brush,0);
+      }
+      brush_fc = gdImageColorAllocate(brush,gdImageRed(img,fc), gdImageGreen(img,fc), gdImageBlue(img,fc));
+      
+      // draw in the brush image 
+      for(i=0;i < symbol->numpoints;i++) {
+	points[i].x = MS_NINT(scale*symbol->points[i].x);
+	points[i].y = MS_NINT(scale*symbol->points[i].y);
+      }
+      gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
+
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, sy, fc, sz, brush);
+    }
+
+    gdImageSetBrush(img, brush);
+    fc = 1; bc = 0;
+    break;
+  }  
+
+  if(symbol->stylelength > 0) {
+    int k=0, sc;
+   
+    sc = fc; // start with foreground color
+    for(i=0; i<symbol->stylelength; i++) {      
+      for(j=0; j<symbol->style[i]; j++) {
+	styleDashed[k] = sc;
+	k++;
+      } 
+      if(sc==fc) sc = bc; else sc = fc;
+    }
+    gdImageSetStyle(img, styleDashed, k);
+
+    // gdImageArc(brush, x, y, MS_NINT(scale*symbol->points[0].x), MS_NINT(scale*symbol->points[0].y), 0, 360, brush_fc);
+
+    if(!brush && !symbol->img)
+      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, gdStyled);      
+    else 
+      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, gdStyledBrushed);
+  } else {
+    if(!brush && !symbol->img)
+      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, fc);
+    else
+      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, gdBrushed);
   }
 
   return;

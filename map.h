@@ -46,7 +46,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "3.5 (pre-alpha)"
+#define MS_VERSION "3.5 (beta)"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
@@ -148,7 +148,7 @@ extern "C" {
 enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS};
 enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
-enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_POLYLINE, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_ELLIPSE};
+enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_CIRCLE};
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
@@ -447,7 +447,7 @@ typedef struct {
   labelObj label;
   int keysizex, keysizey;
   int keyspacingx, keyspacingy;
-  int outlinecolor; /* Color of outline of box, -1 for no outline */
+  int outlinecolor; // Color of outline of box, -1 for no outline
   int status; // ON, OFF or EMBED
   int height, width;
   int position; // for embeded legends
@@ -460,11 +460,11 @@ typedef struct {
 typedef struct {
   int index;
 
-  char *classitem; /* .DBF item to be used for symbol lookup */
+  char *classitem; // .DBF item to be used for symbol lookup
   int classitemindex;
 
 #ifndef __cplusplus
-  classObj *class; /* always at least 1 class */
+  classObj *class; // always at least 1 class
 #else
   classObj *_class;
 #endif
@@ -492,6 +492,7 @@ typedef struct {
 
   int status; // on or off
   char *data; // filename, can be relative or full path
+
   enum MS_LAYER_TYPE type;
 
   int annotate; // boolean flag for annotation
@@ -518,10 +519,10 @@ typedef struct {
 
   char *tileitem;
   int tileitemindex;
-  char *tileindex; /* layer index file for tiling support */
+  char *tileindex; // layer index file for tiling support
 
-  int units;
-  projectionObj projection; /* projection information for the layer */
+  projectionObj projection; // projection information for the layer
+  int units; // units of the projection
 
   featureListNodeObjPtr features; // linked list so we don't need a counter
   featureListNodeObjPtr currentfeature; // pointer to the current feature
@@ -550,7 +551,7 @@ typedef struct {
   char *filteritem;
   int filteritemindex;
 
-  char *styleitem; /* item to be used for style lookup - can also be 'AUTO' */
+  char *styleitem; // item to be used for style lookup - can also be 'AUTO'
   int styleitemindex;
 
   char *requires; // context expressions, simple enough to not use expressionObj
@@ -760,9 +761,11 @@ void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
 void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);
-void msGetMarkerSize(symbolSetObj *symbolset, classObj *_class, int *width, int *height);
 void msDrawMarkerSymbol(symbolSetObj *symbolset,gdImagePtr img, pointObj *p,  int sy, int fc, int bc, int oc, double sz);
-void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);
+void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, double sz);
+void msGetMarkerSize(symbolSetObj *symbolset, classObj *_class, int *width, int *height);
+void msCircleDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, int sy, int fc, int bc, int oc, double sz);
+void msCircleDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, int sy, int fc, int bc, double sz);
 
 gdImagePtr msDrawLegend(mapObj *map); // in maplegend.c
 int msEmbedLegend(mapObj *map, gdImagePtr img);
@@ -786,6 +789,7 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect);
 void msTransformShape(shapeObj *shape, rectObj extent, double cellsize);
 void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
 void msImagePolyline(gdImagePtr img, shapeObj *p, int c);
+void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c);
 void msImageFilledPolygon(gdImagePtr img, shapeObj *p, int c);
 int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
 int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);

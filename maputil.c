@@ -435,6 +435,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   rectObj cliprect;
   pointObj annopnt, *point;
   double angle, length, scalefactor=1.0;
+ 
+  pointObj center; // circle origin
+  double r; // circle radius
 
   cliprect.minx = map->extent.minx - 2*map->cellsize; // set clipping rectangle just a bit larger than the map extent
   cliprect.miny = map->extent.miny - 2*map->cellsize;
@@ -467,16 +470,44 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   }
 #endif
 
+  switch(layer->type) {
+  case MS_LAYER_CIRCLE:
+    if(shape->numlines != 1) return(MS_SUCCESS); // invalid shape
+    if(shape->line[0].numpoints != 2) return(MS_SUCCESS); // invalid shape
+
+    center = shape->line[0].point[0];
+    r = msDistanceBetweenPoints(&(shape->line[0].point[0]), &(shape->line[0].point[1]));
+
 #ifdef USE_PROJ
-  if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-    msProjectShape(&layer->projection, &map->projection, shape);
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection))
+      msProjectPoint(&layer->projection, &map->projection, center);
 #endif
 
-  switch(layer->type) {
-  case MS_LAYER_ELLIPSE:
+    if(layer->transform) {
+      center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
+      center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
+      r *= (inchesPerUnit[layer->units]/inchesPerUnit[map->units]);      
+    }
+
+    if(layer->class[c].color < 0)
+      msCircleDrawLineSymbol(&map->symbolset, img, &center, r, layer->class[c].symbol, layer->class[c].outlinecolor, layer->class[c].backgroundcolor, layer->class[c].sizescaled);
+    else
+      msCircleDrawShadeSymbol(&map->symbolset, img, &center, r, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+
+    if(overlay && layer->class[c].overlaysymbol >= 0) {
+      if(layer->class[c].overlaycolor < 0)
+	msCircleDrawLineSymbol(&map->symbolset, img, &center, r, layer->class[c].overlaysymbol, layer->class[c].overlayoutlinecolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlaysizescaled);
+      else
+        msCircleDrawShadeSymbol(&map->symbolset, img, &center, r, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+    }
+
     break;
   case MS_LAYER_ANNOTATION:
     if(!shape->text) return(MS_SUCCESS); // nothing to draw
+
+#ifdef USE_PROJ
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection)) msProjectShape(&layer->projection, &map->projection, shape);
+#endif
 
     switch(shape->type) {
     case(MS_SHAPE_LINE):
@@ -581,6 +612,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
   case MS_LAYER_POINT:
 
+#ifdef USE_PROJ
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection)) msProjectShape(&layer->projection, &map->projection, shape);
+#endif
+
     for(j=0; j<shape->numlines;j++) {
       for(i=0; i<shape->line[j].numpoints;i++) {
 
@@ -620,14 +655,18 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
       return(MS_FAILURE);
     }
 
+#ifdef USE_PROJ
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection)) msProjectShape(&layer->projection, &map->projection, shape);
+#endif
+
     if(layer->transform) {
       msClipPolylineRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
       msTransformShape(shape, map->extent, map->cellsize);
     }
 
-    msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-    if(overlay && layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+    msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].sizescaled);
+    if(overlay && layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlaysizescaled);
 
     if(shape->text) {
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
@@ -651,44 +690,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     }
     break;
 
-  case MS_LAYER_POLYLINE:
-    if(shape->type != MS_SHAPE_POLYGON){
-      msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polyline layer definition.", "msDrawShape()");
-      return(MS_FAILURE);
-    }
-
-    if(layer->transform) {
-      msClipPolygonRect(shape, cliprect);
-      if(shape->numlines == 0) return(MS_SUCCESS);
-      msTransformShape(shape, map->extent, map->cellsize);
-    }
-
-    msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-    if(overlay && layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
-
-    if(shape->text) {
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
-	if(layer->labelangleitemindex != -1)
-	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-
-	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
-	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
-	  layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
-	  layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
-	}
-
-	if(layer->labelcache)
-	  msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, -1);
-	else
-	  msDrawLabel(img, annopnt, shape->text, &layer->class[c].label, &map->fontset);
-      }
-    }
-    break;
   case MS_LAYER_POLYGON:
     if(shape->type != MS_SHAPE_POLYGON){
-      msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polygon layer definition.", "msDrawShape()");
+      msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a POLYGON layer definition.", "msDrawShape()");
       return(MS_FAILURE);
     }
+
+#ifdef USE_PROJ
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection)) msProjectShape(&layer->projection, &map->projection, shape);
+#endif
 
     if(layer->transform) {
       msClipPolygonRect(shape, cliprect);
@@ -696,8 +706,17 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
       msTransformShape(shape, map->extent, map->cellsize);
     }
 
-    msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-    if(overlay && layer->class[c].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+    if(layer->class[c].color < 0)
+      msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].outlinecolor, layer->class[c].backgroundcolor, layer->class[c].sizescaled);
+    else
+      msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+
+    if(overlay && layer->class[c].overlaysymbol >= 0) {
+      if(layer->class[c].overlaycolor < 0)
+	msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlayoutlinecolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlaysizescaled);
+      else
+        msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+    }
 
     if(shape->text) {
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
@@ -785,8 +804,6 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   msInitShape(&shape);
 
-  if(layer->type == MS_LAYER_LINE || layer->type == MS_LAYER_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
-
   for(i=0; i<layer->resultcache->numresults; i++) {
     status = msLayerGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
     if(status != MS_SUCCESS) return(MS_FAILURE);
@@ -796,6 +813,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       msFreeShape(&shape);
       continue;
     }
+
+    cache = MS_FALSE;
+    if(layer->type == MS_LAYER_LINE || (layer->type == MS_LAYER_POLYGON && layer->class[shape.classindex].color < 0)) 
+      cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
     if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
@@ -819,7 +840,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
     for(current=shpcache; current; current=current->next) {
       c = current->shape.classindex;
-      msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+      msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlaysizescaled);
     }
 
     freeFeatureList(shpcache);
@@ -892,8 +913,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   // step through the target shapes
   msInitShape(&shape);
 
-  if(layer->type == MS_LAYER_LINE || layer->type == MS_LAYER_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
-
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
     shape.classindex = msShapeGetClass(layer, &shape);
@@ -901,6 +920,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       msFreeShape(&shape);
       continue;
     }
+
+    cache = MS_FALSE;
+    if(layer->type == MS_LAYER_LINE || (layer->type == MS_LAYER_POLYGON && layer->class[shape.classindex].color < 0)) 
+      cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
     // With 'STYLEITEM AUTO', we will have the datasource fill the class'
     // style parameters for this shape.
@@ -947,7 +970,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
     for(current=shpcache; current; current=current->next) {
       c = current->shape.classindex;
-      msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+      msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlaysizescaled);
     }
 
     freeFeatureList(shpcache);
@@ -1154,6 +1177,3 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
     }
     return -1;
 }
-
-
-

@@ -429,9 +429,9 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
 
     if(label->outlinecolor >= 0) { /* handle the outline color */
 #ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y-1, string);
+      error = gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor):-(label->outlinecolor)), font, label->sizescaled, angle_radians, x-1, y-1, string);
 #else
-      error = gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y-1, string);
+      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor):-(label->outlinecolor)), font, label->sizescaled, angle_radians, x-1, y-1, string);
 #endif
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
@@ -439,22 +439,22 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
       }
 
 #ifdef USE_GD_TTF
-      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y+1, string);
-      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y+1, string);
-      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y-1, string);
+      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor):-(label->outlinecolor)), font, label->sizescaled, angle_radians, x-1, y+1, string);
+      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor):-(label->outlinecolor)), font, label->sizescaled, angle_radians, x+1, y+1, string);
+      gdImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor):-(label->outlinecolor)), font, label->sizescaled, angle_radians, x+1, y-1, string);
 #else
-      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y+1, string);
-      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y+1, string);
-      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y-1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor):-(label->outlinecolor)), font, label->sizescaled, angle_radians, x-1, y+1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor):-(label->outlinecolor)), font, label->sizescaled, angle_radians, x+1, y+1, string);
+      gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor):-(label->outlinecolor)), font, label->sizescaled, angle_radians, x+1, y-1, string);
 #endif
 
     }
 
     if(label->shadowcolor >= 0) { /* handle the shadow color */
 #ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
+      error = gdImageStringTTF(img, bbox, ((label->antialias)?(label->shadowcolor):-(label->shadowcolor)), font, label->sizescaled, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
 #else
-      error = gdImageStringFT(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
+      error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor):-(label->shadowcolor)), font, label->sizescaled, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
 #endif
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
@@ -463,9 +463,9 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     }
 
 #ifdef USE_GD_TTF
-    gdImageStringTTF(img, bbox, label->antialias*label->color, font, label->sizescaled, angle_radians, x, y, string);
+    gdImageStringTTF(img, bbox, ((label->antialias)?(label->color):-(label->color)), font, label->sizescaled, angle_radians, x, y, string);
 #else
-    gdImageStringFT(img, bbox, label->antialias*label->color, font, label->sizescaled, angle_radians, x, y, string);
+    gdImageStringFT(img, bbox, ((label->antialias)?(label->color):-(label->color)), font, label->sizescaled, angle_radians, x, y, string);
 #endif
 
 #else
