@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/02/05 05:46:09  frank
+ * don't call msOWSGetLayerExtent without OWS services being enabled
+ *
  * Revision 1.15  2004/02/02 17:15:32  frank
  * class pens being reused inappropriately - bug 504
  *
@@ -1234,6 +1237,7 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 /* -------------------------------------------------------------------- */
 /*      Try OWS extent metadata.                                        */
 /* -------------------------------------------------------------------- */
+#if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
     else if( msOWSGetLayerExtent( map, layer, &rect ) == MS_SUCCESS )
     {
         padfGeoTransform[0] = rect.minx;
@@ -1247,6 +1251,7 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 
         return MS_SUCCESS;
     }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      We didn't find any info ... use the default.                    */
