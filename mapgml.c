@@ -119,12 +119,15 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
       else
         fprintf(stream, "%s<gml:LineString>\n", tab);
 
-      fprintf(stream, "%s\t<gml:coordinates>\n", tab);
-      fprintf(stream, "%s\t\t", tab);
-      for(j=0; j<shape->line[0].numpoints; j++)
-	fprintf(stream, "%f,%f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
-      fprintf(stream, "\n");
-      fprintf(stream, "%s\t</gml:coordinates>\n", tab);
+      fprintf(stream, "%s\t<gml:coordinates>", tab);
+      for(j=0; j<shape->line[0].numpoints-1; j++)
+        fprintf(stream, "%f,%f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
+/* -------------------------------------------------------------------- */
+/*      Adding a tab at the end of the coordinates string does          */
+/*      create a bug when reading the the coordinates using ogr         */
+/*      (function ParseGMLCoordinates in gml2ogrgeometry.cpp).          */
+/* -------------------------------------------------------------------- */
+      fprintf(stream, "</gml:coordinates>\n");
 
       fprintf(stream, "%s</gml:LineString>\n", tab);
     } else { // write a MultiLineString      
@@ -136,12 +139,10 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
       for(i=0; i<shape->numlines; i++) {
         fprintf(stream, "%s\t<gml:LineString>\n", tab); // no srsname at this point
 
-        fprintf(stream, "%s\t\t<gml:coordinates>\n", tab);
-        fprintf(stream, "%s\t\t\t", tab);
+        fprintf(stream, "%s\t\t<gml:coordinates>", tab);
         for(j=0; j<shape->line[0].numpoints; j++)
 	  fprintf(stream, "%f,%f", shape->line[i].point[j].x, shape->line[i].point[j].y);
-        fprintf(stream, "\n");
-        fprintf(stream, "%s\t\t</gml:coordinates>\n", tab);
+        fprintf(stream, "</gml:coordinates>\n");
         fprintf(stream, "%s\t</gml:LineString>\n", tab);
       }
 
