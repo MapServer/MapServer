@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2002/11/19 04:50:09  frank
+ * fixed x/y transpose bug with alpha blending for RGBA imagemode
+ *
  * Revision 1.32  2002/11/18 22:32:52  frank
  * additional work to make transparency work properly for RGB or RGBA GD modes
  *
@@ -241,7 +244,7 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         int gd_original_alpha, gd_new_alpha;
                         
                         gd_original_alpha = 
-                          gdTrueColorGetAlpha( dstImg->tpixels[nDstX][nDstY] );
+                          gdTrueColorGetAlpha( dstImg->tpixels[nDstY][nDstX] );
 
                         /* I assume a fairly simple additive model for 
                            opaqueness.  Note that gdAlphaBlend() always returns
@@ -253,7 +256,7 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         
                         nSetPoints++;
                         dstImg->tpixels[nDstY][nDstX] = 
-                            gdAlphaBlend( dstImg->tpixels[nDstX][nDstY], 
+                            gdAlphaBlend( dstImg->tpixels[nDstY][nDstX], 
                                           nValue );
                         dstImg->tpixels[nDstY][nDstX] &= 0x00ffffff;
                         dstImg->tpixels[nDstY][nDstX] |= gd_new_alpha << 24;
