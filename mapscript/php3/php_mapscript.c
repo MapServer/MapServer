@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.57  2001/10/12 00:34:26  assefa
+ * Add utility function getAllGroupNames and getAllLayerNames.
+ *
  * Revision 1.56  2001/10/11 02:21:09  assefa
  * Add missing connection types constants.
  *
@@ -160,6 +163,8 @@ DLEXPORT void php3_ms_map_drawScaleBar(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getLayer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getLayersIndexByGroup(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getAllLayerNames(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_nextLabel(INTERNAL_FUNCTION_PARAMETERS);
@@ -408,6 +413,8 @@ function_entry php_map_class_functions[] = {
     {"getlayer",        php3_ms_map_getLayer,           NULL},
     {"getlayerbyname",  php3_ms_map_getLayerByName,     NULL},
     {"getlayersindexbygroup",  php3_ms_map_getLayersIndexByGroup,     NULL},
+    {"getalllayernames",  php3_ms_map_getAllLayerNames,     NULL},
+    {"getallgroupnames",  php3_ms_map_getAllGroupNames,     NULL},
     {"getcolorbyindex", php3_ms_map_getColorByIndex,    NULL},
     {"setextent",       php3_ms_map_setExtent,          NULL},
     {"zoompoint",       php3_ms_map_zoomPoint,          NULL},
@@ -2818,6 +2825,142 @@ DLEXPORT void php3_ms_map_getLayersIndexByGroup(INTERNAL_FUNCTION_PARAMETERS)
         }
         else
             RETURN_FALSE; 
+    }
+    else
+    {
+        RETURN_FALSE;
+    }
+}
+/* }}} */
+
+/**********************************************************************
+ *                        map->getAllLayerNames()
+ *
+ * Return an array conating all the layers name.
+ **********************************************************************/
+
+/* {{{ proto int map.getAllLayerNames()
+   Return an array conating all the layers name.*/
+
+DLEXPORT void php3_ms_map_getAllLayerNames(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis;
+    mapObj      *self=NULL;
+    int         nCount = 0;
+    int         i = 0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (array_init(return_value) == FAILURE) 
+    {
+        RETURN_FALSE;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self != NULL)
+    {
+        nCount = self->numlayers;
+        for (i=0; i<nCount; i++)
+        {
+            add_next_index_string(return_value,  self->layers[i].name, 1);
+        }
+    }
+    else
+    {
+        RETURN_FALSE;
+    }
+}
+/* }}} */
+
+/**********************************************************************
+ *                        map->getAllGroupNames()
+ *
+ * Return an array containing all the group names
+ **********************************************************************/
+
+/* {{{ proto int map.getAllGroupNames()
+   Return an array containing all the group names. */
+
+DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis;
+    mapObj      *self=NULL;
+    int         nCount = 0;
+    int         i, j = 0;
+    char        **papszGroups = NULL;
+    int         nGroups = 0;
+    int         nLength = 0;
+    int         bFound = 0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (array_init(return_value) == FAILURE) 
+    {
+        RETURN_FALSE;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self != NULL && self->numlayers > 0)
+    {
+        nCount = self->numlayers;
+        nGroups = 0;
+        papszGroups = (char **)malloc(sizeof(char *)*nCount);
+        for (i=0; i<nCount; i++)
+        {
+            bFound = 0;
+            if (self->layers[i].group)
+            {
+                for (j=0; j<nGroups; j++)
+                {
+                    if (strcmp(self->layers[i].group, papszGroups[j]) == 0)
+                    {
+                        bFound = 1;
+                        break;
+                    }
+                }
+                if (!bFound)
+                {
+                    nLength = strlen(self->layers[i].group);
+                    papszGroups[nGroups] = (char *)emalloc(nLength+1);
+                    sprintf(papszGroups[nGroups], "%s", 
+                            self->layers[i].group);
+                    nGroups++;
+                    add_next_index_string(return_value,  
+                                          self->layers[i].group, 1);
+                }
+            }
+        }
+        for (j=0; j<nGroups; j++)
+        {
+            free(papszGroups[j]);
+        }
+        free(papszGroups[j]);
     }
     else
     {

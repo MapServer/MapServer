@@ -296,7 +296,10 @@ and the MapServer Map File documentation at:
 
    array getAllGroupNames()
         Return an array containing all the group names used in the
-        layers.          
+        layers.  
+
+   array getAllLayerNames()
+        Return an array containing all the layer names.
 
  LayerObj Class:
  ---------------
