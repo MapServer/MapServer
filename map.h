@@ -1052,11 +1052,11 @@ MS_DLL_EXPORT char *strdup(char *s);
 #endif
 
 #ifdef NEED_STRNCASECMP
-MS_DLL_EXPORT int strncasecmp(char *s1, char *s2, int len);
+MS_DLL_EXPORT int strncasecmp(const char *s1, const char *s2, int len);
 #endif
 
 #ifdef NEED_STRCASECMP
-MS_DLL_EXPORT int strcasecmp(char *s1, char *s2);
+MS_DLL_EXPORT int strcasecmp(const char *s1, const char *s2);
 #endif
 
 MS_DLL_EXPORT int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map); // in mapsymbol.c

@@ -21,9 +21,9 @@ char	*strdup(char *s)
 #endif
 
 #ifdef NEED_STRNCASECMP
-int strncasecmp(char *s1, char *s2, int len)
+int strncasecmp(const char *s1, const char *s2, int len)
 {
-  register char *cp1, *cp2;
+  register const char *cp1, *cp2;
   int cmp = 0;
 
   cp1 = s1;
@@ -53,9 +53,9 @@ int strncasecmp(char *s1, char *s2, int len)
 #endif
 
 #ifdef NEED_STRCASECMP
-int strcasecmp(char *s1, char *s2)
+int strcasecmp(const char *s1, const char *s2)
 {
-  register char *cp1, *cp2;
+  register const char *cp1, *cp2;
   int cmp = 0;
 
   cp1 = s1;
