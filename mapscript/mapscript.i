@@ -970,7 +970,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   ~imageObj() {
     msFreeImage(self);    
-    free(self);		
+    free(self);
   }
 
   void free() {
@@ -985,7 +985,68 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     msSaveImage(NULL, self, filename );
   }
 
-  
+  // Method getImageString renders the imageObj into image data and returns
+  // it as a string.  Inspired by and used like the saveImage() method.  Python
+  // only at this time.  Questions and comments to Sean Gillies <sgillies@i3.com>
+
+#ifdef SWIGPYTHON
+
+  PyObject *getImageString(int type, int transparent, int interlace, int quality) {
+    unsigned char *imgbytes;
+    int size;
+    PyObject *imgstring; 
+
+    if (interlace) gdImageInterlace(self->bytes, 1);
+    if (transparent) gdImageColorTransparent(self->bytes, 0); 
+
+    switch(type) {
+    case(MS_GIF):
+      msSetError(MS_MISCERR, "GIF output is not available.", "saveImageString()");
+      return(MS_FAILURE);
+      break;
+    case(MS_PNG):
+
+#ifdef USE_GD_PNG
+      imgbytes = gdImagePngPtr(self->bytes, &size);
+#else
+      msSetError(MS_MISCERR, "PNG output is not available.", "saveImageString()");
+      return(MS_FAILURE);
+#endif
+      break;
+    case(MS_JPEG):
+#ifdef USE_GD_JPEG
+      imgbytes = gdImageJpegPtr(self->bytes, &size, quality);
+#else
+      msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageString()");
+      return(MS_FAILURE);
+#endif
+      break;
+    case(MS_WBMP):
+#ifdef USE_GD_WBMP
+      imgbytes = gdImageWBMPPtr(image->bytes, &size, 1);
+#else
+      msSetError(MS_MISCERR, "WBMP output is not available.", "saveImageString()");
+      return(MS_FAILURE);
+#endif
+      break;
+    default:
+      msSetError(MS_MISCERR, "Unknown output image type.", "saveImageString()");
+      return(MS_FAILURE);
+    }
+
+    // Create a Python string from the (char *) imgbytes.
+
+    // The gdImage*Ptr functions return a size for just this purpose.
+    imgstring = PyString_FromStringAndSize(imgbytes, size); 
+
+    // The gd docs recommend gdFree()
+    gdFree(imgbytes); 
+
+    return imgstring;
+
+  }
+#endif
+
 }
 
 // 
