@@ -5,10 +5,10 @@
  * Project:  PHP/MapScript extension for MapServer : Utility functions
  * Language: ANSI C
  * Purpose:  Utility functions
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000, Daniel Morissette
+ * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/09/13 20:56:04  dan
+ * Fixed _phpms_add_property_object() for PHP4 (thanks to Zeev Suraski) and
+ * added _phpms_fetch_property_resource().  (See bug#30 and #40)
+ *
  * Revision 1.8  2001/09/05 19:59:12  dan
  * Another manifestation of the invalid _map_handle_ problem: Check for type
  * IS_RESOURCE instead of IS_LONG in _phpms_fetch_property_handle2().
@@ -346,6 +350,13 @@ long _phpms_fetch_property_long(pval *pObj, char *property_name,
     }
 
 #ifdef PHP4
+    if ((*phandle)->type == IS_RESOURCE)
+    {
+        php3_error(err_type, 
+                   "ERROR: Property %s is of type IS_RESOURCE.  "
+                   "It cannot be handled as LONG", property_name);
+        return 0;
+    }
     convert_to_long(*phandle);
     return (*phandle)->value.lval;
 #else
@@ -394,6 +405,57 @@ double _phpms_fetch_property_double(pval *pObj, char *property_name,
     return phandle->value.dval;
 #endif
 }
+
+/**********************************************************************
+ *                     _phpms_fetch_property_resource()
+ **********************************************************************/
+long _phpms_fetch_property_resource(pval *pObj, char *property_name, 
+                                    int err_type)
+{
+#ifdef PHP4    
+    pval **phandle;
+#else
+    pval *phandle;
+#endif
+
+    if (pObj->type != IS_OBJECT)
+    {
+        php3_error(err_type, "Object expected as argument.");
+        return 0;
+    }
+#ifdef PHP4
+    else if (zend_hash_find(pObj->value.obj.properties, property_name, 
+                            strlen(property_name)+1, 
+                            (void **)&phandle) == FAILURE)
+#else
+    else if (_php3_hash_find(pObj->value.ht, property_name, 
+                             strlen(property_name)+1, 
+                             (void **)&phandle) == FAILURE)
+#endif
+    {
+        if (err_type != 0)
+            php3_error(err_type, "Unable to find %s property", property_name);
+        return 0;
+    }
+
+#ifdef PHP4
+    if ((*phandle)->type != IS_RESOURCE)
+    {
+        if (err_type != 0)
+            php3_error(err_type, 
+                       "Property %s has invalid type.  Expected IS_RESOURCE.",
+                       property_name);
+        return 0;
+    }
+    return (*phandle)->value.lval;
+#else
+    convert_to_long(phandle);
+    return phandle->value.lval;
+#endif
+}
+
+
+
 
 /**********************************************************************
  *                     _phpms_set_property_string()
@@ -538,31 +600,12 @@ int _phpms_add_property_object(pval *pObj,
                                char *property_name, pval *pObjToAdd,
                                int err_type)
 {
-    pval **phandle;
- 
-    /* This is kind of a hack...
-     * We will add a 'long' property, and then we'll replace its contents 
-     * with the object that was passed.
-     */
-
-    if (pObj->type != IS_OBJECT || 
-        (pObjToAdd->type != IS_OBJECT && pObjToAdd->type != IS_ARRAY))
-    {
-        php3_error(err_type, "Object or array expected as argument.");
-        return -1;
-    }
-    else if (add_property_long(pObj, property_name, 0) == FAILURE ||
-             zend_hash_find(pObj->value.obj.properties, property_name, 
-                            strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+    if (add_property_zval(pObj, property_name, pObjToAdd) == FAILURE)
     {
         if (err_type != 0)
           php3_error(err_type, "Unable to add %s property", property_name);
         return -1;
     }
-
-    *(*phandle) = *pObjToAdd;
-    ZVAL_ADDREF(*phandle);
 
     return 0;
 }
@@ -604,6 +647,11 @@ int _phpms_add_property_object(pval *pObj,
 
 /**********************************************************************
  *                     _phpms_object_init()
+ *
+ * Cover function for PHP3 and PHP4's object_init() functions.
+ *
+ * PHP4: Make sure object has been allocated using MAKE_STD_ZVAL(), note
+ * that return_value passed by PHP is already pre-initialized.
  **********************************************************************/
 int _phpms_object_init(pval *return_value, int  handle_id,
                        function_entry *class_functions,
@@ -615,7 +663,6 @@ int _phpms_object_init(pval *return_value, int  handle_id,
 
     object_init_ex(return_value, new_class_entry_ptr);
     add_property_resource(return_value, "_handle_", handle_id);
-    zend_list_addref(handle_id);
 #else
     object_init(return_value);
     add_property_long(return_value, "_handle_", handle_id);
