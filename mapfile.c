@@ -548,7 +548,10 @@ static int loadProjection(projectionObj *p)
       return(-1);
     case(END):
       p->numargs = i;
-      return msProcessProjection(p);
+      if(p->numargs != 0)
+          return msProcessProjection(p);
+      else
+          return 0;
       break;    
     case(MS_STRING):
     case(MS_AUTO):
