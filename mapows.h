@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.22  2004/03/11 22:45:39  dan
+ * Added pszPostContentType in httpRequestObj instead of using hardcoded
+ * text/html mime type for all post requests.
+ *
  * Revision 1.21  2004/02/24 06:20:37  sdlime
  * Added msOWSGetMetadata() function.
  *
@@ -96,7 +100,8 @@ typedef struct http_request_info
     char      * pszContentType;
     char      * pszErrBuf;     /* Buffer where curl can write errors */
     int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
-    char        *pszPostRequest; /*  post request content */
+    char        *pszPostRequest;     /* post request content (NULL for GET) */
+    char        *pszPostContentType; /* post request MIME type */
 
     /* Private members */
     void      * curl_handle;   /* CURLM * handle */

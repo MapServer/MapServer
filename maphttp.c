@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2004/03/11 22:45:39  dan
+ * Added pszPostContentType in httpRequestObj instead of using hardcoded
+ * text/html mime type for all post requests.
+ *
  * Revision 1.13  2003/09/19 21:54:19  assefa
  * Add support fot the Post request.
  *
@@ -158,6 +162,7 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
     {
         pasReqInfo[i].pszGetUrl = NULL;
         pasReqInfo[i].pszPostRequest = NULL;
+        pasReqInfo[i].pszPostContentType = NULL;
         pasReqInfo[i].pszOutputFile = NULL;
         pasReqInfo[i].nLayerId = 0;
         pasReqInfo[i].nTimeout = 0;
@@ -189,6 +194,10 @@ void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         if (pasReqInfo[i].pszPostRequest)
           free(pasReqInfo[i].pszPostRequest);
         pasReqInfo[i].pszPostRequest = NULL;
+
+        if (pasReqInfo[i].pszPostContentType)
+          free(pasReqInfo[i].pszPostContentType);
+        pasReqInfo[i].pszPostContentType = NULL;
 
         if (pasReqInfo[i].pszOutputFile)
             free(pasReqInfo[i].pszOutputFile);
@@ -377,8 +386,12 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
         if(pasReqInfo[i].pszPostRequest != NULL )
         {
+            char szBuf[100];
+
             struct curl_slist *headers=NULL;
-            headers = curl_slist_append(headers, "Content-Type: text/xml");
+            snprintf(szBuf, 100, 
+                     "Content-Type: %s", pasReqInfo[i].pszPostContentType);
+            headers = curl_slist_append(headers, szBuf);
 
             curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
             curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, 

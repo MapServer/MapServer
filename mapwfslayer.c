@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2004/03/11 22:45:39  dan
+ * Added pszPostContentType in httpRequestObj instead of using hardcoded
+ * text/html mime type for all post requests.
+ *
  * Revision 1.18  2003/10/30 22:37:01  assefa
  * Add function msWFSExecuteGetFeature on a wfs layer.
  *
@@ -361,7 +365,7 @@ char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
     char *pszURL = NULL;
     const char *pszTmp; 
     char *pszVersion, *pszService, *pszTypename = NULL;
-    int bVersionInConnection, bServiceInConnection = 0;
+    int bVersionInConnection = 0, bServiceInConnection = 0;
     int bTypenameInConnection = 0;
     
 
@@ -682,9 +686,13 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
 
     if (bPostRequest)
-      pasReqInfo[(*numRequests)].pszPostRequest = 
-        msBuildWFSLayerPostRequest(map, lp, &bbox, psParams);
-    
+    {
+        pasReqInfo[(*numRequests)].pszPostRequest = 
+            msBuildWFSLayerPostRequest(map, lp, &bbox, psParams);
+        pasReqInfo[(*numRequests)].pszPostContentType =
+            strdup("text/xml");
+    }
+
     // We'll store the remote server's response to a tmp file.
     if (bPostRequest)
     {
