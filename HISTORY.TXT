@@ -13,14 +13,8 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-
-Version 3.6-dev (CVS)
----------------------
-
-- Major changes to support vector output (PDF, SWF, GML, ...):
-   - imageObj is used by all rendering functions instead of gdImagePtr
-   - New msSaveImage() prototype
-  Full details still have to be documented...
+Version 3.6.0-beta1 (2002-04-30)
+--------------------------------
 
 - MapScript: qitem and qstring params added to layer->queryByAttribute().
   Instead of being driven by the layer's FILTER/FILTERITEM, the query by
