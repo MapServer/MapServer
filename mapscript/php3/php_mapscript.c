@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.97  2002/03/20 20:16:17  sacha
+ * Added a php function for layer obj getItems that return a list of items.
+ *
  * Revision 1.96  2002/03/19 17:59:59  assefa
  * Remove MS_TILEED_OGR. It was removed from map.h
  *
@@ -268,6 +271,7 @@ DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -594,6 +598,7 @@ function_entry php_layer_class_functions[] = {
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
     {"setfilter",       php3_ms_lyr_setFilter,          NULL},
     {"getwmsfeatureinfourl", php3_ms_lyr_getWMSFeatureInfoURL, NULL},
+    {"getitems",        php3_ms_lyr_getItems,           NULL},
     {NULL, NULL, NULL}
 };
 
@@ -6073,6 +6078,62 @@ DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        layer->getItems()
+ *
+ * Return an array of string containing all the layer items
+ **********************************************************************/
+
+/* {{{ proto char** layer.getItems()
+   Return an array containing all the layer items.*/
+
+DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis;
+    layerObj    *self=NULL;
+    int         i = 0;
+    int         res = 0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (array_init(return_value) == FAILURE)
+    {
+        RETURN_FALSE;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                         list TSRMLS_CC);
+   
+    if (self != NULL)
+     res = msLayerGetItems(self);
+   
+    if (res != MS_FAILURE &&  self->numitems > 0)
+    {
+       for (i=0; i<self->numitems; i++)
+       {
+         /* add a copy of the group name to the PHP array */
+          add_next_index_string(return_value, self->items[i], 1);
+       }
+    }
+    else
+    {
+        RETURN_FALSE;
+    }
+}
+/* }}} */
 
 /*=====================================================================
  *                 PHP function wrappers - labelObj class
