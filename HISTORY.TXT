@@ -28,6 +28,9 @@ Version 4.4.1 (???)
 
 - Fixed problem with accumlated error stacks in fastcgi mode.  Bug 1122
 
+- Fixed support for SIZEUNITS based scaling of text when map is rotated.
+  Bug 1127.
+
 Version 4.4.0 (2004-11-29)
 --------------------------
 
