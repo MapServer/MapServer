@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- Add msOWSPrintURLType: This funciton is a generic URL printing fuction for 
+  OGC specification metadata (WMS, WFS, WCS, WMC, etc.) (Bug 944).
+
+- Support MetadataURL, DataURL and LegendURL tags in WMS capabilities 
+  document and MetadataURL in WFS capabilities.
+
 - SWIG mapscript: clone methods for layerObj, classObj, styleObj (bug 1012).
 
 - Implemented an intarray helper class for SWIG mapscript which allows for
