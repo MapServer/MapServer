@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2003/09/19 21:54:19  assefa
+ * Add support fot the Post request.
+ *
  * Revision 1.12  2003/06/12 20:35:16  dan
  * Fixed test on result of curl_easy_init() in msHTTPExecuteRequests()
  *
@@ -154,6 +157,7 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
     for(i=0; i<numRequests; i++)
     {
         pasReqInfo[i].pszGetUrl = NULL;
+        pasReqInfo[i].pszPostRequest = NULL;
         pasReqInfo[i].pszOutputFile = NULL;
         pasReqInfo[i].nLayerId = 0;
         pasReqInfo[i].nTimeout = 0;
@@ -181,6 +185,10 @@ void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         if (pasReqInfo[i].pszGetUrl)
             free(pasReqInfo[i].pszGetUrl);
         pasReqInfo[i].pszGetUrl = NULL;
+
+        if (pasReqInfo[i].pszPostRequest)
+          free(pasReqInfo[i].pszPostRequest);
+        pasReqInfo[i].pszPostRequest = NULL;
 
         if (pasReqInfo[i].pszOutputFile)
             free(pasReqInfo[i].pszOutputFile);
@@ -367,6 +375,17 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         curl_easy_setopt(http_handle, CURLOPT_ERRORBUFFER, 
                          pasReqInfo[i].pszErrBuf);
 
+        if(pasReqInfo[i].pszPostRequest != NULL )
+        {
+            struct curl_slist *headers=NULL;
+            headers = curl_slist_append(headers, "Content-Type: text/xml");
+
+            curl_easy_setopt(http_handle, CURLOPT_POST, 1 );
+            curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, 
+                             pasReqInfo[i].pszPostRequest);
+            curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
+            //curl_slist_free_all(headers); /* free the header list */
+        }
         /* Add to multi handle */
         curl_multi_add_handle(multi_handle, http_handle);
 

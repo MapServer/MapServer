@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.17  2003/09/19 21:54:19  assefa
+ * Add support fot the Post request.
+ *
  * Revision 1.16  2003/04/09 07:13:49  dan
  * Added GetContext (custom) request in WMS interface.
  * Added missing gml: namespace in 0.1.7 context output.
@@ -81,11 +84,26 @@ typedef struct http_request_info
     char      * pszContentType;
     char      * pszErrBuf;     /* Buffer where curl can write errors */
     int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
+    char        *pszPostRequest; /*  post request content */
 
     /* Private members */
     void      * curl_handle;   /* CURLM * handle */
     FILE      * fp;            /* FILE * used during download */
 } httpRequestObj;
+
+
+typedef  struct
+{
+  char *pszVersion;
+  char *pszRequest;
+  char *pszService;
+  char *pszTypeName;
+  char *pszFilter;
+  int nMaxFeatures;
+  char *pszBbox; //only used with a Get Request
+  char *pszOutputFormat; //only used with DescibeFeatureType
+
+}wfsParamsObj;
 
 int msHTTPInit();
 void msHTTPCleanup();
@@ -104,7 +122,7 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
  *====================================================================*/
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
-int msOWSDispatch(mapObj *map, char **names, char **values, int numentries); 
+int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 int msOWSMakeAllLayersUnique(mapObj *map);
 char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
 const char *msOWSGetSchemasLocation(mapObj *map);
@@ -158,7 +176,7 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
 int msGMLWriteQuery(mapObj *map, char *filename);
 
 #ifdef USE_WFS_SVR
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream);
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures);
 #endif
 
 
@@ -187,7 +205,10 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
 /*====================================================================
  *   mapwfs.c
  *====================================================================*/
-int msWFSDispatch(mapObj *map, char **names, char **values, int numentries); 
+int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj);
+void msWFSParseRequest(cgiRequestObj *, wfsParamsObj *);
+wfsParamsObj *msWFSCreateParamsObj();
+void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
 
 #ifdef USE_WFS_SVR
 const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp);

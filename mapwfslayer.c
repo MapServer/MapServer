@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2003/09/19 21:54:19  assefa
+ * Add support fot the Post request.
+ *
  * Revision 1.15  2003/09/10 19:53:19  assefa
  * Use local hash function instead of md5.
  *
@@ -80,51 +83,133 @@
 #include "maperror.h"
 #include "mapows.h"
 
+#include <time.h>
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <process.h>
+#endif
+
 #define WFS_V_0_0_14  14
 #define WFS_V_1_0_0  100
 
 
-/**********************************************************************
- *                          msBuildWFSLayerURL()
- *
- * Build a WFS GetFeature URL.  
- *
- * Returns a reference to a newly allocated string that should be freed 
- * by the caller.
- **********************************************************************/
-char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret) 
+/************************************************************************/
+/*                           msBuildRequestParms                        */
+/*                                                                      */
+/*      Build the params object based on the metadata                   */
+/*      information. This object will be used when building the Get     */
+/*      and Post requsests.                                             */
+/*      Note : Verify the connection string to extract some values      */
+/*      for backward compatiblity. (It is though depricated).           */
+/*      This will also set layer projection and compute BBOX in that    */
+/*      projection.                                                     */
+/*                                                                      */
+/************************************************************************/
+wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp, 
+                                   rectObj *bbox_ret)
 {
-#ifdef USE_WFS_LYR
-    char *pszURL = NULL;
-    const char *pszTmp;
+    wfsParamsObj *psParams = NULL;
     rectObj bbox;
-    int nVersion;
-    
-    if (lp->connectiontype != MS_WFS || lp->connection == NULL)
-    {
-        msSetError(MS_WFSCONNERR, "Call supported only for CONNECTIONTYPE WFS",
-                   "msBuildWFSLayerURL()");
-        return NULL;
-    }
+    const char *pszTmp; 
+    int nLength, i = 0;
+    char *pszVersion, *pszService, *pszTypeName = NULL;
 
-/* ------------------------------------------------------------------
- * Find out request version
- * ------------------------------------------------------------------ */
-    if ((pszTmp = strstr(lp->connection, "VERSION=")) == NULL &&
-        (pszTmp = strstr(lp->connection, "version=")) == NULL )
-    {
-        msSetError(MS_WFSCONNERR, "WFS Connection String must contain the VERSION parameter (with name in uppercase).", "msBuildWFSLayerURL()");
-        return NULL;
-    }
-    pszTmp = strchr(pszTmp, '=')+1;
-    if (strncmp(pszTmp, "0.0.14", 6) == 0 || strncmp(pszTmp, "1.0.0", 5) >= 0 )
-        nVersion = WFS_V_1_0_0;
+    if (!map || !lp || !bbox_ret)
+      return NULL;
+
+    if (lp->connection == NULL)
+      return NULL;
+    
+    psParams = msWFSCreateParamsObj();
+    pszTmp = msLookupHashTable(lp->metadata, "wfs_version");
+    if (pszTmp)
+      psParams->pszVersion = strdup(pszTmp);
     else
     {
-        msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the VERSION parameter in the connection string).", "msBuildWFSLayerURL()");
-        return NULL;
+        pszTmp = strstr(lp->connection, "VERSION=");
+        if (!pszTmp)
+           pszTmp = strstr(lp->connection, "version=");
+        if (pszTmp)
+        {
+            pszVersion = strchr(pszTmp, '=')+1;
+            if (strncmp(pszVersion, "0.0.14", 6) == 0)
+              psParams->pszVersion = strdup("0.0.14");
+            else if (strncmp(pszVersion, "1.0.0", 5) == 0)
+              psParams->pszVersion = strdup("1.0.0");
+        }
     }
 
+
+    pszTmp = msLookupHashTable(lp->metadata, "wfs_service");
+    if (pszTmp)
+      psParams->pszService = strdup(pszTmp);
+    else
+    {
+        pszTmp = strstr(lp->connection, "SERVICE=");
+        if (!pszTmp)
+          pszTmp = strstr(lp->connection, "service=");
+        if (pszTmp)
+        {
+            pszService = strchr(pszTmp, '=')+1;
+            if (strncmp(pszService, "WFS", 3) == 0)
+              psParams->pszService = strdup("WFS");
+        }
+    }
+
+
+    pszTmp = msLookupHashTable(lp->metadata, "wfs_typename");
+    if (pszTmp)
+      psParams->pszTypeName = strdup(pszTmp);
+    else
+    {
+        pszTmp = strstr(lp->connection, "TYPENAME=");
+        if (!pszTmp)
+          pszTmp = strstr(lp->connection, "typename=");
+        if (pszTmp)
+        {
+            pszTypeName = strchr(pszTmp, '=')+1;
+            if (pszTypeName)
+            {
+                nLength = strlen(pszTypeName);
+                if (nLength > 0)
+                {
+                    for (i=0; i<nLength; i++)
+                    {
+                        if (pszTypeName[i] == '&')
+                          break;
+                    }
+
+                    if (i<nLength)
+                    {
+                        char *pszTypeNameTmp = NULL;
+                        pszTypeNameTmp = strdup(pszTypeName);
+                        pszTypeNameTmp[i] = '\0';
+                        psParams->pszTypeName = strdup(pszTypeNameTmp);
+                        free(pszTypeNameTmp);
+                    }
+                    else
+                      psParams->pszTypeName = strdup(pszTypeName);
+                }
+            }
+        }
+    }
+
+    pszTmp = msLookupHashTable(lp->metadata, "wfs_filter");
+    if (pszTmp)
+    {
+        psParams->pszFilter = malloc(sizeof(char)*(strlen(pszTmp)+17+1));
+        sprintf(psParams->pszFilter, "<Filter>%s</Filter>", pszTmp);
+        //<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ogc ../filter/1.0.0/filter.xsd http://www.opengis.net/gml../gml/2.1/geometry.xsd\">
+    }
+
+     pszTmp = msLookupHashTable(lp->metadata, "wfs_maxfeatures");
+     if (pszTmp)
+       psParams->nMaxFeatures = atoi(pszTmp);
+
+    //Request is always GetFeature;
+    psParams->pszRequest = strdup("GetFeature");
+
+               
 /* ------------------------------------------------------------------
  * Figure the SRS we'll use for the request.
  * - Fetch the map SRS (if it's EPSG)
@@ -136,8 +221,6 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
 // __TODO__ WFS servers support only one SRS... need to decide how we'll
 // handle this and document it well.
 // It's likely that we'll simply reproject the BBOX to teh layer's projection.
-
-
 
 /* ------------------------------------------------------------------
  * Set layer SRS and reproject map extents to the layer's SRS
@@ -161,24 +244,222 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
     }
 
     if (bbox_ret != NULL)
-        *bbox_ret = bbox;
+      *bbox_ret = bbox;
 
+    return psParams;
+}
+
+/**********************************************************************
+ *                          msBuildWFSLayerPostRequest()
+ *
+ * Build a WFS GetFeature xml document for a Post Request.  
+ *
+ * Returns a reference to a newly allocated string that should be freed 
+ * by the caller.
+ **********************************************************************/
+char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp, 
+                                 rectObj *bbox, wfsParamsObj *psParams) 
+{
+    char *pszPostReq = NULL;
+    char *pszFilter = NULL;
+
+#ifdef USE_WFS_LYR
+
+    if (psParams->pszVersion == NULL || 
+        (strncmp(psParams->pszVersion, "0.0.14", 6) != 0 &&
+        strncmp(psParams->pszVersion, "1.0.0", 5)) != 0)
+    {
+        msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).", "msBuildWFSLayerPostRequest()");
+        return NULL;
+    }
+
+    if (psParams->pszService == NULL ||
+        strncmp(psParams->pszService, "WFS", 3) != 0)
+    {
+        msSetError(MS_WFSCONNERR, "Metadata wfs_service must be set in the layare", "msBuildWFSLayerPostRequest()");
+        return NULL;
+    }
+
+    if (psParams->pszTypeName == NULL)
+    {
+        msSetError(MS_WFSCONNERR, "Metadata wfs_typename must be set in the layare", "msBuildWFSLayerPostRequest()");
+        return NULL;
+    } 
+    
+    pszPostReq = (char *)malloc(sizeof(char)*1000);
+
+    if (psParams->pszFilter)
+      pszFilter = psParams->pszFilter;
+    else
+    {
+        pszFilter = (char *)malloc(sizeof(char)*250);
+        sprintf(pszFilter, "<Filter>\n"
+"<BBOX>\n"
+"<PropertyName>Geometry</PropertyName>\n"
+"<Box>\n"
+"<coordinates>%f,%f %f,%f</coordinates>\n"
+"</Box>\n"
+"</BBOX>\n"
+"</Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+    }
+
+    if (psParams->nMaxFeatures > 0)
+      sprintf(pszPostReq, "<?xml version=\"1.0\" ?>\n"
+"<GetFeature\n"
+"service=\"WFS\"\n"
+"version=\"1.0.0\"\n"
+"maxFeatures=\"%d\"\n"
+"outputFormat=\"GML2\">\n"
+"<Query typeName=\"%s\">\n"
+"%s"
+"</Query>\n"
+"</GetFeature>\n", psParams->nMaxFeatures, psParams->pszTypeName, pszFilter);
+    else
+      sprintf(pszPostReq, "<?xml version=\"1.0\" ?>\n"
+"<GetFeature\n"
+"service=\"WFS\"\n"
+"version=\"1.0.0\"\n"
+"outputFormat=\"GML2\">\n"
+"<Query typeName=\"%s\">\n"
+"%s"
+"</Query>\n"
+"</GetFeature>\n", psParams->pszTypeName, pszFilter);
+    if (psParams->pszFilter == NULL)
+      free(pszFilter);
+
+
+    return pszPostReq; 
+#else
 /* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msBuildWFSLayerPostURL()");
+  return NULL;
+
+#endif
+}
+
+/**********************************************************************
+ *                          msBuildWFSLayerGetURL()
+ *
+ * Build a WFS GetFeature URL for a Get Request.  
+ *
+ * Returns a reference to a newly allocated string that should be freed 
+ * by the caller.
+ **********************************************************************/
+char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
+                            wfsParamsObj *psParams) 
+{
+#ifdef USE_WFS_LYR
+    char *pszURL = NULL;
+    const char *pszTmp; 
+    char *pszVersion, *pszService, *pszTypename = NULL;
+    int bVersionInConnection, bServiceInConnection = 0;
+    int bTypenameInConnection = 0;
+    
+
+    if (lp->connectiontype != MS_WFS || lp->connection == NULL)
+    {
+        msSetError(MS_WFSCONNERR, "Call supported only for CONNECTIONTYPE WFS",
+                   "msBuildWFSLayerGetURL()");
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find out request version. Look first for the wfs_version        */
+/*      metedata. If not available try to find out if the CONNECTION    */
+/*      string contains the version. This last test is done for         */
+/*      backward compatiblity but is depericated.                       */
+/* -------------------------------------------------------------------- */
+    pszVersion = psParams->pszVersion;
+    if (!pszVersion)
+    {
+      if ((pszTmp = strstr(lp->connection, "VERSION=")) == NULL &&
+          (pszTmp = strstr(lp->connection, "version=")) == NULL )
+      {
+        msSetError(MS_WFSCONNERR, "Metadata wfs_version must be set in the layer", "msBuildWFSLayerGetURL()");
+        return NULL;
+      }
+      pszVersion = strchr(pszTmp, '=')+1;
+      bVersionInConnection = 1;
+    }
+    
+   
+    if (strncmp(pszVersion, "0.0.14", 6) != 0 &&
+        strncmp(pszVersion, "1.0.0", 5) != 0 )
+    {
+        msSetError(MS_WFSCONNERR, "MapServer supports only WFS 1.0.0 or 0.0.14 (please verify the version metadata wfs_version).", "msBuildWFSLayerGetURL()");
+        return NULL;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Find out the service. Look first for the wfs_service            */
+/*      metadata. If not available try to find out if the CONNECTION    */
+/*      string contains it. This last test is done for                  */
+/*      backward compatiblity but is depericated.                       */
+/* -------------------------------------------------------------------- */
+    pszService = psParams->pszService;
+    if (!pszService)
+    {
+      if ((pszTmp = strstr(lp->connection, "SERVICE=")) == NULL &&
+          (pszTmp = strstr(lp->connection, "service=")) == NULL )
+      {
+        msSetError(MS_WFSCONNERR, "Metadata wfs_service must be set in the layare", "msBuildWFSLayerGetURL()");
+        return NULL;
+      }
+      pszService = strchr(pszTmp, '=')+1;
+      bServiceInConnection = 1;
+    }
+    
+   
+    if (strncmp(pszService, "WFS", 3))
+    {
+        msSetError(MS_WFSCONNERR, "MapServer supports only WFS as a SERVICE (pease verify the service metadata wfs_service).", "msBuildWFSLayerGetURL()");
+        return NULL;
+    }
+    pszService = strdup("WFS");
+
+/* -------------------------------------------------------------------- */
+/*      Find out the typename. Look first for the wfs_tyename           */
+/*      metadata. If not available try to find out if the CONNECTION    */
+/*      string contains it. This last test is done for                  */
+/*      backward compatiblity but is depericated.                       */
+/* -------------------------------------------------------------------- */
+    pszTypename = psParams->pszTypeName;
+    if (!pszTypename)
+    {
+      if ((pszTmp = strstr(lp->connection, "TYPENAME=")) == NULL &&
+          (pszTmp = strstr(lp->connection, "typename=")) == NULL )
+      {
+        msSetError(MS_WFSCONNERR, "Metadata wfs_typename must be set in the layare", "msBuildWFSLayerGetURL()");
+        return NULL;
+      }
+      bTypenameInConnection = 1;
+    }
+    
+
+/* -------------------------------------------------------------------- 
  * Build the request URL.
  * At this point we set only the following parameters for GetFeature:
  *   REQUEST
  *   BBOX
- *
- * The connection string should contain all other required params, 
- * including:
  *   VERSION
  *   SERVICE
  *   TYPENAME
- * ------------------------------------------------------------------ */
+ *   FILTER
+ *   MAXFEATURES
+ *
+ * For backward compatiblity the user could also have in the connection
+ * string the following parameters (but it is depricated):
+ *   VERSION
+ *   SERVICE
+ *   TYPENAME
+ * -------------------------------------------------------------------- */
     // Make sure we have a big enough buffer for the URL
     if(!(pszURL = (char *)malloc((strlen(lp->connection)+1024)*sizeof(char)))) 
     {
-        msSetError(MS_MEMERR, NULL, "msBuildWFSLayerURL()");
+        msSetError(MS_MEMERR, NULL, "msBuildWFSLayerGetURL()");
         return NULL;
     }
 
@@ -187,21 +468,42 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
     // as a space by the remote server.
 
 /* -------------------------------------------------------------------- */
+/*      build the URL,                                                  */
+/* -------------------------------------------------------------------- */
+    sprintf(pszURL, "%s", lp->connection);
+
+    //REQUEST
+    sprintf(pszURL + strlen(pszURL),  "&REQUEST=GetFeature");
+
+    //VERSION
+    if (!bVersionInConnection)
+      sprintf(pszURL + strlen(pszURL),  "&VERSION=%s", pszVersion);
+    
+    //SERVICE
+    if (!bServiceInConnection)
+        sprintf(pszURL + strlen(pszURL),  "&SERVICE=%s", pszService);
+
+    //TYPENAME
+    if (!bTypenameInConnection)
+      sprintf(pszURL + strlen(pszURL),  "&TYPENAME=%s", pszTypename);
+
+/* -------------------------------------------------------------------- */
 /*      If the filter parameter is given in the wfs_filter metadata,    */
 /*      we use it and do not send the BBOX paramter as they are         */
 /*      mutually exclusive.                                             */
 /* -------------------------------------------------------------------- */
-    if ((pszTmp = msLookupHashTable(lp->metadata, 
-                                       "wfs_filter")) != NULL)
+    if (psParams->pszFilter)
     {   
-        sprintf(pszURL, 
-                "%s&REQUEST=GetFeature&FILTER=%s%s%s",
-                lp->connection, msEncodeUrl("<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ogc ../filter/1.0.0/filter.xsd http://www.opengis.net/gml../gml/2.1/geometry.xsd\">"), msEncodeUrl(pszTmp), msEncodeUrl("</Filter>"));
+        sprintf(pszURL + strlen(pszURL), "&FILTER=%s",
+                msEncodeUrl(psParams->pszFilter));
     }
     else
-      sprintf(pszURL, 
-              "%s&REQUEST=GetFeature&BBOX=%f,%f,%f,%f",
-              lp->connection, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
+      sprintf(pszURL + strlen(pszURL), 
+              "&BBOX=%f,%f,%f,%f",
+              bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
+    
+    if (psParams->nMaxFeatures > 0)
+      sprintf(pszURL + strlen(pszURL),  "&MAXFEATURES=%d", psParams->nMaxFeatures);
 
     return pszURL;
 
@@ -210,7 +512,7 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
  * WFS CONNECTION Support not included...
  * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
-             "msBuildWFSLayerURL()");
+             "msBuildWFSLayerGetURL()");
   return NULL;
 
 #endif /* USE_WFS_LYR */
@@ -290,20 +592,50 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     int nStatus = MS_SUCCESS;
     msWFSLayerInfo *psInfo = NULL;
     char *pszHashFileName = NULL;
+    int bPostRequest = 0;
+    wfsParamsObj *psParams = NULL;
+    
 
     if (lp->connectiontype != MS_WFS || lp->connection == NULL)
         return MS_FAILURE;
 
 /* ------------------------------------------------------------------
- * Build the request URL, this will also set layer projection and
- * compute BBOX in that projection.
+ * Build a params object that will be used by to build the request, 
+  this will also set layer projection and compute BBOX in that projection.
  * ------------------------------------------------------------------ */
-    if ((pszURL = msBuildWFSLayerURL(map, lp, &bbox)) == NULL)
+    psParams = msBuildRequestParams(map, lp, &bbox);
+    if (!psParams)
+      return MS_FAILURE;
+
+/* -------------------------------------------------------------------- */
+/*      Depending on the metadata wms_request_method, build a Get or    */
+/*      a Post URL.                                                     */
+/*    If it is a Get request the URL would contain all the parameters in*/
+/*      the string;                                                     */
+/*      If it is a Post request, the URL will only contain the          */
+/*      connection string comming from the layer.                       */
+/* -------------------------------------------------------------------- */
+    if ((pszTmp = msLookupHashTable(lp->metadata, 
+                                    "wms_request_method")) != NULL)
     {
-        /* an error was already reported. */
-        return MS_FAILURE;
+        if (strncmp(pszTmp, "GET", 3) ==0)
+        {
+            pszURL = msBuildWFSLayerGetURL(map, lp, &bbox, psParams);
+            if (!pszURL)
+            {
+              /* an error was already reported. */
+                return MS_FAILURE;
+            }
+        }
+    }
+    //else it is a post request and just get the connection string
+    if (!pszURL)
+    {
+        bPostRequest = 1;
+        pszURL = strdup(lp->connection);
     }
 
+    
 /* ------------------------------------------------------------------
  * check to see if a the metadata wfs_connectiontimeout is set. If it is 
  * the case we will use it, else we use the default which is 30 seconds.
@@ -342,9 +674,23 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * ------------------------------------------------------------------ */
     pasReqInfo[(*numRequests)].nLayerId = nLayerId;
     pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
+
+    if (bPostRequest)
+      pasReqInfo[(*numRequests)].pszPostRequest = 
+        msBuildWFSLayerPostRequest(map, lp, &bbox, psParams);
+    
     // We'll store the remote server's response to a tmp file.
-    //Build the tmp name using the MD5 transformation algorithm
-    pszHashFileName = msHashString(pszURL);
+    if (bPostRequest)
+    {
+        char *pszPostTmpName = NULL;
+        pszPostTmpName = (char *)malloc(sizeof(char)*(strlen(pszURL)+128));
+        sprintf(pszPostTmpName,"%s%ld%d",
+                pszURL, (long)time(NULL), (int)getpid());
+        pszHashFileName = msHashString(pszPostTmpName);
+        free(pszPostTmpName);
+    }
+    else
+      pszHashFileName = msHashString(pszURL);
     pszURL = NULL;
     
     pasReqInfo[(*numRequests)].pszOutputFile =  
@@ -384,6 +730,11 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
     (*numRequests)++;
 
+    if (psParams)
+    {
+        msWFSFreeParamsObj(psParams);
+        psParams = NULL;
+    }
     return nStatus;
 
 #else

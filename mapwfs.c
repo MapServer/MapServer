@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2003/09/19 21:54:19  assefa
+ * Add support fot the Post request.
+ *
  * Revision 1.16  2003/09/10 19:58:24  assefa
  * Rename filterencoding.h file.
  *
@@ -149,15 +152,12 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
   printf("          <Get onlineResource=\"%s\" />\n", script_url);
   printf("        </HTTP>\n");
   printf("      </DCPType>\n");
-
-#ifdef __TODO__
-// POST method with XML encoding not yet supported.
   printf("      <DCPType>\n");
   printf("        <HTTP>\n");
   printf("          <Post onlineResource=\"%s\" />\n", script_url);
   printf("        </HTTP>\n");
   printf("      </DCPType>\n");
-#endif
+
 
   printf("    </%s>\n", request);
 }
@@ -350,7 +350,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
   ** SERVICE definition
   */
   printf("<Service>\n");
-  printf("  <Name>MapServer WFS</Name>\n");
+ printf("  <Name>MapServer WFS</Name>\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
   msOWSPrintMetadata(stdout, map->web.metadata, "wfs_title", OWS_WARN,
@@ -451,37 +451,35 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
 /*
 ** msWFSDescribeFeatureType()
 */
-int msWFSDescribeFeatureType(mapObj *map, const char *wmtver, 
-                             char **names, char **values, int numentries)
+int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
 {
     int i, numlayers=0;
     char **layers = NULL;
     const char *myns_uri = NULL;
 
-    for(i=0; map && i<numentries; i++) 
-    {
-        if(strcasecmp(names[i], "TYPENAME") == 0 && numlayers == 0) 
-        {
-            // Parse comma-delimited list of type names (layers)
-            //
-            // __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4"
-            //
-            layers = split(values[i], ',', &numlayers);
-        } 
-        else if (strcasecmp(names[i], "OUTPUTFORMAT") == 0)
-        {
-            /* We support only XMLSCHEMA for now.
-             */
-            if (strcasecmp(values[i], "XMLSCHEMA") != 0)
-            {
-                msSetError(MS_WFSERR, 
-                        "Unsupported DescribeFeatureType outputFormat (%s).", 
-                           "msWFSDescribeFeatureType()", values[i]);
-                return msWFSException(map, wmtver);
-            }
-        }
 
+    if(paramsObj->pszTypeName && numlayers == 0) 
+    {
+        // Parse comma-delimited list of type names (layers)
+        //
+        // __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4"
+        //
+        layers = split(paramsObj->pszTypeName, ',', &numlayers);
+    } 
+    if (paramsObj->pszOutputFormat)
+    {
+        /* We support only XMLSCHEMA for now.
+         */
+        if (strcasecmp(paramsObj->pszOutputFormat, "XMLSCHEMA") != 0)
+        {
+            msSetError(MS_WFSERR, 
+                       "Unsupported DescribeFeatureType outputFormat (%s).", 
+                       "msWFSDescribeFeatureType()", paramsObj->pszOutputFormat);
+            return msWFSException(map, paramsObj->pszVersion);
+        }
     }
+
+    
 
     /*
     ** DescribeFeatureType response
@@ -592,8 +590,8 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
 /*
 ** msWFSGetFeature()
 */
-int msWFSGetFeature(mapObj *map, const char *wmtver, 
-                    char **names, char **values, int numentries)
+int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
+  //const char *wmtver, char **names, char **values, int numentries)
 {
     int         i, maxfeatures=-1;
     const char *typename="", *myns_uri;
@@ -607,7 +605,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     char   *pszFilter = NULL;
     int bFilterSet, bBBOXSet = 0;
    
-    
+
     // Default filter is map extents
     bbox = map->extent;
 
@@ -616,132 +614,132 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     // __TODO__ Need to support XML encoded requests
     //
 
-    for(i=0; map && i<numentries; i++) 
+    
+    if(paramsObj->pszTypeName) 
     {
-        if(strcasecmp(names[i], "TYPENAME") == 0) 
+        int j, k;
+        const char *pszMapSRS = NULL;
+
+        // keep a ref for layer use.
+        typename = paramsObj->pszTypeName;
+
+        // Parse comma-delimited list of type names (layers)
+        //
+        // __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4"
+        //
+        layers = split(typename, ',', &numlayers);
+        if (layers==NULL || numlayers < 1) 
         {
-            int j, k;
-            const char *pszMapSRS = NULL;
+            msSetError(MS_WFSERR, 
+                       "At least one type name required in TYPENAME parameter.",
+                     "msWFSGetFeature()");
+            return msWFSException(map, paramsObj->pszVersion);
+        }
 
-            // keep a ref for layer use.
-            typename = values[i];
+        pszMapSRS = msGetEPSGProj(&(map->projection),
+                                  map->web.metadata, 
+                                  MS_TRUE);
 
-            // Parse comma-delimited list of type names (layers)
-            //
-            // __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4"
-            //
-            layers = split(values[i], ',', &numlayers);
-            if (layers==NULL || numlayers < 1) 
+        for(j=0; j<map->numlayers; j++) 
+        {
+            layerObj *lp;
+
+            lp = &(map->layers[j]);
+
+            // Keep only selected layers, set to OFF by default.
+            lp->status = MS_OFF;
+            
+            for (k=0; k<numlayers; k++)
             {
-                msSetError(MS_WFSERR, 
-                      "At least one type name required in TYPENAME parameter.",
-                           "msWFSGetFeature()");
-                return msWFSException(map, wmtver);
-            }
-
-            pszMapSRS = msGetEPSGProj(&(map->projection),
-                                      map->web.metadata, 
-                                      MS_TRUE);
-
-            for(j=0; j<map->numlayers; j++) 
-            {
-                layerObj *lp;
-
-                lp = &(map->layers[j]);
-
-                // Keep only selected layers, set to OFF by default.
-                lp->status = MS_OFF;
-
-                for (k=0; k<numlayers; k++)
+                if (msWFSIsLayerSupported(lp) && lp->name && 
+                    strcasecmp(lp->name, layers[k]) == 0)
                 {
-                    if (msWFSIsLayerSupported(lp) && lp->name && 
-                        strcasecmp(lp->name, layers[k]) == 0)
+                    const char *pszThisLayerSRS;
+
+                    lp->status = MS_ON;
+                    if (lp->template == NULL)
                     {
-                        const char *pszThisLayerSRS;
+                        // Force setting a template to enable query.
+                        lp->template = strdup("ttt.html");
+                    }
 
-                        lp->status = MS_ON;
-                        if (lp->template == NULL)
-                        {
-                            // Force setting a template to enable query.
-                            lp->template = strdup("ttt.html");
-                        }
+                    // See comments in msWFSGetCapabilities() about the
+                    // rules for SRS.
+                    if ((pszThisLayerSRS = pszMapSRS) == NULL)
+                    {
+                        pszThisLayerSRS = msGetEPSGProj(&(lp->projection),
+                                                        lp->metadata, 
+                                                        MS_TRUE);
+                    }
 
-                        // See comments in msWFSGetCapabilities() about the
-                        // rules for SRS.
-                        if ((pszThisLayerSRS = pszMapSRS) == NULL)
-                        {
-                            pszThisLayerSRS = msGetEPSGProj(&(lp->projection),
-                                                            lp->metadata, 
-                                                            MS_TRUE);
-                        }
+                    if (pszThisLayerSRS == NULL)
+                    {
+                        msSetError(MS_WFSERR, 
+                                   "Server config error: SRS must be set at least at the map or at the layer level.",
+                                   "msWFSGetFeature()");
+                        return msWFSException(map, paramsObj->pszVersion);
+                    }
 
-                        if (pszThisLayerSRS == NULL)
-                        {
-                            msSetError(MS_WFSERR, 
-                                       "Server config error: SRS must be set at least at the map or at the layer level.",
-                                       "msWFSGetFeature()");
-                            return msWFSException(map, wmtver);
-                        }
-
-                        // Keep track of output SRS.  If different from value
-                        // from previous layers then this is an invalid request
-                        // i.e. all layers in a single request must be in the
-                        // same SRS.
-                        if (pszOutputSRS == NULL)
-                        {
-                            pszOutputSRS = pszThisLayerSRS;
-                        }
-                        else if (strcasecmp(pszThisLayerSRS,pszOutputSRS) != 0)
-                        {
-                            msSetError(MS_WFSERR, 
-                                       "Invalid GetFeature Request: All TYPENAMES in a single GetFeature request must have been advertized in the same SRS.  Please check the capabilities and reformulate your request.",
-                                       "msWFSGetFeature()");
-                            return msWFSException(map, wmtver);
-                        }
+                    // Keep track of output SRS.  If different from value
+                    // from previous layers then this is an invalid request
+                    // i.e. all layers in a single request must be in the
+                    // same SRS.
+                    if (pszOutputSRS == NULL)
+                    {
+                        pszOutputSRS = pszThisLayerSRS;
+                    }
+                    else if (strcasecmp(pszThisLayerSRS,pszOutputSRS) != 0)
+                    {
+                        msSetError(MS_WFSERR, 
+                                   "Invalid GetFeature Request: All TYPENAMES in a single GetFeature request must have been advertized in the same SRS.  Please check the capabilities and reformulate your request.",
+                                   "msWFSGetFeature()");
+                        return msWFSException(map, paramsObj->pszVersion);
                     }
                 }
             }
-       
-        } 
-        else if (strcasecmp(names[i], "PROPERTYNAME") == 0)
-        {
-            
         }
-        else if (strcasecmp(names[i], "MAXFEATURES") == 0) 
-        {
-            maxfeatures = atoi(values[i]);
-        }
-        else if (strcasecmp(names[i], "FEATUREID") == 0)
-        {
-     
-        }
-        else if (strcasecmp(names[i], "FILTER") == 0)
-        {
-            bFilterSet = 1;
-            pszFilter = values[i];
-        }
-        else if (strcasecmp(names[i], "BBOX") == 0)
-        {
-            char **tokens;
-            int n;
-            tokens = split(values[i], ',', &n);
-            if (tokens==NULL || n != 4) 
-            {
-                msSetError(MS_WFSERR, "Wrong number of arguments for BBOX.",
-                           "msWFSGetFeature()");
-                return msWFSException(map, wmtver);
-            }
-            bbox.minx = atof(tokens[0]);
-            bbox.miny = atof(tokens[1]);
-            bbox.maxx = atof(tokens[2]);
-            bbox.maxy = atof(tokens[3]);
-            msFreeCharArray(tokens, n);
-
-            // Note: BBOX SRS is implicit, it is the SRS of the selected
-            // feature types, see pszOutputSRS in TYPENAMES above.
-        }
-
     }
+    
+    //else if (strcasecmp(names[i], "PROPERTYNAME") == 0)
+    //{
+    //        
+    //}
+    if (paramsObj->nMaxFeatures > 0) 
+    {
+        maxfeatures = paramsObj->nMaxFeatures;
+    }
+    //if (strcasecmp(names[i], "FEATUREID") == 0)
+    //{
+    //
+    //}
+    
+    if (paramsObj->pszFilter)
+    {
+        bFilterSet = 1;
+        pszFilter = paramsObj->pszFilter;
+    }
+    else if (paramsObj->pszBbox)
+    {
+        char **tokens;
+        int n;
+        tokens = split(paramsObj->pszBbox, ',', &n);
+        if (tokens==NULL || n != 4) 
+        {
+            msSetError(MS_WFSERR, "Wrong number of arguments for BBOX.",
+                       "msWFSGetFeature()");
+            return msWFSException(map, paramsObj->pszVersion);
+        }
+        bbox.minx = atof(tokens[0]);
+        bbox.miny = atof(tokens[1]);
+        bbox.maxx = atof(tokens[2]);
+        bbox.maxy = atof(tokens[3]);
+        msFreeCharArray(tokens, n);
+
+        // Note: BBOX SRS is implicit, it is the SRS of the selected
+        // feature types, see pszOutputSRS in TYPENAMES above.
+    }
+
+
 
 
     if (bFilterSet && pszFilter && strlen(pszFilter) > 0)
@@ -756,6 +754,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         int iLayerIndex =1;
         rectObj sQueryRect = map->extent;
         projectionObj sProjTmp;
+        char **paszFilter = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      Validate the parameters. When a FILTER parameter is given,      */
@@ -770,14 +769,14 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
             msSetError(MS_WFSERR, 
                    "Required TYPENAME parameter missing for GetFeature with a FILTER parameter.", 
                    "msWFSGetFeature()");
-            return msWFSException(map, wmtver);
+            return msWFSException(map, paramsObj->pszVersion);
         }
         if (bBBOXSet)
         {
              msSetError(MS_WFSERR, 
                    "BBOX parameter and FILTER parameter are mutually exclusive in GetFeature.", 
                    "msWFSGetFeature()");
-            return msWFSException(map, wmtver);
+            return msWFSException(map, paramsObj->pszVersion);
         }
 /* -------------------------------------------------------------------- */
 /*      Parse the Filter parameter. If there are several Filter         */
@@ -789,70 +788,49 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
 /*      INWATERA_1M/WKB_GEOM<PropertyName><gml:Box><gml:coordinates>10,10*/
 /*      20,20</gml:coordinates></gml:Box></Within></Filter>)            */
 /* -------------------------------------------------------------------- */
-        if (pszFilter[0] == "(")        
+        nFilters = 0;
+        if (strlen(pszFilter) > 0 && pszFilter[0] == '(')        
         {
-            tokens = split(pszFilter, '(', &nFilters);
+            tokens = split(pszFilter+1, '(', &nFilters);
+            
             if (tokens == NULL || nFilters <=0 || nFilters != numlayers)
             {
                 msSetError(MS_WFSERR, "Wrong number of FILTER attributes",
                            "msWFSGetFeature()");
-                return msWFSException(map, wmtver);
+                return msWFSException(map, paramsObj->pszVersion);
             }
+            paszFilter = (char **)malloc(sizeof(char *)*nFilters);
             for (i=0; i<nFilters; i++)
-            {
-                psNode = FLTParseFilterEncoding(tokens[i]);
-                if (!psNode)
-                  continue;
-                
-                szExpression = FLTGetMapserverExpression(psNode);
-                if (!szExpression)
-                {
-                    msSetError(MS_WFSERR, 
-                               "Invalid or Unsupported FILTER in GetFeature : %s", 
-                               "msWFSGetFeature()", tokens[i]);
-                    return msWFSException(map, wmtver);
-                }
-
-                //TODO when the filter contains a bbox : need a diffrent logic
-                if (szExpression)
-                {
-                    iLayerIndex = msGetLayerIndex(map, layers[i]);
-                    if (iLayerIndex < 0)
-                      continue;
-                    lp = &(map->layers[iLayerIndex]);
-                    if (initClass(&(lp->class[0])) == -1)
-                      continue;
-                    lp->class[0].type = lp->type;
-                    lp->numclasses++;
-
-                    loadExpressionString(&lp->class[0].expression, szExpression);
-                    msQueryByRect(map, lp->index, sQueryRect);
-                }
-            }
+              paszFilter[i] = strdup(tokens[i]);
         }
-/* -------------------------------------------------------------------- */
-/*      Assuming here that there is only 1 filter and applied on one layer.*/
-/* -------------------------------------------------------------------- */
-        else if (numlayers == 1)
+        else
         {
-            psNode = FLTParseFilterEncoding(pszFilter);
+            nFilters=1;
+            paszFilter = (char **)malloc(sizeof(char *)*nFilters);
+            paszFilter[0] = pszFilter;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      run through the fileters and build the class expressions.       */
+/* -------------------------------------------------------------------- */
+        for (i=0; i<nFilters; i++)
+        {
+            psNode = FLTParseFilterEncoding(paszFilter[i]);
             if (psNode)
             {
                 szExpression = FLTGetMapserverExpression(psNode);
                 szEPSG = FLTGetBBOX(psNode, &sQueryRect);
             }
-            
-              
-
+ 
             if (!szExpression && !szEPSG)
             {
                 msSetError(MS_WFSERR, 
                    "Invalid or Unsupported FILTER in GetFeature : %s", 
                    "msWFSGetFeature()", pszFilter);
-                return msWFSException(map, wmtver);
+                return msWFSException(map, paramsObj->pszVersion);
             }
 
-            iLayerIndex = msGetLayerIndex(map, layers[0]);
+            iLayerIndex = msGetLayerIndex(map, layers[i]);
             if (iLayerIndex > 0)
             {
                 if (szExpression)
@@ -914,6 +892,8 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
                 msQueryByRect(map, lp->index, sQueryRect);
             }
         }
+        if (paszFilter)
+          free(paszFilter);
     }//end if filter set
 
     if(layers)
@@ -924,7 +904,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         msSetError(MS_WFSERR, 
                    "Required TYPENAME parameter missing for GetFeature.", 
                    "msWFSGetFeature()");
-        return msWFSException(map, wmtver);
+        return msWFSException(map, paramsObj->pszFilter);
     }
 
     // Set map output projection to which output features should be reprojected
@@ -934,7 +914,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         sprintf(szBuf, "init=epsg:%.10s", pszOutputSRS+5);
 
         if (msLoadProjectionString(&(map->projection), szBuf) != 0)
-          return msWFSException(map, wmtver);
+          return msWFSException(map, paramsObj->pszVersion);
     }
 
     /*
@@ -948,7 +928,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         ms_error = msGetErrorObj();
 
         if(ms_error->code != MS_NOTFOUND) 
-            return msWFSException(map, wmtver);
+            return msWFSException(map, paramsObj->pszVersion);
     }
 
     /*
@@ -962,7 +942,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     if ((script_url=msOWSGetOnlineResource(map,"wfs_onlineresource")) ==NULL ||
         (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
     {
-        return msWFSException(map, wmtver);
+        return msWFSException(map, paramsObj->pszVersion);
     }
 
 
@@ -981,14 +961,14 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
            "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
            "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s\">\n", 
            myns_uri, myns_uri,
-           msOWSGetSchemasLocation(map), wmtver, 
-           myns_uri, script_url_encoded, wmtver, typename);
+           msOWSGetSchemasLocation(map), paramsObj->pszVersion, 
+           myns_uri, script_url_encoded, paramsObj->pszVersion, typename);
 
 
     /* __TODO__ WFS expects homogenous geometry types, but our layers can
     **          contain mixed geometry types... how to deal with that???
     */
-    msGMLWriteWFSQuery(map, stdout);
+    msGMLWriteWFSQuery(map, stdout, maxfeatures);
 
     /*
     ** Done!
@@ -1013,93 +993,96 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
 **   is returned and MapServer is expected to process this as a regular
 **   MapServer request.
 */
-int msWFSDispatch(mapObj *map, char **names, char **values, int numentries)
+int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj)
 {
 #ifdef USE_WFS_SVR
-  int i, status;
-  static char *wmtver = NULL, *request=NULL, *service=NULL;
+  int status;
 
+
+  //static char *wmtver = NULL, *request=NULL, *service=NULL;
+  wfsParamsObj *paramsObj;
   /*
-  ** Process Params common to all requests
+  ** Populate the Params object based on the request
   */
-  for(i=0; i<numentries; i++) {
-    if (strcasecmp(names[i], "VERSION") == 0)
-      wmtver = values[i];
-    else if (strcasecmp(names[i], "REQUEST") == 0)
-      request = values[i];
-    else if (strcasecmp(names[i], "SERVICE") == 0)
-      service = values[i];
-  }
+  paramsObj = msWFSCreateParamsObj();
+  //TODO : store also parameters that are inside the map object
+  //into the paramsObj. 
+  msWFSParseRequest(requestobj, paramsObj);
 
   /* If SERVICE is specified then it MUST be "WFS" */
-  if (service != NULL && strcasecmp(service, "WFS") != 0)
+  if (paramsObj->pszService != NULL && 
+      strcasecmp(paramsObj->pszService, "WFS") != 0)
       return MS_DONE;  /* Not a WFS request */
 
   /* If SERVICE, VERSION and REQUEST not included than this isn't a WFS req*/
-  if (service == NULL && wmtver==NULL && request==NULL)
+  if (paramsObj->pszService == NULL && paramsObj->pszVersion==NULL && 
+      paramsObj->pszRequest==NULL)
       return MS_DONE;  /* Not a WFS request */
 
   /* VERSION *and* REQUEST required by all WFS requests including 
    * GetCapabilities.
    */
-  if (wmtver==NULL)
+  if (paramsObj->pszVersion==NULL)
   {
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: VERSION parameter missing", 
                  "msWFSDispatch()");
-      return msWFSException(map, wmtver);
+      return msWFSException(map, paramsObj->pszVersion);
   }
 
-  if (request==NULL)
+  if (paramsObj->pszRequest==NULL)
   {
       msSetError(MS_WFSERR, 
                  "Incomplete WFS request: REQUEST parameter missing", 
                  "msWFSDispatch()");
-      return msWFSException(map, wmtver);
+      return msWFSException(map, paramsObj->pszVersion);
   }
 
   if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
-      return msWFSException(map, wmtver);
+      return msWFSException(map, paramsObj->pszVersion);
 
   /*
   ** Start dispatching requests
   */
-  if (strcasecmp(request, "GetCapabilities") == 0 ) 
-      return msWFSGetCapabilities(map, wmtver);
+  if (strcasecmp(paramsObj->pszRequest, "GetCapabilities") == 0 ) 
+      return msWFSGetCapabilities(map, paramsObj->pszVersion);
 
   /*
   ** Validate VERSION against the versions that we support... we don't do this
   ** for GetCapabilities in order to allow version negociation.
   */
-  if (strcmp(wmtver, "1.0.0") != 0)
+  if (strcmp(paramsObj->pszVersion, "1.0.0") != 0)
   {
       msSetError(MS_WFSERR, 
                  "WFS Server does not support VERSION %s.", 
-                 "msWFSDispatch()", wmtver);
-      return msWFSException(map, wmtver);
+                 "msWFSDispatch()", paramsObj->pszVersion);
+      return msWFSException(map, paramsObj->pszVersion);
   }
 
   /* Continue dispatching... 
    */
-  if (strcasecmp(request, "DescribeFeatureType") == 0)
-      return msWFSDescribeFeatureType(map, wmtver, names, values, numentries);
-  else if (strcasecmp(request, "GetFeature") == 0)
-      return msWFSGetFeature(map, wmtver, names, values, numentries);
-  else if (strcasecmp(request, "GetFeatureWithLock") == 0 ||
-           strcasecmp(request, "LockFeature") == 0 ||
-           strcasecmp(request, "Transaction") == 0 )
+  if (strcasecmp(paramsObj->pszRequest, "DescribeFeatureType") == 0)
+    return msWFSDescribeFeatureType(map, paramsObj);
+
+  else if (strcasecmp(paramsObj->pszRequest, "GetFeature") == 0)
+    return msWFSGetFeature(map, paramsObj);
+
+
+  else if (strcasecmp(paramsObj->pszRequest, "GetFeatureWithLock") == 0 ||
+           strcasecmp(paramsObj->pszRequest, "LockFeature") == 0 ||
+           strcasecmp(paramsObj->pszRequest, "Transaction") == 0 )
   {
       // Unsupported WFS request
       msSetError(MS_WFSERR, "Unsupported WFS request: %s", "msWFSDispatch()",
-                 request);
-      return msWFSException(map, wmtver);
+                 paramsObj->pszRequest);
+      return msWFSException(map, paramsObj->pszVersion);
   }
-  else if (strcasecmp(service, "WFS") == 0)
+  else if (strcasecmp(paramsObj->pszService, "WFS") == 0)
   {
       // Invalid WFS request
       msSetError(MS_WFSERR, "Invalid WFS request: %s", "msWFSDispatch()",
-                 request);
-      return msWFSException(map, wmtver);
+                 paramsObj->pszRequest);
+      return msWFSException(map, paramsObj->pszVersion);
   }
 
   // This was not detected as a WFS request... let MapServer handle it
@@ -1110,5 +1093,346 @@ int msWFSDispatch(mapObj *map, char **names, char **values, int numentries)
              "msWFSDispatch()");
   return(MS_FAILURE);
 #endif
+}
+
+/************************************************************************/
+/*                           msWFSCreateParamsObj                       */
+/*                                                                      */
+/*      Create a parameter object, initialize it.                       */
+/*      The caller should free the object using msWFSFreeParamsObj.     */
+/************************************************************************/
+wfsParamsObj *msWFSCreateParamsObj()
+{
+    wfsParamsObj *paramsObj = (wfsParamsObj *)calloc(1, sizeof(wfsParamsObj));
+    if (paramsObj)
+    {
+        paramsObj->nMaxFeatures = -1;
+    }
+
+    return paramsObj;
+}
+
+
+
+/************************************************************************/
+/*                            msWFSFreeParmsObj                         */
+/*                                                                      */
+/*      Free params object.                                             */
+/************************************************************************/
+void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
+{
+    if (wfsparams)
+    {
+        if (wfsparams->pszVersion)
+          free(wfsparams->pszVersion);
+        if (wfsparams->pszRequest)
+          free(wfsparams->pszRequest);
+        if (wfsparams->pszService)
+          free(wfsparams->pszService);
+        if (wfsparams->pszTypeName)
+          free(wfsparams->pszTypeName);
+        if (wfsparams->pszFilter)
+          free(wfsparams->pszFilter);
+    }
+}
+
+/************************************************************************/
+/*                            msWFSParseRequest                         */
+/*                                                                      */
+/*      Parse request into the params object.                           */
+/************************************************************************/
+void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
+{
+    int i = 0;
+        
+    if (!request || !wfsparams)
+      return;
+    
+    if (request->NumParams > 0)
+    {
+        for(i=0; i<request->NumParams; i++) 
+        {
+            if (request->ParamNames[i] && request->ParamValues[i])
+            {
+                if (strcasecmp(request->ParamNames[i], "VERSION") == 0)
+                  wfsparams->pszVersion = strdup(request->ParamValues[i]);
+
+                else if (strcasecmp(request->ParamNames[i], "REQUEST") == 0)
+                  wfsparams->pszRequest = strdup(request->ParamValues[i]);
+                
+                else if (strcasecmp(request->ParamNames[i], "SERVICE") == 0)
+                  wfsparams->pszService = strdup(request->ParamValues[i]);
+             
+                else if (strcasecmp(request->ParamNames[i], "MAXFEATURES") == 0)
+                  wfsparams->nMaxFeatures = atoi(request->ParamValues[i]);
+                
+                else if (strcasecmp(request->ParamNames[i], "BBOX") == 0)
+                  wfsparams->pszBbox = strdup(request->ParamValues[i]);
+                
+                else if (strcasecmp(request->ParamNames[i], "TYPENAME") == 0)
+                  wfsparams->pszTypeName = strdup(request->ParamValues[i]);
+                
+                else if (strcasecmp(request->ParamNames[i], "FILTER") == 0)
+                  wfsparams->pszFilter = strdup(request->ParamValues[i]);
+            }
+        }
+        //version is optional is the GetCapabilities. If not
+        //provided, set it.
+        if (wfsparams->pszRequest && 
+            strcasecmp(wfsparams->pszRequest, "GetCapabilities") == 0)
+          wfsparams->pszVersion = strdup("1.0.0");
+    }
+/* -------------------------------------------------------------------- */
+/*      Parse the post request. It is assumed to be an XML document.    */
+/* -------------------------------------------------------------------- */
+    if (request->postrequest)
+    {
+        CPLXMLNode *psRoot, *psQuery, *psFilter, *psTypeName = NULL;
+        CPLXMLNode *psGetFeature, *psGetCapabilities, *psDescribeFeature = NULL;
+        CPLXMLNode *psOperation = NULL;
+        char *pszValue, *pszSerializedFilter, *pszTmp = NULL;
+        int bMultiLayer = 0;
+
+        psRoot = CPLParseXMLString(request->postrequest);
+
+        if (psRoot)
+        {
+            //need to strip namespaces
+            CPLStripXMLNamespace(psRoot, NULL, 1);
+            for( psOperation = psRoot; 
+                 psOperation != NULL; 
+                 psOperation = psOperation->psNext )
+            {
+                if(psOperation->eType == CXT_Element)
+                {
+                    if(strcasecmp(psOperation->pszValue,"GetFeature")==0)
+                    {
+                        psGetFeature = psOperation;
+                        break;
+                    }
+                    else if(strcasecmp(psOperation->pszValue,"GetCapabilities")==0)
+                    {
+                        psGetCapabilities = psOperation;
+                        break;
+                    }
+                    else if(strcasecmp(psOperation->pszValue,
+                                       "DescribeFeatureType")==0)
+                    {
+                        psDescribeFeature = psOperation;
+                        break;
+                    }
+                    //these are unsupported requests. Just set the 
+                    //request value and return;
+                    else if (strcasecmp(psOperation->pszValue, 
+                                        "GetFeatureWithLock") == 0)
+                    {
+                        wfsparams->pszRequest = strdup("GetFeatureWithLock");
+                         break;
+                    }
+                    else if (strcasecmp(psOperation->pszValue, 
+                                        "LockFeature") == 0)
+                    {
+                        wfsparams->pszRequest = strdup("LockFeature");
+                         break;
+                    }
+                    else if (strcasecmp(psOperation->pszValue, 
+                                        "Transaction") == 0)
+                    {
+                        wfsparams->pszRequest = strdup("Transaction");
+                        break;
+                    }
+                }
+            }
+
+/* -------------------------------------------------------------------- */
+/*      Parse the GetFeature                                            */
+/* -------------------------------------------------------------------- */
+            if (psGetFeature)
+            {
+                wfsparams->pszRequest = strdup("GetFeature");
+            
+                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "version", 
+                                                 NULL);
+                if (pszValue)
+                  wfsparams->pszVersion = strdup(pszValue);
+                
+                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "service", 
+                                                 NULL);
+                if (pszValue)
+                  wfsparams->pszService = strdup(pszValue);
+
+
+                pszValue = (char*)CPLGetXMLValue(psGetFeature,  "maxFeatures", 
+                                                 NULL);
+                if (pszValue)
+                  wfsparams->nMaxFeatures = atoi(pszValue);
+
+                psQuery = CPLGetXMLNode(psGetFeature, "Query");
+                if (psQuery)
+                {
+                   
+                    //free typname and filter. There may have been
+                    //values if they were passed in the URL
+                    if (wfsparams->pszTypeName)    
+                      free(wfsparams->pszTypeName);
+                    wfsparams->pszTypeName = NULL;
+                        
+                    if (wfsparams->pszFilter)    
+                      free(wfsparams->pszFilter);
+                    wfsparams->pszFilter = NULL;
+                    
+                    if (psQuery->psNext && psQuery->psNext->pszValue &&
+                        strcasecmp(psQuery->psNext->pszValue, "Query") == 0)
+                      bMultiLayer = 1;
+
+/* -------------------------------------------------------------------- */
+/*      Parse typenames and filters. If there are multiple queries,     */
+/*      typenames will be build with comma between thme                 */
+/*      (typename1,typename2,...) and filters will be build with        */
+/*      bracets enclosinf the filters :(filter1)(filter2)...            */
+/* -------------------------------------------------------------------- */
+                    while (psQuery &&  psQuery->pszValue && 
+                           strcasecmp(psQuery->pszValue, "Query") == 0)
+                    {
+                        //parse typenames
+                        pszValue = (char*)CPLGetXMLValue(psQuery,  
+                                                         "typename", NULL);
+                        if (pszValue)
+                        {
+                            if (wfsparams->pszTypeName == NULL)
+                              wfsparams->pszTypeName = strdup(pszValue);
+                            else
+                            {
+                                pszTmp = strdup(wfsparams->pszTypeName);
+                                wfsparams->pszTypeName = 
+                                  (char *)realloc(wfsparams->pszTypeName,
+                                                  sizeof(char)*
+                                                  (strlen(pszTmp)+
+                                                   strlen(pszValue)+2));
+                                
+                                sprintf(wfsparams->pszTypeName,"%s,%s",pszTmp, 
+                                        pszValue);
+                                free(pszTmp);
+                            }
+                        }
+
+                        //parse filter
+                        psFilter = CPLGetXMLNode(psQuery, "Filter");
+
+                        if (psFilter)
+                        {
+                            if (!bMultiLayer)
+                              wfsparams->pszFilter = CPLSerializeXMLTree(psFilter);
+                            else
+                            {
+                                pszSerializedFilter = CPLSerializeXMLTree(psFilter);
+                                pszTmp = (char *)malloc(sizeof(char)*
+                                                        (strlen(pszSerializedFilter)+3));
+                                sprintf(pszTmp, "(%s)", pszSerializedFilter);
+                                free(pszSerializedFilter);
+
+                                if (wfsparams->pszFilter == NULL)
+                                  wfsparams->pszFilter = strdup(pszTmp);
+                                else
+                                {
+                                    pszSerializedFilter = strdup(wfsparams->pszFilter);
+                                    wfsparams->pszFilter = 
+                                      (char *)realloc(wfsparams->pszFilter,
+                                                      sizeof(char)*
+                                                      (strlen(pszSerializedFilter)+
+                                                       strlen(pszTmp)+1));
+                                    sprintf(wfsparams->pszFilter, "%s%s",
+                                            pszSerializedFilter, pszTmp);
+
+                                    free(pszSerializedFilter);
+                                }
+                                free(pszTmp);
+                            }
+                        }
+                    
+                        psQuery = psQuery->psNext;
+                    }//while psQuery
+                }
+            }//end of GetFeatures
+
+/* -------------------------------------------------------------------- */
+/*      Parse GetCapabilities.                                          */
+/* -------------------------------------------------------------------- */
+            if (psGetCapabilities)
+            {
+                wfsparams->pszRequest = strdup("GetCapabilities");
+                pszValue = (char*)CPLGetXMLValue(psGetCapabilities,  "version", 
+                                                 NULL);
+                //version is optional is the GetCapabilities. If not
+                //provided, set it.
+                if (pszValue)
+                  wfsparams->pszVersion = strdup(pszValue);
+                else
+                  wfsparams->pszVersion = strdup("1.0.0");
+
+                 pszValue = 
+                   (char*)CPLGetXMLValue(psGetCapabilities, "service", 
+                                         NULL);
+                if (pszValue)
+                  wfsparams->pszService = strdup(pszValue);
+            }//end of GetCapabilites
+/* -------------------------------------------------------------------- */
+/*      Parse DescribeFeatureType                                       */
+/* -------------------------------------------------------------------- */
+            if (psDescribeFeature)
+            {
+                wfsparams->pszRequest = strdup("DescribeFeatureType");
+
+                pszValue = (char*)CPLGetXMLValue(psGetFeature, "version", NULL);
+                if (pszValue)
+                  wfsparams->pszVersion = strdup(pszValue);
+
+                pszValue = (char*)CPLGetXMLValue(psGetFeature, "service", NULL);
+                if (pszValue)
+                  wfsparams->pszService = strdup(pszValue);
+
+                pszValue = (char*)CPLGetXMLValue(psGetFeature, "outputFormat", 
+                                                 NULL);
+                if (pszValue)
+                  wfsparams->pszOutputFormat = strdup(pszValue);
+
+                psTypeName = CPLGetXMLNode(psGetFeature, "TypeName");
+                if (psTypeName)
+                {
+                    //free typname and filter. There may have been
+                    //values if they were passed in the URL
+                    if (wfsparams->pszTypeName)    
+                      free(wfsparams->pszTypeName);
+                    wfsparams->pszTypeName = NULL;
+
+                    while (psTypeName && psTypeName->pszValue &&
+                           strcasecmp(psTypeName->pszValue, "TypeName") == 0)
+                    {
+                        if (psTypeName->psChild && psTypeName->psChild->pszValue)
+                        {
+                            pszValue = psTypeName->psChild->pszValue;
+                            if (wfsparams->pszTypeName == NULL)
+                              wfsparams->pszTypeName = strdup(pszValue);
+                            else
+                            {
+                                pszTmp = strdup(wfsparams->pszTypeName);
+                                wfsparams->pszTypeName = 
+                                  (char *)realloc(wfsparams->pszTypeName,
+                                                  sizeof(char)*
+                                                  (strlen(pszTmp)+
+                                                   strlen(pszValue)+2));
+                                
+                                sprintf(wfsparams->pszTypeName,"%s,%s",pszTmp, 
+                                        pszValue);
+                                free(pszTmp);
+                            }
+                        }
+                        psTypeName = psTypeName->psNext;
+                    }
+                }
+
+            }//end of DescibeFeatureType
+        }
+    }
 }
 

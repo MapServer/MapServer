@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.17  2003/09/19 21:54:19  assefa
+ * Add support fot the Post request.
+ *
  * Revision 1.16  2003/07/29 20:24:18  dan
  * Fixed problem with invalid BoundingBox tag in WMS capabilities (bug 34)
  *
@@ -78,16 +81,20 @@
 **   is returned and MapServer is expected to process this as a regular
 **   MapServer request.
 */
-int msOWSDispatch(mapObj *map, char **names, char **values, int numentries)
+int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 {
     int status = MS_DONE;
 
+    if (!request)
+      return status;
+
 #ifdef USE_WMS_SVR
-    if ((status = msWMSDispatch(map, names, values, numentries)) != MS_DONE )
+    if ((status = msWMSDispatch(map, request->ParamNames, request->ParamValues,
+                                request->NumParams)) != MS_DONE )
         return status;
 #endif
 #ifdef USE_WFS_SVR
-    if ((status = msWFSDispatch(map, names, values, numentries)) != MS_DONE )
+    if ((status = msWFSDispatch(map, request)) != MS_DONE )
         return status;
 #endif
 
