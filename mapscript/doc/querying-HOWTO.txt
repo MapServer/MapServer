@@ -115,6 +115,18 @@ queried features::
         # Close when done
         layer.close()
 
+Backwards Compatibility
+-----------------------
+
+Scripts using the 4.2 API can continue to access query result members
+through layer methods::
+
+   for i in range(layer.getNumResults()):
+       result = layer.getResult(0)
+       
+but should adopt the new API for use in new work.
+
+
 Attribute Queries
 =================
 
