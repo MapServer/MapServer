@@ -129,8 +129,8 @@ by defining the symbol *NEXT_GENERATION_NAMES*.
     swig -python -shadow -modern -DNEXT_GENERATION_NAMES -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
 
 The next generation class names are in capitalized camel case form: *Map*,
-*Layer*, *OutputFormat*, and so on rather than the standard *mapObj*,
-*layerObj*, and *outputFormatObj* names which are not distinguished from
+*Layer*, *OutputFormat*, and so on rather than the standard *--Obj*
+names which are not clearly distinguished from
 class method names.  We're all using object-oriented languages, so the *Obj*
 suffix is redundant.  It is also a cross-language convention (see CPAN and
 the Python standard library) that package and class names be capitalized.
@@ -175,22 +175,22 @@ An instance of classObj is associated with with one instance of layerObj_.
 
 ::
 
-    +----------+ 0..*     1 +----------+
-    | classObj | <--------> | layerObj |
-    +----------+            +----------+
+    +-------+ 0..*     1 +-------+
+    | Class | <--------> | Layer |
+    +-------+            +-------+
 
 The other important associations for classObj are with styleObj_ and
 labelObj_.
 
 ::
 
-    +----------+ 1     0..* +----------+
-    | classObj | ---------> | styleObj |
-    +----------+            +----------+
+    +-------+ 1     0..* +-------+
+    | Class | ---------> | Style |
+    +-------+            +-------+
 
-    +----------+ 1     0..1 +----------+
-    | classObj | ---------> | labelObj |
-    +----------+            +----------+
+    +-------+ 1     0..1 +-------+
+    | Class | ---------> | Label |
+    +-------+            +-------+
 
 Multiple class styles are now supported in 4.1.  See the styleObj_ section
 for details on use of multiple class styles.
@@ -413,13 +413,13 @@ A labelObj is associated with a classObj, a scalebarObj, or a legendObj.
 
 ::
 
-    +----------+ 0..1     1 +-------------+
-    | labelObj | <--------- | classObj    |
-    +----------+            | ----------- |
-                            | scalebarObj |
-                            | ----------- |
-                            | legendObj   |
-                            +-------------+ 
+    +-------+ 0..1     1 +----------+
+    | Label | <--------- | Class    |
+    +-------+            | -------- |
+                         | Scalebar |
+                         | -------- |
+                         | Legend   |
+                         +----------+ 
                            
 Attributes
 ----------
@@ -523,17 +523,17 @@ A layerObj is associated with one mapObj and has no other existence [1]_.
 
 ::
 
-    +----------+ 0..1     1 +--------+
-    | layerObj | <--------> | mapObj |
-    +----------+            +--------+
+    +-------+ 0..1     1 +-----+
+    | Layer | <--------> | Map |
+    +-------+            +-----+
    
 The other important association for layerObj is with classObj
 
 ::
 
-    +----------+ 1     0..1 +----------+
-    | layerObj | <--------> | classObj |
-    +----------+            +----------+
+    +-------+ 1     0..1 +-------+
+    | Layer | <--------> | Class |
+    +-------+            +-------+
 
 
 Methods
@@ -565,9 +565,9 @@ A lineObj is composed of one or more pointObj_ instances.
 
 ::
 
-    +---------+ 0..1  1..* +----------+
-    | lineObj | ---------> | pointObj |
-    +---------+            +----------+
+    +------+ 0..1  1..* +-------+
+    | Line | ---------> | Point |
+    +------+            +-------+
 
 
 -----------------------------------------------------------------------------
@@ -578,29 +578,29 @@ A mapObj is primarily associated with instances of layerObj_.
 
 ::
 
-     +--------+ 1     0..1 +----------+
-     | mapObj | <--------> | layerObj |
-     +--------+            +----------+
+     +-----+ 1     0..1 +-------+
+     | Map | <--------> | Layer |
+     +-----+            +-------+
 
 Secondary associations are with legendObj_, scalebarObj_, referenceMapObj_,
 
 ::
 
-     +--------+ 1     0..1 +-----------------+
-     | mapObj | ---------> | legendObj       |
-     +--------+            | --------------- |
-                           | scalebarObj     |
-                           | --------------- |
-                           | legendObj       |
-                           +---------------- + 
+     +-----+ 1     0..1 +----------+
+     | Map | ---------> | Legend   |
+     +-----+            | -------- |
+                        | Scalebar |
+                        | -------- |
+                        | Legend   |
+                        +----------+ 
 
 and outputFormatObj_.
 
 ::
 
-     +--------+ 1     1..* +-----------------+
-     | mapObj | ---------> | outputFormatObj |
-     +--------+            +---------------- + 
+     +-----+ 1     1..* +--------------+
+     | Map | ---------> | OutputFormat |
+     +-----+            +------------- + 
                            
 
 Attributes
@@ -643,9 +643,9 @@ An outputFormatObj is associated with a mapObj_
 
 ::
 
-     +-----------------+ 1..*     1 +--------+
-     | outputFormatObj | <--------- | mapObj |
-     +-----------------+            +--------+ 
+     +--------------+ 1..*     1 +-----+
+     | OutputFormat | <--------- | Map |
+     +--------------+            +-----+ 
 
 and can also be an attribute of an imageObj_.
 
@@ -715,9 +715,9 @@ A pointObj instance may be associated with a lineObj_.
 
 ::
 
-    +----------+ 1..*  0..1 +---------+
-    | pointObj | <--------- | lineObj |
-    +----------+            +---------+
+    +-------+ 1..*  0..1 +------+
+    | Point | <--------- | Line |
+    +-------+            +------+
 
 Attributes
 ----------
@@ -846,9 +846,9 @@ closed lineObj_.
 
 ::
 
-    +----------+ 1    1..* +---------+
-    | shapeObj | --------> | lineObj |
-    +----------+           +---------+
+    +-------+ 1    1..* +------+
+    | Shape | --------> | Line |
+    +-------+           +------+
 
 Attributes
 ----------
@@ -953,9 +953,9 @@ An instance of styleObj is associated with one instance of classObj [2]_.
 
 ::
 
-    +----------+ 0..*    1 +----------+
-    | styleObj | <-------- | classObj |
-    +----------+           +----------+
+    +-------+ 0..*    1 +-------+
+    | Style | <-------- | Class |
+    +-------+           +-------+
 
 Support for multiple class styles is a new feature in the current unstable
 (4.1) Mapscript and in the next stable (4.2) release.  The initial feature
