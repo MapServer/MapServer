@@ -1284,7 +1284,7 @@ int main(int argc, char *argv[]) {
 	    for(i=0; i<msObj->SelectShape.numlines; i++) {
 	      for(j=0; j<msObj->SelectShape.line[i].numpoints; j++) {
 	        msObj->SelectShape.line[i].point[j].x = MS_IMAGE2MAP_X(msObj->SelectShape.line[i].point[j].x, msObj->Map->extent.minx, msObj->Map->cellsize);
-	        msObj->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_X(msObj->SelectShape.line[i].point[j].y, msObj->Map->extent.maxy, msObj->Map->cellsize);
+	        msObj->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_Y(msObj->SelectShape.line[i].point[j].y, msObj->Map->extent.maxy, msObj->Map->cellsize);
 	      }
 	    }
 	  
