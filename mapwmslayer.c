@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.44  2002/12/20 16:34:59  dan
+ * Added support for wms_time metadata to pass TIME= parameter in WMS requests
+ *
  * Revision 1.43  2002/12/17 21:33:54  dan
  * Enable following redirections with libcurl (requires libcurl 7.10.1+)
  *
@@ -149,7 +152,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
 {
     char *pszURL = NULL, *pszFormat;
     const char *pszOnlineResource, *pszVersion, *pszName;
-    const char *pszFormatList, *pszStyle, *pszStyleList;
+    const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
     const char *pszVersionKeyword=NULL;
     int nLen;
 
@@ -160,6 +163,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     pszFormatList =     msLookupHashTable(lp->metadata, "wms_formatlist");
     pszStyle =          msLookupHashTable(lp->metadata, "wms_style");
     pszStyleList =      msLookupHashTable(lp->metadata, "wms_stylelist");
+    pszTime =           msLookupHashTable(lp->metadata, "wms_time");
 
     if (pszOnlineResource==NULL || pszVersion==NULL || pszName==NULL)
     {
@@ -241,6 +245,9 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     // Alloc a buffer large enough and build the URL
     nLen = 200 + strlen(pszOnlineResource) + strlen(pszVersion) + 
         strlen(pszName)*2 + strlen(pszFormat) + strlen(pszStyle);
+    if (pszTime)
+        nLen += strlen(pszTime)+6;
+
     pszURL = (char*)malloc((nLen+1)*sizeof(char*));
 
     // Start with the onlineresource value and append trailing '?' or '&' 
@@ -267,8 +274,11 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
             pszVersionKeyword, pszVersion, pszName, pszFormat, pszStyle);
     if (msIsLayerQueryable(lp))
     {
-        sprintf(pszURL + strlen(pszURL),
-                "&QUERY_LAYERS=%s",pszName);
+        sprintf(pszURL + strlen(pszURL), "&QUERY_LAYERS=%s", pszName);
+    }
+    if (pszTime)
+    {
+        sprintf(pszURL + strlen(pszURL), "&TIME=%s", pszTime);
     }
 
     free(pszFormat);  // This one was alloc'd locally
