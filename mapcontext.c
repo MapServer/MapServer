@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.66  2004/10/29 22:48:03  assefa
+ * Use of metadata ows_schema_location (Bug 1013).
+ *
  * Revision 1.65  2004/10/25 17:30:38  julien
  * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
  *
@@ -1573,8 +1576,11 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       msIO_fprintf( stream, " xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
       msIO_fprintf( stream, " xmlns=\"http://www.opengis.net/context\"");
       //fprintf( stream, " xmlns:sld=\"http://www.opengis.net/sld");
+      pszEncodedVal = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
       msIO_fprintf( stream, 
-               " xsi:schemaLocation=\"http://www.opengis.net/context http://schemas.opengis.net/context/1.0.0/context.xsd\">\n");
+               " xsi:schemaLocation=\"http://www.opengis.net/context %s/context/1.0.0/context.xsd\">\n",
+                    pszEncodedVal);
+      msFree(pszEncodedVal);
   }
   else
   {
