@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.140  2003/01/24 00:41:55  dan
+ * Make available the latlon projection object of the map object. (Assefa)
+ *
  * Revision 1.139  2003/01/16 17:32:23  dan
  * Applied new phpinfo function using PHP4 formatting (from Jeremy G.)
  *
@@ -428,6 +431,7 @@ static int le_msshapefile;
 static int le_msweb;
 static int le_msrefmap;
 static int le_msprojection_new;
+static int le_msprojection_ref;
 static int le_msscalebar;
 static int le_mslegend;
 static int le_msstyle;
@@ -752,6 +756,10 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
                                                            NULL);
     PHPMS_GLOBAL(le_msprojection_new)= 
         register_list_destructors(php3_ms_free_projection, NULL);
+
+    PHPMS_GLOBAL(le_msprojection_ref)= 
+      register_list_destructors(php3_ms_free_stub,
+                                NULL);
 
     PHPMS_GLOBAL(le_msscalebar)= 
         zend_register_list_destructors_ex(NULL, NULL,
@@ -1191,6 +1199,13 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
 #endif
     _phpms_build_legend_object(&(pNewObj->legend), list, new_obj_ptr);
     _phpms_add_property_object(return_value, "legend", new_obj_ptr, E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_projection_object(&(pNewObj->latlon), PHPMS_GLOBAL(le_msprojection_ref),
+                                   list,  new_obj_ptr);
+    _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR);
 
     return;
 }
@@ -3503,7 +3518,7 @@ DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS)
         else
         {
             _phpms_report_mapserver_error(E_WARNING);
-            php3_error(E_ERROR, "getColorByIndex failed"\
+            php3_error(E_ERROR, "getColorByIndex failed"
                        "Index shoud not be higher than %d\n",
                        palette.numcolors-1);
         }
