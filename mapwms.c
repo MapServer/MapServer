@@ -86,7 +86,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 
       printf("<ServiceExceptionReport version=\"1.0.1\">\n");
     }
-    else
+    else if (nVersion <= OWS_1_1_0)
     {
       // In V1.0.8, 1.1.0 and later, we have OGC-specific MIME types
       // we cannot return anything else than application/vnd.ogc.se_xml here.
@@ -96,10 +96,24 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
                          NULL, "wms_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
-      printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
+
+       printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n");
 
       printf("<ServiceExceptionReport version=\"1.1.0\">\n");        
     }
+    else //1.1.1
+    {
+        printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+
+        msOWSPrintMetadata(stdout, &(map->web.metadata), 
+                         NULL, "wms_encoding", OWS_NOERR,
+                           "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
+                           "ISO-8859-1");
+
+        rintf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://schemas.opengis.net/wms/1.1.1/WMS_exception_1_1_1.dtd\">\n");
+        printf("<ServiceExceptionReport version=\"1.1.1\">\n");  
+    }
+
 
     if (exception_code)
       printf("<ServiceException code=\"%s\">\n", exception_code);
@@ -120,7 +134,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                           char **names, char **values, int numentries)
 {
-  int i, adjust_extent = MS_FALSE;
+  int i,j, adjust_extent = MS_FALSE;
   int iUnits = -1;
   int nLayerOrder = 0;
   int transparent = MS_NOOVERRIDE;
@@ -131,6 +145,15 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   char **layers = NULL;
   int layerfound =0;
   int invalidlayers = 0;
+  char epsgbuf[32];
+  char srsbuffer[32];
+  int epsgvalid = MS_FALSE;
+  const char *projstring;
+   char **tokens;
+   int n;
+
+   epsgbuf[0]='\0';
+   srsbuffer[0]='\0';
 
   // Some of the getMap parameters are actually required depending on the 
   // request, but for now we assume all are optional and the map file 
@@ -205,26 +228,33 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       {
         // SRS=EPSG:xxxx
 
-        char buffer[32];
-        sprintf(buffer, "init=epsg:%.20s", values[i]+5);
+          sprintf(srsbuffer, "init=epsg:%.20s", values[i]+5);
+          sprintf(epsgbuf, "EPSG:%.20s",values[i]+5);
 
+        //we need to wait until all params are read before
+        //loding the projection into the map. This will help 
+        //insure that the passes srs is valid for all layers.
+        /*
         if (msLoadProjectionString(&(map->projection), buffer) != 0)
           return msWMSException(map, nVersion, NULL);
         
         iUnits = GetMapserverUnitUsingProj(&(map->projection));
         if (iUnits != -1)
           map->units = iUnits;
+        */
       }
       else if (strncasecmp(values[i], "AUTO:", 5) == 0) 
       {
+        sprintf(srsbuffer, "%s",  values[i]);
         // SRS=AUTO:proj_id,unit_id,lon0,lat0
-
+        /*
         if (msLoadProjectionString(&(map->projection), values[i]) != 0)
           return msWMSException(map, nVersion, NULL);
         
         iUnits = GetMapserverUnitUsingProj(&(map->projection));
         if (iUnits != -1)
           map->units = iUnits;
+        */
       }
       else 
       {
@@ -312,7 +342,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
   }
 
-
+  
   /*
   ** Apply the selected output format (if one was selected), and override
   ** the transparency if needed.
@@ -329,6 +359,85 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                  "msWMSLoadGetMapParams()");
       return msWMSException(map, nVersion, "LayerNotDefined");
   }
+
+  /* validat srs value : When the SRS parameter in a GetMap request contains a SRS 
+     that is valid for some, but not all of the layers being requested, then the 
+     server shall throw a Service Exception (code = "InvalidSRS"). 
+     Validate first against epsg in the map and if no matching srs is found
+     validate all layers requested.*/
+
+  if (epsgbuf)
+  {
+      epsgvalid = MS_FALSE;
+      projstring = msGetEPSGProj(&(map->projection), &(map->web.metadata), 
+                                 MS_FALSE);
+      if (projstring)
+      {
+          tokens = split(projstring, ' ', &n);
+          if (tokens && n > 0)
+          {
+              for(i=0; i<n; i++)
+              {
+                  if (strcasecmp(tokens[i], epsgbuf) == 0)
+                  {
+                      epsgvalid = MS_TRUE;
+                      break;
+                  }
+              }
+              msFreeCharArray(tokens, n);
+          }
+      }
+      if (epsgvalid == MS_FALSE)
+      {
+          for (i=0; i<map->numlayers; i++)
+          {
+              epsgvalid = MS_FALSE;
+              if (map->layers[i].status == MS_ON)
+              {
+                  projstring = msGetEPSGProj(&(map->layers[i].projection), 
+                                             &(map->layers[i].metadata), 
+                                             MS_FALSE);
+                  if (projstring)
+                  {
+                      tokens = split(projstring, ' ', &n);
+                      if (tokens && n > 0)
+                      {
+                          for(j=0; j<n; j++)
+                          {
+                              if (strcasecmp(tokens[j], epsgbuf) == 0)
+                              {
+                                  epsgvalid = MS_TRUE;
+                                  break;
+                              }
+                          }
+                          msFreeCharArray(tokens, n);
+                      }
+                  }
+                  if (epsgvalid == MS_FALSE)
+                  { 
+                      msSetError(MS_WMSERR, "Invalid SRS given : SRS must be valid for all requested layers.", 
+                                         "msWMSLoadGetMapParams()");
+                      return msWMSException(map, nVersion, "InvalidSRS");
+                  }
+              }
+          }
+      }
+  }
+
+  
+
+  //apply the srs to the map file. This is only done after validating
+  //that the srs given as parameter is valid for all layers
+  if (srsbuffer && strlen(srsbuffer) > 1)
+  {
+      if (msLoadProjectionString(&(map->projection), srsbuffer) != 0)
+          return msWMSException(map, nVersion, NULL);
+        
+        iUnits = GetMapserverUnitUsingProj(&(map->projection));
+        if (iUnits != -1)
+          map->units = iUnits;
+  }
+     
   /* Validate requested image size. */
   if(map->width > map->maxsize || map->height > map->maxsize || 
      map->width < 1 || map->height < 1) 
@@ -1132,6 +1241,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   errorObj *ms_error = msGetErrorObj();
   int status;
   const char *pszMimeType=NULL;
+
 
   pszMimeType = msLookupHashTable(&(map->web.metadata), "WMS_FEATURE_INFO_MIME_TYPE");
      
