@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/10/26 15:19:00  julien
+ * msOWSPrintURLType: use default values inside the given format. (Bug 944)
+ *
  * Revision 1.45  2004/10/25 17:30:38  julien
  * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
  *
@@ -828,16 +831,46 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         }
         else
         {
-            if(!type)
-                type = strdup((default_type ? default_type : ""));
-            if(!width)
-                width = strdup((default_width ? default_width : ""));
-            if(!height)
-                height = strdup((default_height ? default_height : ""));
-            if(!urlfrmt)
-                urlfrmt = strdup((default_urlfrmt ? default_urlfrmt : ""));
-            if(!href)
-                href = strdup((default_href ? default_href : ""));
+            if(!type && type_format)
+            {
+                type = (char*) malloc(strlen(type_format) + 
+                                      strlen(default_type) + 2);
+                sprintf(type, type_format, (default_type ? default_type : ""));
+            }
+            else if(!type)
+                type = strdup("");
+            if(!width && width_format && default_width)
+            {
+                width = (char*) malloc(strlen(width_format) + 
+                                      strlen(default_width) + 2);
+                sprintf(width, width_format, default_width);
+            }
+            else if(!width)
+                width = strdup("");
+            if(!height && height_format && default_height)
+            {
+                height = (char*) malloc(strlen(height_format) + 
+                                      strlen(default_height) + 2);
+                sprintf(height, height_format, default_height);
+            }
+            else if(!height)
+                height = strdup("");
+            if(!urlfrmt && urlfrmt_format && default_urlfrmt)
+            {
+                urlfrmt = (char*) malloc(strlen(urlfrmt_format) + 
+                                      strlen(default_urlfrmt) + 2);
+                sprintf(urlfrmt, urlfrmt_format, default_urlfrmt);
+            }
+            else if(!urlfrmt)
+                urlfrmt = strdup("");
+            if(!href && href_format && default_href)
+            {
+                href = (char*) malloc(strlen(href_format) + 
+                                      strlen(default_href) + 2);
+                sprintf(href, href_format, default_href);
+            }
+            else if(!href)
+                href = strdup("");
 
             if(tag_format == NULL)
                 msIO_fprintf(stream, "%s<%s%s%s%s%s>%s</%s>\n", tabspace, 
