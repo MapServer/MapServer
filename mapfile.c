@@ -3430,6 +3430,31 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
+/*
+** Init a map and create the output format
+*/
+mapObj *msNewMapObj()
+{
+    mapObj *map;
+
+    /* create an empty map, no layers etc... */
+    map = (mapObj *)malloc(sizeof(mapObj));
+
+    if(!map)
+    {
+        msSetError(MS_MEMERR, NULL, "msCreateMap()");
+        return NULL;
+    }
+
+    if( initMap( map ) == -1 )
+        return NULL;
+
+    if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
+        return NULL;
+
+    return map;
+}
+
 static mapObj *loadMapInternal(char *filename, char *new_mappath)
 {
   mapObj *map=NULL;

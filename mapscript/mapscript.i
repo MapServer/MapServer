@@ -73,19 +73,10 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 %extend mapObj {
   mapObj(char *filename) {
-    mapObj *map;
-
     if(filename && strlen(filename))
       return msLoadMap(filename, NULL);
     else { /* create an empty map, no layers etc... */
-      map = (mapObj *)malloc(sizeof(mapObj));
-      if(!map) {
-        msSetError(MS_MEMERR, NULL, "msLoadMap()");
-        return NULL;
-      }
-
-      initMap(map);
-      return map;
+      return msNewMapObj();
     }      
   }
 

@@ -896,6 +896,7 @@ int msSaveMap(mapObj *map, char *filename);
 void msFreeMap(mapObj *map);
 void msFreeCharArray(char **array, int num_items);
 int msLoadMapString(mapObj *map, char *object, char *value);
+mapObj *msNewMapObj();
 int msEvalRegex(char *e, char *s);
 void msFree(void *p);
 char **msTokenizeMap(char *filename, int *numtokens);

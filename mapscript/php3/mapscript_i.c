@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.53  2002/12/20 21:40:46  julien
+ * Create default output format even if format are specified in mapfile
+ *
  * Revision 1.52  2002/12/12 19:30:49  assefa
  * Correct call to msDrawShape function.
  *
@@ -209,19 +212,11 @@
  * class extensions for mapObj
  **********************************************************************/
 mapObj *mapObj_new(char *filename, char *new_path) {
-    mapObj *map=NULL;
-
     if(filename && strlen(filename))
       return msLoadMap(filename, new_path);
     else { /* create an empty map, no layers etc... */
-        map = (mapObj *)malloc(sizeof(mapObj));
-        if(!map) {
-            msSetError(MS_MEMERR, NULL, "msLoadMap()");
-            return NULL;
-        }
-        initMap(map);
-    }
-    return map;  
+      return msNewMapObj();
+    } 
 }
 
 void  mapObj_destroy(mapObj* self) {
