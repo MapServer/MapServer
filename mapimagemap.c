@@ -12,7 +12,7 @@
 #endif
 
 #define MYDEBUG 0
-#define DEBUG if (MYDEBUG > 2) 
+#define DEBUG_IF if (MYDEBUG > 2) 
 
 /*
  * Client-side imagemap support was originally written by
@@ -83,9 +83,9 @@ static int layersize=0;
 static pString imgStr, layerStr={ &layerlist, &layersize, 0 };
 
 /* Format strings for the various bits of a client-side imagemap. */
-static char *polyHrefFmt, *polyMOverFmt, *polyMOutFmt;
-static char *symbolHrefFmt, *symbolMOverFmt, *symbolMOutFmt;
-static char *mapName;
+static const char *polyHrefFmt, *polyMOverFmt, *polyMOutFmt;
+static const char *symbolHrefFmt, *symbolMOverFmt, *symbolMOutFmt;
+static const char *mapName;
 /* Should we suppress AREA declarations in imagemaps with no title? */
 static int suppressEmpty=0;
 
@@ -125,7 +125,7 @@ static const char *makeFmtSafe(const char *fmt, int MAX) {
 /* Append the given printf-style formatted string to the pString 'ps'.
  * This is much cleaner (and faster) than the technique this file
  * used to use! */
-static void im_iprintf(pString *ps, char *fmt, ...) {
+static void im_iprintf(pString *ps, const char *fmt, ...) {
 	int n, remaining;
 	va_list ap;
 	do {
@@ -179,14 +179,14 @@ static int matchdxfcolor(colorObj col)
 		}
 	}
 	if (tcolor >= 256) tcolor = best;
-//DEBUG	printf("%d/%d/%d (%d/%d - %d), %d : %d/%d/%d<BR>\n", ctable[tcolor].r, ctable[tcolor].g, ctable[tcolor].b, tcolor, best, delta, lastcolor, col.red, col.green, col.blue);
+//DEBUG_IF	printf("%d/%d/%d (%d/%d - %d), %d : %d/%d/%d<BR>\n", ctable[tcolor].r, ctable[tcolor].g, ctable[tcolor].b, tcolor, best, delta, lastcolor, col.red, col.green, col.blue);
 	lastcolor = tcolor;
 	return tcolor;
 }
 
 static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, int size) {
 //  struct imageCacheObj *icp;
-DEBUG printf("searchImageCache\n<BR>");
+DEBUG_IF printf("searchImageCache\n<BR>");
 /*
   icp = ic;
   while(icp) {
@@ -201,7 +201,7 @@ static char* lname;
 static int dxf;
 
 void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image){
-DEBUG printf("ImageStartLayerIM\n<BR>");
+DEBUG_IF printf("ImageStartLayerIM\n<BR>");
 	free(lname);
 	if (layer->name)
 		lname = strdup(layer->name);
@@ -219,7 +219,7 @@ DEBUG printf("ImageStartLayerIM\n<BR>");
 	
 static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, styleObj *style, int size, gdImagePtr img) {
   struct imageCacheObj *icp;
-DEBUG printf("addImageCache\n<BR>");
+DEBUG_IF printf("addImageCache\n<BR>");
 
   if(*icsize > MS_IMAGECACHESIZE) { // remove last element, size stays the same
     icp = ic;
@@ -256,7 +256,7 @@ imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
     if (setvbuf(stdout, NULL, _IONBF , 0)){
                printf("Whoops...");
     };
-DEBUG printf("msImageCreateIM<BR>\n");
+DEBUG_IF printf("msImageCreateIM<BR>\n");
     if (width > 0 && height > 0)
     {
         image = (imageObj *)calloc(1,sizeof(imageObj));
@@ -361,7 +361,7 @@ DEBUG printf("msImageCreateIM<BR>\n");
 void msImageInitIM( imageObj *image )
 
 {
-DEBUG printf("msImageInitIM<BR>\n");
+DEBUG_IF printf("msImageInitIM<BR>\n");
 /*    if( image->format->imagemode == MS_IMAGEMODE_PC256 ) {
         gdImageColorAllocate(image->img.gd, background->red, background->green, background->blue);
         return;
@@ -407,7 +407,7 @@ imageObj *msImageLoadIM( const char *filename )
   char bytes[8];
 */  imageObj      *image = NULL;
 
-  DEBUG printf("msImageLoadIM<BR>\n");
+  DEBUG_IF printf("msImageLoadIM<BR>\n");
 /*
   image = (imageObj *)calloc(1,sizeof(imageObj));
   
@@ -489,7 +489,7 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
   double dx, dy;
   int ox=0, oy=0;
 */
-  DEBUG printf("imageOffsetPolyline\n<BR>");
+  DEBUG_IF printf("imageOffsetPolyline\n<BR>");
 /*
   if(offsety == -99) { // old-style offset (version 3.3 and earlier)
     for (i = 0; i < p->numlines; i++) {
@@ -518,7 +518,7 @@ static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, i
 {
 //  int i, j;
   
-DEBUG printf("imagePolyline\n<BR>");
+DEBUG_IF printf("imagePolyline\n<BR>");
 /*
  if(offsetx != 0 || offsetx != 0) 
     imageOffsetPolyline(img, p, color, offsetx, offsety);
@@ -545,7 +545,7 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
 */
-  DEBUG printf("msCircleDrawLineSymbolIM\n<BR>");
+  DEBUG_IF printf("msCircleDrawLineSymbolIM\n<BR>");
 /*  
   if(!p) return;
 
@@ -702,7 +702,7 @@ void msCircleDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img,
   rectObj rect;
   char *font=NULL;
 */
-DEBUG printf("msCircleDrawShadeSymbolIM<BR>\n");
+DEBUG_IF printf("msCircleDrawShadeSymbolIM<BR>\n");
 /*
   if(!p) return;
 
@@ -917,7 +917,7 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
   int ox, oy;
   double size;
 	
-DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
+DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
 
 // skip this, we don't do text
 
@@ -943,7 +943,7 @@ DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
 //  if(fc<0 && oc<0) return; // nothing to do
   if(size < 1) return; // size too small
 
-//DEBUG printf(".%d.%d.%d.", symbol->type, style->symbol, fc);
+//DEBUG_IF printf(".%d.%d.%d.", symbol->type, style->symbol, fc);
   if(style->symbol == 0) { // simply draw a single pixel of the specified color //
 //    gdImageSetPixel(img, p->x + ox, p->y + oy, fc);
 		
@@ -981,10 +981,10 @@ DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
 	//        if(point1->y == point2->y) {}
     return;
   }  
-DEBUG printf("A");
+DEBUG_IF printf("A");
   switch(symbol->type) {  
   case(MS_SYMBOL_TRUETYPE):
-DEBUG printf("T");
+DEBUG_IF printf("T");
 /*
  * #if defined (USE_GD_FT) || defined (USE_GD_TTF)
     font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
@@ -1005,7 +1005,7 @@ DEBUG printf("T");
 */
     break;
   case(MS_SYMBOL_PIXMAP):
-DEBUG printf("P");
+DEBUG_IF printf("P");
 /*    if(size == 1) { // don't scale
       offset_x = MS_NINT(p->x - .5*symbol->img->sx + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy + oy);
@@ -1056,7 +1056,7 @@ DEBUG printf("P");
 */
     break;
   case(MS_SYMBOL_VECTOR):
-DEBUG printf("V");
+DEBUG_IF printf("V");
 /*    d = size/symbol->sizey;
     offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
     offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
@@ -1097,7 +1097,7 @@ DEBUG printf("V");
     } // end if-then-else //
 */    break;
   default:
-DEBUG printf("DEF");
+DEBUG_IF printf("DEF");
     break;
   } // end switch statement //
 
@@ -1121,7 +1121,7 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
 int bsize = 200;
 char first = 1;
 double size;
-DEBUG printf("msDrawLineSymbolIM<BR>\n");
+DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 
 
   if(!p) return;
@@ -1187,11 +1187,11 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
 		      im_iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
 
-//	DEBUG printf ("%d, ",strlen(img->img.imagemap) );
+//	DEBUG_IF printf ("%d, ",strlen(img->img.imagemap) );
     return;
   }
 
-  DEBUG printf("-%d-",symbol->type);
+  DEBUG_IF printf("-%d-",symbol->type);
   
 /*  switch(symbol->type) {
   case(MS_SYMBOL_SIMPLE):
@@ -1330,7 +1330,7 @@ int bsize = 300;
 char first = 1;
 double size;
 
-DEBUG printf("msDrawShadeSymbolIM\n<BR>");
+DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   if(!p) return;
   if(p->numlines <= 0) return;
 //  if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor));
@@ -1345,22 +1345,22 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
-//DEBUG printf ("a");
+//DEBUG_IF printf ("a");
 //  if(fc==-1 && oc!=-1) { // use msDrawLineSymbolIM() instead (POLYLINE)
 //    msDrawLineSymbolIM(symbolset, img, p, style, scalefactor);
 //    return;
 //  }
-//DEBUG printf ("b");
+//DEBUG_IF printf ("b");
 
 //  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
   if (suppressEmpty && p->numvalues==0) return;//suppress area with empty title
-//DEBUG printf ("1");
+//DEBUG_IF printf ("1");
 //  if(fc < 0) return; // nothing to do
-//DEBUG printf ("2");
+//DEBUG_IF printf ("2");
 //  if(size < 1) return; // size too small
-//DEBUG printf ("3");
+//DEBUG_IF printf ("3");
       
-//DEBUG printf("BEF%s", img->img.imagemap);
+//DEBUG_IF printf("BEF%s", img->img.imagemap);
 	  if(style->symbol == 0) { // simply draw a single pixel of the specified color //    
 		  for(l=0,j=0; j<p->numlines; j++) {
 		    if (dxf == 2){
@@ -1405,15 +1405,15 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
 		      im_iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
   
-//DEBUG printf("AFT%s", img->img.imagemap);
+//DEBUG_IF printf("AFT%s", img->img.imagemap);
 // STOOPID. GD draws polygons pixel by pixel ?!
 	
 //    msImageFilledPolygon(img, p, fc);
 //    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
   	     return;
 	  }
-//DEBUG printf ("d");
-  DEBUG printf("-%d-",symbol->type);
+//DEBUG_IF printf ("d");
+  DEBUG_IF printf("-%d-",symbol->type);
 /*  
   switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE):    
@@ -1575,7 +1575,7 @@ static void billboardIM(imageObj* img, shapeObj *shape, labelObj *label)
 {
 //  int i;
 //  shapeObj temp;
-DEBUG printf("billboardIM<BR>\n");
+DEBUG_IF printf("billboardIM<BR>\n");
 /*
   msInitShape(&temp);
   msAddLine(&temp, &shape->line[0]);
@@ -1610,7 +1610,7 @@ int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label
   int x, y;
 		
 
-  DEBUG printf("msDrawText<BR>\n");
+  DEBUG_IF printf("msDrawText<BR>\n");
   if(!string) return(0); // not errors, just don't want to do anything //
   if(strlen(string) == 0) return(0);
   if(!dxf) return (0);
@@ -1763,7 +1763,7 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
 
-DEBUG printf("msDrawLabelCacheIM\n<BR>");
+DEBUG_IF printf("msDrawLabelCacheIM\n<BR>");
 for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
     cachePtr = &(map->labelcache.labels[l]); // point to right spot in the label cache
@@ -1775,7 +1775,7 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
       continue; // not an error, just don't want to do anything
 
     if(cachePtr->label.type == MS_TRUETYPE)
-      cachePtr->label.size *= layerPtr->scalefactor;
+      cachePtr->label.size = (int)(cachePtr->label.size*layerPtr->scalefactor);
 
     if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
       return(-1);
@@ -1790,8 +1790,8 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
       if (msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
 	return(-1);
 
-      marker_width *= layerPtr->scalefactor;
-      marker_height *= layerPtr->scalefactor;
+      marker_width = (int) (marker_width * layerPtr->scalefactor);
+      marker_height = (int) (marker_height * layerPtr->scalefactor);
 
       marker_offset_x = MS_NINT(marker_width/2.0);
       marker_offset_y = MS_NINT(marker_height/2.0);      
@@ -1802,7 +1802,8 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
       marker_rect.maxy = marker_rect.miny + (marker_height-1);
 
       for(i=0; i<cachePtr->numstyles; i++)
-	cachePtr->styles[i].size *= layerPtr->scalefactor;
+	cachePtr->styles[i].size = (int)
+            ( cachePtr->styles[i].size * layerPtr->scalefactor);
     }
 
     if(labelPtr->position == MS_AUTO) {
@@ -1994,7 +1995,7 @@ int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format )
 
 {
     FILE *stream;
-DEBUG printf("msSaveImageIM\n<BR>");
+DEBUG_IF printf("msSaveImageIM\n<BR>");
 
 if(filename != NULL && strlen(filename) > 0) {
     stream = fopen(filename, "wb");
@@ -2025,9 +2026,9 @@ if(filename != NULL && strlen(filename) > 0) {
 */
   if( strcasecmp(format->driver,"imagemap") == 0 )
   {
-DEBUG printf("ALLOCD %d<BR>\n", img->size);
-//DEBUG printf("F %s<BR>\n", img->img.imagemap);
-DEBUG printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
+DEBUG_IF printf("ALLOCD %d<BR>\n", img->size);
+//DEBUG_IF printf("F %s<BR>\n", img->img.imagemap);
+DEBUG_IF printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
 	  if (dxf == 2){
 	    fprintf(stream, "%s", layerlist); 
 	  } else if (dxf){
