@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2003/02/20 19:49:14  frank
+ * fixed implicit setting of JPEG quality from IMAGEQUALITY keyword
+ *
  * Revision 1.16  2003/01/17 15:47:48  frank
  * ensure that msApplyDefaultOutputFormats() does not modify map->imagetype
  *
@@ -515,7 +518,7 @@ void msApplyOutputFormat( outputFormatObj **target,
         if( imagequality != MS_NOOVERRIDE && imagequality != old_imagequality )
         {
             sprintf( new_value, "%d", imagequality );
-            msSetOutputFormatOption( format, "IMAGEQUALITY", new_value );
+            msSetOutputFormatOption( format, "QUALITY", new_value );
         }
 
         if( interlaced != MS_NOOVERRIDE && !interlaced != !old_interlaced )
