@@ -182,7 +182,13 @@
 
 #define PROCESSING	1153
 
+/* The DEBUG macro is also used to request debugging output.  Redefine
+   for keyword purposes.  */
+
+#ifdef DEBUG
+#undef DEBUG
 #define DEBUG 1154
+#endif 
 
 #define EXTENSION 1155
 
