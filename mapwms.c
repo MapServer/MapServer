@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.144  2004/11/09 16:42:47  hobu
+ * conditionally include <process.h> on the windows
+ * platform for getpid
+ *
  * Revision 1.143  2004/11/05 16:57:26  assefa
  * Add test for supported formats in getLegendGraphic (Bug 1030).
  *
@@ -121,6 +125,10 @@
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
+
+#ifdef WIN32
+#include <process.h>
+#endif
 
 MS_CVSID("$Id$")
 
