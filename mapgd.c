@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.76  2004/10/28 18:55:30  sdlime
+ * Fixed a small bug in the marker drawing code to support special circumstances encountered in the reference map drawing code. The problem was that since colors and outlinecolors are shared by both the box and marker with a reference map you could run into situations where certain vector symbols (unfilled) would not render. Basically you could not draw a box outline and a custom unfilled vector marker. The solution was to have the marker drawing code fall back on the outlinecolor if the main color is unset. A one line fix. Now you can have a red box outline and a custom crosshair marker (ala the National Map).
+ *
  * Revision 1.75  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -1313,6 +1316,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       
     } else  { /* NOT filled */     
 
+      if(fc < 0) fc = oc; // try the outline color (reference maps sometimes do this when combining a box and a custom vector marker
       if(fc < 0) return;
       
       oldpnt.x = MS_NINT(d*symbol->points[0].x + offset_x); /* convert first point in marker s */
