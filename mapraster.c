@@ -956,7 +956,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       x = startx;
       for(j=0; j<img->sx; j++) {
 	if((x >= -0.5) && (x < w)) {
-	  pixel = png->pixels[(y == -0.5)?0:MS_NINT(y)][(x == -0.5) < 0)?0:MS_NINT(x)];	  
+	  pixel = png->pixels[(y == -0.5)?0:MS_NINT(y)][(x == -0.5)?0:MS_NINT(x)];	  
 	  if(cmap[pixel] != -1)
 	    img->pixels[i][j] = cmap[pixel];
 	}
