@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.82  2004/07/28 21:45:10  assefa
+ * Function msImageCreate have an additional argument (map object).
+ *
  * Revision 1.81  2004/07/22 19:44:10  assefa
  * Function names have cganhed to use the ms prefix.
  *
@@ -145,7 +148,7 @@ imageObj *mapObj_prepareImage(mapObj* self) {
     else if( MS_RENDERER_RAWDATA(self->outputformat) )
     {
         img = msImageCreate(self->width, self->height, self->outputformat,
-                            self->web.imagepath, self->web.imageurl);
+                            self->web.imagepath, self->web.imageurl. self);
     }
 #ifdef USE_MING_FLASH
     else if( MS_RENDERER_SWF(self->outputformat) )
