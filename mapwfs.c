@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2002/12/19 05:17:09  dan
+ * Report WFS exceptions, and do not fail on WFS requests returning 0 features
+ *
  * Revision 1.11  2002/12/18 22:36:22  dan
  * Sorted out projection handling in GetCapabilities and Getfeature
  *
@@ -731,7 +734,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         sprintf(szBuf, "init=epsg:%.10s", pszOutputSRS+5);
 
         if (msLoadProjectionString(&(map->projection), szBuf) != 0)
-          return msWMSException(map, wmtver);
+          return msWFSException(map, wmtver);
     }
 
     /*

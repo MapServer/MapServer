@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2002/12/19 05:17:09  dan
+ * Report WFS exceptions, and do not fail on WFS requests returning 0 features
+ *
  * Revision 1.7  2002/12/17 21:33:54  dan
  * Enable following redirections with libcurl (requires libcurl 7.10.1+)
  *
@@ -407,7 +410,7 @@ int msWFSLayerOpen(layerObj *lp,
             // Hmmm... should we produce a fatal error?
             // For now we'll just close the layer and reopen it.
             msDebug("msWFSLayerOpen(): Layer already opened (%s)\n",
-                    lp->connection );
+                    lp->name?lp->name:"(null)" );
             msWFSLayerClose(lp);
         }
     }
@@ -486,12 +489,13 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
     msWFSLayerInfo *psInfo;
     int status = MS_SUCCESS;
     const char *pszTmp;
+    FILE *fp;
 
     psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
 
     if (psInfo == NULL)
     {
-        msSetError(MS_MISCERR, "Assertion failed: WFS layer not opened!!!", 
+        msSetError(MS_WFSCONNERR, "Assertion failed: WFS layer not opened!!!", 
                    "msWFSLayerWhichShapes()");
         return(MS_FAILURE);
     }
@@ -563,12 +567,64 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
 
     if ( !MS_HTTP_SUCCESS( psInfo->nStatus ) )
     {
-        msSetError(MS_MISCERR, 
-                   "Got HTTP status %d downloading WFS layer (%s)", 
+        msSetError(MS_WFSCONNERR, 
+                   "Got HTTP status %d downloading WFS layer %s", 
                    "msWFSLayerWhichShapes()",
-                   psInfo->nStatus, lp->connection);
+                   psInfo->nStatus, lp->name?lp->name:"(null)");
         return(MS_FAILURE);
     }
+
+/* ------------------------------------------------------------------
+ * Check that file is really GML... it could be an exception, or just junk.
+ * ------------------------------------------------------------------ */
+    if ((fp = fopen(psInfo->pszGMLFilename, "r")) != NULL)
+    {
+        char szHeader[2000];
+        int  nBytes = 0;
+
+        nBytes = fread( szHeader, 1, sizeof(szHeader)-1, fp );
+        fclose(fp);
+
+        if (nBytes < 0)
+            nBytes = 0;
+        szHeader[nBytes] = '\0';
+
+        if ( nBytes == 0 )
+        {
+            msSetError(MS_WFSCONNERR, 
+                       "WFS request produced no oputput for layer %s.",
+                       "msWFSLayerWhichShapes()",
+                       lp->name?lp->name:"(null)");
+            return(MS_FAILURE);
+
+        }
+        if ( strstr(szHeader, "<WFS_Exception>") ||
+             strstr(szHeader, "<ServiceExceptionReport>") )
+        {
+            msOWSProcessException(lp, psInfo->pszGMLFilename,
+                                  MS_WFSCONNERR, "msWFSLayerWhichShapes()" );
+            return MS_FAILURE;
+        }
+        else if ( strstr(szHeader,"opengis.net/gml") &&
+                  strstr(szHeader,"featureMember>") == NULL )
+        {
+            // This looks like valid GML, but contains 0 features.
+            return MS_DONE;
+        }
+        else if ( strstr(szHeader,"opengis.net/gml") == NULL ||
+                  strstr(szHeader,"featureMember>") == NULL )
+        {
+            // This is probably just junk.
+            msSetError(MS_WFSCONNERR, 
+                       "WFS request produced unexpected output (junk?) for layer %s.",
+                       "msWFSLayerWhichShapes()",
+                       lp->name?lp->name:"(null)");
+            return(MS_FAILURE);
+        }
+        
+        // If we got this far, it must be a valid GML dataset... keep going
+    }
+
 
 /* ------------------------------------------------------------------
  * Open GML file using OGR.

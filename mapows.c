@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.11  2002/12/19 05:17:09  dan
+ * Report WFS exceptions, and do not fail on WFS requests returning 0 features
+ *
  * Revision 1.10  2002/12/18 16:45:49  dan
  * Fixed WFS capabilities to validate against schema
  *
@@ -810,6 +813,67 @@ int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     }
 
     return nStatus;
+}
+
+/**********************************************************************
+ *                          msOWSProcessException()
+ *
+ **********************************************************************/
+void msOWSProcessException(layerObj *lp, const char *pszFname, 
+                           int nErrorCode, const char *pszFuncName)
+{
+    FILE *fp;
+
+    if ((fp = fopen(pszFname, "r")) != NULL)
+    {
+        char *pszBuf=NULL;
+        int   nBufSize=0;
+        char *pszStart, *pszEnd;
+
+        fseek(fp, 0, SEEK_END);
+        nBufSize = ftell(fp);
+        rewind(fp);
+        pszBuf = (char*)malloc((nBufSize+1)*sizeof(char));
+        if (pszBuf == NULL)
+        {
+            msSetError(MS_MEMERR, NULL, "msOWSProcessException()");
+            fclose(fp);
+            return;
+        }
+
+        if (fread(pszBuf, 1, nBufSize, fp) != nBufSize)
+        {
+            msSetError(MS_IOERR, NULL, "msOWSProcessException()");
+            free(pszBuf);
+            fclose(fp);
+            return;
+        }
+
+        pszBuf[nBufSize] = '\0';
+
+
+        // OK, got the data in the buffer.  Look for the <Message> tags
+        if ((strstr(pszBuf, "<WFS_Exception>") &&            // WFS style
+             (pszStart = strstr(pszBuf, "<Message>")) &&
+             (pszEnd = strstr(pszStart, "</Message>")) ) ||
+            (strstr(pszBuf, "<ServiceExceptionReport>") &&   // WMS style
+             (pszStart = strstr(pszBuf, "<ServiceException>")) &&
+             (pszEnd = strstr(pszStart, "</ServiceException>")) ))
+        {
+            pszStart = strchr(pszStart, '>')+1;
+            *pszEnd = '\0';
+            msSetError(nErrorCode, "Got Remote Server Exception for layer %s: %s",
+                       pszFuncName, lp->name?lp->name:"(null)", pszStart);
+        }
+        else
+        {
+            msSetError(MS_WFSCONNERR, "Unable to parse Remote Server Exception Message for layer %s.",
+                       pszFuncName, lp->name?lp->name:"(null)");
+        }
+
+        free(pszBuf);
+        fclose(fp);
+    }
 }
 
 

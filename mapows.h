@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.12  2002/12/19 05:17:09  dan
+ * Report WFS exceptions, and do not fail on WFS requests returning 0 features
+ *
  * Revision 1.11  2002/12/18 16:45:49  dan
  * Fixed WFS capabilities to validate against schema
  *
@@ -128,6 +131,8 @@ void msDecodeHTMLEntities(const char *string);
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                          mapObj *map);
+void msOWSProcessException(layerObj *lp, const char *pszFname, 
+                           int nErrorCode, const char *pszFuncName);
 
 #endif
 
