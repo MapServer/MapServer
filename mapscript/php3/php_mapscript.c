@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.96  2002/03/19 17:59:59  assefa
+ * Remove MS_TILEED_OGR. It was removed from map.h
+ *
  * Revision 1.95  2002/03/14 21:36:12  sacha
  * Add two mapscript function (in PHP and perl)
  * setSymbolSet(filename) that load a symbol file dynanictly
@@ -804,7 +807,6 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_TILED_SHAPEFILE",MS_TILED_SHAPEFILE,const_flag);
     REGISTER_LONG_CONSTANT("MS_SDE",        MS_SDE,         const_flag);
     REGISTER_LONG_CONSTANT("MS_OGR",        MS_OGR,         const_flag);
-    REGISTER_LONG_CONSTANT("MS_TILED_OGR",  MS_TILED_OGR,   const_flag);
     REGISTER_LONG_CONSTANT("MS_POSTGIS",    MS_POSTGIS,     const_flag);
     REGISTER_LONG_CONSTANT("MS_WMS",        MS_WMS,         const_flag);
     REGISTER_LONG_CONSTANT("MS_ORACLESPATIAL", MS_ORACLESPATIAL,const_flag);
