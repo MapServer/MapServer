@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.18  2001/03/28 02:10:15  assefa
+ * Change loadProjectionString to msLoadProjectionString
+ *
  * Revision 1.17  2001/03/21 21:55:28  dan
  * Added get/setMetaData() for layerObj and mapObj()
  *
@@ -82,7 +85,6 @@
 #include "../../mapprimitive.h"
 #include "../../mapsymbol.h"
 #include "../../mapshape.h"
-
 
 /**********************************************************************
  * class extensions for mapObj
@@ -230,7 +232,7 @@ int mapObj_queryByShape(mapObj *self, shapeObj *shape) {
   }
 
 int mapObj_setProjection(mapObj* self, char *string) {
-    return(loadProjectionString(&(self->projection), string));
+    return(msLoadProjectionString(&(self->projection), string));
   }
 
 int mapObj_save(mapObj* self, char *filename) {
@@ -342,7 +344,7 @@ int layerObj_setFilter(layerObj *self, char *string) {
   }
 
 int layerObj_setProjection(layerObj *self, char *string) {
-    return(loadProjectionString(&(self->projection), string));
+    return(msLoadProjectionString(&(self->projection), string));
   }
 
 int layerObj_addFeature(layerObj *self, shapeObj *shape) {
