@@ -141,7 +141,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 
   msSDELayerInfo *sde;
 
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
 
   if(layer->numitems > 0) {
     shape->numvalues = layer->numitems;
@@ -290,7 +290,7 @@ int msSDELayerOpen(layerObj *layer) {
 
   msSDELayerInfo *sde;
 
-  if(layer->sdelayer) return MS_SUCCESS; // layer already open
+  if(layer->sdelayerinfo) return MS_SUCCESS; // layer already open
 
   params = split(layer->connection, ',', &numparams);
   if(!params) {
@@ -308,7 +308,7 @@ int msSDELayerOpen(layerObj *layer) {
     msSetError(MS_MEMERR, "Error allocating SDE layer structure.", "msSDELayerOpen()");
     return(MS_FAILURE);
   }
-  layer->sdelayer = sde;
+  layer->sdelayerinfo = sde;
 
   // initialize a few things
   sde->table = sde->column = NULL;
@@ -376,7 +376,7 @@ void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
   if (sde == NULL) return;  // Silently return if layer not opened.
 
   SE_stream_free(sde->stream);
@@ -384,8 +384,8 @@ void msSDELayerClose(layerObj *layer) {
   SE_coordref_free(sde->coordref);
   SE_connection_free(sde->connection);
 
-  free(layer->sdelayer);
-  layer->sdelayer = NULL;
+  free(layer->sdelayerinfo);
+  layer->sdelayerinfo = NULL;
 
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
@@ -405,7 +405,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerWhichShapes()");
     return(MS_FAILURE);
@@ -501,7 +501,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerNextShape()");
     return(MS_FAILURE);
@@ -541,7 +541,7 @@ int msSDELayerGetItems(layerObj *layer) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetItems()");
     return(MS_FAILURE);
@@ -598,7 +598,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
     return(MS_FAILURE);
@@ -628,7 +628,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
     return(MS_FAILURE);
@@ -673,7 +673,7 @@ int msSDELayerInitItemInfo(layerObj *layer)
 
   msSDELayerInfo *sde=NULL;
    
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerInitItemInfo()");
     return(MS_FAILURE);
@@ -732,7 +732,7 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
 #ifdef USE_SDE
   msSDELayerInfo *sde=NULL;
    
-  sde = layer->sdelayer;
+  sde = layer->sdelayerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetSpatialColumn()");
     return(NULL);
