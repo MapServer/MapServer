@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2002/11/15 06:15:28  dan
+ * Temporary patch for bug 214 (WMS transparency issue)
+ *
  * Revision 1.28  2002/11/14 04:06:48  dan
  * Fixed test for !gdImageTrueColor() in msResampleGDALToMap() to copy
  * palette of GD image after the call to drawGDAL()
@@ -934,6 +937,17 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         return result;
     }
 
+#ifdef __DEBUG_COLORS__
+    {
+        FILE *fp;
+        char szBuf[200];
+        sprintf(szBuf, "/tmp/test_%s.gif", layer->name);
+        fp= fopen(szBuf, "w");
+        gdImageGif(srcImage->img.gd, fp);
+        fclose(fp);
+    }
+#endif
+
     if( MS_RENDERER_GD(srcImage->format)
         && !gdImageTrueColor( srcImage->img.gd ) )
     {
@@ -992,10 +1006,25 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
+// See bug 214 ... I'm not sure why but the default code used to pass 
+// the offsite parameter as layer->offsite.red
+// For sure with a 8 bits GIF we need to pass layer->offsite.pen otherwise
+// we lose transparency of overlayed WMS layers, so we'll put this test 
+// in here for now and ask Frank to confirm what the correct fix is.
 
-    result = msSimpleRasterResampler( srcImage, layer->offsite.red, image, 
-                                      msApproxTransformer, pACBData,
-                                      layer->debug );
+    if( MS_RENDERER_GD(srcImage->format)
+        && !gdImageTrueColor( srcImage->img.gd ) )
+    {
+        result = msSimpleRasterResampler( srcImage, layer->offsite.pen, image, 
+                                          msApproxTransformer, pACBData,
+                                          layer->debug );
+    }
+    else
+    {
+        result = msSimpleRasterResampler( srcImage, layer->offsite.red, image, 
+                                          msApproxTransformer, pACBData,
+                                          layer->debug );
+    }
 
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */

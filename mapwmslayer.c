@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.33  2002/11/15 06:15:29  dan
+ * Temporary patch for bug 214 (WMS transparency issue)
+ *
  * Revision 1.32  2002/10/28 23:07:38  dan
  * Fixed crash in msDrawWMSLayerLow(): free(wldfile) not needed
  *
@@ -509,6 +512,14 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
     if (lp->data) free(lp->data);
     lp->data =  strdup(pasReqInfo[iReq].pszOutputFile);
+
+// Temporary hack for bug 214
+// In order for layter transparency to work we need to force the presence of
+// an offsite color value.  We should remove this once bug 214 is fixed.
+    if( !MS_VALID_COLOR(lp->offsite) )
+    {
+        MS_INIT_COLOR(lp->offsite, 1, 2, 3);// Any not too common RGB would do
+    }
 
     if (!msProjectionsDiffer(&(map->projection), &(lp->projection)))
     {
