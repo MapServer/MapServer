@@ -43,28 +43,35 @@ from testing import MapPrimitivesTestCase
 # Test begins now
 
 class RectObjTestCase(MapPrimitivesTestCase):
+
     def testRectObjConstructorNoArgs(self):
-        """RectObjTestCase.testRectObjConstructorNoArgs: a rect can be initialized with no args"""
+        """a rect can be initialized with no args"""
         r = mapscript.rectObj()
         self.assertAlmostEqual(r.minx, -1.0)
         self.assertAlmostEqual(r.miny, -1.0)
         self.assertAlmostEqual(r.maxx, -1.0)
         self.assertAlmostEqual(r.maxy, -1.0)
+    
     def testRectObjConstructorArgs(self):
-        """RectObjTestCase.testRectObjConstructorArgs: a rect can be initialized with arguments"""
+        """a rect can be initialized with arguments"""
         r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
         self.assertAlmostEqual(r.minx, -1.0)
         self.assertAlmostEqual(r.miny, -2.0)
         self.assertAlmostEqual(r.maxx, 3.0)
         self.assertAlmostEqual(r.maxy, 4.0)
-    def testRectObjConstructorBadly1(self):
-        """RectObjTestCase.testRectObjConstructorBadly1: an invalid extent raises proper error (x direction)"""
-        self.assertRaises(mapscript.MapServerError, mapscript.rectObj, 1.0, -2.0, -3.0, 4.0)
-    def testRectObjConstructorBadly2(self):
-        """RectObjTestCase.testRectObjConstructorBadly2: an invalid extent raises proper error (y direction)"""
-        self.assertRaises(mapscript.MapServerError, mapscript.rectObj, -1.0, 2.0, 3.0, -2.0)
+    
+    def testRectObjConstructorBadXCoords(self):
+        """an invalid extent raises proper error (x direction)"""
+        self.assertRaises(mapscript.MapServerError, mapscript.rectObj,
+                          1.0, -2.0, -3.0, 4.0)
+    
+    def testRectObjConstructorBadYCoords(self):
+        """an invalid extent raises proper error (y direction)"""
+        self.assertRaises(mapscript.MapServerError, mapscript.rectObj,
+                          -1.0, 2.0, 3.0, -2.0)
+    
     def testRectObjToPolygon(self):
-        """RectObjTestCase.testRectObjToPolygon: a rect can be converted into a MS_POLYGON shape"""
+        """a rect can be converted into a MS_POLYGON shape"""
         r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
         s = r.toPolygon()
         assert s.numlines == 1, s.numlines
@@ -74,7 +81,29 @@ class RectObjTestCase(MapPrimitivesTestCase):
         self.assertAlmostEqual(point.x, -1.0)
         self.assertAlmostEqual(point.y, -2.0)
 
+    def testExceptionMessage(self):
+        """test formatted error message"""
+        try:
+            r = mapscript.rectObj(1.0, -2.0, -3.0, 4.0)
+        except mapscript.MapServerError, msg:
+            assert str(msg) == "rectObj(): Invalid rectangle. { 'minx': 1.000000 , 'miny': -2.000000 , 'maxx': -3.000000 , 'maxy': 4.000000 }", msg
 
+    def testRect__str__(self):
+        """__str__ returns properly formatted string"""
+        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
+        r_str = str(r)
+        assert r_str == "{ 'minx': -1.000000 , 'miny': -2.000000 , 'maxx': 3.000000 , 'maxy': 4.000000 }", r_str
+        r2 = eval(r_str)
+        self.assertAlmostEqual(r2['minx'], r.minx)
+        self.assertAlmostEqual(r2['miny'], r.miny)
+        self.assertAlmostEqual(r2['maxx'], r.maxx)
+        self.assertAlmostEqual(r2['maxy'], r.maxy)
+
+    def testRectToString(self):
+        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
+        r_str = r.toString()
+        assert r_str == "{ 'minx': -1.000000 , 'miny': -2.000000 , 'maxx': 3.000000 , 'maxy': 4.000000 }", r_str
+    
 # ===========================================================================
 # Run the tests outside of the main suite
 

@@ -1158,17 +1158,7 @@ appendOutputFormat( outputFormatObj_ format ) : int
     number of output formats.
 
 clone( ) : mapObj
-    Returns a clone of the map.  Presently, the map's fontset and
-    symbolset are not copied and users must explicitly set these for the
-    cloned map.  See http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=557.
-
-    ::
-
-        map_clone = map_orig.clone()
-        map_clone.setFontSet("absolute/path/to/fontset/file")
-        map_clone.setSymbolSet("absolute/path/to/symbolset/file")
-        img = map_clone.draw()
-
+    Returns a clone of the map.
 
 getConfigOption( string key ) : string
     Fetches the value of the requested configuration key if set.  Returns
@@ -1177,6 +1167,9 @@ getConfigOption( string key ) : string
 getFirstMetaDataKey( ) : string
     Returns the first key in the web.metadata hash table.  With
     getNextMetaDataKey(), provides an opaque iterator over keys.
+   
+getLayerOrder( ) : <int*>
+    See Python Appendix [`Text <python.txt>`__, `HTML <python.html>`__]
     
 getMetaData( string key ) : string
     Return the value at *key* from the web.metadata hash table.

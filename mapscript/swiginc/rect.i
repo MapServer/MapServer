@@ -9,7 +9,9 @@
     
         // Check bounds
         if (minx > maxx || miny > maxy) {
-            msSetError(MS_MISCERR, "Invalid bounds.", "rectObj()");
+            msSetError(MS_RECTERR,
+                "{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }",
+                "rectObj()", minx, miny, maxx, maxy);
             return NULL;
         }
     
@@ -87,12 +89,13 @@
         return shape;
     }
 
-    /* to be completed after hobu works up a msRectIsValid function
-    int isValid()
+    char *toString()
     {
-        return MS_VALID_EXTENT(self);
+        char buffer[256];
+        char fmt[]="{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }";
+        msRectToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
+        return strdup(buffer);
     }
-    */
     
 }
 
