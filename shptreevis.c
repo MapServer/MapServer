@@ -7,6 +7,7 @@
  *
  */
 
+#include "map.h"
 #include "mapshape.h"
 #include "maptree.h"
 #include <string.h>
