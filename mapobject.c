@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/05/31 17:27:02  frank
+ * Made msMapComputeGeotransform() return MS_SUCCESS or MS_FAILURE.
+ *
  * Revision 1.1  2004/05/25 16:05:48  frank
  * New
  *
@@ -278,8 +281,11 @@ int msMapComputeGeotransform( mapObj * map )
         - (map->width * 0.5) * map->gt.geotransform[4]
         - (map->height * 0.5) * map->gt.geotransform[5];
 
-    return InvGeoTransform( map->gt.geotransform, 
-                            map->gt.invgeotransform );
+    if( InvGeoTransform( map->gt.geotransform, 
+                         map->gt.invgeotransform ) )
+        return MS_SUCCESS;
+    else
+        return MS_FAILURE;
 }
 
 /************************************************************************/
