@@ -1,0 +1,229 @@
+------------------------------------------------------------------
+README.CONFIGURE - MapServer "configure" script compilation options
+-------------------------------------------------------------------
+
+For Unix users, Mapserver comes with a GNU autoconf "configure" script 
+that should take care of (hopefully!) all compilation issues for you.
+
+The configure script won't work on Windows NT.  See the file README.WIN32
+for details on compiling on Windows systems.
+
+The default configure behavior is to try to locate on your system the most
+common optional libraries that MapServer can use and include them in the
+Makefiles.  It also takes care of setting the proper compilation flags to
+handle issues like the version of GD that you are using, etc.
+
+
+For the impatient:
+------------------
+
+To build the "mapserv" CGI program with the default options, go to the
+directory where you extracted the MapServer source code package and...
+
+ $ cd ms_3.3.x
+ $ ./configure
+ $ make
+
+Unless something went wrong, you should have executables in the current 
+directory for the "mapserv" CGI program and the other utility programs.
+You can copy the "mapserv" program to your HTTP server's CGI directory
+and start using it.  
+
+See the MapServer web site at http://mapserver.gis.umn.edu/ for usage
+instructions.
+
+
+"configure" options:
+--------------------
+
+Here is the list of available options as returned by "./configure --help":
+
+  --with-gd[=DIR]         Specify which version of GD to use (DIR is GD's
+                          install dir).
+  --without-tiff          Disable TIFF support.
+  --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
+  --without-jpeg          Disable JPEG support.
+  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
+  --without-eppl          Disable EPPL7 support.
+  --with-eppl             Include EPPL7 support.
+  --without-ttf           Disable Freetype (TTF) support.
+  --with-ttf[=DIR]        Include Freetype (TTF) support (DIR is Freetype's
+                          install dir).
+  --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
+  --enable-ignore-missing-data   Ignore missing data file errors at runtime
+                                 (enabled by default).
+  --disable-ignore-missing-data  Report all missing data files.
+  --enable-debug          Include -g in CFLAGS for debugging.
+  --disable-debug         Do not include -g in CFLAGS (the default).
+  --with-php3=DIR         Specify directory where PHP3 source tree is
+                          installed. Required in order to compile the
+                          PHP3/MapScript module. 
+
+All the options are described in more details below.
+
+
+GD Library:
+-----------
+  --with-gd[=DIR]         Specify which version of GD to use (DIR is GD's
+                          install dir).
+
+
+  The GD library is the only component that is not optional.
+
+  By default, configure tries to locate it on your system and uses the
+  system copy if found.   If it is not found then it uses "gd-1.2" that
+  is included in the source code distribution.
+
+  You can use the --with-gd=DIR option to use a copy of GD installed in
+  directory "DIR".  Make sure that this copy of GD is compiled before
+  using this option.
+
+
+TIFF Support:
+-------------
+
+  --without-tiff          Disable TIFF support.
+  --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
+
+  Tiff support is optional, but it will be included by default if configure
+  finds libtiff on your system.
+
+  Use --without-tiff to explicitly disable Tiff support.
+
+  Use the --with-tiff=DIR option to use a copy of LibTiff installed in
+  directory "DIR".  Make sure that this copy of LibTiff is compiled before
+  using this option.
+
+    e.g.  $ ./configure --with-tiff=../tiff-v.3.5.4 
+
+
+JPEG Support:
+-------------
+
+  --without-jpeg          Disable JPEG support.
+  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
+
+  JPEG support is optional, but it will be included by default if configure
+  finds libJPEG on your system.
+
+  Use --without-jpeg to explicitly disable JPEG support.
+
+  Use the --with-jpeg=DIR option to use a copy of LibJPEG installed in
+  directory "DIR".  Make sure that this copy of LibJPEG is compiled before
+  using this option.
+
+
+EPPL7 Support:
+--------------
+
+  --without-eppl          Disable EPPL7 support.
+  --with-eppl             Include EPPL7 support.
+
+  EPPL7 support is optional and does not require linking with any external 
+  library.
+
+  It will be included by default, and can be disabledwith --without-eppl.
+
+
+Freetype Support:
+-----------------
+
+  --without-ttf           Disable Freetype (TTF) support.
+  --with-ttf[=DIR]        Include Freetype (TTF) support (DIR is Freetype's
+                          install dir).
+
+  Freetype support is optional, but it will be included by default if 
+  configure finds libttf on your system.
+
+  Use --without-ttf to explicitly disable Freetype support.
+
+  Use the --with-ttf=DIR option to use a copy of Freetype installed in
+  directory "DIR".  Make sure that this copy of Freetype is compiled before
+  using this option.
+
+  IMPORTANT NOTE IF YOU USE "--with-ttf=DIR":
+
+  Since the Freetype distribution (freetype-1.3.1) is built as a shared 
+  library by default, then you have to make sure that libttf.so is located
+  in a directory that is part of the system's runtime library path for 
+  your executables to work.
+
+  If libttf cannot be installed in the system lib directories, then the
+  best option is probably to add the directory where libttf.so lives to the 
+  LD_LIBRARY_PATH environment variable and make sure that its value gets 
+  passed to CGI programs.  With Apache, this is done with the PassEnv or
+  the SetEnv directives in the httpd.conf file.
+
+  e.g. Add to httpd.conf:
+
+         setenv LD_LIBRARY_PATH /path/to/my/libs
+
+       and restart httpd.
+
+
+PROJ.4 Support:
+---------------
+
+  --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
+
+  PROJ.4 support is optional, and is not included by default.
+
+  You have to use the --with-proj=DIR option to enable PROJ.4 support and
+  specify where PROJ.4 installed.  Make sure that this copy of PROJ.4 is 
+  compiled before using this option.
+
+
+  --enable-ignore-missing-data   Ignore missing data file errors at runtime
+                                 (enabled by default).
+  --disable-ignore-missing-data  Report all missing data files.
+  --enable-debug   Include -g in CFLAGS for debugging.
+  --disable-debug  Do not include -g in CFLAGS (the default).
+
+
+Miscellaneous flags:
+--------------------
+
+  --enable-ignore-missing-data   Ignore missing data file errors at runtime
+                                 (enabled by default).
+  --disable-ignore-missing-data  Report all missing data files.
+
+  --enable-debug          Include -g in CFLAGS for debugging.
+  --disable-debug         Do not include -g in CFLAGS (the default).
+
+
+PHP3/MapScript module:
+----------------------
+
+  --with-php3=DIR         Specify directory where PHP3 source tree is
+                          installed. Required in order to compile the
+                          PHP3/MapScript module. 
+
+  This option will trigger the compilation of the PHP3 MapScript module
+  in the ./mapscript/php3/ directory.
+
+  DIR should be the location of the PHP3 source distribution.  The module
+  was developped for php-3.0.14 and would be expected to work with more
+  recent versions of PHP3.
+
+    e.g.  $ ./configure --with-php3=../php-3.0.14
+
+  The PHP3 module has to be built as a shared library that will then
+  be loaded as a Dynamic Module by the PHP interpreter using the dl()
+  PHP command.  See the file ./mapscript/php3/README for more details.
+
+
+Perl MapScript Module:
+----------------------
+
+  The Perl MapScript module is not yet handled by the configure script.
+
+  See the file ./mapscript/perl/REAMDE for compilation instructions.
+
+
+----------------
+$Id$
+----------------
+
+
+
+
