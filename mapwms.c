@@ -190,7 +190,11 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
 
         for(k=0; k<numlayers; k++)
         {
-          if (strcasecmp(map->layers[j].name, layers[k]) == 0)
+          // Turn on selected layers only.
+          // Note: map->name is the root layer.  If root layer is requested
+          // then all map layers should be turned on.
+          if (strcasecmp(map->layers[j].name, layers[k]) == 0 ||
+              (map->name && strcasecmp(map->name, layers[k]) == 0) )
             map->layers[j].status = MS_DEFAULT;
         }
       }
@@ -853,9 +857,12 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printMetadata(map->web.metadata, "wms_title", WMS_WARN,
                 "    <Title>%s</Title>\n", map->name);
 
+  // According to normative comments in the 1.0.7 DTD, the root layer's SRS tag
+  // is REQUIRED.  It also suggests that we use an empty SRS element if there
+  // is no common SRS.
   printParam("MAP.PROJECTION (or wms_srs metadata)", 
              msWMSGetEPSGProj(&(map->projection), map->web.metadata, MS_FALSE),
-             WMS_WARN, "    <SRS>%s</SRS>\n", NULL);
+             WMS_WARN, "    <SRS>%s</SRS>\n", "");
 
   msWMSPrintLatLonBoundingBox("    ", &(map->extent), &(map->projection));
   msWMSPrintBoundingBox( "    ", &(map->extent), &(map->projection), 
