@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.2  2000/05/23 20:46:45  dan
+ * Sync with mapscript.i version 1.5
+ *
  * Revision 1.1  2000/05/09 21:06:11  dan
  * Initial Import
  *
@@ -103,13 +106,20 @@ void mapObj_prepareQuery(mapObj* self) {
 gdImagePtr mapObj_prepareImage(mapObj* self) {
     gdImagePtr img;
 
+    if(self->width == -1 && self->height == -1) {
+      msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
+      return NULL;
+    }
+
     if(self->width == -1 ||  self->height == -1)
       if(msAdjustImage(self->extent, &self->width, &self->height) == -1)
         return NULL;
 
     img = gdImageCreate(self->width, self->height);
-    if(!img)
+    if(!img) {
+      msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
+    }
   
     if(msLoadPalette(img, &(self->palette), self->imagecolor) == -1)
       return NULL;
