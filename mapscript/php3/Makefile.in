@@ -36,6 +36,7 @@
 CC =     @PHP_CC@
 LD =     @PHP_LD@
 CFLAGS = @CFLAGS@ -DCOMPILE_DL=1 
+RUNPATHS= @RPATHS@
 
 #
 # Set PHP_SRC_DIR to point to the root of the PHP source tree
@@ -54,7 +55,7 @@ PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl @APACHE_INC@
 #
 MS_DEFINE = @ALL_ENABLED@
 MS_INC =    @MS_INC@ @ALL_INC@
-MS_LIBS =   @MS_LIB@ @ALL_LIB@ @XTRALIBS@
+MS_LIBS =   $(RUNPATHS) @MS_LIB@ @ALL_LIB@ @XTRALIBS@
 
 
 #
