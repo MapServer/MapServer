@@ -280,28 +280,24 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
       return(MS_FAILURE);
     }
   }
+  
+  // once through to get the number of rows
+  joininfo->numrows = 0;
+  while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) joininfo->numrows++;
+  rewind(stream);
 
-  // allocate base storage for the array of rows  
-  if((joininfo->rows = (char ***) malloc(ROW_ALLOCATION_SIZE*sizeof(char **))) == NULL) {
+  if((joininfo->rows = (char ***) malloc(joininfo->numrows*sizeof(char **))) == NULL) {
     msSetError(MS_MEMERR, "Error allocating rows.", "msCSVJoinConnect()");
     return(MS_FAILURE);
   }
-  numRowsAllocated = ROW_ALLOCATION_SIZE;
 
   // load the rows
-  joininfo->numrows = 0;
-  while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {
-    // make sure there is enough space for the next row
-    if(joininfo->numrows == numRowsAllocated) {
-      if((joininfo->rows = (char ***) realloc(joininfo->rows, ROW_ALLOCATION_SIZE*sizeof(char **))) == NULL) {
-        msSetError(MS_MEMERR, "Error making space for more rows.", "msCSVJoinConnect()");
-        return(MS_FAILURE);
-      }
-      numRowsAllocated += ROW_ALLOCATION_SIZE;
-    }
-    joininfo->rows[joininfo->numrows] = split(buffer, ',', &(joininfo->numcols));
-    joininfo->numrows++;
+  i = 0;
+  while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {    
+    joininfo->rows[i] = split(buffer, ',', &(joininfo->numcols));
+    i++;
   }
+  fclose(stream);
 
   // get "from" item index  
   for(i=0; i<layer->numitems; i++) {
