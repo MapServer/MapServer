@@ -404,10 +404,11 @@ char **split(const char *string, char ch, int *num_tokens)
   return(token);
 }
 
-char *msEncodeUrl(char *data)
+char *msEncodeUrl(const char *data)
 {
   char *hex = "0123456789ABCDEF";
-  char *i, *j, *code;
+  const char *i;
+  char  *j, *code;
   int   inc;
   unsigned char ch;
 

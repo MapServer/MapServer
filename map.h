@@ -958,7 +958,7 @@ char **split(const char *string, char cd, int *num_tokens);
 int countChars(char *str, char ch);
 char *long2string(long value);
 char *double2string(double value);
-char *msEncodeUrl(char*);
+char *msEncodeUrl(const char*);
 char *msEncodeHTMLEntities(const char *string);
 void msDecodeHTMLEntities(const char *string);
 
