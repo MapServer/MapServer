@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2004/10/26 16:28:10  hobu
+ * make sure to initialize sde->row_id_column
+ * in msSDELayerOpen
+ *
  * Revision 1.87  2004/10/26 16:06:04  hobu
  * check for the layer->layerinfo member
  * in msSDELayerClose before freeing
@@ -504,6 +508,7 @@ int msSDELayerOpen(layerObj *layer) {
   // initialize the connection using the connection pooling API
   sde->connection = (SE_CONNECTION) msConnPoolRequest( layer );
   
+  sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
   // If we weren't returned a connection, initialize a new one
   if (!(sde->connection)) {
     if (layer->debug) 
@@ -727,6 +732,7 @@ void msSDELayerClose(layerObj *layer) {
   if (sde->table) free(sde->table);
   if (sde->column) free(sde->column);
   if (sde->row_id_column) free(sde->row_id_column);
+  sde->row_id_column = NULL;
   if (sde->stream) SE_stream_free(sde->stream);
   msConnPoolRelease( layer, sde->connection );  
   sde->connection = NULL;
