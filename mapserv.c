@@ -1335,6 +1335,8 @@ void returnQuery()
   int status;
   int i,j;
 
+  char *template;
+
   layerObj *lp=NULL;
 
   msInitShape(&ResultShape); // ResultShape is a global var define in mapserv.h
@@ -1348,7 +1350,12 @@ void returnQuery()
       if(lp->resultcache->numresults > 0) break;
     }
 
-    if(TEMPLATE_TYPE(lp->class[(int)(lp->resultcache->results[0].classindex)].template) == MS_URL) {
+    if(lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
+      template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
+    else 
+      template = lp->template;
+
+    if(TEMPLATE_TYPE(template) == MS_URL) {
       ResultLayer = lp;
 
       status = msLayerOpen(lp, Map->shapepath);
@@ -1361,7 +1368,7 @@ void returnQuery()
       status = msLayerGetShape(lp, &ResultShape, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
       if(status != MS_SUCCESS) writeError();
 
-      returnURL(lp->class[(int)(lp->resultcache->results[0].classindex)].template, QUERY);      
+      returnURL(template, QUERY);      
       
       msFreeShape(&ResultShape);
       msLayerClose(lp);
@@ -1412,8 +1419,13 @@ void returnQuery()
     for(j=0; j<lp->resultcache->numresults; j++) {
       status = msLayerGetShape(lp, &ResultShape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
       if(status != MS_SUCCESS) writeError();
+      
+      if(lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
+	template = lp->class[(int)(lp->resultcache->results[j].classindex)].template;
+      else 
+	template = lp->template;
 
-      returnPage(lp->class[(int)(lp->resultcache->results[j].classindex)].template, QUERY);      
+      returnPage(template, QUERY);      
 
       msFreeShape(&ResultShape); // init too
 

@@ -13,6 +13,8 @@ int msIsLayerQueryable(layerObj *lp)
 {
   int i, is_queryable = MS_FALSE;
 
+  if(lp->template) return MS_TRUE;
+
   for(i=0; i<lp->numclasses; i++) {
     if(lp->class[i].template) {
       is_queryable = MS_TRUE;
@@ -315,7 +317,7 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
     return(MS_FAILURE);
   }
     
-  if(!(lp->class[shape.classindex].template)) { // no valid template
+  if(!(lp->template) && !(lp->class[shape.classindex].template)) { // no valid template
     msFreeShape(&shape);
     msSetError(MS_NOTFOUND, "Shape does not have a valid template, no way to present results.", "msQueryByIndex()"); 
     return(MS_FAILURE);
@@ -397,7 +399,7 @@ int msQueryByAttributes(mapObj *map, int qlayer)
       continue;
     }
     
-    if(!(lp->class[shape.classindex].template)) { // no valid template
+    if(!(lp->template) && !(lp->class[shape.classindex].template)) { // no valid template
       msFreeShape(&shape);
       continue;
     }
@@ -499,7 +501,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 	continue;
       }
 
-      if(!(lp->class[shape.classindex].template)) { // no valid template
+      if(!(lp->template) && !(lp->class[shape.classindex].template)) { // no valid template
 	msFreeShape(&shape);
 	continue;
       }
@@ -675,7 +677,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	  continue;
 	}
 	
-	if(!(lp->class[shape.classindex].template)) { // no valid template
+	if(!(lp->template) && !(lp->class[shape.classindex].template)) { // no valid template
 	  msFreeShape(&shape);
 	  continue;
 	}
@@ -818,7 +820,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 	continue;
       }
 
-      if(!(lp->class[shape.classindex].template)) { // no valid template
+      if(!(lp->template) && !(lp->class[shape.classindex].template)) { // no valid template
 	msFreeShape(&shape);
 	continue;
       }
@@ -881,7 +883,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
 
   // FIX: do some checking on searchshape here...
   if(searchshape->type != MS_SHAPE_POLYGON) {
-    msSetError(MS_MISCERR, "Search shape MUST be a polygon.", "msQueryByShape()"); 
+    msSetError(MS_QUERYERR, "Search shape MUST be a polygon.", "msQueryByShape()"); 
     return(MS_FAILURE);
   }
 
@@ -946,7 +948,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
 	continue;
       }
 
-      if(!(lp->class[shape.classindex].template)) { // no valid template
+      if(!(lp->template) && !(lp->class[shape.classindex].template)) { // no valid template
 	msFreeShape(&shape);
 	continue;
       }

@@ -1456,9 +1456,8 @@ int initLayer(layerObj *layer)
   layer->sizeunits = MS_PIXELS;
 
   layer->maxfeatures = -1; /* no quota */
-
-  layer->header = NULL;  
-  layer->footer = NULL;
+  
+  layer->template = layer->header = layer->footer = NULL;
 
   layer->transform = MS_TRUE;
 
@@ -1522,6 +1521,7 @@ void freeLayer(layerObj *layer) {
   free(layer->labelangleitem);
   free(layer->header);
   free(layer->footer);
+  free(layer->template);
   free(layer->tileindex);
   free(layer->tileitem);
   free(layer->connection);
@@ -1718,6 +1718,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(SYMBOLSCALE):      
       if(getDouble(&(layer->symbolscale)) == -1) return(-1);
+      break;
+    case(TEMPLATE):
+      if((layer->template = getString()) == NULL) return(-1);
       break;
     case(TILEINDEX):
       if((layer->tileindex = getString()) == NULL) return(-1);
@@ -1925,6 +1928,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msyystate = 2; msyystring = value;
     if(getDouble(&(layer->symbolscale)) == -1) return;
     break;
+  case(TEMPLATE):
+    free(layer->template);
+    layer->template = strdup(value);
+    break;
   case(TOLERANCE):
     msyystate = 2; msyystring = value;
     if(getDouble(&(layer->tolerance)) == -1) return;
@@ -1997,6 +2004,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   fprintf(stream, "    SIZEUNITS %s\n", msUnits[layer->sizeunits]);
   fprintf(stream, "    STATUS %s\n", msStatus[layer->status]);
   if(layer->symbolscale > -1) fprintf(stream, "    SYMBOLSCALE %g\n", layer->symbolscale);
+  if(layer->template) fprintf(stream, "    TEMPLATE \"%s\"\n", layer->template);
   if(layer->tileindex) {
     fprintf(stream, "    TILEINDEX \"%s\"\n", layer->tileindex);
     if(layer->tileitem) fprintf(stream, "    TILEITEM \"%s\"\n", layer->tileitem);

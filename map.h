@@ -457,8 +457,12 @@ typedef struct {
 %readwrite
 #endif
 
-#ifndef SWIG
   char *header, *footer; // only used with multi result queries
+
+#ifndef __cplusplus
+  char *template; // global template, used across all classes
+#else
+  char *_template;
 #endif
 
   resultCacheObj *resultcache; // holds the results of a query against this layer
