@@ -363,7 +363,7 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x2 = (int)clip->minx; // 0
     y2 = (int)clip->miny; // 0
     y1 = (int)clip->maxy-1; // height-1 
-    x1 = x2 - (y2 - y1)/(int) tan(-MS_DEG_TO_RAD*angle);
+    x1 = x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle);
 
     while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -374,7 +374,7 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x2 = (int)clip->minx; // 0
     y2 = (int)clip->maxy-1; // height-1
     y1 = (int)clip->miny; // 0
-    x1 = x2 - (y2 - y1)/(int) tan(-MS_DEG_TO_RAD*angle);
+    x1 = x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle);
 
     while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -385,7 +385,7 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x1 = (int)clip->minx; // 0
     y1 = (int)clip->miny; // 0
     x2 = (int)clip->maxx-1; // width-1
-    y2 = y1 + (x2 - x1)*(int) tan(-MS_DEG_TO_RAD*angle);
+    y2 = y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle);
 
     while(y2 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -396,7 +396,7 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     x2 = (int)clip->maxx-1; // width-1
     y2 = (int)clip->miny; // 0
     x1 = (int)clip->minx; // 0
-    y1 = y2 - (x2 - x1)*(int) tan(-MS_DEG_TO_RAD*angle);
+    y1 = y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle);
 
     while(y1 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
@@ -521,15 +521,15 @@ static void imageFilledCircle(gdImagePtr im, pointObj *p, int r, int c)
   int ymin, ymax, xmin, xmax;
   double dx, dy;
 
-  ymin = (int) MS_MAX((p->y - r), 0);
-  ymax = (int) MS_MIN((p->y + r), (gdImageSY(im)-1));
+  ymin = MS_MAX((p->y - r), 0);
+  ymax = MS_MIN((p->y + r), (gdImageSY(im)-1));
 
   for(y=ymin; y<=ymax; y++) {
     dy = MS_ABS(p->y - y);
     dx = sqrt((r*r) - (dy*dy));
 
-    xmin = (int) MS_MAX((p->x - dx), 0);
-    xmax = (int) MS_MIN((p->x + dx), (gdImageSX(im)-1));
+    xmin = MS_MAX((p->x - dx), 0);
+    xmax = MS_MIN((p->x + dx), (gdImageSX(im)-1));
 
     imageScanline(im, xmin, xmax, y, c);
   }
@@ -542,7 +542,7 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
   int i, j, first;
   int dx, dy, dx0=0, dy0=0,  ox=0, oy=0, limit;
   double x, y, x0=0.0, y0=0.0, k=0.0, k0=0.0, q=0.0, q0=0.0;
-  float par=0.71f;
+  float par=0.71;
 
   if(offsety == -99) {
     limit = offsetx*offsetx/4;
@@ -550,8 +550,8 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
       first = 1;
       for(j=1; j<p->line[i].numpoints; j++) {        
         ox=0; oy=0;
-        dx = (int) p->line[i].point[j].x - (int) p->line[i].point[j-1].x;
-        dy = (int) p->line[i].point[j].y - (int) p->line[i].point[j-1].y;
+        dx = p->line[i].point[j].x - p->line[i].point[j-1].x;
+        dy = p->line[i].point[j].y - p->line[i].point[j-1].y;
         //offset setting - quick approximation, may be changed with goniometric functions
         if(dx==0) { //vertical line
           if(dy==0) continue; //checking unique points
@@ -562,8 +562,8 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
             oy = (dx>0) ? offsetx : -offsetx;
           } else {
             if (MS_ABS(k)<2.1) {
-              oy = (dx>0) ?  offsetx* (int) par : -offsetx* (int) par;
-              ox = (dy>0) ? -offsetx* (int) par : offsetx* (int)par;
+              oy = (dx>0) ? offsetx*par : -offsetx*par;
+              ox = (dy>0) ? -offsetx*par : offsetx*par;
             } else
               ox = (dy>0) ? -offsetx : offsetx;
           }
@@ -599,7 +599,7 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
         dx0 = dx; dy0 = dy; x0 = x, y0 = y; k0 = k; q0=q;
       }
       //last point
-      if(first==0)gdImageLine(img, (int)x0, (int)y0, (int) p->line[i].point[p->line[i].numpoints-1].x+ox, (int) p->line[i].point[p->line[i].numpoints-1].y+oy, color);
+      if(first==0)gdImageLine(img, (int)x0, (int)y0, p->line[i].point[p->line[i].numpoints-1].x+ox, p->line[i].point[p->line[i].numpoints-1].y+oy, color);
     }
   } else { // normal offset (eg. drop shadow)
     for (i = 0; i < p->numlines; i++)
@@ -656,7 +656,7 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
   xintersect = (int *)calloc(n, sizeof(int));
   
   /* Find the min and max Y */
-  ymin = (int) p->line[0].point[0].y;
+  ymin = p->line[0].point[0].y;
   ymax = ymin;
   
   for(l=0,j=0; j<p->numlines; j++) {
@@ -668,10 +668,10 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
 	slope[l] = 0.0;
       } else {
 	horiz[l] = 0;
-	slope[l] = (float) (point2->x - point1->x) / (float) (point2->y - point1->y);
+	slope[l] = (float) (point2->x - point1->x) / (point2->y - point1->y);
       }
-      ymin = (int) MS_MIN(ymin, point1->y);
-      ymax = (int) MS_MAX(ymax, point2->y);
+      ymin = MS_MIN(ymin, point1->y);
+      ymax = MS_MAX(ymax, point2->y);
       point1 = point2;
     }
   }  
@@ -705,15 +705,15 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
 	    else
 	      testpoint1 = &( p->line[j].point[p->line[j].numpoints-1] );
 	    testpoint2 = &( p->line[j].point[k] );
-	    sign = (int) (testpoint2->y - testpoint1->y) *
-	      (int) (point2->y - point1->y);
+	    sign = (testpoint2->y - testpoint1->y) *
+	      (point2->y - point1->y);
 	    if(sign < 0)
-	      xintersect[nfound++] = (int) point1->x;
+	      xintersect[nfound++] = point1->x;
 	    /* All done for point matching case */
 	  } else {  
 	    /* Not at the first point,
 	       find the intersection*/
-	    x = (int) ROUND(point1->x + (y - point1->y)*slope[l]);
+	    x = ROUND(point1->x + (y - point1->y)*slope[l]);
 	    xintersect[nfound++] = x;
 	  }
 	}                 /* End of checking this edge */
@@ -744,7 +744,7 @@ static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, i
     for(i=0; i<p->line[j].numpoints; i++, l++) {
       point2 = &( p->line[j].point[i] );
       if(horiz[l])
-	imageScanline(im, (int) point1->x+offsetx, (int) point2->x+offsetx, (int) point2->y+offsety, c);
+	imageScanline(im, point1->x+offsetx, point2->x+offsetx, point2->y+offsety, c);
       point1 = point2;
     }
   }
@@ -827,7 +827,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style, (int) size)) == NULL) { 
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create
 
       x = MS_NINT(brush->sx/2); // center the ellipse
@@ -838,7 +838,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
       if(symbol->filled)
 	gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
       
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int) size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -858,7 +858,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     if((x < 2) && (y < 2)) break;
 
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style, (int) size)) == NULL) {
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) {
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc);  // not in cache, create
 
       // draw in the brush image 
@@ -868,7 +868,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
       }
       gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
 
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int) size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -960,7 +960,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   if(size < 1) return; // size too small
       
   if(style->symbol == 0) { // simply draw a single pixel of the specified color    
-    imageFilledCircle(img, p, (int)r, fc);
+    imageFilledCircle(img, p, r, fc);
     if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
     return;
   }
@@ -972,14 +972,14 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
-    if(msGetCharacterSize(symbol->character, (int) size, font, &rect) != MS_SUCCESS) return;
-    x = (int)rect.maxx - (int)rect.minx;
-    y = (int)rect.maxy - (int)rect.miny;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
+    x = rect.maxx - rect.minx;
+    y = rect.maxy - rect.miny;
 
     tile = createBrush(img, x, y, style, &tile_fc, &tile_bc); // create the tile image
 
-    x = (int) -rect.minx; // center the glyph
-    y = (int) -rect.miny;
+    x = -rect.minx; // center the glyph
+    y = -rect.miny;
 
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
     gdImageSetTile(img, tile);
@@ -990,7 +990,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
     // fill with the background color before drawing transparent symbol
     if(symbol->transparent == MS_TRUE && bc > -1)
-      imageFilledCircle(img, p, (int)r, bc);
+      imageFilledCircle(img, p, r, bc);
     
     gdImageSetTile(img, symbol->img);
 
@@ -1002,7 +1002,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     y = MS_NINT(symbol->sizey*d)+1;
 
     if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid
-      imageFilledCircle(img, p, (int)r, fc);
+      imageFilledCircle(img, p, r, fc);
       if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
       return;
     }
@@ -1030,7 +1030,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     y = MS_NINT(symbol->sizey*d)+1;
 
     if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid
-      imageFilledCircle(img, p, (int)r, fc);
+      imageFilledCircle(img, p, r, fc);
       if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
       return;
     }
@@ -1078,7 +1078,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   }
 
   // fill the circle in the main image
-  imageFilledCircle(img, p, (int)r, gdTiled);
+  imageFilledCircle(img, p, r, gdTiled);
   if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
   if(tile) gdImageDestroy(tile);
 
@@ -1138,7 +1138,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   if(size < 1) return; // size too small
 
   if(style->symbol == 0 && fc >= 0) { /* simply draw a single pixel of the specified color */
-    gdImageSetPixel(img, (int)p->x + ox, (int)p->y + oy, fc);
+    gdImageSetPixel(img, p->x + ox, p->y + oy, fc);
     return;
   }  
 
@@ -1149,10 +1149,10 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
-    if(msGetCharacterSize(symbol->character, (int)size, font, &rect) != MS_SUCCESS) return;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
 
-    x = (int)p->x + ox - ((int)rect.maxx - (int)rect.minx)/2 - (int)rect.minx;
-    y = (int)p->y + oy - (int)rect.maxy + ((int)rect.maxy - (int)rect.miny)/2;  
+    x = p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx;
+    y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
 
     // ============== MOD BY DHC MAR 14, 2003 -- Can we get outline color (and rotation) for truetype symbols?
     if( oc >= 0 ) {
@@ -1186,7 +1186,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       offset_x = MS_NINT(p->x - .5*symbol->img->sx*d + ox);
       offset_y = MS_NINT(p->y - .5*symbol->img->sy*d + oy);
       // gdImageCopyResized(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*d, symbol->img->sy*d, symbol->img->sx, symbol->img->sy);
-      gdImageCopyResampled(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*(int)d, symbol->img->sy*(int)d, symbol->img->sx, symbol->img->sy);
+      gdImageCopyResampled(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*d, symbol->img->sy*d, symbol->img->sx, symbol->img->sy);
     }
     break;
   case(MS_SYMBOL_ELLIPSE): // TODO: Need to leverage the image cache!
@@ -1320,7 +1320,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   if(fc < 0 && symbol->type != MS_SYMBOL_PIXMAP) return; // nothing to do (color not required for a pixmap symbol)
   if(size < 1) return; // size too small
   ox = MS_NINT(style->offsetx*scalefactor);
-  oy = (style->offsety == -99) ? -99 : style->offsety*(int)scalefactor;
+  oy = (style->offsety == -99) ? -99 : style->offsety*scalefactor;
 
   if(style->symbol == 0) { // just draw a single width line
     imagePolyline(img, p, fc, ox, oy);
@@ -1349,7 +1349,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
 
       x = MS_NINT(brush->sx/2); // center the ellipse
@@ -1360,7 +1360,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       if(symbol->filled)
         gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
       
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -1380,7 +1380,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if((x < 2) && (y < 2)) break;
 
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
+    if((brush = searchImageCache(symbolset->imagecache, style, size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
 
       // draw in the brush image 
@@ -1390,7 +1390,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       }
       gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
 
-      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
+      symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, size, brush);
     }
 
     gdImageSetBrush(img, brush);
@@ -1519,16 +1519,16 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
-    if(msGetCharacterSize(symbol->character, (int)size, font, &rect) != MS_SUCCESS) return;
-    x = (int)rect.maxx - (int)rect.minx;
-    y = (int)rect.maxy - (int)rect.miny;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
+    x = rect.maxx - rect.minx;
+    y = rect.maxy - rect.miny;
     
     // create tile image
     tile = createBrush(img, x, y, style, &tile_fc, &tile_bc);
 
     // center the glyph
-    x = (int) -rect.minx;
-    y = (int) -rect.miny;
+    x = -rect.minx;
+    y = -rect.miny;
 
     // TODO, should style->antialias be used here (it'd be nice to ditch antialias from symbols)
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
@@ -1747,7 +1747,7 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
     
     /* Line rendering */
     first = 1;
-    for (db_line = -1*(int)d_step_coef; db_line++ < MS_ABS(db); b += db_px_coef) {
+    for (db_line = -1*d_step_coef; db_line++ < MS_ABS(db); b += db_px_coef) {
     
       /* Set the start of the first pixel */
       an = a - da_pxn*(size-1)/2;
@@ -2810,35 +2810,32 @@ static void msFixedImageCopy (gdImagePtr dst, gdImagePtr src,  int dstX, int dst
     int x, y;
 
     /* for most cases the GD copy is fine */
-    if( !gdImageTrueColor(dst) || gdImageTrueColor(src) ) {
-        gdImageCopy( dst, src, dstX, dstY, srcX, srcY, w, h );
-    }
-    else
-    {
-      /* But for copying 8bit to 24bit the GD 2.0.1 copy has a bug with
-         transparency */
+    if( !gdImageTrueColor(dst) || gdImageTrueColor(src) )
+        return gdImageCopy( dst, src, dstX, dstY, srcX, srcY, w, h );
 
-      for (y = 0; (y < h); y++)
-      {
-          for (x = 0; (x < w); x++)
-          {
-              int c_8 = gdImageGetPixel (src, srcX + x, srcY + y);
-  
-              if (c_8 != src->transparent)
-              {
-                  int c;
-  
-                  c = gdTrueColorAlpha (src->red[c_8], 
-                                        src->green[c_8], 
-                                        src->blue[c_8],
-                                        gdAlphaOpaque );
-                  gdImageSetPixel (dst,
-                                   dstX + x,
-                                   dstY + y,
-                                   c);
-              }
-          }
-      }
+    /* But for copying 8bit to 24bit the GD 2.0.1 copy has a bug with
+       transparency */
+
+    for (y = 0; (y < h); y++)
+    {
+        for (x = 0; (x < w); x++)
+        {
+            int c_8 = gdImageGetPixel (src, srcX + x, srcY + y);
+
+            if (c_8 != src->transparent)
+            {
+                int c;
+
+                c = gdTrueColorAlpha (src->red[c_8], 
+                                      src->green[c_8], 
+                                      src->blue[c_8],
+                                      gdAlphaOpaque );
+                gdImageSetPixel (dst,
+                                 dstX + x,
+                                 dstY + y,
+                                 c);
+            }
+        }
     }
     return;
 }
@@ -2848,64 +2845,60 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int s
     int x, y;
 
     /* for most cases the GD copy is fine */
-    if( !gdImageTrueColor(dst) || !gdImageTrueColor(src) ) {
-        gdImageCopyMerge( dst, src, dstX, dstY, srcX, srcY, w, h, pct );
-    }
-    else
-    {
+    if( !gdImageTrueColor(dst) || !gdImageTrueColor(src) )
+        return gdImageCopyMerge( dst, src, dstX, dstY, srcX, srcY, w, h, pct );
+
     /* 
     ** Turn off blending in output image to prevent it doing it's own attempt
     ** at blending instead of using our result. 
     */
-    
-      gdImageAlphaBlending( dst, 0 );
-  
-      for (y = 0; (y < h); y++)
-      {
-          for (x = 0; (x < w); x++)
-          {
-              int src_c = gdImageGetPixel (src, srcX + x, srcY + y);
-              int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
-              int red, green, blue, res_alpha;
-              int src_alpha = (127-gdTrueColorGetAlpha(src_c));
-              int dst_alpha = (127-gdTrueColorGetAlpha(dst_c));
-  
-              if( gdTrueColorGetAlpha(src_c) == gdAlphaTransparent )
-                  continue;
-  
-              /* Adjust dst alpha according to percentages */
-              dst_alpha = dst_alpha * ((100-pct)*src_alpha/127) / 100;
-  
-              /* adjust source according to transparency percentage */
-              src_alpha = src_alpha * (pct) / 100;
-  
-              /* Use simple additive model for resulting transparency */
-              res_alpha = src_alpha + dst_alpha;
-              if( res_alpha > 127 )
-                  res_alpha = 127;
-              
-              if( src_alpha + dst_alpha == 0 )
-                  dst_alpha = 1;
-  
-              red = ((gdTrueColorGetRed( src_c ) * src_alpha)
-                     + (gdTrueColorGetRed( dst_c ) * dst_alpha))
-                  / (src_alpha+dst_alpha);
-              green = ((gdTrueColorGetGreen( src_c ) * src_alpha)
-                       + (gdTrueColorGetGreen( dst_c ) * dst_alpha))
-                  / (src_alpha+dst_alpha);
-              blue = ((gdTrueColorGetBlue( src_c ) * src_alpha)
-                      + (gdTrueColorGetBlue( dst_c ) * dst_alpha))
-                  / (src_alpha+dst_alpha);
-              
-              gdImageSetPixel(dst,dstX+x,dstY+y,
-                              gdTrueColorAlpha( red, green, blue, 
-                                                127-res_alpha ));
-          }
-      }
-    
+    gdImageAlphaBlending( dst, 0 );
+
+    for (y = 0; (y < h); y++)
+    {
+        for (x = 0; (x < w); x++)
+        {
+            int src_c = gdImageGetPixel (src, srcX + x, srcY + y);
+            int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
+            int red, green, blue, res_alpha;
+            int src_alpha = (127-gdTrueColorGetAlpha(src_c));
+            int dst_alpha = (127-gdTrueColorGetAlpha(dst_c));
+
+            if( gdTrueColorGetAlpha(src_c) == gdAlphaTransparent )
+                continue;
+
+            /* Adjust dst alpha according to percentages */
+            dst_alpha = dst_alpha * ((100-pct)*src_alpha/127) / 100;
+
+            /* adjust source according to transparency percentage */
+            src_alpha = src_alpha * (pct) / 100;
+
+            /* Use simple additive model for resulting transparency */
+            res_alpha = src_alpha + dst_alpha;
+            if( res_alpha > 127 )
+                res_alpha = 127;
+            
+            if( src_alpha + dst_alpha == 0 )
+                dst_alpha = 1;
+
+            red = ((gdTrueColorGetRed( src_c ) * src_alpha)
+                   + (gdTrueColorGetRed( dst_c ) * dst_alpha))
+                / (src_alpha+dst_alpha);
+            green = ((gdTrueColorGetGreen( src_c ) * src_alpha)
+                     + (gdTrueColorGetGreen( dst_c ) * dst_alpha))
+                / (src_alpha+dst_alpha);
+            blue = ((gdTrueColorGetBlue( src_c ) * src_alpha)
+                    + (gdTrueColorGetBlue( dst_c ) * dst_alpha))
+                / (src_alpha+dst_alpha);
+            
+            gdImageSetPixel(dst,dstX+x,dstY+y,
+                            gdTrueColorAlpha( red, green, blue, 
+                                              127-res_alpha ));
+        }
+    }
+
     /*
     ** Restore original alpha blending flag. 
     */
     gdImageAlphaBlending( dst, 0 );
-    }
 }
