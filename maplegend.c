@@ -67,11 +67,11 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
            msDrawMarkerSymbol(&map->symbolset,
                               img,
                               &marker,
-                              class->symbol,
-                              class->color,
-                              class->backgroundcolor,
-                              class->outlinecolor, 
-                              class->sizescaled);
+                              class->overlaysymbol,
+                              class->overlaycolor,
+                              class->overlaybackgroundcolor,
+                              class->overlayoutlinecolor, 
+                              class->overlaysizescaled);
          break;
       case MS_LAYER_LINE:	
          msDrawLineSymbol(&map->symbolset, 
