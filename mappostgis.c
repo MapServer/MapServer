@@ -41,6 +41,9 @@ char *DATAERRORMESSAGE(char *dataString, char *preamble)
 		sprintf(tmp,"The most common problem with (1) is incorrectly uploading your data.  There must be an entry in the geometry_columns table.  This will be automatically done if you used the shp2pgsql program or created your geometry column with the AddGeometryColumn() postgis function. <br><br>\n\n");
 		strcat(message,tmp);
 
+		sprintf(tmp,"Another important thing to check is that the postgis user specified in the CONNECTION string does have SELECT permissions on the table(s) specified in your DATA string. <br><br>\n\n");
+		strcat(message,tmp);
+
 		sprintf(tmp,"If you are using the (2) method, you've probably made a typo.<br>\nExample:  'the_geom from (select the_geom,oid from mytable) as foo using unique oid using SRID=76'<br>\nThis is very much like the (1) example.  The subquery ('select the_geom,oid from mytable') will be executed, and mapserver will use 'oid' (a postgresql system column) for uniquely specifying a geometry (for mapserver queries).  The geometry (the_geom) must have a SRID of 76. <br><br>\n\n");
 		strcat(message,tmp);
 
@@ -50,6 +53,9 @@ char *DATAERRORMESSAGE(char *dataString, char *preamble)
 		sprintf(tmp,"This is a more complex sub-query involving joining two tables.  The resulting geometry (column 'roads') has SRID=89, and mapserver will use rd_segment_id to uniquely identify a geometry.  The attributes rd_type and rd_name are useable by other parts of mapserver.<br><br>\n\n");
 		strcat(message,tmp);
 
+
+		sprintf(tmp,"To use a view, do something like:<BR>\n'<geometry_column> from (SELECT * FROM <view>) as foo using unique <column name> using SRID=<srid#>'<br>\nFor example: 'the_geom from (SELECT * FROM myview) as foo using unique gid using SRID=-1' <br><br>\n\n");
+		strcat(message,tmp);
 
 		sprintf(tmp,"NOTE: for the (2) case, the ' as foo ' is requred.  The 'using unique &lt;column&gt;' and 'using SRID=' are case sensitive.<br>\n ");
 		strcat(message,tmp);
@@ -327,6 +333,29 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	}
 
 	sprintf(box3d,"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy);
+
+
+	// substitute token '!BOX!' in geom_table with the box3d - do at most 1 substitution
+
+		if (strstr(geom_table,"!BOX!"))
+		{
+				// need to do a substition
+				char	*start, *end;
+				char	*result;
+
+				result = malloc(7000);
+
+				start = strstr(geom_table,"!BOX!");
+				end = start+5;
+
+				start[0] =0;
+				result[0]=0;
+				strcat(result,geom_table);
+				strcat(result,box3d);
+				strcat(result,end);
+				geom_table= result;
+		}
+
 
 	if (layer->filter.string == NULL)
 	{
@@ -1401,6 +1430,7 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
 		else
 		{
 			strncpy(user_srid,pos_srid+12,slength);
+			user_srid[slength] = 0; // null terminate it
 		}
 	}
 
