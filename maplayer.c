@@ -1041,6 +1041,20 @@ char *msLayerGetProcessing( layerObj *layer, int proc_index) {
     }
 }
 
+char *msLayerGetProcessingKey( layerObj *layer, const char *key ) 
+{
+    int i, len = strlen(key);
+
+    for( i = 0; i < layer->numprocessing; i++ )
+    {
+        if( strncasecmp(layer->processing[i],key,len) == 0 
+            && layer->processing[i][len] == '=' )
+            return layer->processing[i] + len + 1;
+    }
+    
+    return NULL;
+}
+
 int msLayerClearProcessing( layerObj *layer ) {
     if (layer->numprocessing > 0) {
         msFreeCharArray( layer->processing, layer->numprocessing );
