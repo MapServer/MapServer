@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.63  2003/10/03 13:38:53  frank
+ * fix support for wkbLineString25D in ogrGeomLine()
+ *
  * Revision 1.62  2003/05/25 18:48:06  dan
  * Fixed test on connection value in msOGRFileOpen()
  *
@@ -180,18 +183,15 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
 /* ------------------------------------------------------------------
  * Count total number of points
  * ------------------------------------------------------------------ */
-  if (poGeom->getGeometryType() == wkbPoint
-      || poGeom->getGeometryType() == wkbPoint25D )
+  if ( wkbFlatten(poGeom->getGeometryType()) == wkbPoint )
   {
       numpoints = 1;
   }
-  else if (poGeom->getGeometryType() == wkbLineString
-           || poGeom->getGeometryType() == wkbLineString25D )
+  else if ( wkbFlatten(poGeom->getGeometryType()) == wkbLineString )
   {
       numpoints = ((OGRLineString*)poGeom)->getNumPoints();
   }
-  else if (poGeom->getGeometryType() == wkbPolygon
-           || poGeom->getGeometryType() == wkbPolygon25D )
+  else if ( wkbFlatten(poGeom->getGeometryType()) == wkbPolygon )
   {
       OGRPolygon *poPoly = (OGRPolygon *)poGeom;
       OGRLinearRing *poRing = poPoly->getExteriorRing();
@@ -207,7 +207,7 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
               numpoints += poRing->getNumPoints();
       }
   }
-  else if (poGeom->getGeometryType() == wkbMultiPoint )
+  else if ( wkbFlatten(poGeom->getGeometryType()) == wkbMultiPoint )
   {
       numpoints = ((OGRMultiPoint*)poGeom)->getNumGeometries();
   }
@@ -304,8 +304,10 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
 /* ------------------------------------------------------------------
  * Use recursive calls for complex geometries
  * ------------------------------------------------------------------ */
-  if (poGeom->getGeometryType() == wkbPolygon 
-      || poGeom->getGeometryType() == wkbPolygon25D )
+  OGRwkbGeometryType eGType = wkbFlatten(poGeom->getGeometryType());
+
+  
+  if ( eGType == wkbPolygon )
   {
       OGRPolygon *poPoly = (OGRPolygon *)poGeom;
       OGRLinearRing *poRing;
@@ -326,10 +328,9 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
           }
       }
   }
-  else if (poGeom->getGeometryType() == wkbGeometryCollection ||
-           poGeom->getGeometryType() == wkbMultiLineString ||
-           poGeom->getGeometryType() == wkbMultiPolygon ||
-           poGeom->getGeometryType() == wkbMultiPolygon25D )
+  else if ( eGType == wkbGeometryCollection
+            || eGType == wkbMultiLineString 
+            || eGType == wkbMultiPolygon )
   {
       OGRGeometryCollection *poColl = (OGRGeometryCollection *)poGeom;
 
@@ -345,17 +346,14 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
 /* ------------------------------------------------------------------
  * OGRPoint and OGRMultiPoint
  * ------------------------------------------------------------------ */
-  else if (poGeom->getGeometryType() == wkbPoint
-           || poGeom->getGeometryType() == wkbPoint25D 
-           || poGeom->getGeometryType() == wkbMultiPoint )
+  else if ( eGType == wkbPoint || eGType == wkbMultiPoint )
   {
       /* Hummmm a point when we're drawing lines/polygons... just drop it! */
   }
 /* ------------------------------------------------------------------
  * OGRLinearRing/OGRLineString ... both are of type wkbLineString
  * ------------------------------------------------------------------ */
-  else if (poGeom->getGeometryType() == wkbLineString
-           || poGeom->getGeometryType() == wkbLineString25D )
+  else if ( eGType == wkbLineString )
   {
       OGRLineString *poLine = (OGRLineString *)poGeom;
       int       j, numpoints;
