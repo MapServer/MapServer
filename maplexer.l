@@ -127,6 +127,7 @@ void lexer_cleanup() {
 <INITIAL,OBJECT_STRING>driver		       { return(DRIVER); }
 <INITIAL,OBJECT_STRING>dump		       { return(DUMP); }
 <INITIAL,OBJECT_STRING>empty		       { return(EMPTY); }
+<INITIAL,OBJECT_STRING>encoding		       { return(ENCODING); }
 <INITIAL>end			               { return(END); }
 <INITIAL,OBJECT_STRING>error		       { return(ERROR); }
 <INITIAL,OBJECT_STRING>expression              { return(EXPRESSION); }

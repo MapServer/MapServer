@@ -366,6 +366,8 @@ typedef struct {
   int partials; /* can labels run of an image */
 
   int force; // labels *must* be drawn
+
+  char *encoding;
 } labelObj;
 
 // WEB OBJECT - holds parameters for a mapserver/mapscript interface
@@ -1369,6 +1371,9 @@ MS_DLL_EXPORT int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, 
 MS_DLL_EXPORT int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 
 MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
+
+// Modify the character encoding.
+char *msGetEncodedString(char *string, char *encoding);
 
 // various JOIN functions (in mapjoin.c)
 MS_DLL_EXPORT int msJoinConnect(layerObj *layer, joinObj *join);

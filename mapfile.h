@@ -195,4 +195,6 @@
 #define ANGLEITEM 1160
 #define SIZEITEM 1161
 
+#define ENCODING 1162
+
 #endif /* MAPFILE_H */

@@ -310,30 +310,45 @@ if test "$with_xpm" != "no" ; then
 
 fi
 
+dnl Note: don't include iconv by default in GD_XTRA_LIBS as it may not
+dnl       be required by GD.
+
+GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
 
 
 dnl ---------------------------------------------------------------------
-dnl Check where libiconv is installed
+dnl Check where libiconv is installed. We always look for it, even if not
+dnl explicitly requested.
+dnl Iconv can come either as libiconv.so or as part of glibc
 dnl ---------------------------------------------------------------------
 
-unset ac_cv_lib_iconv_libiconv_open
+unset ac_cv_lib_iconv_iconv_open
+unset ac_cv_lib_c_iconv_open
 
 AC_ARG_WITH(libiconv,
-[  --with-libiconv=DIR     GD: Specify where libiconv is installed (DIR is path
-                              to libiconv install dir).],
+[  --with-libiconv=DIR     Specify where libiconv is installed (DIR is path
+                          to libiconv install dir (prefix)).],
     ICONV_DIR=$withval,ICONV_DIR='')
 
-AC_EXPAND_PATH($ICONV_DIR, ICONV_DIR)
 AC_CHECKING(where libiconv is installed...)
+
 ICONV_LIB=''
 
-test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib"
-test -f $ICONV_DIR/lib64/libiconv.a -o -f $ICONV_DIR/lib64/libiconv.so -o -f $ICONV_DIR/lib64/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib64"
-test -f $ICONV_DIR/libiconv.a -o -f $ICONV_DIR/libiconv.so -o -f $ICONV_DIR/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR"
+if test -n "$ICONV_DIR" ; then
 
-if test -n "$ICONV_LIBDIR" ; then
+  AC_EXPAND_PATH($ICONV_DIR, ICONV_DIR)
 
-  ICONV_LIB="-L$ICONV_LIBDIR -liconv"
+  test -f $ICONV_DIR/include/iconv.h && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
+  test -f $ICONV_DIR/lib/libiconv.a -o -f $ICONV_DIR/lib/libiconv.so -o -f $ICONV_DIR/lib/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib" && ICONV_INCDIR="$ICONV_DIR/include"
+  test -f $ICONV_DIR/lib64/libiconv.a -o -f $ICONV_DIR/lib64/libiconv.so -o -f $ICONV_DIR/lib64/libiconv.sl && ICONV_LIBDIR="$ICONV_DIR/lib64" && ICONV_INCDIR="$ICONV_DIR/include"
+
+  AC_CHECK_LIB(iconv, iconv_open, ICONV_LIB="-L$ICONV_LIBDIR -liconv",,"-L$ICONV_LIBDIR")
+  AC_CHECK_LIB(c, iconv_open, ICONV_LIB="-L$ICONV_LIBDIR -lc",,"-L$ICONV_LIBDIR")
+
+fi
+
+if test -n "$ICONV_LIB" ; then
+  ICONV_INC="-I$ICONV_INCDIR"
   AC_MSG_RESULT([        using libiconv from $ICONV_LIB])
   AC_ADD_RUNPATH("$ICONV_DIR")
 
@@ -341,7 +356,10 @@ else
 
   dnl check for lib in system libs
 
-  AC_CHECK_LIB(iconv, libiconv_open, ICONV_LIB="-liconv",,)
+  unset ac_cv_lib_iconv_iconv_open
+  unset ac_cv_lib_c_iconv_open
+  AC_CHECK_LIB(iconv, iconv_open, ICONV_LIB="-liconv",,)
+  AC_CHECK_LIB(c, iconv_open, ICONV_LIB="-lc",,)
 
   if test -n "$ICONV_LIB" ; then
     AC_MSG_RESULT([        using libiconv from system libs.])
@@ -351,13 +369,19 @@ else
 
 fi
 
+if test -n "$ICONV_LIB" ; then
+  ICONV_ENABLED="-DUSE_ICONV"
+  AC_MSG_RESULT([        libiconv found. Enabling internationalization ($ICONV_ENABLED)])
+fi
 
-dnl Note: don't include iconv by default in GD_XTRA_LIBS as it may not
-dnl       be required.
 
-GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
+AC_SUBST(ICONV_ENABLED, $ICONV_ENABLED)
+AC_SUBST(ICONV_INC,     $ICONV_INC)
+AC_SUBST(ICONV_LIB,     $ICONV_LIB)
 
-
+ALL_ENABLED="$ICONV_ENABLED $ALL_ENABLED"
+ALL_INC="$ICONV_INC $ALL_INC"
+ALL_LIB="$ICONV_LIB $ALL_LIB"
 
 
 dnl ---------------------------------------------------------------------

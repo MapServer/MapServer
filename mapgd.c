@@ -5,6 +5,10 @@
 
 #include <time.h>
 
+#ifdef USE_ICONV
+#include "iconv.h"
+#endif
+
 #ifdef _WIN32
 #include <fcntl.h>
 #include <io.h>
@@ -2213,6 +2217,64 @@ static void billboardGD(gdImagePtr img, shapeObj *shape, labelObj *label)
 }
 
 /*
+** Simple charset converter.
+** The return value must be freed by the caller.
+*/
+char *msGetEncodedString(char *string, char *encoding)
+{
+#ifdef USE_ICONV
+  iconv_t cd = NULL;
+  char *in, *inp;
+  char *outp, *out = NULL;
+  size_t len, bufsize, bufleft, status;
+
+  cd = iconv_open("UTF-8", encoding);
+  if(cd == (iconv_t)-1) {
+    msSetError(MS_IDENTERR, "Encoding not support by libiconv (%s).", 
+               "msGetEncodedString()", encoding);
+    return NULL;
+  }
+
+  len = strlen(string);
+  bufsize = len * 4;
+  in = strdup(string);
+  inp = in;
+  out = (char*) malloc(bufsize);
+  if(in == NULL || out == NULL){
+    msSetError(MS_MEMERR, NULL, "msGetEncodedString()");
+    msFree(in);
+    iconv_close(cd);
+    return NULL;
+  }
+  strcpy(out, in);
+  outp = out;
+
+  bufleft = bufsize;
+  status = -1;
+
+  while (len > 0){
+    status = iconv(cd, &inp, &len, &outp, &bufleft);
+    if(status == -1){
+      msFree(in);
+      msFree(out);
+      iconv_close(cd);
+      return string;
+    }
+  }
+  out[bufsize - bufleft] = '\0';
+  
+  msFree(in);
+  iconv_close(cd);
+
+  return out;
+#else
+  msSetError(MS_MISCERR, "Not implemeted since Iconv is not enabled.", 
+             "msGetEncodedString()");
+  return NULL;
+#endif
+}
+
+/*
 ** Simply draws a label based on the label point and the supplied label object.
 */
 int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
@@ -2223,6 +2285,21 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
   if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);
 
+  if( label->encoding != NULL ) { /* converting the label encoding */
+      char *temp;
+      temp = msGetEncodedString(string, label->encoding);
+      if( temp != NULL )
+      {
+          if( strlen(string) <= strlen(temp) )
+              string = realloc( string, strlen(temp)+1 );
+          strcpy(string, temp);
+          msFree(temp);
+      }
+      else
+      {
+          return(-1);
+      }
+  }
   x = MS_NINT(labelPnt.x);
   y = MS_NINT(labelPnt.y);
 

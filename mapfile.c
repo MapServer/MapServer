@@ -1011,6 +1011,8 @@ void initLabel(labelObj *label)
   label->partials = MS_TRUE;
   label->wrap = '\0';
 
+  label->encoding = NULL;
+
   label->force = MS_FALSE;
 
   return;
@@ -1019,6 +1021,7 @@ void initLabel(labelObj *label)
 static void freeLabel(labelObj *label)
 {
   msFree(label->font);
+  msFree(label->encoding);
 }
 
 static int loadLabel(labelObj *label, mapObj *map)
@@ -1060,6 +1063,9 @@ static int loadLabel(labelObj *label, mapObj *map)
 #endif
     case(COLOR): 
       if(loadColor(&(label->color)) != MS_SUCCESS) return(-1);      
+      break;
+    case(ENCODING):
+      if((getString(&label->encoding)) == MS_FAILURE) return(-1);
       break;
     case(END):
       return(0);
@@ -1190,6 +1196,10 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     if(loadColorWithAlpha(&(label->color)) != MS_SUCCESS) return;
     break; 
 #endif
+  case(ENCODING):
+    msFree(label->encoding);
+    label->encoding = strdup(value);
+    break;
   case(FONT):
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
     msFree(label->font);
@@ -1306,6 +1316,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
   else
 #endif
 	writeColor(&(label->color), stream, "COLOR", tab);
+  if(label->encoding) fprintf(stream, "  %sENCODING \"%s\"\n", tab, label->encoding);
   fprintf(stream, "  %sFORCE %s\n", tab, msTrueFalse[label->force]);
   fprintf(stream, "  %sMINDISTANCE %d\n", tab, label->mindistance);
   if(label->autominfeaturesize)
