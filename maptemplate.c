@@ -2395,7 +2395,8 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
     }
 
     if(i >= 0) { // at least if no result found, mapserver will display an empty template.
-      if(lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
+
+      if(lp->resultcache->results[0].classindex >= 0 && lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
         template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
       else 
         template = lp->template;
@@ -2433,7 +2434,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
       }
     }
   }
-     
+
   msObj->NR = msObj->NL = 0;
   for(i=0; i<msObj->Map->numlayers; i++) { // compute some totals
     lp = &(msObj->Map->layers[i]);
@@ -2510,7 +2511,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 	}
       }
 
-      if(lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
+      if(lp->resultcache->results[j].classindex >= 0 && lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
         template = lp->class[(int)(lp->resultcache->results[j].classindex)].template;
       else 
         template = lp->template;
