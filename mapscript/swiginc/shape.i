@@ -56,6 +56,7 @@
         {
             for (i=0; i<4; i++) shape->values[i] = strdup("");
         }
+        shape->numvalues = 4;
         
         return shape;
     }
@@ -180,15 +181,12 @@
             {
                 return MS_FAILURE;
             }
-            else 
-            {
-                self->numvalues++;
-                return MS_SUCCESS;
-            }
+            else return MS_SUCCESS;
         }
         else
         {
-            msSetError(MS_SHPERR, "Invalid index, only 4 possible values", "setValue()");
+            msSetError(MS_SHPERR, "Invalid index, only 4 possible values", 
+                                  "setValue()");
             return MS_FAILURE;
         }
     }

@@ -98,15 +98,15 @@ class ShapeValuesTestCase(unittest.TestCase):
 
     def testNullValue(self):
         so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
-        assert so.numvalues == 0
-        assert so.getValue(0) == None
+        assert so.numvalues == 4
+        assert so.getValue(0) == ''
     
     def testSetValue(self):
         so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
         so.setValue(0, 'Foo');
-        assert so.numvalues == 1
+        assert so.numvalues == 4
         assert so.getValue(0) == 'Foo'
-        assert so.getValue(1) == None
+        assert so.getValue(1) == ''
         
         
 if __name__ == '__main__':

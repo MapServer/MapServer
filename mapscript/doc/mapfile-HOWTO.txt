@@ -69,6 +69,8 @@ MapServer 4.4 has greatly improved capability to manipulate these objects.
 The mapObj Class
 ================
 
+An instance of mapObj is a parent for zero to many layerObj children.
+
 New instances
 -------------
 
@@ -191,7 +193,8 @@ New API
 
 In MapServer 4.4, the metadata attributes of mapObj.web, layerObj, and classObj
 are instances of hashTableObj, a class which functions like a limited 
-dictionary::
+dictionary
+::
 
     layer.metadata.set('wms_name', 'foo')
     name = layer.metadata.get('wms_name')   # returns 'foo'
@@ -209,8 +212,8 @@ You can iterate over all keys in a hashTableObj like
 
 See the API Reference (mapscript.txt) for more details.
 
-Backwards Compatibility
------------------------
+Old API
+-------
 
 The old getMetaData and setMetaData methods of mapObj, layerObj, and classObj
 remain for use by older programs.
