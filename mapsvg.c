@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/02/21 22:22:32  assefa
+ * Add code for GOSVG_LATLONG_TRANSFORMATION.
+ *
  * Revision 1.8  2005/02/18 18:14:11  dan
  * New patch to fix url strings broken by previous patch to bug 1238
  *
@@ -138,7 +141,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
     msIO_fprintf(image->img.svg->stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     /* TODO : seems to have a problem of dtd validation using IE (http://www.24help.info/printthread.php?t=52147) */
     /* msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"); */
-    msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-/* W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-flat.dtd\">\n"); */
+    msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-flat.dtd\">\n"); 
 
 
 /* -------------------------------------------------------------------- */
@@ -161,7 +164,67 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
         msIO_fprintf(image->img.svg->stream,"<rdf:RDF xmlns:rdf = \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \n");
         msIO_fprintf(image->img.svg->stream, "xmlns:crs = \"http://www.ogc.org/crs\" xmlns:svg=\"http://wwww.w3.org/2000/svg\"> \n");
         msIO_fprintf(image->img.svg->stream, "<rdf:Description> \n");
-        msIO_fprintf(image->img.svg->stream, "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f,%f,%f,%f,%f,%f)\" \n", a, b, c, d, e, f);
+
+        if (map->units == MS_DD && 
+            (strcasecmp(msGetOutputFormatOption(image->format, 
+                                               "GOSVG_LATLONG_TRANSFORMATION",""), 
+                       "TRUE") == 0))
+        {
+            
+            double plat = ((map->extent.maxy-map->extent.miny)/2) + map->extent.miny;
+            double plon =(( map->extent.maxx-map->extent.minx)/2) + map->extent.minx;
+            double wp = width;
+            double hp = height;
+            double r = ((map->extent.maxy-map->extent.miny)/2)*111320;//1degree of long in meteres at latitude 0
+
+            double circle=40000000;
+            double res=hp;
+            double aspect=width/height;//hp/wp;
+            double aspect_d;
+            double wd;
+            double hd;
+            double dx;
+            double dy;
+            double x1;
+            double y1;
+            double x2;
+            double y2;
+            double a1;
+            double d1;
+            double e1;
+            double f1;
+
+            aspect_d = (hp)/(wp/cos(plat*(M_PI/180.0)));
+	    
+	    if (aspect <= 1) {
+		hd=(360*2*r)/circle;
+		wd=hd/aspect_d;
+	    } else {
+		wd=(360*2*r)/(cos(plat*(M_PI/180.0))*circle);
+		hd=aspect_d*wd;
+	    }
+	    
+	    x1=plon-wd/2;
+	    y1=plat-hd/2;
+	    x2=plon+wd/2;
+	    y2=plat+hd/2;
+	    
+	    dy=y2-y1;
+	    dx=x2-x1;
+	    d1=-(res/dy);
+	    f1=-d1*y1+hp;
+	    
+	    a1=cos(((y1+y2)/2)*(M_PI/180.0))*(res/dy);
+	    e1= -a1*x1;
+
+            msIO_fprintf(image->img.svg->stream, "\n<!-- transform parameters using catersian transformation : svg:transform=\"matrix(%f, %f, %f, %f, %f, %f)\"  -->\n", a, b, c, d, e, f);
+            msIO_fprintf(image->img.svg->stream, "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f, %f, %f, %f, %f, %f)\" \n", a1, b, c, d1, e1, f1);
+            
+
+        }
+        else
+          msIO_fprintf(image->img.svg->stream, "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f,%f,%f,%f,%f,%f)\" \n", a, b, c, d, e, f);
+
         
         /* get epsg code: TODO : test what if espg code is not set ? */
         if (map->projection.numargs > 0 && 
