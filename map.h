@@ -1123,6 +1123,9 @@ MS_DLL_EXPORT symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int index);
 MS_DLL_EXPORT int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename);
 MS_DLL_EXPORT int msLoadImageSymbol(symbolObj *symbol, const char *filename);
 
+MS_DLL_EXPORT imageObj *msGDGetImage(gdImagePtr img, const char *driver);
+MS_DLL_EXPORT gdImagePtr msGDSetImage(imageObj *image);
+
 MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
 MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);
 MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);

@@ -54,10 +54,12 @@
 
     ~symbolObj() 
     {
+        if (!self) return;
         if (self->name) free(self->name);
         if (self->img) gdImageDestroy(self->img);
         if (self->font) free(self->font);
         if (self->imagepath) free(self->imagepath);
+        free(self);
     }
 
     int setPoints(lineObj *line) {
@@ -91,6 +93,23 @@
             return MS_FAILURE;
         }
         self->style[index] = value;
+        return MS_SUCCESS;
+    }
+
+    %newobject getImage;
+    imageObj *getImage(const char *driver=NULL)
+    {
+        return msGDGetImage(self->img, driver);
+    }
+
+    int setImage(imageObj *image)
+    {
+        if (self->img) {
+            gdImageDestroy(self->img);
+            self->img = NULL;
+        }
+        self->img = msGDSetImage(image);
+        if (!self->img) return MS_FAILURE;
         return MS_SUCCESS;
     }
 

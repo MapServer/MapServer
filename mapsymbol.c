@@ -811,3 +811,55 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
   return(MS_SUCCESS);
 }
 
+imageObj *msGDGetImage(gdImagePtr img, const char *driver)
+{
+    imageObj *image=NULL;
+    int width, height;
+    int truecolor;
+    outputFormatObj *format;
+        
+    if (img) {
+        width = gdImageSX(img);
+        height = gdImageSY(img);
+        truecolor = img->trueColor;
+            
+        if (driver) {
+            format = msCreateDefaultOutputFormat(NULL, driver);
+        }
+        else {
+            format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
+            if (format == NULL)
+                format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
+            if (format == NULL)
+                format = msCreateDefaultOutputFormat(NULL, "GD/JPEG");
+            if (format == NULL)
+                format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
+        }
+        if (format == NULL) {
+            msSetError(MS_IMGERR, "Could not create output format %s",
+                       "imageObj()", driver);
+            return NULL;
+        }
+        image = msImageCreate(width, height, format, NULL, NULL, NULL);
+        if (truecolor) {
+            gdImagePaletteCopy(image->img.gd, img);
+        }
+        gdImageCopy(image->img.gd, img, 0, 0, 0, 0, width, height);
+    }
+
+    /* returned reference may be NULL */
+    return image;
+}
+
+gdImagePtr msGDSetImage(imageObj *image)
+{
+    gdImagePtr img;
+    img = gdImageCreate(image->width, image->height);
+    if (image->format->imagemode == MS_IMAGEMODE_PC256) {
+        gdImagePaletteCopy(img, image->img.gd);
+    }
+    gdImageCopy(img, image->img.gd, 0, 0, 0, 0, image->width, image->height);
+    return img;
+}
+
+

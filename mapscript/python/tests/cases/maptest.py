@@ -139,16 +139,18 @@ class MapLayersTestCase(MapTestCase):
                           layer, 1000)
          
     def testMapRemoveLayerAtTail(self):
-        """MapLayersTestCase.testMapRemoveLayerAtTail: test removal of highest index (tail) layer"""
+        """removal of highest index (tail) layer"""
         n = self.map.numlayers
         layer = self.map.removeLayer(n-1)
         assert self.map.numlayers == n-1
         assert layer.name == 'INLINE'
+        assert layer.thisown == 1
+        del layer
         order = self.map.getLayerOrder()
         assert order == (0, 1, 2), order
 
     def testMapRemoveLayerAtZero(self):
-        """MapLayersTestCase.testMapInsertLayerAtZero: test removal of lowest index (0) layer"""
+        """removal of lowest index (0) layer"""
         n = self.map.numlayers
         layer = self.map.removeLayer(0)
         assert self.map.numlayers == n-1
@@ -157,7 +159,7 @@ class MapLayersTestCase(MapTestCase):
         assert order == (0, 1, 2), order
         
     def testMapRemoveLayerDrawingOrder(self):
-        """MapLayersTestCase.testMapInsertLayerDrawingOrder: test affect of layer removal on drawing order"""
+        """test affect of layer removal on drawing order"""
         n = self.map.numlayers
         # reverse layer drawing order
         o_start = (3, 2, 1, 0)
