@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.56  2004/02/02 20:47:39  assefa
+ * Use of wms_sld_body url.
+ * Make sure that the layer type is preserved after a msDrawWMSLayerLow call.
+ *
  * Revision 1.55  2004/01/08 20:44:21  assefa
  * Add #ifdef for windows to be able to use snprintf.
  *
@@ -154,6 +158,7 @@
 
 #include "map.h"
 #include "maperror.h"
+#include "mapogcsld.h"
 
 #include <time.h>
 #include <ctype.h>
@@ -192,6 +197,9 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
     const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
     const char *pszSLD=NULL, *pszVersionKeyword=NULL;
+    const char *pszSLDBody=NULL;
+    char *pszSLDGenerated = NULL, *pszSLDBodyEnc=NULL;
+
     int nLen;
 
     /* If lp->connection is not set then use wms_onlineresource metadata */
@@ -206,6 +214,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     pszStyle =          msLookupHashTable(lp->metadata, "wms_style");
     pszStyleList =      msLookupHashTable(lp->metadata, "wms_stylelist");
     pszTime =           msLookupHashTable(lp->metadata, "wms_time");
+    pszSLDBody =       msLookupHashTable(lp->metadata, "wms_sld_body");
 
     if (pszOnlineResource==NULL || pszVersion==NULL || pszName==NULL)
     {
@@ -317,6 +326,32 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         pszSLDEnc = msEncodeUrl(pszSLD);
         nLen += strlen(pszSLDEnc)+5;
     }
+    
+    /* if  the metadat wms_sld_body is set to AUTO, we generate
+       the sld based on classes found in the map file and send
+       it in the URL. If diffrent from AUTO, we are assuming that
+       it is a valid sld.
+     */
+    if (pszSLDBody)
+    {
+        if (strcasecmp(pszSLDBody, "AUTO") == 0)
+        {
+            pszSLDGenerated = msSLDGenerateSLD(map, -1);
+            if (pszSLDGenerated)
+            {
+                pszSLDBodyEnc =  msEncodeUrl(pszSLDGenerated);
+                nLen += strlen(pszSLDBodyEnc)+5;
+                free(pszSLDGenerated);
+            }
+        }
+        else
+        {
+            pszSLDBodyEnc =  msEncodeUrl(pszSLDBody);
+            nLen += strlen(pszSLDBodyEnc)+5;
+        }
+
+    }
+
 
     pszURL = (char*)malloc((nLen+1)*sizeof(char*));
 
@@ -368,11 +403,19 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         sprintf(pszURL + strlen(pszURL), "&TIME=%s", pszTimeEnc);
     }
 
+    if (pszSLDBodyEnc)
+    {
+        sprintf(pszURL + strlen(pszURL), "&SLD_BODY=%s", pszSLDBodyEnc);
+    }	
+
+
     msFree(pszNameEnc);
     msFree(pszFormatEnc);
     msFree(pszStyleEnc);
     msFree(pszSLDEnc);
     msFree(pszTimeEnc);
+    if (pszSLDBodyEnc)
+      msFree(pszSLDBodyEnc);
 
     return pszURL;
 }
@@ -815,7 +858,9 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     int status = MS_SUCCESS;
     int iReq = -1;
     char szPath[MS_MAXPATHLEN];
-    
+    int currenttype;
+    int numclasses;
+
 /* ------------------------------------------------------------------
  * Find the request info for this layer in the array, based on nLayerId
  * ------------------------------------------------------------------ */
@@ -848,7 +893,17 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
  * Prepare layer for drawing, reprojecting the image received from the
  * server if needed...
  * ------------------------------------------------------------------ */
+    //keep the current type that will be restored at the end of this 
+    //function.
+    currenttype = lp->type;
     lp->type = MS_LAYER_RASTER;
+
+    //set the classes to 0 so that It won't do client side
+    //classification if an sld was set.
+    numclasses = lp->numclasses;
+    if (msLookupHashTable(lp->metadata, "wms_sld_body") ||
+        msLookupHashTable(lp->metadata, "wms_sld_url"))        
+      lp->numclasses = 0;
 
     if (lp->data) free(lp->data);
     lp->data =  strdup(pasReqInfo[iReq].pszOutputFile);
@@ -905,6 +960,12 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     // We're done with the remote server's response... delete it.
     if (!lp->debug)
       unlink(lp->data);
+
+    //restore prveious type
+    lp->type = currenttype;
+
+    //restore previous numclasses
+    lp->numclasses = numclasses;
 
     free(lp->data);
     lp->data = NULL;
