@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/11 22:14:08  frank
+ * Fixed imagePolyline declaration.
+ *
  * Revision 1.5  2005/02/09 20:43:49  assefa
  * Add SVG utility function msSaveImagetoFpSVG.
  *
@@ -201,7 +204,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
 /*                                                                      */
 /*      Draws an svg line element.                                      */
 /************************************************************************/
-void static imagePolyline(FILE *fp, shapeObj *p, colorObj *color, int size,
+static void imagePolyline(FILE *fp, shapeObj *p, colorObj *color, int size,
                           int symbolstylelength, int *symbolstyle)
 {
     int i, j, k;
