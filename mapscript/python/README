@@ -1,6 +1,6 @@
 .. $Id$
 
-Python MapScript for MapServer 4.3 README
+Python MapScript for MapServer 4.4 README
 ================================================================
 
 :Author: Sean Gillies
@@ -8,14 +8,17 @@ Python MapScript for MapServer 4.3 README
 :Revision: $Revision$
 :Date: $Date$
 
-The Python mapscript module provides users an interface to 
-MapServer classes on any platform, and has been well tested
-on Python versions 2.1-2.3.3.
+The Python mapscript module provides users an interface to MapServer
+classes on any platform, and has been well tested on Python versions
+2.1-2.3.4.
 
 
 Building the Mapscript Module
-----------------------------------------------------------------
-Before you begin, it's worth spending a few minutes to read the
+-----------------------------
+
+if you are using Python 2.2+, copy the mapscript_wrap.c and mapscript.py
+files from python/modern up to python/, replacing the files in that
+location.  Before you begin, it's worth spending a few minutes to read the
 docs about Python distutils:
 
     http://www.python.org/doc/current/dist/dist.html
@@ -27,111 +30,52 @@ Now that you know what distutils does, use it like
 
 
 Building C Extension Wrappers
-----------------------------------------------------------------
-If you are building the mapscript module from CVS, not from a
-release, the C extension wrappers will be absent and must then
-be generated using SWIG, the Simplified Wrapper and Interface
-Generator, http://www.swig.org.  SWIG version 1.3.19 or higher
-is recommended.
+-----------------------------
+
+If you are building the mapscript module from CVS, not from a release, the
+C extension wrappers will be absent and must then be generated using SWIG,
+the Simplified Wrapper and Interface Generator, http://www.swig.org.  SWIG
+version 1.3.19 or higher is recommended.
 
 From the mapscript/python directory execute
 ::
 
     $ swig -python -shadow -o mapscript_wrap.c ../mapscript.i
 
-and then proceed to the build step explained above.  If you are
-using Python 2.2 or 2.3, you should add a -modern option which
-produces a higher performance module.
-::
+and then proceed to the build step explained above.  If you are using
+Python 2.2 or 2.3, you should add a -modern option which produces a higher
+performance module.  ::
 
     $ swig -python -shadow -modern -o mapscript_wrap.c ../mapscript.i
 
 Testing
-----------------------------------------------------------------
-Make the appropriate edits to tests/test.map under the mapserver
-directory, change directory from mapscript/python and execute
-::
+-------
+
+Make the appropriate edits to tests/test.map under the mapserver directory,
+change directory from mapscript/python and execute ::
 
     $ cd tests/cases
-    $ python tests/runalltests.py
+    $ python runalltests.py -v
 
 The tests can (and should) be run before the module is installed.
 
-
 Installing
-----------------------------------------------------------------
+----------
+
 As root or superuser
 ::
     
     $ python setup.py install
 
 That's it!
-
-
-Troubleshooting
-----------------------------------------------------------------
-People have been reporting segmentation faults with Python
-MapScript.  The most common cause of this is improperly
-configured map SHAPEPATH and layer DATA.
-
-Here's a sample of how to troubleshoot this issue:
-
-::
-
-    Python 2.1.3 (#18, Jun 24 2003, 18:02:42) 
-    [GCC 3.1 20020420 (prerelease)] on darwin6
-    Type "copyright", "credits" or "license" for more information.
-    >>> from mapscript import mapObj
-    >>> m = mapObj('tests/test.map')
-    >>> m
-    <C mapObj instance at _00df2000_p_mapObj>
-    >>> import os
-    >>> for i in range(m.numlayers):                   
-    ...     l = m.getLayer(i)
-    ...     filename = os.path.join(m.shapepath, l.data + '.shp')
-    ...     try:
-    ...         fh = open(filename, 'r')
-    ...         fh.close()
-    ...     except IOError:
-    ...         print "Caught IOError trying to read " + filename
-    ... 
-    >>> 
-
-In my case the map file is properly configured and the open()
-call doesn't raise an IOError.  If your SHAPEPATH and DATA are
-bogus, you will see errors raised.
-
-
-Links
-----------------------------------------------------------------
-Here are the essential Python and Python MapScript links
-
-Python Language Home
-
-  http://www.python.org
-
-Python MapScript Documentation
-
-  http://mapserver.gis.umn.edu/doc.html
-
-Python MapScript Wiki
-
-  http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PythonMapScript
-
-Slightly out-of-date MapScript HOWTO
-
-  http://mapserver.gis.umn.edu/doc36/howto-mapscript-python_2.html
-
-Norman Vine's MapScript Page
-
-  http://www.vso.cape.com/~nhv/files/python/mapscript.html
-
   
 Credits
-----------------------------------------------------------------
+-------
+
 Steve Lime (developer)
 Sean Gillies (developer)
 Frank Warmerdam (developer)
+Howard Butler (developer)
 Norman Vine (cygwin and distutils guru)
 Tim Cera (install)
 Michael Schultz (documentation)

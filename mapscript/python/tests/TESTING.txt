@@ -14,7 +14,7 @@ To run all of the tests, change directory to cases and execute
 ::
 
     $ cd cases
-    $ python runalltests.py
+    $ python runalltests.py -v
     
 This runs all tests found in every TestCase derived class defined in any
 module named "cases/*test.py".  The tests cannot be run properly from
