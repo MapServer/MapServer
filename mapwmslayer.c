@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.51  2003/04/23 14:21:18  dan
+ * Log an error in msDrawWMSLayerLow() if a GetMap request failed.
+ *
  * Revision 1.50  2003/03/26 20:24:38  dan
  * Do not call msDebug() unless debug flag is turned on
  *
@@ -814,9 +817,15 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     if ( !MS_HTTP_SUCCESS( pasReqInfo[iReq].nStatus ) )
     {
 /* ==================================================================== 
-      Failed downloading layer... we still return SUCCESS here so that 
-      the layer is only skipped intead of aborting the whole draw map.
+      Failed downloading layer... we log an error but we still return 
+      SUCCESS here so that the layer is only skipped intead of aborting
+      the whole draw map.
  ==================================================================== */
+        msSetError(MS_WMSERR, 
+                   "WMS GetMap request failed with status %d for layer '%s'.",
+                   "msDrawWMSLayerLow()", 
+                   pasReqInfo[iReq].nStatus, (lp->name?lp->name:"(null)") );
+
         return MS_SUCCESS;
     }
 
