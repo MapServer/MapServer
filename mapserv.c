@@ -29,11 +29,8 @@ int writeLog(int show_error)
   int i;
   time_t t;
 
-  if(!Map)
-    return(0); /* errors in the initial reading of map file cannot be logged */
-
-  if(!Map->web.log)
-    return(0);
+  if(!Map) return(0);
+  if(!Map->web.log) return(0);
   
   if((stream = fopen(Map->web.log,"a")) == NULL) {
     msSetError(MS_IOERR, Map->web.log, "writeLog()");
@@ -104,8 +101,6 @@ void writeError()
     }
   }
 
-  msFreeQueryResults(QueryResults);
-
   msFreeMap(Map);
   for(i=0;i<NumEntries;i++) {
     free(Entries[i].val);
@@ -121,7 +116,7 @@ void writeError()
   for(i=0;i<NumLayers;i++)
     free(Layers[i]);
 
-  exit(0); /* bail */
+  exit(0); // bail
 }
 
 /*
@@ -1220,9 +1215,7 @@ char *processLine(char *instr, int mode)
   sprintf(repstr, "%.1f", (Map->height-1)/2.0);
   outstr = gsub(outstr, "[center_y]", repstr);      
 
-  /*
-  ** These are really for situations with multiple result sets only, but often used in templates
-  */
+  // These are really for situations with multiple result sets only, but often used in header/footer  
   sprintf(repstr, "%d", NR); // total number of results
   outstr = gsub(outstr, "[nr]", repstr);
   sprintf(repstr, "%d", NLR); // total number of results within a layer
@@ -1236,32 +1229,31 @@ char *processLine(char *instr, int mode)
   if(CL) outstr = gsub(outstr, "[cl]", CL); // current layer name    
   if(CD) outstr = gsub(outstr, "[cd]", CD); // current layer description
 
-  /*
-  ** If query mode, need to do a bit more
-  */
-  if(mode == QUERY) {	
+  if(mode == QUERY) { // return shape and/or attributes	
     
-    sprintf(repstr, "%f %f", (ShpExt.maxx+ShpExt.minx)/2, (ShpExt.maxy+ShpExt.miny)/2); 
+    sprintf(repstr, "%f %f", (ResultShape.bounds.maxx+ResultShape.bounds.minx)/2, (ResultShape.bounds.maxy+ResultShape.bounds.miny)/2); 
     outstr = gsub(outstr, "[shpmid]", repstr);
-    sprintf(repstr, "%f", (ShpExt.maxx+ShpExt.minx)/2);
+    sprintf(repstr, "%f", (ResultShape.bounds.maxx+ResultShape.bounds.minx)/2);
     outstr = gsub(outstr, "[shpmidx]", repstr);
-    sprintf(repstr, "%f", (ShpExt.maxy+ShpExt.miny)/2);
+    sprintf(repstr, "%f", (ResultShape.bounds.maxy+ResultShape.bounds.miny)/2);
     outstr = gsub(outstr, "[shpmidy]", repstr);
     
-    sprintf(repstr, "%f %f %f %f", ShpExt.minx, ShpExt.miny,  ShpExt.maxx, ShpExt.maxy);
+    sprintf(repstr, "%f %f %f %f", ResultShape.bounds.minx, ResultShape.bounds.miny,  ResultShape.bounds.maxx, ResultShape.bounds.maxy);
     outstr = gsub(outstr, "[shpext]", repstr);
-    sprintf(repstr, "%f", ShpExt.minx);
+    sprintf(repstr, "%f", ResultShape.bounds.minx);
     outstr = gsub(outstr, "[shpminx]", repstr);
-    sprintf(repstr, "%f", ShpExt.miny);
+    sprintf(repstr, "%f", ResultShape.bounds.miny);
     outstr = gsub(outstr, "[shpminy]", repstr);
-    sprintf(repstr, "%f", ShpExt.maxx);
+    sprintf(repstr, "%f", ResultShape.bounds.maxx);
     outstr = gsub(outstr, "[shpmaxx]", repstr);
-    sprintf(repstr, "%f", ShpExt.maxy);
+    sprintf(repstr, "%f", ResultShape.bounds.maxy);
     outstr = gsub(outstr, "[shpmaxy]", repstr);
     
-    sprintf(repstr, "%d", ShpIdx);
+    sprintf(repstr, "%d", ResultShape.index);
     outstr = gsub(outstr, "[shpidx]", repstr);
-    
+    sprintf(repstr, "%d", ResultShape.tileindex);
+    outstr = gsub(outstr, "[tileidx]", repstr);  
+
     // FIX: the query section
 
     for(i=0;i<Query->numitems;i++) {	 
