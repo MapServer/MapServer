@@ -666,7 +666,7 @@ typedef struct layer_obj {
 
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
-  struct layer_obj *sameConnection;
+  struct layer_obj *sameconnection;
 
   // a variety of data connection objects (probably should be pointers!)
 #ifndef SWIG
@@ -890,7 +890,7 @@ double dist(pointObj a, pointObj b);
 ** Main API Functions
 */
    
-int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
+int msGetLayerIndex(mapObj *map, char *name); // in mapfile.c
 int msGetSymbolIndex(symbolSetObj *set, char *name);
 mapObj *msLoadMap(char *filename, char *new_mappath);
 int msSaveMap(mapObj *map, char *filename);
@@ -903,6 +903,9 @@ void msFree(void *p);
 char **msTokenizeMap(char *filename, int *numtokens);
 int msInitLabelCache(labelCacheObj *cache);
 int msFreeLabelCache(labelCacheObj *cache);
+
+layerObj *msCheckConnection(layerObj * layer);
+void msCloseConnections(mapObj *map); // connection pooling functions (mapfile.c)
 
 #if defined USE_PDF
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c
