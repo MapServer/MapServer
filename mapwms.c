@@ -822,14 +822,14 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
       {
          char *imgext;
          
-         imgext = gsub(values[i], ",", " ");
+         // Note gsub() works on the string itself, so we need to make a copy
+         imgext = strdup(values[i]);
+         imgext = gsub(imgext, ",", " ");
          
-         values[tmpNumentries] = strdup(imgext);
+         values[tmpNumentries] = imgext;
          names[tmpNumentries] = strdup("imgext");
             
          tmpNumentries++;
-         
-         free(imgext);
       }      
    }
    
@@ -1037,6 +1037,13 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
      
      if ((status = msReturnTemplateQuery(msObj, (char*)pszMimeType,NULL)) != MS_SUCCESS)
          return msWMSException(map, wmtver);
+
+     // We don't want to free the map, and param names/values since they
+     // belong to the caller, set them to NULL before freeing the mapservObj
+     msObj->Map = NULL;
+     msObj->ParamNames = NULL;
+     msObj->ParamValues = NULL;
+     msObj->NumParams = 0;
 
      msFreeMapServObj(msObj);
   }
