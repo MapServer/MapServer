@@ -413,6 +413,11 @@ int msQueryByAttributes(mapObj *map, int qlayer, int mode)
       continue;
     }
 
+#ifdef USE_PROJ
+    if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
+      msProjectShape(&(lp->projection), &(map->projection), &shape);
+#endif
+
     addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
     
     if(lp->resultcache->numresults == 1)
