@@ -2636,9 +2636,9 @@ fi
     fi
   fi
 
-  GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
-
 fi
+
+GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
 
 
 
