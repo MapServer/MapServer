@@ -58,7 +58,7 @@
 void mysql_NOTICE_HANDLER(void *arg, const char *message);
 
 
-char *DATAERRORMESSAGE(char *dataString, char *preamble)
+static char *DATAERRORMESSAGE(char *dataString, char *preamble)
 {
 	char	*message;
 	char	tmp[5000];
@@ -412,7 +412,7 @@ if (MYDEBUG)printf("msMYGISLayerInitItemInfo called<br>\n");
 
 
 //int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
-int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
+static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
 {
 	char	columns_wanted[5000]="";
 	char	temp[5000]="";
@@ -682,7 +682,7 @@ int msMYGISLayerClose(layerObj *layer)
 //	polys->   treat ring like line and pull out the consituent points
 
 //int	force_to_points(char	*wkb, shapeObj *shape)
-int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt)
+static int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt)
 {
 	//we're going to make a 'line' for each entity (point, line or ring) in the geom collection
 
@@ -740,7 +740,7 @@ int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cn
 //  polys -> treat rings as lines
 
 //int	force_to_lines(char	*wkb, shapeObj *shape)
-int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt)
+static int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt)
 {
 	int ngeoms ;
 	int	t, points=0;
@@ -793,7 +793,7 @@ int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt
 // point   -> reject
 // line    -> reject
 // polygon -> lines of linear rings
-int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cntchar)
+static int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cntchar)
 {
 
 	int ngeoms ;
@@ -855,7 +855,7 @@ int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *
 // if there is any line in wkb, return force_line
 // otherwise return force_point
 
-int	dont_force(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cntchar)
+static int	dont_force(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cntchar)
 //int	dont_force(char	*wkb, shapeObj *shape)
 {
 	int	best_type;
@@ -1085,7 +1085,7 @@ int	wkb_force_to_polygons(char	*wkb, shapeObj *shape)
 // if there is any line in wkb, return force_line
 // otherwise return force_point
 
-int	wkb_dont_force(char	*wkb, shapeObj *shape)
+static int	wkb_dont_force(char	*wkb, shapeObj *shape)
 {
 	int offset =0;
 	int ngeoms ;
@@ -1133,7 +1133,7 @@ int	wkb_dont_force(char	*wkb, shapeObj *shape)
 	return(MS_FAILURE); //unknown type
 }
 //find the bounds of the shape
-void find_bounds(shapeObj *shape)
+static void find_bounds(shapeObj *shape)
 {
 	int t,u;
 	int first_one = 1;

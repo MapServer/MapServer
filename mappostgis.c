@@ -121,7 +121,7 @@ char *strstrIgnoreCase(char *haystack, char *needle)
 
 
 
-char *DATAERRORMESSAGE(char *dString, char *preamble)
+static char *DATAERRORMESSAGE(char *dString, char *preamble)
 {
 	char	*m;
 	char	tmp[7000];
@@ -290,7 +290,7 @@ if (layer->debug)
 // geometry column.  For 0.6, we determine the SRID of the column and then
 // tag the bounding box as the same SRID.
 
-int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
+static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
 {
 	PGresult	*result;
 	char	columns_wanted[5000];
@@ -650,7 +650,7 @@ int msPOSTGISLayerClose(layerObj *layer)
 //	lines->   constituent points
 //	polys->   treat ring like line and pull out the consituent points
 
-int	force_to_points(char	*wkb, shapeObj *shape)
+static int	force_to_points(char	*wkb, shapeObj *shape)
 {
 	//we're going to make a 'line' for each entity (point, line or ring) in the geom collection
 
@@ -728,7 +728,7 @@ int	force_to_points(char	*wkb, shapeObj *shape)
 //  lines -> pass through
 //  polys -> treat rings as lines
 
-int	force_to_lines(char	*wkb, shapeObj *shape)
+static int	force_to_lines(char	*wkb, shapeObj *shape)
 {
 	int offset =0,pt_offset;
 	int ngeoms ;
@@ -791,7 +791,7 @@ int	force_to_lines(char	*wkb, shapeObj *shape)
 // point   -> reject
 // line    -> reject
 // polygon -> lines of linear rings
-int	force_to_polygons(char	*wkb, shapeObj *shape)
+static int	force_to_polygons(char	*wkb, shapeObj *shape)
 {
 
 	int offset =0,pt_offset;
@@ -840,7 +840,7 @@ int	force_to_polygons(char	*wkb, shapeObj *shape)
 // if there is any line in wkb, return force_line
 // otherwise return force_point
 
-int	dont_force(char	*wkb, shapeObj *shape)
+static int	dont_force(char	*wkb, shapeObj *shape)
 {
 	int offset =0;
 	int ngeoms ;
@@ -889,7 +889,7 @@ int	dont_force(char	*wkb, shapeObj *shape)
 }
 
 //find the bounds of the shape
-void find_bounds(shapeObj *shape)
+static void find_bounds(shapeObj *shape)
 {
 	int t,u;
 	int first_one = 1;
