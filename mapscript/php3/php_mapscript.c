@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.55  2001/10/10 16:06:28  dan
+ * Added shapeObj->set()
+ *
  * Revision 1.54  2001/10/04 18:13:07  dan
  * Fixed ms_NewLayerObj() to update $map->numlayers.
  *
@@ -103,7 +106,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Oct 4, 2001)"
+#define PHP3_MS_VERSION "(Oct 10, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -232,6 +235,7 @@ DLEXPORT void php3_ms_line_point(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_shape_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_add(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shape_line(INTERNAL_FUNCTION_PARAMETERS);
@@ -487,7 +491,7 @@ function_entry php_class_class_functions[] = {
 
 function_entry php_point_class_functions[] = {
     {"setxy",           php3_ms_point_setXY,            NULL},    
-    {"project",         php3_ms_point_project,             NULL},    
+    {"project",         php3_ms_point_project,          NULL},    
     {"draw",            php3_ms_point_draw,             NULL},    
     {"distancetopoint", php3_ms_point_distanceToPoint,  NULL},    
     {"distancetoline",  php3_ms_point_distanceToLine,   NULL},    
@@ -506,7 +510,8 @@ function_entry php_line_class_functions[] = {
 };
 
 function_entry php_shape_class_functions[] = {
-    {"project",         php3_ms_shape_project,           NULL},    
+    {"set",             php3_ms_shape_setProperty,      NULL},    
+    {"project",         php3_ms_shape_project,          NULL},    
     {"add",             php3_ms_shape_add,              NULL},    
     {"line",            php3_ms_shape_line,             NULL},    
     {"draw",            php3_ms_shape_draw,             NULL},    
@@ -6029,6 +6034,68 @@ DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS)
     /* Return shape object */
     _phpms_build_shape_object(pNewShape, PHPMS_GLOBAL(le_msshape_new), NULL,
                               list, return_value);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        shape->set()
+ **********************************************************************/
+
+/* {{{ proto int shape.set(string property_name, new_value)
+   Set object property to a new value. Returns -1 on error. */
+
+DLEXPORT void php3_ms_shape_setProperty(INTERNAL_FUNCTION_PARAMETERS)
+{
+    shapeObj *self;
+    pval   *pPropertyName, *pNewValue, *pThis;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (shapeObj *)_phpms_fetch_handle2(pThis, 
+                                            PHPMS_GLOBAL(le_msshape_ref),
+                                            PHPMS_GLOBAL(le_msshape_new),
+                                            list);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    IF_SET_STRING(     "text",         self->text)
+    else IF_SET_LONG(  "classindex",   self->classindex)
+    else if (strcmp( "numlines",  pPropertyName->value.str.val) == 0 ||
+             strcmp( "type",      pPropertyName->value.str.val) == 0 ||
+             strcmp( "index",     pPropertyName->value.str.val) == 0 ||
+             strcmp( "tileindex", pPropertyName->value.str.val) == 0 ||
+             strcmp( "numvalues", pPropertyName->value.str.val) == 0)
+    {
+        php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
+                            pPropertyName->value.str.val);
+        RETURN_LONG(-1);
+    }         
+    else
+    {
+        php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
+                            pPropertyName->value.str.val);
+        RETURN_LONG(-1);
+    }
+
+    RETURN_LONG(0);
 }
 /* }}} */
 

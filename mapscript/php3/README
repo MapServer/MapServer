@@ -681,7 +681,8 @@ Constructor:
         Calculates the minimum distance between a point and a shape.
 
   projectionObj project(projectionObj in, projectionObj out)
-        Project the point from "in" projection (1st argument) to "out" projection (2nd argument).
+        Project the point from "in" projection (1st argument) to "out" 
+        projection (2nd argument).
       
   void free()
        Releases all resources used by the object.       
@@ -710,7 +711,8 @@ Constructor:
         during the life of the lineObj that contains the point.
 
    projectionObj project(projectionObj in, projectionObj out)
-        Project the point from "in" projection (1st argument) to "out" projection (2nd argument).
+        Project the line from "in" projection (1st argument) to "out" 
+        projection (2nd argument).
 
    void free()
         Destroys resources used by a line object.     
@@ -726,11 +728,12 @@ Constructor:
 
  Members:
 
+   string  text
+   int     classindex
    int     type      (read-only)
    int     numlines  (read-only)
    int     index     (read-only)
    int     tileindex (read-only)
-   int     classindex (read-only)
    rectObj bounds    (read-only)
    int     numvalues (read-only)
    array   values    (read-only)
@@ -742,6 +745,9 @@ Constructor:
 
  Methods:
 
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+ 
    int add(lineObj line)
         Add a line (i.e. a part) to the shape.
 
@@ -763,7 +769,8 @@ Constructor:
         Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
      
    projectionObj project(projectionObj in, projectionObj out)
-        Project the point from "in" projection (1st argument) to "out" projection (2nd argument).
+        Project the shape from "in" projection (1st argument) to "out" 
+        projection (2nd argument).
 
    void free()
         Destroys resources used by a shape object.  
@@ -805,7 +812,8 @@ Constructor:
         Adjust extents of the rectangle to fit the width/height specified.
 
   projectionObj project(projectionObj in, projectionObj out)
-        Project the point from "in" projection (1st argument) to "out" projection (2nd argument).
+        Project the rectangle from "in" projection (1st argument) to "out" 
+        projection (2nd argument).
 
   void free()
         Destroys resources used by a rect object.  
@@ -883,7 +891,8 @@ Constructor:
    Eg : $projInObj = ms_newprojectionobj("proj=latlong") will create a 
         geographic projection class.
 
-   Eg of usage : the following example will convert a la/long point to an LCC projection :  
+   Eg of usage : the following example will convert a lat/long point to
+   an LCC projection :  
 
         $projInObj = ms_newprojectionobj("proj=latlong");
         $projOutObj = ms_newprojectionobj("proj=lcc,ellps=GRS80,lat_0=49,lon_0=-95,lat_1=49,lat_2=77");
