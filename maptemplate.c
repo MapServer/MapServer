@@ -614,7 +614,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    char pszStatus[3];
    char pszType[3];
    int nOptFlag=0;
-   char *pszOptFlag;
+   char *pszOptFlag = NULL;
    char *pszClassImg;
 
    *pszTemp = NULL;
@@ -623,13 +623,13 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
        !map || 
        nIdxLayer > map->numlayers ||
        nIdxLayer < 0 ||
-       !oLayerArgs || 
        map->layers[nIdxLayer].numclasses == 0) {
      msSetError(MS_WEBERR, "Invalid pointer.", "generateLayerTemplate()");
      return MS_FAILURE;
    }
 
-   pszOptFlag = msLookupHashTable(oLayerArgs, "opt_flag");
+   if (oLayerArgs)
+       pszOptFlag = msLookupHashTable(oLayerArgs, "opt_flag");
    if (pszOptFlag)
      nOptFlag = atoi(pszOptFlag);
       
@@ -716,7 +716,7 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
 {
    char *pszClassImg;
    int nOptFlag=0;
-   char *pszOptFlag;
+   char *pszOptFlag = NULL;
 
    *legClassHtmlCopy = NULL;
    
@@ -731,7 +731,8 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
      return MS_FAILURE;
    }
    
-   pszOptFlag = msLookupHashTable(oClassArgs, "Opt_flag");
+   if (oClassArgs)
+       pszOptFlag = msLookupHashTable(oClassArgs, "Opt_flag");
    if (pszOptFlag)
      nOptFlag = atoi(pszOptFlag);
       
