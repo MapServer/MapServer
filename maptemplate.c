@@ -787,12 +787,17 @@ static int processCoords(mapObj *map, char **line, shapeObj *shape)
     return(MS_FAILURE);
   }
 
+  tagStart = findTag(*line, "shpxy");
+
+  // It is OK to have no shpxy tags, just return. 
+  if( !tagStart )
+      return MS_SUCCESS;
+
   if(!shape || shape->numlines <= 0) { // I suppose we need to make sure the part has vertices (need shape checker?)
     msSetError(MS_WEBERR, "Null or empty shape.", "processCoords()");
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "shpxy");
   while (tagStart) {  
     tagOffset = tagStart - *line;
     
