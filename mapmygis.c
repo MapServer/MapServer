@@ -319,7 +319,6 @@ if (MYDEBUG)printf("New connection<BR>\n");
 
             return(MS_FAILURE);
         }
-	wkbdata = 1;
 	delim = strdup(":");
 	DB_HOST = strdup(strtok(layer->connection, delim));
 	DB_USER = strdup(strtok(NULL, delim));
@@ -327,9 +326,8 @@ if (MYDEBUG)printf("New connection<BR>\n");
 	DB_DATABASE = strdup(strtok(NULL, delim));
 	DB_DATATYPE = strdup(strtok(NULL, delim));
 
-	if (strcmp(DB_DATATYPE, "num")==0){
-		wkbdata = 0;
-	}
+	wkbdata = strcmp(DB_DATATYPE, "num") ? 1 : 0;
+	
 	if (DB_HOST == NULL || DB_USER == NULL || DB_PASSWD == NULL || DB_DATABASE == NULL)
 	{
 		printf("DB param error %s/%s/%s/%s !\n",DB_HOST,DB_USER,DB_PASSWD,DB_DATABASE);
@@ -338,10 +336,12 @@ if (MYDEBUG)printf("New connection<BR>\n");
 	if (strcmp(DB_PASSWD, "none") == 0)
 		strcpy(DB_PASSWD, "");
 
-
+#if MYSQL_VERSION_ID >= 40100
+    if (!(layerinfo->conn = mysql_real_connect(&(layerinfo->mysql),DB_HOST,DB_USER,DB_PASSWD,NULL, 0, NULL, 0)))
+#else
     if (!(layerinfo->conn = mysql_connect(&(layerinfo->mysql),DB_HOST,DB_USER,DB_PASSWD)))
+#endif
     {
-//	  printf("Connection SQL server failed.");
 	free(layerinfo);
 	msSetError(MS_QUERYERR, "Connection to SQL server failed",
            "msMYGISLayerOpen()");
@@ -351,7 +351,6 @@ if (MYDEBUG)printf("New connection<BR>\n");
 if (MYDEBUG)printf("msMYGISLayerOpen2 called<br>\n");
     if (mysql_select_db(layerinfo->conn,DB_DATABASE) < 0)
     {
-//	  printf("Database could not be opened.");
       mysql_close(layerinfo->conn);
 	  free(layerinfo);
 	msSetError(MS_QUERYERR, "SQL Database could not be opened",
@@ -478,7 +477,10 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql
 	for (t=0;t<layer->numitems; t++)
 	{
 //		printf("(%s, %d/%d)", layer->items[t],t,layer->numitems);
-		sprintf(temp,", feature.%s ",layer->items[t]);
+	  if (strchr(layer->items[t], '.') != NULL)
+			sprintf(temp,", %s ",layer->items[t]);
+		 else 
+			sprintf(temp,", feature.%s ",layer->items[t]);
 		strcat(columns_wanted,temp);
 	}
 

@@ -158,6 +158,7 @@ $sqlcreate{'line'} = $sqlcreate{'arc'};
 sub mklayer
 {
     my ($sh, $type, $add) = @_;
+	  $sh =~ tr/-/_/;
 #    print "$sh/$type ($sqlcreate{$type})\n";
         $dbh->do("drop table if exists $sh");
         $dbh->do("drop table if exists $sh");
