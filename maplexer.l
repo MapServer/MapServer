@@ -299,13 +299,13 @@ int msyyreturncomments = 0;
                                                                                                                                                return(NUMBER); 
                                                                                                                                              }
 
-<INITIAL,VALUE_STRING>\/[^\/]*\/               {
+<INITIAL,VALUE_STRING>\/.*\/               {
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-1] = '\0';
 			                         return(MS_REGEX);
 			                       }
 
-<EXPRESSION_STRING>\/[^\/]*\/                  {
+<EXPRESSION_STRING>\/[^\/]*\/              {
                                                  msyytext++;
 			                         msyytext[strlen(msyytext)-1] = '\0';
                                                  msyylval.strval = strdup(msyytext);
