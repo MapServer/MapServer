@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.121  2002/11/13 16:54:23  julien
+ * Change the search of the header to be flexible.
+ *
  * Revision 1.120  2002/10/28 21:43:59  dan
  * Added missing MS_CC constant
  *
@@ -4796,7 +4799,7 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
                                         pParamFileName->value.str.val)) != 0)
         {
             _phpms_report_mapserver_error(E_WARNING);
-            php3_error(E_ERROR, "Failed saving map context from %s",
+            php3_error(E_ERROR, "Failed loading map context from %s",
                        pParamFileName->value.str.val);
         }
     }

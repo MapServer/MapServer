@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2002/11/13 16:54:23  julien
+ * Change the search of the header to be flexible.
+ *
  * Revision 1.12  2002/11/07 21:50:19  julien
  * Set the layer type to RASTER
  *
@@ -240,7 +243,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   char *pszValue, *pszValue1, *pszValue2, *pszValue3, *pszValue4;
   char *pszHash, *pszStyle=NULL, *pszStyleName;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
-  CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle;
+  CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
   char szPath[MS_MAXPATHLEN];
   char szProj[20];
   int nStyle;
@@ -253,13 +256,16 @@ int msLoadMapContext(mapObj *map, char *filename)
       msBuildPath(szPath, map->mappath, filename));
   if(pszWholeText == NULL)
   {
+      msSetError( MS_MAPCONTEXTERR, "Unable to read %s", 
+                  "msLoadMapContext()", filename );
       return MS_FAILURE;
   }
 
   if( strstr( pszWholeText, "<WMS_Viewer_Context" ) == NULL )
   {
       free( pszWholeText );
-      msSetError(MS_MAPCONTEXTERR, "(%s)", "msLoadMapContext()", filename);
+      msSetError( MS_MAPCONTEXTERR, "Not a Map Context file (%s)", 
+                  "msLoadMapContext()", filename );
       return MS_FAILURE;
   }
 
@@ -272,33 +278,62 @@ int msLoadMapContext(mapObj *map, char *filename)
   // We assume parser will report errors via CPL.
   if( psRoot == NULL || psRoot->psNext == NULL )
   {
-      msSetError(MS_MAPCONTEXTERR, "(%s)", "msLoadMapContext()", filename);
+      msSetError( MS_MAPCONTEXTERR, "Invalid XML file (%s)", 
+                  "msLoadMapContext()", filename );
       return MS_FAILURE;
   }
 
-  if( psRoot->psNext->eType != CXT_Element 
-      || !EQUAL(psRoot->psNext->pszValue,"WMS_Viewer_Context") )
+  // Valid the MapContext file and get the root of the document
+  psChild = psRoot;
+  psMapContext = NULL;
+  while( psChild != NULL )
+  {
+      if( psChild->eType == CXT_Element && 
+          EQUAL(psChild->pszValue,"WMS_Viewer_Context") )
+      {
+          psMapContext = psChild;
+          break;
+      }
+      else
+      {
+          psChild = psChild->psNext;
+      }
+  }
+
+  if( psMapContext == NULL )
   {
       CPLDestroyXMLNode(psRoot);
-      msSetError(MS_MAPCONTEXTERR, "(%s)", "msLoadMapContext()", filename);
+      msSetError( MS_MAPCONTEXTERR, "Invalid Map Context File (%s)", 
+                  "msLoadMapContext()", filename );
       return MS_FAILURE;
   }
-  psMapContext = psRoot->psNext;
+
+  // Valid the version number (Only 0.1.4 is supported)
+  pszValue = (char*)CPLGetXMLValue(psMapContext, 
+                                   "version", NULL); 
+  if( !pszValue || ( strcasecmp(pszValue, "0.1.4") < 0 ) )
+  {
+      if(pszValue)
+          msSetError( MS_MAPCONTEXTERR, 
+                      "Wrong version number (%s). Must be at least 0.1.4 (%s)",
+                      "msLoadMapContext()", pszValue, filename );
+      else
+          msSetError( MS_MAPCONTEXTERR, 
+                      "Mandatory data version missing in %s.",
+                      "msLoadMapContext()", filename );
+
+      CPLDestroyXMLNode(psRoot);
+      return MS_FAILURE;
+  }
+
 
   // Load the metadata of the WEB obj
   if(map->web.metadata == NULL)
       map->web.metadata =  msCreateHashTable();
 
   // Schema Location
-  if(msGetMapContextXMLHashValue(psMapContext, "xsi:noNamespaceSchemaLocation",
-                   &map->web.metadata, "wfs_schemas_location") == MS_FAILURE)
-  {
-      CPLDestroyXMLNode(psRoot);
-      msSetError(MS_MAPCONTEXTERR, 
-                 "Mandatory data xsi:noNamespaceSchemaLocation missing in %s.",
-                 "msLoadMapContext()", filename);
-      return MS_FAILURE;
-  }
+  msGetMapContextXMLHashValue(psMapContext, "xsi:noNamespaceSchemaLocation",
+                              &map->web.metadata, "wfs_schemas_location");
 
   // Projection
   pszValue = (char*)CPLGetXMLValue(psMapContext, 
@@ -710,7 +745,7 @@ int msLoadMapContext(mapObj *map, char *filename)
 
 #else
   msSetError(MS_MAPCONTEXTERR, 
-             "Not implemented since  Map Context is not enabled.",
+             "Not implemented since Map Context is not enabled.",
              "msGetMapContext()");
   return MS_FAILURE;
 #endif
@@ -747,7 +782,7 @@ int msSaveMapContext(mapObj *map, char *filename)
   }
   else
   {
-      msSetError(MS_IOERR, "(%s)", "msSaveMapContext()", filename);
+      msSetError(MS_IOERR, "Filename is undefined.", "msSaveMapContext()");
       return MS_FAILURE;
   }
 
@@ -793,7 +828,7 @@ int msSaveMapContext(mapObj *map, char *filename)
                 "    <Abstract>%s</Abstract>\n", NULL);
 
   // Window
-  fprintf( stream, "    <Window width=%d height=%d/>\n", 
+  fprintf( stream, "    <Window width=\"%d\" height=\"%d\"/>\n", 
            map->width, map->height );
 
   // Contact Info
@@ -889,7 +924,8 @@ int msSaveMapContext(mapObj *map, char *filename)
                   if(pszChar != NULL)
                       pszFormat[pszChar - pszFormat] = '\0';
                   if(pszCurrent && (strcasecmp(pszFormat, pszCurrent) == 0))
-                      fprintf(stream,"        <Format current=1>%s</Format>\n",
+                      fprintf( stream,
+                               "        <Format current=\"1\">%s</Format>\n",
                                pszFormat);
                   else
                       fprintf( stream, "        <Format>%s</Format>\n", 
@@ -967,7 +1003,7 @@ int msSaveMapContext(mapObj *map, char *filename)
                   if(pszChar != NULL)
                       pszStyle[pszChar - pszStyle] = '\0';
                   if(pszCurrent && (strcasecmp(pszStyle, pszCurrent) == 0))
-                      fprintf( stream,"        <Style current=1>\n" );
+                      fprintf( stream,"        <Style current=\"1\">\n" );
                   else
                       fprintf( stream, "        <Style>\n" );
 
@@ -1062,7 +1098,7 @@ int msSaveMapContext(mapObj *map, char *filename)
   return MS_SUCCESS;
 #else
   msSetError(MS_MAPCONTEXTERR, 
-             "Not implemented since  Map Context is not enabled.",
+             "Not implemented since Map Context is not enabled.",
              "msSaveMapContext()");
   return MS_FAILURE;
 #endif
