@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MapServer
  * Purpose:  Code for drawing GDAL raster layers.  Called from 
@@ -29,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2004/10/21 04:30:55  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.35  2004/10/21 02:23:24  frank
  * updated header license a bit, and added MS_CVSID
  *

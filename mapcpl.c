@@ -1,14 +1,50 @@
+/******************************************************************************
+ *
+ * Project:  MapServer
+ * Purpose:  Functions copied from GDAL's CPL.
+ * Author:   Y. Assefa, DM Solutions Group (assefa@dmsolutions.ca)
+ * 
+ * This file contain utility functions that come from the GDAL/OGR cpl
+ * library. The idea behind it is to have access in mapserver to all these
+ * utilities, without being constarined to link with GDAL/OGR.
+ * Note : Names of functions used here are the same as those in the cpl
+ *         library with the exception the the CPL prefix is changed to ms
+ *         (eg : CPLGetBasename() would become msGetBasename())
+ *
+ ******************************************************************************
+ * Copyright (c) 1996-2004 Regents of the University of Minnesota.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies of this Software or works derived from this Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.3  2004/10/21 04:30:55  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
+ */
+
 /* $Id$ */
-/* This file contain utility functions that come from the GDAL/OGR cpl
-  library. The idea behind it is to have access in mapserver to all these
-  utilities, without being constarined to link with GDAL/OGR.
-  Note : Names of functions used here are the same as those in the cpl
-         library with the exception the the CPL prefix is changed to ms
-         (eg : CPLGetBasename() would become msGetBasename())
-*/
 
 #include <assert.h>
 #include "map.h"
+
+MS_CVSID("$Id$")
 
 /* should be size of largest possible filename */
 #define MS_PATH_BUF_SIZE 2048

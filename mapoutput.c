@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MapServer
  * Purpose:  Various support code related to the outputFormatObj.
@@ -28,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/10/21 04:30:54  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.24  2004/10/20 20:46:51  frank
  * msOutputFormatValidate() now also fixes stuff up including setting
  * imagemode to MS_RENDER_WITH_RAWDATA if appropriate, and setting
@@ -108,6 +110,8 @@
 
 #include <assert.h>
 #include "map.h"
+
+MS_CVSID("$Id$")
 
 static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name, 
                                              const char *driver );

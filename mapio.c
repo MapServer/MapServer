@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementations for MapServer IO redirection capability.
@@ -28,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/10/21 04:30:55  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.3  2004/10/08 19:11:39  frank
  * ensure msIO_vfprintf is undefed
  *
@@ -42,6 +44,8 @@
 #include <stdarg.h>
 
 #include "map.h"
+
+MS_CVSID("$Id$")
 
 static int is_msIO_initialized = MS_FALSE;
 

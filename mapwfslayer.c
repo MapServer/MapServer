@@ -1,5 +1,4 @@
 /**********************************************************************
- * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of WFS CONNECTIONTYPE - client to WFS servers
@@ -26,7 +25,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
+ *
  * $Log$
+ * Revision 1.24  2004/10/21 04:30:57  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.23  2004/07/13 20:39:37  dan
  * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
  *
@@ -110,6 +113,8 @@
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <process.h>
 #endif
+
+MS_CVSID("$Id$")
 
 #define WFS_V_0_0_14  14
 #define WFS_V_1_0_0  100

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2004/10/21 04:30:54  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.16  2004/03/29 14:41:56  dan
  * Use CURL's internal timer instead of custom gettimeofday() calls for
  * timing WMS/WFS requests
@@ -88,6 +91,8 @@
 #include "map.h"
 #include "maperror.h"
 #include "mapows.h"
+
+MS_CVSID("$Id$")
 
 #include <time.h>
 #ifndef _WIN32

@@ -25,7 +25,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
+ *
  * $Log$
+ * Revision 1.5  2004/10/21 04:30:55  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.4  2004/09/03 14:23:07  frank
  * make internal copy of pj_units for easier build on win32
  *

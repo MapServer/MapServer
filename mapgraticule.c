@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2004/10/21 04:30:54  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.7  2003/03/25 09:28:39  novak
  * Fix crash when no labels specified.
  *
@@ -42,6 +45,8 @@
 
 #include "map.h"
 #include "mapproject.h"
+
+MS_CVSID("$Id$")
 
 /**********************************************************************************************************************
  *

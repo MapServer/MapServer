@@ -1,12 +1,11 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  CFS OGC MapServer
  * Purpose:  Assorted code related to resampling rasters.
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2001-2002, Frank Warmerdam, DM Solutions Group Inc
+ * Copyright (c) 1996-2001 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -15,8 +14,8 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -28,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2004/10/21 04:30:56  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.52  2004/10/18 14:49:12  frank
  * implemented msAlphaBlend
  *
@@ -208,6 +210,8 @@
 
 #include <assert.h>
 #include "mapresample.h"
+
+MS_CVSID("$Id$")
 
 /* The amount of "extra" resolution we will load for our resampling source */
 #define RES_RATIO	2.0

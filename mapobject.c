@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MapServer
  * Purpose:  Functions for operating on a mapObj that don't belong in a
@@ -29,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/10/21 04:30:56  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.18  2004/10/12 21:43:00  sean
  * check for NULL before inserting objects
  *
@@ -91,6 +93,8 @@
 #  include "gdal.h"
 #  include "cpl_conv.h"
 #endif
+
+MS_CVSID("$Id$")
 
 void freeWeb(webObj *web);
 void freeScalebar(scalebarObj *scalebar);

@@ -6,7 +6,7 @@
  * Author:   Frank Warmerdam, warmerdam@pobox.com
  *
  ******************************************************************************
- * Copyright (c) 2004, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 1996-2001 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -15,8 +15,8 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies of this Software or works derived from this Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/10/21 04:30:55  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.3  2004/10/15 18:36:46  frank
  * Set connections to NULL after it is freed.
  *
@@ -142,6 +145,8 @@ o Currently the connection pooling API makes not attempt to address
  ****************************************************************************/
 
 #include "map.h"
+
+MS_CVSID("$Id$")
 
 /* defines for lifetime.  
    A positive number is a time-from-last use in seconds */

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.34  2004/10/21 04:30:56  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.33  2004/10/09 18:22:41  sean
  * towards resolving bug 339, have implemented a mutex acquiring wrapper for
  * the loadExpressionString function.  the new msLoadExpressionString should be
@@ -160,6 +163,8 @@
 
 #include "mapogcfilter.h"
 #include "map.h"
+
+MS_CVSID("$Id$")
 
 #ifdef USE_OGR
 

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MapServer
  * Purpose:  msDrawRasterLayer(): generic raster layer drawing, including
@@ -29,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.121  2004/10/21 04:30:56  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.120  2004/07/29 18:16:44  sdlime
  * Fixed an error with eppl7 code where row/col access to the GD pixels was reversed.
  *
@@ -66,6 +68,8 @@
 #include "map.h"
 #include "mapresample.h"
 #include "mapthread.h"
+
+MS_CVSID("$Id$")
 
 extern int msyyparse();
 extern int msyylex();

@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MapServer
  * Purpose:  Functions for operating on a layerObj that don't belong in a
@@ -27,7 +26,13 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
- ****************************************************************************/
+ *****************************************************************************
+ *
+ * $Log$
+ * Revision 1.9  2004/10/21 04:30:54  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
+ */
 
 #include "map.h"
 
@@ -35,6 +40,8 @@
 #  include "gdal.h"
 #  include "cpl_conv.h"
 #endif
+
+MS_CVSID("$Id$")
 
 /* ===========================================================================
    msInsertClass

@@ -28,7 +28,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
+ *
  * $Log$
+ * Revision 1.64  2004/10/21 04:30:55  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.63  2004/10/15 20:29:03  assefa
  * Add support for OGC mapcontext through mapserver cgi : Bug 946.
  *
@@ -232,6 +236,8 @@
  **********************************************************************/
 
 #include "map.h"
+
+MS_CVSID("$Id$")
 
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
 

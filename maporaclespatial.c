@@ -70,6 +70,8 @@
 
 #include "map.h"
 
+MS_CVSID("$Id$")
+
 #ifdef USE_ORACLESPATIAL
 
 #include <oci.h>

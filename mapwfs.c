@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.47  2004/10/21 04:30:56  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.46  2004/10/04 18:52:24  julien
  * Do not free user_namespace_prefix.
  *
@@ -183,6 +186,8 @@
  **********************************************************************/
 
 #include "map.h"
+
+MS_CVSID("$Id$")
 
 #if defined(USE_WFS_SVR)
 

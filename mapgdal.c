@@ -1,5 +1,4 @@
 /******************************************************************************
- * $Id$
  *
  * Project:  MapServer
  * Purpose:  Implementation of support for output using GDAL.
@@ -28,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/10/21 04:30:56  frank
+ * Added standardized headers.  Added MS_CVSID().
+ *
  * Revision 1.24  2004/10/01 19:16:04  frank
  * use msIO_fwrite to write file to stdout
  *
@@ -110,6 +112,8 @@
 #include <assert.h>
 #include "map.h"
 #include "mapthread.h"
+
+MS_CVSID("$Id$")
 
 #ifdef USE_GDAL
 
