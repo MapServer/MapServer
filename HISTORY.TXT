@@ -18,6 +18,8 @@ Version 3.6.5-dev
 
 - Fix a little problem with qix files with no depth.
 
+- Fixed problem with STATUS EMBED being written as STATUS QUERYONLY by
+  msSaveMap()
 
 
 Version 3.6.4 (2003-01-08)
