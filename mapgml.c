@@ -314,7 +314,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
 
-    if(lp->resultcache && lp->resultcache->numresults > 0) { // found results
+    if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { // found results
 
       // start this collection (layer)
       if(msLookupHashTable(lp->metadata, "gml_layername")) // specify a collection name
