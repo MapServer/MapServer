@@ -1162,8 +1162,22 @@ x
  resultCacheMemberObj
 -----------------------------------------------------------------------------
 
-x
+Has no associations with other Mapscript classes and has no methods.
+By using several indexes, a resultCacheMemberObj refers to a single layer
+feature.
 
+Attributes
+----------
+
+classindex : int immutable
+    The index of the layer class into which the feature has been classified.
+
+shapeindex : int immutable
+    Index of the feature within the layer.
+
+tileindex : int immutable
+    Meaningful for tiled layers only, index of the shapefile data tile.
+    
 
 -----------------------------------------------------------------------------
  scalebarObj
