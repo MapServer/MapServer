@@ -1619,7 +1619,7 @@ int initLayer(layerObj *layer)
   if(msInitProjection(&(layer->projection)) == -1)
     return(-1);
 
-  layer->offsite = -1;
+  initColor(&(layer->offsite), -1,-1,-1);
 
   layer->labelcache = MS_ON;
   layer->postlabelcache = MS_FALSE;
@@ -1823,7 +1823,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->name = getString()) == NULL) return(-1);
       break;
     case(OFFSITE):
-      if(getInteger(&(layer->offsite)) == -1) return(-1); /* using an index rather than an actual color */        
+      if(loadColor(&(layer->offsite)) != MS_SUCCESS) return(-1);
       break;
     case(TRANSPARENCY):
       if(getInteger(&(layer->transparency)) == -1) return(-1);         
@@ -2038,7 +2038,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;    
   case(OFFSITE):
     msyystate = 2; msyystring = value;
-    if(getInteger(&(layer->offsite)) == -1) return; /* using an index rather than an actual color */        
+    if(loadColor(&(layer->offsite)) != MS_SUCCESS) return;
     break;
   case(POSTLABELCACHE):
     msyystate = 2; msyystring = value;
@@ -2158,7 +2158,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if(layer->metadata) writeHashTable(layer->metadata, stream, "      ", "METADATA");
   if(layer->minscale > -1) fprintf(stream, "    MINSCALE %g\n", layer->minscale);
   fprintf(stream, "    NAME \"%s\"\n", layer->name);
-  if(layer->offsite > -1) fprintf(stream, "    OFFSITE %d\n", layer->offsite);
+  writeColor(&(layer->offsite), stream, "OFFSITE", "    ");
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   writeProjection(&(layer->projection), stream, "    ");
   if(layer->requires) fprintf(stream, "    REQUIRES \"%s\"\n", layer->requires);

@@ -67,7 +67,7 @@ double diffTime;
 #define RGB_INDEX(r,g,b) RGB_LEVEL_INDEX(((r)/RED_DIV),((g)/GREEN_DIV),((b)/BLUE_DIV))
 
 /* 
-** NEED TO FIX THIS, SPECIAL FOR RASTERS!
+** NEED TO FIX THIS, SPECIAL FOR RASTERS by passing a colorObj rather than a string!
 */
 static int getClass(layerObj *layer, char *str)
 {
@@ -861,6 +861,8 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   unsigned short *red, *green, *blue;
   int cmap[MAXCOLORS];
 
+  colorObj pixel;
+
   double startx, starty; /* this is where we start out reading */
   int st,strip;  /* current strip */
   int xi,yi,startj,endj,boffset,vv;
@@ -913,7 +915,14 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
       int c;
 
       for(i=0; i<MAXCOLORS; i++) {
-	if(i != layer->offsite) {
+
+	pixel.red = CVT(red[i]);
+	pixel.green = CVT(green[i]);
+	pixel.blue = CVT(blue[i]);
+
+	if(MS_COMPARE_COLORS(&pixel, &layer->offsite)) {
+	  cmap[i] = -1;
+	} else {
 	  sprintf(tmpstr,"%d", i);
 	  c = getClass(layer, tmpstr);
 	  
@@ -925,54 +934,65 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	    else if(MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color))) 
 	      cmap[i] = -1; // make transparent
 	    else
-              cmap[i] = add_color(map,img, CVT(red[i]), CVT(green[i]), CVT(blue[i])); // use raster color
+              cmap[i] = add_color(map,img, pixel.red, pixel.green, pixel.blue); // use raster color
 	  }
-	} else
-	  cmap[i] = -1;
+	} 
       }
     } else {
       for(i=0; i<MAXCOLORS; i++) {
-	if(i != layer->offsite)
-	  cmap[i] = add_color(map,img, CVT(red[i]), CVT(green[i]), CVT(blue[i]));
-        else
+	pixel.red = CVT(red[i]);
+	pixel.green = CVT(green[i]);
+	pixel.blue = CVT(blue[i]);
+
+	if(MS_COMPARE_COLORS(&pixel, &layer->offsite))
 	  cmap[i] = -1;
+	else
+	  cmap[i] = add_color(map,img, pixel.red, pixel.green, pixel.blue); // use raster color        
       }
     }
     break;
   case PHOTOMETRIC_MINISBLACK: /* classes are NOT honored for non-colormapped data */
     if (nbits==1) {
-      if(layer->offsite >= 0)
-	cmap[layer->offsite] = -1;
-      if(layer->offsite != 0)
-	cmap[0]=add_color(map,img,0,0,0);
-      if(layer->offsite != 1)
-	cmap[1]=add_color(map,img,255,255,255);
+      for (i=0; i<2; i++) {
+	pixel.red = pixel.green = pixel.blue = i; // offsite would be specified as 0 or 1
+
+	if(MS_COMPARE_COLORS(&pixel, &layer->offsite))
+	  cmap[i] = -1;
+	else
+          cmap[i]=add_color(map,img, i*255,i*255,i*255); // use raster color, stretched to use entire grayscale range
+      }      
     } else { 
-      if (nbits==4) {
+      if (nbits==4) {	
 	for (i=0; i<16; i++) {
-	  if(i != layer->offsite)
-	    cmap[i]=add_color(map,img,i*17,i*17,i*17);
-	  else
+	  pixel.red = pixel.green = pixel.blue = i; // offsite would be specified in range 0 to 15
+
+	  if(MS_COMPARE_COLORS(&pixel, &layer->offsite))
 	    cmap[i] = -1;
+	  else
+	    cmap[i] = add_color(map,img, i*17, i*17, i*17); // use raster color, stretched to use entire grayscale range	  
 	}
       } else { /* 8-bit */
 	for (i=0; i<256; i++) {
-	  if(i != layer->offsite)
-	    cmap[i]=add_color(map,img,(i>>4)*17,(i>>4)*17,(i>>4)*17);
-	  else
+	  pixel.red = pixel.green = pixel.blue = i; // offsite would be specified in range 0 to 255
+
+	  if(MS_COMPARE_COLORS(&pixel, &layer->offsite))
 	    cmap[i] = -1;
+	  else
+	    cmap[i] = add_color(map,img, (i>>4)*17, (i>>4)*17, (i>>4)*17); // use raster color
 	}
       }
     }
     break;
   case PHOTOMETRIC_MINISWHITE: /* classes are NOT honored for non-colormapped data */
     if (nbits==1) {
-      if(layer->offsite >= 0)
-	cmap[layer->offsite] = -1;
-      if(layer->offsite != 0)
-	cmap[0]=add_color(map,img,255,255,255);	
-      if(layer->offsite != 1)
-	cmap[1]=add_color(map,img,0,0,0);
+      for (i=0; i<2; i++) {
+	pixel.red = pixel.green = pixel.blue = i; // offsite would be specified as 0 or 1
+
+	if(MS_COMPARE_COLORS(&pixel, &layer->offsite))
+	  cmap[i] = -1;
+	else
+          cmap[i]=add_color(map,img, i*255,i*255,i*255); // use raster color, stretched to use entire grayscale range
+      }      
     }
     else {
       msSetError(MS_IMGERR,"Can't do inverted grayscale images","drawTIFF()");
@@ -1071,7 +1091,9 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   FILE *pngStream;
   gdImagePtr png;
 
-  int pixel;
+  int vv;
+
+  colorObj pixel;
 
   double startx, starty; /* this is where we start out reading */
 
@@ -1114,7 +1136,12 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     int c;
 
     for(i=0; i<gdImageColorsTotal(png); i++) {
-      if(i != layer->offsite && i != gdImageGetTransparent(png)) {
+
+      pixel.red = gdImageRed(png,i);
+      pixel.green = gdImageGreen(png,i);
+      pixel.blue = gdImageBlue(png,i);
+
+      if(!MS_COMPARE_COLORS(&pixel, &layer->offsite) && i != gdImageGetTransparent(png)) {
 	sprintf(tmpstr,"%d", i);
 	c = getClass(layer, tmpstr);
 
@@ -1126,18 +1153,22 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  else if(MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color))) 
 	    cmap[i] = -1; // make transparent
 	  else
-            cmap[i] = add_color(map,img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i)); // use raster color	  
+            cmap[i] = add_color(map,img, pixel.red, pixel.green, pixel.blue); // use raster color	  
 	}
       } else
 	cmap[i] = -1;
     }
   } else {
     for(i=0; i<gdImageColorsTotal(png); i++) {
-      if(i != layer->offsite && i != gdImageGetTransparent(png)) 
-	cmap[i] = add_color(map,img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i));
+
+      pixel.red = gdImageRed(png,i);
+      pixel.green = gdImageGreen(png,i);
+      pixel.blue = gdImageBlue(png,i);
+
+      if(!MS_COMPARE_COLORS(&pixel, &layer->offsite) && i != gdImageGetTransparent(png)) 
+	cmap[i] = add_color(map,img, pixel.red, pixel.green, pixel.blue);
       else
 	cmap[i] = -1;
-      /* fprintf(stderr, "\t\t%d %d\n", i, cmap[i]); */
     }
   }
 
@@ -1147,9 +1178,9 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       x = startx;
       for(j=0; j<img->sx; j++) {
 	if((x >= -0.5) && (x < w)) {
-	  pixel = png->pixels[(y == -0.5)?0:MS_NINT(y)][(x == -0.5)?0:MS_NINT(x)];	  
-	  if(cmap[pixel] != -1)
-	    img->pixels[i][j] = cmap[pixel];
+	  vv = png->pixels[(y == -0.5)?0:MS_NINT(y)][(x == -0.5)?0:MS_NINT(x)];	  
+	  if(cmap[vv] != -1)
+	    img->pixels[i][j] = cmap[vv];
 	}
 	x+=skipx;
       }
@@ -1176,7 +1207,9 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   FILE *gifStream;
   gdImagePtr gif;
 
-  int pixel;
+  int vv;
+ 
+  colorObj pixel;
 
   double startx, starty; /* this is where we start out reading */
 
@@ -1219,29 +1252,40 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     int c;
 
     for(i=0; i<gdImageColorsTotal(gif); i++) {
-      if(i != layer->offsite && i != gdImageGetTransparent(gif)) {
+
+      pixel.red = gdImageRed(gif,i);
+      pixel.green = gdImageGreen(gif,i);
+      pixel.blue = gdImageBlue(gif,i);	
+
+      if(!MS_COMPARE_COLORS(&pixel, &layer->offsite) && i != gdImageGetTransparent(gif)) {
 	sprintf(tmpstr,"%d", i);
 	c = getClass(layer, tmpstr);
 
-	if(c == -1) /* doesn't belong to any class, so handle like offsite */
+        if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
 	else {
-	  if(layer->class[c].color == -1) /* use raster color */
-	    cmap[i] = add_color(map,img, gdImageRed(gif,i), gdImageGreen(gif,i), gdImageBlue(gif,i));
+          if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) 
+	    cmap[i] = add_color(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	  else if(MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color))) 
+	    cmap[i] = -1; // make transparent
 	  else
-	    cmap[i] = layer->class[c].color; /* use class color */
-	}
+            cmap[i] = add_color(map,img, pixel.red, pixel.green, pixel.blue); // use raster color	  
+	}	
       } else
 	cmap[i] = -1;
     }
   } else {
     for(i=0; i<gdImageColorsTotal(gif); i++) {
-      if(i != layer->offsite && i != gdImageGetTransparent(gif)) 
-	cmap[i] = add_color(map,img, gdImageRed(gif,i), gdImageGreen(gif,i), gdImageBlue(gif,i));
+
+      pixel.red = gdImageRed(gif,i);
+      pixel.green = gdImageGreen(gif,i);
+      pixel.blue = gdImageBlue(gif,i);
+
+      if(!MS_COMPARE_COLORS(&pixel, &layer->offsite) && i != gdImageGetTransparent(gif)) 
+	cmap[i] = add_color(map,img, pixel.red, pixel.green, pixel.blue);
       else
 	cmap[i] = -1;
-      /* fprintf(stderr, "\t\t%d %d\n", i, cmap[i]); */
-    }
+    }    
   }
 
   y=starty;
@@ -1250,9 +1294,9 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       x = startx;
       for(j=0; j<img->sx; j++) {
 	if((x >= -0.5) && (x < w)) {
-	  pixel = gif->pixels[(y == -0.5)?0:MS_NINT(y)][(x == -0.5)?0:MS_NINT(x)];	  
-	  if(cmap[pixel] != -1)
-	    img->pixels[i][j] = cmap[pixel];
+	  vv = gif->pixels[(y == -0.5)?0:MS_NINT(y)][(x == -0.5)?0:MS_NINT(x)];	  
+	  if(cmap[vv] != -1)
+	    img->pixels[i][j] = cmap[vv];
 	}
 	x+=skipx;
       }
@@ -1276,7 +1320,7 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   int cmap[MAXCOLORS];
   double w, h;
 
-  unsigned char pixel;
+  unsigned char vv;
   JSAMPARRAY buffer;
 
   double startx, starty; /* this is where we start out reading */
@@ -1285,6 +1329,8 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 
   double ulx, uly; /* upper left-hand coordinates */  
   double cx,cy; /* cell sizes (x and y) */
+
+  colorObj pixel;
 
   FILE *jpegStream;
 
@@ -1312,10 +1358,12 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 
   // set up the color map
   for (i=0; i<256; i++) {
-    if(i != layer->offsite)
-      cmap[i]=add_color(map,img,(i>>4)*17,(i>>4)*17,(i>>4)*17);
-    else
+    pixel.red = pixel.green = pixel.blue = i;
+
+    if(MS_COMPARE_COLORS(&pixel, &layer->offsite))
       cmap[i] = -1;
+    else
+      cmap[i] = add_color(map,img, (i>>4)*17,(i>>4)*17,(i>>4)*17);
   }
 
   if(readWorldFile(filename, &ulx, &uly, &cx, &cy) != 0)
@@ -1362,9 +1410,9 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
       x = startx;
       for(j=0; j<img->sx; j++) {
 	if((x >= -0.5) && (x < cinfo.output_width)) {
-	  pixel = buffer[0][(x == -0.5)?0:MS_NINT(x)];
-	  if(cmap[pixel] != -1)
-	    img->pixels[i][j] = cmap[pixel];
+	  vv = buffer[0][(x == -0.5)?0:MS_NINT(x)];
+	  if(cmap[vv] != -1)
+	    img->pixels[i][j] = cmap[vv];
 	}
 	x+=skipx;
 	if(x>=cinfo.output_width) // next x is out of the image, so quit
@@ -1409,11 +1457,13 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   int i,j,rowsz,reverse;
   char trec[128],tname[128];
   unsigned char gc[256],rc[256],bc[256],*pb;
-  int startj,endj,rr,yi,vv,off;
+  int startj,endj,rr,yi,vv;
   double startx,starty,skipx,skipy,x,y;
   int cmap[MAXCOLORS];
   FILE *erd,*trl;
   erdhead hd;
+
+  colorObj pixel;
 
   {union {long i;char c[4];} u; u.i=1; reverse=(u.c[0]==0);}
 
@@ -1459,7 +1509,14 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	int c;
 
 	for(i=0; i<hd.nclass; i++) {
-	  if(i != layer->offsite) {
+
+  	  pixel.red = rc[i];
+	  pixel.green = gc[i];
+	  pixel.blue = bc[i];
+
+	  if(MS_COMPARE_COLORS(&pixel, &layer->offsite)) {
+	    cmap[i] = -1;
+	  } else {
 	    sprintf(tmpstr,"%d", i);
 	    c = getClass(layer, tmpstr);
 	    
@@ -1471,28 +1528,35 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	      else if(MS_TRANSPARENT_COLOR(&(layer->class[c].styles[0].color))) 
 	        cmap[i] = -1; // make transparent
 	      else
-                cmap[i] = add_color(map,img, rc[i], gc[i], bc[i]); // use raster color
+                cmap[i] = add_color(map,img, pixel.red, pixel.green, pixel.blue); // use raster color
 	    }
-	  } else
-	    cmap[i] = -1;
+	  }
 	}
       } else {
 	for(i=0; i<hd.nclass; i++) {
-	  if(i != layer->offsite) 
-	    cmap[i] = add_color(map,img, rc[i], gc[i], bc[i]);
-	  else
+	  pixel.red = rc[i];
+  	  pixel.green = gc[i];
+	  pixel.blue = bc[i];
+
+	  if(MS_COMPARE_COLORS(&pixel, &layer->offsite))
 	    cmap[i] = -1;
+	  else
+  	    cmap[i] = add_color(map,img, pixel.red, pixel.green, pixel.blue); // use raster color
 	}
       }
     }
     fclose(trl);
   } else {
     for (i=0; i<hd.nclass; i++) {  /* no trailer file, make gray, classes are not honored */
-      if(i != layer->offsite) {
-	j=((i*16)/hd.nclass)*17; 
-	cmap[i] = add_color(map,img, j, j, j);
-      } else
+
+      pixel.red = pixel.green = pixel.blue = i;
+
+      if(MS_COMPARE_COLORS(&pixel, &layer->offsite))
 	cmap[i] = -1;
+      else {
+        j=((i*16)/hd.nclass)*17; 
+	cmap[i] = add_color(map,img, j, j, j); // use raster color, streched over the 256 color range
+      }      
     } 
   }
 
@@ -1507,8 +1571,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   for (j=startj; j<img->sx && MS_NINT(x)<hd.cols; j++) x+=skipx;
   endj=j;
   rr=-1;
-  y=starty;
-  off=layer->offsite;
+  y=starty;  
   if (hd.pack==0) rowsz=hd.cols;
    else rowsz=(hd.cols+1)/2;
   for (i=0; i<img->sy; i++) {
@@ -1548,12 +1611,14 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
 #ifdef USE_EPPL
-  int ncol,nrow,yi,rr,i,j,off,startj,endj,vv;
+  int ncol,nrow,yi,rr,i,j,startj,endj,vv;
   double cx,cy,skipx,skipy,x,y,startx,starty;
   int cmap[MAXCOLORS];
   eppfile epp;
   TRGB color;
   clrfile clr;
+
+  colorObj pixel;
 
   for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; /* initialize the colormap to all transparent */
 
@@ -1579,18 +1644,26 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   strcpy(clr.filname,filename);
   if (!clrreset(&clr)) { /* use gray from min to max if no color file, classes not honored for greyscale */
     for (i=epp.minval; i<=epp.maxval; i++) {
-      if(i != layer->offsite) {
+
+      pixel.red = pixel.green = pixel.blue = i;
+
+      if(!MS_COMPARE_COLORS(&pixel, &layer->offsite)) {
 	j=(((i-epp.minval)*16) / (epp.maxval-epp.minval+1))*17; 
 	cmap[i]=add_color(map,img,j,j,j);
       }
-    }  
+    }
   } else {
     if(layer->numclasses > 0) {
       char tmpstr[3];
       int c;
       
       for (i=epp.minval; i<=epp.maxval; i++) {
-	if(i != layer->offsite) {
+
+	pixel.red = color.red;
+	pixel.green = color.green;
+	pixel.blue = color.blue;
+
+	if(!MS_COMPARE_COLORS(&pixel, &layer->offsite)) {
 	  sprintf(tmpstr,"%d", i);
 	  c = getClass(layer, tmpstr);
 	  
@@ -1610,7 +1683,11 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       }
     } else {
       for (i=epp.minval; i<=epp.maxval; i++) {
-	if(i != layer->offsite) {
+	pixel.red = color.red;
+	pixel.green = color.green;
+	pixel.blue = color.blue;
+
+	if(!MS_COMPARE_COLORS(&pixel, &layer->offsite)) {
 	  clrget(&clr,i,&color);
 	  cmap[i] = add_color(map,img, color.red, color.green, color.blue);
 	}
@@ -1626,8 +1703,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   for (j=startj; j<img->sx && MS_NINT(x)<ncol; j++) x+=skipx;
   endj=j;
   rr=-1;
-  y=starty;
-  off=layer->offsite;
+  y=starty;  
   for (i=0; i<img->sy; i++) {
     yi=MS_NINT(y);
     if (yi>=0 && yi<nrow) {
@@ -1667,7 +1743,7 @@ static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   	int cmap[MAXCOLORS];
   	int w, h;
 
-  	int pixel;
+  	int vv;
   	double startx, starty; 	/* this is where we start out reading */
 
   	double ulx, uly; 	/* upper left-hand coordinates */
@@ -1827,9 +1903,9 @@ static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 		{
 			if((x >= 0) && (x < w)) 
 			{
-				pixel = (int) tImg[(int) (j * skipx)];
-	  			if(cmap[pixel] != -1)
-	    				img->pixels[j][i] =  cmap[pixel]; 
+				vv = (int) tImg[(int) (j * skipx)];
+	  			if(cmap[vv] != -1)
+	    				img->pixels[j][i] =  cmap[vv]; 
 			}
 			x += skipx;
       		}
