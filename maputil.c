@@ -229,14 +229,16 @@ gdImagePtr msDrawMap(mapObj *map)
 
   for(i=0; i<map->numlayers; i++) {
 
-    lp = &(map->layers[ map->layerorder[i]]);
-    //lp = &(map->layers[i]);
+    if (map->layerorder[i] != -1) {
+       lp = &(map->layers[ map->layerorder[i]]);
+       //lp = &(map->layers[i]);
 
-    if(lp->postlabelcache) // wait to draw
-      continue;
+       if(lp->postlabelcache) // wait to draw
+         continue;
 
-    status = msDrawLayer(map, lp, img);
-    if(status != MS_SUCCESS) return(NULL);
+       status = msDrawLayer(map, lp, img);
+       if(status != MS_SUCCESS) return(NULL);
+    }
   }
 
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
@@ -866,7 +868,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
-  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features) 
+  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features)
   return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
   if(layer->connectiontype == MS_WMS) return(msDrawWMSLayer(map, layer, img));

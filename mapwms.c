@@ -324,6 +324,13 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
         return msWMSException(map, wmtver);
       }
 
+      if (map->layerorder)
+         free(map->layerorder);
+       
+      map->layerorder = (int*)malloc(sizeof(int) * map->numlayers + 1);
+      for(j=0; j<map->numlayers; j++)
+         map->layerorder[j] = -1;
+
       for(j=0; j<map->numlayers; j++)
       {
         // Keep only layers with status=DEFAULT by default
@@ -336,8 +343,10 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
           // Note: map->name is the root layer.  If root layer is requested
           // then all map layers should be turned on.
           if (strcasecmp(map->layers[j].name, layers[k]) == 0 ||
-              (map->name && strcasecmp(map->name, layers[k]) == 0) )
+              (map->name && strcasecmp(map->name, layers[k]) == 0) ) {
             map->layers[j].status = MS_DEFAULT;
+            map->layerorder[k] = j;
+          }
         }
       }
 
@@ -549,7 +558,7 @@ static int printMetadataList(hashTableObj metadata, const char *name,
 /*
 **
 */
-static void printRequestCap(const char *wmtver, const char *request, 
+static void printRequestCap(const char *wmtver, const char *request,
                          const char *script_url, const char *formats, ...)
 {
   va_list argp;
@@ -819,7 +828,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
                     "  <KeywordList>\n", "  </KeywordList>\n",
                     "    <Keyword>%s</Keyword>\n");
   
-  // contact information is a required element in 1.0.7 but the 
+  // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
   // In 1.1.0, ContactInformation becomes optional.
   if (strcasecmp(wmtver, "1.0.0") > 0) 
@@ -887,7 +896,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf("<Capability>\n");
   printf("  <Request>\n");
 
-  if (strcasecmp(wmtver, "1.0.7") <= 0) 
+  if (strcasecmp(wmtver, "1.0.7") <= 0)
   {
     // WMS 1.0.0 to 1.0.7
     printRequestCap(wmtver, "Map", script_url, 
@@ -931,8 +940,9 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 #endif
                       , NULL);
 
-    printRequestCap(wmtver, "GetFeatureInfo", script_url, 
-                    "text/plain", 
+    printRequestCap(wmtver, "GetFeatureInfo", script_url,
+                    "text/plain",
+                    "text/html",
                     "application/vnd.ogc.gml",
                     NULL);
   }
@@ -1070,7 +1080,7 @@ int msWMSGetMap(mapObj *map, const char *wmtver)
       return msWMSException(map, wmtver);
 
   printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->imagetype), 10,10);
-  if (msSaveImage(img, NULL, map->imagetype, map->transparent, 
+  if (msSaveImage(img, NULL, map->imagetype, map->transparent,
                   map->interlace, map->imagequality) != MS_SUCCESS)
       return msWMSException(map, wmtver);
 
@@ -1245,9 +1255,9 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
       request && (strcasecmp(request, "capabilities") == 0 ||
                   strcasecmp(request, "GetCapabilities") == 0) ) 
   {
-      if (!wmtver) 
+      if (!wmtver)
           wmtver = "1.1.0";  // VERSION is optional with getCapabilities only
-      if ((status = msWMSMakeAllLayersUnique(map, wmtver)) != MS_SUCCESS) 
+      if ((status = msWMSMakeAllLayersUnique(map, wmtver)) != MS_SUCCESS)
           return status;
       return msWMSCapabilities(map, wmtver);
   }
@@ -1255,7 +1265,7 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
   // VERSION *and* REQUEST required by both getMap and getFeatureInfo
   if (wmtver==NULL || request==NULL) return MS_DONE; // Not a WMS request
 
-  if ((status = msWMSMakeAllLayersUnique(map, wmtver)) != MS_SUCCESS) 
+  if ((status = msWMSMakeAllLayersUnique(map, wmtver)) != MS_SUCCESS)
       return status;
 
   // getMap parameters are used by both getMap and getFeatureInfo
