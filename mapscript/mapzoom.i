@@ -53,14 +53,18 @@
         /* ----------------------------------------------------------- */
         if (poGeorefExt->minx >= poGeorefExt->maxx)
         {
-            msSetError(MS_MISCERR, "Georeferenced coordinates minx >= maxx",
-                       "mapscript::mapObj::zoomPoint()");
+            msSetError(MS_MISCERR,
+                       "Invalid coordinates: GeorefExt minx (%f) >= maxx (%f)",
+                       "mapscript::mapObj::zoomPoint()",
+                       poGeorefExt->minx, poGeorefExt->maxx);
             return MS_FAILURE;
         }
         if (poGeorefExt->miny >= poGeorefExt->maxy)
         {
-            msSetError(MS_MISCERR, "Georeferenced coordinates miny >= maxy",
-                       "mapscript::mapObj::zoomPoint()");
+            msSetError(MS_MISCERR,
+                       "Invalid coordinates: GeorefExt miny (%f) >= maxy (%f)",
+                       "mapscript::mapObj::zoomPoint()",
+                       poGeorefExt->miny, poGeorefExt->maxy);
             return MS_FAILURE;
         }
         if (bMaxExtSet == 1)
@@ -68,15 +72,17 @@
             if (poMaxGeorefExt->minx >= poMaxGeorefExt->maxx)
             {
                 msSetError(MS_MISCERR, 
-                           "Max Georeferenced coordinates minx >= maxx",
-                           "mapscript::mapObj::zoomPoint()");
+                    "Invalid coordinates: MaxGeorefExt minx (%f) >= maxx (%f)",
+                    "mapscript::mapObj::zoomPoint()",
+                    poMaxGeorefExt->minx, poMaxGeorefExt->maxx);
                 return MS_FAILURE;
             }
             if (poMaxGeorefExt->miny >= poMaxGeorefExt->maxy)
             {
                 msSetError(MS_MISCERR, 
-                           "Max Georeferenced coordinates miny >= maxy",
-                           "mapscript::mapObj::zoomPoint()");
+                    "Invalid coordinates: MaxGeorefExt miny (%f) >= maxy (%f)",
+                    "mapscript::mapObj::zoomPoint()",
+                    poMaxGeorefExt->miny, poMaxGeorefExt->maxy);
             }
         }
    
@@ -271,29 +277,38 @@
         /* ----------------------------------------------------------- */
         /*      check if the values passed are consistent min > max.   */
         /* ----------------------------------------------------------- */
+        
         if (poPixRect->minx >= poPixRect->maxx)
         {
-            msSetError(MS_MISCERR, "image rectangle minx >= maxx",
-                       "mapscript::mapObj::zoomRectangle()");
+            msSetError(MS_MISCERR,
+            "Invalid coordinates: PixRect upper bound (%f) >= lower bound (%f)",
+                       "mapscript::mapObj::zoomRectangle()",
+                       poPixRect->minx, poPixRect->maxx);
             return MS_FAILURE;
         }
         if (poPixRect->maxy >= poPixRect->miny)
         {
-            msSetError(MS_MISCERR, "Georeferenced coordinates miny <= maxy",
-                       "mapscript::mapObj::zoomRectangle()");
+            msSetError(MS_MISCERR,
+            "Invalid coordinates: PixRect lower bound (%f) >= upper bound (%f)",
+                       "mapscript::mapObj::zoomRectangle()",
+                       poPixRect->maxy, poPixRect->miny);
             return MS_FAILURE;
         }
 
         if (poGeorefExt->minx >= poGeorefExt->maxx)
         {
-            msSetError(MS_MISCERR, "Georeferenced coordinates minx >= maxx",
-                       "mapscript::mapObj::zoomRectangle()");
+            msSetError(MS_MISCERR,
+                       "Invalid coordinates: GeorefExt minx (%f) >= maxx (%f)",
+                       "mapscript::mapObj::zoomRectangle()",
+                       poGeorefExt->minx, poGeorefExt->maxx);
             return MS_FAILURE;
         }
         if (poGeorefExt->miny >= poGeorefExt->maxy)
         {
-            msSetError(MS_MISCERR, "Georeferenced coordinates miny >= maxy",
-                       "mapscript::mapObj::zoomRectangle()");
+            msSetError(MS_MISCERR,
+                       "Invalid coordinates: GeorefExt miny (%f) >= maxy (%f)",
+                       "mapscript::mapObj::zoomRectangle()",
+                       poGeorefExt->miny, poGeorefExt->maxy);
             return MS_FAILURE;
         }
         if (bMaxExtSet == 1)
@@ -301,15 +316,17 @@
             if (poMaxGeorefExt->minx >= poMaxGeorefExt->maxx)
             {
                 msSetError(MS_MISCERR, 
-                           "Max Georeferenced coordinates minx >= maxx",
-                           "mapscript::mapObj::zoomRectangle()");
+                    "Invalid coordinates: MaxGeorefExt minx (%f) >= maxx (%f)",
+                    "mapscript::mapObj::zoomRectangle()",
+                    poMaxGeorefExt->minx, poMaxGeorefExt->maxx);
                 return MS_FAILURE;
             }
             if (poMaxGeorefExt->miny >= poMaxGeorefExt->maxy)
             {
                 msSetError(MS_MISCERR, 
-                           "Max Georeferenced coordinates miny >= maxy",
-                           "mapscript::mapObj::zoomRectangle()");
+                    "Invalid coordinates: MaxGeorefExt miny (%f) >= maxy (%f)",
+                    "mapscript::mapObj::zoomRectangle()",
+                    poMaxGeorefExt->miny, poMaxGeorefExt->maxy);
             }
         }
 
@@ -493,14 +510,18 @@
         /* ----------------------------------------------------------- */
         if (poGeorefExt->minx >= poGeorefExt->maxx)
         {
-            msSetError(MS_MISCERR, "Georeferenced coordinates minx >= maxx",
-                       "mapscript::mapObj::zoomScale()");
+            msSetError(MS_MISCERR,
+                       "Invalid coordinates: GeorefExt minx (%f) >= maxx (%f)",
+                       "mapscript::mapObj::zoomScale()",
+                       poGeorefExt->minx, poGeorefExt->maxx);
             return MS_FAILURE;
         }
         if (poGeorefExt->miny >= poGeorefExt->maxy)
         {
-            msSetError(MS_MISCERR, "Georeferenced coordinates miny >= maxy",
-                       "mapscript::mapObj::zoomScale()");
+            msSetError(MS_MISCERR,
+                       "Invalid coordinates: GeorefExt miny (%f) >= maxy (%f)",
+                       "mapscript::mapObj::zoomScale()",
+                       poGeorefExt->miny, poGeorefExt->maxy);
             return MS_FAILURE;
         }
         if (bMaxExtSet == 1)
@@ -508,17 +529,20 @@
             if (poMaxGeorefExt->minx >= poMaxGeorefExt->maxx)
             {
                 msSetError(MS_MISCERR, 
-                           "Max Georeferenced coordinates minx >= maxx",
-                           "mapscript::mapObj::zoomScale()");
+                    "Invalid coordinates: MaxGeorefExt minx (%f) >= maxx (%f)",
+                    "mapscript::mapObj::zoomScale()",
+                    poMaxGeorefExt->minx, poMaxGeorefExt->maxx);
                 return MS_FAILURE;
             }
             if (poMaxGeorefExt->miny >= poMaxGeorefExt->maxy)
             {
                 msSetError(MS_MISCERR, 
-                           "Max Georeferenced coordinates miny >= maxy",
-                           "mapscript::mapObj::zoomScale()");
+                    "Invalid coordinates: MaxGeorefExt miny (%f) >= maxy (%f)",
+                    "mapscript::mapObj::zoomScale()",
+                    poMaxGeorefExt->miny, poMaxGeorefExt->maxy);
             }
         }
+
    
         dfDeltaX = poGeorefExt->maxx - poGeorefExt->minx;
         dfDeltaY = poGeorefExt->maxy - poGeorefExt->miny;
