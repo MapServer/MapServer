@@ -271,7 +271,7 @@ int processIf(char* pszInstr, hashTableObj ht)
          
       pszName = msLookupHashTable(ifArgs, "name");
       pszValue = msLookupHashTable(ifArgs, "value");
-      pszOperator = msLookupHashTable(ifArgs, "operator"); // ignored for the momment
+      pszOperator = msLookupHashTable(ifArgs, "oper");
          
       if (pszName && pszValue && msLookupHashTable(ht, pszName)) {
          // set position at end of if start tag
@@ -289,11 +289,27 @@ int processIf(char* pszInstr, hashTableObj ht)
          strcat(pszIfTag, pszThen);
          strcat(pszIfTag, "[/if]");
 
-
-         if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
-           pszInstr = gsub(pszInstr, pszIfTag, pszThen);
-         else
-           pszInstr = gsub(pszInstr, pszIfTag, "");
+         if (pszOperator) {
+            if (strcmp(pszOperator, "neq") == 0) {
+               if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) != 0)
+                 pszInstr = gsub(pszInstr, pszIfTag, pszThen);
+               else
+                 pszInstr = gsub(pszInstr, pszIfTag, "");
+            }
+            else {
+               if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
+                 pszInstr = gsub(pszInstr, pszIfTag, pszThen);
+               else
+                 pszInstr = gsub(pszInstr, pszIfTag, "");
+            }                 
+         }
+         else {
+            if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
+              pszInstr = gsub(pszInstr, pszIfTag, pszThen);
+            else
+              pszInstr = gsub(pszInstr, pszIfTag, "");
+         }
+         
 
          free(pszIfTag);
          pszIfTag = NULL;
@@ -588,7 +604,8 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
 int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, hashTableObj oLayerArgs, char **pszTemp)
 {
    hashTableObj myHashTable;
-   char pszStatus[2];
+   char pszStatus[3];
+   char pszType[3];
    int nOptFlag=0;
    char *pszOptFlag;
    char *pszClassImg;
@@ -662,13 +679,16 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    myHashTable = msCreateHashTable();
    
    /*
-    * for now, only status is required by template
+    * for now, only status and type is required by template
     */
    sprintf(pszStatus, "%d", map->layers[nIdxLayer].status);
    msInsertHashTable(myHashTable, "layer_status", pszStatus);
+   
+   sprintf(pszType, "%d", map->layers[nIdxLayer].type);
+   msInsertHashTable(myHashTable, "layer_type", pszType);   
 
    processIf(*pszTemp, myHashTable);
-      
+
    msFreeHashTable(myHashTable);
          
    return MS_SUCCESS;
