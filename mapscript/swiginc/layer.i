@@ -76,7 +76,7 @@
     {
         if (!self->map) {
             freeLayer(self);
-            //free(self);
+            free(self);
         }
         // else map deconstructor takes care of it
     }
