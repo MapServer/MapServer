@@ -28,11 +28,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-#ifndef USE_GD_1_8
-  msSaveImage(img, argv[2], map->scalebar.transparent, map->scalebar.interlace);
-#else
   msSaveImage(img, argv[2], map->imagetype, map->scalebar.transparent, map->scalebar.interlace, map->imagequality);
-#endif
 
   gdImageDestroy(img);
 

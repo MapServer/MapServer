@@ -2673,7 +2673,7 @@ int msSaveMap(mapObj *map, char *filename)
   fprintf(stream, "  IMAGECOLOR %d %d %d\n", map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
 
   fprintf(stream, "  IMAGEQUALITY %d\n", map->imagequality);
-  fprintf(stream, "  IMAGETYPE %s\n", msOutputImageType[layer->imagetype]);
+  fprintf(stream, "  IMAGETYPE %s\n", msOutputImageType[map->imagetype]);
 
   fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
   if(map->symbolset.filename) fprintf(stream, "  SYMBOLSET \"%s\"\n", map->symbolset.filename);

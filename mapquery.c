@@ -652,7 +652,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
       msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
-    status = msLayerWhichShapes(lp, map->shapepath, searchrect, &(map->projection));
+    status = msLayerWhichShapes(lp, map->shapepath, searchrect);
     if(status != MS_SUCCESS) {
       msLayerClose(lp);
       return(MS_FAILURE);

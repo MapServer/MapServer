@@ -1868,9 +1868,9 @@ else
 fi
 
 
-  echo $ac_n "checking for gdImageTTFString in -l$GD_CHECKLIB""... $ac_c" 1>&6
-echo "configure:1873: checking for gdImageTTFString in -l$GD_CHECKLIB" >&5
-ac_lib_var=`echo $GD_CHECKLIB'_'gdImageTTFString | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for gdImageStringTTF in -l$GD_CHECKLIB""... $ac_c" 1>&6
+echo "configure:1873: checking for gdImageStringTTF in -l$GD_CHECKLIB" >&5
+ac_lib_var=`echo $GD_CHECKLIB'_'gdImageStringTTF | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -1882,10 +1882,10 @@ cat > conftest.$ac_ext <<EOF
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
     builtin and then its argument prototype would still apply.  */
-char gdImageTTFString();
+char gdImageStringTTF();
 
 int main() {
-gdImageTTFString()
+gdImageStringTTF()
 ; return 0; }
 EOF
 if { (eval echo configure:1892: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
@@ -2124,9 +2124,9 @@ else
 fi
 
 
-  echo $ac_n "checking for gdImageTTFString in -lgd""... $ac_c" 1>&6
-echo "configure:2129: checking for gdImageTTFString in -lgd" >&5
-ac_lib_var=`echo gd'_'gdImageTTFString | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for gdImageStringTTF in -lgd""... $ac_c" 1>&6
+echo "configure:2129: checking for gdImageStringTTF in -lgd" >&5
+ac_lib_var=`echo gd'_'gdImageStringTTF | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -2138,10 +2138,10 @@ cat > conftest.$ac_ext <<EOF
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
     builtin and then its argument prototype would still apply.  */
-char gdImageTTFString();
+char gdImageStringTTF();
 
 int main() {
-gdImageTTFString()
+gdImageStringTTF()
 ; return 0; }
 EOF
 if { (eval echo configure:2148: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then

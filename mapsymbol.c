@@ -4,12 +4,6 @@
 #include "mapfile.h"
 #include "mapparser.h"
 
-#ifdef USE_GD_TTF
-#include <gdcache.h>
-#include <gdttf.h>
-#include "freetype.h"
-#endif
-
 extern int msyylex(); /* lexer globals */
 extern void msyyrestart();
 extern double msyynumber;
@@ -17,6 +11,9 @@ extern char *msyytext;
 extern int msyylineno;
 extern FILE *msyyin;
 extern int msyyfiletype;
+
+extern unsigned char PNGsig[8];
+extern unsigned char JPEGsig[3];
 
 static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int color, int size) {
   struct imageCacheObj *icp;
@@ -412,11 +409,11 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
 }
 
 static int getCharacterSize(char *character, int size, char *font, rectObj *rect) {
+#ifdef USE_GD_TTF
   int bbox[8];
   char *error=NULL;
 
-#ifdef USE_GD_TTF
-  error = imageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, character, '\n');
+  error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, character);
   if(error) {
     msSetError(MS_TTFERR, error, "getCharacterSize()");
     return(-1);
@@ -503,7 +500,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int
     
     x = -rect.minx;
     y = -rect.miny;
-    imageStringTTF(tile, bbox, symbol->antialias*tile_fg, font, sz, 0, x, y, symbol->character, '\n');
+    gdImageStringFT(tile, bbox, symbol->antialias*tile_fg, font, sz, 0, x, y, symbol->character);
     
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img,p,gdTiled);
@@ -746,7 +743,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
     x = p->x - (rect.maxx - rect.minx)/2 - rect.minx;
     y = p->y - rect.maxy + (rect.maxy - rect.miny)/2;  
 
-    imageStringTTF(img, bbox, symbol->antialias*fc, font, sz, 0, x, y, symbol->character, '\n');
+    gdImageStringFT(img, bbox, symbol->antialias*fc, font, sz, 0, x, y, symbol->character);
 #endif
 
     break;

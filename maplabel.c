@@ -7,12 +7,6 @@
 #include <gdfontmb.h>
 #include <gdfontg.h>
 
-#ifdef USE_GD_TTF
-#include <gdcache.h>
-#include <gdttf.h>
-#include "freetype.h"
-#endif
-
 #include "map.h"
 
 // FIX: need to be handle the label wrapping

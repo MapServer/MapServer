@@ -27,11 +27,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-#ifndef USE_GD_1_8
-  msSaveImage(img, argv[2], map->legend.transparent, map->legend.interlace);
-#else
   msSaveImage(img, argv[2], map->imagetype, map->legend.transparent, map->legend.interlace, map->imagequality);
-#endif
 
   gdImageDestroy(img);
 

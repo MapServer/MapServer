@@ -1449,6 +1449,8 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   char tilename[MS_PATH_LENGTH];
   int numtiles=1; /* always at least one tile */
 
+  rectObj searchrect;
+
 #ifdef USE_EGIS
   char *ext; // OV -egis- temp variable
 #endif
@@ -1472,7 +1474,12 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   if(layer->tileindex) { /* we have in index file */
     if(msSHPOpenFile(&tilefile, "rb", map->shapepath, layer->tileindex) == -1) return(-1);    
     if((tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
-    tilefile.status = msSHPWhichShapes(&tilefile, map->extent, &(layer->projection), &(map->projection));
+    searchrect = map->extent;
+#ifdef USE_PROJ
+    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+      msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+#endif
+    tilefile.status = msSHPWhichShapes(&tilefile, searchrect);
     numtiles = tilefile.numshapes;
   }
 

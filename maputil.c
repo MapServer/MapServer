@@ -850,7 +850,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
     msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
-  status = msLayerWhichShapes(layer, map->shapepath, searchrect, &(map->projection));
+  status = msLayerWhichShapes(layer, map->shapepath, searchrect);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // step through the target shapes

@@ -1483,11 +1483,7 @@ int main(int argc, char *argv[]) {
 	  img = msDrawMap(Map);
 	if(!img) writeError();
 	sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);	
-#ifndef USE_GD_1_8
-	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
-#else
 	if(msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality) == -1) writeError();
-#endif
 	gdImageDestroy(img);
       }
       
@@ -1495,11 +1491,7 @@ int main(int argc, char *argv[]) {
 	img = msDrawLegend(Map);
 	if(!img) writeError();
 	sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	if(msSaveImage(img, buffer, Map->legend.transparent, Map->legend.interlace) == -1) writeError();
-#else
 	if(msSaveImage(img, buffer, Map->imagetype, Map->legend.transparent, Map->legend.interlace, Map->imagequality) == -1) writeError();
-#endif
 	gdImageDestroy(img);
       }
       
@@ -1507,11 +1499,7 @@ int main(int argc, char *argv[]) {
 	img = msDrawScalebar(Map);
 	if(!img) writeError();
 	sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	if(msSaveImage(img, buffer, Map->scalebar.transparent, Map->scalebar.interlace) == -1) writeError();
-#else
 	if(msSaveImage(img, buffer, Map->imagetype, Map->scalebar.transparent, Map->scalebar.interlace, Map->imagequality) == -1) writeError();
-#endif
 	gdImageDestroy(img);
       }
 
@@ -1519,11 +1507,7 @@ int main(int argc, char *argv[]) {
 	img = msDrawReferenceMap(Map);
 	if(!img) writeError();
 	sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
-#else
 	if(msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality) == -1) writeError();
-#endif
 	gdImageDestroy(img);
       }
 
@@ -1567,11 +1551,7 @@ int main(int argc, char *argv[]) {
       if(!img) writeError();
       
       printf("Content-type: image/%s%c%c", outputImageType[Map->imagetype], 10,10);
-#ifndef USE_GD_1_8
-      status = msSaveImage(img, NULL, Map->transparent, Map->interlace);
-#else
       status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
-#endif
       if(status != MS_SUCCESS) writeError();
       
       gdImageDestroy(img);
@@ -1763,20 +1743,12 @@ int main(int argc, char *argv[]) {
 	
 	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP) { // just return the image
 	  printf("Content-type: image/%s%c%c", outputImageType[Map->imagetype], 10,10);
-#ifndef USE_GD_1_8
-	  status = msSaveImage(img, NULL, Map->transparent, Map->interlace);
-#else
 	  status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
-#endif	  
 	  if(status != MS_SUCCESS) writeError();
 	  gdImageDestroy(img);
 	} else {
 	  sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	  status = msSaveImage(img, buffer, Map->transparent, Map->interlace);
-#else
 	  status = msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
-#endif
 	  if(status != MS_SUCCESS) writeError();
 	  gdImageDestroy(img);
 	
@@ -1784,11 +1756,7 @@ int main(int argc, char *argv[]) {
 	    img = msDrawLegend(Map);
 	    if(!img) writeError();
 	    sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	    status = msSaveImage(img, buffer, Map->legend.transparent, Map->legend.interlace);
-#else
 	    status = msSaveImage(img, buffer, Map->imagetype, Map->legend.transparent, Map->legend.interlace, Map->imagequality);
-#endif
 	    if(status != MS_SUCCESS) writeError();
 	    gdImageDestroy(img);
 	  }
@@ -1797,11 +1765,7 @@ int main(int argc, char *argv[]) {
 	    img = msDrawScalebar(Map);
 	    if(!img) writeError();
 	    sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	    status = msSaveImage(img, buffer, Map->scalebar.transparent, Map->scalebar.interlace);
-#else
 	    status = msSaveImage(img, buffer, Map->imagetype, Map->scalebar.transparent, Map->scalebar.interlace, Map->imagequality);
-#endif
 	    if(status != MS_SUCCESS) writeError();
 	    gdImageDestroy(img);
 	  }
@@ -1810,11 +1774,7 @@ int main(int argc, char *argv[]) {
 	    img = msDrawReferenceMap(Map);
 	    if(!img) writeError();
 	    sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	    status = msSaveImage(img, buffer, Map->transparent, Map->interlace);
-#else
 	    status = msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
-#endif
 	    if(status != MS_SUCCESS) writeError();
 	    gdImageDestroy(img);
 	  }

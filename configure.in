@@ -110,7 +110,7 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   AC_CHECK_LIB($GD_CHECKLIB, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG"; GD_LIB="$GD_LIB -ljpeg",, $GD_STATIC $GD_LIB -ljpeg)
   AC_CHECK_LIB($GD_CHECKLIB, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_STATIC $GD_LIB)
 
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageTTFString, 	GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_STATIC $GD_LIB -lttf)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageStringTTF, 	GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_STATIC $GD_LIB -lttf)
 
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
@@ -129,7 +129,7 @@ else
   AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG"; GD_LIB="$GD_LIB -ljpeg",, $GD_LIB -ljpeg)
   AC_CHECK_LIB(gd, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_LIB)
 
-  AC_CHECK_LIB(gd, gdImageTTFString, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_LIB -lttf)
+  AC_CHECK_LIB(gd, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_LIB -lttf)
 
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd $GD_LIB"
