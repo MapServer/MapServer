@@ -17,7 +17,7 @@ Version 4.4.0-beta3 ()
 ----------------------
 
 - Allow use of msOWSPrintURLType with no metadata. In this case the default 
-  parameters will be used. (For bug 1011)
+  parameters will be used. (For bug 1001)
 
 - Ensure the outputFormatObj attached to msImageLoadGDStream() results reflect
   the interlacedness of the loaded image.  Also ensure that the RGB PNG
@@ -25,7 +25,7 @@ Version 4.4.0-beta3 ()
 
 - Fixed support for non-square pixels in WCS. (bug 1014)
 
-- Expose only GD formats for GetLegendGraphic in the capabilities (Bug 1011)
+- Expose only GD formats for GetLegendGraphic in the capabilities (Bug 1001)
   Check for supported formats when process a GetLegendGraphic request (Bug 1030)
 
 - mapraster.c: fixed problem with leaks in tileindexed case where the
@@ -44,7 +44,7 @@ Version 4.4.0-beta3 ()
 
 -  MapServer now provides one default style named (default), title and LegendURL   when generating capabilities.
    Added also the possibility to use the keyword default for STYLES 
-   parameter when doing a GetMap (..&STYLES=default,defeault,...). Bug 1011.
+   parameter when doing a GetMap (..&STYLES=default,defeault,...). Bug 1001.
 
 - Add xlink:type="simple" in WMS MetadataURL (bug 1027)
 
