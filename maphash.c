@@ -33,7 +33,7 @@ struct hashObj *msInsertHashTable(hashTableObj table, char *string, char *data)
     return(NULL);
 
   for(tp=table[hash(string)]; tp!=NULL; tp=tp->next)
-    if(strcmp(string, tp->key) == 0)
+    if(strcasecmp(string, tp->key) == 0)
       break;
 
   if(tp == NULL) { /* not found */
@@ -61,7 +61,7 @@ char *msLookupHashTable(hashTableObj table, char *string)
     return(NULL);
 
   for(tp=table[hash(string)]; tp!=NULL; tp=tp->next)
-    if(strcmp(string, tp->key) == 0)
+    if(strcasecmp(string, tp->key) == 0)
       return(tp->data);
 
   return(NULL);
