@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/01/13 23:52:38  assefa
+ * Add functions to move styles up and down.
+ * Add function to clone style.
+ *
  * Revision 1.41  2004/01/12 19:56:19  assefa
  * Add moveclassup and moveclassdown on a layer object.
  * Add clone function for the class object.
@@ -323,6 +327,8 @@ int             classObj_setOverlaySymbolByName(classObj *self,
                                                 mapObj *map,
                                                 char *pszOverlaySymbolName);
 classObj        *classObj_clone(classObj *class, layerObj *layer);
+int             classObj_moveStyleUp(classObj *self, int index);
+int             classObj_moveStyleDown(classObj *self, int index);
 
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);
@@ -390,9 +396,10 @@ int             DBFInfo_getFieldWidth(DBFInfo *self, int iField);
 int             DBFInfo_getFieldDecimals(DBFInfo *self, int iField);
 DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 
-styleObj       *styleObj_new(classObj *class);
+styleObj       *styleObj_new(classObj *class, styleObj *style);
 void            styleObj_destroy(styleObj* self);
 int             styleObj_setSymbolByName(styleObj *self, mapObj *map, 
                                          char* pszSymbolName);
+styleObj       *styleObj_clone(styleObj *style);
 
 #endif /* _PHP_MAPSCRIPT_H_INCLUDED_ */

@@ -702,17 +702,17 @@ and the MapServer Map File documentation at:
         Returns an SLD XML string based on all the classes found in the layers.
 
  int moveclassup(int index)
-       The class specified bu the class index will be moved up into
+       The class specified by the class index will be moved up into
        the array of layers. Returns MS_SUCCESS or MS_FAILURE.
        ex layer->moveclassup(1) will have the effect of moving class 1
-          up to postion 0, and the class at potion 0 will be moved
+          up to postion 0, and the class at position 0 will be moved
           to position 1.
 
  int moveclassdown(int index)
-       The class specified bu the class index will be moved down into
+       The class specified by the class index will be moved down into
        the array of layers. Returns MS_SUCCESS or MS_FAILURE.
        ex layer->moveclassdown(0) will have the effect of moving class 0
-          up to postion 1, and the class at potion 1 will be moved
+          up to postion 1, and the class at position 1 will be moved
           to position 0.
 
 
@@ -768,7 +768,21 @@ and the MapServer Map File documentation at:
 
    classObj clone()
         Returns a cloned copy of the class.  
+
+   int movestyleup(int index)
+       The style specified by the style index will be moved up into
+       the array of classes. Returns MS_SUCCESS or MS_FAILURE.
+       ex calss->movestyleup(1) will have the effect of moving style 1
+          up to postion 0, and the style at position 0 will be moved
+          to position 1.
  
+   int movestyledown(int index)
+       The style specified by the style index will be moved down into
+       the array of classes. Returns MS_SUCCESS or MS_FAILURE.
+       ex class->movestyledown(0) will have the effect of moving style 0
+          up to postion 1, and the style at position 1 will be moved
+          to position 0.
+
  ImageObj Class:
  ---------------
 
@@ -1270,8 +1284,11 @@ styleObj Class
 
    Instances of styleObj are always embedded inside the classObj.
 
-   styleObj ms_newStyleObj(classObj class)
+   styleObj ms_newStyleObj(classObj class, styleobj style)
 
+   The second argument 'style' is optional. If given, the new style
+   created will be a copy of the style passed as argument.
+        
  Members:
 
   int           symbol
@@ -1290,6 +1307,8 @@ styleObj Class
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
  
+   styleObj clone()
+     Returns a cloned copy of the style.  
 
 outputformatObj Class
 -------------------

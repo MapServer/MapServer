@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.189  2004/01/13 23:52:38  assefa
+ * Add functions to move styles up and down.
+ * Add function to clone style.
+ *
  * Revision 1.188  2004/01/12 19:56:18  assefa
  * Add moveclassup and moveclassdown on a layer object.
  * Add clone function for the class object.
@@ -397,6 +401,8 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_clone(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_moveStyleUp(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_moveStyleDown(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -462,6 +468,7 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_style_clone(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_grid_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -639,6 +646,8 @@ static zend_class_entry *labelcache_class_entry_ptr;
 static unsigned char one_arg_force_ref[] = 
   { 1, BYREF_FORCE};
 static unsigned char two_args_first_arg_force_ref[] = 
+    { 2, BYREF_FORCE, BYREF_NONE };
+static unsigned char two_args_force_ref[] = 
     { 2, BYREF_FORCE, BYREF_NONE };
 
 function_entry phpms_functions[] = {
@@ -850,6 +859,8 @@ function_entry php_class_class_functions[] = {
     {"createlegendicon", php3_ms_class_createLegendIcon, NULL},   
     {"getstyle",        php3_ms_class_getStyle, NULL},   
     {"clone",           php3_ms_class_clone, NULL},   
+    {"movestyleup",     php3_ms_class_moveStyleUp, NULL},   
+    {"movestyledown",   php3_ms_class_moveStyleDown, NULL},   
     {NULL, NULL, NULL}
 };
 
@@ -906,6 +917,7 @@ function_entry php_projection_class_functions[] = {
 
 function_entry php_style_class_functions[] = {
     {"set",             php3_ms_style_setProperty,      NULL},    
+    {"clone",           php3_ms_style_clone,      NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -8547,6 +8559,63 @@ DLEXPORT void php3_ms_class_clone(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_build_class_object(pNewClass, map_id, layer_id, list, 
                               return_value TSRMLS_CC);
 }
+
+DLEXPORT void  php3_ms_class_moveStyleUp(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis, *pIdx;
+     classObj      *self=NULL;
+     HashTable   *list=NULL;
+     int         nStatus = MS_FAILURE;
+
+     pThis = getThis();
+
+     if (pThis == NULL ||
+        getParameters(ht, 1, &pIdx) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+     convert_to_long(pIdx);
+
+     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass), 
+                                            list TSRMLS_CC);
+
+     if (self != NULL)
+     {
+         nStatus = classObj_moveStyleUp(self, pIdx->value.lval);
+     }
+
+      RETURN_LONG(nStatus);
+}
+
+DLEXPORT void  php3_ms_class_moveStyleDown(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis, *pIdx;
+     classObj      *self=NULL;
+     HashTable   *list=NULL;
+     int         nStatus = MS_FAILURE;
+
+     pThis = getThis();
+
+     if (pThis == NULL ||
+        getParameters(ht, 1, &pIdx) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+     convert_to_long(pIdx);
+
+     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass), 
+                                            list TSRMLS_CC);
+
+     if (self != NULL)
+     {
+         nStatus = classObj_moveStyleDown(self, pIdx->value.lval);
+     }
+
+      RETURN_LONG(nStatus);
+}
+
 /* }}} */
 
 
@@ -11810,13 +11879,18 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
 
 DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval  *pClassObj;
+    pval  *pClassObj, *pStyleObj=NULL;
     classObj *parent_class;
-    styleObj *pNewStyle;
+    styleObj *pNewStyle, *style_obj=NULL;
     int layer_id, map_id, class_id;
     HashTable   *list=NULL;
+    int         nArgs = ARG_COUNT(ht);
 
-    if (getParameters(ht, 1, &pClassObj) == FAILURE) 
+    if (nArgs != 1 && nArgs != 2)
+    {
+        WRONG_PARAM_COUNT;
+    }
+    if (getParameters(ht, nArgs, &pClassObj, &pStyleObj) == FAILURE) 
     {
         WRONG_PARAM_COUNT;
     }
@@ -11825,8 +11899,15 @@ DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS)
                                                   PHPMS_GLOBAL(le_msclass),
                                                   list TSRMLS_CC);
 
+    if (nArgs == 2)
+    {
+        style_obj = (styleObj*)_phpms_fetch_handle(pStyleObj, 
+                                                   PHPMS_GLOBAL(le_msstyle),
+                                                   list TSRMLS_CC);
+    }
+
     if (parent_class == NULL ||
-        (pNewStyle = styleObj_new(parent_class)) == NULL)
+        (pNewStyle = styleObj_new(parent_class, style_obj)) == NULL)
     {
         _phpms_report_mapserver_error(E_ERROR);
         RETURN_FALSE;
@@ -11927,6 +12008,40 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     RETURN_LONG(0);
 }
+
+DLEXPORT void php3_ms_style_clone(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pThis = NULL;
+    styleObj *self = NULL, *pNewStyle = NULL;
+    HashTable   *list=NULL;
+    int map_id, layer_id, class_id;
+    pThis = getThis();
+
+    if (pThis == NULL)
+      php3_error(E_ERROR, "Invalid style object.");
+
+    self = (styleObj *)_phpms_fetch_handle(pThis,
+                                           PHPMS_GLOBAL(le_msstyle),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+       php3_error(E_ERROR, "Invalid style object.");
+
+    if ((pNewStyle = styleObj_clone(self)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_FALSE;
+    }
+
+    class_id = _phpms_fetch_property_resource(pThis, "_class_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
+
+     /* Return style object */
+    _phpms_build_style_object(pNewStyle, map_id, layer_id, class_id, list, 
+                              return_value TSRMLS_CC);
+}
+
+
 /* }}} */
 
 

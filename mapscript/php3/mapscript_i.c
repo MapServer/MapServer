@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.75  2004/01/13 23:52:39  assefa
+ * Add functions to move styles up and down.
+ * Add function to clone style.
+ *
  * Revision 1.74  2004/01/12 19:56:18  assefa
  * Add moveclassup and moveclassdown on a layer object.
  * Add clone function for the class object.
@@ -878,6 +882,16 @@ classObj *classObj_clone(classObj *class, layerObj *layer)
     return dstClass;
 }
 
+int classObj_moveStyleUp(classObj *self, int index)
+{
+    return msMoveStyleUp(self, index);
+}
+
+int classObj_moveStyleDown(classObj *self, int index)
+{
+    return msMoveStyleDown(self, index);
+}
+
 /**********************************************************************
  * class extensions for pointObj, useful many places
  **********************************************************************/
@@ -1256,13 +1270,16 @@ DBFFieldType DBFInfo_getFieldType(DBFInfo *self, int iField) {
 /**********************************************************************
  * class extensions for styleObj, always within the context of a class
  **********************************************************************/
-styleObj *styleObj_new(classObj *class) {
+styleObj *styleObj_new(classObj *class, styleObj *style) {
     if(class->numstyles == MS_MAXSTYLES) // no room
       return NULL;
 
     if(initStyle(&(class->styles[class->numstyles])) == -1)
       return NULL;
 
+    if (style)
+      msCopyStyle(&(class->styles[class->numstyles]), style);
+        
     class->numstyles++;
 
     return &(class->styles[class->numstyles-1]);
@@ -1276,4 +1293,17 @@ void  styleObj_destroy(styleObj *self) {
 int styleObj_setSymbolByName(styleObj *self, mapObj *map, char* pszSymbolName) {
     self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName);
     return self->symbol;
+}
+
+styleObj *styleObj_clone(styleObj *style){
+  styleObj *newstyle = NULL;
+  if (!style)
+    return NULL;
+
+  newstyle = (styleObj *)malloc(sizeof(styleObj));
+  initStyle(newstyle);
+
+  msCopyStyle(newstyle, style);
+  
+  return newstyle;
 }
