@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.18  2001/12/13 21:29:30  dan
+ * Changed wms_connectiontimeout metadata value to be in seconds (was ms)
+ *
  * Revision 1.17  2001/12/13 02:07:17  dan
  * Accept any isspace() character as delimiter in wms_srs metadata parsing
  *
@@ -581,20 +584,19 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
 
 /* ------------------------------------------------------------------
  * check to see if a the metedata wms_connectiontimeout is set. If it is 
- * the case we will use it, else we use the default which is 30000 
- * millseconds. 
+ * the case we will use it, else we use the default which is 30 seconds.
  * First check the metedata in the layer object and then in the map object.
  * ------------------------------------------------------------------ */
-    nTimeout = 30000;
+    nTimeout = 30000;  // Default is 30 seconds (internal value in ms)
     if ((pszTmp = msLookupHashTable(lp->metadata, 
                                     "wms_connectiontimeout")) != NULL)
     {
-        nTimeout = atoi(pszTmp);
+        nTimeout = atoi(pszTmp)*1000;  // Convert from seconds to milliseconds
     }
     else if ((pszTmp = msLookupHashTable(map->web.metadata, 
                                          "wms_connectiontimeout")) != NULL)
     {
-        nTimeout = atoi(pszTmp);
+        nTimeout = atoi(pszTmp)*1000;
     }
     if (msWMSGetImage(pszURL, lp->data, nTimeout) != MS_SUCCESS)
     {
