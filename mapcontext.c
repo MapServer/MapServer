@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.22  2002/11/21 15:54:46  julien
+ * Valid empty Format and style, some chage to 0.1.2 version
+ *
  * Revision 1.21  2002/11/20 23:57:55  julien
  * Remove duplicated code of style and format and create a wms_name
  *
@@ -340,6 +343,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
+  CPLXMLNode *psLegendURL;
   char szPath[MS_MAXPATHLEN];
   char szProj[20];
   int nStyle;
@@ -504,10 +508,30 @@ int msLoadMapContext(mapObj *map, char *filename)
                               &(map->web.metadata), "wms_abstract");
 
   // LogoURL, DataURL
-  msGetMapContextXMLHashValueDecode(psMapContext, "General.LogoURL", 
-                                    &(map->web.metadata), "wms_logourl");
-  msGetMapContextXMLHashValueDecode(psMapContext, "General.DataURL", 
-                                    &(map->web.metadata), "wms_dataurl");
+  if(strcasecmp(pszVersion, "0.1.4") >= 0)
+  {
+      msGetMapContextXMLHashValueDecode(psMapContext, 
+                                  "General.DataURL.OnlineResource.xlink:href", 
+                                   &(map->web.metadata), "wms_dataurl");
+  }
+  else
+  {
+      msGetMapContextXMLHashValueDecode(psMapContext, 
+                                        "General.DataURL.onlineResource", 
+                                   &(map->web.metadata), "wms_dataurl");
+  }
+  if(strcasecmp(pszVersion, "0.1.4") >= 0)
+  {
+      msGetMapContextXMLHashValueDecode(psMapContext, 
+                                  "General.LogoURL.OnlineResource.xlink:href", 
+                                   &(map->web.metadata), "wms_logourl");
+  }
+  else
+  {
+      msGetMapContextXMLHashValueDecode(psMapContext, 
+                                        "General.LogoURL.onlineResource", 
+                                   &(map->web.metadata), "wms_logourl");
+  }
 
   // Contact Info
   psContactInfo = CPLGetXMLNode(psMapContext, "General.ContactInformation");
@@ -713,7 +737,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                       else
                           pszValue = NULL;
 
-                      if(pszValue != NULL)
+                      if(pszValue != NULL && strcasecmp(pszValue, "") != 0)
                       {
                           // wms_format
                           pszValue1 = (char*)CPLGetXMLValue(psFormat, 
@@ -814,8 +838,25 @@ int msLoadMapContext(mapObj *map, char *filename)
                           free(pszStyle);
                       }
                       // LegendURL
-                      pszValue=(char*)CPLGetXMLValue(psStyle,
+                      if( strcasecmp(pszVersion, "0.1.4") >= 0 )
+                      {
+                          pszValue=(char*)CPLGetXMLValue(psStyle,
                                    "LegendURL.OnlineResource.xlink:href",NULL);
+                      }
+                      else
+                      {
+                              psLegendURL = CPLGetXMLNode(psStyle,"LegendURL");
+                              psLegendURL = psLegendURL->psChild;
+                              while(psLegendURL != NULL && 
+                                    psLegendURL->eType != CXT_Text)
+                              {
+                                  psLegendURL = psLegendURL->psNext;
+                              }
+                              if(psLegendURL != NULL)
+                                  pszValue = psLegendURL->pszValue;
+                              else
+                                  pszValue = NULL;
+                      }
                       if(pszValue != NULL)
                       {
                           pszStyle = (char*)malloc(strlen(pszStyleName)+25);
@@ -827,8 +868,15 @@ int msLoadMapContext(mapObj *map, char *filename)
                                                         "LegendURL.height","");
                           pszValue3=(char*)CPLGetXMLValue(psStyle,
                                                         "LegendURL.format","");
-                          pszValue4=(char*)CPLGetXMLValue(psStyle, 
+                          if( strcasecmp(pszVersion, "0.1.4") >= 0 )
+                          {
+                              pszValue4=(char*)CPLGetXMLValue(psStyle, 
                                      "LegendURL.OnlineResource.xlink:href","");
+                          }
+                          else
+                          {
+                              pszValue4 = pszValue;
+                          }
                           msDecodeHTMLEntities(pszValue4);
                           pszValue = (char*)malloc(strlen(pszValue1)+
                                                    strlen(pszValue2)+
@@ -905,7 +953,7 @@ int msSaveMapContext(mapObj *map, char *filename)
 #if defined(USE_WMS_LYR)
   const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
-  char *pszFormat, *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL;
+  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL;
   char *pszLegendItem, *pszEncodedVal;
   FILE *stream;
   int i, nValue;
@@ -973,9 +1021,9 @@ int msSaveMapContext(mapObj *map, char *filename)
 
   // LogoURL, DataURL
   msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl", OWS_NOERR,
-                "    <LogoURL>%s</LogoURL>\n", NULL);
+                "    <LogoURL>\n      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n    </LogoURL>\n", NULL);
   msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_dataurl", OWS_NOERR,
-                "    <DataURL>%s</DataURL>\n", NULL);
+                "    <DataURL>\n      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n    </DataURL>\n", NULL);
 
   // Contact Info
   msOWSPrintContactInfo( stream, tabspace, "1.1.0", map->web.metadata );
@@ -1055,39 +1103,45 @@ int msSaveMapContext(mapObj *map, char *filename)
                   pszChar = strchr(pszValue, '&');
                   if( pszChar )
                       pszValue[pszChar - pszValue] = '\0';
-                  fprintf( stream, "      <FormatList>\n");
-                  fprintf( stream, "        <Format>%s</Format>\n", pszValue);
-                  fprintf( stream, "      </FormatList>\n");
+                  if(strcasecmp(pszValue, "") != 0)
+                  {
+                      fprintf( stream, "      <FormatList>\n");
+                      fprintf(stream,"        <Format>%s</Format>\n",pszValue);
+                      fprintf( stream, "      </FormatList>\n");
+                  }
               }
               if(pszURL)
                   free(pszURL);
           }
           else
           {
+              char **papszFormats;
+              int numFormats, nForm;
+
               pszValue = msLookupHashTable(map->layers[i].metadata, 
                                            "wms_formatlist");
               pszCurrent = msLookupHashTable(map->layers[i].metadata, 
                                              "wms_format");
-              fprintf( stream, "      <FormatList>\n");
-              while(pszValue != NULL && pszValue[0] != '\0')
+
+              papszFormats = split(pszValue, ' ', &numFormats);
+              if(numFormats > 0 && papszFormats)
               {
-                  pszFormat = strdup(pszValue);
-                  pszChar = strchr(pszFormat, ' ');
-                  if(pszChar != NULL)
-                      pszFormat[pszChar - pszFormat] = '\0';
-                  if(pszCurrent && (strcasecmp(pszFormat, pszCurrent) == 0))
-                      fprintf( stream,
-                               "        <Format current=\"1\">%s</Format>\n",
-                               pszFormat);
-                  else
-                      fprintf( stream, "        <Format>%s</Format>\n", 
-                               pszFormat);
-                  free(pszFormat);
-                  pszValue = strchr(pszValue, ' ');
-                  if(pszValue)
-                      pszValue++;
+                  fprintf( stream, "      <FormatList>\n");
+                  for(nForm=0; nForm<numFormats; nForm++)
+                  {
+                      if(pszCurrent && (strcasecmp(papszFormats[nForm], 
+                                                   pszCurrent) == 0))
+                          fprintf( stream,
+                                 "        <Format current=\"1\">%s</Format>\n",
+                                   papszFormats[nForm]);
+                      else
+                          fprintf( stream, "        <Format>%s</Format>\n", 
+                                   papszFormats[nForm]);
+                  }
+                  fprintf( stream, "      </FormatList>\n");
               }
-              fprintf( stream, "      </FormatList>\n");
+              if(papszFormats)
+                  msFreeCharArray(papszFormats, numFormats);
           }
 
           // Style
@@ -1113,7 +1167,9 @@ int msSaveMapContext(mapObj *map, char *filename)
                           pszSLD[pszChar - pszSLD] = '\0';
                       pszSLD += 4;
                   }
-                  if( pszValue || pszSLD )
+                  if( (pszValue || pszSLD) && 
+                      ((strcasecmp(pszValue, "") != 0) ||        
+                      strcasecmp(pszSLD, "") != 0))
                   {
                       fprintf( stream, "      <StyleList>\n");
                       fprintf( stream, "        <Style current=\"1\">\n");
@@ -1150,88 +1206,95 @@ int msSaveMapContext(mapObj *map, char *filename)
               pszCurrent = msLookupHashTable(map->layers[i].metadata, 
                                              "wms_style");
               fprintf( stream, "      <StyleList>\n");
-              while(pszValue != NULL && pszValue[0] != '\0')
+              while(pszValue != NULL)
               {
                   pszStyle = strdup(pszValue);
                   pszChar = strchr(pszStyle, ' ');
                   if(pszChar != NULL)
                       pszStyle[pszChar - pszStyle] = '\0';
-                  if(pszCurrent && (strcasecmp(pszStyle, pszCurrent) == 0))
-                      fprintf( stream,"        <Style current=\"1\">\n" );
-                  else
-                      fprintf( stream, "        <Style>\n" );
-
-                  pszStyleItem = (char*)malloc(strlen(pszStyle)+10+5);
-                  sprintf(pszStyleItem, "wms_style_%s_sld", pszStyle);
-                  if(msLookupHashTable(map->layers[i].metadata,
-                                       pszStyleItem) != NULL)
+                  if( strcasecmp(pszStyle, "") != 0)
                   {
-                      fprintf(stream, "          <SLD>\n");
-                      msOWSPrintEncodeMetadata(stream, map->layers[i].metadata,
-                                         pszStyleItem, OWS_NOERR, 
-     "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
-                                         NULL);
-                      fprintf(stream, "          </SLD>\n");
-                      free(pszStyleItem);
-                  }
-                  else
-                  {
-                      free(pszStyleItem);
-                      fprintf(stream, "          <Name>%s</Name>\n", pszStyle);
-                      pszStyleItem = (char*)malloc(strlen(pszStyle)+10+8);
-                      sprintf(pszStyleItem, "wms_style_%s_title", pszStyle);
-                      msOWSPrintMetadata(stream, map->layers[i].metadata, 
-                                         pszStyleItem, OWS_NOERR, 
-                                         "          <Title>%s</Title>\n", 
-                                         NULL);
-                      free(pszStyleItem);
+                      if(pszCurrent && (strcasecmp(pszStyle, pszCurrent) == 0))
+                          fprintf( stream,"        <Style current=\"1\">\n" );
+                      else
+                          fprintf( stream, "        <Style>\n" );
 
-                      pszStyleItem = (char*)malloc(strlen(pszStyle)+10+15);
-                      sprintf(pszStyleItem, "wms_style_%s_legendurl",pszStyle);
-                      pszLegendURL = msLookupHashTable(map->layers[i].metadata,
-                                                       pszStyleItem);
-                      if(pszLegendURL != NULL)
+                      pszStyleItem = (char*)malloc(strlen(pszStyle)+10+5);
+                      sprintf(pszStyleItem, "wms_style_%s_sld", pszStyle);
+                      if(msLookupHashTable(map->layers[i].metadata,
+                                           pszStyleItem) != NULL)
                       {
-                          fprintf(stream, "          <LegendURL ");
-                          // width
-                          pszLegendItem = strdup(pszLegendURL);
-                          pszChar = strchr(pszLegendItem, ' ');
-                          if(pszChar != NULL)
-                              pszLegendItem[pszChar-pszLegendItem] = '\0';
-                          fprintf(stream, "width=\"%s\" ", pszLegendItem);
-                          // height
-                          pszLegendURL+=strlen(pszLegendItem)+1;
-                          strcpy(pszLegendItem, pszLegendURL);
-                          pszChar = strchr(pszLegendItem, ' ');
-                          if(pszChar != NULL)
-                              pszLegendItem[pszChar-pszLegendItem] = '\0';
-                          fprintf(stream, "height=\"%s\" ", pszLegendItem);
-                          // format
-                          pszLegendURL+=strlen(pszLegendItem)+1;
-                          strcpy(pszLegendItem, pszLegendURL);
-                          pszChar = strchr(pszLegendItem, ' ');
-                          if(pszChar != NULL)
-                              pszLegendItem[pszChar-pszLegendItem] = '\0';
-                          fprintf(stream, "format=\"%s\">\n", pszLegendItem);
-                          // URL
-                          pszLegendURL+=strlen(pszLegendItem)+1;
-                          strcpy(pszLegendItem, pszLegendURL);
-                          pszChar = strchr(pszLegendItem, ' ');
-                          if(pszChar != NULL)
-                              pszLegendItem[pszChar-pszLegendItem] = '\0';
-                          pszEncodedVal = msEncodeHTMLEntities(pszLegendItem);
-                          fprintf(stream, 
+                          fprintf(stream, "          <SLD>\n");
+                          msOWSPrintEncodeMetadata(stream, 
+                                                   map->layers[i].metadata,
+                                                   pszStyleItem, OWS_NOERR, 
      "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
-                                  pszEncodedVal);
-                          free(pszEncodedVal);
-                          free(pszLegendItem);
-
-                          fprintf(stream,  "          </LegendURL>\n");
+                                                   NULL);
+                          fprintf(stream, "          </SLD>\n");
+                          free(pszStyleItem);
                       }
-                      free(pszStyleItem);
-                  }
+                      else
+                      {
+                          free(pszStyleItem);
+                          fprintf(stream, "          <Name>%s</Name>\n", 
+                                  pszStyle);
+                          pszStyleItem = (char*)malloc(strlen(pszStyle)+10+8);
+                          sprintf(pszStyleItem, "wms_style_%s_title",pszStyle);
+                          msOWSPrintMetadata(stream, map->layers[i].metadata, 
+                                             pszStyleItem, OWS_NOERR, 
+                                             "          <Title>%s</Title>\n", 
+                                             NULL);
+                          free(pszStyleItem);
 
-                  fprintf( stream,"        </Style>\n" );
+                          pszStyleItem = (char*)malloc(strlen(pszStyle)+10+15);
+                          sprintf(pszStyleItem, "wms_style_%s_legendurl",
+                                  pszStyle);
+                          pszLegendURL = msLookupHashTable(
+                              map->layers[i].metadata, pszStyleItem);
+                          if(pszLegendURL != NULL)
+                          {
+                              fprintf(stream, "          <LegendURL ");
+                              // width
+                              pszLegendItem = strdup(pszLegendURL);
+                              pszChar = strchr(pszLegendItem, ' ');
+                              if(pszChar != NULL)
+                                  pszLegendItem[pszChar-pszLegendItem] = '\0';
+                              fprintf(stream, "width=\"%s\" ", pszLegendItem);
+                              // height
+                              pszLegendURL+=strlen(pszLegendItem)+1;
+                              strcpy(pszLegendItem, pszLegendURL);
+                              pszChar = strchr(pszLegendItem, ' ');
+                              if(pszChar != NULL)
+                                  pszLegendItem[pszChar-pszLegendItem] = '\0';
+                              fprintf(stream, "height=\"%s\" ", pszLegendItem);
+                              // format
+                              pszLegendURL+=strlen(pszLegendItem)+1;
+                              strcpy(pszLegendItem, pszLegendURL);
+                              pszChar = strchr(pszLegendItem, ' ');
+                              if(pszChar != NULL)
+                                  pszLegendItem[pszChar-pszLegendItem] = '\0';
+                              fprintf(stream,"format=\"%s\">\n",pszLegendItem);
+                              // URL
+                              pszLegendURL+=strlen(pszLegendItem)+1;
+                              strcpy(pszLegendItem, pszLegendURL);
+                              pszChar = strchr(pszLegendItem, ' ');
+                              if(pszChar != NULL)
+                                  pszLegendItem[pszChar-pszLegendItem] = '\0';
+                              pszEncodedVal = msEncodeHTMLEntities(
+                                  pszLegendItem);
+                              fprintf(stream, 
+     "            <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
+                                      pszEncodedVal);
+                              free(pszEncodedVal);
+                              free(pszLegendItem);
+
+                              fprintf(stream,  "          </LegendURL>\n");
+                          }
+                          free(pszStyleItem);
+                      }
+
+                      fprintf( stream,"        </Style>\n" );
+                  }
                   free(pszStyle);
                   pszValue = strchr(pszValue, ' ');
                   if(pszValue)  
