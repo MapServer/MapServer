@@ -44,7 +44,7 @@ class MapLayerTestCase(MapTestCase):
 
     def setUp(self):
         MapTestCase.setUp(self)
-        self.layer = self.map.getLayer(0)
+        self.layer = self.map.getLayer(1)
 
 # ===========================================================================
 # Test begins now
@@ -161,12 +161,11 @@ class InsertClassTestCase(MapLayerTestCase):
         new_class = mapscript.classObj()
         new_class.name = 'foo'
         new_index = self.layer.insertClass(new_class)
-        assert new_index = n
-        assert self.layer.numclasses = n + 1
+        assert new_index == n
+        assert self.layer.numclasses == n + 1
         c = self.layer.getClass(new_index)
-        assert c.thisown = 0
-        assert c.layer = self.layer
-        assert c.name = new_class.name
+        assert c.thisown == 0
+        assert c.name == new_class.name
         
     def testLayerInsertClassAtZero(self):
         """insert class at index 0"""
@@ -174,13 +173,16 @@ class InsertClassTestCase(MapLayerTestCase):
         new_class = mapscript.classObj()
         new_class.name = 'foo'
         new_index = self.layer.insertClass(new_class, 0)
-        assert new_index = 0
-        assert self.layer.numclasses = n + 1
+        assert new_index == 0
+        assert self.layer.numclasses == n + 1
         c = self.layer.getClass(new_index)
-        assert c.thisown = 0
-        assert c.layer = self.layer
-        assert c.name = new_class.name
-        
+        assert c.thisown == 0
+        assert c.name == new_class.name
+
+    def testInsertNULLClass(self):
+        """inserting NULL class should raise an error"""
+        self.assertRaises(mapscript.MapServerChildError,
+                          self.layer.insertClass, None)
     
 class LayerTestCase(MapTestCase):
     def testLayerConstructorOwnership(self):

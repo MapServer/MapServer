@@ -31,23 +31,50 @@
 
 %extend classObj {
 
-    classObj(layerObj *layer) 
+    classObj(layerObj *layer=NULL) 
     {
-        if(layer->numclasses == MS_MAXCLASSES) // no room
-            return NULL;
+        classObj *new_class=NULL;
+        
+        if (!layer)
+        {
+            new_class = (classObj *) malloc(sizeof(classObj));
+            if (!new_class)
+            {
+                msSetError(MS_MEMERR,
+                    "Could not allocate memory for new classObj instance",
+                    "classObj()");
+                return NULL;
+            }
+            if (initClass(new_class) == -1) return NULL;
+            new_class->layer = NULL;
+            return new_class;
+        }
+        else
+        {
+            if (layer->numclasses == MS_MAXCLASSES)
+            {
+                msSetError(MS_CHILDERR, "Max number of classes reached",
+                           "classObj()");
+                return NULL;
+            }
+            if (initClass(&(layer->class[layer->numclasses])) == -1)
+                return NULL;
+            layer->class[layer->numclasses].type = layer->type;
+            layer->class[layer->numclasses].layer = layer;
+            layer->numclasses++;
+            return &(layer->class[layer->numclasses-1]);
+        }
 
-        if(initClass(&(layer->class[layer->numclasses])) == -1)
-            return NULL;
-        layer->class[layer->numclasses].type = layer->type;
-
-        layer->numclasses++;
-
-        return &(layer->class[layer->numclasses-1]);
+        return NULL;
     }
 
     ~classObj() 
     {
-        return; // do nothing, map deconstrutor takes care of it all
+        if (!self->layer)
+        {
+            freeClass(self);
+            free(self);
+        }
     }
 
     int setExpression(char *expression) 

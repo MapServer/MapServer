@@ -1441,6 +1441,7 @@ MS_DLL_EXPORT int msInsertLayer(mapObj *map, layerObj *layer, int nIndex);
 MS_DLL_EXPORT layerObj *msRemoveLayer(mapObj *map, int nIndex);
 
 //Defined in layerobject.c
+MS_DLL_EXPORT int msInsertClass(layerObj *layer,classObj *classobj,int nIndex);
 MS_DLL_EXPORT classObj *msRemoveClass(layerObj *layer, int nIndex);
 MS_DLL_EXPORT int msMoveClassUp(layerObj *layer, int nClassIndex);
 MS_DLL_EXPORT int msMoveClassDown(layerObj *layer, int nClassIndex);

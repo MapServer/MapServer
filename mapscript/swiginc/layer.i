@@ -81,6 +81,11 @@
         // else map deconstructor takes care of it
     }
 
+    int insertClass(classObj *classobj, int index=-1)
+    {
+        return msInsertClass(self, classobj, index);
+    }
+    
     /* removeClass() */
     %newobject removeClass;
     classObj *removeClass(int index) 

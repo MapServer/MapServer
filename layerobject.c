@@ -37,6 +37,74 @@
 #endif
 
 /* ===========================================================================
+   msInsertClass
+
+   Returns the index at which the class was inserted.
+   ======================================================================== */
+ 
+int msInsertClass(layerObj *layer, classObj *classobj, int nIndex) 
+{
+    int i;
+
+    if (!classobj)
+    {
+        msSetError(MS_CHILDERR, "Cannot insert NULL class", "msInsertClass()");
+        return -1;
+    }
+        
+    // Possible to add another?
+    if (layer->numclasses == MS_MAXCLASSES) {
+        msSetError(MS_CHILDERR, "Max number of classes, %d, has been reached",
+                   "msInsertClass()", MS_MAXCLASSES);
+        return -1;
+    }
+    // Catch attempt to insert past end of styles array
+    else if (nIndex >= MS_MAXCLASSES) {
+        msSetError(MS_CHILDERR, "Cannot insert class beyond index %d",
+                   "msInsertClass()", MS_MAXCLASSES-1);
+        return -1;
+    }
+    else if (nIndex < 0) { // Insert at the end by default
+#ifndef __cplusplus
+        initClass(&(layer->class[layer->numclasses]));
+        msCopyClass(&(layer->class[layer->numclasses]), classobj, layer);
+#else
+        initClass(&(layer->_class[layer->numclasses]));
+        msCopyClass(&(layer->_class[layer->numclasses]), classobj, layer);
+#endif
+        layer->numclasses++;
+        return layer->numclasses-1;
+    }
+    else if (nIndex >= 0 && nIndex < MS_MAXCLASSES) {
+    
+        // Copy classes existing at the specified nIndex or greater
+        // to an index one higher
+
+#ifndef __cplusplus
+        initClass(&(layer->class[layer->numclasses]));
+        for (i=layer->numclasses-1; i>=nIndex; i--)
+            layer->class[i+1] = layer->class[i];
+        initClass(&(layer->class[nIndex]));
+        msCopyClass(&(layer->class[nIndex]), classobj, layer);
+#else
+        initClass(&(layer->_class[layer->numclasses]));
+        for (i=layer->numclasses-1; i>=nIndex; i--)
+            layer->_class[i+1] = layer->_class[i];
+        initClass(&(layer->_class[nIndex]));
+        msCopyClass(&(layer->_class[nIndex]), classobj, layer);
+#endif
+
+        /* increment number of layers and return */
+        layer->numclasses++;
+        return nIndex;
+    }
+    else {
+        msSetError(MS_CHILDERR, "Invalid index", "msInsertClass()");
+        return -1;
+    }
+}
+
+/* ===========================================================================
    msRemoveClass
 
    remove the class at an index from a layer, returning a copy
