@@ -872,13 +872,8 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
   shapeObj label_poly;
   rectObj label_rect;
   int label_width;
-  int offset;
+  int offset, position;
   double rx, ry;
-
-  int blue, yellow;
-
-  blue = gdImageColorAllocate(img, 0, 0, 255);
-  yellow = gdImageColorAllocate(img, 255, 255, 0);
 
   msInitShape(&label_poly);
 
@@ -888,7 +883,7 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
   label.sizescaled = size;
   label.color = color;
   label.antialias = s->antialias;
-
+  
   if(msGetLabelSize(s->character, &label, &label_rect, fontset) == -1)
     return(-1);
 
@@ -896,36 +891,28 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
 
   offset = 0; // initial padding
   for(i=0; i<p->numlines; i++) {
-
+    
     for(j=1;j<p->line[i].numpoints;j++) {
       length = sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2)));
-      theta = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/length);
-
-      if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
-	if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
-	  label.angle = -(90.0 - MS_RAD_TO_DEG*theta);
-	else
-	  label.angle = (90.0 - MS_RAD_TO_DEG*theta);
-      } else {
-	if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
-	  label.angle = (90.0 - MS_RAD_TO_DEG*theta);
-	else
-	  label.angle = -(90.0 - MS_RAD_TO_DEG*theta);
-      }
-
+      
       rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
       ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;
+      
+      position = s->position;
+      theta = asin(ry);
+      if(rx < 0)
+	theta += MS_PI;
+      else
+        theta = -theta;
+      label.angle = MS_RAD_TO_DEG * theta;
 
       current_length = offset + label_width/2.0;
       while(current_length <= (length - label_width/2.0)) {
         point.x = MS_NINT(p->line[i].point[j-1].x + current_length*rx);
 	point.y = MS_NINT(p->line[i].point[j-1].y + current_length*ry);
 
-  	label_point = get_metrics(&point, MS_CC, label_rect, 0, 0, MS_DEG_TO_RAD*label.angle, 0, &label_poly);
+  	label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, &label_poly);
         draw_text(img, label_point, s->character, &label, fontset);
-
-  	// gdImageSetPixel(img, (int)point.x, (int)point.y, yellow);
-        // gdImageSetPixel(img, (int)label_point.x, (int)label_point.y, blue);
 
 	current_length += label_width + s->gap;
       }
@@ -942,3 +929,4 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
   return(-1);
 #endif
 }
+
