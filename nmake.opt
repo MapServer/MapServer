@@ -229,7 +229,7 @@ IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
 
 NEED_NONBLOCKING_STDERR=-DNEED_NONBLOCKING_STDERR
 
-ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
+#ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
 
 # If you want antialiasing (note that It requires gd2)
 USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
@@ -258,6 +258,9 @@ WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
 WFS=-DUSE_WFS_SVR
 WFSCLIENT= -DUSE_WFS_LYR
 
+# Use -DUSE_WCS_SVR to compile with WCS server support
+#WCS=-DUSE_WCS_SVR
+
 
 # Reprojecting.
 # If you would like mapserver to be able to reproject data from one
@@ -278,7 +281,7 @@ PHP_DIR=c:\projects\php-4.3.4
 # following line to reflect the missing functions on your platform.
 #
 #STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
-STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP
+STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRLCAT
 
 
 ########################################################################
@@ -513,9 +516,9 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) \
-          $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(NEED_NONBLOCKING_STDERR) \
+          $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(NEED_NONBLOCKING_STDERR) $(ENABLE_STDERR_DEBUG) \
           $(GDAL)  \
-          -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(PDF) $(EGIS) \
+          -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
         $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION)
 
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS)
