@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.178  2003/09/24 12:27:43  dan
+ * Added new MAXSIZE mapObj parameter (bug 435)
+ *
  * Revision 1.177  2003/07/30 19:01:31  dan
  * Fixed compile warnings
  *
@@ -1330,9 +1333,10 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value, "name",      pMap->name);
     add_property_long(return_value,  "status",    pMap->status);
-    add_property_long(return_value,  "debug",    pMap->debug);
+    add_property_long(return_value,  "debug",     pMap->debug);
     add_property_long(return_value,  "width",     pMap->width);
     add_property_long(return_value,  "height",    pMap->height);
+    add_property_long(return_value,  "maxsize",   pMap->maxsize);
     add_property_long(return_value,  "transparent", pMap->transparent);
     add_property_long(return_value,  "interlace", pMap->interlace);
     PHPMS_ADD_PROP_STR(return_value,  "imagetype", pMap->imagetype);
@@ -1591,6 +1595,7 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "debug",       self->debug)
     else IF_SET_LONG(  "width",       self->width)
     else IF_SET_LONG(  "height",      self->height)
+    else IF_SET_LONG(  "maxsize",     self->maxsize)
     else IF_SET_LONG(  "transparent", self->transparent)
     else IF_SET_LONG(  "interlace",   self->interlace)
     else IF_SET_LONG(  "imagequality",self->imagequality)
