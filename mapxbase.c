@@ -730,7 +730,7 @@ int msDBFGetItemIndex(DBFHandle dbffile, char *name)
       return(i);
   }
 
-  sprintf(ms_error.message, "Item %s not found.", name);
+  sprintf(ms_error.message, "Item '%s' not found.", name);
   msSetError(MS_DBFERR, ms_error.message, "msDBFGetItemIndex()");  
   return(-1); /* item not found */
 }
@@ -800,7 +800,10 @@ int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems)
 
   for(i=0;i<numitems;i++) {
     itemindexes[i] = msDBFGetItemIndex(dbffile, items[i]);
-    if(itemindexes[i] == -1) return(NULL); // item not found
+    if(itemindexes[i] == -1) { 
+      free(itemindexes);
+      return(NULL); // item not found
+    }
   }
 
   return(itemindexes);

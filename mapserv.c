@@ -203,7 +203,6 @@ void loadForm()
   }
 
   for(i=0;i<NumParams;i++) { // now process the rest of the form variables
-
     if(strlen(ParamValues[i]) == 0)
       continue;
     
@@ -585,8 +584,8 @@ void loadForm()
     }
 
     if(strcasecmp(ParamNames[i],"scale") == 0) { // scale for new map
-      Map->scale = getNumeric(re, ParamValues[i]);      
-      if(Map->scale <= 0) {
+      Scale = getNumeric(re, ParamValues[i]);      
+      if(Scale <= 0) {
 	msSetError(MS_WEBERR, "Scale out of range.", "loadForm()");
 	writeError();
       }
@@ -859,7 +858,7 @@ void setExtent()
     Map->extent.maxy = MapPnt.y + Buffer;
     break;
   case FROMSCALE: 
-    cellsize = (Map->scale/Map->resolution)/inchesPerUnit[Map->units]; // user supplied a point and a scale
+    cellsize = (Scale/Map->resolution)/inchesPerUnit[Map->units]; // user supplied a point and a scale
     Map->extent.minx = MapPnt.x - cellsize*Map->width/2.0;
     Map->extent.miny = MapPnt.y - cellsize*Map->height/2.0;
     Map->extent.maxx = MapPnt.x + cellsize*Map->width/2.0;
@@ -878,7 +877,7 @@ void setExtent()
 void setExtentFromShapes() {
   int i;
   int found=0;
-  double dx, dy;
+  double dx, dy, cellsize;
   layerObj *lp;
 
   rectObj tmpext={-1.0,-1.0,-1.0,-1.0};
@@ -897,8 +896,6 @@ void setExtentFromShapes() {
       msMergeRect(&(tmpext), &(lp->resultcache->bounds));
   }
 
-  // FIX: NEED TO ADD A COUPLE OF POINT BASED METHODS BASED ON SCALE or BUFFER
-
   dx = tmpext.maxx - tmpext.minx;
   dy = tmpext.maxy - tmpext.miny;
  
@@ -909,15 +906,36 @@ void setExtentFromShapes() {
   tmpext.miny -= dy*EXTENT_PADDING/2.0;
   tmpext.maxy += dy*EXTENT_PADDING/2.0;
 
-  // if(!MS_VALID_EXTENT(tmpext.minx, tmpext.miny, tmpext.maxx, tmpext.maxy)) {
-  //   tmpext = ImgExt; // try the previous image extent
-  //   if(!MS_VALID_EXTENT(tmpext.minx, tmpext.miny, tmpext.maxx, tmpext.maxy))
-  //     tmpext = Map->extent; // fall back on default extent set in map file
-  // }
+  if(Scale != 0) { // apply the scale around the center point (tmppnt)
+    cellsize = (Scale/Map->resolution)/inchesPerUnit[Map->units]; // user supplied a point and a scale
+    tmpext.minx = tmppnt.x - cellsize*Map->width/2.0;
+    tmpext.miny = tmppnt.y - cellsize*Map->height/2.0;
+    tmpext.maxx = tmppnt.x + cellsize*Map->width/2.0;
+    tmpext.maxy = tmppnt.y + cellsize*Map->height/2.0;
+  } else if(Buffer != 0) { // apply the buffer around the center point (tmppnt)
+    tmpext.minx = tmppnt.x - Buffer;
+    tmpext.miny = tmppnt.y - Buffer;
+    tmpext.maxx = tmppnt.x + Buffer;
+    tmpext.maxy = tmppnt.y + Buffer;
+  }
+
+  // in case we don't get  usable extent at this point (i.e. single point result)
+  if(!MS_VALID_EXTENT(tmpext.minx, tmpext.miny, tmpext.maxx, tmpext.maxy)) {
+    if(Map->web.minscale > 0) { // try web object minscale first
+      cellsize = (Map->web.minscale/Map->resolution)/inchesPerUnit[Map->units]; // user supplied a point and a scale
+      tmpext.minx = tmppnt.x - cellsize*Map->width/2.0;
+      tmpext.miny = tmppnt.y - cellsize*Map->height/2.0;
+      tmpext.maxx = tmppnt.x + cellsize*Map->width/2.0;
+      tmpext.maxy = tmppnt.y + cellsize*Map->height/2.0;
+    } else {
+      msSetError(MS_WEBERR, "No way to generate a valid map extent from selected shapes.", "mapserv()");
+      writeError();
+    }
+  }
 
   MapPnt = tmppnt;
   Map->extent = RawExt = tmpext; // save unadjusted extent
-  
+
   return;
 }
 
@@ -937,7 +955,7 @@ void checkWebScale() {
       fZoom = Zoom = 1;
       ZoomDirection = 0;
       CoordSource = FROMSCALE;
-      Map->scale = Map->web.minscale;
+      Scale = Map->web.minscale;
       MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
       MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
       setExtent();
@@ -954,7 +972,7 @@ void checkWebScale() {
       fZoom = Zoom = 1;
       ZoomDirection = 0;
       CoordSource = FROMSCALE;
-      Map->scale = Map->web.maxscale;
+      Scale = Map->web.maxscale;
       MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
       MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
       setExtent();
@@ -1835,12 +1853,16 @@ int main(int argc, char *argv[]) {
 	  break;
         } // end mode switch
       }
+	  
+      if(Map->querymap.width != -1) Map->width = Map->querymap.width; // make sure we use the right size
+      if(Map->querymap.height != -1) Map->height = Map->querymap.height;
 
       if(UseShapes)
 	setExtentFromShapes();
 
       // just return the image
       if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP || Mode == ITEMNQUERYMAP || Mode == FEATUREQUERYMAP || Mode == FEATURENQUERYMAP || Mode == ITEMFEATUREQUERYMAP || Mode == ITEMFEATURENQUERYMAP || Mode == INDEXQUERYMAP) {
+
 	checkWebScale();
 
 	img = msDrawQueryMap(Map);
@@ -1890,14 +1912,14 @@ int main(int argc, char *argv[]) {
 	    if(status != MS_SUCCESS) writeError();
 	    gdImageDestroy(img);
 	  }
-	}
-      }
+	}      
 
-      returnQuery();
+        returnQuery();
 
-      if(SaveQuery) {
-	sprintf(buffer, "%s%s%s%s", Map->web.imagepath, Map->name, Id, MS_QUERY_EXTENSION);
-	if(msSaveQuery(Map, buffer) != MS_SUCCESS) writeError();
+        if(SaveQuery) {
+	  sprintf(buffer, "%s%s%s%s", Map->web.imagepath, Map->name, Id, MS_QUERY_EXTENSION);
+	  if(msSaveQuery(Map, buffer) != MS_SUCCESS) writeError();
+        }
       }
 
     } else if(Mode == COORDINATE) {

@@ -78,7 +78,7 @@ pointObj ImgPnt={-1.0, -1.0};
 
 int QueryCoordSource=NONE, CoordSource=NONE;
 
-double Buffer=0; /* used to create a map extent around a point */
+double Buffer=0, Scale=0; /* used to create a map extent around a point */
 double fZoom=1, Zoom=1; /* default for browsing */
 int ZoomDirection=0; /* whether zooming in or out, default is pan or 0 */
 int ZoomSize=0; /* zoom absolute magnitude (i.e. > 0) */

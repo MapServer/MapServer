@@ -9,7 +9,7 @@
 ** specific functions.
 */
 static int layerInitItemInfo(layerObj *layer) 
-{
+{ 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):
@@ -465,7 +465,6 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
 int msLayerWhichItems(layerObj *layer, int classify, int annotate) 
 {
   int i, nt=0, ne=0;
-
 
   // Cleanup any previous item selection
   layerFreeItemInfo(layer);

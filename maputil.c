@@ -205,14 +205,10 @@ gdImagePtr msDrawMap(mapObj *map)
   layerObj *lp=NULL;
   int status;
 
-  if(map->width == -1 && map->height == -1) {
+  if(map->width == -1 || map->height == -1) {
     msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
     return(NULL);
   }
-
-  if(map->width == -1 ||  map->height == -1)
-    if(msAdjustImage(map->extent, &map->width, &map->height) == -1)
-      return(NULL);
 
   img = gdImageCreate(map->width, map->height);
   if(!img) {
@@ -274,19 +270,15 @@ gdImagePtr msDrawQueryMap(mapObj *map)
   gdImagePtr img=NULL;
   layerObj *lp=NULL;
 
+  if(map->querymap.width != -1) map->width = map->querymap.width;
+  if(map->querymap.height != -1) map->height = map->querymap.height;
+
   if(map->querymap.style == MS_NORMAL) return(msDrawMap(map)); // no need to do anything fancy
 
-  if(map->width == -1 && map->height == -1) {
+  if(map->width == -1 || map->height == -1) {
     msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawQueryMap()");
     return(NULL);
   }
-
-  if(map->width == -1 ||  map->height == -1)
-    if(msAdjustImage(map->extent, &map->width, &map->height) == -1)
-      return(NULL);
-
-  if(map->querymap.width != -1) map->width = map->querymap.width;
-  if(map->querymap.height != -1) map->height = map->querymap.height;
 
   img = gdImageCreate( map->width, map->height);
   if(!img) {

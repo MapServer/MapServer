@@ -130,14 +130,10 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     int status;
     gdImagePtr img;
 
-    if(self->width == -1 && self->height == -1) {
+    if(self->width == -1 || self->height == -1) {
       msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
       return NULL;
     }
-
-    if(self->width == -1 ||  self->height == -1)
-      if(msAdjustImage(self->extent, &self->width, &self->height) == -1)
-        return NULL;
 
     img = gdImageCreate(self->width, self->height);
     if(!img) {
