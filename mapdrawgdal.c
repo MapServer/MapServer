@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/03/05 22:58:04  frank
+ * preliminary working implementation of msDrawRasterLayerGDAL_16BitClassification
+ *
  * Revision 1.19  2004/03/05 19:55:10  frank
  * Dont call GDALDatasetRasterIO() in pre 1.2.0 GDAL builds
  *
@@ -439,7 +442,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    * is sufficiently different than the normal mechanism of loading
    * into an 8bit buffer, that we isolate it into it's own subfunction.
    */
-#ifdef notdef
   if(layer->numclasses > 0 && gdImg 
      && hBand1 != NULL && GDALGetRasterDataType( hBand1 ) != GDT_Byte ) 
   {
@@ -448,7 +450,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           src_xoff, src_yoff, src_xsize, src_ysize, 
           dst_xoff, dst_yoff, dst_xsize, dst_ysize );
   }
-#endif
 
   /*
    * Get colormap for this image.  If there isn't one, and we have only
@@ -1416,7 +1417,7 @@ msDrawRasterLayerGDAL_RawMode(
 
     return 0;
 }
-#ifdef notdef
+
 /************************************************************************/
 /*              msDrawRasterLayerGDAL_16BitClassifcation()              */
 /*                                                                      */
@@ -1438,13 +1439,24 @@ msDrawRasterLayerGDAL_16BitClassification(
 
 {
     float *pafRawData;
-    double dfScaleMin=0.0, dfScaleMax=0.0;
-    int   nPixelCount = dst_xsize * dst_ysize, i, nBucketCount;
+    double dfScaleMin=0.0, dfScaleMax=0.0, dfScaleRatio;
+    int   nPixelCount = dst_xsize * dst_ysize, i, nBucketCount=0;
     GDALDataType eDataType;
     float fDataMin, fDataMax;
-    char *pszScaleInfo;
+    const char *pszScaleInfo;
     int  bUseIntegers = FALSE;
-    int  *cmap;
+    int  *cmap, c, j, k;
+    gdImagePtr gdImg = image->img.gd;
+    CPLErr eErr;
+
+    assert( gdImg != NULL );
+
+#if GD2_VERS < 2
+    msSetError( MS_MISCERR, 
+                "16bit classification not supported with GD1.x",
+                "msDrawRasterLayerGDAL_16BitClassification()" );
+    return -1;
+#endif
 
 /* ==================================================================== */
 /*      Read the requested data in one gulp into a floating point       */
@@ -1529,7 +1541,7 @@ msDrawRasterLayerGDAL_16BitClassification(
 /*      and max are less than 65536 apart.                              */
 /* -------------------------------------------------------------------- */
     if( eDataType == GDT_Byte || eDataType == GDT_Int16 
-        || eDataType == GDT_Unt16 )
+        || eDataType == GDT_UInt16 )
     {
         dfScaleMin = fDataMin - 0.5;
         dfScaleMax = fDataMax + 0.5;
@@ -1542,10 +1554,16 @@ msDrawRasterLayerGDAL_16BitClassification(
 /* -------------------------------------------------------------------- */
     else if( dfScaleMin == 0.0 && dfScaleMax == 0.0 )
     {
-        const char *pszBuckets;
-
         dfScaleMin = fDataMin;
         dfScaleMax = fDataMax;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      How many buckets?  Only set if we don't already have a value.   */
+/* -------------------------------------------------------------------- */
+    if( nBucketCount == 0 )
+    {
+        const char *pszBuckets;
 
         pszBuckets = CSLFetchNameValue( layer->processing, "SCALE_BUCKETS" );
         if( pszBuckets == NULL )
@@ -1553,12 +1571,13 @@ msDrawRasterLayerGDAL_16BitClassification(
         else
         {
             nBucketCount = atoi(pszBuckets);
-            if( nBuckets < 2 )
+            if( nBucketCount < 2 )
             {
                 free( pafRawData );
                 msSetError( MS_MISCERR, 
                             "SCALE_BUCKETS PROCESSING option is not a value of 2 or more: %s.",
-                            pszBuckets, "msDrawGDAL()" );
+                            pszBuckets, 
+                            "msDrawRasterLayerGDAL_16BitClassification()" );
                 return -1;
             }
         }
@@ -1618,74 +1637,48 @@ msDrawRasterLayerGDAL_16BitClassification(
 /* ==================================================================== */
 /*      Now process the data, applying to the working imageObj.         */
 /* ==================================================================== */
-/* -------------------------------------------------------------------- */
-/*      Now process the data.                                           */
-/* -------------------------------------------------------------------- */
-    for( i = 0; i < nPixelCount; i++ )
-    {
-        float fScaledValue = (pafRawData[i] - dfScaleMin) * dfScaleRatio;
+    k = 0;
 
-        if( fScaledValue < 0.0 )
-            pabyBuffer[i] = 0;
-        else if( fScaledValue > 255.0 )
-            pabyBuffer[i] = 255;
-        else
-            pabyBuffer[i] = (int) fScaledValue;
+    for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+    {
+        int	result;
+        
+        for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+        {
+            float fRawValue = pafRawData[k++];
+            int   iMapIndex;
+
+            /* 
+             * TODO: There likely ought to be some NODATA testing here.
+             */
+            
+            /*
+             * The funny +1/-1 is to avoid odd rounding around zero.
+             * We could use floor() but sometimes it is expensive. 
+             */
+            iMapIndex = (int) ((fRawValue - dfScaleMin) * dfScaleRatio+1)-1;
+
+            if( iMapIndex >= nBucketCount || iMapIndex < 0 )
+                continue;
+
+            result = cmap[iMapIndex];
+            if( result == -1 )
+                continue;
+
+            if( gdImageTrueColor( gdImg ) )
+                gdImg->tpixels[i][j] = result;
+            else
+                gdImg->pixels[i][j] = result;
+        }
     }
 
     free( pafRawData );
+    free( cmap );
+
+    assert( k == dst_xsize * dst_ysize );
 
     return 0;
-
-  /*
-  ** Process single band using the provided, or greyscale colormap
-  */
-  if( hBand2 == NULL && !truecolor && gdImg )
-  {
-      assert( cmap_set );
-      k = 0;
-
-      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
-      {
-          int	result;
-          
-          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-          {
-              result = cmap[pabyRaw1[k++]];
-              if( result != -1 )
-              {
-#ifndef USE_GD_1_2
-                  gdImg->pixels[i][j] = result;
-#else
-                  gdImg->pixels[j][i] = result;
-#endif
-              }
-          }
-      }
-
-      assert( k == dst_xsize * dst_ysize );
-  }
-#if GD2_VERS > 1
-  else if( hBand2 == NULL && truecolor && gdImg )
-  {
-      assert( cmap_set );
-
-      k = 0;
-      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
-      {
-          int	result;
-          
-          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-          {
-              result = cmap[pabyRaw1[k++]];
-              if( result != -1 )
-                  gdImg->tpixels[i][j] = result;
-          }
-      }
-  }
-#endif
 }
-#endif
 
 #endif
 
