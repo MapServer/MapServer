@@ -21,14 +21,21 @@ $static_libs = <STREAM>;
 chomp $static_libs;
 $static_libs =~ s/\-L\./\-L$home/g;
 
+$ms_version_line = <STREAM>;
+$ms_version_line =~ /MS_VERSION "(.+)"/;
+$ms_version = $1;
+
 print $inc."\n";
 print $libs."\n";
 print $static_libs."\n";
+print $ms_version."\n";
 
 WriteMakefile(
-	      'NAME' => 'mapscript',
-	      'DEFINE' => $define,
-	      'INC' => $inc,
-	      'LIBS' => [$libs,$static_libs],
-	      'OBJECT' => 'mapscript_wrap.o'
+	      'NAME' 		=> 'mapscript',
+	      'DEFINE' 		=> $define,
+	      'INC' 		=> $inc,
+	      'LIBS' 		=> [$libs,$static_libs],
+	      'OBJECT' 		=> 'mapscript_wrap.o',
+		  'VERSION' 	=> $ms_version
 	      );
+

@@ -1,8 +1,7 @@
 # $Id$
 #
 # setup.py file for MapScript
-# version 1.0
-
+#
 # BUILD
 #   python setup.py build
 #
@@ -26,13 +25,22 @@ def unique(list):
 mapscriptvars = "../../mapscriptvars"
 
 # Open and read lines from mapscriptvars.
-fp = open(mapscriptvars, "r")
+try:
+	fp = open(mapscriptvars, "r")
+except IOError, e:
+	raise IOError, '%s. %s' % (e, "Has MapServer been made?")
 
 ms_install_dir = fp.readline()
 ms_macros = fp.readline()
 ms_includes = fp.readline()
 ms_libraries_pre = fp.readline()
 ms_extra_libraries = fp.readline()
+
+# Get mapserver version from mapscriptvars, which contains a line like
+# 
+# MS_VERSION "4.x.y"
+ms_version = fp.readline().split()[1]
+ms_version = ms_version.replace('"', '')
 
 # Distutils wants a list of library directories and
 # a seperate list of libraries.  Create both lists from
@@ -68,12 +76,10 @@ for item in ms_includes:
 	    include_dirs.append( item[2:] )
 
 # Here is the distutils setup function that does all the magic.
-# Had to specify 'extra_link_args = ["-static", "-lgd"]' because
-# mapscript requires the gd library, which on my system is static.
 setup(name = "mapscript",
-      version = "4.1",
-      description = "Python interface to MapServer objects.",
-      author = "Mapserver project - SWIGged MapScript library.",
+      version = ms_version,
+      description = "Python interface to MapServer",
+      author = "MapServer Project",
       url = "http://mapserver.gis.umn.edu/",
       ext_modules = [Extension("_mapscript",
                                ["mapscript_wrap.c", "pygdioctx/pygdioctx.c"],
