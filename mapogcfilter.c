@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2003/09/23 14:34:34  assefa
+ * ifdef's for OGR use.
+ *
  * Revision 1.3  2003/09/22 22:53:20  assefa
  * Add ifdef USE_OGR where the MiniMXL Parser is used.
  *
@@ -143,9 +146,10 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
 /*       - only one BBox filter is supported                            */
 /*       - a Bbox is only acceptable with an AND logical operator       */
 /* -------------------------------------------------------------------- */
+    if (!FLTValidForBBoxFilter(psFilterNode))
+        return NULL;
 
-    //if (!FLTValidForBBoxFilter(psFilterNode)
-    //   return NULL;
+
 
     return psFilterNode;
 }
@@ -669,24 +673,93 @@ int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode)
     return MS_FALSE;
 }
  
+/************************************************************************/
+/*                          FLTNumberOfBBoxFilter                       */
+/*                                                                      */
+/*      Loop trhough the nodes and return the number of BBOX nodes.     */
+/************************************************************************/
+int FLTNumberOfBBoxFilter(FilterEncodingNode *psFilterNode)
+{
+    int nCount = 0;
+    int nLeftNode, nRightNode = 0;
+
+    if (!psFilterNode)
+      return 0;
+
+    if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
+      nCount++;
+
+    if (psFilterNode->psLeftNode)
+      nLeftNode = FLTNumberOfBBoxFilter(psFilterNode->psLeftNode);
+
+    nCount += nLeftNode;
+
+    if (psFilterNode->psRightNode)
+      nRightNode = FLTNumberOfBBoxFilter(psFilterNode->psRightNode);
+    nCount += nRightNode;
+   
+    return nCount;
+}
+    
+  
+
+/************************************************************************/
+/*                          FLTValidForBBoxFilter                       */
+/*                                                                      */
+/*      Validate if there is only one BBOX filter node. Here is waht    */
+/*      is supported (is valid) :                                       */
+/*        - one node which is a BBOX                                    */
+/*        - a logical AND with a valid BBOX                             */
+/*                                                                      */
+/*      eg 1: <Filter>                                                  */
+/*            <BBOX>                                                    */
+/*              <PropertyName>Geometry</PropertyName>                   */
+/*              <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326”>*/
+/*                <gml:coordinates>13.0983,31.5899 35.5472,42.8143</gml:coordinates>*/
+/*              </gml:Box>                                              */
+/*            </BBOX>                                                   */
+/*          </Filter>                                                   */
+/*                                                                      */
+/*      eg 2 :<Filter>                                                  */
+/*              <AND>                                                   */
+/*               <BBOX>                                                 */
+/*                <PropertyName>Geometry</PropertyName>                  */
+/*                <gml:Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326”>*/
+/*                  <gml:coordinates>13.0983,31.5899 35.5472,42.8143</gml:coordinates>*/
+/*                </gml:Box>                                            */
+/*               </BBOX>                                                */
+/*               <PropertyIsEqualTo>                                    */
+/*               <PropertyName>SomeProperty</PropertyName>              */
+/*                <Literal>100</Literal>                                */
+/*              </PropertyIsEqualTo>                                    */
+/*             </AND>                                                   */
+/*           </Filter>                                                  */
+/*                                                                      */
+/************************************************************************/
 int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
 {
-    /*
+    int nCount;
+   
     if (!psFilterNode)
       return 1;
 
-    if (FLTIsThereABBoxNode(psFilterNode))
-    {
-        if (FLTIsThereABBoxNode
-        if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
-          return 1;
-        else
-        {
-            if (strcasecmp(psFilterNode->pszValue, "AND") &&
-                (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX)
-    */
+    nCount = FLTNumberOfBBoxFilter(psFilterNode);
 
-    return 1;
+    if (nCount > 1)
+      return 0;
+    else if (nCount == 0)
+      return 1;
+
+    
+    if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
+      return 1;
+
+    if (strcasecmp(psFilterNode->pszValue, "AND") &&
+        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0) ||
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)))
+      return 1;
+
+    return 0;
 }       
     
             
@@ -846,6 +919,26 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
       return NULL;
 
     
+/* ==================================================================== */
+/*      specila case for BBOX node.                                     */
+/* ==================================================================== */
+    if (psFilterNode->psLeftNode && psFilterNode->psRightNode &&
+        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") == 0) ||
+         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") == 0)))
+    {
+        strcat(szBuffer, " (");
+        if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") != 0)
+          pszTmp = FLTGetNodeExpression(psFilterNode->psLeftNode);
+        else
+          pszTmp = FLTGetNodeExpression(psFilterNode->psRightNode);
+
+        if (!pszTmp)
+          return NULL;
+        strcat(szBuffer, pszTmp);
+        strcat(szBuffer, ") ");
+
+        return strdup(szBuffer);
+    }
 /* -------------------------------------------------------------------- */
 /*      OR and AND                                                      */
 /* -------------------------------------------------------------------- */

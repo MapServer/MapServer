@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2003/09/23 14:34:34  assefa
+ * ifdef's for OGR use.
+ *
  * Revision 1.1  2003/09/10 19:54:27  assefa
  * Renamed from fileterencoding.c/h
  *
@@ -48,8 +51,10 @@
  *
  **********************************************************************/
 
+#ifdef USE_OGR
+
 #include "map.h"
-/* There is a dependency to GDAL/OGR for the MiniXML parser */
+/* There is a dependency to OGR for the MiniXML parser */
 #include "cpl_minixml.h"
 
 
@@ -94,6 +99,7 @@ FilterEncodingNode *FLTCreateFilterEncodingNode();
 
 void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
 int FLTValidFilterNode(FilterEncodingNode *psFilterNode);
+int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode);
 
 void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                             CPLXMLNode *psXMLNode);
@@ -112,3 +118,4 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode);
+#endif
