@@ -73,7 +73,16 @@ SDE_INC=  @SDE_INC@
 #EGIS_INC=-I./egis/errLog -I./egis/imgSrc -I./egis
 #EGIS_LIB=-L./egis/errLog -lerrLog -L./egis/imgSrc -limgGEN -L./egis -legis
 #MAKE_EGIS=egis
-#MAKE_EGIS_CLEAN=egis_clean                                                     
+#MAKE_EGIS_CLEAN=egis_clean
+
+#
+# IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
+#
+# In order to compile the PHP_MAPSCRIPT module, we have to make MapServer 
+# uses the same version of the REGEX library that PHP was compiled with:
+#
+REGEX_OBJ=	@PHP_REGEX_OBJ@
+REGEX_INC=	@PHP_REGEX_INC@
 
 #
 # Pick a compiler, etc. Flex and bison are only required if you need to modify the mapserver lexer (maplexer.l) or expression parser (mapparser.y).
@@ -89,14 +98,14 @@ RUNPATHS= @RPATHS@
 
 CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) \
         $(TIFF) $(JPEG) $(GD) $(SDE) $(PROJ_INC) $(GD_INC) $(TTF_INC) 	\
-	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC)
+	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) $(REGEX_INC)
 
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TTF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
           $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(XTRALIBS)
 
 RM= /bin/rm -f
 
-OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o mapindex.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o $(EPPL_OBJ)
+OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o mapindex.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o $(EPPL_OBJ) $(REGEX_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---

@@ -2954,10 +2954,25 @@ rm -f perl.out
     PHP_LD="$LD_SHARED"
   fi
 
+          echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
+echo "configure:2959: checking whether we should use PHP's regex" >&5
+  if test -n "`grep 'define REGEX 1' $PHP_SRC_DIR/config.h`" ; then
+    echo "$ac_t""yes" 1>&6
+    PHP_REGEX_DIR="$PHP_SRC_DIR/regex"
+    PHP_REGEX_INC="-I$PHP_REGEX_DIR"
+    PHP_REGEX_OBJ="$PHP_REGEX_DIR/regcomp.o $PHP_REGEX_DIR/regerror.o \
+                   $PHP_REGEX_DIR/regexec.o $PHP_REGEX_DIR/regfree.o"
+    ALL_INC="$PHP_REGEX_INC $ALL_INC"
+  else
+    echo "$ac_t""no" 1>&6
+  fi
+
   PHPMS_MAKEFILE=mapscript/php3/Makefile
   MAKE_PHPMS=php3_mapscript
   MAKE_PHPMS_CLEAN=php3_mapscript_clean
 
+  
+  
   
   
   
@@ -2984,7 +2999,7 @@ fi
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:2988: checking for location of Apache headers using apxs" >&5
+echo "configure:3003: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php3 is used." 1>&2; exit 1; }
 
@@ -3206,6 +3221,8 @@ s%@LD_SHARED@%$LD_SHARED%g
 s%@PHP_SRC_DIR@%$PHP_SRC_DIR%g
 s%@PHP_CC@%$PHP_CC%g
 s%@PHP_LD@%$PHP_LD%g
+s%@PHP_REGEX_INC@%$PHP_REGEX_INC%g
+s%@PHP_REGEX_OBJ@%$PHP_REGEX_OBJ%g
 s%@MAKE_PHPMS@%$MAKE_PHPMS%g
 s%@MAKE_PHPMS_CLEAN@%$MAKE_PHPMS_CLEAN%g
 s%@APACHE_INC@%$APACHE_INC%g
