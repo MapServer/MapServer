@@ -72,7 +72,9 @@ MS_LIBS = ../../mapserver.lib ../../gd-1.2/gd.lib \
 # The rest of the file should not have to be edited...
 #
 
-PHPMS_OBJS =  php_mapscript_util.obj php_mapscript.obj mapscript_i.obj
+PHPMS_OBJS =  php_mapscript_util.obj php_mapscript.obj mapscript_i.obj 
+
+PHPPROJ_OBJS = php_mapscript_util.obj php_proj.obj
 
 !ifdef PHP4
 PHPMS_DLL =	php_mapscript.dll
@@ -80,11 +82,17 @@ PHPMS_DLL =	php_mapscript.dll
 PHPMS_DLL =	php3_mapscript.dll
 !endif
 
+PHPPROJ_DLL =	php_proj.dll
+
 CFLAGS = 	$(BASE_CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC)
 
 default: 	all
 
-all:		$(PHPMS_DLL)
+all:		$(PHPMS_DLL) $(PHPPROJ_DLL)
+
+mapscript:      $(PHPMS_DLL)
+
+proj:	        $(PHPPROJ_DLL)
 
 install:	all
 	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)
@@ -93,9 +101,17 @@ install:	all
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
 		$(PHP_SOURCE_DIR)\lib\php4nts.lib
+
+$(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
+	link $(LINK_OPT) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
+		$(PHP_SOURCE_DIR)\lib\php4nts.lib
 !else
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
+		$(PHP_SOURCE_DIR)\win32\cgi_debug\php.lib
+
+$(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
+	link $(LINK_OPT) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
 		$(PHP_SOURCE_DIR)\win32\cgi_debug\php.lib
 !endif
 
@@ -108,7 +124,9 @@ $(PHPMS_OBJS):	php_mapscript_util.h php_mapscript.h $(MS_LIBS)
 clean:
 	del *.obj
 	del $(PHPMS_OBJS)
+	del $(PHPPROJ_OBJS)
 	del $(PHPMS_DLL)
+	del $(PHPPROJ_DLL)
 	del *.lib
 	del *.pdb
 	del *.exp
