@@ -1058,7 +1058,21 @@ char *processLine(char *instr, int mode)
     }
   }
 
-  // allow metadata access in template
+  // allow web object metadata access in template
+  if(Map->web.metadata && strstr(outstr, "web_")) {
+    for(j=0; j<MS_HASHSIZE; j++) {
+      if (Map->web.metadata[j] != NULL) {
+	for(tp=Map->web.metadata[j]; tp!=NULL; tp=tp->next) {            
+	  sprintf(substr, "[web_%s]", tp->key);
+	  outstr = gsub(outstr, substr, tp->data);  
+	  sprintf(substr, "[web_%s_esc]", tp->key);	  
+	  outstr = gsub(outstr, substr, (char *)encode_url(tp->data));  
+	}
+      }
+    }
+  }
+
+  // allow layer metadata access in template
   for(i=0;i<Map->numlayers;i++) {
     if(Map->layers[i].metadata && strstr(outstr, Map->layers[i].name)) {
       for(j=0; j<MS_HASHSIZE; j++) {
@@ -1329,10 +1343,12 @@ void returnQuery()
   for(i=0; i<Map->numlayers; i++) { // compute some totals
     lp = &(Map->layers[i]);
 
-    if(!lp->resultcache) break;
+    if(!lp->resultcache) continue;
 
-    NL++;
-    NR += lp->resultcache->numresults;
+    if(lp->resultcache->numresults > 0) { 
+      NL++;
+      NR += lp->resultcache->numresults;
+    }
   }
 
   printf("Content-type: text/html%c%c", 10, 10); // write MIME header
