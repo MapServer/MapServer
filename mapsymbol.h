@@ -5,7 +5,7 @@
 
 enum MS_SYMBOL_TYPE {MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_STYLED, MS_SYMBOL_TRUETYPE};
 
-#define MS_MAXSYMBOLS 32            // maximum number of symbols in a symbol file
+#define MS_MAXSYMBOLS 64            // maximum number of symbols in a symbol file
 #define MS_MAXVECTORPOINTS 100      // shade, marker and line symbol parameters
 #define MS_MAXSTYLESIZE 11
 
