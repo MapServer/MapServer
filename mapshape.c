@@ -919,6 +919,9 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *file
   /* initialize a few things */
   shpfile->status = NULL;
   shpfile->lastshape = -1;
+  shpfile->shapepath = NULL;
+
+  if(shapepath) shpfile->shapepath = strdup(shapepath);
 
   /* open the shapefile file (appending ok) and get basic info */
   if(!mode) 	
@@ -1000,9 +1003,10 @@ int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
 void msSHPCloseFile(shapefileObj *shpfile)
 {
   if (shpfile) { // Silently return if called with NULL shpfile by freeLayer()
-      if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
-      if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
-      if(shpfile->status) free(shpfile->status);
+    if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
+    if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
+    if(shpfile->status) free(shpfile->status);
+    if(shpfile->shapepath) free(shpfile->shapepath);
   }
 }
 
@@ -1065,7 +1069,7 @@ int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
   return(MS_SUCCESS);
 }
 
-int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
+int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 {
   int i, status;
   char *filename, tilename[MS_PATH_LENGTH];
@@ -1087,9 +1091,9 @@ int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
       
       // open the shapefile
 #ifndef IGNORE_MISSING_DATA
-      if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) return(MS_FAILURE);
+      if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
 #else
-      if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) continue; // check again
+      if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) continue; // check again
 #endif
 
       status = msSHPWhichShapes(&(layer->shpfile), rect);
@@ -1111,9 +1115,9 @@ int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
 }
 
 // FIX: need to remove recursion (see msLayerNextShape)
-int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape) 
+int msTiledSHPNextShape(layerObj *layer, shapeObj *shape) 
 {
-  int i, status;
+  int i, status, filter_passed;
   char *filename, tilename[MS_PATH_LENGTH];
   char **values=NULL;
  
@@ -1137,9 +1141,9 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
 		
 	// open the shapefile
 #ifndef IGNORE_MISSING_DATA
-	if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) return(MS_FAILURE);
+	if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
 #else
-	if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) continue; // check again
+	if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) continue; // check again
 #endif
 	
 	status = msSHPWhichShapes(&(layer->shpfile), layer->tileshpfile.statusbounds);
@@ -1157,7 +1161,7 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
     if(i == layer->tileshpfile.numshapes) 
       return(MS_DONE); // no more tiles
     else
-      return(msTiledSHPNextShape(layer, shapepath, shape)); // next shape
+      return(msTiledSHPNextShape(layer, shape)); // next shape
   }
 
   layer->shpfile.lastshape = i;
@@ -1167,7 +1171,7 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
     shape->values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
     if(!shape->values) return(MS_FAILURE);
 
-    if(msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems) != MS_TRUE) return(msTiledSHPNextShape(layer, shapepath, shape)); // next shape
+    if(msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems) != MS_TRUE) return(msTiledSHPNextShape(layer, shape)); // next shape
   }
 
   shape->tileindex = layer->tileshpfile.lastshape;
@@ -1177,7 +1181,7 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
   return(MS_SUCCESS);
 }
 
-int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record) 
+int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record) 
 {
   char *filename, tilename[MS_PATH_LENGTH];
 
@@ -1195,7 +1199,7 @@ int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int ti
       
     // open the shapefile, since a specific tile was request an error should be generated if that tile does not exist
     if(strlen(filename) == 0) return(MS_FAILURE);
-    if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) return(MS_FAILURE);
+    if(msSHPOpenFile(&(layer->shpfile), "rb",  layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
   }
 
   if((record < 0) || (record >= layer->shpfile.numshapes)) return(MS_FAILURE);

@@ -88,7 +88,7 @@ int msLayerOpen(layerObj *layer, char *shapepath)
   return(MS_FAILURE);
 }
 
-int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape) 
+int msLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
   int i, filter_passed;
   char **values=NULL;
@@ -117,7 +117,7 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
     shape->numvalues = layer->numitems;
     break;
   case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPNextShape(layer, shapepath, shape));
+    return(msTiledSHPNextShape(layer, shape));
   case(MS_INLINE):
     if(!(layer->currentfeature)) return(MS_DONE); // out of features    
     msCopyShape(&(layer->currentfeature->shape), shape);
@@ -138,7 +138,7 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
   return(MS_SUCCESS);
 }
 
-int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record)
+int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
@@ -150,7 +150,7 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
     }
     break;
   case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPGetShape(layer, shapepath, shape, tile, record));
+    return(msTiledSHPGetShape(layer, shape, tile, record));
   case(MS_INLINE):
     msSetError(MS_MISCERR, "Cannot retrieve inline shapes randomly.", "msLayerGetShape()");
     return(MS_FAILURE);
@@ -238,14 +238,14 @@ int msLayerGetItems(layerObj *layer)
   return(MS_SUCCESS);
 }
 
-int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
+int msLayerWhichShapes(layerObj *layer, rectObj rect)
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     return(msSHPWhichShapes(&(layer->shpfile), rect));
     break;
   case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPWhichShapes(layer, shapepath, rect));
+    return(msTiledSHPWhichShapes(layer, rect));
     break;
   case(MS_INLINE):
     break;

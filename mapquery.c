@@ -280,7 +280,7 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
     msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
-  status = msLayerWhichShapes(lp, map->shapepath, searchrect);
+  status = msLayerWhichShapes(lp, searchrect);
   if(status == MS_DONE) { // no overlap
     msLayerClose(lp);
      msSetError(MS_NOTFOUND, "No matching record(s) found, layer and area of interest do not overlap.", "msQueryByRect()"); 
@@ -295,7 +295,7 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   lp->resultcache->numresults = lp->resultcache->cachesize = 0;
   lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
   
-  while((status = msLayerNextShape(lp, map->shapepath, &shape)) == MS_SUCCESS) { // step through the shapes
+  while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { // step through the shapes
     shape.classindex = msShapeGetClass(lp, &shape);
     
     if(shape.classindex == -1) { // not a valid shape
@@ -381,7 +381,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
       msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
-    status = msLayerWhichShapes(lp, map->shapepath, searchrect);
+    status = msLayerWhichShapes(lp, searchrect);
     if(status == MS_DONE) { // no overlap
       msLayerClose(lp);
       continue;
@@ -395,7 +395,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-    while((status = msLayerNextShape(lp, map->shapepath, &shape)) == MS_SUCCESS) { // step through the shapes
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { // step through the shapes
       shape.classindex = msShapeGetClass(lp, &shape);
 
       if(shape.classindex == -1) { // not a valid shape
@@ -532,7 +532,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
       msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
-    status = msLayerWhichShapes(lp, map->shapepath, rect);
+    status = msLayerWhichShapes(lp, rect);
     if(status == MS_DONE) { // no overlap
       msLayerClose(lp);
       continue;
@@ -546,7 +546,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-    while((status = msLayerNextShape(lp, map->shapepath, &shape)) == MS_SUCCESS) { // step through the shapes
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { // step through the shapes
       shape.classindex = msShapeGetClass(lp, &shape);
       if(shape.classindex == -1) { // not a valid shape
 	msFreeShape(&shape);
@@ -667,7 +667,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
       msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
-    status = msLayerWhichShapes(lp, map->shapepath, searchrect);
+    status = msLayerWhichShapes(lp, searchrect);
     if(status == MS_DONE) { // no overlap
       msLayerClose(lp);
       continue;
@@ -681,7 +681,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-    while((status = msLayerNextShape(lp, map->shapepath, &shape)) == MS_SUCCESS) { // step through the shapes
+    while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { // step through the shapes
       shape.classindex = msShapeGetClass(lp, &shape);
 
       if(shape.classindex == -1) { // not a valid shape

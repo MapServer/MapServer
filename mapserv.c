@@ -1326,7 +1326,7 @@ void returnQuery()
       status = msLayerGetItems(lp);
       if(status != MS_SUCCESS) writeError();
 
-      status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
+      status = msLayerGetShape(lp, &ResultShape, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
       if(status != MS_SUCCESS) writeError();
 
       returnURL(lp->class[(int)(lp->resultcache->results[0].classindex)].template, QUERY);      
@@ -1378,7 +1378,7 @@ void returnQuery()
 
     LRN = 1; // layer result number
     for(j=0; j<lp->resultcache->numresults; j++) {
-      status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+      status = msLayerGetShape(lp, &ResultShape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
       if(status != MS_SUCCESS) writeError();
 
       returnPage(lp->class[(int)(lp->resultcache->results[j].classindex)].template, QUERY);      

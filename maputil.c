@@ -745,7 +745,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(layer->type == MS_LAYER_LINE || layer->type == MS_LAYER_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
   for(i=0; i<layer->resultcache->numresults; i++) {    
-    status = msLayerGetShape(layer, map->shapepath, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
+    status = msLayerGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     shape.classindex = layer->resultcache->results[i].classindex;
@@ -838,7 +838,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
     msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
-  status = msLayerWhichShapes(layer, map->shapepath, searchrect);
+  status = msLayerWhichShapes(layer, searchrect);
   if(status == MS_DONE) { // no overlap
     msDebug("Oops, no overlap.\n");
     msLayerClose(layer);
@@ -853,7 +853,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   if(layer->type == MS_LAYER_LINE || layer->type == MS_LAYER_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
-  while((status = msLayerNextShape(layer, map->shapepath, &shape)) == MS_SUCCESS) {
+  while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
     shape.classindex = msShapeGetClass(layer, &shape);    
     if(shape.classindex == -1) {

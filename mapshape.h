@@ -77,13 +77,16 @@ typedef struct {
 #ifdef SWIG
 %readonly
 #endif
-  char source[MS_PATH_LENGTH]; /* full path to the shapefile data */
-  SHPHandle hSHP; /* .SHP/.SHX file pointer */
-  int type; /* shape type */
-  int numshapes; /* number of shapes */
-  rectObj bounds; /* shape extent */
-  DBFHandle hDBF; /* .DBF file pointer */
+  char source[MS_PATH_LENGTH]; // full path to this file data
+
+  SHPHandle hSHP; // SHP/SHX file pointer
+  int type; // shapefile type
+  int numshapes; // number of shapes
+  rectObj bounds; // shape extent
+  DBFHandle hDBF; // DBF file pointer 
   int lastshape;
+
+  char *shapepath; // used by tiled shapefiles to access tiles
 
   char *status;
   rectObj statusbounds; // holds extent associated with the status vector

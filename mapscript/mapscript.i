@@ -247,8 +247,8 @@
     msLayerClose(self);
   }
 
-  int getShape(char *path, shapeObj *shape, int tileindex, int shapeindex, int allitems) {
-    return msLayerGetShape(self, path, shape, tileindex, shapeindex, allitems);
+  int getShape(shapeObj *shape, int tileindex, int shapeindex, int allitems) {
+    return msLayerGetShape(self, shape, tileindex, shapeindex, allitems);
   }
 
   resultCacheMemberObj *getResult(int i) {
