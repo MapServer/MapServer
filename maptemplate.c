@@ -3082,7 +3082,7 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
 /*      TODO : use webminscale/maxscale depending on the scale.         */
 /* -------------------------------------------------------------------- */
         if (msReturnPage(msObj, msObj->Map->web.template, 
-                         BROWSE, &pszBuffer) == MS_SUCCESS)
+                         BROWSE, &pszBuffer) != MS_SUCCESS)
         {
             msFree(pszBuffer);
             pszBuffer = NULL;
