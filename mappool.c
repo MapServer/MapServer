@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/02/22 00:35:25  frank
+ * More fixes for locking.
+ *
  * Revision 1.8  2005/02/22 00:26:52  frank
  * fixed some lock acquisition flaws
  *
@@ -326,8 +329,6 @@ static void msConnPoolClose( int conn_index )
         conn->close( conn->conn_handle );
 
     /* free malloced() stuff in this connection */
-
-    msAcquireLock( TLOCK_POOL );
     free( conn->connection );
 
     /* move the last connection in place of our now closed one */
@@ -345,7 +346,6 @@ static void msConnPoolClose( int conn_index )
         free( connections );
         connections = NULL;
     }
-    msReleaseLock( TLOCK_POOL );
 }
 
 /************************************************************************/
@@ -365,6 +365,7 @@ void *msConnPoolRequest( layerObj *layer )
     if( layer->connection == NULL )
         return NULL;
 
+    msAcquireLock( TLOCK_POOL );
     for( i = 0; i < connectionCount; i++ )
     {
         connectionObj *conn = connections + i;
@@ -419,6 +420,7 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
     if( layer->connection == NULL )
         return;
 
+    msAcquireLock( TLOCK_POOL );
     for( i = 0; i < connectionCount; i++ )
     {
         connectionObj *conn = connections + i;
@@ -451,9 +453,13 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
 
             if( conn->ref_count == 0 && conn->lifespan == MS_LIFE_ZEROREF )
                 msConnPoolClose( i );
+
+            msReleaseLock( TLOCK_POOL );
             return;
         }
     }
+
+    msReleaseLock( TLOCK_POOL );
 
     msDebug( "%s: Unable to find handle for layer '%s'.\n",
              "msConnPoolRelease()",
