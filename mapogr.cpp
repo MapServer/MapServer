@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2001/02/23 21:58:00  dan
+ * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
+ *
  * Revision 1.12  2001/02/20 20:48:44  dan
  * OGR support working for classified maps
  *
@@ -360,7 +363,13 @@ static char **msOGRGetValueList(OGRFeature *poFeature,
     for(i=0;i<numitems;i++) 
     {
       (*itemindexes)[i] = poFeature->GetFieldIndex(items[i]);
-      if((*itemindexes)[i] == -1) return(NULL);
+      if((*itemindexes)[i] == -1) 
+      {
+          msSetError(MS_OGRERR, 
+                     (char*)CPLSPrintf("Invalid Field name: %s", items[i]), 
+                     "msOGRGetValueList()");
+          return(NULL);
+      }
     }
   }
 
@@ -423,10 +432,11 @@ int msOGRLayerOpen(layerObj *layer, char *shapepath)
   OGRDataSource *poDS;
   OGRLayer    *poLayer;
 
-  params = split(layer->connection, ',', &numparams);
-  if(!params || numparams < 1) 
+  if(layer->connection==NULL || 
+     (params = split(layer->connection, ',', &numparams))==NULL || 
+     numparams < 1) 
   {
-      msSetError(MS_MEMERR, "Error spliting OGR connection information.", 
+      msSetError(MS_OGRERR, "Error parsing OGR connection information.", 
                  "msOGRLayerOpen()");
       return(MS_FAILURE);
   }
@@ -639,7 +649,10 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape,
       {
           nStatus = MS_FAILURE; // Error message already produced.
       }
-      shape->type = layer->type;
+      if (layer->type == MS_POLYLINE)
+          shape->type = MS_LINE;
+      else
+          shape->type = layer->type;
       break;
     default:
       msSetError(MS_MISCERR, "Unknown or unsupported layer type.", 

@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.12  2001/02/23 21:58:00  dan
+ * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
+ *
  * Revision 1.11  2000/11/01 16:31:07  dan
  * Add missing functions (in sync with mapscript).
  *
@@ -157,8 +160,8 @@ gdImagePtr mapObj_draw(mapObj* self) {
     return msDrawMap(self);
   }
 
-gdImagePtr mapObj_drawQueryMap(mapObj* self, queryResultObj *results) {
-    return msDrawQueryMap(self, results);
+gdImagePtr mapObj_drawQueryMap(mapObj* self) {
+    return msDrawQueryMap(self);
   }
 
 gdImagePtr mapObj_drawLegend(mapObj* self) {
@@ -194,6 +197,7 @@ labelCacheMemberObj *mapObj_nextLabel(mapObj* self) {
       return NULL;	
   }
 
+#ifdef __TODO35__
 queryResultObj *mapObj_queryUsingPoint(mapObj* self, pointObj *point, 
                                        int mode, double buffer) {
     return msQueryUsingPoint(self, NULL, mode, *point, buffer);
@@ -210,6 +214,7 @@ int mapObj_queryUsingFeatures(mapObj* self, queryResultObj *results) {
 queryResultObj *mapObj_queryUsingShape(mapObj *map, shapeObj *shape) {
     return msQueryUsingShape(map, NULL, shape);
   }
+#endif
 
 int mapObj_setProjection(mapObj* self, char *string) {
     return(loadProjectionString(&(self->projection), string));
@@ -219,57 +224,6 @@ int mapObj_save(mapObj* self, char *filename) {
     return msSaveMap(self, filename);
   }
 
-/**********************************************************************
- * class extensions for queryResultObj
- **********************************************************************/
-queryResultObj *queryResultObj_new(char *filename) {
-    return msLoadQuery(filename);
-  }
-
-void queryResultObj_destroy(queryResultObj *self) {
-    if(self) msFreeQueryResults(self);
-  }
-
-int queryResultObj_save(queryResultObj *self, char *filename) {
-    return msSaveQuery(self, filename);
-  }
-
-shapeResultObj queryResultObj_next(queryResultObj *self) {    
-    int i, j;
-    shapeResultObj result;	
-
-    result.tile = -1;
-
-    for(i=self->currentlayer; i<self->numlayers; i++) {
-      for(j=self->currentshape; j<self->layers[i].numshapes; j++) {
-	if(msGetBit(self->layers[i].status,j)) {
-
-	  self->currentlayer = i;     // defines where to start searching on
-	  self->currentshape = j + 1; // next call to next() for this result set
-
-	  result.layer = i;
-	  result.shape = j;
-	  result.query = self->layers[i].index[j];
-
-          return result;
-        }
-      }
-    }
-
-    result.layer = -1; // no more results
-    result.shape = -1;
-    result.query = -1;
-
-    return result;
-  }
-
-void queryResultObj_rewind(queryResultObj *self) {
-    if (self) {
-        self->currentlayer = 0;
-        self->currenttile = 0;
-        self->currentshape = 0;
-    }
-}
 
 /**********************************************************************
  * class extensions for layerObj, always within the context of a map
@@ -300,16 +254,22 @@ classObj *layerObj_getClass(layerObj *self, int i) { // returns an EXISTING clas
 
 int layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img) {
     if(self->features) {
+#ifdef __TODO35__
       return msDrawInlineLayer(map, self, img);
+#else
+      // ????
+      return msDrawLayer(map, self, img);
+#endif
     } else {
       if(self->type == MS_RASTER) {
         return msDrawRasterLayer(map, self, img);
       } else {
-	return msDrawShapefileLayer(map, self, img, NULL);
+	return msDrawLayer(map, self, img);
       }
     }
   }
 
+#ifdef __TODO35__
 queryResultObj *layerObj_queryUsingPoint(layerObj *self, mapObj *map, 
                                          pointObj *point, int mode, 
                                          double buffer) {
@@ -330,6 +290,8 @@ queryResultObj *layerObj_queryUsingShape(layerObj *self, mapObj *map,
                                          shapeObj *shape) {
     return msQueryUsingShape(map, self->name, shape);
   }
+#endif
+
 int layerObj_setProjection(layerObj *self, char *string) {
     return(loadProjectionString(&(self->projection), string));
   }
@@ -340,10 +302,11 @@ int layerObj_addFeature(layerObj *self, shapeObj *shape) {
     else
       return 0;
   }
-
+#ifdef __TODO35__
 int layerObj_classify(layerObj *self, char *string) {
     return msGetClassIndex(self, string);
   }
+#endif
 
 /**********************************************************************
  * class extensions for classObj, always within the context of a layer
@@ -373,30 +336,6 @@ int classObj_setText(classObj *self, layerObj *layer, char *string) {
   }
 
 /**********************************************************************
- * class extensions for queryObj, always within the context of a layer
- **********************************************************************/
-queryObj *queryObj_new(layerObj *layer) {
-    if(layer->numqueries == MS_MAXQUERIES) /* no room */
-      return NULL;
-
-    if(initQuery(&(layer->query[layer->numqueries])) == -1)
-      return NULL;
-
-    layer->numqueries++;
-
-    return &(layer->query[layer->numqueries-1]);
-  }
-
-void queryObj_destroy(queryObj *self) {
-    return; // do nothing, map deconstrutor takes care of it all
-  }
-
-int queryObj_setExpression(queryObj *self, char *string) {    
-    return loadExpressionString(&self->expression, string);
-  }
-
-
-/**********************************************************************
  * class extensions for pointObj, useful many places
  **********************************************************************/
 pointObj *pointObj_new() {
@@ -408,8 +347,8 @@ void pointObj_destroy(pointObj *self) {
   }
 
 int pointObj_draw(pointObj *self, mapObj *map, layerObj *layer, 
-                  gdImagePtr img, char *class_string, char *label_string) {
-    return msDrawPoint(map, layer, self, img, class_string, label_string);
+                  gdImagePtr img, int class_index, char *label_string) {
+    return msDrawPoint(map, layer, self, img, class_index, label_string);
   }
 
 double pointObj_distanceToPoint(pointObj *self, pointObj *point) {
@@ -511,12 +450,12 @@ lineObj *shapeObj_get(shapeObj *self, int i) {
 int shapeObj_add(shapeObj *self, lineObj *line) {
     return msAddLine(self, line);
   }
-
+#ifdef __TODO35__
 int shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer, 
-                  gdImagePtr img, char *class_string, char *label_string) {
-    return msDrawShape(map, layer, self, img, class_string, label_string);
+                  gdImagePtr img, int class_index, char *label_string) {
+    return msDrawShape(map, layer, self, img, class_index, label_string);
   }
-
+#endif
 int shapeObj_contains(shapeObj *self, pointObj *point) {
     if(self->type == MS_POLYGON)
       return msIntersectPointPolygon(point, self);
@@ -568,19 +507,21 @@ double rectObj_fit(rectObj *self, int width, int height) {
     return  msAdjustExtent(self, width, height);
   } 
 
+#ifdef __TODO35__
 int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
-                 gdImagePtr img, char *class_string, char *label_string) {
+                 gdImagePtr img, int class_index, char *label_string) {
     shapeObj shape;
 
     msInitShape(&shape);
     msRect2Polygon(*self, &shape);
-    msDrawShape(map, layer, &shape, img, class_string, label_string);
+    msDrawShape(map, layer, &shape, img, class_index, label_string);
     msFreeShape(&shape);
     
     return 0;
   }
+#endif
 
-
+#ifdef __TODO35__
 /**********************************************************************
  * class extensions for shapefileObj
  **********************************************************************/
@@ -643,3 +584,4 @@ int shapefileObj_add(shapefileObj *self, shapeObj *shape) {
     return SHPWriteShape(self->hSHP, shape);	
   }	
 
+#endif // __TODO35__

@@ -100,7 +100,6 @@ Very important note: Constant names and class member variable names are
    int          units (map units type)
    double 	scale
    string 	shapepath
-   string 	tile
    int    	keysizex
    int    	keysizey
    int    	keyspacingx
@@ -265,8 +264,6 @@ Very important note: Constant names and class member variable names are
  Members:
    int    numclasses  (read-only)
    int    index       (read-only)
-   string queryitem   (read-only)
-   string numqueries  (read-only)
    int    status
    string classitem
    string name
@@ -561,79 +558,6 @@ Constructor:
         Set red, green, blue values.
 
 
- QueryResultObj Class:
- ---------------------
-
- Constructor:
-
-   There is no public constructor, instances of QueryResultObj objects are 
-   always returned by the MapObj and LayerObj query methods.
-
- Members:
-
-   int    numresults      (read-only)
-   int    numquerylayers  (read-only)
-   int    numlayers       (read-only)
-   int    currentlayer
-   int    currentshape
-   int    currenttile
-
- Methods:
-
-   int set(string property_name, new_value)
-        Set object property to a new value. Returns -1 on error.
-
-   ShapeResultObj next()
-        Returns the next result record in a ShapeResultObj.
-        The last ShapeResultObj will have all its members set to -1.
-
-   void rewind()
-        Move the cursor back to the first result record.
-        This is the same as setting currentlayer=currentshape=currenttile=0
-
-   void free()
-        Destroys resources used by a QueryResultObj.
-
-
-QueryObj Class:
- ---------------------
-
- Constructor:
-
-   QueryObj ms_newQueryObj(layerObj layer)
-
- Members:
-
-   string    template
-
- Methods:
-
-   int set(string property_name, new_value)
-        Set object property to a new value. Returns -1 on error.
-
-   int setexpression(string expression)
-        Set the expression string for the query object.
-     
- ShapeResultObj Class:
- ---------------------
-
- Constructor:
-
-   There is no public constructor, instances of ShapeResultObj objects are 
-   always returned by QueryResultObj methods.
-
- Members:
-
-   int    layer      (read-only)
-   int    tile       (read-only)
-   int    shape      (read-only)
-   int    query      (read-only)
-
- Methods:
-
-    No methods.
-
-
  PointObj Class:
  ---------------
 
@@ -652,8 +576,8 @@ QueryObj Class:
         Set X,Y coordinate values.
 
    int draw(mapObj map, layerObj layer, imageObj img, 
-            string class_name, string text)
-        Draws the individual point using layer.  The class_name is used
+            int class_index, string text)
+        Draws the individual point using layer.  The class_index is used
         to classify the point based on the classes defined for the layer.
         The text string is used to annotate the point.
         Returns 0 on success, -1 on error.
@@ -720,8 +644,8 @@ QueryObj Class:
         during the life of the shapeObj that contains the point.
 
    int draw(mapObj map, layerObj layer, imageObj img, 
-            string class_name, string text)
-        Draws the individual shape using layer.  The class_name is used
+            int class_index, string text)
+        Draws the individual shape using layer.  The class_index is used
         to classify the shape based on the classes defined for the layer.
         The text string is used to annotate the shape.
         Returns 0 on success, -1 on error.
@@ -762,8 +686,8 @@ QueryObj Class:
 	Set the rectangle extents.
 
    int draw(mapObj map, layerObj layer, imageObj img, 
-            string class_name, string text)
-        Draws the individual rectangle using layer.  The class_name is used
+            int class_index, string text)
+        Draws the individual rectangle using layer.  The class_index is used
         to classify the rectangle based on the classes defined for the layer.
         The text string is used to annotate the rectangle.
         Returns 0 on success, -1 on error.

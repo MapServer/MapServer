@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/02/23 21:58:00  dan
+ * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
+ *
  * Revision 1.4  2000/11/01 16:31:08  dan
  * Add missing functions (in sync with mapscript).
  *
@@ -74,7 +77,9 @@ int             mapObj_getSymbolByName(mapObj* self, int type, char *name);
 void            mapObj_prepareQuery(mapObj* self);
 gdImagePtr      mapObj_prepareImage(mapObj* self);
 gdImagePtr      mapObj_draw(mapObj* self);
+#ifdef __TODO35__
 gdImagePtr      mapObj_drawQueryMap(mapObj* self, queryResultObj *results);
+#endif
 gdImagePtr      mapObj_drawLegend(mapObj* self);
 gdImagePtr      mapObj_drawScalebar(mapObj* self);
 gdImagePtr      mapObj_drawReferenceMap(mapObj* self);
@@ -82,28 +87,23 @@ int             mapObj_embedScalebar(mapObj* self, gdImagePtr img);
 int             mapObj_embedLegend(mapObj* self, gdImagePtr img);
 int             mapObj_drawLabelCache(mapObj* self, gdImagePtr img);
 labelCacheMemberObj *mapObj_nextLabel(mapObj* self);
+#ifdef __TODO35__
 queryResultObj *mapObj_queryUsingPoint(mapObj* self, pointObj *point, 
                                        int mode, double buffer);
 queryResultObj *mapObj_queryUsingRect(mapObj* self, rectObj *rect);
 int             mapObj_queryUsingFeatures(mapObj* self, 
                                           queryResultObj *results);
 queryResultObj *mapObj_queryUsingShape(mapObj *map, shapeObj *shape);
+#endif
 int             mapObj_setProjection(mapObj* self, char *string);
 int             mapObj_save(mapObj* self, char *filename);
-
-
-queryResultObj *queryResultObj_new(char *filename);
-void            queryResultObj_destroy(queryResultObj *self);
-void            queryResultObj_free(queryResultObj *self);
-int             queryResultObj_save(queryResultObj *self, char *filename);
-shapeResultObj  queryResultObj_next(queryResultObj *self);
-void            queryResultObj_rewind(queryResultObj *self);
 
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 classObj       *layerObj_getClass(layerObj *self, int i);
 int             layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img);
+#ifdef __TODO35__
 queryResultObj *layerObj_queryUsingPoint(layerObj *self, mapObj *map, 
                                          pointObj *point, int mode, 
                                          double buffer);
@@ -113,6 +113,7 @@ int             layerObj_queryUsingFeatures(layerObj *self, mapObj *map,
                                             queryResultObj *results);
 queryResultObj *layerObj_queryUsingShape(layerObj *self, mapObj *map, 
                                          shapeObj *shape);
+#endif
 int             layerObj_setProjection(layerObj *self, char *string);
 int             layerObj_addFeature(layerObj *self, shapeObj *shape);
 int             layerObj_classify(layerObj *self, char *string);
@@ -124,14 +125,10 @@ int             classObj_setExpression(classObj *self, char *string);
 int             classObj_setText(classObj *self,layerObj *layer,char *string);
 
 
-queryObj       *queryObj_new(layerObj *layer);
-void            queryObj_destroy(queryObj *self);
-int             queryObj_setExpression(queryObj *self, char *string);
-
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);
 int             pointObj_draw(pointObj *self, mapObj *map, layerObj *layer, 
-                              gdImagePtr img, char *class_string, 
+                              gdImagePtr img, int class_index, 
                               char *label_string);
 double          pointObj_distanceToPoint(pointObj *self, pointObj *point);
 double          pointObj_distanceToLine(pointObj *self, pointObj *a, 
@@ -150,7 +147,7 @@ void            shapeObj_destroy(shapeObj *self);
 lineObj        *shapeObj_get(shapeObj *self, int i);
 int             shapeObj_add(shapeObj *self, lineObj *line);
 int             shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer, 
-                              gdImagePtr img, char *class_string, 
+                              gdImagePtr img, int class_index, 
                               char *label_string);
 int             shapeObj_contains(shapeObj *self, pointObj *point);
 int             shapeObj_intersects(shapeObj *self, shapeObj *shape);
@@ -159,7 +156,7 @@ rectObj        *rectObj_new();
 void            rectObj_destroy(rectObj *self);
 double          rectObj_fit(rectObj *self, int width, int height);
 int             rectObj_draw(rectObj *self, mapObj *map, layerObj *layer, 
-                             gdImagePtr img, char *class_string, 
+                             gdImagePtr img, int class_index, 
                              char *label_string);
 
 
