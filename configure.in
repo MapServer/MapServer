@@ -1112,6 +1112,10 @@ AC_SUBST(ORACLESPATIAL_ENABLED,$ORACLESPATIAL_ENABLED)
 AC_SUBST(ORACLESPATIAL_INC,$ORACLESPATIAL_INC)
 AC_SUBST(ORACLESPATIAL_LIB,$ORACLESPATIAL_LIB)
 
+ALL_ENABLED="$ORACLESPATIAL_ENABLED $ALL_ENABLED"
+ALL_INC="$ORACLESPATIAL_INC $ALL_INC"
+ALL_LIB="$ORACLESPATIAL_LIB $ALL_LIB"
+
 dnl ---------------------------------------------------------------------------
 dnl Try to find out if MING FLASH support requested.
 dnl ---------------------------------------------------------------------------
@@ -1142,6 +1146,9 @@ AC_SUBST(MING_ENABLED,$MING_ENABLED)
 AC_SUBST(MING_INC,$MING_INC)
 AC_SUBST(MING_LIB,$MING_LIB)
 
+ALL_ENABLED="$MING_ENABLED $ALL_ENABLED"
+ALL_INC="$MING_INC $ALL_INC"
+ALL_LIB="$MING_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl WMS Server Compatibility - Enabled by default if PROJ.4 is there.
