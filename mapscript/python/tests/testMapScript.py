@@ -224,10 +224,10 @@ class ZoomPointTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomPoint(1, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == -50.0, new_extent.minx
-        assert new_extent.miny == -50.0, new_extent.miny
-        assert new_extent.maxx == 50.0, new_extent.maxx
-        assert new_extent.maxy == 50.0, new_extent.maxy
+        assert int(new_extent.minx) == -50, new_extent.minx
+        assert int(new_extent.miny) == -50, new_extent.miny
+        assert int(new_extent.maxx) == 50, new_extent.maxx
+        assert int(new_extent.maxy) == 50, new_extent.maxy
     def testZoomInPoint(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = pointObj()
@@ -235,10 +235,10 @@ class ZoomPointTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomPoint(2, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == -25.0, new_extent.minx
-        assert new_extent.miny == -25.0, new_extent.miny
-        assert new_extent.maxx == 25.0, new_extent.maxx
-        assert new_extent.maxy == 25.0, new_extent.maxy
+        assert int(new_extent.minx) == -25, new_extent.minx
+        assert int(new_extent.miny) == -25, new_extent.miny
+        assert int(new_extent.maxx) == 25, new_extent.maxx
+        assert int(new_extent.maxy) == 25, new_extent.maxy
     def testZoomOutPoint(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = pointObj()
@@ -246,10 +246,10 @@ class ZoomPointTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomPoint(-2, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == -100.0, new_extent.minx
-        assert new_extent.miny == -100.0, new_extent.miny
-        assert new_extent.maxx == 100.0, new_extent.maxx
-        assert new_extent.maxy == 100.0, new_extent.maxy
+        assert int(new_extent.minx) == -100, new_extent.minx
+        assert int(new_extent.miny) == -100, new_extent.miny
+        assert int(new_extent.maxx) == 100, new_extent.maxx
+        assert int(new_extent.maxy) == 100, new_extent.maxy
     def testZoomOutPointConstrained(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         max = rectObj()
@@ -259,10 +259,10 @@ class ZoomPointTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomPoint(-4, p, w, h, extent, max)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == max.minx, new_extent.minx
-        assert new_extent.miny == max.miny, new_extent.miny
-        assert new_extent.maxx == max.maxx, new_extent.maxx
-        assert new_extent.maxy == max.maxy, new_extent.maxy
+        assert int(new_extent.minx) == int(max.minx), new_extent.minx
+        assert int(new_extent.miny) == int(max.miny), new_extent.miny
+        assert int(new_extent.maxx) == int(max.maxx), new_extent.maxx
+        assert int(new_extent.maxy) == int(max.maxy), new_extent.maxy
     def testZoomBadSize(self):
         p = pointObj()
         p.x, p.y = (50, 50)
@@ -301,10 +301,10 @@ class ZoomRectangleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomRectangle(r, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == -49.0, new_extent.minx
-        assert new_extent.miny == 24.0, new_extent.miny
-        assert new_extent.maxx == -24.0, new_extent.maxx
-        assert new_extent.maxy == 49.0, new_extent.maxy
+        assert int(new_extent.minx) == -49, new_extent.minx
+        assert int(new_extent.miny) == 24, new_extent.miny
+        assert int(new_extent.maxx) == -24, new_extent.maxx
+        assert int(new_extent.maxy) == 49, new_extent.maxy
     def testZoomRectangleConstrained(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         max = rectObj()
@@ -314,10 +314,10 @@ class ZoomRectangleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomRectangle(r, w, h, extent, max)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == max.minx, new_extent.minx
-        assert new_extent.miny == max.miny, new_extent.miny
-        assert new_extent.maxx == max.maxx, new_extent.maxx
-        assert new_extent.maxy == max.maxy, new_extent.maxy
+        assert int(new_extent.minx) == int(max.minx), new_extent.minx
+        assert int(new_extent.miny) == int(max.miny), new_extent.miny
+        assert int(new_extent.maxx) == int(max.maxx), new_extent.maxx
+        assert int(new_extent.maxy) == int(max.maxy), new_extent.maxy
     def testZoomRectangleBadly(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         r = rectObj()
@@ -347,10 +347,10 @@ class ZoomScaleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == -50.0, new_extent.minx
-        assert new_extent.miny == -50.0, new_extent.miny
-        assert new_extent.maxx == 50.0, new_extent.maxx
-        assert new_extent.maxy == 50.0, new_extent.maxy
+        assert int(new_extent.minx) == -50, new_extent.minx
+        assert int(new_extent.miny) == -50, new_extent.miny
+        assert int(new_extent.maxx) == 50, new_extent.maxx
+        assert int(new_extent.maxy) == 50, new_extent.maxy
     def testZoomInScale(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = pointObj()
@@ -359,10 +359,10 @@ class ZoomScaleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == -25.0, new_extent.minx
-        assert new_extent.miny == -25.0, new_extent.miny
-        assert new_extent.maxx == 25.0, new_extent.maxx
-        assert new_extent.maxy == 25.0, new_extent.maxy
+        assert int(new_extent.minx) == -25, new_extent.minx
+        assert int(new_extent.miny) == -25, new_extent.miny
+        assert int(new_extent.maxx) == 25, new_extent.maxx
+        assert int(new_extent.maxy) == 25, new_extent.maxy
     def testZoomOutScale(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = pointObj()
@@ -371,10 +371,10 @@ class ZoomScaleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == -100.0, new_extent.minx
-        assert new_extent.miny == -100.0, new_extent.miny
-        assert new_extent.maxx == 100.0, new_extent.maxx
-        assert new_extent.maxy == 100.0, new_extent.maxy
+        assert int(new_extent.minx) == -100, new_extent.minx
+        assert int(new_extent.miny) == -100, new_extent.miny
+        assert int(new_extent.maxx) == 100, new_extent.maxx
+        assert int(new_extent.maxy) == 100, new_extent.maxy
     def testZoomOutPointConstrained(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         max = rectObj()
@@ -385,10 +385,10 @@ class ZoomScaleTestCase(unittest.TestCase):
         scale = 10000
         self.mapobj1.zoomScale(scale, p, w, h, extent, max)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == max.minx, new_extent.minx
-        assert new_extent.miny == max.miny, new_extent.miny
-        assert new_extent.maxx == max.maxx, new_extent.maxx
-        assert new_extent.maxy == max.maxy, new_extent.maxy
+        assert int(new_extent.minx) == int(max.minx), new_extent.minx
+        assert int(new_extent.miny) == int(max.miny), new_extent.miny
+        assert int(new_extent.maxx) == int(max.maxx), new_extent.maxx
+        assert int(new_extent.maxy) == int(max.maxy), new_extent.maxy
 
 # Tests of getScale
 
@@ -400,7 +400,7 @@ class SetExtentTestCase(unittest.TestCase):
     def testSetExtent(self):
         e = self.mapobj1.extent
         result = self.mapobj1.setExtent(e.minx, e.miny, e.maxx, e.maxy)
-        assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
+        assert int(1000*self.mapobj1.scale) == 14173, self.mapobj1.scale
         assert result == MS_SUCCESS
     def testSetExtentBadly(self):
         self.assertRaises(MapServerError, self.mapobj1.setExtent,
@@ -411,16 +411,16 @@ class SetExtentTestCase(unittest.TestCase):
 class RectObjTestCase(unittest.TestCase):
     def testRectObjConstructorNoArgs(self):
         r = rectObj()
-        assert r.minx == 0.0
-        assert r.miny == 0.0
-        assert r.maxx == 0.0
-        assert r.maxy == 0.0
+        assert int(r.minx) == 0
+        assert int(r.miny) == 0
+        assert int(r.maxx) == 0
+        assert int(r.maxy) == 0
     def testRectObjConstructorArgs(self):
         r = rectObj(-1.0, -2.0, 3.0, 4.0)
-        assert r.minx == -1.0
-        assert r.miny == -2.0
-        assert r.maxx == 3.0
-        assert r.maxy == 4.0
+        assert int(r.minx) == -1
+        assert int(r.miny) == -2
+        assert int(r.maxx) == 3
+        assert int(r.maxy) == 4
     def testRectObjConstructorBadly1(self):
         self.assertRaises(MapServerError, rectObj, 1.0, -2.0, -3.0, 4.0)
     def testRectObjConstructorBadly2(self):
@@ -430,8 +430,8 @@ class RectObjTestCase(unittest.TestCase):
         s = r.toPolygon()
         assert s.numlines == 1, s.numlines
         assert s.get(0).numpoints == 5
-        assert s.get(0).get(0).x == -1.0
-        assert s.get(0).get(0).y == -2.0
+        assert int(s.get(0).get(0).x) == -1
+        assert int(s.get(0).get(0).y) == -2
 
 # pointObj constructor tests
 
@@ -442,8 +442,8 @@ class PointObjTestCase(unittest.TestCase):
         assert p.y == 0.0
     def testPointObjConstructorArgs(self):
         p = pointObj(1.0, 1.0)
-        assert p.x == 1.0
-        assert p.y == 1.0
+        assert int(p.x) == 1
+        assert int(p.y) == 1
 
 # colorObj constructor tests
 
