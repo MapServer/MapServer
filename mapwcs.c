@@ -151,32 +151,51 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
 
 static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
 {
-  char *script_url=NULL, *script_url_encoded;
+  // start the services section, only need the full start tag if this is the only section requested
+  if(!params->section) 
+    printf("<Service>\n");
+  else
+    printf("<Service\n"
+           "   version=\"%s\" \n"
+           "   updateSequence=\"0\" \n"
+           "   xmlns=\"http://www.opengis.net/wcs\" \n"
+           "   xmlns:ogc=\"http://www.opengis.net/ogc\" \n"
+           "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+           "   xsi:schemaLocation=\"http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
 
-  // we need this server's onlineresource.
-  if((script_url=msOWSGetOnlineResource(map, "wcs_onlineresource")) == NULL || (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
-    return msWCSException(map, params->version);
+  // TODO: add MetadataLink (optional)
+  
+  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "description", OWS_NOERR, "  <Description>%s</Description>\n", NULL);
+  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "name", OWS_NOERR, "  <Name>%s</Name>\n", "MapServer WCS");
 
-  // start the services section
-  printf("<Service>\n");
-  printf("  <Name>MapServer WCS</Name>\n");
+  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "label", OWS_WARN, "  <Label>%s</Label>\n", NULL);
+    
+  msOWSPrintMetadataList(stdout, map->web.metadata, "CO", "keywordlist", "  <Keywords>\n", "  </Keywords>\n", "    %s\n", NULL);
 
-  printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+  // TODO: add ResponsibleParty (optional)
+
+  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "fees", OWS_NOERR, "  <Fees>%s</Fees>\n", "NONE");
+  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "accessconstraints", OWS_NOERR, "  <AccessConstraints>%s</AccessConstraints>\n", "NONE"); // TODO: should be a list
 
   // done
   printf("</Service>\n\n");
-
-  // clean up
-  free(script_url);
-  free(script_url_encoded);
 
   return MS_SUCCESS;
 }
 
 static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params)
 {
-  // start the capabilties section
-  printf("<Capability>\n");
+  // start the capabilties section, only need the full start tag if this is the only section requested
+  if(!params->section) 
+    printf("<Capability>\n");
+  else
+    printf("<Capability\n"
+           "   version=\"%s\" \n"
+           "   updateSequence=\"0\" \n"
+           "   xmlns=\"http://www.opengis.net/wcs\" \n"
+           "   xmlns:ogc=\"http://www.opengis.net/ogc\" \n"
+           "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+           "   xsi:schemaLocation=\"http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
 
   // done
   printf("</Capability>\n");
@@ -197,26 +216,26 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
   // print common capability elements 
   msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wcs_encoding", OWS_NOERR, "<?xml version='1.0' encoding=\"%s\" ?>\n", "ISO-8859-1");
 
-  printf("<WCS_Capabilities\n"
-         "   version=\"%s\" \n"
-         "   updateSequence=\"0\" \n"
-         "   xmlns=\"http://www.opengis.net/wcs\" \n"
-         "   xmlns:ogc=\"http://www.opengis.net/ogc\" \n"
-         "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
-         "   xsi:schemaLocation=\"http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
+  if(!params->section) printf("<WCS_Capabilities\n"
+                              "   version=\"%s\" \n"
+                              "   updateSequence=\"0\" \n"
+                              "   xmlns=\"http://www.opengis.net/wcs\" \n"
+                              "   xmlns:ogc=\"http://www.opengis.net/ogc\" \n"
+                              "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+                              "   xsi:schemaLocation=\"http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
          
   // print the various capability sections
-  if(!params->section || strcasecmp(params->section, "Service"))
+  if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Service") == 0)
     msWCSGetCapabilities_Service(map, params);
 
-  if(!params->section || strcasecmp(params->section, "Capability"))
+  if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/Capability")  == 0)
     msWCSGetCapabilities_Capability(map, params);
 
-  if(!params->section || strcasecmp(params->section, "ContentMetadata"))
+  if(!params->section || strcasecmp(params->section, "/WCS_Capabilities/ContentMetadata")  == 0)
     msWCSGetCapabilities_ContentMetadata(map, params);
 
   // done
-  printf("</WCS_Capabilities>\n");
+  if(!params->section) printf("</WCS_Capabilities>\n");
 
   // clean up
   // msWCSFreeParams(params);
