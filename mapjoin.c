@@ -246,7 +246,7 @@ typedef struct {
   int fromindex, toindex;
   char *target;
   char ***rows;
-  int numrows, numcols;
+  int numrows;
   int nextrow;
 } msCSVJoinInfo;
 
@@ -294,7 +294,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   // load the rows
   i = 0;
   while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {    
-    joininfo->rows[i] = split(buffer, ',', &(joininfo->numcols));
+    joininfo->rows[i] = split(buffer, ',', &(join->numitems));
     i++;
   }
   fclose(stream);
@@ -314,17 +314,17 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
 
   // get "to" index (for now the user tells us which column, 1..n)
   joininfo->toindex = atoi(join->to) - 1;
-  if(joininfo->toindex < 0 || joininfo->toindex > joininfo->numcols) {
+  if(joininfo->toindex < 0 || joininfo->toindex > join->numitems) {
     msSetError(MS_JOINERR, "Invalid column index %s.", "msCSVJoinConnect()", join->to); 
     return(MS_FAILURE);
   }
 
   // store away the column names (1..n)
-  if((join->items = (char **) malloc(sizeof(char *)*joininfo->numcols)) == NULL) {
+  if((join->items = (char **) malloc(sizeof(char *)*join->numitems)) == NULL) {
     msSetError(MS_MEMERR, "Error allocating space for join item names.", "msCSVJoinConnect()");
     return(MS_FAILURE);
   }
-  for(i=0; i<joininfo->numcols; i++) {
+  for(i=0; i<join->numitems; i++) {
     join->items[i] = (char *) malloc(8); // plenty of space
     sprintf(join->items[i], "%d", i+1);
   }
@@ -379,7 +379,7 @@ int msCSVJoinNext(joinObj *join)
     if(strcmp(joininfo->target, joininfo->rows[i][joininfo->toindex]) == 0) break;
   }  
 
-  if((join->values = (char ** )malloc(sizeof(char *)*joininfo->numcols)) == NULL) {
+  if((join->values = (char ** )malloc(sizeof(char *)*join->numitems)) == NULL) {
     msSetError(MS_MEMERR, NULL, "msCSVJoinNext()");
     return(MS_FAILURE);
   }
@@ -392,7 +392,7 @@ int msCSVJoinNext(joinObj *join)
     return(MS_DONE);
   } 
 
-  for(j=0; j<joininfo->numcols; j++)
+  for(j=0; j<join->numitems; j++)
     join->values[j] = strdup(joininfo->rows[i][j]);
 
   joininfo->nextrow = i+1; // so we know where to start looking next time through
@@ -408,7 +408,7 @@ int msCSVJoinClose(joinObj *join)
   if(!joininfo) return(MS_SUCCESS); // already closed
 
   for(i=0; i<joininfo->numrows; i++)
-    msFreeCharArray(joininfo->rows[i], joininfo->numcols);
+    msFreeCharArray(joininfo->rows[i], join->numitems);
   free(joininfo->rows);
   if(joininfo->target) free(joininfo->target);
   free(joininfo);

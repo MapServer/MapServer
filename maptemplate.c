@@ -1862,13 +1862,12 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
 
   msJoinPrepare(join, &(msObj->ResultShape)); // execute the join
   while(msJoinNext(join) == MS_SUCCESS) {
-
     // First time through, deal with the header (if necessary) and open the main template. We only
     // want to do this if there are joined records.
     if(records == MS_FALSE) { 
       if(join->header != NULL) {
         if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->header), "r")) == NULL) {
-          msSetError(MS_IOERR, "Error while opening join header file %s.", "returnOneToManyJoin()", join->header);
+          msSetError(MS_IOERR, "Error while opening join header file %s.", "processOneToManyJoin()", join->header);
           return(NULL);
         }
 
@@ -1879,7 +1878,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
       }
 
       if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->template), "r")) == NULL) {
-        msSetError(MS_IOERR, "Error while opening join template file %s.", "returnOneToManyJoin()", join->template);
+        msSetError(MS_IOERR, "Error while opening join template file %s.", "processOneToManyJoin()", join->template);
         return(NULL);
       }      
       
@@ -1901,7 +1900,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
 
   if(records==MS_TRUE && join->footer) {    
     if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->footer), "r")) == NULL) {
-      msSetError(MS_IOERR, "Error while opening join footer file %s.", "returnOneToManyJoin()", join->footer);
+      msSetError(MS_IOERR, "Error while opening join footer file %s.", "processOneToManyJoin()", join->footer);
       return(NULL);
     }
 
@@ -2289,8 +2288,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     
     for(i=0; i<msObj->ResultLayer->numjoins; i++) {
       if(msObj->ResultLayer->joins[i].values) { // join has data
-        for(j=0;j<msObj->ResultLayer->joins[i].numitems;j++) {	 
-
+        for(j=0;j<msObj->ResultLayer->joins[i].numitems;j++) {
           // by default let's encode attributes for HTML presentation
           sprintf(substr, "[%s_%s]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);        
           if(strstr(outstr, substr) != NULL) {
