@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.21  2002/11/20 23:57:55  julien
+ * Remove duplicated code of style and format and create a wms_name
+ *
  * Revision 1.20  2002/11/20 22:17:09  julien
  * Replace fatal error by msDebug
  *
@@ -334,7 +337,7 @@ int msLoadMapContext(mapObj *map, char *filename)
 #if defined(USE_WMS_LYR)
   char *pszWholeText;
   char *pszValue, *pszValue1, *pszValue2, *pszValue3, *pszValue4;
-  char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion;
+  char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
   char szPath[MS_MAXPATHLEN];
@@ -577,14 +580,22 @@ int msLoadMapContext(mapObj *map, char *filename)
                   layer->template = strdup("ttt");
 
               // Others
-              if(msGetMapContextXMLStringValue(psLayer, "Name", 
-                                             &(layer->name)) == MS_FAILURE)
+              pszValue = (char*)CPLGetXMLValue(psLayer, "Name", NULL);
+              if(pszValue != NULL)
               {
-                  CPLDestroyXMLNode(psRoot);
-                  msSetError(MS_MAPCONTEXTERR, 
-                             "Mandatory data Layer.Name missing in %s.",
-                             "msLoadMapContext()", filename);
-                  return MS_FAILURE;
+                  msInsertHashTable( layer->metadata, "wms_name", pszValue );
+
+                  pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+10));
+                  sprintf(pszName, "l%d:%s", layer->index, pszValue);
+                  layer->name = strdup(pszName);
+                  free(pszName);
+              }
+              else
+              {
+                  pszName = (char*)malloc(sizeof(char)*10);
+                  sprintf(pszName, "l%d:", layer->index);
+                  layer->name = strdup(pszName);
+                  free(pszName);
               }
 
               if(msGetMapContextXMLHashValue(psLayer, "Title", 
@@ -678,53 +689,16 @@ int msLoadMapContext(mapObj *map, char *filename)
               // Format
               if( strcasecmp(pszVersion, "0.1.4") >= 0 )
               {
-                psFormatList = CPLGetXMLNode(psLayer, "FormatList");
-                if(psFormatList != NULL)
-                {
-                  for(psFormat = psFormatList->psChild; 
-                      psFormat != NULL; 
-                      psFormat = psFormat->psNext)
-                  {
-                      if(psFormat->psChild != NULL)
-                      {
-                          if(psFormat->psChild->psNext == NULL)
-                              pszValue = psFormat->psChild->pszValue;
-                          else
-                              pszValue = psFormat->psChild->psNext->pszValue;
-                      }
-                      else
-                          pszValue = NULL;
-
-                      if(pszValue != NULL)
-                      {
-                          // wms_format
-                          pszValue1 = (char*)CPLGetXMLValue(psFormat, 
-                                                            "current", NULL);
-                          if(pszValue1 != NULL)
-                              msInsertHashTable(layer->metadata, 
-                                                "wms_format", pszValue);
-                          // wms_formatlist
-                          pszHash = msLookupHashTable(layer->metadata, 
-                                                      "wms_formatlist");
-                          if(pszHash != NULL)
-                          {
-                              pszValue1 = (char*)malloc(strlen(pszHash)+
-                                                        strlen(pszValue)+2);
-                              sprintf(pszValue1, "%s %s", pszHash, pszValue);
-                              msInsertHashTable(layer->metadata, 
-                                                "wms_formatlist", pszValue1);
-                              free(pszValue1);
-                          }
-                          else
-                              msInsertHashTable(layer->metadata, 
-                                                "wms_formatlist", pszValue);
-                      }
-                  }
-                }
+                  psFormatList = CPLGetXMLNode(psLayer, "FormatList");
               }
               else
               {
-                  for(psFormat = psLayer->psChild; 
+                  psFormatList = psLayer;
+              }
+
+              if(psFormatList != NULL)
+              {
+                  for(psFormat = psFormatList->psChild; 
                       psFormat != NULL; 
                       psFormat = psFormat->psNext)
                   {
@@ -769,14 +743,22 @@ int msLoadMapContext(mapObj *map, char *filename)
               // Style
               if( strcasecmp(pszVersion, "0.1.4") >= 0 )
               {
-                psStyleList = CPLGetXMLNode(psLayer, "StyleList");
-                if(psStyleList != NULL)
-                {
+                  psStyleList = CPLGetXMLNode(psLayer, "StyleList");
+              }
+              else
+              {
+                  psStyleList = psLayer;
+              }
+
+              if(psStyleList != NULL)
+              {
                   nStyle = 0;
                   for(psStyle = psStyleList->psChild; 
                       psStyle != NULL; 
                       psStyle = psStyle->psNext)
                   {
+                    if(strcasecmp(psStyle->pszValue, "Style") == 0)
+                    {
                       pszStyleName =(char*)CPLGetXMLValue(psStyle,"Name",NULL);
                       if(pszStyleName == NULL)
                       {
@@ -847,101 +829,6 @@ int msLoadMapContext(mapObj *map, char *filename)
                                                         "LegendURL.format","");
                           pszValue4=(char*)CPLGetXMLValue(psStyle, 
                                      "LegendURL.OnlineResource.xlink:href","");
-                          msDecodeHTMLEntities(pszValue4);
-                          pszValue = (char*)malloc(strlen(pszValue1)+
-                                                   strlen(pszValue2)+
-                                                   strlen(pszValue3)+
-                                                   strlen(pszValue4)+6);
-                          sprintf(pszValue, "%s %s %s %s", pszValue1,pszValue2,
-                                  pszValue3, pszValue4);
-                          msInsertHashTable(layer->metadata,pszStyle,pszValue);
-                          free(pszStyle);
-                          free(pszValue);
-                      }
-
-                      free(pszStyleName);
-                  }
-                }
-              }
-              else
-              {
-                  nStyle = 0;
-                  for(psStyle = psLayer->psChild; 
-                      psStyle != NULL; 
-                      psStyle = psStyle->psNext)
-                  {
-                    if(strcasecmp(psStyle->pszValue, "Style") == 0)
-                    {
-                      pszStyleName =(char*)CPLGetXMLValue(psStyle,"Name",NULL);
-                      if(pszStyleName == NULL)
-                      {
-                          nStyle++;
-                          pszStyleName = (char*)malloc(15);
-                          sprintf(pszStyleName, "Style{%d}", nStyle);
-                      }
-                      else
-                          pszStyleName = strdup(pszStyleName);
-
-                      // wms_style
-                      pszValue = (char*)CPLGetXMLValue(psStyle,"current",NULL);
-                      if(pszValue != NULL)
-                          msInsertHashTable(layer->metadata, 
-                                            "wms_style", pszStyleName);
-                      // wms_stylelist
-                      pszHash = msLookupHashTable(layer->metadata, 
-                                                  "wms_stylelist");
-                      if(pszHash != NULL)
-                      {
-                          pszValue1 = (char*)malloc(strlen(pszHash)+
-                                                    strlen(pszStyleName)+2);
-                          sprintf(pszValue1, "%s %s", pszHash, pszStyleName);
-                          msInsertHashTable(layer->metadata, 
-                                            "wms_stylelist", pszValue1);
-                          free(pszValue1);
-                      }
-                      else
-                          msInsertHashTable(layer->metadata, 
-                                            "wms_stylelist", pszStyleName);
-
-                      // title
-                      pszValue = (char*)CPLGetXMLValue(psStyle, "Title", NULL);
-                      if(pszValue != NULL)
-                      {
-                          pszStyle = (char*)malloc(strlen(pszStyleName)+20);
-                          sprintf(pszStyle,"wms_style_%s_title",pszStyleName);
-                          msInsertHashTable(layer->metadata,pszStyle,pszValue);
-                          free(pszStyle);
-                      }
-                      else
-                          msInsertHashTable(layer->metadata, pszStyle, 
-                                            layer->name);
-                      // SLD
-                      pszValue = (char*)CPLGetXMLValue(psStyle, 
-                                        "SLD.onlineResource", NULL);
-                      if(pszValue != NULL)
-                      {
-                          pszStyle = (char*)malloc(strlen(pszStyleName)+15);
-                          sprintf(pszStyle, "wms_style_%s_sld", pszStyleName);
-                          msDecodeHTMLEntities(pszStyle);
-                          msInsertHashTable(layer->metadata,pszStyle,pszValue);
-                          free(pszStyle);
-                      }
-                      // LegendURL
-                      pszValue=(char*)CPLGetXMLValue(psStyle,
-                                   "LegendURL.onlineResource",NULL);
-                      if(pszValue != NULL)
-                      {
-                          pszStyle = (char*)malloc(strlen(pszStyleName)+25);
-                          sprintf(pszStyle, "wms_style_%s_legendurl",
-                                  pszStyleName);
-                          pszValue1=(char*)CPLGetXMLValue(psStyle,
-                                                         "LegendURL.width","");
-                          pszValue2=(char*)CPLGetXMLValue(psStyle,
-                                                        "LegendURL.height","");
-                          pszValue3=(char*)CPLGetXMLValue(psStyle,
-                                                        "LegendURL.format","");
-                          pszValue4=(char*)CPLGetXMLValue(psStyle, 
-                                                "LegendURL.onlineResource","");
                           msDecodeHTMLEntities(pszValue4);
                           pszValue = (char*)malloc(strlen(pszValue1)+
                                                    strlen(pszValue2)+
@@ -1144,7 +1031,9 @@ int msSaveMapContext(mapObj *map, char *filename)
           //
           // Layer information
           //
-          fprintf(stream, "      <Name>%s</Name>\n", map->layers[i].name);
+          msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_name",
+                             OWS_WARN, "      <Name>%s</Name>\n", 
+                             map->layers[i].name);
           msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_title",
                              OWS_WARN, "      <Title>%s</Title>\n", 
                              map->layers[i].name);
