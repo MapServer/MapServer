@@ -19,6 +19,8 @@ Current Version (CVS)
 - Fixed problem with WMS GetFeatureInfo when data was reprojected. Was a
   problem with msProjectRect and zero-size search rectangles (bug 794)
 
+- Fixed MIME type of GetStyles response (bug 677)
+
 
 Version 4.2.2 (2004-07-28)
 --------------------------
