@@ -14,7 +14,10 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.5   $Date$
+ * Revision 1.6   $Date$
+ * Fixed SRID mismatch error.
+ *
+ * Revision 1.5   2001/11/21 22:35:58 [CVS-TIME]
  * Added support for 2D circle geometries (gtype/etype/interpretation):
  * - (2003/[?00]3/4)
  *
@@ -465,7 +468,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     sprintf( query_str + strlen(query_str), ", %s", layer->items[i] );
   sprintf( query_str + strlen(query_str), ", %s FROM %s", geom_column_name, table_name );
   if (apply_window)
-    strcat( query_str, " WHERE " );
+    sprintf( query_str + strlen(query_str), " %s_alias WHERE ", table_name );
   if (layer->filter.string != NULL) {
     strcat( query_str, layer->filter.string );
     if (apply_window) strcat( query_str, " AND " );
@@ -473,11 +476,12 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   if (apply_window)
     sprintf( query_str + strlen(query_str),
         "SDO_FILTER( %s, MDSYS.SDO_GEOMETRY("
-          "2003, NULL, NULL,"
+          "2003, %s_alias.%s.sdo_srid, NULL,"
           "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
           "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g) ),"
         "'querytype=window') = 'TRUE'",
-        geom_column_name, rect.minx, rect.miny, rect.maxx, rect.maxy );
+        geom_column_name, table_name, geom_column_name,
+        rect.minx, rect.miny, rect.maxx, rect.maxy );
 
   /* parse and execute SQL query */
   success = TRY( layerinfo,
@@ -711,9 +715,6 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
                   points.numpoints = 2;
                   points.point = point5;
                   msAddLine( shape, &points );
-//sprintf( last_oci_call_ms_error, "circulo: %g %g %g %g", point5[0].x, point5[0].y, point5[1].x, point5[1].y );
-//msSetError( 0, last_oci_call_ms_error, "" );
-//return MS_FAILURE;
                 }
               }
               break;
