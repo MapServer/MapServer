@@ -2228,15 +2228,8 @@ int loadLayer(layerObj *layer, mapObj *map)
                  used on the list for easy processing. */
         char *value;
         if((value = getString()) == NULL) return(-1);
-        layer->num_processing++;
-        if( layer->num_processing == 1 )
-            layer->processing = (char **) malloc(2*sizeof(char *));
-        else
-            layer->processing = (char **) 
-                realloc(layer->processing, 
-                        sizeof(char*) * (layer->num_processing+1) );
-        layer->processing[layer->num_processing-1] = value;
-        layer->processing[layer->num_processing] = NULL;
+        msLayerAddProcessing( layer, value );
+        free( value );
     }
     break;
     case(TRANSPARENCY):

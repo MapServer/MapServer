@@ -1110,6 +1110,7 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems);
 int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msLayerGetExtent(layerObj *layer, rectObj *extent);
 int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
+void msLayerAddProcessing( layerObj *layer, const char *directive );
 
 // maplayer.c
 int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);

@@ -931,3 +931,16 @@ int msLayerGetNumFeatures(layerObj *layer) {
     return i;
 }
 
+void msLayerAddProcessing( layerObj *layer, const char *directive )
+
+{
+    layer->num_processing++;
+    if( layer->num_processing == 1 )
+        layer->processing = (char **) malloc(2*sizeof(char *));
+    else
+        layer->processing = (char **) 
+            realloc(layer->processing, 
+                    sizeof(char*) * (layer->num_processing+1) );
+    layer->processing[layer->num_processing-1] = strdup(directive);
+    layer->processing[layer->num_processing] = NULL;
+}
