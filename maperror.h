@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/01/07 18:51:09  sdlime
+ * Added MS_GMLERR code.
+ *
  * Revision 1.31  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -76,7 +79,8 @@ extern "C" {
 #define MS_GEOSERR 33
 #define MS_RECTERR 34
 #define MS_TIMEERR 36
-#define MS_NUMERRORCODES 37
+#define MS_GMLERR 37
+#define MS_NUMERRORCODES 38
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

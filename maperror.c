@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.59  2005/01/07 18:51:09  sdlime
+ * Added MS_GMLERR code.
+ *
  * Revision 1.58  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -87,7 +90,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"WCS server error.",
 						"GEOS library error.",
 						"Invalid rectangle.",
-						"Date/time error."
+						"Date/time error.",
+						"GML encoding error."
 };
 
 #ifndef USE_THREAD
