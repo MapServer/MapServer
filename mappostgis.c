@@ -17,44 +17,14 @@ typedef struct ms_POSTGIS_layer_info_t
  	PGresult   *query_result;//for fetching rows from the db
 } msPOSTGISLayerInfo;
 
-//endian defines. Stolen from postgres/postgis
-// works for i386 and solaris
-
-#if defined(__i386) && !defined(__i386__)
-#define __i386__
-#endif
-
-#if defined(__sparc) && !defined(__sparc__)
-#define __sparc__
-#endif
-
-#ifndef                 BIG_ENDIAN
-#define                 BIG_ENDIAN              4321
-#endif
-#ifndef                 LITTLE_ENDIAN
-#define                 LITTLE_ENDIAN   1234
-#endif
-
-
-#ifndef                 BYTE_ORDER
-#ifdef __sparc__
-#define           BYTE_ORDER      BIG_ENDIAN
-#endif
-#ifdef __i386__
-#define          BYTE_ORDER              LITTLE_ENDIAN
-#endif
-#endif
-
-
-
-
+static int gBYTE_ORDER = 0;
 
 //open up a connection to the postgresql database using the connection string in layer->connection
 // ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv"
 int msPOSTGISLayerOpen(layerObj *layer)
 {
-
 	msPOSTGISLayerInfo	*layerinfo;
+        int			order_test = 1;
 
 //fprintf(stderr,"msPOSTGISLayerOpen called\n");
 	if (layer->postgislayerinfo)
@@ -87,6 +57,11 @@ int msPOSTGISLayerOpen(layerObj *layer)
     }
 
 	layer->postgislayerinfo = (void *) layerinfo;
+
+        if( ((char *) &order_test)[0] == 1 )
+            gBYTE_ORDER = LITTLE_ENDIAN;
+        else
+            gBYTE_ORDER = BIG_ENDIAN;
 
 	return MS_SUCCESS; 
 }
@@ -189,7 +164,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 
 	if (layer->numitems ==0)
 	{
-		if (BYTE_ORDER == LITTLE_ENDIAN)
+		if (gBYTE_ORDER == LITTLE_ENDIAN)
 			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR'),text(oid)", geom_column_name);
 		else
 			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR'),text(oid)", geom_column_name);	
@@ -202,7 +177,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 			sprintf(temp,"text(%s),",layer->items[t]);
 			strcat(columns_wanted,temp);
 		}
-		if (BYTE_ORDER == LITTLE_ENDIAN)
+		if (gBYTE_ORDER == LITTLE_ENDIAN)
 			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),text(oid)", geom_column_name);
 		else
 			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),text(oid)", geom_column_name);
@@ -782,7 +757,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
 	if (layer->numitems ==0) //dont need the oid since its really record
 	{
-		if (BYTE_ORDER == LITTLE_ENDIAN)
+		if (gBYTE_ORDER == LITTLE_ENDIAN)
 			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
 		else
 			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);	
@@ -795,7 +770,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 			sprintf(temp,"text(%s),",layer->items[t]);
 			strcat(columns_wanted,temp);
 		}
-		if (BYTE_ORDER == LITTLE_ENDIAN)
+		if (gBYTE_ORDER == LITTLE_ENDIAN)
 			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
 		else
 			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
