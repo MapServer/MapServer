@@ -4,6 +4,7 @@
 #include "maperror.h"
 #include "mapgml.h"
 #include "gdfonts.h"
+#include <stdarg.h>
 
 #ifdef USE_WMS
 
@@ -21,12 +22,16 @@ int msWMSException(mapObj *map, const char *wmtversion)
   {
       if (wmtversion && strcasecmp(wmtversion, "1.0.0") <= 0)
           wms_exception_format = "INIMAGE";  // WMS 1.0.0
+      else if (wmtversion && strcasecmp(wmtversion, "1.0.7") <= 0)
+          wms_exception_format = "SE_XML";   // WMS 1.0.1 to 1.0.7
       else
-          wms_exception_format = "SE_XML";   // WMS 1.0.1 and later
+          wms_exception_format = "application/vnd.ogc.se_xml"; // WMS 1.0.8, 1.1.0 and later
   }
 
   if (strcasecmp(wms_exception_format, "INIMAGE") == 0 ||
-      strcasecmp(wms_exception_format, "BLANK") == 0 )
+      strcasecmp(wms_exception_format, "BLANK") == 0 ||
+      strcasecmp(wms_exception_format, "application/vnd.ogc.se_inimage")== 0 ||
+      strcasecmp(wms_exception_format, "application/vnd.ogc.se_blank") == 0)
   {
     gdFontPtr font = gdFontSmall;
     gdImagePtr img=NULL;
@@ -42,7 +47,9 @@ int msWMSException(mapObj *map, const char *wmtversion)
     color = gdImageColorAllocate(img, 255,255,255);  // BG color
     color = gdImageColorAllocate(img, 0,0,0);        // Text color
 
-    if (strcasecmp(wms_exception_format, "BLANK") != 0) {
+    if (strcasecmp(wms_exception_format, "BLANK") != 0 &&
+        strcasecmp(wms_exception_format, "application/vnd.ogc.se_blank") != 0)
+    {
       char errormsg[256];
       sprintf(errormsg, "%s: %s", ms_error.routine, ms_error.message);
       gdImageString(img, font, 5, height/2, errormsg, color);
@@ -60,14 +67,31 @@ int msWMSException(mapObj *map, const char *wmtversion)
     msWriteError(stdout);
     printf("</WMTException>\n");
   }
-  else  // SE_XML ... the default with V1.0.1 and later
+  else // XML error, the default: SE_XML (1.0.1 to 1.0.7)
+       // or application/vnd.ogc.se_xml (1.0.8, 1.1.0 and later)
   {
-    printf("Content-type: text/xml%c%c",10,10);
+    if (wmtversion && strcasecmp(wmtversion, "1.0.7") <= 0)
+    {
+      // In V1.0.1 to 1.0.7, the MIME type was text/xml
+      printf("Content-type: text/xml%c%c",10,10);
 
-    printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
-    printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
+      printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+      printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
 
-    printf("<ServiceExceptionReport version=\"1.0.1\">\n");
+      printf("<ServiceExceptionReport version=\"1.0.1\">\n");
+    }
+    else
+    {
+      // In V1.0.8, 1.1.0 and later, we have OGC-specific MIME types
+      // we cannot return anything else than application/vnd.ogc.se_xml here.
+      printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+
+      printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+      printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n");
+
+      printf("<ServiceExceptionReport version=\"1.1.0\">\n");        
+    }
+
     printf("<ServiceException>\n");
     msWriteError(stdout);
     printf("</ServiceException>\n");
@@ -227,13 +251,17 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       map->height = atoi(values[i]);
     }
     else if (strcasecmp(names[i], "FORMAT") == 0) {
-      if (strcasecmp(values[i], "GIF") == 0)
+      if (strcasecmp(values[i], "GIF") == 0 || 
+          strcasecmp(values[i], "image/gif") == 0)
         map->imagetype = MS_GIF;
-      else if (strcasecmp(values[i], "JPEG") == 0)
+      else if (strcasecmp(values[i], "JPEG") == 0 ||
+               strcasecmp(values[i], "image/jpeg") == 0)
         map->imagetype = MS_JPEG;
-      else if (strcasecmp(values[i], "PNG") == 0)
+      else if (strcasecmp(values[i], "PNG") == 0 ||
+               strcasecmp(values[i], "image/png") == 0)
         map->imagetype = MS_PNG;
-      else if (strcasecmp(values[i], "WBMP") == 0)
+      else if (strcasecmp(values[i], "WBMP") == 0 ||
+               strcasecmp(values[i], "image/wbmp") == 0)
         map->imagetype = MS_WBMP;
       else {
         msSetError(MS_IMGERR, 
@@ -374,10 +402,23 @@ static int printMetadataList(hashTableObj metadata, const char *name,
 **
 */
 static void printRequestCap(const char *wmtver, const char *request, 
-                         const char *script_url, const char *formats)
+                         const char *script_url, const char *formats, ...)
 {
+  va_list argp;
+  const char *fmt;
+
   printf("    <%s>\n", request);
-  printf("      <Format>%s</Format>\n", formats);
+
+  // We expect to receive a NULL-terminated args list of formats
+  va_start(argp, formats);
+  fmt = formats;
+  while(fmt != NULL)
+  {
+      printf("      <Format>%s</Format>\n", fmt);
+      fmt = va_arg(argp, const char *);
+  }
+  va_end(argp);
+
   printf("      <DCPType>\n");
   printf("        <HTTP>\n");
 
@@ -482,6 +523,42 @@ static void msWMSPrintBoundingBox(const char *tabspace,
         printf( " />\n" );
     }
 }
+
+/*
+** msWMSPrintScaleHint()
+**
+** Print a ScaleHint tag for this layer if applicable.
+**
+** (see WMS 1.1.0 sect. 7.1.5.4) The WMS defines the scalehint values as
+** the ground distance in meters of the southwest to northeast diagonal of
+** the central pixel of a map.  ScaleHint values are the min and max 
+** recommended values of that diagonal.
+*/
+extern double inchesPerUnit[];  // defined in mapscale.c
+void msWMSPrintScaleHint(const char *tabspace, double minscale, 
+                         double maxscale, double resolution) 
+{
+  double scalehintmin=0.0, scalehintmax=0.0, diag;
+
+  diag = sqrt(2.0);
+
+  if (minscale > 0)
+    scalehintmin = diag*(minscale/resolution)/inchesPerUnit[MS_METERS];
+  if (maxscale > 0)
+    scalehintmax = diag*(maxscale/resolution)/inchesPerUnit[MS_METERS];
+
+  if (scalehintmin > 0.0 || scalehintmax > 0.0)
+  {
+      printf("%s<ScaleHint min=\"%g\" max=\"%g\" />\n", 
+             tabspace, scalehintmin, scalehintmax);
+      if (scalehintmax == 0.0)
+          printf("%s<!-- WARNING: Only MINSCALE and no MAXSCALE specified in "
+                 "the mapfile. A default value of 0 has been returned for the "
+                 "Max ScaleHint but this is probably not what you want. -->\n",
+                 tabspace);
+  }
+}
+
 
 /*
 ** msWMSGetLayerExtent()
@@ -598,8 +675,10 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
       return msWMSException(map, wmtver);
   }
 
-
-  printf("Content-type: text/xml%c%c",10,10);
+  if (strcasecmp(wmtver, "1.0.7") <= 0) 
+      printf("Content-type: text/xml%c%c",10,10);  // 1.0.0 to 1.0.7
+  else
+      printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.0.8, 1.1.0 and later
 
   printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
   printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
@@ -698,7 +777,10 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf("<Capability>\n");
   printf("  <Request>\n");
 
-  printRequestCap(wmtver, "Map", script_url, 
+  if (strcasecmp(wmtver, "1.0.7") <= 0) 
+  {
+    // WMS 1.0.0 to 1.0.7
+    printRequestCap(wmtver, "Map", script_url, 
 #ifdef USE_GD_GIF
                       "<GIF />"
 #endif
@@ -711,14 +793,52 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 #ifdef USE_GD_WBMP
                       "<WBMP />"
 #endif
-                      );
-  printRequestCap(wmtver, "Capabilities", script_url, "<WMS_XML />");
-  printRequestCap(wmtver, "FeatureInfo", script_url, "<MIME />");
+                      , NULL);
+    printRequestCap(wmtver, "Capabilities", script_url, "<WMS_XML />", NULL);
+    printRequestCap(wmtver, "FeatureInfo", script_url, "<MIME /><GML.1 />", NULL);
+  }
+  else
+  {
+    // WMS 1.0.8, 1.1.0 and later
+    // Note changes to the request names, their ordering, and to the formats
+
+    printRequestCap(wmtver, "GetCapabilities", script_url, 
+                    "application/vnd.ogc.wms_xml", 
+                    NULL);
+
+    printRequestCap(wmtver, "GetMap", script_url
+#ifdef USE_GD_GIF
+                      , "image/gif"
+#endif
+#ifdef USE_GD_JPEG
+                      , "image/jpeg"
+#endif
+#ifdef USE_GD_PNG
+                      , "image/png"
+#endif
+#ifdef USE_GD_WBMP
+                      , "image/wbmp"
+#endif
+                      , NULL);
+
+    printRequestCap(wmtver, "GetFeatureInfo", script_url, 
+                    "text/plain", 
+                    "application/vnd.ogc.gml",
+                    NULL);
+  }
 
   printf("  </Request>\n");
 
   printf("  <Exception>\n");
-  printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
+  if (strcasecmp(wmtver, "1.0.7") <= 0) 
+      printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
+  else
+  {
+      // 1.0.8, 1.1.0 and later
+      printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
+      printf("    <Format>application/vnd.ogc.se_inimage</Format>\n");
+      printf("    <Format>application/vnd.ogc.se_blank</Format>\n");
+  }
   printf("  </Exception>\n");
 
 
@@ -740,6 +860,8 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   msWMSPrintLatLonBoundingBox("    ", &(map->extent), &(map->projection));
   msWMSPrintBoundingBox( "    ", &(map->extent), &(map->projection), 
                          map->web.metadata );
+  msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale, 
+                      map->resolution);
 
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
@@ -786,6 +908,8 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
                                map->web.metadata );
       }
     }
+
+    msWMSPrintScaleHint("      ", lp->minscale, lp->maxscale, map->resolution);
     
     printf("    </Layer>\n");
   }
@@ -890,7 +1014,8 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
     if(ms_error.code != MS_NOTFOUND) return msWMSException(map, wmtver);
 
   // Generate response
-  if (strcasecmp(info_format, "MIME") == 0) {
+  if (strcasecmp(info_format, "MIME") == 0 ||
+      strcasecmp(info_format, "text/plain") == 0) {
 
     // MIME response... we're free to use any valid MIME type
     int numresults = 0;
@@ -932,10 +1057,14 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
 
     if (numresults == 0) printf("\n  Search returned no results.\n");
 
-  } else if (strcasecmp(info_format, "GML") == 0) {
+  } else if (strncasecmp(info_format, "GML", 3) == 0 ||  // accept GML.1 or GML
+             strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
     int numresults=0;
 
-    printf("Content-type: text/xml%c%c", 10,10);
+    if (strcasecmp(wmtver, "1.0.7") <= 0) 
+        printf("Content-type: text/xml%c%c", 10,10);
+    else
+        printf("Content-type: application/vnd.ogc.gml%c%c", 10,10);
     
     msGMLStart(stdout, "2.0", map->name, NULL, NULL); // fix the NULL values, 2.0 is the GML version
 
