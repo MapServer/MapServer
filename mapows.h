@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.42  2004/10/15 20:29:03  assefa
+ * Add support for OGC mapcontext through mapserver cgi : Bug 946.
+ *
  * Revision 1.41  2004/09/25 17:16:31  julien
  * Don't encode XML tag (Bug 897)
  * Don't compile mapgml.c function if not necessary (Bug 896)
@@ -340,6 +343,7 @@ MS_DLL_EXPORT char *msWFSExecuteGetFeature(layerObj *lp);
 MS_DLL_EXPORT int msWriteMapContext(mapObj *map, FILE *stream);
 MS_DLL_EXPORT int msSaveMapContext(mapObj *map, char *filename);
 MS_DLL_EXPORT int msLoadMapContext(mapObj *map, char *filename);
+MS_DLL_EXPORT int msLoadMapContextURL(mapObj *map, char *urlfilename);
 
 
 /*====================================================================

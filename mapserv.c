@@ -131,6 +131,7 @@ mapObj *loadMap()
   int i,j,k;
   mapObj *map = NULL;
   char *tmpstr;
+  
 
   for(i=0;i<msObj->request->NumParams;i++) // find the mapfile parameter first
     if(strcasecmp(msObj->request->ParamNames[i], "map") == 0) break;
@@ -172,6 +173,27 @@ mapObj *loadMap()
     free(tmpstr);
   }
 
+  //check to see if a ogc map context is passed as argument. if there
+  //is one load it
+
+  for(i=0;i<msObj->request->NumParams;i++) 
+  {
+      if(strcasecmp(msObj->request->ParamNames[i],"context") == 0) 
+      {
+          if (msObj->request->ParamValues[i] && 
+              strlen(msObj->request->ParamValues[i]) > 0)
+          {
+              if (strncasecmp(msObj->request->ParamValues[i],"http",4) == 0)
+              {
+                  if (msGetConfigOption(map, "CGI_CONTEXT_URL"))
+                    msLoadMapContextURL(map, msObj->request->ParamValues[i]);
+              }
+              else
+                msLoadMapContext(map, msObj->request->ParamValues[i]); 
+          }
+      }
+  } 
+        
   return map;
 }
 
@@ -929,6 +951,7 @@ int main(int argc, char *argv[]) {
     char buffer[1024];
     imageObj *img=NULL;
     int status;
+    char *sname = NULL;
 
     if(argc > 1 && strcmp(argv[1], "-v") == 0) {
       printf("%s\n", msGetVersion());
@@ -1025,7 +1048,17 @@ int main(int argc, char *argv[]) {
     */
     for(i=0;i<msObj->Map->numlayers;i++) {
       if((msObj->Map->layers[i].status != MS_DEFAULT)) {
-	if(isOn(msObj, msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) /* Set layer status */
+          //for wms layers, use the wms_name metadata if available
+          if (msObj->Map->layers[i].connectiontype == MS_WMS)
+          {
+              sname = msLookupHashTable(&(msObj->Map->layers[i].metadata), 
+                                       "wms_name");
+              if (!sname)
+                sname = msObj->Map->layers[i].name;
+          }
+          else
+            sname = msObj->Map->layers[i].name;
+	if(isOn(msObj, sname, msObj->Map->layers[i].group) == MS_TRUE) /* Set layer status */
 	  msObj->Map->layers[i].status = MS_ON;
 	else
 	  msObj->Map->layers[i].status = MS_OFF;

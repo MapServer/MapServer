@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.63  2004/10/15 20:29:03  assefa
+ * Add support for OGC mapcontext through mapserver cgi : Bug 946.
+ *
  * Revision 1.62  2004/10/01 21:26:55  frank
  * Use msIO_ API.
  *
@@ -1214,6 +1217,49 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
 
 #endif
 
+
+
+/* msLoadMapContextURL()
+**
+** load an OGC Web Map Context format from an URL
+**
+** Take a map object and a URL to a conect file in arguments
+*/
+
+int msLoadMapContextURL(mapObj *map, char *urlfilename)
+{
+#if defined(USE_WMS_LYR) && defined(USE_OGR)
+    char *pszTmpFile = NULL;
+    int status = 0;
+
+    if (!map || !urlfilename)
+    {
+        msSetError(MS_MAPCONTEXTERR, 
+                   "Invalid map or url given.",
+                   "msGetMapContextURL()");
+        return MS_FAILURE;
+    }
+    
+    pszTmpFile = msTmpFile(map->mappath, map->web.imagepath, "context.xml");
+    if (msHTTPGetFile(urlfilename, pszTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS)
+    {
+        return msLoadMapContext(map, pszTmpFile);
+    }
+    else
+    {
+        msSetError(MS_MAPCONTEXTERR, 
+                   "Could not open context file %s.",
+                   "msGetMapContextURL()", urlfilename);
+        return MS_FAILURE;
+    }
+    
+#else
+    msSetError(MS_MAPCONTEXTERR, 
+               "Not implemented since Map Context is not enabled.",
+               "msGetMapContextURL()");
+    return MS_FAILURE;
+#endif
+}
 /* msLoadMapContext()
 **
 ** Get a mapfile from a OGC Web Map Context format

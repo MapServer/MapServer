@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- support OGC mapcontext through mapserver cgi : Bug 946
+
 - support for reading 3d shape file (z) : Bug 869.
 
 - add php mapscript functions to expose the z element : Bug 870
