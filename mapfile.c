@@ -1564,7 +1564,7 @@ int initLayer(layerObj *layer)
   layer->connection = NULL;
   layer->connectiontype = MS_SHAPEFILE;
 
-  layer->ogrlayerinfo = layer->sdelayer = NULL;
+  layer->ogrlayerinfo = layer->sdelayerinfo = layer->postgislayerinfo = layer->oraclespatiallayerinfo = NULL;
 
   layer->items = NULL;
   layer->iteminfo = NULL;

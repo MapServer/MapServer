@@ -21,7 +21,7 @@ typedef struct {
   SE_STREAM stream;
 
   char *table, *column;
-} sdeLayerObj;
+} msSDELayerInfo;
 
 /*
 ** Start SDE/MapServer helper functions.
@@ -139,7 +139,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   SE_COLUMN_DEF *itemdefs;
   SE_SHAPE shapeval=0;
 
-  sdeLayerObj *sde;
+  msSDELayerInfo *sde;
 
   sde = layer->sdelayer;
 
@@ -288,7 +288,7 @@ int msSDELayerOpen(layerObj *layer) {
 
   SE_ERROR error;
 
-  sdeLayerObj *sde;
+  msSDELayerInfo *sde;
 
   if(layer->sdelayer) return MS_SUCCESS; // layer already open
 
@@ -303,7 +303,7 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  sde = (sdeLayerObj *) malloc(sizeof(sdeLayerObj));
+  sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
   if(!sde) {
     msSetError(MS_MEMERR, "Error allocating SDE layer structure.", "msSDELayerOpen()");
     return(MS_FAILURE);
@@ -374,7 +374,7 @@ int msSDELayerOpen(layerObj *layer) {
 
 void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
-  sdeLayerObj *sde=NULL;
+  msSDELayerInfo *sde=NULL;
 
   sde = layer->sdelayer;
   if (sde == NULL) return;  // Silently return if layer not opened.
@@ -403,7 +403,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   SE_SQL_CONSTRUCT *sql;
   SE_FILTER constraint;
 
-  sdeLayerObj *sde=NULL;
+  msSDELayerInfo *sde=NULL;
 
   sde = layer->sdelayer;
   if(!sde) {
@@ -499,7 +499,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 #ifdef USE_SDE
   long status;
 
-  sdeLayerObj *sde=NULL;
+  msSDELayerInfo *sde=NULL;
 
   sde = layer->sdelayer;
   if(!sde) {
@@ -539,7 +539,7 @@ int msSDELayerGetItems(layerObj *layer) {
 
   SE_COLUMN_DEF *itemdefs;
 
-  sdeLayerObj *sde=NULL;
+  msSDELayerInfo *sde=NULL;
 
   sde = layer->sdelayer;
   if(!sde) {
@@ -596,7 +596,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 
   SE_ENVELOPE envelope;
 
-  sdeLayerObj *sde=NULL;
+  msSDELayerInfo *sde=NULL;
 
   sde = layer->sdelayer;
   if(!sde) {
@@ -626,7 +626,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 #ifdef USE_SDE
   long status;
 
-  sdeLayerObj *sde=NULL;
+  msSDELayerInfo *sde=NULL;
 
   sde = layer->sdelayer;
   if(!sde) {
@@ -671,7 +671,7 @@ int msSDELayerInitItemInfo(layerObj *layer)
 
   SE_COLUMN_DEF *itemdefs;
 
-  sdeLayerObj *sde=NULL;
+  msSDELayerInfo *sde=NULL;
    
   sde = layer->sdelayer;
   if(!sde) {
@@ -730,7 +730,7 @@ void msSDELayerFreeItemInfo(layerObj *layer)
 char *msSDELayerGetSpatialColumn(layerObj *layer)
 {
 #ifdef USE_SDE
-  sdeLayerObj *sde=NULL;
+  msSDELayerInfo *sde=NULL;
    
   sde = layer->sdelayer;
   if(!sde) {

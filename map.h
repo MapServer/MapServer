@@ -520,7 +520,7 @@ typedef struct {
   shapefileObj tileshpfile;
 
   void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
-  void *sdelayer; // For SDE layers, will contain a sdeLayerObj struct
+  void *sdelayerinfo; // For SDE layers, will contain a sdeLayerObj struct
   void *postgislayerinfo; // For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
   void *oraclespatiallayerinfo;
 
