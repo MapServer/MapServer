@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/10/28 02:24:01  frank
+ * Added special putenv() case in msApplyMapConfigOptions() for MS_ERRORFILE
+ *
  * Revision 1.19  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -248,6 +251,12 @@ void msApplyMapConfigOptions( mapObj *map )
         if( strcasecmp(key,"PROJ_LIB") == 0 )
         {
             msSetPROJ_LIB( value );
+        }
+        else if( strcasecmp(key,"MS_ERRORFILE") == 0 )
+        {
+            char *ms_error = (char *) malloc(strlen(value) + 40);
+            sprintf( ms_error, "MS_ERRORFILE=%s", value);
+            putenv( ms_error ); 
         }
         else 
         {
