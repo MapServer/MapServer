@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2002/11/18 22:32:52  frank
+ * additional work to make transparency work properly for RGB or RGBA GD modes
+ *
  * Revision 1.31  2002/11/18 21:17:24  frank
  * Further work on last fix.  Now the transparent value on the temporary
  * image is setup properly via imagecolor, and by forcing the transparent
@@ -158,7 +161,7 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *img,
 /************************************************************************/
 
 static int 
-msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite, 
+msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
                          imageObj *psDstImage, int *panCMap,
                          SimpleTransformer pfnTransform, void *pCBData,
                          int debug )
@@ -224,15 +227,13 @@ msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
 #if GD2_VERS > 1
                 else
                 {
-                    int gd_alpha = 
-                        gdTrueColorGetAlpha(srcImg->tpixels[nSrcY][nSrcX]);
+                    int nValue = srcImg->tpixels[nSrcY][nSrcX];
+                    int gd_alpha = gdTrueColorGetAlpha(nValue);
 
-                    /* overlay opaque RGBA value */
                     if( gd_alpha == 0 )
                     {
                         nSetPoints++;
-                        dstImg->tpixels[nDstY][nDstX] = 
-                            srcImg->tpixels[nSrcY][nSrcX]; 
+                        dstImg->tpixels[nDstY][nDstX] = nValue;
                     }
                     /* overlay translucent RGBA value */
                     else if( gd_alpha < 127 )
@@ -253,7 +254,7 @@ msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
                         nSetPoints++;
                         dstImg->tpixels[nDstY][nDstX] = 
                             gdAlphaBlend( dstImg->tpixels[nDstX][nDstY], 
-                                          srcImg->tpixels[nSrcX][nSrcY] );
+                                          nValue );
                         dstImg->tpixels[nDstY][nDstX] &= 0x00ffffff;
                         dstImg->tpixels[nDstY][nDstX] |= gd_new_alpha << 24;
                     }
@@ -273,7 +274,7 @@ msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
                     nValue = psSrcImage->img.raw_16bit[
                         nSrcX + nSrcY * psSrcImage->width];
 
-                    if( nValue == nOffsite )
+                    if( nValue == offsite.red )
                         continue;
                     
                     nSetPoints++;
@@ -287,7 +288,7 @@ msSimpleRasterResampler( imageObj *psSrcImage, int nOffsite,
                     fValue = psSrcImage->img.raw_float[
                         nSrcX + nSrcY * psSrcImage->width];
 
-                    if( fValue == nOffsite )
+                    if( fValue == offsite.red )
                         continue;
                     
                     nSetPoints++;
@@ -913,7 +914,18 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         + sSrcExtent.maxx * adfSrcGeoTransform[4]
         + sSrcExtent.miny * adfSrcGeoTransform[5];
 
-    sDummyMap.outputformat = NULL;
+/* -------------------------------------------------------------------- */
+/*      We clone this without referencing it knowing that the           */
+/*      srcImage will take a reference on it.  The sDummyMap is         */
+/*      destroyed off the stack, so the missing map reference is        */
+/*      never a problem.  The image's dereference of the                */
+/*      outputformat during the msFreeImage() calls will result in      */
+/*      the output format being cleaned up.                             */
+/*                                                                      */
+/*      We make a copy so we can easily modify the outputformat used    */
+/*      for the temporary image to include transparentency support.     */
+/* -------------------------------------------------------------------- */
+    sDummyMap.outputformat = msCloneOutputFormat( image->format );
     
 /* -------------------------------------------------------------------- */
 /*      If we are working in 256 color GD mode, allocate 0 as the       */
@@ -921,25 +933,28 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      initialized to see-through.  We pick an arbitrary rgb tuple     */
 /*      as our transparent color, but ensure it is initalized in the    */
 /*      map so that normal transparent avoidance will apply.            */
-/*                                                                      */
-/*      In any event, ensure a referenced outputformat object is        */
-/*      assigned to the dummymap.                                       */
 /* -------------------------------------------------------------------- */
-    if( MS_RENDERER_GD(image->format)
+    if( MS_RENDERER_GD(sDummyMap.outputformat) 
         && !gdImageTrueColor( image->img.gd ) )
     {
-        msApplyOutputFormat( &(sDummyMap.outputformat), image->format,
-                             MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-
+        sDummyMap.outputformat->transparent = MS_TRUE;
         sDummyMap.imagecolor.red = 117;
         sDummyMap.imagecolor.green = 17;
         sDummyMap.imagecolor.blue = 191;
 
     }
-    else
+/* -------------------------------------------------------------------- */
+/*      If we are working in RGB mode ensure we produce an RGBA         */
+/*      image so the transparency can be preserved.                     */
+/* -------------------------------------------------------------------- */
+    else if( MS_RENDERER_GD(sDummyMap.outputformat) 
+             && gdImageTrueColor( image->img.gd ) )
     {
-        msApplyOutputFormat( &(sDummyMap.outputformat), image->format,
-                             MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+        assert( sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGB
+                || sDummyMap.outputformat->imagemode == MS_IMAGEMODE_RGBA );
+
+        sDummyMap.outputformat->transparent = MS_TRUE;
+        sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
     }
 
 /* -------------------------------------------------------------------- */
@@ -954,36 +969,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         sDummyMap.outputformat, NULL, NULL );
 
 /* -------------------------------------------------------------------- */
-/*      If we have a colormapped GD temporary image we need to          */
-/*      allocate color cell zero as the transparent color.              */
+/*      If this is a GD image, ensure we have things initialized to     */
+/*      transparent.                                                    */
 /* -------------------------------------------------------------------- */
-    if( MS_RENDERER_GD(srcImage->format)
-        && !gdImageTrueColor( srcImage->img.gd ) )
-    {
-        int nTrColor;
-        
-        nTrColor = gdImageColorAllocate( srcImage->img.gd, 
-                                         sDummyMap.imagecolor.red,
-                                         sDummyMap.imagecolor.green,
-                                         sDummyMap.imagecolor.blue );
-        assert( nTrColor == 0 );
-    }
-
-/* -------------------------------------------------------------------- */
-/*      If layer has an offsite color then fill the BG of the           */
-/*      temporary image with this color otherwise applying the          */
-/*      offsite twice results in a solid color in the offsite area      */
-/* -------------------------------------------------------------------- */
-#ifdef notdef
-    if( MS_VALID_COLOR(layer->offsite)
-        && MS_RENDERER_GD(srcImage->format) )
-    {
-        RESOLVE_PEN_GD( srcImage->img.gd, layer->offsite );
-        gdImageFilledRectangle(srcImage->img.gd, 0, 0, 
-                               srcImage->width, srcImage->height,
-                               layer->offsite.pen );
-    }
-#endif
+    if( MS_RENDERER_GD(srcImage->format) )
+        msImageInitGD( srcImage, &(sDummyMap.imagecolor) );
 
 /* -------------------------------------------------------------------- */
 /*      Draw into the temporary image.                                  */
@@ -991,8 +981,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     result = drawGDAL( &sDummyMap, layer, srcImage, hDS );
     if( result )
     {
-        msApplyOutputFormat( &(sDummyMap.outputformat), NULL, 
-                             MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
         msFreeImage( srcImage );
         return result;
     }
@@ -1042,8 +1030,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         if( layer->debug )
             msDebug( "msInitProjTransformer() returned NULL.\n" );
 
-        msApplyOutputFormat( &(sDummyMap.outputformat), NULL, 
-                             MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
         msFreeImage( srcImage );
         return MS_PROJERR;
     }
@@ -1058,7 +1044,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
 
-    result = msSimpleRasterResampler( srcImage, layer->offsite.pen, image, 
+    result = msSimpleRasterResampler( srcImage, layer->offsite, image,
                                       anCMap, msApproxTransformer, pACBData,
                                       layer->debug );
 
@@ -1070,9 +1056,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     msFreeProjTransformer( pTCBData );
     msFreeApproxTransformer( pACBData );
     
-    msApplyOutputFormat( &(sDummyMap.outputformat), NULL, 
-                         MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
-
     return result;
 #endif
 }
