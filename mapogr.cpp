@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.30  2001/03/21 21:36:13  dan
+ * Added msOGRLayerInitItemIndexes() (to keep itemindexes[] and item[] in sync)
+ *
  * Revision 1.29  2001/03/21 04:40:49  sdlime
  * Fixed setting of itemindexes. Fixed TTF/FT preprocessor settings.
  *
@@ -483,7 +486,7 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
 
 
 /**********************************************************************
- *                     msOGRGetValueList()
+ *                     msOGRGetValues()
  *
  * Load selected item (i.e. field) values into a char array
  *
@@ -493,61 +496,33 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
  *  "OGR:TextString"  OGRFeatureStyle's text string if present
  *  "OGR:TextAngle"   OGRFeatureStyle's text angle, or 0 if not set
  **********************************************************************/
-static char **msOGRGetValueList(OGRFeature *poFeature,
-                                char **items, int **itemindexes, int numitems)
+static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
 {
   char **values;
   int i;
 
-  if(numitems == 0 || poFeature->GetFieldCount() == 0) 
+  if(layer->numitems == 0) 
       return(NULL);
 
-  if(!(*itemindexes)) 
-  { // build the list
-    (*itemindexes) = (int *)malloc(sizeof(int)*numitems);
-    if(!(*itemindexes)) 
-    {
-      msSetError(MS_MEMERR, NULL, "msOGRGetValueList()");
-      return(NULL);
-    }
+  if(!layer->itemindexes)  // Should not happen... but just in case!
+      if (msOGRLayerInitItemIndexes(layer) != MS_SUCCESS)
+          return NULL;
 
-    for(i=0;i<numitems;i++) 
-    {
-      // Special case for handling text string and angle coming from
-      // OGR style strings.  We use special attribute names.
-      if (EQUAL(items[i], MSOGR_LABELTEXTNAME))
-          (*itemindexes)[i] = MSOGR_LABELTEXTINDEX;
-      else if (EQUAL(items[i], MSOGR_LABELANGLENAME))
-          (*itemindexes)[i] = MSOGR_LABELANGLEINDEX;
-      else if (EQUAL(items[i], MSOGR_LABELSIZENAME))
-          (*itemindexes)[i] = MSOGR_LABELSIZEINDEX;
-      else
-          (*itemindexes)[i] = poFeature->GetFieldIndex(items[i]);
-      if((*itemindexes)[i] == -1) 
-      {
-          msSetError(MS_OGRERR, 
-                     (char*)CPLSPrintf("Invalid Field name: %s", items[i]), 
-                     "msOGRGetValueList()");
-          return(NULL);
-      }
-    }
-  }
-
-  if((values = (char **)malloc(sizeof(char *)*numitems)) == NULL) 
+  if((values = (char **)malloc(sizeof(char *)*layer->numitems)) == NULL) 
   {
-    msSetError(MS_MEMERR, NULL, "msOGRGetValueList()");
+    msSetError(MS_MEMERR, NULL, "msOGRGetValues()");
     return(NULL);
   }
 
   OGRStyleMgr *poStyleMgr = NULL;
   OGRStyleLabel *poLabelStyle = NULL;
 
-  for(i=0;i<numitems;i++)
+  for(i=0;i<layer->numitems;i++)
   {
-    if ((*itemindexes)[i] >= 0)
+    if (layer->itemindexes[i] >= 0)
     {
         // Extract regular attributes
-        values[i] = strdup(poFeature->GetFieldAsString((*itemindexes)[i]));
+        values[i] = strdup(poFeature->GetFieldAsString(layer->itemindexes[i]));
     }
     else
     {
@@ -563,18 +538,18 @@ static char **msOGRGetValueList(OGRFeature *poFeature,
                 delete poStylePart;
         }
         GBool bDefault;
-        if (poLabelStyle && (*itemindexes)[i] == MSOGR_LABELTEXTINDEX)
+        if (poLabelStyle && layer->itemindexes[i] == MSOGR_LABELTEXTINDEX)
         {
             values[i] = strdup(poLabelStyle->TextString(bDefault));
             //msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
         }
-        else if (poLabelStyle && (*itemindexes)[i] == MSOGR_LABELANGLEINDEX)
+        else if (poLabelStyle && layer->itemindexes[i] == MSOGR_LABELANGLEINDEX)
         {
             values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelAngle,
                                                          bDefault));
             //msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
         }
-        else if (poLabelStyle && (*itemindexes)[i] == MSOGR_LABELSIZEINDEX)
+        else if (poLabelStyle && layer->itemindexes[i] == MSOGR_LABELSIZEINDEX)
         {
             values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelSize,
                                                          bDefault));
@@ -582,7 +557,7 @@ static char **msOGRGetValueList(OGRFeature *poFeature,
         }
         else
         {
-          msSetError(MS_OGRERR,"Invalid field index!?!","msOGRGetValueList()");
+          msSetError(MS_OGRERR,"Invalid field index!?!","msOGRGetValues()");
           return(NULL);
         }
     }
@@ -596,33 +571,6 @@ static char **msOGRGetValueList(OGRFeature *poFeature,
   return(values);
 }
 
-
-/**********************************************************************
- *                     msOGRGetValues()
- *
- * Load item (i.e. field) values into a char array
- **********************************************************************/
-static char **msOGRGetValues(OGRFeature *poFeature)
-{
-  char **values;
-  int i, nFields;
-
-  if((nFields = poFeature->GetFieldCount()) == 0)
-  {
-    return(NULL);
-  }
-
-  if((values = (char **)malloc(sizeof(char *)*nFields)) == NULL) 
-  {
-    msSetError(MS_MEMERR, NULL, "msOGRGetValues()");
-    return(NULL);
-  }
-
-  for(i=0;i<nFields;i++)
-    values[i] = strdup(poFeature->GetFieldAsString(i));
-
-  return(values);
-}
 
 #endif  /* USE_OGR */
 
@@ -945,8 +893,8 @@ int msOGRLayerGetItems(layerObj *layer)
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
-  int   i;
   OGRFeatureDefn *poDefn;
+  int i;
 
   if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL ||
      (layer->numitems = poDefn->GetFieldCount()) == 0) 
@@ -955,16 +903,81 @@ int msOGRLayerGetItems(layerObj *layer)
     return(MS_FAILURE);
   }
 
-  if((layer->items = (char **)malloc(sizeof(char *)*(layer->numitems))) == NULL) 
+  if((layer->items = (char**)malloc(sizeof(char *)*layer->numitems)) == NULL) 
   {
     msSetError(MS_MEMERR, NULL, "msOGRLayerGetItems()");
     return(MS_FAILURE);
   }
 
-  for(i=0;i<layer->numitems;i++) 
+  for(i=0;i<layer->numitems;i++)
   {
       OGRFieldDefn *poField = poDefn->GetFieldDefn(i);
       layer->items[i] = strdup(poField->GetNameRef());
+  }                                                                           
+
+  return msOGRLayerInitItemIndexes(layer);
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGRLayerGetItems()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+/**********************************************************************
+ *                     msOGRLayerInitItemIndexes()
+ *
+ * Init the itemindexes array after items[] has been reset in a layer.
+ **********************************************************************/
+int msOGRLayerInitItemIndexes(layerObj *layer)
+{
+#ifdef USE_OGR
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  int   i;
+  OGRFeatureDefn *poDefn;
+
+  if (layer->numitems == 0)
+      return MS_SUCCESS;
+
+  if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL) 
+  {
+    msSetError(MS_OGRERR, "Layer contains no fields.",  
+               "msOGRLayerInitItemIndexes()");
+    return(MS_FAILURE);
+  }
+
+  if (layer->itemindexes)
+      free(layer->itemindexes);
+  if((layer->itemindexes = (int *)malloc(sizeof(int)*layer->numitems))== NULL) 
+  {
+    msSetError(MS_MEMERR, NULL, "msOGRLayerInitItemIndexes()");
+    return(MS_FAILURE);
+  }
+
+  for(i=0;i<layer->numitems;i++) 
+  {
+      // Special case for handling text string and angle coming from
+      // OGR style strings.  We use special attribute names.
+      if (EQUAL(layer->items[i], MSOGR_LABELTEXTNAME))
+          layer->itemindexes[i] = MSOGR_LABELTEXTINDEX;
+      else if (EQUAL(layer->items[i], MSOGR_LABELANGLENAME))
+          layer->itemindexes[i] = MSOGR_LABELANGLEINDEX;
+      else if (EQUAL(layer->items[i], MSOGR_LABELSIZENAME))
+          layer->itemindexes[i] = MSOGR_LABELSIZEINDEX;
+      else
+          layer->itemindexes[i] = poDefn->GetFieldIndex(layer->items[i]);
+      if(layer->itemindexes[i] == -1)
+      {
+          msSetError(MS_OGRERR, 
+                     (char*)CPLSPrintf("Invalid Field name: %s", layer->items[i]), 
+                     "msOGRLayerInitItemIndexes()");
+          return(MS_FAILURE);
+      }
   }
 
   return(MS_SUCCESS);
@@ -974,7 +987,7 @@ int msOGRLayerGetItems(layerObj *layer)
  * ------------------------------------------------------------------ */
 
   msSetError(MS_MISCERR, "OGR support is not available.", 
-             "msOGRLayerGetItems()");
+             "msOGRLayerInitItemIndexes()");
   return(MS_FAILURE);
 
 #endif /* USE_OGR */
@@ -1018,9 +1031,7 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
 
       if(layer->numitems > 0) 
       {
-          shape->values = msOGRGetValueList(poFeature, layer->items, 
-                                                &(layer->itemindexes), 
-                                                layer->numitems);
+          shape->values = msOGRGetValues(layer, poFeature);
           shape->numvalues = layer->numitems;
           if(!shape->values) return(MS_FAILURE);
       }
@@ -1118,9 +1129,7 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
  * ------------------------------------------------------------------ */
   if(layer->numitems > 0) 
   {
-      shape->values = msOGRGetValueList(poFeature, layer->items, 
-                                            &(layer->itemindexes), 
-                                            layer->numitems);
+      shape->values = msOGRGetValues(layer, poFeature);
       shape->numvalues = layer->numitems;
       if(!shape->values) return(MS_FAILURE);
   }   

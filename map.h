@@ -738,6 +738,7 @@ int msOGRLayerClose(layerObj *layer);
 int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
 int msOGRLayerGetItems(layerObj *layer);
+int msOGRLayerInitItemIndexes(layerObj *layer);
 int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 
