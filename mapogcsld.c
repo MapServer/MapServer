@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.34  2004/06/23 21:33:27  assefa
+ * Correct bug related to onlineresource (Bug 739).
+ *
  * Revision 1.33  2004/06/22 20:55:20  sean
  * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
  *
@@ -1952,7 +1955,7 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
     char *pszFormat = NULL;
-    CPLXMLNode *psURL=NULL, *psFormat=NULL;
+    CPLXMLNode *psURL=NULL, *psFormat=NULL, *psTmp=NULL;
     char *pszURL=NULL, *pszTmpSymbolName=NULL;
     int status;
 
@@ -1967,35 +1970,47 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
             (strcasecmp(pszFormat, "GIF") == 0 ||
              strcasecmp(pszFormat, "PNG") == 0))
         {
+          
+          //<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.vendor.com/geosym/2267.svg"/>
             psURL = CPLGetXMLNode(psExternalGraphic, "OnlineResource");
-            if (psURL && psURL->psChild && psURL->psChild->pszValue)
+            if (psURL && psURL->psChild)
             {
-                pszURL = psURL->psChild->pszValue;
-
-                if (strcasecmp(pszFormat, "GIF") == 0)
-                  pszTmpSymbolName = msTmpFile(map->web.imagepath, "gif");
-                else
-                  pszTmpSymbolName = msTmpFile(map->web.imagepath, "png");
-
-                if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) ==  
-                    MS_SUCCESS)
+                psTmp =  psURL->psChild;
+                while (psTmp != NULL && 
+                       psTmp->pszValue && 
+                       strcasecmp(psTmp->pszValue, "xlink:href") != 0)
                 {
-                    psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName);
-                    if (psStyle->symbol > 0 &&
-                        psStyle->symbol < map->symbolset.numsymbols)
-                      psStyle->symbolname = 
-                        strdup(map->symbolset.symbol[psStyle->symbol].name);
+                    psTmp = psTmp->psNext;
+                }
+                if (psTmp && psTmp->psChild)
+                {
+                    pszURL = (char*)psTmp->psChild->pszValue;
 
-                    //set the color parameter if not set. Does not make sense
-                    //for pixmap but mapserver needs it.
-                    if (psStyle->color.red == -1 || psStyle->color.green ||
-                        psStyle->color.blue)
+                    if (strcasecmp(pszFormat, "GIF") == 0)
+                      pszTmpSymbolName = msTmpFile(map->web.imagepath, "gif");
+                    else
+                      pszTmpSymbolName = msTmpFile(map->web.imagepath, "png");
+
+                    if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) ==  
+                        MS_SUCCESS)
                     {
-                        psStyle->color.red = 0;
-                        psStyle->color.green = 0;
-                        psStyle->color.blue = 0;
+                        psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName);
+                        if (psStyle->symbol > 0 &&
+                            psStyle->symbol < map->symbolset.numsymbols)
+                          psStyle->symbolname = 
+                            strdup(map->symbolset.symbol[psStyle->symbol].name);
+
+                        //set the color parameter if not set. Does not make sense
+                        //for pixmap but mapserver needs it.
+                        if (psStyle->color.red == -1 || psStyle->color.green ||
+                            psStyle->color.blue)
+                        {
+                            psStyle->color.red = 0;
+                            psStyle->color.green = 0;
+                            psStyle->color.blue = 0;
+                        }
+                     
                     }
-                        
                 }
             }
         }
