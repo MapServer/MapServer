@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/09/29 18:27:55  frank
+ * comment formatting.
+ *
  * Revision 1.16  2004/09/27 13:31:34  sean
  * corrections to msInsertLayer and msRemoveLayer, a 524 byte leak remains for each mapscript layer (bug 841)
  *
@@ -250,7 +253,7 @@ void msApplyMapConfigOptions( mapObj *map )
 }
 
 /************************************************************************/
-/*                            msMapSetExtent()                             */
+/*                           msMapSetExtent()                           */
 /************************************************************************/
 
 int msMapSetExtent( mapObj *map, 
@@ -501,6 +504,9 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     }
 }
 
+/************************************************************************/
+/*                           msRemoveLayer()                            */
+/************************************************************************/
 layerObj *msRemoveLayer(mapObj *map, int nIndex) 
 {
     int i;
