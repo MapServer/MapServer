@@ -361,7 +361,12 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
 	// write the item/values
 	for(k=0; k<lp->numitems; k++)	
-	  fprintf(stream, "\t\t\t<%s>%s</%s>\n", lp->items[k], shape.values[k], lp->items[k]);
+        {
+          char *encoded_val;
+          encoded_val = msEncodeHTMLEntities(shape.values[k]);
+	  fprintf(stream, "\t\t\t<%s>%s</%s>\n", lp->items[k], encoded_val, lp->items[k]);
+          free(encoded_val);
+        }
 
 	// write the bounding box
 #ifdef USE_PROJ
@@ -478,8 +483,13 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
 
 	// write the item/values
 	for(k=0; k<lp->numitems; k++)	
+        {
+          char *encoded_val;
+          encoded_val = msEncodeHTMLEntities(shape.values[k]);
 	  fprintf(stream, "        <%s>%s</%s>\n", 
-                  lp->items[k], shape.values[k], lp->items[k]);
+                  lp->items[k], encoded_val, lp->items[k]);
+          free(encoded_val);
+        }
 
         fprintf(stream, "        <%s>\n", geom_name); 
 
