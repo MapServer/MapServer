@@ -245,6 +245,20 @@ typedef struct {
 } joinObj;
 #endif
 
+// IMAGE OBJECT - a wrapper for GD images
+typedef struct {
+#ifdef SWIG
+%readonly
+#endif
+  int width, height;
+#ifdef SWIG
+%readwrite
+#endif
+
+  char *imagepath, *imageurl;
+  gdImagePtr bytes;
+} imageObj;
+
 // QUERY MAP OBJECT - used to visualize query results
 typedef struct {
   int height, width;
