@@ -2466,11 +2466,11 @@ static void loadWebString(webObj *web, char *value)
 {
   switch(msyylex()) {
   case(EMPTY):
-    free(web->empty);
+    if(web->empty) free(web->empty);
     web->empty = strdup(value);
     break;
   case(ERROR):
-    free(web->error);
+    if(web->error) free(web->error);
     web->error = strdup(value);
     break;
   case(EXTENT):
@@ -2481,11 +2481,11 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&(web->extent.maxy)) == -1) return;
     break;
   case(FOOTER):
-    free(web->footer);
+    if(web->footer) free(web->footer);
     web->footer = strdup(value);	
     break;
   case(HEADER):
-    free(web->header);
+    (web->header) free(web->header);
     web->header = strdup(value);
     break;
   case(MAXSCALE):
@@ -2493,7 +2493,7 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&web->maxscale) == -1) return;
     break;
   case(MAXTEMPLATE):
-    free(web->maxtemplate);
+    if(web->maxtemplate) free(web->maxtemplate);
     web->maxtemplate = strdup(value);
     break;
   case(MINSCALE):
@@ -2501,11 +2501,11 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&web->minscale) == -1) return;
     break;
   case(MINTEMPLATE):
-    free(web->mintemplate);
+    (web->mintemplate) free(web->mintemplate);
     web->mintemplate = strdup(value);
     break;
   case(TEMPLATE):
-    free(web->template);
+    if(web->template) free(web->template);
     web->template = strdup(value);	
     break;
   default:
