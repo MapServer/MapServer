@@ -495,8 +495,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msQueryByShape(map, self->index, shape);
   }
 
-  int setFilter(char *string) {    
-    return loadExpressionString(&self->filter, string);
+  int setFilter(char *string) {
+      if (!string || strlen(string) == 0) {
+          freeExpression(&self->filter);
+          return MS_SUCCESS;
+      }
+      else return loadExpressionString(&self->filter, string);
   }
 
   %newobject getFilterString;
@@ -581,8 +585,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return; // do nothing, map deconstrutor takes care of it all
   }
 
-  int setExpression(char *string) {    
-    return loadExpressionString(&self->expression, string);
+  int setExpression(char *string) {
+      if (!string || strlen(string) == 0) {
+          freeExpression(&self->expression);
+          return MS_SUCCESS;
+      }
+      else return loadExpressionString(&self->expression, string);
   }
 
   %newobject getExpressionString;
