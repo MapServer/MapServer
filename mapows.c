@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.40  2004/09/28 20:43:27  frank
+ * avoid warnings
+ *
  * Revision 1.39  2004/09/27 19:11:15  dan
  * Fixed small leak in msOWSParseVersionString()
  *
@@ -1124,7 +1127,7 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
             return;
         }
 
-        if (fread(pszBuf, 1, nBufSize, fp) != nBufSize)
+        if ((int) fread(pszBuf, 1, nBufSize, fp) != nBufSize)
         {
             msSetError(MS_IOERR, NULL, "msOWSProcessException()");
             free(pszBuf);
