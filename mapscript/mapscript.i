@@ -32,7 +32,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include typemaps.i
 %include constraints.i
 
-%rename (_class) class;
+//%rename (_class) class;
 
 // grab mapserver declarations to wrap
 %include "../../mapprimitive.h"
@@ -50,7 +50,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %{
   static void _raise_ms_exception(void) {
     char errbuf[256];
-    snprintf(errbuf, 255, "%s: %s %s\n", ms_error.routine, msGetErrorString(ms_error.code), ms_error.message);
+    errorObj *ms_error = msGetErrorObj();
+    snprintf(errbuf, 255, "%s: %s %s\n", ms_error->routine, msGetErrorString(ms_error->code), ms_error->message);
     _SWIG_exception(SWIG_RuntimeError, errbuf);
   }
   
@@ -59,8 +60,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
 %except {
   $function
-    if ( (ms_error.code != MS_NOERR) && (ms_error.code != -1) )
-      raise_ms_exception();
+    {
+      errorObj *ms_error = msGetErrorObj();
+      if ( (ms_error->code != MS_NOERR) && (ms_error->code != -1) )
+        raise_ms_exception();
+    }
 }
 #endif // SWIGPYTHON
 
@@ -131,7 +135,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
     }
 
-    image = msImageCreate(self->width, self->height, self->imagetype,
+    image = msImageCreate(self->width, self->height, self->outputformat,
                           self->web.imagepath, self->web.imageurl);
     if(!image) {
       msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
@@ -139,10 +143,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     }
 
 
-    if (self->imagetype == MS_GIF ||
-        self->imagetype == MS_PNG ||
-        self->imagetype == MS_JPEG ||
-        self->imagetype == MS_WBMP)
+    if (MS_DRIVER_GD(self->outputformat))
     {    
         if(msLoadPalette(image->img.gd, &(self->palette), self->imagecolor) == -1)
           return NULL;
@@ -155,6 +156,26 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return image;
   }
 
+  void setImageType( char * imagetype ) {
+      outputFormatObj *format;
+
+      format = msSelectOutputFormat( self, imagetype );
+      if( format == NULL )
+	  msSetError(MS_MISCERR, "Unable to find IMAGETYPE '%s'.", 
+		     "setImageType()", imagetype );
+      else
+      {  
+          msFree( self->imagetype );
+          self->imagetype = strdup(imagetype);
+          msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
+                               MS_NOOVERRIDE, MS_NOOVERRIDE );
+      }
+  }
+
+  void setOutputFormat( outputFormatObj *format ) {
+      msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
+                           MS_NOOVERRIDE, MS_NOOVERRIDE );
+  }
 
   imageObj *draw() {
     return msDrawMap(self);
@@ -207,7 +228,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     // Python implementation to define needed variables, initialization
     #ifdef SWIGPYTHON
     #endif
-
+#ifdef notdef
     // generic code to get imgbytes, size
     switch (self->imagetype) {
       case(MS_GIF):
@@ -250,7 +271,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
                               "getImageToVar()");
         return(MS_FAILURE);
     }
-
+#endif
 
     // Tcl implementation to set variable
     #ifdef SWIGTCL8
@@ -573,7 +594,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if(!image) return NULL;
 
     image->img.gd = msCreateLegendIcon(map, layer, self, width, height);
-    image->imagetype = map->imagetype;
+    image->format = map->outputformat;
+    image->format->refcount++;
     image->width = gdImageSX(image->img.gd);
     image->height = gdImageSY(image->img.gd);
     image->imagepath = map->web.imagepath?strdup(map->web.imagepath):NULL; 
@@ -902,19 +924,18 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %addmethods imageObj {
   imageObj(int width, int height) {
     imageObj *image=NULL;
-    int imagetype = MS_GIF;
+    outputFormatObj *format;
 
-#ifdef USE_GD_GIF
-  imagetype = MS_GIF;
-#elif USE_GD_PNG
-  imagetype = MS_PNG;
-#elif USE_GD_JPEG
-  imagetype = MS_JPEG;
-#elif USE_GD_WBMP
-  imagetype = MS_WBMP;
-#endif
+    format = msCreateDefaultOutputFormat(NULL,"image/gif");
+    if( format == NULL )
+      format = msCreateDefaultOutputFormat(NULL,"image/png");
+    if( format == NULL )
+      format = msCreateDefaultOutputFormat(NULL,"image/jpeg");
+    if( format == NULL )
+      format = msCreateDefaultOutputFormat(NULL,"image/wbmp");
     
-    image = msImageCreate(width, height, imagetype, NULL, NULL);    
+    image = msImageCreate(width, height, format, NULL, NULL);    
+
     return(image);
   }
 
@@ -929,10 +950,47 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   void saveImage(char *filename, int type, int transparent, int interlace, int quality) {
-    msSaveImage(self, filename, transparent, interlace, quality);
+
+    // save image parameters ignored ... should be in outputFormatObj
+    // used to create the imageObj.
+    msSaveImage(self, filename );
   }
 
   
+}
+
+// 
+// class extensions for outputFormatObj
+//
+%addmethods outputFormatObj {
+  outputFormatObj( const char *driver ) {
+    outputFormatObj *format;
+
+    format = msCreateDefaultOutputFormat( NULL, driver );
+    if( format != NULL ) 
+        format->refcount++;
+
+    return format;
+  }
+
+  ~outputFormatObj() {
+    if( --self->refcount < 1 )
+      msFreeOutputFormat( self );
+  }
+
+  void setExtension( const char *extension ) {
+    msFree( self->extension );
+    self->extension = strdup(extension);
+  }
+
+  void setMimetype( const char *mimetype ) {
+    msFree( self->mimetype );
+    self->mimetype = strdup(mimetype);
+  }
+
+  void setOption( const char *key, const char *value ) {
+    msSetOutputFormatOption( self, key, value );
+  }
 }
 
 //
