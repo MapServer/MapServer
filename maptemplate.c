@@ -2115,24 +2115,27 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s", msObj->Id);
   outstr = gsub(outstr, "[id]", repstr);
   
-  strcpy(repstr, ""); // Layer list for a "GET" request (obsolete, use [layers_esc] instead)
-  for(i=0;i<msObj->NumLayers;i++)    
-    snprintf(repstr, PROCESSLINE_BUFLEN, "%s&layer=%s", repstr, msObj->Layers[i]);
-  outstr = gsub(outstr, "[get_layers]", repstr);
-  
-  strcpy(repstr, ""); // Layer list for a "POST" request
-  for(i=0;i<msObj->NumLayers;i++)
-    snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s ", repstr, msObj->Layers[i]);
+  repstr[0] = '\0'; // Layer list for a "POST" request
+  for(i=0;i<msObj->NumLayers;i++) {    
+    strlcat(repstr, msObj->Layers[i], sizeof(repstr));
+    strlcat(repstr, " ", sizeof(repstr));
+  }
   trimBlanks(repstr);
   outstr = gsub(outstr, "[layers]", repstr);
 
   encodedstr = msEncodeUrl(repstr);
   outstr = gsub(outstr, "[layers_esc]", encodedstr);
+  outstr = gsub(outstr, "[get_layers]", repstr); // obsolete
   free(encodedstr);
 
   strcpy(repstr, ""); // list of ALL layers that can be toggled
-  for(i=0;i<msObj->Map->numlayers;i++)
-    if(msObj->Map->layers[i].status != MS_DEFAULT) snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s ", repstr, msObj->Map->layers[i].name);
+  repstr[0] = '\0';
+  for(i=0;i<msObj->Map->numlayers;i++) {
+    if(msObj->Map->layers[i].status != MS_DEFAULT) {
+      strlcat(repstr, msObj->Map->layers[i].name, sizeof(repstr));
+      strlcat(repstr, " ", sizeof(repstr));
+    }
+  }
   trimBlanks(repstr);
   outstr = gsub(outstr, "[toggle_layers]", repstr);
 

@@ -26,7 +26,7 @@ IGNORE_MISSING_DATA = @IGNORE_MISSING_DATA@
 # Apparently these aren't as commonplace as I'd hoped. Edit the
 # following line to reflect the missing functions on your platform.
 #
-# STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
+# STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP -DNEED_STRLCAT
 STRINGS= @STRINGS@
 
 # Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
