@@ -7,6 +7,11 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.36  2002/03/14 21:36:12  sacha
+ * Add two mapscript function (in PHP and perl)
+ * setSymbolSet(filename) that load a symbol file dynanictly
+ * getNumSymbols() return the number of symbol in map.
+ *
  * Revision 1.35  2002/03/07 22:31:01  assefa
  * Add template processing functions.
  *
@@ -362,6 +367,25 @@ char *mapObj_processQueryTemplate(mapObj *self,
 {
     return msProcessQueryTemplate(self, names, values, numentries);
 }
+
+int mapObj_setSymbolSet(mapObj *self,
+                        char *szFileName)
+{
+    msFreeSymbolSet(&self->symbolset);
+    msInitSymbolSet(&self->symbolset);
+   
+    // Set symbolset filename
+    self->symbolset.filename = strdup(szFileName);
+
+    return msLoadSymbolSet(&self->symbolset);
+}
+
+int mapObj_getNumSymbols(mapObj *self)
+{
+    return self->symbolset.numsymbols;
+}
+
+
   
       
 /**********************************************************************

@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.20  2002/03/14 21:36:12  sacha
+ * Add two mapscript function (in PHP and perl)
+ * setSymbolSet(filename) that load a symbol file dynanictly
+ * getNumSymbols() return the number of symbol in map.
+ *
  * Revision 1.19  2002/03/07 22:31:01  assefa
  * Add template processing functions.
  *
@@ -161,6 +166,10 @@ char            *mapObj_processLegendTemplate(mapObj *self,
 char            *mapObj_processQueryTemplate(mapObj *self,
                                              char **names, char **values, 
                                              int numentries);
+int             mapObj_setSymbolSet(mapObj *self,
+                                    char *szFileName);
+int             mapObj_getNumSymbols(mapObj *self);
+
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 int             layerObj_open(layerObj *self, char *path);

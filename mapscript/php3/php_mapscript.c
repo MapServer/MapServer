@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.95  2002/03/14 21:36:12  sacha
+ * Add two mapscript function (in PHP and perl)
+ * setSymbolSet(filename) that load a symbol file dynanictly
+ * getNumSymbols() return the number of symbol in map.
+ *
  * Revision 1.94  2002/03/14 19:27:32  sacha
  * When you set the size attribute or overlaysize of class it also set the
  * sizescaled and overlaysizescaled.
@@ -228,6 +233,9 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -512,6 +520,8 @@ function_entry php_map_class_functions[] = {
     {"processtemplate",   php3_ms_map_processTemplate,  NULL},
     {"processlegendtemplate",   php3_ms_map_processLegendTemplate,  NULL},
     {"processquerytemplate",   php3_ms_map_processQueryTemplate,  NULL},
+    {"setsymbolset",   php3_ms_map_setSymbolSet,  NULL},
+    {"getnumsymbols",   php3_ms_map_getNumSymbols,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -4352,6 +4362,101 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_STRING("", 0);
 #endif
 }
+
+/**********************************************************************
+ *                        map->setSymbolSet(szFileName)
+ *
+ * Load a symbol file.
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_setSymbolSet(fileName)*/
+
+DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamFileName;
+    mapObj      *self=NULL;
+    int         retVal=0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (ZEND_NUM_ARGS() != 1 ||
+        getParameters(ht,1,&pParamFileName)==FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pParamFileName);
+   
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
+    if (self == NULL)
+        RETURN_FALSE;
+
+    if(pParamFileName->value.str.val != NULL && strlen(pParamFileName->value.str.val) > 0)
+    {
+        if ((retVal = mapObj_setSymbolSet(self, pParamFileName->value.str.val)) != 0)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "Failed loading symbolset from %s",
+                       pParamFileName->value.str.val);
+        }
+    }
+
+    RETURN_LONG(retVal);
+#endif
+}
+
+/**********************************************************************
+ *                        map->getNumSymbols()
+ **********************************************************************/
+
+/* {{{ proto int layer.getNumSymbols()
+   Returns the number of sumbols from this map. */
+
+DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis;
+    mapObj *self=NULL;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        ARG_COUNT(ht) > 0) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
+    if (self == NULL)
+        RETURN_FALSE;
+   
+    RETURN_LONG(self->symbolset.numsymbols);
+}
+
 
 /* }}} */
 

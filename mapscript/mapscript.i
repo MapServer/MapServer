@@ -275,7 +275,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
         break;
       case(MS_PNG):
         #ifdef USE_GD_PNG
-          imgbytes = gdImagePngPtr(img, &size);
+          imgbytes = gdImagePngPtr(image->bytes, &size);
         #else
           msSetError(MS_MISCERR, "PNG output is not available.",
                               "getImageToVar()");
@@ -390,6 +390,22 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if (msInsertHashTable(self->web.metadata, name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
+  }
+  
+  int setSymbolSet(char *szFileName)
+  {
+    msFreeSymbolSet(&self->symbolset);
+    msInitSymbolSet(&self->symbolset);
+   
+    // Set symbolset filename
+    self->symbolset.filename = strdup(szFileName);
+
+    return msLoadSymbolSet(&self->symbolset);
+  }
+
+  int mapObj_getNumSymbols()
+  {
+    return self->symbolset.numsymbols;
   }
 
   int  moveLayerup(int layerindex) {
