@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/11/12 00:12:22  sdlime
+ * Fixed bug 1040 so when escaping for HTML we use &#39; instead of &apos; for an apostrophe.
+ *
  * Revision 1.28  2004/10/21 19:19:44  assefa
  * Add utility function trimLeft.
  *
@@ -652,8 +655,8 @@ char *msEncodeHTMLEntities(const char *string)
             i += 6;
             break;
           case '\'':
-            strcpy(newstring+i, "&apos;");
-            i += 6;
+            strcpy(newstring+i, "&#39;"); // changed from &apos; and i += 6 (bug 1040)
+            i += 5;
             break;
           default:
             newstring[i++] = *c;
