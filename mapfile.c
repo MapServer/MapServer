@@ -1129,6 +1129,7 @@ int initStyle(styleObj *style) {
   style->sizescaled = style->size = 1; // in SIZEUNITS (layerObj)
   style->minsize = MS_MINSYMBOLSIZE;
   style->maxsize = MS_MAXSYMBOLSIZE;
+  style->offsetx = style->offsety = 0; // no offset
   style->offsetx = style->offsety = 0;
 
   return MS_SUCCESS;
