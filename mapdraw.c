@@ -184,10 +184,10 @@ imageObj *msDrawMap(mapObj *map)
                      status = MS_FAILURE;
                  }
 #endif
-            }        
-#else
-            status = MS_FAILURE;
+#else /* ndef USE_WMS_LYR */
+                status = MS_FAILURE;
 #endif
+            }        
             else 
                 status = msDrawLayer(map, lp, image);
             if(status != MS_SUCCESS) return(NULL);
@@ -230,10 +230,10 @@ imageObj *msDrawMap(mapObj *map)
       }
 #endif
 
-    }
 #else
-	status = MS_FAILURE;
+      status = MS_FAILURE;
 #endif
+    }
     else 
         status = msDrawLayer(map, lp, image);
     if(status != MS_SUCCESS) return(NULL);
