@@ -200,8 +200,9 @@ int msCopyHashTable(hashTableObj dst, hashTableObj src){
  * Copy a fontSetObj, using msCreateHashTable() and msCopyHashTable()  *
  **********************************************************************/
 
-int msCopyFontSet(fontSetObj *dst, fontSetObj *src) {
-  copyStringProperty(&(dst->filename), src->filename);
+int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map) {
+  dst->filename = strdup(src->filename);
+  //copyStringProperty(&(dst->filename), src->filename);
   copyProperty(&(dst->numfonts), &(src->numfonts), sizeof(int));
   if (src->fonts) {
     dst->fonts = msCreateHashTable();
@@ -209,7 +210,7 @@ int msCopyFontSet(fontSetObj *dst, fontSetObj *src) {
       return(MS_FAILURE);
   }
 
-  //copyProperty(&(dst->map), &map, sizeof(mapObj *));
+  copyProperty(&(dst->map), &map, sizeof(mapObj *));
 
   return(MS_SUCCESS);
 }
@@ -397,11 +398,11 @@ int msCopyLabel(labelObj *dst, labelObj *src) {
  * msCopyHashTable()                                                   *
  **********************************************************************/
 
-int msCopyWeb(webObj *dst, webObj *src) {
+int msCopyWeb(webObj *dst, webObj *src, mapObj *map) {
   copyStringProperty(&(dst->log), src->log);
   copyStringProperty(&(dst->imagepath), src->imagepath);
   copyStringProperty(&(dst->imageurl), src->imageurl);
-  //copyProperty(&(dst->map), &map, sizeof(mapObj *));
+  copyProperty(&(dst->map), &map, sizeof(mapObj *));
 #ifndef __cplusplus
   copyStringProperty(&(dst->template), src->template);
 #else
@@ -636,13 +637,13 @@ int msCopyResultCache(resultCacheObj *dst, resultCacheObj *src) {
  * gdImageCreate(), gdImageCopy()                                      *
  **********************************************************************/
 
-int msCopySymbol(symbolObj *dst, symbolObj *src) {
+int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
   int i;
   initSymbol(dst);
   copyStringProperty(&(dst->name), src->name);
   copyProperty(&(dst->type), &(src->type), sizeof(int));
   copyProperty(&(dst->inmapfile), &(src->inmapfile), sizeof(int));
-  //struct map_obj *map;
+  copyProperty(&(dst->map), &map, sizeof(mapObj *));
   copyProperty(&(dst->sizex), &(src->sizex), sizeof(double)),
   copyProperty(&(dst->sizey), &(src->sizey), sizeof(double));
   for (i=0; i < MS_MAXVECTORPOINTS; i++) {
@@ -695,14 +696,14 @@ int msCopySymbol(symbolObj *dst, symbolObj *src) {
  * Copy a symbolSetObj using msCopyFontSet(), msCopySymbol()           *
  **********************************************************************/
 
-int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src)
+int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
 {
   int i, return_value;
   
   copyStringProperty(&(dst->filename), src->filename);
-  //copyProperty(&(dst->map), &map, sizeof(mapObj *));
+  copyProperty(&(dst->map), &map, sizeof(mapObj *));
 
-  if (msCopyFontSet(dst->fontset, src->fontset) != MS_SUCCESS) {
+  if (msCopyFontSet(dst->fontset, src->fontset, map) != MS_SUCCESS) {
     msSetError(MS_MEMERR,"Failed to copy fontset.","msCopySymbolSet()");
     return(MS_FAILURE);
   }
@@ -710,7 +711,7 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src)
   copyProperty(&(dst->numsymbols), &(src->numsymbols), sizeof(int));
   
   for (i = 0; i < dst->numsymbols; i++) {
-    return_value = msCopySymbol(&(dst->symbol[i]), &(src->symbol[i]));
+    return_value = msCopySymbol(&(dst->symbol[i]), &(src->symbol[i]), map);
     if (return_value != MS_SUCCESS) {
       msSetError(MS_MEMERR,"Failed to copy symbol.","msCopySymbolSet()");
       return(MS_FAILURE);
@@ -734,7 +735,8 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src)
  * msCopyRect(), msCopyColor()                                         *
  **********************************************************************/
 
-int msCopyReferenceMap(referenceMapObj *dst, referenceMapObj *src)
+int msCopyReferenceMap(referenceMapObj *dst, referenceMapObj *src,
+                       mapObj *map)
 {
   int return_value;
 
@@ -772,7 +774,7 @@ int msCopyReferenceMap(referenceMapObj *dst, referenceMapObj *src)
   copyProperty(&(dst->markersize), &(src->markersize), sizeof(int));
   copyProperty(&(dst->minboxsize), &(src->minboxsize), sizeof(int));
   copyProperty(&(dst->maxboxsize), &(src->maxboxsize), sizeof(int));
-  //copyProperty(&(dst->map), &map, sizeof(mapObj *));
+  copyProperty(&(dst->map), &map, sizeof(mapObj *));
 
   return(MS_SUCCESS);
 }
@@ -849,7 +851,7 @@ int msCopyScalebar(scalebarObj *dst, scalebarObj *src)
  * Copy a legendObj, using msCopyColor()                               *
  **********************************************************************/
 
-int msCopyLegend(legendObj *dst, legendObj *src)
+int msCopyLegend(legendObj *dst, legendObj *src, mapObj *map)
 {
   int return_value;
   
@@ -894,7 +896,7 @@ int msCopyLegend(legendObj *dst, legendObj *src)
 #else
    copyStringProperty(&(dst->_template), src->_template);
 #endif
-  //copyProperty(&(dst->map), &map, sizeof(mapObj *));
+  copyProperty(&(dst->map), &map, sizeof(mapObj *));
 
   return(MS_SUCCESS);
 }
@@ -1107,7 +1109,6 @@ int msCopyMap(mapObj *dst, mapObj *src)
   copyProperty(&(dst->status), &(src->status), sizeof(int)); 
   copyProperty(&(dst->height), &(src->height), sizeof(int));
   copyProperty(&(dst->width), &(src->width), sizeof(int));
-  copyProperty(&(dst->maxsize), &(src->maxsize), sizeof(int));
   copyProperty(&(dst->numlayers), &(src->numlayers), sizeof(int)); 
 
   for (i = 0; i < dst->numlayers; i++) {
@@ -1120,13 +1121,14 @@ int msCopyMap(mapObj *dst, mapObj *src)
     }
   }
   
-  return_value = msCopySymbolSet(&(dst->symbolset), &(src->symbolset));
+  return_value = msCopySymbolSet(&(dst->symbolset), &(src->symbolset),
+                                 dst);
   if(return_value != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy symbolset.", "msCopyMap()");
     return(MS_FAILURE);
   }
   
-  if (msCopyFontSet(&(dst->fontset), &(src->fontset)) != MS_SUCCESS) {
+  if (msCopyFontSet(&(dst->fontset), &(src->fontset), dst) != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopyMap()");
     return(MS_FAILURE);
   }
@@ -1189,7 +1191,8 @@ int msCopyMap(mapObj *dst, mapObj *src)
     return(MS_FAILURE);
   }
   
-  return_value = msCopyReferenceMap(&(dst->reference),&(src->reference));
+  return_value = msCopyReferenceMap(&(dst->reference),&(src->reference),
+                                    dst);
   if (return_value != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy reference.", "msCopyMap()");
     return(MS_FAILURE);
@@ -1201,7 +1204,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
     return(MS_FAILURE);
   }
   
-  return_value = msCopyLegend(&(dst->legend), &(src->legend));
+  return_value = msCopyLegend(&(dst->legend), &(src->legend),dst);
   if (return_value != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy legend.", "msCopyMap()");
     return(MS_FAILURE);
@@ -1213,7 +1216,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
     return(MS_FAILURE);
   }
   
-  return_value = msCopyWeb(&(dst->web), &(src->web));
+  return_value = msCopyWeb(&(dst->web), &(src->web), dst);
   if (return_value != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy web.", "msCopyMap()");
     return(MS_FAILURE);
