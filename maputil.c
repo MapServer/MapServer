@@ -619,7 +619,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	point = &(shape->line[j].point[i]);
 
 	if(layer->transform) {
-	  if(!msPointInRect(point, &map->extent)) return(MS_SUCCESS);
+	  if(!msPointInRect(point, &map->extent)) continue; // next point
 	  point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
 	  point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
 	}
