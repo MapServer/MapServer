@@ -50,16 +50,18 @@ Here is the list of available options as returned by "./configure --help":
   --with-ttf[=DIR]        Include Freetype (TTF) support (DIR is Freetype's
                           install dir).
   --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
+  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
+  --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
   --disable-ignore-missing-data  Report all missing data files.
   --enable-debug          Include -g in CFLAGS for debugging.
   --disable-debug         Do not include -g in CFLAGS (the default).
-  --with-php3=DIR         Specify directory where PHP3 source tree is
+  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is
                           installed. Required in order to compile the
-                          PHP3/MapScript module. 
-  --with-apxs[=FILE]      Use this option only if building the PHP3 MapScript
-                          on a system where PHP3 was built as a shared Apache
+                          PHP/MapScript module.
+  --with-apxs[=FILE]      Use this option only if building the PHP MapScript
+                          on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the
                           Apache apxs tool; defaults to apxs.
   --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
@@ -188,6 +190,32 @@ PROJ.4 Support:
   compiled before using this option.
 
 
+ESRI SDE Support:
+-----------------
+
+  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).
+
+  ESRI SDE support is optional, and is not included by default.  
+
+  You have to use the --with-sde=DIR option to enable ESRI SDE support and
+  specify where ESRI SDE is installed.
+
+
+OGR Support:
+------------
+
+  --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).
+
+  OGR support is optional, and is not included by default.  
+
+  The OGR library (http://gdal.velocet.ca/projects/opengis/) allows MapServer
+  to access data in multiple vector formats.
+
+  You have to use the --with-ogr=DIR option to enable OGR support and
+  specify where the OGR (or GDAL) source tree is located.  Make sure that 
+  this copy of OGR is compiled before using this option.
+
+
 Miscellaneous flags:
 --------------------
 
@@ -213,27 +241,29 @@ Miscellaneous flags:
     CGI or MapScript runtime library path.
 
 
-PHP3/MapScript module:
+PHP/MapScript module:
 ----------------------
 
-  --with-php3=DIR         Specify directory where PHP3 source tree is
+  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is
                           installed. Required in order to compile the
-                          PHP3/MapScript module. 
-  --with-apxs[=FILE]      Use this option only if building the PHP3 MapScript
-                          on a system where PHP3 was built as a shared Apache
+                          PHP/MapScript module.
+  --with-apxs[=FILE]      Use this option only if building the PHP MapScript
+                          on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the
                           Apache apxs tool; defaults to apxs.
 
-  The --with-php3 option will trigger the compilation of the PHP3 MapScript
+  The --with-php option will trigger the compilation of the PHP MapScript
   module in the ./mapscript/php3/ directory.
 
-  DIR should be the location of the PHP3 source distribution.  The module
-  was developped for php-3.0.14 and would be expected to work with more
-  recent versions of PHP3.
+  DIR should be the location of the PHP3 or PHP4 source distribution.  The 
+  module was originally developped using php-3.0.14 and works with more 
+  recent versions of PHP3.  It has also been ported to PHP4, and the 
+  configure script should automatically detect which version of PHP you 
+  are attempting to build with and take the necessary actions.
 
-    e.g.  $ ./configure --with-php3=../php-3.0.14
+    e.g.  $ ./configure --with-php=../php-3.0.14
 
-  The PHP3 module has to be built as a shared library that will then
+  The PHP module has to be built as a shared library that will then
   be loaded as a Dynamic Module by the PHP interpreter using the dl()
   PHP command.  See the file ./mapscript/php3/README for more details.
 
@@ -242,15 +272,28 @@ PHP3/MapScript module:
   site:
 	http://www.php.net/manual/install-unix.php
 
-  If PHP3 is compiled as a shared library Apache module, then you have to
+  If PHP is compiled as a shared library Apache module, then you have to
   pass to the MapServer configure script the same value for the 
-  --with-apxs option that was passed to the PHP3 configure script.
-  You can find the configure options that were used to build PHP3 on your
+  --with-apxs option that was passed to the PHP configure script.
+  You can find the configure options that were used to build PHP on your
   system by looking at the "Configuration" section of the output of the
-  PHP3 phpinfo() command.
+  PHP phpinfo() command.
 
   If you get errors at compile time about missing headers (ap_*.h, httpd.h,
   http*.h) then you need to enable apxs: re-run configure with --with-apxs.
+
+  Some libraries are used by both PHP and MapServer, and using different 
+  versions of these libs will lead to potential crashes at runtime.  In most
+  cases it is safe to have both PHP and MapServer compiled with the same 
+  libraries (e.g. GD, regex, etc.) as long as they are of the same versions.
+
+  However, there is at least one exception that we know of: the Freetype 
+  library.  You cannot have Freetype enabled in both PHP and MapServer 
+  because of a conflict with the gdttf.c and gdcache.c files that are 
+  included in both PHP and MapServer but are not identical.  We may try to
+  fix that conflict in the future, but in the meantime, one of PHP or 
+  MapServer has to be compiled using --without-ttf.  This is especially
+  important with PHP4 because it includes TTF support by default.
 
 
 Perl MapScript Module:
