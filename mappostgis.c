@@ -60,6 +60,14 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	if (layer->postgislayerinfo)
 		return MS_SUCCESS;	//already open
 
+        if( layer->data == NULL )
+        {
+            msSetError(MS_QUERYERR, 
+                       "Missing DATA clause in PostGIS Layer definition.  DATA statement must contain 'geometry_column from table_name'.",
+                       "msPOSTGISLayerOpen()");
+            return(MS_FAILURE);
+        }
+
 	//have to setup a connection to the database
 
 	layerinfo = (msPOSTGISLayerInfo *) malloc( sizeof(msPOSTGISLayerInfo) );
@@ -158,6 +166,14 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 		return(MS_FAILURE);
 	}
 
+        if( layer->data == NULL )
+        {
+            msSetError(MS_QUERYERR, 
+                       "Missing DATA clause in PostGIS Layer definition.  DATA statement must contain 'geometry_column from table_name'.",
+                       "msPOSTGISLayerWhichShapes()");
+            return(MS_FAILURE);
+        }
+
 	query_str = (char *) malloc(6000); //should be big enough
 	memset(query_str,0,6000);		//zero it out
 
@@ -166,7 +182,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 
 	if (nitems !=2)
 	{
-        msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.", 
+            msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column FROM table_name'.", 
                  "msPOSTGISLayerWhichShapes()");
 	  return(MS_FAILURE);
 	}
