@@ -1586,10 +1586,11 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(END):
       layer->numclasses = c;
  
-      if(!layer->connection && layer->data && layer->numclasses > 1 && !layer->classitem) {
-	msSetError(MS_MISCERR, "Multiple classes defined but no classitem?", "loadLayer()");      
-	return(-1);
-      }      
+      // May want to re-write this test to be more specific.
+      // if(!layer->connection && layer->data && layer->numclasses > 1 && !layer->classitem) {
+      //   msSetError(MS_MISCERR, "Multiple classes defined but no classitem?", "loadLayer()");      
+      //   return(-1);
+      // }
 
       if(layer->type == -1) {
 	msSetError(MS_MISCERR, "Layer type not set.", "loadLayer()");      
