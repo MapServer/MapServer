@@ -802,6 +802,8 @@ int msCopyLayer(layerObj *dst, layerObj *src)
             return MS_FAILURE;
     }
 
+		MS_COPYRECT(&(dst->extent), &(src->extent));
+    
     return MS_SUCCESS;
 }
 
