@@ -3882,7 +3882,7 @@ fi
 
 if test "$with_postgis" = "no" -o "$with_postgis" = "" ; then
   echo "$ac_t""no" 1>&6
-  PG_CONFIG=no
+  PG_CONFIG="no"
 elif test "$with_postgis" = "yes" ; then
   echo "$ac_t""yes" 1>&6
   # Extract the first word of "pg_config", so it can be a program name with args.
@@ -3922,10 +3922,10 @@ else
 fi
 
 else 
-  PG_CONFIG=$with_ppostgis
+  PG_CONFIG=$with_postgis
 fi
 
-if test "PG_CONFIG" = "no" ; then
+if test "$PG_CONFIG" = "no" ; then
   POSTGIS_ENABLED=
   POSTGIS_INC=
   POSTGIS_LIB=

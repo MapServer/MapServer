@@ -684,15 +684,15 @@ AC_ARG_WITH(postgis,[  --with-postgis[=ARG]         Include PostGIS Support (ARG
 
 if test "$with_postgis" = "no" -o "$with_postgis" = "" ; then
   AC_MSG_RESULT(no)
-  PG_CONFIG=no
+  PG_CONFIG="no"
 elif test "$with_postgis" = "yes" ; then
   AC_MSG_RESULT(yes)
   AC_PATH_PROG(PG_CONFIG, pg_config, no)
 else 
-  PG_CONFIG=$with_ppostgis
+  PG_CONFIG=$with_postgis
 fi
 
-if test "PG_CONFIG" = "no" ; then
+if test "$PG_CONFIG" = "no" ; then
   POSTGIS_ENABLED=
   POSTGIS_INC=
   POSTGIS_LIB=
