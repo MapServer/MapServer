@@ -39,15 +39,20 @@ static double roundInterval(double d)
 ** Calculate the approximate scale based on a few parameters. Note that this assumes the scale is
 ** the same in the x direction as in the y direction, so run msAdjustExtent(...) first.
 */
-double msCalculateScale(rectObj extent, int units, int width, int height, int resolution)
+int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale)
 {
-  double md, gd, scale;
+  double md, gd;
 
-  if((extent.maxx == extent.minx) || (extent.maxy == extent.miny))
-    return(-1);
-
-  if((width <= 0) || (height <= 0))
-    return(-1);
+  // if((extent.maxx == extent.minx) || (extent.maxy == extent.miny))  
+  if(!MS_VALID_EXTENT(extent.minx, extent.miny, extent.maxx, extent.maxy)) {
+    msSetError(MS_MISCERR, "Invalid image extent.", "msCalculateScale()");
+    return(MS_FAILURE);
+  }
+  
+  if((width <= 0) || (height <= 0)) {
+    msSetError(MS_MISCERR, "Invalid image width or height.", "msCalculateScale()");
+    return(MS_FAILURE);
+  }
 
   switch (units) {
   case(MS_DD):
@@ -58,20 +63,21 @@ double msCalculateScale(rectObj extent, int units, int width, int height, int re
   case(MS_FEET):
     md = width/(resolution*inchesPerUnit[units]); // was (width-1)
     gd = extent.maxx - extent.minx;
-    scale = gd/md;
+    *scale = gd/md;
     break;
   default:
-    return(-1);
+    *scale = -1; // this is not an error
     break;
   }
 
-  return(scale);
+  return(MS_SUCCESS);
 }
 
 #define X_STEP_SIZE 5
 
 gdImagePtr msDrawScalebar(mapObj *map)
 {
+  int status;
   gdImagePtr img=NULL;
   char label[32];
   double i, msx;
@@ -89,7 +95,8 @@ gdImagePtr msDrawScalebar(mapObj *map)
   if(!fontPtr) return(NULL);
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution);
+  status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
+  if(status != MS_SUCCESS) return(NULL);
   
   dsx = map->scalebar.width - 2*HMARGIN;
   do {

@@ -114,6 +114,8 @@ extern "C" {
 #define MS_SGN(a)	(((a)<0) ? -1 : 1)
 #define MS_NINT(x)      ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
 
+#define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
+
 #define MS_IMAGE_MIME_TYPE(type)  ((type)==MS_GIF?"gif": \
                                    (type)==MS_PNG?"png": \
                                    (type)==MS_JPEG?"jpeg": \
@@ -658,7 +660,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 
 gdImagePtr msDrawScalebar(mapObj *map); // in mapscale.c
-double msCalculateScale(rectObj extent, int units, int width, int height, int resolution);
+int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
 
 int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c

@@ -867,6 +867,9 @@ void setExtentFromShapes() {
   double dx, dy;
   layerObj *lp;
 
+  rectObj tmpext={-1.0,-1.0,-1.0,-1.0};
+  pointObj tmppnt={-1.0,-1.0};
+
   for(i=0; i<Map->numlayers; i++) {
     lp = &(Map->layers[i]);
 
@@ -874,26 +877,33 @@ void setExtentFromShapes() {
     if(lp->resultcache->numresults <= 0) continue;
 
     if(!found) {
-      Map->extent = lp->resultcache->bounds;
+      tmpext = lp->resultcache->bounds;
       found = 1;
     } else
-      msMergeRect(&(Map->extent), &(lp->resultcache->bounds));
+      msMergeRect(&(tmpext), &(lp->resultcache->bounds));
   }
 
-  dx = Map->extent.maxx - Map->extent.minx;
-  dy = Map->extent.maxy - Map->extent.miny;
+  // FIX: NEED TO ADD A COUPLE OF POINT BASED METHODS BASED ON SCALE or BUFFER
+
+  dx = tmpext.maxx - tmpext.minx;
+  dy = tmpext.maxy - tmpext.miny;
  
-  MapPnt.x = dx/2;
-  MapPnt.y = dy/2;
-  Map->extent.minx -= dx*EXTENT_PADDING/2.0;
-  Map->extent.maxx += dx*EXTENT_PADDING/2.0;
-  Map->extent.miny -= dy*EXTENT_PADDING/2.0;
-  Map->extent.maxy += dy*EXTENT_PADDING/2.0;
+  tmppnt.x = dx/2;
+  tmppnt.y = dy/2;
+  tmpext.minx -= dx*EXTENT_PADDING/2.0;
+  tmpext.maxx += dx*EXTENT_PADDING/2.0;
+  tmpext.miny -= dy*EXTENT_PADDING/2.0;
+  tmpext.maxy += dy*EXTENT_PADDING/2.0;
 
-  RawExt = Map->extent; // save unadjusted extent
+  if(!MS_VALID_EXTENT(tmpext.minx, tmpext.miny, tmpext.maxx, tmpext.maxy)) { // must've been a single point, we need to fall back on something else
+    tmpext = ImgExt; // try the previous image extent
+    if(!MS_VALID_EXTENT(tmpext.minx, tmpext.miny, tmpext.maxx, tmpext.maxy))
+      tmpext = Map->extent; // fall back on default extent set in map file
+  }
 
-  /* FIX: NEED TO ADD A COUPLE OF POINT BASED METHODS BASED ON SCALE or BUFFER*/
-
+  MapPnt = tmppnt;
+  Map->extent = RawExt = tmpext; // save unadjusted extent
+  
   return;
 }
 
@@ -1461,8 +1471,8 @@ int main(int argc, char *argv[]) {
       }
       
       setExtent();      
-      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
-      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
 
       if((Map->scale < Map->web.minscale) && (Map->web.minscale > 0)) {
 	if(Map->web.mintemplate) { // use the template provided
@@ -1479,7 +1489,7 @@ int main(int argc, char *argv[]) {
 	  MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
 	  setExtent();
 	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
-	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+	  if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
 	}
       }
       if((Map->scale > Map->web.maxscale) && (Map->web.maxscale > 0)) {
@@ -1497,7 +1507,7 @@ int main(int argc, char *argv[]) {
 	  MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
 	  setExtent();
 	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
-	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+	  if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
 	}
       }
    
@@ -1687,20 +1697,20 @@ int main(int argc, char *argv[]) {
 	    if(SearchMap) { // compute new extent, pan etc then search that extent
 	      setExtent();
 	      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
-	      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+	      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
 	      if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
 	    } else {
 	      Map->extent = ImgExt; // use the existing image parameters
 	      Map->width = ImgCols;
 	      Map->height = ImgRows;
-	      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	 
+	      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();	 
 	      if((status = msQueryByPoint(Map, QueryLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
 	    }
 	    break;	  
 	  case FROMIMGBOX:	  
 	    if(SearchMap) { // compute new extent, pan etc then search that extent
 	      setExtent();
-	      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+	      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
 	      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
 	      if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
 	    } else {
@@ -1709,7 +1719,7 @@ int main(int argc, char *argv[]) {
 	      Map->extent = ImgExt; // use the existing image parameters
 	      Map->width = ImgCols;
 	      Map->height = ImgRows;
-	      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	  
+	      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();	  
 	    
 	      cellx = (ImgExt.maxx-ImgExt.minx)/(ImgCols-1); // calculate the new search extent
 	      celly = (ImgExt.maxy-ImgExt.miny)/(ImgRows-1);
@@ -1726,7 +1736,7 @@ int main(int argc, char *argv[]) {
 	    Map->width = ImgCols;
 	    Map->height = ImgRows;
 	    Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
-	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+	    if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
 	  
 	    // convert from image to map coordinates here (see setCoordinate)
 	    for(i=0; i<SelectShape.numlines; i++) {
@@ -1765,7 +1775,7 @@ int main(int argc, char *argv[]) {
 	    Map->extent = ImgExt; // use the existing image parameters
 	    Map->width = ImgCols;
 	    Map->height = ImgRows;
-	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	 	  
+	    if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();	 	  
 	    if((status = msQueryByPoint(Map, QueryLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
 	    break;
 	  

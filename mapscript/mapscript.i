@@ -111,10 +111,14 @@
   }
 
   void prepareQuery() {
-    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution);
+    int status;
+
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
+    if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
   }
 
   gdImagePtr prepareImage() {
+    int status;
     gdImagePtr img;
 
     if(self->width == -1 && self->height == -1) {
@@ -136,7 +140,9 @@
       return NULL;
   
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
-    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution);
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
+    if(status != MS_SUCCESS)
+      return NULL;
 
     return img;
   }

@@ -12,6 +12,7 @@
 
 gdImagePtr msDrawLegend(mapObj *map)
 {
+  int status;
   shapeObj p;
   gdImagePtr img; /* image data structure */
   int i,j; /* loop counters */
@@ -23,7 +24,8 @@ gdImagePtr msDrawLegend(mapObj *map)
   rectObj rect;
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution);
+  status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
+  if(status != MS_SUCCESS) return(NULL);
 
   /* Initialize the polygon/polyline */
   p.line = (lineObj *)malloc(sizeof(lineObj));
