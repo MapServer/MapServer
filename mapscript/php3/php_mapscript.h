@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/12/03 18:56:09  assefa
+ * Add functions to apply and to generate sld on a layer object.
+ *
  * Revision 1.38  2003/12/01 16:12:01  assefa
  * Add applysld and applysldurl on map.
  *
@@ -280,7 +283,10 @@ char            *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map,
                                                int click_x, int click_y,     
                                                int feature_count, 
                                                char *info_format);
-char *layerObj_executeWFSGetFeature(layerObj *self);
+char            *layerObj_executeWFSGetFeature(layerObj *self);
+int             layerObj_applySLD(layerObj *self, char *sld);
+int             layerObj_applySLDURL(layerObj *self, char *sld);
+char            *layerObj_generateSLD(layerObj *self);
 
 classObj       *classObj_new(layerObj *layer);
 void            classObj_destroy(classObj* self);

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.185  2003/12/03 18:56:09  assefa
+ * Add functions to apply and to generate sld on a layer object.
+ *
  * Revision 1.184  2003/12/01 16:12:01  assefa
  * Add applysld and applysldurl on map.
  *
@@ -366,6 +369,9 @@ DLEXPORT void  php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_getProcessing(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_lyr_applySLD(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_lyr_applySLDURL(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_lyr_generateSLD(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -806,6 +812,9 @@ function_entry php_layer_class_functions[] = {
     {"getprocessing",   php3_ms_lyr_getProcessing,           NULL},
     {"clearprocessing", php3_ms_lyr_clearProcessing,           NULL},
     {"executewfsgetfeature", php3_ms_lyr_executeWFSGetfeature,           NULL},
+    {"applysld",        php3_ms_lyr_applySLD,           NULL},
+    {"applysldurl",     php3_ms_lyr_applySLDURL,           NULL},
+    {"generatesld",      php3_ms_lyr_generateSLD,           NULL},
     {NULL, NULL, NULL}
 };
 
@@ -3113,6 +3122,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     imageObj *im = NULL;
+
 
 #ifdef PHP4
     pval   **pExtent;
@@ -7589,6 +7599,122 @@ DLEXPORT void php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS)
     free(pszValue);
 }
  
+/**********************************************************************
+ *                        layer->applySLD(szSLDString)
+ *
+ * Apply an XML SLD string to the layer
+ **********************************************************************/
+DLEXPORT void php3_ms_lyr_applySLD(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     pval        *pSLDString;
+     layerObj      *self=NULL;
+     HashTable   *list=NULL;
+     int         nStatus = MS_SUCCESS;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    if (getParameters(ht,1,&pSLDString) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pSLDString);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    nStatus = layerObj_applySLD(self, pSLDString->value.str.val);
+
+    RETURN_LONG(nStatus);
+}
+
+
+/**********************************************************************
+ *                        layer->applySLD(szSLDURL)
+ *
+ * Apply an SLD to a layer. The SLD is given as an URL.
+ **********************************************************************/
+DLEXPORT void php3_ms_lyr_applySLDURL(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     pval        *pSLDString;
+     layerObj      *self=NULL;
+     HashTable   *list=NULL;
+     int         nStatus = MS_SUCCESS;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    if (getParameters(ht,1,&pSLDString) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pSLDString);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    nStatus = layerObj_applySLDURL(self, pSLDString->value.str.val);
+
+    RETURN_LONG(nStatus);
+}
+
+
+DLEXPORT void php3_ms_lyr_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     layerObj      *self=NULL;
+     HashTable   *list=NULL;
+     char       *pszBuffer = NULL;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    pszBuffer = layerObj_generateSLD(self);
+
+    if (pszBuffer)
+    {
+        RETVAL_STRING(pszBuffer, 1);
+        free(pszBuffer);
+    }
+    else
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_STRING("", 0);
+    }
+}
+
 /* }}} */
 
 /*=====================================================================

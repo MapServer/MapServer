@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.72  2003/12/03 18:56:08  assefa
+ * Add functions to apply and to generate sld on a layer object.
+ *
  * Revision 1.71  2003/12/01 16:12:01  assefa
  * Add applysld and applysldurl on map.
  *
@@ -595,16 +598,16 @@ int mapObj_selectOutputFormat(mapObj *self,
 
 int mapObj_applySLD(mapObj *self, char *sld)
 {
-    return msSLDApplySLD(self, sld);
+    return msSLDApplySLD(self, sld, -1);
 }
 int mapObj_applySLDURL(mapObj *self, char *sld)
 {
-    return msSLDApplySLDURL(self, sld);
+    return msSLDApplySLDURL(self, sld, -1);
 }
 
 char *mapObj_generateSLD(mapObj *self)
 {
-    return msSLDGenerateSLD(self);
+    return msSLDGenerateSLD(self, -1);
 }
 
 /**********************************************************************
@@ -745,6 +748,20 @@ char *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map, int click_x, in
 
 char *layerObj_executeWFSGetFeature(layerObj *self) {
   return (msWFSExecuteGetFeature(self));
+}
+
+int layerObj_applySLD(layerObj *self, char *sld)
+{
+    return msSLDApplySLD(self->map, sld, self->index);
+}
+int layerObj_applySLDURL(layerObj *self, char *sld)
+{
+    return msSLDApplySLDURL(self->map, sld, self->index);
+}
+
+char *layerObj_generateSLD(layerObj *self)
+{
+    return msSLDGenerateSLD(self->map, self->index);
 }
 
 /**********************************************************************
