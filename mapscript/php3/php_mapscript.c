@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.35  2001/03/12 19:02:46  dan
+ * Added query-related stuff in PHP MapScript
+ *
  * Revision 1.34  2001/03/12 14:48:07  assefa
  * Correct error in zoom rectangle.
  *
@@ -89,7 +92,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Mar 9, 2001)"
+#define PHP3_MS_VERSION "(Mar 12, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -169,7 +172,11 @@ DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_lyr_classify(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getNumResults(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -220,7 +227,6 @@ DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
-
 static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
@@ -234,12 +240,18 @@ static long _phpms_build_color_object(colorObj *pcolor,
                                       HashTable *list, pval *return_value);
 static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
                                       HashTable *list, pval *return_value);
+static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
+                                      layerObj *pLayer,
+                                      HashTable *list, pval *return_value);
 static long _phpms_build_web_object(webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_rect_object(rectObj *prect, int handle_type,
                                      HashTable *list, pval *return_value);
 static long _phpms_build_referenceMap_object(referenceMapObj *preferenceMap,
                                           HashTable *list, pval *return_value);
+static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
+                                                  HashTable *list, 
+                                                  pval *return_value);
 
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
@@ -273,7 +285,8 @@ static int le_msshape_new;
 static int le_msshape_ref;
 static int le_msshapefile;
 static int le_msweb;
-static int ls_msrefmap;
+static int le_msrefmap;
+static int le_msrescache;
 
 static char tmpId[128]; /* big enough for time + pid */
 static int  tmpCount;
@@ -291,12 +304,11 @@ static zend_class_entry *reference_class_entry_ptr;
 static zend_class_entry *layer_class_entry_ptr;
 static zend_class_entry *label_class_entry_ptr;
 static zend_class_entry *class_class_entry_ptr;
-static zend_class_entry *queryresult_class_entry_ptr;
-static zend_class_entry *query_class_entry_ptr;
 static zend_class_entry *point_class_entry_ptr;
 static zend_class_entry *line_class_entry_ptr;
 static zend_class_entry *shape_class_entry_ptr;
 static zend_class_entry *shapefile_class_entry_ptr;
+static zend_class_entry *rescache_class_entry_ptr;
 
 #endif
 
@@ -408,6 +420,11 @@ function_entry php_layer_class_functions[] = {
     {"querybyshape",    php3_ms_lyr_queryByShape,       NULL},    
     {"setprojection",   php3_ms_lyr_setProjection,      NULL},
     {"addfeature",      php3_ms_lyr_addFeature,         NULL},
+    {"getnumresults",   php3_ms_lyr_getNumResults,      NULL},
+    {"getresult",       php3_ms_lyr_getResult,          NULL},
+    {"open",            php3_ms_lyr_open,               NULL},
+    {"close",           php3_ms_lyr_close,              NULL},
+    {"getshape",        php3_ms_lyr_getShape,           NULL},
     {NULL, NULL, NULL}
 };
 
@@ -426,10 +443,10 @@ function_entry php_class_class_functions[] = {
 function_entry php_point_class_functions[] = {
     {"setxy",           php3_ms_point_setXY,            NULL},    
     {"draw",            php3_ms_point_draw,             NULL},    
-    {"distancetopoint",            php3_ms_point_distanceToPoint,        NULL},    
-    {"distancetoline",            php3_ms_point_distanceToLine,         NULL},    
-    {"distancetoshape",            php3_ms_point_distanceToShape,       NULL},    
-    {"free",            php3_ms_point_free,               NULL},    
+    {"distancetopoint", php3_ms_point_distanceToPoint,  NULL},    
+    {"distancetoline",  php3_ms_point_distanceToLine,   NULL},    
+    {"distancetoshape", php3_ms_point_distanceToShape,  NULL},    
+    {"free",            php3_ms_point_free,             NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -445,9 +462,9 @@ function_entry php_shape_class_functions[] = {
     {"add",             php3_ms_shape_add,              NULL},    
     {"line",            php3_ms_shape_line,             NULL},    
     {"draw",            php3_ms_shape_draw,             NULL},    
-    {"contains",            php3_ms_shape_contains,         NULL},    
-    {"intersects",            php3_ms_shape_intersects,         NULL},    
-    {"free",            php3_ms_shape_free,               NULL},    
+    {"contains",        php3_ms_shape_contains,         NULL},    
+    {"intersects",      php3_ms_shape_intersects,       NULL},    
+    {"free",            php3_ms_shape_free,             NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -508,11 +525,13 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
                                                         NULL);
     PHPMS_GLOBAL(le_msweb)= register_list_destructors(php3_ms_free_stub,
                                                       NULL);
-    PHPMS_GLOBAL(ls_msrefmap)= register_list_destructors(php3_ms_free_stub,
+    PHPMS_GLOBAL(le_msrefmap)= register_list_destructors(php3_ms_free_stub,
                                                              NULL);
     PHPMS_GLOBAL(le_msrect_new)= register_list_destructors(php3_ms_free_rect,
                                                            NULL);
     PHPMS_GLOBAL(le_msrect_ref)= register_list_destructors(php3_ms_free_stub,
+                                                           NULL);
+    PHPMS_GLOBAL(le_msrescache)= register_list_destructors(php3_ms_free_stub,
                                                            NULL);
 
     /* boolean constants*/
@@ -533,17 +552,16 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_PIXELS",     MS_PIXELS,      const_flag);
 
     /* layer type constants*/
-    REGISTER_LONG_CONSTANT("MS_POINT",      MS_POINT,       const_flag);
-    REGISTER_LONG_CONSTANT("MS_LINE",       MS_LINE,        const_flag);
-    REGISTER_LONG_CONSTANT("MS_POLYGON",    MS_POLYGON,     const_flag);
-    REGISTER_LONG_CONSTANT("MS_POLYLINE",   MS_POLYLINE,    const_flag);
-    REGISTER_LONG_CONSTANT("MS_RASTER",     MS_RASTER,      const_flag);
-    REGISTER_LONG_CONSTANT("MS_ANNOTATION", MS_ANNOTATION,  const_flag);
-    REGISTER_LONG_CONSTANT("MS_NULL",       MS_NULL,        const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_POINT",MS_LAYER_POINT, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_LINE", MS_LAYER_LINE,  const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_POLYGON",MS_LAYER_POLYGON, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_POLYLINE",MS_LAYER_POLYLINE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_RASTER",MS_LAYER_RASTER, const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_ANNOTATION",MS_LAYER_ANNOTATION,const_flag);
+    REGISTER_LONG_CONSTANT("MS_LAYER_QUERY",MS_LAYER_QUERY, const_flag);
 
     /* layer status constants (see also MS_ON, MS_OFF) */
     REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
-    REGISTER_LONG_CONSTANT("MS_QUERY",      MS_QUERY,       const_flag);
     REGISTER_LONG_CONSTANT("MS_EMBED",      MS_EMBED,       const_flag);
 
     /* font type constants*/
@@ -569,11 +587,23 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
     REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
 
+    /* shape type constants*/
+    REGISTER_LONG_CONSTANT("MS_SHAPE_POINT",MS_SHAPE_POINT, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHAPE_LINE",  MS_SHAPE_LINE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHAPE_POLYGON",MS_SHAPE_POLYGON, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHAPE_NULL", MS_SHAPE_NULL,  const_flag);
+
     /* shapefile type constants*/
-    REGISTER_LONG_CONSTANT("MS_SHP_POINT",  MS_SHP_POINT,   const_flag);
-    REGISTER_LONG_CONSTANT("MS_SHP_ARC",    MS_SHP_ARC,     const_flag);
-    REGISTER_LONG_CONSTANT("MS_SHP_POLYGON",MS_SHP_POLYGON, const_flag);
-    REGISTER_LONG_CONSTANT("MS_SHP_MULTIPOINT", MS_SHP_MULTIPOINT,const_flag);
+    /* Old names ... */
+    REGISTER_LONG_CONSTANT("MS_SHP_POINT",  SHP_POINT,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHP_ARC",    SHP_ARC,        const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHP_POLYGON",SHP_POLYGON,    const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHP_MULTIPOINT",SHP_MULTIPOINT, const_flag);
+    /* new names??? */
+    REGISTER_LONG_CONSTANT("SHP_POINT",     SHP_POINT,      const_flag);
+    REGISTER_LONG_CONSTANT("SHP_ARC",       SHP_ARC,        const_flag);
+    REGISTER_LONG_CONSTANT("SHP_POLYGON",   SHP_POLYGON,    const_flag);
+    REGISTER_LONG_CONSTANT("SHP_MULTIPOINT",SHP_MULTIPOINT, const_flag);
 
     /* query/join type constants*/
     REGISTER_LONG_CONSTANT("MS_SINGLE",     MS_SINGLE,      const_flag);
@@ -2639,7 +2669,7 @@ DLEXPORT void php3_ms_map_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)
         (nStatus=mapObj_queryByPoint(self, poPoint, pType->value.lval, 
                                       pBuffer->value.dval)) != MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
     }
 
     RETURN_LONG(nStatus);
@@ -2691,7 +2721,7 @@ DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     if (self && poRect && 
         (nStatus=mapObj_queryByRect(self, *poRect)) != MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
     }
 
     RETURN_LONG(nStatus);
@@ -2732,7 +2762,7 @@ DLEXPORT void php3_ms_map_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS)
         (nStatus=mapObj_queryByFeatures(self, 
                                         pSLayer->value.lval)) != MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
     }
 
     RETURN_LONG(nStatus);
@@ -2782,7 +2812,7 @@ DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
     if (self && poShape && 
         (nStatus = mapObj_queryByShape(self, poShape))!= MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
     }
 
     RETURN_LONG(nStatus);
@@ -3281,6 +3311,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "footer",     player->footer);
     PHPMS_ADD_PROP_STR(return_value,  "connection", player->connection);
     add_property_long(return_value,   "connectiontype",player->connectiontype);
+    PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
 
     return layer_id;
 }
@@ -3394,6 +3425,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("footer",     self->footer)
     else IF_SET_STRING("connection", self->connection)
     else IF_SET_LONG(  "connectiontype", self->connectiontype)
+    else IF_SET_STRING("filteritem", self->filteritem)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {
@@ -3461,7 +3493,7 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /**********************************************************************
- *                        map->getClass()
+ *                        layer->getClass()
  *
  * Note: Multiple calls to getClass() will return multiple instances
  * of PHP objects pointing to the same classObj... this is safe but is a
@@ -3568,7 +3600,7 @@ DLEXPORT void php3_ms_lyr_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)
                                        pType->value.lval, 
                                        pBuffer->value.dval)) != MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
     }
 
     RETURN_LONG(nStatus);
@@ -3621,7 +3653,7 @@ DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
         (nStatus=layerObj_queryByRect(self, parent_map, 
                                       *poRect)) != MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
     }
 
     RETURN_LONG(nStatus);
@@ -3668,7 +3700,7 @@ DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS)
         (nStatus=layerObj_queryByFeatures(self, parent_map, 
                                           pSLayer->value.lval)) != MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
     }
 
     RETURN_LONG(nStatus);
@@ -3723,7 +3755,7 @@ DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
         (nStatus=layerObj_queryByShape(self, parent_map, 
                                        poShape)) != MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
     }
 
     RETURN_LONG(nStatus);
@@ -3873,6 +3905,231 @@ DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS)
 
 /* }}} */
 
+/**********************************************************************
+ *                        layer->getNumResults()
+ **********************************************************************/
+
+/* {{{ proto int layer.getNumResults()
+   Returns the number of results from this layer in the last query. */
+
+DLEXPORT void php3_ms_lyr_getNumResults(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis;
+    layerObj *self=NULL;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        ARG_COUNT(ht) > 0) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    if (self && self->resultcache) 
+    {
+        RETURN_LONG(self->resultcache->numresults);
+    }
+
+    RETURN_LONG(0);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        layer->getResult(i)
+ **********************************************************************/
+
+/* {{{ proto int layer.getResult(int i)
+   Returns a resultCacheMemberObj by index from a layer object.  Returns a valid object or FALSE(0) if index is invalid. */
+
+DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval *pThis, *pIndex;
+    layerObj *self;
+    resultCacheMemberObj *poResult;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pIndex) !=SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pIndex);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+
+    if (self== NULL ||
+        (poResult = layerObj_getResult(self, pIndex->value.lval)) == NULL)
+    {
+        /* Invalid result index. */
+        RETURN_FALSE;
+    }
+
+    /* Return a resultCacheMemberObj object */
+    _phpms_build_resultcachemember_object(&(self->resultcache->
+                                            results[pIndex->value.lval]),
+                                          list, return_value);
+}
+/* }}} */
+
+
+
+/**********************************************************************
+ *                        layer->open()
+ **********************************************************************/
+
+/* {{{ proto int layer.open(string shapepath)
+   Open the layer for use with getShape().  Returns MS_SUCCESS/MS_FAILURE. */
+
+DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis, *pShapePath;
+    layerObj *self=NULL;
+    int         nStatus = MS_FAILURE;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pShapePath) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pShapePath);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    if (self == NULL || 
+        (nStatus = layerObj_open(self, 
+                                 pShapePath->value.str.val)) != MS_SUCCESS)
+        _phpms_report_mapserver_error(E_ERROR);
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        layer->close()
+ **********************************************************************/
+
+/* {{{ proto int layer.close()
+   Close layer previously opened with open(). */
+
+DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis;
+    layerObj *self=NULL;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    if (self)
+        layerObj_close(self);
+
+}
+/* }}} */
+
+/**********************************************************************
+ *                        layer->getShape()
+ **********************************************************************/
+
+/* {{{ proto shapeObj layer.getShape(shapepath, tileindex, shapeindex)
+   Retrieve shapeObj from a layer by index. */
+
+DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pThis, *pShapePath, *pTileId, *pShapeId ;
+    layerObj *self=NULL;
+    shapeObj    *poShape;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 3, &pShapePath, &pTileId, &pShapeId) != SUCCESS) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pShapePath);
+    convert_to_long(pTileId);
+    convert_to_long(pShapeId);
+
+    /* Create a new shapeObj to hold the result 
+     * Note that the type used to create the shape (MS_NULL) does not matter
+     * at this point since it will be set by SHPReadShape().
+     */
+    if ((poShape = shapeObj_new(MS_SHAPE_NULL)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed creating new shape (out of memory?)");
+        RETURN_FALSE;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+
+    if (self == NULL || 
+        layerObj_getShape(self, pShapePath->value.str.val, poShape, 
+                          pTileId->value.lval, 
+                          pShapeId->value.lval, MS_TRUE) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        shapeObj_destroy(poShape);
+        RETURN_FALSE; 
+    }
+
+    /* Return valid object */
+    _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), self,
+                              list, return_value);
+}
+/* }}} */
+
 
 /*=====================================================================
  *                 PHP function wrappers - labelObj class
@@ -3911,7 +4168,6 @@ static long _phpms_build_label_object(labelObj *plabel,
     add_property_long(return_value,   "backgroundshadowsizey",
                                                 plabel->backgroundshadowsizey);
     add_property_long(return_value,   "size",       plabel->size);
-    add_property_long(return_value,   "sizescaled", plabel->sizescaled);
     add_property_long(return_value,   "minsize",    plabel->minsize);
     add_property_long(return_value,   "maxsize",    plabel->maxsize);
     add_property_long(return_value,   "position",   plabel->position);
@@ -3976,7 +4232,6 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "shadowsizex",  self->shadowsizex)
     else IF_SET_LONG(  "shadowsizey",  self->shadowsizey)
     else IF_SET_LONG(  "size",         self->size)
-    else IF_SET_LONG(  "sizescaled",   self->sizescaled)
     else IF_SET_LONG(  "minsize",      self->minsize)
     else IF_SET_LONG(  "maxsize",      self->maxsize)
     else IF_SET_LONG(  "position",     self->position)
@@ -4038,18 +4293,16 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
                                                pclass->overlayoutlinecolor);
     add_property_long(return_value,   "symbol",     pclass->symbol);
     add_property_long(return_value,   "size",       pclass->size);
-    add_property_long(return_value,   "sizescaled", pclass->sizescaled);
     add_property_long(return_value,   "minsize",    pclass->minsize);
     add_property_long(return_value,   "maxsize",    pclass->maxsize);
     PHPMS_ADD_PROP_STR(return_value,  "symbolname", pclass->symbolname);
     add_property_long(return_value,   "overlaysymbol", pclass->overlaysymbol);
     add_property_long(return_value,   "overlaysize", pclass->overlaysize);
-    add_property_long(return_value,   "overlaysizescaled", 
-                                                pclass->overlaysizescaled);
     add_property_long(return_value,   "overlayminsize",pclass->overlayminsize);
     add_property_long(return_value,   "overlaymaxsize",pclass->overlaymaxsize);
     PHPMS_ADD_PROP_STR(return_value,  "overlaysymbolname", 
                                                 pclass->overlaysymbolname);
+    PHPMS_ADD_PROP_STR(return_value,  "template",   pclass->template);
 
     _phpms_build_label_object(&(pclass->label), list, &new_obj_param);
     _phpms_add_property_object(return_value, "label", &new_obj_param,E_ERROR);
@@ -4147,16 +4400,15 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "overlayoutlinecolor", self->overlayoutlinecolor)
     else IF_SET_LONG(  "symbol",       self->symbol)
     else IF_SET_LONG(  "size",         self->size)
-    else IF_SET_LONG(  "sizescaled",   self->sizescaled)
     else IF_SET_LONG(  "minsize",      self->minsize)
     else IF_SET_LONG(  "maxsize",      self->maxsize)
     else IF_SET_STRING("symbolname",   self->symbolname)
     else IF_SET_LONG(  "overlaysymbol",self->overlaysymbol)
     else IF_SET_LONG(  "overlaysize",  self->overlaysize)
-    else IF_SET_LONG(  "overlaysizescaled", self->overlaysizescaled)
     else IF_SET_LONG(  "overlayminsize", self->overlayminsize)
     else IF_SET_LONG(  "overlaymaxsize", self->overlaymaxsize)
     else IF_SET_STRING("overlaysymbolname", self->overlaysymbolname)
+    else IF_SET_STRING("template",      self->template)
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
@@ -5004,6 +5256,7 @@ DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS)
  * le_msshape_new for a newly allocated object
  **********************************************************************/
 static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
+                                      layerObj *pLayer,
                                       HashTable *list, pval *return_value)
 {
     int     shape_id;
@@ -5020,10 +5273,37 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
     /* read-only properties */
     add_property_long(return_value, "numlines", pshape->numlines);
     add_property_long(return_value, "type",     pshape->type);
+    add_property_long(return_value, "index",    pshape->index);
+    add_property_long(return_value, "tileindex", pshape->tileindex);
+    add_property_long(return_value, "classindex", pshape->classindex);
+    PHPMS_ADD_PROP_STR(return_value,"text",     pshape->text);
 
     _phpms_build_rect_object(&(pshape->bounds), PHPMS_GLOBAL(le_msrect_ref), 
                              list, &new_obj_param);
     _phpms_add_property_object(return_value, "bounds", &new_obj_param,E_ERROR);
+
+    /* Package values as an associative array
+     * For now we do this only for shapes returned from map layers, and not
+     * for those from shapefileObj.
+     */
+    if (pLayer && pshape->numvalues && pshape->numvalues == pLayer->numitems)
+    {
+        int i;
+        array_init(&new_obj_param);
+        for(i=0; i<pshape->numvalues; i++)
+        {
+            add_assoc_string(&new_obj_param, 
+                             pLayer->items[i], pshape->values[i], 1);
+        }
+        _phpms_add_property_object(return_value, "values", 
+                                   &new_obj_param, E_ERROR);
+    }
+    else if (pLayer)
+    {
+        php3_error(E_ERROR,
+                   "Assertion failed, Could not set shape values: %d, %d",
+                   pshape->numvalues, pLayer->numitems);
+    }
 
     return shape_id;
 }
@@ -5058,7 +5338,7 @@ DLEXPORT void php3_ms_shape_new(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     /* Return shape object */
-    _phpms_build_shape_object(pNewShape, PHPMS_GLOBAL(le_msshape_new), 
+    _phpms_build_shape_object(pNewShape, PHPMS_GLOBAL(le_msshape_new), NULL,
                               list, return_value);
 }
 /* }}} */
@@ -5824,7 +6104,7 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
     if (preference == NULL)
         return 0;
 
-    reference_id = php3_list_insert(preference, PHPMS_GLOBAL(ls_msrefmap));
+    reference_id = php3_list_insert(preference, PHPMS_GLOBAL(le_msrefmap));
 
     _phpms_object_init(return_value, reference_id, 
                        php_reference_class_functions,
@@ -5878,7 +6158,7 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (referenceMapObj *)_phpms_fetch_handle(pThis, 
-                                                  PHPMS_GLOBAL(ls_msrefmap),
+                                                  PHPMS_GLOBAL(le_msrefmap),
                                                   list);
     if (self == NULL)
     {
@@ -6073,7 +6353,7 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
      * Note that the type used to create the shape (MS_NULL) does not matter
      * at this point since it will be set by SHPReadShape().
      */
-    if ((poShape = shapeObj_new(MS_NULL)) == NULL)
+    if ((poShape = shapeObj_new(MS_SHAPE_NULL)) == NULL)
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "Failed creating new shape (out of memory?)");
@@ -6091,7 +6371,7 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     /* Return shape object */
-    _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), 
+    _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), NULL,
                               list, return_value);
 }
 /* }}} */
@@ -6137,7 +6417,7 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS)
      * Note that the type used to create the shape (MS_NULL) does not matter
      * at this point since it will be set by SHPReadShape().
      */
-    if ((poShape = shapeObj_new(MS_NULL)) == NULL)
+    if ((poShape = shapeObj_new(MS_SHAPE_NULL)) == NULL)
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "Failed creating new shape (out of memory?)");
@@ -6156,7 +6436,7 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     /* Return shape object */
-    _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), 
+    _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), NULL,
                               list, return_value);
 }
 /* }}} */
@@ -6273,6 +6553,36 @@ DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS)
     }
 }
 /* }}} */
+
+
+/*=====================================================================
+ *                 PHP function wrappers - resultCacheMemberObj class
+ *====================================================================*/
+
+/**********************************************************************
+ *                     _phpms_build_resultCacheMember_object()
+ **********************************************************************/
+static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
+                                                  HashTable *list, 
+                                                  pval *return_value)
+{
+    if (pRes == NULL)
+        return 0;
+
+    object_init(return_value);
+
+    /* Note: Contrary to most other object classes, this one does not
+     *       need to keep a handle on the internal structure since all
+     *       members are read-only and thus there is no set() method.
+     */
+
+    /* read-only properties */
+    add_property_long(return_value,   "shapeindex", pRes->shapeindex);
+    add_property_long(return_value,   "tileindex",  pRes->tileindex);
+    add_property_long(return_value,   "classindex", pRes->classindex);
+
+    return 0;
+}
 
 
 /* ==================================================================== */

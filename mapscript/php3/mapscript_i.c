@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.14  2001/03/12 19:02:46  dan
+ * Added query-related stuff in PHP MapScript
+ *
  * Revision 1.13  2001/03/09 19:33:13  dan
  * Updated PHP MapScript... still a few methods missing, and needs testing.
  *
@@ -288,7 +291,7 @@ int layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img) {
       return msDrawLayer(map, self, img);
 #endif
     } else {
-      if(self->type == MS_RASTER) {
+      if(self->type == MS_LAYER_RASTER) {
         return msDrawRasterLayer(map, self, img);
       } else {
 	return msDrawLayer(map, self, img);
@@ -381,11 +384,11 @@ double pointObj_distanceToLine(pointObj *self, pointObj *a, pointObj *b) {
 
 double pointObj_distanceToShape(pointObj *self, shapeObj *shape) {
     switch(shape->type) {
-    case(MS_POINT):
+    case(MS_SHAPE_POINT):
       return msDistanceFromPointToMultipoint(self, &(shape->line[0]));
-    case(MS_LINE):
+    case(MS_SHAPE_LINE):
       return msDistanceFromPointToPolyline(self, shape);
-    case(MS_POLYGON):
+    case(MS_SHAPE_POLYGON):
       return msDistanceFromPointToPolygon(self, shape);
     }
 
@@ -499,7 +502,7 @@ int shapeObj_copy(shapeObj *self, shapeObj *dest) {
   }
 
 int shapeObj_contains(shapeObj *self, pointObj *point) {
-    if(self->type == MS_POLYGON)
+    if(self->type == MS_SHAPE_POLYGON)
       return msIntersectPointPolygon(point, self);
 
     return -1;
@@ -507,19 +510,19 @@ int shapeObj_contains(shapeObj *self, pointObj *point) {
 
 int shapeObj_intersects(shapeObj *self, shapeObj *shape) {
     switch(self->type) {
-    case(MS_LINE):
+    case(MS_SHAPE_LINE):
       switch(shape->type) {
-      case(MS_LINE):
+      case(MS_SHAPE_LINE):
 	return msIntersectPolylines(self, shape);
-      case(MS_POLYGON):
+      case(MS_SHAPE_POLYGON):
 	return msIntersectPolylinePolygon(self, shape);
       }
       break;
-    case(MS_POLYGON):
+    case(MS_SHAPE_POLYGON):
       switch(shape->type) {
-      case(MS_LINE):
+      case(MS_SHAPE_LINE):
 	return msIntersectPolylinePolygon(shape, self);
-      case(MS_POLYGON):
+      case(MS_SHAPE_POLYGON):
 	return msIntersectPolylines(self, shape);
       }
       break;

@@ -46,11 +46,11 @@ Very important note: Constant names and class member variable names are
         MS_PIXELS
 
     Layer types:
-        MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER,
-        MS_ANNOTATION, MS_NULL
+        MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_POLYLINE, 
+        MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY
 
-    Layer Status:
-        MS_ON, MS_OFF, MS_DEFAULT, MS_QUERY, MS_EMBED
+    Layer/Legend/Scalebar Status:
+        MS_ON, MS_OFF, MS_DEFAULT, MS_EMBED
 
     Font types:
         MS_TRUETYPE, MS_BITMAP
@@ -61,6 +61,9 @@ Very important note: Constant names and class member variable names are
 
     Bitmap font styles:
         MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT
+
+    Shape types:
+        MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL
 
     Shapefile types:
         MS_SHP_POINT, MS_SHP_ARC, MS_SHP_POLYGON, MS_SHP_MULTIPOINT
@@ -77,6 +80,15 @@ Very important note: Constant names and class member variable names are
 
     Output Image Types:
         MS_GIF, MS_PNG, MS_JPEG, MS_WBMP
+
+
+ Functions:
+ ----------
+
+   string ms_GetVersion()
+        Returns the MapServer version and options in a string.  This string
+        can be parsed to find out which modules were compiled in, etc.
+
 
  MapObj Class:
  -------------
@@ -213,31 +225,43 @@ Very important note: Constant names and class member variable names are
    int queryByPoint(pointObj point, int type, double buffer)
         Query all selected layers in map at point location specified in 
         georeferenced map coordinates (i.e. not pixels).  
-    __TODO__ returns MS_SUCCESS/MS_FAILURE...
-Returns a queryResultObj on success, or 0 if nothing was found.
+        The query is performed on all the shapes that are part of a CLASS 
+        that contains a TEMPLATE parameter.
         Type is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
         (in pixels) but you can use a constant buffer (specified in 
         ground units) instead.
-        Note that to be queryable a layer must have a QUERYITEM and at least
-        one QUERY object.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
 
    int queryByRect(rectObj rect)
         Query all selected layers in map using a rectangle specified in 
         georeferenced map coordinates (i.e. not pixels).
-   __TODO__ Returns a queryResultObj on success, or 0 if nothing was found.
-        Note that to be queryable a layer must have a QUERYITEM and at least
-        one QUERY object.
+        The query is performed on all the shapes that are part of a CLASS 
+        that contains a TEMPLATE parameter.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
+
+   int queryByShape(shapeObj shape)
+        Query all selected layers in map based on a single shape, the 
+        shape has to be a polygon at this point.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
 
    int queryByFeatures(int slayer) 
-   __TODO__ Generates a result set based on a previous set of results. At present 
-        the results MUST be based on a polygon layer. Holes and disjoint 
-        polygons should now be handled correctly.
-
-   queryresultObj queryUsingShape(shapeObj shape)
-      Generates a result set based on a single shape, the shape is assumed 
-      to be a polygon at this point.
+        Perform a query based on a previous set of results from
+        a layer. At present the results MUST be based on a polygon layer.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
 
    int save(string filename)
         Save current map object state to a file. Returns -1 on error.
@@ -296,6 +320,7 @@ Returns a queryResultObj on success, or 0 if nothing was found.
    string footer
    string connection
    int    connectiontype
+   string filteritem
 
  Methods:
 
@@ -308,6 +333,48 @@ Returns a queryResultObj on success, or 0 if nothing was found.
 
    classObj getClass(int classIndex)
         Returns a classObj from the layer given an index value (0=first class)
+
+   int queryByPoint(pointObj point, int type, double buffer)
+        Query layer at point location specified in georeferenced map 
+        coordinates (i.e. not pixels).  
+        The query is performed on all the shapes that are part of a CLASS 
+        that contains a TEMPLATE parameter.
+        Type is MS_SINGLE or MS_MULTIPLE depending on number of results
+        you want. 
+        Passing buffer <=0 defaults to tolerances set in the map file 
+        (in pixels) but you can use a constant buffer (specified in 
+        ground units) instead.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
+
+   int queryByRect(rectObj rect)
+        Query layer using a rectangle specified in georeferenced map 
+        coordinates (i.e. not pixels).
+        The query is performed on all the shapes that are part of a CLASS 
+        that contains a TEMPLATE parameter.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
+
+   int queryByShape(shapeObj shape)
+        Query layer based on a single shape, the shape has to be a polygon
+        at this point.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
+
+   int queryByFeatures(int slayer) 
+        Perform a query set based on a previous set of results from
+        another layer. At present the results MUST be based on a polygon
+        layer.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
 
    queryResultObj queryUsingPoint(pointObj point, int type, double buffer)
         Query layer at point location specified in georeferenced map 
@@ -344,6 +411,24 @@ Returns a queryResultObj on success, or 0 if nothing was found.
         Set layer projection and coordinate system.  Parameters are given as 
         a single string of comma-delimited PROJ.4 parameters.
 
+   int getNumResult()
+        Returns the number of results from this layer in the last query.
+
+   resultCacheMemberObj getResult(int index)
+        Returns a resultCacheMemberObj by index from a layer object with 
+        index in the range 0 to numresults-1.  
+        Returns a valid object or FALSE(0) if index is invalid.
+
+   int open(string shapepath)
+        Open the layer for use with getShape().  
+        Returns MS_SUCCESS/MS_FAILURE.
+
+   void close()
+        Close layer previously opened with open().
+
+   shapeObj getShape(string shapepath, int tileindex, int shapeindex)
+        Retrieve shapeObj from a layer by index.
+
 
  ClassObj Class:
  ---------------
@@ -365,12 +450,10 @@ Returns a queryResultObj on success, or 0 if nothing was found.
    int    overlayoutlinecolor
    int    symbol
    int    size
-   int    sizescaled
    int    minsize
    int    maxsize
    int    overlaysymbol
    int    overlaysize
-   int    overlaysizescaled
    int    overlayminsize
    int    overlaymaxsize
    labelObj label
@@ -405,47 +488,30 @@ Returns a queryResultObj on success, or 0 if nothing was found.
    void free()
         Destroys resources used by an image object.
 
-  The saveImage() and saveWebImage() methods are different depending on the
-  version of GD that is used:
-  
-  With GD 1.2, 1.3, 1.6:
-
-   int saveImage(string filename, int transparent, int interlace)
-        Writes image object to specifed filename..
-        Passing an empty filename sends output to stdout.  In this case,
-        the PHP header() function should be used to set the documents's
-        content-type prior to calling saveImage().
-        The function returns -1 on error.  On success, it returns either 0
-        if writing to an external file, or the number of bytes written if 
-        output is sent to stdout.
-
-   string saveWebImage(int transparent, int interlace)
-        Writes image to temp directory.  Returns image URL.
-
-  With GD 1.8 (only if JPEG enabled in GD 1.8):
-
    int saveImage(string filename, int type, int transparent, int interlace, 
                  int quality)
         Writes image object to specifed filename.
         Passing an empty filename sends output to stdout.  In this case,
         the PHP header() function should be used to set the documents's
         content-type prior to calling saveImage().
-        Type can be either MS_PNG or MS_JPEG
+        Type can be either MS_GIF, MS_PNG, MS_JPEG or MS_WBMP (depends on
+        which version of GD was used to compile MapScript)
         Quality should be a value in the range 0-95, higher value implies
         higher image quality and larger image sizes.
         If quality is negative, then the default IJG JPEG quality value is 
-        used.
+        used (the quality value is ignored for all formats other than JPEG).
         The function returns -1 on error.  On success, it returns either 0
         if writing to an external file, or the number of bytes written if 
         output is sent to stdout.
 
    string saveWebImage(int type, int transparent, int interlace, int quality)
         Writes image to temp directory.  Returns image URL.
-        Type can be either MS_PNG or MS_JPEG
+        Type can be either MS_GIF, MS_PNG, MS_JPEG or MS_WBMP (depends on
+        which version of GD was used to compile MapScript)
         Quality should be a value in the range 0-95, higher value implies
         higher image quality and larger image sizes.
         If quality is negative, then the default IJG JPEG quality value is 
-        used.
+        used  (the quality value is ignored for all formats other than JPEG).
 
 
  LabelObj Class:
@@ -469,7 +535,6 @@ Returns a queryResultObj on success, or 0 if nothing was found.
    int    backgroundshadowsizex
    int    backgroundshadowsizey
    int    size
-   int    sizescaled
    int    minsize
    int    maxsize
    int    position
@@ -632,6 +697,8 @@ Constructor:
  Constructor:
 
    ShapeObj ms_newShapeObj(int type)
+        'type' is one of MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON or
+        MS_SHAPE_NULL
 
  Members:
 
@@ -741,6 +808,23 @@ Constructor:
    void free()
         Closes a shape file (and commits all changes in write mode) and 
         releases all resources used by the object.
+
+
+ ResultCacheMemberObj Class:
+ ---------------------------
+
+ Constructor:
+
+   Instances of ResultCacheMemberObj are always obtained through 
+   layerObj's getResult() method.
+
+ Members:
+
+   int    shapeindex    (read-only)
+   int    tileindex     (read-only)
+   int    classindex    (read-only)
+
+
 
                       --------------------------
 

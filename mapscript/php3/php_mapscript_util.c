@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/12 19:02:46  dan
+ * Added query-related stuff in PHP MapScript
+ *
  * Revision 1.2  2000/09/08 21:27:54  dan
  * Added _phpms_object_init()
  *
@@ -525,9 +528,10 @@ int _phpms_add_property_object(pval *pObj,
      * with the object that was passed.
      */
 
-    if (pObj->type != IS_OBJECT || pObjToAdd->type != IS_OBJECT)
+    if (pObj->type != IS_OBJECT || 
+        (pObjToAdd->type != IS_OBJECT && pObjToAdd->type != IS_ARRAY))
     {
-        php3_error(err_type, "Object expected as argument.");
+        php3_error(err_type, "Object or array expected as argument.");
         return -1;
     }
     else if (add_property_long(pObj, property_name, 0) == FAILURE ||
@@ -556,9 +560,10 @@ int _phpms_add_property_object(pval *pObj,
      * with the object that was passed.
      */
 
-    if (pObj->type != IS_OBJECT || pObjToAdd->type != IS_OBJECT)
+    if (pObj->type != IS_OBJECT || 
+        (pObjToAdd->type != IS_OBJECT && pObjToAdd->type != IS_ARRAY))
     {
-        php3_error(err_type, "Object expected as argument.");
+        php3_error(err_type, "Object or array expected as argument.");
         return -1;
     }
     else if (add_property_long(pObj, property_name, 0) == FAILURE ||

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.25  2001/03/12 19:02:46  dan
+ * Added query-related stuff in PHP MapScript
+ *
  * Revision 1.24  2001/03/12 16:05:07  sdlime
  * Fixed parameters for msLayerGetItems. Added preprocessor wrapper to OGR version of the same function.
  *
@@ -972,6 +975,7 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
           shape->values = msOGRGetValueList(poFeature, layer->items, 
                                                 &(layer->itemindexes), 
                                                 layer->numitems);
+          shape->numvalues = layer->numitems;
           if(!shape->values) return(MS_FAILURE);
       }
 
@@ -1079,6 +1083,7 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
           return(MS_FAILURE);
       }
       shape->values = msOGRGetValues(poFeature);
+      shape->numvalues = layer->numitems;
       if(!shape->values) return (MS_FAILURE);
   }
   else if(layer->numitems > 0) 
@@ -1086,6 +1091,7 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
       shape->values = msOGRGetValueList(poFeature, layer->items, 
                                             &(layer->itemindexes), 
                                             layer->numitems);
+      shape->numvalues = layer->numitems;
       if(!shape->values) return(MS_FAILURE);
   }   
 
