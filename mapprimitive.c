@@ -470,14 +470,14 @@ void msTransformShape(shapeObj *shape, rectObj extent, double cellsize)
   
     for(i=0; i<shape->numlines; i++) { // for each part
       
-      shape->line[i].point[0].x = MS_NINT((shape->line[i].point[0].x - extent.minx)/cellsize);
-      shape->line[i].point[0].y = MS_NINT((extent.maxy - shape->line[i].point[0].y)/cellsize);
+      shape->line[i].point[0].x = MS_MAP2IMAGE_X(shape->line[i].point[0].x, extent.minx, cellsize);
+      shape->line[i].point[0].y = MS_MAP2IMAGE_Y(shape->line[i].point[0].y, extent.maxy, cellsize);
       
       for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
 	
-	shape->line[i].point[k].x = MS_NINT((shape->line[i].point[j].x - extent.minx)/cellsize); 
-	shape->line[i].point[k].y = MS_NINT((extent.maxy - shape->line[i].point[j].y)/cellsize);
-	
+	shape->line[i].point[k].x = MS_MAP2IMAGE_X(shape->line[i].point[j].x, extent.minx, cellsize);
+	shape->line[i].point[k].y = MS_MAP2IMAGE_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
+
 	if(k == 1) {
 	  if((shape->line[i].point[0].x != shape->line[i].point[1].x) || (shape->line[i].point[0].y != shape->line[i].point[1].y))
 	    k++;
@@ -497,8 +497,8 @@ void msTransformShape(shapeObj *shape, rectObj extent, double cellsize)
   } else { // points or untyped shapes
     for(i=0; i<shape->numlines; i++) { // for each part
       for(j=1; j < shape->line[i].numpoints; j++ ) {
-	shape->line[i].point[j].x = MS_NINT((shape->line[i].point[j].x - extent.minx)/cellsize); 
-	shape->line[i].point[j].y = MS_NINT((extent.maxy - shape->line[i].point[j].y)/cellsize);
+	shape->line[i].point[j].x = MS_MAP2IMAGE_X(shape->line[i].point[j].x, extent.minx, cellsize);
+	shape->line[i].point[j].y = MS_MAP2IMAGE_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
       }
     }
   }

@@ -56,7 +56,7 @@ double msCalculateScale(rectObj extent, int units, int width, int height, int re
   case(MS_MILES):
   case(MS_INCHES):  
   case(MS_FEET):
-    md = (width-1)/(resolution*inchesPerUnit[units]);
+    md = width/(resolution*inchesPerUnit[units]); // was (width-1)
     gd = extent.maxx - extent.minx;
     scale = gd/md;
     break;

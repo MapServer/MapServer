@@ -887,41 +887,43 @@ void setExtent()
   case FROMUSERBOX: /* user passed in a map extent */
     break;
   case FROMIMGBOX: /* fully interactive web, most likely with java front end */
-    cellx = (ImgExt.maxx-ImgExt.minx)/(ImgCols-1);
-    celly = (ImgExt.maxy-ImgExt.miny)/(ImgRows-1);
-    Map->extent.minx = ImgExt.minx + cellx*ImgBox.minx;
-    Map->extent.maxx = ImgExt.minx + cellx*ImgBox.maxx;
-    Map->extent.miny = ImgExt.maxy - celly*ImgBox.maxy;
-    Map->extent.maxy = ImgExt.maxy - celly*ImgBox.miny;
+    cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImageCols);
+    celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImageRows);
+    Map->extent.minx = MS_IMAGE2MAP_X(ImgBox.minx, ImgExt.minx, cellx);
+    Map->extent.maxx = MS_IMAGE2MAP_X(ImgBox.maxx, ImgExt.minx, cellx);
+    Map->extent.miny = MS_IMAGE2MAP_Y(ImgBox.miny, ImgExt.maxy, celly);
+    Map->extent.maxy = MS_IMAGE2MAP_Y(ImgBox.maxy, ImgExt.maxy, celly);
     break;
   case FROMIMGPNT:
-    cellx = (ImgExt.maxx-ImgExt.minx)/(ImgCols-1);
-    celly = (ImgExt.maxy-ImgExt.miny)/(ImgRows-1);
-    MapPnt.x = ImgExt.minx + cellx*ImgPnt.x;
-    MapPnt.y = ImgExt.maxy - celly*ImgPnt.y;
-    Map->extent.minx = MapPnt.x - .5*((ImgExt.maxx - ImgExt.minx)/fZoom);
+    cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImageCols);
+    celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImageRows);
+    MapPnt.x = MS_IMAGE2MAP_X(ImgPnt.x, ImgExt.minx, cellx);
+    MapPnt.y = MS_IMAGE2MAP_Y(ImgPnt.y, ImgExt.maxy, celly);
+
+    Map->extent.minx = MapPnt.x - .5*((ImgExt.maxx - ImgExt.minx)/fZoom); // create an extent around that point
     Map->extent.miny = MapPnt.y - .5*((ImgExt.maxy - ImgExt.miny)/fZoom);
     Map->extent.maxx = MapPnt.x + .5*((ImgExt.maxx - ImgExt.minx)/fZoom);
     Map->extent.maxy = MapPnt.y + .5*((ImgExt.maxy - ImgExt.miny)/fZoom);
     break;
   case FROMREFPNT:
-    cellx = (Map->reference.extent.maxx -  Map->reference.extent.minx)/(Map->reference.width-1);
-    celly = (Map->reference.extent.maxy -  Map->reference.extent.miny)/(Map->reference.height-1);
-    MapPnt.x = Map->reference.extent.minx + cellx*RefPnt.x;
-    MapPnt.y = Map->reference.extent.maxy - celly*RefPnt.y;    
-    Map->extent.minx = MapPnt.x - .5*(ImgExt.maxx - ImgExt.minx);
+    cellx = MS_CELLSIZE(Map->reference.extent.minx, Map->reference.extent.maxx, Map->reference.width);
+    celly = MS_CELLSIZE(Map->reference.extent.miny, Map->reference.extent.maxy, Map->reference.height);
+    MapPnt.x = MS_IMAGE2MAP_X(RefPnt.x, Map->reference.extent.minx, cellx);
+    MapPnt.y = MS_IMAGE2MAP_Y(RefPnt.y, Map->reference.extent.maxy, celly);  
+
+    Map->extent.minx = MapPnt.x - .5*(ImgExt.maxx - ImgExt.minx); // create an extent around that point
     Map->extent.miny = MapPnt.y - .5*(ImgExt.maxy - ImgExt.miny);
     Map->extent.maxx = MapPnt.x + .5*(ImgExt.maxx - ImgExt.minx);
     Map->extent.maxy = MapPnt.y + .5*(ImgExt.maxy - ImgExt.miny);
     break;
-  case FROMBUF: /* user supplied a point and a buffer */
-    Map->extent.minx = MapPnt.x - Buffer;
+  case FROMBUF:
+    Map->extent.minx = MapPnt.x - Buffer; // create an extent around that point, using the buffer
     Map->extent.miny = MapPnt.y - Buffer;
     Map->extent.maxx = MapPnt.x + Buffer;
     Map->extent.maxy = MapPnt.y + Buffer;
     break;
-  case FROMSCALE: /* user supplied a point and a scale */ 
-    cellsize = (Map->scale/Map->resolution)/inchesPerUnit[Map->units];
+  case FROMSCALE: 
+    cellsize = (Map->scale/Map->resolution)/inchesPerUnit[Map->units]; // user supplied a point and a scale
     Map->extent.minx = MapPnt.x - cellsize*Map->width/2.0;
     Map->extent.miny = MapPnt.y - cellsize*Map->height/2.0;
     Map->extent.maxx = MapPnt.x + cellsize*Map->width/2.0;
@@ -931,7 +933,7 @@ void setExtent()
     if((Map->extent.minx == Map->extent.maxx) && (Map->extent.miny == Map->extent.maxy)) {
       msSetError(MS_WEBERR, "No way to generate map extent.", "mapserv()");
       writeError();
-    }    
+    }
   }
 
   RawExt = Map->extent; /* save unaltered extent */
@@ -978,11 +980,11 @@ void setCoordinate()
 {
   double cellx,celly;
 
-  cellx = (ImgExt.maxx - ImgExt.minx)/(ImgCols-1);
-  celly = (ImgExt.maxy - ImgExt.miny)/(ImgRows-1);
+  cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImgCols);
+  celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImgRows);
 
-  MapPnt.x = ImgExt.minx + cellx*ImgPnt.x;
-  MapPnt.y = ImgExt.maxy - celly*ImgPnt.y;
+  MapPnt.x = MS_IMAGE2MAP_X(ImgPnt.x, ImgExt.minx, cellx);
+  MapPnt.y = MS_IMAGE2MAP_Y(ImgPnt.y, ImgExt.maxy, celly);
 
   return;
 }

@@ -155,13 +155,13 @@ double msAdjustExtent(rectObj *rect, int width, int height)
 {
   double cellsize, ox, oy;
 
-  cellsize = MS_MAX((rect->maxx - rect->minx)/(width-1), (rect->maxy - rect->miny)/(height-1));
+  cellsize = MS_MAX(MS_CELLSIZE(rect->minx, rect->maxx, width), MS_CELLSIZE(rect->miny, rect->maxy, height));
 
   if(cellsize <= 0) /* avoid division by zero errors */
     return(0);
 
-  ox = MS_NINT(MS_MAX(((width-1) - (rect->maxx - rect->minx)/cellsize)/2,0));
-  oy = MS_NINT(MS_MAX(((height-1) - (rect->maxy - rect->miny)/cellsize)/2,0));
+  ox = MS_NINT(MS_MAX((width - (rect->maxx - rect->minx)/cellsize)/2,0)); // these were width-1 and height-1
+  oy = MS_NINT(MS_MAX((height - (rect->maxy - rect->miny)/cellsize)/2,0));
 
   rect->minx = rect->minx - ox*cellsize;
   rect->miny = rect->miny - oy*cellsize;
