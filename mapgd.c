@@ -108,9 +108,15 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
             return image;
         }
         else
-            free( image );
-        
+            free( image );   
     }
+    else
+    {
+        msSetError(MS_IMGERR, 
+                   "Cannot create GD image of size %d x %d.", 
+                   "msImageCreateGD()", width, height );
+    }
+
     return NULL;
 }
 
