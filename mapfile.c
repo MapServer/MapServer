@@ -2018,6 +2018,8 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->sameconnection = NULL;
   
+  layer->graticulelayerinfo = NULL;
+  
   return(0);
 }
 
