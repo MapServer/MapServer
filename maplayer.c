@@ -67,7 +67,7 @@ static void layerFreeItemInfo(layerObj *layer)
 ** Does exactly what it implies, readies a layer for processing.
 */
 int msLayerOpen(layerObj *layer, char *shapepath)
-{
+{  
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
     layer->connectiontype = MS_TILED_SHAPEFILE;
 
@@ -155,7 +155,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 
       filter_passed = MS_TRUE;  // By default accept ANY shape
       if(layer->numitems > 0 && layer->iteminfo) {
-        values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
+        values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);	
         if(!values) return(MS_FAILURE);
         if ((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
             msFreeCharArray(values, layer->numitems);

@@ -194,6 +194,7 @@ typedef struct {
 
   // regular expression options
   regex_t regex; // compiled regular expression to be matched
+  int compiled;
 } expressionObj;
 #endif
 

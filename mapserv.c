@@ -190,7 +190,7 @@ mapObj *loadMap()
 void loadForm()
 {
   int i,j,k,n;
-  char **tokens, *tmpstr, *expptr;
+  char **tokens, *tmpstr;
   regex_t re;
 
   if(regcomp(&re, NUMEXP, REG_EXTENDED) != 0) { // what is a number
@@ -849,12 +849,11 @@ void loadForm()
   for(i=0;i<NumParams;i++) {
     tmpstr = (char *)malloc(sizeof(char)*strlen(ParamNames[i]) + 3);
     sprintf(tmpstr,"%%%s%%", ParamNames[i]);
-
+    
     for(j=0; j<Map->numlayers; j++) {
-      for(k=0; k<Map->layers[j].numclasses; k++) {
-	expptr = Map->layers[j].class[k].expression.string;
-	if(expptr && (strstr(expptr, tmpstr) != NULL)) expptr = gsub(expptr, tmpstr, ParamValues[i]);
-      }
+      if(Map->layers[j].filter.string && (strstr(Map->layers[j].filter.string, tmpstr) != NULL)) Map->layers[j].filter.string = gsub(Map->layers[j].filter.string, tmpstr, ParamValues[i]);
+      for(k=0; k<Map->layers[j].numclasses; k++)	
+	if(Map->layers[j].class[k].expression.string && (strstr(Map->layers[j].class[k].expression.string, tmpstr) != NULL)) Map->layers[j].class[k].expression.string = gsub(Map->layers[j].class[k].expression.string, tmpstr, ParamValues[i]);
     }
     
     free(tmpstr);

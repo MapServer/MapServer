@@ -1025,6 +1025,7 @@ void initExpression(expressionObj *exp)
   exp->items = NULL;
   exp->indexes = NULL;
   exp->numitems = 0;
+  exp->compiled = MS_FALSE;
 }
 
 void freeExpression(expressionObj *exp)
@@ -1032,8 +1033,10 @@ void freeExpression(expressionObj *exp)
   if(!exp) return;
 
   free(exp->string);
-  if(exp->type == MS_REGEX)
+  if(exp->type == MS_REGEX && exp->compiled) {
     regfree(&(exp->regex));
+    exp->compiled = MS_FALSE;
+  }
   if(exp->type == MS_EXPRESSION) {
     if(exp->numitems) msFreeCharArray(exp->items, exp->numitems);
     if(exp->indexes) free(exp->indexes);
@@ -1045,13 +1048,13 @@ int loadExpression(expressionObj *exp)
   if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
   exp->string = strdup(msyytext);
   
-  if(exp->type == MS_REGEX) {
-    if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
-      sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
-      msSetError(MS_REGEXERR, ms_error.message, "loadExpression()");
-      return(-1);
-    }
-  }
+  // if(exp->type == MS_REGEX) {
+  //   if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
+  //     sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
+  //     msSetError(MS_REGEXERR, ms_error.message, "loadExpression()");
+  //     return(-1);
+  //   }
+  // }
 
   return(0);
 }
@@ -1066,13 +1069,13 @@ int loadExpressionString(expressionObj *exp, char *value)
   if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
   exp->string = strdup(msyytext);
   
-  if(exp->type == MS_REGEX) {
-    if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
-      sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
-      msSetError(MS_REGEXERR, ms_error.message, "loadExpression()");
-      return(-1);
-    }
-  }
+  // if(exp->type == MS_REGEX) {
+  //   if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
+  //     sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
+  //     msSetError(MS_REGEXERR, ms_error.message, "loadExpression()");
+  //     return(-1);
+  //   }
+  // }
 
   return(0); 
 }
@@ -2764,6 +2767,14 @@ static void loadWebString(webObj *web, char *value)
   case(HEADER):
     if (web->header) free(web->header);
     web->header = strdup(value);
+    break;
+  case(IMAGEPATH):
+    if (web->imagepath) free(web->imagepath);
+    web->imagepath = strdup(value);
+    break;
+  case(IMAGEURL):
+    if (web->imageurl) free(web->imageurl);
+    web->imageurl = strdup(value);
     break;
   case(MAXSCALE):
     msyystate = 2; msyystring = value;

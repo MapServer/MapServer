@@ -64,7 +64,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     if(itemindex >= numitems) {
       msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
       return(MS_FALSE);
-    }
+    }    
     if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); // got a match
     break;
   case(MS_EXPRESSION):
@@ -89,6 +89,15 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
       msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
       return(MS_FALSE);
     }
+
+    if(!expression->compiled) {
+      if(regcomp(&(expression->regex), expression->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
+        msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
+        return(MS_FALSE);
+      }
+      expression->compiled = MS_TRUE;
+    }
+
     if(regexec(&(expression->regex), items[itemindex], 0, NULL, 0) == 0) return(MS_TRUE); // got a match
     break;
   }

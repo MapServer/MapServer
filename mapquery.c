@@ -353,6 +353,11 @@ int msQueryByAttributes(mapObj *map, int qlayer)
     return(MS_FAILURE);
   }
 
+  if(!lp->filter.string) {
+    msSetError(MS_QUERYERR, "Requested layer has no filter defined.", "msQueryByAttribtes()"); 
+    return(MS_FAILURE);
+  }
+
   msInitShape(&shape);
 
   // free any previous search results, do it now in case one of the next few tests fail
@@ -422,7 +427,7 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   if(lp->resultcache && lp->resultcache->numresults > 0)
     return(MS_SUCCESS);
  
-  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByRect()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByAttributes()"); 
   return(MS_FAILURE);
 }
 

@@ -62,10 +62,6 @@ double diffTime;
 #define RGB_LEVEL_INDEX(r,g,b) ((r)*GREEN_LEVELS*BLUE_LEVELS + (g)*BLUE_LEVELS+(b))
 #define RGB_INDEX(r,g,b) RGB_LEVEL_INDEX(((r)/RED_DIV),((g)/GREEN_DIV),((b)/BLUE_DIV))
 
-                                         
-
-
-
 /* 
 ** NEED TO FIX THIS, SPECIAL FOR RASTERS!
 */
@@ -88,6 +84,13 @@ static int getClass(layerObj *layer, char *str)
 	return(i);
       break;
     case(MS_REGEX):
+      if(!layer->class[i].expression.compiled) {
+	if(regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
+	  msSetError(MS_REGEXERR, "Invalid regular expression.", "getClass()");
+	  return(-1);
+	}
+	layer->class[i].expression.compiled = MS_TRUE;
+      }
       if(regexec(&(layer->class[i].expression.regex), str, 0, NULL, 0) == 0) /* got a match */
 	return(i);
       break;
