@@ -100,7 +100,8 @@ setup(name = "mapscript",
                                library_dirs = lib_dirs,
                                libraries = libs,
                                define_macros =  macros,
-                               extra_link_args = ["-static", "-lgd"],
+                               # Uncomment line below if using static gd
+                               #extra_link_args = ["-static", "-lgd"],
                               )
                     ],
       py_modules = ["mapscript"]

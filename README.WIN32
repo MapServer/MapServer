@@ -20,13 +20,13 @@ IMPORTANT - READ THIS FIRST:
   you.  Good Luck!
 --------------------------------------------------------------------
 
-For the developers using MSVC++, a NMAKE makefile (Makefile.vc) to
-build the MapServer library and executable programs is included with
+For the developers using MSVC++, a NMAKE makefile (Makefile.vc + nmake.opt)
+to build the MapServer library and executable programs is included with
 the distribution. 
 
 To build the package using the Makefile.vc and NMAKE:
 
- - Edit Makefile.vc to select (or deselect) optional components of 
+ - Edit nmake.opt to select (or deselect) optional components of 
    the MapServer.  Please read the notes below about each component
    before you move ahead with the compilation.
 
@@ -63,7 +63,7 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
   GIF support patch (see http://www.rime.com.au/gd/)
 
   If you are using a different version of GD, then it is very important
-  to make sure that you update the -DUSE_GD_* flags in all the Makefile.vc.
+  to make sure that you update the -DUSE_GD_* flags in the nmake.opt.
 
   You'll have to compile your own GD library with the options you want,
   including Freetype since starting with MapServer version 3.5, Freetype
@@ -88,7 +88,7 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
 
       ftp://ftp.gnu.org/pub/gnu/regex/regex-0.12.tar.gz
 
-  The default case in the Makefile.vc is set to compile with GNU 
+  The default in the nmake.opt is set to compile with GNU 
   regex-0.12 located in the "regex-0.12" directory.
 
 - If you are planning to compile the PHP3_MAPSCRIPT.DLL module, then it
@@ -121,10 +121,6 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
  - You can use the Visual Workspace in freetype/lib/arch/win32 to build
    the library.
 
- - make sure the value of the -DUSE_GD_* flag in the gdft/Makefile.vc 
-   matches the version of GD that you are building with.
-
- - directory ./mapserver/gdft should not be compiled with DEBUG option
 
 --------------------------------------------------------------------
       Notes on the proj module
@@ -137,92 +133,28 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
    * there is an environnemnt variable PROJ_LIB_DIR that can be set to locate 
      the directory where the epsg file is located
    * if you build this module, at the top of the makefile (./src/makefile.vc), you
-     can set the PROJ_LIB variable and this setting will be used to locates the
-     files.  
+     can set the PROJ_LIB variable and this setting will be used to 
+     locate the proj support files.  
 
   
-
---------------------------------------------------------------------
-      Notes libwww : used to support WMS client connection
-      Depricated. Please refer to notes on libcurl below
--------------------------------------------------------------------- 
-  - the libaray is located at  http://www.w3.org/Library/ 
-
- Notes on how to build it using MSVC:
-
-  - before starting please refer to http://www.w3.org/INSTALL.html#Windows
-
-  - Get the source code from CVS
-  - Get the latest MSVC makefiles
-  - Do the "bootstrap mechanism" : (http://www.w3.org/Library/cvs.html#Boot). 
-    You will need a Perl module for this.
-  - you can then compile by opening the libwww/windows/world.dsw workspace 
-    and do a batch build of the whole thing.
-
- other notes :  I had to define #define WWW_MSWINDOWS 1 in wwwsys.h 
- before compiling.
-
- Notes on mapserver's makefile.vc modifications :
-
-  - flag to add : -DUSE_WMS_LYR
-  - include : -I../Libwww/library/src -I../libwww/modules/expat/xmlparse
-  - libararies : ../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib 
-                ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
-
- Installation :
-
- - The best way is to get a precomiled binaries from the site. There is an 
-   windows install available at :  
-        ftp://ftp.idm.ru/libwww/Libwww_V5.3.2.exe
-
- - copy the following dll to a location where dll's can be loaded 
-  (ex : c:/winnt/syetem32) : gnu_regex.dll xmlparse.dll xmltok.dll 
-   (these dlls should be in .libwww/library/external after the build or 
-    available in your install directory)
-
- - You also needs the following dll files. These file are installed in your system directory when you install Libwww :
-
-        * wwwapp.dll
-        * wwwcache.dll
-        * wwwcore.dll
-        * wwwdir.dll
-        * wwwdll.dll
-        * wwwfile.dll
-        * wwwftp.dll
-        * wwwgophe.dll
-        * wwwhtml.dll
-        * wwwhttp.dll
-        * wwwinit.dll
-        * wwwmime.dll
-        * wwwmux.dll
-        * wwwnews.dll
-        * wwwstream.dll
-        * wwwtelnt.dll
-        * wwwtrans.dll
-        * wwwutils.dll
-        * wwwwais.dll
-        * wwwxml.dll
-        * wwwzip.dll
-
-
 --------------------------------------------------------------------
       Notes libcurl : used to support WMS client connection
-      Mapserver 3.7 is using libcurl instead of libwww for WMS client
+      Mapserver 4.x is using libcurl instead of libwww for WMS client
       support
 -------------------------------------------------------------------- 
   - the library is located at http://curl.haxx.se/download.html
 
   Quick notes on how to build the library using MSVC++:
 
-  - Download and extract the library (at this time it is know to work 
-    with version 7.10.2)
+  - Download and extract the library (at this time it is known to work 
+    with version 7.10.2 or more recent)
   - Open the workspace curlib.dsw located under curl-XXX/lib
   - Build libcurl.dll. Note that the default active configuraion of the project
      is  Win32 Debug. You can modify the configuarion to Release version 
      (Build/Set Active Configuration)          
 
   
-  Notes on mapserver's makefile.vc modifications :
+  Notes on mapserver's nmake.opt modifications :
 
   - uncomment the flag WMSCLIENT= -DUSE_WMS_LYR
   - uncomment and modify according to your installation the flags 
@@ -263,9 +195,7 @@ Here are some quick notes that can help in building mapserver with PDF :
   - copy the pdflib.dll under your system directory (ex : c:/winnt/system32)
  
  2) Build mapserver with PDF
-  - uncomment in the makefile.vc the flags related to PDF
-
-
+  - uncomment in the nmake.opt the flags related to PDF
 
 
 ----------------

@@ -330,7 +330,7 @@
         oNewGeorefExt.maxx = poGeorefExt->minx
                            + dX * (double)poPixRect->maxx;
         oNewGeorefExt.maxy = poGeorefExt->maxy
-                           + dY * (double)poPixRect->maxy;
+                           - dY * (double)poPixRect->maxy;
 
         msAdjustExtent(&oNewGeorefExt, self->width, self->height);
 
