@@ -666,23 +666,24 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
     msSetError(MS_MISCERR, "No items requested, SDE requires at least one item.", "msSDELayerGetShape()");
     return(MS_FAILURE);
   }
-  
-  status = SE_stream_fetch_row(sde->stream, sde->table, record, layer->numitems, (const char **)layer->items);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerGetShape()", "SE_stream_fetch()");
-    return(MS_FAILURE);
-  }
 
-  status = sdeGetRecord(layer, shape);
-  if(status != MS_SUCCESS)
-    return(MS_FAILURE); // something went wrong fetching the record/shape
-
+  // reset the stream
   status = SE_stream_close(sde->stream, 1);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetShape()", "SE_stream_close()");
     return(MS_FAILURE);
   }
 
+  status = SE_stream_fetch_row(sde->stream, sde->table, record, layer->numitems, (const char **)layer->items);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerGetShape()", "SE_stream_fetch_row()");
+    return(MS_FAILURE);
+  }
+
+  status = sdeGetRecord(layer, shape);
+  if(status != MS_SUCCESS)
+    return(MS_FAILURE); // something went wrong fetching the record/shape
+  
   return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetShape()");
