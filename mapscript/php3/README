@@ -145,7 +145,8 @@ and the MapServer Map File documentation at:
    legendObj    legend                  
    string       symbolsetfilename (read-only, set by setSymbolSet())
    string       fontsetfilename (read-only, set by setFontSet())
-
+   outputformatObj outputformat (read only)   
+     
  Methods:
 
    mapObj clone()
@@ -1191,5 +1192,26 @@ styleObj Class
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
  
+
+outputformatObj Class
+-------------------
+
+ Constructor :
+
+  Instance of outputformatObj is always embedded inside the mapObj.
+  It is uses a read only.
+
+  No constructor available
+
+
+ Members:
+
+   string    name;
+   string    mimetype;
+   string    driver;
+   string    extension;
+   int       renderer;
+   int       imagemode     
+   
                      --------------------------
 
