@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.174  2003/07/08 21:53:12  dan
+ * Several fixes to the processXxxTemplate() functions to properly report errors
+ * and fixed some memory leaks.
+ *
  * Revision 1.173  2003/07/03 15:31:47  assefa
  * Add the possibility to generate image for function
  * processquerytemplate (bug 341).
@@ -4700,30 +4704,20 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
     pval        *pThis;
     pval        *pParamValue, *pGenerateImage;
     mapObj      *self=NULL;
     char        *pszBuffer = NULL;
     int         i, iIndice = 0;
     HashTable   *ar;
-    int         numelems,  size;
+    int         numelems=0,  size;
     char        **papszNameValue = NULL;
     char        **papszName = NULL;
     char        **papszValue = NULL;
 
-#ifdef PHP4
     HashTable   *list=NULL;
 
-#else
-    pval        *pValue = NULL;
-#endif
-
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -4738,7 +4732,8 @@ DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS)
     
     convert_to_long(pGenerateImage);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self == NULL)
         RETURN_FALSE;
 
@@ -4779,23 +4774,34 @@ DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS)
                 papszValue[i] = papszNameValue[iIndice+1];
             }
 
-            pszBuffer = mapObj_processTemplate(self, pGenerateImage->value.lval,
-                                               papszName, papszValue, numelems);
-            
-            if (pszBuffer)
-            {
-                RETVAL_STRING(pszBuffer, 1);
-                free(pszBuffer);
-            }
-            else
-                RETURN_STRING("", 0);
         }
         else
-          RETURN_STRING("", 0);  
+        {
+            // Failed for some reason
+            php_error(E_WARNING, 
+                      "processLegendTemplate: failed reading array");
+            RETURN_FALSE;
+        }
+        efree(papszNameValue);
+    }
+
+    pszBuffer = mapObj_processTemplate(self, pGenerateImage->value.lval,
+                                       papszName, papszValue, numelems);
+            
+    msFree(papszName);  // The strings inside the array are just refs
+    msFree(papszValue);
+
+    if (pszBuffer)
+    {
+        RETVAL_STRING(pszBuffer, 1);
+        free(pszBuffer);
     }
     else
+    {
+        _phpms_report_mapserver_error(E_WARNING);
         RETURN_STRING("", 0);
-#endif
+    }
+
 }
 
 /**********************************************************************
@@ -4808,32 +4814,22 @@ DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
     pval        *pThis;
     pval        *pParamValue;
     mapObj      *self=NULL;
     char        *pszBuffer = NULL;
     int         i, iIndice = 0;
     HashTable   *ar;
-    int         numelems,  size;
+    int         numelems=0,  size;
     char        **papszNameValue = NULL;
     char        **papszName = NULL;
     char        **papszValue = NULL;
 
     
-#ifdef PHP4
     HashTable   *list=NULL;
 
-#else
-    pval        *pValue = NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
 
     if (pThis == NULL)
     {
@@ -4846,7 +4842,8 @@ DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
     
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self == NULL)
         RETURN_FALSE;
 
@@ -4878,33 +4875,40 @@ DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
         {
             papszName = (char **)malloc(sizeof(char *)*numelems);
             papszValue = (char **)malloc(sizeof(char *)*numelems);
-            
-            
+
             for (i=0; i<numelems; i++)
             {
                 iIndice = i*2;
                 papszName[i] = papszNameValue[iIndice];
                 papszValue[i] = papszNameValue[iIndice+1];
             }
-
-            pszBuffer = 
-                mapObj_processLegendTemplate(self, papszName, 
-                                             papszValue, numelems);
-            
-            if (pszBuffer)
-            {
-                RETVAL_STRING(pszBuffer, 1);
-                free(pszBuffer);
-            }
-            else
-                RETURN_STRING("", 0);
         }
         else
-          RETURN_STRING("", 0);  
+        {
+            // Failed for some reason
+            php_error(E_WARNING, 
+                      "processLegendTemplate: failed reading array");
+            RETURN_FALSE;
+        }
+        efree(papszNameValue);
+    }
+
+    pszBuffer = mapObj_processLegendTemplate(self, papszName, 
+                                             papszValue, numelems);
+
+    msFree(papszName);  // The strings inside the array are just refs
+    msFree(papszValue);
+
+    if (pszBuffer)
+    {
+        RETVAL_STRING(pszBuffer, 1);
+        free(pszBuffer);
     }
     else
+    {
+        _phpms_report_mapserver_error(E_WARNING);
         RETURN_STRING("", 0);
-#endif
+    }
 }
 
 
@@ -4918,14 +4922,13 @@ DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
     pval        *pThis;
     pval        *pParamValue, *pGenerateImage;
     mapObj      *self=NULL;
     char        *pszBuffer = NULL;
     int         i, iIndice = 0;
     HashTable   *ar;
-    int         numelems,  size;
+    int         numelems=0,  size;
     char        **papszNameValue = NULL;
     char        **papszName = NULL;
     char        **papszValue = NULL;
@@ -4933,24 +4936,14 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
     int         nArgs = ARG_COUNT(ht);
           
 
-#ifdef PHP4
     HashTable   *list=NULL;
 
-#else
-    pval        *pValue = NULL;
-#endif
-
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
         RETURN_FALSE;
     }
-
 
     if (pThis == NULL ||
         (nArgs != 1 && nArgs != 2))
@@ -4969,7 +4962,8 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
         nGenerateImage = pGenerateImage->value.lval;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self == NULL)
         RETURN_FALSE;
 
@@ -5010,24 +5004,35 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
                 papszValue[i] = papszNameValue[iIndice+1];
             }
 
-            pszBuffer = mapObj_processQueryTemplate(self, nGenerateImage,
-                                                    papszName, 
-                                                    papszValue, numelems);
-            
-            if (pszBuffer)
-            {
-                RETVAL_STRING(pszBuffer, 1);
-                free(pszBuffer);
-            }
-            else
-                RETURN_STRING("", 0);
         }
         else
-          RETURN_STRING("", 0);  
+        {
+            // Failed for some reason
+            php_error(E_WARNING, 
+                      "processLegendTemplate: failed reading array");
+            RETURN_FALSE;
+        }
+        efree(papszNameValue);
+    }
+    pszBuffer = mapObj_processQueryTemplate(self, nGenerateImage,
+                                            papszName, 
+                                            papszValue, numelems);
+
+    msFree(papszName);  // The strings inside the array are just refs
+    msFree(papszValue);
+
+    if (pszBuffer)
+    {
+        RETVAL_STRING(pszBuffer, 1);
+        free(pszBuffer);
     }
     else
+    {
+        _phpms_report_mapserver_error(E_WARNING);
         RETURN_STRING("", 0);
-#endif
+    }
+
+
 }
 
 /**********************************************************************
