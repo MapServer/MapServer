@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Added map->setSize() to PHP MapScript (bug 1066)
+
 - Re-enabled building PHP MapScript using PHP's bundled regex/*.o. This is
   needed to build in an environment with PHP configured as an Apache DSO
   (bugs 990, 520)

@@ -140,11 +140,11 @@ and the MapServer Map File documentation at:
    string       name
    int          status
    int          debug
-   int          width
-   int          height
+   int          width           (see setSize())
+   int          height          (see setSize())
    int          maxsize
    outputformatObj outputformat
-   double       resolution   (pixels per inch, defaults to 72)
+   double       resolution      (pixels per inch, defaults to 72)
    rectObj      extent; 
    double       cellsize
    int          units (map units type)
@@ -161,7 +161,7 @@ and the MapServer Map File documentation at:
    legendObj    legend                  
    string       symbolsetfilename (read-only, set by setSymbolSet())
    string       fontsetfilename (read-only, set by setFontSet())
-   labelcacheObj labelcache (no memebers. Used only to be able to free the
+   labelcacheObj labelcache (no members. Used only to be able to free the
                              the label cache (ex : map->labelcache->free())
    int          transparent   (deprecated, use outputFormatObj)
    int          interlace     (deprecated, use outputFormatObj)
@@ -230,7 +230,7 @@ and the MapServer Map File documentation at:
    colorObj getcolorbyindex(int iCloIndex)
 	Returns a colorObj corresponding to the color index in the palette
 
-   void setextent(double minx, double miny, double maxx, double maxy)
+   void setExtent(double minx, double miny, double maxx, double maxy)
 	Set the map extents using the georef extents passed in argument.
 
    int setRotation(double rotation_angle)
@@ -238,6 +238,13 @@ and the MapServer Map File documentation at:
         EXTENTS) will be rotated by the indicated angle in the counter-
         clockwise direction. Note that this implies the rendered map 
         will be rotated by the angle in the clockwise direction.
+        Returns MS_SUCCESS or MS_FAILURE.
+
+   int setSize(int width, int height)
+        Set the map width and height. This method updates the internal
+        geotransform and other data structures required for map rotation
+        so it should be used instead of setting the width and height members
+        directly.
         Returns MS_SUCCESS or MS_FAILURE.
 
    void zoompoint(int nZoomFactor, pointObj oPixelPos, int nImageWidth, 

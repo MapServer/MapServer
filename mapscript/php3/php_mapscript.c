@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.220  2004/11/16 17:23:13  dan
+ * Added map->setSize() to PHP MapScript (bug 1066)
+ *
  * Revision 1.219  2004/11/15 21:11:23  dan
  * Moved the layer->getExtent() logic down to msLayerGetExtent() (bug 1051)
  *
@@ -420,6 +423,7 @@ DLEXPORT void php3_ms_map_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setRotation(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setSize(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS);
@@ -864,6 +868,7 @@ function_entry php_map_class_functions[] = {
     {"getcolorbyindex", php3_ms_map_getColorByIndex,    NULL},
     {"setextent",       php3_ms_map_setExtent,          NULL},
     {"setrotation",     php3_ms_map_setRotation,        NULL},
+    {"setsize",         php3_ms_map_setSize,            NULL},
     {"zoompoint",       php3_ms_map_zoomPoint,          NULL},
     {"zoomrectangle",   php3_ms_map_zoomRectangle,      NULL},
     {"zoomscale",       php3_ms_map_zoomScale,          NULL},
@@ -1945,6 +1950,60 @@ DLEXPORT void php3_ms_map_setRotation(INTERNAL_FUNCTION_PARAMETERS)
     {
         _phpms_report_mapserver_error(E_ERROR);
     }
+
+    RETURN_LONG(nStatus);
+}
+
+/**********************************************************************
+ *                        map->setSize()
+ **********************************************************************/
+
+/* {{{ proto int map.setextent(string property_name, new_value)
+   Set map size (width, height) properties to new values and upddate internal geotransform. Returns MS_SUCCESS/MS_FAILURE. */
+
+DLEXPORT void php3_ms_map_setSize(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj *self;
+    pval   *pWidth, *pHeight;
+    pval *pThis;
+    int nStatus;
+
+    HashTable   *list=NULL;
+
+    pThis = getThis();    
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pWidth, &pHeight) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    convert_to_long(pWidth);
+    convert_to_long(pHeight);
+
+    if ((nStatus = msMapSetSize( self, pWidth->value.lval, 
+                                 pHeight->value.lval) ) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    /* We still sync the class members even if the call failed
+     * Note that as I'm implementing this, msMapSetSize() doesn't
+     * update scale and cellsize but I think it should, so we'll sync
+     * them as well, and if/when they are updated by the low-level function
+     * then they'll be sync'd 
+     */
+    _phpms_set_property_double(pThis, "cellsize", self->cellsize, E_ERROR); 
+    _phpms_set_property_double(pThis, "scale",    self->scale,    E_ERROR); 
+    _phpms_set_property_double(pThis, "width",    self->width,    E_ERROR); 
+    _phpms_set_property_double(pThis, "height",   self->height,   E_ERROR); 
+
 
     RETURN_LONG(nStatus);
 }
