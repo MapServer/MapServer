@@ -1376,7 +1376,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
     fontKey = label->font;
 
     font = PDF_findfont(pdf, fontKey, "winansi",1);
-    PDF_setfont(pdf,font,label->sizescaled+2);
+    PDF_setfont(pdf,font,size+2);
 
     if (phi!=0){
         /*PDF_save(pdf);*/

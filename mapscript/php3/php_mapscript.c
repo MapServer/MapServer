@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.210  2004/09/30 19:02:06  julien
+ * Get rid of the sizescaled parameter in styleObj and labelObj. (Bug 914)
+ *
  * Revision 1.209  2004/09/23 13:51:44  julien
  * Implement ENCODING label parameter to support internationalization.
  * Note that this require the inconv library. (Bug 858)
@@ -8222,7 +8225,6 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     {
         _phpms_set_property_long(pThis,"size", MS_MEDIUM, E_ERROR);
         self->size =  MS_MEDIUM;
-        self->sizescaled =  MS_MEDIUM;
     }
 
     RETURN_LONG(0);

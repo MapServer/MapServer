@@ -266,7 +266,6 @@ int msCopyLabel(labelObj *dst, labelObj *src)
     MS_COPYSTELEM(backgroundshadowsizex);
     MS_COPYSTELEM(backgroundshadowsizey);
     MS_COPYSTELEM(size);
-    MS_COPYSTELEM(sizescaled);
     MS_COPYSTELEM(minsize);
     MS_COPYSTELEM(maxsize);
     MS_COPYSTELEM(position);
@@ -349,7 +348,6 @@ int msCopyStyle(styleObj *dst, styleObj *src)
 
     MS_COPYSTELEM(symbol);
     MS_COPYSTELEM(size);
-    MS_COPYSTELEM(sizescaled);
     MS_COPYSTELEM(minsize);
     MS_COPYSTELEM(maxsize);
     MS_COPYSTELEM(offsetx);

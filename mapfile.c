@@ -995,7 +995,7 @@ void initLabel(labelObj *label)
 
   label->font = NULL;
   label->type = MS_BITMAP;
-  label->sizescaled = label->size = MS_MEDIUM;
+  label->size = MS_MEDIUM;
 
   label->position = MS_CC;
   label->angle = 0;
@@ -1133,7 +1133,6 @@ static int loadLabel(labelObj *label, mapObj *map)
       if((label->size = getSymbol(5, MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
 	      return(-1);
 #endif
-      label->sizescaled = label->size;
       break; 
     case(TYPE):
       if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return(-1);
@@ -1270,7 +1269,6 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
 #else
     if((label->size = getSymbol(5, MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) return;
 #endif    
-    label->sizescaled = label->size;
     break;
   case(TYPE):
     msyystate = 2; msyystring = value;
@@ -1475,7 +1473,7 @@ int initStyle(styleObj *style) {
   MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
   style->symbol = 0; // there is always a default symbol
   style->symbolname = NULL;
-  style->sizescaled = style->size = -1; // in SIZEUNITS (layerObj)
+  style->size = -1; // in SIZEUNITS (layerObj)
   style->minsize = MS_MINSYMBOLSIZE;
   style->maxsize = MS_MAXSYMBOLSIZE;
   style->offsetx = style->offsety = 0; // no offset
@@ -1536,7 +1534,6 @@ int loadStyle(styleObj *style) {
       break;
     case(SIZE):
       if(getInteger(&(style->size)) == -1) return(MS_FAILURE);
-      style->sizescaled = style->size;
       break;
     case(SIZEITEM):
       if(getString(&style->sizeitem) == MS_FAILURE) return(-1);
@@ -1607,7 +1604,7 @@ int initClass(classObj *class)
   initExpression(&(class->text));
   
   initLabel(&(class->label));
-  class->label.sizescaled = class->label.size = -1; // no default
+  class->label.size = -1; // no default
 
   class->template = NULL;
 
@@ -1671,7 +1668,7 @@ void resetClassStyle(classObj *class)
     initStyle(&(class->styles[i]));
 
   initLabel(&(class->label));
-  class->label.sizescaled = class->label.size = -1; // no default
+  class->label.size = -1; // no default
 
   class->type = -1;
   class->layer = NULL;
@@ -1702,7 +1699,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       if(getString(&class->keyimage) == MS_FAILURE) return(-1);
       break;
     case(LABEL):
-      class->label.sizescaled = class->label.size = MS_MEDIUM; // only set a default if the LABEL section is present
+      class->label.size = MS_MEDIUM; // only set a default if the LABEL section is present
       if(loadLabel(&(class->label), map) == -1) return(-1);
       break;
     case(MAXSCALE):      
@@ -1773,7 +1770,6 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(SIZE):
       if(getInteger(&(class->styles[0].size)) == -1) return(-1);
-      class->styles[0].sizescaled = class->styles[0].size;
       break;
     case(SYMBOL):
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
@@ -1806,7 +1802,6 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(OVERLAYSIZE):
       if(getInteger(&(class->styles[1].size)) == -1) return(-1);
-      class->styles[1].sizescaled = class->styles[1].size;
       break;
     case(OVERLAYSYMBOL):
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);

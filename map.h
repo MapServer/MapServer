@@ -344,7 +344,6 @@ typedef struct {
   int backgroundshadowsizex, backgroundshadowsizey;
 
   int size;
-  int sizescaled;
   int minsize, maxsize;
 
   int position;
@@ -405,7 +404,6 @@ typedef struct {
   char *symbolname;
 
   int size;
-  int sizescaled; // may not need this
   int minsize, maxsize;
 
   int offsetx, offsety; // for shadows, hollow symbols, etc...
