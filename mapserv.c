@@ -899,8 +899,8 @@ void setExtentFromShapes() {
   dx = tmpext.maxx - tmpext.minx;
   dy = tmpext.maxy - tmpext.miny;
  
-  tmppnt.x = dx/2;
-  tmppnt.y = dy/2;
+  tmppnt.x = (tmpext.maxx + tmpext.minx)/2;
+  tmppnt.y = (tmpext.maxy + tmpext.miny)/2;
   tmpext.minx -= dx*EXTENT_PADDING/2.0;
   tmpext.maxx += dx*EXTENT_PADDING/2.0;
   tmpext.miny -= dy*EXTENT_PADDING/2.0;
