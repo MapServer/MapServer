@@ -1438,7 +1438,7 @@ int initStyle(styleObj *style) {
   style->offsetx = style->offsety = 0; // no offset
   style->offsetx = style->offsety = 0;
   style->antialias = MS_FALSE;
-
+  style->isachild = MS_TRUE;
   return MS_SUCCESS;
 }
 

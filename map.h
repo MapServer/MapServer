@@ -414,6 +414,14 @@ typedef struct {
   int offsetx, offsety; // for shadows, hollow symbols, etc...
 
   int antialias;
+
+#ifndef SWIG
+  // Whether the style is within a class MS_TRUE or MS_FALSE.
+  // If true, then memory deallocation is handled by the class
+  // if false, then memory deallocation must be handled by the
+  // application.
+  int isachild;
+#endif
 } styleObj;
 
 // CLASS OBJECT - basic symbolization and classification information

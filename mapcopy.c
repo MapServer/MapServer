@@ -462,7 +462,8 @@ int msCopyStyle(styleObj *dst, styleObj *src) {
   copyProperty(&(dst->maxsize), &(src->maxsize), sizeof(int));
   copyProperty(&(dst->offsetx), &(src->offsetx), sizeof(int));
   copyProperty(&(dst->offsety), &(src->offsety), sizeof(int));
-
+  copyProperty(&(dst->isachild), &(src->isachild), sizeof(int));
+  
   return(MS_SUCCESS);
 }
 
