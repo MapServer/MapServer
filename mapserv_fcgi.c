@@ -1,3 +1,19 @@
+/******************************************************************************
+ * $Id$
+ *
+ * Purpose:  Alternate MapServ mainline implementing FastCGI support.
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ * Notes:    This is just a prototype.  A more complete integration of FastCGI
+ *           support in MapServer will be attempted in MapServer 4.1. 
+ *
+ ******************************************************************************
+ *
+ * $Log$
+ * Revision 1.2  2003/06/18 13:52:00  frank
+ * Added little header
+ *
+ */
+
 #define NO_FCGI_DEFINED
 #include "fcgi_stdio.h"
 #include "mapserv.h"
