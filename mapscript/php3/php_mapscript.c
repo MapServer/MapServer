@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.195  2004/04/30 13:07:14  dan
+ * Fixed problem with PHP's pasteImage() method when angle=0
+ *
  * Revision 1.194  2004/03/27 18:05:58  dan
  * Removed empty RINIT()/RSHUTDOWN() callbacks for performance,
  * removed MS_LAYER_GRATICULE and added MS_LAYER_TILEINDEX constants
@@ -6063,7 +6066,7 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval   *pSrcImg, *pTransparent, *pThis, *pDstX, *pDstY, *pAngle;
     imageObj *imgDst = NULL, *imgSrc = NULL;
-    int         nDstX=0, nDstY=0, nAngle=0;
+    int         nDstX=0, nDstY=0, nAngle=0, bAngleSet=MS_FALSE;;
     int         nArgs = ARG_COUNT(ht);
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -6112,6 +6115,7 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
     {
         convert_to_long(pAngle);
         nAngle = pAngle->value.lval;
+        bAngleSet = MS_TRUE;
     }
 
     if (imgSrc != NULL && imgDst != NULL)
@@ -6133,7 +6137,7 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
         nOldTransparentColor = gdImageGetTransparent(imgSrc->img.gd);
         gdImageColorTransparent(imgSrc->img.gd, nNewTransparentColor);
 
-        if (nAngle == 0)
+        if (!bAngleSet)
             gdImageCopy(imgDst->img.gd, imgSrc->img.gd, nDstX, nDstY, 
                         0, 0, imgSrc->img.gd->sx, imgSrc->img.gd->sy);
         else
