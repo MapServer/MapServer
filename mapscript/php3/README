@@ -26,9 +26,9 @@ Currently supported classes, properties and methods:
 ====================================================
 
 For more information on each class, see also the MapScript documentation at:
-	http://mapserver.gis.umn.edu/mapscript.html
+	http://mapserver.gis.umn.edu/doc/perlmapscript-reference.html
 and the MapServer Map File documentation at:
-	http://mapserver.gis.umn.edu/mapfile.html
+	http://mapserver.gis.umn.edu/doc/mapfile-reference.html
 
   Very important notes:
   ---------------------
