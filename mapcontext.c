@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.30  2002/11/26 01:37:55  dan
+ * Fixed compile warnings
+ *
  * Revision 1.29  2002/11/25 21:48:07  dan
  * Set map units after setting new projections in msLoadMapContext()
  *
@@ -459,8 +462,6 @@ int msLoadMapContext(mapObj *map, char *filename)
                                    "General.BoundingBox.SRS", NULL);
   if(pszValue != NULL)
   {
-      int nUnits;
-
       sprintf(szProj, "init=epsg:%s", pszValue+5);
 
       msInitProjection(&map->projection);
@@ -1148,8 +1149,8 @@ int msSaveMapContext(mapObj *map, char *filename)
                              NULL);
 
           // Layer SRS
-          pszValue = msGetEPSGProj(&(map->layers[i].projection), 
-                                   map->layers[i].metadata, MS_FALSE);
+          pszValue = (char*)msGetEPSGProj(&(map->layers[i].projection), 
+                                          map->layers[i].metadata, MS_FALSE);
           fprintf(stream, "      <SRS>%s</SRS>\n", pszValue);
 
           // Format
