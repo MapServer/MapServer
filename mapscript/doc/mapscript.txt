@@ -100,7 +100,7 @@ classes themselves
 
 References to sections below will be added here as the documentation grows.
 
-classObj_, colorObj_, pointObj_, rectObj_, shapeObj_, styleObj_
+classObj_, colorObj_, labelObj_, pointObj_, rectObj_, shapeObj_, styleObj_
 
 -----------------------------------------------------------------------------
  classObj
@@ -114,7 +114,8 @@ An instance of classObj is associated with with one instance of layerObj_.
     | classObj | <--------> | layerObj |
     +----------+            +----------+
 
-The other important associations for classObj are with styleObj_ and labelObj_.
+The other important associations for classObj are with styleObj_ and
+labelObj_.
 
 ::
 
@@ -132,41 +133,41 @@ for details on use of multiple class styles.
 Attributes
 ----------
 
-status : int
-    MS_ON or MS_OFF.  Draw features of this class or do not.
-    
-numstyles : int immutable
-    Number of styles for class
-    
+debug : int
+    MS_TRUE or MS_FALSE
+
+keyimage : string
+    **TODO** Not sure what this attribute is for
+
 label : labelObj_
     Definition of class labeling
-    
-name : string
-    Unique within a layer
-    
-title : string
-    Text used for legend labeling
 
-template : string
-    Template for queries
-
-type : int
-    The layer type of its parent layer
-
-minscale : float
-    The minimum scale at which class is drawn
-    
-maxscale : float
-    The maximum scale at which class is drawn
-    
 layer : layerObj_ immutable
     Reference to the parent layer
 
-debug : int
-    MS_TRUE or MS_FALSE
+maxscale : float
+    The maximum scale at which class is drawn
     
-keyimage : string
-    Path to an image to represent the class in a legend.
+minscale : float
+    The minimum scale at which class is drawn
+
+name : string
+    Unique within a layer
+
+numstyles : int immutable
+    Number of styles for class
+    
+status : int
+    MS_ON or MS_OFF.  Draw features of this class or do not.
+    
+template : string
+    Template for queries
+
+title : string
+    Text used for legend labeling
+
+type : int
+    The layer type of its parent layer
 
 Methods
 -------
@@ -252,14 +253,14 @@ associations.
 Attributes
 ----------
 
-red : int
-    Red component of color in range [0-255]
+blue : int
+    Blue component of color in range [0-255]
 
 green : int
     Green component of color in range [0-255]
 
-blue : int
-    Blue component of color in range [0-255]
+red : int
+    Red component of color in range [0-255]
 
 Methods
 -------
@@ -311,8 +312,7 @@ x
  labelObj
 -----------------------------------------------------------------------------
 
-A labelObj is a associated with a classObj, a scalebarObj, or a legendObj
-and has no other existence.
+A labelObj is associated with a classObj, a scalebarObj, or a legendObj.
 
 ::
 
@@ -323,7 +323,101 @@ and has no other existence.
                             | ----------- |
                             | legendObj   |
                             +-------------+ 
-                            
+                           
+Attributes
+----------
+
+angle : float
+    **TODO**
+
+antialias : int
+    MS_TRUE or MS_FALSE
+
+autoangle : int
+    MS_TRUE or MS_FALSE
+
+autominfeaturesize: int
+    MS_TRUE or MS_FALSE
+
+backgroundcolor : colorObj_
+    Color of background rectangle or billboard.
+
+backgroundshadowcolor : colorObj_
+    Color of background rectangle or billboard shadow.
+
+backgroundshadowsizex : int
+    Horizontal offset of drop shadow in pixels.
+
+backgroundshadowsizey : int
+    Vertical offset of drop shadow in pixels.
+
+buffer : int
+    Maybe this should've been named 'padding' since that's what it is:
+    padding in pixels around a label.
+
+color : colorObj_
+    Foreground color.
+
+font : string
+    Name of TrueType font.
+
+force : int
+    MS_TRUE or MS_FALSE.
+
+maxsize : int
+    Maximum height in pixels for scaled labels.  See symbolscale attribute
+    of layerObj_.
+
+mindistance : int
+    Minimum distance in pixels between duplicate labels.
+    
+minfeaturesize : int
+    Features of this size of greater will be labeled.
+    
+minsize : int
+    Minimum height in pixels.
+
+offsetx : int
+    Horizontal offset of label.
+
+offsety : int
+    Vertical offset of label.
+
+outlinecolor : colorObj_
+    Color of one point outline.
+
+partials : int
+    MS_TRUE (default) or MS_FALSE.  Whether or not labels can flow past
+    the map edges.
+    
+postion : int
+    MS_UL, MS_UC, MS_UR, MS_CL, MS_CC, MS_CR, MS_LL, MS_LC, MS_LR, or
+    MS_AUTO.
+
+shadowcolor : colorObj_
+    Color of drop shadow.
+
+shadowsizex : int
+    Horizontal offset of drop shadow in pixels.
+
+shadowsizey : int
+    Vertical offset of drop shadow in pixels.
+
+size : int
+    Annotation height in pixels.
+
+type : int
+    MS_BITMAP or MS_TRUETYPE.
+
+wrap : string
+    Character on which legend text will be broken to make multi-line
+    legends.
+   
+Methods
+-------
+
+None
+
 -----------------------------------------------------------------------------
  layerObj
 -----------------------------------------------------------------------------
@@ -363,15 +457,15 @@ A pointObj instance may be associated with a lineObj_.
 Attributes
 ----------
 
+m : float
+    Measure.  Meaningful only for measured shapefiles.
+
 x : float
     Easting
     
 y : float
     Northing
     
-m : float
-    Measure.  Meaningful only for measured shapefiles.
-
 Methods
 -------
 
@@ -379,12 +473,6 @@ Methods
 
 new pointObj([float x, float y]) : pointObj_
     Create new instance.  Easting and northing arguments are optional.
-
-.. _pointObj.draw:
-
-draw(mapObj_ map, layerObj_ layer, imageObj_ image, int classindex, string text) : int
-    Draw the point using the styles defined by the *classindex* class of
-    *layer* and labeled with string *text*.  Returns MS_SUCCESS or MS_FAILURE.
 
 .. _distanceToPoint:
 
@@ -401,6 +489,12 @@ distanceToSegment(pointObj_ point1, pointObj_ point2) : float
 
 distanceToShape(shapeObj_ shape) : float
     Returns the minimum distance to *shape*.
+
+.. _pointObj.draw:
+
+draw(mapObj_ map, layerObj_ layer, imageObj_ image, int classindex, string text) : int
+    Draw the point using the styles defined by the *classindex* class of
+    *layer* and labeled with string *text*.  Returns MS_SUCCESS or MS_FAILURE.
 
 .. _pointObj.project:
 
@@ -424,18 +518,18 @@ other associations.
 Attributes
 ----------
 
-minx : float
-    Minimum easting
-    
-miny : float
-    Minimum northing
-    
 maxx : float
     Maximum easting
     
 maxy : float
     Maximum northing
 
+minx : float
+    Minimum easting
+    
+miny : float
+    Minimum northing
+    
 Methods
 -------
 
@@ -479,34 +573,33 @@ closed lineObj_.
 Attributes
 ----------
 
-text : string
-    Shape annotation.
-    
+bounds : rectObj_ immutable
+    Bounding box of shape.
+      
 classindex : int
     The class index for features of a classified layer.
-    
-type : int immutable
-    MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, or MS_SHAPE_NULL.
-    
+   
+index : int immutable
+    Feature index within the layer.
+
 numlines : int immutable
     Number of parts.
 
-index : int immutable
-    Feature index within the layer.
-    
-tileindex : int immutable
-    Index of tiled file for tileindexed layers.
-    
-bounds : rectObj_ immutable
-    Bounding box of shape.
-    
 numvalues : int immutable
     Number of shape attributes.
-    
+
+text : string
+    Shape annotation.
+
+tileindex : int immutable
+    Index of tiled file for tileindexed layers.
+
+type : int immutable
+    MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, or MS_SHAPE_NULL.
+ 
 values : p_p_char immutable
     This is a SWIG pointer to the underlying C array.  Users should access
     values through the getValue_ method.  
- 
  
 Methods
 -------
@@ -522,21 +615,37 @@ new shapeObj(int type) : shapeObj_
 add(lineObj_ line) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
 
-.. _shapeObj.get:
+.. _contains:
 
-get(int index) : lineObj_
-    Returns a reference to part at *index*.  Reference is valid
-    only during the life of the shapeObj.
+contains(pointObj_ point) : int
+    Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
+
+copy(shapeObj_ shape_copy) : int
+    Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
+
+    **TODO**: this method should return shapeObj not int!
+
+distanceToPoint(pointObj_ point) : float
+    Return distance to *point*.
+    
+distanceToShape(shapeObj_ shape) : float
+    Return the minimum distance to *shape*.
 
 .. _shapeObj.draw:
 
 draw(mapObj_ map, layerObj_ layer, imageObj_ img) : int
     Draws the individual shape using layer.  Returns MS_SUCCESS or MS_FAILURE.
 
-.. _contains:
+.. _shapeObj.get:
 
-contains(pointObj_ point) : int
-    Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
+get(int index) : lineObj_
+    Returns a reference to part at *index*.  Reference is valid
+    only during the life of the shapeObj.
+
+.. _getValue:
+
+getValue(int i) : string
+    Return the shape attribute at index *i*.
 
 .. _shapeObj.intersects:
 
@@ -555,23 +664,6 @@ setBounds : void
 
     **TODO**: should return int and set msSetError.
     
-copy(shapeObj_ shape_copy) : int
-    Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
-
-    **TODO**: this method should return shapeObj not int!
-
-.. _getValue:
-
-getValue(int i) : string
-    Return the shape attribute at index *i*.
-
-distanceToPoint(pointObj_ point) : float
-    Return distance to *point*.
-    
-distanceToShape(shapeObj_ shape) : float
-    Return the minimum distance to *shape*.
-
-
 -----------------------------------------------------------------------------
  styleObj
 -----------------------------------------------------------------------------
@@ -603,14 +695,11 @@ styleObj instance, not a reference to the instance itself.
 Attributes
 ----------
 
-symbol : int
-    The index within the map symbolset of the style's symbol.
-    
-symbolname : string immutable
-    Name of the style's symbol.
-    
-size : int
-    Pixel width of the style's pen or symbol.
+backgroundcolor : colorObj_
+    Background pen color.
+
+color : colorObj_
+    Foreground or fill pen color.
 
 minsize : int
     Minimum pen or symbol width for scaling styles.
@@ -624,15 +713,19 @@ offsetx : int
 offsety : int
     Draw with pen or symbol offset from map data.
     
-color : colorObj_
-    Foreground or fill pen color.
-    
-backgroundcolor : colorObj_
-    Background pen color.
-    
 outlinecolor : colorObj_
     Outline pen color.
+
+size : int
+    Pixel width of the style's pen or symbol.
+
+symbol : int
+    The index within the map symbolset of the style's symbol.
     
+symbolname : string immutable
+    Name of the style's symbol.
+
+
 Methods
 -------
 
