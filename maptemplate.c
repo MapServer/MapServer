@@ -1182,7 +1182,8 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
       {
          sprintf(pszStatus, "%d", map->layers[map->layerorder[j]].status);
          msInsertHashTable(myHashTable, "layer_status", pszStatus);
-   
+         msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, &(map->layers[map->layerorder[j]]))?"1":"0" );
+
          if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
          
@@ -1318,7 +1319,8 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
 
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
-   
+   msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, &(map->layers[nIdxLayer]))?"1":"0" );
+
    if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
@@ -1449,7 +1451,8 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
-   
+   msInsertHashTable(myHashTable, "layer_visible", msLayerIsVisible(map, &(map->layers[nIdxLayer]))?"1":"0" );
+
    if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
