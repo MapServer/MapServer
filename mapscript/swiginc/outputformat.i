@@ -37,8 +37,18 @@
         outputFormatObj *format;
 
         format = msCreateDefaultOutputFormat(NULL, driver);
-        if ( format != NULL ) 
-            format->refcount++;
+
+        /* in the case of unsupported formats, msCreateDefaultOutputFormat
+           should return NULL */
+        if (!format)
+        {
+            msSetError(MS_MISCERR, "Unsupported format driver: %s",
+                       "outputFormatObj()", driver);
+            return NULL;
+        }
+        
+        /* Else, continue */
+        format->refcount++;
         if (name != NULL)
         {
             free(format->name);

@@ -108,6 +108,15 @@ class MapOutputFormatTestCase(MapTestCase):
         assert self.map.outputformat.mimetype == 'image/jpeg'
 
 
+class UnsupportedFormatTestCase(unittest.TestCase):
+    """I (Sean) don't ever configure for PDF, so this is the unsupported
+    format."""
+
+    def testCreateUnsupported(self):
+        self.assertRaises(mapscript.MapServerError, mapscript.outputFormatObj,
+                          'PDF')
+
+
 # ===========================================================================
 # Run the tests outside of the main suite
 
