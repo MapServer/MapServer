@@ -135,6 +135,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
     }
 
+    msInitLabelCache(&(self->labelcache)); // this clears any previously allocated cache
+
     image = msImageCreate(self->width, self->height, self->outputformat,
                           self->web.imagepath, self->web.imageurl);
     if(!image) {
@@ -1055,16 +1057,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 %addmethods labelCacheObj {
   void freeCache() {
-    int i;
-    for (i = 0; i < self->numlabels; i++) {
-        free(self->labels[i].string);
-        msFreeShape(self->labels[i].poly);
-    }   
-    self->numlabels = 0;
-    for (i = 0; i < self->nummarkers; i++) {
-        msFreeShape(self->markers[i].poly);
-    }
-    self->nummarkers = 0;
+    msFreeLabelCache(self);    
   }
 }
 
