@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/03/21 21:55:28  dan
+ * Added get/setMetaData() for layerObj and mapObj()
+ *
  * Revision 1.6  2001/03/09 19:33:14  dan
  * Updated PHP MapScript... still a few methods missing, and needs testing.
  *
@@ -95,6 +98,8 @@ int             mapObj_queryByFeatures(mapObj* self, int slayer);
 int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
 int             mapObj_setProjection(mapObj* self, char *string);
 int             mapObj_save(mapObj* self, char *filename);
+char            *mapObj_getMetaData(mapObj *self, char *name);
+int             mapObj_setMetaData(mapObj *self, char *name, char *value);
 
 
 layerObj       *layerObj_new(mapObj *map);
@@ -117,7 +122,8 @@ int             layerObj_queryByShape(layerObj *self, mapObj *map,
 int             layerObj_setFilter(layerObj *self, char *string);
 int             layerObj_setProjection(layerObj *self, char *string);
 int             layerObj_addFeature(layerObj *self, shapeObj *shape);
-
+char            *layerObj_getMetaData(layerObj *self, char *name);
+int             layerObj_setMetaData(layerObj *self, char *name, char *value);
 
 classObj       *classObj_new(layerObj *layer);
 void            classObj_destroy(classObj* self);

@@ -273,10 +273,14 @@ Very important note: Constant names and class member variable names are
    int addFeature(shapeObj shape)
         Add a new feature in a layer.  Returns -1 on error.
 
-    int classify(string expression)
-        Return the first class index which matches the string  passed 
-        in parameters.  If there is an empty expression class, the index 
-        will  be returned.
+   int getMetaData(string name)
+        Fetch metadata entry by name (stored in the WEB object in the map
+        file).  Returns "" if no entry matches the name.  Note that the
+        search is case sensitive.
+
+   int setMetaData(string name, string value)
+        Set a metadata entry for the map (stored in the WEB object in the map
+        file).  Returns MS_SUCCESS/MS_FAILURE.
 
  LayerObj Class:
  ---------------
@@ -427,6 +431,13 @@ Very important note: Constant names and class member variable names are
    shapeObj getShape(string shapepath, int tileindex, int shapeindex)
         Retrieve shapeObj from a layer by index.
 
+   int getMetaData(string name)
+        Fetch layer metadata entry by name.  Returns "" if no entry 
+        matches the name.  Note that the search is case sensitive.
+
+   int setMetaData(string name, string value)
+        Set a metadata entry for the layer.  Returns MS_SUCCESS/MS_FAILURE.
+
 
  ClassObj Class:
  ---------------
@@ -440,6 +451,7 @@ Very important note: Constant names and class member variable names are
  Members:
 
    string name
+   int    type
    int    color
    int    backgroundcolor
    int    outlinecolor

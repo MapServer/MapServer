@@ -204,6 +204,18 @@
   int save(char *filename) {
     return msSaveMap(self, filename);
   }
+
+  char *getMetaData(char *name) {
+    return(msLookupHashTable(self->web.metadata, name));
+  }
+
+  int setMetaData(char *name, char *value) {
+    if (!self->web.metadata)
+        self->web.metadata = msCreateHashTable();
+    if (msInsertHashTable(self->web.metadata, name, value) == NULL)
+	return MS_FAILURE;
+    return MS_SUCCESS;
+  }
 }
 
 //
@@ -300,6 +312,18 @@
       return -1;
     else
       return 0;
+  }
+
+  char *getMetaData(char *name) {
+    return(msLookupHashTable(self->metadata, name));
+  }
+
+  int setMetaData(char *name, char *value) {
+    if (!self->metadata)
+        self->metadata = msCreateHashTable();
+    if (msInsertHashTable(self->metadata, name, value) == NULL)
+	return MS_FAILURE;
+    return MS_SUCCESS;
   }
 }
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.40  2001/03/21 21:55:28  dan
+ * Added get/setMetaData() for layerObj and mapObj()
+ *
  * Revision 1.39  2001/03/20 15:55:10  dan
  * Fixed crash caused by lp->itemindexes[] and lp->items[] becoming out of sync
  *
@@ -104,7 +107,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Mar 13, 2001)"
+#define PHP3_MS_VERSION "(Mar 21, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -162,6 +165,8 @@ DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS);
@@ -189,6 +194,8 @@ DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -387,6 +394,8 @@ function_entry php_map_class_functions[] = {
     {"querybyshape",    php3_ms_map_queryByShape,       NULL},
     {"save",            php3_ms_map_save,               NULL},
     {"getlatlongextent", php3_ms_map_getLatLongExtent,  NULL},
+    {"getmetadata",     php3_ms_map_getMetaData,        NULL},
+    {"setmetadata",     php3_ms_map_setMetaData,        NULL},
     {NULL, NULL, NULL}
 };
 
@@ -436,6 +445,8 @@ function_entry php_layer_class_functions[] = {
     {"open",            php3_ms_lyr_open,               NULL},
     {"close",           php3_ms_lyr_close,              NULL},
     {"getshape",        php3_ms_lyr_getShape,           NULL},
+    {"getmetadata",     php3_ms_lyr_getMetaData,        NULL},
+    {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
     {NULL, NULL, NULL}
 };
 
@@ -2923,6 +2934,94 @@ DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 }
 
+/**********************************************************************
+ *                        map->getMetaData()
+ **********************************************************************/
+
+/* {{{ proto string map.getMetaData(string name)
+   Return MetaData entry by name, or empty string if not found. */
+
+DLEXPORT void php3_ms_map_getMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj *self;
+    pval   *pThis, *pName;
+    char   *pszValue = NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pName) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap),
+                                           list);
+    if (self == NULL || 
+        (pszValue = mapObj_getMetaData(self, pName->value.str.val)) == NULL)
+    {
+        pszValue = "";
+    }
+
+    RETURN_STRING(pszValue, 1);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        map->setMetaData()
+ **********************************************************************/
+
+/* {{{ proto int map.setMetaData(string name, string value)
+   Set MetaData entry by name.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj *self;
+    pval   *pThis, *pName, *pValue;
+    int    nStatus = MS_FAILURE;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pName, &pValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+    convert_to_string(pValue);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap),
+                                           list);
+    if (self == NULL || 
+        (nStatus = mapObj_setMetaData(self, 
+                                      pName->value.str.val,  
+                                      pValue->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
 
 
 /*=====================================================================
@@ -4040,10 +4139,7 @@ DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
     {
         // Until we implement selection of fields, default to selecting
         // all fields
-        if (self->itemindexes)
-            free(self->itemindexes);
-        self->itemindexes = NULL;
-        msLayerGetItems(self, &(self->items), &(self->numitems));
+        msLayerGetItems(self);
     }
 
     RETURN_LONG(nStatus);
@@ -4144,6 +4240,95 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
     /* Return valid object */
     _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), self,
                               list, return_value);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        layer->getMetaData()
+ **********************************************************************/
+
+/* {{{ proto string layer.getMetaData(string name)
+   Return MetaData entry by name, or empty string if not found. */
+
+DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pThis, *pName;
+    char   *pszValue = NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pName) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    if (self == NULL || 
+        (pszValue = layerObj_getMetaData(self, pName->value.str.val)) == NULL)
+    {
+        pszValue = "";
+    }
+
+    RETURN_STRING(pszValue, 1);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        layer->setMetaData()
+ **********************************************************************/
+
+/* {{{ proto int layer.setMetaData(string name, string value)
+   Set MetaData entry by name.  Returns MS_SUCCESS/MS_FAILURE */
+
+DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pThis, *pName, *pValue;
+    int    nStatus = MS_FAILURE;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pName, &pValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pName);
+    convert_to_string(pValue);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    if (self == NULL || 
+        (nStatus = layerObj_setMetaData(self, 
+                                        pName->value.str.val,  
+                                        pValue->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
 }
 /* }}} */
 
@@ -4300,6 +4485,7 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
 
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "name",       pclass->name);
+    add_property_long(return_value,   "type",       pclass->type);
     add_property_long(return_value,   "color",      pclass->color);
     add_property_long(return_value, "backgroundcolor",pclass->backgroundcolor);
     add_property_long(return_value,   "outlinecolor", pclass->outlinecolor);
@@ -4409,6 +4595,7 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pPropertyName);
 
     IF_SET_STRING(     "name",         self->name)
+    else IF_SET_LONG(  "type",         self->type)
     else IF_SET_LONG(  "color",        self->color)
     else IF_SET_LONG(  "backgroundcolor",self->backgroundcolor)
     else IF_SET_LONG(  "outlinecolor", self->outlinecolor)

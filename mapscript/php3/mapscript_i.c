@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.17  2001/03/21 21:55:28  dan
+ * Added get/setMetaData() for layerObj and mapObj()
+ *
  * Revision 1.16  2001/03/21 17:43:33  dan
  * Added layer->class->type ... in sync with mapscript.i v1.29
  *
@@ -234,6 +237,18 @@ int mapObj_save(mapObj* self, char *filename) {
     return msSaveMap(self, filename);
   }
 
+char *mapObj_getMetaData(mapObj *self, char *name) {
+    return(msLookupHashTable(self->web.metadata, name));
+  }
+
+int mapObj_setMetaData(mapObj *self, char *name, char *value) {
+    if (!self->web.metadata)
+        self->web.metadata = msCreateHashTable();
+    if (msInsertHashTable(self->web.metadata, name, value) == NULL)
+	return MS_FAILURE;
+    return MS_SUCCESS;
+  }
+
 
 /**********************************************************************
  * class extensions for layerObj, always within the context of a map
@@ -335,6 +350,18 @@ int layerObj_addFeature(layerObj *self, shapeObj *shape) {
       return -1;
     else
       return 0;
+  }
+
+char *layerObj_getMetaData(layerObj *self, char *name) {
+    return(msLookupHashTable(self->metadata, name));
+  }
+
+int layerObj_setMetaData(layerObj *self, char *name, char *value) {
+    if (!self->metadata)
+        self->metadata = msCreateHashTable();
+    if (msInsertHashTable(self->metadata, name, value) == NULL)
+	return MS_FAILURE;
+    return MS_SUCCESS;
   }
 
 /**********************************************************************
