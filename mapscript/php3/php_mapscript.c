@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.108  2002/05/14 14:10:12  assefa
+ * Add MS_SWF for the mong flash support.
+ *
  * Revision 1.107  2002/05/10 19:16:29  dan
  * Added qitem,qstring args to PHP version of layer->queryByAttributes()
  *
@@ -866,6 +869,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_PNG",        MS_PNG,         const_flag);
     REGISTER_LONG_CONSTANT("MS_JPEG",       MS_JPEG,        const_flag);
     REGISTER_LONG_CONSTANT("MS_WBMP",       MS_WBMP,        const_flag);
+    REGISTER_LONG_CONSTANT("MS_SWF",        MS_SWF,        const_flag);
 
     /* querymap style constants */
     REGISTER_LONG_CONSTANT("MS_NORMAL",     MS_NORMAL,      const_flag);
@@ -958,11 +962,8 @@ static void php_ms_free_map(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 static void php_ms_free_image(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
     imageObj *image = (imageObj *)rsrc->ptr;
-    if (image && (image->imagetype == MS_GIF ||
-                  image->imagetype == MS_PNG ||
-                  image->imagetype == MS_JPEG ||
-                  image->imagetype == MS_WBMP));
-    msFreeImageGD(image->img.gd);
+    
+    msFreeImage(image);
 }
 
 DLEXPORT void php3_ms_free_rect(rectObj *pRect) 
@@ -1044,6 +1045,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     pval        *new_obj_ptr;
     new_obj_ptr = &new_obj_param;
 #endif
+
 
 #if defined(PHP4)
     /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
@@ -4563,7 +4565,8 @@ DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS)
 #define MS_IMAGE_FORMAT_EXT(type)  ((type)==MS_GIF?"gif": \
                                     (type)==MS_PNG?"png": \
                                     (type)==MS_JPEG?"jpg": \
-                                    (type)==MS_WBMP?"wbmp":"???unsupported???")
+                                    (type)==MS_WBMP?"wbmp": \
+                                    (type)==MS_SWF?"swf":"???unsupported???")
 
 /**********************************************************************
  *                     _phpms_build_img_object()
@@ -4648,8 +4651,9 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     if (im)
     {
         //just test GD fdormats for now.
-        if (im->imagetype >= MS_GIF &&  im->imagetype <= MS_WBMP &&
-            pType->value.lval >= MS_GIF && pType->value.lval < MS_WBMP)
+        if ((im->imagetype >= MS_GIF &&  im->imagetype <= MS_WBMP &&
+            pType->value.lval >= MS_GIF && pType->value.lval < MS_WBMP) ||
+            (im->imagetype == pType->value.lval))
             bCompatible = 1;
     }
     if (!bCompatible)
@@ -4849,8 +4853,9 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     if (im)
     {
         //just test GD fdormats for now.
-        if (im->imagetype >= MS_GIF &&  im->imagetype <= MS_WBMP &&
-            pType->value.lval >= MS_GIF && pType->value.lval < MS_WBMP)
+        if ((im->imagetype >= MS_GIF &&  im->imagetype <= MS_WBMP &&
+            pType->value.lval >= MS_GIF && pType->value.lval < MS_WBMP) ||
+            (im->imagetype == pType->value.lval))
             bCompatible = 1;
     }
     if (!bCompatible)
