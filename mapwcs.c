@@ -245,17 +245,17 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
 
   // TODO: add MetadataLink (optional)
   
-  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
-  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "name", OWS_NOERR, "  <name>%s</name>\n", "MapServer WCS");
-  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
+  msOWSPrintMetadata(stdout, map->web.metadata, "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
+  msOWSPrintMetadata(stdout, map->web.metadata, "COM", "name", OWS_NOERR, "  <name>%s</name>\n", "MapServer WCS");
+  msOWSPrintMetadata(stdout, map->web.metadata, "COM", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
 
   // we are not supporting the optional keyword type, at least not yet
-  msOWSPrintMetadataList(stdout, map->web.metadata, "CO", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
+  msOWSPrintMetadataList(stdout, map->web.metadata, "COM", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
 
   // TODO: add responsibleParty (optional)
 
-  msOWSPrintMetadata(stdout, map->web.metadata, "CO", "fees", OWS_NOERR, "  <fees>%s</fees>\n", "NONE");
-  msOWSPrintMetadataList(stdout, map->web.metadata, "CO", "accessconstraints", "  <accessConstraints>\n", "  </accessConstraints>\n", "    %s\n", "NONE");
+  msOWSPrintMetadata(stdout, map->web.metadata, "COM", "fees", OWS_NOERR, "  <fees>%s</fees>\n", "NONE");
+  msOWSPrintMetadataList(stdout, map->web.metadata, "COM", "accessconstraints", "  <accessConstraints>\n", "  </accessConstraints>\n", "    %s\n", "NONE");
 
   // done
   printf("</Service>\n");
@@ -323,10 +323,10 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 
   // TODO: add MetadataLink (optional)
   
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
 
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
 
   // TODO: add elevation and temporal ranges to lonLatEnvelope (optional)
   printf("    <lonLatEnvelope srsName=\"WGS84(DD)\">\n");
@@ -335,7 +335,7 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
   printf("    </lonLatEnvelope>\n");
 
   // we are not supporting the optional keyword type, at least not yet
-  msOWSPrintMetadataList(stdout, layer->metadata, "CO", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
+  msOWSPrintMetadataList(stdout, layer->metadata, "COM", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
 
   // done
   printf("  </CoverageOfferingBrief>\n");
@@ -415,39 +415,39 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
   
   printf("        <AxisDescription");
   snprintf(tag, 100, "%s_semantic", id); // optional attributes follow (should escape?)
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
   snprintf(tag, 100, "%s_refsys", id);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " refSys=\"%s\"", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " refSys=\"%s\"", NULL);
   snprintf(tag, 100, "%s_refsyslabel", id);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " refSysLabel=\"%s\"", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " refSysLabel=\"%s\"", NULL);
   printf(">\n");
   
   // TODO: add metadataLink (optional)
   
   snprintf(tag, 100, "%s_description", id);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, "          <description>%s</description>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, "          <description>%s</description>\n", NULL);
   snprintf(tag, 100, "%s_name", id);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_WARN, "          <name>%s</name>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_WARN, "          <name>%s</name>\n", NULL);
  
   snprintf(tag, 100, "%s_label", id);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_WARN, "          <label>%s</label>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_WARN, "          <label>%s</label>\n", NULL);
   
   // Values
   printf("          <values");
   snprintf(tag, 100, "%s_values_semantic", id); // optional attributes follow (should escape?)
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
   snprintf(tag, 100, "%s_values_type", id);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, " type=\"%s\"", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", tag, OWS_NOERR, " type=\"%s\"", NULL);
   printf(">\n");
   
   // single values, we do not support optional type and semantic attributes
   snprintf(tag, 100, "%s_values", id);
-  if(msOWSLookupMetadata(layer->metadata, "CO", tag))
-    msOWSPrintMetadataList(stdout, layer->metadata, "CO", tag, NULL, NULL, "            <singleValue>%s</singleValue>\n", NULL);
+  if(msOWSLookupMetadata(layer->metadata, "COM", tag))
+    msOWSPrintMetadataList(stdout, layer->metadata, "COM", tag, NULL, NULL, "            <singleValue>%s</singleValue>\n", NULL);
   
   // intervals, only one per axis for now, we do not support optional type, atomic and semantic attributes
   snprintf(tag, 100, "%s_interval", id);
-  if((value = msOWSLookupMetadata(layer->metadata, "CO", tag)) != NULL) {
+  if((value = msOWSLookupMetadata(layer->metadata, "COM", tag)) != NULL) {
     char **tokens;
     int numtokens;
 
@@ -488,10 +488,10 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
   // TODO: add MetadataLink (optional)
   
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "description", OWS_NOERR, "  <description>%s</description>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "name", OWS_NOERR, "  <name>%s</name>\n", layer->name);
 
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
 
   // TODO: add elevation and temporal ranges to lonLatEnvelope (optional)
   printf("    <lonLatEnvelope srsName=\"WGS84(DD)\">\n");
@@ -500,7 +500,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   printf("    </lonLatEnvelope>\n");
 
   // we are not supporting the optional keyword type, at least not yet
-  msOWSPrintMetadataList(stdout, layer->metadata, "CO", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
+  msOWSPrintMetadataList(stdout, layer->metadata, "COM", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
 
   // DomainSet: starting simple, just a spatial domain (gml:envelope) and optionally a temporal domain
   printf("    <domainSet>\n");
@@ -515,9 +515,9 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   printf("        </gml:Envelope>\n");
   
   // envelope in the native srs
-  if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "CO", MS_TRUE)) != NULL)    
+  if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "COM", MS_TRUE)) != NULL)    
     printf("        <gml:Envelope srsName=\"%s\">\n", value);
-  else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "CO", MS_TRUE)) != NULL)
+  else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "COM", MS_TRUE)) != NULL)
     printf("        <gml:Envelope srsName=\"%s\">\n", value);
   else 
     printf("        <!-- NativeCRSs ERROR: missing required information, no SRSs defined -->\n");
@@ -549,11 +549,11 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   // TemporalDomain
 
   // TODO: figure out when a temporal domain is valid, for example only tiled rasters support time as a domain, plus we need a timeitem
-  if(msOWSLookupMetadata(layer->metadata, "CO", "timeposition") || msOWSLookupMetadata(layer->metadata, "CO", "timeperiod")) {
+  if(msOWSLookupMetadata(layer->metadata, "COM", "timeposition") || msOWSLookupMetadata(layer->metadata, "COM", "timeperiod")) {
     printf("      <temporalDomain>\n");
 
     // TimePosition (should support a value AUTO, then we could mine positions from the timeitem)
-    msOWSPrintMetadataList(stdout, layer->metadata, "CO", "timeposition", NULL, NULL, "        <gml:timePosition>%s</gml:timePosition>\n", NULL);    
+    msOWSPrintMetadataList(stdout, layer->metadata, "COM", "timeposition", NULL, NULL, "        <gml:timePosition>%s</gml:timePosition>\n", NULL);    
 
     // TODO:  add TimePeriod (only one per layer) 
 
@@ -568,13 +568,13 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
   // TODO: add metadataLink (optional)
   
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "rangeset_description", OWS_NOERR, "        <description>%s</description>\n", NULL);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "rangeset_name", OWS_WARN, "        <name>%s</name>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "rangeset_description", OWS_NOERR, "        <description>%s</description>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "rangeset_name", OWS_WARN, "        <name>%s</name>\n", NULL);
 
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "rangeset_label", OWS_WARN, "        <label>%s</label>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "rangeset_label", OWS_WARN, "        <label>%s</label>\n", NULL);
   
   // compound range sets
-  if((value = msOWSLookupMetadata(layer->metadata, "C", "rangeset_axes")) != NULL) {
+  if((value = msOWSLookupMetadata(layer->metadata, "COM", "rangeset_axes")) != NULL) {
     char **tokens;
     int numtokens;
 
@@ -593,17 +593,17 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   printf("    <supportedCRSs>\n");
   
   // requestResposeCRSs: check the layer metadata/projection, and then the map metadata/projection if necessary (should never get to the error message)
-  if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "CO", MS_FALSE)) != NULL)    
+  if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "COM", MS_FALSE)) != NULL)    
     printf("      <requestResposeCRSs>%s</requestResposeCRSs>\n", value);
-  else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "CO", MS_FALSE)) != NULL)
+  else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "COM", MS_FALSE)) != NULL)
     printf("      <requestResposeCRSs>%s</requestResposeCRSs>\n", value);
   else 
     printf("      <!-- requestResposeCRSs ERROR: missing required information, no SRSs defined -->\n");
   
   // NativeCRSs (only one in our case)
-  if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "CO", MS_TRUE)) != NULL)    
+  if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "COM", MS_TRUE)) != NULL)    
     printf("      <nativeCRSs>%s</nativeCRSs>\n", value);
-  else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "CO", MS_TRUE)) != NULL)
+  else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "COM", MS_TRUE)) != NULL)
     printf("      <nativeCRSs>%s</nativeCRSs>\n", value);
   else 
     printf("      <!-- nativeCRSs ERROR: missing required information, no SRSs defined -->\n");
@@ -613,8 +613,8 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   
   // supportedFormats
   printf("    <supportedFormats>\n");
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "formats", OWS_NOERR, "      <formats>%s</formats>\n", NULL);
-  msOWSPrintMetadata(stdout, layer->metadata, "CO", "nativeformat", OWS_NOERR, "      <nativeFormat>%s</nativeFormat>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "formats", OWS_NOERR, "      <formats>%s</formats>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "COM", "nativeformat", OWS_NOERR, "      <nativeFormat>%s</nativeFormat>\n", NULL);
   printf("    </supportedFormats>\n");
   
   // TODO: add SupportedInterpolations (optional)
@@ -706,7 +706,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
       }
       
       // TODO: will need to expand this check if a time period is supported
-      value = msOWSLookupMetadata(lp->metadata, "CO", "timeposition");
+      value = msOWSLookupMetadata(lp->metadata, "COM", "timeposition");
       if(!value) {
         msSetError( MS_WCSERR, "The coverage does not support temporal subsetting.", "msWCSGetCoverage()" );
         return msWCSException(params->version);
@@ -730,7 +730,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
       tlp = &(map->layers[tli]);
 
       // make sure there is enough information to filter
-      value = msOWSLookupMetadata(lp->metadata, "CO", "timeitem");
+      value = msOWSLookupMetadata(lp->metadata, "COM", "timeitem");
       if(!tlp->filteritem && !value) {
         msSetError( MS_WCSERR, "Not enough information available to filter.", "msWCSGetCoverage()" );
         return msWCSException(params->version);
@@ -748,7 +748,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     }
            
     // Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands)
-    value = msOWSLookupMetadata(lp->metadata, "CO", "rangeset_axes"); // this will get all the compound range sets
+    value = msOWSLookupMetadata(lp->metadata, "COM", "rangeset_axes"); // this will get all the compound range sets
     if(value) { 
       char **tokens;
       int numtokens;
@@ -759,14 +759,14 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
        for(i=0; i<numtokens; i++) {
          if((value = msWCSGetRequestParameter(request, tokens[i])) == NULL) continue; // next rangeset parameter
        
-         if(msWCSValidateRangeSetParam(lp->metadata, tokens[i], "CO", value) != MS_SUCCESS) {
+         if(msWCSValidateRangeSetParam(lp->metadata, tokens[i], "COM", value) != MS_SUCCESS) {
            msSetError( MS_WCSERR, "Error specifying \"%s\" paramter value(s).", "msWCSGetCoverage()", tokens[i]);
            return msWCSException(params->version);
          }
        
          // xxxxx_rangeitem tells us how to subset
          snprintf(tag, 100, "%s_rangeitem", tokens[i]);
-         if((rangeitem = msOWSLookupMetadata(lp->metadata, "CO", tag)) == NULL) {
+         if((rangeitem = msOWSLookupMetadata(lp->metadata, "COM", tag)) == NULL) {
            msSetError( MS_WCSERR, "Missing required metadata element \"%s\", unable to process %s=%s.", "msWCSGetCoverage()", tag, tokens[i], value);
            return msWCSException(params->version);
          }
@@ -837,14 +837,19 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
         msSetError( MS_WCSERR,  "Unrecognized value for the FORMAT parameter.", "msWCSGetCoverage()" );
         return msWCSException(params->version);
     }
-           
-    if(bandlist)
-      msLayerSetProcessingKey( lp, "BANDS", bandlist );
-                       
+
     // Create a temporary outputformat (we like will need to tweak parts)
     format = msCloneOutputFormat(msSelectOutputFormat(map,params->format));
     msApplyOutputFormat(&(map->outputformat), format, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE); 
+           
+    if(bandlist) {
+      char tmpstr[8]; // should be large enough to hold numbands
 
+      msLayerSetProcessingKey( lp, "BANDS", bandlist );
+      sprintf(tmpstr, "%d", countChars(bandlist, ',')+1);
+      msSetOutputFormatOption(map->outputformat, "BAND_COUNT", tmpstr);
+    }      
+                 
     // Create the image object. 
     if(!map->outputformat) {
         msSetError(MS_WCSERR, "The map outputformat is missing!", "msWCSGetCoverage()");
@@ -853,12 +858,6 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
         image = msImageCreateGD(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);        
         if( image != NULL ) msImageInitGD( image, &map->imagecolor );
     } else if( MS_RENDERER_RAWDATA(map->outputformat) ) {
-        if(bandlist) {
-          char tmpstr[16]; // should be big enough to hold numbands
-      
-          sprintf(tmpstr, "%d", countChars(bandlist, ',')+1);
-          msSetOutputFormatOption(map->outputformat, "BAND_COUNT", tmpstr);
-        }
         image = msImageCreate(map->width, map->height, map->outputformat, map->web.imagepath, map->web.imageurl);
     } else {
         msSetError(MS_WCSERR, "Map outputformat not supported for WCS!", "msWCSGetCoverage()");
@@ -928,8 +927,8 @@ return msWCSGetCoverage(map, request, params);
 static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 {
   // get information that is "data" independent
-  if((cm->srs = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "CO", MS_TRUE)) == NULL) {
-    if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "CO", MS_TRUE)) == NULL) {
+  if((cm->srs = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "COM", MS_TRUE)) == NULL) {
+    if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "COM", MS_TRUE)) == NULL) {
       msSetError(MS_WCSERR, "Unable to determine the SRS for this layer, no projection defined and no metadata available.", "msWCSGetCoverageMetadata()");
       return MS_FAILURE;
     }
@@ -939,7 +938,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
   /*      If we have "virtual dataset" metadata on the layer, then use    */
   /*      that in preference to inspecting the file(s).                   */
   /* -------------------------------------------------------------------- */
-  if( msOWSLookupMetadata(layer->metadata, "CO", "extent") != NULL ) {
+  if( msOWSLookupMetadata(layer->metadata, "COM", "extent") != NULL ) {
     const char *value;
 
     // get extent
@@ -953,7 +952,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     // get resolution
     cm->xresolution = 0.0;
     cm->yresolution = 0.0;
-    if( (value = msOWSLookupMetadata(layer->metadata, "CO", "resolution")) != NULL ) {
+    if( (value = msOWSLookupMetadata(layer->metadata, "COM", "resolution")) != NULL ) {
       char **tokens;
       int n;
             
@@ -971,7 +970,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     // get Size (in pixels and lines)
     cm->xsize = 0;
     cm->ysize = 0;
-    if( (value=msOWSLookupMetadata(layer->metadata, "CO", "size")) != NULL ) {
+    if( (value=msOWSLookupMetadata(layer->metadata, "COM", "size")) != NULL ) {
       char **tokens;
       int n;
             
@@ -1014,13 +1013,13 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 
     // get bands count, or assume 1 if not found
     cm->bandcount = 1;
-    if( (value=msOWSLookupMetadata(layer->metadata, "CO", "bandcount")) != NULL) {
+    if( (value=msOWSLookupMetadata(layer->metadata, "COM", "bandcount")) != NULL) {
       cm->bandcount = atoi(value);
     }
 
     // get bands type, or assume float if not found
     cm->imagemode = MS_IMAGEMODE_FLOAT32;
-    if( (value=msOWSLookupMetadata(layer->metadata, "CO", "imagemode")) != NULL ) {
+    if( (value=msOWSLookupMetadata(layer->metadata, "COM", "imagemode")) != NULL ) {
       if( EQUAL(value,"INT16") )
         cm->imagemode = MS_IMAGEMODE_INT16;
       else if( EQUAL(value,"FLOAT32") )
@@ -1088,7 +1087,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
     msReleaseLock( TLOCK_GDAL );
   }
  
-  // we must have the bounding box in lat/lon (WGS84 DD), is that default lat/lon transformation
+  // we must have the bounding box in lat/lon [WGS84(DD)/EPSG:4326]
   cm->llextent = cm->extent;
   if (layer->projection.numargs > 0 && !pj_is_latlong(layer->projection.proj)) // check the layer projection
     msProjectRect(&(layer->projection), NULL, &(cm->llextent));
