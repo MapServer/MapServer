@@ -222,8 +222,39 @@ double msAdjustExtent(rectObj *rect, int width, int height)
   return(cellsize);
 }
 
+/*
+** Rect must always contain a portion of bounds. If not, rect is 
+** shifted to overlap by overlay percent. The dimensions of rect do
+** not change but placement relative to bounds can.
+*/
+int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay) 
+{
+  double offset=0;
 
+  // check left edge, and if necessary the right edge of bounds
+  if(rect->maxx <= bounds->minx) {
+    offset = overlay*(rect->maxx - rect->minx);
+    rect->minx += offset; // shift right
+    rect->maxx += offset;
+  } else if(rect->minx >= bounds->maxx) {
+    offset = overlay*(rect->maxx - rect->minx);
+    rect->minx -= offset; // shift left
+    rect->maxx -= offset;
+  }
 
+  // check top edge, and if necessary the bottom edge of bounds
+  if(rect->maxy <= bounds->miny) {
+    offset = overlay*(rect->maxy - rect->miny);
+    rect->miny -= offset; // shift down
+    rect->maxy -= offset;
+  } else if(rect->miny >= bounds->maxy) {
+    offset = overlay*(rect->maxy - rect->miny);
+    rect->miny += offset; // shift up
+    rect->maxy += offset;
+  }
+
+  return(MS_SUCCESS);
+}
 
 /*
 ** Generic function to save an image to a file.

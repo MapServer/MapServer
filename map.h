@@ -1144,6 +1144,7 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale);
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 int msAdjustImage(rectObj rect, int *width, int *height);
 double msAdjustExtent(rectObj *rect, int width, int height);
+int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);
 
 int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
 

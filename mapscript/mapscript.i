@@ -758,6 +758,10 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return  msAdjustExtent(self, width, height);
   } 
 
+  int contrain(rectObj *bounds, double overlay) {
+    return msConstrainRect(bounds,self, overlay);
+  }
+
   int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, char *text) {
     shapeObj shape;
 
