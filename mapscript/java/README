@@ -26,6 +26,12 @@ Copy the shared libmapscript and mapscript.jar to the appropriate location.
 Windows
 -------
 
-If any user has a robust win32 Makefile or build script to contribute to the
-MapServer project, we would be delighted to incorporate it.
+Edit makefile.vc to match your environment.  You will need to set JAVA_HOME 
+and SWIG_HOME to the appropriate variables.  You will likely need to copy 
+all of the DLLs needed to run MapServer into the mapscript/java directory 
+(including libmap.dll) so the mapscript.dll can see them to run.
+
+cd mapscript/java
+nmake /f makefile.vc
+nmake /f makefile.vc test
 
