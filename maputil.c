@@ -429,58 +429,6 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
   return aiIndex;
 }
 
-/**
- * Move the class up inside the array of classes.
- */  
-int msMoveClassUp(layerObj *layer, int nClassIndex)
-{
-    classObj *psTmpClass = NULL;
-    if (layer && nClassIndex < layer->numclasses && nClassIndex >0)
-    {
-        psTmpClass = (classObj *)malloc(sizeof(classObj));
-        initClass(psTmpClass);
-        
-        msCopyClass(psTmpClass, &layer->class[nClassIndex], layer);
-
-        msCopyClass(&layer->class[nClassIndex], 
-                    &layer->class[nClassIndex-1], layer);
-        
-        msCopyClass(&layer->class[nClassIndex-1], psTmpClass, layer);
-
-        return(MS_SUCCESS);
-    }
-    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveClassUp()",
-               nClassIndex);
-    return (MS_FAILURE);
-}
-
-
-/**
- * Move the class down inside the array of classes.
- */  
-int msMoveClassDown(layerObj *layer, int nClassIndex)
-{
-    classObj *psTmpClass = NULL;
-    if (layer && nClassIndex < layer->numclasses-1 && nClassIndex >=0)
-    {
-        psTmpClass = (classObj *)malloc(sizeof(classObj));
-        initClass(psTmpClass);
-        
-        msCopyClass(psTmpClass, &layer->class[nClassIndex], layer);
-
-        msCopyClass(&layer->class[nClassIndex], 
-                    &layer->class[nClassIndex+1], layer);
-        
-        msCopyClass(&layer->class[nClassIndex+1], psTmpClass, layer);
-
-        return(MS_SUCCESS);
-    }
-    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveClassDown()",
-               nClassIndex);
-    return (MS_FAILURE);
-}
-
-
 /*
 ** Return the projection string. 
 */
