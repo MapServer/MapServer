@@ -1299,6 +1299,7 @@ int msJoinClose(joinObj *join);
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
 int msGetClass(layerObj *layer, colorObj *color);
+int msGetClass_Float(layerObj *layer, float fValue);
 //in mapdrawgdal.c
 int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, 
                           void *hDSVoid );

@@ -107,6 +107,63 @@ int msGetClass(layerObj *layer, colorObj *color)
   return(-1); /* not found */
 }
 
+/************************************************************************/
+/*                          msGetClass_Float()                          */
+/*                                                                      */
+/*      Returns the class based on classification of a floating         */
+/*      pixel value.                                                    */
+/************************************************************************/
+
+int msGetClass_Float(layerObj *layer, float fValue)
+{
+    int i;
+    char *tmpstr1=NULL;
+    char tmpstr2[100];
+  
+    if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
+        return(0);
+
+    for(i=0; i<layer->numclasses; i++) {
+        if (layer->class[i].expression.string == NULL) /* Empty expression - always matches */
+            return(i);
+
+        switch(layer->class[i].expression.type) {
+          case(MS_STRING):
+            sprintf(tmpstr2, "%18g", fValue );
+            if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); // matched
+            break;
+
+          case(MS_REGEX):
+            if(!layer->class[i].expression.compiled) {
+                if(regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
+                    msSetError(MS_REGEXERR, "Invalid regular expression.", "msGetClass()");
+                    return(-1);
+                }
+                layer->class[i].expression.compiled = MS_TRUE;
+            }
+
+            sprintf(tmpstr2, "%18g", fValue );
+            if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); // got a match
+            break;
+
+          case(MS_EXPRESSION):
+            tmpstr1 = strdup(layer->class[i].expression.string);
+
+            sprintf(tmpstr2, "%18g", fValue);
+            tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
+
+            msyystate = 4; msyystring = tmpstr1;
+            if(msyyparse() != 0) return(-1); // error parsing the expression
+
+            free(tmpstr1);
+
+            if(msyyresult) return(i); // got a match	
+        }
+    }
+
+    return(-1); /* not found */
+}
+
 /*
 ** Function to add a color to an existing color map.  It first looks for
 ** an exact match, then tries to add it to the end of the existing color map,
