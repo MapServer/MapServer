@@ -13,7 +13,7 @@
 
 # To use PHP4 (instead of PHP3) uncomment the following line
 # The default when PHP4=1 is not set is to build for PHP3
-#PHP4 = 1
+PHP4 = 1
 
 !ifdef PHP4
 OPTFLAGS =	/nologo /Zi /W3 
@@ -24,13 +24,14 @@ BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32
 !endif
 
 LINK_OPT =	/dll /debug
+#LINK_OPT =	/dll
 
 #
 # Set PHP_SOURCE_DIR to point to the root of the PHP source tree
 #
 
 !ifdef PHP4
-PHP_SOURCE_DIR = ../../../php-4.0.3pl1
+PHP_SOURCE_DIR = ../../../php-4.0.4
 PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/main -I$(PHP_SOURCE_DIR)/zend -I$(PHP_SOURCE_DIR)/include -I$(PHP_SOURCE_DIR)/tsrm
 !else
 PHP_SOURCE_DIR = ../../../php-3.0.14
@@ -42,9 +43,9 @@ PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/dl
 # Where do you want php3_mapscript.dll to be installed?
 #
 !ifdef PHP4
-PHP_INSTALL_DIR =  d:\Apache\php4
+PHP_INSTALL_DIR =  \Apache\php4
 !else
-PHP_INSTALL_DIR =  d:\Apache\php3
+PHP_INSTALL_DIR =  \Apache\php3
 !endif
 
 #
@@ -55,18 +56,24 @@ PHP_INSTALL_DIR =  d:\Apache\php3
 # MS_INCLUDE = -I../.. -I../../gd-1.2 -I../../gdft
 # MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
 #
-MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF
-#!ifdef PHP4
-#MS_INC = -I../.. -I../../regex-0.12 -I../../gd-1.2 -I../../../proj/src
-#!else
+MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF -DUSE_OGR
+!ifdef PHP4
+MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -DPHP_NO_ALIASES -I../../gd-1.2 -I../../../proj/src
+!else
 MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../gd-1.2 -I../../../proj/src
-#!endif
+!endif
+GDAL_DIR= ../../../gdal
+
 MS_LIBS = ../../mapserver.lib ../../gd-1.2/gd.lib \
 	../../../tiff-v3.5.4/libtiff/libtiff.lib \
 	../../gdft/gdft.lib \
 	../../../freetype/lib/freetype.lib \
-        ../../../proj/src/proj.lib
-
+        ../../../proj/src/proj.lib \
+        $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib \
+        $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib \
+        $(GDAL_DIR)/ogr/ogr.lib \
+        $(GDAL_DIR)/ogr/../port/cpl.lib
+                
 
 #
 # The rest of the file should not have to be edited...

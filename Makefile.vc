@@ -70,6 +70,13 @@ TIFF=-DUSE_TIFF
 EPPL=-DUSE_EPPL
 EPPL_OBJ=epplib.obj
 
+# OGR Support OGC Simple Feature inspired interface for vector
+# formats.  See http://gdal.velocet.ca/projects/opengis/
+GDAL_DIR= ../gdal
+OGR=-DUSE_OGR
+OGR_LIB = $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib $(GDAL_DIR)/ogr/ogr.lib $(GDAL_DIR)/ogr/../port/cpl.lib
+OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port
+
 #
 # UofMN GIS/Image Processing Extension (very experimental)
 #
@@ -100,10 +107,11 @@ REGEX_INC=-I./regex-0.12
 # MapServer uses the same version of the REGEX library that PHP was 
 # compiled with:
 #
-PHP_REGEX=..\php-3.0.14\regex
+#PHP_REGEX=..\php-3.0.14\regex
+PHP_REGEX=..\php-4.0.4\regex
 REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
           $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
-REGEX_INC=-I$(PHP_REGEX)
+REGEX_INC=-I$(PHP_REGEX) -DPHP_NO_ALIASES
 
 #
 # REGEX needs some special flags... here they are for VC++ 6.0
@@ -135,13 +143,13 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe shpindex.exe \
 #
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) $(TTF_LIB) \
-		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB)
+		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) $(TTF_INC) \
-		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC)
+		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) 
+		$(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(OGR)
 
 default: 	all
 
