@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.58  2004/11/08 00:33:00  frank
+ * Fixed support for non-square pixels in WCS. (bug 1014)
+ *
  * Revision 1.57  2004/11/04 21:47:07  frank
  * Removed unused variable.
  *
@@ -1009,10 +1012,13 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     return msWCSException(map, params->version);
   }
 
-  // should we compute a new extent, ala WMS?
+  map->cellsize = params->resx;
+
+  // Do we need to force special handling? 
   if( fabs(params->resx/params->resy - 1.0) > 0.001 ) {
-    msSetError( MS_WCSERR,  "RESX and RESY don't match.  This is currently not a supported option for MapServer WCS.", "msWCSGetCoverage()" );
-    return msWCSException(map, params->version);
+      map->gt.need_geotransform = MS_TRUE;
+      if( map->debug )
+          msDebug( "RESX and RESY don't match.  Using geotransform/resample.");
   }
    
   // apply region and size to map object. 
@@ -1023,6 +1029,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
   map->cellsize = params->resx; // pick one, MapServer only supports square cells (what about msAdjustExtent here!)
 
   msMapComputeGeotransform(map);
+  map->projection.gt = map->gt;
 
   // check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata)
   if(!params->format) {
