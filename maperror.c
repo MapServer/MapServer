@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.62  2005/02/02 02:21:50  sdlime
+ * Applied Jerry/Dan patch for bug 1194.
+ *
  * Revision 1.61  2005/01/28 06:16:53  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -295,8 +298,10 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
 
   if(!routine)
     strcpy(ms_error->routine, "");
-  else
+  else {
     strncpy(ms_error->routine, routine, ROUTINELENGTH);
+    ms_error->routine[ROUTINELENGTH-1] = '\0';
+  }
 
   if(!message_fmt)
     strcpy(ms_error->message, "");
