@@ -70,7 +70,8 @@ DEBUG printf("searchImageCache\n<BR>");
 }
 
 static char* lname;
-static char layerlist[MS_MAXLAYERS*80]="  2\nLAYER\n 70\n  10\n";
+static int dxf;
+static char layerlist[MS_MAXLAYERS*80];
 
 void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image){
 DEBUG printf("ImageStartLayerIM\n<BR>");
@@ -79,10 +80,15 @@ DEBUG printf("ImageStartLayerIM\n<BR>");
 		lname = strdup(layer->name);
 	else
 		lname = strdup("NONE");
-		
-	strcat(layerlist, "  0\nLAYER\n  2\n");
-	strcat(layerlist, lname);
-	strcat(layerlist, "\n 70\n  64\n 6\nCONTINUOUS\n");
+	if (dxf == 2){
+		strcat(layerlist, "LAYER\n");
+		strcat(layerlist, lname);
+		strcat(layerlist, "\n");
+	} else {
+		strcat(layerlist, "  0\nLAYER\n  2\n");
+		strcat(layerlist, lname);
+		strcat(layerlist, "\n 70\n  64\n 6\nCONTINUOUS\n");
+	}
 	lastcolor = -1;
 }
 	
@@ -112,7 +118,6 @@ DEBUG printf("addImageCache\n<BR>");
   return(icp);
 }
 
-static int dxf;
 
 
 //*
@@ -156,17 +161,27 @@ DEBUG printf("msImageCreateIM<BR>\n");
             image->height = height;
             image->imagepath = NULL;
             image->imageurl = NULL;
-	    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0)
+	    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0){
 		    dxf = 1;
-	    else
+		    strcpy(layerlist, "  2\nLAYER\n 70\n  10\n");
+	    } else
 		    dxf = 0;
-	    if (dxf){
+
+	    if( strcasecmp("ON",msGetOutputFormatOption( format, "SCRIPT", "OFF" )) == 0){
+		    dxf = 2;
+		    strcpy(layerlist,"");
+	    }
+		    
+
+	    if (dxf == 2){
+		    sprintf(head, "ENTITIES");
+	    } else if (dxf){
 		    sprintf(head, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\nAC1009\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n");		    
 	    } else
 		    sprintf(head, "<MAP name='map1' width=%d height=%d>", image->width, image->height);
 	    lname = strdup("NONE");
 //	    image->img.imagemap = strdup(head);
-	    image->img.imagemap = strdup(" ");
+	    image->img.imagemap = strdup("");
 	    if (image->img.imagemap){
 		    imgsize = strlen(image->img.imagemap);
 	            image->size = strlen(image->img.imagemap);
@@ -796,7 +811,7 @@ DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
 		int nchars = 0;
 		char buffer[300] = "";
 		
-		nchars = sprintf (buffer, dxf ? "  0\nPOINT\n 10\n%f\n 20\n%f\n 30\n0.0\n 62\n%6d\n  8\n%s\n" : "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy, dxf ? matchdxfcolor(style->color) : 0, lname);
+		nchars = sprintf (buffer, dxf ? (dxf == 2 ? "POINT\n%.0f %.0f\n%d\n" : "  0\nPOINT\n 10\n%f\n 20\n%f\n 30\n0.0\n 62\n%6d\n  8\n%s\n") : "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy, dxf ? matchdxfcolor(style->color) : 0, lname);
 
 //DEBUG printf ("%d, ",strlen(img->img.imagemap) );
 // DEBUG printf("nchars %d<BR>\n", nchars);
@@ -976,7 +991,9 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
 //  if(fc < 0) return; // nothing to do
 //  if(size < 1) return; // size too small
-  if (dxf){
+  if (dxf == 2){
+	nchars = sprintf (fbuffer, "LINE\n%d\n", matchdxfcolor(style->color));
+  } else if (dxf){
 	nchars = sprintf (fbuffer, "  0\nPOLYLINE\n 70\n     0\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
   } else {
 	nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
@@ -987,7 +1004,9 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
 		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
 				int slen = 0;
-				if (dxf){
+				if (dxf == 2){
+					nchars = sprintf (buffer, "%s%.0f %.0f\n", first ? fbuffer: "", p->line[j].point[i].x, p->line[j].point[i].y);
+				} else if (dxf){
 					nchars = sprintf (buffer, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
 				} else {
 					nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
@@ -1010,7 +1029,7 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
 		//        if(point1->y == point2->y) {}
 		      }
 		  }
-	    mystrcat(img->img.imagemap, dxf ? "  0\nSEQEND\n" : "'></A>\n");
+	    mystrcat(img->img.imagemap, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "'></A>\n");
 //	DEBUG printf ("%d, ",strlen(img->img.imagemap) );
     return;
   }
@@ -1187,7 +1206,9 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
 //DEBUG printf ("3");
       
 //DEBUG printf("BEF%s", img->img.imagemap);
-  if (dxf){
+  if (dxf == 2){
+	nchars = sprintf (fbuffer, "POLY\n%d\n", matchdxfcolor(style->color));
+  } else if (dxf){
 	nchars = sprintf (fbuffer, "  0\nPOLYLINE\n 73\n     1\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
   } else {
 	nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
@@ -1198,7 +1219,9 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
 		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
 				int slen = 0;
-				if (dxf){
+				if (dxf == 2){
+					nchars = sprintf (buffer, "%s%.0f %.0f\n", first ? fbuffer:"", p->line[j].point[i].x, p->line[j].point[i].y);
+				} else if (dxf){
 					nchars = sprintf (buffer, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
 				} else {
 					nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
@@ -1220,7 +1243,7 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
 		//        if(point1->y == point2->y) {}
 		      }
 		  }
-	    mystrcat(img->img.imagemap, dxf ? "  0\nSEQEND\n" : "'></A>\n");
+	    mystrcat(img->img.imagemap, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "'></A>\n");
   
 //DEBUG printf("AFT%s", img->img.imagemap);
 // STOOPID. GD draws polygons pixel by pixel ?!
@@ -1437,7 +1460,11 @@ int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label
   x = MS_NINT(labelPnt.x);
   y = MS_NINT(labelPnt.y);
 
-	nchars = sprintf (buffer, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
+	if (dxf == 2) {
+		nchars = sprintf (buffer, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
+	} else {
+		nchars = sprintf (buffer, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
+	}
 //DEBUG printf("%s<BR>", buffer);
 //DEBUG printf ("%d, ",strlen(img->img.imagemap) );
 //DEBUG printf("nchars %d<BR>\n", nchars);
@@ -1854,14 +1881,18 @@ if(filename != NULL && strlen(filename) > 0) {
 DEBUG printf("ALLOCD %d<BR>\n", img->size);
 //DEBUG printf("F %s<BR>\n", img->img.imagemap);
 DEBUG printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
-	  if (dxf){
+	  if (dxf == 2){
+	    fprintf(stream, "%s", layerlist); 
+	  } else if (dxf){
 	    fprintf(stream, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\n  1\nAC1009\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n  0\nTABLE\n%s0\nENDTAB\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n", layerlist); 
 	  } else {
 	    fprintf(stream, "<MAP name='map1' width=%d height=%d>", img->width, img->height);
     	  }
 	  fprintf(stream, img->img.imagemap);
 	  if( strcasecmp("OFF",msGetOutputFormatOption( format, "SKIPENDTAG", "OFF" )) == 0){
-		  if (dxf)
+		  if (dxf == 2)
+			  fprintf(stream, "END");
+		  else if (dxf)
 			  fprintf(stream, "0\nENDSEC\n0\nEOF\n");
 		  else 
 			  fprintf(stream, "</MAP>");
