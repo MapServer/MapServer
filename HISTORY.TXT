@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- mapprimitive.c: Optimizations in msTransformShapeToPixel() (avoid division)
+
+- map.h: Made MS_NINT inline assembly for win32, linux/i86.  
+
 - mapprimitive.c: optimized msClipPolygonRect and msClipPolylineRect for
   case where the shape is completely inside the clip rect.
 

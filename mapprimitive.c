@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/03/24 22:27:20  frank
+ * optimized msTransformShapeToPixel - avoid division
+ *
  * Revision 1.47  2005/03/24 17:50:04  frank
  * optimized msClipPoly{gon/line}Rect for all-inside case
  *
@@ -615,7 +618,7 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
 void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
 {
   int i,j,k; /* loop counters */
-
+  double inv_cs = 1.0 / cellsize; /* invert and multiply much faster */
 
   if(shape->numlines == 0) return; /* nothing to transform */
 
@@ -623,13 +626,13 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
   
     for(i=0; i<shape->numlines; i++) { /* for each part */
       
-      shape->line[i].point[0].x = MS_MAP2IMAGE_X(shape->line[i].point[0].x, extent.minx, cellsize);
-      shape->line[i].point[0].y = MS_MAP2IMAGE_Y(shape->line[i].point[0].y, extent.maxy, cellsize);
+      shape->line[i].point[0].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[0].x, extent.minx, inv_cs);
+      shape->line[i].point[0].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[0].y, extent.maxy, inv_cs);
       
       for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
 	
-	shape->line[i].point[k].x = MS_MAP2IMAGE_X(shape->line[i].point[j].x, extent.minx, cellsize);
-	shape->line[i].point[k].y = MS_MAP2IMAGE_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
+	shape->line[i].point[k].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+	shape->line[i].point[k].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
 
 	if(k == 1) {
 	  if((shape->line[i].point[0].x != shape->line[i].point[1].x) || (shape->line[i].point[0].y != shape->line[i].point[1].y))
@@ -650,8 +653,8 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
   } else { /* points or untyped shapes */
     for(i=0; i<shape->numlines; i++) { /* for each part */
       for(j=1; j < shape->line[i].numpoints; j++ ) {
-	shape->line[i].point[j].x = MS_MAP2IMAGE_X(shape->line[i].point[j].x, extent.minx, cellsize);
-	shape->line[i].point[j].y = MS_MAP2IMAGE_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
+	shape->line[i].point[j].x = MS_MAP2IMAGE_X_IC(shape->line[i].point[j].x, extent.minx, inv_cs);
+	shape->line[i].point[j].y = MS_MAP2IMAGE_Y_IC(shape->line[i].point[j].y, extent.maxy, inv_cs);
 	  }
 	}
   }
