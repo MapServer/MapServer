@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.9  2000/09/22 13:56:10  dan
+ * Added msInitShape() in rectObj_draw()
+ *
  * Revision 1.8  2000/09/13 21:04:34  dan
  * Use msInitShape() in shapeObj constructor
  *
@@ -559,6 +562,7 @@ int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
                  gdImagePtr img, char *class_string, char *label_string) {
     shapeObj shape;
 
+    msInitShape(&shape);
     msRect2Polygon(*self, &shape);
     msDrawShape(map, layer, &shape, img, class_string, label_string);
     msFreeShape(&shape);
