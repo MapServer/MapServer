@@ -42,13 +42,13 @@ import re
 import string
 
 # Filter the wrapper code using re.sub()
-fh = open('mapscript_wrap.c', 'rb')
-wrapper = fh.read()
-fh.close()
-wrapper_wnone = re.sub(r'"Os:(\w+)_set"', r'"Oz:\1_set"', wrapper)
-fh = open('mapscript_wrap_wnone.c', 'wb')
-fh.write(wrapper_wnone)
-fh.close()
+#fh = open('mapscript_wrap.c', 'rb')
+#wrapper = fh.read()
+#fh.close()
+#wrapper_wnone = re.sub(r'"Os:(\w+)_set"', r'"Oz:\1_set"', wrapper)
+#fh = open('mapscript_wrap_wnone.c', 'wb')
+#fh.write(wrapper_wnone)
+#fh.close()
 
 # Function needed to make unique lists.
 def unique(list):
@@ -95,7 +95,7 @@ setup(name = "mapscript",
       description = "Enables Python to manipulate shapefiles.",
       author = "Mapserver project - SWIGged MapScript library.",
       url = "http://mapserver.gis.umn.edu",
-      ext_modules = [Extension("_mapscript", ["mapscript_wrap_wnone.c"],
+      ext_modules = [Extension("_mapscript", ["mapscript_wrap.c", "pygdioctx/pygdioctx.c"],
                                include_dirs = [sysconfig.get_python_inc()],
                                library_dirs = lib_dirs,
                                libraries = libs,
