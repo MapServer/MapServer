@@ -131,58 +131,108 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 
 int msValidateTimeValue(char *timestring, const char *timeextent)
 {
-    //char **atimeextent =  NULL;
-    //int numtimeextent = 0;
-    //struct tm *tm;
+    char **atimeextent, **atimes, **tokens =  NULL;
+    int numtimeextent, i, numtimes, ntmp = 0;
+    struct tm tm, tmstart, tmend;
 
-    return MS_TRUE;
 
-    //TODO : do we need to validate the time passsed in the request
-    //against th time exten defines ? There is no mention of this in the
-    //wms specs
-    /*
+    //we need to validate the time passsed in the request
+    //against the time extent defined
+    
 
     if (!timestring || !timeextent)
       return MS_FALSE;
     
     //parse time extent. Only supports one range (2004-09-21/2004-09-25)
-    atimeextent = split (timestring, '/', &numtimeextent);
-    if (atimeextent == NULL || numtimes != 2)
+    atimeextent = split (timeextent, '/', &numtimeextent);
+    if (atimeextent == NULL || numtimeextent != 2)
     {
         msFreeCharArray(atimeextent, numtimeextent);
         return MS_FALSE;
     }
     //build time structure for the extents
-    msInitTime(&tmstart);
-    msInitTime(&tmend);
+    msTimeInit(&tmstart);
+    msTimeInit(&tmend);
     if (msParseTime(atimeextent[0], &tmstart) != MS_TRUE ||
-        msParseTime(atimeextent[1], &tmend) == MS_TRUE)
+        msParseTime(atimeextent[1], &tmend) != MS_TRUE)
     {
          msFreeCharArray(atimeextent, numtimeextent);
          return MS_FALSE;
     }
 
-    //parse the time string. We support dicrete times (eg 2004-09-21), 
+     msFreeCharArray(atimeextent, numtimeextent);
+    //parse the time string. We support descrete times (eg 2004-09-21), 
     //multiple times (2004-09-21, 2004-09-22, ...)
     //and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29)
     if (strstr(timestring, ",") == NULL && 
         strstr(timestring, "/") == NULL) //discrete time
     {
-        msFreeCharArray(atimeextent, numtimeextent);
-        msInitTime(&tm);
+        msTimeInit(&tm);
         if (msParseTime(timestring, &tm) == MS_TRUE)
         {
-            if (msTimeCompare(&tmstart, &tm) < 0 &&
-                msTimeCompare(&tmend, &tm) > 0)
-              return MS_TRUE;
+            if (msTimeCompare(&tmstart, &tm) <= 0 &&
+                msTimeCompare(&tmend, &tm) >= 0)
+                return MS_TRUE;
         }
     }
     else 
     {
         atimes = split (timestring, ',', &numtimes);
+        if (numtimes >=1)
+        {
+            tokens = split(atimes[0],  '/', &ntmp); 
+            if (ntmp == 2)//ranges
+            {
+                 for (i=0; i<numtimes; i++)
+                 {
+                     msFreeCharArray(tokens, ntmp);
+
+                     tokens = split(atimes[i],  '/', &ntmp);
+                     if (!tokens || ntmp != 2)
+                     {
+                        msFreeCharArray(tokens, ntmp);
+                        return MS_FALSE;
+                     }
+                     msTimeInit(&tm); 
+                     if (msParseTime(tokens[0], &tm) != MS_TRUE ||
+                         msTimeCompare(&tmstart, &tm) > 0 ||
+                         msTimeCompare(&tmend, &tm) < 0)
+                     {
+                         msFreeCharArray(tokens, ntmp);
+                         return MS_FALSE;
+                     }
+                     if (msParseTime(tokens[1], &tm) != MS_TRUE ||
+                         msTimeCompare(&tmstart, &tm) > 0 ||
+                         msTimeCompare(&tmend, &tm) < 0)
+                     {
+                         msFreeCharArray(tokens, ntmp);
+                         return MS_FALSE;
+                     }
+                 }
+                 msFreeCharArray(atimes, numtimes);
+                 return MS_TRUE;
+            }
+            else if (ntmp == 1) //multiple times
+            {
+                msFreeCharArray(tokens, ntmp);
+                for (i=0; i<numtimes; i++)
+                {
+                    msTimeInit(&tm);
+                    if (msParseTime(atimes[i], &tm) != MS_TRUE ||
+                        msTimeCompare(&tmstart, &tm) > 0 ||
+                        msTimeCompare(&tmend, &tm) < 0)
+                    {
+                         msFreeCharArray(atimes, numtimes);
+                        return MS_FALSE;
+                    }
+                }
+                return MS_TRUE;
+            }
+        }
+            
     }
     return MS_FALSE;
-    */
+    
 }
 
 void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
@@ -253,14 +303,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
 
     if (map)
     {
-        //check to see if there is a list of possible patterns defined
-        //if it is the case, use it to set the time pattern to use
-        //for the request
         
-        timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",     
-                                         "timeformat");
-        if (timpattern && time && strlen(time) > 0)
-          msWMSSetTimePattern(timpattern, time);
 
         for (i=0; i<map->numlayers; i++)
         {
@@ -297,19 +340,28 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                     if (msValidateTimeValue(time, timeextent) == MS_FALSE)
                     {
                         msSetError(MS_WMSERR, "Time value(s) %s given is outside the time extent defined (%s).", "msWMSApplyTime", time, timeextent);
-                        return MS_FALSE;
-                        //return msWMSException(map, version, 
-                        //                    "InvalidTimeValue");
+                        //return MS_FALSE;
+                        return msWMSException(map, version, 
+                                              "InvalidDimensionValue");
                     }
                     //build the time string
                     msLayerSetTimeFilter(lp, time, timefield);
+                    msSaveMap(map, "c:/msapps/time_test/htdocs/save_filter.map");
                     timeextent= NULL;
                 }
             }
         }
+        //check to see if there is a list of possible patterns defined
+        //if it is the case, use it to set the time pattern to use
+        //for the request
+        
+        timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",     
+                                         "timeformat");
+        if (timpattern && time && strlen(time) > 0)
+          msWMSSetTimePattern(timpattern, time);
     }
 
-    return MS_TRUE;
+    return MS_SUCCESS;
 }
 
 
@@ -531,9 +583,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
     //see function msWMSApplyTime
     else if (strcasecmp(names[i], "TIME") == 0)// &&  values[i])
     {
-        if (msWMSApplyTime(map, nVersion, values[i]) == MS_FALSE)
+        if (msWMSApplyTime(map, nVersion, values[i]) == MS_FAILURE)
         {
-             return msWMSException(map, nVersion, "InvalidTimeRequest");
+            return MS_FAILURE;// msWMSException(map, nVersion, "InvalidTimeRequest");
         }
     }
   }
