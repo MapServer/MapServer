@@ -394,8 +394,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
   
   char *processQueryTemplate(char **names, char **values, int numentries) {
-    return msProcessQueryTemplate(self, names, values, numentries);
+    return msProcessQueryTemplate(self, 1, names, values, numentries);
   }
+
 }
 
 %extend symbolSetObj {
