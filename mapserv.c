@@ -827,16 +827,15 @@ void loadForm() /* set variables as input from the user form */
 /*
 ** is a particular layer on
 */
-int isOn(char *string)
+int isOn(char *name, char *group)
 {
   int i;
 
-  if(string) {
-    for(i=0;i<NumLayers;i++) {
-      if(strcmp(Layers[i], string) == 0) /* The user has this layer on */ 
-	return(MS_TRUE);
-    }
+  for(i=0;i<NumLayers;i++) {
+    if(name && strcmp(Layers[i], name) == 0)  return(MS_TRUE);
+    if(group && strcmp(Layers[i], group) == 0) return(MS_TRUE);
   }
+
   return(MS_FALSE);
 }
 
@@ -1119,7 +1118,7 @@ void returnHTML(char *html)
       outstr = gsub(outstr, "[layers]", substr);
       
       for(i=0;i<Map->numlayers;i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */ 
-        if(isOn(Map->layers[i].name) == MS_TRUE) {
+        if(isOn(Map->layers[i].name, Map->layers[i].group) == MS_TRUE) {
 	  sprintf(substr, "[%s_select]", Map->layers[i].name);
 	  outstr = gsub(outstr, substr, "selected");
 	  sprintf(substr, "[%s_check]", Map->layers[i].name);
@@ -1672,7 +1671,7 @@ int main(int argc, char *argv[]) {
     */
     for(i=0;i<Map->numlayers;i++) {
       if((Map->layers[i].status != MS_DEFAULT) && (Map->layers[i].status != MS_QUERY)) {
-	if((isOn(Map->layers[i].name) == MS_TRUE) || (isOn(Map->layers[i].group) == MS_TRUE)) /* Set layer status */
+	if(isOn(Map->layers[i].name, Map->layers[i].group) == MS_TRUE) /* Set layer status */
 	  Map->layers[i].status = MS_ON;
 	else
 	  Map->layers[i].status = MS_OFF;

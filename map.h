@@ -615,17 +615,15 @@ int strcasecmp(char *s1, char *s2);
 #endif
 
 int msLoadSymbolFile(symbolSetObj *symbolset); /* in mapsymbol.c */
-void msDrawShadeSymbol(mapObj *map, gdImagePtr img, shapeObj *p, classObj *class);
-void msGetMarkerSize(mapObj *map, classObj *class, int *width, int *height);
-void msDrawMarkerSymbol(mapObj *map, gdImagePtr img, pointObj *p, classObj *class);
-void msDrawLineSymbol(mapObj *map, gdImagePtr img, shapeObj *p, classObj *class);
+void msDrawShadeSymbol(symbolSetObj *shadeset, fontSetObj *fontset, gdImagePtr img, shapeObj *p, classObj *class);
+void msGetMarkerSize(symbolSetObj *markerset, fontSetObj *fontset, classObj *class, int *width, int *height);
+void msDrawMarkerSymbol(symbolSetObj *markerset, fontSetObj *fontset, gdImagePtr img, pointObj *p, classObj *class);
+void msDrawLineSymbol(symbolSetObj *lineset, fontSetObj *fontset, gdImagePtr img, shapeObj *p, classObj *class);
 
 gdImagePtr msDrawLegend(mapObj *map); /* in maplegend.c */
 int msEmbedLegend(mapObj *map, gdImagePtr img);
 
-#ifdef USE_TTF
 int msLoadFontSet(fontSetObj *fontSet);
-#endif
 int msDrawLabel(gdImagePtr img, mapObj *map, pointObj labelPnt, char *string, labelObj *label);
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
 int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj point, char *string, double featuresize);

@@ -21,10 +21,11 @@ int main(int argc, char *argv[])
   int gray, green, red, black, white;
   classObj class;
   symbolSetObj symbolSet;
+  fontSetObj fontSet={NULL, NULL, 0};
 
    /* ---- check the number of arguments, return syntax if not correct ---- */
-  if( argc < 2 ) {
-      fprintf(stdout, "Syntax: sym2img [symbolfile] [outfile]\n" );
+  if( argc < 3 ) {
+      fprintf(stdout, "Syntax: sym2img [symbolset] [fontset|none] [outfile]\n" );
       exit(0);
   }
 
@@ -34,8 +35,9 @@ int main(int argc, char *argv[])
   p.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
   p.line[0].numpoints = 4;
 
-  /* Initialize the symbol set */
+  /* Initialize the symbol and font sets */
   symbolSet.filename = strdup(argv[1]);
+  fontSet.filename = strdup(argv[2]);
 
   /* 
   ** load the symbol file
@@ -43,6 +45,13 @@ int main(int argc, char *argv[])
   if(msLoadSymbolFile(&symbolSet) == -1) { 
     msWriteError(stderr);
     exit(0);
+  }
+  
+  if(strcasecmp(fontSet.filename, "none") != 0) {
+    if(msLoadFontSet(&fontSet) == -1) { 
+      msWriteError(stderr);
+      exit(0);
+    }
   }
 
   ns = symbolSet.numsymbols;
@@ -84,7 +93,7 @@ int main(int argc, char *argv[])
 	p.line[0].point[0].x = MS_NINT(j + CELLSIZE/2);
 	p.line[0].point[0].y = MS_NINT(i + CELLSIZE/2);
 	p.line[0].numpoints = 1;
-	msDrawMarkerSymbol(&(symbolSet), img, &(p.line[0].point[0]), &(class));
+	msDrawMarkerSymbol(&(symbolSet), &(fontSet), img, &(p.line[0].point[0]), &(class));
 	break;
 
       case(MS_LINESET):
@@ -99,7 +108,7 @@ int main(int argc, char *argv[])
 	p.line[0].point[3].x = j + (CELLSIZE-LBUF) - 1;
         p.line[0].point[3].y = i;
 	p.line[0].numpoints = 4;
-        msDrawLineSymbol(&(symbolSet),img, &p, &(class));
+        msDrawLineSymbol(&(symbolSet), &(fontSet), img, &p, &(class));
 	break;
 
       case(MS_SHADESET):
@@ -114,7 +123,7 @@ int main(int argc, char *argv[])
 	p.line[0].point[3].x = j;
 	p.line[0].point[3].y = i + CELLSIZE-1;
 	p.line[0].numpoints = 4;
-	msDrawShadeSymbol(&(symbolSet),img, &p, &(class));
+	msDrawShadeSymbol(&(symbolSet), &(fontSet), img, &p, &(class));
 	break;
 
       default:
@@ -131,7 +140,7 @@ int main(int argc, char *argv[])
     }
   }
 
- if((stream = fopen(argv[2],"wb")) == NULL) { /* open the file */
+ if((stream = fopen(argv[3],"wb")) == NULL) { /* open the file */
     fprintf(stderr, "Unable to open output file: %s\n", argv[2]);
     exit(0);
   }
