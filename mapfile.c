@@ -689,7 +689,7 @@ void initLabel(labelObj *label)
   label->autominfeaturesize = MS_FALSE;
   label->mindistance = -1; /* no limit */
   label->partials = MS_TRUE;
-  label->wrap = '\n';
+  label->wrap = '\0';
 
   label->force = MS_FALSE;
   return;
@@ -821,7 +821,7 @@ static int loadLabel(labelObj *label, mapObj *map)
     case(TYPE):
       if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return(-1);
       break;    
-    case(WRAP):
+    case(WRAP):      
       if(getCharacter(&(label->wrap)) == -1) return(-1);
       break;
     default:
@@ -964,8 +964,9 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     msyystate = 2; msyystring = value;
     if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return;
     break;    
-  case(WRAP):
-    if(value) label->wrap = value[0];
+  case(WRAP):    
+    label->wrap = value[0];
+    break;
   default:
     break;
   }
@@ -1014,7 +1015,7 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->shadowcolor-1].red, map->palette.colors[label->shadowcolor-1].green, map->palette.colors[label->shadowcolor-1].blue);
     fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
   }
-  if(label->wrap != '\n') fprintf(stream, "  %sWRAP %c\n", tab, label->wrap);
+  if(label->wrap) fprintf(stream, "  %sWRAP %c\n", tab, label->wrap);
   fprintf(stream, "%sEND\n", tab);  
 }
 
@@ -1478,7 +1479,7 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
     fprintf(stream, "\n");
   }
   for(i=0; i<class->numjoins; i++)
-    writeJoin(&(class->joins[i]), stream);  
+    writeJoin(&(class->joins[i]), stream);
   writeLabel(map, &(class->label), stream, "      ");
   if(class->maxsize > -1) fprintf(stream, "      MAXSIZE %d\n", class->maxsize);
   if(class->metadata) writeHashTable(class->metadata, stream, "      ", "METADATA");

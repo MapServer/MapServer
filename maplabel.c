@@ -13,9 +13,10 @@
 
 #define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
-int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj point, char *string, double featuresize)
+int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize)
 {
   int i;
+  char wrap[2];
 
   if(!string) return(0); /* not an error */
 
@@ -29,18 +30,26 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
   }
 
   i = map->labelcache.numlabels;  
-  map->labelcache.labels[i].layeridx = layer;
-  map->labelcache.labels[i].classidx = class;
-  map->labelcache.labels[i].tileidx = tile;
-  map->labelcache.labels[i].shapeidx = shape;
+  map->labelcache.labels[i].layeridx = layeridx;
+  map->labelcache.labels[i].classidx = classidx;
+  map->labelcache.labels[i].tileidx = tileidx;
+  map->labelcache.labels[i].shapeidx = shapeidx;
 
   map->labelcache.labels[i].point = point;
   map->labelcache.labels[i].point.x = MS_NINT(map->labelcache.labels[i].point.x);
   map->labelcache.labels[i].point.y = MS_NINT(map->labelcache.labels[i].point.y);
   
   map->labelcache.labels[i].string = strdup(string);
-  map->labelcache.labels[i].size = map->layers[layer].class[class].label.sizescaled;
-  map->labelcache.labels[i].angle = map->layers[layer].class[class].label.angle;
+
+  // GD/Freetype recognizes \r\n as a true line wrap so we must turn the wrap character into that pattern
+  if(map->layers[layeridx].class[classidx].label.type != MS_BITMAP && map->layers[layeridx].class[classidx].label.wrap != '\0') {
+    wrap[0] = map->layers[layeridx].class[classidx].label.wrap;
+    wrap[1] = '\0';
+    map->labelcache.labels[i].string = gsub(map->labelcache.labels[i].string, wrap, "\r\n");
+  }
+
+  map->labelcache.labels[i].size = map->layers[layeridx].class[classidx].label.sizescaled;
+  map->labelcache.labels[i].angle = map->layers[layeridx].class[classidx].label.angle;
   map->labelcache.labels[i].featuresize = featuresize;
 
   map->labelcache.labels[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
@@ -48,7 +57,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
 
   map->labelcache.labels[i].status = MS_FALSE;
 
-  if(map->layers[layer].type == MS_LAYER_POINT) { 
+  if(map->layers[layeridx].type == MS_LAYER_POINT) { 
     rectObj rect;
     int w, h;
 
@@ -66,7 +75,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
     map->labelcache.markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
     msInitShape(map->labelcache.markers[i].poly);
    
-    msGetMarkerSize(&map->symbolset, &(map->layers[layer].class[class]), &w, &h);
+    msGetMarkerSize(&map->symbolset, &(map->layers[layeridx].class[classidx]), &w, &h);
     rect.minx = MS_NINT(point.x - .5 * w);
     rect.miny = MS_NINT(point.y - .5 * h);
     rect.maxx = rect.minx + (w-1);
@@ -188,18 +197,25 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     if((fontPtr = msGetBitmapFont(label->size)) == NULL)
       return(-1);
 
-    if((token = split(string, label->wrap, &(num_tokens))) == NULL)
-      return(0);
+    if(label->wrap != '\0') {
+      if((token = split(string, label->wrap, &(num_tokens))) == NULL)
+	return(0);
 
-    for(t=0; t<num_tokens; t++) /* what's the longest token */
-      max_token_length = MS_MAX(max_token_length, strlen(token[t]));
+      for(t=0; t<num_tokens; t++) /* what's the longest token */
+	max_token_length = MS_MAX(max_token_length, strlen(token[t]));
+      
+      rect->minx = 0;
+      rect->miny = -(fontPtr->h * num_tokens);
+      rect->maxx = fontPtr->w * max_token_length;
+      rect->maxy = 0;
 
-    rect->minx = 0;
-    rect->miny = -(fontPtr->h * num_tokens);
-    rect->maxx = fontPtr->w * max_token_length;
-    rect->maxy = 0;
-
-    msFreeCharArray(token, num_tokens);
+      msFreeCharArray(token, num_tokens);
+    } else {
+      rect->minx = 0;
+      rect->miny = -fontPtr->h;
+      rect->maxx = fontPtr->w * strlen(string);
+      rect->maxy = 0;
+    }
   }
   return(0);
 }
@@ -415,27 +431,45 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     if((fontPtr = msGetBitmapFont(label->size)) == NULL)
       return(-1);
 
-    if((token = split(string, label->wrap, &(num_tokens))) == NULL)
-      return(-1);
-    
-    y -= fontPtr->h*num_tokens;
-    for(t=0; t<num_tokens; t++) { /* what's the longest token */
+    if(label->wrap != '\0') {
+      fprintf(stderr, "wrap char is '%c'.\n", label->wrap);
+
+      if((token = split(string, label->wrap, &(num_tokens))) == NULL)
+	return(-1);
+      
+      y -= fontPtr->h*num_tokens;
+      for(t=0; t<num_tokens; t++) {
+	if(label->outlinecolor >= 0) {
+	  gdImageString(img, fontPtr, x-1, y-1, token[t], label->outlinecolor);
+	  gdImageString(img, fontPtr, x-1, y+1, token[t], label->outlinecolor);
+	  gdImageString(img, fontPtr, x+1, y+1, token[t], label->outlinecolor);
+	  gdImageString(img, fontPtr, x+1, y-1, token[t], label->outlinecolor);
+	}
+	
+	if(label->shadowcolor >= 0)
+	  gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, token[t], label->shadowcolor);
+	
+	gdImageString(img, fontPtr, x, y, token[t], label->color);
+
+	y += fontPtr->h; /* shift down */
+      }
+      
+      msFreeCharArray(token, num_tokens);  
+    } else {
+      y -= fontPtr->h;
+
       if(label->outlinecolor >= 0) {
-	gdImageString(img, fontPtr, x-1, y-1, token[t], label->outlinecolor);
-	gdImageString(img, fontPtr, x-1, y+1, token[t], label->outlinecolor);
-	gdImageString(img, fontPtr, x+1, y+1, token[t], label->outlinecolor);
-	gdImageString(img, fontPtr, x+1, y-1, token[t], label->outlinecolor);
+	gdImageString(img, fontPtr, x-1, y-1, string, label->outlinecolor);
+	gdImageString(img, fontPtr, x-1, y+1, string, label->outlinecolor);
+	gdImageString(img, fontPtr, x+1, y+1, string, label->outlinecolor);
+	gdImageString(img, fontPtr, x+1, y-1, string, label->outlinecolor);
       }
 
-      if(label->shadowcolor >= 0) { /* handle the shadow color */
-	gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, token[t], label->shadowcolor);
-      }
-
-      gdImageString(img, fontPtr, x, y, token[t], label->color);
-      y += fontPtr->h; /* shift down */
+      if(label->shadowcolor >= 0)
+	gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, string, label->shadowcolor);
+	
+      gdImageString(img, fontPtr, x, y, string, label->color);
     }
-    
-    msFreeCharArray(token, num_tokens);  
   }
 
   return(0);

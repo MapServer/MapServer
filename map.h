@@ -732,7 +732,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img);
 int msLoadFontSet(fontSetObj *fontSet); // in maplabel.c
 int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset);
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
-int msAddLabel(mapObj *map, int layer, int nclass, int tile, int shape, pointObj point, char *string, double featuresize);
+int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize);
 int msDrawLabelCache(gdImagePtr img, mapObj *map);
 gdFontPtr msGetBitmapFont(int size);
 int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
