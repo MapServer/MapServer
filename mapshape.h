@@ -114,7 +114,7 @@ typedef struct {
 
 #ifndef SWIG
 // shapefileObj functions
-int msOpenSHPFile(shapefileObj *shpfile, char *path, char *tile, char *filename);
+int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, char *filename);
 int msCreateSHPFile(shapefileObj *shpfile, char *filename, int type);
 void msCloseSHPFile(shapefileObj *shpfile);
 

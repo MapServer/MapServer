@@ -1145,7 +1145,7 @@ int SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   return(0);
 }
 
-int msOpenSHPFile(shapefileObj *shpfile, char *path, char *tile, char *filename)
+int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, char *filename)
 {
   int i;
   char *dbfFilename;
@@ -1156,8 +1156,11 @@ int msOpenSHPFile(shapefileObj *shpfile, char *path, char *tile, char *filename)
   if(path) chdir(path);
   if(tile) chdir(tile);
 
-  /* ---- open the shapefile file and get basic info ---- */
-  shpfile->hSHP = SHPOpen(filename, "rb" );
+  /* open the shapefile file (appending ok) and get basic info */
+  if(!mode) 	
+    shpfile->hSHP = SHPOpen(filename, "rb");
+  else
+    shpfile->hSHP = SHPOpen(filename, mode);
 
   if(!shpfile->hSHP) {
     msSetError(MS_IOERR, NULL, "msOpenSHPFile()");

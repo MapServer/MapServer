@@ -1148,7 +1148,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
    
   if(layer->tileindex) { /* we have in index file */
 
-    if(msOpenSHPFile(&tilefile, map->shapepath, map->tile, layer->tileindex) == -1) return(-1);
+    if(msOpenSHPFile(&tilefile, "rb", map->shapepath, map->tile, layer->tileindex) == -1) return(-1);
     if((tileItemIndex = msGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
     
 #ifdef USE_PROJ 
@@ -1178,10 +1178,10 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     if(strlen(filename) == 0) continue;
 
 #ifndef IGNORE_MISSING_DATA
-    if(msOpenSHPFile(&shpfile, map->shapepath, map->tile, filename) == -1) 
+    if(msOpenSHPFile(&shpfile, "rb", map->shapepath, map->tile, filename) == -1) 
       return(-1);
 #else
-    if(msOpenSHPFile(&shpfile, map->shapepath, map->tile, filename) == -1) 
+    if(msOpenSHPFile(&shpfile, "rb", map->shapepath, map->tile, filename) == -1) 
       continue; // skip it, next tile
 #endif
 

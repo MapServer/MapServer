@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   else
   { byte_order = MS_NATIVE_ORDER; }
     
-  if(msOpenSHPFile(&shapefile, NULL, NULL, argv[1]) == -1) {
+  if(msOpenSHPFile(&shapefile, "rb", NULL, NULL, argv[1]) == -1) {
     fprintf(stdout, "Error opening shapefile %s.\n", argv[1]);
     exit(0);
   }

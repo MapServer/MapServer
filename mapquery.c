@@ -407,7 +407,7 @@ queryResultObj *msQueryUsingItem(mapObj *map, char *layer, int mode, char *item,
     if((map->layers[l].status == MS_OFF) || (map->layers[l].numqueries == 0) || (map->layers[l].tileindex != NULL))
       continue;
 
-    if(msOpenSHPFile(&shpfile, map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
+    if(msOpenSHPFile(&shpfile, "rb", map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
 
     if(initLayerResult(&results->layers[l], shpfile.numshapes) == -1) {
       msCloseSHPFile(&shpfile);
@@ -527,7 +527,7 @@ queryResultObj *msQueryUsingRect(mapObj *map, char *layer, rectObj *rect) {
 	continue;
     }
 
-    if(msOpenSHPFile(&shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
+    if(msOpenSHPFile(&shpfile, "rb",  map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
        
 #ifdef USE_PROJ
     status = msWhichShapesProj(&shpfile, *rect, &(map->layers[l].projection), &(map->projection));
@@ -691,7 +691,7 @@ queryResultObj *msQueryUsingPoint(mapObj *map, char *layer, int mode, pointObj p
 	continue;
     }
 
-    if(msOpenSHPFile(&shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
+    if(msOpenSHPFile(&shpfile, "rb", map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
   
     if(buffer <= 0) { /* use layer tolerance */ 
       if(map->layers[l].toleranceunits == MS_PIXELS)
@@ -827,7 +827,7 @@ int msQueryUsingFeatures(mapObj *map, char *layer, queryResultObj *results)
   */
   for(l=0;l<map->numlayers;l++) {
     if(results->layers[l].numresults > 0) {
-      if(msOpenSHPFile(&search_shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) 
+      if(msOpenSHPFile(&search_shpfile, "rb", map->shapepath, map->tile, map->layers[l].data) == -1) 
 	return(-1);
       search_layer = l; /* save the index value */      
       break;
@@ -846,7 +846,7 @@ int msQueryUsingFeatures(mapObj *map, char *layer, queryResultObj *results)
 	continue;
     }
 
-    if(msOpenSHPFile(&shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) return(-1);
+    if(msOpenSHPFile(&shpfile, "rb", map->shapepath, map->tile, map->layers[l].data) == -1) return(-1);
 
     if(initLayerResult(&results->layers[l], shpfile.numshapes) == -1) {
       msCloseSHPFile(&shpfile);
@@ -1054,7 +1054,7 @@ queryResultObj *msQueryUsingShape(mapObj *map, char *layer, shapeObj *search_sha
 	continue;
     }
 
-    if(msOpenSHPFile(&shpfile,  map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
+    if(msOpenSHPFile(&shpfile, "rb", map->shapepath, map->tile, map->layers[l].data) == -1) return(NULL);
 
     if(initLayerResult(&results->layers[l], shpfile.numshapes) == -1) {
       msCloseSHPFile(&shpfile);

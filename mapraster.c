@@ -1273,7 +1273,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   if(layer->tileindex) { /* we have in index file */
 
-    if(msOpenSHPFile(&tilefile, map->shapepath, map->tile, layer->tileindex) == -1) return(-1);
+    if(msOpenSHPFile(&tilefile, "rb", map->shapepath, map->tile, layer->tileindex) == -1) return(-1);
     
     if((tileItemIndex = msGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
 

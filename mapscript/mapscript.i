@@ -569,7 +569,9 @@
       return NULL;
 
     if(type == -1)
-      status = msOpenSHPFile(shapefile, NULL, NULL, filename);
+      status = msOpenSHPFile(shapefile, "rb", NULL, NULL, filename);
+    else if(type == -2)
+      status = msOpenSHPFile(shapefile, "rb+", NULL, NULL, filename);
     else
       status = msCreateSHPFile(shapefile, filename, type);
 

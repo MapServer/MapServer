@@ -916,7 +916,7 @@ void setExtentFromShapes() {
     if(QueryResults->layers[i].numresults <= 0) /* next query */
       continue;
 
-    if(msOpenSHPFile(&shp, Map->shapepath, Map->tile, Map->layers[i].data) == -1)
+    if(msOpenSHPFile(&shp, "rb", Map->shapepath, Map->tile, Map->layers[i].data) == -1)
       writeError();
 
     for(j=0; j<shp.numshapes; j++) {
@@ -1510,7 +1510,7 @@ void returnQuery()
 
     if(TEMPLATE_TYPE(Query->template) == MS_URL) { 
 
-      if(msOpenSHPFile(&shp, Map->shapepath, Map->tile, Map->layers[i].data) == -1) writeError();
+      if(msOpenSHPFile(&shp, "rb", Map->shapepath, Map->tile, Map->layers[i].data) == -1) writeError();
 
 #ifdef USE_PROJ
       SHPReadShapeProj(shp.hSHP, j, &shape, &(Map->layers[i].projection), &(Map->projection));
@@ -1577,7 +1577,7 @@ void returnQuery()
       Mode = BROWSE; returnHTML(Map->layers[i].header); Mode = QUERY;
     }
     
-    if(msOpenSHPFile(&shp, Map->shapepath, Map->tile, Map->layers[i].data) == -1) 
+    if(msOpenSHPFile(&shp, "rb", Map->shapepath, Map->tile, Map->layers[i].data) == -1) 
       writeError();
 
     for(j=0; j<shp.numshapes; j++) {      
