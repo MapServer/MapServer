@@ -1306,4 +1306,105 @@ int msEmbedScalebarPDF(mapObj *map, imageObj *image)
     /*TODO*/
     return(0);
 }
+
+/************************************************************************/
+/*                          int msDrawWMSLayerPDF                       */
+/*                                                                      */
+/*      Use low level gd functions to draw a wms layer in a gd          */
+/*      images                                                          */
+/************************************************************************/
+int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo, 
+                      int numRequests, mapObj *map, layerObj *layer, imageObj *image)
+{
+    PDF                 *pdf = NULL;
+    imageObj            *image_tmp = NULL;
+    int                 iReq = -1;
+    char                *driver = strdup("GD/GIF");
+    char                *jpeg = NULL;
+    int                 nLength = 0, nResult = 0;
+    char                ttt[200];
+
+#ifdef USE_GD_GIF
+    driver = strdup("GD/GIF");
+#else  
+
+#ifdef USE_GD_PNG
+     driver = strdup("GD/PNG");
+#else
+
+#ifdef USE_GD_JPEG
+     driver = strdup("GD/JPEG");
+#else
+
+#ifdef USE_GD_WBMP
+     driver = strdup("GD/WBMP");
+#endif 
+
+#endif
+#endif
+#endif
+
+
+    if (!image || !MS_DRIVER_PDF(image->format) || image->width <= 0 ||
+        image->height <= 0)
+      return -1;
+
+     pdf = image->img.pdf->pdf;
+
+/* ==================================================================== */
+/*      WMS requests are done simultaniously for all WMS layer.         */
+/* ==================================================================== */
+    for(iReq=0; iReq<numRequests; iReq++)
+    {
+        if (pasReqInfo[iReq].nLayerId == nLayerId)
+          break;
+    }
+    if (iReq == numRequests)
+      return MS_SUCCESS;     
+/* -------------------------------------------------------------------- */
+/*      create a temprary GD image and render in it.                    */
+/* -------------------------------------------------------------------- */
+    
+    image_tmp = msImageCreateGD(map->width, map->height,  
+                                msCreateDefaultOutputFormat(map, driver),
+                                map->web.imagepath, map->web.imageurl);
+
+    
+    msImageInitGD( image_tmp, &map->imagecolor );
+
+    if (msDrawWMSLayerLow(nLayerId, pasReqInfo, numRequests, map, layer, 
+                          image_tmp) != -1)
+    {
+        /*kludge: this should really be a raw image or png. jpeg is not good*/
+        /*but pdflib doesn't support in mem opening of png.*/
+        jpeg = gdImageJpegPtr(image_tmp->img.gd, &nLength, 95);
+        nResult = PDF_open_image(pdf, "jpeg", "memory",
+                                jpeg, (long)nLength,
+                                map->width, map->height,
+                                3, 8, NULL);
+      
+        /*
+        FILE *out = NULL;
+        sprintf(ttt,"%s%d", "c:/tmp/ms_tmp/ttt.png", nLayerId);
+        out = fopen(ttt, "wb");
+
+        gdImagePng(image_tmp->img.gd, out);
+        fclose(out);
+        PDF_open_image_file(pdf, "png", ttt, "", 0);
+        */
+
+        gdFree(jpeg);
+        PDF_save(pdf); /* save the original coordinate system */
+        PDF_scale(pdf, 1, -1); /* flip the coordinates, and therefore the image */
+        PDF_place_image(pdf,nResult, 0, -(map->height), 1.0);
+        PDF_restore(pdf); /* restore the original coordinate system */
+ 
+        PDF_close_image(pdf,nResult);
+        msFreeImage( image_tmp );
+    }
+
+    return MS_SUCCESS;
+
+}
+
 #endif

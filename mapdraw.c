@@ -178,12 +178,11 @@ imageObj *msDrawMap(mapObj *map)
                                               map, lp, image);
 #endif
 #ifdef USE_PDF
-/* PDF output doesn't support WMS layers yet
-                 else if( MS_RENDERER_PDF(image->format) )
-                 {
-                     status = MS_FAILURE;
-                 }
-*/
+                else if( MS_RENDERER_PDF(image->format) )
+                {
+                  status = msDrawWMSLayerPDF(i, asOWSReqInfo, numOWSRequests,
+                                             map, lp, image);
+                }
 #endif
                  else
                  {
@@ -486,7 +485,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
      (msLookupHashTable(layer->metadata, "SWFOUTPUT") &&
       strcasecmp(msLookupHashTable(layer->metadata, "SWFOUTPUT"),"RASTER")==0)||
      (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE",
-                                         "MULTIPLE"), 
+                                         ""), 
                  "MULTIPLE") != 0))
     return msDrawVectorLayerAsRasterSWF(map, layer, image);
 #endif
