@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2001/08/22 04:48:34  dan
+ * Create wld file for the WMS map slide so that it can be reprojected by GDAL
+ *
  * Revision 1.5  2001/08/21 23:12:26  dan
  * Test layer status at beginning of msDrawWMSLayer()
  *
@@ -473,18 +476,41 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     }
     else
     {
+        FILE *fp;
+        char *wldfile;
         // OK, we have to resample the raster to map projection...
         lp->transform = MS_TRUE;
 
         // Create a world file with raster extents
         // One line per value, in this order: cx, 0, 0, cy, ulx, uly
+        wldfile = strdup(lp->data);
+        if (wldfile)    
+            strcpy(wldfile+strlen(wldfile)-3, "wld");
+        if (wldfile && (fp = fopen(wldfile, "wt")) != NULL)
+        {
+            fprintf(fp, "%f\n", MS_CELLSIZE(bbox.minx,bbox.maxx, map->width));
+            fprintf(fp, "0\n");
+            fprintf(fp, "0\n");
+            fprintf(fp, "%f\n", MS_CELLSIZE(bbox.maxy,bbox.miny, map->height));
+            fprintf(fp, "%f\n", bbox.minx);
+            fprintf(fp, "%f\n", bbox.maxy);
+            fclose(fp);
 
+            // GDAL should be called to reproject automatically.
+            if (msDrawRasterLayer(map, lp, img) != 0)
+                status = MS_FAILURE;
 
-        // __TODO__ not implemented yet!
-        msSetError(MS_WMSCONNERR, 
-                   "WMS Layer reprojection not implemented yet.", 
-                   "msDrawWMSLayer()");
-        status = MS_FAILURE;
+            unlink(wldfile);
+            free(wldfile);
+        }
+        else
+        {
+            msSetError(MS_WMSCONNERR, 
+                       "Unable to create wld file for WMS slide.", 
+                       "msDrawWMSLayer()");
+            status = MS_FAILURE;
+        }
+
     } 
 
     // We're done with the remote server's response... delete it.
