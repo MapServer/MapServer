@@ -86,20 +86,19 @@
 #endif
     {
         classObj *new_class;
-        int result;
 
         new_class = (classObj *) malloc(sizeof(classObj));
         if (!new_class)
         {
             msSetError(MS_MEMERR,
                 "Could not allocate memory for new classObj instance",
-                "classObj()");
+                "clone()");
             return NULL;
         }
         if (initClass(new_class) == -1)
         {
-            msSetError(MS_MEMERR, "Failed to initialize Layer",
-                                  "classObj()");
+            msSetError(MS_MEMERR, "Failed to initialize Class",
+                                  "clone()");
             return NULL;
         }
         new_class->layer = NULL;

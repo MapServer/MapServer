@@ -60,21 +60,32 @@ class DrawProgrammedStylesTestCase(MapTestCase):
         img.save('test_draw_points.png')
 
 class NewStylesTestCase(MapTestCase):
+
     def testStyleConstructor(self):
-        """NewStylesTestCase.testStyleConstructor: a new style is properly initialized"""
+        """a new style is properly initialized"""
         new_style = mapscript.styleObj()
         assert new_style.color.red == -1
         assert new_style.color.green == -1
         assert new_style.color.blue == -1
+
+    def testCloneStyle(self):
+        """check attributes of a cloned style"""
+        new_style = mapscript.styleObj()
+        new_style.color.setHex('#808080')
+        clone = new_style.clone()
+        assert clone.thisown == 1
+        assert clone.color.toHex() == '#808080'
+
     def testStyleColorSettable(self):
-        """NewStylesTestCase.testStyleColorSettable: a style can be set with a color tuple"""
+        """a style can be set with a color tuple"""
         new_style = mapscript.styleObj()
         new_style.color.setRGB(1,2,3)
         assert new_style.color.red == 1
         assert new_style.color.green == 2
         assert new_style.color.blue == 3
+    
     def testAppendNewStyle(self):
-        """NewStylesTestCase.testAppendNewStyle: a new style can be appended properly"""
+        """a new style can be appended properly"""
         p_layer = self.map.getLayerByName('POINT')
         class0 = p_layer.getClass(0)
         assert class0.numstyles == 2, class0.numstyles

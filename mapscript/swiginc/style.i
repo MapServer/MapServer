@@ -66,4 +66,40 @@
             free(self);
         // else we let the parent class clean up
     }
+
+#ifdef SWIGJAVA
+    %newobject cloneStyle;
+    styleObj *cloneStyle() 
+#else
+    %newobject clone;
+    styleObj *clone() 
+#endif
+    {
+        styleObj *style;
+
+        style = (styleObj *) malloc(sizeof(styleObj));
+        if (!style)
+        {
+            msSetError(MS_MEMERR,
+                "Could not allocate memory for new styleObj instance",
+                "clone()");
+            return NULL;
+        }
+        if (initStyle(style) == -1)
+        {
+            msSetError(MS_MEMERR, "Failed to initialize Style",
+                                  "clone()");
+            return NULL;
+        }
+
+        if (msCopyStyle(style, self) != MS_SUCCESS)
+        {
+            free(style);
+            return NULL;
+        }
+        
+        style->isachild = MS_FALSE;
+        return style;
+    }
+
 }
