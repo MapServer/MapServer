@@ -416,6 +416,11 @@ const char *msGetEPSGProj(projectionObj *proj, hashTableObj metadata, int bRetur
     sprintf(epsgCode, "EPSG:%s", value+10);
     return epsgCode;
   }
+  else if (proj && proj->numargs > 0 && 
+           strncasecmp(proj->args[0], "AUTO:", 5) == 0 )
+  {
+    return proj->args[0];
+  }
 
   return NULL;
 #else

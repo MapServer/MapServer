@@ -518,6 +518,128 @@ void msFreeProjection(projectionObj *p) {
 #endif
 }
 
+
+/*
+** Handle OGC WMS/WFS AUTO projection in the format:
+**    "AUTO:proj_id,units_id,lon0,lat0"
+*/
+#ifdef USE_PROJ    
+static int _msProcessAutoProjection(projectionObj *p)
+{
+    char **args;
+    int numargs, nProjId, nUnitsId, nZone;
+    double dLat0, dLon0;
+    const char *pszUnits = "m";
+    char szProjBuf[512]="";
+
+    /* WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0" */
+    args = split(p->args[0], ',', &numargs);
+    if (numargs != 4 || strncasecmp(args[0], "AUTO:", 5) != 0)
+    {
+        msSetError(MS_PROJERR, 
+                   "WMS/WFS AUTO PROJECTION must be in the format "
+                   "'AUTO:proj_id,units_id,lon0,lat0' (got '%s').\n",
+                   "_msProcessAutoProjection()", p->args[0]);
+        return -1;
+    }
+
+    nProjId = atoi(args[0]+5);
+    nUnitsId = atoi(args[1]);
+    dLon0 = atof(args[2]);
+    dLat0 = atof(args[3]);
+
+    msFreeCharArray(args, numargs);
+
+    /* Handle EPSG Units.  Only meters for now. */
+    switch(nUnitsId)
+    {
+      case 9001:  /* Meters */
+        pszUnits = "m";
+        break;
+      default:
+        msSetError(MS_PROJERR, 
+                   "WMS/WFS AUTO PROJECTION: EPSG Units %d not supported.\n",
+                   "_msProcessAutoProjection()", nUnitsId);
+        return -1;
+    }
+
+    /* Build PROJ4 definition.
+     * This is based on the definitions found in annex E of the WMS 1.1.1 
+     * spec and online at http://www.digitalearth.org/wmt/auto.html
+     * The conversion from the original WKT definitions to PROJ4 format was
+     * done using the MapScript setWKTProjection() function (based on OGR).
+     */
+    switch(nProjId)
+    {
+      case 42001: /** WGS 84 / Auto UTM **/
+        nZone = (double)floor( (dLon0 + 180.0) / 6.0 ) + 1;
+        sprintf( szProjBuf, 
+                 "+proj=tmerc+lat_0=0+lon_0=%.16g+k=0.999600+x_0=500000"
+                 "+y_0=%.16g+ellps=WGS84+datum=WGS84+units=%s", 
+                 -183.0 + nZone * 6.0, 
+                 (dLat0 >= 0.0) ? 0.0 : 10000000.0,
+                 pszUnits);
+        break;
+      case 42002: /** WGS 84 / Auto Tr. Mercator **/
+        sprintf( szProjBuf, 
+                 "+proj=tmerc+lat_0=0+lon_0=%.16g+k=0.999600+x_0=500000"
+                 "+y_0=%.16g+ellps=WGS84+datum=WGS84+units=%s",
+                 dLon0, 
+                 (dLat0 >= 0.0) ? 0.0 : 10000000.0,
+                 pszUnits);
+        break;
+      case 42003: /** WGS 84 / Auto Orthographic **/
+        sprintf( szProjBuf, 
+                 "+proj=ortho+lon_0=%.16g+lat_0=%.16g+x_0=0+y_0=0"
+                 "+ellps=WGS84+datum=WGS84+units=%s",
+                 dLon0, dLat0, pszUnits );
+        break;
+      case 42004: /** WGS 84 / Auto Equirectangular **/
+        // __TODO__ I suspect a problem with this one since the WMS spec
+        // version contains a "standard_parallel_1" value and it was lost in
+        // the conversion.  
+        // (And the docs at http://www.digitalearth.org/wmt/auto.html set
+        // only standard_parallel_1 = lat0 and force lon_0=0 ...)
+        //
+        sprintf( szProjBuf, 
+                 "+proj=eqc+lat_ts=0+lon_0=%.16g+x_0=0+y_0=0"
+                 "+ellps=WGS84+datum=WGS84+units=%s",
+                 dLon0, pszUnits);
+        break;
+      case 42005: /** WGS 84 / Auto Mollweide **/
+        sprintf( szProjBuf, 
+                 "+proj=moll+lon_0=%.16g+x_0=0+y_0=0+ellps=WGS84"
+                 "+datum=WGS84+units=%s",
+                 dLon0, pszUnits);
+        break;
+      default:
+        msSetError(MS_PROJERR, 
+                   "WMS/WFS AUTO PROJECTION %d not supported.\n",
+                   "_msProcessAutoProjection()", nProjId);
+        return -1;
+    }
+
+    msDebug("%s = %s\n", p->args[0], szProjBuf);
+
+    /* OK, pass the definition to pj_init() */
+    args = split(szProjBuf, '+', &numargs);
+
+    msAcquireLock( TLOCK_PROJ );
+    if( !(p->proj = pj_init(numargs, args)) ) {
+        msReleaseLock( TLOCK_PROJ );
+        msSetError(MS_PROJERR, pj_strerrno(pj_errno), 
+                   "msProcessProjection()");	  
+        return(-1);
+    }
+    
+    msReleaseLock( TLOCK_PROJ );
+
+    msFreeCharArray(args, numargs);
+
+    return(0);
+}
+#endif /* USE_PROJ */
+
 int msProcessProjection(projectionObj *p)
 {
 #ifdef USE_PROJ    
@@ -536,6 +658,12 @@ int msProcessProjection(projectionObj *p)
     if (strcasecmp(p->args[0], "AUTO") == 0) {
 	p->proj = NULL;
         return 0;
+    }
+
+    if (strncasecmp(p->args[0], "AUTO:", 5) == 0)
+    {
+        // WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0"
+        return _msProcessAutoProjection(p);
     }
 
     msAcquireLock( TLOCK_PROJ );
@@ -631,7 +759,15 @@ int msLoadProjectionString(projectionObj *p, char *value)
       p->args = split(trimmed,'+', &p->numargs);
       free( trimmed );
   }
-
+  else if (strncasecmp(value, "AUTO:", 5) == 0)
+  {
+      // WMS/WFS AUTO projection: "AUTO:proj_id,units_id,lon0,lat0"
+      // Keep the projection defn into a single token for writeProjection()
+      // to work fine.
+      p->args = (char**)malloc(sizeof(char*));
+      p->args[0] = strdup(value);
+      p->numargs = 1;
+  }
   /*
    * Handle old style comma delimited.  eg. "proj=utm,zone=11,ellps=WGS84".
    */

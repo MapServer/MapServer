@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.45  2003/01/14 04:13:45  dan
+ * Added support for WMS AUTO projections
+ *
  * Revision 1.44  2002/12/20 16:34:59  dan
  * Added support for wms_time metadata to pass TIME= parameter in WMS requests
  *
@@ -383,10 +386,20 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     if ((pszEPSG = (char*)msGetEPSGProj(&(map->projection), 
                                            NULL, MS_TRUE)) != NULL &&
         (pszEPSG = strdup(pszEPSG)) != NULL &&
-        strncasecmp(pszEPSG, "EPSG:", 5) == 0)
+        (strncasecmp(pszEPSG, "EPSG:", 5) == 0 ||
+         strncasecmp(pszEPSG, "AUTO:", 5) == 0) )
     {
         const char *pszLyrEPSG, *pszFound;
         int nLen;
+        char *pszPtr = NULL;
+
+        // If it's an AUTO projection then keep only id and strip off 
+        // the parameters for now (we'll restore them at the end)
+        if (strncasecmp(pszEPSG, "AUTO:", 5) == 0)
+        {
+            if ((pszPtr = strchr(pszEPSG, ',')))
+                *pszPtr = '\0';
+        }
 
         nLen = strlen(pszEPSG);
 
@@ -400,17 +413,42 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             free(pszEPSG);
             pszEPSG = NULL;
         }
+        if (pszEPSG && pszPtr)
+            *pszPtr = ',';  // Restore full AUTO:... definition
     }
 
     if (pszEPSG == NULL &&
         ((pszEPSG = (char*)msGetEPSGProj(&(lp->projection), 
                                             lp->metadata, MS_TRUE)) == NULL ||
          (pszEPSG = strdup(pszEPSG)) == NULL ||
-         strncasecmp(pszEPSG, "EPSG:", 5) != 0) )
+         (strncasecmp(pszEPSG, "EPSG:", 5) != 0 &&
+          strncasecmp(pszEPSG, "AUTO:", 5) != 0 ) ) )
     {
-        msSetError(MS_WMSCONNERR, "Layer must have an EPSG projection code (in its PROJECTION object or wms_srs metadata)", "msBuildWMSLayerURL()");
+        msSetError(MS_WMSCONNERR, "Layer must have an EPSG or AUTO projection code (in its PROJECTION object or wms_srs metadata)", "msBuildWMSLayerURL()");
         if (pszEPSG) free(pszEPSG);
         return NULL;
+    }
+
+/* ------------------------------------------------------------------
+ * For an AUTO projection, set the Units,lon0,lat0 if not already set
+ * ------------------------------------------------------------------ */
+    if (strncasecmp(pszEPSG, "AUTO:", 5) == 0 &&
+        strchr(pszEPSG, ',') == NULL)
+    {
+        pointObj oPoint;
+        char *pszNewEPSG;
+
+        // Use center of map view for lon0,lat0
+        oPoint.x = (map->extent.minx + map->extent.maxx)/2.0;
+        oPoint.y = (map->extent.miny + map->extent.maxy)/2.0;
+        msProjectPoint(&(map->projection), &(map->latlon), &oPoint);
+
+        pszNewEPSG = (char*)malloc(101*sizeof(char));
+        snprintf(pszNewEPSG, 100, "%s,9001,%.16g,%.16g", 
+                 pszEPSG, oPoint.x, oPoint.y);
+        pszNewEPSG[100]='\0';
+        free(pszEPSG);
+        pszEPSG=pszNewEPSG;
     }
 
 /* ------------------------------------------------------------------
@@ -420,10 +458,18 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     if ((pszTmp = msGetEPSGProj(&(lp->projection), NULL, MS_TRUE)) == NULL ||
         strcasecmp(pszEPSG, pszTmp) != 0)
     {
-        char szProj[20];
-        sprintf(szProj, "init=epsg:%s", pszEPSG+5);
-        if (msLoadProjectionString(&(lp->projection), szProj) != 0)
-            return NULL;
+        if (strncasecmp(pszEPSG, "EPSG:", 5) == 0)
+        {
+            char szProj[20];
+            sprintf(szProj, "init=epsg:%s", pszEPSG+5);
+            if (msLoadProjectionString(&(lp->projection), szProj) != 0)
+                return NULL;
+        }
+        else
+        {
+            if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
+                return NULL;
+        }
     }
 
     bbox = map->extent;
@@ -458,7 +504,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  *   QUERY_LAYERS (for queriable layers only)
  * ------------------------------------------------------------------ */
     // Make sure we have a big enough buffer for the URL
-    if(!(pszURL = (char *)realloc(pszURL, (strlen(pszURL)+256)*sizeof(char)))) 
+    if(!(pszURL = (char *)realloc(pszURL, (strlen(pszURL)+512)*sizeof(char)))) 
     {
         msSetError(MS_MEMERR, NULL, "msBuildWMSLayerURL()");
         return NULL;
@@ -486,7 +532,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         // If FEATURE_COUNT <= 0 then don't pass this parameter
         // The spec states that FEATURE_COUNT must be greater than zero
-        // and if not passed hten the behavior is up to the server
+        // and if not passed then the behavior is up to the server
         if (nFeatureCount > 0)
         {
             sprintf(szFeatureCount, "&FEATURE_COUNT=%d", nFeatureCount);

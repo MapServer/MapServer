@@ -271,20 +271,13 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       // __TODO__
     }
     else if (strcasecmp(names[i], "SRS") == 0) {
-      char **tokens;
-      int n;
-      // SRS is in format "EPSG:..." or "AUTO:..."
-      // For now we support only "EPSG:<epsg_code>" format.
-      tokens = split(values[i], ':', &n);
-      if (tokens==NULL || n != 2) {
-        msSetError(MS_WMSERR, "Wrong number of arguments for SRS.",
-                   "msWMSLoadGetMapParams()");
-        return msWMSException(map, wmtver);
-      }
+      // SRS is in format "EPSG:epsg_id" or "AUTO:proj_id,unit_id,lon0,lat0"
+      if (strncasecmp(values[i], "EPSG:", 5) == 0) 
+      {
+        // SRS=EPSG:xxxx
 
-      if (strcasecmp(tokens[0], "EPSG") == 0) {
         char buffer[32];
-        sprintf(buffer, "init=epsg:%.20s", tokens[1]);
+        sprintf(buffer, "init=epsg:%.20s", values[i]+5);
 
         if (msLoadProjectionString(&(map->projection), buffer) != 0)
           return msWMSException(map, wmtver);
@@ -293,13 +286,24 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
         if (iUnits != -1)
           map->units = iUnits;
       }
-      else {
+      else if (strncasecmp(values[i], "AUTO:", 5) == 0) 
+      {
+        // SRS=AUTO:proj_id,unit_id,lon0,lat0
+
+        if (msLoadProjectionString(&(map->projection), values[i]) != 0)
+          return msWMSException(map, wmtver);
+        
+        iUnits = GetMapserverUnitUsingProj(&(map->projection));
+        if (iUnits != -1)
+          map->units = iUnits;
+      }
+      else 
+      {
         msSetError(MS_WMSERR, 
-                   "Unsupported SRS namespace (only EPSG currently supported).",
+                   "Unsupported SRS namespace (only EPSG and AUTO currently supported).",
                    "msWMSLoadGetMapParams()");
         return msWMSException(map, wmtver);
       }
-      msFreeCharArray(tokens, n);
     }
     else if (strcasecmp(names[i], "BBOX") == 0) {
       char **tokens;
