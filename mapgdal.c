@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.24  2004/10/01 19:16:04  frank
+ * use msIO_fwrite to write file to stdout
+ *
  * Revision 1.23  2004/07/13 20:39:36  dan
  * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
  *
@@ -472,7 +475,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         }
 
         while( (bytes_read = fread(block, 1, sizeof(block), fp)) > 0 )
-            fwrite( block, 1, bytes_read, stdout );
+            msIO_fwrite( block, 1, bytes_read, stdout );
 
         fclose( fp );
 
