@@ -50,6 +50,16 @@ Version 4.3 (CVS)
 
 - Added preliminary raster query support.
 
+- No more Python-stopping but otherwise benign errors raised from
+  msDrawWMSLayer() (bug 650).
+
+- Finished prototyping all MapServer functions used by SWIG-Mapscript
+  and added 'void' to prototypes of no-arg functions, eliminating all
+  but two SWIG-Mapscript build warnings (bug 658).
+
+- Map cloning fixed.  However, users must now set the cloned map's fontset
+  and symbolset explicitly (see bug 557).  A new testcopy program has
+  been added as a target for make.
 
 
 Version 4.2-beta1 (2004-04-17)
