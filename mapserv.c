@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.139  2004/11/09 16:24:19  frank
+ * avoid lots of casting warnings
+ *
  * Revision 1.138  2004/11/04 21:47:36  frank
  * Removed unused variable.
  *
@@ -306,7 +309,7 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"zoomdir") == 0) {
-      msObj->ZoomDirection = getNumeric(msObj->request->ParamValues[i]);
+      msObj->ZoomDirection = (int)getNumeric(msObj->request->ParamValues[i]);
       if((msObj->ZoomDirection != -1) && (msObj->ZoomDirection != 1) && (msObj->ZoomDirection != 0)) {
 	msSetError(MS_WEBERR, "Zoom direction must be 1, 0 or -1.", "loadForm()");
 	writeError();
@@ -315,7 +318,7 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"zoomsize") == 0) { // absolute zoom magnitude
-      ZoomSize = getNumeric(msObj->request->ParamValues[i]);      
+      ZoomSize = (int) getNumeric(msObj->request->ParamValues[i]);      
       if((ZoomSize > MAXZOOM) || (ZoomSize < 1)) {
 	msSetError(MS_WEBERR, "Invalid zoom size.", "loadForm()");
 	writeError();
@@ -685,8 +688,8 @@ void loadForm()
         writeError();
       }
 
-      msObj->ImgCols = getNumeric(tokens[0]);
-      msObj->ImgRows = getNumeric(tokens[1]);
+      msObj->ImgCols = (int)getNumeric(tokens[0]);
+      msObj->ImgRows = (int)getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
       
@@ -711,8 +714,8 @@ void loadForm()
 	    writeError();
       }
 
-      msObj->Map->width = getNumeric(tokens[0]);
-      msObj->Map->height = getNumeric(tokens[1]);
+      msObj->Map->width = (int)getNumeric(tokens[0]);
+      msObj->Map->height = (int)getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
       
@@ -791,11 +794,11 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"shapeindex") == 0) { // used for index queries
-      ShapeIndex = getNumeric(msObj->request->ParamValues[i]);
+      ShapeIndex = (int)getNumeric(msObj->request->ParamValues[i]);
       continue;
     }
     if(strcasecmp(msObj->request->ParamNames[i],"tileindex") == 0) {
-      TileIndex = getNumeric(msObj->request->ParamValues[i]);
+      TileIndex = (int)getNumeric(msObj->request->ParamValues[i]);
       continue;
     }
 
