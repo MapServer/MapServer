@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000-2002, DM Solutions Group
+ * Copyright (c) 2000-2003, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.138  2003/01/13 20:37:50  dan
+ * Set $line->numpoints and $shape->numlines after add() calls (bug 69)
+ *
  * Revision 1.137  2003/01/13 14:44:47  assefa
  * Remove setcolor functions from label and style classes. They
  * were redundant since there is a setRGB function on the color object.
@@ -123,135 +126,6 @@
  *
  * Revision 1.109  2002/06/11 23:47:11  assefa
  * Upgrade code to support new outputformat support.
- *
- * Revision 1.108  2002/05/14 14:10:12  assefa
- * Add MS_SWF for the mong flash support.
- *
- * Revision 1.107  2002/05/10 19:16:29  dan
- * Added qitem,qstring args to PHP version of layer->queryByAttributes()
- *
- * Revision 1.106  2002/05/06 13:06:16  dan
- * Added $layer->styleitem
- *
- * Revision 1.105  2002/05/02 15:55:51  assefa
- * Adapt code to support imageObj.
- *
- * Revision 1.104  2002/04/24 20:37:32  assefa
- * Correct compiling error on Windows.
- *
- * Revision 1.103  2002/04/22 19:31:57  dan
- * Added optional new_map_path arg to msLoadMap()
- *
- * Revision 1.102  2002/04/09 14:49:53  assefa
- * Add minscale/maxscale in the class object.
- *
- * Revision 1.101  2002/04/01 17:42:26  dan
- * Added template member in legend object (P.Spencer)
- *
- * Revision 1.100  2002/03/22 04:48:50  dan
- * Fixed PHP4.1 problems: missing register_list_destructors() calls for
- * legend and scalebar resources.  Also started the move away from PHP3.
- *
- * Revision 1.99  2002/03/21 23:13:58  dan
- * Produce a fatal error in ms_newMapObj() if PHP is NOT configured as a CGI.
- *
- * Revision 1.98  2002/03/21 14:58:40  assefa
- * Set the numclasses memeber properly after adding a new class in a layer.
- *
- * Revision 1.97  2002/03/20 20:16:17  sacha
- * Added a php function for layer obj getItems that return a list of items.
- *
- * Revision 1.96  2002/03/19 17:59:59  assefa
- * Remove MS_TILEED_OGR. It was removed from map.h
- *
- * Revision 1.95  2002/03/14 21:36:12  sacha
- * Add two mapscript function (in PHP and perl)
- * setSymbolSet(filename) that load a symbol file dynanictly
- * getNumSymbols() return the number of symbol in map.
- *
- * Revision 1.94  2002/03/14 19:27:32  sacha
- * When you set the size attribute or overlaysize of class it also set the
- * sizescaled and overlaysizescaled.
- *
- * Revision 1.93  2002/03/08 23:16:41  assefa
- * Add PHP4.1 support.
- *
- * Revision 1.92  2002/03/08 00:39:38  assefa
- * Remove unused variables.
- *
- * Revision 1.91  2002/03/07 22:31:01  assefa
- * Add template processing functions.
- *
- * Revision 1.90  2002/03/04 12:58:56  tomas
- * Added layerObj->transparency
- * - type: integer value between 1-100
- *
- * Revision 1.89  2002/03/01 16:02:48  assefa
- * Correct typo error in zoompoint/zoomscale.
- *
- * Revision 1.88  2002/02/19 19:58:14  assefa
- * Forgot to udate extents information in the php object
- * when map->draw and map->drawquery are called.
- *
- * Revision 1.87  2002/02/19 19:02:23  assefa
- * Update scale and cellsize values in the php object after in the
- * map->draw and map->drawquery functions. (BID 109).
- *
- * Revision 1.86  2002/02/08 18:51:11  dan
- * Remove class and layer args to setSymbolByName()
- *
- * Revision 1.85  2002/02/08 18:25:39  sacha
- * let mapserv add a new symbol when we use the classobj setproperty function
- * with "symbolname" and "overlaysymbolname" arg.
- *
- * Revision 1.84  2002/01/30 17:16:08  assefa
- * Add setimagecolor on the scalebar object.
- *
- * Revision 1.83  2002/01/29 23:38:31  assefa
- * Add write support for measured shape files.
- *
- * Revision 1.82  2002/01/28 16:59:01  dan
- * Added mapObj->resolution.  Added optional dstx,dsty args to PasteImage().
- *
- * Revision 1.81  2002/01/24 20:01:36  sacha
- * Change msgetAllGroupNames to msGetAllGroupNames
- *
- * Revision 1.80  2002/01/24 19:58:14  sacha
- * Move the function GetAllGroupNames from php to mapserver binaries
- *
- * Revision 1.79  2002/01/23 16:43:09  dan
- * Ooopps.  Removed unused variable.
- *
- * Revision 1.78  2002/01/23 16:41:58  dan
- * Fixed crash problem in getAllGroupNames()
- *
- * Revision 1.77  2002/01/22 21:19:01  sacha
- * Add two functions in maplegend.c
- * - msDrawLegendIcon that draw an class legend icon over an existing image.
- * - msCreateLegendIcon that draw an class legend icon and return the newly
- * created image.
- * Also, an php examples in mapscript/php3/examples/test_draw_legend_icon.phtml
- *
- * Revision 1.76  2002/01/20 21:30:01  dan
- * Added imagetype and imagequality params in mapObj
- *
- * Revision 1.75  2002/01/17 21:05:53  dan
- * Changed img->pasteImage() to take transparent color index as argument
- *
- * Revision 1.74  2002/01/17 16:44:43  assefa
- * setlayersdrawingorder only available for PHP4.
- *
- * Revision 1.73  2002/01/17 16:33:03  assefa
- * Add function setlayersdrawingorder.
- *
- * Revision 1.72  2002/01/17 03:36:43  dan
- * Added imageObj->pasteImage()
- *
- * Revision 1.71  2002/01/17 01:39:01  dan
- * Added class->status, and include CVS Revision/Date in PHP3_MS_VERSION
- *
- * Revision 1.70  2002/01/10 23:16:29  assefa
- * Correct a bug in php3_ms_map_getAllGroupNames.
  *
  * ...
  *
@@ -6861,7 +6735,6 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 
-
 /*=====================================================================
  *                 PHP function wrappers - classObj class
  *====================================================================*/
@@ -8041,7 +7914,10 @@ DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS)
                                               list TSRMLS_CC);
 
     if (self && poPoint)
+    {
         nRetVal = lineObj_add(self, poPoint);
+        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR);
+    }
 
     RETURN_LONG(nRetVal)
 }
@@ -8105,7 +7981,10 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
                                            list TSRMLS_CC);
 
     if (self)
+    {
         nRetVal = lineObj_add(self, &oPoint);
+        _phpms_set_property_long(pThis, "numpoints", self->numpoints, E_ERROR);
+    }
 
     RETURN_LONG(nRetVal)
 }
@@ -8524,7 +8403,10 @@ DLEXPORT void php3_ms_shape_add(INTERNAL_FUNCTION_PARAMETERS)
                                             list TSRMLS_CC);
 
     if (self && poLine)
+    {
         nRetVal = shapeObj_add(self, poLine);
+        _phpms_set_property_long(pThis, "numlines", self->numlines, E_ERROR);
+    }
 
     RETURN_LONG(nRetVal)
 }
