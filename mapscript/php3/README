@@ -290,6 +290,10 @@ and the MapServer Map File documentation at:
         Set a metadata entry for the map (stored in the WEB object in the map
         file).  Returns MS_SUCCESS/MS_FAILURE.
 
+   array getlayersindexbygroup(string groupname)
+        Return an array containing all the layer's indexes given
+        a group name.     
+
  LayerObj Class:
  ---------------
 

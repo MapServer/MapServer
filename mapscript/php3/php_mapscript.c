@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.53  2001/10/03 12:41:04  assefa
+ * Add function getLayersIndexByGroup.
+ *
  * Revision 1.52  2001/09/24 15:59:03  assefa
  * Modify GetDeltaExtentsUsingScale to fit with msCalculateScale (mapscale.c) :
  * this corrects the zoomscale bug (#46).
@@ -147,6 +150,7 @@ DLEXPORT void php3_ms_map_drawReferenceMap(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_drawScaleBar(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getLayer(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getLayersIndexByGroup(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_nextLabel(INTERNAL_FUNCTION_PARAMETERS);
@@ -165,6 +169,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS);
+
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -275,8 +280,9 @@ static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
                                                   HashTable *list, 
                                                   pval *return_value);
 
-static long _phpms_build_projection_object(projectionObj *pproj, int handle_type,
-                                           HashTable *list, pval *return_value);
+static long _phpms_build_projection_object(projectionObj *pproj, 
+                                           int handle_type, HashTable *list, 
+                                           pval *return_value);
 
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
@@ -391,6 +397,7 @@ function_entry php_map_class_functions[] = {
     {"drawscalebar",    php3_ms_map_drawScaleBar,       NULL},
     {"getlayer",        php3_ms_map_getLayer,           NULL},
     {"getlayerbyname",  php3_ms_map_getLayerByName,     NULL},
+    {"getlayersindexbygroup",  php3_ms_map_getLayersIndexByGroup,     NULL},
     {"getcolorbyindex", php3_ms_map_getColorByIndex,    NULL},
     {"setextent",       php3_ms_map_setExtent,          NULL},
     {"zoompoint",       php3_ms_map_zoomPoint,          NULL},
@@ -2740,6 +2747,71 @@ DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
+/**********************************************************************
+ *                        map->getLayersIndexByGroup()
+ *
+ * Return an array of layer's index given a group name.
+ **********************************************************************/
+
+/* {{{ proto int map.getLayersIndexByGroup(string groupname)
+   Return an array of layer's index given a group name. */
+
+DLEXPORT void php3_ms_map_getLayersIndexByGroup(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pGrpName, *pThis;
+    mapObj      *self=NULL;
+    int         *aiIndex = NULL;
+    int         nCount = 0;
+    int         i = 0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pGrpName) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pGrpName);
+
+    if (array_init(return_value) == FAILURE) 
+    {
+        RETURN_FALSE;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self != NULL)
+    {
+        aiIndex = 
+            mapObj_getLayersIndexByGroup(self, pGrpName->value.str.val,
+                                         &nCount);
+
+        if (aiIndex && nCount > 0)
+        {
+            for (i=0; i<nCount; i++)
+            {
+                add_next_index_long(return_value, aiIndex[i]);
+            }
+            free (aiIndex);
+        }
+        else
+            RETURN_FALSE; 
+    }
+    else
+    {
+        RETURN_FALSE;
+    }
+}
+/* }}} */
+
 /************************************************************************/
 /*                         map->getColorByIndex                         */
 /*                                                                      */
@@ -3183,6 +3255,7 @@ DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(nStatus);
 }
 /* }}} */
+
 
 
 

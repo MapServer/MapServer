@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.24  2001/10/03 12:41:04  assefa
+ * Add function getLayersIndexByGroup.
+ *
  * Revision 1.23  2001/08/29 14:36:06  dan
  * Changes to msCalculateScale() args.  Sync with mapscript.i v1.42
  *
@@ -143,6 +146,11 @@ layerObj *mapObj_getLayerByName(mapObj* self, char *name) {
     else
       return NULL;
   }
+
+int *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname, 
+                                 int *pnCount) {
+    return msGetLayersIndexByGroup(self, groupname, pnCount);
+}
 
 int mapObj_addColor(mapObj* self, int r, int g, int b) {
     return msAddColor(self, r, g, b);

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/10/03 12:41:05  assefa
+ * Add function getLayersIndexByGroup.
+ *
  * Revision 1.11  2001/08/01 13:52:59  dan
  * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
  * to getSymbolByName().
@@ -91,6 +94,8 @@ mapObj         *mapObj_new(char *filename);
 void            mapObj_destroy(mapObj* self);
 layerObj       *mapObj_getLayer(mapObj* self, int i);
 layerObj       *mapObj_getLayerByName(mapObj* self, char *name);
+int             *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname, 
+                                             int *pnCount);
 int             mapObj_addColor(mapObj* self, int r, int g, int b);
 int             mapObj_getSymbolByName(mapObj* self, char *name);
 void            mapObj_prepareQuery(mapObj* self);
