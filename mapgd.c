@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.81  2004/11/08 05:38:27  frank
+ * Make sure that if an RGB PNG file is loaded with msImageLoadGD() that the
+ * attached format will also be MS_IMAGEMODE_PNG.  Also Bug 1039.
+ *
  * Revision 1.80  2004/11/08 05:25:06  frank
  * Applied patch in msImageLoadGDStream() to ensure the format reflects
  * the interlacedness of the source image.
@@ -319,6 +323,22 @@ imageObj *msImageLoadGDStream(FILE *stream)
   {
     msSetError(MS_GDERR, "Unable to create default OUTPUTFORMAT definition for driver '%s'.", "msImageLoadGDStream()", driver );
     return(NULL);
+  }
+
+  /*
+  ** Try to ensure that truecolor images are handled as MS_IMAGEMODE_RGB
+  ** and that colormapped images are MS_IMAGEMODE_PC256.  This would generally
+  ** only be an issue for PNG which can be either. 
+  */
+  if( gdImageTrueColor(img) && image->format->imagemode == MS_IMAGEMODE_PC256 )
+  {
+      image->format->imagemode = MS_IMAGEMODE_RGB;
+  }
+  else if( !gdImageTrueColor(img) 
+           && (image->format->imagemode == MS_IMAGEMODE_RGB 
+               || image->format->imagemode == MS_IMAGEMODE_RGBA) )
+  {
+      image->format->imagemode = MS_IMAGEMODE_PC256;
   }
 
   /*
