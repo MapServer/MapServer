@@ -143,6 +143,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
   char *path;
   char szPath[MS_MAXPATHLEN];
   int i;
+  int bFullPath = 0;
 
   if(fontset->numfonts != 0) /* already initialized */
     return(0);
@@ -175,11 +176,26 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
     sscanf(buffer,"%s %s", alias,  file1);
 
-    if(file1[0] == '/') { /* already full path */
+    if (!file1 || !alias || (strlen(file1) <= 0))
+      continue;
+    
+    bFullPath = 0;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    if (file1[0] == '\\' || (strlen(file1) > 1 && (file1[1] == ':')))
+      bFullPath = 1;
+#else
+    if(file1[0] == '/')
+      bFullPath = 1;
+#endif
+
+    if(bFullPath) { /* already full path */
       msInsertHashTable(fontset->fonts, alias, file1);
     } else {
       sprintf(file2, "%s%s", path, file1);
-      msInsertHashTable(fontset->fonts, alias, file2);
+      //msInsertHashTable(fontset->fonts, alias, file2);
+      msInsertHashTable(fontset->fonts, alias, 
+                        msBuildPath(szPath, fontset->map->mappath, file2));
+      
     }
 
     i++;
