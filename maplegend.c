@@ -6,7 +6,6 @@
 #define VMARGIN 5 /* margin at top and bottom of legend graphic */
 #define HMARGIN 5 /* margin at left and right of legend graphic */
 
-
 int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int height, gdImagePtr img, int dstX, int dstY)
 {
   int i, type;
@@ -131,21 +130,15 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
       return(NULL);
   }
 
-  /* Ensure we have an image format representing the options for the legend.*/
-  msApplyOutputFormat( &format, map->outputformat, 
-                       map->legend.transparent, 
-                       map->legend.interlace, 
-                       MS_NOOVERRIDE );
+  // ensure we have an image format representing the options for the legend
+  msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
 
-  /* create image */
-  image = msImageCreateGD(width, height, map->outputformat,
-                          map->web.imagepath, map->web.imageurl);
+  // create image
+  image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);
 
-  /* drop this reference to output format */
-  msApplyOutputFormat( &format, NULL, 
-                       MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+  // drop this reference to output format
+  msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
 
-  /* did we succeed in creating the image? */
   if(image == NULL) {
     msSetError(MS_GDERR, "Unable to initialize image.","msCreateLegendIcon()");
     return(NULL);
@@ -183,6 +176,7 @@ imageObj *msDrawLegend(mapObj *map)
   int *heights;
   rectObj rect;
   imageObj      *image = NULL;
+  outputFormatObj *format = NULL;
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
@@ -242,10 +236,14 @@ imageObj *msDrawLegend(mapObj *map)
     size_y += MS_MAX(heights[i], map->legend.keysizey);
   }
 
-  /*
-  ** Initialize the legend image
-  */
-  image = msImageCreateGD(size_x, size_y, map->outputformat, map->web.imagepath, map->web.imageurl);
+  // ensure we have an image format representing the options for the legend.
+  msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
+
+  // initialize the legend image
+  image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl);
+
+  // drop this reference to output format
+  msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
   if (image)
     img = image->img.gd;
