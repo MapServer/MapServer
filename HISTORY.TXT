@@ -13,6 +13,14 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 3.6.0 (CVS - not released yet)
+--------------------------------------
+
+- PostGIS: Added Sean Gillies <sgillies@i3.com>'s patch for "using unique 
+  <column name>". Added "using SRID=#" to specify a spatial reference 
+  for an arbitrary sql query.
+
+
 Version 3.6.0-beta1 (2002-04-30)
 --------------------------------
 
