@@ -1259,7 +1259,6 @@ pointObj *getPointUsingMeasure(shapeObj *shape, double m)
     double      dfSecondPointM = 0;
     double      dfCurrentM = 0;
     double      dfFactor = 0;
-    double      dfTmp = 0;
 
     if (shape &&  shape->numlines > 0)
     {
@@ -1332,6 +1331,8 @@ pointObj *getPointUsingMeasure(shapeObj *shape, double m)
         
         return point;
     }
+
+    return NULL;
 }
 
 
