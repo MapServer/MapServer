@@ -13,7 +13,7 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-Version 3.6.6-dev
+Version 3.6.6 (2003-06-01)
 --------------------------
 
 - Disabled the 'make install' target since it just leads to confusion.
@@ -24,8 +24,10 @@ Version 3.6.6-dev
 
 - Better looking phpinfo() output for php_mapscript (backported from v3.7)
 
+- Applied fix for GCC 3.x problems (include -lstdc++ by default)
 
-Version 3.6.5 (2003--3-18)
+
+Version 3.6.5 (2003-03-18)
 --------------------------
 
 - Fix a little problem with qix files with no depth.
