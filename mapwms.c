@@ -56,7 +56,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
   {
     gdFontPtr font = gdFontSmall;
     gdImagePtr img=NULL;
-    int width=400, height=300, color, imagetype=MS_GIF, transparent=MS_FALSE;
+    int width=400, height=300, color;
     int nMargin =5;
     int nTextLength = 0;
     int nUsableWidth = 0;
@@ -72,13 +72,19 @@ int msWMSException(mapObj *map, const char *wmtversion)
     int nWidthTxt = 0;
     int nSpaceBewteenLines = font->h;
     int nBlack = 0;     
+    outputFormatObj *format = NULL;
 
     if (map) {
       width = map->width;
       height = map->height;
-      imagetype = map->imagetype;
-      transparent = map->transparent;
+      format = map->outputformat;
     }
+
+    if( format == NULL )
+        format = msCreateDefaultOutputFormat( NULL, "image/gif" );
+    if( format == NULL )
+        format = msCreateDefaultOutputFormat( NULL, "image/png" );
+
     img = gdImageCreate(width, height);
     color = gdImageColorAllocate(img, 255,255,255);  // BG color
     nBlack = gdImageColorAllocate(img, 0,0,0);        // Text color
@@ -152,9 +158,12 @@ int msWMSException(mapObj *map, const char *wmtversion)
     //gdImageString(img, font, 5, height/2, errormsg, color);
     }
 
-    printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(imagetype), 10,10);
-    msSaveImageGD(img, NULL, imagetype, transparent, 0, -1);
+    printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
+    msSaveImageGD(img, NULL, format);
     gdImageDestroy(img);
+
+    if( format->refcount == 0 )
+        msFreeOutputFormat( format );
 
   }
   else if (strcasecmp(wms_exception_format, "WMS_XML") == 0) // Only in V1.0.0 
@@ -266,6 +275,8 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
   int i, adjust_extent = MS_FALSE;
   int iUnits = -1;
   int nLayerOrder = 0;
+  int transparent = MS_NOOVERRIDE;
+  outputFormatObj *format = NULL;
    
   // Some of the getMap parameters are actually required depending on the 
   // request, but for now we assume all are optional and the map file 
@@ -378,26 +389,22 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       map->height = atoi(values[i]);
     }
     else if (strcasecmp(names[i], "FORMAT") == 0) {
-      if (strcasecmp(values[i], "GIF") == 0 || 
-          strcasecmp(values[i], "image/gif") == 0)
-        map->imagetype = MS_GIF;
-      else if (strcasecmp(values[i], "PNG") == 0 ||
-               strcasecmp(values[i], "image/png") == 0)
-        map->imagetype = MS_PNG;
-      else if (strcasecmp(values[i], "JPEG") == 0 ||
-               strcasecmp(values[i], "image/jpeg") == 0)
-        map->imagetype = MS_JPEG;
-      else if (strcasecmp(values[i], "WBMP") == 0 ||
-               strcasecmp(values[i], "image/wbmp") == 0)
-        map->imagetype = MS_WBMP;
-      else {
+
+      format = msSelectOutputFormat( map, values[i] );
+
+      if( format == NULL ) {
         msSetError(MS_IMGERR, 
-                   "Unsupported output format.", "msWMSLoadGetMapParams()");
+                   "Unsupported output format (%s).", 
+                   "msWMSLoadGetMapParams()",
+                   values[i] );
         return msWMSException(map, wmtver);
       }
+
+      msFree( map->imagetype );
+      map->imagetype = strdup(values[i]);
     }
     else if (strcasecmp(names[i], "TRANSPARENT") == 0) {
-      map->transparent = (strcasecmp(values[i], "TRUE") == 0);
+      transparent = (strcasecmp(values[i], "TRUE") == 0);
     }
     else if (strcasecmp(names[i], "BGCOLOR") == 0) {
       long c;
@@ -407,6 +414,15 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       map->imagecolor.blue = c&0xff;
     }
   }
+
+  /*
+  ** Apply the selected output format (if one was selected), and override
+  ** the transparency if needed.
+  */
+
+  if( format != NULL )
+      msApplyOutputFormat( &(map->outputformat), format, transparent, 
+                           MS_NOOVERRIDE, MS_NOOVERRIDE );
 
   /*
   ** WMS extents are edge to edge while MapServer extents are center of
@@ -983,7 +999,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 
   if (strcasecmp(wmtver, "1.0.7") <= 0)
   {
-    // WMS 1.0.0 to 1.0.7
+    // WMS 1.0.0 to 1.0.7 - We don't try to use outputformats list here for now
     printRequestCap(wmtver, "Map", script_url, 
 #ifdef USE_GD_GIF
                       "<GIF />"
@@ -1003,27 +1019,22 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   }
   else
   {
+    char *mime_list[20];
     // WMS 1.0.8, 1.1.0 and later
     // Note changes to the request names, their ordering, and to the formats
 
     printRequestCap(wmtver, "GetCapabilities", script_url, 
                     "application/vnd.ogc.wms_xml", 
                     NULL);
-
-    printRequestCap(wmtver, "GetMap", script_url
-#ifdef USE_GD_GIF
-                      , "image/gif"
-#endif
-#ifdef USE_GD_PNG
-                      , "image/png"
-#endif
-#ifdef USE_GD_JPEG
-                      , "image/jpeg"
-#endif
-#ifdef USE_GD_WBMP
-                      , "image/wbmp"
-#endif
-                      , NULL);
+    
+    msGetOutputFormatMimeList(map,mime_list,sizeof(mime_list)/sizeof(char*));
+    printRequestCap(wmtver, "GetMap", script_url,
+                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                    NULL );
 
     pszMimeType = msLookupHashTable(map->web.metadata, "WMS_FEATURE_INFO_MIME_TYPE");
     if (pszMimeType && strcasecmp(pszMimeType, "NONE") == 0)
@@ -1259,9 +1270,8 @@ int msWMSGetMap(mapObj *map, const char *wmtver)
   if (img == NULL)
       return msWMSException(map, wmtver);
 
-  printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->imagetype), 10,10);
-  if (msSaveImage(img, NULL, map->transparent,
-                  map->interlace, map->imagequality) != MS_SUCCESS)
+  printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+  if (msSaveImage(map, img, NULL) != MS_SUCCESS)
       return msWMSException(map, wmtver);
 
   msFreeImage(img);

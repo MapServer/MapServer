@@ -14,6 +14,7 @@
 
 #ifdef USE_MING_FLASH
 
+#include <assert.h>
 #include "map.h"
 
 static char gszFilename[128];
@@ -617,7 +618,7 @@ SWFButton   BuildButtonPolygon(gdPoint adfPoints[], int nPoints,
                                colorObj *psHighlightColor)
 {
     SWFButton b;
-    int bFill = 0;
+    //int bFill = 0;
 
     b = newSWFButton();
 
@@ -672,7 +673,7 @@ SWFButton   BuildButtonLine(gdPoint adfPoints[], int nPoints,
                             colorObj *psHighlightColor)
 {
     SWFButton b;
-    int bFill = 0;
+    //int bFill = 0;
 
     b = newSWFButton();
 
@@ -718,15 +719,19 @@ SWFButton   BuildButtonLine(gdPoint adfPoints[], int nPoints,
 /*                                                                      */
 /*      Utility function to create an image object of SWF type          */
 /************************************************************************/
-imageObj *msImageCreateSWF(int width, int height, char *imagepath,
-                           char *imageurl, mapObj *map)
+imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
+                           char *imagepath, char *imageurl, mapObj *map)
 {
 
     imageObj *image = NULL;
 
-    image = (imageObj *)malloc(sizeof(imageObj));
+    assert( strcasecmp(format->driver,"SWF") == 0 );
 
-    image->imagetype = MS_SWF;
+    image = (imageObj *)calloc(1,sizeof(imageObj));
+
+    image->format = format;
+    format->refcount++;
+
     image->width = width;
     image->height = height;
     image->imagepath = NULL;
@@ -765,7 +770,7 @@ imageObj *msImageCreateSWF(int width, int height, char *imagepath,
 void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 {
     int nTmp = 0;
-    if (image && image->imagetype == MS_SWF)
+    if (image && MS_DRIVER_SWF(image->format) )
     {
         image->img.swf->nLayerMovies++;
         nTmp = image->img.swf->nLayerMovies;
@@ -804,8 +809,6 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     int j;
     gdPoint mPoints[MS_MAXVECTORPOINTS];
 
-    int tmp_fc=-1, tmp_oc=-1;
-
     double scale=1.0;
 
     rectObj rect;
@@ -834,7 +837,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
-    if (image == NULL || image->imagetype != MS_SWF)
+    if (image == NULL || !MS_DRIVER_SWF(image->format) )
         return;
 
     if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
@@ -1212,7 +1215,7 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
-    if (image == NULL || image->imagetype != MS_SWF)
+    if (image == NULL || !MS_DRIVER_SWF(image->format) )
         return;
 
     if(p == NULL || p->numlines <= 0)
@@ -1264,25 +1267,19 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     int         nTmp = 0;
     colorObj    *psFillColor = NULL;
     colorObj    *psOutlineColor = NULL;
-    colorObj    *psBackgroungColor = NULL;
     
     gdImagePtr  tile = NULL;
-    int         bDestroyImage = 0;
+    //int         bDestroyImage = 0;
     unsigned char *data, *dbldata;
     int         size;
     int         bytesPerColor;
 
-
     FILE        *out;
 
-    int nttt;
-    char *sttt = NULL;
-    
-    //nttt = strlen(sttt);
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
-    if (image == NULL || image->imagetype != MS_SWF)
+    if (image == NULL || !MS_DRIVER_SWF(image->format) )
         return;
     
     if(p == NULL || p->numlines <= 0)
@@ -1376,7 +1373,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
-    if (image == NULL || image->imagetype != MS_SWF)
+    if (image == NULL || !MS_DRIVER_SWF(image->format))
         return 0;
 
 /* -------------------------------------------------------------------- */
@@ -1539,7 +1536,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     
     int         nCurrentMovie = 0;
 
-    if (!image || image->imagetype != MS_SWF)
+    if (!image || !MS_DRIVER_SWF(image->format))
         return -1;
 
 
@@ -1792,7 +1789,7 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
     pointObj p;
     rectObj r;
 
-    if (!image || image->imagetype != MS_SWF)
+    if (!image || !MS_DRIVER_SWF(image->format))
         return 0;
 
     if(!string)
@@ -1815,8 +1812,8 @@ int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
     int         nTmp = 0;
     gdImagePtr  imgtmp = NULL;
     SWFShape    oShape;
-     FILE *out;
-    if (!image || image->imagetype != MS_SWF || image->width <= 0 ||
+
+    if (!image || !MS_DRIVER_SWF(image->format) || image->width <= 0 ||
         image->height <= 0)
         return -1;
     
@@ -1851,7 +1848,7 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
     gdImagePtr  imgtmp = NULL;
     SWFShape    oShape;
 
-    if (!image || image->imagetype != MS_SWF || image->width <= 0 ||
+    if (!image || !MS_DRIVER_SWF(image->format) || image->width <= 0 ||
         image->height <= 0)
         return -1;
     
@@ -1877,7 +1874,6 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /************************************************************************/
 int msSaveImageSWF(imageObj *image, char *filename)
 {
-    SWFMovie    *psMovie = NULL;
     int         i, nLayers = 0;
     char        szBase[100];
     char        szExt[5];
@@ -1887,7 +1883,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
     char        szAction[200];
     SWFAction   oAction;
 
-    if (image && image->imagetype == MS_SWF && filename)
+    if (image && MS_DRIVER_SWF(image->format) && filename)
     {
         
         nLayers = image->img.swf->nLayerMovies;
@@ -1950,7 +1946,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
 void msFreeImageSWF(imageObj *image)
 {
     int i = 0;
-    if (image && image->imagetype == MS_SWF)
+    if (image && MS_DRIVER_SWF(image->format) )
     {
         destroySWFMovie(image->img.swf->sMainMovie);
         for (i=0; i<image->img.swf->nLayerMovies; i++)
