@@ -221,7 +221,9 @@ gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wi
      return(NULL);
    
    // Call drawLegendIcon with destination (0, 0)
-   msDrawLegendIcon(map, lp, class, width, height, img, 0, 0);
+   // Return an empty image if lp==NULL || class=NULL
+   if (lp && class)
+       msDrawLegendIcon(map, lp, class, width, height, img, 0, 0);
    
    return img;
 }

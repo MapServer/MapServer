@@ -694,9 +694,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
    
    if (!map || 
        nIdxLayer > map->numlayers || 
-       nIdxLayer < 0 || 
-       nIdxClass > map->layers[nIdxLayer].numclasses || 
-       nIdxClass < 0) {
+       nIdxLayer < 0 ) {
      msSetError(MS_WEBERR, "Invalid pointer.", "processIcon()");
      return MS_FAILURE;
    }
@@ -741,8 +739,18 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       else
       {
          // Create an image corresponding to the current class
-         img = msCreateLegendIcon(map, &(map->layers[nIdxLayer]), &(map->layers[nIdxLayer].class[nIdxClass]), nWidth, nHeight);
-         
+         if ( nIdxClass > map->layers[nIdxLayer].numclasses || nIdxClass < 0)
+         {
+             // Nonexistent class.  Create an empty image
+             img = msCreateLegendIcon(map, NULL, NULL, nWidth, nHeight);
+         }
+         else
+         {
+            img = msCreateLegendIcon(map, &(map->layers[nIdxLayer]), 
+                                     &(map->layers[nIdxLayer].class[nIdxClass]), 
+                                     nWidth, nHeight);
+         }
+
          if(!img) {
             if (myHashTable)
               msFreeHashTable(myHashTable);
@@ -928,8 +936,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    if (!pszLayerTemplate || 
        !map || 
        nIdxLayer > map->numlayers ||
-       nIdxLayer < 0 ||
-       map->layers[nIdxLayer].numclasses == 0) {
+       nIdxLayer < 0 ) {
      msSetError(MS_WEBERR, "Invalid pointer.", "generateLayerTemplate()");
      return MS_FAILURE;
    }
