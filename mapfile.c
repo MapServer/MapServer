@@ -1385,6 +1385,8 @@ int initLayer(layerObj *layer)
 void freeLayer(layerObj *layer) {
   int i;
 
+  msLayerClose(layer);
+
   free(layer->name);
   free(layer->group);
   free(layer->data);

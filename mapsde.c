@@ -379,6 +379,7 @@ void msSDELayerClose(layerObj *layer) {
   sdeLayerObj *sde=NULL;
 
   sde = layer->sdelayer;
+  if (sde == NULL) return;  // Silently return if layer not opened.
 
   SE_table_free_descriptions(sde->itemdefs);
   SE_stream_free(sde->stream);

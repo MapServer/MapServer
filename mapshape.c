@@ -999,9 +999,11 @@ int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
 
 void msSHPCloseFile(shapefileObj *shpfile)
 {
-  if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
-  if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
-  if(shpfile->status) free(shpfile->status);
+  if (shpfile) { // Silently return if called with NULL shpfile by freeLayer()
+      if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
+      if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
+      if(shpfile->status) free(shpfile->status);
+  }
 }
 
 // status array lives in the shpfile, can return MS_SUCCESS/MS_FAILURE/MS_DONE
