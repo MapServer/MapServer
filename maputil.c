@@ -94,7 +94,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     status = msyyparse();
     free(tmpstr);
 
-    if(status != 0) return(MS_FALSE); // error in parse
+    if(status != 0) return(MS_FALSE); // error in parse (TO DO: we should generate an error here!)
 
     return(msyyresult);
     break;
