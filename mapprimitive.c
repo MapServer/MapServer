@@ -447,38 +447,48 @@ void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out)
 /*
 ** Converts from map coordinates to image coordinates
 */
-void msTransformPolygon(rectObj extent, double cellsize, shapeObj *p)
+void msTransformShape(rectObj extent, double cellsize, shapeObj *shape)
 {
   int i,j,k; /* loop counters */
 
-  if(p->numlines == 0)
+  if(shape->numlines == 0)
     return; /* nothing to do */  
+
+  if(shape->type == MS_LINE || shape->type == MS_POLYGON) { // remove co-linear vertices
   
-  for(i=0; i<p->numlines; i++) { /* for each line */
-    
-    p->line[i].point[0].x = MS_NINT((p->line[i].point[0].x - extent.minx)/cellsize);
-    p->line[i].point[0].y = MS_NINT((extent.maxy - p->line[i].point[0].y)/cellsize);
+    for(i=0; i<shape->numlines; i++) { // for each part
       
-    for(j=1, k=1; j < p->line[i].numpoints; j++ ) {
+      shape->line[i].point[0].x = MS_NINT((shape->line[i].point[0].x - extent.minx)/cellsize);
+      shape->line[i].point[0].y = MS_NINT((extent.maxy - shape->line[i].point[0].y)/cellsize);
       
-      p->line[i].point[k].x = MS_NINT((p->line[i].point[j].x - extent.minx)/cellsize); 
-      p->line[i].point[k].y = MS_NINT((extent.maxy - p->line[i].point[j].y)/cellsize);
-      
-      if(k == 1) {
-	if((p->line[i].point[0].x != p->line[i].point[1].x) || (p->line[i].point[0].y != p->line[i].point[1].y))
-	  k++;
-      } else {
-	if((p->line[i].point[k-1].x != p->line[i].point[k].x) || (p->line[i].point[k-1].y != p->line[i].point[k].y)) {
-	  if(((p->line[i].point[k-2].y - p->line[i].point[k-1].y)*(p->line[i].point[k-1].x - p->line[i].point[k].x)) == ((p->line[i].point[k-2].x - p->line[i].point[k-1].x)*(p->line[i].point[k-1].y - p->line[i].point[k].y))) {	    
-	    p->line[i].point[k-1].x = p->line[i].point[k].x;
-	    p->line[i].point[k-1].y = p->line[i].point[k].y;	
-	  } else {
+      for(j=1, k=1; j < shape->line[i].numpoints; j++ ) {
+	
+	shape->line[i].point[k].x = MS_NINT((shape->line[i].point[j].x - extent.minx)/cellsize); 
+	shape->line[i].point[k].y = MS_NINT((extent.maxy - shape->line[i].point[j].y)/cellsize);
+	
+	if(k == 1) {
+	  if((shape->line[i].point[0].x != shape->line[i].point[1].x) || (shape->line[i].point[0].y != shape->line[i].point[1].y))
 	    k++;
+	} else {
+	  if((shape->line[i].point[k-1].x != shape->line[i].point[k].x) || (shape->line[i].point[k-1].y != shape->line[i].point[k].y)) {
+	    if(((shape->line[i].point[k-2].y - shape->line[i].point[k-1].y)*(shape->line[i].point[k-1].x - shape->line[i].point[k].x)) == ((shape->line[i].point[k-2].x - shape->line[i].point[k-1].x)*(shape->line[i].point[k-1].y - shape->line[i].point[k].y))) {	    
+	      shape->line[i].point[k-1].x = shape->line[i].point[k].x;
+	      shape->line[i].point[k-1].y = shape->line[i].point[k].y;	
+	    } else {
+	      k++;
+	    }
 	  }
 	}
       }
+      shape->line[i].numpoints = k; // save actual number kept
     }
-    p->line[i].numpoints = k; /* save actual number kept */
+  } else { // points or untyped shapes
+    for(i=0; i<shape->numlines; i++) { // for each part
+      for(j=1; j < shape->line[i].numpoints; j++ ) {
+	shape->line[i].point[j].x = MS_NINT((shape->line[i].point[j].x - extent.minx)/cellsize); 
+	shape->line[i].point[j].y = MS_NINT((extent.maxy - shape->line[i].point[j].y)/cellsize);
+      }
+    }
   }
 
   return;
@@ -789,15 +799,15 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
   get_bbox(p, &minx, &miny, &maxx, &maxy);
 
   if(min_dimension != -1)
-    if(MS_MIN(maxx-minx,maxy-miny) < min_dimension) return(-1);
+    if(MS_MIN(maxx-minx,maxy-miny) < min_dimension) return(MS_FAILURE);
 
   lp->x = (maxx+minx)/2.0;
   lp->y = (maxy+miny)/2.0;
 
-  //if(get_centroid(p, lp, &miny, &maxy) == -1) return(-1);
+  //if(get_centroid(p, lp, &miny, &maxy) == -1) return(MS_FAILURE);
 
   if(msIntersectPointPolygon(lp, p) == MS_TRUE) /* cool, done */
-    return(0);
+    return(MS_SUCCESS);
 
   /* do it the hard way - scanline */
 
@@ -839,7 +849,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
     }
 
     if(lo_y == hi_y) 
-      return (-1);
+      return (MS_FAILURE);
     else  
       y = (hi_y + lo_y)/2.0;    
     
@@ -893,9 +903,9 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
   free(xintersect);
 
   if(max_len > 0)
-    return(0);
+    return(MS_SUCCESS);
   else
-    return(-1);
+    return(MS_FAILURE);
 }
 
 /*
@@ -936,10 +946,10 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
   }
 
   if(segment_index == 0) /* must have a degenerate line, skip it */
-    return(-1);
+    return(MS_FAILURE);
 
   if((min_length != -1) && (total_length < min_length)) /* too short to label */
-    return(-1);
+    return(MS_FAILURE);
 
   // ok, now we know which line and which segment within that line
   i = line_index;
@@ -964,5 +974,5 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
       *angle = -MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);      
   }
 
-  return(0);
+  return(MS_SUCCESS);
 }

@@ -691,7 +691,7 @@ void msComputeBounds(shapeObj *shape);
 void msRectToPolygon(rectObj rect, shapeObj *poly);
 void msClipPolylineRect(shapeObj *in, rectObj rect, shapeObj *out);
 void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out);
-void msTransformPolygon(rectObj extent, double cellsize, shapeObj *p);
+void msTransformShape(rectObj extent, double cellsize, shapeObj *shape);
 void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
 void msImagePolyline(gdImagePtr img, shapeObj *p, int c);
 void msImageFilledPolygon(gdImagePtr img, shapeObj *p, int c);
