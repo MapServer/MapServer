@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.51  2001/09/13 20:58:01  dan
+ * Fixed handling of objects and refcounts vs PHP4.0.6... thanks to Zeev Suraski
+ * for his help.  See bug#30 and #40.
+ *
  * Revision 1.50  2001/09/10 15:37:24  assefa
  * Add error messages in the zoom functions when the extents given are
  * wrong.
@@ -56,57 +60,6 @@
  *
  * Revision 1.43  2001/04/19 15:11:34  dan
  * Sync with mapscript.i v.1.32
- *
- * Revision 1.42  2001/04/03 23:16:19  dan
- * Fixed args to calls to reprojection functions
- *
- * Revision 1.41  2001/03/30 04:16:14  dan
- * Removed shapepath parameter to layer->getshape()
- *
- * Revision 1.40  2001/03/21 21:55:28  dan
- * Added get/setMetaData() for layerObj and mapObj()
- *
- * Revision 1.39  2001/03/20 15:55:10  dan
- * Fixed crash caused by lp->itemindexes[] and lp->items[] becoming out of sync
- *
- * Revision 1.38  2001/03/18 17:23:03  dan
- * Default to selecting all fields in layer->open()
- *
- * Revision 1.37  2001/03/15 04:48:35  dan
- * Fixed maplayer.c - had been committed with conflicts in it
- *
- * Revision 1.36  2001/03/13 16:59:41  dan
- * Removed unused vars with PHP4 + added layer->getvalue() for testing.
- *
- * Revision 1.35  2001/03/12 19:02:46  dan
- * Added query-related stuff in PHP MapScript
- *
- * Revision 1.34  2001/03/12 14:48:07  assefa
- * Correct error in zoom rectangle.
- *
- * Revision 1.33  2001/03/09 19:33:13  dan
- * Updated PHP MapScript... still a few methods missing, and needs testing.
- *
- * Revision 1.32  2001/03/07 22:13:13  assefa
- * Make sure to call msAdjustExtent in the zoom functions.
- *
- * Revision 1.31  2001/03/07 19:01:34  assefa
- * Add an argument to zoomrectangle to handle maxextents.
- *
- * Revision 1.30  2001/03/03 01:03:43  dan
- * Fixes in saveImage() for new GD stuff + added ms_GetVersion()
- *
- * Revision 1.29  2001/02/24 01:07:42  dan
- * Fixed undefined symbols on Windoze
- *
- * Revision 1.28  2001/02/23 21:58:00  dan
- * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
- *
- * Revision 1.27  2001/01/09 20:21:17  dan
- * Use PHP's virtual_cwd to open a .map file ONLY on WINNT
- *
- * Revision 1.26  2001/01/09 05:24:41  dan
- * Fixes to build with PHP 4.0.4
  *
  * ...
  *
@@ -140,7 +93,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Aug 29, 2001)"
+#define PHP3_MS_VERSION "(Spet 13, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -864,9 +817,13 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pFname;
     mapObj      *pNewObj = NULL;
     int         map_id;
-    pval        new_obj_param;  /* No, it's not a pval * !!! */
 #ifdef PHP4
+    pval        *new_obj_ptr;
     HashTable   *list=NULL;
+#else
+    pval        new_obj_param;  /* No, it's not a pval * !!! */
+    pval        *new_obj_ptr;
+    new_obj_ptr = &new_obj_param;
 #endif
 
     if (getParameters(ht, 1, &pFname) != SUCCESS)
@@ -924,10 +881,12 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value,  "transparent", pNewObj->transparent);
     add_property_long(return_value,  "interlace", pNewObj->interlace);
 
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
     _phpms_build_rect_object(&(pNewObj->extent), PHPMS_GLOBAL(le_msrect_ref),
-                             list, &new_obj_param);
-
-    _phpms_add_property_object(return_value, "extent", &new_obj_param,E_ERROR);
+                             list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR);
 
     add_property_double(return_value,"cellsize",  pNewObj->cellsize);
     add_property_long(return_value,  "units",     pNewObj->units);
@@ -939,20 +898,24 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value, "keyspacingy",pNewObj->legend.keyspacingy);
 
 
-    _phpms_build_color_object(&(pNewObj->imagecolor),list, &new_obj_param);
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_color_object(&(pNewObj->imagecolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
 
-    _phpms_add_property_object(return_value, 
-                               "imagecolor", &new_obj_param,E_ERROR);
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_web_object(&(pNewObj->web), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "web", new_obj_ptr, E_ERROR);
 
-
-    _phpms_build_web_object(&(pNewObj->web), list, &new_obj_param);
-    _phpms_add_property_object(return_value, "web", &new_obj_param,E_ERROR);
-
-
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
     _phpms_build_referenceMap_object(&(pNewObj->reference), list, 
-                                     &new_obj_param);
-    _phpms_add_property_object(return_value, 
-                               "reference", &new_obj_param, E_ERROR);
+                                     new_obj_ptr);
+    _phpms_add_property_object(return_value, "reference", new_obj_ptr,E_ERROR);
 
     return;
 }
@@ -2704,7 +2667,7 @@ DLEXPORT void php3_ms_map_getLayer(INTERNAL_FUNCTION_PARAMETERS)
     /* We will store a reference to the parent object id (this) inside
      * the layer obj.
      */
-    map_id = _phpms_fetch_property_long(pThis, "_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
 
     /* Return layer object */
     _phpms_build_layer_object(newLayer, map_id, list, return_value);
@@ -2765,7 +2728,7 @@ DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS)
     /* We will store a reference to the parent object id (this) inside
      * the layer obj.
      */
-    map_id = _phpms_fetch_property_long(pThis, "_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
 
     /* Return layer object */
     _phpms_build_layer_object(newLayer, map_id, list, return_value);
@@ -3573,15 +3536,15 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     {
         return 0;
     }
-    
+
     layer_id = php3_list_insert(player, PHPMS_GLOBAL(le_mslayer));
 
     _phpms_object_init(return_value, layer_id, php_layer_class_functions,
                        PHP4_CLASS_ENTRY(layer_class_entry_ptr));
 
 #ifdef PHP4
-    add_property_resource(return_value, "_map_handle_", parent_map_id);
     zend_list_addref(parent_map_id);
+    add_property_resource(return_value, "_map_handle_", parent_map_id);
 #else
     add_property_long(return_value, "_map_handle_", parent_map_id);
 #endif
@@ -3660,7 +3623,7 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
     /* We will store a reference to the parent_map object id inside
      * the layer obj.
      */
-    map_id = _phpms_fetch_property_long(pMapObj, "_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pMapObj, "_handle_", E_ERROR);
 
     /* Return layer object */
     _phpms_build_layer_object(pNewLayer, map_id, list, return_value);
@@ -3891,7 +3854,7 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
     /* We will store a reference to the parent object id (this) inside
      * the class obj.
      */
-    layer_id = _phpms_fetch_property_long(pThis, "_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
 
     /* Return layer object */
     _phpms_build_class_object(newClass, layer_id, list, return_value);
@@ -4771,7 +4734,13 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
                                       HashTable *list, pval *return_value)
 {
     int class_id;
-    pval new_obj_param;  /* No, it's not a pval * !!! */
+#ifdef PHP4
+    pval        *new_obj_ptr;
+#else
+    pval        new_obj_param;  /* No, it's not a pval * !!! */
+    pval        *new_obj_ptr;
+    new_obj_ptr = &new_obj_param;
+#endif
 
     if (pclass == NULL)
         return 0;
@@ -4812,8 +4781,11 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
                                                 pclass->overlaysymbolname);
     PHPMS_ADD_PROP_STR(return_value,  "template",   pclass->template);
 
-    _phpms_build_label_object(&(pclass->label), list, &new_obj_param);
-    _phpms_add_property_object(return_value, "label", &new_obj_param,E_ERROR);
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
+    _phpms_build_label_object(&(pclass->label), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR);
 
     return class_id;
 }
@@ -4855,7 +4827,7 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
     /* We will store a reference to the parent_layer object id inside
      * the class obj.
      */
-    layer_id = _phpms_fetch_property_long(pLayerObj, "_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pLayerObj, "_handle_", E_ERROR);
 
     /* Return class object */
     _phpms_build_class_object(pNewClass, layer_id, list, return_value);
@@ -5880,7 +5852,13 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
                                       HashTable *list, pval *return_value)
 {
     int     shape_id;
-    pval    new_obj_param;  /* No, it's not a pval * !!! */
+#ifdef PHP4
+    pval        *new_obj_ptr;
+#else
+    pval        new_obj_param;  /* No, it's not a pval * !!! */
+    pval        *new_obj_ptr;
+    new_obj_ptr = &new_obj_param;
+#endif
 
     if (pshape == NULL)
         return 0;
@@ -5899,9 +5877,12 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
     add_property_long(return_value, "numvalues", pshape->numvalues);
     PHPMS_ADD_PROP_STR(return_value,"text",     pshape->text);
 
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
     _phpms_build_rect_object(&(pshape->bounds), PHPMS_GLOBAL(le_msrect_ref), 
-                             list, &new_obj_param);
-    _phpms_add_property_object(return_value, "bounds", &new_obj_param,E_ERROR);
+                             list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR);
 
     /* Package values as an associative array
      * For now we do this only for shapes returned from map layers, and not
@@ -5910,14 +5891,17 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
     if (pLayer && pshape->numvalues && pshape->numvalues == pLayer->numitems)
     {
         int i;
-        array_init(&new_obj_param);
+#ifdef PHP4
+        MAKE_STD_ZVAL(new_obj_ptr);
+#endif
+        array_init(new_obj_ptr);
         for(i=0; i<pshape->numvalues; i++)
         {
-            add_assoc_string(&new_obj_param, 
+            add_assoc_string(new_obj_ptr, 
                              pLayer->items[i], pshape->values[i], 1);
         }
         _phpms_add_property_object(return_value, "values", 
-                                   &new_obj_param, E_ERROR);
+                                   new_obj_ptr, E_ERROR);
     }
     else if (pLayer)
     {
@@ -6376,7 +6360,13 @@ static long _phpms_build_web_object(webObj *pweb,
                                     HashTable *list, pval *return_value)
 {
     int         web_id;
+#ifdef PHP4
+    pval        *new_obj_ptr;
+#else
     pval        new_obj_param;  /* No, it's not a pval * !!! */
+    pval        *new_obj_ptr;
+    new_obj_ptr = &new_obj_param;
+#endif
 
     if (pweb == NULL)
         return 0;
@@ -6399,9 +6389,12 @@ static long _phpms_build_web_object(webObj *pweb,
     add_property_double(return_value,   "minscale",       pweb->minscale);
     add_property_double(return_value,   "maxscale",       pweb->maxscale);
     
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
     _phpms_build_rect_object(&(pweb->extent), PHPMS_GLOBAL(le_msrect_ref), 
-                             list, &new_obj_param);
-    _phpms_add_property_object(return_value, "extent", &new_obj_param,E_ERROR);
+                             list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "extent", new_obj_ptr,E_ERROR);
 
     return web_id;
 }
@@ -6881,7 +6874,13 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
                                     HashTable *list, pval *return_value)
 {
     int         reference_id;
+#ifdef PHP4
+    pval        *new_obj_ptr;
+#else
     pval        new_obj_param;  /* No, it's not a pval * !!! */
+    pval        *new_obj_ptr;
+    new_obj_ptr = &new_obj_param;
+#endif
 
     if (preference == NULL)
         return 0;
@@ -6897,16 +6896,25 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
     add_property_long(return_value,   "height",  preference->height);
     add_property_long(return_value,   "status",  preference->status);
     
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
     _phpms_build_rect_object(&(preference->extent), 
-                             PHPMS_GLOBAL(le_msrect_ref),list, &new_obj_param);
-    _phpms_add_property_object(return_value, "extent", &new_obj_param,E_ERROR);
+                             PHPMS_GLOBAL(le_msrect_ref),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "extent", new_obj_ptr, E_ERROR);
 
-    _phpms_build_color_object(&(preference->color),list, &new_obj_param);
-    _phpms_add_property_object(return_value, "color", &new_obj_param,E_ERROR);
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
+    _phpms_build_color_object(&(preference->color),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "color", new_obj_ptr, E_ERROR);
 
-    _phpms_build_color_object(&(preference->outlinecolor),list,&new_obj_param);
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
+    _phpms_build_color_object(&(preference->outlinecolor),list, new_obj_ptr);
     _phpms_add_property_object(return_value, "outlinecolor", 
-                               &new_obj_param, E_ERROR);
+                               new_obj_ptr, E_ERROR);
 
     return reference_id;
 }
@@ -6986,7 +6994,13 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
                                           HashTable *list, pval *return_value)
 {
     int shapefile_id;
-    pval    new_obj_param;  /* No, it's not a pval * !!! */
+#ifdef PHP4
+    pval        *new_obj_ptr;
+#else
+    pval        new_obj_param;  /* No, it's not a pval * !!! */
+    pval        *new_obj_ptr;
+    new_obj_ptr = &new_obj_param;
+#endif
 
     if (pshapefile == NULL)
         return 0;
@@ -7002,10 +7016,12 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
     add_property_long(return_value, "type",       pshapefile->numshapes);
     PHPMS_ADD_PROP_STR(return_value,"source",     pshapefile->source);
 
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
     _phpms_build_rect_object(&(pshapefile->bounds), 
-                             PHPMS_GLOBAL(le_msrect_ref), 
-                             list, &new_obj_param);
-    _phpms_add_property_object(return_value, "bounds", &new_obj_param,E_ERROR);
+                             PHPMS_GLOBAL(le_msrect_ref), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "bounds", new_obj_ptr,E_ERROR);
 
     return shapefile_id;
 }
