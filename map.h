@@ -409,6 +409,8 @@ typedef struct {
 
   int offsetx, offsety; // for shadows, hollow symbols, etc...
 
+  double angle; // for future use
+
   int antialias;
 
 #ifndef SWIG

@@ -376,7 +376,7 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 
   status = msWCSGetCoverageMetadata(layer, &cm);
   if(status != MS_SUCCESS) return MS_FAILURE;
-  
+ 
   // start the CoverageOfferingBrief section
   printf("  <CoverageOfferingBrief>\n"); // is this tag right (I hate schemas without ANY examples)
 
@@ -1031,6 +1031,8 @@ return msWCSGetCoverage(map, request, params);
 #ifdef USE_WCS_SVR
 static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 {
+  projectionObj llproj;
+ 
   // get information that is "data" independent
   if((cm->srs = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "COM", MS_TRUE)) == NULL) {
     if((cm->srs = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "COM", MS_TRUE)) == NULL) {
@@ -1194,7 +1196,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
  
   // we must have the bounding box in lat/lon [WGS84(DD)/EPSG:4326]
   cm->llextent = cm->extent;
-
+  
   // Already in latlong .. use directly.
   if( layer->projection.proj != NULL && pj_is_latlong(layer->projection.proj))
   {
@@ -1215,7 +1217,7 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 
     sprintf(projstring, "init=epsg:%.20s", cm->srs+5);
     if (msLoadProjectionString(&proj, projstring) != 0) return MS_FAILURE;
-    msProjectRect(&proj, NULL, &(cm->llextent));
+    msProjectRect(&proj, NULL, &(cm->llextent));    
   }
 
   return MS_SUCCESS;

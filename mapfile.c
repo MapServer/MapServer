@@ -1462,9 +1462,9 @@ int initStyle(styleObj *style) {
   style->minsize = MS_MINSYMBOLSIZE;
   style->maxsize = MS_MAXSYMBOLSIZE;
   style->offsetx = style->offsety = 0; // no offset
-  style->offsetx = style->offsety = 0;
   style->antialias = MS_FALSE;
   style->isachild = MS_TRUE;
+  style->angle = 0;
   return MS_SUCCESS;
 }
 
@@ -1473,6 +1473,9 @@ int loadStyle(styleObj *style) {
 
   for(;;) {
     switch(msyylex()) {
+    case(ANGLE):
+      if(getDouble(&(style->angle)) == -1) return(-1);
+      break;
     case(ANTIALIAS):
       if((style->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1)
 	return(-1);
@@ -1537,6 +1540,7 @@ void freeStyle(styleObj *style) {
 
 void writeStyle(styleObj *style, FILE *stream) {
   fprintf(stream, "      STYLE\n");
+  if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
   if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
   writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
 
