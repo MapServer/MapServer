@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/12/16 18:59:58  assefa
+ * Make sure map object is not null.
+ *
  * Revision 1.12  2002/11/19 17:56:18  frank
  * don't call GDALDestroyDriverManager() if GDAL is old
  *
@@ -147,7 +150,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /* -------------------------------------------------------------------- */
     if( filename == NULL )
     {
-        if( map->web.imagepath != NULL )
+        if( map != NULL && map->web.imagepath != NULL )
             filename = msTmpFile(map->web.imagepath, "img.tmp");
         else
         {
