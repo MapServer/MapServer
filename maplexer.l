@@ -327,7 +327,7 @@ int msyyreturncomments = 0;
                                                        msyytext++;
 			                               msyytext[strlen(msyytext)-1] = '\0'; 
                                                        msTimeInit(&msyylval.tmval);
-                                                       strptime(msyytext, "%Y-%m-%d", &msyylval.tmval);
+                                                       sprintf(msyytext, "%d-%02d-%02d", (msyylval.tmval.tm_year+1900), (msyylval.tmval.tm_mon+1));
                                                        return(TIME);
                                                      }
 
