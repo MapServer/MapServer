@@ -826,8 +826,8 @@ void setExtent()
     celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImgRows);
     Map->extent.minx = MS_IMAGE2MAP_X(ImgBox.minx, ImgExt.minx, cellx);
     Map->extent.maxx = MS_IMAGE2MAP_X(ImgBox.maxx, ImgExt.minx, cellx);
-    Map->extent.miny = MS_IMAGE2MAP_Y(ImgBox.miny, ImgExt.maxy, celly);
-    Map->extent.maxy = MS_IMAGE2MAP_Y(ImgBox.maxy, ImgExt.maxy, celly);
+    Map->extent.maxy = MS_IMAGE2MAP_Y(ImgBox.miny, ImgExt.maxy, celly); // y's are flip flopped because img/map coordinate systems are
+    Map->extent.miny = MS_IMAGE2MAP_Y(ImgBox.maxy, ImgExt.maxy, celly);
     break;
   case FROMIMGPNT:
     cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImgCols);
@@ -1780,11 +1780,11 @@ int main(int argc, char *argv[]) {
 	    
 	      cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImgCols); // calculate the new search extent
 	      celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImgRows);
-	      RawExt.minx = MS_IMAGE2MAP_X(ImgBox.minx, ImgExt.minx, cellx);
+	      RawExt.minx = MS_IMAGE2MAP_X(ImgBox.minx, ImgExt.minx, cellx);	      
 	      RawExt.maxx = MS_IMAGE2MAP_X(ImgBox.maxx, ImgExt.minx, cellx);
-	      RawExt.miny = MS_IMAGE2MAP_Y(ImgBox.miny, ImgExt.maxy, celly);
-	      RawExt.maxy = MS_IMAGE2MAP_Y(ImgBox.maxy, ImgExt.maxy, celly);
-	    
+	      RawExt.maxy = MS_IMAGE2MAP_Y(ImgBox.miny, ImgExt.maxy, celly); // y's are flip flopped because img/map coordinate systems are
+	      RawExt.miny = MS_IMAGE2MAP_Y(ImgBox.maxy, ImgExt.maxy, celly);
+
 	      if((status = msQueryByRect(Map, QueryLayerIndex, RawExt)) != MS_SUCCESS) writeError();
 	    }
 	    break;
