@@ -35,6 +35,9 @@ Version 4.2.1 (CVS)
 
 - Fixed problem with maxy in PHP MapScript's map->zoomscale() (bug 75)
 
+- Fixed $map->processTemplate() which was always returning NULL. 
+  Bug introduced in version 4.0 in all flavours of MapScript (bug 410)
+
 
 Version 4.2.0 (2004-05-25)
 --------------------------
