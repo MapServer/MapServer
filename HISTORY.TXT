@@ -16,6 +16,13 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Oracle Spatial:
+  Implemented connection pool support for Oracle Spatial. New layer data
+  parameters to support query functions, added "using unique <column name>".
+  Added "FILTER", "RELATE" and "GEOMRELATE" parameters, now permit users
+  choose the Oracle Spatial Filter. Modified the internal SQL to always
+  apply FILTER function. And improve the Oracle Spatial performance.
+
 - Centralize "stdout binary mode setting" for win32 in msIO_needBinaryStdout().
   Use it when writing GDAL files to stdout in mapgdal.c.  Fixes problems with
   output of binary files from GDAL outputformat drivers on win32 via WMS/WCS.
