@@ -10,10 +10,23 @@
 */
 static int layerInitItemInfo(layerObj *layer) 
 {
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-  case(MS_TILED_SHAPEFILE):
+  shapefileObj *shpfile;
 
+  switch(layer->connectiontype) {
+  case(MS_SHAPEFILE):    
+    shpfile = layer->layerinfo;
+
+    if(!shpfile) {
+      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerWhichShapes()");
+      return(MS_FAILURE);
+    }
+
+    // iteminfo needs to be a bit more complex, a list of indexes plus the length of the list
+    layer->iteminfo = (int *) msDBFGetItemIndexes(shpfile->hDBF, layer->items, layer->numitems);
+    if(!layer->iteminfo) return(MS_FAILURE);
+    return(MS_SUCCESS);
+    break;
+  case(MS_TILED_SHAPEFILE):
     // iteminfo needs to be a bit more complex, a list of indexes plus the length of the list
     layer->iteminfo = (int *) msDBFGetItemIndexes(layer->shpfile.hDBF, layer->items, layer->numitems);
     if(!layer->iteminfo) return(MS_FAILURE);
@@ -92,6 +105,7 @@ static void layerFreeItemInfo(layerObj *layer)
 int msLayerOpen(layerObj *layer)
 {
   char szPath[MS_MAXPATHLEN];
+  shapefileObj *shpfile;
 
   if(layer->features && layer->connectiontype != MS_GRATICULE ) 
     layer->connectiontype = MS_INLINE;
@@ -101,9 +115,21 @@ int msLayerOpen(layerObj *layer)
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data)) == -1) 
-      if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, layer->data)) == -1)
+    if(layer->layerinfo) return(MS_SUCCESS); // layer already open
+
+    // allocate space for a shapefileObj using layer->layerinfo	
+    shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
+    if(!shpfile) {
+      msSetError(MS_MEMERR, "Error allocating shapefileObj structure.", "msLayerOpen()");
+      return(MS_FAILURE);
+    }
+
+    layer->layerinfo = shpfile;
+
+    if(msSHPOpenFile(shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data)) == -1) 
+      if(msSHPOpenFile(shpfile, "rb", msBuildPath(szPath, layer->map->mappath, layer->data)) == -1)
         return(MS_FAILURE);
+   
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
@@ -155,21 +181,29 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
 {
   int i, n1=0, n2=0;
   int status;
+  shapefileObj *shpfile;
 
   switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-    status = msSHPWhichShapes(&(layer->shpfile), rect);
+  case(MS_SHAPEFILE):    
+    shpfile = layer->layerinfo;
+
+    if(!shpfile) {
+      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerWhichShapes()");
+      return(MS_FAILURE);
+    }
+
+    status = msSHPWhichShapes(shpfile, rect);
     if(status != MS_SUCCESS) return(status);
 
     // now apply the maxshapes criteria
     if(layer->maxfeatures > 0) {
-      for(i=0; i<layer->shpfile.numshapes; i++)
-        n1 += msGetBit(layer->shpfile.status,i);
+      for(i=0; i<shpfile->numshapes; i++)
+        n1 += msGetBit(shpfile->status,i);
     
       if(n1 > layer->maxfeatures) {
-        for(i=0; i<layer->shpfile.numshapes; i++) {
-          if(msGetBit(layer->shpfile.status,i) && (n2 < (n1 - layer->maxfeatures))) {
-	    msSetBit(layer->shpfile.status,i,0);
+        for(i=0; i<shpfile->numshapes; i++) {
+          if(msGetBit(shpfile->status,i) && (n2 < (n1 - layer->maxfeatures))) {
+	    msSetBit(shpfile->status,i,0);
 	    n2++;
           }
         }
@@ -222,19 +256,27 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 {
   int i, filter_passed;
   char **values=NULL;
+  shapefileObj *shpfile;
 
   switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-    do {
-      i = layer->shpfile.lastshape + 1;
-      while(i<layer->shpfile.numshapes && !msGetBit(layer->shpfile.status,i)) i++; // next "in" shape
-      layer->shpfile.lastshape = i;
+  case(MS_SHAPEFILE):    
+    shpfile = layer->layerinfo;
 
-      if(i == layer->shpfile.numshapes) return(MS_DONE); // nothing else to read
+    if(!shpfile) {
+      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerNextShape()");
+      return(MS_FAILURE);
+    }
+
+    do {
+      i = shpfile->lastshape + 1;
+      while(i<shpfile->numshapes && !msGetBit(shpfile->status,i)) i++; // next "in" shape
+      shpfile->lastshape = i;
+
+      if(i == shpfile->numshapes) return(MS_DONE); // nothing else to read
 
       filter_passed = MS_TRUE;  // By default accept ANY shape
       if(layer->numitems > 0 && layer->iteminfo) {
-        values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
+        values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
         if(!values) return(MS_FAILURE);
         if ((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
             msFreeCharArray(values, layer->numitems);
@@ -243,7 +285,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
       }
     } while(!filter_passed);  // Loop until both spatial and attribute filters match
 
-    msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
+    msSHPReadShape(shpfile->hSHP, i, shape); // ok to read the data now
 
     // skip NULL shapes (apparently valid for shapefiles, at least ArcView doesn't care)
     if(shape->type == MS_SHAPE_NULL) return(msLayerNextShape(layer, shape));
@@ -296,19 +338,27 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 */
 int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
+  shapefileObj *shpfile;
+
   switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
+  case(MS_SHAPEFILE):    
+    shpfile = layer->layerinfo;
+
+    if(!shpfile) {
+      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerGetShape()");
+      return(MS_FAILURE);
+    }
 
     // msSHPReadShape *should* return success or failure so we don't have to test here
-    if(record < 0 || record >= layer->shpfile.numshapes) {
+    if(record < 0 || record >= shpfile->numshapes) {
       msSetError(MS_MISCERR, "Invalid feature id.", "msLayerGetShape()");
       return(MS_FAILURE);
     }
 
-    msSHPReadShape(layer->shpfile.hSHP, record, shape);
+    msSHPReadShape(shpfile->hSHP, record, shape);
     if(layer->numitems > 0 && layer->iteminfo) {
       shape->numvalues = layer->numitems;
-      shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->iteminfo, layer->numitems);
+      shape->values = msDBFGetValueList(shpfile->hDBF, record, layer->iteminfo, layer->numitems);
       if(!shape->values) return(MS_FAILURE);
     }
     return(MS_SUCCESS);
@@ -353,16 +403,23 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 */
 void msLayerClose(layerObj *layer) 
 {
+  shapefileObj *shpfile;
+
   // no need for items once the layer is closed
   layerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
     layer->items = NULL;
     layer->numitems = 0;
-  }  
+  }
+
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    msSHPCloseFile(&(layer->shpfile));
+    shpfile = layer->layerinfo;
+    if(!shpfile) return; // nothing to do
+    msSHPCloseFile(shpfile);
+    free(layer->layerinfo);
+    layer->layerinfo = NULL;
     break;
   case(MS_TILED_SHAPEFILE):
     msTiledSHPClose(layer);
@@ -585,9 +642,9 @@ int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *meta
     }
   }
 
-  for(i=0; i<layer->numitems; i++) {
+  // for(i=0; i<layer->numitems; i++) { }
 
-  }
+  return(MS_SUCCESS);
 }
 
 /*
