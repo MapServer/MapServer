@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.390  2005/01/26 15:30:52  hobu
+ * Add drawSDE prototype for experimental
+ * SDE raster support
+ *
  * Revision 1.389  2005/01/26 06:14:53  sdlime
  * Added style maxwidth/minwidth read/write/copy.
  *
@@ -1428,6 +1432,7 @@ MS_DLL_EXPORT int msSDELayerInitItemInfo(layerObj *layer);
 MS_DLL_EXPORT void msSDELayerFreeItemInfo(layerObj *layer);
 MS_DLL_EXPORT char *msSDELayerGetSpatialColumn(layerObj *layer);
 MS_DLL_EXPORT char *msSDELayerGetRowIDColumn(layerObj *layer);
+MS_DLL_EXPORT int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img);
 
 MS_DLL_EXPORT int msOracleSpatialLayerOpen(layerObj *layer);
 MS_DLL_EXPORT int msOracleSpatialLayerIsOpen(layerObj *layer);
