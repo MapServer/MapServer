@@ -667,17 +667,6 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    *pszTemp = gsub(*pszTemp, "[leg_layer_name]", map->layers[nIdxLayer].name);
    
    /*
-    * Check if leg_icon tag exist
-    * if so display the first class icon
-    */
-   pszClassImg = strstr(*pszTemp, "[leg_icon");
-   if (pszClassImg) {
-      processIcon(map, nIdxLayer, 0, pszTemp);
-   }      
-
-   processMetadata(*pszTemp, map->layers[nIdxLayer].metadata);
-      
-   /*
     * Create a hash table that contain info
     * on current layer
     */
@@ -695,7 +684,18 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    processIf(*pszTemp, myHashTable);
 
    msFreeHashTable(myHashTable);
-         
+   
+   /*
+    * Check if leg_icon tag exist
+    * if so display the first class icon
+    */
+   pszClassImg = strstr(*pszTemp, "[leg_icon");
+   if (pszClassImg) {
+      processIcon(map, nIdxLayer, 0, pszTemp);
+   }      
+
+   processMetadata(*pszTemp, map->layers[nIdxLayer].metadata);
+      
    return MS_SUCCESS;
 }
 
