@@ -9,6 +9,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/06/02 06:28:53  sdlime
+ * New version of getNumeric for mapserv.c and mapserv_fcgi.c.
+ *
  * Revision 1.5  2003/09/24 03:42:12  sdlime
  * Fixed bug 435. There is a new mapObj parameter called MAXSIZE. The default is 2048 as before but it can be changed in the map file now.
  *
@@ -142,29 +145,16 @@ void writeError()
 ** Converts a string (e.g. form parameter) to a double, first checking the format against
 ** a regular expression. Dumps an error immediately if the format test fails.
 */
-static double getNumeric(regex_t re, char *s)
+static double getNumeric(char *s)
 {
-  regmatch_t *match;
-  
-  if((match = (regmatch_t *)malloc(sizeof(regmatch_t))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "getNumeric()");
+  char *err;
+  double rv;
+  rv = strtod(s, &err);
+  if (*err) {
+    msSetError(MS_TYPEERR, NULL, "getNumeric()");
     writeError();
   }
-  
-  if(regexec(&re, s, (size_t)1, match, 0) == REG_NOMATCH) {
-    free(match);
-    msSetError(MS_TYPEERR, NULL, "getNumeric()"); 
-    writeError();
-  }
-  
-  if(strlen(s) != (match->rm_eo - match->rm_so)) { /* whole string must match */    
-    free(match);
-    msSetError(MS_TYPEERR, NULL, "getNumeric()"); 
-    writeError();
-  }
-  
-  free(match);
-  return(atof(s));
+  return rv;
 }
 
 /*
@@ -229,13 +219,7 @@ void loadForm()
 {
   int i,j,n;
   char **tokens, *tmpstr;
-  regex_t re;
   int rosa_type=0;
-
-  if(regcomp(&re, NUMEXP, REG_EXTENDED) != 0) { // what is a number
-    msSetError(MS_REGEXERR, NULL, "loadForm()"); 
-    writeError();
-  }
 
   for(i=0;i<;i++) { // now process the rest of the form variables
     if(strlen(msObj->request->ParamValues[i]) == 0)
@@ -248,7 +232,7 @@ void loadForm()
     
     if(strcasecmp(msObj->request->ParamNames[i],"savequery") == 0) {
       msObj->SaveQuery = MS_TRUE; 
-      continue;
+      continuegetNumeric(;
     }
     
     /* Insecure as implemented, need to save someplace non accessible by everyone in the universe
@@ -259,7 +243,7 @@ void loadForm()
     */
 
     if(strcasecmp(msObj->request->ParamNames[i],"zoom") == 0) {
-      msObj->Zoom = getNumeric(re, msObj->request->ParamValues[i]);      
+      msObj->Zoom = getNumeric(msObj->request->ParamValues[i]);      
       if((msObj->Zoom > MAXZOOM) || (msObj->Zoom < MINZOOM)) {
 	msSetError(MS_WEBERR, "Zoom value out of range.", "loadForm()");
 	writeError();
@@ -268,7 +252,7 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"zoomdir") == 0) {
-      msObj->ZoomDirection = getNumeric(re, msObj->request->ParamValues[i]);
+      msObj->ZoomDirection = getNumeric(msObj->request->ParamValues[i]);
       if((msObj->ZoomDirection != -1) && (msObj->ZoomDirection != 1) && (msObj->ZoomDirection != 0)) {
 	msSetError(MS_WEBERR, "Zoom direction must be 1, 0 or -1.", "loadForm()");
 	writeError();
@@ -277,7 +261,7 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"zoomsize") == 0) { // absolute zoom magnitude
-      ZoomSize = getNumeric(re, msObj->request->ParamValues[i]);      
+      ZoomSize = getNumeric(msObj->request->ParamValues[i]);      
       if((ZoomSize > MAXZOOM) || (ZoomSize < 1)) {
 	msSetError(MS_WEBERR, "Invalid zoom size.", "loadForm()");
 	writeError();
@@ -298,10 +282,10 @@ void loadForm()
 	writeError();
       }
 
-      msObj->ImgExt.minx = getNumeric(re, tokens[0]);
-      msObj->ImgExt.miny = getNumeric(re, tokens[1]);
-      msObj->ImgExt.maxx = getNumeric(re, tokens[2]);
-      msObj->ImgExt.maxy = getNumeric(re, tokens[3]);
+      msObj->ImgExt.minx = getNumeric(tokens[0]);
+      msObj->ImgExt.miny = getNumeric(tokens[1]);
+      msObj->ImgExt.maxx = getNumeric(tokens[2]);
+      msObj->ImgExt.maxy = getNumeric(tokens[3]);
 
       msFreeCharArray(tokens, 4);
       continue;
@@ -334,10 +318,10 @@ void loadForm()
 	  writeError();
 	}
 	
-	msObj->Map->extent.minx = getNumeric(re, tokens[0]);
-	msObj->Map->extent.miny = getNumeric(re, tokens[1]);
-	msObj->Map->extent.maxx = getNumeric(re, tokens[2]);
-	msObj->Map->extent.maxy = getNumeric(re, tokens[3]);	
+	msObj->Map->extent.minx = getNumeric(tokens[0]);
+	msObj->Map->extent.miny = getNumeric(tokens[1]);
+	msObj->Map->extent.maxx = getNumeric(tokens[2]);
+	msObj->Map->extent.maxy = getNumeric(tokens[3]);	
 	
 	msFreeCharArray(tokens, 4);
 	
@@ -360,19 +344,19 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"minx") == 0) { // extent of the new map, in pieces
-      msObj->Map->extent.minx = getNumeric(re, msObj->request->ParamValues[i]);      
+      msObj->Map->extent.minx = getNumeric(msObj->request->ParamValues[i]);      
       continue;
     }
     if(strcasecmp(msObj->request->ParamNames[i],"maxx") == 0) {      
-      msObj->Map->extent.maxx = getNumeric(re, msObj->request->ParamValues[i]);
+      msObj->Map->extent.maxx = getNumeric(msObj->request->ParamValues[i]);
       continue;
     }
     if(strcasecmp(msObj->request->ParamNames[i],"miny") == 0) {
-      msObj->Map->extent.miny = getNumeric(re, msObj->request->ParamValues[i]);
+      msObj->Map->extent.miny = getNumeric(msObj->request->ParamValues[i]);
       continue;
     }
     if(strcasecmp(msObj->request->ParamNames[i],"maxy") == 0) {
-      msObj->Map->extent.maxy = getNumeric(re, msObj->request->ParamValues[i]);
+      msObj->Map->extent.maxy = getNumeric(msObj->request->ParamValues[i]);
       msObj->CoordSource = FROMUSERBOX;
       QueryCoordSource = FROMUSERBOX;
       continue;
@@ -395,8 +379,8 @@ void loadForm()
 	  writeError();
 	}
 	
-	msObj->MapPnt.x = getNumeric(re, tokens[0]);
-	msObj->MapPnt.y = getNumeric(re, tokens[1]);
+	msObj->MapPnt.x = getNumeric(tokens[0]);
+	msObj->MapPnt.y = getNumeric(tokens[1]);
 	
 	msFreeCharArray(tokens, 2);
 
@@ -457,7 +441,7 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"img.x") == 0) { // mouse click, in pieces
-      msObj->ImgPnt.x = getNumeric(re, msObj->request->ParamValues[i]);
+      msObj->ImgPnt.x = getNumeric(msObj->request->ParamValues[i]);
       if((msObj->ImgPnt.x > (2*msObj->Map->maxsize)) || (msObj->ImgPnt.x < (-2*msObj->Map->maxsize))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -467,7 +451,7 @@ void loadForm()
       continue;
     }
     if(strcasecmp(msObj->request->ParamNames[i],"img.y") == 0) {
-      msObj->ImgPnt.y = getNumeric(re, msObj->request->ParamValues[i]);      
+      msObj->ImgPnt.y = getNumeric(msObj->request->ParamValues[i]);      
       if((msObj->ImgPnt.y > (2*msObj->Map->maxsize)) || (msObj->ImgPnt.y < (-2*msObj->Map->maxsize))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -493,8 +477,8 @@ void loadForm()
 	writeError();
       }
 
-      msObj->ImgPnt.x = getNumeric(re, tokens[0]);
-      msObj->ImgPnt.y = getNumeric(re, tokens[1]);
+      msObj->ImgPnt.x = getNumeric(tokens[0]);
+      msObj->ImgPnt.y = getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
 
@@ -523,10 +507,10 @@ void loadForm()
 	writeError();
       }
       
-      msObj->ImgBox.minx = getNumeric(re, tokens[0]);
-      msObj->ImgBox.miny = getNumeric(re, tokens[1]);
-      msObj->ImgBox.maxx = getNumeric(re, tokens[2]);
-      msObj->ImgBox.maxy = getNumeric(re, tokens[3]);
+      msObj->ImgBox.minx = getNumeric(tokens[0]);
+      msObj->ImgBox.miny = getNumeric(tokens[1]);
+      msObj->ImgBox.maxx = getNumeric(tokens[2]);
+      msObj->ImgBox.maxy = getNumeric(tokens[3]);
       
       msFreeCharArray(tokens, 4);
 
@@ -568,7 +552,7 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"ref.x") == 0) { // mouse click in reference image, in pieces
-      msObj->RefPnt.x = getNumeric(re, msObj->request->ParamValues[i]);      
+      msObj->RefPnt.x = getNumeric(msObj->request->ParamValues[i]);      
       if((msObj->RefPnt.x > (2*msObj->Map->maxsize)) || (msObj->RefPnt.x < (-2*msObj->Map->maxsize))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -577,7 +561,7 @@ void loadForm()
       continue;
     }
     if(strcasecmp(msObj->request->ParamNames[i],"ref.y") == 0) {
-      msObj->RefPnt.y = getNumeric(re, msObj->request->ParamValues[i]); 
+      msObj->RefPnt.y = getNumeric(msObj->request->ParamValues[i]); 
       if((msObj->RefPnt.y > (2*msObj->Map->maxsize)) || (msObj->RefPnt.y < (-2*msObj->Map->maxsize))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -599,8 +583,8 @@ void loadForm()
 	writeError();
       }
 
-      msObj->RefPnt.x = getNumeric(re, tokens[0]);
-      msObj->RefPnt.y = getNumeric(re, tokens[1]);
+      msObj->RefPnt.x = getNumeric(tokens[0]);
+      msObj->RefPnt.y = getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
       
@@ -614,14 +598,14 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"buffer") == 0) { // radius (map units), actually 1/2 square side
-      msObj->Buffer = getNumeric(re, msObj->request->ParamValues[i]);      
+      msObj->Buffer = getNumeric(msObj->request->ParamValues[i]);      
       msObj->CoordSource = FROMBUF;
       QueryCoordSource = FROMUSERPNT;
       continue;
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"scale") == 0) { // scale for new map
-      msObj->Scale = getNumeric(re, msObj->request->ParamValues[i]);      
+      msObj->Scale = getNumeric(msObj->request->ParamValues[i]);      
       if(msObj->Scale <= 0) {
 	msSetError(MS_WEBERR, "Scale out of range.", "loadForm()");
 	writeError();
@@ -644,8 +628,8 @@ void loadForm()
 	writeError();
       }
 
-      msObj->ImgCols = getNumeric(re, tokens[0]);
-      msObj->ImgRows = getNumeric(re, tokens[1]);
+      msObj->ImgCols = getNumeric(tokens[0]);
+      msObj->ImgRows = getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
       
@@ -670,8 +654,8 @@ void loadForm()
 	writeError();
       }
 
-      msObj->Map->width = getNumeric(re, tokens[0]);
-      msObj->Map->height = getNumeric(re, tokens[1]);
+      msObj->Map->width = getNumeric(tokens[0]);
+      msObj->Map->height = getNumeric(tokens[1]);
 
       msFreeCharArray(tokens, 2);
       
@@ -741,11 +725,11 @@ void loadForm()
     }
 
     if(strcasecmp(msObj->request->ParamNames[i],"shapeindex") == 0) { // used for index queries
-      ShapeIndex = getNumeric(re, msObj->request->ParamValues[i]);
+      ShapeIndex = getNumeric(msObj->request->ParamValues[i]);
       continue;
     }
     if(strcasecmp(msObj->request->ParamNames[i],"tileindex") == 0) {
-      TileIndex = getNumeric(re, msObj->request->ParamValues[i]);
+      TileIndex = getNumeric(msObj->request->ParamValues[i]);
       continue;
     }
 
@@ -846,8 +830,6 @@ void loadForm()
 
 
   }
-
-  regfree(&re);
 
   if(ZoomSize != 0) { // use direction and magnitude to calculate zoom
     if(msObj->ZoomDirection == 0) {

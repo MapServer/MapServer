@@ -2415,7 +2415,6 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
       if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
 
     } else {
-
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
       if(labelPtr->position == MS_CC) // don't need the marker_offset
@@ -2455,7 +2454,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 	      break;
 	    }
 
-	    if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+	    if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */          
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
