@@ -1180,7 +1180,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     if(msOpenSHPFile(&tilefile, "rb", map->shapepath, map->tile, layer->tileindex) == -1) return(-1);
     if((tileItemIndex = msGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
     
-#ifdef USE_PROJ 
+#ifdef USE_PROJ     
     tileStatus = msWhichShapesProj(&tilefile, map->extent, &(layer->projection), &(map->projection)); /* Which tiles should be processed? */
 #else	    
     tileStatus = msWhichShapes(&tilefile, map->extent); /* which tiles should be processed? */
@@ -1517,7 +1517,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  }
 	  msTransformPolygon(map->extent, map->cellsize, &shape);
 	}
-
+	
 	msDrawLineSymbol(&map->symbolset, img, &shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 		
 	if(annotate && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
@@ -1546,18 +1546,21 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
 	if(layer->class[c].overlaysymbol >= 0) { // cache shape
 	  shape.classindex = c;
+	  fprintf(stderr, "Inserting line in cache...\n");
 	  if(insertFeatureList(&shpcache, shape) == NULL) return(-1);
+          fprintf(stderr, "Inserting line in cache...\n");
 	  msInitShape(&shape); // we init instead of free because we don't want to destroy in memory point list
 	} else
 	  msFreeShape(&shape);
       }
 
-      if(shpcache) {	
+      if(shpcache) {
 	for(current=shpcache; current; current=current->next) {
 	  c = current->shape.classindex;
 	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	}
 	freeFeatureList(shpcache);
+	shpcache = NULL;
       }
 
       break;
@@ -1627,6 +1630,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	}
 	freeFeatureList(shpcache);
+	shpcache = NULL;
       }
 
       break;

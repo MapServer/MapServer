@@ -32,7 +32,7 @@ void msProjectPoint(PJ *in, PJ *out, pointObj *point)
 
 #define NUMBER_OF_SAMPLE_POINTS 100
 
-void msProjectRect(PJ *in, PJ *out, rectObj *rect)
+void msProjectRect(PJ *in, PJ *out, rectObj *rect) 
 {
   pointObj prj_point;
   rectObj prj_rect;
