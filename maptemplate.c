@@ -1708,6 +1708,65 @@ char *generateLegendTemplate(mapservObj *msObj)
    return pszResult;
 }
 
+int processOneToManyJoin(joinObj *join)
+{
+  int k,l;
+  FILE *stream;
+  char buffer[MS_BUFFER_LENGTH], substr[MS_BUFFER_LENGTH], *outstr;
+
+  if(join->numrecords == 0) return(MS_SUCCESS); // nothing to do
+
+  if(join->header != NULL) {
+    if((stream = fopen(join->header, "r")) == NULL) {
+      msSetError(MS_IOERR, join->header, "returnOneToManyJoin()");
+      return(MS_FAILURE);
+    }
+
+    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) /* echo file, no substitutions */
+    printf("%s", buffer);
+
+    fclose(stream);
+  }
+
+  if((stream = fopen(join->template, "r")) == NULL) { /* open main template file */
+    msSetError(MS_IOERR, join->template, "returnOneToManyJoin()");
+    return(MS_FAILURE);
+  }
+
+  for(k=0; k<join->numrecords; k++) {
+    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) { /* now on to the end of the file */
+      outstr = strdup(buffer);
+      
+      for(l=0; l<join->numitems; l++) {	  
+	sprintf(substr, "[%s]", join->items[l]);
+	if(strstr(outstr, substr) != NULL) { /* do substitution */
+	  outstr = gsub(outstr, substr, join->data[k][l]);
+	}
+      } /* next item */
+      
+      printf("%s", outstr);
+      fflush(stdout);	
+      free(outstr);
+    }
+      
+    rewind(stream);
+  }
+
+  if(join->footer != NULL) {
+    if((stream = fopen(join->footer, "r")) == NULL) {
+      msSetError(MS_IOERR, join->footer, "returnOneToManyJoin()");
+      return(MS_FAILURE);
+    }
+
+    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) /* echo file, no substitutions */
+      printf("%s", buffer);
+
+    fclose(stream);
+  }
+
+  return(MS_SUCCESS);
+}
+
 char *processLine(mapservObj* msObj, char* instr, int mode)
 {
   int i, j;
@@ -2052,7 +2111,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   return(outstr);
 }
+
 #define MS_TEMPLATE_BUFFER 1024 //1k
+
 int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
 {
   FILE *stream;
@@ -2165,7 +2226,6 @@ int msReturnURL(mapservObj* msObj, char* url, int mode)
   if(url == NULL) {
     msSetError(MS_WEBERR, "Empty URL.", "msReturnURL()");
     return MS_FAILURE;
-//    writeError();
   }
 
   tmpurl = processLine(msObj, url, mode);
@@ -2182,182 +2242,166 @@ int msReturnURL(mapservObj* msObj, char* url, int mode)
 
 int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 {
-    int status;
-    int i,j;
-    char buffer[1024];
-    int   nBufferSize =0;
-    int   nCurrentSize = 0;
-    int   nExpandBuffer = 0;
+  int status;
+  int i,j;
+  char buffer[1024];
+  int   nBufferSize =0;
+  int   nCurrentSize = 0;
+  int   nExpandBuffer = 0;
 
-    char *template;
+  char *template;
 
-    layerObj *lp=NULL;
+  layerObj *lp=NULL;
 
-/* -------------------------------------------------------------------- */
-/*      mime type could be null when the function is called from        */
-/*      mapscript (function msProcessQueryTemplate)                     */
-/* -------------------------------------------------------------------- */
+  /* -------------------------------------------------------------------- */
+  /*      mime type could be null when the function is called from        */
+  /*      mapscript (function msProcessQueryTemplate)                     */
+  /* -------------------------------------------------------------------- */
 
-    /*
-    if (!pszMimeType)
-    {
-       msSetError(MS_WEBERR, "Mime type not specified.", "msReturnQuery()");
-       return MS_FAILURE;
-    }
-    */
+  /* if(!pszMimeType) {
+    msSetError(MS_WEBERR, "Mime type not specified.", "msReturnQuery()");
+    return MS_FAILURE;
+  } */
 
-    if (papszBuffer)
-    {
-        (*papszBuffer) = (char *)malloc(MS_TEMPLATE_BUFFER);
-        (*papszBuffer)[0] = '\0';
-        nBufferSize = MS_TEMPLATE_BUFFER;
-        nCurrentSize = 0;
-        nExpandBuffer = 1;
-    }
+  if(papszBuffer) {
+    (*papszBuffer) = (char *)malloc(MS_TEMPLATE_BUFFER);
+    (*papszBuffer)[0] = '\0';
+    nBufferSize = MS_TEMPLATE_BUFFER;
+    nCurrentSize = 0;
+    nExpandBuffer = 1;
+  }
   
-    msInitShape(&(msObj->ResultShape)); // ResultShape is a global var define in mapserv.h
+  msInitShape(&(msObj->ResultShape));
 
-    if((msObj->Mode == ITEMQUERY) || (msObj->Mode == QUERY)) { // may need to handle a URL result set
+  if((msObj->Mode == ITEMQUERY) || (msObj->Mode == QUERY)) { // may need to handle a URL result set
 
-        for(i=(msObj->Map->numlayers-1); i>=0; i--) {
-            lp = &(msObj->Map->layers[i]);
-
-            if(!lp->resultcache) continue;
-            if(lp->resultcache->numresults > 0) break;
-        }
-
-        if (i >= 0) // at least if no result found, mapserver will display an empty template.
-        {
-            if(lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
-                template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
-            else 
-                template = lp->template;
-
-            if(TEMPLATE_TYPE(template) == MS_URL) {
-                msObj->ResultLayer = lp;
-
-                status = msLayerOpen(lp, msObj->Map->shapepath);
-                if(status != MS_SUCCESS)
-                    return status;
-
-                // retrieve all the item names
-                status = msLayerGetItems(lp);
-                if(status != MS_SUCCESS)
-                    return status;
-
-                status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
-                if(status != MS_SUCCESS)
-                    return status;
-
-                if (papszBuffer == NULL)
-                {
-                    if (msReturnURL(msObj, template, QUERY) != MS_SUCCESS)
-                        return MS_FAILURE;
-                }
-
-                msFreeShape(&(msObj->ResultShape));
-                msLayerClose(lp);
-                msObj->ResultLayer = NULL;
-          
-                return MS_SUCCESS;
-            }
-        }
-    }
-   
-  
-    msObj->NR = msObj->NL = 0;
-    for(i=0; i<msObj->Map->numlayers; i++) { // compute some totals
-        lp = &(msObj->Map->layers[i]);
-
-        if(!lp->resultcache) continue;
-
-        if(lp->resultcache->numresults > 0) { 
-            msObj->NL++;
-            msObj->NR += lp->resultcache->numresults;
-        }
-    }
-
-    if (papszBuffer && pszMimeType)
-    {
-        sprintf(buffer, "Content-type: %s%c%c <!-- %s -->\n",  
-                pszMimeType, 10, 10, msGetVersion());
-      
-        if (nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1))
-        {
-            nExpandBuffer++;
-            (*papszBuffer) = (char *)realloc((*papszBuffer),
-                                             MS_TEMPLATE_BUFFER*nExpandBuffer);
-            nBufferSize = MS_TEMPLATE_BUFFER*nExpandBuffer;
-        }
-        strcat((*papszBuffer), buffer);
-        nCurrentSize += strlen(buffer);
-    }
-    else if (pszMimeType)
-    {
-        printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
-        printf("<!-- %s -->\n", msGetVersion());
-        fflush(stdout);
-    }
-
-    if(msObj->Map->web.header)
-        if (msReturnPage(msObj, msObj->Map->web.header, BROWSE, papszBuffer) != MS_SUCCESS)
-            return MS_FAILURE;
-
-    msObj->RN = 1; // overall result number
     for(i=(msObj->Map->numlayers-1); i>=0; i--) {
-        msObj->ResultLayer = lp = &(msObj->Map->layers[i]);
+      lp = &(msObj->Map->layers[i]);
 
-        if(!lp->resultcache) continue;
-        if(lp->resultcache->numresults <= 0) continue;
+      if(!lp->resultcache) continue;
+      if(lp->resultcache->numresults > 0) break;
+    }
 
-        msObj->NLR = lp->resultcache->numresults; 
+    if(i >= 0) { // at least if no result found, mapserver will display an empty template.
+      if(lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
+        template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
+      else 
+        template = lp->template;
 
-        if(lp->header) 
-            if (msReturnPage(msObj, lp->header, BROWSE, papszBuffer) != MS_SUCCESS)
-                return MS_FAILURE;
+      if(TEMPLATE_TYPE(template) == MS_URL) {
+        msObj->ResultLayer = lp;
 
-        // open this layer
         status = msLayerOpen(lp, msObj->Map->shapepath);
-        if(status != MS_SUCCESS)
-            return status;
+        if(status != MS_SUCCESS) return status;
 
         // retrieve all the item names
         status = msLayerGetItems(lp);
-        if(status != MS_SUCCESS)
-            return status;
+        if(status != MS_SUCCESS) return status;
 
-        msObj->LRN = 1; // layer result number
-        for(j=0; j<lp->resultcache->numresults; j++) {
-            status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
-            if(status != MS_SUCCESS)
-                return status;
-      
-            if(lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
-                template = lp->class[(int)(lp->resultcache->results[j].classindex)].template;
-            else 
-                template = lp->template;
+        status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
+        if(status != MS_SUCCESS) return status;
 
-            if (msReturnPage(msObj, template, QUERY, papszBuffer) != MS_SUCCESS)
-                return MS_FAILURE;
+	// do any necessary JOINS here
 
-            msFreeShape(&(msObj->ResultShape)); // init too
-
-            msObj->RN++; // increment counters
-            msObj->LRN++;
+        if(papszBuffer == NULL) {
+          if(msReturnURL(msObj, template, QUERY) != MS_SUCCESS) return MS_FAILURE;
         }
 
-        if(lp->footer) 
-            if (msReturnPage(msObj, lp->footer, BROWSE, papszBuffer) != MS_SUCCESS)
-                return MS_FAILURE;
-
+        msFreeShape(&(msObj->ResultShape));
         msLayerClose(lp);
         msObj->ResultLayer = NULL;
+          
+        return MS_SUCCESS;
+      }
+    }
+  }
+   
+  
+  msObj->NR = msObj->NL = 0;
+  for(i=0; i<msObj->Map->numlayers; i++) { // compute some totals
+    lp = &(msObj->Map->layers[i]);
+
+    if(!lp->resultcache) continue;
+
+    if(lp->resultcache->numresults > 0) { 
+      msObj->NL++;
+      msObj->NR += lp->resultcache->numresults;
+    }
+  }
+
+  if(papszBuffer && pszMimeType) {
+    sprintf(buffer, "Content-type: %s%c%c <!-- %s -->\n", pszMimeType, 10, 10, msGetVersion());
+      
+    if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
+      nExpandBuffer++;
+      (*papszBuffer) = (char *)realloc((*papszBuffer), MS_TEMPLATE_BUFFER*nExpandBuffer);
+      nBufferSize = MS_TEMPLATE_BUFFER*nExpandBuffer;
+    }
+    strcat((*papszBuffer), buffer);
+    nCurrentSize += strlen(buffer);
+  } else if(pszMimeType) {
+    printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
+    printf("<!-- %s -->\n", msGetVersion());
+    fflush(stdout);
+  }
+
+  if(msObj->Map->web.header) {
+    if(msReturnPage(msObj, msObj->Map->web.header, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
+  }
+
+  msObj->RN = 1; // overall result number
+  for(i=(msObj->Map->numlayers-1); i>=0; i--) {
+    msObj->ResultLayer = lp = &(msObj->Map->layers[i]);
+
+    if(!lp->resultcache) continue;
+    if(lp->resultcache->numresults <= 0) continue;
+
+    msObj->NLR = lp->resultcache->numresults; 
+
+    if(lp->header) { 
+      if(msReturnPage(msObj, lp->header, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
     }
 
-    if(msObj->Map->web.footer) 
-        return msReturnPage(msObj, msObj->Map->web.footer, BROWSE, papszBuffer);
+    // open this layer
+    status = msLayerOpen(lp, msObj->Map->shapepath);
+    if(status != MS_SUCCESS) return status;
 
-    return MS_SUCCESS;
+    // retrieve all the item names
+    status = msLayerGetItems(lp);
+    if(status != MS_SUCCESS) return status;
+
+    msObj->LRN = 1; // layer result number
+    for(j=0; j<lp->resultcache->numresults; j++) {
+      status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+      if(status != MS_SUCCESS) return status;
+
+      // do any necessary JOINS here
+      
+      if(lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
+        template = lp->class[(int)(lp->resultcache->results[j].classindex)].template;
+      else 
+        template = lp->template;
+
+      if(msReturnPage(msObj, template, QUERY, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
+
+      msFreeShape(&(msObj->ResultShape)); // init too
+
+      msObj->RN++; // increment counters
+      msObj->LRN++;
+    }
+
+    if(lp->footer) {
+      if(msReturnPage(msObj, lp->footer, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
+    }
+
+    msLayerClose(lp);
+    msObj->ResultLayer = NULL;
+  }
+
+  if(msObj->Map->web.footer) 
+    return msReturnPage(msObj, msObj->Map->web.footer, BROWSE, papszBuffer);
+
+  return MS_SUCCESS;
 }
 
 mapservObj*  msAllocMapServObj()
