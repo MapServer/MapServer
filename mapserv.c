@@ -614,8 +614,8 @@ void loadForm()
       msFreeCharArray(tokens, 2);
       
       if(msObj->Map->width > msObj->Map->maxsize || msObj->Map->height > msObj->Map->maxsize || msObj->Map->width < 0 || msObj->Map->height < 0) {
-	msSetError(MS_WEBERR, "Image size out of range.", "loadForm()");
-	writeError();
+        msSetError(MS_WEBERR, "Image size out of range.", "loadForm()");
+        writeError();
       }
       continue;
     }
@@ -626,7 +626,7 @@ void loadForm()
 
       layers = split(msObj->request->ParamValues[i], ' ', &(num_layers));
       for(l=0; l<num_layers; l++)
-	msObj->Layers[msObj->NumLayers+l] = strdup(layers[l]);
+	    msObj->Layers[msObj->NumLayers+l] = strdup(layers[l]);
       msObj->NumLayers += l;
 
       msFreeCharArray(layers, num_layers);
