@@ -14,8 +14,17 @@ the CVS logs is updated daily at the following URL:
 
 
 
-Version 4.0.1 (CVS)
+Version 4.0.1 (2003-10-09)
 ------------------------
+- Fixed problem with cloned mapObj's fontset->filename pointing to the
+  original mapObj's fontset->filename
+
+- Fixed error in MapScript zoomRectangle method (bug 449)
+
+- Corrected use of error stack in Python MapScript exception handler
+
+- Fixed memory leaks in MapScript when using mapObj's clone, 
+  and in methods that return an imageObj
 
 - Fixed double free in SWIG imageObj's free method (bug 393)
 
