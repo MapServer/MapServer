@@ -13,12 +13,18 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
+Version 4.4.0-beta2 ()
+----------------------
+
+- Implemented an intarray helper class for SWIG mapscript which allows for
+  multi-language manipulation of layer drawing order (bugs 853, 1005).
+  
 Version 4.4.0-beta1 (2004-10-21)
 --------------------------------
 
-- 'make shared' compilation target now supports some kind of versioning,
+- "shared" compilation target now supports some kind of versioning,
   should at least prevent libmap.so version collisions when upgrading
-  MapServer on a server (bug 982)
+  MapServer on a server (bug 982).
 
 - When no RULE parameter has been specified in the WMS request
   a legend should be returned with all classes for the specified LAYER.
@@ -28,17 +34,17 @@ Version 4.4.0-beta1 (2004-10-21)
   layer is scale dependant (big 809).
 
 - Nested layers in the capabilities are supported by using a new metadata
-  tag WMS_LAYER_GROUP (bug 776)
+  tag WMS_LAYER_GROUP (bug 776).
   
-- Added greyscale+alpha render support if mapdrawgdal.c: Bug 965. 
+- Added greyscale+alpha render support if mapdrawgdal.c (bug 965). 
 
 - Added --with-fastcgi support to configure.
 
-- support OGC mapcontext through mapserver cgi : Bug 946
+- support OGC mapcontext through mapserver cgi (bug 946).
 
-- support for reading 3d shape file (z) : Bug 869.
+- support for reading 3d shape file (z) (bug 869).
 
-- add php mapscript functions to expose the z element : Bug 870
+- add php mapscript functions to expose the z element (bug 870).
 
 - imageObj::write() method for SWIG mapscript (bug 941).
 
