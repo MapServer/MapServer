@@ -30,6 +30,13 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/01/22 21:19:02  sacha
+ * Add two functions in maplegend.c
+ * - msDrawLegendIcon that draw an class legend icon over an existing image.
+ * - msCreateLegendIcon that draw an class legend icon and return the newly
+ * created image.
+ * Also, an php examples in mapscript/php3/examples/test_draw_legend_icon.phtml
+ *
  * Revision 1.10  2002/01/11 17:30:47  dan
  * Replace global ms_error with thread-safe msGetErrorObj() call
  *
@@ -225,7 +232,7 @@ char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
     return retVal;
 }
 #else
-char *_phpms_fetch_property_handle2(pval *pObj, char *property_name, 
+char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
                                     int handle_type1, int handle_type2,
                                     HashTable *list, int err_type)
 {

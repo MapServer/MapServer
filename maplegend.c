@@ -4,6 +4,218 @@
 #define VMARGIN 5 /* margin at top and bottom of legend graphic */
 #define HMARGIN 5 /* margin at left and right of legend graphic */
 
+
+int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height, gdImagePtr img, int dstX, int dstY)
+{
+   shapeObj box, zigzag;
+   pointObj marker;
+
+   // initialize the shapes used to render the legend
+   box.line = (lineObj *)malloc(sizeof(lineObj));
+   box.numlines = 1;
+   box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
+   box.line[0].numpoints = 5;
+
+   zigzag.line = (lineObj *)malloc(sizeof(lineObj));
+   zigzag.numlines = 1;
+   zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
+   zigzag.line[0].numpoints = 4;
+
+
+   // compute shapes used to render individual legend pieces
+      marker.x = dstX + MS_NINT(width / 2.0);
+      marker.y = dstY + MS_NINT(height / 2.0);
+
+      zigzag.line[0].point[0].x = dstX;
+      zigzag.line[0].point[0].y = dstY + height - 1;
+      zigzag.line[0].point[1].x = dstX + MS_NINT(width / 3.0) - 1;
+      zigzag.line[0].point[1].y = dstY;
+      zigzag.line[0].point[2].x = dstX + MS_NINT(2.0 * width / 3.0) - 1;
+      zigzag.line[0].point[2].y = dstY + height - 1;
+      zigzag.line[0].point[3].x = dstX + width - 1;
+      zigzag.line[0].point[3].y = dstY;
+      zigzag.line[0].numpoints = 4;
+
+      box.line[0].point[0].x = dstX;
+      box.line[0].point[0].y = dstY;
+      box.line[0].point[1].x = dstX + width - 1;
+      box.line[0].point[1].y = dstY;
+      box.line[0].point[2].x = dstX + width - 1;
+      box.line[0].point[2].y = dstY + height - 1;
+      box.line[0].point[3].x = dstX;
+      box.line[0].point[3].y = dstY + height - 1;
+      box.line[0].point[4].x = box.line[0].point[0].x;
+      box.line[0].point[4].y = box.line[0].point[0].y;
+      box.line[0].numpoints = 5;
+
+      /* 
+      ** now draw the appropriate color/symbol/size combination 
+      */      
+      switch(lp->type) {
+      case MS_LAYER_POINT:
+         msDrawMarkerSymbol(&map->symbolset,
+                            img,
+                            &marker,
+                            class->symbol, 
+                            class->color, 
+                            class->backgroundcolor, 
+                            class->outlinecolor, 
+                            class->sizescaled);
+         
+         if(class->overlaysymbol >= 0)
+           msDrawMarkerSymbol(&map->symbolset,
+                              img,
+                              &marker,
+                              class->symbol,
+                              class->color,
+                              class->backgroundcolor,
+                              class->outlinecolor, 
+                              class->sizescaled);
+         break;
+      case MS_LAYER_LINE:	
+         msDrawLineSymbol(&map->symbolset, 
+                          img, 
+                          &zigzag, 
+                          class->symbol, 
+                          class->color, 
+                          class->backgroundcolor, 
+                          class->sizescaled);
+         
+         if(class->overlaysymbol >= 0) 
+           msDrawLineSymbol(&map->symbolset, 
+                            img, 
+                            &zigzag,
+                            class->overlaysymbol, 
+                            class->overlaycolor, 
+                            class->overlaybackgroundcolor, 
+                            class->overlaysizescaled);
+         break;
+      case MS_LAYER_CIRCLE:
+      case MS_LAYER_RASTER:
+      case MS_LAYER_POLYGON:
+         if(class->color >= 0) { // use the box
+            msDrawShadeSymbol(&map->symbolset, 
+                              img, 
+                              &box, 
+                              class->symbol, 
+                              class->color, 
+                              class->backgroundcolor, 
+                              class->outlinecolor, 
+                              class->sizescaled);
+
+            if(class->overlaysymbol >= 0) {
+               if(class->overlaycolor < 0)
+                 msDrawLineSymbol(&map->symbolset, 
+                                  img, 
+                                  &box, 
+                                  class->overlaysymbol, 
+                                  class->overlayoutlinecolor, 
+                                  class->overlaybackgroundcolor, 
+                                  class->overlaysizescaled);
+               else
+                 msDrawShadeSymbol(&map->symbolset, 
+                                   img, 
+                                   &box, 
+                                   class->overlaysymbol, 
+                                   class->overlaycolor, 
+                                   class->overlaybackgroundcolor, 
+                                   class->overlayoutlinecolor, 
+                                   class->overlaysizescaled);
+            }
+         }
+         else {
+           if(class->overlaycolor >= 0) { // use the box
+              if(class->color < 0)
+                msDrawLineSymbol(&map->symbolset, 
+                                 img, 
+                                 &box, 
+                                 class->symbol, 
+                                 class->outlinecolor, 
+                                 class->backgroundcolor, 
+                                 class->sizescaled);
+              else
+                msDrawShadeSymbol(&map->symbolset, 
+                                  img, 
+                                  &box, 
+                                  class->symbol, 
+                                  class->color, 
+                                  class->backgroundcolor, 
+                                  class->outlinecolor, 
+                                  class->sizescaled);
+
+              msDrawShadeSymbol(&map->symbolset, 
+                                img, 
+                                &box, 
+                                class->overlaysymbol, 
+                                class->overlaycolor, 
+                                class->overlaybackgroundcolor, 
+                                class->overlayoutlinecolor, 
+                                class->overlaysizescaled);
+           } else { // use the zigzag
+              msDrawLineSymbol(&map->symbolset, 
+                               img, 
+                               &zigzag, 
+                               class->symbol, 
+                               class->outlinecolor, 
+                               class->backgroundcolor, 
+                               class->sizescaled);
+              
+              if(class->overlaysymbol >= 0) 
+                msDrawLineSymbol(&map->symbolset, 
+                                 img, 
+                                 &zigzag, 
+                                 class->overlaysymbol, 
+                                 class->overlaycolor, 
+                                 class->overlaybackgroundcolor, 
+                                 class->overlaysizescaled);
+           }
+         }
+         break;
+      default:
+         return MS_FAILURE;
+         break;
+      } /* end symbol drawing */
+
+   
+   // Draw the outline if a color is specified (0 is background, so who cares about drawing it)
+   if(map->legend.outlinecolor > 0)
+     msImagePolyline(img, &box, map->legend.outlinecolor);
+
+   free(box.line[0].point);
+   free(box.line);
+   free(zigzag.line[0].point);
+   free(zigzag.line);
+
+   return MS_SUCCESS;
+}
+
+
+gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height)
+{
+   // Create an image
+   gdImagePtr img;
+  
+   /*
+   ** Initialize the legend image
+   */
+   if((img = gdImageCreate(width, height)) == NULL) {
+      msSetError(MS_GDERR, "Unable to initialize image.", "msCreateLegendIcon()");
+      return(NULL);
+   }
+
+   /*
+   ** Load colormap for the image
+   */
+   if(msLoadPalette(img, &map->palette, map->legend.imagecolor) == -1)
+     return(NULL);
+   
+   // Call drawLegendIcon with destination (0, 0)
+   msDrawLegendIcon(map, lp, class, width, height, img, 0, 0);
+   
+   return img;
+}
+
+
 /*
 ** Creates a GD image of a legend for a specific map. msDrawLegend()
 ** respects the current scale, and classes without a name are not
@@ -13,8 +225,7 @@
 gdImagePtr msDrawLegend(mapObj *map)
 {
   int status;
-  shapeObj box, zigzag;
-  pointObj marker;
+
   gdImagePtr img; /* image data structure */
   int i,j; /* loop counters */
   pointObj pnt;
@@ -27,17 +238,6 @@ gdImagePtr msDrawLegend(mapObj *map)
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
   if(status != MS_SUCCESS) return(NULL);
-
-  // initialize the shapes used to render the legend
-  box.line = (lineObj *)malloc(sizeof(lineObj));
-  box.numlines = 1;
-  box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
-  box.line[0].numpoints = 5;
-
-  zigzag.line = (lineObj *)malloc(sizeof(lineObj));
-  zigzag.numlines = 1;
-  zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
-  zigzag.line[0].numpoints = 4;
 
   /*
   ** allocate heights array
@@ -128,80 +328,12 @@ gdImagePtr msDrawLegend(mapObj *map)
 
       if(!lp->class[j].name)
 	continue; /* skip it */
+
       
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
-
-      // compute shapes used to render individual legend pieces
-      marker.x = MS_NINT(HMARGIN + (map->legend.keysizex/2.0)) - 1;
-      marker.y = MS_NINT(pnt.y + (map->legend.keysizey/2.0)) - 1;
-
-      zigzag.line[0].point[0].x = HMARGIN;
-      zigzag.line[0].point[0].y = pnt.y + map->legend.keysizey - 1;
-      zigzag.line[0].point[1].x = HMARGIN + MS_NINT(map->legend.keysizex/3.0) - 1;
-      zigzag.line[0].point[1].y = pnt.y;
-      zigzag.line[0].point[2].x = HMARGIN + MS_NINT(2*map->legend.keysizex/3.0) - 1;
-      zigzag.line[0].point[2].y = pnt.y + map->legend.keysizey - 1;
-      zigzag.line[0].point[3].x = HMARGIN + map->legend.keysizex - 1;
-      zigzag.line[0].point[3].y = pnt.y;
-      zigzag.line[0].numpoints = 4;
-
-      box.line[0].point[0].x = HMARGIN;
-      box.line[0].point[0].y = pnt.y;
-      box.line[0].point[1].x = HMARGIN + map->legend.keysizex - 1;
-      box.line[0].point[1].y = pnt.y;
-      box.line[0].point[2].x = HMARGIN + map->legend.keysizex - 1;
-      box.line[0].point[2].y = pnt.y + map->legend.keysizey - 1;
-      box.line[0].point[3].x = HMARGIN;
-      box.line[0].point[3].y = pnt.y + map->legend.keysizey - 1;
-      box.line[0].point[4].x = box.line[0].point[0].x;
-      box.line[0].point[4].y = box.line[0].point[0].y;
-      box.line[0].numpoints = 5;
-
-      /* 
-      ** now draw the appropriate color/symbol/size combination 
-      */      
-      switch(lp->type) {
-      case MS_LAYER_POINT:            
-	msDrawMarkerSymbol(&map->symbolset, img, &marker, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
-	if(lp->class[j].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &marker, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
-	break;
-      case MS_LAYER_LINE:	
-	msDrawLineSymbol(&map->symbolset, img, &zigzag, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].sizescaled);
-	if(lp->class[j].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, &zigzag, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlaysizescaled);
-	break;
-      case MS_LAYER_CIRCLE:
-      case MS_LAYER_RASTER:
-      case MS_LAYER_POLYGON:
-
-	if(lp->class[j].color >= 0) { // use the box
-	  msDrawShadeSymbol(&map->symbolset, img, &box, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
-
-          if(lp->class[j].overlaysymbol >= 0) {
-            if(lp->class[j].overlaycolor < 0)
-	      msDrawLineSymbol(&map->symbolset, img, &box, lp->class[j].overlaysymbol, lp->class[j].overlayoutlinecolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlaysizescaled);
-            else
-              msDrawShadeSymbol(&map->symbolset, img, &box, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlayoutlinecolor, lp->class[j].overlaysizescaled);
-          }
-        } else if(lp->class[j].overlaycolor >= 0) { // use the box
-	  if(lp->class[j].color < 0)
-            msDrawLineSymbol(&map->symbolset, img, &box, lp->class[j].symbol, lp->class[j].outlinecolor, lp->class[j].backgroundcolor, lp->class[j].sizescaled);
-          else
-            msDrawShadeSymbol(&map->symbolset, img, &box, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
-
-	  msDrawShadeSymbol(&map->symbolset, img, &box, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlayoutlinecolor, lp->class[j].overlaysizescaled);
-        } else { // use the zigzag
-          msDrawLineSymbol(&map->symbolset, img, &zigzag, lp->class[j].symbol, lp->class[j].outlinecolor, lp->class[j].backgroundcolor, lp->class[j].sizescaled);
-	  if(lp->class[j].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, &zigzag, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlaysizescaled);
-        }
-
-        break;
-      default:
-	break;
-     } /* end symbol drawing */
-
-      // Draw the outline if a color is specified (0 is background, so who cares about drawing it)
-      if(map->legend.outlinecolor > 0)
-	msImagePolyline(img, &box, map->legend.outlinecolor);
+      
+      if (msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, img, HMARGIN, pnt.y) != MS_SUCCESS)
+         return NULL;
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
       msDrawLabel(img, pnt, lp->class[j].name, &(map->legend.label), &map->fontset);
@@ -212,10 +344,6 @@ gdImagePtr msDrawLegend(mapObj *map)
   } // next layer please
 
   free(heights);
-  free(box.line[0].point);
-  free(box.line);
-  free(zigzag.line[0].point);
-  free(zigzag.line);
 
   return(img);
 }
@@ -298,3 +426,6 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
 
   return(0);
 }
+
+
+

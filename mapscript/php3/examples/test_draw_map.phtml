@@ -44,6 +44,7 @@ $map = ms_newMapObj("demo.map");
 // writable by the httpd user.
 //
 $img = $map->draw();
+
 $url = $img->saveWebImage(MS_PNG, 0, 0, 0);
 printf("<IMG SRC=%s WIDTH=%d HEIGHT=%d>\n", $url, $map->width, $map->height);
  

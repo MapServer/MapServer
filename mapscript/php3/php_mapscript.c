@@ -30,6 +30,13 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.77  2002/01/22 21:19:01  sacha
+ * Add two functions in maplegend.c
+ * - msDrawLegendIcon that draw an class legend icon over an existing image.
+ * - msCreateLegendIcon that draw an class legend icon and return the newly
+ * created image.
+ * Also, an php examples in mapscript/php3/examples/test_draw_legend_icon.phtml
+ *
  * Revision 1.76  2002/01/20 21:30:01  dan
  * Added imagetype and imagequality params in mapObj
  *
@@ -281,6 +288,8 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -347,7 +356,7 @@ static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
                                       HashTable *list, pval *return_value);
-static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
+static long _phpms_build_class_object(classObj *pclass, int parent_map_id, int parent_layer_id,
                                       HashTable *list, pval *return_value);
 static long _phpms_build_label_object(labelObj *plabel,
                                       HashTable *list, pval *return_value);
@@ -594,9 +603,11 @@ function_entry php_label_class_functions[] = {
 };
 
 function_entry php_class_class_functions[] = {
-    {"set",             php3_ms_class_setProperty,      NULL},    
-    {"setexpression",   php3_ms_class_setExpression,    NULL},    
-    {"settext",   php3_ms_class_setText,    NULL},    
+    {"set",              php3_ms_class_setProperty,      NULL},    
+    {"setexpression",    php3_ms_class_setExpression,    NULL},    
+    {"settext",          php3_ms_class_setText,          NULL},
+    {"drawlegendicon",   php3_ms_class_drawLegendIcon,   NULL},
+    {"createlegendicon", php3_ms_class_createLegendIcon, NULL},   
     {NULL, NULL, NULL}
 };
 
@@ -4668,7 +4679,7 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
     pval  *pClassIndex, *pThis;
     layerObj *self=NULL;
     classObj *newClass=NULL;
-    int layer_id;
+    int layer_id, map_id;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -4701,8 +4712,13 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
      */
     layer_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
 
+    /* We will store a reference to the map parent object id (this) inside
+     * the class obj.
+     */
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
+
     /* Return layer object */
-    _phpms_build_class_object(newClass, layer_id, list, return_value);
+    _phpms_build_class_object(newClass, map_id, layer_id, list, return_value);
 }
 /* }}} */
 
@@ -5686,7 +5702,7 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 /**********************************************************************
  *                     _phpms_build_class_object()
  **********************************************************************/
-static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
+static long _phpms_build_class_object(classObj *pclass, int parent_map_id, int parent_layer_id,
                                       HashTable *list, pval *return_value)
 {
     int class_id;
@@ -5712,6 +5728,13 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
 #else
     add_property_long(return_value, "_layer_handle_", parent_layer_id);
 #endif
+   
+#ifdef PHP4
+    add_property_resource(return_value, "_map_handle_", parent_map_id);
+    zend_list_addref(parent_map_id);
+#else
+    add_property_long(return_value, "_map_handle_", parent_map_id);
+#endif   
 
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "name",       pclass->name);
@@ -5760,7 +5783,7 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
     pval  *pLayerObj;
     layerObj *parent_layer;
     classObj *pNewClass;
-    int layer_id;
+    int layer_id, map_id;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -5786,8 +5809,13 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
      */
     layer_id = _phpms_fetch_property_resource(pLayerObj, "_handle_", E_ERROR);
 
+    /* We will store a reference to the parent_map object id inside
+     * the class obj.
+     */
+    map_id = _phpms_fetch_property_resource(pLayerObj, "_map_handle_", E_ERROR);
+   
     /* Return class object */
-    _phpms_build_class_object(pNewClass, layer_id, list, return_value);
+    _phpms_build_class_object(pNewClass, map_id, layer_id, list, return_value);
 }
 /* }}} */
 
@@ -5962,6 +5990,141 @@ DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
+/************************************************************************/
+/*                          class->drawLegendIcon()                     */
+/*                                                                      */
+/*      return the legend icon related to this class.                   */
+/*                                                                      */
+/*      Returns 0 on success, -1 on error.                              */
+/************************************************************************/
+
+/* {{{ proto int class.drawLegendIcon(int width, int height, image img, int dstX, int dstY)
+   set the lengend icon in img. */
+
+/* SFO */
+
+DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pWidth, *pHeight, *imgObj, *pDstX, *pDstY, *pThis;
+    mapObj *parent_map;
+    classObj *self;
+    layerObj *parent_layer;
+    gdImagePtr im = NULL;
+    int    retVal=0;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 5, &pWidth, &pHeight, &imgObj, &pDstX, &pDstY) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    im = (gdImagePtr)_phpms_fetch_handle(imgObj,
+                                         PHPMS_GLOBAL(le_msimg), list);
+
+    convert_to_long(pWidth);
+    convert_to_long(pHeight);
+    convert_to_long(pDstX);
+    convert_to_long(pDstY);   
+
+    self = (classObj *)_phpms_fetch_handle(pThis, 
+                                           PHPMS_GLOBAL(le_msclass),
+                                           list);
+
+    parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
+                                                           PHPMS_GLOBAL(le_mslayer),
+                                                           list, E_ERROR);
+
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list, E_ERROR);
+
+    if (im == NULL || self == NULL || parent_map == NULL || parent_layer == NULL ||
+        (retVal = classObj_drawLegendIcon(self, 
+                                          parent_map, 
+                                          parent_layer, 
+                                          pWidth->value.lval, pHeight->value.lval, 
+                                          im, 
+                                          pDstX->value.lval, pDstY->value.lval)) == -1)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+   
+    RETURN_LONG(retVal);   
+}
+
+/************************************************************************/
+/*                          class->createLegendIcon()                   */
+/*                                                                      */
+/*      return the legend icon related to this class.                   */
+/*                                                                      */
+/*      Returns gdImagePtr.                                             */
+/************************************************************************/
+
+/* {{{ proto int class.createLegendIcon(int width, int height)
+   return the lengend icon. */
+
+DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pWidth, *pHeight, *pThis;
+    mapObj *parent_map;
+    classObj *self;
+    layerObj *parent_layer;
+    gdImagePtr im = NULL;
+   
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pWidth, &pHeight) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pWidth);
+    convert_to_long(pHeight);
+
+    self = (classObj *)_phpms_fetch_handle(pThis,
+                                           PHPMS_GLOBAL(le_msclass),
+                                           list);
+
+    parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
+                                                           PHPMS_GLOBAL(le_mslayer),
+                                                           list, E_ERROR);
+
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list, E_ERROR);
+
+    if (self == NULL || parent_map == NULL || parent_layer == NULL ||
+        (im = classObj_createLegendIcon(self, 
+                                        parent_map, 
+                                        parent_layer, 
+                                        pWidth->value.lval, pHeight->value.lval)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+       
+        RETURN_FALSE;
+    }
+
+    /* Return an image object */
+    _phpms_build_img_object(im, &(parent_map->web), list, return_value);
+}
 
 /*=====================================================================
  *                 PHP function wrappers - colorObj class

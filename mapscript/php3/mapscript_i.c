@@ -7,6 +7,13 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.30  2002/01/22 21:19:01  sacha
+ * Add two functions in maplegend.c
+ * - msDrawLegendIcon that draw an class legend icon over an existing image.
+ * - msCreateLegendIcon that draw an class legend icon and return the newly
+ * created image.
+ * Also, an php examples in mapscript/php3/examples/test_draw_legend_icon.phtml
+ *
  * Revision 1.29  2001/12/19 03:46:02  assefa
  * Support of Measured shpe files.
  *
@@ -448,6 +455,14 @@ int classObj_setExpression(classObj *self, char *string) {
 int classObj_setText(classObj *self, layerObj *layer, char *string) {
     return loadExpressionString(&self->text, string);
   }
+
+int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height, gdImagePtr dstImg, int dstX, int dstY) {
+    return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY);
+}
+
+gdImagePtr classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height) {
+    return msCreateLegendIcon(map, layer, self, width, height);
+}
 
 /**********************************************************************
  * class extensions for pointObj, useful many places

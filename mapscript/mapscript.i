@@ -512,9 +512,18 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if (!self->metadata)
         self->metadata = msCreateHashTable();
     if (msInsertHashTable(self->metadata, name, value) == NULL)
-	return MS_FAILURE;
+        return MS_FAILURE;
     return MS_SUCCESS;
   }
+   
+  int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, gdImagePtr dstImg, int dstX, int dstY) {
+    return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY);
+  }
+  
+  gdImagePtr createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
+    return msDrawLegendIcon(map, layer, self, width, height);
+  }
+   
 }
 
 //
