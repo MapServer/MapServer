@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Fixed bug 1118 in msOWSGetLayerExtent() (mapows.c). 
+
 - Fixed ogcfilter bug #1252  
 
 - Turned all C++ (//) comments into C comments (bug 1238)

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2005/02/25 21:32:12  frank
+ * fix msOWSGetLayerExtent() for bug 1118
+ *
  * Revision 1.56  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -1369,7 +1372,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, const char *namespaces, rectO
     msFreeCharArray(tokens, n);
     return MS_SUCCESS;
   }
-  else
+  else if( lp->type != MS_LAYER_RASTER )
   {
       return msLayerGetExtent(lp, ext);
   }
