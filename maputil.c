@@ -89,11 +89,12 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     for(i=0; i<expression->numitems; i++)
       tmpstr = gsub(tmpstr, expression->items[i], items[expression->indexes[i]]);
 
-    msyystate = 4; msyystring = tmpstr;
+    msyystate = 4; msyystring = tmpstr; // set lexer state to EXPRESSION_STRING
     status = msyyparse();
     free(tmpstr);
 
     if(status != 0) return(MS_FALSE); // error in parse
+
     return(msyyresult);
     break;
   case(MS_REGEX):

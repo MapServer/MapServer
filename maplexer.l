@@ -43,13 +43,19 @@ char *msyystring=NULL;
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyystate=0;
          msyystring=NULL;
-         return(0); 
+         return(0);
          break;
        case(4):
          BEGIN(EXPRESSION_STRING);
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyystate=0;
+         break;
+       case(5):
+         BEGIN(INITIAL);        
+         msyystate=0;
+         msyystring=NULL;
+         return(0);
          break;
        default:
          break;

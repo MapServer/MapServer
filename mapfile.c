@@ -7,6 +7,7 @@
 #include "mapparser.h"
 
 extern int msyylex();
+extern void msyyrestart();
 extern double msyynumber;
 extern char *msyytext;
 extern int msyylineno;
@@ -1035,15 +1036,9 @@ void freeExpression(expressionObj *exp)
   if(!exp) return;
 
   msFree(exp->string);
-  if(exp->type == MS_REGEX && exp->compiled) {
-    regfree(&(exp->regex));
-    exp->compiled = MS_FALSE;
-  }
-  if(exp->type == MS_EXPRESSION) {
-    if(exp->numitems > 0) msFreeCharArray(exp->items, exp->numitems);
-    msFree(exp->indexes);
-    exp->numitems = 0;
-  }
+  if(exp->type == MS_REGEX && exp->compiled) regfree(&(exp->regex));
+  if(exp->type == MS_EXPRESSION && exp->numitems > 0) msFreeCharArray(exp->items, exp->numitems);
+  msFree(exp->indexes);
 
   initExpression(exp); // re-initialize
 }
@@ -1069,7 +1064,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   msyystate = 2; msyystring = value;
 
   freeExpression(exp); // we're totally replacing the old expression so free then init to start over
-  initExpression(exp);
+  // initExpression(exp);
 
   if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
   exp->string = strdup(msyytext);
@@ -2998,6 +2993,7 @@ void msFreeMap(mapObj *map) {
 
   if (map->layerorder)
       free(map->layerorder);
+
   msFree(map);
 }
 
@@ -3108,8 +3104,12 @@ mapObj *msLoadMap(char *filename)
   map_path = getPath(filename);
   chdir(map_path); /* switch so all filenames are relative to the location of the map file */
   free(map_path);
+     
 
-  msyylineno = 0; /* reset line counter */
+  msyystate = 5; // restore lexer state to INITIAL
+  msyylex();
+  msyyrestart(msyyin);
+  msyylineno = 0;
 
   if(initMap(map) == -1) /* initialize this map */
     return(NULL);
@@ -3118,7 +3118,7 @@ mapObj *msLoadMap(char *filename)
 
     switch(msyylex()) {   
     case(END):
-      fclose(msyyin);
+      fclose(msyyin);      
 
       if(msLoadSymbolSet(&(map->symbolset)) == -1) return(NULL);
 
