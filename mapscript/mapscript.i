@@ -2,6 +2,18 @@
 // mapscript.i: SWIG interface file for MapServer scripting extension called MapScript.
 //
 
+// language specific initialization
+#ifdef SWIGTCL8
+%module Mapscript
+%init %{
+#ifdef USE_TCL_STUBS
+  if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
+    return TCL_ERROR;
+  }
+#endif
+%}
+#endif
+
 %module mapscript
 %{
 #include "../../map.h"
@@ -623,3 +635,54 @@
   }	
 }
 
+//
+// class extensions for labelCacheObj - TP mods
+//
+%addmethods labelCacheObj {
+  void freeCache() {
+    int i;
+    for (i = 0; i < self->numlabels; i++) {
+        free(self->labels[i].string);
+        msFreeShape(self->labels[i].poly);
+    }   
+    self->numlabels = 0;
+    for (i = 0; i < self->nummarkers; i++) {
+        msFreeShape(self->markers[i].poly);
+    }
+    self->nummarkers = 0;
+  }
+}
+
+//
+// class extensions for DBFInfo - TP mods
+//
+%addmethods DBFInfo {
+    char *getFieldName(int iField) {
+        static char pszFieldName[1000];
+	int pnWidth;
+	int pnDecimals;
+	DBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	return pszFieldName;
+    }
+
+    int getFieldWidth(int iField) {
+        char pszFieldName[1000];
+	int pnWidth;
+	int pnDecimals;
+	DBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	return pnWidth;
+    }
+
+    int getFieldDecimals(int iField) {
+        char pszFieldName[1000];
+	int pnWidth;
+	int pnDecimals;
+	DBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	return pnDecimals;
+    }
+    
+    DBFFieldType getFieldType(int iField) {
+	return DBFGetFieldInfo(self, iField, NULL, NULL, NULL);
+    }
+    
+}
