@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2003/09/10 03:52:53  assefa
+ * The <Filter ...> and </Filter> is now generated here intstead of
+ * comming from the wfs_filter metadata parameter.
+ *
  * Revision 1.13  2003/09/04 17:47:15  assefa
  * Add filterencoding tests.
  *
@@ -170,7 +174,7 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
  *   TYPENAME
  * ------------------------------------------------------------------ */
     // Make sure we have a big enough buffer for the URL
-    if(!(pszURL = (char *)malloc((strlen(lp->connection)+256)*sizeof(char)))) 
+    if(!(pszURL = (char *)malloc((strlen(lp->connection)+1024)*sizeof(char)))) 
     {
         msSetError(MS_MEMERR, NULL, "msBuildWFSLayerURL()");
         return NULL;
@@ -187,9 +191,11 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
 /* -------------------------------------------------------------------- */
     if ((pszTmp = msLookupHashTable(lp->metadata, 
                                        "wfs_filter")) != NULL)
-      sprintf(pszURL, 
-              "%s&REQUEST=GetFeature&FILTER=%s",
-              lp->connection, msEncodeUrl(pszTmp));
+    {   
+        sprintf(pszURL, 
+                "%s&REQUEST=GetFeature&FILTER=%s%s%s",
+                lp->connection, msEncodeUrl("<Filter xmlns=\"http://www.opengis.net/ogc\" xmlns:gml=\"http://www.opengis.net/gml\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.opengis.net/ogc ../filter/1.0.0/filter.xsd http://www.opengis.net/gml../gml/2.1/geometry.xsd\">"), msEncodeUrl(pszTmp), msEncodeUrl("</Filter>"));
+    }
     else
       sprintf(pszURL, 
               "%s&REQUEST=GetFeature&BBOX=%f,%f,%f,%f",
