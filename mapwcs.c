@@ -472,7 +472,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   const char *value;
   char tag[100]; // should be plenty of space
   
-  printf("        <AxisDescription");
+  printf("        <axisDescription");
   snprintf(tag, 100, "%s_semantic",  name); // optional attributes follow (should escape?)
   msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
   snprintf(tag, 100, "%s_refsys", name);
@@ -527,7 +527,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   
   // TODO: add NullValues (optional)
   
-  printf("        </AxisDescription>\n");
+  printf("        </axisDescription>\n");
   
   return MS_SUCCESS;
 }
