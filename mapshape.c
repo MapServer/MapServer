@@ -1187,7 +1187,7 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename)
   char *dbfFilename;
 
   if(!filename) {
-    msSetError(MS_IOERR, "No (NULL) filename provided.", "msOpenSHPFile()");
+    msSetError(MS_IOERR, "No (NULL) filename provided.", "msSHPOpenFile()");
     return(-1);
   }
 
@@ -1202,7 +1202,7 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename)
     shpfile->hSHP = msSHPOpen( filename, mode);
 
   if(!shpfile->hSHP) {
-    msSetError(MS_IOERR, "(%s)", "msOpenSHPFile()", filename);
+    msSetError(MS_IOERR, "(%s)", "msSHPOpenFile()", filename);
     return(-1);
   }
 
@@ -1228,7 +1228,7 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename)
   shpfile->hDBF = msDBFOpen(dbfFilename, "rb");
 
   if(!shpfile->hDBF) {
-    msSetError(MS_IOERR, "(%s)", "msOpenSHPFile()", dbfFilename);    
+    msSetError(MS_IOERR, "(%s)", "msSHPOpenFile()", dbfFilename);    
     free(dbfFilename);
     return(-1);
   }
