@@ -1828,6 +1828,8 @@ int initLayer(layerObj *layer, mapObj *map)
     msSetError(MS_MEMERR, NULL, "initLayer()");
     return(-1);
   }
+
+  layer->sameconnection = NULL;
   
   return(0);
 }
@@ -4076,45 +4078,48 @@ layerObj *msCheckConnection(layerObj * layer) {
   int i;
   layerObj *lp;
 
+  // TODO: there may be an issue with layer order since it's possible that layers to be rendered out of order
   for (i=0;i<layer->index;i++) { 	//check all layers previous to this one
     lp = &(layer->map->layers[i]);
+
     if (lp == layer) continue;
     if (lp->connectiontype != layer->connectiontype) continue;
     if (!lp->connection) continue;
     if (strcmp(lp->connection, layer->connection)) continue;
 
     // If we reach here, we found a layer with the same connection type and string.
-    // This either has a sameConnection pointing to itself (the first layer found
-    // with this connectionstring), or a sameConnection pointing to a previously
-    // opened layer.  In both cases, set the new layer's sameConnection pointer to
-    // the found layer's sameConnection and return a pointer to this
+    // This either has a sameconnection pointing to itself (the first layer found
+    // with this connectionstring), or a sameconnection pointing to a previously
+    // opened layer.  In both cases, set the new layer's sameconnection pointer to
+    // the found layer's sameconnection and return a pointer to this
     // layer.  The database application should neither open nor close this
     // layer. It will not be closed by msCloseConnection at the end.
-    layer->sameConnection = lp->sameConnection;
-    return (lp->sameConnection);
+    layer->sameconnection = lp->sameconnection;
+    return (lp->sameconnection);
   }
 
   // If we reach here, no previous  connection was found.  Set this layer's
-  // sameConnection pointing to itself and return NULL.  This layer should only
+  // sameconnection pointing to itself and return NULL.  This layer should only
   // be opened by the database application, not closed.  It will be closed at the
   // end by msCloseConnections
-  layer->sameConnection = layer;
+  // layer->sameconnection = layer;
+
   return(NULL);
 }
 
-static void msCloseConnections(mapObj *map) {
+void msCloseConnections(mapObj *map) {
   int i;
   layerObj *lp;
 
   for (i=0;i<map->numlayers;i++) {
     lp = &(map->layers[i]);
 
-    // Check if this layer has a sameConnection layer pointing to itself.
+    // Check if this layer has a sameconnection layer pointing to itself.
     // If so, call the close function provided for this database 
-    if (lp->sameConnection  == lp) {
+    if (lp->sameconnection  == lp) {
       switch (lp->connectiontype) {
       case MS_POSTGIS: 
-	lp->sameConnection = NULL;
+	lp->sameconnection = NULL;
 	msPOSTGISLayerClose(lp);
 	break;
       case MS_ORACLESPATIAL:

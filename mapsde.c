@@ -295,16 +295,21 @@ int msSDELayerOpen(layerObj *layer) {
 
   if(layer->sdelayerinfo) return MS_SUCCESS; // layer already open
 
-  params = split(layer->connection, ',', &numparams);
-  if(!params) {
-    msSetError(MS_MEMERR, "Error spliting SDE connection information.", "msSDELayerOpen()");
-    return(MS_FAILURE);
-  }
+  layer->sameconnection = msCheckConnection(layer);
+  if(!layer->sameconnection) { // no existing connection to use, open a new one
 
-  if(numparams < 5) {
-    msSetError(MS_SDEERR, "Not enough SDE connection parameters specified.", "msSDELayerOpen()");
-    return(MS_FAILURE);
-  }
+    params = split(layer->connection, ',', &numparams);
+    if(!params) {
+      msSetError(MS_MEMERR, "Error spliting SDE connection information.", "msSDELayerOpen()");
+      return(MS_FAILURE);
+    }
+
+    if(numparams < 5) {
+      msSetError(MS_SDEERR, "Not enough SDE connection parameters specified.", "msSDELayerOpen()");
+      return(MS_FAILURE);
+    }
+
+  HERE!
 
   sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
   if(!sde) {
