@@ -67,7 +67,6 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
   return(icp);
 }
 
-
 /**
  * Utility function to create a GD image. Returns
  * a pointer to an imageObj structure.
@@ -256,6 +255,44 @@ imageObj *msImageLoadGD( const char *filename )
   }
 
   return image;
+}
+
+static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *style, int *fgcolor, int *bgcolor)
+{
+  gdImagePtr brush;
+
+#if GD2_VERS > 1
+  if(!gdImageTrueColor(img)) {
+    brush = gdImageCreate(width, height);
+    if(style->backgroundcolor.pen >= 0)
+      *bgcolor = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
+    else {
+      *bgcolor = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));          
+      gdImageColorTransparent(brush,0);
+    }
+    *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
+  } else {
+    brush = gdImageCreateTrueColor(width, height);
+    gdImageAlphaBlending(brush, 0);
+    if(style->backgroundcolor.pen >= 0)
+      *bgcolor = gdTrueColor(style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);      
+    else
+      *bgcolor = -1;      
+    gdImageFilledRectangle(brush, 0, 0, width, height, *bgcolor);
+    *fgcolor = gdTrueColor(style->color.red, style->color.green, style->color.blue);
+  }
+#else
+  brush = gdImageCreate(width, height);
+  if(style->backgroundcolor.pen >= 0)
+    *bgcolor = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
+  else {
+    *bgcolor = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));          
+    gdImageColorTransparent(brush,0);
+  }
+  *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
+#endif
+
+  return(brush);
 }
 
 // TODO: might be a way to optimize this (halve the number of additions)
@@ -1097,15 +1134,17 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       return;
     }
 
-    tile = gdImageCreate(x, y);
+    /* tile = gdImageCreate(x, y);
     if(bc >= 0)
       tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
     else {
       tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
       gdImageColorTransparent(tile,0);
     }    
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue);
+    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue); */
     
+    tile = createBrush(img, x, y, style, &tile_fc, &tile_bc);
+
     x = MS_NINT(tile->sx/2);
     y = MS_NINT(tile->sy/2);
 
@@ -1139,14 +1178,16 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     /*
     ** create tile image
     */
-    tile = gdImageCreate(x, y);
+    /* tile = gdImageCreate(x, y);
     if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, bc), gdImageGreen(img, bc), gdImageBlue(img, bc));
+      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
     else {
       tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
       gdImageColorTransparent(tile,0);
     }
-    tile_fc = gdImageColorAllocate(tile, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue); */
+    
+    tile = createBrush(img, x, y, style, &tile_fc, &tile_bc);
    
     /*
     ** draw in the tile image
