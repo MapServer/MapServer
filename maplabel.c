@@ -59,6 +59,15 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     map->labelcache.labels[i].styles = (styleObj *) malloc(sizeof(styleObj)*cp->numstyles);
     memcpy(map->labelcache.labels[i].styles, cp->styles, sizeof(styleObj)*cp->numstyles);
     map->labelcache.labels[i].numstyles = cp->numstyles;
+
+    /* Copy the style's symbolnames as well */
+    if (cp->numstyles) {
+      int j;
+      for(j=0; j<cp->numstyles; j++) {
+        if (cp->styles[j].symbolname)
+          map->labelcache.labels[i].styles[j].symbolname = strdup(cp->styles[j].symbolname);
+      }
+    }
   }
 
   // copy the label
