@@ -155,7 +155,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
       else
         fprintf(stream, "%s<gml:Polygon>\n", tab);
 
-      fprintf(stream, "%s\t<gml:outerBoundayIs>\n", tab);
+      fprintf(stream, "%s\t<gml:outerBoundaryIs>\n", tab);
       fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
       fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
@@ -166,7 +166,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
       fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
 
       fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
-      fprintf(stream, "%s\t</gml:outerBoundayIs>\n", tab);
+      fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
 
       fprintf(stream, "%s</gml:Polygon>\n", tab);
     } else { // need to test for inner and outer rings
