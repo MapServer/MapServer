@@ -1,6 +1,9 @@
 #include "map.h"
 #include "maperror.h"
 #include "mapthread.h"
+
+#include "gdfonts.h"
+
 #include <time.h>
 #ifndef _WIN32
 #include <sys/time.h>
@@ -166,6 +169,101 @@ void msWriteError(FILE *stream)
   errorObj *ms_error = msGetErrorObj();
 
   fprintf(stream, "%s: %s %s\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+}
+
+void msWriteErrorImage(mapObj *map, char *filename, int blank) {
+  gdFontPtr font = gdFontSmall;
+  gdImagePtr img=NULL;
+  int width=400, height=300, color;
+  int nMargin =5;
+  int nTextLength = 0;
+  int nUsableWidth = 0;
+  int nMaxCharsPerLine = 0;
+  int nLines = 0;
+  int i = 0;
+  int nStart = 0;
+  int nEnd = 0;
+  int nLength = 0;
+  char **papszLines = NULL;
+  int nXPos = 0;
+  int nYPos = 0;
+  int nWidthTxt = 0;
+  int nSpaceBewteenLines = font->h;
+  int nBlack = 0;   
+  outputFormatObj *format = NULL;
+
+  char errormsg[MESSAGELENGTH+ROUTINELENGTH+4];
+  errorObj *ms_error = msGetErrorObj();
+
+  if (map) {
+    width = map->width;
+    height = map->height;
+    format = map->outputformat;
+  }
+
+  if (format == NULL) format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
+
+  img = gdImageCreate(width, height);
+  color = gdImageColorAllocate(img, 255,255,255); // BG color
+  nBlack = gdImageColorAllocate(img, 0,0,0); // Text color
+
+  sprintf(errormsg, "%s: %s", ms_error->routine, ms_error->message);
+  nTextLength = strlen(errormsg); 
+  nWidthTxt  =  nTextLength * font->w;
+  nUsableWidth = width - (nMargin*2);
+
+  // Check to see if it all fits on one line. If not, split the text on several lines.
+  if(!blank) {
+    if (nWidthTxt > nUsableWidth) {
+      nMaxCharsPerLine =  nUsableWidth/font->w;
+      nLines = (int) ceil ((double)nTextLength / (double)nMaxCharsPerLine);
+      if (nLines > 0) {
+        papszLines = (char **)malloc(nLines*sizeof(char *));
+        for (i=0; i<nLines; i++) {
+          papszLines[i] = (char *)malloc((nMaxCharsPerLine+1)*sizeof(char));
+          papszLines[i][0] = '\0';
+        }
+      }
+      for (i=0; i<nLines; i++) {
+        nStart = i*nMaxCharsPerLine;
+        nEnd = nStart + nMaxCharsPerLine;
+        if (nStart < nTextLength) {
+          if (nEnd > nTextLength)
+            nEnd = nTextLength;
+          nLength = nEnd-nStart;
+
+          strncpy(papszLines[i], errormsg+nStart, nLength);
+          papszLines[i][nLength+1] = '\0';
+        }
+      }
+    } else {
+      nLines = 1;
+      papszLines = (char **)malloc(nLines*sizeof(char *));
+      papszLines[0] = (char *)malloc((strlen(errormsg)+1)*sizeof(char));
+      papszLines[0] = strcpy(papszLines[0], errormsg);
+      papszLines[0][strlen(papszLines[0])+1]='\0';
+    }   
+    for (i=0; i<nLines; i++) {
+      nYPos = (nSpaceBewteenLines) * ((i*2) +1); 
+      nXPos = nSpaceBewteenLines;
+
+      gdImageString(img, font, nXPos, nYPos, (unsigned char *)papszLines[i], nBlack);
+    }
+    if (papszLines) {
+      for (i=0; i<nLines; i++) {
+	free(papszLines[i]);
+      }
+      free(papszLines);
+    }
+  }
+
+  // actually write the image
+  if(!filename) printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
+  msSaveImageGD(img, filename, format);
+  gdImageDestroy(img);
+
+  if (format->refcount == 0)
+    msFreeOutputFormat(format);
 }
 
 char *msGetVersion() {
