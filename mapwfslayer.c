@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2003/10/22 20:20:09  assefa
+ * Test if wfs_filter metada is empty.
+ *
  * Revision 1.16  2003/09/19 21:54:19  assefa
  * Add support fot the Post request.
  *
@@ -195,7 +198,7 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
     }
 
     pszTmp = msLookupHashTable(lp->metadata, "wfs_filter");
-    if (pszTmp)
+    if (pszTmp && strlen(pszTmp) > 0)
     {
         psParams->pszFilter = malloc(sizeof(char)*(strlen(pszTmp)+17+1));
         sprintf(psParams->pszFilter, "<Filter>%s</Filter>", pszTmp);
