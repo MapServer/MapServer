@@ -89,9 +89,9 @@ class SymbolSetTestCase(unittest.TestCase):
 
     def testSymbolSetFromFile(self):
         """get a symbolset from a Python file"""
-        f = open(SYMBOLSET, 'r')
+        f = open('symbols.txt', 'r')
         symbolset = mapscript.symbolSetObj(f)
-        assert symbolset.numsymbols == 4
+        assert symbolset.numsymbols == 2
 
 
 class MapSymbolSetTestCase(MapTestCase):
