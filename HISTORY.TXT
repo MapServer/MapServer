@@ -61,6 +61,7 @@ Version 4.3 (CVS)
   and symbolset explicitly (see bug 557).  A new testcopy program has
   been added as a target for make.
 
+- Resolved issue with pens and dynamic drawing of points (bug 663).
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------

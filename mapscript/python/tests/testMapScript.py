@@ -733,21 +733,21 @@ class PointObjTestCase(MapscriptTestCase):
 class ColorObjTestCase(unittest.TestCase):
     def testColorObjConstructorNoArgs(self):
         c = mapscript.colorObj()
-        assert (c.red, c.green, c.blue) == (0, 0, 0)
+        assert (c.red, c.green, c.blue, c.pen) == (0, 0, 0, -4)
     def testColorObjConstructorArgs(self):
         c = mapscript.colorObj(1, 2, 3)
-        assert (c.red, c.green, c.blue) == (1, 2, 3)
+        assert (c.red, c.green, c.blue, c.pen) == (1, 2, 3, -4)
     def testColorObjToHex(self):
         c = mapscript.colorObj(255, 255, 255)
         assert c.toHex() == '#ffffff'
     def testColorObjSetRGB(self):
         c = mapscript.colorObj()
         c.setRGB(255, 255, 255)
-        assert (c.red, c.green, c.blue) == (255, 255, 255)
+        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
     def testColorObjSetHexLower(self):
         c = mapscript.colorObj()
         c.setHex('#ffffff')
-        assert (c.red, c.green, c.blue) == (255, 255, 255)
+        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
     def testColorObjSetHexUpper(self):
         c = mapscript.colorObj()
         c.setHex('#FFFFFF')
@@ -1027,7 +1027,28 @@ class MapMetaDataTestCase(MapTestCase):
     def testAccessNullClassMetaData(self):
         layer = self.mapobj1.getLayer(1).getClass(1)
         self.assertRaises(mapscript.MapServerError, layer.getFirstMetaDataKey)
-        
+
+class DrawProgrammedStylesTestCase(MapTestCase):
+    
+    def testDrawPoints(self):
+        points = [mapscript.pointObj(-0.2, 51.6),
+                  mapscript.pointObj(0.0, 51.2),
+                  mapscript.pointObj(0.2, 51.6)]
+        colors = [mapscript.colorObj(255,0,0),
+                  mapscript.colorObj(0,255,0),
+                  mapscript.colorObj(0,0,255)]
+        img = self.mapobj1.prepareImage()
+        layer = self.mapobj1.getLayerByName('POINT')
+        #layer.draw(self.mapobj1, img)
+        class0 = layer.getClass(0)
+        for i in range(len(points)):
+            style0 = class0.getStyle(0)
+            style0.color = colors[i]
+            #style0.color.pen = -4
+            assert style0.color.toHex() == colors[i].toHex()
+            points[i].draw(self.mapobj1, layer, img, 0, "foo")
+        img.save('test_draw_points.png')
+
 if __name__ == '__main__':
     unittest.main()
 

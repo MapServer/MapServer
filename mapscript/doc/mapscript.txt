@@ -419,12 +419,19 @@ green : int
 red : int
     Red component of color in range [0-255]
 
+pen : int
+    **TODO** trigger for change in mapserver pens?
+    
+.. note:: Because of the issue with *pen*, setting colors by individual
+   components is unreliable.  Best practice is to use setRGB(), setHex(),
+   or assign to a new instance of colorObj().
+
 Methods
 -------
 
 .. _`new colorObj`:
 
-new colorObj( [ int red=0, int green=0, int blue=0 ] ) : colorObj_ 
+new colorObj( [ int red=0, int green=0, int blue=0, int pens=-4 ] ) : colorObj_ 
     Create a new instance.  The color arguments are optional.
     
 .. _setRGB:
