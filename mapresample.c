@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2001/09/04 13:20:52  frank
+ * ensure Z is passed to pj_transform for datum shifts
+ *
  * Revision 1.16  2001/08/22 04:33:01  dan
  * Try calling GDALReadWorldFile() if GDALGetGeoTransform() fails.
  * When resampling layers with an offsite then init temporary image BG
@@ -333,8 +336,10 @@ int msProjTransformer( void *pCBData, int nPoints,
     if( psPTInfo->psDstProj != NULL
         && psPTInfo->psSrcProj != NULL )
     {
+        double	z = 0;
+
         if( pj_transform( psPTInfo->psDstProj, psPTInfo->psSrcProj, 
-                          nPoints, 1, x, y, NULL ) != 0 )
+                          nPoints, 1, x, y,  &z) != 0 )
         {
             for( i = 0; i < nPoints; i++ )
                 panSuccess[i] = 0;
