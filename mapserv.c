@@ -711,6 +711,32 @@ void loadForm()
     }
 
     if(strcasecmp(ParamNames[i],"mode") == 0) { // set operation mode
+      for(j=0; j<numModes; j++) {
+	if(strcasecmp(ParamValues[i], modeStrings[j]) == 0) {
+	  Mode = j;
+
+	  if(Mode == ZOOMIN) {
+	    ZoomDirection = 1;
+	    Mode = BROWSE;
+	  }
+	  if(Mode == ZOOMOUT) {
+	    ZoomDirection = -1;
+	    Mode = BROWSE;
+	  }
+
+	  break;
+	}
+      }
+
+      if(j == numModes) {
+	msSetError(MS_WEBERR, "Invalid mode.", "loadForm()");
+	writeError();
+      }
+
+      continue;
+    }
+
+    if(strcasecmp(ParamNames[i],"mode") == 0) { // set operation mode
       if(strcasecmp(ParamValues[i],"browse") == 0) {
         Mode = BROWSE;
         continue;
@@ -1670,68 +1696,89 @@ int main(int argc, char *argv[]) {
 	  Map->layers[QueryLayerIndex].status = MS_ON;
 
         switch(Mode) {
-        case FEATUREQUERY:
-        case FEATURENQUERY:
+	case ITEMFEATUREQUERY:
+        case ITEMFEATURENQUERY:
+	case ITEMFEATUREQUERYMAP:
+        case ITEMFEATURENQUERYMAP:
 	  if((SelectLayerIndex = msGetLayerIndex(Map, SelectLayer)) == -1) { /* force the selection layer on */
 	    msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
 	    writeError();
-	  } else
-	    Map->layers[SelectLayerIndex].status = MS_ON;
+	  }
+	  Map->layers[SelectLayerIndex].status = MS_ON;
 
-  	  if(QueryCoordSource == NONE) { // use values
+	  if(QueryCoordSource != NONE && !UseShapes)
+	    setExtent(); /* set user area of interest */
 
-	    if((status = msQueryByAttributes(Map, SelectLayerIndex)) != MS_SUCCESS) writeError();
+	  if(Mode == ITEMQUERY || Mode == ITEMQUERYMAP)
+	    if((status = msQueryByAttributes(Map, SelectLayerIndex, MS_SINGLE)) != MS_SUCCESS) writeError();
+	  else
+	    if((status = msQueryByAttributes(Map, SelectLayerIndex, MS_MULTIPLE)) != MS_SUCCESS) writeError();
 
-  	  } else { /* use coordinates */
-	  
-	    if(Mode == FEATUREQUERY) {
-	      switch(QueryCoordSource) {
-	      case FROMIMGPNT:
-	        Map->extent = ImgExt; /* use the existing map extent */	
-	        setCoordinate();
-	        if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
-	        break;
-	      case FROMUSERPNT: /* only a buffer makes sense */
-	        if(Buffer == -1) {
-		  msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
-		  writeError();
-	        }
-	        if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
-	        break;
-	      default:
-	        msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
-	        writeError();
-	        break;
-	      }	  
-	    } else { /* FEATURENQUERY */
-	      switch(QueryCoordSource) {
-	      case FROMIMGPNT:
-	        Map->extent = ImgExt; /* use the existing map extent */	
-	        setCoordinate();
-	        if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
-	        break;	 
-	      case FROMIMGBOX:
-	        break;
-	      case FROMUSERPNT: /* only a buffer makes sense */
-	        if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
-	      default:
-	        setExtent();
-	        if((status = msQueryByRect(Map, SelectLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
-	        break;
+	  if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) == -1) writeError();
+
+	  break;
+        case FEATUREQUERY:
+        case FEATURENQUERY:
+	case FEATUREQUERYMAP:
+        case FEATURENQUERYMAP:
+	  if((SelectLayerIndex = msGetLayerIndex(Map, SelectLayer)) == -1) { /* force the selection layer on */
+	    msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
+	    writeError();
+	  }
+	  Map->layers[SelectLayerIndex].status = MS_ON;
+
+	  if(Mode == FEATUREQUERY || FEATUREQUERYMAP) {
+	    switch(QueryCoordSource) {
+	    case FROMIMGPNT:
+	      Map->extent = ImgExt; /* use the existing map extent */	
+	      setCoordinate();
+	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
+	      break;
+	    case FROMUSERPNT: /* only a buffer makes sense */
+	      if(Buffer == -1) {
+		msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
+		writeError();
 	      }
-	    } /* end switch */
-	  } 
+	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
+	      break;
+	    default:
+	      msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
+	      writeError();
+	      break;
+	    }	  
+	  } else { /* FEATURENQUERY/FEATURENQUERYMAP */
+	    switch(QueryCoordSource) {
+	    case FROMIMGPNT:
+	      Map->extent = ImgExt; /* use the existing map extent */	
+	      setCoordinate();
+	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
+	      break;	 
+	    case FROMIMGBOX:
+	      break;
+	    case FROMUSERPNT: /* only a buffer makes sense */
+	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
+	    default:
+	      setExtent();
+	      if((status = msQueryByRect(Map, SelectLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
+	      break;
+	    }
+	  } /* end switch */
 	
 	  if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) == -1) writeError();
       
 	  break;
         case ITEMQUERY:
+	case ITEMNQUERY:
         case ITEMQUERYMAP:
-	
+        case ITEMNQUERYMAP:
+
 	  if(QueryCoordSource != NONE && !UseShapes)
 	    setExtent(); /* set user area of interest */
 
-	  if((status = msQueryByAttributes(Map, QueryLayerIndex)) != MS_SUCCESS) writeError();
+	  if(Mode == ITEMQUERY || Mode == ITEMQUERYMAP)
+	    if((status = msQueryByAttributes(Map, QueryLayerIndex, MS_SINGLE)) != MS_SUCCESS) writeError();
+	  else
+	    if((status = msQueryByAttributes(Map, QueryLayerIndex, MS_MULTIPLE)) != MS_SUCCESS) writeError();
 
 	  break;
         case NQUERY:
@@ -1850,7 +1897,7 @@ int main(int argc, char *argv[]) {
 	img = msDrawQueryMap(Map);
 	if(!img) writeError();
 	
-	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP || Mode == INDEXQUERYMAP) { // just return the image
+	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP || Mode == ITEMNQUERYMAP || Mode == FEATUREQUERYMAP || Mode == FEATURENQUERYMAP || Mode == ITEMFEATUREQUERYMAP || Mode == ITEMFEATURENQUERYMAP || Mode == INDEXQUERYMAP) { // just return the image
 	  printf("Content-type: image/%s%c%c",MS_IMAGE_MIME_TYPE(Map->imagetype), 10,10);
 	  status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 	  if(status != MS_SUCCESS) writeError();

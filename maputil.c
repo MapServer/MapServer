@@ -593,7 +593,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     }
     break;      
 
-  case MS_LAYER_LINE:    
+  case MS_LAYER_LINE:
     if(shape->type != MS_SHAPE_POLYGON && shape->type != MS_SHAPE_LINE){ 
       msSetError(MS_MISCERR, "Only polygon or line shapes can be drawn using a line layer definition.", "msDrawShape()");
       return(MS_FAILURE);

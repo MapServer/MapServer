@@ -332,7 +332,7 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   return(MS_SUCCESS);
 }
 
-int msQueryByAttributes(mapObj *map, int qlayer)
+int msQueryByAttributes(mapObj *map, int qlayer, int mode)
 {
   layerObj *lp;
   int status;
@@ -417,6 +417,11 @@ int msQueryByAttributes(mapObj *map, int qlayer)
       msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
     
     msFreeShape(&shape);
+
+    if(mode == MS_SINGLE) { // no need to look any further
+      status = MS_DONE;
+      break;
+    }
   }
 
   if(status != MS_DONE) return(MS_FAILURE);
