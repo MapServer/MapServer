@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.89  2004/11/03 20:31:38  hobu
+ * first cut at implementing layer and stream caching
+ * to go along with pool caching to improve the
+ * response time for opening/closing layers
+ *
  * Revision 1.88  2004/10/26 16:28:10  hobu
  * make sure to initialize sde->row_id_column
  * in msSDELayerOpen
@@ -86,13 +91,12 @@
 
 #include "map.h"
 #include "maperror.h"
-
-MS_CVSID("$Id$")
+#include "maptime.h"
 
 #ifdef USE_SDE
 #include <sdetype.h> /* ESRI SDE Client Includes */
 #include <sdeerno.h>
-
+ 
 #define MS_SDE_MAXBLOBSIZE 1024*50 // 50 kbytes
 #define MS_SDE_NULLSTRING "<null>"
 #define MS_SDE_SHAPESTRING "<shape>"
@@ -100,7 +104,13 @@ MS_CVSID("$Id$")
 #define MS_SDE_TIMEFMT "%T %m/%d/%Y"
 #define MS_SDE_ROW_ID_COLUMN "SE_ROW_ID"
 
+typedef struct {
+  SE_CONNECTION connection;
+  SE_STREAM stream;
+} msSDEConnPoolInfo; 
+
 typedef struct { 
+  msSDEConnPoolInfo *connPoolInfo;
   SE_CONNECTION connection;
   SE_LAYERINFO layerinfo;
   SE_COORDREF coordref;
@@ -108,6 +118,22 @@ typedef struct {
   long state_id;
   char *table, *column, *row_id_column;
 } msSDELayerInfo;
+
+typedef struct {
+  long layerId;
+  char *table;
+  char *column;
+  char *connection;
+} layerId;
+
+/*
+ * Layer ID caching section.
+ */
+static int lcacheCount = 0;
+static int lcacheMax = 0;
+static layerId *lcache = NULL;
+
+
 
 /************************************************************************/
 /*       Start SDE/MapServer helper functions.                          */
@@ -122,12 +148,23 @@ typedef struct {
 /* -------------------------------------------------------------------- */
 static void msSDECloseConnection( void *conn_handle )
 {
+
   long status;
-  
-  status= SE_connection_free_all_locks ((SE_CONNECTION)conn_handle);
-  if (status == SE_SUCCESS) {
-    SE_connection_free((SE_CONNECTION)conn_handle);
-  }
+  msSDEConnPoolInfo *poolinfo = conn_handle;
+
+  if (poolinfo) {
+     if (poolinfo->stream) {
+        SE_stream_free(poolinfo->stream);
+     }
+     if (poolinfo->connection) {
+        status = SE_connection_free_all_locks (poolinfo->connection);
+        if (status == SE_SUCCESS) {
+           SE_connection_free(poolinfo->connection);
+        }
+     }
+     free(poolinfo);
+  } 
+
 }
 
 /* -------------------------------------------------------------------- */
@@ -150,6 +187,145 @@ static void sde_error(long error_code, char *routine, char *sde_routine)
               error_code);
 
   return;
+}
+
+/* -------------------------------------------------------------------- */
+/* msSDELCacheAdd                                                       */
+/* -------------------------------------------------------------------- */
+/*     Adds a SDE layer to the global layer cache.                      */
+/* -------------------------------------------------------------------- */
+long msSDELCacheAdd( layerObj *layer,
+                     SE_LAYERINFO layerinfo,
+                     char *tableName,
+                     char *columnName,
+                     char *connectionString) 
+{
+  layerId *lid = NULL;
+  int status = 0;
+  
+  if (layer->debug){
+    msDebug( "%s: Caching id for %s, %s, %s\n", "msSDELCacheAdd()", 
+            tableName, columnName, connectionString);
+  }
+  /*
+   * Ensure the cache is large enough to hold the new item.
+   */
+  if(lcacheCount == lcacheMax)
+  {
+    lcacheMax += 10;
+    lcache = (layerId *)realloc(lcache, sizeof(layerId) * lcacheMax);
+    if(lcache == NULL)
+    {
+      msSetError(MS_MEMERR, NULL, "msSDELCacheAdd()");
+      return (MS_FAILURE);
+    }
+  }
+
+  /*
+   * Population the new lcache object.
+   */
+  lid = lcache + lcacheCount;
+  lcacheCount++;
+
+  status = SE_layerinfo_get_id(layerinfo, &lid->layerId);
+  if(status != SE_SUCCESS)
+  {
+        sde_error(status, "msSDELCacheAdd()", "SE_layerinfo_get_id()");
+        return(MS_FAILURE);
+  }
+  lid->table = strdup(tableName);
+  lid->column = strdup(columnName);
+  lid->connection = strdup(connectionString);
+  return (MS_SUCCESS);
+}
+
+/* -------------------------------------------------------------------- */
+/* msSDEGetLayerInfo                                                    */
+/* -------------------------------------------------------------------- */
+/*     Get a LayerInfo for the layer.  Cached layer is used if it       */
+/*     exists in the cache.                                             */
+/* -------------------------------------------------------------------- */
+long msSDEGetLayerInfo(layerObj *layer,
+                       SE_CONNECTION conn, 
+                       char *tableName, 
+                       char *columnName, 
+                       char *connectionString,
+                       SE_LAYERINFO layerinfo)
+{
+  int i;
+  long status;
+  layerId *lid = NULL;
+  
+  /*
+   * If table or column are null, nothing can be done.
+   */
+  if(tableName == NULL)
+  {
+    msSetError( MS_MISCERR,
+                "Missing table name.\n",
+                "msSDEGetLayerInfo()");
+    return (MS_FAILURE);
+  }
+  if(columnName == NULL)
+  {
+    msSetError( MS_MISCERR,
+                "Missing column name.\n",
+                "msSDEGetLayerInfo()");
+    return (MS_FAILURE);
+  }
+  if(connectionString == NULL)
+  {
+    msSetError( MS_MISCERR,
+                "Missing connection string.\n",
+                "msSDEGetLayerInfo()");
+    return (MS_FAILURE);
+  }  
+
+  if (layer->debug){
+    msDebug("%s: Looking for layer by %s, %s, %s\n", "msSDEGetLayerInfo()",
+          tableName, columnName, connectionString);
+  }
+  /*
+   * Search the lcache for the layer id.
+   */
+  for(i = 0; i < lcacheCount; i++)
+  {
+    lid = lcache + i;
+    if(strcasecmp(lid->table, tableName) == 0 &&
+        strcasecmp(lid->column, columnName) == 0 &&
+        strcasecmp(lid->connection, connectionString) == 0)
+    {
+      status = SE_layer_get_info_by_id(conn, lid->layerId, layerinfo);
+      if(status != SE_SUCCESS) {
+        sde_error(status, "msSDEGetLayerInfo()", "SE_layer_get_info()");
+        return(MS_FAILURE);
+      }
+      else
+      {
+        if (layer->debug){
+          msDebug( "%s: Matched layer to id %i.\n", 
+                   "msSDEGetLayerId()", lid->layerId);
+        }
+        return (MS_SUCCESS);
+      }
+    }
+  }
+  if (layer->debug){
+    msDebug("%s: No cached layerid found.\n", "msSDEGetLayerInfo()");
+  }
+  /*
+   * No matches found, create one.
+   */
+  status = SE_layer_get_info( conn, tableName, columnName, layerinfo );
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDEGetLayerInfo()", "SE_layer_get_info()");
+    return(MS_FAILURE);
+  }
+  else 
+  {
+    status = msSDELCacheAdd(layer, layerinfo, tableName, columnName, connectionString);
+    return(MS_SUCCESS);
+  }
 }
 
 /* -------------------------------------------------------------------- */
@@ -295,12 +471,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   SE_COLUMN_DEF *itemdefs;
   SE_SHAPE shapeval=0;
   SE_BLOB_INFO blobval;
-
+ // blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO));
   msSDELayerInfo *sde;
-  
-  blobval.blob_length = 0;
-  blobval.blob_buffer = (CHAR*)malloc(blobval.blob_length);
-
 
   sde = layer->layerinfo;
 
@@ -398,7 +570,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     case SE_BLOB_TYPE:
         status = SE_stream_get_blob(sde->stream, (short) (i+1), &blobval);
         if(status == SE_SUCCESS) {
-          // Blobs will still not work because of stream spec stuff
           shape->values[i] = (char *)malloc(sizeof(char)*blobval.blob_length);
           shape->values[i] = memcpy(shape->values[i],
                                     blobval.blob_buffer, 
@@ -412,7 +583,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
           sde_error(status, "sdeGetRecord()", "SE_stream_get_blob()");
           return(MS_FAILURE);
         }
-    
       break;
     case SE_DATE_TYPE:
       status = SE_stream_get_date(sde->stream, (short)(i+1), &dateval);
@@ -486,8 +656,10 @@ int msSDELayerOpen(layerObj *layer) {
   SE_ERROR error;
   SE_STATEINFO state;
   SE_VERSIONINFO version;
- // SE_STREAM_SPEC spec;
+
   msSDELayerInfo *sde;
+  msSDEConnPoolInfo *poolinfo;
+
 
   // layer already open, silently return
   if(layer->layerinfo) return(MS_SUCCESS); 
@@ -504,18 +676,26 @@ int msSDELayerOpen(layerObj *layer) {
   sde->state_id = SE_BASE_STATE_ID;
   // initialize the table and spatial column names
   sde->table = sde->column = NULL;
-  
-  // initialize the connection using the connection pooling API
-  sde->connection = (SE_CONNECTION) msConnPoolRequest( layer );
-  
+  // initialize the row_id column
   sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
-  // If we weren't returned a connection, initialize a new one
-  if (!(sde->connection)) {
+
+  // request a connection and stream from the pool
+  poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
+
+  
+  // If we weren't returned a connection and stream, initialize new ones
+  if (!poolinfo) {
     if (layer->debug) 
       msDebug("msSDELayerOpen(): "
               "Layer %s opened from scratch.\n", layer->name);
 
-    // Split the connection parameters and make sure we have enough of them
+
+    poolinfo = malloc(sizeof *poolinfo);
+    if (!poolinfo) {
+      return MS_FAILURE;
+    } 		
+
+	  // Split the connection parameters and make sure we have enough of them
     params = split(layer->connection, ',', &numparams);
     if(!params) {
       msSetError( MS_MEMERR, 
@@ -530,47 +710,49 @@ int msSDELayerOpen(layerObj *layer) {
       return(MS_FAILURE);
     }
   
-    // Create the connection handle and put into the sde->connection
+    // Create the connection handle and put into poolinfo->connection
     status = SE_connection_create(params[0], 
                                   params[1], 
                                   params[2], 
                                   params[3], 
                                   params[4], 
                                   &error, 
-                                  &(sde->connection));
+                                  &(poolinfo->connection));
+
     if(status != SE_SUCCESS) {
       sde_error(status, "msSDELayerOpen()", "SE_connection_create()");
       return(MS_FAILURE);
     }
-/* ------------------------------------------------------------------------- */
-/* Set the concurrency for the connection.  This is to support threading.    */
-/* ------------------------------------------------------------------------- */
-    status = SE_connection_set_concurrency( sde->connection, 
+
+    /* ------------------------------------------------------------------------- */
+    /* Set the concurrency type for the connection.  SE_UNPROTECTED_POLICY is    */
+    /* suitable when only one thread accesses the specified connection.          */
+    /* ------------------------------------------------------------------------- */
+    status = SE_connection_set_concurrency( poolinfo->connection, 
                                             SE_UNPROTECTED_POLICY);
+
+  
     if(status != SE_SUCCESS) {
       sde_error(status, "msSDELayerOpen()", "SE_connection_set_concurrency()");
       return(MS_FAILURE);
     }
+    
 
-/*    status = SE_connection_get_stream_spec(sde->connection, &spec);
-          msDebug("Stream spec: blob_bytes: %d, max_bypes_per_blob: %d, stream_pool_size: %d.\n", 
-                spec.blob_bytes, 
-                spec.max_bytes_per_blob,
-                spec.stream_pool_size);
-    spec.blob_bytes=8000000;
-    spec.max_bytes_per_blob = 8000000;
-    
-*/
-    
+    status = SE_stream_create(poolinfo->connection, &(poolinfo->stream));
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_stream_create()");
+    return(MS_FAILURE);
+    }
+
     // Register the connection with the connection pooling API.  Give 
     // msSDECloseConnection as the function to call when we run out of layer 
     // instances using it
-    msConnPoolRegister(layer, sde->connection, msSDECloseConnection);
+    msConnPoolRegister(layer, poolinfo, msSDECloseConnection);
     msFreeCharArray(params, numparams); // done with parameter list
   }
   
   // Split the DATA member into its parameters using the comma
-  // Periods (.) are use to denote table names and schemas in SDE, 
+  // Periods (.) are used to denote table names and schemas in SDE, 
   // as are underscores (_).
   params = split(layer->data, ',', &numparams);
   if(!params) {
@@ -588,14 +770,13 @@ int msSDELayerOpen(layerObj *layer) {
   sde->table = params[0]; 
   sde->column = params[1];
 
-
   if (numparams < 3){ 
     // User didn't specify a version, we won't use one
     if (layer->debug) {
       msDebug("msSDELayerOpen(): Layer %s did not have a " 
-              "specified version.", layer->name);
+              "specified version.\n", layer->name);
     }
-      sde->state_id = SE_DEFAULT_STATE_ID;
+    sde->state_id = SE_DEFAULT_STATE_ID;
   } 
   else {
     if (layer->debug) {
@@ -608,14 +789,12 @@ int msSDELayerOpen(layerObj *layer) {
       sde_error(status, "msSDELayerOpen()", "SE_versioninfo_create()");
       return(MS_FAILURE);
     }
-    status = SE_version_get_info(sde->connection, params[2], version);
-  
-   
+    status = SE_version_get_info(poolinfo->connection, params[2], version);
     if(status != SE_SUCCESS) {
        
       if (status == SE_INVALID_RELEASE) {
         // The user has incongruent versions of SDE, ie 8.2 client and 
-        // 8.3 server set the state_id to SE_DEFAULT_STATE_ID, which means 
+        // 8.3 server set the state_id to SE_DEFAULT_STATE_ID, which means   
         // no version queries are done
         sde->state_id = SE_DEFAULT_STATE_ID;
       }
@@ -625,6 +804,7 @@ int msSDELayerOpen(layerObj *layer) {
       }
     } 
   }
+
   // Get the STATEID from the given version and set the stream to 
   // that if we didn't already set it to SE_DEFAULT_STATE_ID.  
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
@@ -639,7 +819,7 @@ int msSDELayerOpen(layerObj *layer) {
       sde_error(status, "msSDELayerOpen()", "SE_stateinfo_create()");
       return(MS_FAILURE);
     }    
-    status = SE_state_get_info(sde->connection, sde->state_id, state);
+    status = SE_state_get_info(poolinfo->connection, sde->state_id, state);
     if(status != SE_SUCCESS) {
       sde_error(status, "msSDELayerOpen()", "SE_state_get_info()");
       return(MS_FAILURE);
@@ -656,17 +836,20 @@ int msSDELayerOpen(layerObj *layer) {
   } // if (!(sde->state_id == SE_DEFAULT_STATE_ID))
   
   
-  
   status = SE_layerinfo_create(NULL, &(sde->layerinfo));
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerOpen()", "SE_layerinfo_create()");
     return(MS_FAILURE);
   }
 
-  status = SE_layer_get_info( sde->connection, 
-                              params[0], 
-                              params[1], 
+
+  status = msSDEGetLayerInfo( layer,
+                              poolinfo->connection,
+                              params[0],
+                              params[1],
+                              layer->connection,
                               sde->layerinfo);
+
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerOpen()", "SE_layer_get_info()");
     return(MS_FAILURE);
@@ -684,24 +867,23 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  status = SE_stream_create(sde->connection, &(sde->stream));
+
+  // reset the stream
+  status = SE_stream_close(poolinfo->stream, 1);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerOpen()", "SE_stream_create()");
+    sde_error(status, "msSDELayerOpen()", "SE_stream_close()");
     return(MS_FAILURE);
-  }
-  if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
-    status =  SE_stream_set_state(sde->stream, 
-                                  sde->state_id, 
-                                  sde->state_id, 
-                                  SE_STATE_DIFF_NOCHECK); 
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
-      return(MS_FAILURE);
-      }  
-  }
+  }  
+
+
   // point to the SDE layer information 
   // (note this might actually be in another layer)
   layer->layerinfo = sde; 
+
+  sde->connection = poolinfo->connection;
+  sde->stream = poolinfo->stream;
+  sde->connPoolInfo = poolinfo;
+
 
   return(MS_SUCCESS);
 #else
@@ -719,6 +901,7 @@ int msSDELayerOpen(layerObj *layer) {
 void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
 
+
   msSDELayerInfo *sde=NULL;
 
   sde = layer->layerinfo;
@@ -732,12 +915,13 @@ void msSDELayerClose(layerObj *layer) {
   if (sde->table) free(sde->table);
   if (sde->column) free(sde->column);
   if (sde->row_id_column) free(sde->row_id_column);
-  sde->row_id_column = NULL;
-  if (sde->stream) SE_stream_free(sde->stream);
-  msConnPoolRelease( layer, sde->connection );  
+
+  msConnPoolRelease( layer, sde->connPoolInfo );  
   sde->connection = NULL;
+  sde->connPoolInfo = NULL;
   if (layer->layerinfo) free(layer->layerinfo);
   layer->layerinfo = NULL;
+
 #else
   msSetError( MS_MISCERR, 
               "SDE support is not available.", 
@@ -868,16 +1052,21 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
               "SE_queryinfo_set_query_type()");
     return(MS_FAILURE);
   }
+  
+
 
   // reset the stream
   status = SE_stream_close(sde->stream, 1);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_close()");
+    sde_error(status, "msSDELayerGetShape()", "SE_stream_close()");
     return(MS_FAILURE);
   }
-  
   //Set the stream state back to the state_id of our user-specified version
+  //This must be done every time after the stream is reset before the 
+  //query happens.
+
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
+
     status =  SE_stream_set_state(sde->stream, 
                                   sde->state_id, 
                                   sde->state_id, 
@@ -1105,7 +1294,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 /*     given the ID (which is the MS_SDE_ROW_ID_COLUMN column           */
 /* -------------------------------------------------------------------- */
 int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
-	
+
 #ifdef USE_SDE
   long status;
   msSDELayerInfo *sde=NULL;
@@ -1126,24 +1315,14 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
     return(MS_FAILURE);
   }
 
+
+
   // reset the stream
   status = SE_stream_close(sde->stream, 1);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetShape()", "SE_stream_close()");
     return(MS_FAILURE);
   }
-
-  // Set the stream state back to the state_id of our user-specified version
-  if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
-  status =  SE_stream_set_state(sde->stream, 
-                                sde->state_id, 
-                                sde->state_id, 
-                                SE_STATE_DIFF_NOCHECK); 
-    if(status != SE_SUCCESS) {
-      sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
-      return(MS_FAILURE);
-    }  
-  }  
 
   status = SE_stream_fetch_row( sde->stream, 
                                 sde->table, 
