@@ -854,7 +854,7 @@ int getCharacter(char *c);
 
 void initSymbol(symbolObj *s);
 int initMap(mapObj *map);
-int initLayer(layerObj *layer);
+int initLayer(layerObj *layer, mapObj *map);
 int initClass(classObj *_class);
 void initLabel(labelObj *label);
 void resetClassStyle(classObj *_class);

@@ -1582,7 +1582,7 @@ static void writeClass(classObj *class, FILE *stream)
 /*
 ** Initialize, load and free a single layer structure
 */
-int initLayer(layerObj *layer)
+int initLayer(layerObj *layer, mapObj *map)
 {
   layer->debug = MS_OFF;
 
@@ -1596,7 +1596,7 @@ int initLayer(layerObj *layer)
   layer->status = MS_OFF;
   layer->data = NULL;
 
-  layer->map = NULL;
+  layer->map = map;
 
   layer->type = -1;
 
@@ -1717,7 +1717,7 @@ int loadLayer(layerObj *layer, mapObj *map)
   int c=0; // class counter
   int type;
 
-  if(initLayer(layer) == -1)
+  if(initLayer(layer, map) == -1)
     return(-1);
 
   layer->map = (mapObj *)map;
