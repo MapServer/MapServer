@@ -484,11 +484,11 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     /*
     ** Trim/skip leading blanks (SDL Modification)
     */ 
-    for(i=0;i<strlen(psDBF->pszStringField);i++) {
+    /* for(i=0;i<strlen(psDBF->pszStringField);i++) {
 	if(psDBF->pszStringField[i] != ' ')
 	  break;	
     }
-    pReturnField = psDBF->pszStringField+i;
+    pReturnField = psDBF->pszStringField+i; */
 
     return( pReturnField );
 }
