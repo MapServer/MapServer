@@ -9,7 +9,8 @@
 ** Match this with with unit enumerations is map.h
 */
 static char *unitText[5]={"in", "ft", "mi", "m", "km"};
-double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};  // also used in mapwms.c
+double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
+
 
 static double roundInterval(double d)
 {
@@ -75,7 +76,8 @@ int msCalculateScale(rectObj extent, int units, int width, int height, int resol
 
 #define X_STEP_SIZE 5
 
-gdImagePtr msDrawScalebar(mapObj *map)
+//TODO : the will be msDrawScalebarGD
+imageObj *msDrawScalebar(mapObj *map)
 {
   int status;
   gdImagePtr img=NULL;
@@ -85,6 +87,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
   int isx, sx, sy, ox, oy, state, dsx;
   pointObj p;
   gdFontPtr fontPtr;
+  imageObj      *image = NULL;
 
   if(map->units == -1) {
     msSetError(MS_MISCERR, "Map units not set.", "msDrawScalebar()");
@@ -113,10 +116,20 @@ gdImagePtr msDrawScalebar(mapObj *map)
 
   sy = (2*VMARGIN) + MS_NINT(VSPACING*fontPtr->h) + fontPtr->h + map->scalebar.height - VSLOP;
   
-  if((img = gdImageCreate(map->scalebar.width, sy)) == NULL) {
-    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
+  //TODO
+  image = msImageCreateGD(map->scalebar.width, sy, map->imagetype,
+                          map->web.imagepath, map->web.imageurl);
+  if (image)
+      img = image->img.gd;
+  else
+  {
+      msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
     return(NULL);
   }
+  //if((img = gdImageCreate(map->scalebar.width, sy)) == NULL) {
+  //  msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
+  // return(NULL);
+  //}
   
   if(msLoadPalette(img, &(map->palette), map->scalebar.imagecolor) == -1)  
     return(NULL);
@@ -141,7 +154,8 @@ gdImagePtr msDrawScalebar(mapObj *map)
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; // + MS_NINT(fontPtr->w/2);
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
+      //TODO
+      msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset));
 
       state = -state;
     }
@@ -151,7 +165,8 @@ gdImagePtr msDrawScalebar(mapObj *map)
     map->scalebar.label.position = MS_CR;
     p.x = ox; // + MS_NINT(fontPtr->w/2);
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
+    //TODO
+    msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset));
     break;
 
   case(1):
@@ -166,7 +181,8 @@ gdImagePtr msDrawScalebar(mapObj *map)
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx; // + MS_NINT(fontPtr->w/2);
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
+      //TODO
+      msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset));
 
       state = -state;
     }
@@ -179,7 +195,8 @@ gdImagePtr msDrawScalebar(mapObj *map)
     map->scalebar.label.position = MS_CR;
     p.x = ox; // + MS_NINT(fontPtr->w/2);
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
+    //TODO
+    msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset));
     break;
   default:
     msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");
@@ -187,13 +204,14 @@ gdImagePtr msDrawScalebar(mapObj *map)
     break;
   }
 
-  return(img);
+  return(image);
 }
 
 int msEmbedScalebar(mapObj *map, gdImagePtr img)
 {
   int s,l;
   pointObj point;
+  imageObj *image = NULL;
 
   s = msGetSymbolIndex(&(map->symbolset), "scalebar");
   if(s == -1) {
@@ -204,8 +222,9 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     if(map->symbolset.symbol[s].img) 
       gdImageDestroy(map->symbolset.symbol[s].img);
   }
-
-  map->symbolset.symbol[s].img = msDrawScalebar(map);
+  
+  image = msDrawScalebar(map);
+  map->symbolset.symbol[s].img =  image->img.gd; //TODO 
   if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
 
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
@@ -261,8 +280,8 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].label.force = MS_TRUE;
   map->layers[l].class[0].label.size = map->layers[l].class[0].label.sizescaled = MS_MEDIUM; // must set a size to have a valid label definition
 
-  if(map->scalebar.postlabelcache) // add it directly to the image
-    msDrawMarkerSymbol(&map->symbolset, img, &point, map->layers[l].class[0].symbol, 0, -1, -1, 10);
+  if(map->scalebar.postlabelcache) // add it directly to the image //TODO
+    msDrawMarkerSymbolGD(&map->symbolset, img, &point, map->layers[l].class[0].symbol, 0, -1, -1, 10);
   else
     msAddLabel(map, l, 0, -1, -1, point, " ", -1);
 

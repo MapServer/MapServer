@@ -3,7 +3,7 @@
 int main(int argc, char *argv[])
 {
   mapObj *map=NULL;
-  gdImagePtr img=NULL;
+  imageObj *img=NULL;
 
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
@@ -27,9 +27,9 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  msSaveImage(img, argv[2], map->imagetype, map->legend.transparent, map->legend.interlace, map->imagequality);
+  msSaveImage(img, argv[2], map->legend.transparent, map->legend.interlace, map->imagequality);
 
-  gdImageDestroy(img);
+  msFreeImage(img);
 
   msFreeMap(map);
   

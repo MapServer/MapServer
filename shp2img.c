@@ -5,8 +5,8 @@ int main(int argc, char *argv[])
   int i,j,k;
 
   mapObj    	   *map=NULL;
-  gdImagePtr       img=NULL;
-
+  imageObj         *image = NULL;
+     
   char **layers=NULL;
   int num_layers=0;
 
@@ -102,15 +102,16 @@ int main(int argc, char *argv[])
      }
   }
 
-  img = msDrawMap(map);
-  if(!img) {
+  image = msDrawMap(map);
+
+  if(!image) {
     msWriteError(stderr);
     exit(0);
   }
 
-  msSaveImage(img, outfile, map->imagetype, map->transparent, map->interlace, map->imagequality);
+  msSaveImage(image, outfile, map->transparent, map->interlace, map->imagequality);
 
-  gdImageDestroy(img);
+  msFreeImage(image);
 
   msFreeMap(map);
   free(outfile);

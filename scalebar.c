@@ -3,7 +3,7 @@
 int main(int argc, char *argv[])
 {
   mapObj *map=NULL;
-  gdImagePtr img=NULL;
+  imageObj         *image = NULL;
 
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
@@ -22,15 +22,18 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  img = msDrawScalebar(map);
-  if(!img) { 
+  image = msDrawScalebar(map);
+
+
+  if(!image) { 
     msWriteError(stderr);
     exit(0);
   }
 
-  msSaveImage(img, argv[2], map->imagetype, map->scalebar.transparent, map->scalebar.interlace, map->imagequality);
+  msSaveImage(image, argv[2], map->scalebar.transparent, map->scalebar.interlace, 
+              map->imagequality);
 
-  gdImageDestroy(img);
+  msFreeImage(image);
 
   msFreeMap(map);  
   return(MS_TRUE);

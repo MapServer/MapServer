@@ -259,8 +259,14 @@ typedef struct {
 %readwrite
 #endif
 
+  int imagetype;
 #ifndef SWIG
-  gdImagePtr bytes;
+  union
+  {
+      gdImagePtr gd;
+      //PDF     *pdf;
+  }img;
+
 #endif
 } imageObj;
 
@@ -727,8 +733,14 @@ typedef struct { /* structure for a map */
 } mapObj;
 
 // Function prototypes, wrapable
-int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
-void msFreeImage(gdImagePtr img);
+int msSaveImage(imageObj *img, char *filename, int transparent, 
+                int interlace, int quality);
+void msFreeImage(imageObj *img);
+
+int msSaveImageGD(gdImagePtr img, char *filename, int type, int transparent, 
+                  int interlace, int quality);
+void msFreeImageGD(gdImagePtr img);
+
 
 // Function prototypes, not wrapable
 
@@ -768,8 +780,6 @@ int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
 pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly);
 double dist(pointObj a, pointObj b);
 
-// For mappdf
-int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); // maputil.c
 
    
 /*
@@ -777,7 +787,6 @@ int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); // maputil.c
 */
    
 int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
-int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
 int msGetSymbolIndex(symbolSetObj *set, char *name);
 mapObj *msLoadMap(char *filename, char *new_map_path);
 int msSaveMap(mapObj *map, char *filename);
@@ -789,38 +798,16 @@ int msAddColor(mapObj *map, int red, int green, int blue);
 int msLoadMapString(mapObj *map, char *object, char *value);
 void msFree(void *p);
 
-int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems); // in maputil.c
-char **msGetAllGroupNames(mapObj* map, int *numTok);
-int msEvalContext(mapObj *map, char *context);
-int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale);
-char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
-double msAdjustExtent(rectObj *rect, int width, int height);
-int msAdjustImage(rectObj rect, int *width, int *height);
-char *msTmpFile(const char *path, const char *ext);
-gdImagePtr msDrawMap(mapObj *map);
+
 #if defined USE_PDF
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c
 #endif
-gdImagePtr msDrawQueryMap(mapObj *map);
-int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, int overlay);
-int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, int classindex, char *text);
-int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img);
-int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 
    
-gdImagePtr msDrawScalebar(mapObj *map); // in mapscale.c
+imageObj *msDrawScalebar(mapObj *map); // in mapscale.c
 int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
 
-//Functions to chnage the drawing order of the layers.
-//Defined in maputil.c
-int msMoveLayerUp(mapObj *map, int nLayerIndex);
-int msMoveLayerDown(mapObj *map, int nLayerIndex);
-int msSetLayersdrawingOrder(mapObj *self, int *panIndexes);
-
-char *msGetProjectionString(projectionObj *proj);
-pointObj *getPointUsingMeasure(shapeObj *shape, double m);
-pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point);
 
 int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 int msRectOverlap(rectObj *a, rectObj *b);
@@ -878,23 +865,24 @@ int msLoadSymbolSet(symbolSetObj *symbolset); // in mapsymbol.c
 void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
-void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);
-void msDrawMarkerSymbol(symbolSetObj *symbolset,gdImagePtr img, pointObj *p,  int sy, int fc, int bc, int oc, double sz);
-void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, double sz);
-void msGetMarkerSize(symbolSetObj *symbolset, classObj *_class, int *width, int *height);
-void msCircleDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, int sy, int fc, int bc, int oc, double sz);
-void msCircleDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, int sy, int fc, int bc, double sz);
 
-gdImagePtr msDrawLegend(mapObj *map); // in maplegend.c
+
+
+void msGetMarkerSize(symbolSetObj *symbolset, classObj *_class, int *width, int *height);
+int getCharacterSize(char *character, int size, char *font, rectObj *rect);
+void billboard(gdImagePtr img, shapeObj *shape, labelObj *label);
+void freeImageCache(struct imageCacheObj *ic);
+
+imageObj *msDrawLegend(mapObj *map); // in maplegend.c
 int msEmbedLegend(mapObj *map, gdImagePtr img);
 int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, gdImagePtr img, int dstX, int dstY);
 gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
    
 int msLoadFontSet(fontSetObj *fontSet); // in maplabel.c
-int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset);
+
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
 int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize);
-int msDrawLabelCache(gdImagePtr img, mapObj *map);
+
 gdFontPtr msGetBitmapFont(int size);
 int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
 int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
@@ -917,7 +905,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 int msAddLine(shapeObj *p, lineObj *new_line);
 
 int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img); // in mapraster.c
-gdImagePtr msDrawReferenceMap(mapObj *map);
+imageObj *msDrawReferenceMap(mapObj *map);
 
 size_t msGetBitArraySize(int numbits); // in mapbits.c
 char *msAllocBitArray(int numbits);
@@ -997,6 +985,124 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              const char *pszInfoFormat); 
 
 int msGMLWriteQuery(mapObj *map, char *filename); // mapgml.c
+
+
+/* ==================================================================== */
+/*      Prototypes for functions in mapdraw.c                           */
+/* ==================================================================== */
+imageObj *msDrawMap(mapObj *map);
+
+imageObj *msDrawQueryMap(mapObj *map);
+
+int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image);
+
+int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);
+
+int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, 
+                imageObj *image, int overlay);
+
+int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image, 
+                int classindex, char *labeltext);
+
+void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, 
+                            pointObj *p, double r,  int sy, int fc, 
+                            int bc, double sz);
+void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, 
+                             pointObj *p, double r, int sy, int fc, int bc, 
+                             int oc, double sz);
+
+void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p,  
+                        int sy, int fc, int bc, int oc, double sz);
+
+int msDrawLabel(imageObj *image, pointObj labelPnt, char *string, 
+                labelObj *label, fontSetObj *fontset);
+
+int draw_text(imageObj *image, pointObj labelPnt, char *string, 
+              labelObj *label, fontSetObj *fontset);
+
+int msDrawLabelCache(imageObj *image, mapObj *map);
+
+void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
+                      int sy, int fc, int bc, double sz);
+
+void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
+                       int sy, int fc, int bc, int oc, double sz);
+
+/* ==================================================================== */
+/*      End of Prototypes for functions in mapdraw.c                    */
+/* ==================================================================== */
+
+
+/* ==================================================================== */
+/*      Prototypes for functions in mapgd.c                             */
+/* ==================================================================== */
+imageObj *msImageCreateGD(int width, int height, int type,
+                          char *imagepath, char *imageurl);
+
+void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
+                              pointObj *p, double r, int sy, int fc, int bc, 
+                              double sz);
+
+void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
+                               pointObj *p, double r, int sy, int fc, int bc, 
+                               int oc, double sz);
+
+void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, 
+                          pointObj *p, int sy, int fc, int bc, int oc, 
+                          double sz);
+
+int draw_textGD(gdImagePtr img, pointObj labelPnt, char *string, 
+                labelObj *label, fontSetObj *fontset);
+
+int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
+
+void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, 
+                        int sy, int fc, int bc, double sz);
+
+void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, 
+                         int sy, int fc, int bc, int oc, double sz);
+
+/* ==================================================================== */
+/*      End of prototypes for functions in mapgd.c                      */
+/* ==================================================================== */
+
+
+/* ==================================================================== */
+/*      Prototypes for functions in maputil.c                           */
+/* ==================================================================== */
+// For mappdf
+int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); // maputil.c
+int msEvalContext(mapObj *map, char *context);
+int msEvalExpression(expressionObj *expression, int itemindex, char **items, 
+                     int numitems);
+int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale);
+char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
+int msAdjustImage(rectObj rect, int *width, int *height);
+double msAdjustExtent(rectObj *rect, int width, int height);
+
+int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
+
+//Functions to chnage the drawing order of the layers.
+//Defined in maputil.c
+int msMoveLayerUp(mapObj *map, int nLayerIndex);
+int msMoveLayerDown(mapObj *map, int nLayerIndex);
+int msSetLayersdrawingOrder(mapObj *self, int *panIndexes);
+
+char *msGetProjectionString(projectionObj *proj);
+
+// Measured shape utility functions.   
+pointObj *getPointUsingMeasure(shapeObj *shape, double m);
+pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point);
+
+char **msGetAllGroupNames(mapObj* map, int *numTok);
+char *msTmpFile(const char *path, const char *ext);
+
+imageObj *msImageCreate(int width, int height, int imagetype, char *imagepath,
+                        char *imageurl);
+
+/* ==================================================================== */
+/*      End of prototypes for functions in maputil.c                    */
+/* ==================================================================== */
 
 #endif
 

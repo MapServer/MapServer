@@ -54,17 +54,17 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
       switch(lp->type) {
       case MS_LAYER_ANNOTATION:
       case MS_LAYER_POINT:
-         msDrawMarkerSymbol(&map->symbolset,
-                            img,
-                            &marker,
-                            class->symbol, 
-                            class->color, 
-                            class->backgroundcolor, 
-                            class->outlinecolor, 
-                            class->sizescaled);
+          msDrawMarkerSymbolGD(&map->symbolset, //TODO
+                              img,
+                              &marker,
+                              class->symbol, 
+                              class->color, 
+                              class->backgroundcolor, 
+                              class->outlinecolor, 
+                              class->sizescaled);
          
          if(class->overlaysymbol >= 0)
-           msDrawMarkerSymbol(&map->symbolset,
+           msDrawMarkerSymbolGD(&map->symbolset,
                               img,
                               &marker,
                               class->overlaysymbol,
@@ -74,7 +74,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
                               class->overlaysizescaled);
          break;
       case MS_LAYER_LINE:	
-         msDrawLineSymbol(&map->symbolset, 
+         msDrawLineSymbolGD(&map->symbolset, 
                           img, 
                           &zigzag, 
                           class->symbol, 
@@ -83,7 +83,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
                           class->sizescaled);
          
          if(class->overlaysymbol >= 0) 
-           msDrawLineSymbol(&map->symbolset, 
+           msDrawLineSymbolGD(&map->symbolset, 
                             img, 
                             &zigzag,
                             class->overlaysymbol, 
@@ -95,7 +95,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
       case MS_LAYER_RASTER:
       case MS_LAYER_POLYGON:
          if(class->color >= 0) { // use the box
-            msDrawShadeSymbol(&map->symbolset, 
+             msDrawShadeSymbolGD(&map->symbolset, //TODO 
                               img, 
                               &box, 
                               class->symbol, 
@@ -106,7 +106,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
 
             if(class->overlaysymbol >= 0) {
                if(class->overlaycolor < 0)
-                 msDrawLineSymbol(&map->symbolset, 
+                   msDrawLineSymbolGD(&map->symbolset, //TODO
                                   img, 
                                   &box, 
                                   class->overlaysymbol, 
@@ -114,7 +114,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
                                   class->overlaybackgroundcolor, 
                                   class->overlaysizescaled);
                else
-                 msDrawShadeSymbol(&map->symbolset, 
+                   msDrawShadeSymbolGD(&map->symbolset, //TODO
                                    img, 
                                    &box, 
                                    class->overlaysymbol, 
@@ -127,7 +127,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
          else {
            if(class->overlaycolor >= 0) { // use the box
               if(class->color < 0)
-                msDrawLineSymbol(&map->symbolset,
+                msDrawLineSymbolGD(&map->symbolset,
                                  img, 
                                  &box, 
                                  class->symbol, 
@@ -135,7 +135,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
                                  class->backgroundcolor, 
                                  class->sizescaled);
               else
-                msDrawShadeSymbol(&map->symbolset, 
+                  msDrawShadeSymbolGD(&map->symbolset, //TODO
                                   img, 
                                   &box, 
                                   class->symbol, 
@@ -145,7 +145,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
                                   class->sizescaled);
 
            } else { // use the zigzag
-              msDrawLineSymbol(&map->symbolset, 
+              msDrawLineSymbolGD(&map->symbolset, 
                                img, 
                                &zigzag, 
                                class->symbol, 
@@ -154,7 +154,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
                                class->sizescaled);
               
               if(class->overlaysymbol >= 0)
-                msDrawLineSymbol(&map->symbolset, 
+                msDrawLineSymbolGD(&map->symbolset, 
                                  img, 
                                  &zigzag, 
                                  class->overlaysymbol, 
@@ -171,7 +171,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
 
    if (class->overlayoutlinecolor > 0)
    {
-        msDrawShadeSymbol(&map->symbolset, 
+       msDrawShadeSymbolGD(&map->symbolset, //TODO
                           img, 
                           &box, 
                           class->overlaysymbol, 
@@ -235,7 +235,7 @@ gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wi
 ** added to the legend.
 */
 
-gdImagePtr msDrawLegend(mapObj *map)
+imageObj *msDrawLegend(mapObj *map)
 {
   int status;
 
@@ -247,6 +247,7 @@ gdImagePtr msDrawLegend(mapObj *map)
   int maxwidth=0, maxheight=0, n=0;
   int *heights;
   rectObj rect;
+  imageObj      *image = NULL;
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
@@ -308,11 +309,21 @@ gdImagePtr msDrawLegend(mapObj *map)
   /*
   ** Initialize the legend image
   */
-  if((img = gdImageCreate(size_x, size_y)) == NULL) {
-    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
-    free(heights);
+  //TODO
+  image = msImageCreateGD(size_x, size_y, map->imagetype,
+                          map->web.imagepath, map->web.imageurl);
+  if (image)
+      img = image->img.gd;
+  else
+  {
+      msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
     return(NULL);
   }
+  //if((img = gdImageCreate(size_x, size_y)) == NULL) {
+  //  msSetError(MS_GDERR, "Unable to initialize image.", "msDrawLegend()");
+  //  free(heights);
+  //  return(NULL);
+  //}
 
   /*
   ** Load colormap for the image
@@ -345,11 +356,13 @@ gdImagePtr msDrawLegend(mapObj *map)
       
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
-      if (msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, img, HMARGIN, pnt.y) != MS_SUCCESS)
+      //TODO
+      if (msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, pnt.y) != MS_SUCCESS)
          return NULL;
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
-      msDrawLabel(img, pnt, lp->class[j].name, &(map->legend.label), &map->fontset);
+      //TODO
+      msDrawLabel(image, pnt, lp->class[j].name, &(map->legend.label), &map->fontset);
 
       pnt.y += map->legend.keyspacingy; /* bump y for next label */
 	
@@ -358,13 +371,16 @@ gdImagePtr msDrawLegend(mapObj *map)
 
   free(heights);
 
-  return(img);
+  return(image);
 }
 
+
+//TODO
 int msEmbedLegend(mapObj *map, gdImagePtr img)
 {
   int s,l;
   pointObj point;
+  imageObj *image = NULL;
 
   s = msGetSymbolIndex(&(map->symbolset), "legend");
   if(s == -1) {
@@ -375,8 +391,9 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
     if(map->symbolset.symbol[s].img) 
       gdImageDestroy(map->symbolset.symbol[s].img);
   }
-
-  map->symbolset.symbol[s].img = msDrawLegend(map);
+  
+  image = msDrawLegend(map);
+  map->symbolset.symbol[s].img = image->img.gd; //TODO 
   if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
 
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
@@ -433,7 +450,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].label.size = map->layers[l].class[0].label.sizescaled = MS_MEDIUM; // must set a size to have a valid label definition
 
   if(map->legend.postlabelcache) // add it directly to the image
-    msDrawMarkerSymbol(&map->symbolset, img, &point, map->layers[l].class[0].symbol, 0, -1, -1, 10);
+    msDrawMarkerSymbolGD(&map->symbolset, img, &point, map->layers[l].class[0].symbol, 0, -1, -1, 10);
   else
     msAddLabel(map, l, 0, -1, -1, point, " ", -1);
 

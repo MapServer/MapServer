@@ -2072,7 +2072,8 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   return 0;
 }
 
-gdImagePtr msDrawReferenceMap(mapObj *map) {
+//TODO : this will msDrawReferenceMapGD
+imageObj *msDrawReferenceMap(mapObj *map) {
   FILE *stream;
   gdImagePtr img=NULL;
   double cellsize;
@@ -2080,7 +2081,9 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
   int x1,y1,x2,y2;
 
   char bytes[8];
+  imageObj      *image = NULL;
 
+  image = (imageObj *)malloc(sizeof(imageObj));
   
   stream = fopen(map->reference.image,"rb"); // allocate input and output images (same size)
   if(!stream) {
@@ -2095,6 +2098,10 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
 #ifdef USE_GD_GIF
     img = gdImageCreateFromGif(stream);
     map->reference.imagetype = MS_GIF;
+    image->imagetype = MS_GIF;
+    image->img.gd = img;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
 #else
     msSetError(MS_MISCERR, "Unable to load GIF reference image.", "msDrawReferenceMap()");
     fclose(stream);
@@ -2104,6 +2111,10 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
 #ifdef USE_GD_PNG
     img = gdImageCreateFromPng(stream);
     map->reference.imagetype = MS_PNG;
+    image->imagetype = MS_PNG;
+    image->img.gd = img;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
 #else
     msSetError(MS_MISCERR, "Unable to load PNG reference image.", "msDrawReferenceMap()");
     fclose(stream);
@@ -2113,6 +2124,10 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
 #ifdef USE_GD_JPEG
     img = gdImageCreateFromJpeg(stream);
     map->reference.imagetype = MS_JPEG;
+    image->imagetype = MS_JPEG;
+    image->img.gd = img;
+    image->imagepath = NULL;
+    image->imageurl = NULL;
 #else
     msSetError(MS_MISCERR, "Unable to load JPEG reference image.", "msDrawReferenceMap()");
     fclose(stream);
@@ -2171,7 +2186,7 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
               point->x = (double)x1 + x2 - x1;
               point->y = (double)y1 + y2 - y1;
 
-              msDrawMarkerSymbol(&map->symbolset, img, point, 
+              msDrawMarkerSymbol(&map->symbolset, image, point, 
                                  map->reference.marker, c, -1, oc, 
                                  map->reference.markersize);
               free(point);
@@ -2186,7 +2201,7 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
               point->x = (double)x1 + x2 - x1;
               point->y = (double)y1 + y2 - y1;
 
-              msDrawMarkerSymbol(&map->symbolset,img,point, marker, c, -1, oc, 
+              msDrawMarkerSymbol(&map->symbolset,image,point, marker, c, -1, oc, 
                                  map->reference.markersize);
               free(point);
           }
@@ -2214,5 +2229,5 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
   }
 
   fclose(stream);
-  return(img);
+  return(image);
 }

@@ -153,7 +153,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
     }
 
     printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(imagetype), 10,10);
-    msSaveImage(img, NULL, imagetype, transparent, 0, -1);
+    msSaveImageGD(img, NULL, imagetype, transparent, 0, -1);
     gdImageDestroy(img);
 
   }
@@ -1233,7 +1233,7 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
 */
 int msWMSGetMap(mapObj *map, const char *wmtver) 
 {
-  gdImagePtr img;
+    imageObj *img;
 
   // __TODO__ msDrawMap() will try to adjust the extent of the map
   // to match the width/height image ratio.
@@ -1245,11 +1245,11 @@ int msWMSGetMap(mapObj *map, const char *wmtver)
       return msWMSException(map, wmtver);
 
   printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->imagetype), 10,10);
-  if (msSaveImage(img, NULL, map->imagetype, map->transparent,
+  if (msSaveImage(img, NULL, map->transparent,
                   map->interlace, map->imagequality) != MS_SUCCESS)
       return msWMSException(map, wmtver);
 
-  gdImageDestroy(img);
+  msFreeImage(img);
 
   return(MS_SUCCESS);
 }

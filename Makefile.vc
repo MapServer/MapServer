@@ -134,7 +134,8 @@ REGEX_INC=-I./regex-0.12
 # compiled with:
 #
 #PHP_REGEX=..\php-3.0.14\regex
-PHP_REGEX=..\php-4.0.6\regex
+#PHP_REGEX=..\php-4.0.6\regex
+PHP_REGEX=..\php-4.1.2\regex
 REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
           $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
 REGEX_INC=-I$(PHP_REGEX) -DPHP_NO_ALIASES
@@ -162,7 +163,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj \
         maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
         mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
-        mapprojhack.obj \
+        mapprojhack.obj mapdraw.obj mapgd.obj\
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h

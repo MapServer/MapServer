@@ -18,6 +18,7 @@
 char errLogMsg[80];	// egis - for storing and printing error messages
 #endif
 
+extern double inchesPerUnit[6];
 
 mapservObj* msObj;
 
@@ -893,9 +894,8 @@ void returnCoordinate()
 int main(int argc, char *argv[]) {
     int i,j;
     char buffer[1024];
-    gdImagePtr img=NULL;
+    imageObj *img=NULL;
     int status;
-
 
     msObj = msAllocMapServObj();
 
@@ -1038,10 +1038,10 @@ int main(int argc, char *argv[]) {
       if(!img) writeError();
 
       printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->imagetype), 10,10);
-      status = msSaveImage(img, NULL, msObj->Map->imagetype, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+      status = msSaveImage(img, NULL, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
       if(status != MS_SUCCESS) writeError();
       
-      gdImageDestroy(img);
+      msFreeImage(img);
     } else if (msObj->Mode == LEGEND) {
        if (msObj->Map->legend.template) 
        {
@@ -1062,10 +1062,10 @@ int main(int argc, char *argv[]) {
           if(!img) writeError();
 
           printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->imagetype), 10,10);
-          status = msSaveImage(img, NULL, msObj->Map->imagetype, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+          status = msSaveImage(img, NULL, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
           if(status != MS_SUCCESS) writeError();
           
-          gdImageDestroy(img);            
+          msFreeImage(img);            
        }
     } else if(msObj->Mode >= QUERY) { // query modes
 
@@ -1289,9 +1289,9 @@ int main(int argc, char *argv[]) {
 	if(!img) writeError();
 
 	printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->imagetype), 10,10);
-	status = msSaveImage(img, NULL, msObj->Map->imagetype, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+	status = msSaveImage(img, NULL, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
 	if(status != MS_SUCCESS) writeError();
-	gdImageDestroy(img);
+	msFreeImage(img);
 
       } 
        else { // process the query through templates
