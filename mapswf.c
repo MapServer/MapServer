@@ -1958,13 +1958,19 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 	return(-1);
     }
 
-    oText = DrawText(string, x, y, msBuildPath(szPath, fontset->filename, font), size, &sColor);
+/* ==================================================================== */
+/*      Create a text object at "0,0".. this sets it's rotation         */
+/*      axis.... We will then move the text SWFDisplayItem_moveTo       */
+/*      and rotate it.                                                  */
+/* ==================================================================== */
+    //oText = DrawText(string, x, y, msBuildPath(szPath, fontset->filename, font), size, &sColor);
+    oText = DrawText(string, 0, 0, msBuildPath(szPath, fontset->filename, font), size, &sColor);
     if (oText)
     {
          SWFDisplayItem oDisplay; 
         //nTmp = image->img.swf->nCurrentMovie;
         oDisplay = SWFMovie_add(GetCurrentMovie(map, image), oText);
-        //SWFDisplayItem_moveTo(oDisplay, (float)x, (float)y);
+        SWFDisplayItem_moveTo(oDisplay, (float)x, (float)y);
         SWFDisplayItem_rotate(oDisplay, (float)label->angle);
     }
 
