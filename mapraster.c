@@ -902,13 +902,14 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   double cx,cy; /* cell sizes (x and y) */
   long rowsPerStrip;    
 
+  char szPath[MS_MAXPATHLEN];
+
   for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
 
   TIFFSetWarningHandler(NULL); // can these be directed to the mapserver error functions?
   TIFFSetErrorHandler(NULL);
 
-  tif = TIFFOpen(msBuildPath(szPath, 
-        msBuildPath(szPath, map->map_path, map->shapepath), filename), "rb");
+  tif = TIFFOpen(msBuildPath(szPath, msBuildPath(szPath, map->map_path, map->shapepath), filename), "rb");
   if(!tif) {
     msSetError(MS_IMGERR, "Error loading TIFF image.", "drawTIFF()");
     return(-1);
