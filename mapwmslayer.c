@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2001/10/11 22:29:20  dan
+ * Took out terminate_handler 2.  Tested, working fine on Linux.
+ *
  * Revision 1.8  2001/10/09 22:02:00  assefa
  * Use the non-preemptive mode : tested on windows.
  *
@@ -92,6 +95,10 @@ static int tracer (const char * fmt, va_list pArgs)
 
 
 #ifdef PREEMPTIVE_MODE
+
+/* Preemptive version: no event loop ... does noe work on Windows.
+ * we should take that version out eventually
+ */
 
 /*
 **  We get called here from the event loop when we are done
@@ -196,6 +203,10 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
 
 #else
 
+/* Non-preemptive version: uses an event loop.  
+ * Works on both Linux and Windows.
+ */
+
 /*
 **  We get called here from the event loop when we are done
 **  loading.
@@ -218,26 +229,6 @@ static int terminate_handler (HTRequest * request, HTResponse * response,
 
     HTEventList_stopLoop();
     return 0;
-}
-
-static int terminate_handler2 (HTRequest * request, HTResponse * response,
-                              void * param, int status)
-{
-    static char errmsg[100];
-
-    /* Delete our request again */
-    HTRequest_delete(request);
-
-    /* Delete our profile */
-    HTProfile_delete();
-
-    if (status)
-    {
-        sprintf(errmsg, "HTTP GET request failed with status %d", status);
-        msSetError(MS_WMSCONNERR, errmsg, "msGetImage()");
-    }
-
-    return status;
 }
 
 
