@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2003/09/10 03:54:09  assefa
+ * Add partial support for BBox.
+ * Add Node validating functions.
+ *
  * Revision 1.3  2003/09/02 22:59:06  assefa
  * Add classitem extrcat function for IsLike filter.
  *
@@ -82,22 +86,26 @@ typedef struct
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-FilterEncodingNode *PaserFilterEncoding(char *szXMLString);
-FilterEncodingNode *CreateFilerEncodingNode();
-void FreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
+FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
+FilterEncodingNode *FLTCreateFilterEncodingNode();
 
-void InsertElementInNode(FilterEncodingNode *psFilterNode,
-                         CPLXMLNode *psXMLNode);
-int IsLogicalFilterType(char *pszValue);
-int IsBinaryComparisonFilterType(char *pszValue);
-int IsComparisonFilterType(char *pszValue);
-int IsSpatialFilterType(char *pszValue);
-int IsSupportedFilterType(CPLXMLNode *psXMLNode);
+void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
+int FLTValidFilterNode(FilterEncodingNode *psFilterNode);
 
-char *GetMapserverExpression(FilterEncodingNode *psFilterNode);
-char *GetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
-char *GetNodeExpression(FilterEncodingNode *psFilterNode);
-char *GetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
-char *GetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
-char *GetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
-char *GetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode);
+void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
+                            CPLXMLNode *psXMLNode);
+int FLTIsLogicalFilterType(char *pszValue);
+int FLTIsBinaryComparisonFilterType(char *pszValue);
+int FLTIsComparisonFilterType(char *pszValue);
+int FLTIsSpatialFilterType(char *pszValue);
+int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode);
+
+char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode);
+char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
+char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode);
+char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
+
+char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
+char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
+char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
+char *FLTGetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode);
