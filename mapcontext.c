@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.40  2003/02/04 14:33:18  julien
+ * Fix the closing tag of View_Context
+ *
  * Revision 1.39  2003/01/30 22:46:32  julien
  * mv context_* metadata to wms_context_*
  *
@@ -463,7 +466,8 @@ int msLoadMapContext(mapObj *map, char *filename)
       return MS_FAILURE;
  }
 
-  if( strstr( pszWholeText, "<WMS_Viewer_Context" ) == NULL )
+  if( ( strstr( pszWholeText, "<WMS_Viewer_Context" ) == NULL ) &&
+      ( strstr( pszWholeText, "<View_Context" ) == NULL ) )
   {
       free( pszWholeText );
       msSetError( MS_MAPCONTEXTERR, "Not a Map Context file (%s)", 
@@ -1583,7 +1587,15 @@ int msSaveMapContext(mapObj *map, char *filename)
   // Close layer list
   fprintf(stream, "  </LayerList>\n");
   // Close Map Context
-  fprintf(stream, "</WMS_Viewer_Context>\n");
+
+  if(strcasecmp(version, "0.1.7") >= 0)
+  {
+      fprintf(stream, "</View_Context>\n");
+  }
+  else
+  {
+      fprintf(stream, "</WMS_Viewer_Context>\n");
+  }
 
   fclose(stream);
 
