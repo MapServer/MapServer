@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2002/11/20 22:17:09  julien
+ * Replace fatal error by msDebug
+ *
  * Revision 1.19  2002/11/20 21:25:35  dan
  * Duh! Forgot to set the proper path for the contexts/0.1.4/context.xsd
  *
@@ -404,12 +407,9 @@ int msLoadMapContext(mapObj *map, char *filename)
                                    "version", NULL);
   if( !pszValue )
   {
-          msSetError( MS_MAPCONTEXTERR, 
-                      "Mandatory data version missing in %s.",
-                      "msLoadMapContext()", filename );
-
-      CPLDestroyXMLNode(psRoot);
-      return MS_FAILURE;
+      msDebug( "msLoadMapContext(): Mandatory data version missing in %s.",
+               filename );
+      pszValue = "0.1.4";
   }
 
   pszVersion = strdup(pszValue);
@@ -440,60 +440,43 @@ int msLoadMapContext(mapObj *map, char *filename)
   }
   else
   {
-      CPLDestroyXMLNode(psRoot);
-      msSetError(MS_MAPCONTEXTERR, 
-                 "Mandatory data General.BoundingBox.SRS missing in %s.",
-                 "msLoadMapContext()", filename);
-      return MS_FAILURE;
+      msDebug("Mandatory data General.BoundingBox.SRS missing in %s.",
+              filename);
   }
 
   // Extent
   if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.minx",
                                    &(map->extent.minx)) == MS_FAILURE)
   {
-      CPLDestroyXMLNode(psRoot);
-      msSetError(MS_MAPCONTEXTERR, 
-                 "Mandatory data General.BoundingBox.minx missing in %s.",
-                 "msLoadMapContext()", filename);
-      return MS_FAILURE;
+      msDebug("Mandatory data General.BoundingBox.minx missing in %s.",
+              filename);
   }
   if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.miny",
                                &(map->extent.miny)) == MS_FAILURE)
   {
-      CPLDestroyXMLNode(psRoot);
-      msSetError(MS_MAPCONTEXTERR, 
-                 "Mandatory data General.BoundingBox.miny missing in %s.",
-                 "msLoadMapContext()", filename);
-      return MS_FAILURE;
+      msDebug("Mandatory data General.BoundingBox.miny missing in %s.",
+              filename);
   }
   if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.maxx",
                                &(map->extent.maxx)) == MS_FAILURE)
   {
-      CPLDestroyXMLNode(psRoot);
-      msSetError(MS_MAPCONTEXTERR, 
-                 "Mandatory data General.BoundingBox.maxx missing in %s.",
-                 "msLoadMapContext()", filename);
+      msDebug("Mandatory data General.BoundingBox.maxx missing in %s.",
+              filename);
       return MS_FAILURE;
   }
   if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.maxy",
                                &(map->extent.maxy)) == MS_FAILURE)
   {
-      CPLDestroyXMLNode(psRoot);
-      msSetError(MS_MAPCONTEXTERR, 
-                 "Mandatory data General.BoundingBox.maxy missing in %s.",
-                 "msLoadMapContext()", filename);
-      return MS_FAILURE;
+      msDebug("Mandatory data General.BoundingBox.maxy missing in %s.",
+              filename);
   }
 
   // Title
   if( msGetMapContextXMLHashValue(psMapContext, "General.Title", 
                               &(map->web.metadata), "wms_title") == MS_FAILURE)
   {
-      CPLDestroyXMLNode(psRoot);
-      msSetError(MS_MAPCONTEXTERR, 
-                 "Mandatory data General.Title missing in %s.",
-                 "msLoadMapContext()", filename);
-      return MS_FAILURE;
+      msDebug("Mandatory data General.Title missing in %s.",
+              filename);
   }
 
   // Name
@@ -610,11 +593,8 @@ int msLoadMapContext(mapObj *map, char *filename)
                   if(msGetMapContextXMLHashValue(psLayer, "Server.title", 
                                 &(layer->metadata), "wms_title") == MS_FAILURE)
                   {
-                      CPLDestroyXMLNode(psRoot);
-                      msSetError(MS_MAPCONTEXTERR, 
-                                 "Mandatory data Layer.Title missing in %s.",
-                                 "msLoadMapContext()", filename);
-                      return MS_FAILURE;
+                      msDebug("Mandatory data Layer.Title missing in %s.",
+                              filename);
                   }
               }
 
@@ -668,11 +648,8 @@ int msLoadMapContext(mapObj *map, char *filename)
                   if(msGetMapContextXMLHashValue(psLayer, "Server.version", 
                        &(layer->metadata), "wms_server_version") == MS_FAILURE)
                   {
-                      CPLDestroyXMLNode(psRoot);
-                      msSetError(MS_MAPCONTEXTERR, 
-                                "Mandatory data Server.version missing in %s.",
-                                "msLoadMapContext()", filename);
-                      return MS_FAILURE;
+                      msDebug("Mandatory data Server.version missing in %s.",
+                              filename);
                   }
               }
               else
@@ -680,11 +657,8 @@ int msLoadMapContext(mapObj *map, char *filename)
                   if(msGetMapContextXMLHashValue(psLayer, "Server.wmtver", 
                        &(layer->metadata), "wms_server_version") == MS_FAILURE)
                   {
-                      CPLDestroyXMLNode(psRoot);
-                      msSetError(MS_MAPCONTEXTERR, 
-                                "Mandatory data Server.wmtver missing in %s.",
-                                "msLoadMapContext()", filename);
-                      return MS_FAILURE;
+                      msDebug("Mandatory data Server.wmtver missing in %s.",
+                              filename);
                   }
               }
 
