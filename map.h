@@ -1004,6 +1004,7 @@ char *double2string(double value);
 char *msEncodeUrl(const char*);
 char *msEncodeHTMLEntities(const char *string);
 void msDecodeHTMLEntities(const char *string);
+char *strcatalloc(char *pszDest, char *pszSrc);
 
 #ifdef NEED_STRDUP
 char *strdup(char *s);

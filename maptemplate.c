@@ -901,44 +901,6 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
 }
 
 /*!
- * This function probably should be in
- * mapstring.c
- * 
- * it concatenate pszSrc to pszDest and reallocate
- * memory if necessary.
-*/
-char *strcatalloc(char* pszDest, char* pszSrc)
-{
-   int nLen;
-   
-   if (pszSrc == NULL)
-      return pszDest;
-
-   // if destination is null, allocate memory
-   if (pszDest == NULL) {
-      pszDest = strdup(pszSrc);
-   }
-   else { // if dest is not null, reallocate memory
-      char *pszTemp;
-
-      nLen = strlen(pszDest) + strlen(pszSrc);
-
-      pszTemp = (char*)realloc(pszDest, nLen + 1);
-      if (pszTemp) {
-         pszDest = pszTemp;
-         strcat(pszDest, pszSrc);
-         pszDest[nLen] = '\0';
-      }
-      else {
-         msSetError(MS_WEBERR, "Error while reallocating memory.", "strcatalloc()");
-         return NULL;
-      }        
-   }
-   
-   return pszDest;
-}
-
-/*!
  * Replace all tags from group template
  * with correct value.
  * 
