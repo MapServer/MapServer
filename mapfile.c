@@ -4484,6 +4484,9 @@ int msCheckConnection(layerObj * layer) {
     case MS_SDE:
       if(!lp->layerinfo) continue;
       break;
+    case MS_MYGIS:
+      if(!lp->layerinfo) continue;
+      break;
     default:
       continue; // not a database layer, skip it
       break;
@@ -4518,6 +4521,9 @@ void msCloseConnections(mapObj *map) {
       break;
     case MS_SDE:
       msSDELayerClose(lp);
+      break;
+    case MS_MYGIS:
+      msMYGISLayerClose(lp);
       break;
     default:
       break;

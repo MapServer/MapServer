@@ -133,8 +133,6 @@ typedef struct ms_MYGIS_layer_info_t
 	int attriboffset;
 } msMYGISLayerInfo;
 
-MYSQL *prevconn=NULL;
-char *prevdata=NULL;  
 int wkbdata = 1;
 
 int msMYGISLayerParseData(char *data, char *geom_column_name,
@@ -187,7 +185,7 @@ static int gBYTE_ORDER = 0;
 
 void end_memcpy(char order, void* dest, void* src, int num)
 {
-	u_int16_t* shorts;
+	u_int16_t* shorts=NULL;
 	u_int32_t* longs;
 
 	if (
@@ -216,6 +214,16 @@ void end_memcpy(char order, void* dest, void* src, int num)
 
 	}
 	memcpy(dest, src, num);
+}
+
+msMYGISLayerInfo *getMyGISLayerInfo(layerObj *layer)
+{
+		  return layer->layerinfo;
+}
+
+void setMyGISLayerInfo(layerObj *layer,msMYGISLayerInfo *mygislayerinfo )
+{
+		   layer->layerinfo = (void*)mygislayerinfo;
 }
 
 int query(msMYGISLayerInfo *layer, char qbuf[]){
@@ -256,12 +264,13 @@ if (SHOWQUERY || MYDEBUG) printf("%d rows<br>\n", numrows);
    return MS_SUCCESS;
 }
 
+
 //open up a connection to the postgresql database using the connection string in layer->connection
 // ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv"
 int msMYGISLayerOpen(layerObj *layer)
 {
 	msMYGISLayerInfo	*layerinfo;
-        int			order_test = 1;
+  int			order_test = 1;
 	char* DB_HOST = NULL;
 	char* DB_USER = NULL;
 	char* DB_PASSWD = NULL;
@@ -274,9 +283,11 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 	if (setvbuf(stdout, NULL, _IONBF , 0)){
 		printf("Whoops...");
 	};
-	if (layer->layerinfo)
-		return MS_SUCCESS;	//already open
-
+	if (getMyGISLayerInfo(layer)) {
+     if (layer->debug) msDebug("msPOSTGISLayerOpen :: layer is already open!!\n");
+     return MS_SUCCESS;  //already open
+  }
+	
 	//have to setup a connection to the database
 
 	layerinfo = (msMYGISLayerInfo *) malloc( sizeof(msMYGISLayerInfo) );
@@ -291,79 +302,65 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 
     // check whether previous connection can be used
 
-    if (prevconn != NULL && prevdata != NULL && strcmp(prevdata, layer->data)==0){
-if (MYDEBUG)printf("Reusing existing connection<BR>\n");	
-        layerinfo->conn = prevconn;
-	layer->layerinfo = (void *) layerinfo;
-	return MS_SUCCESS;	//already open
-    } else if (prevconn != NULL) { // a different connection, close shop...
-if (MYDEBUG)printf("New connection<BR>\n");	
-        mysql_close(prevconn);
-	prevconn = NULL;
-	free(layer->layerinfo);
-	layer->layerinfo = NULL;
-//        mysql_close(prevconn);
-//        free(prevconn);
-//        free(prevdata); 
-    }
+	if (msCheckConnection(layer) != MS_SUCCESS){
+			
+		if( layer->data == NULL ) {
+			msSetError(MS_QUERYERR,	DATAERRORMESSAGE("","Error parsing MYGIS data variable: nothing specified in DATA statement.<br><br>\n\nMore Help:<br><br>\n<br>\n"),
+			"msMYGISLayerOpen()");
 
+				return(MS_FAILURE);
+		}
+		delim = strdup(":");
+		DB_HOST = strdup(strtok(layer->connection, delim));
+		DB_USER = strdup(strtok(NULL, delim));
+		DB_PASSWD = strdup(strtok(NULL, delim));
+		DB_DATABASE = strdup(strtok(NULL, delim));
+		DB_DATATYPE = strdup(strtok(NULL, delim));
 
-    
-        if( layer->data == NULL )
-        {
-
-
-            msSetError(MS_QUERYERR,
-					DATAERRORMESSAGE("","Error parsing MYGIS data variable: nothing specified in DATA statement.<br><br>\n\nMore Help:<br><br>\n<br>\n"),
-					"msMYGISLayerOpen()");
-
-            return(MS_FAILURE);
-        }
-	delim = strdup(":");
-	DB_HOST = strdup(strtok(layer->connection, delim));
-	DB_USER = strdup(strtok(NULL, delim));
-	DB_PASSWD = strdup(strtok(NULL, delim));
-	DB_DATABASE = strdup(strtok(NULL, delim));
-	DB_DATATYPE = strdup(strtok(NULL, delim));
-
-	wkbdata = strcmp(DB_DATATYPE, "num") ? 1 : 0;
-	
-	if (DB_HOST == NULL || DB_USER == NULL || DB_PASSWD == NULL || DB_DATABASE == NULL)
-	{
-		printf("DB param error %s/%s/%s/%s !\n",DB_HOST,DB_USER,DB_PASSWD,DB_DATABASE);
-		return MS_FAILURE;
-	}
-	if (strcmp(DB_PASSWD, "none") == 0)
-		strcpy(DB_PASSWD, "");
+		wkbdata = strcmp(DB_DATATYPE, "num") ? 1 : 0;
+		
+		if (DB_HOST == NULL || DB_USER == NULL || DB_PASSWD == NULL || DB_DATABASE == NULL)
+		{
+			printf("DB param error %s/%s/%s/%s !\n",DB_HOST,DB_USER,DB_PASSWD,DB_DATABASE);
+			return MS_FAILURE;
+		}
+		if (strcmp(DB_PASSWD, "none") == 0) strcpy(DB_PASSWD, "");
 
 #if MYSQL_VERSION_ID >= 40000
+    mysql_init(&(layerinfo->mysql));
     if (!(layerinfo->conn = mysql_real_connect(&(layerinfo->mysql),DB_HOST,DB_USER,DB_PASSWD,NULL, 0, NULL, 0)))
 #else
     if (!(layerinfo->conn = mysql_connect(&(layerinfo->mysql),DB_HOST,DB_USER,DB_PASSWD)))
 #endif
     {
-	free(layerinfo);
-	msSetError(MS_QUERYERR, "Connection to SQL server failed",
+				char tmp[4000];
+				sprintf( tmp, "Failed to connect to SQL server: Error: %s\nHost: %s\nUsername:%s\nPassword:%s\n", mysql_error(&(layerinfo->mysql)), DB_HOST, DB_USER, DB_PASSWD);
+				msSetError(MS_QUERYERR, tmp,
            "msMYGISLayerOpen()");
+				free(layerinfo);
         return MS_FAILURE;
     }
 
-if (MYDEBUG)printf("msMYGISLayerOpen2 called<br>\n");
+		if (MYDEBUG)printf("msMYGISLayerOpen2 called<br>\n");
     if (mysql_select_db(layerinfo->conn,DB_DATABASE) < 0)
     {
       mysql_close(layerinfo->conn);
-	  free(layerinfo);
-	msSetError(MS_QUERYERR, "SQL Database could not be opened",
+		  free(layerinfo);
+			msSetError(MS_QUERYERR, "SQL Database could not be opened",
            "msMYGISLayerOpen()");
-        return MS_FAILURE;
+      return MS_FAILURE;
     }
-if (MYDEBUG)printf("msMYGISLayerOpen3 called<br>\n");
-       if( ((char *) &order_test)[0] == 1 )
-            gBYTE_ORDER = LITTLE_ENDIAN;
-        else
-            gBYTE_ORDER = BIG_ENDIAN;
+	} else {		// connection reusable
+			layerinfo = layer->sameconnection->layerinfo;
+//			layerinfo->conn = layer->sameconnection->layerinfo->conn;
+	}
+	if (MYDEBUG)printf("msMYGISLayerOpen3 called<br>\n");
+	
+  if( ((char *) &order_test)[0] == 1 ) gBYTE_ORDER = LITTLE_ENDIAN;
+  else gBYTE_ORDER = BIG_ENDIAN;
 
-	layer->layerinfo = (void *) layerinfo;
+  setMyGISLayerInfo(layer,   layerinfo);
+
 	return MS_SUCCESS;
 }
 
@@ -650,21 +647,14 @@ int msMYGISLayerClose(layerObj *layer)
 {
 	msMYGISLayerInfo	*layerinfo;
 
-if (MYDEBUG) printf("msMYGISLayerClose called<br>\n");
+	if (MYDEBUG) printf("msMYGISLayerClose called<br>\n");
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
+	if (layerinfo == NULL) return MS_FAILURE;
 
-
-	if (layerinfo != NULL)
-	{
-// let's not overreact, we'll skip over the sql closing nice and easy so a following connection can be made 
-
-        prevconn = layerinfo->conn;
-        prevdata = strdup(layer->data);
-/*      mysql_close(layerinfo->conn);
-	layerinfo->conn = NULL;
-	free(layerinfo);
+  mysql_close(layerinfo->conn);
+  free(layer->layerinfo);
 	layer->layerinfo = NULL;
-*/	}
+		
 	if (setvbuf(stdout, NULL, _IONBF , 0)){
 		printf("Whoops...");
 	};
@@ -1297,6 +1287,12 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 		case MS_LAYER_GRATICULE:
 					msDebug( "Ignoring MS_LAYER_GRATICULE in mapMYGIS.c<br>\n" );
 					break;
+		case MS_LAYER_TILEINDEX:
+					msDebug( "Ignoring MS_LAYER_TILEINDEX in mapMYGIS.c<br>\n" );
+					break;
+		case MS_LAYER_MASK:
+					msDebug( "Ignoring MS_LAYER_MASK in mapMYGIS.c<br>\n" );
+					break;
 
 			}
 			if (shape->type != MS_SHAPE_NULL)
@@ -1331,7 +1327,7 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 
 
 //					sprintf(tmpstr,"select attribute, value from shape_attr where shape_attr.shape='%d'", shape->index);
-					sprintf(tmpstr,"SELECT %s, %s, %s FROM %s feature WHERE feature.id='%d'", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? layer->labelsizeitem: "''", layerinfo->feature ? layerinfo->feature : "feature", shape->index);
+					sprintf(tmpstr,"SELECT %s, %s, %s FROM %s feature WHERE feature.id='%li'", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? layer->labelsizeitem: "''", layerinfo->feature ? layerinfo->feature : "feature", shape->index);
 //					sprintf(tmpstr,"SELECT %s, %s, %s FROM %s WHERE feature.id='%d' AND feature.GID=geometry.GID GROUP BY feature.id", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? layer->labelsizeitem: "''", layerinfo->table ? layerinfo->table : "feature", shape->index);
 
 					   if (layerinfo->query2_result != NULL) // query leftover 
@@ -1418,7 +1414,7 @@ int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	msMYGISLayerInfo	*layerinfo;
 	int	t;
 
-if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %u<br>\n",record);
+if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %li<br>\n",record);
 //return (MS_FAILURE);
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	if (layerinfo == NULL)
