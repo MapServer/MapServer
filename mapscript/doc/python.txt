@@ -1,7 +1,7 @@
 ..  $Id$
     
     This is the new unified mapscript documentation prepared using
-    ReStructured Text.
+    reStructured Text.
 
     ***************************************************************
     RULE #1: No tabs in this document!
@@ -11,21 +11,21 @@
     Thank you.
     ***************************************************************
     
-    ReStructured Text is part of the Python docutils module
+    reStructured Text is part of the Python docutils module
     
         http://docutils.sourceforge.net/
     
-    Documentation on ReStructured Text is found at
+    Documentation on reStructured Text is found at
 
         http://docutils.sourceforge.net/rst.html
 
-    First RST note is about comments: a double period begins a comment
+    First reST note is about comments: a double period begins a comment
     block (like a /* in C) and a double period on a line all by itself
     closes the comment block.
 ..
 
 ..  Below is our main heading (becomes H1).  Note that we require empty
-    lines between every different RST element such as the empty line
+    lines between every different reST element such as the empty line
     between the end of this comment and the begining of the heading.
 ..
 

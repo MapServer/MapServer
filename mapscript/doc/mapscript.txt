@@ -1,7 +1,7 @@
 ..  $Id$
     
     This is the new unified mapscript documentation prepared using
-    ReStructured Text.
+    reStructured Text.
 
     ***************************************************************
     RULE #1: No tabs in this document!
@@ -11,21 +11,21 @@
     Thank you.
     ***************************************************************
     
-    ReStructured Text is part of the Python docutils module
+    reStructured Text is part of the Python docutils module
     
         http://docutils.sourceforge.net/
     
-    Documentation on ReStructured Text is found at
+    Documentation on reStructured Text is found at
 
         http://docutils.sourceforge.net/rst.html
 
-    First RST note is about comments: a double period begins a comment
+    First reST note is about comments: a double period begins a comment
     block (like a /* in C) and a double period on a line all by itself
     closes the comment block.
 ..
 
 ..  Below is our main heading (becomes H1).  Note that we require empty
-    lines between every different RST element such as the empty line
+    lines between every different reST element such as the empty line
     between the end of this comment and the begining of the heading.
 ..
 
@@ -106,8 +106,25 @@ classObj_, colorObj_, pointObj_, rectObj_, shapeObj_, styleObj_
  classObj
 -----------------------------------------------------------------------------
 
-An instance of classObj is a child of a layerObj instance and controls a
-particular classification of the layer's data.
+An instance of classObj is associated with with one instance of layerObj_.
+
+::
+
+    +----------+          +----------+
+    | classObj | <------> | layerObj |
+    +----------+ 0..*     +----------+
+
+The other important associations for classObj are with styleObj_ and labelObj_.
+
+::
+
+    +----------+          +----------+
+    | classObj | <------> | styleObj |
+    +----------+     0..* +----------+
+
+    +----------+          +----------+
+    | classObj | <------> | labelObj |
+    +----------+     0..1 +----------+
 
 Multiple class styles are now supported in 4.1.  See the styleObj_ section
 for details on use of multiple class styles.
@@ -116,7 +133,7 @@ Attributes
 ----------
 
 status : int
-    MS_ON or MS_OFF
+    MS_ON or MS_OFF.  Draw features of this class or do not.
     
 numstyles : int immutable
     Number of styles for class
@@ -524,6 +541,14 @@ distanceToShape(shapeObj_ shape) : float
  styleObj
 -----------------------------------------------------------------------------
 
+An instance of styleObj is associated with one instance of classObj [1]_.
+
+::
+
+    +----------+          +----------+
+    | styleObj | <------> | classObj |
+    +----------+ 0..*     +----------+
+
 Support for multiple class styles is a new feature in the current unstable
 (4.1) Mapscript and in the next stable (4.2) release.  The initial feature
 request and notes are archived at 
@@ -586,4 +611,8 @@ new styleObj() : styleObj_
 -----------------------------------------------------------------------------
 
 x
+
+
+..  [1] At some point this needs to be fixed so that styleObj instances are 
+    *reference* objects that can be shared by multiple classObjs.
 
