@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.23  2000/11/06 13:42:41  dan
+ * Typo error for PHP4 compilation.
+ *
  * Revision 1.22  2000/11/01 16:31:07  dan
  * Add missing functions (in sync with mapscript).
  *
@@ -749,7 +752,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
     INIT_CLASS_ENTRY(tmp_class_entry, "query", 
                      php_query_class_functions);
-    queryrt_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    query_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "point", php_point_class_functions);
     point_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
