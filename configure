@@ -5445,7 +5445,14 @@ rm -f perl.out
   else
     IRIX_ALL=
   fi
-  if test -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
+
+  SHARED_FLAG="-shared"
+
+  if test -n "`uname -a | grep Darwin`" ; then
+    SHARED_FLAG="-bundle -flat_namespace -undefined suppress"
+  fi
+
+  if test -z "`${CXX} $SHARED_FLAG $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
       if test -z "$LD_LIBRARY_PATH" ; then
@@ -5455,21 +5462,21 @@ rm -f perl.out
       fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ${CXX} -shared ... yes"
-        LD_SHARED="${CXX} -shared $IRIX_ALL"
+        echo "checking for ${CXX} $SHARED_FLAG ... yes"
+        LD_SHARED="${CXX} $SHARED_FLAG $IRIX_ALL"
       else
-        echo "checking for ${CXX} -shared ... no(3)"
+        echo "checking for ${CXX} $SHARED_FLAG ... no(3)"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
     else
-      echo "checking for ${CXX} -shared ... no(2)"
+      echo "checking for ${CXX} $SHARED_FLAG ... no(2)"
     fi
   else
-    echo "checking for ${CXX} -shared ... no(1)"
+    echo "checking for ${CXX} $SHARED_FLAG ... no(1)"
   fi
 
   if test "$LD_SHARED" = "/bin/true" \
-          -a -z "`ld -shared conftest2.o -o libconftest.so 2>&1`" ; then
+          -a -z "`ld $SHARED_FLAG conftest2.o -o libconftest.so 2>&1`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
       if test -z "$LD_LIBRARY_PATH" ; then
@@ -5479,8 +5486,8 @@ rm -f perl.out
       fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ld -shared ... yes"
-        LD_SHARED="ld -shared"
+        echo "checking for ld $SHARED_FLAG ... yes"
+        LD_SHARED="ld $SHARED_FLAG"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
     fi
@@ -5506,7 +5513,7 @@ rm -f perl.out
   fi
 
   if test "$LD_SHARED" = "/bin/true" ; then
-    echo "checking for ld -shared ... no"
+    echo "checking for ld $SHARED_FLAG ... no"
     if test ! -x /bin/true ; then
       LD_SHARED=/usr/bin/true
     fi
@@ -5521,7 +5528,7 @@ rm -f perl.out
   fi
 
           echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
-echo "configure:5525: checking for location of config.h or php_config.h" >&5
+echo "configure:5532: checking for location of config.h or php_config.h" >&5
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
@@ -5534,7 +5541,7 @@ echo "configure:5525: checking for location of config.h or php_config.h" >&5
   fi
 
           echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
-echo "configure:5538: checking whether we have PHP3 or PHP4" >&5
+echo "configure:5545: checking whether we have PHP3 or PHP4" >&5
   if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
@@ -5546,7 +5553,7 @@ echo "configure:5538: checking whether we have PHP3 or PHP4" >&5
   echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:5550: checking whether we should use PHP's regex" >&5
+echo "configure:5557: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
 
@@ -5608,7 +5615,7 @@ if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:5612: checking for location of Apache headers using apxs" >&5
+echo "configure:5619: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -5641,7 +5648,7 @@ if test -n "$with_apache" -a "$with_apache" != "no" ; then
 !!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!" 1>&2; exit 1; }
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:5645: checking for location of Apache headers" >&5
+echo "configure:5652: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi
