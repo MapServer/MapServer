@@ -26,6 +26,19 @@ void msProjectLine(PJ *in, PJ *out, lineObj *line);
 void msProjectRect(PJ *in, PJ *out, rectObj *rect);
 #endif
 
+int msOGCWKT2ProjectionObj( const char *pszWKT, 
+                            projectionObj *proj );
+void msFreeProjection(projectionObj *p);
+int msInitProjection(projectionObj *p);
+int msProcessProjection(projectionObj *p);
+int msLoadProjectionString(projectionObj *p, char *value);
+
+/* Provides compatibliity with PROJ.4 4.4.2 */
+#ifndef PJ_VERSION
+#  define pj_is_latlong(x)	((x)->is_latlong)
+#endif
+
+
 #ifdef __cplusplus
 }
 #endif
