@@ -133,6 +133,7 @@ and the MapServer Map File documentation at:
    int          debug
    int          width
    int          height
+   int          maxsize
    int          transparent
    int          interlace
    int          imagetype  (read-only, use selectOutputformat())
