@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.188  2004/01/12 19:56:18  assefa
+ * Add moveclassup and moveclassdown on a layer object.
+ * Add clone function for the class object.
+ * Add a 2nd optional argument for function ms_newclassobj to be able
+ * to pass a class as argument.
+ *
  * Revision 1.187  2004/01/05 21:27:13  assefa
  * applySLDURL and applySLD on a layer object can now take an optional
  * argument which is the name of the NamedLayer to use to style the layer.
@@ -379,6 +385,8 @@ DLEXPORT void  php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_applySLD(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_applySLDURL(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void  php3_ms_lyr_generateSLD(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_moveClassUp(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_moveClassDown(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -388,6 +396,7 @@ DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_clone(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -822,6 +831,8 @@ function_entry php_layer_class_functions[] = {
     {"applysld",        php3_ms_lyr_applySLD,           NULL},
     {"applysldurl",     php3_ms_lyr_applySLDURL,           NULL},
     {"generatesld",      php3_ms_lyr_generateSLD,           NULL},
+    {"moveclassup",     php3_ms_lyr_moveClassUp, NULL},   
+    {"moveclassdown",   php3_ms_lyr_moveClassDown, NULL},   
     {NULL, NULL, NULL}
 };
 
@@ -838,6 +849,7 @@ function_entry php_class_class_functions[] = {
     {"drawlegendicon",   php3_ms_class_drawLegendIcon,   NULL},
     {"createlegendicon", php3_ms_class_createLegendIcon, NULL},   
     {"getstyle",        php3_ms_class_getStyle, NULL},   
+    {"clone",           php3_ms_class_clone, NULL},   
     {NULL, NULL, NULL}
 };
 
@@ -7746,6 +7758,63 @@ DLEXPORT void php3_ms_lyr_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
     }
 }
 
+
+DLEXPORT void  php3_ms_lyr_moveClassUp(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis, *pClassIdx;
+     layerObj      *self=NULL;
+     HashTable   *list=NULL;
+     int         nStatus = MS_FAILURE;
+
+     pThis = getThis();
+
+     if (pThis == NULL ||
+        getParameters(ht, 1, &pClassIdx) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+     convert_to_long(pClassIdx);
+
+     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer), 
+                                            list TSRMLS_CC);
+
+     if (self != NULL)
+     {
+         nStatus = layerObj_moveClassUp(self, pClassIdx->value.lval);
+     }
+
+      RETURN_LONG(nStatus);
+}
+
+DLEXPORT void  php3_ms_lyr_moveClassDown(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis, *pClassIdx;
+     layerObj      *self=NULL;
+     HashTable   *list=NULL;
+     int         nStatus = MS_FAILURE;
+
+
+     pThis = getThis();
+
+     if (pThis == NULL ||
+        getParameters(ht, 1, &pClassIdx) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+     convert_to_long(pClassIdx);
+
+     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer), 
+                                            list TSRMLS_CC);
+
+     if (self != NULL)
+     {
+         nStatus = layerObj_moveClassDown(self, pClassIdx->value.lval);
+     }
+
+     RETURN_LONG(nStatus);
+}
 /* }}} */
 
 /*=====================================================================
@@ -7970,15 +8039,25 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval  *pLayerObj;
+    pval  *pLayerObj,*pClassObj;
     layerObj *parent_layer;
     classObj *pNewClass;
+    classObj *class_obj = NULL;
     int layer_id, map_id;
+    int         nArgs = ARG_COUNT(ht);
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
 
-    if (getParameters(ht, 1, &pLayerObj) == FAILURE) 
+
+    if (nArgs != 1 && nArgs != 2)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+
+    if (getParameters(ht, nArgs, &pLayerObj, &pClassObj) == FAILURE) 
     {
         WRONG_PARAM_COUNT;
     }
@@ -7987,8 +8066,15 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
                                                   PHPMS_GLOBAL(le_mslayer),
                                                   list TSRMLS_CC);
 
+    if (nArgs == 2)
+    {
+        class_obj = (classObj*)_phpms_fetch_handle(pClassObj, 
+                                                   PHPMS_GLOBAL(le_msclass),
+                                                   list TSRMLS_CC);
+    }
+
     if (parent_layer == NULL ||
-        (pNewClass = classObj_new(parent_layer)) == NULL)
+        (pNewClass = classObj_new(parent_layer, class_obj)) == NULL)
     {
         _phpms_report_mapserver_error(E_ERROR);
         RETURN_FALSE;
@@ -8423,6 +8509,46 @@ DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS)
                               return_value TSRMLS_CC);
 }
     
+
+DLEXPORT void php3_ms_class_clone(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pThis = NULL;
+    classObj *self = NULL, *pNewClass = NULL;
+    layerObj *parent_layer = NULL;
+    int layer_id, map_id;
+    HashTable   *list=NULL;
+    pThis = getThis();
+
+
+
+    if (pThis == NULL)
+      php3_error(E_ERROR, "Invalid class object.");
+
+    self = (classObj *)_phpms_fetch_handle(pThis,
+                                           PHPMS_GLOBAL(le_msclass),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+       php3_error(E_ERROR, "Invalid class object.");
+
+    parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
+                                                           PHPMS_GLOBAL(le_mslayer),
+                                                           list TSRMLS_CC, E_ERROR);
+
+    if ((pNewClass = classObj_clone(self, parent_layer)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_FALSE;
+    }
+
+    layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
+
+     /* Return class object */
+    _phpms_build_class_object(pNewClass, map_id, layer_id, list, 
+                              return_value TSRMLS_CC);
+}
+/* }}} */
+
 
 /*=====================================================================
  *                 PHP function wrappers - colorObj class

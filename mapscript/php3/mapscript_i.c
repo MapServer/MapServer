@@ -7,6 +7,12 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.74  2004/01/12 19:56:18  assefa
+ * Add moveclassup and moveclassdown on a layer object.
+ * Add clone function for the class object.
+ * Add a 2nd optional argument for function ms_newclassobj to be able
+ * to pass a class as argument.
+ *
  * Revision 1.73  2004/01/05 21:27:14  assefa
  * applySLDURL and applySLD on a layer object can now take an optional
  * argument which is the name of the NamedLayer to use to style the layer.
@@ -768,15 +774,32 @@ char *layerObj_generateSLD(layerObj *self)
     return msSLDGenerateSLD(self->map, self->index);
 }
 
+int layerObj_moveClassUp(layerObj *self, int index)
+{
+    return msMoveClassUp(self, index);
+}
+
+int layerObj_moveClassDown(layerObj *self, int index)
+{
+    return msMoveClassDown(self, index);
+}
+
+
 /**********************************************************************
  * class extensions for classObj, always within the context of a layer
  **********************************************************************/
-classObj *classObj_new(layerObj *layer) {
+classObj *classObj_new(layerObj *layer, classObj *class) {
     if(layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
 
     if(initClass(&(layer->class[layer->numclasses])) == -1)
       return NULL;
+
+    if (class){
+      msCopyClass(&(layer->class[layer->numclasses]), class, layer);
+      layer->class[layer->numclasses].layer = layer;
+    }
+
     layer->class[layer->numclasses].type = layer->type;
 
     layer->numclasses++;
@@ -842,6 +865,18 @@ int classObj_setOverlaySymbolByName(classObj *self, mapObj *map, char* pszOverla
 
   }
 
+classObj *classObj_clone(classObj *class, layerObj *layer)
+{
+    classObj *dstClass;
+    dstClass = (classObj *)malloc(sizeof(classObj));
+    
+    initClass(dstClass);
+    msCopyClass(dstClass, class, layer);
+
+    dstClass->type = layer->type;
+
+    return dstClass;
+}
 
 /**********************************************************************
  * class extensions for pointObj, useful many places

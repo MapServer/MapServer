@@ -701,6 +701,22 @@ and the MapServer Map File documentation at:
   char generateSLD()
         Returns an SLD XML string based on all the classes found in the layers.
 
+ int moveclassup(int index)
+       The class specified bu the class index will be moved up into
+       the array of layers. Returns MS_SUCCESS or MS_FAILURE.
+       ex layer->moveclassup(1) will have the effect of moving class 1
+          up to postion 0, and the class at potion 0 will be moved
+          to position 1.
+
+ int moveclassdown(int index)
+       The class specified bu the class index will be moved down into
+       the array of layers. Returns MS_SUCCESS or MS_FAILURE.
+       ex layer->moveclassdown(0) will have the effect of moving class 0
+          up to postion 1, and the class at potion 1 will be moved
+          to position 0.
+
+
+
  ClassObj Class:
  ---------------
 
@@ -708,7 +724,10 @@ and the MapServer Map File documentation at:
    Class Objects can be returned by the LayerObj class, or can be created
    using:
 
-   classObj ms_newClassObj(layerObj layer)
+   classObj ms_newClassObj(layerObj layer, classObj class)
+
+  The second argument class is optional. If given, the new class
+  created will be a copy of this class.
 
  Members:
 
@@ -746,6 +765,9 @@ and the MapServer Map File documentation at:
    styleObj getStyle(int index)
         Return the style object using an index. index >= 0 &&
         index < class->numstyles.
+
+   classObj clone()
+        Returns a cloned copy of the class.  
  
  ImageObj Class:
  ---------------

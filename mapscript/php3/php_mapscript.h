@@ -30,6 +30,12 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.41  2004/01/12 19:56:19  assefa
+ * Add moveclassup and moveclassdown on a layer object.
+ * Add clone function for the class object.
+ * Add a 2nd optional argument for function ms_newclassobj to be able
+ * to pass a class as argument.
+ *
  * Revision 1.40  2004/01/05 21:27:14  assefa
  * applySLDURL and applySLD on a layer object can now take an optional
  * argument which is the name of the NamedLayer to use to style the layer.
@@ -291,8 +297,11 @@ char            *layerObj_executeWFSGetFeature(layerObj *self);
 int             layerObj_applySLD(layerObj *self, char *sld, char *stylelayer);
 int             layerObj_applySLDURL(layerObj *self, char *sld, char *stylelayer);
 char            *layerObj_generateSLD(layerObj *self);
+int             layerObj_moveClassUp(layerObj *self, int index);
+int             layerObj_moveClassDown(layerObj *self, int index);
 
-classObj       *classObj_new(layerObj *layer);
+
+classObj       *classObj_new(layerObj *layer, classObj *class);
 void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);
 char            *classObj_getExpressionString(classObj *self);
@@ -313,6 +322,8 @@ int             classObj_setSymbolByName(classObj *self,
 int             classObj_setOverlaySymbolByName(classObj *self,
                                                 mapObj *map,
                                                 char *pszOverlaySymbolName);
+classObj        *classObj_clone(classObj *class, layerObj *layer);
+
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);
 int             pointObj_project(pointObj *self, projectionObj *in, 
