@@ -2,6 +2,12 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.84  2004/10/19 19:06:48  hobu
+ * First cut of BLOB support.  Blobs
+ * can't actually query yet, but NULL
+ * blob columns in a table will not prevent
+ * the user from querying the table.
+ *
  * Revision 1.83  2004/10/19 16:51:00  hobu
  * if no version is specified, do not set
  * a default or do any versioned queries.
@@ -245,7 +251,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   SE_COLUMN_DEF *itemdefs;
   SE_SHAPE shapeval=0;
   SE_BLOB_INFO blobval;
- // blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO));
+  blobval.blob_length = 0;
+  blobval.blob_buffer = (CHAR*)malloc(blobval.blob_length);
   msSDELayerInfo *sde;
 
   sde = layer->layerinfo;
@@ -343,9 +350,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       break;
     case SE_BLOB_TYPE:
         status = SE_stream_get_blob(sde->stream, (short) (i+1), &blobval);
-        msDebug("SE_BLOB_TYPE: "
-              "Status code %d", status);
         if(status == SE_SUCCESS) {
+          // Blobs will still not work because of stream spec stuff
           shape->values[i] = (char *)malloc(sizeof(char)*blobval.blob_length);
           shape->values[i] = memcpy(shape->values[i],
                                     blobval.blob_buffer, 
@@ -360,12 +366,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
           return(MS_FAILURE);
         }
     
-    
-    /*  shape->values[i] = strdup("<blob>");
-      msSetError( MS_SDEERR, 
-                  "Retrieval of BLOBs is not yet supported.", 
-                  "sdeGetRecord()");
-*/
       break;
     case SE_DATE_TYPE:
       status = SE_stream_get_date(sde->stream, (short)(i+1), &dateval);
@@ -439,7 +439,7 @@ int msSDELayerOpen(layerObj *layer) {
   SE_ERROR error;
   SE_STATEINFO state;
   SE_VERSIONINFO version;
-
+ // SE_STREAM_SPEC spec;
   msSDELayerInfo *sde;
 
   // layer already open, silently return
@@ -503,6 +503,16 @@ int msSDELayerOpen(layerObj *layer) {
       sde_error(status, "msSDELayerOpen()", "SE_connection_set_concurrency()");
       return(MS_FAILURE);
     }
+
+/*    status = SE_connection_get_stream_spec(sde->connection, &spec);
+          msDebug("Stream spec: blob_bytes: %d, max_bypes_per_blob: %d, stream_pool_size: %d.\n", 
+                spec.blob_bytes, 
+                spec.max_bytes_per_blob,
+                spec.stream_pool_size);
+    spec.blob_bytes=8000000;
+    spec.max_bytes_per_blob = 8000000;
+    
+*/
     
     // Register the connection with the connection pooling API.  Give 
     // msSDECloseConnection as the function to call when we run out of layer 
