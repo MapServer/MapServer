@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.134  2003/01/08 16:21:25  assefa
+ * Bug in ms_newMapObj related to empty filename.
+ *
  * Revision 1.133  2003/01/08 15:00:16  assefa
  * Add setsymbolbyname in the style class.
  *
@@ -1220,6 +1223,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
 
     virtual_getcwd(szFname, MS_MAXPATHLEN TSRMLS_CC);
     msBuildPath(szPath, szFname, pFname->value.str.val);
+    if (strlen(pFname->value.str.val) == 0)
+      szPath[0] = '\0';
 
     if (pszNewPath)
     {
