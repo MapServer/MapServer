@@ -16,6 +16,13 @@ the CVS logs is updated daily at the following URL:
 Version 4.1 (CVS)
 ------------------------
 
+- Replace wms_style_%s_legendurl, wms_logourl, wms_descriptionurl, wms_dataurl 
+  and wms_metadataurl metadata by four new metadata by metadata replaced. The 
+  new metadata are called legendurl_width, legendurl_height, legendurl_format, 
+  legendurl_href, logourl_width, etc...
+  Old dependancy to the metadata with four value in it , space separated, are 
+  not kept.
+
 - Implement DataURL, MetadataURL and DescriptionURL metadata in 
   mapcontext.c (bug 523)
 
