@@ -1328,6 +1328,8 @@ int loadExpressionString(expressionObj *exp, char *value)
   // initExpression(exp);
 
   if((exp->type = getSymbol(2, MS_EXPRESSION,MS_REGEX)) == -1) {
+    msResetErrorList(); // failure above is not really an error, so reset the stack
+
     exp->type = MS_STRING;
     if((strlen(value) - strlen(msyytext)) == 2)
       exp->string = strdup(msyytext); // value was quoted
