@@ -31,13 +31,20 @@ int msCompareColors(colorObj *c1, colorObj *c2)
   return MS_TRUE;
 }
 
-static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, int size) 
+static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style,
+                                   int size) 
 {
   struct imageCacheObj *icp;
 
   icp = ic;
   while(icp) {
-    if(icp->symbol == style->symbol && msCompareColors(&icp->color, &style->color) == MS_TRUE && icp->size == size) return(icp->img);
+    if (icp->symbol == style->symbol
+    && msCompareColors(&(icp->color), &(style->color)) == MS_TRUE
+    && msCompareColors(&(icp->outlinecolor), &(style->outlinecolor)) == MS_TRUE
+    && msCompareColors(&(icp->backgroundcolor), &(style->backgroundcolor)) == MS_TRUE
+    && icp->size == size) {
+        return(icp->img);
+    }
     icp = icp->next;
   }
 
@@ -63,6 +70,8 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
   
   icp->img = img;
   icp->color = style->color;
+  icp->outlinecolor = style->outlinecolor;
+  icp->backgroundcolor = style->backgroundcolor;
   icp->symbol = style->symbol;
   icp->size = size;
   icp->next = ic; // insert at the beginning

@@ -24,13 +24,16 @@ typedef struct {
 
 #ifndef SWIG
 struct imageCacheObj {
-  colorObj color;
   int symbol;
   int size;
+  colorObj color;
+  colorObj outlinecolor;
+  colorObj backgroundcolor;
   gdImagePtr img;
   struct imageCacheObj *next;
 };
 #endif // SWIG
+
 
 typedef struct {
   char *name;
