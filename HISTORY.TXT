@@ -24,6 +24,11 @@ Version 3.6.4-dev
 - Fixed bad memory corruption bug with WMS SRS parameter value mapwms.c
   (Thanks to Ed M. for finding it)
 
+- Added version 3.7's mappostgis.c
+      - minor bug fixes
+	  - lots of help if you make a mistake
+	  - more functionality
+
 
 Version 3.6.3 (2002-10-07)
 --------------------------
