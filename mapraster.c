@@ -264,7 +264,10 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   src_xsize = GDALGetRasterXSize( hDS );
   src_ysize = GDALGetRasterYSize( hDS );
 
-  GDALGetGeoTransform( hDS, adfGeoTransform );
+  if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
+  {
+      GDALReadWorldFile(layer->data, "wld", adfGeoTransform);
+  }
   InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
 
   mapRect = map->extent;
@@ -1709,29 +1712,107 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 #endif
 
     if (memcmp(dd,"GIF8",4)==0) {
-      if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
+      if(layer->transform && 
+         msProjectionsDiffer(&(map->projection), &(layer->projection))) {
+#ifdef USE_GDAL
+        /*
+        ** Image should be reprojected... We'll set the offsite to the GIF
+        ** transparent colour (since GDAL ignores it) and then let GDAL
+        ** render the layer (if it has GIF support included).
+        **
+        ** __TODO__ Yes, this is a hack and should be improved...
+        **          but hey!  It works for now.
+        */
+        if (layer->offsite == -1)
+        {
+            FILE *gifStream;
+            gdImagePtr gif;
+
+            gifStream = fopen(filename, "rb");
+            if(!gifStream) {
+                msSetError(MS_IOERR, "Error open image file.", "drawGIF()");
+                chdir(old_path); /* restore old cwd */
+                return(-1);
+            }
+            gif = gdImageCreateFromGif(gifStream);
+            fclose(gifStream);
+
+            if(!gif) {
+                msSetError(MS_IMGERR, "Error loading GIF file.", "drawGIF()");
+                chdir(old_path); /* restore old cwd */
+                return(-1);
+            }
+            layer->offsite = gdImageGetTransparent(gif);  // both default to -1
+            gdImageDestroy(gif);
+        }
+#else
         msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( GIF )");
         return(-1);
+#endif
       }
-      status = drawGIF(map, layer, img, filename);
-      if(status == -1) {
-	chdir(old_path); /* restore old cwd */
-	return(-1);
+      else
+      {
+        // No reprojection...
+
+        status = drawGIF(map, layer, img, filename);
+        if(status == -1) {
+          chdir(old_path); /* restore old cwd */
+          return(-1);
+        }
+        continue;
       }
-      continue;
     }
 
     if (memcmp(dd,PNGsig,8)==0) {
-      if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
+      if(layer->transform && 
+         msProjectionsDiffer(&(map->projection), &(layer->projection))) {
+#ifdef USE_GDAL
+        /*
+        ** Image should be reprojected... We'll set the offsite to the PNG
+        ** transparent colour (since GDAL ignores it) and then let GDAL
+        ** render the layer (if it has PNG support included).
+        **
+        ** __TODO__ Yes, this is a hack and should be improved...
+        **          but hey!  It works for now.
+        */
+        if (layer->offsite == -1)
+        {
+            FILE *pngStream;
+            gdImagePtr png;
+
+            pngStream = fopen(filename, "rb");
+            if(!pngStream) {
+                msSetError(MS_IOERR, "Error open image file.", "drawPNG()");
+                chdir(old_path); /* restore old cwd */
+                return(-1);
+            }
+            png = gdImageCreateFromPng(pngStream);
+            fclose(pngStream);
+
+            if(!png) {
+                msSetError(MS_IMGERR, "Error loading PNG file.", "drawPNG()");
+                chdir(old_path); /* restore old cwd */
+                return(-1);
+            }
+            layer->offsite = gdImageGetTransparent(png);  // both default to -1
+            gdImageDestroy(png);
+        }
+#else
         msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( PNG )");
         return(-1);
+#endif
       }
-      status = drawPNG(map, layer, img, filename);
-      if(status == -1) {
-	chdir(old_path); /* restore old cwd */
-	return(-1);
+      else
+      {
+        // No reprojection...
+
+        status = drawPNG(map, layer, img, filename);
+        if(status == -1) {
+	  chdir(old_path); /* restore old cwd */
+	  return(-1);
+        }
+        continue;
       }
-      continue;
     }
     
     if (memcmp(dd,JPEGsig,3)==0) {
@@ -1825,7 +1906,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
                 }
             }
 
-            GDALGetGeoTransform( hDS, adfGeoTransform );
+            if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
+            {
+                GDALReadWorldFile(filename, "wld", adfGeoTransform);
+            }
 
             /* 
             ** We want to resample if the source image is rotated, or if
@@ -1838,9 +1922,13 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
                  && layer->projection.proj != NULL)
                 || msProjectionsDiffer( &(map->projection), 
                                         &(layer->projection) ) )
+            {
                 status = msResampleGDALToMap( map, layer, img, hDS );
+            }
             else
+            {
                 status = drawGDAL(map, layer, img, hDS );
+            }
 
             if( status == -1 )
             {
