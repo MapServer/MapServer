@@ -101,7 +101,8 @@ void writeError()
 static double getNumeric(char *s)
 {
   char *err;
-  double rv;
+  double rv; 
+
   rv = strtod(s, &err);
   if (*err) {
     msSetError(MS_TYPEERR, NULL, "getNumeric()");
@@ -469,8 +470,8 @@ void loadForm()
       msFreeCharArray(tokens, 4);
 
       if((msObj->ImgBox.minx != msObj->ImgBox.maxx) && (msObj->ImgBox.miny != msObj->ImgBox.maxy)) { // must not degenerate into a point
-	    msObj->CoordSource = FROMIMGBOX;
-	    QueryCoordSource = FROMIMGBOX;
+        msObj->CoordSource = FROMIMGBOX;
+        QueryCoordSource = FROMIMGBOX;
       }
       continue;
     }

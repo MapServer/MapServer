@@ -9,6 +9,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/06/02 16:57:06  sdlime
+ * Removed spurrious DOS linefeeds from mapserv.c and mapserv_fcgi.c.
+ *
  * Revision 1.6  2004/06/02 06:28:53  sdlime
  * New version of getNumeric for mapserv.c and mapserv_fcgi.c.
  *
@@ -149,6 +152,7 @@ static double getNumeric(char *s)
 {
   char *err;
   double rv;
+
   rv = strtod(s, &err);
   if (*err) {
     msSetError(MS_TYPEERR, NULL, "getNumeric()");
