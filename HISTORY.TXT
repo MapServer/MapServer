@@ -26,6 +26,9 @@ Version 3.6.1 (2002-06-20)
 
 - Fixed an issue with "LOCATION TINY" being output in legend label objects.
 
+- Postgis bug 165: fix dont_force() to allow for POINT shapes 
+
+
 Version 3.6.0 (2002-05-28)
 --------------------------
 
