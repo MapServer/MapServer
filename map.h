@@ -1286,6 +1286,8 @@ int msGetClass(layerObj *layer, colorObj *color);
 //in mapdrawgdal.c
 int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, 
                           void *hDSVoid );
+int msGetGDALGeoTransform(void *hDS, mapObj *map, layerObj *layer,
+                          double *padfGeoTransform );
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */

@@ -1425,16 +1425,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
                 }
             }
 
-            adfGeoTransform[0] = 0.0;
-            adfGeoTransform[1] = 1.0;
-            adfGeoTransform[2] = 0.0;
-            adfGeoTransform[3] = 0.0;
-            adfGeoTransform[4] = 0.0;
-            adfGeoTransform[5] = 1.0;
-
-            if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
-                GDALReadWorldFile(msBuildPath(szPath, cwd, filename),
-                                  "wld", adfGeoTransform);
+            msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
 
             /* 
             ** We want to resample if the source image is rotated, or if

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/01/26 15:20:11  frank
+ * added msGetGDALGeoTransform
+ *
  * Revision 1.13  2004/01/15 19:49:23  frank
  * ensure geotransform is set on failure of GetGeotransform
  *
@@ -226,24 +229,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    */
   else if( layer->transform )
   {
-      /* some GDAL drivers (ie. GIF) don't set geotransform on failure. */
-      adfGeoTransform[0] = 0.0;
-      adfGeoTransform[1] = 1.0;
-      adfGeoTransform[2] = 0.0;
-      adfGeoTransform[3] = GDALGetRasterYSize(hDS);
-      adfGeoTransform[4] = 0.0;
-      adfGeoTransform[5] = -1.0;
-
-      if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
-          GDALReadWorldFile((char *)GDALGetDescription(hDS),
-                            "wld", adfGeoTransform);
-
-      if( adfGeoTransform[5] == 1.0 && adfGeoTransform[3] == 0.0 )
-      {
-          adfGeoTransform[5] = -1.0;
-          adfGeoTransform[3] = GDALGetRasterYSize(hDS);
-      }
-
+      msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
       InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
       
       mapRect = map->extent;
@@ -1176,5 +1162,82 @@ static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
     GDALClose( hDS );
 }
 #endif /* def ENABLE_DITHER */
+
+/************************************************************************/
+/*                       msGetGDALGeoTransform()                        */
+/*                                                                      */
+/*      Cover function that tries GDALGetGeoTransform(), a world        */
+/*      file or OWS extents.                                            */
+/************************************************************************/
+
+int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer, 
+                           double *padfGeoTransform )
+
+{
+    rectObj  rect;
+
+/* -------------------------------------------------------------------- */
+/*      some GDAL drivers (ie. GIF) don't set geotransform on failure.  */
+/* -------------------------------------------------------------------- */
+    padfGeoTransform[0] = 0.0;
+    padfGeoTransform[1] = 1.0;
+    padfGeoTransform[2] = 0.0;
+    padfGeoTransform[3] = GDALGetRasterYSize(hDS);
+    padfGeoTransform[4] = 0.0;
+    padfGeoTransform[5] = -1.0;
+    
+/* -------------------------------------------------------------------- */
+/*      Try GDAL.                                                       */
+/*                                                                      */
+/*      Make sure that ymax is always at the top, and ymin at the       */
+/*      bottom ... that is flip any files without the usual             */
+/*      orientation.  This is intended to enable display of "raw"       */
+/*      files with no coordinate system otherwise they break down in    */
+/*      many ways.                                                      */
+/* -------------------------------------------------------------------- */
+    if (GDALGetGeoTransform( hDS, padfGeoTransform ) == CE_None )
+    {
+        if( padfGeoTransform[5] == 1.0 && padfGeoTransform[3] == 0.0 )
+        {
+            padfGeoTransform[5] = -1.0;
+            padfGeoTransform[3] = GDALGetRasterYSize(hDS);
+        }
+
+        return MS_SUCCESS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try worldfile.                                                  */
+/* -------------------------------------------------------------------- */
+    else if( GDALGetDescription(hDS) != NULL 
+             && GDALReadWorldFile(GDALGetDescription(hDS), "wld", 
+                                  padfGeoTransform) )
+    {
+        return MS_SUCCESS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Try OWS extent metadata.                                        */
+/* -------------------------------------------------------------------- */
+    else if( msOWSGetLayerExtent( map, layer, &rect ) == MS_SUCCESS )
+    {
+        padfGeoTransform[0] = rect.minx;
+        padfGeoTransform[1] = (rect.maxx - rect.minx) /
+            (double) GDALGetRasterXSize( hDS );
+        padfGeoTransform[2] = 0;
+        padfGeoTransform[3] = rect.maxy;
+        padfGeoTransform[4] = 0;
+        padfGeoTransform[5] = (rect.miny - rect.maxy) /
+            (double) GDALGetRasterYSize( hDS );
+
+        return MS_SUCCESS;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      We didn't find any info ... use the default.                    */
+/* -------------------------------------------------------------------- */
+    else
+        return MS_FAILURE;
+}
 
 #endif
