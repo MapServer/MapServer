@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2002/11/05 21:56:13  julien
+ * Remove fatal write mistake in msSaveMapContext
+ *
  * Revision 1.8  2002/11/04 20:39:17  julien
  * Change a validation to prevent a crash
  *
@@ -680,7 +683,7 @@ int msSaveMapContext(mapObj *map, char *filename)
   }
 
   // file header
-  fprintf( stream, "<?xml version=\"1.0\" encoding=\"utf-8\'?>\n" );
+  fprintf( stream, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" );
 
   // set the WMS_Viewer_Context information
   // Use value of "wfs_schemas_location", otherwise return ".."
@@ -692,7 +695,7 @@ int msSaveMapContext(mapObj *map, char *filename)
   fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
   fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"" );
   fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-  fprintf( stream, " xsi:noNamespaceSchemaLcation=\"%s\">\n",schemas_location);
+  fprintf( stream," xsi:noNamespaceSchemaLocation=\"%s\">\n",schemas_location);
 
   // set the General information
   fprintf( stream, "  <General>\n" );
