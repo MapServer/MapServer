@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.174  2005/02/09 21:51:17  frank
+ * added msForceTmpFileBase and -tmpbase mapserv switch
+ *
  * Revision 1.173  2005/02/09 20:43:50  assefa
  * Add SVG utility function msSaveImagetoFpSVG.
  *
@@ -1000,11 +1003,49 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
     return papszGroups;
 }
 
+/************************************************************************/
+/*                         msForceTmpFileBase()                         */
+/************************************************************************/
+
+static int tmpCount = -1;
+static char *ForcedTmpBase = NULL;
+
+void msForceTmpFileBase( const char *new_base )
+{
+/* -------------------------------------------------------------------- */
+/*      Clear previous setting, if any.                                 */
+/* -------------------------------------------------------------------- */
+    if( ForcedTmpBase != NULL )
+    {
+        free( ForcedTmpBase );
+        ForcedTmpBase = NULL;
+    }
+    
+    tmpCount = -1;
+
+    if( new_base == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Record new base.                                                */
+/* -------------------------------------------------------------------- */
+    ForcedTmpBase = strdup( new_base );
+    tmpCount = 0;
+}
+
 /**********************************************************************
  *                          msTmpFile()
  *
- * Generate a Unique temporary filename using PID + timestamp + extension
- * char* returned must be freed by caller
+ * Generate a Unique temporary filename using:
+ * 
+ *    PID + timestamp + sequence# + extension
+ * 
+ * If msForceTmpFileBase() has been call to control the temporary filename
+ * then the filename will be:
+ *
+ *    TmpBase + sequence# + extension
+ * 
+ * Returns char* which must be freed by caller.
  **********************************************************************/
 char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
 {
@@ -1012,9 +1053,12 @@ char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
     char szPath[MS_MAXPATHLEN];
     const char *fullFname;
     static char tmpId[128]; /* big enough for time + pid + ext */
-    static int tmpCount = -1;
 
-    if (tmpCount == -1)
+    if( ForcedTmpBase != NULL )
+    {
+        strncpy( tmpId, ForcedTmpBase, sizeof(tmpId) );
+    }
+    else if (tmpCount == -1)
     {
         /* We'll use tmpId and tmpCount to generate unique filenames */
         sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
@@ -1210,6 +1254,7 @@ extern void lexer_cleanup(void);
 
 void msCleanup()
 {
+    msForceTmpFileBase( NULL );
     msConnPoolFinalCleanup();
     lexer_cleanup();
 #ifdef USE_OGR

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.144  2005/02/09 21:51:17  frank
+ * added msForceTmpFileBase and -tmpbase mapserv switch
+ *
  * Revision 1.143  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -1042,6 +1045,9 @@ void returnCoordinate(pointObj pnt)
   writeError();
 }
 
+/************************************************************************/
+/*                      FastCGI cleanup functions.                      */
+/************************************************************************/
 #ifndef WIN32
 void msCleanupOnSignal( int nInData )
 
@@ -1075,49 +1081,65 @@ void msCleanupOnExit( void )
 
 // FIX: need to consider 5% shape extent expansion
 
-/*
-**
-** Start of main program
-**
-*/
+/************************************************************************/
+/*                                main()                                */
+/************************************************************************/
 int main(int argc, char *argv[]) {
-    int i,j;
+    int i,j, iArg;
     char buffer[1024];
     imageObj *img=NULL;
     int status;
 
-    if(argc > 1 && strcmp(argv[1], "-v") == 0) {
-      printf("%s\n", msGetVersion());
-      fflush(stdout);
-      exit(0);
-    }
-    else if(argc > 2 && strcmp(argv[1], "-t") == 0) 
+/* -------------------------------------------------------------------- */
+/*      Process arguments.  In normal use as a cgi-bin there are no     */
+/*      commandline switches, but we provide a few for test/debug       */
+/*      purposes, and to query the version info.                        */
+/* -------------------------------------------------------------------- */
+    for( iArg = 1; iArg < argc; iArg++ )
     {
-        char **tokens;
-        int numtokens=0;
-        if ((tokens=msTokenizeMap(argv[2], &numtokens)) != NULL)
-        {
-            int i;
-            for(i=0; i<numtokens; i++)
-                printf("%s\n", tokens[i]);
-            msFreeCharArray(tokens, numtokens);
+        if( strcmp(argv[iArg],"-v") == 0 ) {
+            printf("%s\n", msGetVersion());
+            fflush(stdout);
+            exit(0);
+        }
+        else if( iArg < argc-1 && strcmp(argv[iArg], "-tmpbase") == 0) {
+            msForceTmpFileBase( argv[++iArg] );
+        }
+        else if( iArg < argc-1 && strcmp(argv[iArg], "-t") == 0) {
+            char **tokens;
+            int numtokens=0;
+            if ((tokens=msTokenizeMap(argv[iArg+1], &numtokens)) != NULL)
+            {
+                int i;
+                for(i=0; i<numtokens; i++)
+                    printf("%s\n", tokens[i]);
+                msFreeCharArray(tokens, numtokens);
+            }
+            else
+            {
+                writeError();
+            }
+            
+            exit(0);
+        }
+        else if ( strncmp(argv[iArg], "QUERY_STRING=", 13) == 0) {
+            /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
+            char *buf;
+            buf = strdup("REQUEST_METHOD=GET");
+            putenv(buf);
+            buf = strdup(argv[1]);
+            putenv(buf);
         }
         else
         {
-            writeError();
+            /* we don't produce a usage message as some web servers pass
+               junk arguments */
         }
-
-      exit(0);
-    }
-    else if (argc > 1 && strncmp(argv[1], "QUERY_STRING=", 13) == 0) {
-      /* Debugging hook... pass "QUERY_STRING=..." on the command-line */
-      char *buf;
-      buf = strdup("REQUEST_METHOD=GET");
-      putenv(buf);
-      buf = strdup(argv[1]);
-      putenv(buf);
     }
 
+/* -------------------------------------------------------------------- */
+/*      Setup cleanup magic, mainly for FastCGI case.                   */
+/* -------------------------------------------------------------------- */
 #ifndef WIN32
     signal( SIGUSR1, msCleanupOnSignal );
     signal( SIGTERM, msCleanupOnSignal );
@@ -1130,10 +1152,15 @@ int main(int argc, char *argv[]) {
     atexit( msCleanupOnExit );
 #endif    
 
+    // In FastCGI case we loop accepting multiple requests.  In normal CGI
+    // use we only accept and process one request. 
     while( FCGI_Accept() >= 0 )
     {
 #endif /* def USE_FASTCGI */
 
+/* -------------------------------------------------------------------- */
+/*      Process a request.                                              */
+/* -------------------------------------------------------------------- */
     msObj = msAllocMapServObj();
 
     sprintf(msObj->Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden

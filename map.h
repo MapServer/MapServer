@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.395  2005/02/09 21:51:17  frank
+ * added msForceTmpFileBase and -tmpbase mapserv switch
+ *
  * Revision 1.394  2005/02/09 20:43:49  assefa
  * Add SVG utility function msSaveImagetoFpSVG.
  *
@@ -1665,6 +1668,8 @@ MS_DLL_EXPORT pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point)
 
 MS_DLL_EXPORT char **msGetAllGroupNames(mapObj* map, int *numTok);
 MS_DLL_EXPORT char *msTmpFile(const char *mappath, const char *tmppath, const char *ext);
+MS_DLL_EXPORT void msForceTmpFileBase( const char *new_base );
+
 
 MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
 
