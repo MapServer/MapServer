@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.71  2004/11/12 17:05:01  assefa
+ * Use %.17g instrad of %f when output bbox values (Bug 678)
+ *
  * Revision 1.70  2004/11/11 22:08:17  frank
  * fix off-by-half-pixel error in wms worldfile - bug 1050
  *
@@ -680,7 +683,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msSetWMSParamInt(   psWMSParams, "HEIGHT",  map->height);
         msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
-        snprintf(szBuf, 100, "%f,%f,%f,%f", 
+        snprintf(szBuf, 100, "%.17g,%.17g,%.17g,%.17g", 
                  bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
         msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
  
@@ -718,7 +721,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msSetWMSParamInt(   psWMSParams, "HEIGHT",  map->height);
         msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
-        snprintf(szBuf, 100, "%f,%f,%f,%f", 
+        snprintf(szBuf, 100, "%.17g,%.17g,%.17g,%.17g", 
                  bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
         msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
         msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE);

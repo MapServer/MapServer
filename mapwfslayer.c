@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/11/12 17:05:01  assefa
+ * Use %.17g instrad of %f when output bbox values (Bug 678)
+ *
  * Revision 1.24  2004/10/21 04:30:57  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -323,7 +326,7 @@ char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 "<BBOX>\n"
 "<PropertyName>Geometry</PropertyName>\n"
 "<Box>\n"
-"<coordinates>%f,%f %f,%f</coordinates>\n"
+"<coordinates>%lf,%lf %lf,%lf</coordinates>\n"
 "</Box>\n"
 "</BBOX>\n"
 "</Filter>",bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
@@ -526,7 +529,7 @@ char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
     }
     else
       sprintf(pszURL + strlen(pszURL), 
-              "&BBOX=%f,%f,%f,%f",
+              "&BBOX=%.17g,%.17g,%.17g,%.17g",
               bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
     
     if (psParams->nMaxFeatures > 0)
