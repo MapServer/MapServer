@@ -983,7 +983,7 @@ void freeImageCache(struct imageCacheObj *ic);
 imageObj *msDrawLegend(mapObj *map); // in maplegend.c
 int msEmbedLegend(mapObj *map, gdImagePtr img);
 int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, gdImagePtr img, int dstX, int dstY);
-gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
+imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
    
 int msLoadFontSet(fontSetObj *fontSet, mapObj *map); // in maplabel.c
 int msInitFontSet(fontSetObj *fontset);

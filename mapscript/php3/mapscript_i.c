@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.54  2002/12/24 03:26:24  dan
+ * Make msCreateLegendIcon() return imageObj + properly handle format (bug 227)
+ *
  * Revision 1.53  2002/12/20 21:40:46  julien
  * Create default output format even if format are specified in mapfile
  *
@@ -650,21 +653,8 @@ int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int wi
     return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY);
 }
 
-//TODO
 imageObj *classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height) {
-    imageObj *image=NULL;
-
-    image = (imageObj*)malloc(sizeof(imageObj));
-    if (image == NULL) return NULL;
-
-    image->img.gd = msCreateLegendIcon(map, layer, self, width, height);
-    image->format = msSelectOutputFormat(map, map->imagetype);
-    image->width = gdImageSX(image->img.gd);
-    image->height = gdImageSY(image->img.gd);
-    image->imagepath = map->web.imagepath?strdup(map->web.imagepath):NULL; 
-    image->imageurl = map->web.imageurl?strdup(map->web.imageurl):NULL;
-
-    return image;
+    return msCreateLegendIcon(map, layer, self, width, height);
   }
 
 

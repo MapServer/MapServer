@@ -85,25 +85,48 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
 }
 
 
-gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height)
+imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height)
 {
-  gdImagePtr img;
+  imageObj *image;
+  outputFormatObj *format = NULL;
 
-  img = gdImageCreate(width, height);
-  if(!img) {
-    msSetError(MS_GDERR, "Unable to initialize image.", "msCreateLegendIcon()");
+  if(!map->outputformat || !MS_RENDERER_GD(map->outputformat) ) 
+  {
+      msSetError(MS_GDERR, 
+                 "Map outputformat must be set to a GD format!", 
+                 "msCreateLegendIcon()");
+      return(NULL);
+  }
+
+  /* Ensure we have an image format representing the options for the legend.*/
+  msApplyOutputFormat( &format, map->outputformat, 
+                       map->legend.transparent, 
+                       map->legend.interlace, 
+                       MS_NOOVERRIDE );
+
+  /* create image */
+  image = msImageCreateGD(width, height, map->outputformat,
+                          map->web.imagepath, map->web.imageurl);
+
+  /* drop this reference to output format */
+  msApplyOutputFormat( &format, NULL, 
+                       MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+
+  /* did we succeed in creating the image? */
+  if(image == NULL) {
+    msSetError(MS_GDERR, "Unable to initialize image.","msCreateLegendIcon()");
     return(NULL);
   }
-  
+
   // allocate the background color
-  gdImageColorAllocate(img, map->legend.imagecolor.red, map->legend.imagecolor.green, map->legend.imagecolor.blue);
+  msImageInitGD( image, &(map->legend.imagecolor));
 
   // Call drawLegendIcon with destination (0, 0)
   // Return an empty image if lp==NULL || class=NULL
   if (lp && class)
-    msDrawLegendIcon(map, lp, class, width, height, img, 0, 0);
+    msDrawLegendIcon(map, lp, class, width, height, image->img.gd, 0, 0);
    
-  return img;
+  return image;
 }
 
 

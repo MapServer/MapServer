@@ -525,20 +525,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
   
   imageObj *createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
-    imageObj *image=NULL;
-
-    image = (imageObj *)malloc(sizeof(imageObj));
-    if(!image) return NULL;
-
-    image->img.gd = msCreateLegendIcon(map, layer, self, width, height);
-    image->format = map->outputformat;
-    image->format->refcount++;
-    image->width = gdImageSX(image->img.gd);
-    image->height = gdImageSY(image->img.gd);
-    image->imagepath = map->web.imagepath?strdup(map->web.imagepath):NULL; 
-    image->imageurl = map->web.imageurl?strdup(map->web.imageurl):NULL;
-   
-    return image;
+    return msCreateLegendIcon(map, layer, self, width, height);
   }  
 }
 
