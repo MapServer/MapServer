@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.27  2004/04/16 19:12:31  assefa
+ * Correct bug on windows when opening xml file (open it in binary mode).
+ *
  * Revision 1.26  2004/03/15 07:36:15  frank
  * removed unused variables
  *
@@ -164,13 +167,13 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
     char *pszSLDbuf=NULL;
     FILE *fp = NULL;               
     int nStatus = MS_FAILURE;
- 
+
     if (map && szURL)
     {
         pszSLDTmpFile = msTmpFile(map->web.imagepath, "sld.xml");
         if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS)
         {
-            if ((fp = fopen(pszSLDTmpFile, "r")) != NULL)
+            if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL)
             {
                 int   nBufsize=0;
                 fseek(fp, 0, SEEK_END);

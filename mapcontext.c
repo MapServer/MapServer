@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.54  2004/04/16 19:12:31  assefa
+ * Correct bug on windows when opening xml file (open it in binary mode).
+ *
  * Revision 1.53  2004/04/14 05:14:54  dan
  * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
  *
@@ -225,7 +228,7 @@ char * msGetMapContextFileText(char *filename)
  
   // open file
   if(filename != NULL && strlen(filename) > 0) {
-      stream = fopen(filename, "r");
+      stream = fopen(filename, "rb");
       if(!stream) {
           msSetError(MS_IOERR, "(%s)", "msGetMapContextFileText()", filename);
           return NULL;
