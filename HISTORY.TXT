@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Oracle Spatial:
+  Fixed problem with LayerClose function.
+  Added token NONE for DATA statement.
+  Thanks Valik with the hints about the LayerClose problem and Francois
+  with the hints about NONE token.  
+
 - numpoints and stylelength memebers of the symbol object needs to be in sync
   with the low level values after calles to setpoints ans setstyle (Bug 1137).
  
