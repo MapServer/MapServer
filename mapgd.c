@@ -136,27 +136,6 @@ void msImageInitGD( imageObj *image, colorObj *background )
   }
 }
 
-/* msImageLoadGD now calls msImageLoadGDStream to do the work, change
- * made as part of the resolution of bug 550 */
-
-imageObj *msImageLoadGD(const char *filename) {
-    FILE *stream;
-    imageObj *image;
-    stream = fopen(filename, "rb");
-    if (!stream) {
-        msSetError(MS_IOERR, "(%s)", "msImageLoadGD()", filename );
-        return(NULL);
-    }
-    image = msImageLoadGDStream(stream);
-    if (!image) {
-        msSetError(MS_GDERR, "Unable to initialize image '%s'", 
-                   "msLoadImageGD()", filename);
-        fclose(stream);
-        return(NULL);
-    }
-    else return(image);
-}
-
 /* msImageLoadGDStream is called by msImageLoadGD and is useful
  * by itself */
 imageObj *msImageLoadGDStream(FILE *stream)
@@ -279,6 +258,28 @@ imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver) {
 
     return image;
 }
+
+/* msImageLoadGD now calls msImageLoadGDStream to do the work, change
+ * made as part of the resolution of bug 550 */
+
+imageObj *msImageLoadGD(const char *filename) {
+    FILE *stream;
+    imageObj *image;
+    stream = fopen(filename, "rb");
+    if (!stream) {
+        msSetError(MS_IOERR, "(%s)", "msImageLoadGD()", filename );
+        return(NULL);
+    }
+    image = msImageLoadGDStream(stream);
+    if (!image) {
+        msSetError(MS_GDERR, "Unable to initialize image '%s'", 
+                   "msLoadImageGD()", filename);
+        fclose(stream);
+        return(NULL);
+    }
+    else return(image);
+}
+
 
 static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *style, int *fgcolor, int *bgcolor)
 {
