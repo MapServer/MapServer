@@ -470,7 +470,7 @@ and the MapServer Map File documentation at:
    double labelminscale
    double labelmaxscale
    int    maxfeatures
-   color    offsite
+   colorObj    offsite
    int    annotate
    int    transform
    int    labelcache
