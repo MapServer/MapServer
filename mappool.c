@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/03 04:54:47  frank
+ * Fixed lock releaseing in msConnPoolRelease().
+ *
  * Revision 1.5  2005/02/02 17:57:48  frank
  * Added multithreading safety support for pool
  *
@@ -430,6 +433,8 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
                             "Handle confusion on layer %s.", 
                             "msConnPoolRelease()",
                             layer->name );
+
+                msReleaseLock( TLOCK_POOL );
                 return;
             }
 
@@ -442,9 +447,12 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
             if( conn->ref_count == 0 && conn->lifespan == MS_LIFE_ZEROREF )
                 msConnPoolClose( i );
 
+            msReleaseLock( TLOCK_POOL );
             return;
         }
     }
+
+    msReleaseLock( TLOCK_POOL );
 
     msDebug( "%s: Unable to find handle for layer '%s'.\n",
              "msConnPoolRelease()",
