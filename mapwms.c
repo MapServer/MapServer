@@ -61,7 +61,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
   {
     printf("Content-type: text/xml%c%c",10,10);
     printf("<WMTException version=\"1.0.0\">\n");
-    msWriteError(stdout);
+    msWriteErrorXML(stdout);
     printf("</WMTException>\n");
   }
   else // XML error, the default: SE_XML (1.0.1 to 1.0.7)
@@ -94,7 +94,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
     }
 
     printf("<ServiceException>\n");
-    msWriteError(stdout);
+    msWriteErrorXML(stdout);
     printf("</ServiceException>\n");
     printf("</ServiceExceptionReport>\n");
   }
