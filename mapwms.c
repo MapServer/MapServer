@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.159  2005/01/24 15:46:20  assefa
+ * Error : missing index in the source.
+ *
  * Revision 1.158  2005/01/14 05:03:01  frank
  * fixed style capabilities (use msIO_fprintf) generation per Bug 1152
  *
@@ -1955,7 +1958,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      //free the stuff used for nested layers
      for (i = 0; i < map->numlayers; i++)
      {
-       if (numNestedGroups > 0)
+       if (numNestedGroups[i] > 0)
        {
          msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
        }
