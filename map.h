@@ -199,7 +199,7 @@ enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS };
+enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS, MS_RASTER };
 enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
@@ -928,6 +928,7 @@ int  hex2int(char *hex);
 void initSymbol(symbolObj *s);
 int initMap(mapObj *map);
 int initLayer(layerObj *layer, mapObj *map);
+void freeLayer( layerObj * );
 int initClass(classObj *_class);
 void initLabel(labelObj *label);
 void resetClassStyle(classObj *_class);
@@ -1029,6 +1030,12 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape);
 int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
 int msIsLayerQueryable(layerObj *lp);
 void msQueryFree(mapObj *map, int qlayer);
+int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape);
+int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect);
+int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, 
+                         pointObj p, double buffer );
+
+
 const char *msGetConfigOption( mapObj *map, const char *key);
 void msSetConfigOption( mapObj *map, const char *key, const char *value);
 void msApplyMapConfigOptions( mapObj *map );
@@ -1214,6 +1221,16 @@ int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long re
 int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent);
 int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 
+int msRASTERLayerOpen(layerObj *layer); // in mapmygis.c
+void msRASTERLayerFreeItemInfo(layerObj *layer);
+int msRASTERLayerInitItemInfo(layerObj *layer);
+int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect);
+int msRASTERLayerClose(layerObj *layer);
+int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape);
+int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
+int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent);
+int msRASTERLayerGetItems(layerObj *layer);
+
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
@@ -1325,9 +1342,14 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b);
 int msGetClass(layerObj *layer, colorObj *color);
 int msGetClass_Float(layerObj *layer, float fValue);
+
 //in mapdrawgdal.c
 int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, 
                           void *hDSVoid );
+int *msGetGDALBandList( layerObj *layer, void *hDS, int max_bands, 
+                        int *band_count );
+double msGetGDALNoDataValue( layerObj *layer, void *hBand,
+                             int *pbGotNoData );
 int msGetGDALGeoTransform(void *hDS, mapObj *map, layerObj *layer,
                           double *padfGeoTransform );
 
