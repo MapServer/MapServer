@@ -50,7 +50,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"WMS Map Context error.",
 						"HTTP request error.",
 						"Child array error.",
-						"WCS server error."
+						"WCS server error.",
+						"GEOS library error."
 };
 
 #ifndef USE_THREAD

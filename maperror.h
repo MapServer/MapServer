@@ -38,7 +38,8 @@ extern "C" {
 #define MS_HTTPERR 30
 #define MS_CHILDERR 31    /* Errors involving arrays of child objects */
 #define MS_WCSERR 32
-#define MS_NUMERRORCODES 33
+#define MS_GEOSERR 33
+#define MS_NUMERRORCODES 34
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
