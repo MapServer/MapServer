@@ -1,6 +1,10 @@
 #include "map.h"
 #include "mapproject.h"
 
+static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
+                           projectionObj *src_proj, 
+                           projectionObj *dst_proj );
+
 int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 {
 #ifdef USE_PROJ
@@ -162,15 +166,10 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 {
 #ifdef USE_PROJ
-  int i,j;
+  int i;
 
-#ifdef notdef
   for(i=0; i<shape->numlines; i++)
       msProjectLine(in, out, shape->line+i );
-#endif
-  for(i=0; i<shape->numlines; i++)
-    for(j=0; j<shape->line[i].numpoints; j++)
-      msProjectPoint(in, out, &(shape->line[i].point[j]));
 
   return(MS_SUCCESS);
 #else
@@ -182,29 +181,48 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 {
 #ifdef USE_PROJ
-  int i, be_careful = 0;
+  int i, be_careful = 1;
 
   if( be_careful )
-      be_careful = out->proj != NULL && pj_is_latlong(out->proj);
+      be_careful = out->proj != NULL && pj_is_latlong(out->proj)
+          && !pj_is_latlong(in->proj);
 
   if( be_careful )
   {
+      pointObj	startPoint, thisPoint; /* locations in projected space */
+
+      startPoint = line->point[0];
+
       for(i=0; i<line->numpoints; i++)
       {
           double	dist;
 
+          thisPoint = line->point[i];
+
+          /* 
+          ** Read comments before msTestNeedWrap() to better understand
+          ** this dateline wrapping logic. 
+          */
           msProjectPoint(in, out, &(line->point[i]));
           if( i > 0 )
           {
-              dist = line->point[i].x - line->point[i-1].x;
-              if( dist > 180 )
+              dist = line->point[i].x - line->point[0].x;
+              if( fabs(dist) > 180.0 )
               {
-                  line->point[i].x -= 360.0;
+                  if( msTestNeedWrap( thisPoint, startPoint, 
+                                      line->point[0], in, out ) )
+                  {
+                      if( dist > 0.0 )
+                      {
+                          line->point[i].x -= 360.0;
+                      }
+                      else if( dist < 0.0 )
+                      {
+                          line->point[i].x += 360.0;
+                      }
+                  }
               }
-              else if( dist < -180 )
-              {
-                  line->point[i].x += 360.0;
-              }
+
           }
       }
   }
@@ -252,3 +270,104 @@ int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
 
     return MS_FALSE;
 }
+
+/*
+
+Frank Warmerdam, Nov, 2001. 
+
+See Also: 
+
+http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=15
+
+Proposal:
+
+Modify msProjectLine() so that it "dateline wraps" objects when necessary
+in order to preserve their shape when reprojecting to lat/long.  This
+will be accomplished by:
+
+1) As each vertex is reprojected, compare the X distance between that 
+   vertex and the previous vertex.  If it is less than 180 then proceed to
+   the next vertex without any special logic, otherwise:
+
+2) Reproject the center point of the line segment from the last vertex to
+   the current vertex into lat/long.  Does it's longitude lie between the
+   longitudes of the start and end point.  If yes, return to step 1) for
+   the next vertex ... everything is fine. 
+
+3) We have determined that this line segment is suffering from 360 degree
+   wrap to keep in the -180 to +180 range.  Now add or subtract 360 degrees
+   as determined from the original sign of the distances.  
+
+This is similar to the code there now (though disabled in CVS); however, 
+it will ensure that big boxes will remain big, and not get dateline wrapped
+because of the extra test in step 2).  However step 2 is invoked only very
+rarely so this process takes little more than the normal process.  In fact, 
+if we were sufficiently concerned about performance we could do a test on the
+shape MBR in lat/long space, and if the width is less than 180 we know we never
+need to even do test 1). 
+
+What doesn't this resolve:
+
+This ensures that individual lines are kept in the proper shape when 
+reprojected to geographic space.  However, it does not:
+
+ o Ensure that all rings of a polygon will get transformed to the same "side"
+   of the world.  Depending on starting points of the different rings it is
+   entirely possible for one ring to end up in the -180 area and another ring
+   from the same polygon to end up in the +180 area.  We might possibly be
+   able to achieve this though, by treating the multi-ring polygon as a whole
+   and testing the first point of each additional ring against the last
+   vertex of the previous ring (or any previous vertex for that matter).
+
+ o It does not address the need to cut up lines and polygons into distinct
+   chunks to preserve the correct semantics.  Really a polygon that 
+   spaces the dateline in a -180 to 180 view should get split into two 
+   polygons.  We haven't addressed that, though if it were to be addressed,
+   it could be done as a followon and distinct step from what we are doing
+   above.  In fact this sort of improvement (split polygons based on dateline
+   or view window) should be done for all lat/long shapes regardless of 
+   whether they are being reprojected from another projection. 
+
+ o It does not address issues related to viewing rectangles that go outside
+   the -180 to 180 longitude range.  For instance, it is entirely reasonable
+   to want a 160 to 200 longitude view to see an area on the dateline clearly.
+   Currently shapes in the -180 to -160 range which should be displayed in the
+   180 to 200 portion of that view will not be because there is no recogition
+   that they belong there. 
+
+
+*/
+static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
+                           projectionObj *in, 
+                           projectionObj *out )
+
+{
+    pointObj	middle;
+
+    middle.x = (pt1.x + pt2.x) * 0.5;
+    middle.y = (pt1.y + pt2.y) * 0.5;
+    
+    msProjectPoint( in, out, &pt1 );
+    msProjectPoint( in, out, &pt2 );
+    msProjectPoint( in, out, &middle );
+
+    /* 
+     * If the last point was moved, then we are considered due for a
+     * move to.
+     */
+    if( fabs(pt2_geo.x-pt2.x) > 180.0 )
+        return 1;
+
+    /*
+     * Otherwise, test to see if the middle point transforms
+     * to be between the end points. If yes, no wrapping is needed.
+     * Otherwise wrapping is needed.
+     */
+    if( (middle.x < pt1.x && middle.x < pt2_geo.x)
+        || (middle.x > pt1.x && middle.x > pt2_geo.x) )
+        return 1;
+    else
+        return 0;
+}
+
+
