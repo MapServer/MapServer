@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.41  2005/01/06 00:33:49  assefa
+ * bug 1143 : missing call to msInitShape.
+ *
  * Revision 1.40  2004/12/07 15:31:51  assefa
  * Change the output of the expression when using a wild card for
  * PropertyIsLike (Bug 1107).
@@ -568,6 +571,7 @@ void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map,
 
     for (i=0; i<nSize; i++)
     {
+        msInitShape(&shape);
         status = msLayerGetShape(psLayer, &shape, -1, anValues[i]);
         if (status != MS_SUCCESS)
           nClassIndex = -1;
