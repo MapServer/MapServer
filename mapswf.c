@@ -119,7 +119,7 @@ gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset,
           y = -rect.miny;
 
 #ifdef USE_GD_TTF
-          gdImageStringTTF(tile, bbox, 
+          msGDImageStringTTF(tile, bbox, 
                            ((symbol->antialias)?(tile_fg):-(tile_fg)), 
                            font, sz, 0, x, y, symbol->character);
 #else
@@ -1258,14 +1258,14 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                    (int)((rect.maxy - rect.miny)+2));
 
 #ifdef USE_GD_TTF
-            //gdImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), 
+            //msGDImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), 
             //                font, sz, 0, x, y, symbol->character);
 
             msImageSetPenGD(imgtmp, &(style->color));
             fc = style->color.pen;
 
-            gdImageStringTTF(imgtmp, bbox, ((symbol->antialias)?(fc):-(fc)), 
-                              font, size, 0, 1, 1, symbol->character);
+            msGDImageStringTTF(imgtmp, bbox, ((symbol->antialias)?(fc):-(fc)), 
+                               font, size, 0, 1, 1, symbol->character);
             oButton = BuildButtonFromGD(imgtmp, NULL);
             AddMouseActions(oButton, nLayerIndex, nShapeIndex);
              //oShape = gdImage2Shape(imgtmp);

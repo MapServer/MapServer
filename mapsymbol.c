@@ -31,7 +31,7 @@ int getCharacterSize(char *character, int size, char *font, rectObj *rect) {
   char *error=NULL;
 
 #ifdef USE_GD_TTF
-  error = gdImageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, character);
+  error = msGDImageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, character);
 #else
   error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, character);
 #endif
