@@ -44,6 +44,11 @@ dnl
 dnl If --with-gd not given, then check in system libs.
 dnl ---------------------------------------------------------------------
 
+dnl We don't want LIBS updated by all the GD stuff, so we save it and
+dnl restore later.
+
+ms_saved_LIBS="$LIBS"
+
 dnl Clear some cache variables
 unset ac_cv_lib_gd_gdImageCreate
 unset ac_cv_lib_gd_gdImageString16
@@ -183,6 +188,9 @@ ALL_ENABLED="$GD_DEF $ALL_ENABLED"
 ALL_INC="$GD_INC $ALL_INC"
 ALL_LIB="$GD_LIB $ALL_LIB"
 ALL_STATIC_LIB="$GD_STATIC $ALL_STATIC_LIB"
+
+dnl Restore LIBS environment to state at beginning of gd tests.
+LIBS="$ms_saved_LIBS"
 
 dnl ---------------------------------------------------------------------
 dnl libTIFF (included by default if found on system).
@@ -378,6 +386,8 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
       AC_MSG_ERROR("Could not find projects.h or libproj.a in $PROJ_DIR.")
   fi
 
+  echo LIB=$LIB
+  echo PROJ_LIB=$PROJ_LIB
   AC_CHECK_LIB(proj,pj_transform,PJ_TRANSFORM=yes,PJ_TRANSFORM=no,$PROJ_LIB)
   if test "$PJ_TRANSFORM" = "no"; then
       AC_MSG_ERROR([This version of PROJ is too old.  PROJ4.4.2 or later is required.])
