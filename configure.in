@@ -1115,10 +1115,25 @@ elif test -z "$PROJ_ENABLED" ; then
 
 elif test "$with_wmsclient" = "yes" ; then
 
+  AC_PATH_PROG(LIBWWW_CONFIG, libwww-config, no)
+
+  if test "$LIBWWW_CONFIG" = "no" ; then
+    AC_MSG_ERROR([couldn't find libwww-config])
+  fi
+
+  WWW_VER=`$LIBWWW_CONFIG --version`
+
+  dnl Need libwww 5.3.2 or more because of an infinite loop in older versions
+  dnl __TODO__ How can we do a '-lt' (lower than) test on strings???
+  if test -z "$WWW_VER" -o "$WWW_VER" != "5.3.2" ; then
+    AC_MSG_ERROR([libwww version 5.3.2 or more recent is required.])
+  fi
+  AC_MSG_RESULT([        found libwww version $WWW_VER])
+
   WMS_LYR_ENABLED="-DUSE_WMS_LYR"
 
-  WWW_INC=`libwww-config --cflags`
-  WWW_LIB=`libwww-config --libs`
+  WWW_INC=`$LIBWWW_CONFIG --cflags`
+  WWW_LIB=`$LIBWWW_CONFIG --libs`
 
   AC_MSG_RESULT([        OGC WMS Client Connections enabled ($WMS_LYR_ENABLED).])
 

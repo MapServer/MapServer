@@ -4892,17 +4892,65 @@ elif test -z "$PROJ_ENABLED" ; then
 
 elif test "$with_wmsclient" = "yes" ; then
 
+  # Extract the first word of "libwww-config", so it can be a program name with args.
+set dummy libwww-config; ac_word=$2
+echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
+echo "configure:4899: checking for $ac_word" >&5
+if eval "test \"`echo '$''{'ac_cv_path_LIBWWW_CONFIG'+set}'`\" = set"; then
+  echo $ac_n "(cached) $ac_c" 1>&6
+else
+  case "$LIBWWW_CONFIG" in
+  /*)
+  ac_cv_path_LIBWWW_CONFIG="$LIBWWW_CONFIG" # Let the user override the test with a path.
+  ;;
+  ?:/*)			 
+  ac_cv_path_LIBWWW_CONFIG="$LIBWWW_CONFIG" # Let the user override the test with a dos path.
+  ;;
+  *)
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
+  ac_dummy="$PATH"
+  for ac_dir in $ac_dummy; do 
+    test -z "$ac_dir" && ac_dir=.
+    if test -f $ac_dir/$ac_word; then
+      ac_cv_path_LIBWWW_CONFIG="$ac_dir/$ac_word"
+      break
+    fi
+  done
+  IFS="$ac_save_ifs"
+  test -z "$ac_cv_path_LIBWWW_CONFIG" && ac_cv_path_LIBWWW_CONFIG="no"
+  ;;
+esac
+fi
+LIBWWW_CONFIG="$ac_cv_path_LIBWWW_CONFIG"
+if test -n "$LIBWWW_CONFIG"; then
+  echo "$ac_t""$LIBWWW_CONFIG" 1>&6
+else
+  echo "$ac_t""no" 1>&6
+fi
+
+
+  if test "$LIBWWW_CONFIG" = "no" ; then
+    { echo "configure: error: couldn't find libwww-config" 1>&2; exit 1; }
+  fi
+
+  WWW_VER=`$LIBWWW_CONFIG --version`
+
+      if test -z "$WWW_VER" -o "$WWW_VER" != "5.3.2" ; then
+    { echo "configure: error: libwww version 5.3.2 or more recent is required." 1>&2; exit 1; }
+  fi
+  echo "$ac_t""        found libwww version $WWW_VER" 1>&6
+
   WMS_LYR_ENABLED="-DUSE_WMS_LYR"
 
-  WWW_INC=`libwww-config --cflags`
-  WWW_LIB=`libwww-config --libs`
+  WWW_INC=`$LIBWWW_CONFIG --cflags`
+  WWW_LIB=`$LIBWWW_CONFIG --libs`
 
   echo "$ac_t""        OGC WMS Client Connections enabled ($WMS_LYR_ENABLED)." 1>&6
 
   echo "checking for potential conflict between system regex and rxposix..." 1>&6
-echo "configure:4904: checking for potential conflict between system regex and rxposix..." >&5
+echo "configure:4952: checking for potential conflict between system regex and rxposix..." >&5
   echo $ac_n "checking for regexec in -lrx""... $ac_c" 1>&6
-echo "configure:4906: checking for regexec in -lrx" >&5
+echo "configure:4954: checking for regexec in -lrx" >&5
 ac_lib_var=`echo rx'_'regexec | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -4910,7 +4958,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lrx  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 4914 "configure"
+#line 4962 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -4921,7 +4969,7 @@ int main() {
 regexec()
 ; return 0; }
 EOF
-if { (eval echo configure:4925: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:4973: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -5081,7 +5129,7 @@ fi
 
 
 echo "checking for PHP/MapScript module options..." 1>&6
-echo "configure:5085: checking for PHP/MapScript module options..." >&5
+echo "configure:5133: checking for PHP/MapScript module options..." >&5
 # Check whether --with-php or --without-php was given.
 if test "${with_php+set}" = set; then
   withval="$with_php"
@@ -5098,7 +5146,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
   fi
 
               echo $ac_n "checking whether 'perl -V' works""... $ac_c" 1>&6
-echo "configure:5102: checking whether 'perl -V' works" >&5
+echo "configure:5150: checking whether 'perl -V' works" >&5
   if  (perl -V > /dev/null 2>&1)  ; then
     echo "$ac_t""yes" 1>&6
     
@@ -5239,7 +5287,7 @@ rm -f perl.out
   fi
 
           echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
-echo "configure:5243: checking for location of config.h or php_config.h" >&5
+echo "configure:5291: checking for location of config.h or php_config.h" >&5
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
@@ -5252,7 +5300,7 @@ echo "configure:5243: checking for location of config.h or php_config.h" >&5
   fi
 
           echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
-echo "configure:5256: checking whether we have PHP3 or PHP4" >&5
+echo "configure:5304: checking whether we have PHP3 or PHP4" >&5
   if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
@@ -5261,7 +5309,7 @@ echo "configure:5256: checking whether we have PHP3 or PHP4" >&5
   echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:5265: checking whether we should use PHP's regex" >&5
+echo "configure:5313: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
 
@@ -5316,7 +5364,7 @@ fi
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:5320: checking for location of Apache headers using apxs" >&5
+echo "configure:5368: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -5343,7 +5391,7 @@ fi
 if test -n "$with_apache" -a "$with_apache" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:5347: checking for location of Apache headers" >&5
+echo "configure:5395: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi
@@ -5586,6 +5634,7 @@ s%@ORACLESPATIAL_ENABLED@%$ORACLESPATIAL_ENABLED%g
 s%@ORACLESPATIAL_INC@%$ORACLESPATIAL_INC%g
 s%@ORACLESPATIAL_LIB@%$ORACLESPATIAL_LIB%g
 s%@WMS_ENABLED@%$WMS_ENABLED%g
+s%@LIBWWW_CONFIG@%$LIBWWW_CONFIG%g
 s%@WMS_LYR_ENABLED@%$WMS_LYR_ENABLED%g
 s%@WWW_INC@%$WWW_INC%g
 s%@WWW_LIB@%$WWW_LIB%g
