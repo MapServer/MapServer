@@ -74,44 +74,34 @@ class LayerExtentTestCase(MapTestCase):
         MapTestCase.setUp(self)
         self.layer = self.map.getLayerByName('POLYGON')
 
+    def testPolygonExtent(self):
+        """retrieve the extent of a polygon layer"""
+        e = mapscript.rectObj()
+        self.assertRectsEqual(e, self.layer.extent)
+
     def testPolygonGetExtent(self):
-        """LayerExtentTestCase.testPolygonGetExtent: retrieve the extent of a polygon layer"""
+        """retrieve the extent of a polygon layer"""
         e = mapscript.rectObj(-0.25, 51.227222, 0.25, 51.727222)
         self.assertRectsEqual(e, self.layer.getExtent())
         
-    def testSetExtentBadly(self):
-        """LayerExtentTestCase.testSetExtentBadly: test layer.setExtent() to provoke it to raise an error when given a bogus extent"""
-        self.assertRaises(mapscript.MapServerError, self.layer.setExtent,
-                          1.0, -2.0, -3.0, 4.0)
-    
     def testGetPresetExtent(self):
-        """LayerExtentTestCase.testGetPresetExtent: test layer.setExtent() and layer.getExtent() to return preset instead of calculating extents"""
-        minx, miny, maxx, maxy = 1.0, 1.0, 3.0, 3.0
-        self.layer.setExtent(minx, miny, maxx, maxy)
-        rect = self.layer.getExtent()
-        assert minx == rect.minx
-        assert miny == rect.miny
-        assert maxx == rect.maxx
-        assert maxy == rect.maxy
+        """test layer.setExtent() and layer.getExtent() to return preset instead of calculating extents"""
+        r = mapscript.rectObj(1.0, 1.0, 3.0, 3.0)
+        self.layer.setExtent(r.minx, r.miny, r.maxx, r.maxy)
+        rect = self.layer.extent
+        assert r.minx == rect.minx, rect
+        assert r.miny == rect.miny, rect.miny
+        assert r.maxx == rect.maxx, rect.maxx
+        assert r.maxy == rect.maxy, rect.maxy
         
     def testResetLayerExtent(self):
-        """LayerExtentTestCase.testResetLayerExtent: test resetting a layer's extent"""
+        """test resetting a layer's extent"""
         layer = self.map.getLayerByName('POLYGON')
-        layer.setExtent(-1.0, -1.0, -1.0, -1.0)
-        self.testPolygonGetExtent()
+        layer.setExtent()
+        self.assertRectsEqual(layer.extent, mapscript.rectObj())
 
-    def testReBindingExtent(self):
-        """LayerExtentTestCase.testReBindingExtent: rebind a layer's extent"""
-        rect1 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
-        rect2 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
-        self.layer.extent = rect1
-        assert repr(self.layer.extent) != repr(rect1)
-        del rect1
-        self.assertRectsEqual(self.layer.extent, rect2)
-        self.assertRectsEqual(self.layer.getExtent(), rect2)
-       
     def testDirectExtentAccess(self):
-        """LayerExtentTestCase.testDirectExtentAccess: direct access to a layer's extent works properly"""
+        """direct access to a layer's extent works properly"""
         pt_layer = self.map.getLayerByName('POINT')
         rect = pt_layer.extent
         assert str(pt_layer.extent) == str(rect), (pt_layer.extent, rect)
@@ -121,7 +111,7 @@ class LayerExtentTestCase(MapTestCase):
 class LayerRasterProcessingTestCase(MapLayerTestCase):
     
     def testSetProcessing(self):
-        """LayerRasterProcessingTestCase.testSetProcessing: setting a layer's processing directive works"""
+        """setting a layer's processing directive works"""
         self.layer.setProcessing('directive0=foo')
         assert self.layer.numprocessing == 1, self.layer.numprocessing
         self.layer.setProcessing('directive1=bar')
@@ -131,7 +121,7 @@ class LayerRasterProcessingTestCase(MapLayerTestCase):
         assert directives == ['directive0=foo', 'directive1=bar']
 
     def testClearProcessing(self):
-        """LayerRasterProcessingTestCase.testClearProcessing: clearing a self.layer's processing directive works"""
+        """clearing a self.layer's processing directive works"""
         self.layer.setProcessing('directive0=foo')
         assert self.layer.numprocessing == 1, self.layer.numprocessing
         self.layer.setProcessing('directive1=bar')

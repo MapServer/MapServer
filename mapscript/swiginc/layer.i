@@ -267,9 +267,19 @@
         return extent;
     }
 
-    int setExtent(double minx, double miny, double maxx, double maxy) {	
-	    return msLayerSetExtent( self, minx, miny, maxx, maxy );
+    int setExtent(double minx=-1.0, double miny=-1.0,
+                  double maxx=-1.0, double maxy=-1.0)
+    {
+        if (minx > maxx || miny > maxy) {
+            msSetError(MS_RECTERR,
+                "{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }",
+                "layerObj::setExtent()", minx, miny, maxx, maxy);
+            return MS_FAILURE;
+        }
+
+        return msLayerSetExtent(self, minx, miny, maxx, maxy);
     }
+    
     /* 
     The following metadata methods are no longer needed since we have
     promoted the metadata member of layerObj to a first-class mapscript

@@ -755,7 +755,6 @@ typedef struct layer_obj {
   hashTableObj metadata;
   
   int transparency; // transparency value 0-100 
-  rectObj extent;
   
   int dump;
   int debug;
@@ -766,6 +765,7 @@ typedef struct layer_obj {
 #ifdef SWIG
 %immutable;
 #endif
+  rectObj extent;
   int numprocessing;
   int numjoins;
 #ifdef SWIG
