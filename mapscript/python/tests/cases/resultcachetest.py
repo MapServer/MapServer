@@ -1,0 +1,112 @@
+# $Id$
+#
+# Project:  MapServer
+# Purpose:  xUnit style Python mapscript tests of ResultCache
+# Author:   Sean Gillies, sgillies@frii.com
+#
+# ===========================================================================
+# Copyright (c) 2004, Sean Gillies
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ===========================================================================
+#
+# Execute this module as a script from mapserver/mapscript/python
+#
+#     python tests/cases/resultcachetest.py -v
+#
+# ===========================================================================
+
+import os, sys
+import unittest
+
+# the testing module helps us import the pre-installed mapscript
+from testing import mapscript
+from testing import MapTestCase, MapPrimitivesTestCase
+
+# Base class
+class LayerQueryTestCase(MapTestCase):
+
+    def setUp(self):
+        MapTestCase.setUp(self)
+        self.layer = self.map.getLayer(0)
+        self.layer.template = 'some day i will fix this!'
+       
+# ===========================================================================
+# Test begins now
+
+class ResultCacheTestCase(LayerQueryTestCase):
+
+    def testNoDirectAccess(self):
+        """denying direct access to layer's resultcache"""
+        self.assertRaises(AttributeError, getattr, self.layer, 'resultcache')
+
+    def testNullResultCache(self):
+        """before a query layer's resultcache should be NULL"""
+        results = self.layer.getResults()
+        assert results == None
+
+class PointQueryResultsTestCase(LayerQueryTestCase):
+
+    def pointquery(self):
+        p = mapscript.pointObj(0.0, 51.5)
+        self.layer.queryByPoint(self.map, p, mapscript.MS_MULTIPLE, -1)
+        return self.layer.getResults()
+
+    def testCacheAfterQuery(self):
+        """simple point query returns one result"""
+        results = self.pointquery()
+        assert results.numresults == 1
+
+    def testCacheAfterFailedQuery(self):
+        """point query with no results returns NULL"""
+        p = mapscript.pointObj(0.0, 0.0)
+        self.layer.queryByPoint(self.map, p, mapscript.MS_MULTIPLE, -1)
+        results = self.layer.getResults()
+        assert results == None
+
+    def testDeletionOfResults(self):
+        """deleting results should not harm the layer"""
+        results = self.pointquery()
+        assert results.thisown == 0
+        del results
+        results = self.layer.getResults()
+        assert results.numresults == 1
+
+    def testQueryResultBounds(self):
+        """result bounds should equal layer bounds"""
+        results = self.pointquery()
+        e = self.layer.getExtent() 
+        self.assertRectsEqual(results.bounds, e)
+
+    def testQueryResultMembers(self):
+        """get the single result member"""
+        results = self.pointquery()
+        self.layer.open()
+        res = results.getResult(0)
+        feature = self.layer.getFeature(res.shapeindex, res.tileindex)
+        self.layer.close()
+        self.assertRectsEqual(results.bounds, feature.bounds)
+        assert feature.getValue(1) == 'A Polygon'
+        
+# ===========================================================================
+# Run the tests outside of the main suite
+
+if __name__ == '__main__':
+    unittest.main()
+    
