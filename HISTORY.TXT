@@ -16,18 +16,21 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
-- Removed mapindex.c, mapindex.h, shpindex.c - old unused shapefile 
-  indexing method.  
+- New mapserver exceptions for Java mapscript thanks to Umberto Nicoletti
+  (bug 895).
+
+- Removed mapindex.c, mapindex.h, shpindex.c components of old unused 
+  shapefile indexing method.  
 
 - Use the symbol size instead of 1 for the default style size value. This is
   done by setting the default size to -1 and adding msSymbolGetDefaultSize() 
-  everywhere to get the default symbolsize. (Bug 751)
+  everywhere to get the default symbolsize (Bug 751).
 
-- Coorect Bug with GML BBOX output when using a <Filter> with a 
-  GetFeature request (Bug 913) 
+- Correct Bug with GML BBOX output when using a <Filter> with a 
+  GetFeature request (Bug 913).
 
-- Encode all metadatas and mapfile parameters outputed in a xml document.
-  (Bug 802)
+- Encode all metadatas and mapfile parameters outputed in a xml document
+  (Bug 802).
 
 - Implement the ENCODING label parameter to support internationalization.
   Note this require the iconv library (Bug 858).
