@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/09/05 19:59:12  dan
+ * Another manifestation of the invalid _map_handle_ problem: Check for type
+ * IS_RESOURCE instead of IS_LONG in _phpms_fetch_property_handle2().
+ *
  * Revision 1.7  2001/08/21 19:07:18  dan
  * Reset ms_error struct at the end of _phpms_report_mapserver_error()
  *
@@ -197,7 +201,7 @@ char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
         return NULL;
     }
 
-    if ((*phandle)->type != IS_LONG ||
+    if ((*phandle)->type != IS_RESOURCE ||
         (retVal = (void *)php3_list_find((*phandle)->value.lval, &type)) ==NULL ||
         (type != handle_type1 && type != handle_type2))
     {
