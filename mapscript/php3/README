@@ -489,12 +489,15 @@ and the MapServer Map File documentation at:
         See SLD How to for more information on the SLD support.
 
   int applySLDURL(string sldurl)
-        Apply the SLD document pointed by the URL to the map file. The matching between the
-        sld document and the map file will be done using the layer's name.
+        Apply the SLD document pointed by the URL to the map file. The 
+        matching between the sld document and the map file will be done 
+        using the layer's name.
         See SLD How to for more information on the SLD support.
 
   string generateSLD()
-        Returns an SLD XML string based on all the classes found in all the layers.
+        Returns an SLD XML string based on all the classes found in all 
+        the layers.
+
 
  LayerObj Class:
  ---------------
@@ -503,11 +506,11 @@ and the MapServer Map File documentation at:
    Layer Objects can be returned by the MapObj class, or can be created
    using:
 
-   layerObj ms_newLayerObj(MapObj map, layerObj layer)
+   layerObj ms_newLayerObj(MapObj map [, layerObj layer])
 
-   A second argument (which is not manadatory) can be given to the  ms_newLayerObj
-   to be able to create a new layer based on an existing layer. If a layer is 
-   given as argument, all members of a this layer will be copied in the new
+   A second optional argument can be given to ms_newLayerObj() to create
+   the new layer as a copy of an existing layer. If a layer is given as 
+   argument then all members of a this layer will be copied in the new
    layer created.
 
  Members:
@@ -754,7 +757,7 @@ and the MapServer Map File documentation at:
    Class Objects can be returned by the LayerObj class, or can be created
    using:
 
-   classObj ms_newClassObj(layerObj layer, classObj class)
+   classObj ms_newClassObj(layerObj layer [, classObj class])
 
   The second argument class is optional. If given, the new class
   created will be a copy of this class.
@@ -1264,7 +1267,7 @@ Constructor:
 
  Constructor:
   
-    ProjectionObjObj ms_newprojectionobj(string projectionstring)
+    ProjectionObjObj ms_newProjectionObj(string projectionstring)
         
    Creates a projection object based on the projection string passed
    as argument.
@@ -1353,7 +1356,7 @@ styleObj Class
 
    Instances of styleObj are always embedded inside the classObj.
 
-   styleObj ms_newStyleObj(classObj class, styleobj style)
+   styleObj ms_newStyleObj(classObj class [, styleObj style])
 
    The second argument 'style' is optional. If given, the new style
    created will be a copy of the style passed as argument.
@@ -1520,14 +1523,14 @@ symbolObj class
 
   Constructor:
         
-        symboldid = ms_newsymbolobj(mapObj map, string symbbolname);
+        symboldid = ms_newSymbolObj(mapObj map, string symbolname);
         
         Creates a new symbol with default values in the symbolist. 
         Returns the Id of the new symbol. If a symbol with the same
         name exists, It's id will be returned.
 
-  To ge a symbol object, you need to use a function on the mapobject :
-        $oSymbol = $map->getsymbolobjectbyid($nId);
+  To get a symbol object, you need to use a method on the map object:
+        $oSymbol = $map->getSymbolObjectById($nId);
 
   Members
 
