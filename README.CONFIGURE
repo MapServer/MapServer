@@ -194,6 +194,8 @@ PROJ.4 Support:
   specify where PROJ.4 installed.  Make sure that this copy of PROJ.4 is 
   compiled before using this option.
 
+  Starting with MapServer v3.5, PROJ.4.4.2 (or more recent) is required.
+
 
 ESRI SDE Support:
 -----------------

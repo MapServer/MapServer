@@ -728,12 +728,13 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
 void msTiledSHPClose(layerObj *layer);
 
-int msOGRLayerOpen(layerObj *layer, char *shapepath);   // in mapogr.cpp 
+int msOGRLayerOpen(layerObj *layer);   // in mapogr.cpp 
 int msOGRLayerClose(layerObj *layer);
-int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
-int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
+int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
+int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
 int msOGRLayerGetItems(layerObj *layer, char ***items, int *numitems);
-int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
+int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
+int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 
 int msSDELayerOpen(layerObj *layer); // in mapsde.c
 void msSDELayerClose(layerObj *layer);
@@ -749,3 +750,4 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record);
 #endif
 
 #endif /* MAP_H */
+

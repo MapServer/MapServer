@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.37  2001/03/15 04:48:35  dan
+ * Fixed maplayer.c - had been committed with conflicts in it
+ *
  * Revision 1.36  2001/03/13 16:59:41  dan
  * Removed unused vars with PHP4 + added layer->getvalue() for testing.
  *
@@ -3287,8 +3290,6 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "classitem",  player->classitem);
     PHPMS_ADD_PROP_STR(return_value,  "name",       player->name);
     PHPMS_ADD_PROP_STR(return_value,  "group",      player->group);
-    PHPMS_ADD_PROP_STR(return_value,  "description",player->description);
-    PHPMS_ADD_PROP_STR(return_value,  "legend",     player->legend);
     PHPMS_ADD_PROP_STR(return_value,  "data",       player->data);
     add_property_long(return_value,   "type",       player->type);
     add_property_double(return_value, "tolerance",  player->tolerance);
@@ -3401,8 +3402,6 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("classitem",  self->classitem)
     else IF_SET_STRING("name",       self->name)
     else IF_SET_STRING("group",      self->group)
-    else IF_SET_STRING("description",self->description)
-    else IF_SET_STRING("legend",     self->legend)
     else IF_SET_STRING("data",       self->data)
     else IF_SET_LONG(  "type",       self->type)
     else IF_SET_DOUBLE("tolerance",  self->tolerance)

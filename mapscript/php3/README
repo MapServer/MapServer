@@ -294,8 +294,6 @@ Very important note: Constant names and class member variable names are
    string classitem
    string name
    string group
-   string description
-   string legend
    string data
    int    type
    double tolerance

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.26  2001/03/15 04:48:35  dan
+ * Fixed maplayer.c - had been committed with conflicts in it
+ *
  * Revision 1.25  2001/03/12 19:02:46  dan
  * Added query-related stuff in PHP MapScript
  *
@@ -685,7 +688,7 @@ int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRLayerOpen(layerObj *layer, char *shapepath) 
+int msOGRLayerOpen(layerObj *layer) 
 {
 #ifdef USE_OGR
 
@@ -840,7 +843,7 @@ int msOGRLayerClose(layerObj *layer)
  * Returns MS_SUCCESS/MS_FAILURE, or MS_DONE if no shape matching the
  * layer's FILTER overlaps the selected region.
  **********************************************************************/
-int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect) 
+int msOGRLayerWhichShapes(layerObj *layer, rectObj rect) 
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
@@ -943,7 +946,7 @@ int msOGRLayerGetItems(layerObj *layer, char ***items, int *numitems)
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape) 
+int msOGRLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
@@ -1027,8 +1030,7 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
-                       int tile, long record, int allitems) 
+int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
@@ -1070,23 +1072,7 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
 /* ------------------------------------------------------------------
  * Process shape attributes
  * ------------------------------------------------------------------ */
-  if (allitems == MS_TRUE)
-  {
-      // fill the items layer variable if not already filled
-      // __TODO__ This will eventually go away when allitems is replaced
-      // by the use of msOGRLayerGetItems() in maplayer.c
-
-      if(!layer->items &&
-         msOGRLayerGetItems(layer, &layer->items, 
-                            &layer->numitems) != MS_SUCCESS)
-      {
-          return(MS_FAILURE);
-      }
-      shape->values = msOGRGetValues(poFeature);
-      shape->numvalues = layer->numitems;
-      if(!shape->values) return (MS_FAILURE);
-  }
-  else if(layer->numitems > 0) 
+  if(layer->numitems > 0) 
   {
       shape->values = msOGRGetValueList(poFeature, layer->items, 
                                             &(layer->itemindexes), 
@@ -1107,6 +1093,55 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
 
   msSetError(MS_MISCERR, "OGR support is not available.", 
              "msOGRLayerGetShape()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+/**********************************************************************
+ *                     msOGRLayerGetExtent()
+ *
+ * Returns the layer extents.
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+int msOGRLayerGetExtent(layerObj *layer, rectObj *extent) 
+{
+#ifdef USE_OGR
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  OGREnvelope oExtent;
+
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRLayerGetExtent()");
+    return(MS_FAILURE);
+  }
+
+/* ------------------------------------------------------------------
+ * Call OGR's GetExtent()... note that for some formats this will
+ * result in a scan of the whole layer and can be an expensive call.
+ * ------------------------------------------------------------------ */
+  if (psInfo->poLayer->GetExtent(&oExtent, TRUE) != OGRERR_NONE)
+  {
+    msSetError(MS_MISCERR, "Unable to get extents for this layer.", 
+               "msOGRLayerGetExtent()");
+    return(MS_FAILURE);
+  }
+
+  extent->minx = oExtent.MinX;
+  extent->miny = oExtent.MinY;
+  extent->maxx = oExtent.MaxX;
+  extent->maxy = oExtent.MaxY;
+
+  return MS_SUCCESS;
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGRLayerGetExtent()");
   return(MS_FAILURE);
 
 #endif /* USE_OGR */
