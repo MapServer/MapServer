@@ -8,6 +8,26 @@ MAP
   FONTSET "fonts.txt"
   SYMBOLSET "symbols.txt"
 
+  SCALEBAR
+    STATUS EMBED
+    POSTLABELCACHE TRUE
+    STYLE 0
+    UNITS METERS
+    SIZE 150 3
+    POSITION LR
+    TRANSPARENT TRUE
+    COLOR 0 0 0
+    IMAGECOLOR 242 255 195
+    BACKGROUNDCOLOR 255 255 255
+    LABEL
+      TYPE BITMAP
+      SIZE TINY
+      COLOR 0 0 0
+      POSITION UR
+      BUFFER 10
+    END
+  END
+
   WEB
     METADATA
       "key1" "value1"
@@ -16,7 +36,7 @@ MAP
       "key4" "value4"
     END
   END
- 
+
   PROJECTION
     "init=epsg:4326"
   END
@@ -152,3 +172,4 @@ MAP
   END
 
 END
+

@@ -75,11 +75,13 @@ Version 4.3 (CVS)
 - Implementation geotransform/rotation support in cgi core, and mapscript.i.
 
 - Testing: fixed syntax error, 'EPSG' -> 'epsg' in test.map (bug 687).
+  Added an embedded scalebar which demonstrates that bug 519 is fixed.
 
 - Mapscript (SWIG): remove promote and demote methods from layerObj.  Use
   of container's moveLayerUp/moveLayerDown is better, and this brings
   the module nearer to PHP-Mapscript (bug 692).
 
+- 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 
