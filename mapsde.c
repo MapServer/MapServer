@@ -179,7 +179,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   for(i=0; i<layer->numitems; i++) {
 
     if(strcmp(layer->items[i],sde->row_id_column) == 0) {
-      status = SE_stream_get_integer(sde->stream, i+1, &shape->index);
+      status = SE_stream_get_integer(sde->stream, (short)(i+1), &shape->index);
       if(status != SE_SUCCESS) {
          sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
          return(MS_FAILURE);
@@ -192,7 +192,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     
     switch(itemdefs[i].sde_type) {
     case SE_SMALLINT_TYPE:
-      status = SE_stream_get_smallint(sde->stream, i+1, &shortval); // changed by gdv
+      status = SE_stream_get_smallint(sde->stream, (short)(i+1), &shortval); // changed by gdv
       if(status == SE_SUCCESS)
         shape->values[i] = long2string(shortval);
       else if(status == SE_NULL_VALUE)
@@ -203,7 +203,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }
       break;
     case SE_INTEGER_TYPE:
-      status = SE_stream_get_integer(sde->stream, i+1, &longval);
+      status = SE_stream_get_integer(sde->stream, (short)(i+1), &longval);
       if(status == SE_SUCCESS)
         shape->values[i] = long2string(longval);
       else if(status == SE_NULL_VALUE)
@@ -214,7 +214,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }      
       break;
     case SE_FLOAT_TYPE:
-      status = SE_stream_get_float(sde->stream, i+1, &floatval); // changed by gdv
+      status = SE_stream_get_float(sde->stream, (short)(i+1), &floatval); // changed by gdv
       if(status == SE_SUCCESS)
         shape->values[i] = double2string(floatval);
       else if(status == SE_NULL_VALUE)
@@ -225,7 +225,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }
       break;
     case SE_DOUBLE_TYPE:
-      status = SE_stream_get_double(sde->stream, i+1, &doubleval);
+      status = SE_stream_get_double(sde->stream, (short)(i+1), &doubleval);
       if(status == SE_SUCCESS)
         shape->values[i] = double2string(doubleval);
       else if(status == SE_NULL_VALUE)
@@ -237,7 +237,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       break;
     case SE_STRING_TYPE:
       shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-      status = SE_stream_get_string(sde->stream, i+1, shape->values[i]);
+      status = SE_stream_get_string(sde->stream, (short)(i+1), shape->values[i]);
       if(status == SE_NULL_VALUE)
         shape->values[i][0] = '\0'; // empty string
       else if(status != SE_SUCCESS) {
@@ -250,7 +250,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       msSetError(MS_SDEERR, "Retrieval of BLOBs is not yet supported.", "sdeGetRecord()");
       break;
     case SE_DATE_TYPE:
-      status = SE_stream_get_date(sde->stream, i+1, &dateval);
+      status = SE_stream_get_date(sde->stream, (short)(i+1), &dateval);
       if(status == SE_SUCCESS) {
         shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
         strftime(shape->values[i], MS_SDE_TIMEFMTSIZE, MS_SDE_TIMEFMT, &dateval);
@@ -262,7 +262,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }
       break;
     case SE_SHAPE_TYPE:
-      status = SE_stream_get_shape(sde->stream, i+1, shapeval);
+      status = SE_stream_get_shape(sde->stream, (short)(i+1), shapeval);
       if(status == SE_SUCCESS)
         shape->values[i] = strdup(MS_SDE_SHAPESTRING);
       else if(status == SE_NULL_VALUE)
@@ -808,7 +808,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 	  }  
 	}  
 
-  status = SE_stream_fetch_row(sde->stream, sde->table, record, layer->numitems, (const char **)layer->items);
+  status = SE_stream_fetch_row(sde->stream, sde->table, record, (short)(layer->numitems), (const char **)layer->items);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetShape()", "SE_stream_fetch_row()");
     return(MS_FAILURE);
