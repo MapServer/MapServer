@@ -20,7 +20,13 @@ typedef struct {
   int numlines;
   lineObj *line;
   rectObj bounds;
+
   int type;
+
+  int classindex;
+  int queryindex;
+
+  char *text;
 } shapeObj;
 
 typedef lineObj multipointObj;

@@ -531,6 +531,9 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
     layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
     layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
     layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
+    layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
+    layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
+    layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
 #ifdef USE_TTF
     if(layer->class[c].label.type == MS_TRUETYPE) { 
       layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
@@ -560,8 +563,10 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
       if(layer->labelcache)
 	msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
       else {
-	if(layer->class[c].color == -1)
+	if(layer->class[c].color == -1) {
 	  msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+	  if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	}
 	msDrawLabel(img, map, *point, text, &layer->class[c].label);
       }
     }
@@ -572,17 +577,15 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
       point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
-      msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-    } else {
-      msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
     }
+
+    msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+    if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 
     if(label_string) text = label_string; 
     else text = layer->class[c].text.string;
 	
     if(text) {
-      fprintf(stderr, "text = %s\n", text);
-
       if(layer->labelcache)
 	msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
       else
@@ -623,6 +626,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
     layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
     layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
+    layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
+    layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
+    layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
 #ifdef USE_TTF
     if(layer->class[c].label.type == MS_TRUETYPE) { 
       layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
@@ -657,8 +663,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	  if(layer->labelcache)
 	    msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
 	  else {
-	    if(layer->class[c].color == -1)
+	    if(layer->class[c].color == -1) {
 	      msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+	      if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	    }
 	    msDrawLabel(img, map, *point, text, &layer->class[c].label);
 	  }
 	}
@@ -679,6 +687,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	}
 
 	msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+	if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 
 	if(label_string) text = label_string; 
 	else text = layer->class[c].text.string;
@@ -699,7 +708,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
       if(shape->numlines == 0) return(0);
       msTransformPolygon(map->extent, map->cellsize, shape);
     }
-    msDrawLineSymbol(&map->symbolset, img, shape, &layer->class[c], MS_FALSE); 
+    msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 
     if(label_string) text = label_string;
     else text = layer->class[c].text.string;
@@ -746,6 +755,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     }
 
     msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+    if(layer->class[c].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
       
     if(label_string) text = label_string; 
     else text = layer->class[c].text.string;
@@ -782,7 +792,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   pointObj *pnt;
   double scalefactor=1;
 
-  overlay = MS_FALSE;
+  int overlay = MS_FALSE;
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
@@ -833,17 +843,17 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
     for(current=layer->features; current; current=current->next) {
 
-      if((c = getClassIndex(layer, current->feature.class)) == -1) continue; /* next feature */
+      c = current->shape.classindex; // features *must* be pre-classified
  
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->feature.shape));
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->shape));
 #endif
 
-      for(j=0; j<current->feature.shape.numlines;j++) {
-	for(i=0; i<current->feature.shape.line[j].numpoints;i++) {
+      for(j=0; j<current->shape.numlines;j++) {
+	for(i=0; i<current->shape.line[j].numpoints;i++) {
 
-	  pnt = &(current->feature.shape.line[j].point[i]);
+	  pnt = &(current->shape.line[j].point[i]);
 	  
 	  if(layer->transform) {
 	    if(!msPointInRect(pnt, &map->extent)) continue;
@@ -851,14 +861,16 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	    pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
 	  }
 	  
-	  if(current->feature.text) text = current->feature.text; 
+	  if(current->shape.text) text = current->shape.text; 
 	  else text = layer->class[c].text.string;
 	    
 	  if(layer->labelcache)
 	    msAddLabel(map, layer->index, c, -1, -1, *pnt, text, -1);
 	  else {
-	    if(layer->class[c].color == -1)
+	    if(layer->class[c].color == -1) {
 	      msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+	      if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	    }
 	    msDrawLabel(img, map, *pnt, text, &layer->class[c].label);
 	  }
 	}    
@@ -871,29 +883,29 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   case MS_POINT:
     for(current=layer->features; current; current=current->next) {
 
-      if((c = getClassIndex(layer, current->feature.class)) == -1) continue; /* next feature */
+      c = current->shape.classindex; // features *must* be pre-classified
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->feature.shape));
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->shape));
 #endif
 
-      for(j=0; j<current->feature.shape.numlines;j++) {
-	for(i=0; i<current->feature.shape.line[j].numpoints;i++) {
+      for(j=0; j<current->shape.numlines;j++) {
+	for(i=0; i<current->shape.line[j].numpoints;i++) {
 	  
-	  pnt = &(current->feature.shape.line[j].point[i]);
+	  pnt = &(current->shape.line[j].point[i]);
 
 	  if(layer->transform) {
 	    if(!msPointInRect(pnt, &map->extent)) continue;
 	    pnt->x = MS_NINT((pnt->x - map->extent.minx)/map->cellsize); 
 	    pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
-	    msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-	  } else {
-	    msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	  }
+
+	  msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+	  if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	  
 	  if(annotate) {
-	    if(current->feature.text) text = current->feature.text; 
+	    if(current->shape.text) text = current->shape.text;
 	    else if(layer->class[c].text.string) text = layer->class[c].text.string;
 	    else continue;
 
@@ -910,46 +922,42 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   case MS_LINE:
     for(current=layer->features; current; current=current->next) {
 
-      if((c = getClassIndex(layer, current->feature.class)) == -1) continue; /* next feature */
-      current->feature.classindex = c; // save for later
+      c = current->shape.classindex; // features *must* be pre-classified
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->feature.shape));
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->shape));
 #endif
      
       if(layer->transform) {
-	msClipPolylineRect(&current->shape, map->extent, &current->feature.shape);
+	msClipPolylineRect(&current->shape, map->extent, &current->shape);
 	if(current->shape.numlines == 0) continue;
-	msTransformPolygon(map->extent, map->cellsize, &current->feature.shape);
+	msTransformPolygon(map->extent, map->cellsize, &current->shape);
       }
-      msDrawLineSymbol(&map->symbolset, img, &current->feature.shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+      msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
       
       if(annotate) {
-	if(current->feature.text) text = current->feature.text; 
+	if(current->shape.text) text = current->shape.text; 
 	else if(layer->class[c].text.string) text = layer->class[c].text.string;
 	else continue;	
 
-	if(msPolylineLabelPoint(&current->feature.shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
+	if(msPolylineLabelPoint(&current->shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
 	  if(layer->class[c].label.autoangle)
 	    layer->class[c].label.angle = angle;
 
-	  if(layer->labelcache) {
+	  if(layer->labelcache)
 	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, length);
-	  } else {
-	    if(layer->class[c].color == -1)
-	      msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+	  else
 	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
-	  }
 	}
       }
     }   
 
     if(overlay) {
       for(current=layer->features; current; current=current->next) {
-	c = current->feature.classindex;
+	c = current->shape.classindex;
 	if(layer->class[c].overlaysymbol >= 0)
-	  msDrawLineSymbol(&map->symbolset, img, &current->feature.shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
       }
     }
 
@@ -957,29 +965,28 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   case MS_POLYLINE:
     for(current=layer->features; current; current=current->next) {
-    
-      if((c = getClassIndex(layer, current->feature.class)) == -1) continue; /* next feature */
-      current->feature.classindex = c; // save for later
+
+      c = current->shape.classindex; // features *must* be pre-classified
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->feature.shape));
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->shape));
 #endif
       
-      if(layer->transform) {      
-	msClipPolygonRect(&current->feature.shape, cliprect, &current->feature.shape);
+      if(layer->transform) {
+	msClipPolygonRect(&current->shape, cliprect, &current->shape);
 	if(current->shape.numlines == 0) continue;
-	msTransformPolygon(map->extent, map->cellsize, &current->feature.shape);
+	msTransformPolygon(map->extent, map->cellsize, &current->shape);
       }
 
-      msDrawLineSymbol(&map->symbolset, img, &current->feature.shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+      msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 
       if(annotate) {
-	if(current->text) text = current->text; 
+	if(current->shape.text) text = current->shape.text; 
 	else if(layer->class[c].text.string) text = layer->class[c].text.string;
 	else continue;
 
-	if(msPolygonLabelPoint(&current->feature.shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	if(msPolygonLabelPoint(&current->shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
 	  if(layer->labelcache)
 	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
 	  else
@@ -990,9 +997,9 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
     if(overlay) {
       for(current=layer->features; current; current=current->next) {
-	c = current->feature.classindex;
+	c = current->shape.classindex;
 	if(layer->class[c].overlaysymbol >= 0)
-	  msDrawLineSymbol(&map->symbolset, img, &current->feature.shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
       }
     }
 
@@ -1000,25 +1007,24 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   case MS_POLYGON:
     for(current=layer->features; current; current=current->next) {
     
-      if((c = getClassIndex(layer, current->feature.class)) == -1) continue; /* next feature */
+      c = current->shape.classindex; // features *must* be pre-classified
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->feature.shape));
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->shape));
 #endif
       
-      if(layer->transform) {      
-	msClipPolygonRect(&current->feature.shape, cliprect, &current->feature.shape);
+      if(layer->transform) {
+	msClipPolygonRect(&current->shape, cliprect, &current->shape);
 	if(current->shape.numlines == 0) continue;
-	msTransformPolygon(map->extent, map->cellsize, &current->feature.shape);
+	msTransformPolygon(map->extent, map->cellsize, &current->shape);
       }
 
-      msDrawShadeSymbol(&map->symbolset, img, &current->feature.shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-      if(layer->class[c].overlaysymbol >= 0) 
-	msDrawShadeSymbol(&map->symbolset, img, &current->feature.shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+      msDrawShadeSymbol(&map->symbolset, img, &current->shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+      if(layer->class[c].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
       
       if(annotate) {
-	if(current->feature.text) text = current->feature.text; 
+	if(current->shape.text) text = current->shape.text; 
 	else if(layer->class[c].text.string) text = layer->class[c].text.string;
 	else continue;
 
@@ -1463,7 +1469,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  msTransformPolygon(map->extent, map->cellsize, &shape);
 	}
 
-	msDrawLineSymbol(&map->symbolset, img, &shape, &(layer->class[c]), MS_FALSE);	
+	msDrawLineSymbol(&map->symbolset, img, &shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 		
 	if(annotate && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	  if(msPolylineLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
@@ -1522,7 +1528,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  msTransformPolygon(map->extent, map->cellsize, &shape);
 	}
 
-	msDrawLineSymbol(&map->symbolset, img, &shape, &(layer->class[c]), MS_FALSE);
+	msDrawLineSymbol(&map->symbolset, img, &shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 
 	if(annotate  && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {

@@ -744,8 +744,8 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       continue; /* next label */
 
     if(draw_marker) { /* need to draw a marker */
-      msDrawMarkerSymbol(&map->symbolset, img, &(cachePtr->point), classPtr, MS_FALSE);
-      if(classPtr->overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &(cachePtr->point), classPtr, MS_TRUE);
+      msDrawMarkerSymbol(&map->symbolset, img, &(cachePtr->point), classPtr->symbol, classPtr->color, classPtr->backgroundcolor, classPtr->outlinecolor, classPtr->sizescaled);
+      if(classPtr->overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &(cachePtr->point), classPtr->overlaysymbol, classPtr->overlaycolor, classPtr->overlaybackgroundcolor, classPtr->overlayoutlinecolor, classPtr->overlaysizescaled);
     }
 
     if(label.backgroundcolor >= 0)

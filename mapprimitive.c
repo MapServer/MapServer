@@ -24,16 +24,37 @@ void msPrintShape(shapeObj *p)
   }
 }
 
-void msFreeShape(shapeObj *p)
+void msInitShape(shapeObj *shape)
+{
+  // spatial component
+  shape->line = NULL;
+  shape->numlines = 0;
+  shape->type = MS_NULL;
+  shape->bounds.minx = shape->bounds.miny = -1;
+  shape->bounds.maxx = shape->bounds.maxy = -1;
+  
+  // attribute component ...to be added soon
+
+  // annotation component
+  shape->text = NULL;
+
+  // bookkeeping component
+  shape->classindex = -1;
+  shape->queryindex = -1;
+}
+
+void msFreeShape(shapeObj *shape)
 {
   int c;
 
-  for (c= 0; c < p->numlines; c++)
-    free(p->line[c].point);
-  free(p->line);
+  for (c= 0; c < shape->numlines; c++)
+    free(shape->line[c].point);
+  free(shape->line);
+
+  free(shape->text);
   
-  p->line = NULL;
-  p->numlines= 0;
+  shape->line = NULL;
+  shape->numlines= 0;
 }
 
 int msAddLine(shapeObj *p, lineObj *new_line)

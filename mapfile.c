@@ -229,35 +229,8 @@ int msGetLayerIndex(mapObj *map, char *name)
   return(-1);
 }
 
-void initFeature(featureObj *feature)
-{
-  // spatial component
-  feature->shape.line = NULL;
-  feature->shape.numlines = 0;
-  feature->shape.type = MS_NULL;
-  feature->shape.bounds.minx = feature->shape.bounds.miny = -1;
-  feature->shape.bounds.maxx = feature->shape.bounds.maxy = -1;
-  
-  // attribute component ...to be added soon
-
-  // presentation component
-  feature->class = NULL;
-  feature->text = NULL;
-
-  // bookkeeping component
-  feature->classindex = -1;
-  feature->queryindex = -1;
-}
-
-void freeFeature(featureObj *feature)
-{
-  msFreeShape(&feature->shape);
-  free(feature->class);
-  free(feature->text);
-}
-
 /* inserts a feature at the end of the list, can create a new list */
-featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, featureObj feature) {
+featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj shape) {
   featureListNodeObjPtr node, current, previous;
 
   if((node = (featureListNodeObjPtr)malloc(sizeof(featureListNodeObjPtr))) == NULL) {
@@ -265,7 +238,7 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, featureObj 
     return(NULL);
   }
   
-  node->feature = feature;
+  node->shape = shape;
   node->next = NULL;
 
   previous = NULL;
@@ -289,8 +262,8 @@ void freeFeatureList(featureListNodeObjPtr list)
 {
   if(list) {
     freeFeatureList(list->next); /* free any children */
-    freeFeature(&(list->feature));
-    free(list);  
+    msFreeShape(&(list->shape));
+    free(list);
   }
   return;
 }
@@ -340,9 +313,9 @@ static int loadFeaturePoints(lineObj *points)
 static int loadFeature(featureListNodeObjPtr list)
 {
   multipointObj points={0,NULL};
-  featureObj feature;
+  shapeObj shape;
 
-  initFeature(&feature);
+  msInitShape(&shape);
 
   for(;;) {
     switch(msyylex()) {
@@ -350,20 +323,17 @@ static int loadFeature(featureListNodeObjPtr list)
       msSetError(MS_EOFERR, NULL, "loadFeature()");      
       return(-1);
     case(END):
-      if(insertFeatureList(&list, feature) == NULL) return(-1);
+      if(insertFeatureList(&list, shape) == NULL) return(-1);
       return(0);
-    case(CLASS):
-      if((feature.class = getString()) == NULL) return(-1);
-      break;
-    case(POINTS):      
+    case(POINTS):
       if(loadFeaturePoints(&points) == -1) return(-1);
-      if(msAddLine(&feature.shape, &points) == -1) return(-1);
+      if(msAddLine(&shape, &points) == -1) return(-1);
 
       free(points.point); /* reset */
       points.numpoints = 0;
       break;
     case(TEXT):
-      if((feature.text = getString()) == NULL) return(-1);
+      if((shape.text = getString()) == NULL) return(-1);
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadfeature()");    
@@ -373,21 +343,20 @@ static int loadFeature(featureListNodeObjPtr list)
   } /* next token */  
 }
 
-static void writeFeature(featureObj *feature, FILE *stream) 
+static void writeFeature(shapeObj *shape, FILE *stream) 
 {
   int i,j;
 
   fprintf(stream, "    FEATURE\n");
-  if(feature->class) fprintf(stream, "      CLASS \"%s\"\n", feature->class);
 
-  for(i=0; i<feature->shape.numlines; i++) {
+  for(i=0; i<shape->numlines; i++) {
     fprintf(stream, "      POINTS\n");
-    for(j=0; j<feature->shape.line[i].numpoints; j++)
-      fprintf(stream, "        %g %g\n", feature->shape.line[i].point[j].x, feature->shape.line[i].point[j].y);
+    for(j=0; j<shape->line[i].numpoints; j++)
+      fprintf(stream, "        %g %g\n", shape->line[i].point[j].x, shape->line[i].point[j].y);
     fprintf(stream, "      END\n");
   }
 
-  if(feature->text) fprintf(stream, "      TEXT \"%s\"\n", feature->text);
+  if(shape->text) fprintf(stream, "      TEXT \"%s\"\n", shape->text);
   fprintf(stream, "    END\n");
 }
 
@@ -1642,7 +1611,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   int done=0;
 
   static featureListNodeObjPtr current=NULL;
-  featureObj feature;
+  shapeObj shape;
 
   switch(msyylex()) {
   case(CLASS):
@@ -1672,8 +1641,8 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       msyystate = 2; msyystring = value;
 
       if(layer->features == NULL) {
-	initFeature(&feature);
-	if((current = insertFeatureList(&(layer->features), feature)) == NULL) return; /* create initial feature */
+	msInitShape(&shape);
+	if((current = insertFeatureList(&(layer->features), shape)) == NULL) return; /* create initial feature */
       }
 
       if((points.point = (pointObj *)malloc(sizeof(pointObj)*MS_FEATUREINITSIZE)) == NULL) {
@@ -1706,18 +1675,20 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
 	}	
       }
 
-      if(msAddLine(&(current->feature.shape), &points) == -1) break;
+      if(msAddLine(&(current->shape), &points) == -1) break;
 
       break;
-    case(CLASS):
-      current->feature.class = strdup(value);
-      break;
+    
+/* 
+** may need to add code to classify an incoming feature, pretty rare use though
+*/
+
     case(TEXT):
-      current->feature.text = strdup(value);
+      current->shape.text = strdup(value);
       break;
     default:
-      initFeature(&feature);
-      if((current = insertFeatureList(&(layer->features), feature)) == NULL) return;
+      msInitShape(&shape);
+      if((current = insertFeatureList(&(layer->features), shape)) == NULL) return;
       break;
     }
 
@@ -1837,7 +1808,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
 
   current = layer->features;
   while(current != NULL) {
-    writeFeature(&(current->feature), stream);
+    writeFeature(&(current->shape), stream);
     current = current->next;
   }
 

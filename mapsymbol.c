@@ -820,7 +820,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
 /* ------------------------------------------------------------------------------- */
 /*       Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------------- */
-void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, , int sy, int fc, int bc, int oc, double sz)
+void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz)
 {
   int i, j;
   symbolObj *symbol;

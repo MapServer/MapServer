@@ -134,19 +134,9 @@ typedef struct {
 } fontSetObj;
 #endif
 
-// FEATURE OBJECT and FEATURE LIST OBJECT - for inline features, shape caches and queries
-typedef struct {
-  shapeObj shape; /* can handle all cases- point, line and polygon */
-  char *class; /* string to classify with */
-
-  int classindex;
-  int queryindex;
-
-  char *text; /* string to annotate with */ 
-} featureObj;
-
+// FEATURE LIST OBJECT - for inline features, shape caches and queries
 typedef struct listNode {
-  featureObj feature;
+  shapeObj shape;
   struct listNode *next;
 } featureListNodeObj;
 
@@ -568,8 +558,9 @@ int initMap(mapObj *map);
 int initLayer(layerObj *layer);
 int initClass(classObj *class);
 int initQuery(queryObj *query);
-struct featureObj *addFeature(struct featureObj *list);
-void initFeature(featureObj *feature);
+
+/* NEED TEMPLATES HERE! (for feature lists) */
+
 int loadProjectionString(projectionObj *p, char *value);
 int loadExpressionString(expressionObj *exp, char *value);
 
@@ -673,7 +664,8 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
 int msDrawLabelCache(gdImagePtr img, mapObj *map);
 gdFontPtr msGetBitmapFont(int size);
 
-void msFreeShape(shapeObj *p); /* in mapprimative.c */
+void msFreeShape(shapeObj *shape); /* in mapprimative.c */
+void msInitShape(shapeObj *shape);
 void msRect2Polygon(rectObj rect, shapeObj *poly);
 void msClipPolylineRect(shapeObj *in, rectObj rect, shapeObj *out);
 void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out);

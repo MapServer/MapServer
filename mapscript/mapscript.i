@@ -344,6 +344,9 @@
 //
 %addmethods featureObj {
   featureObj(layerObj *layer) {
+
+    /* MODIFY THIS CODE */
+	
     if(!layer->features)
       layer->features = initFeature(); /* new feature list */
     else
@@ -354,6 +357,10 @@
 
   ~featureObj() {
     return; /* do nothing, map deconstrutor takes care of it all */
+  }
+
+  int classify(char *string) {
+    /* use string to classify this feature - NEED THIS CODE */
   }
 
   int add(lineObj *p) {
