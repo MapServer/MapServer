@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Current Version (CVS)
 --------------------------
 
+- Fixed detection of OGRRegisterAll() with GDAL 1.1.9 in configure. 
+  We were looking for libgdal.1.1.so but the name changed to 
+  libgdal.so.x.y.z starting with GDAL 1.1.9
+
 - Fixed the way PROCESSING directives are written in $map->save()
   (chameleon bug 154)
 
