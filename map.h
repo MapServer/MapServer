@@ -28,6 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.374  2004/11/16 04:31:17  dan
+ * Re-enabled building PHP MapScript using PHP's bundled regex/*.o. This is
+ * needed to build in an environment with PHP configured as an Apache DSO
+ * (bugs 990, 520)
+ *
  * Revision 1.373  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -143,7 +148,15 @@ static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid ); }
 #endif
 
 #include <sys/types.h> /* regular expression support */
+
+/* The regex lib from the system and the regex lib from PHP needs to
+ * be separated here. We separate here via its directory location.
+ */
+#ifdef USE_PHP_REGEX
+#include "regex/regex.h"
+#else
 #include <regex.h>
+#endif
 
 #ifdef USE_MING
 #include "ming.h"

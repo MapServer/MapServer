@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Re-enabled building PHP MapScript using PHP's bundled regex/*.o. This is
+  needed to build in an environment with PHP configured as an Apache DSO
+  (bugs 990, 520)
+
 - Fixed problem with raster dither support on windows (related to ascii 
   encoding pointers).  (bug 722)
 

@@ -20,7 +20,7 @@ For the impatient:
 To build the "mapserv" CGI program with the default options, go to the
 directory where you extracted the MapServer source code package and...
 
- $ cd mapserver-4.2.x
+ $ cd mapserver-4.4.x
  $ ./configure
  $ make
 
@@ -84,9 +84,14 @@ Here is the list of available options as returned by "./configure --help":
                           msDebug() output to stderr (i.e. server log file).
   --disable-debug         Do not include -g in CFLAGS and disable msDebug()
                           output (the default).
-  --with-php=DIR          Specify directory where PHP4 source tree is
-                          installed. Required in order to compile the
-                          PHP/MapScript module.
+  --with-php=DIR          Specify directory where PHP4's include files are
+                          installed (or a pointer to the full source tree)
+                          Required in order to compile the PHP/MapScript
+                          module.
+  --with-php-regex-dir=DIR  Specify directory where the PHP4 bundled REGEX
+                          object files (regex/*.o) are available. Required in
+                          order to compile the PHP/MapScript module with PHP
+                          configured as a DSO.
   --enable-perlv-ld-detect (applies to --with-php only) 
                           Use perl -V output to figure the command to use to 
                           link php_mapscript.so.  Try this only if the default
@@ -499,9 +504,14 @@ Miscellaneous flags:
 PHP/MapScript module:
 ----------------------
 
-  --with-php=DIR          Specify directory where PHP4 source tree is
-                          installed. Required in order to compile the
-                          PHP/MapScript module.
+  --with-php=DIR          Specify directory where PHP4's include files are
+                          installed (or a pointer to the full source tree)
+                          Required in order to compile the PHP/MapScript
+                          module.
+  --with-php-regex-dir=DIR  Specify directory where the PHP4 bundled REGEX
+                          object files (regex/*.o) are available. Required in
+                          order to compile the PHP/MapScript module with PHP
+                          configured as a DSO.
   --enable-perlv-ld-detect (applies to --with-php only) 
                           Use perl -V output to figure the command to use to 
                           link php_mapscript.so.  Try this only if the default
@@ -512,9 +522,10 @@ PHP/MapScript module:
   module in the ./mapscript/php3/ directory.  
 
   DIR should be the location of the PHP4 source distribution.  The 
-  module currently requires PHP 4.1.2 or more recent. The configure 
-  script should automatically detect which version of PHP you 
-  are attempting to build with and take the necessary actions.
+  module currently requires PHP 4.1.2 or more recent (PHP 4.3.x is strongly
+  recommended). The configure script should automatically detect which 
+  version of PHP you are attempting to build with and take the necessary
+  actions.
 
     e.g.  $ ./configure --with-php=../php-4.3.2
 
@@ -525,14 +536,26 @@ PHP/MapScript module:
   See also the file ./mapscript/php3/README for more details on the
   MapScript classes and functions.  
 
-  Note that PHP MapScript currently works only with PHP installed as a CGI
-  and will not work with PHP as an Apache module.  For more details, see
-    http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI
-
   Some libraries are used by both PHP and MapServer, and using different 
   versions of these libs will lead to potential crashes at runtime.  In most
   cases it is safe to have both PHP and MapServer compiled with the same 
   libraries (e.g. GD, regex, etc.) as long as they are of the same versions.
+
+  If your PHP was compiled with PHP's bundled regex then configure may 
+  return an error. In this case you have two options:
+  1- Download/extract and build the PHP source on your system (no need 
+     to 'make install') and use MapServer's --with-php-regex-dir=DIR 
+     configure option to specifiy the location of the PHP source tree 
+     where the regex/*.o files are located. This is the only way to
+     build PHP MapScript in an environment where PHP is configured as
+     an Apache DSO.
+  2- Try to re-configure and re-compile PHP4 using --with-regex=system 
+     and then re-configure and re-compile MapServer.                   
+     Note that PHP's --with-regex=system works only when PHP is        
+     is configured as a CGI (that is without the --with-apxs and       
+     --with-httpd options). So if you configured your PHP using        
+     --with-regex=system and still get this error then make sure you   
+     configured PHP as a CGI.                                          
 
 
 Perl MapScript Module:
