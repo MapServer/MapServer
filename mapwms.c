@@ -345,14 +345,33 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                     //check if given time is in the range
                     if (msValidateTimeValue(time, timeextent) == MS_FALSE)
                     {
-                        msSetError(MS_WMSERR, "Time value(s) %s given is invalid or outside the time extent defined (%s).", "msWMSApplyTime", time, timeextent);
+                        if (timedefault == NULL)
+                        {
+                            msSetError(MS_WMSERR, "Time value(s) %s given is invalid or outside the time extent defined (%s).", "msWMSApplyTime", time, timeextent);
                         //return MS_FALSE;
-                        return msWMSException(map, version,
-                                              "InvalidDimensionValue");
+                            return msWMSException(map, version,
+                                                  "InvalidDimensionValue");
+                        }
+                        else
+                        {
+                            if (msValidateTimeValue((char *)timedefault, timeextent) == MS_FALSE)
+                            {
+                                msSetError(MS_WMSERR, "Time value(s) %s given is invalid or outside the time extent defined (%s), and default time set is invalid (%s)", "msWMSApplyTime", time, timeextent, timedefault);
+                        //return MS_FALSE;
+                                return msWMSException(map, version,
+                                                      "InvalidDimensionValue");
+                            }
+                            else
+                              msLayerSetTimeFilter(lp, timedefault, timefield);
+                        }
+                            
                     }
+                    else
+                    {
                     //build the time string
-                    msLayerSetTimeFilter(lp, time, timefield);
-                    timeextent= NULL;
+                        msLayerSetTimeFilter(lp, time, timefield);
+                        timeextent= NULL;
+                    }
                 }
             }
         }
