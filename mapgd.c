@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2004/11/12 00:04:24  sdlime
+ * Fixed bug 1036 (ignoring PENUP with filled VECTOR symbols) for the GD marker, line and fill routines.
+ *
  * Revision 1.85  2004/11/10 19:22:23  sean
  * Comment out msImageLoadGDStream and pipe all gd image input through existing
  * msImageLoadGDCtx function.  Moved Frank's recent transparency and interlacing
@@ -1146,6 +1149,9 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
   if(!p) return;
 
+  printf("in msCircleDrawShadeSymbolGD()\n");
+  printf("%d %d %d %d\n", style->color.pen, style->color.red, style->color.green, style->color.blue);
+
   if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor)) { // use msDrawLineSymbolGD() instead (POLYLINE)
     msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
     return;
@@ -1176,6 +1182,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
   if(fc < 0) return; // invalid color, -1 is valid
   if(size < 1) return; // size too small
+
+  printf("here (3)...\n");
       
   if(style->symbol == 0) { // simply draw a single pixel of the specified color    
     imageFilledCircle(img, p, (int) r, fc);
@@ -1311,7 +1319,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 {
   symbolObj *symbol;
   int offset_x, offset_y, x, y;
-  int j;
+  int j, k;
   gdPoint oldpnt,newpnt;
   gdPoint mPoints[MS_MAXVECTORPOINTS];
   char *error=NULL;
@@ -1451,14 +1459,28 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
     
     if(symbol->filled) { /* if filled */
+      
+      k = 0; // point counter
       for(j=0;j < symbol->numpoints;j++) {
-	mPoints[j].x = MS_NINT(d*symbol->points[j].x + offset_x);
-	mPoints[j].y = MS_NINT(d*symbol->points[j].y + offset_y);
+        if((symbol->points[j].x < 0) && (symbol->points[j].x < 0)) { // new polygon (PENUP)
+	  if(k>2) {
+            if(fc >= 0)
+	      gdImageFilledPolygon(img, mPoints, k, fc);
+	    if(oc >= 0)
+	      gdImagePolygon(img, mPoints, k, oc);
+          }
+          k = 0; // reset point counter
+        } else {
+  	  mPoints[k].x = MS_NINT(d*symbol->points[j].x + offset_x);
+	  mPoints[k].y = MS_NINT(d*symbol->points[j].y + offset_y); 
+          k++;
+        }
       }
+
       if(fc >= 0)
-	gdImageFilledPolygon(img, mPoints, symbol->numpoints, fc);
+	gdImageFilledPolygon(img, mPoints, k, fc);
       if(oc >= 0)
-	gdImagePolygon(img, mPoints, symbol->numpoints, oc);
+	gdImagePolygon(img, mPoints, k, oc);
       
     } else  { /* NOT filled */     
 
@@ -1498,7 +1520,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 /* ------------------------------------------------------------------------------- */
 void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
-  int i, j;
+  int i, j, k;
   symbolObj *symbol;
   int styleDashed[100];
   int x, y;
@@ -1602,12 +1624,18 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if((brush = searchImageCache(symbolset->imagecache, style, (int)size)) == NULL) { 
       brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
 
-      // draw in the brush image 
+      k = 0; // point counter
       for(i=0;i < symbol->numpoints;i++) {
-        points[i].x = MS_NINT(d*symbol->points[i].x);
-        points[i].y = MS_NINT(d*symbol->points[i].y);
+        if((symbol->points[i].x < 0) && (symbol->points[i].x < 0)) { // new polygon (PENUP)
+          if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
+          k = 0; // reset point counter
+        } else {
+          points[k].x = MS_NINT(d*symbol->points[i].x);
+          points[k].y = MS_NINT(d*symbol->points[i].y);
+          k++;
+        }
       }
-      gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
+      if(k>2) gdImageFilledPolygon(brush, points, k, brush_fc);
 
       symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
     }
@@ -1654,7 +1682,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
-  int i;
+  int i, k;
   gdPoint oldpnt, newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
   gdImagePtr tile;
@@ -1850,11 +1878,18 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     // draw in the tile image    
     if(symbol->filled) {
 
+      k = 0; // point counter
       for(i=0;i < symbol->numpoints;i++) {
-	sPoints[i].x = MS_NINT(d*symbol->points[i].x);
-	sPoints[i].y = MS_NINT(d*symbol->points[i].y);
+        if((symbol->points[i].x < 0) && (symbol->points[i].x < 0)) { // new polygon (PENUP)
+          if(k>2) gdImageFilledPolygon(tile, sPoints, k, tile_fc);      
+          k = 0; // reset point counter
+        } else {
+  	  sPoints[k].x = MS_NINT(d*symbol->points[i].x);
+	  sPoints[k].y = MS_NINT(d*symbol->points[i].y);
+          k++;
+        }
       }
-      gdImageFilledPolygon(tile, sPoints, symbol->numpoints, tile_fc);      
+      if(k>2) gdImageFilledPolygon(tile, sPoints, k, tile_fc);      
 
     } else  { /* shade is a vector drawing */
       
