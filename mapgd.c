@@ -1720,4 +1720,71 @@ msFixedImageCopy (gdImagePtr dst, gdImagePtr src,
     }
     return;
 }
+
+void
+msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
+                  int dstX, int dstY, int srcX, int srcY, int w, int h,
+                  int pct)
+
+{
+    int x, y, pct_alpha;
+
+    /* for most cases the GD copy is fine */
+    if( !gdImageTrueColor(dst) || !gdImageTrueColor(src) )
+        return gdImageCopyMerge( dst, src, dstX, dstY, srcX, srcY, w, h, pct );
+
+
+    /* 
+    ** But for RGBA to RGBA we need to take into account the source
+    ** alpha as well as the percentage transparency 
+    */
+    pct_alpha = 127 - (pct * 127) / 100;
+
+    for (y = 0; (y < h); y++)
+    {
+        for (x = 0; (x < w); x++)
+        {
+            int src_c = gdImageGetPixel (src, srcX + x, srcY + y);
+            int dst_c = gdImageGetPixel (dst, dstX + x, dstY + y);
+            int red, green, blue, res_alpha;
+            int src_alpha = (127-gdTrueColorGetAlpha(src_c));
+            int dst_alpha = (127-gdTrueColorGetAlpha(dst_c));
+
+            if( gdTrueColorGetAlpha(src_c) == gdAlphaTransparent )
+                continue;
+
+            /* Adjust dst alpha according to percentages */
+            if( src_alpha == 127 )
+                dst_alpha = dst_alpha * pct / 100;
+            else
+                dst_alpha = dst_alpha * (pct*src_alpha/127) / 100;
+
+            /* adjust source according to transparency percentage */
+            src_alpha = src_alpha * (100-pct) / 100;
+
+            /* Use simple additive model for resulting transparency */
+            res_alpha = src_alpha + dst_alpha;
+            if( res_alpha > 127 )
+                res_alpha = 127;
+            
+            if( src_alpha + dst_alpha == 0 )
+                dst_alpha = 1;
+
+            red = ((gdTrueColorGetRed( src_c ) * src_alpha)
+                   + (gdTrueColorGetRed( dst_c ) * dst_alpha))
+                / (src_alpha+dst_alpha);
+            green = ((gdTrueColorGetGreen( src_c ) * src_alpha)
+                     + (gdTrueColorGetGreen( dst_c ) * dst_alpha))
+                / (src_alpha+dst_alpha);
+            blue = ((gdTrueColorGetBlue( src_c ) * src_alpha)
+                    + (gdTrueColorGetBlue( dst_c ) * dst_alpha))
+                / (src_alpha+dst_alpha);
+            
+            gdImageSetPixel(dst,dstX+x,dstY+y,
+                            gdTrueColorAlpha( red, green, blue, 
+                                              127-res_alpha ));
+        }
+    }
+}
+
 #endif /* if GD2_VERS > 1 */
