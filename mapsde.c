@@ -2,6 +2,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.80  2004/10/11 14:34:26  hobu
+ * change thread locking policy
+ * to SE_UNPROTECTED_POLICY
+ *
  * Revision 1.79  2004/10/04 22:13:49  hobu
  * touch up comments that weren't properly
  * closed that were causing gcc to complain
@@ -455,17 +459,9 @@ int msSDELayerOpen(layerObj *layer) {
     }
 /* ------------------------------------------------------------------------- */
 /* Set the concurrency for the connection.  This is to support threading.    */
-/* Below is a relevant portion of the SDE C API documentation outlining      */
-/* the implications of this mode of concurrency.                             */
-/*                                                                           */
-/*  SE_LOCK_POLICY Similar to SE_TRYLOCK_POLICY, but instead of failing      */
-/*  if the connection is currently in use, the call hangs until the          */
-/*  thread which has the connection currently locked returns from its        */
-/*  ArcSDE function call. If multiple threads are waiting on the             */
-/*  connection, it is impossible to predict which thread will get the        */
-/*  lock next.                                                               */
 /* ------------------------------------------------------------------------- */
-    status = SE_connection_set_concurrency(sde->connection, SE_LOCK_POLICY);
+    status = SE_connection_set_concurrency( sde->connection, 
+                                            SE_UNPROTECTED_POLICY);
     if(status != SE_SUCCESS) {
       sde_error(status, "msSDELayerOpen()", "SE_connection_set_concurrency()");
       return(MS_FAILURE);
