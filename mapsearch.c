@@ -291,7 +291,19 @@ int msIntersectPolylinePolygon(shapeObj *line, shapeObj *poly) {
 int msIntersectPolygons(shapeObj *p1, shapeObj *p2) {
   int c1,v1,c2,v2;
 
-  /* STEP 1: look for intersecting line segments */
+  /* STEP 1: polygon 1 completely contains 2 (only need to check one point from each part) */
+  for(c2=0; c2<p2->numlines; c2++) {
+    if(msIntersectPointPolygon(&(p2->line[c2].point[0]), p1) == MS_TRUE) // this considers holes and multiple parts
+      return(MS_TRUE);
+  }
+
+  /* STEP 2: polygon 2 completely contains 1 (only need to check one point from each part) */
+  for(c1=0; c1<p1->numlines; c1++) {
+    if(msIntersectPointPolygon(&(p1->line[c1].point[0]), p2) == MS_TRUE) // this considers holes and multiple parts
+      return(MS_TRUE);
+  }
+
+  /* STEP 3: look for intersecting line segments */
   for(c1=0; c1<p1->numlines; c1++)
     for(v1=1; v1<p1->line[c1].numpoints; v1++)
       for(c2=0; c2<p2->numlines; c2++)
@@ -300,22 +312,9 @@ int msIntersectPolygons(shapeObj *p1, shapeObj *p2) {
 	    return(MS_TRUE);
 
   /*
-  ** At this point we know there are are no intersections between edges. However, one polygon might
-  ** contain portions of the other. There may be a case that the following two steps don't catch, but
-  ** I haven't found one yet.
+  ** At this point we know there are are no intersections between edges. There may be other tests necessary
+  ** but I haven't run into any cases that require them.
   */
-
-  /* STEP 2: polygon 1 completely contains 2 (only need to check one point from each part) */
-  for(c2=0; c2<p2->numlines; c2++) {
-    if(msIntersectPointPolygon(&(p2->line[c2].point[0]), p1) == MS_TRUE) // this considers holes and multiple parts
-      return(MS_TRUE);
-  }
-
-  /* STEP 3: polygon 2 completely contains 1 (only need to check one point from each part) */
-  for(c1=0; c1<p1->numlines; c1++) {
-    if(msIntersectPointPolygon(&(p1->line[c1].point[0]), p2) == MS_TRUE) // this considers holes and multiple parts
-      return(MS_TRUE);
-  }
 
   return(MS_FALSE);
 }

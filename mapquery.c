@@ -599,51 +599,56 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   status = msLayerOpen(slp, map->shapepath);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  for(i=0; i<slp->resultcache->numresults; i++) {
-    status = msLayerGetShape(slp, &selectshape, slp->resultcache->results[i].tileindex, slp->resultcache->results[i].shapeindex);
-    if(status != MS_SUCCESS) {
-      msLayerClose(slp);
-      return(MS_FAILURE);
-    }
+  for(l=start; l>=stop; l--) {
+    if(l == slayer) continue; // skip the selection layer
+    
+    lp = &(map->layers[l]);
+    if(!msIsLayerQueryable(lp)) continue;
 
-    if(selectshape.type != MS_SHAPE_POLYGON) {
-      msLayerClose(slp);
-      msSetError(MS_QUERYERR, "Selection features MUST be polygons.", "msQueryByFeatures()");
-      return(MS_FAILURE);
+    // free any previous search results, do it now in case one of the next few tests fail
+    if(lp->resultcache) {
+      if(lp->resultcache->results) free(lp->resultcache->results);
+      free(lp->resultcache);
+      lp->resultcache = NULL;
     }
+    
+    if(lp->status == MS_OFF) continue;
+    
+    if(map->scale > 0) {
+      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
+      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+    }
+    
+    // open this layer
+    status = msLayerOpen(lp, map->shapepath);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+    
+    // build item list (no annotation)
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+    
+    for(i=0; i<slp->resultcache->numresults; i++) {
 
+      status = msLayerGetShape(slp, &selectshape, slp->resultcache->results[i].tileindex, slp->resultcache->results[i].shapeindex);
+      if(status != MS_SUCCESS) {
+	msLayerClose(lp);
+	msLayerClose(slp);
+	return(MS_FAILURE);
+      }
+
+      if(selectshape.type != MS_SHAPE_POLYGON) {
+	msLayerClose(lp);
+	msLayerClose(slp);
+	msSetError(MS_QUERYERR, "Selection features MUST be polygons.", "msQueryByFeatures()");
+	return(MS_FAILURE);
+      }
+      
 #ifdef USE_PROJ
-    if((slp->projection.numargs > 0) && (map->projection.numargs > 0)) {
-      msProjectShape(&(slp->projection), &(map->projection), &selectshape);
-      msComputeBounds(&selectshape); // recompute the bounding box AFTER projection
-    }
+      if((slp->projection.numargs > 0) && (map->projection.numargs > 0)) {
+	msProjectShape(&(slp->projection), &(map->projection), &selectshape);
+	msComputeBounds(&selectshape); // recompute the bounding box AFTER projection
+      }
 #endif
-
-    for(l=start; l>=stop; l--) {
-      lp = &(map->layers[l]);
-      if(!msIsLayerQueryable(lp)) continue;
-
-      // free any previous search results, do it now in case one of the next few tests fail
-      if(lp->resultcache) {
-	if(lp->resultcache->results) free(lp->resultcache->results);
-	free(lp->resultcache);
-	lp->resultcache = NULL;
-      }
-      
-      if(lp->status == MS_OFF) continue;
-      
-      if(map->scale > 0) {
-	if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
-	if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
-      }
-
-      // open this layer
-      status = msLayerOpen(lp, map->shapepath);
-      if(status != MS_SUCCESS) return(MS_FAILURE);
-
-      // build item list (no annotation)
-      status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
-      if(status != MS_SUCCESS) return(MS_FAILURE);
 
       // identify target shapes
       searchrect = selectshape.bounds;
@@ -654,18 +659,20 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       status = msLayerWhichShapes(lp, searchrect);
       if(status == MS_DONE) { // no overlap
 	msLayerClose(lp);
-	continue;
+	break; // next layer
       } else if(status != MS_SUCCESS) {
 	msLayerClose(lp);
 	msLayerClose(slp);
 	return(MS_FAILURE);
       }
 
-      lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
-      lp->resultcache->results = NULL;
-      lp->resultcache->numresults = lp->resultcache->cachesize = 0;
-      lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
-            
+      if(i == 0) {
+	lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
+	lp->resultcache->results = NULL;
+	lp->resultcache->numresults = lp->resultcache->cachesize = 0;
+	lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;    
+      }      
+
       while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { // step through the shapes
 
 	// check for dups when there are multiple selection shapes
@@ -676,7 +683,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	  msFreeShape(&shape);
 	  continue;
 	}
-	
+
 	if(!(lp->template) && !(lp->class[shape.classindex].template)) { // no valid template
 	  msFreeShape(&shape);
 	  continue;
@@ -689,7 +696,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	switch(selectshape.type) { // may eventually support types other than polygon
 	case MS_SHAPE_POLYGON:
 	  
-	  switch(shape.type) { // make sure shape actually intersects the rect (ADD FUNCTIONS SPECIFIC TO RECTOBJ)
+	  switch(shape.type) { // make sure shape actually intersects the selectshape
 	  case MS_SHAPE_POINT:
 	    status = msIntersectMultipointPolygon(&shape.line[0], &selectshape);
 	    break;
@@ -719,14 +726,14 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
 	msFreeShape(&shape);
       } // next shape
-      
-      if(status != MS_DONE) return(MS_FAILURE);
-      
-      msLayerClose(lp);
-    } // next layer
 
-    msFreeShape(&selectshape);
-  } // next selection shape
+      if(status != MS_DONE) return(MS_FAILURE);
+
+      msFreeShape(&selectshape);
+    } // next selection shape
+
+    msLayerClose(lp);
+  } // next layer
 
   msLayerClose(slp);
 

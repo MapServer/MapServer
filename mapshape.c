@@ -1166,6 +1166,8 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
   rectObj shaperect;
   char *filename;
 
+  if(shpfile->status) free(shpfile->status);
+
   shpfile->statusbounds = rect; // save the search extent
 
   // rect and shapefile DON'T overlap...
@@ -1207,6 +1209,8 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
     }   
   }
  
+  shpfile->lastshape = -1;
+
   return(MS_SUCCESS); /* success */
 }
 
@@ -1290,7 +1294,6 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
     return(MS_SUCCESS);
 }
 
-// FIX: need to remove recursion (see msLayerNextShape)
 int msTiledSHPNextShape(layerObj *layer, shapeObj *shape) 
 {
   int i, status, filter_passed = MS_FALSE;
