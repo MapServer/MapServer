@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.362  2004/10/26 15:54:35  sean
+ * replace empty arg lists with ( void ) to eliminate swig warnings, and move
+ * MS_DLL_EXPORT symbol ahead of function types.
+ *
  * Revision 1.361  2004/10/22 04:03:31  dan
  * Ready for 4.4.0-beta1
  *
@@ -1621,13 +1625,13 @@ MS_DLL_EXPORT int msCopyStyle(styleObj *dst, styleObj *src);
 /* ==================================================================== */
 /*      mappool.c: connection pooling API.                              */
 /* ==================================================================== */
-void MS_DLL_EXPORT *msConnPoolRequest( layerObj *layer );
-void MS_DLL_EXPORT  msConnPoolRelease( layerObj *layer, void * );
-void MS_DLL_EXPORT  msConnPoolRegister( layerObj *layer,
+MS_DLL_EXPORT void *msConnPoolRequest( layerObj *layer );
+MS_DLL_EXPORT void msConnPoolRelease( layerObj *layer, void * );
+MS_DLL_EXPORT void msConnPoolRegister( layerObj *layer,
                                         void *conn_handle,
                                         void (*close)( void * ) );
-void MS_DLL_EXPORT  msConnPoolCloseUnreferenced();
-void MS_DLL_EXPORT  msConnPoolFinalCleanup();
+MS_DLL_EXPORT void msConnPoolCloseUnreferenced( void );
+MS_DLL_EXPORT void msConnPoolFinalCleanup( void );
 
 /* ==================================================================== */
 /*      prototypes for functions in mapcpl.c                            */

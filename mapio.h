@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/10/26 15:54:35  sean
+ * replace empty arg lists with ( void ) to eliminate swig warnings, and move
+ * MS_DLL_EXPORT symbol ahead of function types.
+ *
  * Revision 1.1  2004/10/01 19:03:35  frank
  * New
  *
@@ -65,7 +69,7 @@ int MS_DLL_EXPORT msIO_vfprintf( FILE *fp, const char *format, va_list ap );
 
 #endif
 
-int MS_DLL_EXPORT msIO_installFastCGIRedirect();
+int MS_DLL_EXPORT msIO_installFastCGIRedirect( void );
 gdIOCtx MS_DLL_EXPORT *msIO_getGDIOCtx( FILE *fp );
 
 /*
