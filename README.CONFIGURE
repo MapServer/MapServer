@@ -223,11 +223,16 @@ OGR Support:
 
   You have to use the --with-ogr=DIR option to enable OGR support and
   specify where the OGR (or GDAL) source tree is located.  Make sure that 
-  this copy of OGR is compiled before using this option.
+  this copy of OGR is compiled before using this option.  This will link
+  OGR statically into the MapServer executable.
 
   OGR can also be installed as part of a GDAL shared library.  To get the
   full GDAL and OGR source kit visit http://www.remotesensing.org/gdal .
-  When configuring GDAL ensure that --with-ogr is selected.  
+  When configuring GDAL ensure that --with-ogr is selected.
+  Then when you configure MapServer, include the --with-ogr switch with
+  no argument since the location of the GDAL lib also defines the OGR 
+  location in this case.  See the GDAL section below for more details 
+  on using --with-gdal and --with-ogr together.
 
   If mapogr.cpp won't compile due to the lack of ogr_featurestyle.h, please
   copy from gdal-version/ogr/ogr_featurestyle.h into the install include
@@ -249,6 +254,28 @@ GDAL Support:
   to say --with-gdal, but if the gdal-config script cannot be found, please
   use --with-gdal=/usr/local/bin/gdal-config, or whatever path is is required
   to get the gdal-config script. 
+
+  Note that there are several ways to compile GDAL/OGR independently
+  or not in MapServer:
+
+  1- OGR only, statically linked into MapServer, then you point configure
+     directly to the ogr source tree after having compiled OGR:
+      ./configure --with-ogr=/path/to/ogr/source
+
+  2- GDAL only using libgdal.so installed in system lib dirs, this assumes
+     you have previously run 'make install' as root in your GDAL source
+     tree:
+      ./configure --with-gdal
+     or 
+      ./configure --with-gdal=/usr/local/bin/gdal-config
+     (or whatever the path to the installed gdal-config script is.)
+
+  3- GDAL and OGR using libgdal.so, assuming that GDAL was configured with 
+     --with-ogr.  Same as #2 above, but add --with-ogr with no argument to
+     the MapServer configure command:
+      ./configure --with-gdal --with-ogr
+     or 
+      ./configure --with-gdal=/usr/local/bin/gdal-config --with-ogr
 
 
 OGC WMS Compatibility:
