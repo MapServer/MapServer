@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2005/01/26 05:21:19  sdlime
+ * Added support for reading/writing/copying a style width.
+ *
  * Revision 1.33  2004/11/15 19:16:53  sean
  * Do not copy layerinfo, wfslayerinfo, or ogrlayerinfo in msCopyLayer (bug 1055).
  *
@@ -363,6 +366,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
 
     MS_COPYSTELEM(symbol);
     MS_COPYSTELEM(size);
+    MS_COPYSTELEM(width);
     MS_COPYSTELEM(minsize);
     MS_COPYSTELEM(maxsize);
     MS_COPYSTELEM(offsetx);

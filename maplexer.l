@@ -257,7 +257,7 @@ void lexer_cleanup() {
 <INITIAL,OBJECT_STRING>templatepattern	       { return(TEMPLATEPATTERN); }
 <INITIAL,OBJECT_STRING>text		       { return(TEXT); }
 <INITIAL,OBJECT_STRING>tileindex	       { return(TILEINDEX); }
-<VALUE_STRING>tileindex                    { return(MS_LAYER_TILEINDEX); }
+<VALUE_STRING>tileindex                        { return(MS_LAYER_TILEINDEX); }
 <INITIAL,OBJECT_STRING>tileitem		       { return(TILEITEM); }
 <INITIAL,OBJECT_STRING>title	               { return(TITLE); }
 <INITIAL,OBJECT_STRING>to                      { return(TO); }
@@ -269,6 +269,7 @@ void lexer_cleanup() {
 <INITIAL,OBJECT_STRING>type		       { return(TYPE); }
 <INITIAL,OBJECT_STRING>units		       { return(UNITS); }
 <INITIAL,OBJECT_STRING>web		       { return(WEB); }
+<INITIAL,OBJECT_STRING>width                    { return(WIDTH); }
 <INITIAL,OBJECT_STRING>wrap                    { return(WRAP); }
 
 <INITIAL,VALUE_STRING>annotation	       { return(MS_LAYER_ANNOTATION); }

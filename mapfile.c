@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.290  2005/01/26 05:21:19  sdlime
+ * Added support for reading/writing/copying a style width.
+ *
  * Revision 1.289  2004/12/20 22:41:48  sdlime
  * Changed default style angle from 0 to 360.
  *
@@ -1583,6 +1586,7 @@ int initStyle(styleObj *style) {
   style->symbol = 0; // there is always a default symbol
   style->symbolname = NULL;
   style->size = -1; // in SIZEUNITS (layerObj)
+  style->width = 1; // in pixels
   style->minsize = MS_MINSYMBOLSIZE;
   style->maxsize = MS_MAXSYMBOLSIZE;
   style->offsetx = style->offsety = 0; // no offset
@@ -1654,6 +1658,13 @@ int loadStyle(styleObj *style) {
       else
 	style->symbolname = strdup(msyytext);
       break;
+    case(WIDTH):
+      if(getInteger(&(style->width)) == -1) return(-1);
+      if(style->width < 1) {
+        msSetError(MS_MISCERR, "Invalid WIDTH, must an integer greater or equal to 1." , "loadStyle()");
+        return(MS_FAILURE);
+      }
+      break;
     default:
       msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadStyle()", msyytext, msyylineno);
       return(MS_FAILURE);
@@ -1694,6 +1705,7 @@ void writeStyle(styleObj *style, FILE *stream) {
     fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
   else
     fprintf(stream, "        SYMBOL %d\n", style->symbol);
+  if(style->width > 1) fprintf(stream, "        SIZE %d\n", style->width);
   fprintf(stream, "      END\n");
 }
 
