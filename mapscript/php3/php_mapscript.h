@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/09/07 20:18:42  dan
+ * Sync with mapscript.i version 1.16
+ *
  * Revision 1.2  2000/06/28 20:22:02  dan
  * Sync with mapscript.i version 1.9
  *
@@ -105,6 +108,8 @@ queryResultObj *layerObj_queryUsingRect(layerObj *self, mapObj *map,
 int             layerObj_queryUsingFeatures(layerObj *self, mapObj *map, 
                                             queryResultObj *results);
 int             layerObj_setProjection(layerObj *self, char *string);
+int             layerObj_addFeature(layerObj *self, shapeObj *shape);
+int             layerObj_classify(layerObj *self, char *string);
 
 
 classObj       *classObj_new(layerObj *layer);
@@ -116,11 +121,6 @@ int             classObj_setText(classObj *self,layerObj *layer,char *string);
 queryObj       *queryObj_new(layerObj *layer);
 void            queryObj_destroy(queryObj *self);
 int             queryObj_setExpression(queryObj *self, char *string);
-
-struct featureObj *featureObj_new(layerObj *layer);
-void            featureObj_destroy(struct featureObj *self);
-int             featureObj_add(struct featureObj *self, lineObj *p);
-
 
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);
@@ -135,6 +135,7 @@ double          pointObj_distanceToShape(pointObj *self, shapeObj *shape);
 
 lineObj        *lineObj_new();
 void            lineObj_destroy(lineObj *self);
+pointObj       *lineObj_get(lineObj *self, int i);
 int             lineObj_add(lineObj *self, pointObj *p);
 
 
@@ -145,6 +146,8 @@ int             shapeObj_add(shapeObj *self, lineObj *line);
 int             shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer, 
                               gdImagePtr img, char *class_string, 
                               char *label_string);
+int             shapeObj_contains(shapeObj *self, pointObj *point);
+int             shapeObj_intersects(shapeObj *self, shapeObj *shape);
 
 rectObj        *rectObj_new();
 void            rectObj_destroy(rectObj *self);

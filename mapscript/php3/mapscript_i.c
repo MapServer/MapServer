@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.7  2000/09/07 20:18:20  dan
+ * Sync with mapscript.i version 1.16
+ *
  * Revision 1.6  2000/08/24 05:46:22  dan
  * #ifdef everything related to featureObj
  *
@@ -241,7 +244,7 @@ shapeResultObj queryResultObj_next(queryResultObj *self) {
       }
     }
 
-    result.layer = -1; /* no more results */
+    result.layer = -1; // no more results
     result.shape = -1;
     result.query = -1;
 
@@ -260,7 +263,7 @@ void queryResultObj_rewind(queryResultObj *self) {
  * class extensions for layerObj, always within the context of a map
  **********************************************************************/
 layerObj *layerObj_new(mapObj *map) {
-    if(map->numlayers == MS_MAXLAYERS) /* no room */
+    if(map->numlayers == MS_MAXLAYERS) // no room
       return(NULL);
 
     if(initLayer(&(map->layers[map->numlayers])) == -1)
@@ -273,10 +276,10 @@ layerObj *layerObj_new(mapObj *map) {
   }
 
 void layerObj_destroy(layerObj *self) {
-    return; /* do nothing, map deconstrutor takes care of it all */
+    return; // map deconstructor takes care of it
   }
 
-classObj *layerObj_getClass(layerObj *self, int i) { /* returns an EXISTING class */
+classObj *layerObj_getClass(layerObj *self, int i) { // returns an EXISTING class
     if(i >= 0 && i < self->numclasses)
       return &(self->class[i]); 
     else
@@ -315,11 +318,22 @@ int layerObj_setProjection(layerObj *self, char *string) {
     return(loadProjectionString(&(self->projection), string));
   }
 
+int layerObj_addFeature(layerObj *self, shapeObj *shape) {
+    if(insertFeatureList(&(self->features), *shape) == NULL) 
+      return -1;
+    else
+      return 0;
+  }
+
+int layerObj_classify(layerObj *self, char *string) {
+    return msGetClassIndex(self, string);
+  }
+
 /**********************************************************************
  * class extensions for classObj, always within the context of a layer
  **********************************************************************/
 classObj *classObj_new(layerObj *layer) {
-    if(layer->numclasses == MS_MAXCLASSES) /* no room */
+    if(layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
 
     if(initClass(&(layer->class[layer->numclasses])) == -1)
@@ -358,35 +372,13 @@ queryObj *queryObj_new(layerObj *layer) {
   }
 
 void queryObj_destroy(queryObj *self) {
-    return; /* do nothing, map deconstrutor takes care of it all */
+    return; // do nothing, map deconstrutor takes care of it all
   }
 
 int queryObj_setExpression(queryObj *self, char *string) {    
     return loadExpressionString(&self->expression, string);
   }
 
-
-#ifdef __TODO__FEATURE__OBJ__
-/**********************************************************************
- * class extensions for featureObj, always within the context of a layer
- **********************************************************************/
-struct featureObj *featureObj_new(layerObj *layer) {
-    if(!layer->features)
-      layer->features = initFeature(); /* new feature list */
-    else
-      layer->features = addFeature(layer->features);	
-
-    return layer->features;
-  }
-
-void featureObj_destroy(struct featureObj *self) {
-    return; /* do nothing, map deconstrutor takes care of it all */
-  }
-
-int featureObj_add(struct featureObj *self, lineObj *p) {
-    return msAddLine(&self->shape, p);
-  }
-#endif
 
 /**********************************************************************
  * class extensions for pointObj, useful many places
