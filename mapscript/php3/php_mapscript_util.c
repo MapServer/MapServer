@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000-2002, DM Solutions Group
+ * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,8 +30,8 @@
  **********************************************************************
  *
  * $Log$
- * Revision 1.10  2002/01/11 17:30:47  dan
- * Replace global ms_error with thread-safe msGetErrorObj() call
+ * Revision 1.10.2.1  2002/01/17 00:03:08  assefa
+ * Support of php4.1.1.
  *
  * Revision 1.9  2001/09/13 20:56:04  dan
  * Fixed _phpms_add_property_object() for PHP4 (thanks to Zeev Suraski) and
@@ -77,18 +77,14 @@
  **********************************************************************/
 void _phpms_report_mapserver_error(int php_err_type)
 {
-    errorObj *ms_error;
-
-    ms_error = msGetErrorObj();
-
-    if (ms_error->code != MS_NOERR)
+    if (ms_error.code != MS_NOERR)
     {
         php3_error(php_err_type, 
                    "MapServer Error in %s: %s\n", 
-                   ms_error->routine, ms_error->message);
-        ms_error->code = -1;
-        strcpy(ms_error->message, "");
-        strcpy(ms_error->routine, "");
+                   ms_error.routine, ms_error.message);
+        ms_error.code = -1;
+        strcpy(ms_error.message, "");
+        strcpy(ms_error.routine, "");
     }
 }
 
@@ -101,7 +97,8 @@ void _phpms_report_mapserver_error(int php_err_type)
 #ifdef PHP4
 void *_phpms_fetch_handle2(pval *pObj, 
                            int handle_type1, int handle_type2,
-                            HashTable *list)
+                           void ***tsrm_ls,
+                           HashTable *list)
                                   
 {
     pval **phandle;
@@ -141,6 +138,7 @@ void *_phpms_fetch_handle2(pval *pObj,
 
 void *_phpms_fetch_handle2(pval *pObj, 
                            int handle_type1, int handle_type2, 
+                           void ***tsrm_ls,
                            HashTable *list)
 {
     pval *phandle;
@@ -162,6 +160,7 @@ void *_phpms_fetch_handle2(pval *pObj,
     {
         int type;
         retVal = (void *)php3_list_find(phandle->value.lval, &type);
+        
         if (retVal == NULL || (type != handle_type1 && type != handle_type2))
         {
             php3_error(E_ERROR, "Object has an invalid _handle_ property");
@@ -180,9 +179,14 @@ void *_phpms_fetch_handle2(pval *pObj,
  *                     _phpms_fetch_handle()
  **********************************************************************/
 void *_phpms_fetch_handle(pval *pObj, int handle_type, 
-                          HashTable *list)
+                          void ***tsrm_ls, HashTable *list)
 {
-    return _phpms_fetch_handle2(pObj, handle_type, handle_type, list);
+#ifdef PHP4    
+    return _phpms_fetch_handle2(pObj, handle_type, handle_type, tsrm_ls, list);
+#else
+    return _phpms_fetch_handle2(pObj, handle_type, handle_type, NULL, list);
+#endif
+
 }
 
 
@@ -192,7 +196,8 @@ void *_phpms_fetch_handle(pval *pObj, int handle_type,
 #ifdef PHP4
 char *_phpms_fetch_property_handle2(pval *pObj, char *property_name, 
                                     int handle_type1, int handle_type2,
-                                    HashTable *list, int err_type)
+                                    void ***tsrm_ls, HashTable *list, 
+                                    int err_type)
 {
     pval **phandle;
     void *retVal = NULL;
@@ -227,6 +232,7 @@ char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
 #else
 char *_phpms_fetch_property_handle2(pval *pObj, char *property_name, 
                                     int handle_type1, int handle_type2,
+                                    void ***tsrm_ls,
                                     HashTable *list, int err_type)
 {
     pval *phandle;
@@ -265,11 +271,13 @@ char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
  *                     _phpms_fetch_property_handle()
  **********************************************************************/
 char *_phpms_fetch_property_handle(pval *pObj, char *property_name, 
-                                   int handle_type, HashTable *list,
+                                   int handle_type, void ***tsrm_ls,
+                                   HashTable *list,
                                    int err_type)
 {
     return _phpms_fetch_property_handle2(pObj, property_name, 
-                                         handle_type, handle_type, list,
+                                         handle_type, handle_type, tsrm_ls, 
+                                         list,
                                          err_type);
 }
 
@@ -665,6 +673,7 @@ int _phpms_object_init(pval *return_value, int  handle_id,
                        void           *zend_class_entry_ptr )
 {
 #ifdef PHP4
+    void ***tsrm_ls = NULL;
     zend_class_entry *new_class_entry_ptr;
     new_class_entry_ptr = (zend_class_entry *)zend_class_entry_ptr;
 

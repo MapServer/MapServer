@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4.4.1  2002/01/17 00:03:08  assefa
+ * Support of php4.1.1.
+ *
  * Revision 1.4  2001/09/13 20:56:27  dan
  * Added _phpms_fetch_property_resource().
  *
@@ -114,17 +117,20 @@ void _phpms_report_mapserver_error(int php_err_type);
 
 void *_phpms_fetch_handle2(pval *pObj, 
                            int handle_type1, int handle_type2, 
-                           HashTable *list);
+                           void ***tsrm_ls, HashTable *list);
 
 void *_phpms_fetch_handle(pval *pObj, int handle_type, 
-                          HashTable *list);
+                          void ***tsrm_ls, HashTable *list);
 
 char *_phpms_fetch_property_handle2(pval *pObj, char *property_name, 
                                     int handle_type1, int handle_type2,
-                                    HashTable *list, int err_type);
+                                    void ***tsrm_ls, HashTable *list, 
+                                    int err_type);
 char *_phpms_fetch_property_handle(pval *pObj, char *property_name, 
-                                   int handle_type, HashTable *list,
+                                   int handle_type, void ***tsrm_ls, 
+                                   HashTable *list,
                                    int err_type);
+
 char *_phpms_fetch_property_string(pval *pObj, char *property_name, 
                                    int err_type);
 long _phpms_fetch_property_long(pval *pObj, char *property_name, 
