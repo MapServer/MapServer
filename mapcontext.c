@@ -8,7 +8,7 @@
  * Author:   Julien-Samuel Lacroix, DM Solutions Group (lacroix@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2002, Julien-Samuel Lacroix, DM Solutions Group Inc
+ * Copyright (c) 2002-2003, Julien-Samuel Lacroix, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.46  2003/07/11 15:43:20  dan
+ * Try to pick a supported format when current format is not supported
+ *
  * Revision 1.45  2003/06/26 12:43:14  assefa
  * typo : replace printf by fprintf.
  *
@@ -1012,7 +1015,65 @@ int msLoadMapContext(mapObj *map, char *filename)
                                                 "wms_formatlist", pszValue);
                       }
                   }
-              }
+
+                  /* Make sure selected format is supported or select another
+                   * supported format.  Note that we can efficiently do this
+                   * only for GIF/PNG/JPEG, can't try to handle all GDAL
+                   * formats.
+                   */
+                  pszValue = msLookupHashTable(layer->metadata, "wms_format");
+
+                  if (
+#ifndef USE_GD_PNG
+                      strcasecmp(pszValue, "image/png") == 0 || 
+                      strcasecmp(pszValue, "PNG") == 0 ||
+#endif
+#ifndef USE_GD_JPEG
+                      strcasecmp(pszValue, "image/jpeg") == 0 || 
+                      strcasecmp(pszValue, "JPEG") == 0 ||
+#endif
+#ifndef USE_GD_GIF
+                      strcasecmp(pszValue, "image/gif") == 0 || 
+                      strcasecmp(pszValue, "GIF") == 0 ||
+#endif
+                      0 )
+                  {
+                      char **papszList=NULL;
+                      int i, numformats=0;
+
+                      pszValue = msLookupHashTable(layer->metadata, 
+                                                   "wms_formatlist");
+
+                      papszList = split(pszValue, ',', &numformats);
+                      for(i=0; i < numformats; i++)
+                      {
+                          if (
+#ifdef USE_GD_PNG
+                              strcasecmp(papszList[i], "image/png") == 0 || 
+                              strcasecmp(papszList[i], "PNG") == 0 ||
+#endif
+#ifdef USE_GD_JPEG
+                              strcasecmp(papszList[i], "image/jpeg") == 0 || 
+                              strcasecmp(papszList[i], "JPEG") == 0 ||
+#endif
+#ifdef USE_GD_GIF
+                              strcasecmp(papszList[i], "image/gif") == 0 || 
+                              strcasecmp(papszList[i], "GIF") == 0 ||
+#endif
+                              0 )
+                          {
+                              /* Found a match */
+                              msInsertHashTable(layer->metadata, 
+                                                "wms_format", papszList[i]);
+                              break;
+                          }
+                      }
+                      if(papszList)
+                          msFreeCharArray(papszList, numformats);
+
+                  } /* end if unsupported format */
+                   
+              } /* end FormatList parsing */
 
               // Style
               if( strcasecmp(pszVersion, "0.1.4") >= 0 )
@@ -1176,8 +1237,9 @@ int msLoadMapContext(mapObj *map, char *filename)
                   }
                   free(pszValue);
               }
-          }
-      }
+
+          }/* end Layer parsing */
+      }/* for */
   }
 
   if(pszMapProj)
