@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.66  2004/01/06 21:18:02  julien
+ * Make STYLEITEM AUTO work with an empty CLASS (Bug 531)
+ *
  * Revision 1.65  2003/11/09 20:19:09  frank
  * fixed support for 3D multipoint datasets
  *
@@ -2006,6 +2009,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   c->styles[0].outlinecolor = c->styles[0].color = oPenColor;
                   c->styles[0].symbol = nPenSymbol;
                   c->styles[0].size = nPenSize;
+                  c->numstyles = 1;
               }
 
           }
@@ -2049,6 +2053,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   c->styles[0].symbol = msOGRGetSymbolId(&(map->symbolset), 
                                                          pszName, NULL);
               }
+              c->numstyles = 1;
           }
           else if (poStylePart->GetType() == OGRSTCSymbol)
           {
@@ -2073,6 +2078,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               c->styles[0].symbol = msOGRGetSymbolId(&(map->symbolset),
                                                     pszName, 
                                                     "default-marker");
+              c->numstyles = 1;
           }
 
           delete poStylePart;

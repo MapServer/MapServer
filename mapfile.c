@@ -1588,36 +1588,17 @@ void freeClass(classObj *class)
  */
 void resetClassStyle(classObj *class)
 {
+  int i;
+
   freeLabel(&(class->label));
 
   freeExpression(&(class->text));
   initExpression(&(class->text));
 
-  /*
-  ** Not sure what to do here, needs DMS attention.
-  **
-  msFree(class->symbolname);
-  msFree(class->overlaysymbolname);
-
-  class->color = -1;
-  class->symbol = 0;
-  class->sizescaled = class->size = 1;
-  class->minsize = MS_MINSYMBOLSIZE;
-  class->maxsize = MS_MAXSYMBOLSIZE;
-  class->backgroundcolor = -1;
-  class->outlinecolor = -1;
-  class->symbolname = NULL;
-
-  class->overlaybackgroundcolor = -1;
-  class->overlaycolor = -1;
-  class->overlayoutlinecolor = -1;
-  class->overlaysizescaled = class->overlaysize = 1;
-  class->overlayminsize = MS_MINSYMBOLSIZE;
-  class->overlaymaxsize = MS_MAXSYMBOLSIZE;
-  class->overlaysymbol = -1;
-  class->overlaysymbolname = NULL; 
-  **
-  */
+  // reset styles
+  class->numstyles = 0;
+  for(i=0; i<MS_MAXSTYLES; i++)
+    initStyle(&(class->styles[i]));
 
   initLabel(&(class->label));
   class->label.sizescaled = class->label.size = -1; // no default
