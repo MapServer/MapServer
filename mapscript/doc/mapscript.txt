@@ -56,18 +56,126 @@ return arrays or sequences or accept array or sequence arguments.
 We use the SWIG terms *mutable* and *immutable* instead of read-write
 and read-only.
 
-..  Following is an anchor, named 'colorObj'.  We link to this anchor by
-    typing 'colorObj_'.  Let us always put such an anchor before all
+..  Following is an anchor, named 'classObj'.  We link to this anchor by
+    typing 'classObj_'.  Let us always put such an anchor before all
     class headings.
 ..
 
-.. _colorObj:
+-----------------------------------------------------------------------------
+ classObj
+-----------------------------------------------------------------------------
 
-..  Subheading for colorObj
-..
+Attributes
+----------
+
+status : int mutable
+    MS_ON or MS_OFF
+    
+numstyles : int immutable
+    Number of styles for class
+    
+label : labelObj_ mutable
+    Definition of class labeling
+    
+name : string mutable
+    Unique within a layer
+    
+title : string mutable
+    Text used for legend labeling
+
+template : string mutable
+    Template for queries
+
+type : int mutable
+    The layer type of its parent layer
+
+minscale : float mutable
+    The minimum scale at which class is drawn
+    
+maxscale : float mutable
+    The maximum scale at which class is drawn
+    
+layer : layerObj_ immutable
+    Reference to the parent layer
+
+debug : int mutable
+    MS_TRUE or MS_FALSE
+    
+keyimage : string
+    Path to an image to represent the class in a legend.
+
+Method Details
+--------------
+
+.. _new classObj:
+
+classObj_ new classObj(layerObj_ layer)
+    Create a new child classObj instance at the tail (highest index) of 
+    the class array of the parent *layer*.
+
+.. _createLegendIcon:
+ 
+imageObj_ createLegendIcon(mapObj_ map, layerObj_ layer, int width, int height)     Draw and return a new legend icon.
+
+.. _drawlegendIcon:
+
+int drawLegendIcon(mapObj_ map, layerObj_ layer, int width, int height, imageObj_ dstImage, int dstX, int dstY)
+    Draw the legend icon on im object at dstX, dstY.  Returns MS_SUCCESS or
+    MS_FAILURE.
+
+.. _getExpressionString:
+  
+string getExpressionString()
+    Return a string representation of the expression enclosed in the quote
+    characters appropriate to the expression type.
+
+.. _classObj.getMetaData:
+
+string getMetaData(string key)
+    Return the value of the classObj metadata at *key*.
+
+.. _getStyle:
+
+styleObj_ getStyle(int index)
+    Return a reference to the styleObj at *index* in the styles array.
+
+.. _insertStyle:
+
+int insertStyle(styleObj_ style [, int index=-1])
+    Insert a styleObj into the styles array at index *index*.  Default
+    is -1, or the end of the array.  Returns the index at which the 
+    style was inserted.
+
+.. _moveStyleDown:
+
+int moveStyleDown(int index)
+    Swap the styleObj at *index* with the styleObj *index* + 1.
+    
+.. _moveStyleUp:
+
+int moveStyleUp(int index)
+    Swap the styleObj at *index* with the styleObj *index* - 1.
+
+.. _removeStyle:
+
+styleObj_ removeStyle(int index)
+    Remove the styleObj at *index* from the styles array and return a
+    copy.
+
+.. _setExpression:
+
+int setExpression(string expression)
+    Set expression string where *expression* is a MapServer regular, logical
+    or string expression.  Returns MS_SUCCESS or MS_FAILUIRE.
+  
+.. _classObj.setMetaData:
+
+int setMetaData(string key, string value)
+    Insert *value* into the classObj metadata at *key*.  Returns MS_SUCCESS
+    or MS_FAILURE.
 
 -----------------------------------------------------------------------------
- class colorObj
+ colorObj
 -----------------------------------------------------------------------------
 
 Since the 4.0 release, MapServer colors are instances of colorObj.
@@ -90,52 +198,31 @@ blue : int mutable
 Methods
 -------
 
-- `new colorObj`_
-- setRGB_
-- setHex_
-- toHex_
-   
-Attribute Details
------------------
-
-int **red**, int **green**, int **blue**
-
-Red, green, and blue can be any value between 0 and 255. *Mutable*.
-
-Method Details
---------------
-
 .. _`new colorObj`:
 
-colorObj_ **new** **colorObj** ([int red=0, int green=0, int blue=0])
-
+colorObj_ new colorObj([int red=0, int green=0, int blue=0])
     Create a new instance.  The color arguments are optional.
     
 .. _setRGB:
 
-int **setRGB** (int red, int green, int blue)
-
-    Set all three RGB components.
+int setRGB(int red, int green, int blue)
+    Set all three RGB components.  Returns MS_SUCCESS or MS_FAILURE.
     
 .. _setHex:
 
-int **setHex** (string hexcolor)
-    
+int setHex(string hexcolor)
     Set the color to values specified in case-independent hexadecimal
     notation.  Calling setHex('#ffffff') assigns values of 255 to each
-    color component.
+    color component.  Returns MS_SUCCESS or MS_FAILURE.
     
 .. _toHex:
 
-string **toHex** ()
-
+string toHex()
     Compliments setHex, returning a hexadecimal representation of the
     color components.
     
-.. _mapObj:
-
 ------------
-class mapObj
+ mapObj
 ------------
 
 Attributes
@@ -158,22 +245,26 @@ Method Details
 
 x
 
-.. _layerObj:
-
 --------------
-class layerObj
+ labelObj
 --------------
 
-.. _imageObj:
+x
 
 --------------
-class imageObj
+ layerObj
 --------------
 
-.. _pointObj:
+x
 
 --------------
-class pointObj
+ imageObj
+--------------
+
+x 
+
+--------------
+ pointObj
 --------------
 
 Primitive class for points.
@@ -181,9 +272,14 @@ Primitive class for points.
 Attributes
 ----------
 
-- x: float, mutable
-- y: float, mutable
-- m: float, mutable
+x : float mutable
+    Easting
+    
+y : float mutable
+    Northing
+    
+m : float mutable
+    Measure.  Meaningful only for measured shapefiles.
 
 Methods
 -------
@@ -195,75 +291,50 @@ Methods
 - draw [pointObj.draw_]
 - project [pointObj.project_]
 
-Attribute Details
------------------
-
-float **x**, float **y**
-
-Easting and northing values.  *Mutable*.
-
-float **m**
-
-Measure is meaningful only for measured shapefiles.  *Mutable*.
-
 Method Details
 --------------
 
 .. _new pointObj:
 
-pointObj_ **new** **pointObj** ([float x, float y])
-
+pointObj_ new pointObj([float x, float y])
     Create new instance.  Easting and northing arguments are optional.
 
 .. _pointObj.draw:
 
-int **draw** (mapObj_ map, layerObj_ layer, imageObj_ image, int classindex, string text)
-
+int draw(mapObj_ map, layerObj_ layer, imageObj_ image, int classindex, string text)
     Draw the point using the styles defined by the *classindex* class of
-    *layer* and labeled with string *text*.
+    *layer* and labeled with string *text*.  Returns MS_SUCCESS or MS_FAILURE.
 
 .. _distanceToPoint:
 
-float **distanceToPoint** (pointObj_ point)
-
+float distanceToPoint(pointObj_ point)
     Returns the distance to *point*.
    
 .. _distanceToSegment:
 
-float **distanceToSegment** (pointObj_ point1, pointObj_ point2)
-
-    Returns the minimum distance to the line segment connecting
+float distanceToSegment(pointObj_ point1, pointObj_ point2)
+    Returns the minimum distance to a hypothetical line segment connecting 
     *point1* and *point2*.
    
 .. _distanceToShape:
 
-float **distanceToShape** (shapeObj_ shape)
-
+float distanceToShape(shapeObj_ shape)
     Returns the minimum distance to *shape*.
 
 .. _pointObj.project:
 
-int **project** (projectionObj_ *proj_in*, projectionObj_ *proj_out*)
-
+int project(projectionObj_ proj_in, projectionObj_ proj_out)
     Reproject point from *proj_in* to *proj_out*.  Transformation
-    is done in place.
-
-.. _projectionObj:
+    is done in place.  Returns MS_SUCCESS or MS_FAILURE.
 
 -------------------
-class ProjectionObj
+ ProjectionObj
 -------------------
 
-.. _shapeObj:
-
---------------
-class shapeObj
---------------
-
-.. _rectObj:
+x
 
 -------------
-class rectObj
+ rectObj
 -------------
 
 Map extents and shape bounds are instances of rectObj_.
@@ -271,10 +342,17 @@ Map extents and shape bounds are instances of rectObj_.
 Attributes
 ----------
 
-- minx: float, mutable
-- miny: float, mutable
-- maxx: float, mutable
-- maxy: float, mutable
+minx : float mutable
+    Minimum easting
+    
+miny : float mutable
+    Minimum northing
+    
+maxx : float mutable
+    Maximum easting
+    
+maxy : float mutable
+    Maximum northing
 
 Methods
 -------
@@ -284,43 +362,41 @@ Methods
 - project [rectObj.project_]
 - toPolygon_
    
-Attribute Details
------------------
-
-float **minx**, float **miny**, float **maxx**, float **maxy**
-
-    Minimum easting, minimum northing, maximum easting, and
-    maximum northing of rectangle region.  *Mutable*.
-
 Method Details
 --------------
 
 .. _new rectObj:
 
-rectObj_  **new** **rectObj** ([float minx, float miny, float maxx, float maxy])
-
+rectObj_  new rectObj([float minx, float miny, float maxx, float maxy])
     Create new instance.  The four easting and northing arguments
     are optional.
 
-
 .. _rectObj.draw:
 
-int **draw** (mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text)
-
+int draw(mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text)
     Draw rectangle into *img* using style defined by the *classindex* class
-    of *layer*.  The rectangle is labeled with the string *text*.
+    of *layer*.  The rectangle is labeled with the string *text*.  Returns 
+    MS_SUCCESS or MS_FAILURE.
 
 .. _rectObj.project:
 
-int **project** (projectionObj_ proj_in, projectionObj_ proj_out)
-
+int project(projectionObj_ proj_in, projectionObj_ proj_out)
     Reproject rectangle from *proj_in* to *proj_out*.  Transformation
-    is done in place.
-
+    is done in place.  Returns MS_SUCCESS or MS_FAILURE.
+    
 .. _toPolygon:
 
-shapeObj_ **toPolygon** ()
-
+shapeObj_ toPolygon()
     Convert to a polygon of five vertices.
-        
 
+--------------
+ shapeObj
+--------------
+
+x
+
+--------------
+ styleObj
+--------------
+
+x
