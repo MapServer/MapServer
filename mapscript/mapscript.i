@@ -33,6 +33,99 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include typemaps.i
 %include constraints.i
 
+
+/******************************************************************************
+ * Supporting 'None' as an argument to attribute accessor functions
+ ******************************************************************************
+ *
+ * Typemaps to support NULL in attribute accessor functions
+ * provided to Steve Lime by David Beazley and tested for Python
+ * only by Sean Gillies.
+ *
+ * With the use of these typemaps and some filtering on the mapscript
+ * wrapper code to change the argument parsing of *_set() methods from
+ * "Os" to "Oz", we can execute statements like
+ *
+ *   layer.group = None
+ *
+ *****************************************************************************/
+
+#ifdef __cplusplus
+%typemap(memberin) char * {
+  if ($1) delete [] $1;
+  if ($input) {
+     $1 = ($1_type) (new char[strlen($input)+1]);
+     strcpy((char *) $1,$input);
+  } else {
+     $1 = 0;
+  }
+}
+%typemap(memberin,warning="451:Setting const char * member may leak
+memory.") const char * {
+  if ($input) {
+     $1 = ($1_type) (new char[strlen($input)+1]);
+     strcpy((char *) $1,$input);
+  } else {
+     $1 = 0;
+  }
+}
+%typemap(globalin) char * {
+  if ($1) delete [] $1;
+  if ($input) {
+     $1 = ($1_type) (new char[strlen($input)+1]);
+     strcpy((char *) $1,$input);
+  } else {
+     $1 = 0;
+  }
+}
+%typemap(globalin,warning="451:Setting const char * variable may leak
+memory.") const char * {
+  if ($input) {
+     $1 = ($1_type) (new char[strlen($input)+1]);
+     strcpy((char *) $1,$input);
+  } else {
+     $1 = 0;
+  }
+}
+#else
+%typemap(memberin) char * {
+  if ($1) free((char*)$1);
+  if ($input) {
+     $1 = ($1_type) malloc(strlen($input)+1);
+     strcpy((char*)$1,$input);
+  } else {
+     $1 = 0;
+  }
+}
+%typemap(memberin,warning="451:Setting const char * member may leak
+memory.") const char * {
+  if ($input) {
+     $1 = ($1_type) malloc(strlen($input)+1);
+     strcpy((char*)$1,$input);
+  } else {
+     $1 = 0;
+  }
+}
+%typemap(globalin) char * {
+  if ($1) free((char*)$1);
+  if ($input) {
+     $1 = ($1_type) malloc(strlen($input)+1);
+     strcpy((char*)$1,$input);
+  } else {
+     $1 = 0;
+  }
+}
+%typemap(globalin,warning="451:Setting const char * variable may leak
+memory.") const char * {
+  if ($input) {
+     $1 = ($1_type) malloc(strlen($input)+1);
+     strcpy((char*)$1,$input);
+  } else {
+     $1 = 0;
+  }
+}
+#endif // __cplusplus
+
 // Python-specific module code included here
 
 #ifdef SWIGPYTHON
