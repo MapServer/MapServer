@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.43  2004/10/04 17:02:28  frank
+ * fixed handling of default_value in msOWSPrintValidateMetadata
+ *
  * Revision 1.42  2004/10/01 19:14:47  frank
  * use msIO_ calls
  *
@@ -612,7 +615,7 @@ int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata,
 
         if (default_value)
         {
-            if(msIsXMLTagValid(value) == MS_FALSE)
+            if(msIsXMLTagValid(default_value) == MS_FALSE)
                 msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
                         "in a XML tag context. -->\n", default_value);
             msIO_fprintf(stream, format, default_value);
