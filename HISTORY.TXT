@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Coorect Bug with GML BBOX output when using a <Filter> with a 
+  GetFeature request (Bug 913) 
+
 - Encode all metadatas and mapfile parameters outputed in a xml document.
   (Bug 802)
 
