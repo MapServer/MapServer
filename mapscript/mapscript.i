@@ -38,7 +38,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %}
 #endif
 
+// Problem with SWIG CSHARP typemap for pointers
+#ifndef SWIGCSHARP
 %include typemaps.i
+#endif
+
 %include constraints.i
 
 
