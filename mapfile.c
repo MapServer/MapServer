@@ -3434,6 +3434,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 {
   mapObj *map=NULL;
   int i,j,k;
+  char szPath[MS_MAXPATHLEN], szCWDPath[MS_MAXPATHLEN];
 
   if(!filename) {
     msSetError(MS_MISCERR, "Filename is undefined.", "msLoadMap()");
@@ -3470,10 +3471,13 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 
   // If new_mappath is provided then use it, otherwise use the location
   // of the mapfile as the default path
+  getcwd(szCWDPath, MS_MAXPATHLEN);
   if (new_mappath)
-      map->mappath = strdup(new_mappath);
+      map->mappath = strdup(
+          msBuildPath(szPath, szCWDPath, strdup(new_mappath)));
   else
-      map->mappath = getPath(filename);
+      map->mappath = strdup(
+          msBuildPath(szPath, szCWDPath, getPath(filename)));
 
   for(;;) {
 

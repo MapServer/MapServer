@@ -193,6 +193,12 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     } else {
       sprintf(file2, "%s%s", path, file1);
       //msInsertHashTable(fontset->fonts, alias, file2);
+
+      /*
+      ** msBuildPath is use here, but if we have to save the fontset file
+      ** the msBuildPath must be done everywhere the fonts are used and 
+      ** removed here.
+      */
       msInsertHashTable(fontset->fonts, alias, 
                         msBuildPath(szPath, fontset->map->mappath, file2));
       
@@ -224,7 +230,6 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
     int bbox[8];
     char *error=NULL, *font=NULL;
-    char szPath[MS_MAXPATHLEN];
 
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
@@ -238,13 +243,9 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     }
 
 #ifdef USE_GD_TTF
-    error = gdImageStringTTF(NULL, bbox, 0, 
-                             msBuildPath(szPath, fontset->map->mappath, font),
-                             label->size, 0, 0, 0, string);
+    error = gdImageStringTTF(NULL, bbox, 0, font,label->size, 0, 0, 0, string);
 #else
-    error = gdImageStringFT(NULL, bbox, 0, 
-                             msBuildPath(szPath, fontset->map->mappath, font),
-                            label->size, 0, 0, 0, string);
+    error = gdImageStringFT(NULL, bbox, 0, font, label->size, 0, 0, 0, string);
 #endif
     if(error) {
         msSetError(MS_TTFERR, error, "msGetLabelSize()");

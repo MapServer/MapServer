@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.130  2002/12/19 19:27:32  julien
+ * use an absolute path in map->mappath
+ *
  * Revision 1.129  2002/12/17 22:52:53  dan
  * Fixed return value of map->selectOutputFormat()
  *
@@ -1196,24 +1199,18 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      */
 
 #if defined(PHP4) && defined(WIN32)
-    /* With PHP4 on WINNT, we have to use the virtual_cwd API... for now we'll
+    /* With PHP4, we have to use the virtual_cwd API... for now we'll
      * just make sure that the .map file path is absolute, but what we
      * should really do is make all of MapServer use the V_* macros and
      * avoid calling setcwd() from anywhere.
      */
-    if (strlen(pFname->value.str.val) == 0 ||
-        IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
-        pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
-    else
-    {
-        char    szFname[MAXPATHLEN];
-        if (virtual_getcwd(szFname, MAXPATHLEN TSRMLS_CC) != NULL)
-        {
-            strcat(szFname, "\\");
-            strcat(szFname, pFname->value.str.val, pszNewPath);
-            pNewObj = mapObj_new(szFname, pszNewPath);
-        }
-    }
+    char        szPath[MS_MAXPATHLEN], szFname[MS_MAXPATHLEN];
+    char        szNewPath[MS_MAXPATHLEN];
+
+    virtual_getcwd(szFname, MS_MAXPATHLEN TSRMLS_CC);
+    msBuildPath(szPath, szFname, pFname->value.str.val);
+    msBuildPath(szNewPath, szFname, pszNewPath);
+    pNewObj = mapObj_new(szPath, szNewPath);
 #else
     pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
 #endif
