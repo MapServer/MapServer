@@ -73,7 +73,7 @@ wrapper_source = "mapscript_wrap.c"
 # Had to specify 'extra_link_args = ["-static", "-lgd"]' because
 # mapscript requires the gd library, which on my system is static.
 setup(name = "mapscript",
-      version = "4.2.2",
+      version = "4.2.4",
       description = "Python interface to MapServer objects.",
       author = "Mapserver project - SWIGged MapScript library.",
       url = "http://mapserver.gis.umn.edu/",

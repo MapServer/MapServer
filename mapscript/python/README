@@ -59,11 +59,6 @@ produces a higher performance module.
 
     swig -python -modern -o mapscript_wrap.c ../mapscript.i
 
-Users who would like to try the next generation API and next
-generation class names ('Map' instead of 'mapObj', &c), should
-add -DNEXT_GENERATION_NAMES and -DNEXT_GENERATION_API options
-to the swig statement.
-
 
 Testing
 ----------------------------------------------------------------
