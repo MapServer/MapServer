@@ -6,6 +6,7 @@
 */
 
 #include "map.h"
+#include "maphash.h"
 
 #define IDSIZE 128
 #define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("https://", s, 8) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
@@ -108,11 +109,32 @@ int isOn(mapservObj* msObj, char *name, char *group);
 int checkWebScale(mapservObj *msObj);
 int setExtent(mapservObj *msObj);
 
-int msReturnPage(mapservObj* msObj, char* , int);
+int msReturnPage(mapservObj* msObj, char* , int, char **);
 int msReturnURL(mapservObj* msObj, char*, int);
-int msReturnQuery(mapservObj* msObj, char* pszMimeType);
+int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer);
 
 int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType);
 
 int msRedirect(char* url);
+
+char *generateLegendTemplate(mapservObj *msObj);
+
+int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError);
+
+
+char *msProcessTemplate(mapObj *map, int bGenerateImages, 
+                         char **names, char **values, 
+                         int numentries);
+
+char *msProcessLegendTemplate(mapObj *map,
+                              char **names, char **values, 
+                              int numentries);
+
+char *msProcessQueryTemplate(mapObj *map,
+                             char **names, char **values, 
+                             int numentries);
+
 #endif
+
+
+

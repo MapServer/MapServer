@@ -902,8 +902,9 @@ int main(int argc, char *argv[]) {
     gdImagePtr img=NULL;
     int status;
 
+
     msObj = msAllocMapServObj();
-   
+
 #ifdef USE_EGIS
     // OV -egis- Initialize egis error log file here...
     initErrLog("/export/home/tmp/msError.log");
@@ -995,51 +996,22 @@ int main(int argc, char *argv[]) {
       
       setExtent(msObj);
       checkWebScale(msObj);
-         
-      if(msObj->Map->status == MS_ON) {
-	if(QueryFile)
-	  img = msDrawQueryMap(msObj->Map);
-	else
-	  img = msDrawMap(msObj->Map);
-	if(!img) writeError();
-	sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));	
-	if(msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality) == -1) writeError();
-	gdImageDestroy(img);
-      }
+       
+/* -------------------------------------------------------------------- */
+/*      generate map, legend, scalebar and refernce images.             */
+/* -------------------------------------------------------------------- */
+      if (msGenerateImages(msObj, QueryFile, MS_TRUE) == MS_FALSE)
+        writeError();
       
-      if(msObj->Map->legend.status == MS_ON) {
-	img = msDrawLegend(msObj->Map);
-	if(!img) writeError();
-	sprintf(buffer, "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
-	if(msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->legend.transparent, msObj->Map->legend.interlace, msObj->Map->imagequality) == -1) writeError();
-	gdImageDestroy(img);
-      }
-      
-      if(msObj->Map->scalebar.status == MS_ON) {
-	img = msDrawScalebar(msObj->Map);
-	if(!img) writeError();
-	sprintf(buffer, "%s%ssb%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
-	if(msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->scalebar.transparent, msObj->Map->scalebar.interlace, msObj->Map->imagequality) == -1) writeError();
-	gdImageDestroy(img);
-      }
-
-      if(msObj->Map->reference.status == MS_ON) {
-	img = msDrawReferenceMap(msObj->Map);
-	if(!img) writeError();
-	sprintf(buffer, "%s%sref%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
-	if(msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality) == -1) writeError();
-	gdImageDestroy(img);
-      }
-
       if(QueryFile) {
-         if (msReturnQuery(msObj, "text/html") != MS_SUCCESS)
+          if (msReturnQuery(msObj, "text/html", NULL) != MS_SUCCESS)
            writeError();
       } else {
 	if(TEMPLATE_TYPE(msObj->Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
 	  printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
 	  printf("<!-- %s -->\n", msGetVersion());
 	  fflush(stdout);
-	  if (msReturnPage(msObj, msObj->Map->web.template, BROWSE) != MS_SUCCESS)
+	  if (msReturnPage(msObj, msObj->Map->web.template, BROWSE, NULL) != MS_SUCCESS)
          writeError();
 	} else {	
 	  if (msReturnURL(msObj, msObj->Map->web.template, BROWSE) != MS_SUCCESS)

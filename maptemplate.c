@@ -3,7 +3,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-
+#include <time.h>
 /*
  * Redirect to (only use in CGI)
  * 
@@ -94,7 +94,7 @@ int checkWebScale(mapservObj *msObj)
    if((msObj->Map->scale < msObj->Map->web.minscale) && (msObj->Map->web.minscale > 0)) {
       if(msObj->Map->web.mintemplate) { // use the template provided
          if(TEMPLATE_TYPE(msObj->Map->web.mintemplate) == MS_FILE) {
-            if ((status = msReturnPage(msObj, msObj->Map->web.mintemplate, BROWSE)) != MS_SUCCESS) return status;
+            if ((status = msReturnPage(msObj, msObj->Map->web.mintemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
          }
          else
          {
@@ -118,7 +118,7 @@ int checkWebScale(mapservObj *msObj)
    if((msObj->Map->scale > msObj->Map->web.maxscale) && (msObj->Map->web.maxscale > 0)) {
       if(msObj->Map->web.maxtemplate) { // use the template provided
          if(TEMPLATE_TYPE(msObj->Map->web.maxtemplate) == MS_FILE) {
-            if ((status = msReturnPage(msObj, msObj->Map->web.maxtemplate, BROWSE)) != MS_SUCCESS) return status;
+            if ((status = msReturnPage(msObj, msObj->Map->web.maxtemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
          }
          else {
             if ((status = msReturnURL(msObj, msObj->Map->web.maxtemplate, BROWSE)) != MS_SUCCESS) return status;
@@ -196,7 +196,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
       }
    }
    
-   if ((status = msReturnQuery(msObj, pszMimeType)) != MS_SUCCESS)
+   if ((status = msReturnQuery(msObj, pszMimeType, NULL)) != MS_SUCCESS)
      return status;
 
    return MS_SUCCESS;
@@ -1213,7 +1213,10 @@ char *generateLegendTemplate(mapservObj *msObj)
      if(strcasecmp(msObj->ParamNames[i], "map") == 0) break;
   
    if(i == msObj->NumParams)
-      pszMapFname = strcatalloc(pszMapFname, getenv("MS_MAPFILE"));
+   {
+       if ( getenv("MS_MAPFILE"))
+           pszMapFname = strcatalloc(pszMapFname, getenv("MS_MAPFILE"));
+   }
    else 
    {
       if(getenv(msObj->ParamValues[i])) // an environment references the actual file to use
@@ -1222,23 +1225,37 @@ char *generateLegendTemplate(mapservObj *msObj)
         pszMapFname = strcatalloc(pszMapFname, msObj->ParamValues[i]);
    }
    
-   if (stat(pszMapFname, &tmpStat) != -1)
+   if (pszMapFname)
    {
-      char pszSize[5];
-      char pszTime[11];
+       if (stat(pszMapFname, &tmpStat) != -1)
+       {
+           char pszSize[5];
+           char pszTime[11];
       
-      sprintf(pszSize, "%ld_", tmpStat.st_size);
-      sprintf(pszTime, "%ld", tmpStat.st_mtime);      
+           sprintf(pszSize, "%ld_", tmpStat.st_size);
+           sprintf(pszTime, "%ld", tmpStat.st_mtime);      
 
-      pszPrefix = strcatalloc(pszPrefix, msObj->Map->name);
-      pszPrefix = strcatalloc(pszPrefix, "_");
-      pszPrefix = strcatalloc(pszPrefix, pszSize);
-      pszPrefix = strcatalloc(pszPrefix, pszTime);
+           pszPrefix = strcatalloc(pszPrefix, msObj->Map->name);
+           pszPrefix = strcatalloc(pszPrefix, "_");
+           pszPrefix = strcatalloc(pszPrefix, pszSize);
+           pszPrefix = strcatalloc(pszPrefix, pszTime);
+       }
+   
+       free(pszMapFname);
    }
-   
-   free(pszMapFname);
-   
-   // open template
+   else
+   {
+/* -------------------------------------------------------------------- */
+/*      map file name may not be avaible when the template functions    */
+/*      are called from mapscript. Use the time stamp as prefix.        */
+/* -------------------------------------------------------------------- */
+       char pszTime[11];
+       
+       sprintf(pszTime, "%ld", (long)time(NULL));      
+       pszPrefix = strcatalloc(pszPrefix, pszTime);
+   }
+
+       // open template
    if((stream = fopen(msObj->Map->legend.template, "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
       return NULL;
@@ -1935,11 +1952,12 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   return(outstr);
 }
-
-int msReturnPage(mapservObj* msObj, char* html, int mode)
+#define MS_TEMPLATE_BUFFER 1024 //1k
+int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
 {
   FILE *stream;
   char line[MS_BUFFER_LENGTH], *tmpline;
+  int   nBufferSize, nCurrentSize, nExpandBuffer = 0;
 
   regex_t re; /* compiled regular expression to be matched */ 
 
@@ -1963,19 +1981,73 @@ int msReturnPage(mapservObj* msObj, char* html, int mode)
 //    writeError();
   } 
 
+  if (papszBuffer)
+  {
+      if ((*papszBuffer) == NULL)
+      {
+          (*papszBuffer) = (char *)malloc(MS_TEMPLATE_BUFFER);
+          (*papszBuffer)[0] = '\0';
+          nBufferSize = MS_TEMPLATE_BUFFER;
+          nCurrentSize = 0;
+          nExpandBuffer = 1;
+      }
+      else
+      {
+          nCurrentSize = strlen((*papszBuffer));
+          nBufferSize = nCurrentSize;
+
+          nExpandBuffer = (nCurrentSize/MS_TEMPLATE_BUFFER) +1;
+      }
+  }
   while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) { /* now on to the end of the file */
 
     if(strchr(line, '[') != NULL) {
       tmpline = processLine(msObj, line, mode);
       if (!tmpline)
          return MS_FAILURE;         
-            
-      printf("%s", tmpline);
-      free(tmpline);
-    } else
-      printf("%s", line);
+   
+      if (papszBuffer)
+      {
+          if (nBufferSize <= (int)(nCurrentSize + strlen(tmpline) + 1))
+          {
+              nExpandBuffer = (strlen(tmpline) /  MS_TEMPLATE_BUFFER) + 1;
 
-   fflush(stdout);
+               nBufferSize = 
+                   MS_TEMPLATE_BUFFER*nExpandBuffer + strlen((*papszBuffer));
+
+              (*papszBuffer) = 
+                  (char *)realloc((*papszBuffer),sizeof(char)*nBufferSize);
+          }
+          strcat((*papszBuffer), tmpline);
+          nCurrentSize += strlen(tmpline);
+         
+      }
+      else
+          printf("%s", tmpline);
+      free(tmpline);
+    } 
+    else
+    {
+        if (papszBuffer)
+        {
+            if (nBufferSize <= (int)(nCurrentSize + strlen(line)))
+            {
+                nExpandBuffer = (strlen(line) /  MS_TEMPLATE_BUFFER) + 1;
+
+                nBufferSize = 
+                    MS_TEMPLATE_BUFFER*nExpandBuffer + strlen((*papszBuffer));
+
+                (*papszBuffer) = 
+                    (char *)realloc((*papszBuffer),sizeof(char)*nBufferSize);
+            }
+            strcat((*papszBuffer), line);
+            nCurrentSize += strlen(line);
+        }
+        else 
+            printf("%s", line);
+    }
+    if (!papszBuffer)
+        fflush(stdout);
   } // next line
 
   fclose(stream);
@@ -2005,143 +2077,182 @@ int msReturnURL(mapservObj* msObj, char* url, int mode)
 }
 
 
-int msReturnQuery(mapservObj* msObj, char* pszMimeType)
+int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 {
-  int status;
-  int i,j;
+    int status;
+    int i,j;
+    char buffer[1024];
+     int   nBufferSize, nCurrentSize, nExpandBuffer = 0;
 
-  char *template;
+    char *template;
 
-  layerObj *lp=NULL;
+    layerObj *lp=NULL;
 
-  if (!pszMimeType)
-  {
-     msSetError(MS_WEBERR, "Mime type not specified.", "msReturnQuery()");
-     return MS_FAILURE;
-  }
-   
-  msInitShape(&(msObj->ResultShape)); // ResultShape is a global var define in mapserv.h
+/* -------------------------------------------------------------------- */
+/*      mime type could be null when the function is called from        */
+/*      mapscript (function msProcessQueryTemplate)                     */
+/* -------------------------------------------------------------------- */
 
-  if((msObj->Mode == ITEMQUERY) || (msObj->Mode == QUERY)) { // may need to handle a URL result set
-
-    for(i=(msObj->Map->numlayers-1); i>=0; i--) {
-      lp = &(msObj->Map->layers[i]);
-
-      if(!lp->resultcache) continue;
-      if(lp->resultcache->numresults > 0) break;
-    }
-
-    if (i >= 0) // at least if no result found, mapserver will display an empty template.
+    /*
+    if (!pszMimeType)
     {
-       if(lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
-         template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
-       else 
-         template = lp->template;
-
-       if(TEMPLATE_TYPE(template) == MS_URL) {
-          msObj->ResultLayer = lp;
-
-          status = msLayerOpen(lp, msObj->Map->shapepath);
-          if(status != MS_SUCCESS)
-            return status;
-
-          // retrieve all the item names
-          status = msLayerGetItems(lp);
-          if(status != MS_SUCCESS)
-            return status;
-
-          status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
-          if(status != MS_SUCCESS)
-            return status;
-
-          if (msReturnURL(msObj, template, QUERY) != MS_SUCCESS)
-            return MS_FAILURE;
-      
-          msFreeShape(&(msObj->ResultShape));
-          msLayerClose(lp);
-          msObj->ResultLayer = NULL;
-          
-          return MS_SUCCESS;
-       }
-    }
-  }
-   
-
-  msObj->NR = msObj->NL = 0;
-  for(i=0; i<msObj->Map->numlayers; i++) { // compute some totals
-    lp = &(msObj->Map->layers[i]);
-
-    if(!lp->resultcache) continue;
-
-    if(lp->resultcache->numresults > 0) { 
-      msObj->NL++;
-      msObj->NR += lp->resultcache->numresults;
-    }
-  }
-
-  printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
-  printf("<!-- %s -->\n", msGetVersion());
-  fflush(stdout);
-  
-  if(msObj->Map->web.header)
-     if (msReturnPage(msObj, msObj->Map->web.header, BROWSE) != MS_SUCCESS)
+       msSetError(MS_WEBERR, "Mime type not specified.", "msReturnQuery()");
        return MS_FAILURE;
+    }
+    */
 
-  msObj->RN = 1; // overall result number
-  for(i=(msObj->Map->numlayers-1); i>=0; i--) {
-    msObj->ResultLayer = lp = &(msObj->Map->layers[i]);
+    if (papszBuffer)
+    {
+        (*papszBuffer) = (char *)malloc(MS_TEMPLATE_BUFFER);
+        (*papszBuffer)[0] = '\0';
+        nBufferSize = MS_TEMPLATE_BUFFER;
+        nCurrentSize = 0;
+        nExpandBuffer = 1;
+    }
+  
+    msInitShape(&(msObj->ResultShape)); // ResultShape is a global var define in mapserv.h
 
-    if(!lp->resultcache) continue;
-    if(lp->resultcache->numresults <= 0) continue;
+    if((msObj->Mode == ITEMQUERY) || (msObj->Mode == QUERY)) { // may need to handle a URL result set
 
-    msObj->NLR = lp->resultcache->numresults; 
+        for(i=(msObj->Map->numlayers-1); i>=0; i--) {
+            lp = &(msObj->Map->layers[i]);
 
-    if(lp->header) 
-       if (msReturnPage(msObj, lp->header, BROWSE) != MS_SUCCESS)
-         return MS_FAILURE;
+            if(!lp->resultcache) continue;
+            if(lp->resultcache->numresults > 0) break;
+        }
 
-    // open this layer
-    status = msLayerOpen(lp, msObj->Map->shapepath);
-    if(status != MS_SUCCESS)
-       return status;
+        if (i >= 0) // at least if no result found, mapserver will display an empty template.
+        {
+            if(lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
+                template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
+            else 
+                template = lp->template;
 
-    // retrieve all the item names
-    status = msLayerGetItems(lp);
-    if(status != MS_SUCCESS)
-       return status;
+            if(TEMPLATE_TYPE(template) == MS_URL) {
+                msObj->ResultLayer = lp;
 
-    msObj->LRN = 1; // layer result number
-    for(j=0; j<lp->resultcache->numresults; j++) {
-      status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
-      if(status != MS_SUCCESS)
-         return status;
-      
-      if(lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
-	template = lp->class[(int)(lp->resultcache->results[j].classindex)].template;
-      else 
-	template = lp->template;
+                status = msLayerOpen(lp, msObj->Map->shapepath);
+                if(status != MS_SUCCESS)
+                    return status;
 
-      if (msReturnPage(msObj, template, QUERY) != MS_SUCCESS)
-         return MS_FAILURE;
+                // retrieve all the item names
+                status = msLayerGetItems(lp);
+                if(status != MS_SUCCESS)
+                    return status;
 
-      msFreeShape(&(msObj->ResultShape)); // init too
+                status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
+                if(status != MS_SUCCESS)
+                    return status;
 
-      msObj->RN++; // increment counters
-      msObj->LRN++;
+                if (papszBuffer == NULL)
+                {
+                    if (msReturnURL(msObj, template, QUERY) != MS_SUCCESS)
+                        return MS_FAILURE;
+                }
+
+                msFreeShape(&(msObj->ResultShape));
+                msLayerClose(lp);
+                msObj->ResultLayer = NULL;
+          
+                return MS_SUCCESS;
+            }
+        }
+    }
+   
+  
+    msObj->NR = msObj->NL = 0;
+    for(i=0; i<msObj->Map->numlayers; i++) { // compute some totals
+        lp = &(msObj->Map->layers[i]);
+
+        if(!lp->resultcache) continue;
+
+        if(lp->resultcache->numresults > 0) { 
+            msObj->NL++;
+            msObj->NR += lp->resultcache->numresults;
+        }
     }
 
-    if(lp->footer) 
-       if (msReturnPage(msObj, lp->footer, BROWSE) != MS_SUCCESS)
-         return MS_FAILURE;
+    if (papszBuffer && pszMimeType)
+    {
+        sprintf(buffer, "Content-type: %s%c%c <!-- %s -->\n",  
+                pszMimeType, 10, 10, msGetVersion());
+      
+        if (nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1))
+        {
+            nExpandBuffer++;
+            (*papszBuffer) = (char *)realloc((*papszBuffer),
+                                             MS_TEMPLATE_BUFFER*nExpandBuffer);
+            nBufferSize = MS_TEMPLATE_BUFFER*nExpandBuffer;
+        }
+        strcat((*papszBuffer), buffer);
+        nCurrentSize += strlen(buffer);
+    }
+    else if (pszMimeType)
+    {
+        printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
+        printf("<!-- %s -->\n", msGetVersion());
+        fflush(stdout);
+    }
 
-    msLayerClose(lp);
-    msObj->ResultLayer = NULL;
-  }
+    if(msObj->Map->web.header)
+        if (msReturnPage(msObj, msObj->Map->web.header, BROWSE, papszBuffer) != MS_SUCCESS)
+            return MS_FAILURE;
 
-  if(msObj->Map->web.footer) 
-     return msReturnPage(msObj, msObj->Map->web.footer, BROWSE);
+    msObj->RN = 1; // overall result number
+    for(i=(msObj->Map->numlayers-1); i>=0; i--) {
+        msObj->ResultLayer = lp = &(msObj->Map->layers[i]);
 
-  return MS_SUCCESS;
+        if(!lp->resultcache) continue;
+        if(lp->resultcache->numresults <= 0) continue;
+
+        msObj->NLR = lp->resultcache->numresults; 
+
+        if(lp->header) 
+            if (msReturnPage(msObj, lp->header, BROWSE, papszBuffer) != MS_SUCCESS)
+                return MS_FAILURE;
+
+        // open this layer
+        status = msLayerOpen(lp, msObj->Map->shapepath);
+        if(status != MS_SUCCESS)
+            return status;
+
+        // retrieve all the item names
+        status = msLayerGetItems(lp);
+        if(status != MS_SUCCESS)
+            return status;
+
+        msObj->LRN = 1; // layer result number
+        for(j=0; j<lp->resultcache->numresults; j++) {
+            status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
+            if(status != MS_SUCCESS)
+                return status;
+      
+            if(lp->class[(int)(lp->resultcache->results[j].classindex)].template) 
+                template = lp->class[(int)(lp->resultcache->results[j].classindex)].template;
+            else 
+                template = lp->template;
+
+            if (msReturnPage(msObj, template, QUERY, papszBuffer) != MS_SUCCESS)
+                return MS_FAILURE;
+
+            msFreeShape(&(msObj->ResultShape)); // init too
+
+            msObj->RN++; // increment counters
+            msObj->LRN++;
+        }
+
+        if(lp->footer) 
+            if (msReturnPage(msObj, lp->footer, BROWSE, papszBuffer) != MS_SUCCESS)
+                return MS_FAILURE;
+
+        msLayerClose(lp);
+        msObj->ResultLayer = NULL;
+    }
+
+    if(msObj->Map->web.footer) 
+        return msReturnPage(msObj, msObj->Map->web.footer, BROWSE, papszBuffer);
+
+    return MS_SUCCESS;
 }
 
 mapservObj*  msAllocMapServObj()
@@ -2217,4 +2328,267 @@ mapservObj*  msAllocMapServObj()
 void msFreeMapServObj(mapservObj* msObj)
 {
    free(msObj);
+}
+
+
+/*
+** Utility function to generate map, legend, scalebar and reference
+** images.
+** Parameters :
+**   - msObj : mapserv object (used to extrcat the map object)
+**   - szQuery : query file used my mapserv cgi. Set to NULL if not
+**               needed
+**   - bReturnOnError : if set to TRUE, the function will return on 
+**                      the first error. Else it will try to generate
+**                      all the images.
+**/
+int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
+{
+    gdImagePtr img=NULL;
+    char buffer[1024];
+
+    if (msObj)
+    {
+/* -------------------------------------------------------------------- */
+/*      rednder map.                                                    */
+/* -------------------------------------------------------------------- */
+        if(msObj->Map->status == MS_ON) 
+        {
+            if (szQuery)
+              img = msDrawQueryMap(msObj->Map);
+            else
+              img = msDrawMap(msObj->Map);
+
+            if(img)
+            { 
+                sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, 
+                        msObj->Map->name, msObj->Id, 
+                        MS_IMAGE_EXTENSION(msObj->Map->imagetype));	
+                if (msSaveImage(img, buffer, msObj->Map->imagetype, 
+                                msObj->Map->transparent, 
+                                msObj->Map->interlace, 
+                                msObj->Map->imagequality) == -1 &&
+                    bReturnOnError)
+                {
+                    gdImageDestroy(img);
+                    return MS_FALSE;
+                }
+                gdImageDestroy(img);
+            }
+            else if (bReturnOnError)
+                return MS_FALSE;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      render legend.                                                  */
+/* -------------------------------------------------------------------- */
+        if(msObj->Map->legend.status == MS_ON) 
+        {
+            img = msDrawLegend(msObj->Map);
+            if(img)
+            { 
+                sprintf(buffer, "%s%sleg%s.%s", msObj->Map->web.imagepath, 
+                        msObj->Map->name, msObj->Id, 
+                        MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+                
+                if (msSaveImage(img, buffer, msObj->Map->imagetype, 
+                                msObj->Map->legend.transparent, 
+                                msObj->Map->legend.interlace, 
+                                msObj->Map->imagequality) == -1 &&
+                    bReturnOnError)
+                {
+                    gdImageDestroy(img);
+                    return MS_FALSE;
+                }
+                gdImageDestroy(img);
+            }
+            else if (bReturnOnError)
+              return MS_FALSE;
+        }
+
+/* -------------------------------------------------------------------- */
+/*      render scalebar.                                                */
+/* -------------------------------------------------------------------- */
+        if(msObj->Map->scalebar.status == MS_ON) 
+        {
+            img = msDrawScalebar(msObj->Map);
+            if(img)
+            {
+                sprintf(buffer, "%s%ssb%s.%s", msObj->Map->web.imagepath, 
+                        msObj->Map->name, msObj->Id, 
+                        MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+                if (msSaveImage(img, buffer, msObj->Map->imagetype, 
+                                msObj->Map->scalebar.transparent, 
+                                msObj->Map->scalebar.interlace, 
+                                msObj->Map->imagequality) == -1 &&
+                    bReturnOnError)
+                {
+                    gdImageDestroy(img);
+                    return MS_FALSE;
+                }
+                gdImageDestroy(img);
+            }
+            else if (bReturnOnError)
+              return MS_FALSE;
+        }
+        
+/* -------------------------------------------------------------------- */
+/*      render refernece.                                               */
+/* -------------------------------------------------------------------- */
+        if(msObj->Map->reference.status == MS_ON) 
+        {
+            img = msDrawReferenceMap(msObj->Map);
+            if(img)
+            { 
+                sprintf(buffer, "%s%sref%s.%s", msObj->Map->web.imagepath, 
+                        msObj->Map->name, msObj->Id, 
+                        MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+                if (msSaveImage(img, buffer, msObj->Map->imagetype, 
+                                msObj->Map->transparent, 
+                                msObj->Map->interlace, 
+                                msObj->Map->imagequality) == -1 &&
+                    bReturnOnError)
+                {
+                    gdImageDestroy(img);
+                    return MS_FALSE;
+                }
+                gdImageDestroy(img);
+            }
+            else if (bReturnOnError)
+              return MS_FALSE;
+        }
+        
+    }
+    return MS_TRUE;
+}
+
+
+
+/*
+** Utility function to open a template file, process it and 
+** and return into a buffer the processed template.
+** Uses the template file from the web object.
+** return NULL if there is an error.
+*/ 
+char *msProcessTemplate(mapObj *map, int bGenerateImages, 
+                        char **names, char **values, 
+                        int numentries)
+{
+    mapservObj          *msObj  = NULL;
+    char                *pszBuffer = NULL;
+    gdImagePtr          img=NULL;
+
+    if (map)
+    {
+/* -------------------------------------------------------------------- */
+/*      initialize object and set values.                               */
+/* -------------------------------------------------------------------- */
+        msObj = msAllocMapServObj();
+
+        msObj->Map = map;
+        msObj->Mode = BROWSE;
+        sprintf(msObj->Id, "%ld",(long)time(NULL)); 
+
+        if (names && values && numentries > 0)
+        {
+            msObj->ParamNames = names;
+            msObj->ParamValues = values;
+            msObj->NumParams = numentries;    
+        }
+/* -------------------------------------------------------------------- */
+/*      ISSUE/TODO : some of the name/values should be extracted and    */
+/*      processed (ex imgext, layers, ...) as it is done in function    */
+/*      loadform.                                                       */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+        if (bGenerateImages)
+            msGenerateImages(msObj, NULL, MS_FALSE);
+/* -------------------------------------------------------------------- */
+/*      process the template.                                           */
+/*                                                                      */
+/*      TODO : use webminscale/maxscale depending on the scale.         */
+/* -------------------------------------------------------------------- */
+        if (msReturnPage(msObj, msObj->Map->web.template, 
+                         BROWSE, &pszBuffer) == MS_SUCCESS)
+            return pszBuffer;
+    }
+
+    return NULL;
+}
+        
+
+
+/************************************************************************/
+/*                char *msProcessLegendTemplate(mapObj *map,            */
+/*                                    char **names, char **values,      */
+/*                                    int numentries)                   */
+/*                                                                      */
+/*      Utility method to ptocess the lened template.                   */
+/************************************************************************/
+char *msProcessLegendTemplate(mapObj *map,
+                              char **names, char **values, 
+                              int numentries)
+{
+    mapservObj          *msObj  = NULL;
+
+    if (map && map->legend.template)
+    {
+/* -------------------------------------------------------------------- */
+/*      initialize object and set values.                               */
+/* -------------------------------------------------------------------- */
+        msObj = msAllocMapServObj();
+
+        msObj->Map = map;
+        msObj->Mode = BROWSE;
+        sprintf(msObj->Id, "%ld",(long)time(NULL)); 
+
+        if (names && values && numentries > 0)
+        {
+            msObj->ParamNames = names;
+            msObj->ParamValues = values;
+            msObj->NumParams = numentries;    
+        }
+        return generateLegendTemplate(msObj);
+    }
+
+    return NULL;
+}
+
+
+/************************************************************************/
+/*                char *msProcessQueryTemplate(mapObj *map,             */
+/*                                   char **names, char **values,       */
+/*                                   int numentries)                    */
+/*                                                                      */
+/*      Utility function that process a template file(s) used in the    */
+/*      query and retrun the processed template(s) in a bufffer.        */
+/************************************************************************/
+char *msProcessQueryTemplate(mapObj *map,
+                             char **names, char **values, 
+                             int numentries)
+{
+    mapservObj          *msObj  = NULL;
+    char                *pszBuffer = NULL;
+
+    if (map)
+    {
+/* -------------------------------------------------------------------- */
+/*      initialize object and set values.                               */
+/* -------------------------------------------------------------------- */
+        msObj = msAllocMapServObj();
+
+        msObj->Map = map;
+        msObj->Mode = QUERY;
+        sprintf(msObj->Id, "%ld",(long)time(NULL)); 
+
+        if (names && values && numentries > 0)
+        {
+            msObj->ParamNames = names;
+            msObj->ParamValues = values;
+            msObj->NumParams = numentries;    
+        }
+        msReturnQuery(msObj, NULL, &pszBuffer );
+    }
+
+    return pszBuffer;
 }
