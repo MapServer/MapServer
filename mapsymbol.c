@@ -357,11 +357,23 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
     return(-1);
   }
 
-  if((stream = fopen(msBuildPath(szPath, symbolset->map->mappath, filename), "rb")) == NULL) {
-    msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
-    return(-1);
+  
+  if (symbolset->map)
+  {
+      if((stream = fopen(msBuildPath(szPath, symbolset->map->mappath, filename), "rb")) == NULL)        
+      {
+          msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
+          return(-1);
+      }
   }
-
+  else
+  {
+      if((stream = fopen(msBuildPath(szPath, NULL, filename), "rb")) == NULL)        
+      {
+          msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
+          return(-1);
+      }
+  }
   i = symbolset->numsymbols;  
 
   initSymbol(&symbolset->symbol[i]);
