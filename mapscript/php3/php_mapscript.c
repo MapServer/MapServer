@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.1  2002/06/03 14:19:53  dan
+ * Added $layer->styleitem to 3.6 branch
+ *
  * Revision 1.104  2002/04/24 20:37:32  assefa
  * Correct compiling error on Windows.
  *
@@ -5016,6 +5019,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
     PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
     add_property_long(return_value,   "transparency",player->transparency);
+    PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
 
     return layer_id;
 }
@@ -5134,6 +5138,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("filteritem", self->filteritem)
     else IF_SET_STRING("template",   self->template)
     else IF_SET_LONG(  "transparency", self->transparency)
+    else IF_SET_STRING("styleitem",  self->styleitem)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {
