@@ -55,6 +55,7 @@ void msFreeShape(shapeObj *shape)
   
   shape->line = NULL;
   shape->numlines= 0;
+  shape->text = NULL;
 }
 
 int msAddLine(shapeObj *p, lineObj *new_line)

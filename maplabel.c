@@ -49,6 +49,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
   map->labelcache.labels[i].poly->line = NULL;
 
   map->labelcache.labels[i].status = MS_FALSE;
+  map->labelcache.labels[i].poly->text = NULL;
 
   if(map->layers[layer].type == MS_POINT) { 
     rectObj rect;
@@ -68,6 +69,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
     map->labelcache.markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
     map->labelcache.markers[i].poly->numlines = 0;
     map->labelcache.markers[i].poly->line = NULL;
+    map->labelcache.markers[i].poly->text = NULL;
     
     msGetMarkerSize(&map->symbolset, &(map->layers[layer].class[class]), &w, &h);
     rect.minx = point.x - MS_NINT(.5 * w);

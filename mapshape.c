@@ -659,6 +659,7 @@ void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     shape->bounds.minx = shape->bounds.miny = 0;
     shape->bounds.maxx = shape->bounds.maxy = 0;
     shape->type = MS_NULL;
+    shape->text = NULL;
 
     /* -------------------------------------------------------------------- */
     /*      Validate the record/entity number.                              */
@@ -880,7 +881,8 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
     shape->bounds.minx = shape->bounds.miny = 0;
     shape->bounds.maxx = shape->bounds.maxy = 0;
     shape->type = MS_NULL;
-    
+    shape->text = NULL;
+
     /* -------------------------------------------------------------------- */
     /*      Validate the record/entity number.                              */
     /* -------------------------------------------------------------------- */
