@@ -811,6 +811,41 @@ if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
   APACHE_INC=-I`$APXS -q INCLUDEDIR`
   AC_MSG_RESULT($APACHE_INC)
+
+  dnl APACHE_INC substitution is done after --with-apache switch processing
+  dnl below.
+fi
+
+
+dnl ---------------------------------------------------------------------
+dnl '--with-apache' option for PHP built as an Apache module and statically
+dnl linked into the httpd executable.  This option is used to specify the
+dnl location of the apache include files.
+dnl ---------------------------------------------------------------------
+
+AC_ARG_WITH(apache,
+[  --with-apache=DIR       Use this option only if building the PHP MapScript
+                          on a system where PHP was built as an Apache
+                          module statically linked into the httpd executable.
+                          DIR is the path to the apache include files.],,)
+
+if test -n "$with_apache" -a "$with_apache" != "no" ; then
+
+  AC_MSG_CHECKING([for location of Apache headers])
+  if test -z "$MAKE_PHPMS" ; then
+    AC_MSG_ERROR([--with-apache applies only if --with-php is used.])
+  fi
+
+  AC_EXPAND_PATH($with_apache, APACHE_DIR)
+  test -f $APACHE_DIR/httpd.h && APACHE_INC_DIR="$APACHE_DIR"
+  test -f $APACHE_DIR/include/httpd.h && APACHE_INC_DIR="$APACHE_DIR/include"
+  test -f $APACHE_DIR/src/include/httpd.h && APACHE_INC_DIR="$APACHE_DIR/src/include"
+  if test -n "$APACHE_INC_DIR" ; then
+    APACHE_INC="-I$APACHE_INC_DIR $APACHE_INC"
+    AC_MSG_RESULT("-I$APACHE_INC")
+  else
+      AC_MSG_ERROR("Could not find httpd.h in $APACHE_DIR.")
+  fi
 fi
 
 AC_SUBST(APACHE_INC, $APACHE_INC)
