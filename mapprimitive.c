@@ -1084,7 +1084,18 @@ static double getAngleFromDxDy(double dx, double dy)
   return(angle);
 }
 
-static void imageFilledSegment(gdImagePtr im, double x, double y, double sz, double angle_from, double angle_to, int c) 
+static void ImageFilledPolygonAA (gdImagePtr im, gdPointPtr p, int n, int c, int antialias)
+{
+  if (antialias) {
+    //gdImageSetAntiAliased(im, c);
+    gdImageSetAntiAliasedDontBlend(im, c, c);
+    gdImageFilledPolygon(im, p, n, gdAntiAliased);
+  } else {
+    gdImageFilledPolygon(im, p, n, c);
+  }
+} 
+
+static void imageFilledSegment(gdImagePtr im, double x, double y, double sz, double angle_from, double angle_to, int c, int antialias) 
 {
   int j=0;
   double angle, dx, dy;
@@ -1120,19 +1131,21 @@ static void imageFilledSegment(gdImagePtr im, double x, double y, double sz, dou
     points[j].y = points[0].y;
     j++;
   
-    gdImagePolygon(im, points, j, c);
-    gdImageFilledPolygon(im, points, j, c);
+//    gdImagePolygon(im, points, j, c);
+//    gdImageFilledPolygon(im, points, j, c);
+    ImageFilledPolygonAA(im, points, j, c, antialias);
   }
 }
 
 /* ------------------------------------------------------------------------------- */
 /*    Draw a cartographic line symbol of the specified size, color, join and cap   */
 /* ------------------------------------------------------------------------------- */
-static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bcoord, double da, double db, double angle_n, double size, int c, symbolObj *symbol, double styleCoef, double *styleSize, int *styleIndex, int *styleVis, gdPoint *points, double *da_px, double *db_px, int offseta, int offsetb) 
+static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bcoord, double da, double db, double angle_n, double size, int c, symbolObj *symbol, double styleCoef, double *styleSize, int *styleIndex, int *styleVis, gdPoint *points, double *da_px, double *db_px, int offseta, int offsetb, int antialias) 
 {
-  double an, bn, da_pxn, db_pxn, d_size, a, b;
+  double an, bn, da_pxn, db_pxn, d_size, a, b, last_style_size;
   double d_step_coef, da_pxn_coef, db_pxn_coef, da_px_coef, db_px_coef;
-  int db_line, s, first, tan1;
+  int db_line, s, first, drawpoly;
+  gdPoint poly_points[4];
 
   /* Steps for one pixel */
   *da_px = da/MS_ABS(db);
@@ -1145,14 +1158,7 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
     db_pxn = *db_px*sin(angle_n);
   }
 
-  if (!da || !db || (size == 1)) {
-    d_step_coef = 1;
-  } else {
-    d_step_coef = 0.5;
-    size -= d_step_coef;
-  }
-  da *= 1/d_step_coef;
-  db *= 1/d_step_coef;
+  d_step_coef = 1;
 
   da_px_coef = *da_px*d_step_coef;
   db_px_coef = *db_px*d_step_coef;
@@ -1182,62 +1188,65 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
   a = *acoord;
   b = *bcoord; 
 
-  /* Tan 1 correction */
-  tan1 = 0;
-  if (size > 1 && MS_ABS(MS_ABS(da/db) - 1) < 0.4) {
+/*  if (antialias) {
     size -= 0.5;
-    tan1 = 1;
-  }
+  } else {
+    if (!da || !db) size -= 0.5;
+  }*/
   
-  /* Style counting unit */
-  d_size = sqrt(pow(*da_px,2)+pow(*db_px,2))*d_step_coef;
+  /* Style counting */
+  if (symbol->stylelength > 0) {
   
-  /* Line rendering */
-  first = 1;
-  for (db_line = -1*d_step_coef; db_line++ < MS_ABS(db); b += db_px_coef) {
-  
-    /* Set the start of the first pixel */
-    an = a - da_pxn*(size-1)/2;
-    bn = b - db_pxn*(size-1)/2;
-  
-    /* Tan 1 correction */
-    if (tan1) {
-      an -= da_pxn*d_step_coef;
-      bn += db_pxn*d_step_coef;
-    }
+    /* Style counting unit */
+    d_size = sqrt(pow(*da_px,2)+pow(*db_px,2))*d_step_coef;
     
-    /* Save corners */
-    if (first) {
-      if (gox) {
-        if (MS_SGN(db) > 0) {
-          points[0].x = MS_NINT(bn);
-          points[0].y = MS_NINT(an);
-          points[1].x = MS_NINT(bn+db_pxn*size);
-          points[1].y = MS_NINT(an+da_pxn*size);
+    /* Line rendering */
+    first = 1;
+    for (db_line = -1*d_step_coef; db_line++ < MS_ABS(db); b += db_px_coef) {
+    
+      /* Set the start of the first pixel */
+      an = a - da_pxn*(size-1)/2;
+      bn = b - db_pxn*(size-1)/2;
+    
+      /* Save corners */
+      if (first) {
+        if (gox) {
+          if (MS_SGN(db) > 0) {
+            points[0].x = MS_NINT(bn);
+            points[0].y = MS_NINT(an);
+            points[1].x = MS_NINT(bn+db_pxn*size);
+            points[1].y = MS_NINT(an+da_pxn*size);
+          } else {
+            points[1].x = MS_NINT(bn);
+            points[1].y = MS_NINT(an);
+            points[0].x = MS_NINT(bn+db_pxn*size);
+            points[0].y = MS_NINT(an+da_pxn*size);
+          }
+          poly_points[0].x = MS_NINT(bn);
+          poly_points[0].y = MS_NINT(an);
+          poly_points[1].x = MS_NINT(bn+db_pxn*size);
+          poly_points[1].y = MS_NINT(an+da_pxn*size);
         } else {
-          points[1].x = MS_NINT(bn);
-          points[1].y = MS_NINT(an);
-          points[0].x = MS_NINT(bn+db_pxn*size);
-          points[0].y = MS_NINT(an+da_pxn*size);
+          if (MS_SGN(db) > 0) {
+            points[0].x = MS_NINT(an);
+            points[0].y = MS_NINT(bn);
+            points[1].x = MS_NINT(an+da_pxn*size);
+            points[1].y = MS_NINT(bn+db_pxn*size);
+          } else {
+            points[1].x = MS_NINT(an);
+            points[1].y = MS_NINT(bn);
+            points[0].x = MS_NINT(an+da_pxn*size);
+            points[0].y = MS_NINT(bn+db_pxn*size);
+          }
+          poly_points[0].x = MS_NINT(an);
+          poly_points[0].y = MS_NINT(bn);
+          poly_points[1].x = MS_NINT(an+da_pxn*size);
+          poly_points[1].y = MS_NINT(bn+db_pxn*size);
         }
-      } else {
-        if (MS_SGN(db) > 0) {
-          points[0].x = MS_NINT(an);
-          points[0].y = MS_NINT(bn);
-          points[1].x = MS_NINT(an+da_pxn*size);
-          points[1].y = MS_NINT(bn+db_pxn*size);
-        } else {
-          points[1].x = MS_NINT(an);
-          points[1].y = MS_NINT(bn);
-          points[0].x = MS_NINT(an+da_pxn*size);
-          points[0].y = MS_NINT(bn+db_pxn*size);
-        }
+        first = 0;
+        drawpoly = *styleVis;
       }
-    }
-    first = 0;
-
-    /* Style counting */
-    if (symbol->stylelength > 0) {
+  
       if (*styleIndex == symbol->stylelength) 
         *styleIndex = 0;
       *styleSize -= d_size;    
@@ -1245,42 +1254,116 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
         *styleSize = symbol->style[*styleIndex]*styleCoef;
         *styleSize -= d_size;    
         (*styleIndex)++;
-        *styleVis = *styleVis?0:1; 
+        *styleVis = *styleVis?0:1;
+        
+        if (*styleVis) {
+          if (gox) {
+            poly_points[0].x = MS_NINT(bn);
+            poly_points[0].y = MS_NINT(an);
+            poly_points[1].x = MS_NINT(bn+db_pxn*size);
+            poly_points[1].y = MS_NINT(an+da_pxn*size);
+          } else {
+            poly_points[0].x = MS_NINT(an);
+            poly_points[0].y = MS_NINT(bn);
+            poly_points[1].x = MS_NINT(an+da_pxn*size);
+            poly_points[1].y = MS_NINT(bn+db_pxn*size);
+          }
+          last_style_size = *styleSize; 
+          drawpoly = 1;
+        } else {
+          if (gox) {
+            poly_points[3].x = MS_NINT(bn);
+            poly_points[3].y = MS_NINT(an);
+            poly_points[2].x = MS_NINT(bn+db_pxn*size);
+            poly_points[2].y = MS_NINT(an+da_pxn*size);
+          } else {
+            poly_points[3].x = MS_NINT(an);
+            poly_points[3].y = MS_NINT(bn);
+            poly_points[2].x = MS_NINT(an+da_pxn*size);
+            poly_points[2].y = MS_NINT(bn+db_pxn*size);
+          }
+          if (drawpoly) {
+            if (last_style_size < 2*d_size) {
+              if (antialias) {
+                //gdImageSetAntiAliased(img, c);
+                gdImageSetAntiAliasedDontBlend(img, c, c);
+                gdImageLine(img, poly_points[0].x, poly_points[0].y, poly_points[1].x, poly_points[1].y, gdAntiAliased);
+              } else {
+                gdImageLine(img, poly_points[0].x, poly_points[0].y, poly_points[1].x, poly_points[1].y, c);
+              }
+            } else {
+              if (antialias) {
+                gdImageSetAntiAliasedDontBlend(img, c, c);
+                if (size > 1) {
+                  gdImageFilledPolygon(img, poly_points, 4, gdAntiAliased);
+                } else {
+                  gdImageLine(img, poly_points[0].x, poly_points[0].y, poly_points[3].x, poly_points[3].y, gdAntiAliased);
+                }
+              } else {
+                if (size > 1) {
+                  gdImageFilledPolygon(img, poly_points, 4, c);
+                } else {
+                  gdImageLine(img, poly_points[0].x, poly_points[0].y, poly_points[3].x, poly_points[3].y, c);
+                }
+              }
+            }
+            drawpoly = 0;
+          }
+        }
       }
       
-      /* Skip spaces */
-      if (! *styleVis) {
-        a += da_px_coef;
-        continue;
+      a += da_px_coef;
+    }
+    
+  /* Solid line - not styled */
+  } else {
+    /* Set the start of the first pixel */
+    an = a - da_pxn*(size-1)/2;
+    bn = b - db_pxn*(size-1)/2;
+
+    if (gox) {
+      if (MS_SGN(db) > 0) {
+        points[0].x = MS_NINT(bn);
+        points[0].y = MS_NINT(an);
+        points[1].x = MS_NINT(bn+db_pxn*size);
+        points[1].y = MS_NINT(an+da_pxn*size);
+      } else {
+        points[1].x = MS_NINT(bn);
+        points[1].y = MS_NINT(an);
+        points[0].x = MS_NINT(bn+db_pxn*size);
+        points[0].y = MS_NINT(an+da_pxn*size);
       }
+      poly_points[0].x = MS_NINT(bn);
+      poly_points[0].y = MS_NINT(an);
+      poly_points[1].x = MS_NINT(bn+db_pxn*size);
+      poly_points[1].y = MS_NINT(an+da_pxn*size);
     } else {
-      *styleVis = 1;
-    }  
-
-    /* Walk by one pixel steps */ 
-    for (s = 1; s <= size/d_step_coef; s++) {
-
-      if (gox) gdImageSetPixel(img, MS_NINT(bn), MS_NINT(an), c);
-          else gdImageSetPixel(img, MS_NINT(an), MS_NINT(bn), c);
-
-      an += da_pxn_coef;
-      bn += db_pxn_coef;
-          
-    } 
-    a += da_px_coef;
-
+      if (MS_SGN(db) > 0) {
+        points[0].x = MS_NINT(an);
+        points[0].y = MS_NINT(bn);
+        points[1].x = MS_NINT(an+da_pxn*size);
+        points[1].y = MS_NINT(bn+db_pxn*size);
+      } else {
+        points[1].x = MS_NINT(an);
+        points[1].y = MS_NINT(bn);
+        points[0].x = MS_NINT(an+da_pxn*size);
+        points[0].y = MS_NINT(bn+db_pxn*size);
+      }
+      poly_points[0].x = MS_NINT(an);
+      poly_points[0].y = MS_NINT(bn);
+      poly_points[1].x = MS_NINT(an+da_pxn*size);
+      poly_points[1].y = MS_NINT(bn+db_pxn*size);
+    }
+    drawpoly = 1;
+    *styleVis = 1;
+    a += da;
+    b += db;
   }                   
 
   /* Set the start of the first pixel */
   an = a - da_pxn*(size-1)/2;
   bn = b - db_pxn*(size-1)/2;
 
-  /* Tan 1 correction */
-  if (tan1) {
-    an -= da_pxn*d_step_coef;
-    bn += db_pxn*d_step_coef;
-  }
-  
   /* Save next corners */
   if (gox) {
     if (MS_SGN(db) > 0) {
@@ -1307,6 +1390,37 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
       points[3].y = MS_NINT(bn+db_pxn*size);
     }
   }
+
+  if (drawpoly) {
+    if (gox) {
+      poly_points[3].x = MS_NINT(bn);
+      poly_points[3].y = MS_NINT(an);
+      poly_points[2].x = MS_NINT(bn+db_pxn*size);
+      poly_points[2].y = MS_NINT(an+da_pxn*size);
+    } else {
+      poly_points[3].x = MS_NINT(an);
+      poly_points[3].y = MS_NINT(bn);
+      poly_points[2].x = MS_NINT(an+da_pxn*size);
+      poly_points[2].y = MS_NINT(bn+db_pxn*size);
+    }
+    
+    /* Antialias */
+    if (antialias) {
+//      gdImageSetAntiAliased(img, c);
+      gdImageSetAntiAliasedDontBlend(img, c, c);
+      if (size > 1) {
+        gdImageFilledPolygon(img, poly_points, 4, gdAntiAliased);
+      } else {
+        gdImageLine(img, poly_points[0].x, poly_points[0].y, poly_points[3].x, poly_points[3].y, gdAntiAliased);
+      }
+    } else {
+      if (size > 1) {
+        gdImageFilledPolygon(img, poly_points, 4, c);
+      } else {
+        gdImageLine(img, poly_points[0].x, poly_points[0].y, poly_points[3].x, poly_points[3].y, c);
+      }
+    }
+  }
   
 }
 
@@ -1318,26 +1432,27 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
   int i, j, k;
   double x, y, dx, dy, s, maxs, angle, angle_n, last_angle=0, angle_left_limit, angle_from, angle_to;
 
-  int styleIndex, styleVis, last_styleVis=0;
-  double styleSize, styleCoef, dy_px, dx_px, size_2;
+  double dy_px, dx_px, size_2;
 
-//  char buffer[256];
+  static int styleIndex, styleVis;
+  static double styleSize=0, styleCoef=0, last_style_size=-1;
+  static int last_style_c=-1, last_style_stylelength=-1, last_styleVis=0;
+
+  char buffer[256];
 
   gdPoint points[4], last_points[4];
   gdPoint cap_join_points[6];
 
-  /* Style settings */
-  if (symbol->stylelength > 0) {   
-    styleVis = 1;
-    styleIndex = -1;
-
-//    if (symbol->stylesize)
-//      styleCoef = size/symbol->stylesize;
-//    else
-//      styleCoef = 1;
+  /* Style settings - continue with style on the next line from the same symbol */
+  if (symbol->stylelength > 0 && (last_style_c != c || last_style_size != size || last_style_stylelength != symbol->stylelength)) {
+    styleIndex = symbol->stylelength;
     styleCoef = size/style->size;
-    styleSize = -1;
+    styleVis=0;
   }
+  last_style_c = c;  
+  last_style_size = size;  
+  last_style_stylelength = symbol->stylelength;  
+
 
   /* Draw lines */
   for (i = 0; i < p->numlines; i++) {
@@ -1359,21 +1474,21 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
       
       /* Steps for one pixel */
       if ((MS_ABS(dx) > MS_ABS(dy)) || (dx==dy)) {
-        RenderCartoLine(img, 1, &y, &x, dy, dx, angle_n, size, c, symbol, styleCoef, &styleSize, &styleIndex, &styleVis, points, &dy_px, &dx_px, style->offsety, style->offsetx);      
+        RenderCartoLine(img, 1, &y, &x, dy, dx, angle_n, size, c, symbol, styleCoef, &styleSize, &styleIndex, &styleVis, points, &dy_px, &dx_px, style->offsety, style->offsetx, style->antialias);      
       } else {
-        RenderCartoLine(img, 0, &x, &y, dx, dy, angle_n, size, c, symbol, styleCoef, &styleSize, &styleIndex, &styleVis, points, &dx_px, &dy_px, style->offsetx, style->offsety);      
+        RenderCartoLine(img, 0, &x, &y, dx, dy, angle_n, size, c, symbol, styleCoef, &styleSize, &styleIndex, &styleVis, points, &dx_px, &dy_px, style->offsetx, style->offsety, style->antialias);      
       }
 
 //      gdImageSetPixel(img, MS_NINT(points[0].x), MS_NINT(points[0].y), 2);
 
 //      gdImageLine(img, p->line[i].point[j-1].x, p->line[i].point[j-1].y, p->line[i].point[j].x, p->line[i].point[j].y, 3);  
 
-//sprintf(buffer, "LastVis: %d, angle: %g", last_styleVis, angle);
+//sprintf(buffer, "styleVis: %d", styleVis);
 //gdImageString(img, gdFontSmall, 10, 10, buffer, 1);
 
       /* Jointype */
 //      if ((j > 1) && (angle != last_angle) && (last_styleVis)) {
-      if ((size > 3) && (j > 1) && (angle != last_angle)) {
+      if (last_styleVis && (size > 3) && (j > 1) && (angle != last_angle)) {
 
         angle_left_limit = last_angle - MS_PI;
 
@@ -1400,7 +1515,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
             angle_from -= MS_DEG_TO_RAD*2;
             angle_to   += MS_DEG_TO_RAD*2;
             
-            imageFilledSegment(img, x, y, (size-1)/2, angle_from, angle_to, c);
+            imageFilledSegment(img, x, y, (size-1)/2, angle_from, angle_to, c, style->antialias);
           break;
 
           /* Miter */
@@ -1452,21 +1567,22 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               s = s?s:1;
               cap_join_points[3].x = MS_NINT(x - dx/s); 
               cap_join_points[3].y = MS_NINT(y - dy/s); 
-              gdImageFilledPolygon(img, cap_join_points, 4, c);
+              ImageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
+
             /* Bevel */
             } else {
               s = s?s:1;
               cap_join_points[1] = cap_join_points[2]; 
               cap_join_points[2].x = MS_NINT(x - dx/s); 
               cap_join_points[2].y = MS_NINT(y - dy/s); 
-              gdImageFilledPolygon(img, cap_join_points, 3, c);
+              ImageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
             }
           break;
         }
       }
 
       /* Captype */
-      if (symbol->linecap != MS_CJC_BUTT && size > 3 && ((j == 1) || (j == (p->line[i].numpoints-1)))) { 
+      if (last_styleVis && symbol->linecap != MS_CJC_BUTT && size > 3 && ((j == 1) || (j == (p->line[i].numpoints-1)))) { 
         size_2 = size/sqrt(pow(dx_px,2)+pow(dy_px,2))/2;
         switch (symbol->linecap) {
           /* Butt */
@@ -1483,7 +1599,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               angle_from -= angle_from > MS_2PI?MS_2PI:0;
               angle_to   = angle_from + MS_PI;
               s = sqrt(pow(dx,2) + pow(dy,2))/2;
-              imageFilledSegment(img, points[0].x+dx_px-dx/2.0, points[0].y+dy_px-dy/2.0, s, angle_from, angle_to, c);
+              imageFilledSegment(img, points[0].x+dx_px-dx/2.0, points[0].y+dy_px-dy/2.0, s, angle_from, angle_to, c, style->antialias);
             } 
             /* Last point */            
             if (j == (p->line[i].numpoints-1)) {
@@ -1493,7 +1609,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               angle_from += angle_from < 0?MS_2PI:0;
               angle_to   = angle_from + MS_PI;
               s = sqrt(pow(dx,2) + pow(dy,2))/2;
-              imageFilledSegment(img, points[2].x-dx_px-dx/2.0, points[2].y-dy_px-dy/2.0, s, angle_from, angle_to, c);
+              imageFilledSegment(img, points[2].x-dx_px-dx/2.0, points[2].y-dy_px-dy/2.0, s, angle_from, angle_to, c, style->antialias);
             }
           break;
           /* Square */
@@ -1508,7 +1624,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[2].y = MS_NINT(points[1].y - size_2*dy_px); 
               cap_join_points[3].x = MS_NINT(points[0].x - size_2*dx_px); 
               cap_join_points[3].y = MS_NINT(points[0].y - size_2*dy_px);
-              gdImageFilledPolygon(img, cap_join_points, 4, c);
+              ImageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
             } 
             /* Last point */            
             if (j == (p->line[i].numpoints-1)) {
@@ -1520,7 +1636,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[2].y = MS_NINT(points[3].y + size_2*dy_px); 
               cap_join_points[3].x = MS_NINT(points[2].x + size_2*dx_px); 
               cap_join_points[3].y = MS_NINT(points[2].y + size_2*dy_px);
-              gdImageFilledPolygon(img, cap_join_points, 4, c);
+              ImageFilledPolygonAA(img, cap_join_points, 4, c, style->antialias);
             } 
           break;
           /* Triangle */
@@ -1533,7 +1649,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[1].y = MS_NINT(points[1].y+dy_px); 
               cap_join_points[2].x = MS_NINT((points[0].x+points[1].x)/2 - size_2*dx_px); 
               cap_join_points[2].y = MS_NINT((points[0].y+points[1].y)/2 - size_2*dy_px); 
-              gdImageFilledPolygon(img, cap_join_points, 3, c);
+              ImageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
             } 
             /* Last point */            
             if (j == (p->line[i].numpoints-1)) {
@@ -1543,7 +1659,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[1].y = MS_NINT(points[3].y-dy_px); 
               cap_join_points[2].x = MS_NINT((points[2].x+points[3].x)/2 + size_2*dx_px); 
               cap_join_points[2].y = MS_NINT((points[2].y+points[3].y)/2 + size_2*dy_px); 
-              gdImageFilledPolygon(img, cap_join_points, 3, c);
+              ImageFilledPolygonAA(img, cap_join_points, 3, c, style->antialias);
             } 
           break;
         }
@@ -1560,7 +1676,6 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
       }
       last_angle = angle;
       last_styleVis = styleVis;
-    
     }
 
   }
