@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.200  2004/06/03 02:02:32  dan
+ * Added layerObj requires and labelrequires (bug 717)
+ *
  * Revision 1.199  2004/05/31 15:34:31  dan
  * Added setRotation() (bug 702)
  *
@@ -6339,7 +6342,9 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_long(return_value,   "transparency",player->transparency);
     PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
     add_property_long(return_value,   "num_processing",player->numprocessing);
-    
+    PHPMS_ADD_PROP_STR(return_value,  "requires",   player->requires);
+    PHPMS_ADD_PROP_STR(return_value,  "labelrequires", player->labelrequires);
+
     MAKE_STD_ZVAL(new_obj_ptr);
     _phpms_build_color_object(&(player->offsite),list, new_obj_ptr);
     _phpms_add_property_object(return_value, "offsite", new_obj_ptr, E_ERROR);
@@ -6494,6 +6499,8 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("template",   self->template)
     else IF_SET_LONG(  "transparency", self->transparency)
     else IF_SET_STRING("styleitem",  self->styleitem)
+    else IF_SET_STRING("requires",   self->requires)
+    else IF_SET_STRING("labelrequires",   self->labelrequires)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {
