@@ -264,6 +264,8 @@ int msyyreturncomments = 0;
 <INITIAL,VALUE_STRING>off		       { return(MS_OFF); }
 <INITIAL,VALUE_STRING>ogr		       { return(MS_OGR); }
 <INITIAL,VALUE_STRING>on		       { return(MS_ON); }
+<INITIAL,VALUE_STRING>one-to-one	       { return(MS_JOIN_ONE_TO_ONE); }
+<INITIAL,VALUE_STRING>one-to-many	       { return(MS_JOIN_ONE_TO_MANY); }
 <INITIAL,VALUE_STRING>oraclespatial	       { return(MS_ORACLESPATIAL); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
 <INITIAL,VALUE_STRING>pixels                   { return(MS_PIXELS); }

@@ -188,6 +188,8 @@ enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
 enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS};
+
+enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
 enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
@@ -257,12 +259,10 @@ typedef struct {
 // JOIN OBJECT - simple way to access other XBase files, one-to-one or one-to-many supported
 typedef struct {
   char *name;
-
-  char **items; /* array of item names */
+  char **items; // array of item/column names
   char numitems;
-  char ***data; /* array of data for 1 or more records */
-  int numrecords; /* number of records we have data for */
-
+  char ***records; // array of data for 1 or more records
+  int numrecords; // number of records we have data for
   char *table;
   char *from, *to;
   char *header;
@@ -272,11 +272,10 @@ typedef struct {
   char *_template;
 #endif
   char *footer;
-
   char *match;
-
-  int type;
-
+  enum MS_JOIN_TYPE type;
+  char *connection;
+  enum MS_JOIN_CONNECTION_TYPE connectiontype;
 } joinObj;
 #endif
 
@@ -946,8 +945,6 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape);
 int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
 int msIsLayerQueryable(layerObj *lp);
 
-int msJoinDBFTables(joinObj *join, char *path, char *tile);
-
 void trimBlanks(char *string); // in mapstring.c
 char *chop(char *string);
 void trimEOL(char *string);
@@ -1164,6 +1161,10 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
                        int dstX, int dstY, int srcX, int srcY, int w, int h,
                        int pct);
+
+// various JOIN functions
+int msDBFJoinTable(joinObj *join, char *path, char *tile);
+
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b);

@@ -33,7 +33,7 @@ static char *msStatus[5]={"OFF", "ON", "DEFAULT", "QUERYONLY", "EMBED"};
 // static char *msOnOff[2]={"OFF", "ON"};
 static char *msTrueFalse[2]={"FALSE", "TRUE"};
 // static char *msYesNo[2]={"NO", "YES"};
-static char *msJoinType[2]={"SINGLE", "MULTIPLE"};
+static char *msJoinType[2]={"ONE-TO-ONE", "ONE-TO-MANY"};
 
 int msEvalRegex(char *e, char *s) {
   regex_t re;
@@ -249,7 +249,7 @@ void initJoin(joinObj *join)
   join->name = NULL; /* unique join name, used for variable substitution */
 
   join->items = NULL; /* array to hold item names for the joined table */
-  join->data = NULL; /* arrays of strings to holds 1 or more records worth of data */
+  join->records = NULL; /* arrays of strings to holds 1 or more records worth of data */
   join->numrecords = 0;
 
   join->table = NULL;
@@ -263,7 +263,10 @@ void initJoin(joinObj *join)
   join->template = NULL; /* only html type templates are supported */
   join->footer = NULL;
 
-  join->type = MS_SINGLE; /* one-to-one */
+  join->type = MS_JOIN_ONE_TO_ONE;
+
+  join->connection = NULL;
+  join->connectiontype = MS_DB_XBASE;
 }
 
 void freeJoin(joinObj *join) 
@@ -283,8 +286,10 @@ void freeJoin(joinObj *join)
 
   msFreeCharArray(join->items, join->numitems); /* these may have been free'd elsewhere */
   for(i=0; i<join->numrecords; i++)
-    msFreeCharArray(join->data[i], join->numitems);
-  msFree(join->data);
+    msFreeCharArray(join->records[i], join->numitems);
+  msFree(join->records);
+
+  msFree(join->connection);
 }
 
 int loadJoin(joinObj *join)
@@ -293,6 +298,12 @@ int loadJoin(joinObj *join)
 
   for(;;) {
     switch(msyylex()) {
+    case(CONNECTION):
+      if((join->connection = getString()) == NULL) return(-1);
+      break;
+    case(CONNECTIONTYPE):
+      if((join->connectiontype = getSymbol(4, MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES)) == -1) return(-1);
+      break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadJoin()");
       return(-1);
@@ -328,7 +339,7 @@ int loadJoin(joinObj *join)
       if((join->to = getString()) == NULL) return(-1);
       break;
     case(TYPE):
-      if((join->type = getSymbol(2, MS_SINGLE, MS_MULTIPLE)) == -1) return(-1);
+      if((join->type = getSymbol(2, MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY)) == -1) return(-1);
       break;
     default:
       msSetError(MS_IDENTERR, "(%s):(%d)", "loadJoin()", msyytext, msyylineno);
