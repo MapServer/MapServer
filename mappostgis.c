@@ -43,7 +43,7 @@ char tolower(char c)
 
 msPOSTGISLayerInfo *getPostGISLayerInfo(layerObj *layer)
 {
-	return layer->layerinfo;	
+	return layer->layerinfo;
 }
 
 void setPostGISLayerInfo(layerObj *layer,msPOSTGISLayerInfo *postgislayerinfo )
@@ -163,7 +163,7 @@ char *DATAERRORMESSAGE(char *dString, char *preamble)
 
 
 int msPOSTGISLayerParseData(char *data, char *geom_column_name,
-					char *table_name, char *urid_name,char *user_srid);
+					char *table_name, char *urid_name,char *user_srid,char debug);
 
 
 
@@ -176,9 +176,17 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	msPOSTGISLayerInfo	*layerinfo;
         int			order_test = 1;
 
-//fprintf(stderr,"msPOSTGISLayerOpen called\n");
+
+if (layer->debug)
+	msDebug("msPOSTGISLayerOpen called datastatement: %s\n",layer->data);
+
+
 	if (getPostGISLayerInfo(layer))
+	{
+		if (layer->debug)
+			msDebug("msPOSTGISLayerOpen :: layer is already open!!\n");
 		return MS_SUCCESS;	//already open
+	}
 
         if( layer->data == NULL )
         {
@@ -197,7 +205,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	layerinfo->sql = NULL; //calc later
 	layerinfo->row_num=0;
 	layerinfo->query_result= NULL;
-	layerinfo->urid_name= NULL; 
+	layerinfo->urid_name= NULL;
 	layerinfo->user_srid= NULL;
 
 	layerinfo->conn = PQconnectdb( layer->connection );
@@ -229,7 +237,9 @@ int msPOSTGISLayerOpen(layerObj *layer)
 // Free the itemindexes array in a layer.
 void    msPOSTGISLayerFreeItemInfo(layerObj *layer)
 {
-//fprintf(stderr,"msPOSTGISLayerFreeItemInfo called\n");
+
+	if (layer->debug)
+		msDebug("msPOSTGISLayerFreeItemInfo called\n");
 
  	if (layer->iteminfo)
       	free(layer->iteminfo);
@@ -243,7 +253,9 @@ int msPOSTGISLayerInitItemInfo(layerObj *layer)
 	int   i;
 	int *itemindexes ;
 
-//fprintf(stderr,"msPOSTGISLayerInitItemInfo called\n");
+
+if (layer->debug)
+	msDebug("msPOSTGISLayerInitItemInfo called\n");
 
 
 
@@ -327,7 +339,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
                 pos_paren = strrchr(pos_ftab,')');
 		#else
 				pos_paren = rindex(pos_ftab,')');
-		#endif 
+		#endif
 
 
 		if (  (pos_space ==NULL)  || (pos_paren ==NULL) ) {
@@ -444,7 +456,8 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
 	//set enable_seqscan=off not required (already done)
 
-//fprintf (stderr,"query_string_0_6:%s\n",query_string_0_6);
+	if (layer->debug)
+		msDebug("query_string_0_6:%s\n",query_string_0_6);
     result = PQexec(layerinfo->conn, query_string_0_6 );
 
     if ( (result!=NULL) && (PQresultStatus(result) == PGRES_COMMAND_OK) )
@@ -474,10 +487,6 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
     PQclear(result);
 
-//fprintf (stderr,"prep_DB:query_string_0_5:%s\n",query_string_0_5);
-
-
- 
 		sprintf(tmp2, "Error executing POSTGIS  DECLARE (the actual query) statement: '%s' <br><br>\n\nPostgresql reports the error '%s'<br><br>\n\nMore Help:<br><br>\n\n",
 				query_string_0_6,
 					PQerrorMessage(layerinfo->conn)
@@ -526,7 +535,8 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 
 
 
-//fprintf(stderr,"msPOSTGISLayerWhichShapes called\n");
+if (layer->debug)
+	msDebug("msPOSTGISLayerWhichShapes called\n");
 
 	layerinfo = getPostGISLayerInfo( layer);
 
@@ -549,7 +559,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	query_str = (char *) malloc(6000); //should be big enough
 	memset(query_str,0,6000);		//zero it out
 
-	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
+	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid,layer->debug);
 
 	set_up_result= prep_DB(table_name,geom_column_name, layer, &(layerinfo->query_result), rect,query_str, urid_name,user_srid);
 
@@ -591,9 +601,13 @@ int msPOSTGISLayerClose(layerObj *layer)
 {
 	msPOSTGISLayerInfo	*layerinfo;
 
-//fprintf(stderr,"msPOSTGISLayerClose called\n");
 	layerinfo = getPostGISLayerInfo( layer);
 
+
+	if (layer->debug)
+		msDebug("msPOSTGISLayerClose datastatement: %s\n",layer->data);
+	if ( (layer->debug) &&  (layerinfo == NULL))
+		msDebug("msPOSTGISLayerClose -- layerinfo is  NULL\n");
 
 	if (layerinfo != NULL)
 	{
@@ -922,7 +936,8 @@ int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
 	layerinfo = getPostGISLayerInfo(layer);
 
 
-//fprintf(stderr,"msPOSTGISLayerNextShape called\n");
+if (layer->debug)
+	msDebug("msPOSTGISLayerNextShape called\n");
 
 	if (layerinfo == NULL)
 	{
@@ -1076,7 +1091,8 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	int				result,t,size;
 	char				*temp1,*temp2;
 
-//fprintf(stderr,"msPOSTGISLayerGetShape called for record = %i\n",record);
+if (layer->debug)
+	msDebug("msPOSTGISLayerGetShape called for record = %i\n",record);
 
 	layerinfo = getPostGISLayerInfo( layer) ;
 
@@ -1091,7 +1107,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	query_str = (char *) malloc(6000); //should be big enough
 	memset(query_str,0,6000);		//zero it out
 
-	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
+	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid,layer->debug);
 
 	if (layer->numitems ==0) //dont need the oid since its really record
 	{
@@ -1118,10 +1134,11 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
 
 
-		sprintf(query_str,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s = %li", columns_wanted,table_name,urid_name,record);
+		sprintf(query_str,"DECLARE mycursor2 BINARY CURSOR FOR SELECT %s from %s WHERE %s = %li", columns_wanted,table_name,urid_name,record);
 
 
-//fprintf(stderr,"msPOSTGISLayerGetShape: %s \n",query_str);
+if (layer->debug)
+	msDebug("msPOSTGISLayerGetShape: %s \n",query_str);
 
     query_result = PQexec(layerinfo->conn, "BEGIN");
     if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
@@ -1134,16 +1151,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 		return(MS_FAILURE);
     }
 
-    query_result = PQexec(layerinfo->conn, "set enable_seqscan = off");
-    if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
-    {
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  'set enable_seqscan off'   statement.",
-                 "msPOSTGISLayerGetShape()");
 
-        	PQclear(query_result);
-	  	query_result = NULL;
-		return(MS_FAILURE);
-    }
 
 
     PQclear(query_result);
@@ -1168,7 +1176,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     }
     PQclear(query_result);
 
-    query_result = PQexec(layerinfo->conn, "FETCH ALL in mycursor");
+    query_result = PQexec(layerinfo->conn, "FETCH ALL in mycursor2");
     if (!(query_result) || PQresultStatus(query_result) !=  PGRES_TUPLES_OK)
     {
 		char tmp[4000];
@@ -1239,11 +1247,33 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
 				find_bounds(shape);
 
+				 	query_result = PQexec(layerinfo->conn, "ROLLBACK");
+				    if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
+				    {
+					      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement.",
+				                 "msPOSTGISLayerGetShape()");
+
+				        	PQclear(query_result);
+					  	query_result = NULL;
+						return(MS_FAILURE);
+    				}
+
+
 				return (MS_SUCCESS);
 			}
 		}
 		else
 		{
+			query_result = PQexec(layerinfo->conn, "ROLLBACK");
+			if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
+			{
+				  msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement.",
+						 "msPOSTGISLayerGetShape()");
+
+					PQclear(query_result);
+				query_result = NULL;
+				return(MS_FAILURE);
+    		}
 			return (MS_DONE);
 		}
 
@@ -1286,7 +1316,8 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 	int item_num;
 
 
-//fprintf(stderr, "in msPOSTGISLayerGetItems  (find column names)\n");
+if (layer->debug)
+	msDebug("in msPOSTGISLayerGetItems  (find column names)\n");
 
 	layerinfo = getPostGISLayerInfo( layer);
 
@@ -1306,11 +1337,11 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 	}
 	//get the table name and geometry column name
 
-	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid);
+	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid,layer->debug);
 
 	// two cases here.  One, its a table (use select * from table) otherwise, just use the select clause
 	sprintf(sql,"SELECT * FROM %s LIMIT 0",table_name); // attempt the query, but dont actually do much (this might take some time if there is an order by!)
-	
+
 	query_result = PQexec(layerinfo->conn, sql );
     if (!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK)
     {
@@ -1329,10 +1360,10 @@ int msPOSTGISLayerGetItems(layerObj *layer)
     }
 
 	layer->numitems = PQnfields(query_result)-1; //dont include the geometry column
-	layer->items = malloc (sizeof(char *) * (layer->numitems+1) ); // +1 incase there is a problem finding goeometry column 
+	layer->items = malloc (sizeof(char *) * (layer->numitems+1) ); // +1 incase there is a problem finding goeometry column
 																// it will return an error if there is no geometry column found,
 																// so this isnt a problem
-	
+
 		found_geom = 0; //havent found the geom field
 		item_num = 0;
 	for (t=0;t<PQnfields(query_result);t++)
@@ -1381,7 +1412,9 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 // Never seen this function actually called
 int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
 {
-//fprintf(stderr,"msPOSTGISLayerGetExtent called\n");
+
+	if(layer->debug)
+		msDebug("msPOSTGISLayerGetExtent called\n");
 
 
 
@@ -1480,7 +1513,7 @@ PGresult   *query_result;
  */
 
 int msPOSTGISLayerParseData(char *data, char *geom_column_name,
-	char *table_name, char *urid_name,char *user_srid)
+	char *table_name, char *urid_name,char *user_srid, char debug)
 {
 	char *pos_opt, *pos_scn, *tmp, *pos_srid;
 	int 	slength;
@@ -1588,7 +1621,9 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
 					"msPOSTGISLayerParseData()");
 		return(MS_FAILURE);
 	}
-//printf("msPOSTGISLayerParseData: unique column = %s, srid='%s', geom_column_name = %s, table_name=%s\n", urid_name,user_srid,geom_column_name,table_name);
+
+	if (debug)
+		msDebug("msPOSTGISLayerParseData: unique column = %s, srid='%s', geom_column_name = %s, table_name=%s\n", urid_name,user_srid,geom_column_name,table_name);
 	return(MS_SUCCESS);
 }
 
