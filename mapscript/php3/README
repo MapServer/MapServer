@@ -12,11 +12,10 @@ recent versions of PHP3.  It has also been ported to PHP4, the MapServer
 configure script should automatically detect which version of PHP you are 
 attempting to build with and take the necessary actions.
 
-The module has been tested and used on Linux, Solaris, and WinNT.
+The module has been tested and used on Linux, Solaris, *BSD, and WinNT.
 
-This module is constantly under development and is not (yet) an officially 
-supported part of MapServer, the main resource for help is the PHP/MapScript
-web page at:
+This module is constantly under development, the main resource for help
+is the PHP/MapScript web page at:
   http://www2.dmsolutions.on.ca/mapserver/php_mapscript/
 and especially the FAQ at:
   http://www2.dmsolutions.on.ca/mapserver/php_mapscript/php_mapscript_faq.html
@@ -153,15 +152,16 @@ Very important note: Constant names and class member variable names are
    imageObj drawScaleBar()
         Render scale bar and return handle on image object.
 
-   int embedlegend() 
+   int embedlegend(imageObj image) 
         embeds a legend. Actually the legend is just added to the label 
         cache so you must invoke drawLabelCache() to actually do the 
-        rendering (unless postlabelcache is set).
+        rendering (unless postlabelcache is set in which case it is 
+        drawn right away).
 
-    int embedScalebar() 
+   int embedScalebar(imageObj image) 
         embeds a scalebar. Actually the scalebar is just added to the label 
         cache so you must invoke drawLabelCache() to actually do the rendering 
-        (unless postlabelcache is set).
+        (unless postlabelcache is set in which case it is drawn right away).
 
    int drawLabelCache(imageObj image)
         Renders the labels for a map. Returns -1 on error.
