@@ -1,6 +1,203 @@
 #include "maptemplate.h"
 #include "maphash.h"
-#include "cgiutil.h"
+
+/*
+ * Redirect to (only use in CGI)
+ * 
+*/
+int msRedirect(char *url)
+{
+  printf("Status: 302 Found\n");
+  printf("Uri: %s\n", url);
+  printf("Location: %s\n", url);
+  printf("Content-type: text/html%c%c",10,10);
+  fflush(stdout);
+  return MS_SUCCESS;
+}
+
+/*
+** Sets the map extent under a variety of scenarios.
+*/
+int setExtent(mapservObj *msObj)
+{
+  double cellx,celly,cellsize;
+
+  switch(msObj->CoordSource) 
+  {
+   case FROMUSERBOX: /* user passed in a map extent */
+     break;
+   case FROMIMGBOX: /* fully interactive web, most likely with java front end */
+     cellx = MS_CELLSIZE(msObj->ImgExt.minx, msObj->ImgExt.maxx, msObj->ImgCols);
+     celly = MS_CELLSIZE(msObj->ImgExt.miny, msObj->ImgExt.maxy, msObj->ImgRows);
+     msObj->Map->extent.minx = MS_IMAGE2MAP_X(msObj->ImgBox.minx, msObj->ImgExt.minx, cellx);
+     msObj->Map->extent.maxx = MS_IMAGE2MAP_X(msObj->ImgBox.maxx, msObj->ImgExt.minx, cellx);
+     msObj->Map->extent.maxy = MS_IMAGE2MAP_Y(msObj->ImgBox.miny, msObj->ImgExt.maxy, celly); // y's are flip flopped because img/map coordinate systems are
+     msObj->Map->extent.miny = MS_IMAGE2MAP_Y(msObj->ImgBox.maxy, msObj->ImgExt.maxy, celly);
+     break;
+   case FROMIMGPNT:
+     cellx = MS_CELLSIZE(msObj->ImgExt.minx, msObj->ImgExt.maxx, msObj->ImgCols);
+     celly = MS_CELLSIZE(msObj->ImgExt.miny, msObj->ImgExt.maxy, msObj->ImgRows);
+     msObj->MapPnt.x = MS_IMAGE2MAP_X(msObj->ImgPnt.x, msObj->ImgExt.minx, cellx);
+     msObj->MapPnt.y = MS_IMAGE2MAP_Y(msObj->ImgPnt.y, msObj->ImgExt.maxy, celly);
+
+     msObj->Map->extent.minx = msObj->MapPnt.x - .5*((msObj->ImgExt.maxx - msObj->ImgExt.minx)/msObj->fZoom); // create an extent around that point
+     msObj->Map->extent.miny = msObj->MapPnt.y - .5*((msObj->ImgExt.maxy - msObj->ImgExt.miny)/msObj->fZoom);
+     msObj->Map->extent.maxx = msObj->MapPnt.x + .5*((msObj->ImgExt.maxx - msObj->ImgExt.minx)/msObj->fZoom);
+     msObj->Map->extent.maxy = msObj->MapPnt.y + .5*((msObj->ImgExt.maxy - msObj->ImgExt.miny)/msObj->fZoom);
+     break;
+   case FROMREFPNT:
+     cellx = MS_CELLSIZE(msObj->Map->reference.extent.minx, msObj->Map->reference.extent.maxx, msObj->Map->reference.width);
+     celly = MS_CELLSIZE(msObj->Map->reference.extent.miny, msObj->Map->reference.extent.maxy, msObj->Map->reference.height);
+     msObj->MapPnt.x = MS_IMAGE2MAP_X(msObj->RefPnt.x, msObj->Map->reference.extent.minx, cellx);
+     msObj->MapPnt.y = MS_IMAGE2MAP_Y(msObj->RefPnt.y, msObj->Map->reference.extent.maxy, celly);  
+
+     msObj->Map->extent.minx = msObj->MapPnt.x - .5*(msObj->ImgExt.maxx - msObj->ImgExt.minx); // create an extent around that point
+     msObj->Map->extent.miny = msObj->MapPnt.y - .5*(msObj->ImgExt.maxy - msObj->ImgExt.miny);
+     msObj->Map->extent.maxx = msObj->MapPnt.x + .5*(msObj->ImgExt.maxx - msObj->ImgExt.minx);
+     msObj->Map->extent.maxy = msObj->MapPnt.y + .5*(msObj->ImgExt.maxy - msObj->ImgExt.miny);
+     break;
+   case FROMBUF:
+     msObj->Map->extent.minx = msObj->MapPnt.x - msObj->Buffer; // create an extent around that point, using the buffer
+     msObj->Map->extent.miny = msObj->MapPnt.y - msObj->Buffer;
+     msObj->Map->extent.maxx = msObj->MapPnt.x + msObj->Buffer;
+     msObj->Map->extent.maxy = msObj->MapPnt.y + msObj->Buffer;
+     break;
+   case FROMSCALE: 
+     cellsize = (msObj->Scale/msObj->Map->resolution)/inchesPerUnit[msObj->Map->units]; // user supplied a point and a scale
+     msObj->Map->extent.minx = msObj->MapPnt.x - cellsize*msObj->Map->width/2.0;
+     msObj->Map->extent.miny = msObj->MapPnt.y - cellsize*msObj->Map->height/2.0;
+     msObj->Map->extent.maxx = msObj->MapPnt.x + cellsize*msObj->Map->width/2.0;
+     msObj->Map->extent.maxy = msObj->MapPnt.y + cellsize*msObj->Map->height/2.0;
+     break;
+   default: /* use the default in the mapfile if it exists */
+     if((msObj->Map->extent.minx == msObj->Map->extent.maxx) && (msObj->Map->extent.miny == msObj->Map->extent.maxy)) {
+        msSetError(MS_WEBERR, "No way to generate map extent.", "mapserv()");
+        return MS_FAILURE;
+     }
+  }
+
+   msObj->RawExt = msObj->Map->extent; /* save unaltered extent */
+   
+   return MS_SUCCESS;
+}
+
+int checkWebScale(mapservObj *msObj) 
+{
+   int status;
+
+   msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); // we do this cause we need a scale
+   if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) return status;
+
+   if((msObj->Map->scale < msObj->Map->web.minscale) && (msObj->Map->web.minscale > 0)) {
+      if(msObj->Map->web.mintemplate) { // use the template provided
+         if(TEMPLATE_TYPE(msObj->Map->web.mintemplate) == MS_FILE) {
+            if ((status = msReturnPage(msObj, msObj->Map->web.mintemplate, BROWSE)) != MS_SUCCESS) return status;
+         }
+         else
+         {
+            if ((status = msReturnURL(msObj, msObj->Map->web.mintemplate, BROWSE)) != MS_SUCCESS) return status;
+         }
+      } 
+      else 
+      { /* force zoom = 1 (i.e. pan) */
+         msObj->fZoom = msObj->Zoom = 1;
+         msObj->ZoomDirection = 0;
+         msObj->CoordSource = FROMSCALE;
+         msObj->Scale = msObj->Map->web.minscale;
+         msObj->MapPnt.x = (msObj->Map->extent.maxx + msObj->Map->extent.minx)/2; // use center of bad extent
+         msObj->MapPnt.y = (msObj->Map->extent.maxy + msObj->Map->extent.miny)/2;
+         setExtent(msObj);
+         msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);      
+         if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) return status;
+      }
+   } 
+   else 
+   if((msObj->Map->scale > msObj->Map->web.maxscale) && (msObj->Map->web.maxscale > 0)) {
+      if(msObj->Map->web.maxtemplate) { // use the template provided
+         if(TEMPLATE_TYPE(msObj->Map->web.maxtemplate) == MS_FILE) {
+            if ((status = msReturnPage(msObj, msObj->Map->web.maxtemplate, BROWSE)) != MS_SUCCESS) return status;
+         }
+         else {
+            if ((status = msReturnURL(msObj, msObj->Map->web.maxtemplate, BROWSE)) != MS_SUCCESS) return status;
+         }
+      } else { /* force zoom = 1 (i.e. pan) */
+         msObj->fZoom = msObj->Zoom = 1;
+         msObj->ZoomDirection = 0;
+         msObj->CoordSource = FROMSCALE;
+         msObj->Scale = msObj->Map->web.maxscale;
+         msObj->MapPnt.x = (msObj->Map->extent.maxx + msObj->Map->extent.minx)/2; // use center of bad extent
+         msObj->MapPnt.y = (msObj->Map->extent.maxy + msObj->Map->extent.miny)/2;
+         setExtent(msObj);
+         msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
+         if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) return status;
+      }
+   }
+   
+   return MS_SUCCESS;
+}
+
+
+int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
+{
+   gdImagePtr img=NULL;
+   int status;
+   char buffer[1024];
+
+   if (!pszMimeType)
+   {
+      msSetError(MS_WEBERR, "Mime type not specified.", "msReturnTemplateQuery()");
+      return MS_FAILURE;
+   }
+   
+   if(msObj->Map->querymap.status)
+   {
+      checkWebScale(msObj);
+
+      img = msDrawQueryMap(msObj->Map);
+      if(!img) return MS_FAILURE;
+
+      sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+      status = msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+      if(status != MS_SUCCESS) return status;
+	  
+      gdImageDestroy(img);
+	
+      if(msObj->Map->legend.status == MS_ON || msObj->UseShapes)
+      {
+         img = msDrawLegend(msObj->Map);
+         if(!img) return MS_FAILURE;
+         sprintf(buffer, "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+         status = msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->legend.transparent, msObj->Map->legend.interlace, msObj->Map->imagequality);
+         if(status != MS_SUCCESS) return status;
+         gdImageDestroy(img);
+      }
+	  
+      if(msObj->Map->scalebar.status == MS_ON) 
+      {
+         img = msDrawScalebar(msObj->Map);
+         if(!img) return MS_FAILURE;
+         sprintf(buffer, "%s%ssb%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+         status = msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->scalebar.transparent, msObj->Map->scalebar.interlace, msObj->Map->imagequality);
+         if(status != MS_SUCCESS) return status;
+         gdImageDestroy(img);
+      }
+	  
+      if(msObj->Map->reference.status == MS_ON) 
+      {
+         img = msDrawReferenceMap(msObj->Map);
+         if(!img) return MS_FAILURE;
+         sprintf(buffer, "%s%sref%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+         status = msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+         if(status != MS_SUCCESS) return status;
+         gdImageDestroy(img);
+      }
+   }
+   
+   if ((status = msReturnQuery(msObj, pszMimeType)) != MS_SUCCESS)
+     return status;
+
+   return MS_SUCCESS;
+}
 
 /*
 ** Is a particular layer or group on, that is was it requested explicitly by the user.
@@ -155,7 +352,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
             // put all arguments seperate by space in a hash table
             papszArgs = split(pszArgs, ' ', &nArgs);
 
-            // check all argument if they have values
+            // msReturnTemplateQuerycheck all argument if they have values
             for (i=0; i<nArgs; i++) {
                if (strchr(papszArgs[i], '='))
                {
@@ -630,6 +827,7 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
 
    if (oLayerArgs)
        pszOptFlag = msLookupHashTable(oLayerArgs, "opt_flag");
+
    if (pszOptFlag)
      nOptFlag = atoi(pszOptFlag);
       
@@ -730,9 +928,10 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
      msSetError(MS_WEBERR, "Invalid pointer.", "generateClassTemplate()");
      return MS_FAILURE;
    }
-   
+
    if (oClassArgs)
-       pszOptFlag = msLookupHashTable(oClassArgs, "Opt_flag");
+     pszOptFlag = msLookupHashTable(oClassArgs, "Opt_flag");
+
    if (pszOptFlag)
      nOptFlag = atoi(pszOptFlag);
       
@@ -1183,7 +1382,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 #endif
 
   outstr = strdup(instr); // work from a copy
-  
+
   outstr = gsub(outstr, "[version]",  msGetVersion());
 
   sprintf(repstr, "%s%s%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
@@ -1243,7 +1442,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   trimBlanks(repstr);
   outstr = gsub(outstr, "[layers]", repstr);
 
-  encodedstr = encode_url(repstr);
+  encodedstr = msEncodeUrl(repstr);
   outstr = gsub(outstr, "[layers_esc]", encodedstr);
   free(encodedstr);
 
@@ -1310,7 +1509,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 	  outstr = gsub(outstr, substr, tp->data);  
 	  sprintf(substr, "[web_%s_esc]", tp->key);
        
-      encodedstr = encode_url(tp->data);
+      encodedstr = msEncodeUrl(tp->data);
 	  outstr = gsub(outstr, substr, encodedstr);
       free(encodedstr);
 	}
@@ -1323,7 +1522,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     if(msObj->Map->layers[i].metadata && strstr(outstr, msObj->Map->layers[i].name)) {
       for(j=0; j<MS_HASHSIZE; j++) {
 	if (msObj->Map->layers[i].metadata[j] != NULL) {
-	  for(tp=msObj->Map->layers[i].metadata[j]; tp!=NULL; tp=tp->next) {            
+	  for(tp=msObj->Map->layers[i].metadata[j]; tp!=NULL; tp=tp->next) {
 	    sprintf(substr, "[%s_%s]", msObj->Map->layers[i].name, tp->key);
 	    if(msObj->Map->layers[i].status == MS_ON)
 	      outstr = gsub(outstr, substr, tp->data);  
@@ -1331,7 +1530,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 	      outstr = gsub(outstr, substr, "");
 	    sprintf(substr, "[%s_%s_esc]", msObj->Map->layers[i].name, tp->key);
 	    if(msObj->Map->layers[i].status == MS_ON) {
-          encodedstr = encode_url(tp->data);
+          encodedstr = msEncodeUrl(tp->data);
           outstr = gsub(outstr, substr, encodedstr);
           free(encodedstr);
         }
@@ -1360,7 +1559,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%f %f %f %f", msObj->Map->extent.minx, msObj->Map->extent.miny,  msObj->Map->extent.maxx, msObj->Map->extent.maxy);
   outstr = gsub(outstr, "[mapext]", repstr);
    
-  encodedstr =  encode_url(repstr);
+  encodedstr =  msEncodeUrl(repstr);
   outstr = gsub(outstr, "[mapext_esc]", encodedstr);
   free(encodedstr);
   
@@ -1380,7 +1579,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%f %f %f %f", msObj->RawExt.minx, msObj->RawExt.miny,  msObj->RawExt.maxx, msObj->RawExt.maxy);
   outstr = gsub(outstr, "[rawext]", repstr);
   
-  encodedstr = encode_url(repstr);
+  encodedstr = msEncodeUrl(repstr);
   outstr = gsub(outstr, "[rawext_esc]", encodedstr);
   free(encodedstr);
     
@@ -1409,7 +1608,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     sprintf(repstr, "%f %f %f %f", llextent.minx, llextent.miny,  llextent.maxx, llextent.maxy);
     outstr = gsub(outstr, "[mapext_latlon]", repstr);
      
-    encodedstr = encode_url(repstr);
+    encodedstr = msEncodeUrl(repstr);
     outstr = gsub(outstr, "[mapext_latlon_esc]", encodedstr);
     free(encodedstr);
   }
@@ -1418,7 +1617,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%d %d", msObj->Map->width, msObj->Map->height);
   outstr = gsub(outstr, "[mapsize]", repstr);
    
-  encodedstr = encode_url(repstr);
+  encodedstr = msEncodeUrl(repstr);
   outstr = gsub(outstr, "[mapsize_esc]", encodedstr);
   free(encodedstr);
 
@@ -1466,7 +1665,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     sprintf(repstr, "%f %f %f %f", msObj->ResultShape.bounds.minx, msObj->ResultShape.bounds.miny,  msObj->ResultShape.bounds.maxx, msObj->ResultShape.bounds.maxy);
     outstr = gsub(outstr, "[shpext]", repstr);
      
-    encodedstr = encode_url(repstr);
+    encodedstr = msEncodeUrl(repstr);
     outstr = gsub(outstr, "[shpext_esc]", encodedstr);
     free(encodedstr);
      
@@ -1490,7 +1689,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 	outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
       sprintf(substr, "[%s_esc]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
-        encodedstr = encode_url(msObj->ResultShape.values[i]);
+        encodedstr = msEncodeUrl(msObj->ResultShape.values[i]);
         outstr = gsub(outstr, substr, encodedstr);
         free(encodedstr);
       }
@@ -1498,13 +1697,13 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     
     // FIX: need to re-incorporate JOINS at some point
   }
-  
-  for(i=0;i<msObj->NumParams;i++) { 
+
+  for(i=0;i<msObj->NumParams;i++) {
     sprintf(substr, "[%s]", msObj->ParamNames[i]);
     outstr = gsub(outstr, substr, msObj->ParamValues[i]);
     sprintf(substr, "[%s_esc]", msObj->ParamNames[i]);
-    
-    encodedstr = encode_url(msObj->ParamValues[i]);
+
+    encodedstr = msEncodeUrl(msObj->ParamValues[i]);
     outstr = gsub(outstr, substr, encodedstr);
     free(encodedstr);
   }
@@ -1574,14 +1773,14 @@ int msReturnURL(mapservObj* msObj, char* url, int mode)
   if (!tmpurl)
      return MS_FAILURE;
    
-  redirect(tmpurl);
+  msRedirect(tmpurl);
   free(tmpurl);
    
   return MS_SUCCESS;
 }
 
 
-int msReturnQuery(mapservObj* msObj)
+int msReturnQuery(mapservObj* msObj, char* pszMimeType)
 {
   int status;
   int i,j;
@@ -1590,6 +1789,12 @@ int msReturnQuery(mapservObj* msObj)
 
   layerObj *lp=NULL;
 
+  if (!pszMimeType)
+  {
+     msSetError(MS_WEBERR, "Mime type not specified.", "msReturnQuery()");
+     return MS_FAILURE;
+  }
+   
   msInitShape(&(msObj->ResultShape)); // ResultShape is a global var define in mapserv.h
 
   if((msObj->Mode == ITEMQUERY) || (msObj->Mode == QUERY)) { // may need to handle a URL result set
@@ -1645,7 +1850,7 @@ int msReturnQuery(mapservObj* msObj)
     }
   }
 
-  printf("Content-type: text/html%c%c", 10, 10); // write MIME header
+  printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
   printf("<!-- %s -->\n", msGetVersion());
   fflush(stdout);
   
@@ -1725,7 +1930,6 @@ mapservObj*  msAllocMapServObj()
 
    msObj->NumLayers=0; /* number of layers specfied by a user */
 
-
    msObj->RawExt.minx=-1;
    msObj->RawExt.miny=-1;
    msObj->RawExt.maxx=-1;
@@ -1736,6 +1940,7 @@ mapservObj*  msAllocMapServObj()
    
    msObj->ResultLayer=NULL;
    
+   msObj->UseShapes=MS_FALSE;
 
    msObj->MapPnt.x=-1;
    msObj->MapPnt.y=-1;
@@ -1744,6 +1949,29 @@ mapservObj*  msAllocMapServObj()
 
    msObj->Mode=BROWSE; /* can be BROWSE, QUERY, etc. */
    msObj->Id[0]='\0'; /* big enough for time + pid */
+   
+   msObj->CoordSource=NONE;
+   msObj->Scale=0;
+   
+   msObj->ImgRows=-1;
+   msObj->ImgCols=-1;
+   
+   msObj->ImgExt.minx=-1;
+   msObj->ImgExt.miny=-1;
+   msObj->ImgExt.maxx=-1;
+   msObj->ImgExt.maxy=-1;
+   
+   msObj->ImgBox.minx=-1;
+   msObj->ImgBox.miny=-1;
+   msObj->ImgBox.maxx=-1;
+   msObj->ImgBox.maxy=-1;
+   
+   msObj->RefPnt.x=-1;
+   msObj->RefPnt.y=-1;
+   msObj->ImgPnt.x=-1;
+   msObj->ImgPnt.y=-1;
+
+   msObj->Buffer=0;
 
    /* 
     ** variables for multiple query results processing 

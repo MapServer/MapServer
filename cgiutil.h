@@ -21,7 +21,5 @@ int getline(char *, int, FILE *);
 void send_fd(FILE *, FILE *);
 int ind(char *, char);
 void escape_shell_cmd(char *);
-char *encode_url(char *);
-void redirect(char* url);
 
 #endif /* CGIUTIL_H */

@@ -4,8 +4,12 @@
 #include "maperror.h"
 #include "mapgml.h"
 #include "gdfonts.h"
-#include <stdarg.h>
 
+#include "maptemplate.h"
+
+#include <stdarg.h>
+#include <time.h>
+#include <string.h>
 
 /* ==================================================================
  * Some functions shared by both mapwms.c and mapwmslayer.c
@@ -331,7 +335,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
          free(map->layerorder);
 
       map->layerorder = (int*)malloc(sizeof(int) * map->numlayers);
-       
+
       papszGroups = msGetAllGroupNames(map, &nGroupNames);
        
       for(j=0; j<map->numlayers; j++) 
@@ -532,6 +536,46 @@ static int printMetadata(hashTableObj metadata, const char *name,
             printf(format, default_value);
     }
 
+    return status;
+}
+
+/*
+** printGroupMetadata()
+**
+** Attempt to output a capability item.  If corresponding metadata is not 
+** found then one of a number of predefined actions will be taken. 
+** If a default value is provided and metadata is absent then the 
+** default will be used.
+*/
+
+static int printGroupMetadata(mapObj *map, char* pszGroupName, const char *name, 
+                              int action_if_not_found, const char *format, const char *default_value) 
+{
+    const char *value;
+    int status = MS_NOERR;
+    int i;
+
+    for (i=0; i<map->numlayers; i++)
+    {
+       if (map->layers[i].group && (strcmp(map->layers[i].group, pszGroupName) == 0) && map->layers[i].metadata)
+       {
+         if((value = msLookupHashTable(map->layers[i].metadata, (char*)name)))
+         { 
+            printf(format, value);
+            return status;
+         }
+       }
+    }
+
+    if (action_if_not_found == WMS_WARN)
+    {
+       printf("<!-- WARNING: Mandatory metadata '%s' was missing in this context. -->\n", name);
+       status = action_if_not_found;
+    }
+
+    if (default_value)
+      printf(format, default_value);
+   
     return status;
 }
 
@@ -765,18 +809,104 @@ int msWMSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
 }
 
 
+int msDumpLayersByGroup(mapObj *map, char *pszGroupName, const char* value, const char* wmtver)
+{
+   int i;
+   layerObj *lp = NULL;
+   rectObj ext;
+
+   
+   for(i=0; i<map->numlayers; i++)
+   {
+      lp = &(map->layers[i]);
+
+      if ((pszGroupName == NULL && lp->group == NULL) || (pszGroupName && lp->group && strcmp(lp->group,pszGroupName) == 0))
+      {
+         if (strcasecmp(wmtver, "1.0.7") <= 0)
+         {
+            printf("    <Layer queryable=\"%d\">\n", msIsLayerQueryable(lp));
+         }
+         else
+         {
+            // 1.0.8, 1.1.0 and later: opaque and cascaded are new.
+            int cascaded=0, opaque=0;
+            if ((value = msLookupHashTable(lp->metadata, "wms_opaque")) != NULL)
+              opaque = atoi(value);
+            if (lp->connectiontype == MS_WMS)
+              cascaded = 1;
+
+            printf("    <Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
+                   msIsLayerQueryable(lp), opaque, cascaded);
+         }
+
+         printParam("LAYER.NAME", lp->name, WMS_WARN, 
+                    "      <Name>%s</Name>\n", NULL);
+         // the majority of this section is dependent on appropriately named metadata in the LAYER object
+         printMetadata(lp->metadata, "wms_title", WMS_WARN,
+                       "      <Title>%s</Title>\n", lp->name);
+
+         printMetadata(lp->metadata, "wms_abstract", WMS_NOERR,
+                       "      <Abstract>%s</Abstract>\n", NULL);
+
+         printMetadataList(lp->metadata, "wms_keywordlist", 
+                           "      <KeywordList>\n", "      </KeywordList>\n",
+                           "        <Keyword>%s</Keyword>\n");
+
+         if (msWMSGetEPSGProj(&(map->projection),map->web.metadata,MS_FALSE) == NULL)
+         {
+            // If map has no proj then every layer MUST have one or produce a warning
+            printParam("(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata", 
+                       msWMSGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
+                       WMS_WARN, "      <SRS>%s</SRS>\n", NULL);
+         }
+         else
+         {
+            // No warning required in this case since there's at least a map proj.
+            printParam(" LAYER.PROJECTION (or wms_srs metadata)", 
+                       msWMSGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
+                       WMS_NOERR, "      <SRS>%s</SRS>\n", NULL);
+         }
+
+         // If layer has no proj set then use map->proj for bounding box.
+         if (msWMSGetLayerExtent(map, lp, &ext) == MS_SUCCESS)
+         {
+            if(lp->projection.numargs > 0) 
+            {
+               msWMSPrintLatLonBoundingBox("      ", &(ext), &(lp->projection));
+               msWMSPrintBoundingBox( "      ", &(ext), &(lp->projection), 
+                                      lp->metadata );
+            } 
+            else 
+            {
+               msWMSPrintLatLonBoundingBox("      ", &(ext), &(map->projection));
+               msWMSPrintBoundingBox( "      ", &(ext), &(map->projection), 
+                                      map->web.metadata );
+            }
+         }
+
+         msWMSPrintScaleHint("      ", lp->minscale, lp->maxscale, map->resolution);
+    
+         printf("    </Layer>\n");
+      }
+   }
+   
+   return MS_SUCCESS;
+}
+
+
+
 /*
 ** msWMSCapabilities()
 */
 int msWMSCapabilities(mapObj *map, const char *wmtver) 
 {
-  int i;
+  int j;
   const char *value=NULL;
   const char *dtd_url = NULL;
   char *script_url=NULL;
-  rectObj ext;
-
-  layerObj *lp=NULL;
+  char **papszGroups;
+  char *pszMimeType=NULL;
+  int nGroups;
 
   // Decide which version we're going to return.
   if (wmtver && strcasecmp(wmtver, "1.0.7") < 0) {
@@ -978,11 +1108,27 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 #endif
                       , NULL);
 
-    printRequestCap(wmtver, "GetFeatureInfo", script_url,
-                    "text/plain",
-                    "text/html",
-                    "application/vnd.ogc.gml",
-                    NULL);
+    pszMimeType = msLookupHashTable(map->web.metadata, "WMS_FEATURE_INFO_MIME_TYPE");
+    if (pszMimeType && strcasecmp(pszMimeType, "NONE") == 0)
+       printRequestCap(wmtver, "GetFeatureInfo", script_url,
+                       "text/plain",
+                       "application/vnd.ogc.gml",
+                       NULL);
+    else
+    if (pszMimeType)
+       printRequestCap(wmtver, "GetFeatureInfo", script_url,
+                       "text/plain",
+                       pszMimeType,
+                       "application/vnd.ogc.gml",
+                       NULL);
+    else
+       printRequestCap(wmtver, "GetFeatureInfo", script_url,
+                       "text/plain",
+                       "text/html",
+                       "application/vnd.ogc.gml",
+                       NULL);       
+       
+       
   }
 
   printf("  </Request>\n");
@@ -1014,83 +1160,36 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   // According to normative comments in the 1.0.7 DTD, the root layer's SRS tag
   // is REQUIRED.  It also suggests that we use an empty SRS element if there
   // is no common SRS.
-  printParam("MAP.PROJECTION (or wms_srs metadata)", 
+  printParam("MAP.PROJECTION (or wms_srs metadata)",
              msWMSGetEPSGProj(&(map->projection), map->web.metadata, MS_FALSE),
              WMS_WARN, "    <SRS>%s</SRS>\n", "");
 
   msWMSPrintLatLonBoundingBox("    ", &(map->extent), &(map->projection));
-  msWMSPrintBoundingBox( "    ", &(map->extent), &(map->projection), 
+  msWMSPrintBoundingBox( "    ", &(map->extent), &(map->projection),
                          map->web.metadata );
-  msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale, 
+  msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale,
                       map->resolution);
 
-  for(i=0; i<map->numlayers; i++) {
-    lp = &(map->layers[i]);
+   
+   msDumpLayersByGroup(map, NULL, value, wmtver);
+   
+   papszGroups = msGetAllGroupNames(map, &nGroups);
+   
+   for (j=0; j<nGroups; j++)
+   {
+      // Top-level layer, encloses all group layers
+      printf("  <Layer>\n");
 
-    if (strcasecmp(wmtver, "1.0.7") <= 0) 
-    {
-        printf("    <Layer queryable=\"%d\">\n", msIsLayerQueryable(lp));
-    }
-    else
-    {
-        // 1.0.8, 1.1.0 and later: opaque and cascaded are new.
-        int cascaded=0, opaque=0;
-        if ((value = msLookupHashTable(lp->metadata, "wms_opaque")) != NULL)
-            opaque = atoi(value);
-        if (lp->connectiontype == MS_WMS) 
-            cascaded = 1;
+      // Layer Name is optional but title is mandatory.
+      printParam("GROUP.NAME", papszGroups[j], WMS_NOERR, "    <Name>%s</Name>\n", NULL);
+      printGroupMetadata(map, papszGroups[j], "WMS_GROUP_TITLE", WMS_WARN, "    <Title>%s</Title>\n", papszGroups[j]);
 
-        printf("    <Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
-               msIsLayerQueryable(lp), opaque, cascaded);
-    }
-
-    printParam("LAYER.NAME", lp->name, WMS_WARN, 
-               "      <Name>%s</Name>\n", NULL);
-    // the majority of this section is dependent on appropriately named metadata in the LAYER object
-    printMetadata(lp->metadata, "wms_title", WMS_WARN,
-               "      <Title>%s</Title>\n", lp->name);
-
-    printMetadata(lp->metadata, "wms_abstract", WMS_NOERR,
-                  "      <Abstract>%s</Abstract>\n", NULL);
-
-    printMetadataList(lp->metadata, "wms_keywordlist", 
-                      "      <KeywordList>\n", "      </KeywordList>\n",
-                      "        <Keyword>%s</Keyword>\n");
-
-    if (msWMSGetEPSGProj(&(map->projection),map->web.metadata,MS_FALSE) == NULL)
-    {
-      // If map has no proj then every layer MUST have one or produce a warning
-      printParam("(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata", 
-                 msWMSGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
-                 WMS_WARN, "      <SRS>%s</SRS>\n", NULL);
-    }
-    else
-    {
-      // No warning required in this case since there's at least a map proj.
-      printParam(" LAYER.PROJECTION (or wms_srs metadata)", 
-                 msWMSGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
-                 WMS_NOERR, "      <SRS>%s</SRS>\n", NULL);
-    }
-
-    // If layer has no proj set then use map->proj for bounding box.
-    if (msWMSGetLayerExtent(map, lp, &ext) == MS_SUCCESS)
-    {
-      if(lp->projection.numargs > 0) {
-	msWMSPrintLatLonBoundingBox("      ", &(ext), &(lp->projection));
-        msWMSPrintBoundingBox( "      ", &(ext), &(lp->projection), 
-                               lp->metadata );
-      } else {
-	msWMSPrintLatLonBoundingBox("      ", &(ext), &(map->projection));
-        msWMSPrintBoundingBox( "      ", &(ext), &(map->projection), 
-                               map->web.metadata );
-      }
-    }
-
-    msWMSPrintScaleHint("      ", lp->minscale, lp->maxscale, map->resolution);
-    
-    printf("    </Layer>\n");
-  }
-
+      msDumpLayersByGroup(map, papszGroups[j], value, wmtver);
+      
+      printf("   </Layer>\n");
+   }
+   
+   
   printf("  </Layer>\n");
 
   printf("</Capability>\n");
@@ -1099,6 +1198,96 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   free(script_url);
 
   return(MS_SUCCESS);
+}
+
+/*
+ * This function look for params that can be used
+ * by mapserv when generating template.
+*/
+int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
+{
+   int i=0;
+   int tmpNumentries = *numentries;;
+   
+   for (i=0; i<*numentries; i++)
+   {
+      if (strcasecmp("X", names[i]) == 0)
+      {
+         values[tmpNumentries] = strdup(values[i]);
+         names[tmpNumentries] = (char*)malloc(6);
+         strcpy(names[tmpNumentries], "img.x\0");
+         
+         tmpNumentries++;
+      }
+      else
+      if (strcasecmp("Y", names[i]) == 0)
+      {
+         values[tmpNumentries] = strdup(values[i]);
+         names[tmpNumentries] = (char*)malloc(6);
+         strcpy(names[tmpNumentries], "img.y\0");
+         
+         tmpNumentries++;
+      }
+      else
+      if (strcasecmp("LAYERS", names[i]) == 0)
+      {
+         char **layers;
+         int tok;
+         int j;
+         
+         layers = split(values[i], ',', &tok);
+         
+         for (j=0; j<tok; j++)
+         {
+            values[tmpNumentries] = strdup(layers[j]);
+            names[tmpNumentries] = (char*)malloc(6);
+            strcpy(names[tmpNumentries], "layer\0");
+            
+            tmpNumentries++;
+         }
+         
+         free(layers);
+      }
+      else
+      if (strcasecmp("QUERY_LAYERS", names[i]) == 0)
+      {
+         char **layers;
+         int tok;
+         int j;
+         
+         layers = split(values[i], ',', &tok);
+
+         for (j=0; j<tok; j++)
+         {
+            values[tmpNumentries] = strdup(layers[j]);
+            names[tmpNumentries] = (char*)malloc(6);
+            strcpy(names[tmpNumentries], "qlayer\0");
+
+            tmpNumentries++;
+         }
+         
+         free(layers);
+      }
+      else
+      if (strcasecmp("BBOX", names[i]) == 0)
+      {
+         char *imgext;
+         
+         imgext = gsub(values[i], ",", " ");
+         
+         values[tmpNumentries] = strdup(imgext);
+         names[tmpNumentries] = (char*)malloc(7);
+         strcpy(names[tmpNumentries], "imgext\0");
+            
+         tmpNumentries++;
+         
+         free(imgext);
+      }      
+   }
+   
+   *numentries = tmpNumentries;
+   
+   return MS_SUCCESS;
 }
 
 /*
@@ -1127,17 +1316,69 @@ int msWMSGetMap(mapObj *map, const char *wmtver)
   return(MS_SUCCESS);
 }
 
+int msDumpResult(mapObj *map, int bFormatHtml, const char* wmtver, int feature_count)
+{
+   int numresults=0;
+   int i;
+   
+   for(i=0; i<map->numlayers && numresults<feature_count; i++) 
+   {
+      int j, k;
+      layerObj *lp;
+      lp = &(map->layers[i]);
+
+      if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0)
+        continue;
+
+      if(msLayerOpen(lp, map->shapepath) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
+        return msWMSException(map, wmtver);
+
+      printf("\nLayer '%s'\n", lp->name);
+
+      for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++) {
+        shapeObj shape;
+
+        msInitShape(&shape);
+        if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
+          return msWMSException(map, wmtver);
+
+        printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
+        
+        for(k=0; k<lp->numitems; k++)
+	  printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
+
+        msFreeShape(&shape);
+        numresults++;
+      }
+
+      msLayerClose(lp);
+    }
+   
+   return numresults;
+}
+
+
 /*
 ** msWMSFeatureInfo()
 */
-int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **values, int numentries) 
+int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **values, int numentries)
 {
   int i, feature_count=1, numlayers_found=0;
   pointObj point = {-1.0, -1.0};
   const char *info_format="MIME";
   double cellx, celly;
   errorObj *ms_error = msGetErrorObj();
-
+  int status;
+  char *pszMimeType=NULL;
+  const char *szMimeType="text/html";
+   
+  pszMimeType = msLookupHashTable(map->web.metadata, "WMS_FEATURE_INFO_MIME_TYPE");
+  if (!pszMimeType)
+  {
+     pszMimeType = szMimeType;
+  }
+   
+   
   for(i=0; map && i<numentries; i++) {
     if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
       char **layers;
@@ -1162,7 +1403,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
       }
 
       msFreeCharArray(layers, numlayers);
-    } else if (strcasecmp(names[i], "INFO_FORMAT") == 0) 
+    } else if (strcasecmp(names[i], "INFO_FORMAT") == 0)
       info_format = values[i];
     else if (strcasecmp(names[i], "FEATURE_COUNT") == 0) 
       feature_count = atoi(values[i]);
@@ -1201,53 +1442,48 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
     printf("Content-type: text/plain%c%c", 10,10);
     printf("GetFeatureInfo results:\n");
 
-    for(i=0; i<map->numlayers && numresults<feature_count; i++) {
-      int j, k;
-      layerObj *lp;
-      lp = &(map->layers[i]);
-
-      if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0) 
-        continue;
-
-      if(msLayerOpen(lp, map->shapepath) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
-        return msWMSException(map, wmtver);
-
-      printf("\nLayer '%s'\n", lp->name);
-
-      for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++) {
-        shapeObj shape;
-
-        msInitShape(&shape);
-        if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
-          return msWMSException(map, wmtver);
-
-        printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
-        
-        for(k=0; k<lp->numitems; k++)
-	  printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
-
-        msFreeShape(&shape);
-        numresults++;
-      }
-
-      msLayerClose(lp);
-    }
-
+    numresults = msDumpResult(map, 0, wmtver, feature_count);
+     
     if (numresults == 0) printf("\n  Search returned no results.\n");
 
   } else if (strncasecmp(info_format, "GML", 3) == 0 ||  // accept GML.1 or GML
              strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
 
-    if (strcasecmp(wmtver, "1.0.7") <= 0) 
+    if (strcasecmp(wmtver, "1.0.7") <= 0)
         printf("Content-type: text/xml%c%c", 10,10);
     else
         printf("Content-type: application/vnd.ogc.gml%c%c", 10,10);
     
     msGMLWriteQuery(map, NULL); // default is stdout
 
-  } else {
-    msSetError(MS_MISCERR, "Unsupported INFO_FORMAT value.", "msWMSFeatureInfo()");
-    return msWMSException(map, wmtver);
+  } else
+  if (pszMimeType && (strcmp(pszMimeType, info_format) == 0))
+  {
+     mapservObj *msObj;
+
+     msObj = msAllocMapServObj();
+
+     // Translate some vars from WMS to mapserv
+     msTranslateWMS2Mapserv(names, values, &numentries);
+
+     msObj->Map = map;
+     msObj->ParamNames = names;
+     msObj->ParamValues = values;
+     msObj->Mode = QUERY;
+     sprintf(msObj->Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
+     msObj->NumParams = numentries;
+     msObj->MapPnt.x = point.x;
+     msObj->MapPnt.y = point.y;
+     
+     if ((status = msReturnTemplateQuery(msObj, pszMimeType)) != MS_SUCCESS)
+         return status;
+
+     msFreeMapServObj(msObj);
+  }
+  else 
+  {
+     msSetError(MS_MISCERR, "Unsupported INFO_FORMAT value.", "msWMSFeatureInfo()");
+     return msWMSException(map, wmtver);
   }
 
   return(MS_SUCCESS);
@@ -1264,7 +1500,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
 **   is returned and MapServer is expected to process this as a regular
 **   MapServer request.
 */
-int msWMSDispatch(mapObj *map, char **names, char **values, int numentries) 
+int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
 {
 #ifdef USE_WMS
   int i, status;

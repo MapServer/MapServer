@@ -1,5 +1,7 @@
 #include "map.h"
 
+#include <ctype.h>
+
 #ifdef NEED_STRDUP
 char	*strdup(char *s)
 {
@@ -298,4 +300,41 @@ char **split(const char *string, char ch, int *num_tokens)
 
   return(token);
 }
+
+
+char *msEncodeUrl(char *data)
+{
+  char *hex = "0123456789ABCDEF";
+  char *i, *j, *code;
+  int   inc;
+  unsigned char ch;
+
+  for (inc=0, i=data; *i!='\0'; i++)
+    if (!isalnum(*i))
+      inc += 2;
+  
+  if (!(code = (char*)malloc(strlen(data)+inc+1)))
+    return NULL;
+  
+  for (j=code, i=data; *i!='\0'; i++, j++)
+    {
+      if (*i == ' ')
+	*j = '+';
+      else
+      if (!isalnum(*i))
+	{
+	  ch = *i;
+	  *j++ = '%';
+	  *j++ = hex[ch/16];
+	  *j   = hex[ch%16];
+	}
+      else
+	*j = *i;
+    }
+  *j = '\0';
+  
+  return code;
+}
+
+
 

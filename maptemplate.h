@@ -12,30 +12,11 @@
 #define MAXZOOM 25
 #define MINZOOM -25
 
-enum modes {
-     BROWSE,
-     ZOOMIN,
-     ZOOMOUT,
-     MAP,
-     LEGEND,
-     REFERENCE,
-     SCALEBAR,
-     COORDINATE,
-     PROCESSING,
-     QUERY,
-     QUERYMAP,
-     NQUERY,
-     NQUERYMAP,
-     ITEMQUERY,
-     ITEMQUERYMAP,
-     ITEMNQUERY,
-     ITEMNQUERYMAP,
-     FEATUREQUERY,
-     FEATUREQUERYMAP,
-     FEATURENQUERY,
-     FEATURENQUERYMAP,
-     ITEMFEATUREQUERY,
-     ITEMFEATUREQUERYMAP,ITEMFEATURENQUERY,ITEMFEATURENQUERYMAP,INDEXQUERY,INDEXQUERYMAP};
+static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
+
+enum coordSources {NONE, FROMIMGPNT, FROMIMGBOX, FROMIMGSHAPE, FROMREFPNT, FROMUSERPNT, FROMUSERBOX, FROMUSERSHAPE, FROMBUF, FROMSCALE};
+
+enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, REFERENCE, SCALEBAR, COORDINATE, PROCESSING, QUERY, QUERYMAP, NQUERY, NQUERYMAP, ITEMQUERY, ITEMQUERYMAP, ITEMNQUERY, ITEMNQUERYMAP, FEATUREQUERY, FEATUREQUERYMAP, FEATURENQUERY, FEATURENQUERYMAP, ITEMFEATUREQUERY, ITEMFEATUREQUERYMAP,ITEMFEATURENQUERY,ITEMFEATURENQUERYMAP,INDEXQUERY,INDEXQUERYMAP};
 
 /*! \srtuct mapservObj
  *  \brief Global structur used by template and mapserv
@@ -63,6 +44,9 @@ typedef struct
    int NumLayers;
 
    layerObj *ResultLayer;
+   
+   int UseShapes; // are results of a query to be used in calculating an extent of some sort
+
 
    shapeObj SelectShape, ResultShape;
 
@@ -81,7 +65,21 @@ typedef struct
    
    /// big enough for time + pid
    char Id[IDSIZE]; 
+   
+   int CoordSource;
+   double Scale; /* used to create a map extent around a point */
 
+   int ImgRows, ImgCols;
+   rectObj ImgExt; /* Existing image's mapextent */
+   rectObj ImgBox;
+   
+   pointObj RefPnt;
+   pointObj ImgPnt;
+
+   double Buffer;
+
+
+   
    /* 
     ** variables for multiple query results processing 
     */
@@ -91,6 +89,8 @@ typedef struct
    int NR; /// total number or results
    int NLR; /// number of results in a layer
 } mapservObj;
+   
+   
 
 /*! \fn msAllocMapServObj
  * Allocate memory for all variables in strusture
@@ -105,9 +105,14 @@ void msFreeMapServObj(mapservObj* msObj);
 
 // For Mapserv.c
 int isOn(mapservObj* msObj, char *name, char *group);
+int checkWebScale(mapservObj *msObj);
+int setExtent(mapservObj *msObj);
 
 int msReturnPage(mapservObj* msObj, char* , int);
 int msReturnURL(mapservObj* msObj, char*, int);
-int msReturnQuery(mapservObj* msObj);
+int msReturnQuery(mapservObj* msObj, char* pszMimeType);
 
+int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType);
+
+int msRedirect(char* url);
 #endif

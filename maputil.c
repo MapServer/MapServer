@@ -1611,7 +1611,7 @@ char *msTmpFile(const char *path, const char *ext)
     if (ext == NULL)  ext = "";
 
     tmpFname = (char*)malloc(strlen(path) + strlen(tmpId) + 4  + strlen(ext) + 1);
-   
+
     sprintf(tmpFname, "%s%s%d.%s%c", path, tmpId, tmpCount++, ext, '\0');
 
     return tmpFname;

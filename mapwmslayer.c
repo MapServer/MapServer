@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.22  2002/02/08 21:07:27  sacha
+ * Added template support to WMS.
+ *
  * Revision 1.21  2002/02/01 00:08:36  sacha
  * Move msTmpFile function from mapwmslayer.c to maputil.c
  *
@@ -517,7 +520,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
  * Build the request URL, this will also set layer projection and
  * compute BBOX in that projection.
  * ------------------------------------------------------------------ */
-    if ((pszURL = msBuildWMSLayerURL(map, lp, WMS_GETMAP, 
+    if ((pszURL = msBuildWMSLayerURL(map, lp, WMS_GETMAP,
                                      0, 0, 0, NULL, &bbox)) == NULL)
     {
         /* an error was already reported. */
