@@ -1057,6 +1057,11 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *file
 
   char old_path[MS_PATH_LENGTH];
 
+  if(!filename) {
+    msSetError(MS_IOERR, "No (NULL) filename provided.", "msOpenSHPFile()");
+    return(-1);
+  }
+
   getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
   if(shapepath) chdir(shapepath);
 
