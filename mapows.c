@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.21  2004/02/26 16:13:24  frank
+ * Correct msOWSGetLayerExtent() error message.
+ *
  * Revision 1.20  2004/02/26 16:08:49  frank
  * Added check for wcs_extent.
  *
@@ -676,7 +679,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
     tokens = split(value, ' ', &n);
     if (tokens==NULL || n != 4) {
       msSetError(MS_WMSERR, "Wrong number of arguments for EXTENT metadata.",
-                 "msWMSGetLayerExtent()");
+                 "msOWSGetLayerExtent()");
       return MS_FAILURE;
     }
     ext->minx = atof(tokens[0]);
