@@ -2331,7 +2331,18 @@ mapservObj*  msAllocMapServObj()
 
 void msFreeMapServObj(mapservObj* msObj)
 {
-   free(msObj);
+  int i;
+
+  if(msObj) {
+    msFreeMap(msObj->Map);
+
+    msFreeCharArray(msObj->ParamNames, msObj->NumParams);
+    msFreeCharArray(msObj->ParamValues, msObj->NumParams);
+
+    for(i=0;i<msObj->NumLayers;i++) free(msObj->Layers[i]);
+
+    free(msObj);
+  }
 }
 
 

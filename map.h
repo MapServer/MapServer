@@ -762,7 +762,7 @@ void msFree(void *p);
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems); // in maputil.c
 char **msGetAllGroupNames(mapObj* map, int *numTok);
 int msEvalContext(mapObj *map, char *context);
-int msShapeGetClass(layerObj *layer, shapeObj *shape);
+int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale);
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 double msAdjustExtent(rectObj *rect, int width, int height);
 int msAdjustImage(rectObj rect, int *width, int *height);

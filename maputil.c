@@ -124,13 +124,34 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
   return(MS_FALSE);
 }
 
-int msShapeGetClass(layerObj *layer, shapeObj *shape)
+/*
+ * int msShapeGetClass(layerObj *layer, shapeObj *shape)
+ * {
+ *   int i;
+ * 
+ *   for(i=0; i<layer->numclasses; i++) {
+ *     if(layer->class[i].status != MS_DELETE && msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
+ *       return(i);
+ *   }
+ * 
+ *   return(-1); // no match
+ * }
+ */
+
+int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
 {
   int i;
 
   for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i].status != MS_DELETE &&
-       msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
+    
+    if(scale > 0) {  // verify scale here 
+      if((layer->class[i].maxscale > 0) && (scale > layer->class[i].maxscale))
+        continue; // can skip this one, next class
+      if((layer->class[i].minscale > 0) && (scale <= layer->class[i].minscale))
+        continue; // can skip this one, next class
+    }
+
+    if(layer->class[i].status != MS_DELETE && msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
       return(i);
   }
 
@@ -870,6 +891,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
 int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 {
+  int i;
   int status;
   char annotate=MS_TRUE, cache=MS_FALSE;
   shapeObj shape;
@@ -890,10 +912,24 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   annotate = msEvalContext(map, layer->labelrequires);
 
   if(map->scale > 0) {
+    
+    // layer scale boundaries should be checked first
     if((layer->maxscale > 0) && (map->scale > layer->maxscale))
       return(MS_SUCCESS);
     if((layer->minscale > 0) && (map->scale <= layer->minscale))
       return(MS_SUCCESS);
+
+    // now check class scale boundaries (all layers *must* pass these tests)
+    for(i=0; i<layer->numclasses; i++) {
+      if((layer->class[i].maxscale > 0) && (map->scale > layer->class[i].maxscale))
+        continue; // can skip this one, next class
+      if((layer->class[i].minscale > 0) && (map->scale <= layer->class[i].minscale))
+        continue; // can skip this one, next class
+
+      break; // can't skip this class (or layer for that matter)
+    } 
+    if(i == layer->numclasses) return(MS_SUCCESS);
+
     if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
       annotate = MS_FALSE;
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
@@ -901,8 +937,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   }
 
   // Create a temp image for this layer tranparency
-  if (layer->transparency > 0) 
-  {
+  if (layer->transparency > 0) {
     img_cache = img;
     img = gdImageCreate(img_cache->sx, img_cache->sy);
     if(!img) {
@@ -975,7 +1010,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   
     while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
   
-      shape.classindex = msShapeGetClass(layer, &shape);
+      shape.classindex = msShapeGetClass(layer, &shape, map->scale);
       if((shape.classindex == -1) || (layer->class[shape.classindex].status == MS_OFF)) {
         msFreeShape(&shape);
         continue;

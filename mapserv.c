@@ -19,9 +19,7 @@ char errLogMsg[80];	// egis - for storing and printing error messages
 #endif
 
 
-
 mapservObj* msObj;
-
 
 int writeLog(int show_error)
 {
@@ -102,19 +100,16 @@ void writeError()
     }
   }
 
-  msFreeMap(msObj->Map);
-
-  msFreeCharArray(msObj->ParamNames, msObj->NumParams);
-  msFreeCharArray(msObj->ParamValues, msObj->NumParams);
-
+  /*
+  ** Clean Up
+  */
   free(Item);
   free(Value);      
   free(QueryFile);
   free(QueryLayer);      
   free(SelectLayer);
 
-  for(i=0;i<msObj->NumLayers;i++)
-    free(msObj->Layers[i]);
+  msFreeMapServObj(msObj);
 
   exit(0); // bail
 }
@@ -1362,18 +1357,11 @@ int main(int argc, char *argv[]) {
     /*
     ** Clean-up
     */
-    msFreeMap(msObj->Map);
-
-    msFreeCharArray(msObj->ParamNames, msObj->NumParams);
-    msFreeCharArray(msObj->ParamValues, msObj->NumParams);
-
-    free(Item);
+    free(Item); // the following are not stored as part of the msObj
     free(Value);      
     free(QueryLayer);
     free(SelectLayer);
-    free(QueryFile);
-
-    for(i=0;i<msObj->NumLayers;i++) free(msObj->Layers[i]);
+    free(QueryFile);    
    
     msFreeMapServObj(msObj);
 
