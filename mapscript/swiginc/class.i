@@ -77,6 +77,42 @@
         }
     }
 
+#ifdef SWIGJAVA
+    %newobject cloneClass;
+    classObj *cloneClass() 
+#else
+    %newobject clone;
+    classObj *clone() 
+#endif
+    {
+        classObj *new_class;
+        int result;
+
+        new_class = (classObj *) malloc(sizeof(classObj));
+        if (!new_class)
+        {
+            msSetError(MS_MEMERR,
+                "Could not allocate memory for new classObj instance",
+                "classObj()");
+            return NULL;
+        }
+        if (initClass(new_class) == -1)
+        {
+            msSetError(MS_MEMERR, "Failed to initialize Layer",
+                                  "classObj()");
+            return NULL;
+        }
+        new_class->layer = NULL;
+
+        if (msCopyClass(new_class, self, self->layer) != MS_SUCCESS) {
+            freeClass(new_class);
+            free(new_class);
+            new_class = NULL;
+        }
+        
+        return new_class;
+    }
+
     int setExpression(char *expression) 
     {
       if (!expression || strlen(expression) == 0) {

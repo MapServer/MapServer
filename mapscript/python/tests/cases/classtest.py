@@ -57,6 +57,16 @@ class ClassObjTestCase(unittest.TestCase):
         assert c.layer.name == l.name
         assert c.numstyles == 0
 
+class ClassCloningTestCase(unittest.TestCase):
+
+    def testCloneClass(self):
+        """check attributes of a cloned class"""
+        c = mapscript.classObj()
+        c.minscale = 5.0
+        clone = c.clone()
+        assert clone.thisown == 1
+        assert clone.minscale == 5.0
+
 
 # ===========================================================================
 # Run the tests outside of the main suite
