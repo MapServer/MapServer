@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/05/22 18:02:59  frank
+ * ensure MIN and MAX are defined
+ *
  * Revision 1.12  2001/05/22 02:47:09  frank
  * ifdef out transformer func if no USE_PROJ
  *
@@ -79,6 +82,11 @@
 #ifdef USE_GDAL
 int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img, 
              GDALDatasetH hDS );
+#endif
+
+#ifndef MAX
+#  define MIN(a,b)      ((a<b) ? a : b)
+#  define MAX(a,b)      ((a>b) ? a : b)
 #endif
 
 /************************************************************************/
