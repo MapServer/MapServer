@@ -280,7 +280,7 @@ const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata)
     sprintf(epsgCode, "EPSG:%s", value+10);
     return epsgCode;
   }
-  else if ((value = msLookupHashTable(metadata, "wms_proj")) != NULL)
+  else if ((value = msLookupHashTable(metadata, "wms_srs")) != NULL)
   {
     return value;  // Value should be in format "EPSG:n" or "AUTO:..."
   }
@@ -317,7 +317,7 @@ int msWMSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
 {
   static char *value;
 
-  if ((value = msLookupHashTable(lp->metadata, "extent")) != NULL)
+  if ((value = msLookupHashTable(lp->metadata, "wms_extent")) != NULL)
   {
     char **tokens;
     int n;
@@ -380,7 +380,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   // We need this script's URL, including hostname.
   // Default to use the value of the "onlineresource" metadata, and if not
   // set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)"
-  if ((value = msLookupHashTable(map->web.metadata, "onlineresource"))) {
+  if ((value = msLookupHashTable(map->web.metadata, "wms_onlineresource"))) {
     script_url = strdup(value);
   }
   else {
@@ -422,13 +422,13 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf("  <Name>GetMap</Name> <!-- WMT defined -->\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "title"))) printf("  <Title>%s</Title>\n", value);
-  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "abstract"))) printf("  <Abstract>%s</Abstract>\n", value);
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_title"))) printf("  <Title>%s</Title>\n", value);
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_abstract"))) printf("  <Abstract>%s</Abstract>\n", value);
   if (strcasecmp(wmtver, "1.0.0") == 0)
     printf("  <OnlineResource>%s</OnlineResource>\n", script_url);
   else
     printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url);
-  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "keywordlist"))) {
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_keywordlist"))) {
     char **keywords;
     int numkeywords;
 
@@ -444,34 +444,34 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   // contact information is a required element in 1.0.7+
   if (strcasecmp(wmtver, "1.0.0") != 0) {
     printf("  <ContactInformation>\n");
-    if(map->web.metadata && msLookupHashTable(map->web.metadata, "ContactPerson") && msLookupHashTable(map->web.metadata, "ContactOrganization")) {
+    if(map->web.metadata && msLookupHashTable(map->web.metadata, "wms_contactperson") && msLookupHashTable(map->web.metadata, "wms_contactorganization")) {
       printf("    <ContactPersonPrimary>\n");
-      printf("      <ContactPerson>%s</ContactPerson>\n", msLookupHashTable(map->web.metadata, "ContactPerson"));
-      printf("      <ContactOrganization>%s</ContactOrganization>\n", msLookupHashTable(map->web.metadata, "ContactOrganization"));
+      printf("      <ContactPerson>%s</ContactPerson>\n", msLookupHashTable(map->web.metadata, "wms_contactperson"));
+      printf("      <ContactOrganization>%s</ContactOrganization>\n", msLookupHashTable(map->web.metadata, "wms_contactorganization"));
       printf("    </ContactPersonPrimary>\n");
     }
-    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "contactposition"))) printf("    <ContactPosition>%s</ContactPosition>\n", value);
-    if(map->web.metadata && msLookupHashTable(map->web.metadata, "addresstype") && 
-       msLookupHashTable(map->web.metadata, "address") && msLookupHashTable(map->web.metadata, "city") &&
-       msLookupHashTable(map->web.metadata, "stateorprovince") && msLookupHashTable(map->web.metadata, "postcode") &&
-       msLookupHashTable(map->web.metadata, "country")) {
+    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_contactposition"))) printf("    <ContactPosition>%s</ContactPosition>\n", value);
+    if(map->web.metadata && msLookupHashTable(map->web.metadata, "wms_addresstype") && 
+       msLookupHashTable(map->web.metadata, "wms_address") && msLookupHashTable(map->web.metadata, "wms_city") &&
+       msLookupHashTable(map->web.metadata, "wms_stateorprovince") && msLookupHashTable(map->web.metadata, "wms_postcode") &&
+       msLookupHashTable(map->web.metadata, "wms_country")) {
       printf("    <ContactAddress>\n");
-      printf("      <AddressType>%s</AddressType>\n", msLookupHashTable(map->web.metadata, "addresstype"));
-      printf("      <Address>%s</Address>\n", msLookupHashTable(map->web.metadata, "address"));
-      printf("      <City>%s</City>\n", msLookupHashTable(map->web.metadata, "City"));
-      printf("      <StateOrProvince>%s</StateOrProvince>\n", msLookupHashTable(map->web.metadata, "StateOrProvince"));
-      printf("      <PostCode>%s</PostCode>\n", msLookupHashTable(map->web.metadata, "PostCode"));
-      printf("      <Country>%s</County>\n", msLookupHashTable(map->web.metadata, "Country"));
+      printf("      <AddressType>%s</AddressType>\n", msLookupHashTable(map->web.metadata, "wms_addresstype"));
+      printf("      <Address>%s</Address>\n", msLookupHashTable(map->web.metadata, "wms_address"));
+      printf("      <City>%s</City>\n", msLookupHashTable(map->web.metadata, "wms_city"));
+      printf("      <StateOrProvince>%s</StateOrProvince>\n", msLookupHashTable(map->web.metadata, "wms_stateorprovince"));
+      printf("      <PostCode>%s</PostCode>\n", msLookupHashTable(map->web.metadata, "wms_postcode"));
+      printf("      <Country>%s</County>\n", msLookupHashTable(map->web.metadata, "wms_country"));
       printf("    </ContactAddress>\n");
     }
-    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "ContactVoiceTelephone"))) printf("    <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n", value);
-    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "ContactFacsimileTelephone"))) printf("    <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", value);
-    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "ContactElectronicMailAddress"))) printf("    <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", value);
+    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_contactvoicetelephone"))) printf("    <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n", value);
+    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_contactfacsimiletelephone"))) printf("    <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", value);
+    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_contactelectronicmailaddress"))) printf("    <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", value);
     printf("  </ContactInformation>\n");
   }
 
-  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "accessconstraints"))) printf("  <AccessConstraints>%s</AccessConstraints>\n", value);
-  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "fees"))) printf("  <Fees>%s</Fees>\n", value);
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_accessconstraints"))) printf("  <AccessConstraints>%s</AccessConstraints>\n", value);
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "wms_fees"))) printf("  <Fees>%s</Fees>\n", value);
 
   printf("</Service>\n\n");
 
@@ -507,8 +507,8 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 
   // Top-level layer with map extents and SRS, encloses all map layers
   printf("  <Layer>\n"); 
-  if((value = msLookupHashTable(map->web.metadata, "title")) || (value == map->name)) printf("    <Title>%s</Title>\n", value);
-  if((value = msLookupHashTable(map->web.metadata, "wms_all_proj"))) printf("    <SRS>%s</SRS>\n", value);
+  if((value = msLookupHashTable(map->web.metadata, "wms_title")) || (value == map->name)) printf("    <Title>%s</Title>\n", value);
+  if((value = msLookupHashTable(map->web.metadata, "wms_srs"))) printf("    <SRS>%s</SRS>\n", value);
 
   msWMSPrintLatLonBoundingBox("    ", &(map->extent), &(map->projection));
   if((value = msWMSGetEPSGProj(&(map->projection), map->web.metadata))) printf("    <BoundingBox SRS=\"%s\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", value, map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
@@ -520,9 +520,9 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
     printf("      <Name>%s</Name>\n", lp->name);
 
     // the majority of this section is dependent on appropriately named metadata in the LAYER object
-    if((value = msLookupHashTable(lp->metadata, "title")) || (value = lp->name)) printf("      <Title>%s</Title>\n", value);
-    if((value = msLookupHashTable(lp->metadata, "abstract"))) printf("      <Abstract>%s</Abstract>\n", value);
-    if((value = msLookupHashTable(lp->metadata, "keywordlist"))) {
+    if((value = msLookupHashTable(lp->metadata, "wms_title")) || (value = lp->name)) printf("      <Title>%s</Title>\n", value);
+    if((value = msLookupHashTable(lp->metadata, "wms_abstract"))) printf("      <Abstract>%s</Abstract>\n", value);
+    if((value = msLookupHashTable(lp->metadata, "wms_keywordlist"))) {
       char **keywords;
       int numkeywords;
       
