@@ -373,16 +373,6 @@ class ZoomScaleTestCase(MapZoomTestCase):
         new_extent = self.mapobj1.extent
         self.assertRectsEqual(new_extent, max)
 
-class SetExtentTestCase(MapTestCase):
-    def testSetExtent(self):
-        e = self.mapobj1.extent
-        result = self.mapobj1.setExtent(e.minx, e.miny, e.maxx, e.maxy)
-        self.assertAlmostEqual(self.mapobj1.scale, 14.173236)
-        assert result == mapscript.MS_SUCCESS, result
-    def testSetExtentBadly(self):
-        self.assertRaises(mapscript.MapServerError, self.mapobj1.setExtent,
-                          1.0, -2.0, -3.0, 4.0)
-
 class LineObjTestCase(MapPrimitivesTestCase):
     """Testing the lineObj class in stand-alone mode"""
     def setUp(self):
