@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000-2003, DM Solutions Group
+ * Copyright (c) 2000-2004, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.206  2004/07/14 16:07:11  dan
+ * Use msMapSetExtent() in map->setExtent() (bug 773)
+ *
  * Revision 1.205  2004/07/14 15:19:34  assefa
  * Modify SvaeImage function on the image object to take a map object as
  * 2nd argument. (Bug 772).
@@ -1773,25 +1776,14 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
 {
     mapObj *self;
-#ifdef PHP4
     pval   **pExtent;
-#else
-    pval   *pExtent;
-#endif
-
     pval   *pMinX, *pMinY, *pMaxX, *pMaxY;
     pval *pThis;
+    int nStatus;
 
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
-    pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-    
+    pThis = getThis();    
 
     if (pThis == NULL ||
         getParameters(ht, 4, &pMinX, &pMinY, &pMaxX, &pMaxY) != SUCCESS)
@@ -1802,7 +1794,7 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
-        RETURN_LONG(-1);
+        RETURN_LONG(MS_FAILURE);
     }
 
     convert_to_double(pMinX);
@@ -1810,24 +1802,21 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_double(pMaxX);
     convert_to_double(pMaxY);
 
-    self->extent.minx = pMinX->value.dval;
-    self->extent.miny = pMinY->value.dval;
-    self->extent.maxx = pMaxX->value.dval;
-    self->extent.maxy = pMaxY->value.dval;
+    nStatus = msMapSetExtent( self, 
+                              pMinX->value.dval, pMinY->value.dval,
+                              pMaxX->value.dval, pMaxY->value.dval);
     
-    self->cellsize = msAdjustExtent(&(self->extent), self->width, 
-                                    self->height);      
-    if (msCalculateScale(self->extent, self->units, self->width, self->height, 
-                         self->resolution, &(self->scale)) != MS_SUCCESS)
+    if (nStatus != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
     }
 
+    /* We still sync the class members even if the call failed */
+
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
-#ifdef PHP4
-    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"), 
+    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"),
                        (void **)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
@@ -1839,21 +1828,8 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
                                    E_ERROR);
     }
-#else
-    if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
-                        (void **)&pExtent) == SUCCESS)
-    {
-        _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
-                                   E_ERROR);
-    }
-#endif
 
+    RETURN_LONG(nStatus);
 }
 
 /**********************************************************************
