@@ -99,7 +99,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
 int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
                           char **names, char **values, int numentries)
 {
-  int i;
+  int i, adjust_extent = MS_FALSE;
 
   // Some of the getMap parameters are actually required depending on the 
   // request, but for now we assume all are optional and the map file 
@@ -141,7 +141,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       char **tokens;
       int n;
       // SRS is in format "EPSG:..." or "AUTO:..."
-      // For now we support only "EPSG:<epsg_code>" format
+      // For now we support only "EPSG:<epsg_code>" format.
       tokens = split(values[i], ':', &n);
       if (tokens==NULL || n != 2) {
         msSetError(MS_MISCERR, "Wrong number of arguments for SRS.",
@@ -179,6 +179,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       map->extent.maxx = atof(tokens[2]);
       map->extent.maxy = atof(tokens[3]);
       msFreeCharArray(tokens, n);
+      adjust_extent = MS_TRUE;
     }
     else if (strcasecmp(names[i], "WIDTH") == 0) {
       map->width = atoi(values[i]);
@@ -211,6 +212,25 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       map->imagecolor.green = (c/0x100)&0xff;
       map->imagecolor.blue = c&0xff;
     }
+  }
+
+  /*
+  ** WMS extents are edge to edge while MapServer extents are center of
+  ** pixel to center of pixel.  Here we try to adjust the WMS extents
+  ** in by half a pixel.  We wait till here becaus we want to ensure we
+  ** are doing this in terms of the correct WIDTH and HEIGHT. 
+  */
+  if( adjust_extent )
+  {
+      double	dx, dy;
+      
+      dx = (map->extent.maxx - map->extent.minx) / map->width;
+      map->extent.minx += dx*0.5;
+      map->extent.maxx -= dx*0.5;
+
+      dy = (map->extent.maxy - map->extent.miny) / map->height;
+      map->extent.miny += dy*0.5;
+      map->extent.maxy -= dy*0.5;
   }
 
   return MS_SUCCESS;
