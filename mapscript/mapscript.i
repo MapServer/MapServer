@@ -1195,21 +1195,25 @@ memory.") const char * {
 //
 //TODO : should take image type as argument ??
 %extend imageObj {
-  imageObj(int width, int height) {
+  imageObj(int width, int height, const char *filename=NULL) {
     imageObj *image=NULL;
     outputFormatObj *format;
 
-    format = msCreateDefaultOutputFormat(NULL,"image/gif");
-    if( format == NULL )
-      format = msCreateDefaultOutputFormat(NULL,"image/png");
-    if( format == NULL )
-      format = msCreateDefaultOutputFormat(NULL,"image/jpeg");
-    if( format == NULL )
-      format = msCreateDefaultOutputFormat(NULL,"image/wbmp");
+    if (filename) {
+        return msImageLoadGD(filename);
+    }
+    else {
+        format = msCreateDefaultOutputFormat(NULL,"image/gif");
+        if( format == NULL )
+            format = msCreateDefaultOutputFormat(NULL,"image/png");
+        if( format == NULL )
+            format = msCreateDefaultOutputFormat(NULL,"image/jpeg");
+        if( format == NULL )
+            format = msCreateDefaultOutputFormat(NULL,"image/wbmp");
     
-    image = msImageCreate(width, height, format, NULL, NULL);    
-
-    return(image);
+        image = msImageCreate(width, height, format, NULL, NULL);    
+        return(image);
+    }
   }
 
   ~imageObj() {

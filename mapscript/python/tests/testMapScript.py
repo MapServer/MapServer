@@ -16,6 +16,7 @@ sys.path.insert(0, 'build/lib.' + platformdir)
 # Our testing mapfile
 testMapfile = '../../tests/test.map'
 testNoFontSetMapfile = '../../tests/test_nofontset.map'
+test_image = '/Users/sean/Projects/ms_41/mapserver/tests/test.png'
 
 # Import all from mapscript
 from mapscript import *
@@ -652,6 +653,36 @@ class ColorObjTestCase(unittest.TestCase):
         c = colorObj()
         self.assertRaises(MapServerError, c.setHex, '#fffffg')
 
+class ClonedMapOutputFormatTestCase(unittest.TestCase):
+    """This test case is developed to address MapServer bug 510"""
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testClonedMapKeepsOutputFormat(self):
+        self.mapobj1.setImageType('image/jpeg')
+        assert self.mapobj1.outputformat.mimetype == 'image/jpeg'
+        mapobj_clone = self.mapobj1.clone()
+        assert mapobj_clone.thisown == 1
+        mime = mapobj_clone.outputformat.mimetype
+        assert mime == 'image/jpeg', mime
+    def testClonedMapKeepsModifiedOutputFormat(self):
+        self.mapobj1.setImageType('image/jpeg')
+        self.mapobj1.outputformat.setOption('QUALITY','90');
+        assert self.mapobj1.outputformat.mimetype == 'image/jpeg'
+        iquality = self.mapobj1.outputformat.getOption('QUALITY')
+        assert iquality == '90'
+        mapobj_clone = self.mapobj1.clone()
+        assert mapobj_clone.thisown == 1
+        quality = mapobj_clone.outputformat.getOption('QUALITY')
+        assert quality == iquality, quality
+
+class ImageObjTestCase(unittest.TestCase):
+    def testConstructorFilename(self):
+        imgobj = imageObj(0, 0, test_image)
+        assert imgobj.height == 200
+        assert imgobj.width == 200
+    
 if __name__ == '__main__':
     unittest.main()
 
