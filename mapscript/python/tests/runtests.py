@@ -89,6 +89,7 @@ from cases.labeltest import LabelCacheMemberTestCase
 
 from cases.resultcachetest import ResultCacheTestCase
 from cases.resultcachetest import PointQueryResultsTestCase
+from cases.resultcachetest import DumpAndLoadTestCase
 
 # Create a test suite
 suite = unittest.TestSuite()
@@ -141,7 +142,8 @@ suite.addTests([OutputFormatTestCase, MapOutputFormatTestCase])
 
 suite.addTest(LabelCacheMemberTestCase)
 
-suite.addTests([ResultCacheTestCase, PointQueryResultsTestCase])
+suite.addTests([ResultCacheTestCase, PointQueryResultsTestCase,
+                DumpAndLoadTestCase])
 
 # ============================================================================
 # If module is run as a script, execute every test case in the suite

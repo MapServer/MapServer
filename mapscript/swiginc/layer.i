@@ -202,6 +202,15 @@
         return msQueryByShape(map, self->index, shape);
     }
 
+    int queryByIndex(mapObj *map, int tileindex, int shapeindex,
+                     int bAddToQuery=MS_FALSE)
+    {
+        if (bAddToQuery == MS_FALSE)
+            return msQueryByIndex(map, self->index, tileindex, shapeindex);
+        else
+            return msQueryByIndexAdd(map, self->index, tileindex, shapeindex);
+    }
+    
     resultCacheObj *getResults(void)
     {
         return self->resultcache;

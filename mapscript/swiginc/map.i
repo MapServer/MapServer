@@ -291,9 +291,19 @@
     return msSaveMap(self, filename);
   }
 
-  int saveQuery(char *filename) {
-    return msSaveQuery(self, filename);
-  }
+    int saveQuery(char *filename) {
+        return msSaveQuery(self, filename);
+    }
+
+    int loadQuery(char *filename)
+    {
+        return msLoadQuery(self, filename);
+    }
+
+    void freeQuery(int qlayer=-1)
+    {
+        msQueryFree(self, qlayer);
+    }
 
   int saveQueryAsGML(char *filename) {
     return msGMLWriteQuery(self, filename);

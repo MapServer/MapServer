@@ -1391,6 +1391,10 @@ queryByFeatures( mapObj_ map, int slayer ) : int
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened.
 
+queryByIndex( mapObj_ map, int shapeindex, int tileindex [, int bAddToQuery=MS_FALSE ]) : int
+    Pop a query result member into the layer's result cache.  By default
+    clobbers existing cache.  Returns MS_SUCCESS or MS_FAILURE.
+
 queryByPoint( mapObj_ map, pointObj_ point, int mode, float buffer ) : int
     Query layer at point location specified in georeferenced map 
     coordinates (i.e. not pixels).  
@@ -1636,6 +1640,9 @@ appendOutputFormat( outputFormatObj_ format ) : int
 clone( ) : mapObj
     Returns a clone of the map.
 
+freeQuery( [ int qlayer=-1 ] ) : void
+    Clear layer query result caches.  Default is -1, or *all* layers.
+    
 getConfigOption( string key ) : string
     Fetches the value of the requested configuration key if set.  Returns
     NULL if the key is not set.  
@@ -1675,6 +1682,9 @@ loadOWSParameters( OWSRequest_ request [, string version='1.1.1' ] ) : int
     Load OWS request parameters (BBOX, LAYERS, &c.) into map.  Returns
     MS_SUCCESS or MS_FAILURE.
 
+loadQuery( string filename ) : int
+    Load a saved query.  Returns MS_SUCCESS or MS_FAILURE.
+    
 prepareImage( ) : imageObj_
     Returns an imageObj initialized to map extents and outputformat.
 
@@ -1691,6 +1701,9 @@ removeMetaData( string key ) : int
 removeOutputFormat( string name ) : int
     Removes the format named *name* from the map's output format list.
     Returns MS_SUCCESS or MS_FAILURE.
+
+saveQuery( string filename ) : int
+    Save query results to filesystem.  Returns MS_SUCCESS or MS_FAILURE.
 
 setConfigOption( string key, string value ) : void
     Set the indicated key configuration option to the indicated value.  

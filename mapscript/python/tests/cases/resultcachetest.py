@@ -46,7 +46,13 @@ class LayerQueryTestCase(MapTestCase):
         MapTestCase.setUp(self)
         self.layer = self.map.getLayer(0)
         self.layer.template = 'some day i will fix this!'
-       
+  
+    def pointquery(self):
+        p = mapscript.pointObj(0.0, 51.5)
+        self.layer.queryByPoint(self.map, p, mapscript.MS_MULTIPLE, -1)
+        return self.layer.getResults()
+
+
 # ===========================================================================
 # Test begins now
 
@@ -62,11 +68,6 @@ class ResultCacheTestCase(LayerQueryTestCase):
         assert results == None
 
 class PointQueryResultsTestCase(LayerQueryTestCase):
-
-    def pointquery(self):
-        p = mapscript.pointObj(0.0, 51.5)
-        self.layer.queryByPoint(self.map, p, mapscript.MS_MULTIPLE, -1)
-        return self.layer.getResults()
 
     def testCacheAfterQuery(self):
         """simple point query returns one result"""
@@ -111,6 +112,28 @@ class PointQueryResultsTestCase(LayerQueryTestCase):
         assert len(result_list) == 1
         assert result_list[0].shapeindex == 0
 
+    def testQueryByIndex(self):
+        """pop a result into the result set"""
+        self.layer.queryByIndex(self.map, -1, 0, mapscript.MS_FALSE)
+        results = self.layer.getResults()
+        assert results.numresults == 1
+        self.layer.queryByIndex(self.map, -1, 0, mapscript.MS_TRUE)
+        results = self.layer.getResults()
+        assert results.numresults == 2
+        
+class DumpAndLoadTestCase(LayerQueryTestCase):
+    
+    def testSaveAndLoadQuery(self):
+        """test saving query to a file"""
+        results = self.pointquery()
+        self.map.saveQuery('test.qry')
+        self.map.freeQuery()
+        results = self.layer.getResults()
+        assert results == None
+        self.map.loadQuery('test.qry')
+        results = self.layer.getResults()
+        assert results is not None
+       
 # ===========================================================================
 # Run the tests outside of the main suite
 
