@@ -433,11 +433,17 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     /* -------------------------------------------------------------------- */
     /*	Is the request valid?                  				    */
     /* -------------------------------------------------------------------- */
-    if( iField < 0 || iField >= psDBF->nFields )
-      return( NULL );
+    if( iField < 0 || iField >= psDBF->nFields ) 
+    {
+        msSetError(MS_DBFERR, "Invalid field index %d.", "msDBFGetItemIndex()",iField );
+        return( NULL );
+    }
 
     if( hEntity < 0 || hEntity >= psDBF->nRecords )
-      return( NULL );
+    {
+        msSetError(MS_DBFERR, "Invalid record number %d.", "msDBFGetItemIndex()",hEntity );
+        return( NULL );
+    }
 
     /* -------------------------------------------------------------------- */
     /*	Have we read the record?					    */
@@ -816,6 +822,7 @@ int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems)
 
 char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int numitems)
 {
+  const char *value;
   char **values=NULL;
   int i;
 
@@ -826,8 +833,12 @@ char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int nu
     return(NULL);
   }
 
-  for(i=0;i<numitems;i++)
-    values[i] = strdup(msDBFReadStringAttribute(dbffile, record, itemindexes[i]));
+  for(i=0;i<numitems;i++) {
+    value = msDBFReadStringAttribute(dbffile, record, itemindexes[i]);
+    if (value == NULL)
+      return NULL; /* Error already reported by msDBFReadStringAttribute() */
+    values[i] = strdup(value);
+  }
 
   return(values);
 }
