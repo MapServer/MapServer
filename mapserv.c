@@ -2000,7 +2000,6 @@ int main(int argc, char *argv[]) {
 	  img = msDrawReferenceMap(Map);
 	  if(!img) writeError();
 	  sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-	  if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
 #ifndef USE_GD_1_8
 	  if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
 #else
@@ -2362,7 +2361,6 @@ int main(int argc, char *argv[]) {
 	img = msDrawReferenceMap(Map);
 	if(!img) writeError();
 	sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
 #ifndef USE_GD_1_8
 	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
 #else

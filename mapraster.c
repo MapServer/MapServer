@@ -1418,7 +1418,7 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
 
 #ifdef USE_GD_1_8
   fread(bytes,8,1,stream); // read some bytes to try and identify the file
-  if (memcmp(dd,PNGsig,8)==0) {
+  if (memcmp(bytes,PNGsig,8)==0) {
     img = gdImageCreateFromPng(stream);
     map->reference.imagetype = MS_PNG;
   } else {
