@@ -228,7 +228,7 @@ int msGetSymbolIndex(symbolSetObj *symbols, char *name)
       if(strcasecmp(symbols->symbol[i].name, name) == 0) return(i);
   }
 
-  return(-1); /* symbol not found */
+  return(msAddImageSymbol(symbols, name)); /* make sure it's not a filename */
 }
 
 /*
@@ -1452,11 +1452,8 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     if(state == MS_NUMBER)
       class->symbol = (int) msyynumber;
     else {
-      if((class->symbol = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1) {
-	if((class->symbol = msAddImageSymbol(&(map->symbolset), msyytext)) == -1) {
-	  msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
-	}
-      }      
+      if((class->symbol = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1)
+	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
     }
     break;
   case(TEMPLATE):
@@ -3177,11 +3174,9 @@ static mapObj *loadMapInternal(char *filename)
           for(j=0; j<map->layers[i].numclasses; j++)
           {
              if (map->layers[i].class[j].overlaysymbolname)
-                if ((map->layers[i].class[j].overlaysymbol =  msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1)
-                 {
-                    msSetError(MS_MISCERR,
-                               "Undefined overlay symbol \"%s\" in class %d of layer %s.",
-                               "msLoadMap()",
+                if ((map->layers[i].class[j].overlaysymbol =  msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
+                    msSetError(MS_MISCERR, "Undefined overlay symbol \"%s\" in class %d of layer %s.", 
+			       "msLoadMap()",
                                map->layers[i].class[j].overlaysymbolname,
                                j, map->layers[i].name);
 

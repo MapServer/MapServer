@@ -112,13 +112,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   int getSymbolByName(char *name) {
-    int symbol;
-
-    if((symbol = msGetSymbolIndex(&self->symbolset, name)) == -1)
-      if((symbol = msAddImageSymbol(&self->symbolset, name)) == -1)
-	return -1;
-
-    return symbol;
+    return msGetSymbolIndex(&self->symbolset, name);
   }
 
   void prepareQuery() {
@@ -981,6 +975,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     msSaveImage(self->bytes, filename, type, transparent, interlace, quality);
   }
 
+  
 }
 
 //
