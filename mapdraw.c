@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2005/02/18 21:50:03  jerryp
+ * Fixed memory and resource leaks in msDrawVectorLayer (bug 1228)
+ *
  * Revision 1.84  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -901,7 +904,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     status = msLayerWhichItems(layer, MS_TRUE, annotate, msLookupHashTable(&(layer->metadata), "SWFDUMPATTRIBUTES"));                                
   else        
     status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL);
-  if(status != MS_SUCCESS) return MS_FAILURE;
+  if(status != MS_SUCCESS) {
+    msLayerClose(layer);
+    return MS_FAILURE;
+  }
   
   /* identify target shapes */
   if(layer->transform == MS_TRUE)
@@ -961,7 +967,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     else
       status = msDrawShape(map, layer, &shape, image, -1); /* all styles  */
     if(status != MS_SUCCESS) {
-      msLayerClose(layer);
+      msFreeShape(&shape);
       retcode = MS_FAILURE;
       break;
     }
@@ -982,8 +988,10 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     msFreeShape(&shape);
   }
     
-  if(retcode == MS_FAILURE) return MS_FAILURE;  
-  if(status != MS_DONE) return MS_FAILURE;
+  if(status != MS_DONE) {
+    msLayerClose(layer);
+    return MS_FAILURE;
+  }
   
   if(shpcache) {
     int s;
