@@ -13,6 +13,8 @@ static int layerInitItemInfo(layerObj *layer)
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):
+
+    // iteminfo needs to be a bit more complex, a list of indexes plus the length of the list
     layer->iteminfo = (int *) msDBFGetItemIndexes(layer->shpfile.hDBF, layer->items, layer->numitems);
     if(!layer->iteminfo) return(MS_FAILURE);
     return(MS_SUCCESS);
@@ -529,6 +531,40 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
       j++;
     }
   }
+}
+
+int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *metadata) 
+{
+  int i, status;
+  char **items; // the list of items we actually need
+  int numitems, numchars;
+
+  status = msLayerGetItems(layer); // get a list of all attributes available for this layer (including JOINs)
+  if(status != MS_SUCCESS) return(status);
+
+  // allocate space for the various item lists
+  if(classify && layer->filter.type == MS_EXPRESSION) { 
+    numchars = countChars(layer->filter.string, '[');
+    if(numchars > 0) {
+      layer->filter.items = (char **)calloc(numchars, sizeof(char *)); // should be more than enough space
+      if(!(layer->filter.items)) {
+	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	return(MS_FAILURE);
+      }
+      layer->filter.indexes = (int *)malloc(numchars*sizeof(int));
+      if(!(layer->filter.indexes)) {
+	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	return(MS_FAILURE);
+      }
+      layer->filter.numitems = 0;     
+    }
+  }
+
+  for(i=0; i<layer->numitems; i++) {
+
+  }
+
+  
 }
 
 /*
