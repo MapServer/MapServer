@@ -1427,6 +1427,54 @@ ALL_INC="$CURL_INC $ALL_INC"
 ALL_LIB="$CURL_LIB $ALL_LIB"
 
 
+dnl ---------------------------------------------------------------------
+dnl Try to detect Apache version (httpd -v)
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(HTTPD server (Apache) version)
+AC_ARG_WITH(httpd,
+[  --with-httpd            Specify path to 'httpd' executable.],,)
+
+
+if test "$with_httpd" = "no" ; then
+
+  AC_MSG_RESULT([        HTTPD server (Apache) version detection disabled by --without-httpd.])
+
+elif test "$with_httpd" = "yes" ; then
+  AC_MSG_ERROR([full path to httpd executable is required as argument when using --with-httpd])
+
+else
+
+  if test -n "$with_httpd" ; then
+    dnl
+    dnl User supplied explicit httpd path
+    dnl
+    HTTPD="$with_httpd"
+    
+    if test -f "$HTTPD" -a -x "$HTTPD" ; then
+      AC_MSG_RESULT([        using user-supplied httpd ($HTTPD)])
+    else
+      AC_MSG_ERROR([$HTTPD is not an executable.  Make sure you use --with-httpd=/path/to/httpd])
+    fi
+  else
+    dnl 
+    dnl Try to locate httpd
+    dnl
+    AC_PATH_PROG(HTTPD, httpd, "", "$PATH:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/apache/bin")
+  fi
+
+  if test -z "$HTTPD" ; then
+    AC_MSG_RESULT([        'httpd' not found, skipping Apache version detection. You may want to use --with-httpd=/path/to/httpd])
+  else
+    HTTPD_VERSION_STRING=`$HTTPD -v | grep "Server version" | awk '{print $3}'`
+    dnl If server is not Apache then APACHE_VERSION will be empty
+    APACHE_VERSION=`echo "$HTTPD_VERSION_STRING" | grep Apache | awk -F / '{print $2}' | awk -F . '{print $1*1000000 + $2*1000 + $3}'`
+
+    AC_MSG_RESULT([        $HTTPD version is $HTTPD_VERSION_STRING ($APACHE_VERSION).])
+  fi
+
+fi
+
 
 dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that
@@ -1473,7 +1521,12 @@ if test "$enable_debug" = "yes" ; then
   dnl also enable output of msDebug() calls to stderr.
   DEBUG_FLAGS="-DENABLE_STDERR_DEBUG"
 
-  AC_MSG_RESULT([        Enabling debug features: -g in CFLAGS and msDebug() to stderr.])
+  if test -n $APACHE_VERSION -a `expr $APACHE_VERSION \>= "2000000"` = 1 ; then
+    AC_MSG_RESULT([        You requested msDebug() output on a system apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030).])
+    DEBUG_FLAGS="$DEBUG_FLAGS -DNEED_NONBLOCKING_STDERR"
+  fi
+
+  AC_MSG_RESULT([        Enabling debug features: -g in CFLAGS and msDebug() to stderr ($DEBUG_FLAGS).])
 else
   AC_COMPILER_WFLAGS
 fi
