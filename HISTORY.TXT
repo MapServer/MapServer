@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- mapserv_fcgi.c removed.  Committed new comprehensive FastCGI support. 
+
 - New mapserver exceptions for Java mapscript thanks to Umberto Nicoletti
   (bug 895).
 
