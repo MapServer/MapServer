@@ -1,7 +1,7 @@
 # $Id$
 #
-# Unit tests concerning the removeLayer() and removeClass() extension
-# methods.
+# Unit tests concerning getLayerOrder(), setLayerOrder(),
+# raiseLayer(), lowerLayer() extensions.
 
 import os, sys
 import distutils.util
@@ -16,9 +16,32 @@ sys.path.insert(0, 'build/lib.' + platformdir)
 # Our testing mapfile
 testMapfile = 'tests/test.map'
 
-# Import mapscript and define the test case classes
+# Import all from mapscript
 from mapscript import *
 
+# Layer ordering tests
+class LayerOrderTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testGetLayerOrder(self):
+        order = self.mapobj1.getLayerOrder()
+        assert order == (0, 1), order
+    def testPromoteLayer1(self):
+        self.mapobj1.getLayer(1).promote()
+        order = self.mapobj1.getLayerOrder()
+        assert order == (1, 0), order
+    def testDemoteLayer0(self):
+        self.mapobj1.getLayer(0).demote()
+        order = self.mapobj1.getLayerOrder()
+        assert order == (1, 0), order
+    def testSetLayerOrder(self):
+        self.mapobj1.setLayerOrder((1, 0))
+        order = self.mapobj1.getLayerOrder()
+        assert order == (1, 0), order
+
+# Layer removal tests
 class RemoveLayerTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile)
@@ -39,6 +62,7 @@ class RemoveLayerTestCase(unittest.TestCase):
         self.mapobj1.removeLayer(1)
         assert self.mapobj1.getLayer(0).name == l1name
 
+# class removal tests
 class RemoveClassTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile)
@@ -58,6 +82,15 @@ class RemoveClassTestCase(unittest.TestCase):
         c1name = self.mapobj1.getLayer(0).getClass(0).name
         self.mapobj1.getLayer(0).removeClass(1)
         assert self.mapobj1.getLayer(0).getClass(0).name == c1name
+
+# symbolset tests
+class SymbolSetTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testDefaultNumSymbols(self):
+        assert mapobj.symbolset.numsymbols == 1
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,0 +1,121 @@
+MAP
+  NAME "Colorado1"
+  EXTENT -108.0 37.0 -104.0 41.0
+  UNITS DD
+  STATUS ON
+  IMAGETYPE "PNG"
+  IMAGECOLOR 0 0 0
+  SIZE 500 500
+
+  WEB
+    IMAGEURL "/tmp/"
+    IMAGEPATH "/tmp/"
+    TEMPLATE "foo"
+  END
+  
+  OUTPUTFORMAT
+    NAME "PNG"
+    DRIVER "GD/PNG"
+    IMAGEMODE "pc256"
+  END
+
+  PROJECTION
+    "proj=longlat"
+    "ellps=GRS80"
+    "datum=NAD83"
+  END
+  
+  LAYER
+    NAME "County"
+    STATUS DEFAULT
+    TYPE POLYGON
+    PROJECTION
+      "proj=longlat"
+      "ellps=GRS80"
+      "datum=NAD83"
+    END
+    UNITS DD
+    DATA "/Data/census/co08_d00/co08_d00.shp"
+    CLASSITEM "CO08_D00_"
+    LABELITEM "NAME"
+
+    CLASS
+      NAME "Counties A"
+      EXPRESSION ([CO08_D00_] <= 37)
+      TEMPLATE "foo"
+      STYLE
+        SYMBOL 0
+        SIZE 1
+        COLOR 255 204 153
+        OUTLINECOLOR 0 0 0
+      END
+      LABEL
+        TYPE BITMAP
+	    COLOR 0 0 0
+	    SIZE SMALL
+      END
+    END
+    CLASS
+      NAME "Counties B"
+      EXPRESSION ([CO08_D00_] > 37)
+      TEMPLATE "foo"
+      STYLE
+        SIZE 1
+        COLOR 204 204 153
+        OUTLINECOLOR 0 0 0
+      END
+      LABEL
+        TYPE BITMAP
+	    COLOR 0 0 0
+	    SIZE SMALL
+      END
+    END
+  END
+
+  LAYER
+    NAME "UrbanAreas"
+    STATUS DEFAULT
+    TYPE POLYGON
+    PROJECTION
+      "proj=longlat"
+      "ellps=GRS80"
+      "datum=NAD83"
+    END
+    UNITS DD
+    DATA "/Data/census/ua99_d00/ua99_d00.shp"
+    CLASSITEM "LSAD_TRANS"
+    LABELITEM "NAME"
+
+    CLASS
+      NAME "Urban Clusters"
+      EXPRESSION "Urban Cluster"
+      TEMPLATE "foo"
+      STYLE
+        SIZE 1
+        COLOR 153 51 255
+        OUTLINECOLOR 0 0 0
+      END
+      LABEL
+        TYPE BITMAP
+	    COLOR 0 0 0
+	    SIZE SMALL
+      END
+    END
+    CLASS
+      NAME "Urbanized Areas"
+      EXPRESSION "Urbanized Area"
+      TEMPLATE "foo"
+      STYLE
+        SIZE 1
+        COLOR 102 51 204
+        OUTLINECOLOR 0 0 0
+      END
+      LABEL
+        TYPE BITMAP
+	    COLOR 0 0 0
+	    SIZE SMALL
+      END
+    END
+  END
+
+END
