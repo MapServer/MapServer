@@ -30,6 +30,7 @@ char *msyystring=NULL;
          BEGIN(OBJECT_STRING);         
          msyy_scan_string(msyystring);
          msyystate=0;
+         (void) yyunput; /* just to avoid warning about it being unrefed */
          break;
        case(2):
          BEGIN(VALUE_STRING);
