@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.52  2004/11/10 16:10:19  assefa
+ * DescribeFeatureType returns now in the exception only the typename that is
+ * invalid instead of the whole typename passed in the request (Bug 442).
+ *
  * Revision 1.51  2004/10/29 22:18:54  assefa
  * Use ows_schama_location metadata. The default value if metadata is not found
  * is http://schemas.opengeospatial.net
@@ -650,7 +654,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             {
                 msSetError(MS_WFSERR, 
                        "Invalid typename (%s).", 
-                       "msWFSDescribeFeatureType()", paramsObj->pszTypeName);
+                           "msWFSDescribeFeatureType()", layers[i]);//paramsObj->pszTypeName);
                 return msWFSException(map, paramsObj->pszVersion);
             }
         }
