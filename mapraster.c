@@ -413,6 +413,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	  if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	    cmap[i] = -1;
 	  else {
+            RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
 	    if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
 	      cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	    else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
@@ -627,6 +628,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
 	else {
+          RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
           if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
 	    cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	  else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
@@ -744,6 +746,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
         if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
 	else {
+          RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
           if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
 	    cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	  else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
@@ -1002,6 +1005,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	    if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	      cmap[i] = -1;
 	    else {
+              RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
 	      if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
 	        cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	      else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
@@ -1148,6 +1152,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  if(c == -1) 
 	    cmap[i] = -1;
 	  else {
+            RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
 	    if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
 	      cmap[i] = msAddColorGD(map,img, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
 	    else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
