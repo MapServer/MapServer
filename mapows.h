@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.30  2004/04/14 07:31:40  dan
+ * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
+ *
  * Revision 1.29  2004/04/14 05:14:54  dan
  * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
  *
@@ -144,7 +147,6 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
 
 MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
-MS_DLL_EXPORT const char *msOWSGetMetadata(hashTableObj metadata, ...);
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);

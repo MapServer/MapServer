@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.26  2004/04/14 07:31:40  dan
+ * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
+ *
  * Revision 1.25  2004/04/14 05:14:54  dan
  * Added ability to pass a default value to msOWSPrintMetadataList() (bug 616)
  *
@@ -132,25 +135,6 @@ int msOWSDispatch(mapObj *map, cgiRequestObj *request)
 #endif
 
     return MS_DONE;  /* Not a WMS/WFS request... let MapServer handle it */
-}
-
-const char *msOWSGetMetadata(hashTableObj metadata, ...) 
-{
-  va_list arglist;
-  char *arg;
-  const char *value;
-
-  va_start(arglist, metadata);
-  while((arg = va_arg(arglist, char *)) != NULL) {
-    if((value = msLookupHashTable(metadata, (char*) arg))) {
-      va_end(arglist);
-      return(value);
-    }
-  }
-
-  // didn't find the right metadata
-  va_end(arglist);
-  return(NULL);
 }
 
 /*
