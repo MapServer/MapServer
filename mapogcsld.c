@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.48.2.2  2005/02/28 15:23:33  assefa
+ * SLD generation bug 1150 : replacing <AND> tag to <ogc:And>
+ *
  * Revision 1.48.2.1  2005/01/03 15:50:26  assefa
  * Correct bug 1151 : generates twice a </Mark> tag when generating an SLD.
  * This was happening the style did not have a size set.
@@ -4846,7 +4849,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
             if (psClass->layer && psClass->layer->classitem)
             {
                 if (pszWfsFilter)
-                  sprintf(szBuffer, "<ogc:Filter><AND>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></AND></ogc:Filter>\n", 
+                  sprintf(szBuffer, "<ogc:Filter><ogc:And>%s<ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:And></ogc:Filter>\n", 
                         pszWfsFilter, psClass->layer->classitem, psClass->expression.string);
                 else
                   sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsLike wildCard=\"*\" singleChar=\"#\" escape=\"!\"><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsLike></ogc:Filter>\n", 
