@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "map.h"
 #include "mapparser.h"
 
@@ -932,13 +934,16 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
        
         for (i=0; i<nCount; i++)
         {
+            layerObj *lp;
+            lp = &(map->layers[map->layerorder[i]]);
+
             bFound = 0;
-            if (map->layers[map->layerorder[i]].group)
+            if (lp->group && lp->status != MS_DELETE)
             {
                 for (j=0; j<*numTok; j++)
                 {
                     if (papszGroups[j] &&
-                        strcmp(map->layers[map->layerorder[i]].group, papszGroups[j]) == 0)
+                        strcmp(lp->group, papszGroups[j]) == 0)
                     {
                         bFound = 1;
                         break;
@@ -947,7 +952,7 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
                 if (!bFound)
                 {
                     /* New group... add to the list of groups found */
-                    papszGroups[(*numTok)] = strdup(map->layers[map->layerorder[i]].group);
+                    papszGroups[(*numTok)] = strdup(lp->group);
                     (*numTok)++;
                 }
             }
