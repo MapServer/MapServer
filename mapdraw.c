@@ -216,6 +216,7 @@ imageObj *msDrawMap(mapObj *map)
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
         msFreeWmsParamsObj(&sLastWMSParams);
 #endif
+        msFreeImage(image);
         return(NULL);
     }
     
@@ -256,6 +257,7 @@ imageObj *msDrawMap(mapObj *map)
                                           &numOWSRequests) == MS_FAILURE)
             {
                 msFreeWmsParamsObj(&sLastWMSParams);
+                msFreeImage(image);
                 return NULL;
             }
         }
@@ -268,6 +270,7 @@ imageObj *msDrawMap(mapObj *map)
                                           &numOWSRequests) == MS_FAILURE)
             {
                 msFreeWmsParamsObj(&sLastWMSParams);
+                msFreeImage(image);
                 return NULL;
             }
         }
@@ -282,6 +285,7 @@ imageObj *msDrawMap(mapObj *map)
     if (numOWSRequests && 
         msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE)
     {
+        msFreeImage(image);
         return NULL;
     }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
@@ -340,6 +344,7 @@ imageObj *msDrawMap(mapObj *map)
             if(status == MS_FAILURE) {
                 msSetError(MS_IMGERR, "Failed to draw layer named '%s'.",
                            "msDrawMap()", lp->name);
+                msFreeImage(image);
                 return(NULL);
             }
         }
@@ -382,7 +387,10 @@ imageObj *msDrawMap(mapObj *map)
       msGettimeofday(&starttime, NULL);
 
   if(msDrawLabelCache(image, map) == -1)
+  {
+    msFreeImage(image);
     return(NULL);
+  }
 
   if (map->debug)
   {
@@ -434,7 +442,11 @@ imageObj *msDrawMap(mapObj *map)
     }
     else 
         status = msDrawLayer(map, lp, image);
-    if(status == MS_FAILURE) return(NULL);
+    if(status == MS_FAILURE)
+    {
+        msFreeImage(image);
+        return(NULL);
+    }
 
     if (map->debug)
     {
