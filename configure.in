@@ -550,18 +550,36 @@ AC_CHECKING(whether we should include OGR support...)
 AC_ARG_WITH(ogr,
 [  --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).],,)
 
-if test "$with_ogr" = "yes" ; then
+if test "`basename $with_ogr`" = "gdal-config" ; then
+  GDAL_CONFIG="$with_ogr"
+fi
 
+if test "$with_ogr" = "yes" ; then
+  AC_PATH_PROG(GDAL_CONFIG, gdal-config, no)
+
+  if test "$GDAL_CONFIG" = "no" ; then
+    AC_MSG_ERROR([couldn't find gdal-config])
+  fi
+fi
+
+if test -n "$GDAL_CONFIG" ; then
+
+  saved_LIBS="$LIBS"
+  LIBS="$LIBS `gdal-config --libs`"
   AC_CHECK_LIB(gdal.1.1, OGRRegisterAll, OGR_ENABLED=-DUSE_OGR,,,)
+  LIBS="$saved_LIBS"
+
+  HAVE_GDAL_LIB=yes
 
   if test -n "$OGR_ENABLED" ; then
-      OGR_LIB="-lgdal.1.1 -ljpeg -lpng -ldl -logdi -lzlib"
+      OGR_LIB="`gdal-config --libs`"
+      OGR_INC="`gdal-config --cflags`"
       AC_MSG_RESULT([        using OGR from system libs.])
   else
       AC_MSG_WARN([        OGR not found in system libs... use --with-ogr=DIR.])
   fi
 
-elif test -n "$with_ogr" -a "$with_ogr " != "no" ; then
+elif test -n "$with_ogr" -a "$with_ogr" != "no" ; then
 
   AC_EXPAND_PATH($with_ogr, OGR_DIR)
 
@@ -610,6 +628,56 @@ AC_SUBST(OGR_LIB,    $OGR_LIB)
 ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
 ALL_INC="$OGR_INC $ALL_INC"
 ALL_LIB="$OGR_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
+dnl Find GDAL only if requested (and not supplied by OGR)
+dnl ---------------------------------------------------------------------
+AC_MSG_CHECKING(if GDAL support requested)
+
+AC_ARG_WITH(gdal,
+[  --with-gdal[=DIR]       Include GDAL support (DIR is path to gdal-config],,)
+
+if test "$with_gdal" = "yes" ; then
+
+  AC_MSG_RESULT([yes])  
+
+  if test -z "$GDAL_CONFIG" ; then
+    AC_PATH_PROG(GDAL_CONFIG, gdal-config, no)
+  fi
+
+  if test "$GDAL_CONFIG" = "no" ; then
+    AC_MSG_ERROR([couldn't find gdal-config])
+  fi
+
+elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
+
+  GDAL_CONFIG=$with_gdal
+  AC_MSG_RESULT([yes, user supplied gdal-config])  
+
+else
+
+  AC_MSG_RESULT([no])
+
+fi
+
+if test -n "$GDAL_CONFIG" ; then
+
+  if test "$HAVE_GDAL_LIB" != "yes" ; then
+    GDAL_LIB=`$GDAL_CONFIG --libs`
+  fi
+
+  GDAL_INC=`$GDAL_CONFIG --cflags`
+  GDAL_ENABLED=-DUSE_GDAL
+
+fi
+
+AC_SUBST(GDAL_ENABLED,$GDAL_ENABLED)
+AC_SUBST(GDAL_INC,    $GDAL_INC)
+AC_SUBST(GDAL_LIB,    $GDAL_LIB)
+
+ALL_ENABLED="$GDAL_ENABLED $ALL_ENABLED"
+ALL_INC="$GDAL_INC $ALL_INC"
+ALL_LIB="$GDAL_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that
