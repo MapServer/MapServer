@@ -753,7 +753,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       sprintf(pszImgFname, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
       pszFullImgFname = strdup(msBuildPath(szPath, 
-         msBuildPath(szPath, map->map_path, map->web.imagepath), pszImgFname));
+         msBuildPath(szPath, map->mappath, map->web.imagepath), pszImgFname));
       
       // check if icon already exist in cache
       if ((fIcon = fopen(pszFullImgFname, "r+")) != NULL)
@@ -1342,7 +1342,7 @@ char *generateLegendTemplate(mapservObj *msObj)
    }
 
        // open template
-   if((stream = fopen(msBuildPath(szPath, msObj->Map->map_path, msObj->Map->legend.template), "r")) == NULL) {
+   if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, msObj->Map->legend.template), "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
       return NULL;
    } 
@@ -2075,7 +2075,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
   }
   regfree(&re);
 
-  if((stream = fopen(msBuildPath(szPath, msObj->Map->map_path, html), "r")) == NULL) {
+  if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, html), "r")) == NULL) {
     msSetError(MS_IOERR, html, "msReturnPage()");
     return MS_FAILURE;
 //    writeError();

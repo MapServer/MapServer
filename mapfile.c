@@ -3190,7 +3190,7 @@ void msFreeMap(mapObj *map) {
 
   msFree(map->name);
   msFree(map->shapepath);
-  msFree(map->map_path);
+  msFree(map->mappath);
 
   msFreeSymbolSet(&map->symbolset); // free symbols
   msFree(map->symbolset.filename);
@@ -3259,7 +3259,7 @@ int msSaveMap(mapObj *map, char *filename)
     return(-1);
   }
 
-  stream = fopen(msBuildPath(szPath, map->map_path, filename), "w");
+  stream = fopen(msBuildPath(szPath, map->mappath, filename), "w");
   if(!stream) {
     msSetError(MS_IOERR, "(%s)", "msSaveMap()", filename);    
     return(-1);
@@ -3321,7 +3321,7 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
-static mapObj *loadMapInternal(char *filename, char *new_map_path)
+static mapObj *loadMapInternal(char *filename, char *new_mappath)
 {
   regex_t re;
   mapObj *map=NULL;
@@ -3368,12 +3368,12 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
   if(initMap(map) == -1) /* initialize this map */
     return(NULL);
 
-  // If new_map_path is provided then use it, otherwise use the location
+  // If new_mappath is provided then use it, otherwise use the location
   // of the mapfile as the default path
-  if (new_map_path)
-      map->map_path = strdup(new_map_path);
+  if (new_mappath)
+      map->mappath = strdup(new_mappath);
   else
-      map->map_path = getPath(filename);
+      map->mappath = getPath(filename);
 
   for(;;) {
 
@@ -3520,12 +3520,12 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
 //
 // Wraps loadMapInternal
 //
-mapObj *msLoadMap(char *filename, char *new_map_path)
+mapObj *msLoadMap(char *filename, char *new_mappath)
 {
     mapObj *map;
 
     msAcquireLock( TLOCK_PARSER );
-    map = loadMapInternal( filename, new_map_path );
+    map = loadMapInternal( filename, new_mappath );
     msReleaseLock( TLOCK_PARSER );
 
     return map;

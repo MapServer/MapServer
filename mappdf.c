@@ -1274,11 +1274,11 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
 
     if(fontset == NULL) return(0);
     if(fontset->filename == NULL) return(0);
-    path = msBuildPath(szPath, fontset->map->map_path, 
+    path = msBuildPath(szPath, fontset->map->mappath, 
                        getPath(fontset->filename));
 
     stream = fopen(
-        msBuildPath(szPath, fontset->map->map_path, fontset->filename), "r");
+        msBuildPath(szPath, fontset->map->mappath, fontset->filename), "r");
     if(!stream) {
         msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontsetPDF()",
                    fontset->filename);

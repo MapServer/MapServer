@@ -145,7 +145,7 @@ int loadSymbol(symbolObj *s, mapObj *map)
 	return(-1);
       }
       
-      if((stream = fopen(msBuildPath(szPath, s->map->map_path, msyytext), "rb")) == NULL)
+      if((stream = fopen(msBuildPath(szPath, s->map->mappath, msyytext), "rb")) == NULL)
       {
 	msSetError(MS_IOERR, "(%s):(%d)", "loadSymbol()", 
                    msyytext, msyylineno);
@@ -360,7 +360,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
     return(-1);
   }
 
-  if((stream = fopen(msBuildPath(szPath, symbolset->map->map_path, filename), "rb")) == NULL) {
+  if((stream = fopen(msBuildPath(szPath, symbolset->map->mappath, filename), "rb")) == NULL) {
     msSetError(MS_IOERR, "Error opening image file %s.", "msAddImageSymbol()", szPath);
     return(-1);
   }
@@ -448,7 +448,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   /*
   ** Open the file
   */
-  if((msyyin = fopen(msBuildPath(szPath, symbolset->map->map_path, symbolset->filename), "r")) == NULL) {
+  if((msyyin = fopen(msBuildPath(szPath, symbolset->map->mappath, symbolset->filename), "r")) == NULL) {
     msSetError(MS_IOERR, "(%s)", "msLoadSymbolFile()", symbolset->filename);
     return(-1);
   }

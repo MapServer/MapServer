@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.30  2002/09/20 03:44:07  sdlime
+ * Swapped map_path for mappath for consistency.
+ *
  * Revision 1.29  2002/09/17 13:08:30  julien
  * Remove all chdir() function and replace them with the new msBuildPath function.
  * This have been done to make MapServer thread safe. (Bug 152)
@@ -814,7 +817,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
         // Create a world file with raster extents
         // One line per value, in this order: cx, 0, 0, cy, ulx, uly
-        wldfile = msBuildPath(szPath, lp->map->map_path, lp->data);
+        wldfile = msBuildPath(szPath, lp->map->mappath, lp->data);
         if (wldfile)    
             strcpy(wldfile+strlen(wldfile)-3, "wld");
         if (wldfile && (fp = fopen(wldfile, "wt")) != NULL)

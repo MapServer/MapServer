@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/09/20 03:44:06  sdlime
+ * Swapped map_path for mappath for consistency.
+ *
  * Revision 1.8  2002/09/17 13:08:28  julien
  * Remove all chdir() function and replace them with the new msBuildPath function.
  * This have been done to make MapServer thread safe. (Bug 152)
@@ -368,7 +371,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         int bytes_read;
         char szPath[MS_MAXPATHLEN];
 
-        fp = fopen( msBuildPath(szPath, map->map_path, filename), "rb" );
+        fp = fopen( msBuildPath(szPath, map->mappath, filename), "rb" );
         if( fp == NULL )
         {
             msSetError( MS_MISCERR, 

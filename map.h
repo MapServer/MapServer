@@ -742,7 +742,7 @@ typedef struct map_obj{ /* structure for a map */
   int resolution;
 
   char *shapepath; /* where are the shape files located */
-  char *map_path; /* path of the mapfile, all path are relative to this path */
+  char *mappath; /* path of the mapfile, all path are relative to this path */
 
   paletteObj palette; /* holds a map palette */
   colorObj imagecolor; /* holds the initial image color value */
@@ -873,7 +873,7 @@ double dist(pointObj a, pointObj b);
    
 int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
 int msGetSymbolIndex(symbolSetObj *set, char *name);
-mapObj *msLoadMap(char *filename, char *new_map_path);
+mapObj *msLoadMap(char *filename, char *new_mappath);
 int msSaveMap(mapObj *map, char *filename);
 void msFreeMap(mapObj *map);
 void msFreeCharArray(char **array, int num_items);

@@ -32,7 +32,7 @@ int writeLog(int show_error)
   if(!msObj->Map) return(0);
   if(!msObj->Map->web.log) return(0);
   
-  if((stream = fopen(msBuildPath(szPath, msObj->Map->map_path, 
+  if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, 
                                    msObj->Map->web.log),"a")) == NULL) {
     msSetError(MS_IOERR, msObj->Map->web.log, "writeLog()");
     return(-1);

@@ -160,7 +160,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
     return(-1);
   }
 
-  stream = fopen( msBuildPath(szPath, fontset->map->map_path, fontset->filename), "r");
+  stream = fopen( msBuildPath(szPath, fontset->map->mappath, fontset->filename), "r");
   if(!stream) {
     msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontset()",
                fontset->filename);
@@ -223,11 +223,11 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 
 #ifdef USE_GD_TTF
     error = gdImageStringTTF(NULL, bbox, 0, 
-                             msBuildPath(szPath, fontset->map->map_path, font),
+                             msBuildPath(szPath, fontset->map->mappath, font),
                              label->sizescaled, 0, 0, 0, string);
 #else
     error = gdImageStringFT(NULL, bbox, 0, 
-                             msBuildPath(szPath, fontset->map->map_path, font),
+                             msBuildPath(szPath, fontset->map->mappath, font),
                             label->sizescaled, 0, 0, 0, string);
 #endif
     if(error) {

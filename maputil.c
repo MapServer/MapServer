@@ -277,7 +277,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         {
             if(map != NULL)
                 nReturnVal = msSaveImageGD(img->img.gd, 
-                                           msBuildPath(szPath, map->map_path, 
+                                           msBuildPath(szPath, map->mappath, 
                                                        filename), 
                                            img->format );
             else
