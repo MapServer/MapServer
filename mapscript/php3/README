@@ -600,7 +600,7 @@ QueryObj Class:
 
  Constructor:
 
-   QueryObj ms_newQueryObj()     
+   QueryObj ms_newQueryObj(layerObj layer)
 
  Members:
 
@@ -612,7 +612,7 @@ QueryObj Class:
         Set object property to a new value. Returns -1 on error.
 
    int setexpression(string expression)
-        Set the expression string for thequery object.
+        Set the expression string for the query object.
      
  ShapeResultObj Class:
  ---------------------
