@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.128  2004/10/27 14:58:34  assefa
+ * Correct exception message for GetFeatureInfo (Bug 819)
+ *
  * Revision 1.127  2004/10/27 10:20:04  assefa
  * Correct bug with format in GetLegendGraphic (Bug 991).
  *
@@ -1867,6 +1870,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   errorObj *ms_error = msGetErrorObj();
   int status;
   const char *pszMimeType=NULL;
+  int query_layer = 0;
 
 
   pszMimeType = msLookupHashTable(&(map->web.metadata), "WMS_FEATURE_INFO_MIME_TYPE");
@@ -1876,10 +1880,12 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       char **layers;
       int numlayers, j, k;
 
+      query_layer = 1; //flag set if QUERY_LAYERS is the request
+
       layers = split(values[i], ',', &numlayers);
-      if(layers==NULL || numlayers < 1) {
+      if(layers==NULL || numlayers < 1 || strlen(trimLeft(values[i])) < 1) {
         msSetError(MS_WMSERR, "At least one layer name required in QUERY_LAYERS.", "msWMSFeatureInfo()");
-        return msWMSException(map, nVersion, NULL);
+        return msWMSException(map, nVersion, "LayerNotDefined");
       }
 
       for(j=0; j<map->numlayers; j++) {
@@ -1922,9 +1928,18 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
   }
 
-  if(numlayers_found == 0) {
-    msSetError(MS_WMSERR, "Required QUERY_LAYERS parameter missing for getFeatureInfo.", "msWMSFeatureInfo()");
-    return msWMSException(map, nVersion, "LayerNotQueryable");
+  if(numlayers_found == 0) 
+  {
+      if (query_layer)
+      {
+          msSetError(MS_WMSERR, "Layer(s) specified in QUERY_LAYERS parameter is not offered by the service instance.", "msWMSFeatureInfo()");
+          return msWMSException(map, nVersion, "LayerNotDefined");
+      }
+      else
+      {
+          msSetError(MS_WMSERR, "Required QUERY_LAYERS parameter missing for getFeatureInfo.", "msWMSFeatureInfo()");
+          return msWMSException(map, nVersion, "LayerNotDefined");
+      }
   }
 
 /* -------------------------------------------------------------------- */
