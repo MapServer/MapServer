@@ -998,6 +998,8 @@ MS_DLL_EXPORT int msMapSetSize( mapObj *map, int width, int height );
 MS_DLL_EXPORT int msMapSetSize( mapObj *map, int width, int height );
 MS_DLL_EXPORT int msMapSetFakedExtent( mapObj *map );
 MS_DLL_EXPORT int msMapRestoreRealExtent( mapObj *map );
+MS_DLL_EXPORT int msMapLoadOWSParameters( mapObj *map, cgiRequestObj *request,
+                                          const char *wmtver_string );
 
 // mapfile.c
    
