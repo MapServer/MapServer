@@ -33,88 +33,10 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include typemaps.i
 %include constraints.i
 
-/* Typemaps to support NULL in attribute accessor functions
- * provided to Steve Lime by David Beazley and tested for Python
- * only by Sean Gillies.  If these typemaps are going to be useful
- * for other scripting interfaces and can be tested, I welcome
- * the removal of the SWIGPYTHON ifdef */
+// Python-specific module code included here
 
 #ifdef SWIGPYTHON
-#ifdef __cplusplus
-%typemap(memberin) char * {
-  if ($1) delete [] $1;
-  if ($input) {
-     $1 = ($1_type) (new char[strlen($input)+1]);
-     strcpy((char *) $1,$input);
-  } else {
-     $1 = 0;
-  }
-}
-%typemap(memberin,warning="451:Setting const char * member may leak
-memory.") const char * {
-  if ($input) {
-     $1 = ($1_type) (new char[strlen($input)+1]);
-     strcpy((char *) $1,$input);
-  } else {
-     $1 = 0;
-  }
-}
-%typemap(globalin) char * {
-  if ($1) delete [] $1;
-  if ($input) {
-     $1 = ($1_type) (new char[strlen($input)+1]);
-     strcpy((char *) $1,$input);
-  } else {
-     $1 = 0;
-  }
-}
-%typemap(globalin,warning="451:Setting const char * variable may leak
-memory.") const char * {
-  if ($input) {
-     $1 = ($1_type) (new char[strlen($input)+1]);
-     strcpy((char *) $1,$input);
-  } else {
-     $1 = 0;
-  }
-}
-#else
-%typemap(memberin) char * {
-  if ($1) free((char*)$1);
-  if ($input) {
-     $1 = ($1_type) malloc(strlen($input)+1);
-     strcpy((char*)$1,$input);
-  } else {
-     $1 = 0;
-  }
-}
-%typemap(memberin,warning="451:Setting const char * member may leak
-memory.") const char * {
-  if ($input) {
-     $1 = ($1_type) malloc(strlen($input)+1);
-     strcpy((char*)$1,$input);
-  } else {
-     $1 = 0;
-  }
-}
-%typemap(globalin) char * {
-  if ($1) free((char*)$1);
-  if ($input) {
-     $1 = ($1_type) malloc(strlen($input)+1);
-     strcpy((char*)$1,$input);
-  } else {
-     $1 = 0;
-  }
-}
-%typemap(globalin,warning="451:Setting const char * variable may leak
-memory.") const char * {
-  if ($input) {
-     $1 = ($1_type) malloc(strlen($input)+1);
-     strcpy((char*)$1,$input);
-  } else {
-     $1 = 0;
-  }
-}
-#endif
+%include "pymodule.i"
 #endif // SWIGPYTHON
 
 //%rename (_class) class;
@@ -124,34 +46,15 @@ memory.") const char * {
 %include "../../mapshape.h"
 %include "../../mapproject.h"
 %include "../../map.h"
-// %include "../../maperror.h"
 
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
 
-#ifdef SWIGPYTHON
-// For Python, errors reported via the ms_error structure are translated
-// into RuntimeError exceptions. (Chris Chamberlin <cdc@aracnet.com>)
-%{
-  static void _raise_ms_exception(void) {
-    char errbuf[256];
-    errorObj *ms_error = msGetErrorObj();
-    snprintf(errbuf, 255, "%s: %s %s\n", ms_error->routine, msGetErrorString(ms_error->code), ms_error->message);
-    _SWIG_exception(SWIG_RuntimeError, errbuf);
-  }
-  
-  #define raise_ms_exception() { _raise_ms_exception(); return NULL; }
-%}
+// Python-specific extensions to mapserver classes are included here
 
-%except {
-  $function
-    {
-      errorObj *ms_error = msGetErrorObj();
-      if ( (ms_error->code != MS_NOERR) && (ms_error->code != -1) )
-        raise_ms_exception();
-    }
-}
-#endif // SWIGPYTHON
+#ifdef SWIGPYTHON
+%include "pyextend.i"
+#endif //SWIGPYTHON
 
 //
 // class extensions for mapObj, need to figure out how to deal with Dan's extension to msLoadMap()...
@@ -224,12 +127,6 @@ memory.") const char * {
       return NULL;
   }
 
-  /*
-  int addColor(int r, int g, int b) {
-    return msAddColor(self, r, g, b);
-  }
-  */
-
   int getSymbolByName(char *name) {
     return msGetSymbolIndex(&self->symbolset, name);
   }
@@ -258,12 +155,6 @@ memory.") const char * {
       msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
     }
-
-    /*if (MS_DRIVER_GD(self->outputformat))
-    {    
-        if(msLoadPalette(image->img.gd, &(self->palette), self->imagecolor) == -1)
-          return NULL;
-    }*/
 
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
     status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
@@ -423,6 +314,11 @@ memory.") const char * {
     return msLoadFontSet(&(self->fontset), self);
   }
 
+  %newobject getFontSetFile;
+  char *getFontSetFile() {
+    return strdup(self->fontset.filename);
+  }
+  
   int saveMapContext(char *szFileName) {
     return msSaveMapContext(self, szFileName);
   }
@@ -442,31 +338,6 @@ memory.") const char * {
   int *getLayersDrawingOrder() {
     return  self->layerorder;
   }
-
-#ifdef SWIGPYTHON 
-  /* getLayerOrder() extension returns the map layerorder as a native
-   * sequence
-   */
-   PyObject *getLayerOrder() {
-     int i;
-     PyObject *order;
-     order = PyTuple_New(self->numlayers);
-     for (i = 0; i < self->numlayers; i++) {
-       PyTuple_SetItem(order, i, PyInt_FromLong((long)self->layerorder[i]));
-     }
-     return order;
-   } 
-
-  /* setLayerOrder() extension */
-  int setLayerOrder(PyObject *order) {
-    int i, size;
-    size = PyTuple_Size(order);
-    for (i = 0; i < size; i++) {
-      self->layerorder[i] = (int)PyInt_AsLong(PyTuple_GetItem(order, i));
-    }
-    return MS_SUCCESS;
-  }
-#endif
 
   int setLayersDrawingOrder(int *panIndexes) {
     return  msSetLayersdrawingOrder(self, panIndexes); 
@@ -1103,22 +974,13 @@ memory.") const char * {
   // Method saveToString renders the imageObj into image data and returns
   // it as a string. Questions and comments to Sean Gillies <sgillies@frii.com>
 
-#if defined (SWIGPYTHON) || defined (SWIGTCL8)
+#if defined SWIGTCL8
 
-#ifdef SWIGPYTHON
-  PyObject *saveToString() {
-#elif defined (SWIGTCL8)
   Tcl_Obj *saveToString() {
-#endif
 
     unsigned char *imgbytes;
     int size;
-
-#ifdef SWIGPYTHON
-    PyObject *imgstring; 
-#elif defined (SWIGTCL8)
     Tcl_Obj *imgstring;
-#endif
 
 #if GD2_VERS > 1
     if(self->format->imagemode == MS_IMAGEMODE_RGBA) {
@@ -1177,13 +1039,8 @@ memory.") const char * {
        return(MS_FAILURE);
     } 
 
-#ifdef SWIGPYTHON
-    // Python implementation to create string
-    imgstring = PyString_FromStringAndSize(imgbytes, size); 
-#elif defined (SWIGTCL8)
     // Tcl implementation to create string
     imgstring = Tcl_NewByteArrayObj(imgbytes, size);    
-#endif
     
     gdFree(imgbytes); // The gd docs recommend gdFree()
 
