@@ -5,5 +5,6 @@
 void msTimeInit(struct tm *time);
 int msDateCompare(struct tm *time1, struct tm *time2);
 int msTimeCompare(struct tm *time1, struct tm *time2);
+char *msStrptime(const char *s, const char *format, struct tm *tm);
 
 #endif /* MAPTIME_H */

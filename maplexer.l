@@ -330,7 +330,7 @@ int msyyreturncomments = 0;
                                                        msyytext++;
 			                               msyytext[strlen(msyytext)-1] = '\0'; 
                                                        msTimeInit(&msyylval.tmval);
-                                                       strptime(msyytext, "%Y-%m-%d", &msyylval.tmval);
+                                                       msStrptime(msyytext, "%Y-%m-%d", &msyylval.tmval);
                                                        return(TIME);
                                                      }
 

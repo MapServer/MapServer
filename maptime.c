@@ -62,3 +62,18 @@ int msTimeCompare(struct tm *time1, struct tm *time2)
 
   return(0); // must be equal
 }
+
+
+
+char *msStrptime(const char *s, const char *format, struct tm *tm)
+{
+#if defined(_WIN32) && !defined(__CYGWIN__)
+    msSetError(MS_MISCERR, 
+               "strptime() not available on Windows, see bug 556.", 
+               "msStrptime()");
+    return s;
+#else
+    /* Use system strptime() on non-windows systems */
+    return strptime(s, format, tm);
+#endif
+}
