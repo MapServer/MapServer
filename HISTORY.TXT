@@ -47,7 +47,7 @@ Version 4.3 (CVS)
 
 - Fixed bug 823 : adding a validation of the SRS parameter when doing
   a GetMap request on a wms server. Here is the OGC statement :
- 'When the SRS parameter in a GetMap request contains a SRS 
+  'When the SRS parameter in a GetMap request contains a SRS 
   that is valid for some, but not all of the layers being requested, 
   then the server shall throw a Service Exception (code = "InvalidSRS").'
 
@@ -172,9 +172,9 @@ Version 4.3 (CVS)
 - Make PHP MapScript's layer->open() produce a PHP Warning instead of a
   Fatal error (bug 742)
 
-- MapServer hash tables are now a structure containing a hashObj **items
-  See maphash.h for new prototypes of hash table functions.  In SWIG
-  mapscript, Map, Layer, and Class metadata are now instances of the
+- MapServer hash tables are now a structure containing a items pointer
+  to hashObj. See maphash.h for new prototypes of hash table functions.
+  In SWIG mapscript, Map, Layer, and Class metadata are now instances of the
   new hashTableObj class.  fontset.fonts and Map.configoptions are also
   instances of hashTableObj.  The older getMetaData/setMetaData and
   metadata iterator methods can be deprecated (bug 737).
@@ -260,7 +260,7 @@ Version 4.2-beta1 (2004-04-17)
 
 - MapScript colorObj: added optional RGB color value args to colorObj
   constructor, and extended colorObj class with setRGB, setHex, and toHex
-  methods.  The *Hex methods use hex color strings like '#ffffff' rather
+  methods.  The hex methods use hex color strings like '#ffffff' rather
   than '0xffffff' for compatibility with HTML (bug 509).
 
 - MapScript outputFormatObj: extended with a getOption method (bug 510). 
@@ -389,7 +389,7 @@ Version 4.0-beta1 (2003-06-06)
 ------------------------------
 
 - Added imagemap outputformat, which makes possible use of client-side 
-  imagemaps in browsers
+  imagemaps in browsers.
 
 - Added MySQL support for non-spatial OpenGIS Simple Features SQL stored data
 
@@ -459,8 +459,8 @@ Version 4.0-beta1 (2003-06-06)
 - Added layer and map level DEBUG options to map file.
 
 - Major changes to support vector output (PDF, SWF, GML, ...):
-   - imageObj is used by all rendering functions instead of gdImagePtr
-   - New msSaveImage() prototype
+  imageObj is used by all rendering functions instead of gdImagePtr,
+  New msSaveImage() prototype
 
 - Support for GD-2.0, including 24 bits output.  Dropped support for GD 1.x
 
@@ -473,7 +473,7 @@ Version 4.0-beta1 (2003-06-06)
   <column name>". Added "using SRID=#" to specify a spatial reference 
   for an arbitrary sql query.
 
-- ... and nuerous fixes not listed here...
+- ... and numerous fixes not listed here...
 
 
 Version 3.6.0-beta1 (2002-04-30)
@@ -484,10 +484,9 @@ Version 3.6.0-beta1 (2002-04-30)
   attribute is now driven by the values passed via qitem,qstring, and the 
   layer's FILTER/FILTERITEM are ignored.
 
-- Symbol and MapFile changes:
-   ANTIALIAS and FILLED keywords now take a boolean (TRUE/FALSE) argument
-   i.e.   ANTIALIAS becomes ANTIALIAS TRUE
-   and    FILLED    becomes FILLED TRUE
+- Symbol and MapFile changes: ANTIALIAS and FILLED keywords now take a
+  boolean (TRUE/FALSE) argument i.e. ANTIALIAS becomes ANTIALIAS TRUE
+  and FILLED becomes FILLED TRUE
 
 - Reference Map:
   Added options to show a different marker when the reference box becomes
@@ -519,4 +518,3 @@ Version 3.5.0 (2002-12-18)
 - No Revision history before version 3.5
 
 
----------
