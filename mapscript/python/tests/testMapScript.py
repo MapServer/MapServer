@@ -186,11 +186,23 @@ class ExpressionTestCase(unittest.TestCase):
         self.mapobj1.getLayer(0).setFilter('')
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '"(null)"', fs
-    def testSetExpression(self):
-        #self.mapobj1.getLayer(0).setFilter('"foo"')
+    def testSetStringExpression(self):
         self.mapobj1.getLayer(0).setFilter('foo')
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '"foo"', fs
+    def testSetQuotedStringExpression(self):
+        self.mapobj1.getLayer(0).setFilter('"foo"')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '"foo"', fs
+    def testSetRegularExpression(self):
+        self.mapobj1.getLayer(0).setFilter('/foo/')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '/foo/', fs
+    def testSetLogicalExpression(self):
+        self.mapobj1.getLayer(0).setFilter('([foo] >= 2)')
+        #self.mapobj1.getLayer(0).setFilter('foo')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '([foo] >= 2)', fs
        
 class ZoomPointTestCase(unittest.TestCase):
     "testing new zoom* methods that we are adapting from the PHP MapScript"
