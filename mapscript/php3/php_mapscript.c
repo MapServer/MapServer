@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2000/10/10 14:19:41  dan
+ * Fixed #ifdef _WIN32 test to compile on Cygwin
+ *
  * Revision 1.18  2000/10/04 16:01:56  dan
  * Added missing return value in img->saveImage()
  *
@@ -165,13 +168,13 @@
 
 #include <time.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__CYGWIN__)
 #include <process.h>
 #else
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Oct 4, 2000)"
+#define PHP3_MS_VERSION "(Oct 10, 2000)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
