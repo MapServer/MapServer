@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.130  2004/10/27 20:41:07  julien
+ * in MetadataURL printing write xlink:href instead of link:href.
+ *
  * Revision 1.129  2004/10/27 19:51:24  assefa
  * Correct XML for DescribeLayer response (Bug 683)
  *
@@ -1089,7 +1092,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                          NULL, NULL, ">\n          <Format>%s</Format", 
                          "\n          <OnlineResource xmlns:xlink=\""
                          "http://www.w3.org/1999/xlink\" "
-                         "link:href=\"%s\"/>\n        ", 
+                         "xlink:href=\"%s\"/>\n        ", 
                          MS_TRUE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
                          NULL, NULL, NULL, NULL, NULL, "        ");
 
