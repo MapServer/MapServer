@@ -1026,6 +1026,8 @@ char *processLine(char *instr, int mode)
 
   outstr = strdup(instr); // work from a copy
   
+ outstr = gsub(outstr, "[version]",  msGetVersion());
+
   sprintf(repstr, "%s%s%s.%s", Map->web.imageurl, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
   outstr = gsub(outstr, "[img]", repstr);
   sprintf(repstr, "%s%sref%s.%s", Map->web.imageurl, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
