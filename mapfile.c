@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.287  2004/11/03 16:59:49  frank
+ * handle raster layers in msCloseConnections
+ *
  * Revision 1.286  2004/10/21 17:58:09  frank
  * Avoid all direct use of pj_errno.
  *
@@ -4740,6 +4743,9 @@ void msCloseConnections(mapObj *map) {
       break;
     case MS_MYGIS:
       msMYGISLayerClose(lp);
+      break;
+    case MS_RASTER:
+      msRASTERLayerClose(lp);
       break;
     default:
       break;

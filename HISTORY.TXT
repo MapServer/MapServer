@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- modified msCloseConnections() to also close raster layers so that 
+  held raster query results will be freed. 
+
 - modified raster queries to properly set the classindex in the resultcache.
 
 - modified msDrawQueryCache() to be very careful to not try and lookup 
