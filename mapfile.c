@@ -3728,7 +3728,9 @@ void msCleanup()
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     msHTTPCleanup();
 #endif
+    msResetErrorList();
 }
+
 void msFreeMap(mapObj *map) {
   int i;
 
