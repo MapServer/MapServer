@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.176  2003/07/21 16:55:58  assefa
+ * Correct bug in function drawLegendIcon (Bug 369).
+ *
  * Revision 1.175  2003/07/21 14:43:21  assefa
  * Change prototypes for certain functions (Bug 362).
  *
@@ -7805,7 +7808,7 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *parent_map;
     classObj *self;
     layerObj *parent_layer;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
     int    retVal=0;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -7823,7 +7826,7 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    im = (gdImagePtr)_phpms_fetch_handle(imgObj,
+    im = (imageObj *)_phpms_fetch_handle(imgObj,
                                          PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     convert_to_long(pWidth);
@@ -7842,13 +7845,18 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
                                                        PHPMS_GLOBAL(le_msmap),
                                                        list TSRMLS_CC, E_ERROR);
-
-    if (im == NULL || self == NULL || parent_map == NULL || parent_layer == NULL ||
+    if (im != NULL && !MS_DRIVER_GD(im->format))
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_WARNING, "DrawLegendicon function is only available for GD dirvers");
+        RETURN_FALSE;
+    }
+    if (self == NULL || parent_map == NULL || parent_layer == NULL ||
         (retVal = classObj_drawLegendIcon(self, 
                                           parent_map, 
                                           parent_layer, 
                                           pWidth->value.lval, pHeight->value.lval, 
-                                          im, 
+                                          im->img.gd, 
                                           pDstX->value.lval, pDstY->value.lval)) == -1)
     {
         _phpms_report_mapserver_error(E_WARNING);
@@ -7862,7 +7870,7 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
 /*                                                                      */
 /*      return the legend icon related to this class.                   */
 /*                                                                      */
-/*      Returns gdImagePtr.                                             */
+/*      Returns image object.                                           */
 /************************************************************************/
 
 /* {{{ proto int class.createLegendIcon(int width, int height)
