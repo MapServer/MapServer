@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2004/11/04 21:33:08  frank
+ * Removed unused variable.
+ *
  * Revision 1.47  2004/10/28 18:16:17  dan
  * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
  * when requested layer was out of scale (bug 1006)
@@ -230,7 +233,6 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   rectObj rect;
   imageObj      *image = NULL;
   outputFormatObj *format = NULL;
-  int empty_legend = MS_FALSE;
 
   if (!scale_independent) {
       map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
