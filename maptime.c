@@ -89,6 +89,11 @@ void msGettimeofday(struct mstimeval* tp, void* tzp)
 }
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+// we need to provide our own prototype on windows.
+char *strptime( const char *buf, const char *format, struct tm *timeptr );
+#endif
+
 char *msStrptime(const char *s, const char *format, struct tm *tm)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
