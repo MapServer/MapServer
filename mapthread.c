@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/02/03 04:55:17  frank
+ * Added POOL lock name.
+ *
  * Revision 1.8  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -170,7 +173,7 @@ MS_CVSID("$Id$")
 static int thread_debug = 0;
 
 static char *lock_names[] = 
-{ NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", NULL };
+{ NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", "POOL", NULL };
 #endif
 
 /************************************************************************/
