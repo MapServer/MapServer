@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.401  2005/03/25 05:43:20  frank
+ * added msAddLineDirectly()
+ *
  * Revision 1.400  2005/03/24 22:25:32  frank
  * Implement assembly for MS_NINT on win32 and linux/i86.
  *
@@ -1418,6 +1421,7 @@ MS_DLL_EXPORT void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, style
 MS_DLL_EXPORT int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
 MS_DLL_EXPORT int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 MS_DLL_EXPORT int msAddLine(shapeObj *p, lineObj *new_line);
+MS_DLL_EXPORT int msAddLineDirectly(shapeObj *p, lineObj *new_line);
 
 MS_DLL_EXPORT int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image); /* in mapraster.c */
 MS_DLL_EXPORT imageObj *msDrawReferenceMap(mapObj *map);
