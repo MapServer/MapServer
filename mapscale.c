@@ -252,6 +252,11 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     map->layers[l].status = MS_ON;
 
     if(initClass(&(map->layers[l].class[0])) == -1) return(-1);    
+#ifdef USE_PRIOLIST
+      //Update the priority list with the layer's index.
+    map->panPrioList[l] = l;
+#endif
+
   }
 
   map->layers[l].class[0].symbol = s;
