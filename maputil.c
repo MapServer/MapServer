@@ -1602,7 +1602,7 @@ int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace)
 {
   FILE *stream;
 
-  if(filename != NULL) {
+  if(filename != NULL && strlen(filename) > 0) {
     stream = fopen(filename, "wb");
     if(!stream) {
       msSetError(MS_IOERR, NULL, "msSaveImage()");      
