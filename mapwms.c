@@ -1027,11 +1027,11 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
      msTranslateWMS2Mapserv(names, values, &numentries);
 
      msObj->Map = map;
-     msObj->ParamNames = names;
-     msObj->ParamValues = values;
+     msObj->request->ParamNames = names;
+     msObj->request->ParamValues = values;
      msObj->Mode = QUERY;
      sprintf(msObj->Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
-     msObj->NumParams = numentries;
+     msObj->request->NumParams = numentries;
      msObj->MapPnt.x = point.x;
      msObj->MapPnt.y = point.y;
      
@@ -1041,9 +1041,9 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
      // We don't want to free the map, and param names/values since they
      // belong to the caller, set them to NULL before freeing the mapservObj
      msObj->Map = NULL;
-     msObj->ParamNames = NULL;
-     msObj->ParamValues = NULL;
-     msObj->NumParams = 0;
+     msObj->request->ParamNames = NULL;
+     msObj->request->ParamValues = NULL;
+     msObj->request->NumParams = 0;
 
      msFreeMapServObj(msObj);
   }
