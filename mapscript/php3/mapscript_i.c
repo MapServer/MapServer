@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.84  2004/08/12 17:18:26  assefa
+ * Check if string is null in classObj_getExpressionString.
+ *
  * Revision 1.83  2004/07/28 22:03:50  dan
  * Added layer->getFilter() to PHP MapScript (bug 787)
  *
@@ -614,16 +617,20 @@ int classObj_setExpression(classObj *self, char *string) {
 char *classObj_getExpressionString(classObj *self) {
   char exprstring[512];
 
-    switch(self->expression.type) {
-    case(MS_REGEX):
-      sprintf(exprstring, "/%s/", self->expression.string);
-      return strdup(exprstring);
-    case(MS_STRING):
-      sprintf(exprstring, "\"%s\"", self->expression.string);
-      return strdup(exprstring);
-    case(MS_EXPRESSION):
-      sprintf(exprstring, "(%s)", self->expression.string);
-      return strdup(exprstring);
+  if (self->expression.string)
+  {
+      switch(self->expression.type)
+      {
+          case(MS_REGEX):
+            sprintf(exprstring, "/%s/", self->expression.string);
+            return strdup(exprstring);
+          case(MS_STRING):
+            sprintf(exprstring, "\"%s\"", self->expression.string);
+            return strdup(exprstring);
+          case(MS_EXPRESSION):
+            sprintf(exprstring, "(%s)", self->expression.string);
+            return strdup(exprstring);
+      }
     }
     return NULL;
 }
