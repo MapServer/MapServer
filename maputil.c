@@ -860,6 +860,24 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       continue;
     }
 
+    // With 'STYLEITEM AUTO', we will have the datasource fill the class'
+    // style parameters for this shape.
+    if (layer->styleitem && strcasecmp(layer->styleitem, "AUTO") == 0)
+    {
+        if (msLayerGetAutoStyle(map, layer, &(layer->class[shape.classindex]),
+                                shape.tileindex, shape.index) != MS_SUCCESS)
+        {
+            return MS_FAILURE;
+        }
+
+        // Dynamic class update may have extended the color palette...
+        if (!msUpdatePalette(img, &(map->palette)))
+            return MS_FAILURE;
+
+        // __TODO__ For now, we can't cache features with 'AUTO' style
+        cache = MS_FALSE;
+    }
+
     if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
 

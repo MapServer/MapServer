@@ -168,6 +168,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>sizeunits	       { return(SIZEUNITS); }
 <INITIAL,OBJECT_STRING>status		       { return(STATUS); }
 <INITIAL,OBJECT_STRING>style		       { return(STYLE); }
+<INITIAL,OBJECT_STRING>styleitem	       { return(STYLEITEM); }
 <INITIAL,OBJECT_STRING>symbol		       { return(SYMBOL); }
 <INITIAL,OBJECT_STRING>symbolscale             { return(SYMBOLSCALE); }
 <INITIAL,OBJECT_STRING>symbolset               { return(SYMBOLSET); }

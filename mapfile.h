@@ -141,4 +141,6 @@
 
 #define SIZEUNITS 1123
 
+#define STYLEITEM 1124
+
 #endif /* MAPFILE_H */

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.34  2001/06/24 17:32:25  dan
+ * Initial implementation of STYLEITEM AUTO for rendering maps using style info from the data source instead of static mapfile classes.  Still a few issues with fonts and symbols.
+ *
  * Revision 1.33  2001/04/03 23:16:19  dan
  * Fixed args to calls to reprojection functions
  *
@@ -125,6 +128,7 @@ typedef struct ms_ogr_layer_info_t
     int         nLayerIndex;
     OGRDataSource *poDS;
     OGRLayer    *poLayer;
+    OGRFeature  *poLastFeature;
 } msOGRLayerInfo;
 
 
@@ -816,6 +820,9 @@ int msOGRLayerClose(layerObj *layer)
 
     CPLFree(psInfo->pszFname);
 
+    if (psInfo->poLastFeature)
+        delete psInfo->poLastFeature;
+
     /* Destroying poDS automatically closes files, destroys the layer, etc. */
     delete psInfo->poDS;
 
@@ -1098,7 +1105,10 @@ int msOGRLayerNextShape(layerObj *layer, shapeObj *shape)
 
   shape->index = poFeature->GetFID();
 
-  delete poFeature;
+  // Keep ref. to last feature read in case we need style info.
+  if (psInfo->poLastFeature)
+      delete psInfo->poLastFeature;
+  psInfo->poLastFeature = poFeature;
 
   return MS_SUCCESS;
 
@@ -1172,7 +1182,10 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 
   shape->index = poFeature->GetFID();
 
-  delete poFeature;
+  // Keep ref. to last feature read in case we need style info.
+  if (psInfo->poLastFeature)
+      delete psInfo->poLastFeature;
+  psInfo->poLastFeature = poFeature;
 
   return MS_SUCCESS;
 #else
@@ -1231,6 +1244,185 @@ int msOGRLayerGetExtent(layerObj *layer, rectObj *extent)
 
   msSetError(MS_MISCERR, "OGR support is not available.", 
              "msOGRLayerGetExtent()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+
+
+/**********************************************************************
+ *                     msOGRLayerGetAutoStyle()
+ *
+ * Fills a classObj with style info from the specified shape.
+ * For optimal results, this should be called immediately after 
+ * GetNextShape() or GetShape() so that the shape doesn't have to be read
+ * twice.
+ *
+ * The returned classObj is a ref. to a static structure valid only until
+ * the next call and that shouldn't be freed by the caller.
+ **********************************************************************/
+int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
+                           int tile, long record)
+{
+#ifdef USE_OGR
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRLayerGetAutoStyle()");
+    return(MS_FAILURE);
+  }
+
+/* ------------------------------------------------------------------
+ * Read shape or reuse ref. to last shape read.
+ * ------------------------------------------------------------------ */
+  if (psInfo->poLastFeature == NULL || 
+      psInfo->poLastFeature->GetFID() != record)
+  {
+      if (psInfo->poLastFeature)
+          delete psInfo->poLastFeature;
+
+      psInfo->poLastFeature = psInfo->poLayer->GetFeature(record);
+  }
+
+/* ------------------------------------------------------------------
+ * Reset style info in the class to defaults
+ * the only members we don't touch are name, expression, and join/query stuff
+ * ------------------------------------------------------------------ */
+  resetClassStyle(c);
+
+  // __TODO__ label cache incompatible with styleitem feature.
+  layer->labelcache = MS_OFF;
+
+/* ------------------------------------------------------------------
+ * Handle each part
+ * ------------------------------------------------------------------ */
+  if (psInfo->poLastFeature)
+  {
+      GBool bDefault, bIsBrush=FALSE, bIsPen=FALSE;
+      int r=0,g=0,b=0,t=0;
+
+      OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
+      poStyleMgr->InitFromFeature(psInfo->poLastFeature);
+      msDebug("OGRStyle: %s\n", psInfo->poLastFeature->GetStyleString());
+
+      int numParts = poStyleMgr->GetPartCount();
+      for(int i=0; i<numParts; i++)
+      {
+          OGRStyleTool *poStylePart = poStyleMgr->GetPart(i);
+          if (!poStylePart)
+              continue;
+
+          // We want all size values returned in pixels.
+          poStylePart->SetUnit(OGRSTUPixel, map->cellsize);
+
+          if (poStylePart->GetType() == OGRSTCLabel)
+          {
+              OGRStyleLabel *poLabelStyle = (OGRStyleLabel*)poStylePart;
+
+              loadExpressionString(&(c->text), 
+                                   (char*)poLabelStyle->TextString(bDefault));
+
+              c->label.angle = poLabelStyle->Angle(bDefault);
+              c->label.size = (int)poLabelStyle->Size(bDefault);
+              if (poLabelStyle->GetRGBFromString(poLabelStyle->
+                                                 ForeColor(bDefault),r,g,b,t))
+              {
+                  c->label.color = msAddColor(map, r,g,b);
+              }
+              if (poLabelStyle->GetRGBFromString(poLabelStyle->
+                                                 BackColor(bDefault),r,g,b,t) 
+                  && !bDefault)
+              {
+                  c->label.backgroundcolor = msAddColor(map, r,g,b);
+              }
+
+              // Label font... do our best to use TrueType fonts, otherwise
+              // fallback on bitmap fonts.
+              // __TODO__ Should check for native font name and ogr generic
+              // font names first.
+#ifdef USE_GD_TTF
+              if (msLookupHashTable(map->fontset.fonts, "default") != NULL)
+              {
+                  c->label.type = MS_TRUETYPE;
+                  c->label.font = strdup("default");
+                  msDebug("** Using 'default' TTF font **\n");
+              }
+              else
+#endif
+              {
+                  c->label.type = MS_BITMAP;
+                  c->label.size = MS_MEDIUM;
+                  msDebug("** Using 'medium' BITMAP font **\n");
+              }
+          }
+          else if (poStylePart->GetType() == OGRSTCPen)
+          {
+              OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
+              bIsPen = TRUE;
+
+              if (poPenStyle->GetRGBFromString(poPenStyle->
+                                               Color(bDefault),r,g,b,t))
+              {
+                  // With multipart symbology, a pen color defines the 
+                  // outline color of a polygon
+                  if (bIsBrush)
+                      c->outlinecolor = msAddColor(map, r,g,b);
+                  else
+                      c->outlinecolor = c->color = msAddColor(map, r,g,b);
+                  msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, c->outlinecolor);
+              }
+          }
+          else if (poStylePart->GetType() == OGRSTCBrush)
+          {
+              OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
+              bIsBrush = TRUE;
+
+              if (poBrushStyle->GetRGBFromString(poBrushStyle->
+                                                 ForeColor(bDefault),r,g,b,t))
+              {
+                  c->color = msAddColor(map, r,g,b);
+                  msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
+              }
+              if (poBrushStyle->GetRGBFromString(poBrushStyle->
+                                                 BackColor(bDefault),r,g,b,t) 
+                  && !bDefault)
+              {
+                  c->label.backgroundcolor = msAddColor(map, r,g,b);
+              }
+          }
+          else if (poStylePart->GetType() == OGRSTCSymbol)
+          {
+              OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
+
+              // __TODO__ Need to map OGR symbols names somehow
+              c->symbol = 0;
+              if (poSymbolStyle->GetRGBFromString(poSymbolStyle->
+                                                  Color(bDefault),r,g,b,t))
+              {
+                  c->color = msAddColor(map, r,g,b);
+              }
+          }
+
+          delete poStylePart;
+
+      }
+
+      if (poStyleMgr)
+          delete poStyleMgr;
+
+  }
+
+  return MS_SUCCESS;
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGRLayerGetAutoStyle()");
   return(MS_FAILURE);
 
 #endif /* USE_OGR */

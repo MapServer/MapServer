@@ -98,6 +98,26 @@ int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color)
 }
 
 /*
+** Updates the gdImage palette, i.e. add to the gdImage any color from the
+** mapserver palette that it didn't contain yet.
+*/
+int msUpdatePalette(gdImagePtr img, paletteObj *palette)
+{  
+  int i;
+
+  if(!img) {
+    msSetError(MS_GDERR, "Image not initialized, can't allocate colors yet.", "msUpdatePalette()");
+    return(-1);
+  }
+
+  /* Add to image palette any color that it didn't contain yet. */
+  for(i=gdImageColorsTotal(img); i<palette->numcolors; i++)
+    gdImageColorAllocate(img, palette->colors[i].red, palette->colors[i].green, palette->colors[i].blue);
+
+  return(1);
+}
+
+/*
 ** Free memory allocated for a character array
 */
 void msFreeCharArray(char **array, int num_items)
@@ -1128,6 +1148,44 @@ void freeClass(classObj *class)
   free(class->joins);
 }
 
+/*
+ * Reset style info in the class to defaults
+ * the only members we don't touch are name, expression, and join/query stuff
+ * This is used with STYLEITEM before overwriting the contents of a class.
+ */
+void resetClassStyle(classObj *class)
+{
+  freeLabel(&(class->label));
+  freeExpression(&(class->text));
+  free(class->symbolname);
+  free(class->overlaysymbolname);
+
+  initExpression(&(class->text));
+  class->color = -1; /* must explictly set a color */
+  class->symbol = 0;
+  class->sizescaled = class->size = 1; /* one pixel */
+  class->minsize = MS_MINSYMBOLSIZE;
+  class->maxsize = MS_MAXSYMBOLSIZE;
+  class->backgroundcolor = -1;
+  class->outlinecolor = -1;
+
+  class->overlaybackgroundcolor = -1;
+  class->overlaycolor = -1;
+  class->overlayoutlinecolor = -1;
+  class->overlaysizescaled = class->overlaysize = 1;
+  class->overlayminsize = MS_MINSYMBOLSIZE;
+  class->overlaymaxsize = MS_MAXSYMBOLSIZE;
+  class->overlaysymbol = -1;
+  class->overlaysymbolname = NULL;
+
+  initLabel(&(class->label));
+  class->label.sizescaled = class->label.size = -1; // no default
+  class->symbolname = NULL;
+
+  class->type = -1;
+}
+
+
 int loadClass(classObj *class, mapObj *map)
 {
   int red, green, blue;
@@ -1446,6 +1504,9 @@ int initLayer(layerObj *layer)
 
   layer->metadata = msCreateHashTable();
 
+  layer->styleitem = NULL;
+  layer->styleitemindex = -1;
+
   return(0);
 }
 
@@ -1486,6 +1547,8 @@ void freeLayer(layerObj *layer) {
   free(layer->labelrequires);
 
   if(layer->metadata) msFreeHashTable(layer->metadata);
+
+  free(layer->styleitem);
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -1648,6 +1711,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(STATUS):
       if((layer->status = getSymbol(3, MS_ON,MS_OFF,MS_DEFAULT)) == -1) return(-1);
+      break;
+    case(STYLEITEM):
+      if((layer->styleitem = getString()) == NULL) return(-1);
       break;
     case(SYMBOLSCALE):      
       if(getDouble(&(layer->symbolscale)) == -1) return(-1);

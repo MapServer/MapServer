@@ -545,3 +545,34 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 
   return(MS_SUCCESS);
 }
+
+
+/*
+** Fills a classObj with style info from the specified shape.  This is used
+** with STYLEITEM AUTO when rendering shapes.
+** For optimal results, this should be called immediately after 
+** GetNextShape() or GetShape() so that the shape doesn't have to be read
+** twice.
+** 
+*/
+int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
+                        int tile, long record)
+{
+  switch(layer->connectiontype) {
+  case(MS_OGR):
+    return(msOGRLayerGetAutoStyle(map, layer, c, tile, record));
+    break;
+  case(MS_SHAPEFILE):
+  case(MS_TILED_SHAPEFILE):
+  case(MS_INLINE):
+  case(MS_TILED_OGR):
+  case(MS_SDE):
+  default:
+    msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", 
+               "msLayerGetAutoStyle()");
+    return(MS_FAILURE);    
+    break;
+  }
+
+  return(MS_FAILURE);
+}

@@ -522,6 +522,9 @@ typedef struct {
   char *filteritem;
   int filteritemindex;
 
+  char *styleitem; /* item to be used for style lookup - can also be 'AUTO' */
+  int styleitemindex;
+
   char *requires; // context expressions, simple enough to not use expressionObj
   char *labelrequires;
 
@@ -605,6 +608,7 @@ int initMap(mapObj *map);
 int initLayer(layerObj *layer);
 int initClass(classObj *_class);
 void initLabel(labelObj *label);
+void resetClassStyle(classObj *_class);
 
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 void freeFeatureList(featureListNodeObjPtr list);
@@ -624,6 +628,7 @@ int msSaveMap(mapObj *map, char *filename);
 void msFreeMap(mapObj *map);
 void msFreeCharArray(char **array, int num_items);
 int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color);
+int msUpdatePalette(gdImagePtr img, paletteObj *palette);
 int msAddColor(mapObj *map, int red, int green, int blue);
 int msLoadMapString(mapObj *map, char *object, char *value);
 
@@ -748,6 +753,8 @@ int msLayerGetItems(layerObj *layer);
 int msLayerSetItems(layerObj *layer, char **items, int numitems);
 int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msLayerGetExtent(layerObj *layer, rectObj *extent);
+int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
+                        int tile, long record);
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
 int msTiledSHPWhichShapes(layerObj *layer, rectObj rect);
@@ -764,6 +771,8 @@ int msOGRLayerInitItemInfo(layerObj *layer);
 void msOGRLayerFreeItemInfo(layerObj *layer);
 int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
+int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
+                           int tile, long record);
 
 int msSDELayerOpen(layerObj *layer); // in mapsde.c
 void msSDELayerClose(layerObj *layer);
