@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/05/31 20:20:56  frank
+ * ensure gdal.h is included for Config stuff
+ *
  * Revision 1.2  2004/05/31 17:27:02  frank
  * Made msMapComputeGeotransform() return MS_SUCCESS or MS_FAILURE.
  *
@@ -38,6 +41,11 @@
  */
 
 #include "map.h"
+
+#ifdef USE_GDAL
+#  include "gdal.h"
+#  include "cpl_conv.h"
+#endif
 
 void freeWeb(webObj *web);
 void freeScalebar(scalebarObj *scalebar);
@@ -174,9 +182,10 @@ void msApplyMapConfigOptions( mapObj *map )
         }
         else 
         {
+
 #if defined(USE_GDAL) && GDAL_RELEASE_DATE > 20030601
             CPLSetConfigOption( key, value );
-#endif         
+#endif
         }   
     }
 }
@@ -363,5 +372,6 @@ int msMapRestoreRealExtent( mapObj *map )
     map->extent = map->saved_extent;
     map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
 
+    return MS_SUCCESS;
 }
 
