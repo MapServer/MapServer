@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102.2.2  2005/03/04 14:00:39  dan
+ * More fixes for null layer names in template procesing (bug 1271)
+ *
  * Revision 1.102.2.1  2005/03/04 13:38:42  dan
  * Fixed crash in template generation with empty layer names (bug 1271)
  *
@@ -2264,10 +2267,12 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 	sprintf(substr, "[%s_check]", msObj->Map->layers[i].group);
 	outstr = gsub(outstr, substr, "checked");
       }
-      sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
-      outstr = gsub(outstr, substr, "selected");
-      sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
-      outstr = gsub(outstr, substr, "checked");
+      if(msObj->Map->layers[i].name) {
+        sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
+        outstr = gsub(outstr, substr, "selected");
+        sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
+        outstr = gsub(outstr, substr, "checked");
+      }
     } else {
       if(msObj->Map->layers[i].group) {
 	sprintf(substr, "[%s_select]", msObj->Map->layers[i].group);
@@ -2275,10 +2280,12 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 	sprintf(substr, "[%s_check]", msObj->Map->layers[i].group);
 	outstr = gsub(outstr, substr, "");
       }
-      sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
-      outstr = gsub(outstr, substr, "");
-      sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
-      outstr = gsub(outstr, substr, "");
+      if(msObj->Map->layers[i].name) {
+        sprintf(substr, "[%s_select]", msObj->Map->layers[i].name);
+        outstr = gsub(outstr, substr, "");
+        sprintf(substr, "[%s_check]", msObj->Map->layers[i].name);
+        outstr = gsub(outstr, substr, "");
+      }
     }
   }
 
@@ -2334,7 +2341,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   // allow layer metadata access in template
   for(i=0;i<msObj->Map->numlayers;i++) {
-    if(&(msObj->Map->layers[i].metadata) && strstr(outstr, msObj->Map->layers[i].name)) {
+    if(&(msObj->Map->layers[i].metadata) && msObj->Map->layers[i].name && strstr(outstr, msObj->Map->layers[i].name)) {
       for(j=0; j<MS_HASHSIZE; j++) {
 	if (msObj->Map->layers[i].metadata.items[j] != NULL) {
 	  for(tp=msObj->Map->layers[i].metadata.items[j]; tp!=NULL; tp=tp->next) {
