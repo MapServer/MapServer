@@ -1,22 +1,51 @@
+# $Id$
+#
+# Project:  MapServer
+# Purpose:  Comprehensive xUnit style Python mapscript test suite
+# Author:   Sean Gillies, sgillies@frii.com
+#
+# ===========================================================================
+# Copyright (c) 2004, Sean Gillies
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+# ===========================================================================
+#
+# Execute this module as a script from mapserver/mapscript/python
+#
+#     python tests/runtests.py -v
+#
+# ===========================================================================
 
-import os, sys
-import distutils.util
 import unittest
 
-# Construct the distutils build path, allowing us to run unit tests 
-# before the module is installed
-platformdir = '-'.join((distutils.util.get_platform(), 
-                       '.'.join(map(str, sys.version_info[0:2]))))
-sys.path.insert(0, 'build/lib.' + platformdir)
+# Import testing modules from the tests/cases directory
+from cases.hashtest import HashTableTestCase
+from cases.clonetest import MapCloningTestCase
 
-
-
-from hashtest import HashTableTestCase
-from testMapScript import LayerTestCase
-
+# Create a test suite
 suite = unittest.TestSuite()
-suite.addTest(HashTableTestCase)
 
+# Add tests to the suite
+suite.addTest(HashTableTestCase)
+suite.addTest(MapCloningTestCase)
+
+# If module is run as a script, execute every test case in the suite
 if __name__ == '__main__':
     unittest.main()
 
