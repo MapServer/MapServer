@@ -32,8 +32,7 @@ static void sde_error(long error_code, char *routine, char *sde_routine) {
   error_string[0] = '\0';
   SE_error_get_string(error_code, error_string);
 
-  msSetError(MS_SDEERR, "%s: %s. (%ld)", routine,
-             sde_routine, error_string, error_code);
+  msSetError(MS_SDEERR, "%s: %s. (%ld)", routine, sde_routine, error_string, error_code);
 
   return;
 }
@@ -152,7 +151,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 
   msSDELayerInfo *sde;
 
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
 
   if(layer->numitems > 0) {
     shape->numvalues = layer->numitems;
@@ -300,7 +299,7 @@ int msSDELayerOpen(layerObj *layer) {
 
   msSDELayerInfo *sde, *same_sde;  
 
-  if(layer->sdelayerinfo) return(MS_SUCCESS); // layer already open, silently return
+  if(layer->layerinfo) return(MS_SUCCESS); // layer already open, silently return
 
   // allocate space for SDE structures
   sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
@@ -339,7 +338,7 @@ int msSDELayerOpen(layerObj *layer) {
   } else { // we can share another layers connection
     if(layer->debug) msDebug("msSDELayerOpen(): Layer %s sharing connection with layer %s.\n", layer->name, layer->sameconnection->name);    
 
-    same_sde = layer->sameconnection->sdelayerinfo;
+    same_sde = layer->sameconnection->layerinfo;
     sde->connection = same_sde->connection;    
   }
 
@@ -387,7 +386,7 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  layer->sdelayerinfo = sde; // point to the SDE layer information (note this might actually be in another layer)
+  layer->layerinfo = sde; // point to the SDE layer information (note this might actually be in another layer)
 
   return(MS_SUCCESS);
 #else
@@ -400,7 +399,7 @@ void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
   if (sde == NULL) return;  // Silently return if layer not opened.
 
   if(layer->debug) msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
@@ -413,8 +412,8 @@ void msSDELayerClose(layerObj *layer) {
   if(sde->table) free(sde->table);
   if(sde->column) free(sde->column);
 
-  free(layer->sdelayerinfo);
-  layer->sdelayerinfo = NULL;
+  free(layer->layerinfo);
+  layer->layerinfo = NULL;
 
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
@@ -434,7 +433,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerWhichShapes()");
     return(MS_FAILURE);
@@ -530,7 +529,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerNextShape()");
     return(MS_FAILURE);
@@ -570,7 +569,7 @@ int msSDELayerGetItems(layerObj *layer) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetItems()");
     return(MS_FAILURE);
@@ -627,7 +626,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
     return(MS_FAILURE);
@@ -657,7 +656,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 
   msSDELayerInfo *sde=NULL;
 
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
     return(MS_FAILURE);
@@ -702,7 +701,7 @@ int msSDELayerInitItemInfo(layerObj *layer)
 
   msSDELayerInfo *sde=NULL;
    
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerInitItemInfo()");
     return(MS_FAILURE);
@@ -764,7 +763,7 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
 #ifdef USE_SDE
   msSDELayerInfo *sde=NULL;
    
-  sde = layer->sdelayerinfo;
+  sde = layer->layerinfo;
   if(!sde) {
     msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetSpatialColumn()");
     return(NULL);

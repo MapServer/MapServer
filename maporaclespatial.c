@@ -136,8 +136,7 @@ typedef struct {
   item_text_array  *items; /* items buffer */
   SDOGeometryObj   *obj[ARRAY_SIZE]; /* spatial object buffer */
   SDOGeometryInd   *ind[ARRAY_SIZE]; /* object indicator */
-}
-msOracleSpatialLayerInfo;
+} msOracleSpatialLayerInfo;
 
 /* local prototypes */
 static int TRY( msOracleSpatialLayerInfo *layerinfo, sword status );
@@ -331,8 +330,8 @@ static void msOCIDisconnect( msOracleSpatialLayerInfo *layerinfo )
     OCIHandleFree( (dvoid *)layerinfo->envhp, (ub4)OCI_HTYPE_ENV );
   if (layerinfo->items != NULL)
     free( layerinfo->items );
-  /* zero layerinfo out. can't free it because it's not the actual layer->oraclespatiallayerinfo pointer
-   * but a copy of it. the only function that frees layer->oraclespatiallayerinfo is msOracleSpatialLayerClose */
+  /* zero layerinfo out. can't free it because it's not the actual layer->layerinfo pointer
+   * but a copy of it. the only function that frees layer->layerinfo is msOracleSpatialLayerClose */
   memset( layerinfo, 0, sizeof( msOracleSpatialLayerInfo ) ); 
 }
 
@@ -428,7 +427,7 @@ int msOracleSpatialLayerOpen( layerObj *layer )
 {
   char username[1024], password[1024], dblink[1024];
 
-  if (layer->oraclespatiallayerinfo != NULL)
+  if (layer->layerinfo != NULL)
     return MS_SUCCESS;
 
   if (layer->data == NULL) {
@@ -442,19 +441,19 @@ int msOracleSpatialLayerOpen( layerObj *layer )
 
   last_oci_call_ms_status = MS_SUCCESS;
   msSplitLogin( layer->connection, username, password, dblink );
-  layer->oraclespatiallayerinfo = msOCIConnect( username, password, dblink );
+  layer->layerinfo = msOCIConnect( username, password, dblink );
 
-  return layer->oraclespatiallayerinfo != NULL ? MS_SUCCESS : MS_FAILURE;
+  return layer->layerinfo != NULL ? MS_SUCCESS : MS_FAILURE;
 }
 
-/* closes the layer, disconnecting from db if connected. layer->oraclespatiallayerinfo is freed */
+/* closes the layer, disconnecting from db if connected. layer->layerinfo is freed */
 int msOracleSpatialLayerClose( layerObj *layer )
 { 
-  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->oraclespatiallayerinfo;
+  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
   if (layerinfo != NULL) {
     msOCIDisconnect( layerinfo );
     free( layerinfo );
-    layer->oraclespatiallayerinfo = NULL;
+    layer->layerinfo = NULL;
   }
 
   return MS_SUCCESS;
@@ -469,7 +468,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   OCIDefine *adtp = NULL, *items[ARRAY_SIZE] = { NULL };
 
   /* get layerinfo */
-  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->oraclespatiallayerinfo;
+  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
   if (layerinfo == NULL) {
     msSetError( MS_ORACLESPATIALERR,
       "msOracleSpatialLayerWhichShapes called on unopened layer",
@@ -576,7 +575,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
   pointObj point5[5]; /* for quick access */
 
   /* get layerinfo */
-  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->oraclespatiallayerinfo;
+  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
   if (layerinfo == NULL) {
     msSetError( MS_ORACLESPATIALERR,
       "msOracleSpatialLayerWhichShapes called on unopened layer",

@@ -266,7 +266,7 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 	if (setvbuf(stdout, NULL, _IONBF , 0)){
 		printf("Whoops...");
 	};
-	if (layer->mygislayerinfo)
+	if (layer->layerinfo)
 		return MS_SUCCESS;	//already open
 
 	//have to setup a connection to the database
@@ -286,14 +286,14 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
     if (prevconn != NULL && prevdata != NULL && strcmp(prevdata, layer->data)==0){
 if (MYDEBUG)printf("Reusing existing connection<BR>\n");	
         layerinfo->conn = prevconn;
-	layer->mygislayerinfo = (void *) layerinfo;
+	layer->layerinfo = (void *) layerinfo;
 	return MS_SUCCESS;	//already open
     } else if (prevconn != NULL) { // a different connection, close shop...
 if (MYDEBUG)printf("New connection<BR>\n");	
         mysql_close(prevconn);
 	prevconn = NULL;
-	free(layer->mygislayerinfo);
-	layer->mygislayerinfo = NULL;
+	free(layer->layerinfo);
+	layer->layerinfo = NULL;
 //        mysql_close(prevconn);
 //        free(prevconn);
 //        free(prevdata); 
@@ -354,7 +354,7 @@ if (MYDEBUG)printf("msMYGISLayerOpen3 called<br>\n");
         else
             gBYTE_ORDER = BIG_ENDIAN;
 
-	layer->mygislayerinfo = (void *) layerinfo;
+	layer->layerinfo = (void *) layerinfo;
 	return MS_SUCCESS;
 }
 
@@ -416,7 +416,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql
 	char ftable[5000];
 	char attribselect[5000] = "" ;
 
-	layerinfo = (msMYGISLayerInfo *) layer->mygislayerinfo;
+	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
 	/* Set the urid name */
 	layerinfo->urid_name = urid_name;
@@ -434,7 +434,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql
 	pos_space = strstr(geom_table, " "); // First space
 	strncpy(ftable, geom_table, pos_space - geom_table);
 	ftable[pos_space - geom_table] = NULL;
-	layerinfo = (msMYGISLayerInfo *) layer->mygislayerinfo;
+	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	layerinfo->feature = strdup(ftable);
 //printf("FEATURE %s/%s/%s/%s<BR>", ftable, pos_ftab, pos_space, pos_paren);
 	
@@ -589,7 +589,7 @@ int msMYGISLayerWhichShapes(layerObj *layer, rectObj rect)
 
 if (MYDEBUG) printf("msMYGISLayerWhichShapes called<br>\n");
 
-	layerinfo = (msMYGISLayerInfo *) layer->mygislayerinfo;
+	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	if (layerinfo == NULL)
 	{
 		//layer not opened yet
@@ -630,7 +630,7 @@ int msMYGISLayerClose(layerObj *layer)
 	msMYGISLayerInfo	*layerinfo;
 
 if (MYDEBUG) printf("msMYGISLayerClose called<br>\n");
-	layerinfo = (msMYGISLayerInfo *) layer->mygislayerinfo;
+	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
 
 	if (layerinfo != NULL)
@@ -642,7 +642,7 @@ if (MYDEBUG) printf("msMYGISLayerClose called<br>\n");
 /*      mysql_close(layerinfo->conn);
 	layerinfo->conn = NULL;
 	free(layerinfo);
-	layer->mygislayerinfo = NULL;
+	layer->layerinfo = NULL;
 */	}
 	if (setvbuf(stdout, NULL, _IONBF , 0)){
 		printf("Whoops...");
@@ -1165,7 +1165,7 @@ int msMYGISLayerNextShape(layerObj *layer, shapeObj *shape)
 
 	msMYGISLayerInfo	*layerinfo;
 
-	layerinfo = (msMYGISLayerInfo *) layer->mygislayerinfo;
+	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
 
 //if (MYDEBUG)printf("msMYGISLayerNextShape called<br>\n");
@@ -1202,7 +1202,7 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
     int numrows2 = 0;
     char* wkb;
 
-	layerinfo = (msMYGISLayerInfo *) layer->mygislayerinfo;
+	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
 //if (MYDEBUG) printf("msMYGISLayerGetShapeRandom : called row %li<br>\n",*record);
 
@@ -1397,7 +1397,7 @@ int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
 if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %u<br>\n",record);
 
-	layerinfo = (msMYGISLayerInfo *) layer->mygislayerinfo;
+	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	if (layerinfo == NULL)
 	{
 		//layer not opened yet
@@ -1593,7 +1593,7 @@ int msMYGISLayerGetItems(layerObj *layer)
 
 printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 
-	layerinfo = (msMYGISLayerInfo *) layer->mygislayerinfo;
+	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
 	if (layerinfo == NULL)
 	{

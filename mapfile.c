@@ -310,7 +310,7 @@ void initJoin(joinObj *join)
 
   join->table = NULL;
 
-  join->tableinfo = NULL;
+  join->joininfo = NULL;
 
   join->from = NULL; /* join items */
   join->to = NULL;
@@ -574,43 +574,43 @@ static int loadGrid( layerObj *pLayer )
 				return(0);
 
 			case( LABELFORMAT ):
-				if( (int) (((graticuleObj *)pLayer->graticulelayerinfo)->labelformat = getString()) == -1) 
+				if( (int) (((graticuleObj *)pLayer->layerinfo)->labelformat = getString()) == -1) 
 					return(-1);
 
 				break;
 
 			case( MINARCS ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->minarcs) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->minarcs) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MAXARCS ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->maxarcs) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->maxarcs) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MININTERVAL ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->minincrement) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->minincrement) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MAXINTERVAL ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->maxincrement) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->maxincrement) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MINSUBDIVIDE ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->minsubdivides) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->minsubdivides) == -1) 
 					return(-1);
 
 				break;
 				
 			case( MAXSUBDIVIDE ):
-				if( getDouble(&((graticuleObj *)pLayer->graticulelayerinfo)->maxsubdivides) == -1) 
+				if( getDouble(&((graticuleObj *)pLayer->layerinfo)->maxsubdivides) == -1) 
 					return(-1);
 
 				break;
@@ -1984,7 +1984,8 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->connection = NULL;
   layer->connectiontype = MS_SHAPEFILE;
 
-  layer->ogrlayerinfo = layer->sdelayerinfo = layer->postgislayerinfo = layer->oraclespatiallayerinfo = NULL;
+  layer->layerinfo = NULL;
+  layer->ogrlayerinfo = NULL;
 
   layer->items = NULL;
   layer->iteminfo = NULL;
@@ -2015,8 +2016,6 @@ int initLayer(layerObj *layer, mapObj *map)
   }
 
   layer->sameconnection = NULL;
-  
-  layer->graticulelayerinfo = NULL;
   
   return(0);
 }
@@ -2152,12 +2151,12 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(GRID):
 		layer->connectiontype				= MS_GRATICULE;
-		layer->graticulelayerinfo			= (void *) malloc( sizeof( graticuleObj ) );
+		layer->layerinfo			= (void *) malloc( sizeof( graticuleObj ) );
 
-		if( layer->graticulelayerinfo == NULL )
+		if( layer->layerinfo == NULL )
 			return -1;
 
-		initGrid( (graticuleObj *) layer->graticulelayerinfo );
+		initGrid( (graticuleObj *) layer->layerinfo );
 		loadGrid( layer );
 		break;
     case(GROUP):
@@ -2594,8 +2593,8 @@ static void writeLayer(layerObj *layer, FILE *stream)
   // write potentially multiply occuring features last
   for(i=0; i<layer->numclasses; i++) writeClass(&(layer->class[i]), stream);
 
-  if( layer->graticulelayerinfo )
-	  writeGrid( (graticuleObj *) layer->graticulelayerinfo, stream );
+  if( layer->layerinfo )
+	  writeGrid( (graticuleObj *) layer->layerinfo, stream );
   else
   {
 	  current = layer->features;
@@ -4341,13 +4340,13 @@ int msCheckConnection(layerObj * layer) {
     // check to make sure lp even has an open connection (database types only)
     switch (lp->connectiontype) {
     case MS_POSTGIS: 
-      if(!lp->postgislayerinfo) continue;
+      if(!lp->layerinfo) continue;
       break;
     case MS_ORACLESPATIAL:
       break;
-      if(!lp->oraclespatiallayerinfo) continue;
+      if(!lp->layerinfo) continue;
     case MS_SDE:
-      if(!lp->sdelayerinfo) continue;
+      if(!lp->layerinfo) continue;
       break;
     default:
       continue; // not a database layer, skip it

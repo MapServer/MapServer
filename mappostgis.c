@@ -171,7 +171,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
         int			order_test = 1;
 
 //fprintf(stderr,"msPOSTGISLayerOpen called\n");
-	if (layer->postgislayerinfo)
+	if (layer->layerinfo)
 		return MS_SUCCESS;	//already open
 
         if( layer->data == NULL )
@@ -208,7 +208,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
 
 
 
-	layer->postgislayerinfo = (void *) layerinfo;
+	layer->layerinfo = (void *) layerinfo;
 
         if( ((char *) &order_test)[0] == 1 )
             gBYTE_ORDER = LITTLE_ENDIAN;
@@ -292,7 +292,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	memset(f_table_name,0,5000);            //zero it out!!!
 
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 
 	/* Set the urid name */
 	layerinfo->urid_name = urid_name;
@@ -552,7 +552,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 
 //fprintf(stderr,"msPOSTGISLayerWhichShapes called\n");
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 	if (layerinfo == NULL)
 	{
 		//layer not opened yet
@@ -610,7 +610,7 @@ int msPOSTGISLayerClose(layerObj *layer)
 	msPOSTGISLayerInfo	*layerinfo;
 
 //fprintf(stderr,"msPOSTGISLayerClose called\n");
-	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 
 
 	if (layerinfo != NULL)
@@ -622,7 +622,7 @@ int msPOSTGISLayerClose(layerObj *layer)
 			layerinfo->conn = NULL;
 
 		free(layerinfo);
-		layer->postgislayerinfo = NULL;
+		layer->layerinfo = NULL;
 	}
 
 	return(MS_SUCCESS);
@@ -929,7 +929,7 @@ int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
 
 	msPOSTGISLayerInfo	*layerinfo;
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 
 
 //fprintf(stderr,"msPOSTGISLayerNextShape called\n");
@@ -964,7 +964,7 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 	long				record_oid;
 
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 
 //fprintf(stderr,"msPOSTGISLayerGetShapeRandom : called row %li\n",record);
 
@@ -1088,7 +1088,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
 //fprintf(stderr,"msPOSTGISLayerGetShape called for record = %i\n",record);
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 	if (layerinfo == NULL)
 	{
 		//layer not opened yet
@@ -1294,7 +1294,7 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 
 //fprintf(stderr, "in msPOSTGISLayerGetItems  (find column names)\n");
 
-	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+	layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 
 	if (layerinfo == NULL)
 	{
@@ -1447,7 +1447,7 @@ PGresult   *query_result;
 
 
 
-  layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+  layerinfo = (msPOSTGISLayerInfo *) layer->layerinfo;
 
    msPOSTGISLayerParseData(layer->data, geom_column_name,table_name, urid_name,user_srid);
 

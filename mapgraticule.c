@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2003/03/18 04:56:28  sdlime
+ * Updating vendor specific layer code to use a common layerinfo (void *) rather than one named for each silly connection type. A bit cleaner code. This is just renaming a layerObj parameter nothing more.Done are sde, osi, mygis, graticules and postgis. Dan will have to deal with OGR and WMS/WFS since he has some merging to do. Renamed the joinObj tableinfo to joininfo. There is a method to my madness- dynamic joins just around the corner.
+ *
  * Revision 1.5  2003/03/10 17:15:36  novak
  * Fix hang when no projection specified on graticule layer
  *
@@ -70,7 +73,7 @@ static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToForm
  */
 int msGraticuleLayerOpen(layerObj *layer) 
 {
-	graticuleObj 		*pInfo	= (graticuleObj *) layer->graticulelayerinfo;
+	graticuleObj 		*pInfo	= (graticuleObj *) layer->layerinfo;
 
 	if( pInfo == NULL )
 		return MS_FAILURE;
@@ -113,7 +116,7 @@ int msGraticuleLayerOpen(layerObj *layer)
  */
 int msGraticuleLayerClose(layerObj *layer)
 {
-	graticuleObj 		*pInfo			= (graticuleObj *) layer->graticulelayerinfo;
+	graticuleObj 		*pInfo			= (graticuleObj *) layer->layerinfo;
 
 	if( pInfo->labelformat )
 	{
@@ -141,7 +144,7 @@ int msGraticuleLayerClose(layerObj *layer)
  */
 int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 {
-	graticuleObj 		*pInfo			= (graticuleObj *) layer->graticulelayerinfo;
+	graticuleObj 		*pInfo			= (graticuleObj *) layer->layerinfo;
 	int					 iAxisTickCount	= 0;
 	rectObj				 rectMapCoordinates;
 
@@ -259,7 +262,7 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
  */
 int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 {
-	graticuleObj 		*pInfo		= (graticuleObj *) layer->graticulelayerinfo;
+	graticuleObj 		*pInfo		= (graticuleObj *) layer->layerinfo;
 
 	if( pInfo->minsubdivides <= 0.0
 	  || pInfo->maxsubdivides <= 0.0 )
@@ -508,7 +511,7 @@ int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long re
  */
 int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent)
 {
-	graticuleObj 		*pInfo	= (graticuleObj  *) layer->graticulelayerinfo;
+	graticuleObj 		*pInfo	= (graticuleObj  *) layer->layerinfo;
 
 	if( pInfo )
 	{
@@ -533,7 +536,7 @@ int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int 
  */
 static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToFormat )
 {
-	graticuleObj 		*pInfo	= (graticuleObj  *) pLayer->graticulelayerinfo;
+	graticuleObj 		*pInfo	= (graticuleObj  *) pLayer->layerinfo;
 	char				cBuffer[32];
 	int					iDegrees, iMinutes;
 	
@@ -570,7 +573,7 @@ static void _FormatLabel( layerObj *pLayer, shapeObj *pShape, double dDataToForm
  */
 static void _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticulePosition ePosition )
 {
-	graticuleObj 		*pInfo	= (graticuleObj  *) pLayer->graticulelayerinfo;
+	graticuleObj 		*pInfo	= (graticuleObj  *) pLayer->layerinfo;
 	rectObj				 rectLabel;
 	pointObj			 ptPoint;
 

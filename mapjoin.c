@@ -31,34 +31,36 @@ int msJoinCloseTable(joinObj *join) {
 typedef struct {
   DBFHandle hDBF;
   int fromindex, toindex;
-} msDBFJoinTableInfo;
+  int *indexes;
+  int numindexes;
+} msDBFJoinInfo;
 
 int msDBFJoinOpenTable(layerObj *layer, joinObj *join) {
   int i;
   char szPath[MS_MAXPATHLEN];
-  msDBFJoinTableInfo *tableinfo;
+  msDBFJoinInfo *joininfo;
 
-  if(join->tableinfo) return(MS_SUCCESS); // already open
+  if(join->joininfo) return(MS_SUCCESS); // already open
     
-  // allocate a msDBFJoinTableInfo struct
-  tableinfo = (msDBFJoinTableInfo *) malloc(sizeof(msDBFJoinTableInfo));
-  if(!tableinfo) {
+  // allocate a msDBFJoinInfo struct
+  joininfo = (msDBFJoinInfo *) malloc(sizeof(msDBFJoinInfo));
+  if(!joininfo) {
     msSetError(MS_MEMERR, "Error allocating XBase table info structure.", "msDBFJoinOpenTable()");
     return(MS_FAILURE);
   }
 
-  join->tableinfo = tableinfo;
+  join->joininfo = joininfo;
 
   // open the XBase file
-  if((tableinfo->hDBF = msDBFOpen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "rb" )) == NULL) {
-    if((tableinfo->hDBF = msDBFOpen( msBuildPath(szPath, layer->map->mappath, join->table), "rb" )) == NULL) {     
+  if((joininfo->hDBF = msDBFOpen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "rb" )) == NULL) {
+    if((joininfo->hDBF = msDBFOpen( msBuildPath(szPath, layer->map->mappath, join->table), "rb" )) == NULL) {     
       msSetError(MS_IOERR, "(%s)", "msDBFJoinOpenTable()", join->table);   
       return(MS_FAILURE);
     }
   }
 
   // get "to" item index
-  if((tableinfo->toindex = msDBFGetItemIndex(tableinfo->hDBF, join->to)) == -1) { 
+  if((joininfo->toindex = msDBFGetItemIndex(joininfo->hDBF, join->to)) == -1) { 
     msSetError(MS_DBFERR, "Item %s not found in table %s.", "msDBFJoinOpenTable()", join->to, join->table); 
     return(MS_FAILURE);
   }
@@ -66,7 +68,7 @@ int msDBFJoinOpenTable(layerObj *layer, joinObj *join) {
   // get "from" item index  
   for(i=0; i<layer->numitems; i++) {
     if(strcasecmp(layer->items[i],join->from) == 0) { // found it
-      tableinfo->fromindex = i;
+      joininfo->fromindex = i;
       break;
     }
   }
@@ -77,20 +79,20 @@ int msDBFJoinOpenTable(layerObj *layer, joinObj *join) {
   }
 
   // finally store away the item names in the XBase table
-  join->numitems =  msDBFGetFieldCount(tableinfo->hDBF);
-  join->items = msDBFGetItems(tableinfo->hDBF);
+  join->numitems =  msDBFGetFieldCount(joininfo->hDBF);
+  join->items = msDBFGetItems(joininfo->hDBF);
   if(!join->items) return(MS_FAILURE);  
 
   return(MS_SUCCESS);
 }
 
 int msDBFJoinCloseTable(joinObj *join) {
-  msDBFJoinTableInfo *tableinfo = join->tableinfo;
+  msDBFJoinInfo *joininfo = join->joininfo;
 
-  if(!tableinfo) return(MS_SUCCESS); // already closed
-  msDBFClose(tableinfo->hDBF);
-  free(tableinfo);
-  tableinfo = NULL;
+  if(!joininfo) return(MS_SUCCESS); // already closed
+  msDBFClose(joininfo->hDBF);
+  free(joininfo);
+  joininfo = NULL;
   return(MS_SUCCESS);
 }
 
@@ -98,12 +100,12 @@ int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape) {
   int i, j;
   int numrecords, *ids=NULL;
 
-  msDBFJoinTableInfo *tableinfo;
+  msDBFJoinInfo *joininfo;
 
   if(msDBFJoinOpenTable(layer, join) != MS_SUCCESS) return(MS_FAILURE);
-  tableinfo = join->tableinfo;
+  joininfo = join->joininfo;
 
-  numrecords = msDBFGetRecordCount(tableinfo->hDBF);
+  numrecords = msDBFGetRecordCount(joininfo->hDBF);
 
   if(join->type == MS_JOIN_ONE_TO_ONE) { /* only one row */
     
@@ -113,7 +115,7 @@ int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape) {
     }
     
     for(i=0; i<numrecords; i++) { /* find a match */
-      if(strcmp(shape->values[tableinfo->fromindex], msDBFReadStringAttribute(tableinfo->hDBF, i, tableinfo->toindex)) == 0)
+      if(strcmp(shape->values[joininfo->fromindex], msDBFReadStringAttribute(joininfo->hDBF, i, joininfo->toindex)) == 0)
 	break;
     }  
     
@@ -125,7 +127,7 @@ int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape) {
       for(i=0; i<join->numitems; i++)
 	join->values[0][i] = strdup("\0"); /* intialize to zero length strings */
     } else {
-      if((join->values[0] = msDBFGetValues(tableinfo->hDBF,i)) == NULL) return(MS_FAILURE);      
+      if((join->values[0] = msDBFGetValues(joininfo->hDBF,i)) == NULL) return(MS_FAILURE);      
     }
 
   } else {
@@ -145,7 +147,7 @@ int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape) {
     
     j=0;
     for(i=0; i<numrecords; i++) { /* find the matches, save ids */
-      if(strcmp(shape->values[tableinfo->fromindex], msDBFReadStringAttribute(tableinfo->hDBF, i, tableinfo->toindex)) == 0) {
+      if(strcmp(shape->values[joininfo->fromindex], msDBFReadStringAttribute(joininfo->hDBF, i, joininfo->toindex)) == 0) {
 	ids[j] = i;
 	j++;
       }
@@ -168,7 +170,7 @@ int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape) {
 	  return(MS_FAILURE);
 	}
 
-	join->values[i] = msDBFGetValues(tableinfo->hDBF,ids[i]);
+	join->values[i] = msDBFGetValues(joininfo->hDBF,ids[i]);
 	if(!join->values[i]) {
 	  free(ids);
 	  return(MS_FAILURE);

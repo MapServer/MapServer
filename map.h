@@ -271,7 +271,7 @@ typedef struct {
   char *table;
   char *from, *to; // item names
 
-  void *tableinfo; // vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access
+  void *joininfo; // vendor specific (i.e. XBase, MySQL, etc.) stuff to allow for persistant access
  
   char *header, *footer;
 #ifndef __cplusplus
@@ -689,13 +689,10 @@ typedef struct layer_obj {
 #endif
 
 #ifndef SWIG
+  // SDL has converted OracleSpatial, SDE, Graticules, MyGIS
+  void *layerinfo; // all connection types should use this generic pointer to a vendor specific structure
   void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
-  void *sdelayerinfo; // For SDE layers, will contain a sdeLayerObj struct
-  void *postgislayerinfo; // For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
-  void *mygislayerinfo; // mysql based layers & stuff...
-  void *oraclespatiallayerinfo;
-  void *wfslayerinfo; // For WFS layers, will contain a msWFSLayerInfo struct
-  void *graticulelayerinfo;
+  void *wfslayerinfo; // For WFS layers, will contain a msWFSLayerInfo struct 
 #endif
 
   // attribute/classification handling components
