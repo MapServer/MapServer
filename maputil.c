@@ -107,6 +107,8 @@ int msGetClassIndex(layerObj *layer, char *str)
   if(!str) return(-1);
 
   for(i=0; i<layer->numclasses; i++) {
+    if (layer->class[i].expression.string == NULL) /* Empty expression - always matches */
+      return(i);
     switch(layer->class[i].expression.type) {
     case(MS_STRING):
       if(strcmp(layer->class[i].expression.string, str) == 0) /* got a match */
@@ -148,56 +150,60 @@ static int shpGetClassIndex(DBFHandle hDBF, layerObj *layer, int record, int ite
     return(0);
 
   for(i=0; i<layer->numclasses; i++) {
-    switch(layer->class[i].expression.type) {
-    case(MS_STRING):
-      if(strcmp(layer->class[i].expression.string, DBFReadStringAttribute(hDBF, record, item)) == 0) /* got a match */
-	found=MS_TRUE;
-      break;
-    case(MS_EXPRESSION):
-      tmpstr = strdup(layer->class[i].expression.string);
+    if (layer->class[i].expression.string == NULL) /* Empty expression - always matches */
+      found=MS_TRUE;
+    else {
+      switch(layer->class[i].expression.type) {
+      case(MS_STRING):
+        if(strcmp(layer->class[i].expression.string, DBFReadStringAttribute(hDBF, record, item)) == 0) /* got a match */
+	  found=MS_TRUE;
+        break;
+      case(MS_EXPRESSION):
+        tmpstr = strdup(layer->class[i].expression.string);
 
-      if(!values) {
-	numitems = DBFGetFieldCount(hDBF);
-	values = msGetDBFValues(hDBF, record);
-      }
+        if(!values) {
+	  numitems = DBFGetFieldCount(hDBF);
+	  values = msGetDBFValues(hDBF, record);
+        }
 
-      if(!(layer->class[i].expression.items)) { // build cache of item replacements	
-	char **items=NULL, substr[19];
+        if(!(layer->class[i].expression.items)) { // build cache of item replacements	
+	  char **items=NULL, substr[19];
 
-	numitems = DBFGetFieldCount(hDBF);
-	items = msGetDBFItems(hDBF);
+	  numitems = DBFGetFieldCount(hDBF);
+	  items = msGetDBFItems(hDBF);
 
-	layer->class[i].expression.items = (char **)malloc(numitems);
-	layer->class[i].expression.indexes = (int *)malloc(numitems);
+	  layer->class[i].expression.items = (char **)malloc(numitems);
+	  layer->class[i].expression.indexes = (int *)malloc(numitems);
 
-	for(j=0; j<numitems; j++) {
-	  sprintf(substr, "[%s]", items[j]);
-	  if(strstr(tmpstr, substr) != NULL) {
-	    layer->class[i].expression.indexes[layer->class[i].expression.numitems] = j;
-	    layer->class[i].expression.items[layer->class[i].expression.numitems] = strdup(substr);
-	    layer->class[i].expression.numitems++;
+	  for(j=0; j<numitems; j++) {
+	    sprintf(substr, "[%s]", items[j]);
+	    if(strstr(tmpstr, substr) != NULL) {
+	      layer->class[i].expression.indexes[layer->class[i].expression.numitems] = j;
+	      layer->class[i].expression.items[layer->class[i].expression.numitems] = strdup(substr);
+	      layer->class[i].expression.numitems++;
+	    }
 	  }
-	}
 
-	msFreeCharArray(items,numitems);
+	  msFreeCharArray(items,numitems);
+        }
+
+        for(j=0; j<layer->class[i].expression.numitems; j++)
+	  tmpstr = gsub(tmpstr, layer->class[i].expression.items[j], values[layer->class[i].expression.indexes[j]]);
+
+        msyystate = 4; msyystring = tmpstr;
+        if(msyyparse() != 0)
+	  return(-1);
+
+        free(tmpstr);
+
+        if(msyyresult) /* got a match */
+	  found=MS_TRUE;
+        break;
+      case(MS_REGEX):
+        if(regexec(&(layer->class[i].expression.regex), DBFReadStringAttribute(hDBF, record, item), 0, NULL, 0) == 0) /* got a match */
+	  found=MS_TRUE;
+        break;
       }
-
-      for(j=0; j<layer->class[i].expression.numitems; j++)
-	tmpstr = gsub(tmpstr, layer->class[i].expression.items[j], values[layer->class[i].expression.indexes[j]]);
-
-      msyystate = 4; msyystring = tmpstr;
-      if(msyyparse() != 0)
-	return(-1);
-
-      free(tmpstr);
-
-      if(msyyresult) /* got a match */
-	found=MS_TRUE;
-      break;
-    case(MS_REGEX):
-      if(regexec(&(layer->class[i].expression.regex), DBFReadStringAttribute(hDBF, record, item), 0, NULL, 0) == 0) /* got a match */
-	found=MS_TRUE;
-      break;
     }
 
     if(found) {
