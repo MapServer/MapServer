@@ -38,8 +38,8 @@ static int sdeRectContained(SE_ENVELOPE *a, SE_ENVELOPE *b)
 }
 
 static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, shapeObj *outshp) {
-  long numparts, numpoints;
-  long *parts=NULL;
+  long numparts, numsubparts, numpoints;
+  long *subparts=NULL;
   SE_POINT *points=NULL;
   long type, status;
 
@@ -52,35 +52,40 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
   if(type == SG_NIL_SHAPE) return(0); // skip null shapes
 
   SE_shape_get_num_points(inshp, 0, 0, &numpoints);
-  SE_shape_get_num_parts(inshp, &numparts, NULL);
+  SE_shape_get_num_parts(inshp, &numparts, &numsubparts);
 
-  if(numparts > 0) {
-    parts = (long *)malloc(numparts*sizeof(long));
-    if(!parts) {
+  printf("%ld %ld %ld\n", numpoints, numparts, numsubparts);
+
+  if(numsubparts > 0) {
+    subparts = (long *)malloc(numsubparts*sizeof(long));
+    if(!subparts) {
       msSetError(MS_MEMERR, "Unable to allocate parts array.", "sdeTransformShape()");
       return(-1);
     }
+    
   }
 
   points = (SE_POINT *)malloc(numpoints*sizeof(SE_POINT));
-  if(!parts) {
-    msSetError(MS_MEMERR, "Unable to allocate parts array.", "sdeTransformShape()");
+  if(!points) {
+    msSetError(MS_MEMERR, "Unable to allocate points array.", "sdeTransformShape()");
     return(-1);
   }
 
-  status = SE_shape_get_all_points(inshp, SE_DEFAULT_ROTATION, parts, NULL, points, NULL, NULL);
+  status = SE_shape_get_all_points(inshp, SE_DEFAULT_ROTATION, NULL, subparts, points, NULL, NULL);
   if(status != SE_SUCCESS) {
     sde_error(status, "sdeTransformShape()", "SE_shape_get_all_points()");
     return(-1);
   }
 
-  l = 0;
-  for(i=0; i<numparts; i++) {
+  l = 0; // overall point counter
+  for(i=0; i<numsubparts; i++) {
     
-    if( i == numparts-1)
-      line.numpoints = numpoints - parts[i];
+    if( i == numsubparts-1)
+      line.numpoints = numpoints - subparts[i];
     else
-      line.numpoints = parts[i+1] - parts[i];
+      line.numpoints = subparts[i+1] - subparts[i];
+
+    printf("%ld (%d) ", subparts[i], line.numpoints);
 
     line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
     if(!line.point) {
@@ -118,6 +123,11 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
 
     free(line.point);
   }
+
+  printf("\n");
+
+  free(subparts);
+  free(points);
 
   return(0);
 }
@@ -205,7 +215,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     return(-1);
   }
 
-  fprintf(stderr, "SDE connection established...\n");
+  // fprintf(stderr, "SDE connection established...\n");
 
   msFreeCharArray(params, numparams);
 
@@ -214,7 +224,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   */
   SE_layerinfo_create(NULL, &layerinfo);
 
-  params = split(layer->data, ',', &numparams);
+  params = split(layer->data, '.', &numparams);
   if(!params) {
     msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msDrawSDELayer()");
     return(-1);
@@ -254,7 +264,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   if(rect.miny > map->extent.maxy) return(0);
   if(rect.maxy < map->extent.miny) return(0);
 
-  fprintf(stderr, "layer envelope: %g %g %g %g\n", rect.minx, rect.miny, rect.maxx, rect.maxy);
+  // fprintf(stderr, "layer envelope: %g %g %g %g\n", rect.minx, rect.miny, rect.maxx, rect.maxy);
 
   /*
   ** initialize a few shapes
@@ -333,8 +343,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   msFreeCharArray(params, numparams);
 
-  for(i=0; i<numcolumns; i++)
-    fprintf(stderr, "%d:%s\n", i+1, columns[i]);
+  // for(i=0; i<numcolumns; i++)
+  // fprintf(stderr, "%d:%s\n", i+1, columns[i]);
 
   /*
   ** each class is a SQL statement, no expression means all features
@@ -347,14 +357,14 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
     
-    fprintf(stderr, "SDE stream created...\n");
+    // fprintf(stderr, "SDE stream created...\n");
     
     if(!(layer->class[i].expression.string))
       sql->where = strdup("");
     else
       sql->where = strdup(layer->class[i].expression.string);
 
-    fprintf(stderr, "class %d where: %s\n", i, sql->where);
+    // fprintf(stderr, "class %d where: %s\n", i, sql->where);
 
     status = SE_stream_query(stream, numcolumns, columns, sql);
     if(status != SE_SUCCESS) {
@@ -362,7 +372,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
-    fprintf(stderr, "attribute query set\n");
+    // fprintf(stderr, "attribute query set\n");
 
     status = SE_stream_set_spatial_constraints(stream, SE_SPATIAL_FIRST, FALSE, 1, &filter);
     if(status != SE_SUCCESS) {
@@ -370,7 +380,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
-    fprintf(stderr, "spatial query set\n");
+    // fprintf(stderr, "spatial query set\n");
 
     status = SE_stream_bind_output_column(stream, 1, shape, &shape_is_null);
     if(status != SE_SUCCESS) {
@@ -392,7 +402,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
-    fprintf(stderr, "search executed...\n");
+    // fprintf(stderr, "search executed...\n");
     
     switch(layer->type) {
     case MS_ANNOTATION:

@@ -2485,7 +2485,7 @@ static void loadWebString(webObj *web, char *value)
     web->footer = strdup(value);	
     break;
   case(HEADER):
-    (web->header) free(web->header);
+    if (web->header) free(web->header);
     web->header = strdup(value);
     break;
   case(MAXSCALE):
@@ -2501,7 +2501,7 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&web->minscale) == -1) return;
     break;
   case(MINTEMPLATE):
-    (web->mintemplate) free(web->mintemplate);
+    if (web->mintemplate) free(web->mintemplate);
     web->mintemplate = strdup(value);
     break;
   case(TEMPLATE):
