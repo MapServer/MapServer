@@ -294,7 +294,16 @@ int msGMLWriteQuery(mapObj *map, char *filename)
     }
   }
 
-  fprintf(stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n");
+  // charset encoding: lookup "gml_encoding" metadata first, then 
+  // "wms_encoding", and if not found then use "ISO-8859-1" as default.
+  if(msLookupHashTable(map->web.metadata, "gml_encoding")) 
+      fprintf(stream, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n",
+              msLookupHashTable(map->web.metadata, "gml_encoding"));
+  else if(msLookupHashTable(map->web.metadata, "wms_encoding")) 
+      fprintf(stream, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n",
+              msLookupHashTable(map->web.metadata, "wms_encoding"));
+  else
+      fprintf(stream, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n\n");
   
   if(msLookupHashTable(map->web.metadata, "gml_rootname")) 
     fprintf(stream, "<%s ", msLookupHashTable(map->web.metadata, "gml_rootname"));

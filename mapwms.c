@@ -61,6 +61,14 @@ const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
  * ================================================================== */
 #ifdef USE_WMS
 
+static int printMetadata(hashTableObj metadata, const char *name, 
+                         int action_if_not_found, const char *format, 
+                         const char *default_value);
+// WMS_NOERR and WMS_WARN passed as action_if_not_found to printMetadata()
+#define WMS_NOERR   0
+#define WMS_WARN    1
+
+
 /*
 ** msWMSException()
 **
@@ -204,7 +212,9 @@ int msWMSException(mapObj *map, const char *wmtversion)
       // In V1.0.1 to 1.0.7, the MIME type was text/xml
       printf("Content-type: text/xml%c%c",10,10);
 
-      printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+      printMetadata(map->web.metadata, "wms_encoding", WMS_NOERR,
+                "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
+                    "ISO-8859-1");
       printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
 
       printf("<ServiceExceptionReport version=\"1.0.1\">\n");
@@ -215,7 +225,9 @@ int msWMSException(mapObj *map, const char *wmtversion)
       // we cannot return anything else than application/vnd.ogc.se_xml here.
       printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
-      printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+      printMetadata(map->web.metadata, "wms_encoding", WMS_NOERR,
+                "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
+                    "ISO-8859-1");
       printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_1_0.dtd\">\n");
 
       printf("<ServiceExceptionReport version=\"1.1.0\">\n");        
@@ -449,8 +461,6 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
 ** If a default value is provided and metadata is absent then the 
 ** default will be used.
 */
-#define WMS_NOERR   0
-#define WMS_WARN    1
 
 static int printMetadata(hashTableObj metadata, const char *name, 
                          int action_if_not_found, const char *format, 
@@ -778,7 +788,9 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   else
       printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.0.8, 1.1.0 and later
 
-  printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+  printMetadata(map->web.metadata, "wms_encoding", WMS_NOERR,
+                "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
+                "ISO-8859-1");
   printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
   printf(" [\n");
 
