@@ -148,9 +148,9 @@ unset ac_cv_lib_c_gdImageJpeg
 unset ac_cv_lib_c_gdImageWBMP
 unset ac_cv_lib_c_gdImageStringFT
 unset ac_cv_lib_c_gdImageGifPtr
-unset ac_cv_lib_gd_gdImageCreateTrueColor
+unset ac_cv_lib_gd_gdImageSetAntiAliased
 
-AC_CHECKING(for GD 2.x...)
+AC_CHECKING(for GD 2.0.12 or higher...)
 AC_ARG_WITH(gd,
 [  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
                           install dir).],,)
@@ -159,8 +159,7 @@ if test "$with_gd" = "no" ; then
   AC_MSG_ERROR(GD library cannot be disabled)
 elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   dnl
-  dnl --with-gd was specified explicitly... try to establish which version
-  dnl           of GD this is
+  dnl --with-gd was specified explicitly... 
   dnl
   AC_PARSE_WITH_LIB_STATIC($with_gd, GD_DIR, GD_STATIC)
   AC_EXPAND_PATH($GD_DIR, GD_DIR)
@@ -179,15 +178,15 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
 
   dnl make sure it is GD 2.x
-  AC_CHECK_LIB(gd, gdImageCreateTrueColor,IS_GD2="true",,-L$GD_LIBDIR)
+  AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,-L$GD_LIBDIR)
 
   if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
-      AC_MSG_RESULT([        using libgd 2.x from $GD_LIB])
+      AC_MSG_RESULT([        using libgd 2.0.12 (or higher) from $GD_LIB])
       AC_ADD_RUNPATH("$GD_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.x is compiled before calling configure.")
+      AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.")
   fi
 else
   dnl  --with-gd specified without a DIR, look for gd in system dirs /usr or /usr/local
@@ -198,13 +197,13 @@ else
     test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
 
-    dnl make sure it is GD 2.x
-    AC_CHECK_LIB(gd, gdImageCreateTrueColor, IS_GD2="true")
-
+    dnl make sure it is GD 2.0.12 or higher
+    AC_CHECK_LIB(gd, gdImageSetAntiAliased, IS_GD2="true")
+ 
     if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
-      AC_MSG_RESULT([        using libgd 2.x from system libs.])
+      AC_MSG_RESULT([        using libgd 2.0.12 (or higher) from system libs.])
       AC_ADD_RUNPATH("$GD_LIBDIR")
       FOUND_GD="true"
       break;
@@ -212,7 +211,7 @@ else
   done
 
   if test "$FOUND_GD" = "false" ; then
-    AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.x is compiled before calling configure.")
+    AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.0.12 or higher is compiled before calling configure.")
   fi
 fi
 
@@ -434,9 +433,6 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
   dnl gdImageGifPtr is there only in GIF-patched GD versions
   AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr,GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
-  dnl check for antialiased drawing (gd 2.0.12 and higher)
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageSetAntiAliased, GD_DEF="$GD_DEF -DUSE_GD_ANTIALIAS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
 else
@@ -462,9 +458,6 @@ else
 
   dnl gdImageGifPtr is there only in GIF-patched GD versions
   AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB $GD_XTRA_LIBS)
-
-  dnl check for antialiased drawing (gd 2.0.12 and higher)
-  AC_CHECK_LIB(gd, gdImageSetAntiAliased, GD_DEF="$GD_DEF -DUSE_GD_ANTIALIAS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd $GD_LIB"
