@@ -34,7 +34,7 @@ char x2c(char *);
 void unescape_url(char *);
 void plustospace(char *);
 int rind(char *, char);
-int getline(char *, int, FILE *);
+int _getline(char *, int, FILE *);
 void send_fd(FILE *, FILE *);
 int ind(char *, char);
 void escape_shell_cmd(char *);
