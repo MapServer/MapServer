@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.385  2004/12/22 03:57:42  sdlime
+ * Added thickness related parameters to the styleObj in map.h.
+ *
  * Revision 1.384  2004/12/14 21:30:43  sdlime
  * Moved functions to build lists of inner and outer rings to mapprimitive.c from mapgml.c. They are needed to covert between MapServer polygons and GEOS gemometries (bug 771).
  *
@@ -547,6 +550,9 @@ typedef struct {
 
   int size;
   int minsize, maxsize;
+
+  int thickness;
+  int minthickness, maxthickness;
 
   int offsetx, offsety; // for shadows, hollow symbols, etc...
 
