@@ -1550,7 +1550,7 @@ int main(int argc, char *argv[]) {
       
       if(!img) writeError();
       
-      printf("Content-type: image/%s%c%c", outputImageType[Map->imagetype], 10,10);
+      printf("Content-type: image/%s%c%c", outputImageMimeType[Map->imagetype], 10,10);
       status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
       if(status != MS_SUCCESS) writeError();
       
@@ -1742,7 +1742,7 @@ int main(int argc, char *argv[]) {
 	if(!img) writeError();
 	
 	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP) { // just return the image
-	  printf("Content-type: image/%s%c%c", outputImageType[Map->imagetype], 10,10);
+	  printf("Content-type: image/%s%c%c", outputImageMimeType[Map->imagetype], 10,10);
 	  status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 	  if(status != MS_SUCCESS) writeError();
 	  gdImageDestroy(img);
