@@ -13,6 +13,19 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 3.6.1 (2002-06-20)
+--------------------------
+
+- Fixed a performance problem in msImageFilledPolygon() (bug 162)
+  3.6.0 was up to 50% slower than 3.5 rendering polygons, and now
+  3.6.1 is up to 10-20% faster than 3.5.
+
+- Removed obsolete PHP3 stuff in README files and configure scripts.
+
+- Fixed color problem with crosshair in reference map.
+
+- Fixed an issue with "LOCATION TINY" being output in legend label objects.
+
 Version 3.6.0 (2002-05-28)
 --------------------------
 
