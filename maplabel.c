@@ -11,7 +11,7 @@
 
 //#define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
-int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, double scalefactor)
+int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize)
 {
   int i;
   char wrap[2];
@@ -65,10 +65,6 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   map->labelcache.labels[i].label = cp->label; // this copies all non-pointers
   if(cp->label.font) map->labelcache.labels[i].label.font = strdup(cp->label.font);
 
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
-  if(cp->label.type == MS_TRUETYPE) cp->label.size *= scalefactor;
-#endif
-
   map->labelcache.labels[i].featuresize = featuresize;
 
   map->labelcache.labels[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
@@ -76,7 +72,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 
   map->labelcache.labels[i].status = MS_FALSE;
 
-  if(lp->type == MS_LAYER_POINT) { // cache the marker placement
+  if(lp->type == MS_LAYER_POINT) { // cache the marker placement, it's already on the map
     rectObj rect;
     int w, h;
 
@@ -95,8 +91,8 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     msInitShape(map->labelcache.markers[i].poly);
 
     msGetMarkerSize(&map->symbolset, &(cp->styles), cp->numstyles, &w, &h);
-    w *= scalefactor;
-    h *= scalefactor;
+    w *= lp->scalefactor;
+    h *= lp->scalefactor;
 
     rect.minx = MS_NINT(point->x - .5 * w);
     rect.miny = MS_NINT(point->y - .5 * h);

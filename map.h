@@ -421,7 +421,7 @@ typedef struct {
   char *string;
   double featuresize;
 
-  styleObj *styles; // copied from the classObj
+  styleObj *styles; // copied from the classObj, only present if there is a marker to be drawn
   int numstyles;
 
   labelObj label; // copied from the classObj
@@ -435,7 +435,6 @@ typedef struct {
   shapeObj *poly; // label bounding box
 
   int status; // has this label been drawn or not
-  int hasmarker; // does this label have a marker associated with it
 } labelCacheMemberObj;
 
 typedef struct {
@@ -926,7 +925,7 @@ int msInitFontSet(fontSetObj *fontset);
 int msFreeFontSet(fontSetObj *fontset);
 
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
-int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, double scalefactor);
+int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize);
 
 gdFontPtr msGetBitmapFont(int size);
 int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);

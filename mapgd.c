@@ -1294,27 +1294,22 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
   layerObj *layerPtr=NULL;
   labelObj *labelPtr=NULL;
 
-  int draw_marker;
   int marker_width, marker_height;
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
 
-  double scalefactor=1.0;
-
   for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
-    cachePtr = &(map->labelcache.labels[l]); /* point to right spot in cache */
+    cachePtr = &(map->labelcache.labels[l]); // point to right spot in the label cache
 
-    layerPtr = &(map->layers[cachePtr->layerindex]); /* set a couple of other pointers, avoids nasty references */
+    layerPtr = &(map->layers[cachePtr->layerindex]); // set a couple of other pointers, avoids nasty references
     labelPtr = &(cachePtr->label);
 
-    /* compute the layer scalefactor here */
+    if(!cachePtr->string || strlen(cachePtr->string) == 0)
+      continue; // not an error, just don't want to do anything
 
-    if(!cachePtr->string)
-      continue; /* not an error, just don't want to do anything */
-
-    if(strlen(cachePtr->string) == 0)
-      continue; /* not an error, just don't want to do anything */
+    if(cachePtr->label.type == MS_TRUETYPE)
+      cachePtr->label.size *= layerPtr->scalefactor;
 
     if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset)) == -1)
       return(-1);
@@ -1322,11 +1317,12 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
       continue; /* label too large relative to the feature */
 
-    draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
-    if(cachePtr->hasmarker) { // there *is* a marker
-      
-      // UMMMMM, WHAT ABOUT SCALING HERE! (WE SHOULD STORE SCALEFACTOR SOMEPLACE)
-      msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, &marker_height);     
+    marker_offset_x = marker_offset_y = 0; /* assume no marker */
+    if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker      
+      msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, &marker_height);
+      marker_width *= layerPtr->scalefactor;
+      marker_height *= layerPtr->scalefactor;
+
       marker_offset_x = MS_NINT(marker_width/2.0);
       marker_offset_y = MS_NINT(marker_height/2.0);      
 
@@ -1335,7 +1331,8 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
       marker_rect.maxx = marker_rect.minx + (marker_width-1);
       marker_rect.maxy = marker_rect.miny + (marker_height-1);
 
-      if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
+      for(i=0; i<cachePtr->numstyles; i++)
+	cachePtr->styles[i].size *= layerPtr->scalefactor;
     }
 
     if(labelPtr->position == MS_AUTO) {
@@ -1357,7 +1354,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
-	  if(draw_marker)
+	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 
 	  if(!labelPtr->partials) { // check against image first
@@ -1407,7 +1404,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
 	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
-	  if(draw_marker)
+	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 
 	  if(!labelPtr->partials) { // check against image first
@@ -1460,7 +1457,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
       else
         p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
-      if(draw_marker)
+      if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
       if(!labelPtr->force) { // no need to check anything else
@@ -1506,13 +1503,13 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
     if(!cachePtr->status)
       continue; /* next label */
 
-    if(draw_marker) { /* need to draw a marker */
+    if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { /* need to draw a marker */
       for(i=0; i<cachePtr->numstyles; i++)
-        msDrawMarkerSymbolGD(&map->symbolset, img, &(cachePtr->point), &(cachePtr->styles[i]), scalefactor);
+        msDrawMarkerSymbolGD(&map->symbolset, img, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
     }
 
     if(MS_VALID_COLOR(&(labelPtr->backgroundcolor))) billboardGD(img, cachePtr->poly, labelPtr);
-    msDrawTextGD(img, p, cachePtr->string, labelPtr, &(map->fontset), 1.0); // actually draw the label, we scaled it in msAddLabel
+    msDrawTextGD(img, p, cachePtr->string, labelPtr, &(map->fontset), layerPtr->scalefactor); // actually draw the label, we scaled it in msAddLabel
 
   } /* next label in cache */
 

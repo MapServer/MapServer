@@ -88,6 +88,16 @@ imageObj *msDrawMap(mapObj *map)
                               map->resolution, &map->scale);
     if(status != MS_SUCCESS) return(NULL);
 
+    // compute layer scale factors now
+    for(i=0;i<map->numlayers; i++) {
+      if(map->layers[i].symbolscale > 0 && map->scale > 0) {
+    	if(map->layers[i].sizeunits != MS_PIXELS)
+      	  map->layers[i].scalefactor = (inchesPerUnit[map->layers[i].sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
+    	else
+      	  map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+      }
+    }
+
 #ifdef USE_WMS_LYR
     // Pre-download all WMS layers in parallel before starting to draw map
     for(i=0; i<map->numlayers; i++) 
@@ -207,6 +217,16 @@ imageObj *msDrawQueryMap(mapObj *map)
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
   if(status != MS_SUCCESS) return(NULL);
+
+  // compute layer scale factors now
+  for(i=0;i<map->numlayers; i++) {
+    if(map->layers[i].symbolscale > 0 && map->scale > 0) {
+      if(map->layers[i].sizeunits != MS_PIXELS)
+      	map->layers[i].scalefactor = (inchesPerUnit[map->layers[i].sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
+      else
+      	map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+    }
+  }
 
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
@@ -458,19 +478,11 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   
   if(shpcache) {
     int s;
-    double scalefactor=1.0;
-
-    if(layer->symbolscale > 0 && map->scale > 0) {
-      if(layer->sizeunits != MS_PIXELS)
-        scalefactor = (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
-      else
-        scalefactor = layer->symbolscale/map->scale;
-    }
-  
+      
     for(s=1; s<maxnumstyles; s++) {
       for(current=shpcache; current; current=current->next) {        
         if(layer->class[current->shape.classindex].numstyles > s)
-	  msDrawLineSymbol(&map->symbolset, image, &current->shape, &(layer->class[current->shape.classindex].styles[s]), scalefactor);
+	  msDrawLineSymbol(&map->symbolset, image, &current->shape, &(layer->class[current->shape.classindex].styles[s]), layer->scalefactor);
       }
     }
     
@@ -586,19 +598,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if(shpcache) {
     int s;
-    double scalefactor=1.0;
-
-    if(layer->symbolscale > 0 && map->scale > 0) {
-      if(layer->sizeunits != MS_PIXELS)
-        scalefactor = (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
-      else
-        scalefactor = layer->symbolscale/map->scale;
-    }
   
     for(s=1; s<maxnumstyles; s++) {
       for(current=shpcache; current; current=current->next) {        
         if(layer->class[current->shape.classindex].numstyles > s)
-	  msDrawLineSymbol(&map->symbolset, image, &current->shape, &(layer->class[current->shape.classindex].styles[s]), scalefactor);
+	  msDrawLineSymbol(&map->symbolset, image, &current->shape, &(layer->class[current->shape.classindex].styles[s]), layer->scalefactor);
       }
     }
     
@@ -705,7 +709,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   int i,j,c,s;
   rectObj cliprect;
   pointObj annopnt, *point;
-  double angle, length, scalefactor=1.0;
+  double angle, length;
  
   pointObj center; // circle origin
   double r; // circle radius
@@ -721,15 +725,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   msDrawStartShape(map, layer, image, shape);
 
   c = shape->classindex;
-
-  if(layer->symbolscale > 0 && map->scale > 0) {
-    if(layer->sizeunits != MS_PIXELS)
-      scalefactor = (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
-    else
-      scalefactor = layer->symbolscale/map->scale;
-  }
   
-  csz = MS_NINT((layer->class[c].styles[0].size*scalefactor)/2.0); // changed when Tomas added CARTOLINE symbols
+  csz = MS_NINT((layer->class[c].styles[0].size*layer->scalefactor)/2.0); // changed when Tomas added CARTOLINE symbols
   cliprect.minx = map->extent.minx - csz*map->cellsize;
   cliprect.miny = map->extent.miny - csz*map->cellsize;
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;
@@ -757,10 +754,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
     // shade symbol drawing will call outline function if color not set
     if(style != -1)
-      msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c].styles[style]), scalefactor);
+      msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c].styles[style]), layer->scalefactor);
     else
       for(s=0; s<layer->class[c].numstyles; s++)
-        msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c].styles[s]), scalefactor);
+        msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c].styles[s]), layer->scalefactor);
 
     // TO DO: need to handle circle annotation
 
@@ -789,13 +786,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(layer->class[c].label.autoangle) layer->class[c].label.angle = angle;
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
 	  if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
             for(s=0; s<layer->class[c].numstyles; s++)
-	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), scalefactor);
+	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
 	  }
-	  msDrawLabel(image, annopnt, shape->text, &(layer->class[c].label), &map->fontset, scalefactor);
+	  msDrawLabel(image, annopnt, shape->text, &(layer->class[c].label), &map->fontset, layer->scalefactor);
 	}
       }
 
@@ -814,13 +811,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
 	  if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
             for(s=0; s<layer->class[c].numstyles; s++)
-	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), scalefactor);
+	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
 	  }
-	  msDrawLabel(image, annopnt, shape->text, &(layer->class[c].label), &map->fontset, scalefactor);
+	  msDrawLabel(image, annopnt, shape->text, &(layer->class[c].label), &map->fontset, layer->scalefactor);
 	}
       }
       break;
@@ -841,13 +838,13 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
 	  if(shape->text) {
 	    if(layer->labelcache) {
-	      if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1, scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	      if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
 	    } else {
 	      if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
                 for(s=0; s<layer->class[c].numstyles; s++)
-	          msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), scalefactor);
+	          msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
 	      }
-	      msDrawLabel(image, *point, shape->text, &layer->class[c].label, &map->fontset, scalefactor);
+	      msDrawLabel(image, *point, shape->text, &layer->class[c].label, &map->fontset, layer->scalefactor);
 	    }
 	  }
 	}
@@ -874,16 +871,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	}
 
 	for(s=0; s<layer->class[c].numstyles; s++)
-  	  msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), scalefactor);
+  	  msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
 
 	if(shape->text) {
 	  if(layer->labelangleitemindex != -1) layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);	  
 	  if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);   
 
 	  if(layer->labelcache) {
-	    if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1, scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	    if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
 	  } else
-	    msDrawLabel(image, *point, shape->text, &layer->class[c].label, &map->fontset, scalefactor);
+	    msDrawLabel(image, *point, shape->text, &layer->class[c].label, &map->fontset, layer->scalefactor);
 	}
       }
     }
@@ -907,10 +904,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
  
     if(style != -1)
-      msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[style]), scalefactor);
+      msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[style]), layer->scalefactor);
     else
       for(s=0; s<layer->class[c].numstyles; s++)
-        msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[s]), scalefactor);
+        msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[s]), layer->scalefactor);
 
     if(shape->text) {
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
@@ -920,9 +917,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(layer->class[c].label.autoangle) layer->class[c].label.angle = angle;
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
 	} else
-          msDrawLabel(image, annopnt, shape->text, &layer->class[c].label, &map->fontset, scalefactor);
+          msDrawLabel(image, annopnt, shape->text, &layer->class[c].label, &map->fontset, layer->scalefactor);
       }
     }
     break;
@@ -945,7 +942,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
  
     for(s=0; s<layer->class[c].numstyles; s++)
-      msDrawShadeSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[s]), scalefactor);
+      msDrawShadeSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[s]), layer->scalefactor);
     
     if(shape->text) {
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {	
@@ -953,9 +950,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
 	if(layer->labelcache) {
-	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, -1, scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
 	} else
-	  msDrawLabel(image, annopnt, shape->text, &layer->class[c].label, &map->fontset, scalefactor);
+	  msDrawLabel(image, annopnt, shape->text, &layer->class[c].label, &map->fontset, layer->scalefactor);
       }
     }
     break;
@@ -976,17 +973,9 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
                 int classindex, char *labeltext)
 {
   int c, s;
-  double scalefactor=1.0;
 
   c = classindex;
-
-  if(layer->symbolscale > 0 && map->scale > 0) {
-    if(layer->sizeunits != MS_PIXELS)
-      scalefactor = (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
-    else
-      scalefactor = layer->symbolscale/map->scale;
-  }
-  
+ 
 #ifdef USE_PROJ
   if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
     msProjectPoint(&layer->projection, &map->projection, point);
@@ -1002,13 +991,13 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
 
     if(labeltext) {
       if(layer->labelcache) {
-	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1, scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
       } else {
 	if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
           for(s=0; s<layer->class[c].numstyles; s++)
-  	    msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), scalefactor);
+  	    msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
 	}
-	msDrawLabel(image, *point, labeltext, &layer->class[c].label, &map->fontset, scalefactor);
+	msDrawLabel(image, *point, labeltext, &layer->class[c].label, &map->fontset, layer->scalefactor);
       }
     }
     break;
@@ -1021,13 +1010,13 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
     }
 
     for(s=0; s<layer->class[c].numstyles; s++)
-      msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), scalefactor);
+      msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
 
     if(labeltext) {
       if(layer->labelcache) {
-	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1, scalefactor) != MS_SUCCESS) return(MS_FAILURE);
+	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1, layer->scalefactor) != MS_SUCCESS) return(MS_FAILURE);
       } else
-	msDrawLabel(image, *point, labeltext, &layer->class[c].label, &map->fontset, scalefactor);
+	msDrawLabel(image, *point, labeltext, &layer->class[c].label, &map->fontset, layer->scalefactor);
     }
     break;
   default:
