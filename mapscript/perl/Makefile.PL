@@ -26,7 +26,7 @@ print $libs."\n";
 print $static_libs."\n";
 
 WriteMakefile(
-	      'NAME' => 'mapscript43',
+	      'NAME' => 'mapscript',
 	      'DEFINE' => $define,
 	      'INC' => $inc,
 	      'LIBS' => [$libs,$static_libs],
