@@ -1069,15 +1069,25 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 #ifdef USE_MING_FLASH
     if (image != NULL && MS_RENDERER_SWF(image->format) )
     {
-        msTransformShapeSWF(shape, extent, cellsize);
+        if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
+                       "FALSE") == 0)
+          msTransformShapeToPixel(shape, extent, cellsize);
+        else
+          msTransformShapeSWF(shape, extent, cellsize);
+          
+
         return;
     }
 #endif
 #ifdef USE_PDF
     if (image != NULL && MS_RENDERER_PDF(image->format) )
     {
-      //msTransformShapePDF(shape, extent, cellsize);
-        msTransformShapeToPixel(shape, extent, cellsize);
+        if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
+                       "FALSE") == 0)
+          msTransformShapeToPixel(shape, extent, cellsize);
+        else
+          msTransformShapePDF(shape, extent, cellsize);
+
         return;
     }
 #endif
