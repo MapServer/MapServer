@@ -1324,42 +1324,71 @@ Methods
 
 .. _new pointObj:
 
-new pointObj([float x=0.0, float y=0.0]) : pointObj_
-    Create new instance.  Easting and northing arguments are optional.
+new pointObj( [float x=0.0, float y=0.0, float m=2e-38] ) : pointObj
+    Create new instance.  Easting, northing, and measure arguments are
+    optional.
 
 .. _distanceToPoint:
 
-distanceToPoint(pointObj_ point) : float
+distanceToPoint( pointObj point ) : float
     Returns the distance to *point*.
    
 .. _distanceToSegment:
 
-distanceToSegment(pointObj_ point1, pointObj_ point2) : float
+distanceToSegment( pointObj point1, pointObj point2 ) : float
     Returns the minimum distance to a hypothetical line segment connecting 
     *point1* and *point2*.
    
 .. _distanceToShape:
 
-distanceToShape(shapeObj_ shape) : float
+distanceToShape( shapeObj_ shape ) : float
     Returns the minimum distance to *shape*.
 
 .. _pointObj.draw:
 
-draw(mapObj_ map, layerObj_ layer, imageObj_ image, int classindex, string text) : int
+draw( mapObj_ map, layerObj_ layer, imageObj_ image, int classindex, string text ) : int
     Draw the point using the styles defined by the *classindex* class of
     *layer* and labeled with string *text*.  Returns MS_SUCCESS or MS_FAILURE.
 
 .. _pointObj.project:
 
-project(projectionObj_ proj_in, projectionObj_ proj_out) : int
+project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject point from *proj_in* to *proj_out*.  Transformation
     is done in place.  Returns MS_SUCCESS or MS_FAILURE.
+
+setXY( float x, float y [, float m=2e-38] ) : int
+    Set spatial coordinate and, optionally, measure values simultaneously.
+    The measure will be set only if the value of *m* is greater than the
+    ESRI measure no-data value of 1e-38.  Returns MS_SUCCESS or MS_FAILURE.
 
 ------------------------------------------------------------------------------
  projectionObj
 ------------------------------------------------------------------------------
 
-x
+This class is not really fully implemented yet.  MapServer's Maps and Layers
+have Projection attributes, and these are C projectionObj structures, but are
+not directly exposed by the mapscript module.  Currently we have to do 
+some round-a-bout logic like this
+
+::
+
+    point.project(projectionObj(mapobj.getProjection(), 
+                  projectionObj(layer.getProjection())
+
+to project a point from map to layer reference system.
+
+Attributes
+----------
+
+numargs : int immutable
+    Number of PROJ.4 arguments.  
+
+Methods
+-------
+
+new projectionObj( string proj4 ) : projectionObj
+    Create new instance of projectionObj.  Input parameter *proj4* is a 
+    PROJ.4 definition string such as "init=EPSG:4269".
 
 ------------------------------------------------------------------------------
  rectObj
@@ -1388,20 +1417,20 @@ Methods
 
 .. _new rectObj:
 
-new rectObj([float minx=0.0, float miny=0.0, float maxx=0.0, float maxy=0.0]) : rectObj_
+new rectObj( [ float minx=0.0, float miny=0.0, float maxx=0.0, float maxy=0.0 ] ) : rectObj
     Create new instance.  The four easting and northing arguments
     are optional.
 
 .. _rectObj.draw:
 
-draw(mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text) : int
+draw( mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text ) : int
     Draw rectangle into *img* using style defined by the *classindex* class
     of *layer*.  The rectangle is labeled with the string *text*.  Returns 
     MS_SUCCESS or MS_FAILURE.
 
 .. _rectObj.project:
 
-project(projectionObj_ proj_in, projectionObj_ proj_out) : int
+project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject rectangle from *proj_in* to *proj_out*.  Transformation
     is done in place.  Returns MS_SUCCESS or MS_FAILURE.
     
@@ -1605,63 +1634,63 @@ Methods
 
 .. _new shapeObj:
 
-new shapeObj(int type) : shapeObj_
+new shapeObj( int type ) : shapeObj
     Return a new shapeObj of the specified *type*.  See the type attribute
     above.
 
 .. _shapeObj.add:
 
-add(lineObj_ line) : int
+add( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
 
-**NEXT_GENERATION_API** addLine(lineObj_ line) : int
+**NEXT_GENERATION_API** addLine( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
 
 .. _contains:
 
-contains(pointObj_ point) : int
+contains( pointObj_ point ) : int
     Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
 
-copy(shapeObj_ shape_copy) : int
+copy( shapeObj shape_copy ) : int
     Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
 
-**NEXT_GENERATION_API** copy() : shapeObj_
+**NEXT_GENERATION_API** copy() : shapeObj
     Return a copy of the shape.
 
-distanceToPoint(pointObj_ point) : float
+distanceToPoint( pointObj_ point ) : float
     Return distance to *point*.
     
-distanceToShape(shapeObj_ shape) : float
+distanceToShape( shapeObj shape ) : float
     Return the minimum distance to *shape*.
 
 .. _shapeObj.draw:
 
-draw(mapObj_ map, layerObj_ layer, imageObj_ img) : int
+draw( mapObj_ map, layerObj_ layer, imageObj_ img ) : int
     Draws the individual shape using layer.  Returns MS_SUCCESS or MS_FAILURE.
 
 .. _shapeObj.get:
 
-get(int index) : lineObj_
+get( int index ) : lineObj_
     Returns a reference to part at *index*.  Reference is valid
     only during the life of the shapeObj.
 
-**NEXT_GENERATION_API** getLine(int index) : lineObj_
+**NEXT_GENERATION_API** getLine( int index ) : lineObj_
     Returns a reference to part at *index*.  Reference is valid
     only during the life of the shapeObj.
 
 .. _getValue:
 
-getValue(int i) : string
+getValue( int i ) : string
     Return the shape attribute at index *i*.
 
 .. _shapeObj.intersects:
 
-intersects(shapeObj_ shape) : int
+intersects( shapeObj shape ) : int
     Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
 
 .. _shapeObj.project:
 
-project(projectionObj_ proj_in, projectionObj_ proj_out) : int
+project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject shape from *proj_in* to *proj_out*.  Transformation
     is done in place.  Returns MS_SUCCESS or MS_FAILURE.
 

@@ -1159,12 +1159,14 @@ memory.") const char * {
 // class extensions for pointObj, useful many places
 //
 %extend pointObj {
-  pointObj(double x=0.0, double y=0.0) {
+  pointObj(double x=0.0, double y=0.0, double m=2e-38) {
       pointObj *p;
       p = (pointObj *)malloc(sizeof(pointObj));
       if (!p) return NULL;
       p->x = x;
       p->y = y;
+      if (m > 1e-38)
+          p->m = m;
       return p;
   }
 
@@ -1190,6 +1192,14 @@ memory.") const char * {
 
   double distanceToShape(shapeObj *shape) {
     return msDistancePointToShape(self, shape);
+  }
+
+  int setXY(double x, double y, double m=2e-38) {
+    self->x = x;
+    self->y = y;
+    if (m > 1e-38)
+      self->m = m;
+    return MS_SUCCESS;
   }
 }
 

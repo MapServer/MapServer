@@ -676,6 +676,18 @@ class PointObjTestCase(unittest.TestCase):
         p = mapscript.pointObj(1.0, 1.0)
         self.assertAlmostEqual(p.x, 1.0)
         self.assertAlmostEqual(p.y, 1.0)
+    def testSetXY(self):
+        p = mapscript.pointObj()
+        p.setXY(1.0, 1.0)
+        self.assertAlmostEqual(p.x, 1.0)
+        self.assertAlmostEqual(p.y, 1.0)
+        self.assertAlmostEqual(p.m, 0.0)
+    def testSetXYM(self):
+        p = mapscript.pointObj()
+        p.setXY(1.0, 1.0, 1.0)
+        self.assertAlmostEqual(p.x, 1.0)
+        self.assertAlmostEqual(p.y, 1.0)
+        self.assertAlmostEqual(p.m, 1.0)
 
 # colorObj constructor tests
 

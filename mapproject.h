@@ -18,12 +18,20 @@ extern "C" {
 #endif
 
 typedef struct {
+#ifdef SWIG
+  %immutable;
+#endif
+  int numargs; /* actual number of projection args */
+#ifdef SWIG
+  %mutable;
+#endif
+#ifndef SWIG
   char **args; /* variable number of projection args */
-  int numargs; /* actual number of projection args */ 
 #ifdef USE_PROJ
   projPJ proj; /* a projection structure for the PROJ package */
 #else
   void *proj;
+#endif
 #endif
 } projectionObj;
 
