@@ -2909,6 +2909,16 @@ static int loadOutputFormat(mapObj *map)
       msFree( driver );
       if((driver = getString()) == NULL) return(-1);
       break;
+    case(EXTENSION):
+      msFree( extension );
+      if((extension = getString()) == NULL) return(-1);
+      if( extension[0] == '.' )
+      {
+          char *temp = strdup(extension+1);
+          msFree( extension );
+          extension = temp;
+      }
+      break;
     case(FORMATOPTION):
       if((value = getString()) == NULL) return(-1);
       if( numformatoptions < MAX_FORMATOPTIONS )

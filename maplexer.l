@@ -119,6 +119,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>error		       { return(ERROR); }
 <INITIAL,OBJECT_STRING>expression              { return(EXPRESSION); }
 <INITIAL>extent		                       { return(EXTENT); }
+<INITIAL,OBJECT_STRING>extension	       { return(EXTENSION); }
 <INITIAL,OBJECT_STRING>feature                 { return(FEATURE); }
 <INITIAL>filled                                { return(FILLED); }
 <INITIAL,OBJECT_STRING>filter                  { return(FILTER); }

@@ -184,4 +184,6 @@
 
 #define DEBUG 1154
 
+#define EXTENSION 1155
+
 #endif /* MAPFILE_H */
