@@ -1291,6 +1291,9 @@ getExtent() : rectObj_
     full read pass through the features of the layer and does not work for
     raster layers.  
 
+getFeature( int shapeindex [, int tileindex ] ) : shapeObj_
+    Return the layer feature at *shapeindex* and *tileindex*.
+
 getFilter() : string
     Returns the current filter expression. 
 
@@ -1344,10 +1347,6 @@ getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, 
     
 getShape( shapeObj_ shape, int tileindex, int shapeindex ) : int
     Get a shape from layer data.
-
-.. admonition:: Next Generation API
-   
-   getShape( int shapeindex [, int tileindex=0]) : shapeObj_
 
 moveClassDown( int class ) : int 
        The class specified by the class index will be moved up into
@@ -1549,16 +1548,8 @@ lineObj Methods
 add(pointObj_ point) : int
     Add *point* to the line.  Returns MS_SUCCESS or MS_FAILURE.
 
-.. admonition:: Next Generation API
-   
-   addPoint(pointObj_ point) : int
-
 get(int index) : pointObj_
     Return reference to point at *index*.
-
-.. admonition:: Next Generation API
-
-   getPoint(int index) : pointObj_
 
 project(projectionObj_ proj_in, projectionObj_ proj_out) : int
     Transform line in place from *proj_in* to *proj_out*.  Returns
@@ -1567,10 +1558,6 @@ project(projectionObj_ proj_in, projectionObj_ proj_out) : int
 set(int index, pointObj_ point) : int
     Set the point at *index* to *point*.  Returns MS_SUCCESS or MS_FAILURE.
 
-.. admonition:: Next Generation API
-
-   setPoint(int index, pointObj_ point) : int
-    
 -----------------------------------------------------------------------------
  mapObj
 -----------------------------------------------------------------------------
@@ -2254,19 +2241,14 @@ new shapeObj( int type ) : shapeObj
 add( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
 
-.. admonition:: Next Generation API
-
-   addLine( lineObj_ line ) : int
-
 contains( pointObj_ point ) : int
     Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
 
 copy( shapeObj shape_copy ) : int
     Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
 
-.. admonition:: Next Generation API
-
-   copy() : shapeObj
+clone() : shapeObj
+    Return an independent copy of the shape.
 
 distanceToPoint( pointObj_ point ) : float
     Return distance to *point*.
@@ -2280,10 +2262,6 @@ draw( mapObj_ map, layerObj_ layer, imageObj_ img ) : int
 get( int index ) : lineObj_
     Returns a reference to part at *index*.  Reference is valid
     only during the life of the shapeObj.
-
-.. admonition:: Next Generation API
-
-   getLine( int index ) : lineObj_
 
 getValue( int i ) : string
     Return the shape attribute at index *i*.
@@ -2581,24 +2559,6 @@ webObj Methods
 --------------
 
 None.
-
-
-=======================
-Next Generation Classes
-=======================
-
-By defining the preprocessor symbol *NEXT_GENERATION_API* when running
-SWIG to produce wrapper code, one can use the 'next generation' mapscript
-API.  For example
-
-::
-
-    swig -python -shadow -modern -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
-
-The API changes in the next generation classes result
-from efforts to merge the best of the PHP-Mapscript and SWIG mapscript
-interfaces (Bugzilla issue 575 - 
-http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).
 
 
 =========
