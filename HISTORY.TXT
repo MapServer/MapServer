@@ -130,6 +130,11 @@ Version 4.1 (CVS)
 - New key iterators for map, layer, and class metadata hash tables 
   (bug 434) and fontset fonts hash table (bug 439).
 
+- Fixed potential crash when using nquery with a querymap enabled and
+  some layers have a template set at the layer level instead of inside
+  classes (bug 569).
+
+
 Version 4.0 (2003-08-01)
 ------------------------
 
