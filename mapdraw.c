@@ -1067,7 +1067,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   int i,j,c,s;
   rectObj cliprect;
   pointObj annopnt, *point;
-  double angle, length;
+  double angle, length = 0.0;
  
   pointObj center; // circle origin
   double r; // circle radius
