@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/11/19 17:56:18  frank
+ * don't call GDALDestroyDriverManager() if GDAL is old
+ *
  * Revision 1.11  2002/11/19 05:47:29  frank
  * centralize GDAL initialization and cleanup
  *
@@ -108,7 +111,9 @@ void msGDALCleanup( void )
     {
         msAcquireLock( TLOCK_GDAL );
 
+#if GDAL_RELEASE_DATE > 20021001
         GDALDestroyDriverManager();
+#endif
 
         msReleaseLock( TLOCK_GDAL );
 
