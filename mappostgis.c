@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/03/04 21:54:21  pramsey
+ * Provided masking of passwords in the error reporting (bug 703).
+ *
  * Revision 1.48  2005/03/04 20:04:34  pramsey
  * Added the ability to identify a tables primary key for use as a unique identifier (Bug 1234)
  *
@@ -194,6 +197,8 @@ int msPOSTGISLayerOpen(layerObj *layer)
 {
     msPOSTGISLayerInfo  *layerinfo;
     int                 order_test = 1;
+    char                *index, *maskeddata;
+    int                 i, count;
 
     if(layer->debug) {
         msDebug("msPOSTGISLayerOpen called datastatement: %s\n", layer->data);
@@ -233,8 +238,22 @@ int msPOSTGISLayerOpen(layerObj *layer)
         layerinfo->conn = PQconnectdb(layer->connection);
 
         if(!layerinfo->conn || PQstatus(layerinfo->conn) == CONNECTION_BAD) {
-            msSetError(MS_QUERYERR, "couldnt make connection to DB with connect string '%s'.\n<br>\nError reported was '%s'.\n<br>\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n<br>\nMost commonly this is caused by <br>\n(1) incorrect connection string <br>\n(2) you didnt specify a 'user=...' in your connection string <br>\n(3) the postmaster (postgresql server) isnt running <br>\n(4) you are not allowing TCP/IP connection to the postmaster <br>\n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' <br>\n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster <br>\n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine<br>\n(8) you made a typo <br>\n  ", "msPOSTGISLayerOpen()", layer->connection,PQerrorMessage(layerinfo->conn));
+            msDebug("FAILURE!!!");
+            maskeddata = (char *)malloc(strlen(layer->connection) + 1);
+            strcpy(maskeddata, layer->connection);
+            index = strstr(maskeddata, "password=");
+            if(index != NULL) {
+              index = (char *)(index + 9);
+              count = (int)(strstr(index, " ") - index);
+              for(i = 0; i < count; i++) {
+                  strncpy(index, "*", (int)1);
+                  index++;
+              }
+            }
+            
+            msSetError(MS_QUERYERR, "couldnt make connection to DB with connect string '%s'.\n<br>\nError reported was '%s'.\n<br>\n\nThis error occured when trying to make a connection to the specified postgresql server.  \n<br>\nMost commonly this is caused by <br>\n(1) incorrect connection string <br>\n(2) you didnt specify a 'user=...' in your connection string <br>\n(3) the postmaster (postgresql server) isnt running <br>\n(4) you are not allowing TCP/IP connection to the postmaster <br>\n(5) your postmaster is not running on the correct port - if its not on 5432 you must specify a 'port=...' <br>\n (6) the security on your system does not allow the webserver (usually user 'nobody') to make socket connections to the postmaster <br>\n(7) you forgot to specify a 'host=...' if the postmaster is on a different machine<br>\n(8) you made a typo <br>\n  ", "msPOSTGISLayerOpen()", maskeddata,PQerrorMessage(layerinfo->conn));
 
+            free(maskeddata);
             free(layerinfo);
             return MS_FAILURE;
         }
@@ -1720,10 +1739,10 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
       return MS_FAILURE;
     }
 
-    tmpint = PQgetvalue(query_result, 0, 0);
+    tmpint = (int)PQgetvalue(query_result, 0, 0);
     msDebug("msPOSTGISLayerRetrievePK: field length = $i", tmpint);
-    urid_name = (char *)malloc(tmpint + 1);
-    strcpy(urid_name, PQgetvalue(query_result, 0, 0));
+    *urid_name = (char *)malloc(tmpint + 1);
+    strcpy(*urid_name, PQgetvalue(query_result, 0, 0));
 
     PQclear(query_result);
     return MS_SUCCESS;
