@@ -19,6 +19,7 @@ int msLayerOpen(layerObj *layer, char *shapepath)
     layer->currentfeature = layer->features; // point to the begining of the feature list
     break;
   case(MS_OGR):
+    return msOGRLayerOpen(layer, shapepath);
     break;
   case(MS_TILED_OGR):
     break;
@@ -68,6 +69,7 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attr
     layer->currentfeature = layer->currentfeature->next;
     break;
   case(MS_OGR):
+    return msOGRLayerNextShape(layer, shapepath, shape, attributes);
     break;
   case(MS_TILED_OGR):
     break;
@@ -106,6 +108,8 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
     return(MS_FAILURE);
     break;
   case(MS_OGR):
+    return msOGRLayerGetShape(layer, shapepath, shape, tile,
+                              record, attributes);
     break;
   case(MS_TILED_OGR):
     break;
@@ -130,6 +134,7 @@ void msLayerClose(layerObj *layer)
   case(MS_INLINE):
     break;
   case(MS_OGR):
+    msOGRLayerClose(layer);
     break;
   case(MS_TILED_OGR):
     break;
@@ -152,6 +157,7 @@ int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectio
   case(MS_INLINE):
     break;
   case(MS_OGR):
+    return msOGRLayerWhichShapes(layer, shapepath, rect, proj);
     break;
   case(MS_TILED_OGR):
     break;

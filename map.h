@@ -489,6 +489,7 @@ typedef struct {
   // a variety of data connection objects (probably should be pointers!)
   shapefileObj shpfile;
   shapefileObj tileshpfile;
+  void *ogrlayerinfo;  // For OGR layers, will contain a msOGRLayerInfo struct
 
   // attribute handling components
   char **items;
@@ -562,7 +563,6 @@ void msFreeImage(gdImagePtr img);
 
 #ifndef SWIG
 int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapsde.c */
-int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapogr.cpp */
 
 /*
 ** helper functions not part of the general API but needed in
@@ -720,6 +720,15 @@ int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projec
 int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attributes);
 int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int attributes);
 void msTiledSHPClose(layerObj *layer);
+
+int msOGRLayerOpen(layerObj *layer, char *shapepath);   // in mapogr.cpp 
+int msOGRLayerClose(layerObj *layer);
+int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, 
+                          rectObj rect, projectionObj *proj);
+int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, 
+                        int attributes);
+int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
+                       int tile, int record, int attributes);
 
 #endif
 

@@ -5,11 +5,10 @@
  * Project:  MapServer
  * Language: C++
  * Purpose:  OGR Link
- * Author:   Daniel Morissette, danmo@videotron.ca
- *           Based on mapsde.c from Steve Lime
+ * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2000, Daniel Morissette
+ * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,37 +28,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
- *
  * $Log$
- * Revision 1.11  2000/12/05 14:39:12  sdlime
- * Symbol file changes. There is no longer a STYLED type. Added SIMPLE line type and advanced dashing patterns. Offset symbols are also a thing of the past. TTF line symbols are close.
+ * Revision 1.12  2001/02/20 20:48:44  dan
+ * OGR support working for classified maps
  *
- * Revision 1.10  2000/11/06 16:57:20  dan
- * Changed layer->class to layer->_class in overlaysize handling
- *
- * Revision 1.9  2000/11/01 16:55:38  sdlime
- * Changed overlaysize handling (when scaled) to be relative to the main class size.
- *
- * Revision 1.8  2000/11/01 04:23:32  sdlime
- * Changed insertFeatureList to make a copy of the input shape rather than simply pointing to it. Added msCopyShape function that might be useful in other places.
- *
- * Revision 1.7  2000/09/18 19:45:25  dan
- * Added support of overlaying symbols
- *
- * Revision 1.6  2000/09/17 17:35:21  dan
- * Fixed label point generation for polygons
- *
- * Revision 1.5  2000/09/17 03:10:19  sdlime
- * Fixed a few more things. Real close, just needs some testing.
- *
- * Revision 1.4  2000/09/11 14:28:29  dan
- * Added extern "C" in MS headers with external functions (was in mapogr.cpp)
- *
- * Revision 1.3  2000/09/06 18:40:45  dan
- * getClassIndex() changed name to msGetClassIndex()
- *
- * Revision 1.2  2000/08/28 02:00:25  dan
- * Fixed compile problem when OGR not enabled
+ * ...
  *
  * Revision 1.1  2000/08/25 18:41:05  dan
  * Added optional OGR support
@@ -74,26 +47,32 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
-/**********************************************************************
- *                     ogrTransformPointsAddPoint()
- **********************************************************************/
-static void ogrTransformPointsAddPoint(lineObj *line, rectObj *extent, 
-                                       double cellsize, double dX, double dY)
+typedef struct ms_ogr_layer_info_t
 {
-    if(dX < extent->minx || dX > extent->maxx ||
-       dY < extent->miny || dY > extent->maxy  )
-        return;
-    
-    line->point[line->numpoints].x = MS_NINT((dX - extent->minx)/cellsize);
-    line->point[line->numpoints].y = MS_NINT((extent->maxy - dY)/cellsize);
+    char        *pszFname;
+    int         nLayerIndex;
+    OGRDataSource *poDS;
+    OGRLayer    *poLayer;
+} msOGRLayerInfo;
+
+/* ==================================================================
+ * Some utility functions
+ * ================================================================== */
+
+/**********************************************************************
+ *                     ogrPointsAddPoint()
+ **********************************************************************/
+static void ogrPointsAddPoint(lineObj *line, double dX, double dY)
+{
+    line->point[line->numpoints].x = dX;
+    line->point[line->numpoints].y = dY;
     line->numpoints++;
 }
 
 /**********************************************************************
- *                     ogrTransformGeomPoints()
+ *                     ogrGeomPoints()
  **********************************************************************/
-static int ogrTransformGeomPoints(rectObj *extent, double cellsize, 
-                                   OGRGeometry *poGeom, shapeObj *outshp) 
+static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp) 
 {
   int   i;
   int   numpoints;
@@ -134,7 +113,7 @@ static int ogrTransformGeomPoints(rectObj *extent, double cellsize,
       msSetError(MS_OGRERR, 
                  (char*)CPLSPrintf("OGRGeometry type `%s' not supported yet.", 
                                    poGeom->getGeometryName()),
-                 "ogrTransformGeomPoints()");
+                 "ogrGeomPoints()");
       return(-1);
   }
 
@@ -146,22 +125,20 @@ static int ogrTransformGeomPoints(rectObj *extent, double cellsize,
   if(!line.point) 
   {
       msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", 
-                 "ogrTransformAddPoint()");
+                 "ogrGeomPoints()");
       return(-1);
   }
    
   if (poGeom->getGeometryType() == wkbPoint)
   {
       OGRPoint *poPoint = (OGRPoint *)poGeom;
-      ogrTransformPointsAddPoint(&line, extent, cellsize,
-                                 poPoint->getX(), poPoint->getY());
+      ogrPointsAddPoint(&line, poPoint->getX(), poPoint->getY());
   }
   else if (poGeom->getGeometryType() == wkbLineString)
   {
       OGRLineString *poLine = (OGRLineString *)poGeom;
       for(i=0; i<numpoints; i++)
-          ogrTransformPointsAddPoint(&line, extent, cellsize,
-                                     poLine->getX(i), poLine->getY(i));
+          ogrPointsAddPoint(&line, poLine->getX(i), poLine->getY(i));
   }
   else if (poGeom->getGeometryType() == wkbPolygon)
   {
@@ -178,8 +155,7 @@ static int ogrTransformGeomPoints(rectObj *extent, double cellsize,
           if (poRing)
           {
               for(i=0; i<poRing->getNumPoints(); i++)
-                  ogrTransformPointsAddPoint(&line, extent, cellsize,
-                                             poRing->getX(i), poRing->getY(i));
+                  ogrPointsAddPoint(&line, poRing->getX(i), poRing->getY(i));
           }
       }
   }
@@ -192,14 +168,13 @@ static int ogrTransformGeomPoints(rectObj *extent, double cellsize,
 
 
 /**********************************************************************
- *                     ogrTransformGeomLine()
+ *                     ogrGeomLine()
  *
  * Recursively convert any OGRGeometry into a shapeObj.  Each part becomes
  * a line in the overall shapeObj.
  **********************************************************************/
-static int ogrTransformGeomLine(rectObj *extent, double cellsize, 
-                                OGRGeometry *poGeom, shapeObj *outshp,
-                                int bCloseRings) 
+static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
+                       int bCloseRings) 
 {
   if (poGeom == NULL)
       return 0;
@@ -219,8 +194,7 @@ static int ogrTransformGeomLine(rectObj *extent, double cellsize,
           else
               poRing = poPoly->getInteriorRing(iRing);
 
-          if (ogrTransformGeomLine(extent, cellsize,
-                                   poRing, outshp, bCloseRings) == -1)
+          if (ogrGeomLine(poRing, outshp, bCloseRings) == -1)
           {
               return -1;
           }
@@ -234,11 +208,10 @@ static int ogrTransformGeomLine(rectObj *extent, double cellsize,
 
       for (int iGeom=0; iGeom < poColl->getNumGeometries(); iGeom++)
       {
-          if (ogrTransformGeomLine(extent, cellsize,
-                                   poColl->getGeometryRef(iGeom),
-                                   outshp, bCloseRings) == -1)
+          if (ogrGeomLine(poColl->getGeometryRef(iGeom),
+                          outshp, bCloseRings) == -1)
           {
-                  return -1;
+              return -1;
           }
       }
   }
@@ -255,7 +228,7 @@ static int ogrTransformGeomLine(rectObj *extent, double cellsize,
   else if (poGeom->getGeometryType() == wkbLineString)
   {
       OGRLineString *poLine = (OGRLineString *)poGeom;
-      int       j, k, numpoints;
+      int       j, numpoints;
       lineObj   line={0,NULL};
 
       if ((numpoints = poLine->getNumPoints()) < 2)
@@ -266,45 +239,16 @@ static int ogrTransformGeomLine(rectObj *extent, double cellsize,
       if(!line.point) 
       {
           msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", 
-                     "ogrTransformGeomLine");
+                     "ogrGeomLine");
           return(-1);
       }
 
-      line.point[0].x = MS_NINT((poLine->getX(0) - extent->minx)/cellsize);
-      line.point[0].y = MS_NINT((extent->maxy - poLine->getY(0))/cellsize);
-
-      for(j=1, k=1; j<numpoints; j++)
+      for(j=0; j<numpoints; j++)
       {
-          line.point[k].x = MS_NINT((poLine->getX(j)-extent->minx)/cellsize); 
-          line.point[k].y = MS_NINT((extent->maxy-poLine->getY(j))/cellsize);
-      
-          if(k == 1) 
-          {
-              if((line.point[0].x != line.point[1].x) || 
-                 (line.point[0].y != line.point[1].y))
-                  k++;
-          } 
-          else 
-          {
-              if((line.point[k-1].x != line.point[k].x) || 
-                 (line.point[k-1].y != line.point[k].y)) 
-              {
-                  if(((line.point[k-2].y - line.point[k-1].y)*
-                      (line.point[k-1].x - line.point[k].x)) == 
-                           ((line.point[k-2].x - line.point[k-1].x)*
-                            (line.point[k-1].y - line.point[k].y))) 
-                  {
-                      line.point[k-1].x = line.point[k].x;
-                      line.point[k-1].y = line.point[k].y;	
-                  } 
-                  else 
-                  {
-                      k++;
-                  }
-              }
-          }
+          line.point[j].x = poLine->getX(j); 
+          line.point[j].y = poLine->getY(j);
       }
-      line.numpoints = k; /* save actual number kept */
+      line.numpoints = numpoints; 
 
       if (bCloseRings &&
           ( line.point[line.numpoints-1].x != line.point[0].x ||
@@ -323,37 +267,144 @@ static int ogrTransformGeomLine(rectObj *extent, double cellsize,
       msSetError(MS_OGRERR, 
                  (char*)CPLSPrintf("OGRGeometry type `%s' not supported yet.", 
                                    poGeom->getGeometryName()),
-                 "ogrTransformGeomLine()");
+                 "ogrGeomLine()");
       return(-1);
   }
 
   return(0);
 }
 
+/**********************************************************************
+ *                     msOGRGetItems()
+ *
+ * Load item (i.e. field) names in a char array
+ **********************************************************************/
+static char **msOGRGetItems(OGRLayer *poLayer)
+{
+  char **items;
+  int i, nFields;
+  OGRFeatureDefn *poDefn;
+
+  if((poDefn = poLayer->GetLayerDefn()) == NULL ||
+     (nFields = poDefn->GetFieldCount()) == 0) 
+  {
+    msSetError(MS_OGRERR, "Layer contains no fields.", "msOGRGetItems()");
+    return(NULL);
+  }
+
+  if((items = (char **)malloc(sizeof(char *)*nFields)) == NULL) 
+  {
+    msSetError(MS_MEMERR, NULL, "msOGRGetItems()");
+    return(NULL);
+  }
+
+  for(i=0;i<nFields;i++) 
+  {
+      OGRFieldDefn *poField = poDefn->GetFieldDefn(i);
+      items[i] = strdup(poField->GetNameRef());
+  }
+
+  return(items);
+}
+
+/**********************************************************************
+ *                     msOGRGetValues()
+ *
+ * Load item (i.e. field) values into a char array
+ **********************************************************************/
+static char **msOGRGetValues(OGRFeature *poFeature)
+{
+  char **values;
+  int i, nFields;
+
+  if((nFields = poFeature->GetFieldCount()) == 0)
+  {
+    return(NULL);
+  }
+
+  if((values = (char **)malloc(sizeof(char *)*nFields)) == NULL) 
+  {
+    msSetError(MS_MEMERR, NULL, "msOGRGetValues()");
+    return(NULL);
+  }
+
+  for(i=0;i<nFields;i++)
+    values[i] = strdup(poFeature->GetFieldAsString(i));
+
+  return(values);
+}
+
+/**********************************************************************
+ *                     msOGRGetValueList()
+ *
+ * Load selected item (i.e. field) values into a char array
+ **********************************************************************/
+static char **msOGRGetValueList(OGRFeature *poFeature,
+                                char **items, int **itemindexes, int numitems)
+{
+  char **values;
+  int i;
+
+  if(numitems == 0 || poFeature->GetFieldCount() == 0) 
+      return(NULL);
+
+  if(!(*itemindexes)) 
+  { // build the list
+    (*itemindexes) = (int *)malloc(sizeof(int)*numitems);
+    if(!(*itemindexes)) 
+    {
+      msSetError(MS_MEMERR, NULL, "msOGRGetValueList()");
+      return(NULL);
+    }
+
+    for(i=0;i<numitems;i++) 
+    {
+      (*itemindexes)[i] = poFeature->GetFieldIndex(items[i]);
+      if((*itemindexes)[i] == -1) return(NULL);
+    }
+  }
+
+  if((values = (char **)malloc(sizeof(char *)*numitems)) == NULL) 
+  {
+    msSetError(MS_MEMERR, NULL, "msOGRGetValueList()");
+    return(NULL);
+  }
+
+  for(i=0;i<numitems;i++)
+    values[i] = strdup(poFeature->GetFieldAsString((*itemindexes)[i]));
+
+  return(values);
+}
+
 
 #endif  /* USE_OGR */
 
+/* ==================================================================
+ * Here comes the REAL stuff... the functions below are called by maplayer.c
+ * ================================================================== */
+
 /**********************************************************************
- *                     msDrawOGRLayer()
+ *                     msOGRLayerOpen()
+ *
+ * Open OGR data source for the specified map layer.
+ *
+ * An OGR connection string is:   <dataset_filename>[,<layer_index>]
+ *  <dataset_filename>   is file format specific
+ *  <layer_index>        (optional) is the OGR layer index
+ *                       default is 0, the first layer.
+ *
+ * One can use the "ogrinfo" program to find out the layer indices in a dataset
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img) 
+int msOGRLayerOpen(layerObj *layer, char *shapepath) 
 {
 #ifdef USE_OGR
 
-  int i,j;
-
-  double scalefactor=1;
-  double angle, length;
-
-  char **params;
-  int numparams;
-
-  short annotate=MS_TRUE;
-
-  shapeObj transformedshape={0,NULL,{-1,-1,-1,-1},MS_NULL};
-  pointObj annopnt, *pnt;
-
-  featureListNodeObjPtr shpcache=NULL, current=NULL;           
+  if (layer->ogrlayerinfo != NULL)
+  {
+      return MS_SUCCESS;  // Nothing to do... layer is already opened
+  }
 
 /* ------------------------------------------------------------------
  * Register OGR Drivers, only once per execution
@@ -364,65 +415,20 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   bDriversRegistered = MS_TRUE;
 
 /* ------------------------------------------------------------------
- * Check layer status, min/max scale, etc.
- * ------------------------------------------------------------------ */
-  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
-    return(0);
-
-  if(map->scale > 0) {
-    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
-      return(0);
-    if((layer->minscale > 0) && (map->scale <= layer->minscale))
-      return(0);
-    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
-      annotate = MS_FALSE;
-    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
-      annotate = MS_FALSE;
-  }
-  
-  /* ------------------------------------------------------------------
-   * apply scaling to symbols and fonts
-   * ------------------------------------------------------------------ */
-  if(layer->symbolscale > 0) scalefactor = layer->symbolscale/map->scale;
-
-  for(i=0; i<layer->numclasses; i++) {
-    layer->_class[i].sizescaled = MS_NINT(layer->_class[i].size * scalefactor);
-    layer->_class[i].sizescaled = MS_MAX(layer->_class[i].sizescaled, layer->_class[i].minsize);
-    layer->_class[i].sizescaled = MS_MIN(layer->_class[i].sizescaled, layer->_class[i].maxsize);
-    layer->_class[i].overlaysizescaled = layer->_class[i].sizescaled - (layer->_class[i].size - layer->_class[i].overlaysize);
-    // layer->_class[i].overlaysizescaled = MS_NINT(layer->_class[i].overlaysize * scalefactor);
-    layer->_class[i].overlaysizescaled = MS_MAX(layer->_class[i].overlaysizescaled, layer->_class[i].overlayminsize);
-    layer->_class[i].overlaysizescaled = MS_MIN(layer->_class[i].overlaysizescaled, layer->_class[i].overlaymaxsize);
-#ifdef USE_TTF
-    if(layer->_class[i].label.type == MS_TRUETYPE) { 
-      layer->_class[i].label.sizescaled = MS_NINT(layer->_class[i].label.size * scalefactor);
-      layer->_class[i].label.sizescaled = MS_MAX(layer->_class[i].label.sizescaled, layer->_class[i].label.minsize);
-      layer->_class[i].label.sizescaled = MS_MIN(layer->_class[i].label.sizescaled, layer->_class[i].label.maxsize);
-    }
-#endif
-  }
-
-
-/* ------------------------------------------------------------------
  * Attempt to open OGR dataset
- *
- * An OGR connection string is:   <dataset_filename>[,<layer_index>]
- *  <dataset_filename>   is file format specific
- *  <layer_index>        (optional) is the OGR layer index
- *                       default is 0, the first layer.
- *
- * One can use the "ogrinfo" program to find out the layer indices in a dataset
  * ------------------------------------------------------------------ */
+  int   nLayerIndex = 0;
+  char  **params;
+  int   numparams;
   OGRDataSource *poDS;
-  OGRLayer      *poLayer = NULL;
-  int           nLayerIndex = 0;
+  OGRLayer    *poLayer;
 
   params = split(layer->connection, ',', &numparams);
   if(!params || numparams < 1) 
   {
       msSetError(MS_MEMERR, "Error spliting OGR connection information.", 
-                 "msDrawOGRLayer()");
-      return(-1);
+                 "msOGRLayerOpen()");
+      return(MS_FAILURE);
   }
 
   poDS = OGRSFDriverRegistrar::Open( params[0] );
@@ -432,8 +438,8 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                  (char*)CPLSPrintf("Open failed for OGR connection `%s'.  "
                                    "File not found or unsupported format.", 
                                    layer->connection),
-                 "msDrawOGRLayer()");
-      return(-1);
+                 "msOGRLayerOpen()");
+      return(MS_FAILURE);
   }
 
   if(numparams > 1) 
@@ -445,23 +451,98 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       msSetError(MS_OGRERR, 
              (char*)CPLSPrintf("GetLayer(%d) failed for OGR connection `%s'.",
                                nLayerIndex, layer->connection),
-                 "msDrawOGRLayer()");
-      return(-1);
+                 "msOGRLayerOpen()");
+      delete poDS;
+      return(MS_FAILURE);
   }
 
+/* ------------------------------------------------------------------
+ * OK... open succeded... alloc and fill msOGRLayerInfo inside layer obj
+ * ------------------------------------------------------------------ */
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)CPLCalloc(1,sizeof(msOGRLayerInfo));
+  layer->ogrlayerinfo = psInfo;
+
+  psInfo->pszFname = CPLStrdup(params[0]);
+  psInfo->nLayerIndex = nLayerIndex;
+  psInfo->poDS = poDS;
+  psInfo->poLayer = poLayer;
+
+  // Cleanup and exit;
   msFreeCharArray(params, numparams);
+
+  return MS_SUCCESS;
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", "msOGRLayerOpen()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+/**********************************************************************
+ *                     msOGRLayerClose()
+ **********************************************************************/
+int msOGRLayerClose(layerObj *layer) 
+{
+#ifdef USE_OGR
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+
+  if (psInfo)
+  {
+    CPLFree(psInfo->pszFname);
+
+    /* Destroying poDS automatically closes files, destroys the layer, etc. */
+    delete psInfo->poDS;
+
+    CPLFree(psInfo);
+    layer->ogrlayerinfo = NULL;
+  }
+
+  return MS_SUCCESS;
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", "msOGRLayerClose()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+/**********************************************************************
+ *                     msOGRLayerWhichShapes()
+ *
+ * Init OGR layer structs ready for calls to msOGRLayerNextShape().
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, 
+                          rectObj rect, projectionObj *proj) 
+{
+#ifdef USE_OGR
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRLayerWhichShapes()");
+    return(MS_FAILURE);
+  }
 
 /* ------------------------------------------------------------------
  * Set Spatial filter... this may result in no features being returned
  * if layer does not overlap current view.
+ *
+ * __TODO__: for now we assume rect is in same proj as data
+ * __TODO__: Do we need to handle expression filter at this point???
  * ------------------------------------------------------------------ */
   OGRLinearRing oSpatialFilter;
-
-  rectObj rect;
-  rect.minx = map->extent.minx - 2*map->cellsize; 
-  rect.miny = map->extent.miny - 2*map->cellsize;
-  rect.maxx = map->extent.maxx + 2*map->cellsize;
-  rect.maxy = map->extent.maxy + 2*map->cellsize;
 
   oSpatialFilter.setNumPoints(5);
   oSpatialFilter.setPoint(0, rect.minx, rect.miny);
@@ -470,284 +551,168 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   oSpatialFilter.setPoint(3, rect.minx, rect.maxy);
   oSpatialFilter.setPoint(4, rect.minx, rect.miny);
 
-  poLayer->SetSpatialFilter( &oSpatialFilter );
-
-
-/* ------------------------------------------------------------------
- * Get index of some attribute fields
- * ------------------------------------------------------------------ */
-  OGRFeatureDefn *poDefn = poLayer->GetLayerDefn();
-
-  int nClassItem = -1;
-  int nLabelItem = -1;
-
-  if (layer->classitem)
-      nClassItem = poDefn->GetFieldIndex(layer->classitem);
-
-  if (layer->labelitem && annotate)
-      nLabelItem = poDefn->GetFieldIndex(layer->labelitem);
-
+  psInfo->poLayer->SetSpatialFilter( &oSpatialFilter );
 
 /* ------------------------------------------------------------------
- * Retrieve features until EOF
+ * Reset current feature pointer
  * ------------------------------------------------------------------ */
-  OGRFeature *poFeature;
-  int   nClassId;
-  char *pszLabel;
+  psInfo->poLayer->ResetReading();
 
-  poLayer->ResetReading();
-  while( (poFeature = poLayer->GetNextFeature()) != NULL )
-  {
-
-/* ------------------------------------------------------------------
- * Establish class to which feature belongs
- * __TODO__ With msGetClassIndex(), logical expressions work only with a
- *   variable "[value]" in the expression and that will be replaced with
- *   the value of the classitem attribute.
- *   We need to support any field name in expressions like with DBF files.
- * ------------------------------------------------------------------ */
-      nClassId = 0;
-      if (nClassItem != -1)
-      {
-          const char *pszValue = poFeature->GetFieldAsString(nClassItem);
-
-          if ( (nClassId = msGetClassIndex(layer, (char*)pszValue)) == -1 )
-          {
-              /* Feature does not belong to any class */
-              delete poFeature;
-              continue;
-          }
-      }
-
-/* ------------------------------------------------------------------
- * Annotation
- * __TODO__ We need to handle expressions too ... see shpGetAnnotation()
- * ------------------------------------------------------------------ */
-      pszLabel = NULL;
-      if (nLabelItem != -1)
-          pszLabel = CPLStrdup(poFeature->GetFieldAsString(nLabelItem));
-      else if (annotate && layer->_class[nClassId].text.string)
-          pszLabel = CPLStrdup(layer->_class[nClassId].text.string);
-
-/* ------------------------------------------------------------------
- * Process geometry according to layer type
- * ------------------------------------------------------------------ */
-      switch(layer->type) 
-      {
-/* ------------------------------------------------------------------
- *      MS_ANNOTATION
- * ------------------------------------------------------------------ */
-        case MS_ANNOTATION:
-          msSetError(MS_OGRERR, "OGR annotation layers are not yet supported.",
-                     "msDrawOGRLayer()");
-          return(-1);
-          break;
-/* ------------------------------------------------------------------
- *      MS_POINT
- * ------------------------------------------------------------------ */
-        case MS_POINT:
-	  if(ogrTransformGeomPoints(&(map->extent), map->cellsize, 
-                                    poFeature->GetGeometryRef(), 
-                                    &transformedshape) != -1)
-          {
-              for(j=0; j<transformedshape.line[0].numpoints; j++) 
-              {
-                  /* point to the correct point */
-                  pnt = &(transformedshape.line[0].point[j]); 
-
-                  msDrawMarkerSymbol(&map->symbolset, img, pnt,
-                                     layer->_class[nClassId].symbol, 
-                                     layer->_class[nClassId].color, 
-                                     layer->_class[nClassId].backgroundcolor,
-                                     layer->_class[nClassId].outlinecolor, 
-                                     layer->_class[nClassId].sizescaled);
-                  if (layer->_class[nClassId].overlaysymbol >= 0)
-                      msDrawMarkerSymbol(&map->symbolset, img, pnt,
-                                layer->_class[nClassId].overlaysymbol, 
-                                layer->_class[nClassId].overlaycolor, 
-                                layer->_class[nClassId].overlaybackgroundcolor,
-                                layer->_class[nClassId].overlayoutlinecolor, 
-                                layer->_class[nClassId].overlaysizescaled);
-
-                  if(pszLabel) 
-                  {
-                      if(layer->labelcache)
-                          msAddLabel(map, layer->index, nClassId, -1, -1, 
-                                     *pnt, pszLabel, -1);
-                      else
-                          msDrawLabel(img, *pnt, pszLabel,
-                                      &(layer->_class[nClassId].label), &map->fontset);
-                  }
-              }
-          }
-	  
-	  msFreeShape(&transformedshape);
-          break;
-/* ------------------------------------------------------------------
- *      MS_LINE
- * ------------------------------------------------------------------ */
-        case MS_LINE:
-	  if(ogrTransformGeomLine(&(map->extent), map->cellsize, 
-                                  poFeature->GetGeometryRef(), 
-                                  &transformedshape, MS_FALSE) != -1)
-          {
-
-              msDrawLineSymbol(&map->symbolset, img, &transformedshape,
-                                     layer->_class[nClassId].symbol, 
-                                     layer->_class[nClassId].color, 
-                                     layer->_class[nClassId].backgroundcolor,
-                                     layer->_class[nClassId].outlinecolor, 
-                                     layer->_class[nClassId].sizescaled);
-
-              // Linear Overlaying Symbols are cached... see below
-
-              if(pszLabel &&
-                 msPolylineLabelPoint(&transformedshape, &annopnt, 
-                                 layer->_class[nClassId].label.minfeaturesize, 
-                                      &angle, &length) != -1)
-              {
-                  if(layer->_class[nClassId].label.autoangle)
-                      layer->_class[nClassId].label.angle = angle;
-
-                  if(layer->labelcache)
-                      msAddLabel(map, layer->index, nClassId, -1, -1, 
-                                 annopnt, pszLabel, length);
-                  else
-                      msDrawLabel(img, annopnt, pszLabel,
-                                  &(layer->_class[nClassId].label), &map->fontset);
-              }
-          }
-
-	  if(layer->_class[nClassId].overlaysymbol >= 0) // cache shape
-          {
-              transformedshape.classindex = nClassId;
-              if(insertFeatureList(&shpcache, &transformedshape) == NULL) 
-                  return(-1);
-	  } 
-
-	  msFreeShape(&transformedshape);
-
-          break;
-/* ------------------------------------------------------------------
- *      MS_POLYGON / MS_POLYLINE
- * ------------------------------------------------------------------ */
-    case MS_POLYLINE:
-    case MS_POLYGON:
-	  if(ogrTransformGeomLine(&(map->extent), map->cellsize, 
-                                  poFeature->GetGeometryRef(), 
-                                  &transformedshape, MS_TRUE) != -1)
-          {
-              int nLabelStatus = -1;
-
-              angle = layer->_class[nClassId].label.angle;
-              length = -1;
-
-              if(layer->type == MS_POLYGON)
-              {
-                  msDrawShadeSymbol(&map->symbolset, img, &transformedshape,
-                                   layer->_class[nClassId].symbol, 
-                                   layer->_class[nClassId].color, 
-                                   layer->_class[nClassId].backgroundcolor,
-                                   layer->_class[nClassId].outlinecolor, 
-                                   layer->_class[nClassId].sizescaled);
-                  if (layer->_class[nClassId].overlaysymbol >= 0)
-                      msDrawShadeSymbol(&map->symbolset, img, 
-                                &transformedshape,
-                                layer->_class[nClassId].overlaysymbol, 
-                                layer->_class[nClassId].overlaycolor, 
-                                layer->_class[nClassId].overlaybackgroundcolor,
-                                layer->_class[nClassId].overlayoutlinecolor,
-                                layer->_class[nClassId].overlaysizescaled);
-                  if(pszLabel)
-                      nLabelStatus = msPolygonLabelPoint(&transformedshape, 
-                                                          &annopnt, 
-                                 layer->_class[nClassId].label.minfeaturesize);
-              }
-              else
-              {
-                  msDrawLineSymbol(&map->symbolset, img, &transformedshape,
-                                   layer->_class[nClassId].symbol, 
-                                   layer->_class[nClassId].color, 
-                                   layer->_class[nClassId].backgroundcolor,
-                                   layer->_class[nClassId].outlinecolor, 
-                                   layer->_class[nClassId].sizescaled);
-
-                  // Linear Overlaying Symbols are cached... see below
-
-                  if(pszLabel)
-                      nLabelStatus = msPolylineLabelPoint(&transformedshape, 
-                                                          &annopnt, 
-                                 layer->_class[nClassId].label.minfeaturesize, 
-                                                          &angle, &length);
-              }
-
-              if(nLabelStatus != -1)
-              {
-                  if(layer->_class[nClassId].label.autoangle)
-                      layer->_class[nClassId].label.angle = angle;
-
-                  if(layer->labelcache)
-                      msAddLabel(map, layer->index, nClassId, -1, -1, 
-                                 annopnt, pszLabel, length);
-                  else
-                      msDrawLabel(img, annopnt, pszLabel,
-                                  &(layer->_class[nClassId].label), &map->fontset);
-              }
-          }
-
-	  if(layer->type == MS_POLYLINE &&
-             layer->_class[nClassId].overlaysymbol >= 0) // cache shape
-          {
-              transformedshape.classindex = nClassId;
-              if(insertFeatureList(&shpcache, &transformedshape) == NULL) 
-                  return(-1);
-	  } 
-
-	  msFreeShape(&transformedshape);
-          break;
-    default:
-      msSetError(MS_MISCERR, "Unknown or unsupported layer type.", 
-                 "msDrawOGRLayer()");
-      return(-1);
-      } /* switch layer->type */
-
-      CPLFree(pszLabel);
-      delete poFeature;
-
-  } /* while GetNextFeature() */
-
-/* ------------------------------------------------------------------
- * Display overlay symbols, LINE/POLYLINE only
- * ------------------------------------------------------------------ */
-  if(shpcache) 
-  {
-      for(current=shpcache; current; current=current->next) 
-      {
-	  nClassId = current->shape.classindex;
-          msDrawLineSymbol(&map->symbolset, img, &current->shape,
-                           layer->_class[nClassId].overlaysymbol,
-                           layer->_class[nClassId].overlaycolor,
-                           layer->_class[nClassId].overlaybackgroundcolor,
-                           layer->_class[nClassId].overlayoutlinecolor,
-                           layer->_class[nClassId].overlaysizescaled);
-      }
-      freeFeatureList(shpcache);
-  }
-
-/* ------------------------------------------------------------------
- * OK, we're done ... cleanup
- * ------------------------------------------------------------------ */
-  delete poDS;  /* This automatically closes files, destroys the layer, etc. */
-
-  return(0);
+  return MS_SUCCESS;
 
 #else
 /* ------------------------------------------------------------------
  * OGR Support not included...
  * ------------------------------------------------------------------ */
 
-  msSetError(MS_MISCERR, "OGR support is not available.", "msDrawOGRLayer()");
-  return(-1);
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGRLayerWhichShapes()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+/**********************************************************************
+ *                     msOGRLayerNextShape()
+ *
+ * Returns shape sequentially from OGR data source.
+ * msOGRLayerWhichShape() must have been called first.
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, 
+                        int attributes) 
+{
+#ifdef USE_OGR
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  OGRFeature *poFeature;
+
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRLayerNextShape()");
+    return(MS_FAILURE);
+  }
+
+  if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
+  {
+      return MS_DONE;  // No more features to read
+  }
+
+/* ------------------------------------------------------------------
+ * Process geometry according to layer type
+ *
+ * __TODO__: Should we return real feature type and ignore layer type???
+ * __TODO__: Handle attribute fields
+ * __TODO__: Share conversion code by feature type with msOGRLayerGetShape()
+ * ------------------------------------------------------------------ */
+  int nStatus = MS_SUCCESS;
+  msFreeShape(shape);
+  switch(layer->type) 
+  {
+/* ------------------------------------------------------------------
+ *      MS_POINT
+ * ------------------------------------------------------------------ */
+    case MS_POINT:
+      if(ogrGeomPoints(poFeature->GetGeometryRef(), shape) == -1)
+      {
+          nStatus = MS_FAILURE; // Error message already produced.
+      }
+      shape->type = layer->type;
+      break;
+/* ------------------------------------------------------------------
+ *      MS_LINE
+ * ------------------------------------------------------------------ */
+    case MS_LINE:
+      if(ogrGeomLine(poFeature->GetGeometryRef(), shape, MS_FALSE) == -1)
+      {
+          nStatus = MS_FAILURE; // Error message already produced.
+      }
+      shape->type = layer->type;
+      break;
+/* ------------------------------------------------------------------
+ *      MS_POLYGON / MS_POLYLINE
+ * ------------------------------------------------------------------ */
+    case MS_POLYLINE:
+    case MS_POLYGON:
+      if(ogrGeomLine(poFeature->GetGeometryRef(), shape, MS_TRUE) == -1)
+      {
+          nStatus = MS_FAILURE; // Error message already produced.
+      }
+      shape->type = layer->type;
+      break;
+    default:
+      msSetError(MS_MISCERR, "Unknown or unsupported layer type.", 
+                 "msOGRLayerNextShape()");
+      nStatus = MS_FAILURE;
+  } /* switch layer->type */
+
+
+/* ------------------------------------------------------------------
+ * Process shape attributes
+ * ------------------------------------------------------------------ */
+    if(attributes == MS_TRUE && layer->numitems > 0) 
+    {
+      shape->attributes = msOGRGetValueList(poFeature, layer->items, 
+                                            &(layer->itemindexes), 
+                                            layer->numitems);
+      if(!shape->attributes) return(MS_FAILURE);
+    } 
+    else if (attributes == MS_ALLITEMS) 
+    {
+      if(!layer->items) 
+      { 
+	// fill the items layer variable if not already filled
+        layer->numitems = poFeature->GetFieldCount();
+	layer->items = msOGRGetItems(psInfo->poLayer);
+	if(!layer->items) 
+            return(MS_FAILURE);
+      }
+      shape->attributes = msOGRGetValues(poFeature);
+      if(!shape->attributes) 
+          return(MS_FAILURE);
+    }
+
+  delete poFeature;
+
+  return nStatus;
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGRLayerNextShape()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
+}
+
+/**********************************************************************
+ *                     msOGRLayerGetShape()
+ *
+ * Returns shape from OGR data source by id.
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
+                       int tile, int record, int attributes) 
+{
+#ifdef USE_OGR
+
+  msSetError(MS_MISCERR, "Not Implemented yet!", 
+             "msOGRLayerGetShape()");
+  return(MS_FAILURE);
+
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGRLayerGetShape()");
+  return(MS_FAILURE);
 
 #endif /* USE_OGR */
 }
