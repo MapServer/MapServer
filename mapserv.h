@@ -43,7 +43,6 @@ int SearchMap=MS_FALSE; // apply pan/zoom BEFORE doing the query (e.g. query the
 char *QueryFile=NULL;
 char *QueryLayer=NULL, *SelectLayer=NULL;
 int QueryLayerIndex=-1, SelectLayerIndex=-1;
-char *Item=NULL, *Value=NULL;
 
 char *QueryItem=NULL, *QueryString=NULL;
 

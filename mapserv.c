@@ -82,14 +82,12 @@ void writeError()
     }
   }
 
-  /*
-  ** Clean Up
-  */
-  free(Item);
-  free(Value);      
-  free(QueryFile);
-  free(QueryLayer);      
-  free(SelectLayer);
+  // Clean-up (the following are not stored as part of the msObj)
+  if(QueryItem) free(QueryItem);
+  if(QueryString) free(QueryString);
+  if(QueryLayer) free(QueryLayer);
+  if(SelectLayer) free(SelectLayer);
+  if(QueryFile) free(QueryFile);
 
   msFreeMapServObj(msObj);
 
@@ -184,7 +182,7 @@ mapObj *loadMap()
 void loadForm()
 {
   int i,j,n;
-  char **tokens, *tmpstr;
+  char **tokens=NULL;
   regex_t re;
   int rosa_type=0;
 
@@ -678,24 +676,6 @@ void loadForm()
 
     if(strcasecmp(msObj->ParamNames[i],"slayer") == 0) { // layer to select (for feature based search)
       SelectLayer = strdup(msObj->ParamValues[i]);
-      continue;
-    }
-
-    if(strcasecmp(msObj->ParamNames[i],"item") == 0) { // search item
-      Item = strdup(msObj->ParamValues[i]);
-      continue;
-    }
-
-    if(strcasecmp(msObj->ParamNames[i],"value") == 0) { // search expression
-      if(!Value)
-	Value = strdup(msObj->ParamValues[i]);
-      else { /* need to append */
-	tmpstr = strdup(Value);
-	free(Value);
-	Value = (char *)malloc(strlen(tmpstr)+strlen(msObj->ParamValues[i])+2);
-	sprintf(Value, "%s|%s", tmpstr, msObj->ParamValues[i]);
-	free(tmpstr);
-      }
       continue;
     }
 
@@ -1366,14 +1346,12 @@ int main(int argc, char *argv[]) {
 
     writeLog(MS_FALSE);
    
-    /*
-    ** Clean-up
-    */
-    free(Item); // the following are not stored as part of the msObj
-    free(Value);      
-    free(QueryLayer);
-    free(SelectLayer);
-    free(QueryFile);    
+    // Clean-up (the following are not stored as part of the msObj)
+    if(QueryItem) free(QueryItem);
+    if(QueryString) free(QueryString);
+    if(QueryLayer) free(QueryLayer);
+    if(SelectLayer) free(SelectLayer);
+    if(QueryFile) free(QueryFile);
    
     msFreeMapServObj(msObj);
 
