@@ -760,7 +760,7 @@ int processIf(char** pszInstr, hashTableObj ht, int bLastPass)
 **   - Need generalization routines (not here, but in mapprimative.c).
 **   - Try to avoid all the realloc calls.
 */
-static int processCoords(mapObj *map, char **line, shapeObj *shape) 
+static int processCoords(layerObj *layer, char **line, shapeObj *shape) 
 {
   int i,j;
   int status;
@@ -778,8 +778,11 @@ static int processCoords(mapObj *map, char **line, shapeObj *shape)
   char *ph="", *pf=""; // part
   char *sh="", *sf=""; // shape 
   int precision=0;
-  int transform=MS_FALSE; // don't clip and convert to image coordinates
 
+  shapeObj tShape;
+
+  char *projectionString=NULL;
+ 
   char *coords=NULL, point[128];  
   
   if(!*line) {
@@ -827,72 +830,68 @@ static int processCoords(mapObj *map, char **line, shapeObj *shape)
       argValue = msLookupHashTable(tagArgs, "precision");
       if(argValue) precision = atoi(argValue);
 
-      argValue = msLookupHashTable(tagArgs, "transform");
-      if(argValue) {
-	transform = MS_TRUE;       
-        precision = 0;
-      }
+      argValue = msLookupHashTable(tagArgs, "proj");
+      if(argValue) projectionString = argValue;
     }
 
     // build the per point format string
     pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + 10 + 1;
     pointFormat = (char *) malloc(pointFormatLength);
     snprintf(pointFormat, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
+ 
+    // make a copy of the shape
+    msInitShape(&tShape);
+    status = msCopyShape(shape, &tShape);
+    if(status != 0) return(MS_FAILURE); // copy failed
     
     // no big deal to convert from file to image coordinates, but what are the image parameters
-    if(transform) {
-      shapeObj tempShape;
-
-      msInitShape(&tempShape);
-      status = msCopyShape(shape, &tempShape);
-      if(status != 0) return(MS_FAILURE); // copy failed
-
-      switch(tempShape.type) {
+    if(projectionString && strcasecmp(projectionString,"image") ==0) {
+      precision = 0;
+      
+      switch(tShape.type) {
       case(MS_SHAPE_POINT):
         // at this point we only convert the first point of the first shape
-	tempShape.line[0].point[0].x = MS_MAP2IMAGE_X(tempShape.line[0].point[0].x, map->extent.minx, map->cellsize);
-        tempShape.line[0].point[0].y = MS_MAP2IMAGE_Y(tempShape.line[0].point[0].y, map->extent.maxy, map->cellsize);
-	break;
+	    tShape.line[0].point[0].x = MS_MAP2IMAGE_X(tShape.line[0].point[0].x, layer->map->extent.minx, layer->map->cellsize);
+        tShape.line[0].point[0].y = MS_MAP2IMAGE_Y(tShape.line[0].point[0].y, layer->map->extent.maxy, layer->map->cellsize);
+	    break;
       case(MS_SHAPE_LINE):
-	msClipPolylineRect(&tempShape, map->extent);
-	break;
+	    msClipPolylineRect(&tShape, layer->map->extent);
+	    break;
       case(MS_SHAPE_POLYGON):
-        msClipPolygonRect(&tempShape, map->extent);
+        msClipPolygonRect(&tShape, layer->map->extent);
         break;
       default:
         // TO DO: need an error message here 
         return(MS_FAILURE);
-	break;
+	   break;
       }
-      msTransformShapeToPixel(&tempShape, map->extent, map->cellsize);
+      msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize);
+    } else if(projectionString) {
+       projectionObj projection;
 
-      // build the coordinate string (from tempShape)
-      if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
-      for(i=0; i<tempShape.numlines; i++) {      
-        if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
-        for(j=0; j<tempShape.line[i].numpoints; j++) {
-          snprintf(point, 128, pointFormat, tempShape.line[i].point[j].x, tempShape.line[i].point[j].y);
-          coords = strcatalloc(coords, point);  
-        }
-        if(strlen(pf) > 0) coords = strcatalloc(coords, pf);
-      }
-      if(strlen(sf) > 0) coords = strcatalloc(coords, sf);
+       status = msLoadProjectionString(&projection, projectionString);
+       if(status != MS_SUCCESS) return MS_FAILURE;
 
-      msFreeShape(&tempShape);
-    } else {	
-      // build the coordinate string (from shape)   
-      if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
-      for(i=0; i<shape->numlines; i++) {      
-        if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
-        for(j=0; j<shape->line[i].numpoints; j++) {
-          snprintf(point, 128, pointFormat, shape->line[i].point[j].x, shape->line[i].point[j].y);
-          coords = strcatalloc(coords, point);  
-        }
-        if(strlen(pf) > 0) coords = strcatalloc(coords, pf);
-      }
-      if(strlen(sf) > 0) coords = strcatalloc(coords, sf);
+       if(layer->project && msProjectionsDiffer(&(layer->projection), &projection))  
+         msProjectShape(&layer->projection, &projection, &tShape);
     }
+      
+    // TODO: add thinning support here  
+      
+    // build the coordinate string
+    if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
+    for(i=0; i<tShape.numlines; i++) {      
+      if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
+      for(j=0; j<tShape.line[i].numpoints; j++) {
+        snprintf(point, 128, pointFormat, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
+        coords = strcatalloc(coords, point);  
+      }
+      if(strlen(pf) > 0) coords = strcatalloc(coords, pf);
+    }
+    if(strlen(sf) > 0) coords = strcatalloc(coords, sf);
 
+    msFreeShape(&tShape);
+    
     // find the end of the tag
     tagEnd = strchr(tagStart, ']');
     tagEnd++;
@@ -2379,7 +2378,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     sprintf(repstr, "%d", msObj->ResultShape.classindex);
     outstr = gsub(outstr, "[shpclass]", repstr);
 
-    if(processCoords(msObj->Map, &outstr, &msObj->ResultShape) != MS_SUCCESS)
+    if(processCoords(msObj->ResultLayer, &outstr, &msObj->ResultShape) != MS_SUCCESS)
       return(NULL);
 
     sprintf(repstr, "%f", msObj->ResultShape.bounds.minx);
