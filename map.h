@@ -170,8 +170,9 @@ enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP   
    
-#ifndef SWIG
+
 // FONTSET OBJECT - used to hold aliases for TRUETYPE fonts
+#ifndef SWIG
 typedef struct {
   char *filename;
   hashTableObj fonts;
@@ -180,12 +181,14 @@ typedef struct {
 #endif
 
 // FEATURE LIST OBJECT - for inline features, shape caches and queries
+#ifndef SWIG
 typedef struct listNode {
   shapeObj shape;
   struct listNode *next;
 } featureListNodeObj;
 
 typedef featureListNodeObj * featureListNodeObjPtr;
+#endif
 
 // COLOR OBJECT
 typedef struct {
@@ -251,12 +254,14 @@ typedef struct {
 %readonly
 #endif
   int width, height;
+  char *imagepath, *imageurl;
 #ifdef SWIG
 %readwrite
 #endif
 
-  char *imagepath, *imageurl;
+#ifndef SWIG
   gdImagePtr bytes;
+#endif
 } imageObj;
 
 // QUERY MAP OBJECT - used to visualize query results
@@ -311,17 +316,23 @@ typedef struct {
 typedef struct {
   char *log;
   char *imagepath, *imageurl;
+
 #ifndef __cplusplus
   char *template;
 #else
   char *_template;
 #endif
+
   char *header, *footer;
   char *empty, *error; /* error handling */
   rectObj extent; /* clipping extent */
   double minscale, maxscale;
   char *mintemplate, *maxtemplate;
+
+#ifndef SWIG
   hashTableObj metadata;
+#endif
+
 } webObj;
 
 // CLASS OBJECT - basic symbolization and classification information
@@ -372,10 +383,17 @@ typedef struct {
 
   int type;
 
+#ifndef SWIG
   hashTableObj metadata;
+#endif
+
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
+// Note: These are scriptable, but are read only.
+#ifdef SWIG
+%readonly
+#endif
 typedef struct {
   char *string;
   double featuresize;
@@ -416,26 +434,33 @@ typedef struct {
   int tileindex;
   char classindex;
 } resultCacheMemberObj;
+#ifdef SWIG
+%readwrite
+#endif
 
+#ifndef SWIG
 typedef struct {
   resultCacheMemberObj *results;
   int numresults;
   int cachesize;
   rectObj bounds;
 } resultCacheObj;
+#endif
 
 // SYMBOLSET OBJECT
+#ifndef SWIG
 typedef struct {
   char *filename;
-#ifndef SWIG
+
   fontSetObj *fontset; // a pointer to the main mapObj version
-#endif
+
   int numsymbols;
   symbolObj symbol[MS_MAXSYMBOLS];
 
   struct imageCacheObj *imagecache;
   int imagecachesize;
 } symbolSetObj;
+#endif
 
 // REFERENCE MAP OBJECT
 typedef struct {
@@ -495,10 +520,12 @@ typedef struct {
   char *classitem; // .DBF item to be used for symbol lookup
   int classitemindex;
 
+#ifndef SWIG
 #ifndef __cplusplus
   classObj *class; // always at least 1 class
 #else
   classObj *_class;
+#endif
 #endif
 
 #ifdef SWIG
@@ -553,32 +580,44 @@ typedef struct {
   int tileitemindex;
   char *tileindex; // layer index file for tiling support
 
+#ifndef SWIG
   projectionObj projection; // projection information for the layer
+#endif
+
   int units; // units of the projection
 
+#ifndef SWIG
   featureListNodeObjPtr features; // linked list so we don't need a counter
   featureListNodeObjPtr currentfeature; // pointer to the current feature
+#endif
 
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
 
   // a variety of data connection objects (probably should be pointers!)
+#ifndef SWIG
   shapefileObj shpfile;
   shapefileObj tileshpfile;
+#endif
 
+#ifndef SWIG
   void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
   void *sdelayerinfo; // For SDE layers, will contain a sdeLayerObj struct
   void *postgislayerinfo; // For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
   void *oraclespatiallayerinfo;
+#endif
 
   // attribute/classification handling components
   char **items;
   int numitems;
-  void *iteminfo; // connection specific information necessary to retrieve values
 
-  #ifndef SWIG
+#ifndef SWIG
+  void *iteminfo; // connection specific information necessary to retrieve values
+#endif
+
+#ifndef SWIG
   expressionObj filter; // connection specific attribute filter
-  #endif
+#endif
 
   char *filteritem;
   int filteritemindex;
@@ -589,9 +628,14 @@ typedef struct {
   char *requires; // context expressions, simple enough to not use expressionObj
   char *labelrequires;
 
+#ifndef SWIG
   hashTableObj metadata;
+<<<<<<< map.h
+#endif
+=======
   
   int transparency; // transparency value 0-100 
+>>>>>>> 1.138
 
   int dump;
 } layerObj;
@@ -636,16 +680,16 @@ typedef struct { /* structure for a map */
 
   int imagetype, imagequality;
 
+#ifndef SWIG
   projectionObj projection; /* projection information for output map */
   projectionObj latlon; /* geographic projection definition */
+#endif
 
   referenceMapObj reference;
   scalebarObj scalebar;
   legendObj legend;
 
-#ifndef SWIG
   queryMapObj querymap;
-#endif
 
   webObj web;
 

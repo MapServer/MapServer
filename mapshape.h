@@ -21,7 +21,6 @@ extern "C" {
 #define SHP_ARCM  23
 #define SHP_POLYGONM 25
 #define SHP_MULTIPOINTM 28
-
 #endif
 
 #define MS_SHAPEFILE_POINT 1
@@ -106,11 +105,18 @@ typedef struct {
 #endif
   char source[MS_PATH_LENGTH]; // full path to this file data
 
+#ifndef SWIG
   SHPHandle hSHP; // SHP/SHX file pointer
+#endif
+
   int type; // shapefile type
   int numshapes; // number of shapes
   rectObj bounds; // shape extent
+
+#ifndef SWIG
   DBFHandle hDBF; // DBF file pointer 
+#endif
+
   int lastshape;
 
   char *shapepath; // used by tiled shapefiles to access tiles
