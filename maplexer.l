@@ -95,6 +95,7 @@ int msyyreturncomments = 0;
 
 <EXPRESSION_STRING>length                      { return(LENGTH); }
 
+<INITIAL,OBJECT_STRING>alphacolor		       { return(ALPHACOLOR); }
 <INITIAL,OBJECT_STRING>angle                   { return(ANGLE); }
 <INITIAL,OBJECT_STRING>antialias               { return(ANTIALIAS); }
 <INITIAL,OBJECT_STRING>backgroundcolor	       { return(BACKGROUNDCOLOR); }
@@ -129,6 +130,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>formatoption	       { return(FORMATOPTION); }
 <INITIAL,OBJECT_STRING>from                    { return(FROM); }
 <INITIAL>gap                                   { return(GAP); }
+<INITIAL,OBJECT_STRING>grid		               { return(GRID); }
 <INITIAL,OBJECT_STRING>graticule               { return(GRATICULE); }
 <INITIAL,OBJECT_STRING>group                   { return(GROUP); }
 <INITIAL,OBJECT_STRING>header		       { return(HEADER); }
@@ -148,6 +150,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>label		       { return(LABEL); }
 <INITIAL,OBJECT_STRING>labelangleitem          { return(LABELANGLEITEM); }
 <INITIAL,OBJECT_STRING>labelcache	       { return(LABELCACHE); }
+<INITIAL,OBJECT_STRING>labelformat               { return(LABELFORMAT); }
 <INITIAL,OBJECT_STRING>labelitem               { return(LABELITEM); }
 <INITIAL,OBJECT_STRING>labelmaxscale	       { return(LABELMAXSCALE); }
 <INITIAL,OBJECT_STRING>labelminscale	       { return(LABELMINSCALE); }
@@ -163,21 +166,26 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>map	               { return(MAP); }
 <INITIAL,OBJECT_STRING>marker	               { return(MARKER); }
 <INITIAL,OBJECT_STRING>markersize              { return(MARKERSIZE); }
+<INITIAL,OBJECT_STRING>maxarcs				   { return(MAXARCS); }
 <INITIAL,OBJECT_STRING>maxboxsize              { return(MAXBOXSIZE); }
 <INITIAL,OBJECT_STRING>maxfeatures             { return(MAXFEATURES); }
+<INITIAL,OBJECT_STRING>maxinterval		       { return(MAXINTERVAL); }
 <INITIAL,OBJECT_STRING>maxscale		       { return(MAXSCALE); }
 <INITIAL,OBJECT_STRING>maxsize	               { return(MAXSIZE); }
+<INITIAL,OBJECT_STRING>maxsubdivide		       { return(MAXSUBDIVIDE); }
 <INITIAL,OBJECT_STRING>maxtemplate	       { return(MAXTEMPLATE); }
 <INITIAL,OBJECT_STRING>metadata	               { return(METADATA); }
 <INITIAL,OBJECT_STRING>mimetype	               { return(MIMETYPE); }
+<INITIAL,OBJECT_STRING>minarcs				   { return(MINARCS); }
 <INITIAL,OBJECT_STRING>minboxsize              { return(MINBOXSIZE); }
 <INITIAL,OBJECT_STRING>mindistance             { return(MINDISTANCE); }
 <INITIAL,OBJECT_STRING>minfeaturesize          { return(MINFEATURESIZE); }
+<INITIAL,OBJECT_STRING>mininterval		       { return(MININTERVAL); }
 <INITIAL,OBJECT_STRING>minscale		       { return(MINSCALE); }
 <INITIAL,OBJECT_STRING>minsize		       { return(MINSIZE); }
+<INITIAL,OBJECT_STRING>minsubdivide		       { return(MINSUBDIVIDE); }
 <INITIAL,OBJECT_STRING>mintemplate	       { return(MINTEMPLATE); }
 <INITIAL,OBJECT_STRING>name		       { return(NAME); }
-<INITIAL>none                                 { return(MS_CJC_NONE); }
 <INITIAL,OBJECT_STRING>offset                  { return(OFFSET); }
 <INITIAL,OBJECT_STRING>offsite                 { return(OFFSITE); }
 <INITIAL,OBJECT_STRING>outlinecolor	       { return(OUTLINECOLOR); }

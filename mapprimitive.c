@@ -499,11 +499,43 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
       for(j=1; j < shape->line[i].numpoints; j++ ) {
 	shape->line[i].point[j].x = MS_MAP2IMAGE_X(shape->line[i].point[j].x, extent.minx, cellsize);
 	shape->line[i].point[j].y = MS_MAP2IMAGE_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
-      }
-    }
+	  }
+	}
   }
+}
+/*
+** Converts from map coordinates to image coordinates
+*/
+void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize)
+{
+	int i,j; /* loop counters */
 
-  return;
+	if(shape->numlines == 0) return; // nothing to transform
+
+	if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON)  // remove co-linear vertices
+	{
+		for(i=0; i<shape->numlines; i++)  // for each part
+		{ 
+			for(j=0; j < shape->line[i].numpoints; j++ ) 
+			{
+				shape->line[i].point[j].x = MS_IMAGE2MAP_X(shape->line[i].point[j].x, extent.minx, cellsize);
+				shape->line[i].point[j].y = MS_IMAGE2MAP_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
+			}
+		}
+	}
+	else  // points or untyped shapes
+	{
+		for(i=0; i<shape->numlines; i++)  // for each part
+		{
+			for(j=1; j < shape->line[i].numpoints; j++ ) 
+			{
+				shape->line[i].point[j].x = MS_IMAGE2MAP_X(shape->line[i].point[j].x, extent.minx, cellsize);
+				shape->line[i].point[j].y = MS_IMAGE2MAP_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
+			}
+		}
+	}
+
+	return;
 }
 
 void msImageScanline(gdImagePtr im, int x1, int x2, int y, int c)
@@ -640,6 +672,11 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
 
   if(p->numlines == 0) return;
 
+#if 0
+  if( c & 0xFF000000 )
+	gdImageAlphaBlending( im, 1 );
+#endif
+  
   /* calculate the total number of vertices */
   n=0;
   for(i=0; i<p->numlines; i++)
@@ -746,6 +783,10 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
     }
   }
   
+#if 0
+   gdImageAlphaBlending( im, 0 );
+#endif
+
   free(slope);
   free(horiz);
   free(xintersect);

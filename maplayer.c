@@ -35,6 +35,10 @@ static int layerInitItemInfo(layerObj *layer)
   case(MS_ORACLESPATIAL):
     return(msOracleSpatialLayerInitItemInfo(layer));
     break;
+
+		case(MS_GRATICULE):
+			return(msGraticuleLayerInitItemInfo(layer));
+			break;
   default:
     break;
   }
@@ -66,6 +70,10 @@ static void layerFreeItemInfo(layerObj *layer)
   case(MS_ORACLESPATIAL):
     msOracleSpatialLayerFreeItemInfo(layer);
     break;
+		case(MS_GRATICULE):
+			msGraticuleLayerFreeItemInfo(layer);
+			break;
+
   default:
     break;
   }
@@ -77,10 +85,11 @@ static void layerFreeItemInfo(layerObj *layer)
 ** Does exactly what it implies, readies a layer for processing.
 */
 int msLayerOpen(layerObj *layer)
-{ 
+{
   char szPath[MS_MAXPATHLEN];
 
-  if(layer->features) 
+	if(layer->features
+	  && layer->connectiontype != MS_GRATICULE ) 
     layer->connectiontype = MS_INLINE;
 
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
@@ -101,7 +110,7 @@ int msLayerOpen(layerObj *layer)
     return(MS_SUCCESS);
     break;
   case(MS_OGR):
-    return(msOGRLayerOpen(layer, NULL));
+    return(msOGRLayerOpen(layer,NULL));
     break;
   case(MS_WFS):
     return(msWFSLayerOpen(layer, NULL, NULL));
@@ -115,6 +124,11 @@ int msLayerOpen(layerObj *layer)
   case(MS_ORACLESPATIAL):
     return(msOracleSpatialLayerOpen(layer));
     break;
+
+		case(MS_GRATICULE):
+			return(msGraticuleLayerOpen(layer));
+			break;
+
   default:
     break;
   }
@@ -181,6 +195,11 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
   case(MS_ORACLESPATIAL):
     return(msOracleSpatialLayerWhichShapes(layer, rect));
     break;
+
+		case(MS_GRATICULE):
+			return(msGraticuleLayerWhichShapes(layer, rect));
+			break;
+
   default:
     break;
   }
@@ -250,6 +269,10 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   case(MS_ORACLESPATIAL):
     return(msOracleSpatialLayerNextShape(layer, shape));
     break;
+		case(MS_GRATICULE):
+			return(msGraticuleLayerNextShape(layer, shape));
+			break;
+
   default:
     break;
   }
@@ -300,6 +323,11 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   case(MS_ORACLESPATIAL):
     return(msOracleSpatialLayerGetShape(layer, shape, record));
     break;
+
+		case(MS_GRATICULE):
+			return(msGraticuleLayerGetShape(layer, shape, tile, record));
+				break;
+
   default:
     break;
   }
@@ -345,6 +373,11 @@ void msLayerClose(layerObj *layer)
   case(MS_ORACLESPATIAL):
     msOracleSpatialLayerClose(layer);
     break;
+
+		case(MS_GRATICULE):
+			msGraticuleLayerClose(layer);
+			break;
+
   default:
     break;
   }
@@ -392,6 +425,11 @@ int msLayerGetItems(layerObj *layer)
   case(MS_ORACLESPATIAL):
     return(msOracleSpatialLayerGetItems(layer));
     break;
+
+		case(MS_GRATICULE):
+			return(msGraticuleLayerGetItems(layer));
+			break;
+
   default:
     break;
   }
@@ -430,6 +468,11 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent) {
   case(MS_ORACLESPATIAL):
     return(msOracleSpatialLayerGetExtent(layer, extent));
     break;
+
+		case(MS_GRATICULE):
+			return(msGraticuleLayerGetExtent(layer, extent));
+			break;
+
   default:
     break;
   }
@@ -711,6 +754,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
   case(MS_SDE):
   case(MS_ORACLESPATIAL):
   case(MS_WFS):
+		case(MS_GRATICULE):
   default:
     msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", 
                "msLayerGetAutoStyle()");

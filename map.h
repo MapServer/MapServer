@@ -187,8 +187,7 @@ enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS};
-
+enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE };
 enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
@@ -227,6 +226,9 @@ typedef struct {
   int red;
   int green;
   int blue;
+#if ALPHACOLOR_ENABLED
+  int alpha;
+#endif
 } colorObj;
 
 #ifndef SWIG
@@ -263,6 +265,7 @@ typedef struct {
   char numitems;
   char ***records; // array of data for 1 or more records
   int numrecords; // number of records we have data for
+
   char *table;
   char *from, *to;
   char *header;
@@ -272,6 +275,7 @@ typedef struct {
   char *_template;
 #endif
   char *footer;
+
   char *match;
   enum MS_JOIN_TYPE type;
   char *connection;
@@ -580,6 +584,31 @@ typedef struct {
   struct map_obj *map;
 } legendObj;
 
+typedef struct
+{
+	double		dwhichlatitude;
+	double		dwhichlongitude;
+	double		dstartlatitude;
+	double		dstartlongitude;
+	double		dendlatitude;
+	double		dendlongitude;
+	double		dincrementlatitude;
+	double		dincrementlongitude;
+	double		dminarcs;
+	double		dmaxarcs;
+	double		dminincrement;
+	double		dmaxincrement;
+	double		dminarcsubdivisions;
+	double		dmaxarcsubdivisions;
+	int			bvertical;
+	int			blabelaxes;
+	int			ilabelstate;
+	int			ilabeltype;
+	rectObj		extent;
+	lineObj		*pboundinglines;
+	pointObj	*pboundingpoints;
+	char		*pszlabelformat;
+} graticuleObj;
 
 // LAYER OBJECT - basic unit of a map
 typedef struct layer_obj {
@@ -633,7 +662,6 @@ typedef struct layer_obj {
   double scalefactor; // computed, not set
   double minscale, maxscale;
   double labelminscale, labelmaxscale;
-
   int sizeunits; // applies to all classes
 
   int maxfeatures;
@@ -679,6 +707,7 @@ typedef struct layer_obj {
   void *postgislayerinfo; // For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
   void *oraclespatiallayerinfo;
   void *wfslayerinfo; // For WFS layers, will contain a msWFSLayerInfo struct
+  void *graticulelayerinfo;
 #endif
 
   // attribute/classification handling components
@@ -710,12 +739,10 @@ typedef struct layer_obj {
 
   int dump;
   int debug;
-
 #ifndef SWIG
   int  num_processing;
   char **processing;
 #endif
-
   joinObj *joins;
   int numjoins;
 } layerObj;
@@ -784,7 +811,7 @@ typedef struct map_obj{ /* structure for a map */
 
   int *layerorder;
 
-  int debug;
+  int debug;   
 
   char *datapattern, *templatepattern;   
 } mapObj;
@@ -883,6 +910,8 @@ int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
 int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
 pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly);
 double dist(pointObj a, pointObj b);
+
+
    
 /*
 ** Main API Functions
@@ -901,7 +930,6 @@ void msFree(void *p);
 char **msTokenizeMap(char *filename, int *numtokens);
 int msInitLabelCache(labelCacheObj *cache);
 int msFreeLabelCache(labelCacheObj *cache);
-
 int msCheckConnection(layerObj * layer); // connection pooling functions (mapfile.c)
 void msCloseConnections(mapObj *map); 
 
@@ -916,6 +944,7 @@ void msGDALInitialize();
 imageObj *msDrawScalebar(mapObj *map); // in mapscale.c
 int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
+
 
 int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 int msRectOverlap(rectObj *a, rectObj *b);
@@ -944,6 +973,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer);
 int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape);
 int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
 int msIsLayerQueryable(layerObj *lp);
+
 
 void trimBlanks(char *string); // in mapstring.c
 char *chop(char *string);
@@ -1009,6 +1039,7 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect);
 void msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
                       imageObj *image);
 void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize);
+void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize);
 void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
 void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c);
 void msImageFilledPolygon(gdImagePtr img, shapeObj *p, int c);
@@ -1091,7 +1122,16 @@ int msOracleSpatialLayerInitItemInfo(layerObj *layer);
 void msOracleSpatialLayerFreeItemInfo(layerObj *layer);
 int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);   
 
-
+int msGraticuleLayerOpen(layerObj *layer);   // in mapGraticule.cpp
+int msGraticuleLayerClose(layerObj *layer);
+int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect);
+int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape);
+int msGraticuleLayerGetItems(layerObj *layer);
+int msGraticuleLayerInitItemInfo(layerObj *layer);
+void msGraticuleLayerFreeItemInfo(layerObj *layer);
+int msGraticuleLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
+int msGraticuleLayerGetExtent(layerObj *layer, rectObj *extent);
+int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
@@ -1161,16 +1201,13 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
                        int dstX, int dstY, int srcX, int srcY, int w, int h,
                        int pct);
-
 // various JOIN functions (in mapjoin.c)
 int msJoinTable(layerObj *layer, joinObj *join);
 int msDBFJoinTable(layerObj *layer, joinObj *join);
-
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b);
 int msGetClass(layerObj *layer, colorObj *color);
-
 //in mapdrawgdal.c
 int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, 
                           void *hDSVoid );
