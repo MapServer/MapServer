@@ -16,13 +16,15 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- SWIG mapscript: clone methods for layerObj, classObj, styleObj (bug 1012).
+
 - Implemented an intarray helper class for SWIG mapscript which allows for
   multi-language manipulation of layer drawing order (bugs 853, 1005).
 
 - Fixed WMS GetLegendGraphic which was returning an exception (GD error)
-  when requested layer was out of scale (bug 1006)
+  when requested layer was out of scale (bug 1006).
 
-- Fixed maplexer.l to work with flex 2.5.31 (bug 975)
+- Fixed maplexer.l to work with flex 2.5.31 (bug 975).
 
 Version 4.4.0-beta1 (2004-10-21)
 --------------------------------
