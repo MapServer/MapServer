@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Removed mapindex.c, mapindex.h, shpindex.c - old unused shapefile 
+  indexing method.  
+
 - Use the symbol size instead of 1 for the default style size value. This is
   done by setting the default size to -1 and adding msSymbolGetDefaultSize() 
   everywhere to get the default symbolsize. (Bug 751)
