@@ -626,11 +626,12 @@ None
  layerObj
 -----------------------------------------------------------------------------
 
-A layerObj is associated with one mapObj and has no other existence [1]_.
+A layerObj is associated with mapObj.  In the most recent revision, an
+intance of layerObj can exist outside of a mapObj.
 
 ::
 
-    +-------+ 0..*     1 +-----+
+    +-------+ 0..*  0..1 +-----+
     | Layer | <--------> | Map |
     +-------+            +-----+
    
@@ -801,9 +802,10 @@ Methods
 
 **TODO**
 
-new layerObj( mapObj_ parent_map ) : layerObj
+new layerObj( [ mapObj_ parent_map=NULL ] ) : layerObj
     Create a new layerObj in *parent_map*.  The layer index of the new layerObj
-    will be equal to the *parent_map* numlayers - 1.
+    will be equal to the *parent_map* numlayers - 1.  The *parent_map* arg is
+    now optional and Layers can exist outside of a Map.
     
 addFeature( shapeObj_ shape ) : int 
     Add a new inline feature on a layer.  Returns -1 on error. 
@@ -1145,7 +1147,7 @@ A mapObj is primarily associated with instances of layerObj_.
 
 ::
 
-     +-----+ 1     0..* +-------+
+     +-----+ 0..1  0..* +-------+
      | Map | <--------> | Layer |
      +-----+            +-------+
 
@@ -1199,6 +1201,9 @@ Methods
 
 **TODO**
 
+new mapObj( [ string filename='' ] ) : mapObj
+    Create a new instance of mapObj.
+    
 appendOutputFormat( outputFormatObj_ format ) : int
     Attach *format* to the map's output format list.  Returns the updated
     number of output formats.
@@ -1239,10 +1244,18 @@ getOutputFormat( string imagetype ) : outputFormatObj_
     an output format to be found either by driver (like 'GD/PNG') or
     name (like 'PNG24').
 
+insertLayer( layerObj *layer [, int nIndex=-1 ] ) : int
+    Insert a copy of *layer* into the Map at index *nIndex*.  The default
+    value of *nIndex* is -1, which means the last possible index.  Returns
+    the index of the new Layer, or -1 in the case of a failure.
+    
 loadOWSParameters( string version, OWSRequest_ request ) : int
     Load OWS request parameters (BBOX, LAYERS, &c.) into map.  Returns
     MS_SUCCESS or MS_FAILURE.
 
+removeLayer( int nIndex ) : layerObj_
+    Remove the Layer at index *nIndex* and return a copy.
+    
 removeMetaData( string key ) : int
     Delete the web.metadata hash at *key*.  Returns MS_SUCCESS or
     MS_FAILURE.

@@ -109,6 +109,10 @@ Version 4.3 (CVS)
   instances of hashTableObj.  The older getMetaData/setMetaData and
   metadata iterator methods can be deprecated (bug 737).
   
+- Mapscript-SWIG: made the arguments of mapObj and layerObj constructors
+  optional.  A layerObj can now exist outside of a map and can be added
+  to a mapObj using the insertLayer method.  mapObj.removeLayer now 
+  returns a copy of the removed Layer rather than an integer (bug 759).
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
