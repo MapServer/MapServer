@@ -1,10 +1,11 @@
 #include "map.h"
 #include "maperror.h"
-#include "gdal.h"
 #include "mapthread.h"
-#include "cpl_string.h" // GDAL string handling
 
 #ifdef USE_WCS_SVR
+
+#include "gdal.h"
+#include "cpl_string.h" // GDAL string handling
 
 typedef struct {
   // TODO: union?
@@ -646,4 +647,5 @@ msWCSGetCoverageDomain( mapObj *map, layerObj *layer,
         return MS_SUCCESS;
     }
 }
-#endif
+#endif /* defn USE_WCS_SVR */
+
