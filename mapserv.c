@@ -924,10 +924,15 @@ void checkWebScale() {
 
   if((msObj->Map->scale < msObj->Map->web.minscale) && (msObj->Map->web.minscale > 0)) {
     if(msObj->Map->web.mintemplate) { // use the template provided
-      if(TEMPLATE_TYPE(msObj->Map->web.mintemplate) == MS_FILE)
-        msReturnPage(msObj, msObj->Map->web.mintemplate, BROWSE);
-      else
-        msReturnURL(msObj, msObj->Map->web.mintemplate, BROWSE);
+      if(TEMPLATE_TYPE(msObj->Map->web.mintemplate) == MS_FILE) {
+         if (msReturnPage(msObj, msObj->Map->web.mintemplate, BROWSE) != MS_SUCCESS)
+            writeError();
+    }
+     else
+     {
+        if (msReturnURL(msObj, msObj->Map->web.mintemplate, BROWSE) != MS_SUCCESS)
+          writeError();
+     }
     } else { /* force zoom = 1 (i.e. pan) */
       msObj->fZoom = msObj->Zoom = 1;
       msObj->ZoomDirection = 0;
@@ -941,10 +946,14 @@ void checkWebScale() {
     }
   } else if((msObj->Map->scale > msObj->Map->web.maxscale) && (msObj->Map->web.maxscale > 0)) {
     if(msObj->Map->web.maxtemplate) { // use the template provided
-      if(TEMPLATE_TYPE(msObj->Map->web.maxtemplate) == MS_FILE)
-	msReturnPage(msObj, msObj->Map->web.maxtemplate, BROWSE);
-      else
-        msReturnURL(msObj, msObj->Map->web.maxtemplate, BROWSE);
+      if(TEMPLATE_TYPE(msObj->Map->web.maxtemplate) == MS_FILE) {
+         if (msReturnPage(msObj, msObj->Map->web.maxtemplate, BROWSE) != MS_SUCCESS)
+           writeError();
+      }
+      else {
+        if (msReturnURL(msObj, msObj->Map->web.maxtemplate, BROWSE) != MS_SUCCESS)
+           writeError();
+      }
     } else { /* force zoom = 1 (i.e. pan) */
       msObj->fZoom = msObj->Zoom = 1;
       msObj->ZoomDirection = 0;
@@ -1134,15 +1143,18 @@ int main(int argc, char *argv[]) {
       }
 
       if(QueryFile) {
-	msReturnQuery(msObj);
+         if (msReturnQuery(msObj) != MS_SUCCESS)
+           writeError();
       } else {
 	if(TEMPLATE_TYPE(msObj->Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
 	  printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
 	  printf("<!-- %s -->\n", msGetVersion());
 	  fflush(stdout);
-	  msReturnPage(msObj, msObj->Map->web.template, BROWSE);
+	  if (msReturnPage(msObj, msObj->Map->web.template, BROWSE) != MS_SUCCESS)
+         writeError();
 	} else {	
-	  msReturnURL(msObj, msObj->Map->web.template, BROWSE);
+	  if (msReturnURL(msObj, msObj->Map->web.template, BROWSE) != MS_SUCCESS)
+         writeError();
 	} 
       }
 
@@ -1445,7 +1457,8 @@ int main(int argc, char *argv[]) {
 	  }
 	}      
 
-        msReturnQuery(msObj);
+        if (msReturnQuery(msObj) != MS_SUCCESS)
+           writeError();
 
         if(msObj->SaveQuery) {
            sprintf(buffer, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);

@@ -889,7 +889,6 @@ char *generateLegendTemplate(mapObj *map)
            legGroupHtmlCopy = NULL;
          }
          
-
          // for all layers in group
          if (legLayerHtml) {
            for (j=0; j<map->numlayers; j++) {
@@ -928,7 +927,11 @@ char *generateLegendTemplate(mapObj *map)
             
                   
                  if (legLayerHtmlCopy)
-                   free(legLayerHtmlCopy);
+                 {
+                    free(legLayerHtmlCopy);
+                    legLayerHtmlCopy = NULL;
+                 }
+                 
             
                  // for all classes in layer
                  if (legClassHtml) {
@@ -1527,6 +1530,10 @@ int msReturnURL(mapservObj* msObj, char* url, int mode)
   }
 
   tmpurl = processLine(msObj, url, mode);
+ 
+  if (!tmpurl)
+     return MS_FAILURE;
+   
   redirect(tmpurl);
   free(tmpurl);
    
