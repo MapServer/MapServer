@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.285  2004/10/21 17:01:48  frank
+ * Use pj_get_errno_ref() instead of directly using pj_errno.
+ *
  * Revision 1.284  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -900,8 +903,9 @@ int msProcessProjection(projectionObj *p)
     }
     msAcquireLock( TLOCK_PROJ );
     if( !(p->proj = pj_init(p->numargs, p->args)) ) {
+        int *pj_errno_ref = pj_get_errno_ref();
         msReleaseLock( TLOCK_PROJ );
-        msSetError(MS_PROJERR, pj_strerrno(pj_errno), 
+        msSetError(MS_PROJERR, pj_strerrno(*pj_errno_ref), 
                    "msProcessProjection()");	  
         return(-1);
     }
