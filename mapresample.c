@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2001/05/22 02:47:09  frank
+ * ifdef out transformer func if no USE_PROJ
+ *
  * Revision 1.11  2001/05/03 16:25:18  frank
  * map->extents are for center of pixel
  *
@@ -361,6 +364,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                                    rectObj *psSrcExtent )
 
 {
+#ifdef USE_PROJ
 #define EDGE_STEPS    10
 
     int		i, nSamples = 0;
@@ -449,6 +453,9 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     }
 
     return MS_TRUE;
+#else
+    return MS_FALSE;
+#endif
 }
 
 
