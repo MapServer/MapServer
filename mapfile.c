@@ -1492,7 +1492,7 @@ void freeLayer(layerObj *layer) {
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int c=0; // class counter
-  int type;
+  int type, metadata_end;
   char *key=NULL, *data=NULL;
 
   if(initLayer(layer) == -1)
@@ -1595,31 +1595,34 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getDouble(&(layer->maxscale)) == -1) return(-1);
       break;
     case(METADATA):
-      msCreateHashTable(layer->metadata);
-      for(;;) {
-	switch(msyylex()) {
-	case(EOF):
-	  msSetError(MS_EOFERR, NULL, "loadLayer()");      
-	  return(-1);
-	case(END):
-	  break;
-	case(MS_STRING):	  
-	  key = strdup(msyytext);
-	  data = getString();
+      if (!layer->metadata)
+        layer->metadata = msCreateHashTable();
+      metadata_end = MS_FALSE;
+      for(;!metadata_end;) {
+      switch(msyylex()) {
+      case(EOF):
+        msSetError(MS_EOFERR, NULL, "loadLayer()");      
+        return(-1);
+      case(END):
+        metadata_end = MS_TRUE;
+        break;
+      case(MS_STRING):	  
+        key = strdup(msyytext);
+        data = getString();
 
-	  if(!data) return(-1);
+        if(!data) return(-1);
 
-	  msInsertHashTable(layer->metadata, key, data);
+        msInsertHashTable(layer->metadata, key, data);
 
-	  free(key);
-	  free(data);
-	  break;
-	default:
-	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-	  msSetError(MS_IDENTERR, ms_error.message, "loadLayer()");          
-	  return(-1);      
-	}
-      }      
+        free(key);
+        free(data);
+        break;
+      default:
+        sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+        msSetError(MS_IDENTERR, ms_error.message, "loadLayer()");
+        return(-1);      
+      }
+      }
       break;
     case(MINSCALE):      
       if(getDouble(&(layer->minscale)) == -1) return(-1);
@@ -2527,6 +2530,7 @@ static void writeWeb(webObj *web, FILE *stream)
 int loadWeb(webObj *web)
 {
   char *key=NULL, *data=NULL;
+  int metadata_end;
 
   for(;;) {
     switch(msyylex()) {
@@ -2572,13 +2576,16 @@ int loadWeb(webObj *web)
       if((web->maxtemplate = getString()) == NULL) return(-1);
       break;
     case(METADATA):
-      msCreateHashTable(web->metadata);
-      for(;;) {
+      if (!web->metadata)
+        web->metadata = msCreateHashTable();
+      metadata_end = MS_FALSE;
+      for(;!metadata_end;) {
 	switch(msyylex()) {
 	case(EOF):
 	  msSetError(MS_EOFERR, NULL, "loadWeb()");      
 	  return(-1);
 	case(END):
+          metadata_end = MS_TRUE;
 	  break;
 	case(MS_STRING):
 	  key = strdup(msyytext);
