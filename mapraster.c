@@ -510,15 +510,19 @@ static int readWorldFile(char *filename, double *ulx, double *uly, double *cx, d
   strcpy(strrchr(wld_filename, '.'), ".wld");
   stream = fopen(wld_filename, "r");
   if(!stream) {
-    strcpy(strrchr(wld_filename, '.'), ".jgw");
+    strcpy(strrchr(wld_filename, '.'), ".tfw");
     stream = fopen(wld_filename, "r");
     if(!stream) {
-      strcpy(strrchr(wld_filename, '.'), ".tfw");
+      strcpy(strrchr(wld_filename, '.'), ".jgw");
       stream = fopen(wld_filename, "r");
-      if(!stream) {	
-	msSetError(MS_IOERR, "Unable to open world file for reading.", "readWorldFile()");
-	free(wld_filename);
-	return(-1);
+      if(!stream) {
+        strcpy(strrchr(wld_filename, '.'), ".gfw");
+        stream = fopen(wld_filename, "r");
+        if(!stream) {	
+	  msSetError(MS_IOERR, "Unable to open world file for reading.", "readWorldFile()");
+	  free(wld_filename);
+	  return(-1);
+        }
       }
     }
   }
