@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.85  2004/10/08 22:40:07  dan
+ * Moved mapscript's prepareImage() logic into msPrepareImage() which is
+ * also going to be used by msDrawMap(). (bug 945)
+ *
  * Revision 1.84  2004/08/12 17:18:26  assefa
  * Check if string is null in classObj_getExpressionString.
  *
@@ -133,59 +137,7 @@ void mapObj_prepareQuery(mapObj* self) {
   }
 
 imageObj *mapObj_prepareImage(mapObj* self) {
-    int status;
-    imageObj *img = NULL;
-
-    if(self->width == -1 && self->height == -1) {
-      msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
-      return NULL;
-    }
-
-    if(self->width == -1 ||  self->height == -1)
-      if(msAdjustImage(self->extent, &self->width, &self->height) == -1)
-        return NULL;
-
-    if( MS_RENDERER_GD(self->outputformat) )
-    {
-        img = msImageCreateGD(self->width, self->height, self->outputformat, 
-				self->web.imagepath, self->web.imageurl);        
-        if( img != NULL ) msImageInitGD( img, &self->imagecolor );
-    }
-    else if( MS_RENDERER_RAWDATA(self->outputformat) )
-    {
-        img = msImageCreate(self->width, self->height, self->outputformat,
-                            self->web.imagepath, self->web.imageurl, self);
-    }
-#ifdef USE_MING_FLASH
-    else if( MS_RENDERER_SWF(self->outputformat) )
-    {
-        img = msImageCreateSWF(self->width, self->height, self->outputformat,
-                               self->web.imagepath, self->web.imageurl,
-                               self);
-    }
-#endif
-#ifdef USE_PDF
-    else if( MS_RENDERER_PDF(self->outputformat) )
-    {
-        img = msImageCreatePDF(self->width, self->height, self->outputformat,
-                               self->web.imagepath, self->web.imageurl,
-                               self);
-	}
-#endif
-    
-    if(!img) {
-      msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
-      return NULL;
-    }
-  
-   
-    self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
-    status = msCalculateScale(self->extent, self->units, self->width, self->height, 
-                              self->resolution, &self->scale);
-    if(status != MS_SUCCESS)
-      return NULL;
-
-    return img;
+    return msPrepareImage(self, MS_FALSE);
   }
 
 imageObj *mapObj_draw(mapObj* self) {

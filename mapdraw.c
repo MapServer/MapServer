@@ -92,53 +92,28 @@ void msClearPenValues(mapObj *map) {
   
 }
 
-/*
- * Generic function to render the map file.
- * The type of the image created is based on the
- * imagetype parameter in the map file.
-*/
-
-imageObj *msDrawMap(mapObj *map)
+/* msPrepareImage()
+ *
+ * Returns a new imageObj ready for rendering the current map.
+ *
+ * If allow_nonsquare is set to MS_TRUE then the caller should call
+ * msMapRestoreRealExtent() once they are done with the image.
+ * This should be set to MS_TRUE only when called from msDrawMap(), see bug 945.
+ */
+imageObj *msPrepareImage(mapObj *map, int allow_nonsquare) 
 {
-    int i;
-    layerObj *lp=NULL;
-    int status;
-    enum MS_CONNECTION_TYPE lastconnectiontype;
-    imageObj *image = NULL;
-    struct mstimeval mapstarttime, mapendtime;
-    struct mstimeval starttime, endtime;
-    int oldAlphaBlending;  // allows toggling of gd alpha blending (bug 490)
-    
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
-    int numOWSRequests=0;
-    wmsParamsObj sLastWMSParams;
-
-    msHTTPInitRequestObj(asOWSReqInfo, MS_MAXLAYERS+1);
-    msInitWmsParamsObj(&sLastWMSParams);
-#endif
-
-    if (map->debug)
-    {
-        msGettimeofday(&mapstarttime, NULL);
-    }
+    int i, status;
+    imageObj *image=NULL;
 
     if(map->width == -1 || map->height == -1) {
-        msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-        msFreeWmsParamsObj(&sLastWMSParams);
-#endif
+        msSetError(MS_MISCERR, "Image dimensions not specified.", "msPrepareImage()");
         return(NULL);
     }
 
-    msApplyMapConfigOptions( map );
     msInitLabelCache(&(map->labelcache)); // this clears any previously allocated cache
 
     if(!map->outputformat) {
-        msSetError(MS_GDERR, "Map outputformat not set!", "msDrawMap()");
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-        msFreeWmsParamsObj(&sLastWMSParams);
-#endif
+        msSetError(MS_GDERR, "Map outputformat not set!", "msPrepareImage()");
         return(NULL);
     }
     else if( MS_RENDERER_GD(map->outputformat) )
@@ -153,7 +128,6 @@ imageObj *msDrawMap(mapObj *map)
 				map->web.imagepath, map->web.imageurl);        
         if( image != NULL ) msImageInitIM( image );
     }
-
     else if( MS_RENDERER_RAWDATA(map->outputformat) )
     {
         image = msImageCreate(map->width, map->height, map->outputformat,
@@ -181,18 +155,19 @@ imageObj *msDrawMap(mapObj *map)
     }
   
     if(!image) {
-        msSetError(MS_GDERR, "Unable to initialize image.", "msDrawMap()");
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-        msFreeWmsParamsObj(&sLastWMSParams);
-#endif
+        msSetError(MS_GDERR, "Unable to initialize image.", "msPrepareImage()");
         return(NULL);
     }
 
     /*
      * If we want to support nonsquare pixels, note that now, otherwise
-     * adjust the extent size to have square pixels. 
+     * adjust the extent size to have square pixels.
+     *
+     * If allow_nonsquare is set to MS_TRUE then the caller should call
+     * msMapRestoreRealExtent() once they are done with the image.
+     * This should be set to MS_TRUE only when called from msDrawMap(), see bug 945.
      */
-    if( msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE ) )
+    if( allow_nonsquare && msTestConfigOption( map, "MS_NONSQUARE", MS_FALSE ) )
     {
         double cellsize_x = (map->extent.maxx - map->extent.minx)/map->width;
         double cellsize_y = (map->extent.maxy - map->extent.miny)/map->height;
@@ -209,18 +184,14 @@ imageObj *msDrawMap(mapObj *map)
     else
         map->cellsize = msAdjustExtent(&(map->extent),map->width,map->height);
 
-    status = msCalculateScale(map->extent, map->units, map->width, map->height,
+    status = msCalculateScale(map->extent,map->units,map->width,map->height,
                               map->resolution, &map->scale);
-    if(status != MS_SUCCESS)
-    {
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-        msFreeWmsParamsObj(&sLastWMSParams);
-#endif
+    if(status != MS_SUCCESS) {
         msFreeImage(image);
         return(NULL);
     }
-    
-    // update geotransform based on adjusted extent. 
+
+   // update geotransform based on adjusted extent.
     msMapComputeGeotransform( map );
 
     // Do we need to fake out stuff for rotated support?
@@ -235,6 +206,53 @@ imageObj *msDrawMap(mapObj *map)
         map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
       else
         map->layers[i].scalefactor = 1;
+    }
+
+    return image;
+}
+
+
+/*
+ * Generic function to render the map file.
+ * The type of the image created is based on the
+ * imagetype parameter in the map file.
+*/
+
+imageObj *msDrawMap(mapObj *map)
+{
+    int i;
+    layerObj *lp=NULL;
+    int status = MS_FAILURE;
+    enum MS_CONNECTION_TYPE lastconnectiontype;
+    imageObj *image = NULL;
+    struct mstimeval mapstarttime, mapendtime;
+    struct mstimeval starttime, endtime;
+    int oldAlphaBlending;  // allows toggling of gd alpha blending (bug 490)
+    
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+    httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
+    int numOWSRequests=0;
+    wmsParamsObj sLastWMSParams;
+
+    msHTTPInitRequestObj(asOWSReqInfo, MS_MAXLAYERS+1);
+    msInitWmsParamsObj(&sLastWMSParams);
+#endif
+
+    if (map->debug)
+    {
+        msGettimeofday(&mapstarttime, NULL);
+    }
+
+    msApplyMapConfigOptions( map );
+
+    image = msPrepareImage(map, MS_TRUE);
+
+    if(!image) {
+        msSetError(MS_IMGERR, "Unable to initialize image.", "msDrawMap()");
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
+        return(NULL);
     }
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)

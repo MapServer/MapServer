@@ -1298,6 +1298,7 @@ MS_DLL_EXPORT void msClearReferenceMapPenValues(referenceMapObj *referencemap);
 MS_DLL_EXPORT void msClearQueryMapPenValues(queryMapObj *querymap);
 MS_DLL_EXPORT void msClearPenValues(mapObj *map);
 
+MS_DLL_EXPORT imageObj *msPrepareImage(mapObj *map, int allow_nonsquare);
 MS_DLL_EXPORT imageObj *msDrawMap(mapObj *map);
 MS_DLL_EXPORT imageObj *msDrawQueryMap(mapObj *map);
 MS_DLL_EXPORT int msLayerIsVisible(mapObj *map, layerObj *layer);
