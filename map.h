@@ -669,9 +669,11 @@ double dist(pointObj a, pointObj b);
 // For mappdf
 int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); // maputil.c
 
+   
 /*
 ** Main API Functions
 */
+   
 int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
 int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
 int msGetSymbolIndex(symbolSetObj *set, char *name);

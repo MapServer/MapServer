@@ -243,3 +243,14 @@ char *encode_url(char *data)
   
   return code;
 }
+
+void redirect(char *url)
+{
+  printf("Status: 302 Found\n");
+  printf("Uri: %s\n", url);
+  printf("Location: %s\n", url);
+  printf("Content-type: text/html%c%c",10,10);
+  fflush(stdout);
+  return;
+}
+

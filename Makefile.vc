@@ -160,8 +160,9 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
 		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
 		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj \
-                mappostgis.obj maplayer.obj mapresample.obj mapwms.obj \
-		mapwmslayer.obj mapgml.obj maporaclespatial.obj  mapprojhack.obj \
+        maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
+        mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
+        mapprojhack.obj \
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
