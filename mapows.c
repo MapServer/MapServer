@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.42  2004/10/01 19:14:47  frank
+ * use msIO_ calls
+ *
  * Revision 1.41  2004/09/30 13:01:43  julien
  * Fix a typo in contact information encoding
  *
@@ -513,18 +516,18 @@ int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata,
 
     if((value = msOWSLookupMetadata(metadata, namespaces, name)) != NULL)
     { 
-        fprintf(stream, format, value);
+        msIO_fprintf(stream, format, value);
     }
     else
     {
         if (action_if_not_found == OWS_WARN)
         {
-            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+            msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
             status = action_if_not_found;
         }
 
         if (default_value)
-            fprintf(stream, format, default_value);
+            msIO_fprintf(stream, format, default_value);
     }
 
     return status;
@@ -552,21 +555,21 @@ int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata,
     if((value = msOWSLookupMetadata(metadata, namespaces, name)))
     {
         pszEncodedValue = msEncodeHTMLEntities(value);
-        fprintf(stream, format, pszEncodedValue);
+        msIO_fprintf(stream, format, pszEncodedValue);
         free(pszEncodedValue);
     }
     else
     {
         if (action_if_not_found == OWS_WARN)
         {
-            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+            msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
             status = action_if_not_found;
         }
 
         if (default_value)
         {
             pszEncodedValue = msEncodeHTMLEntities(default_value);
-            fprintf(stream, format, default_value);
+            msIO_fprintf(stream, format, default_value);
             free(pszEncodedValue);
         }
     }
@@ -595,24 +598,24 @@ int msOWSPrintValidateMetadata(FILE *stream, hashTableObj *metadata,
     if((value = msOWSLookupMetadata(metadata, namespaces, name)))
     {
         if(msIsXMLTagValid(value) == MS_FALSE)
-            fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a "
+            msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a "
                     "XML tag context. -->\n", value);
-        fprintf(stream, format, value);
+        msIO_fprintf(stream, format, value);
     }
     else
     {
         if (action_if_not_found == OWS_WARN)
         {
-            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+            msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
             status = action_if_not_found;
         }
 
         if (default_value)
         {
             if(msIsXMLTagValid(value) == MS_FALSE)
-                fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
+                msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
                         "in a XML tag context. -->\n", default_value);
-            fprintf(stream, format, default_value);
+            msIO_fprintf(stream, format, default_value);
         }
     }
 
@@ -645,7 +648,7 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
          if((value = msOWSLookupMetadata(&(map->layers[i].metadata), namespaces, name)))
          { 
             encoded = msEncodeHTMLEntities(value);
-            fprintf(stream, format, encoded);
+            msIO_fprintf(stream, format, encoded);
             msFree(encoded);
             return status;
          }
@@ -654,14 +657,14 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
 
     if (action_if_not_found == OWS_WARN)
     {
-       fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
+       msIO_fprintf(stream, "<!-- WARNING: Mandatory metadata '%s%s' was missing in this context. -->\n", (namespaces?"..._":""), name);
        status = action_if_not_found;
     }
 
     if (default_value)
     {
        encoded = msEncodeHTMLEntities(default_value);
-       fprintf(stream, format, encoded);
+       msIO_fprintf(stream, format, encoded);
        msFree(encoded);
     }
    
@@ -680,18 +683,18 @@ int msOWSPrintParam(FILE *stream, const char *name, const char *value,
 
     if(value && strlen(value) > 0)
     { 
-        fprintf(stream, format, value);
+        msIO_fprintf(stream, format, value);
     }
     else
     {
         if (action_if_not_found == OWS_WARN)
         {
-            fprintf(stream, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", name);
+            msIO_fprintf(stream, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", name);
             status = action_if_not_found;
         }
 
         if (default_value)
-            fprintf(stream, format, default_value);
+            msIO_fprintf(stream, format, default_value);
     }
 
     return status;
@@ -711,21 +714,21 @@ int msOWSPrintEncodeParam(FILE *stream, const char *name, const char *value,
     if(value && strlen(value) > 0)
     { 
         encode = msEncodeHTMLEntities(value);
-        fprintf(stream, format, encode);
+        msIO_fprintf(stream, format, encode);
         msFree(encode);
     }
     else
     {
         if (action_if_not_found == OWS_WARN)
         {
-            fprintf(stream, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", name);
+            msIO_fprintf(stream, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", name);
             status = action_if_not_found;
         }
 
         if (default_value)
         {
             encode = msEncodeHTMLEntities(default_value);
-            fprintf(stream, format, encode);
+            msIO_fprintf(stream, format, encode);
             msFree(encode);
         }
     }
@@ -753,10 +756,10 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata,
       keywords = split(value, ',', &numkeywords);
       if(keywords && numkeywords > 0) {
         int kw;
-	    if(startTag) fprintf(stream, "%s", startTag);
+	    if(startTag) msIO_fprintf(stream, "%s", startTag);
 	    for(kw=0; kw<numkeywords; kw++) 
-            fprintf(stream, itemFormat, keywords[kw]);
-	    if(endTag) fprintf(stream, "%s", endTag);
+            msIO_fprintf(stream, itemFormat, keywords[kw]);
+	    if(endTag) msIO_fprintf(stream, "%s", endTag);
 	    msFreeCharArray(keywords, numkeywords);
       }
       return MS_TRUE;
@@ -786,14 +789,14 @@ int msOWSPrintEncodeMetadataList(FILE *stream, hashTableObj *metadata,
       keywords = split(value, ',', &numkeywords);
       if(keywords && numkeywords > 0) {
         int kw;
-	    if(startTag) fprintf(stream, "%s", startTag);
+	    if(startTag) msIO_fprintf(stream, "%s", startTag);
 	    for(kw=0; kw<numkeywords; kw++)
             {
                 encoded = msEncodeHTMLEntities(keywords[kw]);
-                fprintf(stream, itemFormat, encoded);
+                msIO_fprintf(stream, itemFormat, encoded);
                 msFree(encoded);
             }
-	    if(endTag) fprintf(stream, "%s", endTag);
+	    if(endTag) msIO_fprintf(stream, "%s", endTag);
 	    msFreeCharArray(keywords, numkeywords);
       }
       return MS_TRUE;
@@ -824,7 +827,7 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
   if (nService == OWS_WFS)
       pszTag = "LatLongBoundingBox";
 
-  fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
+  msIO_fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
          tabspace, pszTag, ll_ext.minx, ll_ext.miny, ll_ext.maxx, ll_ext.maxy);
 }
 
@@ -847,7 +850,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
     if( value != NULL )
     {
         encoded = msEncodeHTMLEntities(value);
-        fprintf(stream, "%s<BoundingBox SRS=\"%s\"\n"
+        msIO_fprintf(stream, "%s<BoundingBox SRS=\"%s\"\n"
                "%s            minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\"",
                tabspace, encoded, 
                tabspace, extent->minx, extent->miny, 
@@ -859,13 +862,13 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
         {
             encoded_resx = msEncodeHTMLEntities(resx);
             encoded_resy = msEncodeHTMLEntities(resy);
-            fprintf( stream, "\n%s            resx=\"%s\" resy=\"%s\"",
+            msIO_fprintf( stream, "\n%s            resx=\"%s\" resy=\"%s\"",
                     tabspace, encoded_resx, encoded_resy );
             msFree(encoded_resx);
             msFree(encoded_resy);
         }
  
-        fprintf( stream, " />\n" );
+        msIO_fprintf( stream, " />\n" );
     }
 
 }
@@ -889,20 +892,20 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     {
       if(bEnableContact == 0)
       {
-          fprintf(stream, "%s<ContactInformation>\n", tabspace);
+          msIO_fprintf(stream, "%s<ContactInformation>\n", tabspace);
           bEnableContact = 1;
       }
 
       // ContactPersonPrimary is optional, but when present then all its 
       // sub-elements are mandatory
-      fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
+      msIO_fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
 
       msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactperson", 
                   OWS_WARN, "      <ContactPerson>%s</ContactPerson>\n", NULL);
       msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactorganization", 
              OWS_WARN, "      <ContactOrganization>%s</ContactOrganization>\n",
              NULL);
-      fprintf(stream, "%s  </ContactPersonPrimary>\n", tabspace);
+      msIO_fprintf(stream, "%s  </ContactPersonPrimary>\n", tabspace);
     }
 
     if(bEnableContact == 0)
@@ -931,13 +934,13 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     {
       if(bEnableContact == 0)
       {
-          fprintf(stream, "%s<ContactInformation>\n", tabspace);
+          msIO_fprintf(stream, "%s<ContactInformation>\n", tabspace);
           bEnableContact = 1;
       }
 
       // ContactAdress is optional, but when present then all its 
       // sub-elements are mandatory
-      fprintf(stream, "%s  <ContactAddress>\n", tabspace);
+      msIO_fprintf(stream, "%s  <ContactAddress>\n", tabspace);
 
       msOWSPrintEncodeMetadata(stream, metadata, "OMF","addresstype", OWS_WARN,
                               "        <AddressType>%s</AddressType>\n", NULL);
@@ -951,7 +954,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
                     "        <PostCode>%s</PostCode>\n", NULL);
       msOWSPrintEncodeMetadata(stream, metadata, "OMF", "country", OWS_WARN,
                     "        <Country>%s</Country>\n", NULL);
-      fprintf(stream, "%s  </ContactAddress>\n", tabspace);
+      msIO_fprintf(stream, "%s  </ContactAddress>\n", tabspace);
     }
 
 
@@ -1009,7 +1012,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 
     if(bEnableContact == 1)
     {
-        fprintf(stream, "%s</ContactInformation>\n", tabspace);
+        msIO_fprintf(stream, "%s</ContactInformation>\n", tabspace);
     }
   }
 }
