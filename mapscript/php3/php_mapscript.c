@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.194.2.4  2004/07/07 19:37:19  dan
+ * Correct bug in Zoomscale : setting the maxextents. (backport of Bug 75)
+ *
  * Revision 1.194.2.3  2004/05/13 21:37:44  dan
  * Use MS_INIT_COLOR() in setRGB() (bug 663)
  *
@@ -3046,7 +3049,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         }
         if (self->extent.maxy > poMaxGeorefExt->maxy)
         {
-            self->extent.miny = poMaxGeorefExt->maxy;
+            self->extent.maxy = poMaxGeorefExt->maxy;
             oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }

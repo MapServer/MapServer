@@ -33,6 +33,8 @@ Version 4.2.1 (CVS)
 - Fixed problem with tiled raster layers if there is no tile in the current
   view (bug 729).
 
+- Fixed problem with maxy in PHP MapScript's map->zoomscale() (bug 75)
+
 
 Version 4.2.0 (2004-05-25)
 --------------------------
