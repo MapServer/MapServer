@@ -3025,7 +3025,7 @@ elif test -n "$with_mpatrol" -a "$with_patrol" != "no" ; then
       { echo "configure: error: "Could not find mpatrol.h or libmpatrol.a/libmpatrol.so in $MPATROL_DIR."" 1>&2; exit 1; }
   fi
 
-  SDE_ENABLED=-DUSE_MPATROL
+  MPATROL_ENABLED=-DUSE_MPATROL
   echo "$ac_t""        using MPATROL from $MPATROL_DIR." 1>&6
 else
   echo "$ac_t""        MPATROL support not requested." 1>&6

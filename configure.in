@@ -526,7 +526,7 @@ elif test -n "$with_mpatrol" -a "$with_patrol" != "no" ; then
       AC_MSG_ERROR("Could not find mpatrol.h or libmpatrol.a/libmpatrol.so in $MPATROL_DIR.")
   fi
 
-  SDE_ENABLED=-DUSE_MPATROL
+  MPATROL_ENABLED=-DUSE_MPATROL
   AC_MSG_RESULT([        using MPATROL from $MPATROL_DIR.])
 else
   AC_MSG_RESULT([        MPATROL support not requested.])
