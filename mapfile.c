@@ -264,7 +264,6 @@ void initJoin(joinObj *join)
   join->footer = NULL;
 
   join->type = MS_SINGLE; /* one-to-one */
-  join->class = NULL;
 }
 
 void freeJoin(joinObj *join) 
@@ -288,10 +287,9 @@ void freeJoin(joinObj *join)
   msFree(join->data);
 }
 
-int loadJoin(joinObj *join, classObj *class)
+int loadJoin(joinObj *join)
 {
   initJoin(join);
-  join->class = (classObj *) class;
 
   for(;;) {
     switch(msyylex()) {
@@ -1227,12 +1225,7 @@ int initClass(classObj *class)
   initLabel(&(class->label));
   class->label.sizescaled = class->label.size = -1; // no default
 
-  class->numjoins = 0;
   class->template = NULL;
-  if((class->joins = (joinObj *)malloc(MS_MAXJOINS*sizeof(joinObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initClass()");
-    return(-1);
-  }
 
   class->type = -1;
   class->metadata = NULL;
@@ -1259,9 +1252,6 @@ void freeClass(classObj *class)
   msFree(class->name);
   msFree(class->title);
   msFree(class->template);
-  for(i=0;i<class->numjoins;i++) // each join
-    freeJoin(&(class->joins[i]));
-  msFree(class->joins);
   if(class->metadata) msFreeHashTable(class->metadata);
   for(i=0;i<class->numstyles;i++) // each style    
     freeStyle(&(class->styles[i]));
@@ -1333,11 +1323,7 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(EXPRESSION):
       if(loadExpression(&(class->expression)) == -1) return(-1);
-      break;
-    case(JOIN):
-      if(loadJoin(&(class->joins[class->numjoins]), class) == -1) return(-1);
-      class->numjoins++;
-      break;
+      break;    
     case(LABEL):
       class->label.sizescaled = class->label.size = MS_MEDIUM; // only set a default if the LABEL section is present
       if(loadLabel(&(class->label), map) == -1) return(-1);
@@ -1592,9 +1578,7 @@ static void writeClass(classObj *class, FILE *stream)
     fprintf(stream, "      EXPRESSION ");
     writeExpression(&(class->expression), stream);
     fprintf(stream, "\n");
-  }
-  for(i=0; i<class->numjoins; i++)
-    writeJoin(&(class->joins[i]), stream);
+  } 
   writeLabel(&(class->label), stream, "      ");
   if(class->maxscale > -1) fprintf(stream, "      MAXSCALE %g\n", class->maxscale);
   if(class->metadata) writeHashTable(class->metadata, stream, "      ", "METADATA");
@@ -1703,6 +1687,12 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->num_processing = 0;
   layer->processing = NULL;
+
+  layer->numjoins = 0;
+  if((layer->joins = (joinObj *)malloc(MS_MAXJOINS*sizeof(joinObj))) == NULL) {
+    msSetError(MS_MEMERR, NULL, "initLayer()");
+    return(-1);
+  }
   
   return(0);
 }
@@ -1750,6 +1740,11 @@ void freeLayer(layerObj *layer) {
       msFreeCharArray( layer->processing, layer->num_processing );
 
   msFree(layer->styleitem);
+
+  for(i=0;i<layer->numjoins;i++) // each join
+    freeJoin(&(layer->joins[i]));
+  msFree(layer->joins);
+  layer->numjoins = 0;
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -1837,6 +1832,10 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(HEADER):      
       if((layer->header = getString()) == NULL) return(-1);
+      break;
+    case(JOIN):
+      if(loadJoin(&(layer->joins[layer->numjoins])) == -1) return(-1);
+      layer->numjoins++;
       break;
     case(LABELANGLEITEM):
       if((layer->labelangleitem = getString()) == NULL) return(-1);
@@ -2223,6 +2222,8 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if(layer->footer) fprintf(stream, "    FOOTER \"%s\"\n", layer->footer);
   if(layer->group) fprintf(stream, "    GROUP \"%s\"\n", layer->group);
   if(layer->header) fprintf(stream, "    HEADER \"%s\"\n", layer->header);
+  for(i=0; i<layer->numjoins; i++)
+    writeJoin(&(layer->joins[i]), stream);
   if(layer->labelangleitem) fprintf(stream, "    LABELANGLEITEM \"%s\"\n", layer->labelangleitem);
   if(!layer->labelcache) fprintf(stream, "    LABELCACHE OFF\n");
   if(layer->labelitem) fprintf(stream, "    LABELITEM \"%s\"\n", layer->labelitem);

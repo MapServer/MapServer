@@ -266,10 +266,8 @@ typedef struct {
   char *header;
 #ifndef __cplusplus
   char *template;
-  struct class_obj *class;
 #else
   char *_template;
-  struct class_obj *_class;
 #endif
   char *footer;
 
@@ -428,9 +426,6 @@ typedef struct class_obj{
 #else
   char *_template;
 #endif
-
-  joinObj *joins;
-  int numjoins;
 
   int type;
 
@@ -718,6 +713,9 @@ typedef struct layer_obj {
   int  num_processing;
   char **processing;
 #endif
+
+  joinObj *joins;
+  int numjoins;
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
