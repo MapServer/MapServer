@@ -237,10 +237,10 @@ int loadSymbol(symbolObj *s)
       break;
     case(TYPE):
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_TRUETYPE)) == -1)
+      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_TRUETYPE)) == -1)
 	return(-1);	
 #else
-      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE)) == -1)
+      if((s->type = getSymbol(4,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE)) == -1)
 	return(-1);
 #endif
       break;
