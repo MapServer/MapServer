@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.122  2002/11/15 15:32:03  dan
+ * ReferenceMap's extents, color and outlinecolor shouldn't be marked read-only
+ *
  * Revision 1.121  2002/11/13 16:54:23  julien
  * Change the search of the header to be flexible.
  *
@@ -9390,7 +9393,8 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
              strcmp( "color",  pPropertyName->value.str.val) == 0 ||
              strcmp( "outlinecolor", pPropertyName->value.str.val) == 0)
     {
-        php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
+        php3_error(E_ERROR,"Property '%s' is an object and cannot be set using set().  Use the %s object's methods instead.", 
+                            pPropertyName->value.str.val, 
                             pPropertyName->value.str.val);
         RETURN_LONG(-1);
     }                  

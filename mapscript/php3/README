@@ -768,9 +768,9 @@ Constructor:
    int      width
    int      height
    int      status
-   rectObj  extent       (read-only)
-   ColorObj color        (read-only)
-   ColorObj outlinecolor (read-only)
+   rectObj  extent
+   ColorObj color
+   ColorObj outlinecolor
 
  Method :
 
