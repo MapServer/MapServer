@@ -762,7 +762,17 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
                        "application/vnd.ogc.gml",
                        NULL);       
        
-       
+    msWMSPrintRequestCap(wmtver, "DescribeLayer", script_url_encoded,
+                         "text/xml",
+                         NULL);
+
+    msWMSPrintRequestCap(wmtver, "GetLegendGraphic", script_url_encoded,
+                    mime_list[0], mime_list[1], mime_list[2], mime_list[3],
+                    mime_list[4], mime_list[5], mime_list[6], mime_list[7],
+                    mime_list[8], mime_list[9], mime_list[10], mime_list[11],
+                    mime_list[12], mime_list[13], mime_list[14], mime_list[15],
+                    mime_list[16], mime_list[17], mime_list[18], mime_list[19],
+                    NULL );
   }
 
   printf("  </Request>\n");
@@ -1209,9 +1219,8 @@ int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names,
   char **layers = NULL;
   int numlayers = 0;
   int j, k;
-  int alllayers = 0;
   layerObj *lp = NULL;
-  char *pszTmp = NULL;
+  const char *pszOnlineResMap = NULL, *pszOnlineResLyr = NULL;
 
    for(i=0; map && i<numentries; i++) {
      if(strcasecmp(names[i], "LAYERS") == 0) {
@@ -1220,47 +1229,51 @@ int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names,
      }
    }
 
-   if (layers == NULL) {
-     alllayers = 1;
-     numlayers = map->numlayers;
-   }
-
-   printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+   msOWSPrintMetadata(stdout, map->web.metadata, "wms_encoding", OWS_NOERR,
+                      "<?xml version='1.0' encoding=\"%s\"?>\n",
+                      "ISO-8859-1");
    printf("<!DOCTYPE WMS_DescribeLayerResponse>\n");
    printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
       
-   //check if metadata wfs_onlineresource is available
-   pszTmp = msLookupHashTable(map->web.metadata, "wfs_onlineresource");
-   if (pszTmp && strlen(pszTmp) > 0) 
+   //check if map-level metadata wfs_onlineresource is available
+   pszOnlineResMap = msLookupHashTable(map->web.metadata,"wfs_onlineresource");
+   if (pszOnlineResMap && strlen(pszOnlineResMap) == 0)
+       pszOnlineResMap = NULL;
+
+   for(j=0; j<numlayers; j++) 
    {
-     for(j=0; j<numlayers; j++) 
-     {
        for(k=0; k<map->numlayers; k++) 
        {
-         if (alllayers || (map->layers[k].name && 
-                           strcasecmp(map->layers[k].name, layers[j]) == 0))
+         lp = &map->layers[k];
+         if (lp->name && strcasecmp(lp->name, layers[j]) == 0)
          {
-           if (map->layers[k].type == MS_LAYER_POINT ||
-               map->layers[k].type == MS_LAYER_LINE ||
-               map->layers[k].type == MS_LAYER_POLYGON)
+             /* Look for a WFS onlineresouce at the layer level and then at
+              * the map level.
+              */
+           pszOnlineResLyr = msLookupHashTable(lp->metadata,
+                                               "wfs_onlineresource");
+           if (pszOnlineResLyr == NULL || strlen(pszOnlineResLyr) == 0)
+               pszOnlineResLyr = pszOnlineResMap;
+
+           if (pszOnlineResLyr && (lp->type == MS_LAYER_POINT ||
+                                   lp->type == MS_LAYER_LINE ||
+                                   lp->type == MS_LAYER_POLYGON ) )
            { 
              printf("<LayerDescription name=\"%s\" wfs=\"%s\">\n",
-                    map->layers[k].name, pszTmp);
-             lp = &map->layers[k];
-             printf("<Query typeName=\"%s\" />\n",
-                          lp->name);
+                    lp->name, pszOnlineResLyr);
+             printf("<Query typeName=\"%s\" />\n", lp->name);
              printf("</LayerDescription>\n");
            }
            else
            {
              printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
-                    map->layers[j].name);
+                    lp->name);
            }
            break;
          }
        }
-     }
    }
+
    printf("</WMS_DescribeLayerResponse>\n");
 
    if (layers)
