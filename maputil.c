@@ -1,0 +1,1675 @@
+#include "map.h"
+#include "mapparser.h"
+
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
+extern int yyparse();
+extern int yylex();
+extern char *yytext;
+
+/*
+** Load item names into a character array
+*/
+char **msGetDBFItems(DBFHandle dbffile)
+{
+  char **items;
+  int i, nFields;
+  char fName[32];
+
+  if((nFields = DBFGetFieldCount(dbffile)) == 0) {
+    msSetError(MS_DBFERR, "File contains no data.", "msGetDBFItems()");
+    return(NULL);
+  }
+
+  if((items = (char **)malloc(sizeof(char *)*nFields)) == NULL) {
+    msSetError(MS_MEMERR, NULL, "msGetDBFItems()");
+    return(NULL);
+  }
+
+  for(i=0;i<nFields;i++) {
+    DBFGetFieldInfo(dbffile, i, fName, NULL, NULL);
+    items[i] = strdup(fName);
+  }
+
+  return(items);
+}
+
+/*
+** Load item values into a character array
+*/
+char **msGetDBFValues(DBFHandle dbffile, int record)
+{
+  char **values;
+  int i, nFields;
+
+  if((nFields = DBFGetFieldCount(dbffile)) == 0) {
+    msSetError(MS_DBFERR, "File contains no data.", "msGetDBFValues()");
+    return(NULL);
+  }
+
+  if((values = (char **)malloc(sizeof(char *)*nFields)) == NULL) {
+    msSetError(MS_MEMERR, NULL, "msGetDBFValues()");
+    return(NULL);
+  }
+
+  for(i=0;i<nFields;i++)
+    values[i] = strdup(DBFReadStringAttribute(dbffile, record, i));
+
+  return(values);
+}
+
+/*
+** Which column number in the .DBF file does the item correspond to
+*/
+int msGetItemIndex(DBFHandle dbffile, char *name)
+{
+  int i;
+  DBFFieldType dbfField;
+  int fWidth,fnDecimals; /* field width and number of decimals */    
+  char fName[32]; /* field name */
+
+  if(!name) {
+    msSetError(MS_MISCERR, "NULL item name passed.", "msGetItemIndex()");    
+    return(-1);
+  }
+
+  /* does name exist as a field? */
+  for(i=0;i<DBFGetFieldCount(dbffile);i++) {
+    dbfField = DBFGetFieldInfo(dbffile,i,fName,&fWidth,&fnDecimals);
+    if(strcasecmp(name,fName) == 0) /* found it */
+      return(i);
+  }
+
+  msSetError(MS_DBFERR, NULL, "msFindRecords()");
+  sprintf(ms_error.message, "Item %s not found.", name);
+  return(-1); /* item not found */
+}
+
+extern int yyresult; // result of parsing, true/false
+extern int yystate;
+extern char *yystring;
+extern int yyparse();
+
+/* 
+** Returns class index for a given layer and record, non-shapefile data. Used in mapraster.c as well.
+*/
+int getClassIndex(layerObj *layer, char *str)
+{
+  int i;
+  char *tmpstr=NULL;
+
+  if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
+    return(0);
+
+  if(!str) return(-1);
+
+  for(i=0; i<layer->numclasses; i++) {
+    switch(layer->class[i].expression.type) {
+    case(MS_STRING):
+      if(strcmp(layer->class[i].expression.string, str) == 0) /* got a match */
+	return(i);
+      break;
+    case(MS_REGEX):
+      if(regexec(&(layer->class[i].expression.regex), str, 0, NULL, 0) == 0) /* got a match */
+	return(i);
+      break;
+    case(MS_EXPRESSION):
+      tmpstr = strdup(layer->class[i].expression.string);
+      tmpstr = gsub(tmpstr, "[value]", str);
+
+      yystate = 4; yystring = tmpstr;
+      if(yyparse() != 0)
+	return(-1);
+
+      free(tmpstr);
+
+      if(yyresult) /* got a match */
+	return(i);
+    }
+  }
+
+  return(-1); /* not found */
+}
+
+/* 
+** Returns class index for a given layer and record, shapefile data only, supports logical expressions
+*/
+static int shpGetClassIndex(DBFHandle hDBF, layerObj *layer, int record, int item)
+{
+  int i,j;
+  int numitems=0;
+  char *tmpstr=NULL, **values=NULL;
+  int found=MS_FALSE;
+
+  if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
+    return(0);
+
+  for(i=0; i<layer->numclasses; i++) {
+    switch(layer->class[i].expression.type) {
+    case(MS_STRING):
+      if(strcmp(layer->class[i].expression.string, DBFReadStringAttribute(hDBF, record, item)) == 0) /* got a match */
+	found=MS_TRUE;
+      break;
+    case(MS_EXPRESSION):
+
+      tmpstr = strdup(layer->class[i].expression.string);
+
+      if(!values) {
+	numitems = DBFGetFieldCount(hDBF);
+	values = msGetDBFValues(hDBF, record);
+      }
+
+      if(!(layer->class[i].expression.items)) { // build cache of item replacements	
+	char **items=NULL, substr[19];
+
+	numitems = DBFGetFieldCount(hDBF);
+	items = msGetDBFItems(hDBF);
+	
+	layer->class[i].expression.items = (char **)malloc(numitems);
+	layer->class[i].expression.indexes = (int *)malloc(numitems);
+
+	for(j=0; j<numitems; j++) {
+	  sprintf(substr, "[%s]", items[j]);
+	  if(strstr(tmpstr, substr) != NULL) {
+	    layer->class[i].expression.indexes[layer->class[i].expression.numitems] = j;
+	    layer->class[i].expression.items[layer->class[i].expression.numitems] = strdup(substr);
+	    layer->class[i].expression.numitems++;
+	  }
+	}
+
+	msFreeCharArray(items,numitems);
+      }
+
+      for(j=0; j<layer->class[i].expression.numitems; j++)
+	tmpstr = gsub(tmpstr, layer->class[i].expression.items[j], values[layer->class[i].expression.indexes[j]]);
+
+      yystate = 4; yystring = tmpstr;
+      if(yyparse() != 0)
+	return(-1);
+
+      free(tmpstr);
+
+      if(yyresult) /* got a match */
+	found=MS_TRUE;
+      break;
+    case(MS_REGEX):
+      if(regexec(&(layer->class[i].expression.regex), DBFReadStringAttribute(hDBF, record, item), 0, NULL, 0) == 0) /* got a match */
+	found=MS_TRUE;
+      break;
+    }
+
+    if(found) {
+      if(values) msFreeCharArray(values,numitems);
+      return(i);
+    }
+  }
+
+  return(-1); /* not found */
+}
+
+/*
+** Return the annotation string to use for a given layer/class/feature combination.
+** Feature and class numbers are assumed to be valid.
+*/
+static char *shpGetAnnotation(DBFHandle hDBF, classObj *class, int record, int item)
+{
+  int i;
+  char *tmpstr=NULL;
+  char **values;
+  int numitems;
+
+  if(class->text.string) { // test for global label first
+    tmpstr = strdup(class->text.string);
+    switch(class->text.type) {
+    case(MS_STRING):
+      break;
+    case(MS_EXPRESSION):
+      numitems = DBFGetFieldCount(hDBF);
+      values = msGetDBFValues(hDBF, record);
+
+      if(!(class->text.items)) { // build cache of item replacements	
+	char **items=NULL, substr[19];
+
+	numitems = DBFGetFieldCount(hDBF);
+	items = msGetDBFItems(hDBF);
+	
+	class->text.items = (char **)malloc(numitems);
+	class->text.indexes = (int *)malloc(numitems);
+	
+	for(i=0; i<numitems; i++) {
+	  sprintf(substr, "[%s]", items[i]);
+	  if(strstr(tmpstr, substr) != NULL) {
+	    class->text.indexes[class->text.numitems] = i;
+	    class->text.items[class->text.numitems] = strdup(substr);
+	    class->text.numitems++;
+	  }
+	}
+	
+	msFreeCharArray(items,numitems);
+      }
+      
+      for(i=0; i<class->text.numitems; i++)
+	tmpstr = gsub(tmpstr, class->text.items[i], values[class->text.indexes[i]]); 
+      
+      msFreeCharArray(values,numitems);
+      break;
+    }
+  } else {
+    if(item < 0) return(NULL);    
+    tmpstr = strdup(DBFReadStringAttribute(hDBF, record, item));
+  }
+
+  return(tmpstr);
+}
+
+/* 
+** Adjusts an image size in one direction to fit an extent.
+*/
+int msAdjustImage(rectObj rect, int *width, int *height)
+{
+  if(*width == -1 && *height == -1) {
+    msSetError(MS_MISCERR, "Cannot calculate both image height and width.", "msAdjustImage()");
+    return(-1);
+  }
+  
+  if(*width > 0)
+    *height = MS_NINT((rect.maxy - rect.miny)/((rect.maxx - rect.minx)/(*width)));
+  else
+    *width = MS_NINT((rect.maxx - rect.minx)/((rect.maxy - rect.miny)/(*height)));
+
+  return(0);
+}
+
+/* 
+** Make sure extent fits image window to be created. Returns cellsize of output image.
+*/
+double msAdjustExtent(rectObj *rect, int width, int height) 
+{
+  double cellsize, ox, oy;
+
+  cellsize = MS_MAX((rect->maxx - rect->minx)/(width-1), (rect->maxy - rect->miny)/(height-1));
+
+  if(cellsize <= 0) /* avoid division by zero errors */
+    return(0);
+
+  ox = MS_NINT(MS_MAX(((width-1) - (rect->maxx - rect->minx)/cellsize)/2,0));
+  oy = MS_NINT(MS_MAX(((height-1) - (rect->maxy - rect->miny)/cellsize)/2,0));
+
+  rect->minx = rect->minx - ox*cellsize;
+  rect->miny = rect->miny - oy*cellsize;
+  rect->maxx = rect->maxx + ox*cellsize;
+  rect->maxy = rect->maxy + oy*cellsize;
+
+  return(cellsize);
+}
+
+/*
+** Does several things related to scaling. Turns layers OFF that fall outside scaling limits. 
+** Toggles an annotation flag based on scale. Applies scaling to symbols and fonts for layers 
+** with a symbol scale.
+*/
+void msApplyScale(mapObj *map)
+{
+  int i,j;
+  double scalefactor;
+  layerObj *layer;
+
+  if(map->scaled) return;
+
+  if(map->scale == -1) return;
+
+  for(i=0; i<map->numlayers; i++) {
+    layer = &(map->layers[i]);
+
+    // check status
+    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
+      layer->status = MS_OFF;
+    if((layer->minscale > 0) && (map->scale <= layer->minscale))
+      layer->status = MS_OFF;
+
+    // check annotation status
+    if(layer->annotate) {
+      if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
+	layer->annotate = MS_FALSE;
+      if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
+	layer->annotate = MS_FALSE;
+    }
+
+    // apply scaling to symbols and fonts
+    if(layer->symbolscale > 0) {
+      scalefactor = layer->symbolscale/map->scale;
+      for(j=0; j<layer->numclasses; j++) {
+	layer->class[j].size = MS_NINT(layer->class[j].size * scalefactor);
+	layer->class[j].size = MS_MAX(layer->class[j].size, layer->class[j].minsize);
+	layer->class[j].size = MS_MIN(layer->class[j].size, layer->class[j].maxsize);
+
+#ifdef USE_TTF
+	if(layer->class[j].label.type == MS_TRUETYPE) { 
+	  layer->class[j].label.size = MS_NINT(layer->class[j].label.size * scalefactor);
+	  layer->class[j].label.size = MS_MAX(layer->class[j].label.size, layer->class[j].label.minsize);
+	  layer->class[j].label.size = MS_MIN(layer->class[j].label.size, layer->class[j].label.maxsize);
+	}
+#endif
+
+      }
+    }
+  }
+
+  map->scaled = MS_TRUE;
+}
+
+gdImagePtr msDrawMap(mapObj *map)
+{
+  int i;
+  gdImagePtr img=NULL;
+  layerObj *lp=NULL;
+
+  if(map->width == -1 ||  map->height == -1)
+    if(msAdjustImage(map->extent, &map->width, &map->height) == -1)
+      return(NULL);
+
+  img = gdImageCreate(map->width, map->height);
+  if(!img) {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawMap()");
+    return(NULL);
+  }  
+  
+  if(msLoadPalette(img, &(map->palette), map->imagecolor) == -1)
+    return(NULL);
+  
+  map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
+
+  msApplyScale(map);
+
+  for(i=0; i<map->numlayers; i++) { /* for each layer */
+
+    lp = &(map->layers[i]);
+    
+    if(lp->postlabelcache) // wait to draw
+      continue;
+
+    if(lp->features)
+      msDrawInlineLayer(map, lp, img);
+    else
+      if(lp->type == MS_RASTER) {
+	if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
+      } else {	
+	if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+      }
+  }
+
+  if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
+    msEmbedScalebar(map, img);
+
+  if(msDrawLabelCache(img, map) == -1) 
+    return(NULL);
+
+  for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
+
+    lp = &(map->layers[i]);
+    
+    if(!lp->postlabelcache) 
+      continue;
+
+    if(lp->features)
+      msDrawInlineLayer(map, lp, img);
+    else
+      if(lp->type == MS_RASTER) {
+	if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
+      } else {	
+	if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+      }
+  }
+
+  if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
+    msEmbedScalebar(map, img);
+
+  return(img);
+}
+
+gdImagePtr msDrawQueryMap(mapObj *map, queryResultObj *results)
+{
+  int i,j;
+  gdImagePtr img=NULL;
+  layerObj *lp=NULL;
+  char color_buffer[MS_MAXCLASSES];
+
+  if(map->width == -1 ||  map->height == -1)
+    if(msAdjustImage(map->extent, &map->width, &map->height) == -1)
+      return(NULL);
+
+  if(map->querymap.width != -1) map->width = map->querymap.width;
+  if(map->querymap.height != -1) map->height = map->querymap.height;
+
+  img = gdImageCreate( map->width, map->height);
+  if(!img) {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawQueryMap()");
+    return(NULL);
+  }
+  
+  if(msLoadPalette(img, &(map->palette), map->imagecolor) == -1)
+    return(NULL);
+
+  map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
+
+  msApplyScale(map);
+  
+  for(i=0; i<map->numlayers; i++) { /* for each layer */
+
+    lp = &(map->layers[i]);
+
+    if(lp->postlabelcache) // wait to draw
+      continue;
+
+    if(lp->features)
+      msDrawInlineLayer(map, lp, img);
+    else {
+      if(lp->type == MS_RASTER) { 
+	if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
+      } else {
+	
+	switch(map->querymap.style) {
+	case(MS_NORMAL):
+	  if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+	  break;
+	case(MS_HILITE): /* draw selected features in special color, other features get drawn normally */
+	  if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL); /* 1st, draw normally */
+	  if(results->layers[i].status && results->layers[i].numresults > 0) {
+	    for(j=0; j<lp->numclasses; j++) {
+	      color_buffer[j] = lp->class[j].color; // save the color
+	      lp->class[j].color = map->querymap.color;
+	    }
+	    if(msDrawShapefileLayer(map, lp, img, results->layers[i].status) == -1) return(NULL);
+	    for(j=0; j<lp->numclasses; j++)	      
+	      lp->class[j].color = color_buffer[j]; // restore the color
+	  }
+	  break;
+	case(MS_SELECTED): /* draw only the selected features, normally */
+	  if(!results->layers[i].status) {
+	    if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+	  } else {
+	    if(results->layers[i].numresults > 0)
+	      if(msDrawShapefileLayer(map, lp, img, results->layers[i].status) == -1) return(NULL);
+	  }
+	  break;
+	}
+      }
+    }
+  }
+
+  if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
+    msEmbedScalebar(map, img);
+
+  if(msDrawLabelCache(img, map) == -1)
+    return(NULL);
+  
+  for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
+
+    lp = &(map->layers[i]);
+    
+    if(!lp->postlabelcache) 
+      continue;
+
+    if(lp->features)
+      msDrawInlineLayer(map, lp, img);
+    else
+      if(lp->type == MS_RASTER) {
+	if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
+      } else {	
+	if(msDrawShapefileLayer(map, lp, img, NULL) == -1) return(NULL);
+      }
+  }
+
+  if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
+    msEmbedScalebar(map, img);
+
+  return(img);
+}
+
+/*
+** function to render an individual point
+*/
+int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, char *class_string, char *label_string) 
+{
+  int c;
+  char *text=NULL;
+
+  switch(layer->type) {      
+  case MS_ANNOTATION:
+    
+    if((c = getClassIndex(layer, class_string)) == -1) return(0);
+ 
+#ifdef USE_PROJ
+    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+      msProjectPoint(layer->projection.proj, map->projection.proj, point);
+#endif
+ 
+    if(layer->transform) {
+      if(!msPointInRect(point, &map->extent)) return(0);
+      point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
+      point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
+    }
+
+    if(label_string) text = label_string;
+    else text = layer->class[c].text.string;
+      
+    if(text) {
+      if(layer->labelcache)
+	msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
+      else {
+	if(layer->class[c].color == -1)
+	  msDrawMarkerSymbol(&map->markerset, img, point, &layer->class[c]);
+	msDrawLabel(img, map, *point, text, &layer->class[c].label);
+      }
+    }
+    break;
+
+  case MS_POINT:
+
+    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
+
+#ifdef USE_PROJ
+    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+      msProjectPoint(layer->projection.proj, map->projection.proj, point);
+#endif
+
+    if(layer->transform) {
+      if(!msPointInRect(point, &map->extent)) return(0);
+      point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
+      point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
+      msDrawMarkerSymbol(&map->markerset, img, point, &layer->class[c]);
+    } else {
+      msDrawMarkerSymbol(&map->markerset, img, point, &layer->class[c]);
+    }
+
+    if(label_string) text = label_string; 
+    else text = layer->class[c].text.string;
+	
+    if(text) {
+      if(layer->labelcache)
+	msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
+      else {
+	if(layer->class[c].color == -1)
+	  msDrawMarkerSymbol(&map->markerset, img, point, &layer->class[c]);
+	msDrawLabel(img, map, *point, text, &layer->class[c].label);
+      }
+    }
+    break;
+  default:
+    break; /* don't do anything with layer of other types */
+  }
+
+  return(1); /* all done, no cleanup */
+}
+
+/*
+** function to render an individual shape
+*/
+int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, char *class_string, char *label_string) 
+{
+  int i,j,c;
+  rectObj cliprect;
+  pointObj annopnt;
+  double angle, length;
+  char *text=NULL;
+  pointObj *pnt;
+
+  /* Set clipping rectangle */
+  if(layer->transform) {
+    cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
+    cliprect.miny = map->extent.miny - 2*map->cellsize;
+    cliprect.maxx = map->extent.maxx + 2*map->cellsize;
+    cliprect.maxy = map->extent.maxy + 2*map->cellsize;
+  }
+    
+  switch(layer->type) {      
+  case MS_ANNOTATION:
+     
+    if((c = getClassIndex(layer, class_string)) == -1) return(0);
+ 
+#ifdef USE_PROJ
+    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
+#endif
+
+    for(j=0; j<shape->numlines;j++) {
+      for(i=0; i<shape->line[j].numpoints;i++) {
+
+	pnt = &(shape->line[j].point[i]);
+	  
+	if(layer->transform) {
+	  if(!msPointInRect(pnt, &map->extent)) return(0);
+	  pnt->x = MS_NINT((pnt->x - map->extent.minx)/map->cellsize); 
+	  pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
+	}
+	  
+	if(label_string) text = label_string;
+	else text = layer->class[c].text.string;
+
+	if(text) {
+	  if(layer->labelcache)
+	    msAddLabel(map, layer->index, c, -1, -1, *pnt, text, -1);
+	  else {
+	    if(layer->class[c].color == -1)
+	      msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	    msDrawLabel(img, map, *pnt, text, &layer->class[c].label);
+	  }
+	}
+      }    
+    }
+    break;
+
+  case MS_POINT:
+
+    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
+
+#ifdef USE_PROJ
+    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
+#endif
+
+    for(j=0; j<shape->numlines;j++) {
+      for(i=0; i<shape->line[j].numpoints;i++) {
+	  
+	pnt = &(shape->line[j].point[i]);
+	
+	if(layer->transform) {
+	  if(!msPointInRect(pnt, &map->extent)) return(0);
+	  pnt->x = MS_NINT((pnt->x - map->extent.minx)/map->cellsize); 
+	  pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
+	  msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	} else {
+	  msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	}
+
+	if(label_string) text = label_string; 
+	else text = layer->class[c].text.string;
+
+	if(text) {
+	  if(layer->labelcache)
+	    msAddLabel(map, layer->index, c, -1, -1, *pnt, text, -1);
+	  else {
+	    if(layer->class[c].color == -1)
+	      msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	    msDrawLabel(img, map, *pnt, text, &layer->class[c].label);
+	  }
+	}
+      }    
+    }
+    break;      
+
+  case MS_POLYLINE:    
+
+    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
+
+#ifdef USE_PROJ
+    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
+#endif
+      
+    if(layer->transform) {      
+      msClipPolygonRect(shape, cliprect, shape);
+      if(shape->numlines == 0) return(0);
+      msTransformPolygon(map->extent, map->cellsize, shape);
+    }
+    msDrawLineSymbol(&map->lineset, img, shape, &layer->class[c]); 
+      
+    if(label_string) text = label_string;
+    else text = layer->class[c].text.string;
+    
+    if(text) {
+      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	if(layer->labelcache) {
+	  msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
+	} else {
+	  if(layer->class[c].color == -1)
+	    msDrawMarkerSymbol(&map->markerset, img, &annopnt, &layer->class[c]);
+	  msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	}
+      }
+    }
+    break;
+    
+  case MS_LINE:
+  
+    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
+
+#ifdef USE_PROJ
+    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
+#endif
+     
+    if(layer->transform) {
+      msClipPolylineRect(shape, cliprect, shape);
+      if(shape->numlines == 0) return(0);
+      msTransformPolygon(map->extent, map->cellsize, shape);
+    }
+    msDrawLineSymbol(&map->lineset, img, shape, &layer->class[c]); 
+
+    if(label_string) text = label_string;
+    else text = layer->class[c].text.string;
+    
+    if(text) {
+      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
+	if(layer->class[c].label.autoangle)
+	  layer->class[c].label.angle = angle;
+	
+	if(layer->labelcache) {
+	  msAddLabel(map, layer->index, c, -1, -1, annopnt, text, length);
+	} else {
+	  if(layer->class[c].color == -1)
+	    msDrawMarkerSymbol(&map->markerset, img, &annopnt, &layer->class[c]);
+	  msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	}
+      }
+    }
+    break;
+    
+  case MS_POLYGON:
+ 
+    if((c = getClassIndex(layer, class_string)) == -1) return(0); /* next feature */
+
+#ifdef USE_PROJ
+    if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+      msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
+#endif
+      
+    if(layer->transform) {      
+      msClipPolygonRect(shape, cliprect, shape);
+      if(shape->numlines == 0) return(0);
+      msTransformPolygon(map->extent, map->cellsize, shape);
+    }
+    msDrawShadeSymbol(&map->shadeset, img, shape, &layer->class[c]); 
+
+    if(label_string) text = label_string; 
+    else text = layer->class[c].text.string;
+
+    if(text) {
+      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	if(layer->labelcache)
+	  msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
+	else {
+	  if(layer->class[c].color == -1)
+	    msDrawMarkerSymbol(&map->markerset, img, &annopnt, &layer->class[c]);
+	  msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	}
+      }
+    }
+    break;      
+  default:
+    msSetError(MS_MISCERR, "Unknown layer type.", "msDrawShape()");
+    return(-1);
+  }
+
+  return(1); /* all done, no cleanup */
+}
+
+/*
+** function to draw features defined within a map file
+*/
+int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
+{
+  int i,j,c;
+  struct featureObj *fptr=NULL;
+  rectObj cliprect;
+  pointObj annopnt;
+  double angle, length;
+  char *text;
+  pointObj *pnt;
+
+  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
+    return(0);
+
+  /* Set clipping rectangle */
+  if(layer->transform) {
+    cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
+    cliprect.miny = map->extent.miny - 2*map->cellsize;
+    cliprect.maxx = map->extent.maxx + 2*map->cellsize;
+    cliprect.maxy = map->extent.maxy + 2*map->cellsize;
+  }
+    
+  switch(layer->type) {      
+  case MS_ANNOTATION:
+    
+    if(!layer->annotate)
+      break;
+    
+    for(fptr=layer->features; fptr; fptr=fptr->next) {
+
+      if((c = getClassIndex(layer, fptr->class)) == -1) continue; /* next feature */
+ 
+#ifdef USE_PROJ
+      if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(fptr->shape));
+#endif
+
+      for(j=0; j<fptr->shape.numlines;j++) {
+	for(i=0; i<fptr->shape.line[j].numpoints;i++) {
+
+	  pnt = &(fptr->shape.line[j].point[i]);
+	  
+	  if(layer->transform) {
+	    if(!msPointInRect(pnt, &map->extent)) continue;
+	    pnt->x = MS_NINT((pnt->x - map->extent.minx)/map->cellsize); 
+	    pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
+	  }
+	  
+	  if(fptr->text) text = fptr->text; 
+	  else text = layer->class[c].text.string;
+	    
+	  if(layer->labelcache)
+	    msAddLabel(map, layer->index, c, -1, -1, *pnt, text, -1);
+	  else {
+	    if(layer->class[c].color == -1)
+	      msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	    msDrawLabel(img, map, *pnt, text, &layer->class[c].label);
+	  }
+	}    
+      }
+
+      pnt = NULL;
+    }
+    break;
+
+  case MS_POINT:
+    for(fptr=layer->features; fptr; fptr=fptr->next) {
+
+      if((c = getClassIndex(layer, fptr->class)) == -1) continue; /* next feature */
+
+#ifdef USE_PROJ
+      if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(fptr->shape));
+#endif
+
+      for(j=0; j<fptr->shape.numlines;j++) {
+	for(i=0; i<fptr->shape.line[j].numpoints;i++) {
+	  
+	  pnt = &(fptr->shape.line[j].point[i]);
+
+	  if(layer->transform) {
+	    if(!msPointInRect(pnt, &map->extent)) continue;
+	    pnt->x = MS_NINT((pnt->x - map->extent.minx)/map->cellsize); 
+	    pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
+	    msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	  } else {
+	    msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	  }
+	  
+	  if(layer->annotate) {
+	    if(fptr->text) text = fptr->text; 
+	    else text = layer->class[c].text.string;
+
+	    if(layer->labelcache)
+	      msAddLabel(map, layer->index, c, -1, -1, *pnt, text, -1);
+	    else {
+	      if(layer->class[c].color == -1)
+		msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	      msDrawLabel(img, map, *pnt, text, &layer->class[c].label);
+	    }
+	  }
+	}    
+      }
+    }
+    break;      
+
+  case MS_POLYLINE:    
+    for(fptr=layer->features; fptr; fptr=fptr->next) {
+
+      if((c = getClassIndex(layer, fptr->class)) == -1) continue; /* next feature */
+
+#ifdef USE_PROJ
+      if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(fptr->shape));
+#endif
+      
+      if(layer->transform) {      
+	msClipPolygonRect(&fptr->shape, cliprect, &fptr->shape);
+	if(fptr->shape.numlines == 0) continue;
+	msTransformPolygon(map->extent, map->cellsize, &fptr->shape);
+      }
+      msDrawLineSymbol(&map->lineset, img, &fptr->shape, &layer->class[c]); 
+      
+      if(layer->annotate) {
+	if(fptr->text) text = fptr->text; 
+	else text = layer->class[c].text.string;
+
+	if(msPolygonLabelPoint(&fptr->shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	  if(layer->labelcache) {
+	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
+	  } else {
+	    if(layer->class[c].color == -1)
+	      msDrawMarkerSymbol(&map->markerset, img, &annopnt, &layer->class[c]);
+	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	  }
+	}
+      }
+    }
+    break;
+    
+  case MS_LINE:
+    for(fptr=layer->features; fptr; fptr=fptr->next) {
+
+      if((c = getClassIndex(layer, fptr->class)) == -1) continue; /* next feature */
+
+#ifdef USE_PROJ
+      if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(fptr->shape));
+#endif
+     
+      if(layer->transform) {
+	msClipPolylineRect(&fptr->shape, cliprect, &fptr->shape);
+	if(fptr->shape.numlines == 0) continue;
+	msTransformPolygon(map->extent, map->cellsize, &fptr->shape);
+      }
+      msDrawLineSymbol(&map->lineset, img, &fptr->shape, &layer->class[c]); 
+      
+      if(layer->annotate) {
+	if(fptr->text) text = fptr->text; 
+	else text = layer->class[c].text.string;
+
+	if(msPolylineLabelPoint(&fptr->shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
+	  if(layer->class[c].label.autoangle)
+	    layer->class[c].label.angle = angle;
+
+	  if(layer->labelcache) {
+	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, length);
+	  } else {
+	    if(layer->class[c].color == -1)
+	      msDrawMarkerSymbol(&map->markerset, img, &annopnt, &layer->class[c]);
+	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	  }
+	}
+      }
+    }   
+    break;
+    
+  case MS_POLYGON:
+    for(fptr=layer->features; fptr; fptr=fptr->next) {
+    
+      if((c = getClassIndex(layer, fptr->class)) == -1) continue; /* next feature */
+
+#ifdef USE_PROJ
+      if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(fptr->shape));
+#endif
+      
+      if(layer->transform) {      
+	msClipPolygonRect(&fptr->shape, cliprect, &fptr->shape);
+	if(fptr->shape.numlines == 0) continue;
+	msTransformPolygon(map->extent, map->cellsize, &fptr->shape);
+      }
+      msDrawShadeSymbol(&map->shadeset, img, &fptr->shape, &layer->class[c]); 
+      
+      if(layer->annotate) {
+	if(fptr->text) text = fptr->text; 
+	else text = layer->class[c].text.string;
+
+	if(msPolygonLabelPoint(&fptr->shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	  if(layer->labelcache)
+	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
+	  else {
+	    if(layer->class[c].color == -1)
+	      msDrawMarkerSymbol(&map->markerset, img, &annopnt, &layer->class[c]);
+	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	  }
+	}
+      }
+    }    
+    break;      
+  default:
+    msSetError(MS_MISCERR, "Unknown layer type.", "msDrawInlineLayer()");
+    return(-1);
+  }
+
+  return(1); /* all done, no cleanup */
+}
+
+/*
+** Function to draw features defined within a shape file. Can apply an external
+** shape status array which must contain the same number of elements as the shapefile
+** being drawn. The query_status array is not valid for tiled data.
+*/
+int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *query_status)
+{
+  shapefileObj shpfile;
+  int i,j,k; /* counters */
+  rectObj cliprect;
+  char *status=NULL;
+
+  char *filename=NULL;
+
+  double sf=1.0;
+  int c=-1; /* what class is a particular feature */
+
+  int start_feature;
+  int f; /* feature counter */
+
+  shapeObj shape={0,NULL,{-1,-1,-1,-1},MS_NULL};
+  pointObj *pnt;
+
+  pointObj annopnt;
+  char *annotxt=NULL;
+
+  int classItemIndex, labelItemIndex, labelAngleItemIndex, labelSizeItemIndex;
+  
+  int tileItemIndex=-1;
+  int t;
+  shapefileObj tilefile;
+  char tilename[MS_PATH_LENGTH];
+  int nTiles=1; /* always at least one tile */
+  char *tileStatus=NULL;
+
+  double angle, length; /* line labeling parameters */
+
+  if(!layer->data && !layer->tileindex)
+    return(0);
+
+  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
+    return(0);
+
+  if(layer->transform) {
+    cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
+    cliprect.miny = map->extent.miny - 2*map->cellsize;
+    cliprect.maxx = map->extent.maxx + 2*map->cellsize;
+    cliprect.maxy = map->extent.maxy + 2*map->cellsize;
+  }
+  
+  classItemIndex = labelItemIndex = labelAngleItemIndex = labelSizeItemIndex = -1;
+   
+  if(layer->tileindex) { /* we have in index file */
+
+    if(msOpenSHPFile(&tilefile, map->shapepath, map->tile, layer->tileindex) == -1) return(-1);
+    if((tileItemIndex = msGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
+    
+#ifdef USE_PROJ 
+    tileStatus = msWhichShapesProj(&tilefile, map->extent, &(layer->projection), &(map->projection)); /* Which tiles should be processed? */
+#else	    
+    tileStatus = msWhichShapes(&tilefile, map->extent); /* Which tiles should be processed? */
+#endif
+    
+    nTiles = tilefile.numshapes;
+  }
+
+  for(t=0;t<nTiles;t++) { /* for each tile, there is always at least 1 tile */
+    
+    if(layer->tileindex) {
+      if(msGetBit(tileStatus,t) == 0)
+	continue; /* on to next tile */
+      if(!layer->data) /* assume whole filename is in attribute field */
+	filename = DBFReadStringAttribute(tilefile.hDBF, t, tileItemIndex);
+      else {  
+	sprintf(tilename,"%s/%s", DBFReadStringAttribute(tilefile.hDBF, t, tileItemIndex) , layer->data);
+	filename = tilename;
+      }
+    } else {
+      filename = layer->data;
+    }
+
+#ifndef IGNORE_MISSING_DATA
+    if(msOpenSHPFile(&shpfile, map->shapepath, map->tile, filename) == -1) 
+      return(-1);
+#else
+    if(msOpenSHPFile(&shpfile, map->shapepath, map->tile, filename) == -1) 
+      continue; // skip it, next tile
+#endif
+
+    /* Find item numbers of any columns to be used */
+    if(layer->classitem) {
+      if((classItemIndex = msGetItemIndex(shpfile.hDBF, layer->classitem)) == -1)
+	return(-1);
+    }
+
+    if(layer->labelitem && layer->annotate) {
+      if((labelItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelitem)) == -1)
+	return(-1);	
+      labelAngleItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelangleitem); /* not required */
+      labelSizeItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelsizeitem);
+    }
+
+    if(layer->transform == MS_TRUE) {
+#ifdef USE_PROJ
+      if((status = msWhichShapesProj(&shpfile, map->extent, &(layer->projection), &(map->projection))) == NULL) return(-1);
+#else
+      if((status = msWhichShapes(&shpfile, map->extent)) == NULL) return(-1);
+#endif
+    } else {
+      status = msAllocBitArray(shpfile.numshapes);
+      if(!status) {
+	msSetError(MS_MEMERR, NULL, "msDrawShapefileLayer()");	
+	msCloseSHPFile(&shpfile);
+	return(-1);
+      }
+      for(i=0; i<shpfile.numshapes; i++)
+	msSetBit(status,i,1); /* all shapes are in by default */
+    }
+
+    if(query_status && !(layer->tileindex)) { /* apply query_status array */
+      for(i=0; i<shpfile.numshapes; i++)
+	if(!msGetBit(query_status, i) || !msGetBit(status, i)) // if 1 in both then it stays 1, else 0
+	  msSetBit(status,i,0);
+    }
+    
+    start_feature = 0;
+    if(layer->maxfeatures != -1) { /* user only wants maxFeatures, this only makes sense with sorted shapefiles */
+      f = 0;
+      for(i=shpfile.numshapes-1; i>=0; i--) {
+	if(f > layer->maxfeatures)
+	  break; /* at the quota, may loose a few to clipping, but that's ok */
+	start_feature = i;
+	f += msGetBit(status,i);
+      }
+    }
+   
+    switch(layer->type) {
+    case MS_ANNOTATION:
+      
+      if(!layer->annotate) break;
+      
+      switch(shpfile.type) {
+      case MS_SHP_POINT:
+      case MS_SHP_MULTIPOINT:
+
+	for(i=start_feature;i<shpfile.numshapes;i++) {
+	  
+	  if(!msGetBit(status,i)) continue; /* next shape */
+
+	  if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+	  
+#ifdef USE_PROJ
+	  SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));	    
+#else
+	  SHPReadShape(shpfile.hSHP, i, &shape);	
+#endif	  
+	  
+	  annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+
+	  for(j=0; j<shape.line[0].numpoints; j++) {
+	    pnt = &(shape.line[0].point[j]); /* point to the correct point */	      
+	    
+	    if(layer->transform) {
+	      if(!msPointInRect(pnt, &map->extent)) continue;
+	      pnt->x = MS_NINT((pnt->x - map->extent.minx)/map->cellsize); 
+	      pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
+	    }
+	    
+	    if(labelAngleItemIndex != -1)
+	      layer->class[c].label.angle = DBFReadDoubleAttribute(shpfile.hDBF, i, labelAngleItemIndex)*MS_DEG_TO_RAD;
+	    
+	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
+	      layer->class[c].label.size = DBFReadIntegerAttribute(shpfile.hDBF, i, labelSizeItemIndex)*sf;
+	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
+	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	    }
+	    
+	    if(layer->labelcache)
+	      msAddLabel(map, layer->index, c, t, i, *pnt, annotxt, -1);
+	    else {
+	      if(layer->class[c].color != -1)
+		msDrawMarkerSymbol(&(map->markerset), img, pnt, &(layer->class[c]));
+	      msDrawLabel(img, map, *pnt, annotxt, &(layer->class[c].label));
+	    }
+	  }
+
+	  pnt = NULL;
+	  msFreeShape(&shape);
+	  free(annotxt);
+	}
+	break;
+      case MS_SHP_ARC:
+	
+	for(i=start_feature;i<shpfile.numshapes;i++) {
+	  
+	  if(!msGetBit(status,i)) continue; /* next shape */	    
+	  
+	  if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+	  
+#ifdef USE_PROJ
+	  SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));	    
+#else	    
+	  SHPReadShape(shpfile.hSHP, i, &shape);
+#endif
+	  
+	  if(layer->transform) {
+	    if(msRectContained(&shape.bounds, &cliprect) == MS_FALSE) {
+	      if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
+	      msClipPolylineRect(&shape, cliprect, &shape);
+	      if(shape.numlines == 0) continue;
+	    }
+	    msTransformPolygon(map->extent, map->cellsize, &shape);	      
+	  }
+
+	  if(msPolylineLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
+	    
+	    if(labelAngleItemIndex != -1)
+	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
+	    
+	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
+	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
+	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
+	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	    }
+
+	    if(layer->class[c].label.autoangle)
+	      layer->class[c].label.angle = angle;
+
+	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+
+	    if(layer->labelcache)
+	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, length);
+	    else {
+	      if(layer->class[c].color != -1)
+		msDrawMarkerSymbol(&(map->markerset), img, &annopnt, &(layer->class[c]));
+	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));	    
+	    }
+
+	    free(annotxt);
+	  }
+	  
+	  msFreeShape(&shape);
+	}
+	break;
+	
+      case MS_SHP_POLYGON:
+	
+	for(i=start_feature;i<shpfile.numshapes;i++) {
+	  
+	  if(!msGetBit(status,i)) continue; /* next shape */	
+	  
+	  if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+	  
+#ifdef USE_PROJ	  
+	  SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));	    
+#else
+	  SHPReadShape(shpfile.hSHP, i, &shape);
+#endif
+
+	  if(layer->transform) {
+	    if(msRectContained(&shape.bounds, &cliprect) == MS_FALSE) {
+	      if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
+	      msClipPolygonRect(&shape, cliprect, &shape);
+	      if(shape.numlines == 0) continue;
+	    }	      
+	    msTransformPolygon(map->extent, map->cellsize, &shape);	      
+	  }
+
+	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	    if(labelAngleItemIndex != -1)
+	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
+	    
+	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
+	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
+	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
+	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	    }
+
+	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+	    
+	    if(layer->labelcache)
+	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
+	    else {
+	      if(layer->class[c].color != -1)
+		msDrawMarkerSymbol(&(map->markerset), img, &annopnt, &(layer->class[c]));
+	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));	    
+	    }
+
+	    free(annotxt);
+	  }
+	}
+	break;
+	
+      default:
+	break;
+      }
+      
+      break;
+      
+    case MS_POINT:
+      
+      for(i=start_feature;i<shpfile.numshapes;i++) {
+	
+	if(!msGetBit(status,i)) continue; /* next shape */
+	
+	if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+
+#ifdef USE_PROJ
+        SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));	    
+#else
+	SHPReadShape(shpfile.hSHP, i, &shape);	    
+#endif
+
+	if(layer->annotate)
+	  annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+
+	for(j=0; j<shape.numlines;j++) {
+	  for(k=0; k<shape.line[j].numpoints;k++) {
+
+	    pnt = &(shape.line[j].point[k]); /* point to the correct point */
+
+	    if(layer->transform) {
+	      if(!msPointInRect(pnt, &map->extent)) continue;
+	      pnt->x = MS_NINT((pnt->x - map->extent.minx)/map->cellsize); 
+	      pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
+	      msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	    } else {
+	      msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
+	    }
+	
+	    if(layer->annotate) {
+	      if(labelAngleItemIndex != -1)
+		layer->class[c].label.angle = DBFReadDoubleAttribute(shpfile.hDBF, i, labelAngleItemIndex)*MS_DEG_TO_RAD;
+	      
+	      if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
+		layer->class[c].label.size = DBFReadIntegerAttribute(shpfile.hDBF, i, labelSizeItemIndex)*sf;
+		layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
+		layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	      }
+
+	      if(layer->labelcache)
+		msAddLabel(map, layer->index, c, t, i, *pnt, annotxt, -1);
+	      else
+		msDrawLabel(img, map, *pnt, annotxt, &layer->class[c].label);
+	    }
+	  }
+	}
+	
+	pnt = NULL;
+	msFreeShape(&shape);
+	if(layer->annotate)
+	  free(annotxt);
+      }	
+      
+      break;
+      
+    case MS_POLYLINE:      
+
+      if((shpfile.type != MS_SHP_ARC) && (shpfile.type != MS_SHP_POLYGON)) { /* wrong shapefile type */
+	msSetError(MS_MISCERR, "POLYLINE layers must be ARC or POLYGON shapefiles.", "msDrawShapefileLayer()");
+	return(-1);
+      }
+      
+      for(i=start_feature;i<shpfile.numshapes;i++) {
+
+        if(!msGetBit(status,i)) continue; /* next shape */
+
+        if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+
+#ifdef USE_PROJ
+	SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));
+#else
+	SHPReadShape(shpfile.hSHP, i, &shape);	    
+#endif
+
+	if(layer->transform) {
+	  if(!msRectContained(&shape.bounds, &cliprect)) {
+	    if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
+	    msClipPolygonRect(&shape, cliprect, &shape);
+	    if(shape.numlines == 0) continue;
+	  }
+	  msTransformPolygon(map->extent, map->cellsize, &shape);
+	}
+	msDrawLineSymbol(&(map->lineset), img, &shape, &(layer->class[c]));
+	
+	if(layer->annotate) {	  
+	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	    if(labelAngleItemIndex != -1)
+	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
+	  
+	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
+	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
+	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
+	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	    }	    
+	    
+	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+	    
+	    if(layer->labelcache)
+	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
+	    else
+	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
+	    
+	    free(annotxt);
+	  }
+	}
+	
+	msFreeShape(&shape);
+      }	
+      break; /* next layer */
+      
+    case MS_LINE:
+      if((shpfile.type != MS_SHP_ARC) && (shpfile.type != MS_SHP_POLYGON)) { /* wrong shapefile type */
+	msSetError(MS_MISCERR, "LINE layers must be ARC or POLYGON shapefiles.", "msDrawShapefileLayer()");
+	return(-1);
+      }
+      
+      for(i=start_feature;i<shpfile.numshapes;i++) {
+
+	if(!msGetBit(status,i)) continue; /* next shape */
+
+        if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+
+#ifdef USE_PROJ
+	SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));	    
+#else
+	SHPReadShape(shpfile.hSHP, i, &shape);
+#endif
+
+	if(layer->transform) {
+	  if(!msRectContained(&shape.bounds, &cliprect)) {
+	    if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
+	    msClipPolylineRect(&shape, cliprect, &shape);
+	    if(shape.numlines == 0) continue;
+	  }
+	  msTransformPolygon(map->extent, map->cellsize, &shape);
+	}
+	msDrawLineSymbol(&(map->lineset), img, &shape, &(layer->class[c]));	
+	
+	if(layer->annotate) {	 	    
+	  if(msPolylineLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
+
+	    if(layer->class[c].label.autoangle)
+	      layer->class[c].label.angle = angle;
+
+	    if(labelAngleItemIndex != -1)
+	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
+	    
+	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
+	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
+	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
+	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	    }
+	    
+	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+	    
+	    if(layer->labelcache)
+	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, length);
+	    else
+	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
+
+	    free(annotxt);
+	  }
+	}
+	
+	msFreeShape(&shape);
+      }
+      
+      break;
+      
+    case MS_POLYGON:
+      
+      if(shpfile.type != MS_SHP_POLYGON) { /* wrong shapefile type */
+	msSetError(MS_MISCERR, "POLYGON layers must be POLYGON shapefiles.", "msDrawShapefileLayer()");
+	return(-1);
+      }
+      
+      for(i=start_feature;i<shpfile.numshapes;i++) {
+	
+	if(!msGetBit(status,i)) continue; /* next shape */
+	
+	if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+
+#ifdef USE_PROJ
+	SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));
+#else
+	SHPReadShape(shpfile.hSHP, i, &shape);
+#endif
+	
+	if(layer->transform) {
+	  if(!msRectContained(&shape.bounds, &cliprect)) {
+	    if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
+	    msClipPolygonRect(&shape, cliprect, &shape);
+	    if(shape.numlines == 0) continue;
+	  }
+	  msTransformPolygon(map->extent, map->cellsize, &shape);
+	}
+	msDrawShadeSymbol(&(map->shadeset), img, &shape, &(layer->class[c]));
+
+	if(layer->annotate) {
+	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	    if(labelAngleItemIndex != -1)
+	      layer->class[c].label.angle = atof(DBFReadStringAttribute(shpfile.hDBF, i, labelAngleItemIndex))*MS_DEG_TO_RAD;
+	    
+	    if((labelSizeItemIndex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
+	      layer->class[c].label.size = atoi(DBFReadStringAttribute(shpfile.hDBF, i, labelSizeItemIndex))*sf;
+	      layer->class[c].label.size = MS_MAX(layer->class[c].label.size, layer->class[c].label.minsize);
+	      layer->class[c].label.size = MS_MIN(layer->class[c].label.size, layer->class[c].label.maxsize);
+	    }
+	    
+	    annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex);
+	    
+	    if(layer->labelcache)
+	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
+	    else
+	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
+	    
+	    free(annotxt);
+	  }
+	}
+	
+	msFreeShape(&shape);
+      }	
+      
+      break;
+      
+    default:
+      msSetError(MS_MISCERR, "Unknown layer type.", "msDrawShapefileLayer()");
+      return(-1);
+    }		
+    
+    msCloseSHPFile(&shpfile);
+    free(status);
+    
+  } /* next tile */
+  
+  if(layer->tileindex) { /* tiling clean-up */
+    msCloseSHPFile(&tilefile);
+    free(tileStatus);
+  }
+
+  return(0);
+}
+
+/*
+** Save an image to a file named filename, if filename is NULL it goes to stdout
+*/
+int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace)
+{
+  FILE *stream;
+
+  if(filename != NULL) {
+    stream = fopen(filename, "wb");
+    if(!stream) {
+      msSetError(MS_IOERR, NULL, "msSaveImage()");      
+      sprintf(ms_error.message, "(%s)", filename);
+      return(-1);
+    }
+  } else { /* use stdout */
+    
+#ifdef _WIN32
+    /*
+    ** Change stdout mode to binary on win32 platforms
+    */
+    if(_setmode( _fileno(stdout), _O_BINARY) == -1) {
+      msSetError(MS_IOERR, "Unable to change stdout to binary mode.", "msSaveImage()");
+      return(-1);
+    }
+#endif
+    stream = stdout;
+  }
+
+  if(interlace)
+    gdImageInterlace(img, 1);
+
+  if(transparent)
+    gdImageColorTransparent(img, 0);
+
+#ifndef USE_GD_1_6 
+      gdImageGif(img, stream);
+#else	
+      gdImagePng(img, stream);
+#endif
+
+  fclose(stream);
+
+  return(0);
+}
+
+void msFreeImage(gdImagePtr img)
+{
+  gdImageDestroy(img);
+}
+
+gdImagePtr msDrawReferenceMap(mapObj *map) {
+  FILE *stream;
+  gdImagePtr img=NULL;
+  double cellsize;
+  int c=-1, oc=-1;
+  int x1,y1,x2,y2;
+
+  /* Allocate input and output images (same size) */
+  stream = fopen(map->reference.image,"rb");
+  if(!stream) {
+    msSetError(MS_IOERR, NULL, "msDrawReferenceMap()");
+    sprintf(ms_error.message, "(%s)", map->reference.image);
+    return(NULL);
+  }
+
+#ifndef USE_GD_1_6 
+  img = gdImageCreateFromGif(stream);
+#else
+  img = gdImageCreateFromPng(stream);
+#endif
+  if(!img) {
+    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawReferenceMap()");
+    fclose(stream);
+    return(NULL);
+  }
+
+  /* Re-map users extent to this image */
+  cellsize = msAdjustExtent(&(map->reference.extent), img->sx, img->sy);
+
+  /* allocate some colors */
+  if(map->reference.outlinecolor.red != -1 && map->reference.outlinecolor.green != -1 && map->reference.outlinecolor.blue != -1)
+    oc = gdImageColorAllocate(img, map->reference.outlinecolor.red, map->reference.outlinecolor.green, map->reference.outlinecolor.blue);
+  if(map->reference.color.red != -1 && map->reference.color.green != -1 && map->reference.color.blue != -1)
+    c = gdImageColorAllocate(img, map->reference.color.red, map->reference.color.green, map->reference.color.blue); 
+  
+  /* Remember 0,0 file coordinates equals minx,maxy map coordinates (e.g. UTM) */
+  x1 = MS_NINT((map->extent.minx - map->reference.extent.minx)/cellsize);
+  x2 = MS_NINT((map->extent.maxx - map->reference.extent.minx)/cellsize);
+  y2 = MS_NINT((map->reference.extent.maxy - map->extent.miny)/cellsize);
+  y1 = MS_NINT((map->reference.extent.maxy - map->extent.maxy)/cellsize);
+  
+  /* Add graphic element to the output image file */
+  if(c != -1)
+    gdImageFilledRectangle(img,x1,y1,x2,y2,c);
+  if(oc != -1)
+    gdImageRectangle(img,x1,y1,x2,y2,oc);
+  
+  fclose(stream);
+  return(img);
+}
