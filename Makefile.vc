@@ -187,7 +187,7 @@ CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
 
 default: 	all
 
-all:		$(MAKE_GD) $(MS_LIB) $(MS_EXE)
+all:		$(MS_LIB) $(MS_EXE)
 
 $(MS_OBJS):	$(MS_HDRS)
 
@@ -225,7 +225,7 @@ clean:
 	del *.pdb
 	del *.exp
 	del *.ilk
-	cd gd-1.2
-	nmake -f makefile.nt clean
-	cd ..
+#	cd gd-1.2
+#	nmake -f makefile.nt clean
+#	cd ..
 
