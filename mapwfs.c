@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.30  2004/02/12 23:29:12  assefa
+ * Ordrer was incorrect for element Keyword and Fees.
+ *
  * Revision 1.29  2004/02/04 19:46:24  assefa
  * Add support for multiple spatial opertaors inside one filter.
  * Add support for opeartors DWithin and Intersect.
@@ -399,16 +402,17 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
                 "  <Title>%s</Title>\n", map->name);
   msOWSPrintMetadata(stdout, map->web.metadata, "wfs_abstract", OWS_NOERR,
                 "  <Abstract>%s</Abstract>\n", NULL);
-  printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
 
   msOWSPrintMetadataList(stdout, map->web.metadata, "wfs_keywordlist", 
                     "  <Keywords>\n", "  </Keywords>\n",
                     "    %s\n");
+  printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+
+  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_fees", OWS_NOERR,
+                "  <Fees>%s</Fees>\n", NULL);
   
   msOWSPrintMetadata(stdout, map->web.metadata, "wfs_accessconstraints", OWS_NOERR,
                 "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
-  msOWSPrintMetadata(stdout, map->web.metadata, "wfs_fees", OWS_NOERR,
-                "  <Fees>%s</Fees>\n", NULL);
 
   printf("</Service>\n\n");
 
