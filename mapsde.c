@@ -388,9 +388,9 @@ int msSDELayerOpen(layerObj *layer) {
 		    sde_error(status, "msSDELayerOpen()", "SE_stateinfo_is_open() -- State for version is open");
 		    return(MS_FAILURE);
 		  }
+		  SE_stateinfo_free (state); 
 		}
 	  
-	  SE_stateinfo_free (state); 
 	  SE_versioninfo_free(version);
 	     
 	  msFreeCharArray(params, numparams); // done with parameter list
