@@ -933,6 +933,7 @@ and the MapServer Map File documentation at:
    double minscale
    double maxscale
    rectObj extent   (read-only)
+   string queryformat
 
  Methods:
 

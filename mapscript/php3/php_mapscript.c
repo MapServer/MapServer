@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.202  2004/06/25 15:59:45  assefa
+ * Add queryformat in the web object.
+ *
  * Revision 1.201  2004/06/21 21:04:21  dan
  * Make layer->open() produce a PHP Warning instead of a Fatal error (bug 742)
  *
@@ -10483,6 +10486,8 @@ static long _phpms_build_web_object(webObj *pweb,
     PHPMS_ADD_PROP_STR(return_value,  "maxtemplate",    pweb->maxtemplate);
     add_property_double(return_value,   "minscale",       pweb->minscale);
     add_property_double(return_value,   "maxscale",       pweb->maxscale);
+    PHPMS_ADD_PROP_STR(return_value,  "queryformat",       pweb->queryformat);
+    
     
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
@@ -10547,6 +10552,7 @@ DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING(  "footer",   self->footer)
     else IF_SET_STRING(  "mintemplate",   self->mintemplate) 
     else IF_SET_STRING(  "maxtemplate",   self->maxtemplate) 
+    else IF_SET_STRING(  "queryformat",   self->queryformat) 
     else IF_SET_LONG(    "minscale",   self->minscale)
     else IF_SET_LONG(    "maxscale",   self->maxscale)  
     else if (strcmp( "empty", pPropertyName->value.str.val) == 0 ||
