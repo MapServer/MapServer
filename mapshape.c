@@ -513,7 +513,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   /*  Write vertices for a Polygon or Arc.				    */
   /* -------------------------------------------------------------------- */
-  if( psSHP->nShapeType == MS_SHP_POLYGON || psSHP->nShapeType == MS_SHP_ARC ) {
+  if( psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC ) {
     int32 t_nParts, t_nPoints, partSize;
     
     t_nParts = nParts;
@@ -560,7 +560,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   /*  Write vertices for a MultiPoint.				    */
   /* -------------------------------------------------------------------- */
-  else if( psSHP->nShapeType == MS_SHP_MULTIPOINT ) {
+  else if( psSHP->nShapeType == SHP_MULTIPOINT ) {
     int32 t_nPoints;
     
     t_nPoints = nPoints;
@@ -586,7 +586,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   /*      Write vertices for a point.                                     */
   /* -------------------------------------------------------------------- */
-  else if( psSHP->nShapeType == MS_SHP_POINT ) {
+  else if( psSHP->nShapeType == SHP_POINT ) {
     ByteCopy( &(shape->line[0].point[0].x), pabyRec + 12, 8 );
     ByteCopy( &(shape->line[0].point[0].y), pabyRec + 20, 8 );
     
@@ -682,7 +682,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*  Extract vertices for a Polygon or Arc.				    */
     /* -------------------------------------------------------------------- */
-    if( psSHP->nShapeType == MS_SHP_POLYGON || psSHP->nShapeType == MS_SHP_ARC )
+    if( psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC )
     {
       int32		nPoints, nParts;      
 
@@ -758,17 +758,17 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	}
       }
 
-      if(psSHP->nShapeType == MS_SHP_POLYGON)
-	shape->type = MS_POLYGON;
+      if(psSHP->nShapeType == SHP_POLYGON)
+	shape->type = MS_SHAPE_POLYGON;
       else
-	shape->type = MS_LINE;
+	shape->type = MS_SHAPE_LINE;
 
     }
 
     /* -------------------------------------------------------------------- */
     /*  Extract a MultiPoint.   			                    */
     /* -------------------------------------------------------------------- */
-    else if( psSHP->nShapeType == MS_SHP_MULTIPOINT)
+    else if( psSHP->nShapeType == SHP_MULTIPOINT)
     {
       int32		nPoints;
 
@@ -810,13 +810,13 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	}
       }
 
-      shape->type = MS_POINT;
+      shape->type = MS_SHAPE_POINT;
     }
 
     /* -------------------------------------------------------------------- */
     /*  Extract a Point.   			                    */
     /* -------------------------------------------------------------------- */
-    else if( psSHP->nShapeType == MS_SHP_POINT )
+    else if( psSHP->nShapeType == SHP_POINT )
     {    
 
       /* -------------------------------------------------------------------- */
@@ -843,7 +843,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;
       shape->bounds.miny = shape->bounds.maxy = shape->line[0].point[0].y;
 
-      shape->type = MS_POINT;
+      shape->type = MS_SHAPE_POINT;
     }
 
     shape->index = hEntity;
@@ -874,7 +874,7 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
       return(-1);
     } 
     
-    if( psSHP->nShapeType != MS_SHP_POINT ) {
+    if( psSHP->nShapeType != SHP_POINT ) {
       fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity]+12, 0 );
       fread( padBounds, sizeof(double)*4, 1, psSHP->fpSHP );
       
@@ -976,7 +976,7 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *file
 // Creates a new shapefile
 int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
 {
-  if(type != MS_SHP_POINT && type != MS_SHP_MULTIPOINT && type != MS_SHP_ARC && type != MS_SHP_POLYGON) {
+  if(type != SHP_POINT && type != SHP_MULTIPOINT && type != SHP_ARC && type != SHP_POLYGON) {
     msSetError(MS_SHPERR, "Invalid shape type.", "msNewSHPFile()");
     return(-1);
   }
@@ -1160,9 +1160,9 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
   layer->shpfile.lastshape = i;
 
   if(layer->numitems > 0) {
-    shape->numattributes = layer->numitems;
-    shape->attributes = msDBFGetValueList(layer->shpfile.hDBF, i, layer->items, &(layer->itemindexes), layer->numitems);
-    if(!shape->attributes) return(MS_FAILURE);
+    shape->numvalues = layer->numitems;
+    shape->values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->items, &(layer->itemindexes), layer->numitems);
+    if(!shape->values) return(MS_FAILURE);
 
     if(msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems) != MS_TRUE) return(msTiledSHPNextShape(layer, shapepath, shape)); // next shape
   }
@@ -1206,13 +1206,13 @@ int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int ti
       layer->items = msDBFGetItems(layer->shpfile.hDBF);
       if(!layer->items) return(MS_FAILURE);
     }
-    shape->numattributes = layer->numitems;
-    shape->attributes = msDBFGetValues(layer->shpfile.hDBF, record);
-    if(!shape->attributes) return(MS_FAILURE);
+    shape->numvalues = layer->numitems;
+    shape->values = msDBFGetValues(layer->shpfile.hDBF, record);
+    if(!shape->values) return(MS_FAILURE);
   } else if(layer->numitems > 0) {
-    shape->numattributes = layer->numitems;
-    shape->attributes = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
-    if(!shape->attributes) return(MS_FAILURE);
+    shape->numvalues = layer->numitems;
+    shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
+    if(!shape->values) return(MS_FAILURE);
   }
 
   shape->tileindex = tile;

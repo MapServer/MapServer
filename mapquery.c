@@ -416,13 +416,13 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 	status = MS_TRUE;
       } else {
 	switch(shape.type) { // make sure shape actually intersects the rect (ADD FUNCTIONS SPECIFIC TO RECTOBJ)
-	case MS_POINT:
+	case MS_SHAPE_POINT:
 	  status = msIntersectMultipointPolygon(&shape.line[0], &searchshape);
 	  break;
-	case MS_LINE:
+	case MS_SHAPE_LINE:
 	  status = msIntersectPolylinePolygon(&shape, &searchshape);
 	  break;
-	case MS_POLYGON:
+	case MS_SHAPE_POLYGON:
 	  status = msIntersectPolygons(&shape, &searchshape);
 	  break;
 	default:
@@ -562,11 +562,11 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 	msProjectPolyline(lp->projection.proj, map->projection.proj, &shape);
 #endif
 
-      if(shape.type == MS_POINT)
+      if(shape.type == MS_SHAPE_POINT)
 	d = msDistanceFromPointToMultipoint(&p, &shape.line[0]);
-      else if(shape.type == MS_LINE)
+      else if(shape.type == MS_SHAPE_LINE)
 	d = msDistanceFromPointToPolyline(&p, &shape);
-      else // MS_POLYGON
+      else // MS_SHAPE_POLYGON
 	d = msDistanceFromPointToPolygon(&p, &shape);	  
 
       if( d <= t ) { // found one
@@ -621,7 +621,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
   rectObj searchrect;
 
   // FIX: do some checking on searchshape here...
-  if(searchshape->type != MS_POLYGON) {
+  if(searchshape->type != MS_SHAPE_POLYGON) {
     msSetError(MS_MISCERR, "Search shape MUST be a polygon.", "msQueryByShape()"); 
     return(MS_FAILURE);
   }
@@ -699,13 +699,13 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
 #endif
 
       switch(shape.type) { // make sure shape actually intersects the shape
-      case MS_POINT:
+      case MS_SHAPE_POINT:
 	status = msIntersectMultipointPolygon(&shape.line[0], searchshape);	
 	break;
-      case MS_LINE:
+      case MS_SHAPE_LINE:
 	status = msIntersectPolylinePolygon(&shape, searchshape);
 	break;
-      case MS_POLYGON:
+      case MS_SHAPE_POLYGON:
 	status = msIntersectPolygons(&shape, searchshape);
 	break;
       default:

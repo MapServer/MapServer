@@ -21,7 +21,7 @@ typedef struct {
   lineObj *line;
   rectObj bounds;
 
-  int type;
+  int type; // MS_SHAPE_TYPE
 
   long index;
   int tileindex;
@@ -30,11 +30,20 @@ typedef struct {
 
   char *text;
 
-  char **attributes;
-  int numattributes;
+  char **values;
+  int numvalues;
 
 } shapeObj;
 
 typedef lineObj multipointObj;
+
+/* attribute primatives */
+typedef struct {
+  char *name;
+  long type;
+  int index;
+  int size;
+  short numdecimals;
+} itemObj;
 
 #endif /* MAPPRIMITIVE_H */

@@ -244,7 +244,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
 
     if(initLayer(&(map->layers[l])) == -1) return(-1);
     map->layers[l].name = strdup("scalebar");
-    map->layers[l].type = MS_ANNOTATION;
+    map->layers[l].type = MS_LAYER_ANNOTATION;
     map->layers[l].status = MS_ON;
 
     if(initClass(&(map->layers[l].class[0])) == -1) return(-1);    

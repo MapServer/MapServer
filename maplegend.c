@@ -35,7 +35,7 @@ gdImagePtr msDrawLegend(mapObj *map)
   ** allocate heights array
   */
   for(i=0; i<map->numlayers; i++) {
-    if((map->layers[i].status == MS_OFF) || (map->layers[i].status == MS_QUERY)) /* skip it */
+    if((map->layers[i].status == MS_OFF) || (map->layers[i].type == MS_LAYER_QUERY)) /* skip it */
       continue;
 
     for(j=0;j<map->layers[i].numclasses;j++) {
@@ -55,7 +55,7 @@ gdImagePtr msDrawLegend(mapObj *map)
   */
   n=0;
   for(i=0; i<map->numlayers; i++) { /* Need to find the longest legend label string */
-    if((map->layers[i].status == MS_OFF) || (map->layers[i].status == MS_QUERY)) /* skip it */
+    if((map->layers[i].status == MS_OFF) || (map->layers[i].type == MS_LAYER_QUERY)) /* skip it */
       continue;
 
    if(map->scale > 0) {
@@ -106,7 +106,7 @@ gdImagePtr msDrawLegend(mapObj *map)
 
     lp = &(map->layers[i]); /* assign for brevity */
 
-    if((lp->numclasses == 0) || (lp->status == MS_OFF) || (lp->status == MS_QUERY))
+    if((lp->numclasses == 0) || (lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY))
       continue; /* skip this layer */
 
     if(map->scale > 0) {
@@ -127,15 +127,15 @@ gdImagePtr msDrawLegend(mapObj *map)
       ** now draw the appropriate color/symbol/size combination 
       */      
       switch(lp->type) {
-      case MS_POINT:            
+      case MS_LAYER_POINT:            
 	p.line[0].point[0].x = MS_NINT(HMARGIN + (map->legend.keysizex/2.0)) - 1;
 	p.line[0].point[0].y = MS_NINT(pnt.y + (map->legend.keysizey/2.0)) - 1;
 	p.line[0].numpoints = 1;
 	msDrawMarkerSymbol(&map->symbolset, img, &(p.line[0].point[0]), lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
 	if(lp->class[j].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &(p.line[0].point[0]), lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
 	break;
-      case MS_LINE:
-      case MS_POLYLINE:
+      case MS_LAYER_LINE:
+      case MS_LAYER_POLYLINE:
 	p.line[0].point[0].x = HMARGIN;
 	p.line[0].point[0].y = pnt.y + map->legend.keysizey - 1;
 	p.line[0].point[1].x = HMARGIN + MS_NINT(map->legend.keysizex/3.0) - 1;
@@ -148,8 +148,8 @@ gdImagePtr msDrawLegend(mapObj *map)
 	msDrawLineSymbol(&map->symbolset, img, &p, lp->class[j].symbol, lp->class[j].color, lp->class[j].backgroundcolor, lp->class[j].outlinecolor, lp->class[j].sizescaled);
 	if(lp->class[j].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, &p, lp->class[j].overlaysymbol, lp->class[j].overlaycolor, lp->class[j].overlaybackgroundcolor, lp->class[j].overlayoutlinecolor, lp->class[j].overlaysizescaled);
 	break;
-      case MS_RASTER:
-      case MS_POLYGON:
+      case MS_LAYER_RASTER:
+      case MS_LAYER_POLYGON:
         p.line[0].point[0].x = HMARGIN;
 	p.line[0].point[0].y = pnt.y;
 	p.line[0].point[1].x = HMARGIN + map->legend.keysizex - 1;
@@ -255,7 +255,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
 
     if(initLayer(&(map->layers[l])) == -1) return(-1);
     map->layers[l].name = strdup("legend");
-    map->layers[l].type = MS_ANNOTATION;
+    map->layers[l].type = MS_LAYER_ANNOTATION;
     map->layers[l].status = MS_ON;
 
     if(initClass(&(map->layers[l].class[0])) == -1) return(-1);    

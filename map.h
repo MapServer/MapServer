@@ -120,7 +120,8 @@ extern "C" {
 // General enumerated types - needed by scripts
 enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS};
-enum MS_FEATURE_TYPE {MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER, MS_ANNOTATION, MS_QUERY, MS_NULL};
+enum MS_SHAPE_TYPE {MS_SHAPE_POINT, MS_SHAPE_LINE, MS_SHAPE_POLYGON, MS_SHAPE_NULL};
+enum MS_LAYER_TYPE {MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_POLYLINE, MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY};
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
@@ -451,7 +452,7 @@ typedef struct {
 
   int status; // on or off
   char *data; // filename, can be relative or full path
-  enum MS_FEATURE_TYPE type;
+  enum MS_LAYER_TYPE type;
 
   int annotate; // boolean flag for annotation
   

@@ -54,7 +54,7 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
     }
 
     msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
-    shape->attributes = values;
+    shape->values = values;
     break;
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPNextShape(layer, shapepath, shape));
@@ -90,13 +90,13 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
 	layer->items = msDBFGetItems(layer->shpfile.hDBF);
 	if(!layer->items) return(MS_FAILURE);
       }
-      shape->numattributes = layer->numitems;
-      shape->attributes = msDBFGetValues(layer->shpfile.hDBF, record);      
-      if(!shape->attributes) return(MS_FAILURE);      
+      shape->numvalues = layer->numitems;
+      shape->values = msDBFGetValues(layer->shpfile.hDBF, record);      
+      if(!shape->values) return(MS_FAILURE);      
     } else if(layer->numitems > 0) {
-      shape->numattributes = layer->numitems;
-      shape->attributes = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
-      if(!shape->attributes) return(MS_FAILURE);
+      shape->numvalues = layer->numitems;
+      shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
+      if(!shape->values) return(MS_FAILURE);
     }
 
     break;

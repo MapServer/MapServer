@@ -50,7 +50,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
   map->labelcache.labels[i].status = MS_FALSE;
   map->labelcache.labels[i].poly->text = NULL;
 
-  if(map->layers[layer].type == MS_POINT) { 
+  if(map->layers[layer].type == MS_LAYER_POINT) { 
     rectObj rect;
     int w, h;
 
@@ -513,8 +513,9 @@ static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
 void billboard(gdImagePtr img, shapeObj *shape, labelObj *label) 
 {
   int i;
-  shapeObj temp={0,NULL,{-1,-1,-1,-1},MS_NULL};
+  shapeObj temp;
 
+  msInitShape(&temp);
   msAddLine(&temp, &shape->line[0]);
 
   if(label->backgroundshadowcolor >= 0) {
@@ -575,7 +576,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       continue; /* label too large relative to the feature */
 
     draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
-    if((layerPtr->type == MS_ANNOTATION || layerPtr->type == MS_POINT) && (classPtr->color >= 0 || classPtr->outlinecolor > 0)) { /* there *is* a marker */
+    if((layerPtr->type == MS_LAYER_ANNOTATION || layerPtr->type == MS_LAYER_POINT) && (classPtr->color >= 0 || classPtr->outlinecolor > 0)) { /* there *is* a marker */
 
       msGetMarkerSize(&map->symbolset, classPtr, &marker_width, &marker_height);
       marker_offset_x = MS_NINT(marker_width/2.0);
@@ -586,12 +587,12 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       marker_rect.maxx = marker_rect.minx + (marker_width-1);
       marker_rect.maxy = marker_rect.miny + (marker_height-1);
 
-      if(layerPtr->type == MS_ANNOTATION) draw_marker = 1; /* actually draw the marker */
+      if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
     }
     
     if(label.position == MS_AUTO) {
 
-      if(layerPtr->type == MS_LINE) {
+      if(layerPtr->type == MS_LAYER_LINE) {
 	int position = MS_UC;
 
 	for(j=0; j<2; j++) { /* Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. */

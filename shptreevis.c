@@ -19,7 +19,7 @@ typedef unsigned char uchar;
    #undef MAPSERVER
 #else
    #define MAPSERVER 1
-   #define SHPT_POLYGON MS_SHP_POLYGON
+   #define SHPT_POLYGON SHP_POLYGON
 #endif
 
 char* AddFileSuffix ( const char * Filename, const char * Suffix ) {

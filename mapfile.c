@@ -21,7 +21,7 @@ extern int loadSymbol(symbolObj *s); // in mapsymbol.c
 */
 static char *msOutputImageType[4]={"GIF", "PNG", "JPEG", "WBMP"};
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
-static char *msLayerTypes[6]={"POINT", "LINE", "POLYGON", "POLYLINE", "RASTER", "ANNOTATION"};
+static char *msLayerTypes[7]={"POINT", "LINE", "POLYGON", "POLYLINE", "RASTER", "ANNOTATION", "QUERY"};
 static char *msLabelPositions[10]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO"};
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
 static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
@@ -1478,12 +1478,12 @@ int loadLayer(layerObj *layer, mapObj *map)
 	return(-1);
       }
 
-      if(layer->type == MS_POLYGON || layer->type == MS_POLYLINE)
-	type = MS_POLYGON;
-      else if(layer->type == MS_LINE)
-	type = MS_LINE;
+      if(layer->type == MS_LAYER_POLYGON || layer->type == MS_LAYER_POLYLINE)
+	type = MS_SHAPE_POLYGON;
+      else if(layer->type == MS_LAYER_LINE)
+	type = MS_SHAPE_LINE;
       else
-	type = MS_POINT;	
+	type = MS_SHAPE_POINT;	
 
       if(loadFeature(&(layer->features), type) == -1) return(-1);      
       layer->connectiontype = MS_INLINE;
@@ -1554,7 +1554,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->requires = getString()) == NULL) return(-1);
       break;
     case(STATUS):
-      if((layer->status = getSymbol(4, MS_ON,MS_OFF,MS_QUERY,MS_DEFAULT)) == -1) return(-1);
+      if((layer->status = getSymbol(3, MS_ON,MS_OFF,MS_DEFAULT)) == -1) return(-1);
       break;
     case(SYMBOLSCALE):      
       if(getDouble(&(layer->symbolscale)) == -1) return(-1);
@@ -1576,7 +1576,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->transform = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
     case(TYPE):
-      if((layer->type = getSymbol(6, MS_POINT,MS_LINE,MS_RASTER,MS_POLYGON,MS_POLYLINE,MS_ANNOTATION)) == -1) return(-1);
+      if((layer->type = getSymbol(7, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION, MS_LAYER_QUERY)) == -1) return(-1);
       break;
     default:
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
@@ -1617,12 +1617,12 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->description = strdup(value);
     break;
   case(FEATURE):    
-    if(layer->type == MS_POLYGON || layer->type == MS_POLYLINE)
-      type = MS_POLYGON;
-    else if(layer->type == MS_LINE)
-      type = MS_LINE;
+    if(layer->type == MS_LAYER_POLYGON || layer->type == MS_LAYER_POLYLINE)
+      type = MS_SHAPE_POLYGON;
+    else if(layer->type == MS_LAYER_LINE)
+      type = MS_SHAPE_LINE;
     else
-      type = MS_POINT;
+      type = MS_SHAPE_POINT;
 
     switch(msyylex()) {      
     case(POINTS):
@@ -1779,7 +1779,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(TYPE):
     msyystate = 2; msyystring = value;
-    if((layer->type = getSymbol(6, MS_POINT,MS_LINE,MS_RASTER,MS_POLYGON,MS_POLYLINE,MS_ANNOTATION)) == -1) return;
+    if((layer->type = getSymbol(7, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION,MS_LAYER_QUERY)) == -1) return;
     break;
   default:
     break;

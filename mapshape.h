@@ -13,10 +13,10 @@ extern "C" {
 #endif
 
 // Shapefile types
-#define MS_SHP_POINT 1
-#define MS_SHP_ARC 3
-#define MS_SHP_POLYGON 5
-#define MS_SHP_MULTIPOINT 8
+#define SHP_POINT 1
+#define SHP_ARC 3
+#define SHP_POLYGON 5
+#define SHP_MULTIPOINT 8
 
 #ifndef SWIG
 typedef	struct {

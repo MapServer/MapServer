@@ -55,17 +55,17 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   switch(type) {
   case(SG_POINT_SHAPE):
   case(SG_MULTI_POINT_SHAPE):
-    outshp->type = MS_POINT;
+    outshp->type = MS_SHAPE_POINT;
     break;
   case(SG_LINE_SHAPE):
   case(SG_SIMPLE_LINE_SHAPE): 
   case(SG_MULTI_LINE_SHAPE):
   case(SG_MULTI_SIMPLE_LINE_SHAPE):
-    outshp->type = MS_LINE;
+    outshp->type = MS_SHAPE_LINE;
     break;
   case(SG_AREA_SHAPE):
   case(SG_MULTI_AREA_SHAPE):
-    outshp->type = MS_POLYGON;
+    outshp->type = MS_SHAPE_POLYGON;
     break;
   default:
     msSetError(MS_SDEERR, "Unsupported SDE shape type.", "sdeCopyShape()");
@@ -144,9 +144,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
   sde = layer->sdelayer;
 
   if(layer->numitems > 0) {
-    shape->numattributes = layer->numitems;
-    shape->attributes = (char **)malloc(sizeof(char *)*layer->numitems);
-    if(!shape->attributes) {
+    shape->numvalues = layer->numitems;
+    shape->values = (char **)malloc(sizeof(char *)*layer->numitems);
+    if(!shape->values) {
       msSetError(MS_MEMERR, "Error allocation shape attribute array.", "sdeGetRecord()");
       return(MS_FAILURE);
     }
@@ -177,10 +177,10 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_SMALLINT_TYPE:
       status = SE_stream_get_smallint(sde->stream, i+skip, (short *) &longval);
       if(status == SE_SUCCESS) {
-	shape->attributes[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
-	sprintf(shape->attributes[i], "%ld", longval);
+	shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+	sprintf(shape->values[i], "%ld", longval);
       } else if(status == SE_NULL_VALUE) {
-	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
+	shape->values[i] = strdup(MS_SDE_NULLSTRING);
       } else {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_smallint()");
 	return(MS_FAILURE);
@@ -188,10 +188,10 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_INTEGER_TYPE:
       status = SE_stream_get_integer(sde->stream, i+skip, &longval);
       if(status == SE_SUCCESS) {
-	shape->attributes[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
-	sprintf(shape->attributes[i], "%ld", longval);
+	shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+	sprintf(shape->values[i], "%ld", longval);
       } else if(status == SE_NULL_VALUE) {
-	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
+	shape->values[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
 	return(MS_FAILURE);
@@ -200,10 +200,10 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_FLOAT_TYPE:
       status = SE_stream_get_float(sde->stream, i+skip, (float *) &doubleval);
       if(status == SE_SUCCESS) {
-	shape->attributes[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
-	sprintf(shape->attributes[i], "%g", doubleval);
+	shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+	sprintf(shape->values[i], "%g", doubleval);
       } else if(status == SE_NULL_VALUE) {
-	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
+	shape->values[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_float()");
 	return(MS_FAILURE);
@@ -212,34 +212,34 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_DOUBLE_TYPE:
       status = SE_stream_get_double(sde->stream, i+skip, &doubleval);
       if(status == SE_SUCCESS) {
-	shape->attributes[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
-	sprintf(shape->attributes[i], "%g", doubleval);
+	shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+	sprintf(shape->values[i], "%g", doubleval);
       } else if(status == SE_NULL_VALUE) {
-	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
+	shape->values[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_double()");
 	return(MS_FAILURE);
       }
       break;
     case SE_STRING_TYPE:
-      shape->attributes[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
-      status = SE_stream_get_string(sde->stream, i+skip, shape->attributes[i]);
+      shape->values[i] = (char *)malloc(sde->itemdefs[i+skip].size+1);
+      status = SE_stream_get_string(sde->stream, i+skip, shape->values[i]);
       if(status != SE_SUCCESS) {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_string()");
 	return(MS_FAILURE);
       }
       break;
     case SE_BLOB_TYPE:
-      shape->attributes[i] = strdup("<blob>");
+      shape->values[i] = strdup("<blob>");
       msSetError(MS_SDEERR, "Retrieval of BLOBs is not yet supported.", "sdeGetRecord()");
       break;
     case SE_DATE_TYPE:
       status = SE_stream_get_date(sde->stream, i+skip, &dateval);
       if(status == SE_SUCCESS) {
-	shape->attributes[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
-	strftime(shape->attributes[i], MS_SDE_TIMEFMTSIZE, MS_SDE_TIMEFMT, &dateval);
+	shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
+	strftime(shape->values[i], MS_SDE_TIMEFMTSIZE, MS_SDE_TIMEFMT, &dateval);
       } else if(status == SE_NULL_VALUE) {
-	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
+	shape->values[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_date()");
 	return(MS_FAILURE);
@@ -248,9 +248,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
     case SE_SHAPE_TYPE:
       status = SE_stream_get_shape(sde->stream, i+skip, shapeval);
       if(status == SE_SUCCESS) {
-	shape->attributes[i] = strdup(MS_SDE_SHAPESTRING);
+	shape->values[i] = strdup(MS_SDE_SHAPESTRING);
       } else if(status == SE_NULL_VALUE) {
-	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
+	shape->values[i] = strdup(MS_SDE_NULLSTRING);
       } else {     
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
 	return(MS_FAILURE);
@@ -391,7 +391,7 @@ void msSDELayerClose(layerObj *layer) {
 #endif
 }
 
-// starts a stream query using spatial filter (and optionally attributes)
+// starts a stream query using spatial filter (and optionally values)
 int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 #ifdef USE_SDE
   char **items=NULL;
@@ -535,7 +535,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
     return(MS_FAILURE);
   }
 
-  // get the shape and attributes (first column is the shape id, second is the shape itself)
+  // get the shape and values (first column is the shape id, second is the shape itself)
   status = sdeGetRecord(layer, shape, 2);
   if(status != MS_SUCCESS)
     return(MS_FAILURE); // something went wrong fetching the record/shape

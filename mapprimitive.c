@@ -29,13 +29,13 @@ void msInitShape(shapeObj *shape)
   // spatial component
   shape->line = NULL;
   shape->numlines = 0;
-  shape->type = MS_NULL;
+  shape->type = MS_SHAPE_NULL;
   shape->bounds.minx = shape->bounds.miny = -1;
   shape->bounds.maxx = shape->bounds.maxy = -1;
   
   // attribute component
-  shape->attributes = NULL;
-  shape->numattributes = 0;
+  shape->values = NULL;
+  shape->numvalues = 0;
 
   // annotation component
   shape->text = NULL;
@@ -66,12 +66,11 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
   to->index = from->index;
   to->tileindex = from->tileindex;
 
-  // FIX: Need to duplicate attributes
-  if(from->attributes) {    
-    to->attributes = (char **)malloc(sizeof(char *)*from->numattributes);
-    for(i=0; i<from->numattributes; i++)
-      to->attributes[i] = strdup(from->attributes[i]);
-    to->numattributes = from->numattributes;
+  if(from->values) {    
+    to->values = (char **)malloc(sizeof(char *)*from->numvalues);
+    for(i=0; i<from->numvalues; i++)
+      to->values[i] = strdup(from->values[i]);
+    to->numvalues = from->numvalues;
   }
 
   return(0);
@@ -85,7 +84,7 @@ void msFreeShape(shapeObj *shape)
     free(shape->line[c].point);
   free(shape->line);
 
-  if(shape->attributes) msFreeCharArray(shape->attributes, shape->numattributes);
+  if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
 
   free(shape->text);
   
@@ -176,7 +175,7 @@ void msRectToPolygon(rectObj rect, shapeObj *poly)
   line.numpoints = 5;
   
   msAddLine(poly, &line);
-  poly->type = MS_POLYGON;
+  poly->type = MS_SHAPE_POLYGON;
   poly->bounds = rect;
   free(line.point);
 }
@@ -467,7 +466,7 @@ void msTransformShape(shapeObj *shape, rectObj extent, double cellsize)
 
   if(shape->numlines == 0) return; // nothing to transform
 
-  if(shape->type == MS_LINE || shape->type == MS_POLYGON) { // remove co-linear vertices
+  if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { // remove co-linear vertices
   
     for(i=0; i<shape->numlines; i++) { // for each part
       

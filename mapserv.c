@@ -1173,7 +1173,7 @@ char *processLine(char *instr, int mode)
     if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description
   }
 
-  if(mode == QUERY) { // return shape and/or attributes	
+  if(mode == QUERY) { // return shape and/or values	
     
     sprintf(repstr, "%f %f", (ResultShape.bounds.maxx+ResultShape.bounds.minx)/2, (ResultShape.bounds.maxy+ResultShape.bounds.miny)/2); 
     outstr = gsub(outstr, "[shpmid]", repstr);
@@ -1201,10 +1201,10 @@ char *processLine(char *instr, int mode)
     for(i=0;i<ResultLayer->numitems;i++) {	 
       sprintf(substr, "[%s]", ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL)
-	outstr = gsub(outstr, substr, ResultShape.attributes[i]);
+	outstr = gsub(outstr, substr, ResultShape.values[i]);
       sprintf(substr, "[%s_esc]", ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL)
-	outstr = gsub(outstr, substr, (char *)encode_url(ResultShape.attributes[i]));
+	outstr = gsub(outstr, substr, (char *)encode_url(ResultShape.values[i]));
     }
     
     // FIX: need to re-incorporate JOINS at some point
@@ -1426,7 +1426,7 @@ int main(int argc, char *argv[]) {
     ** For each layer lets set layer status
     */
     for(i=0;i<Map->numlayers;i++) {
-      if((Map->layers[i].status != MS_DEFAULT) && (Map->layers[i].status != MS_QUERY)) {
+      if((Map->layers[i].status != MS_DEFAULT)) {
 	if(isOn(Map->layers[i].name, Map->layers[i].group) == MS_TRUE) /* Set layer status */
 	  Map->layers[i].status = MS_ON;
 	else
@@ -1583,7 +1583,7 @@ int main(int argc, char *argv[]) {
 	} else
 	  Map->layers[SelectLayerIndex].status = MS_ON;
 
-	if(QueryCoordSource == NONE) { // use attributes
+	if(QueryCoordSource == NONE) { // use values
 
 	  if((status = msQueryByAttributes(Map, SelectLayerIndex)) != MS_SUCCESS) writeError();	  
 

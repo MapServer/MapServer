@@ -154,8 +154,6 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>position		       { return(POSITION); }
 <INITIAL,OBJECT_STRING>postlabelcache	       { return(POSTLABELCACHE); }
 <INITIAL,OBJECT_STRING>projection	       { return(PROJECTION); }
-<INITIAL,OBJECT_STRING>query		       { return(QUERY); }
-<INITIAL,OBJECT_STRING>queryitem	       { return(QUERYITEM); }
 <INITIAL,OBJECT_STRING>querymap	               { return(QUERYMAP); }
 <INITIAL,OBJECT_STRING>reference	       { return(REFERENCE); }
 <INITIAL,OBJECT_STRING>requires	               { return(REQUIRES); }
@@ -185,7 +183,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>web		       { return(WEB); }
 <INITIAL,OBJECT_STRING>wrap                    { return(WRAP); }
 
-<INITIAL,VALUE_STRING>annotation	       { return(MS_ANNOTATION); }
+<INITIAL,VALUE_STRING>annotation	       { return(MS_LAYER_ANNOTATION); }
 <INITIAL,VALUE_STRING>auto                     { return(MS_AUTO); }
 <INITIAL>bitmap			               { return(MS_BITMAP); }
 <INITIAL,VALUE_STRING>cc                       { return(MS_CC); }
@@ -205,7 +203,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>kilometers	       { return(MS_KILOMETERS); }
 <INITIAL,VALUE_STRING>large		       { return(MS_LARGE); }
 <INITIAL,VALUE_STRING>lc                       { return(MS_LC); }
-<INITIAL,VALUE_STRING>line		       { return(MS_LINE); }
+<INITIAL,VALUE_STRING>line		       { return(MS_LAYER_LINE); }
 <INITIAL,VALUE_STRING>ll                       { return(MS_LL); }
 <INITIAL,VALUE_STRING>lr                       { return(MS_LR); }
 <INITIAL,VALUE_STRING>medium		       { return(MS_MEDIUM); }
@@ -219,11 +217,11 @@ char *msyystring=NULL;
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
 <INITIAL,VALUE_STRING>pixels                   { return(MS_PIXELS); }
 <INITIAL,VALUE_STRING>png		       { return(MS_PNG); }
-<INITIAL,VALUE_STRING>point		       { return(MS_POINT); }
-<INITIAL,VALUE_STRING>polygon 		       { return(MS_POLYGON); }
-<INITIAL,VALUE_STRING>polyline		       { return(MS_POLYLINE); }
-<INITIAL,VALUE_STRING>queryonly                { return(MS_QUERY); }
-<INITIAL,VALUE_STRING>raster		       { return(MS_RASTER); }
+<INITIAL,VALUE_STRING>point		       { return(MS_LAYER_POINT); }
+<INITIAL,VALUE_STRING>polygon 		       { return(MS_LAYER_POLYGON); }
+<INITIAL,VALUE_STRING>polyline		       { return(MS_LAYER_POLYLINE); }
+<INITIAL,VALUE_STRING>query                    { return(MS_LAYER_QUERY); }
+<INITIAL,VALUE_STRING>raster		       { return(MS_LAYER_RASTER); }
 <INITIAL,VALUE_STRING>sde		       { return(MS_SDE); }
 <INITIAL,VALUE_STRING>selected		       { return(MS_SELECTED); }
 <INITIAL>simple                                { return(MS_SYMBOL_SIMPLE); }
