@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.44  2003/06/26 02:49:47  assefa
+ * Add support for version 1.0.0
+ *
  * Revision 1.43  2003/04/09 07:13:49  dan
  * Added GetContext (custom) request in WMS interface.
  * Added missing gml: namespace in 0.1.7 context output.
@@ -456,7 +459,8 @@ int msLoadMapContext(mapObj *map, char *filename)
   char *pszValue, *pszValue1, *pszValue2;
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
-  CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
+  CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild, *psKeyword, 
+    *psKeywordList;
   CPLXMLNode *psLegendURL, *psSRS;
   char szPath[MS_MAXPATHLEN];
   int nStyle;
@@ -551,7 +555,8 @@ int msLoadMapContext(mapObj *map, char *filename)
   // Version
   msInsertHashTable( map->web.metadata, "wms_context_version", pszVersion );
 
-  if( strcasecmp(pszVersion, "0.1.7") >= 0 )
+  if( strcasecmp(pszVersion, "0.1.7") >= 0 && 
+      strcasecmp(pszVersion, "1.0.0") < 0)
   {
       if( msGetMapContextXMLHashValue(psMapContext, "fid", 
                            &(map->web.metadata), "wms_context_fid") == MS_FAILURE )
@@ -628,28 +633,73 @@ int msLoadMapContext(mapObj *map, char *filename)
   if( msGetMapContextXMLHashValue(psMapContext, "General.Title", 
                               &(map->web.metadata), "wms_title") == MS_FAILURE)
   {
-      if( msGetMapContextXMLHashValue(psMapContext, "General.gml:name", 
-                             &(map->web.metadata), "wms_title") == MS_FAILURE )
+      if (strcasecmp(pszVersion, "1.0.0") >= 0)
+         msDebug("Mandatory data General.Title missing in %s.", filename);
+      else
       {
-          if(strcasecmp(pszVersion, "0.1.7") < 0)
-              msDebug("Mandatory data General.Title missing in %s.", filename);
-          else
-              msDebug("Mandatory data General.gml:name missing in %s.", 
-                      filename);
+          if( msGetMapContextXMLHashValue(psMapContext, "General.gml:name", 
+                             &(map->web.metadata), "wms_title") == MS_FAILURE )
+          {
+              if(strcasecmp(pszVersion, "0.1.7") < 0)
+                msDebug("Mandatory data General.Title missing in %s.", filename);
+              else
+                msDebug("Mandatory data General.gml:name missing in %s.", 
+                        filename);
+          }
       }
   }
 
   // Name
-  if(msGetMapContextXMLStringValue(psMapContext, "General.Name", 
-                                   &(map->name)) == MS_FAILURE)
+  if( strcasecmp(pszVersion, "1.0.0") >= 0)
   {
-      msGetMapContextXMLStringValue(psMapContext, "General.gml:name", 
-                                    &(map->name));
+      pszValue = (char*)CPLGetXMLValue(psMapContext, 
+                                       "id", NULL);
+      if (pszValue)
+        map->name = strdup(pszValue);
   }
-
+  else
+  {
+      if(msGetMapContextXMLStringValue(psMapContext, "General.Name", 
+                                       &(map->name)) == MS_FAILURE)
+      {
+          msGetMapContextXMLStringValue(psMapContext, "General.gml:name", 
+                                        &(map->name));
+      }
+  }
   // Keyword
-  msGetMapContextXMLHashValue(psMapContext, "General.Keywords", 
-                              &(map->web.metadata), "wms_keywordlist");
+  if( strcasecmp(pszVersion, "1.0.0") >= 0)
+  {
+      psKeywordList = CPLGetXMLNode(psMapContext, "General.KeywordList");
+      if (psKeywordList)
+      {
+          psKeyword = psKeywordList->psChild;
+          while (psKeyword)
+          {
+              if (psKeyword->psChild &&
+                  strcasecmp(psKeyword->pszValue, "KEYWORD") == 0 )
+              {
+                  pszValue = psKeyword->psChild->pszValue;
+                  pszHash = msLookupHashTable(map->web.metadata, "wms_keywordlist");
+                  if (pszHash != NULL)
+                  {
+                      pszValue1 = (char*)malloc(strlen(pszHash)+
+                                                strlen(pszValue)+2);
+                      sprintf(pszValue1, "%s,%s", pszHash, pszValue);
+                      msInsertHashTable(map->web.metadata, 
+                                        "wms_keywordlist", pszValue1);
+                      free(pszValue1);
+                  }
+                  else
+                    msInsertHashTable(map->web.metadata, 
+                                      "wms_keywordlist", pszValue);
+              }
+              psKeyword = psKeyword->psNext;   
+          }
+      }
+  }
+  else
+    msGetMapContextXMLHashValue(psMapContext, "General.Keywords", 
+                                &(map->web.metadata), "wms_keywordlist");
 
   // Window
   pszValue1 = (char*)CPLGetXMLValue(psMapContext,"General.Window.width",NULL);
@@ -1196,7 +1246,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   // Decide which version we're going to return...
   version = msLookupHashTable(map->web.metadata, "wms_context_version");
   if(version == NULL)
-      version = "0.1.7";
+    version = "1.0.0";
 
   // file header
   msOWSPrintMetadata(stream, map->web.metadata, "wms_encoding", OWS_NOERR,
@@ -1207,26 +1257,48 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   if(strcasecmp(version, "0.1.7") >= 0)
   {
       fprintf( stream, "<View_Context version=\"%s\"", version );
+      
+  }
+  else
+  {
+      fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
+  }
+
+  if (strcasecmp(version, "0.1.7") >= 0 &&
+      strcasecmp(version, "1.0.0") < 0)
+  {
       pszValue = msLookupHashTable(map->web.metadata, "wms_context_fid");
       if(pszValue != NULL)
           fprintf( stream, " fid=\"%s\"", pszValue );
       else
           fprintf( stream, " fid=\"0\"");
   }
-  else
-  {
-      fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
-  }
-  fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"" 
-                   " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+  if (strcasecmp(version, "1.0.0") >= 0)
+        fprintf( stream, " id=\"%s\"", map->name);
 
-  if(strcasecmp(version, "0.1.7") >= 0)
+  fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+
+  if(strcasecmp(version, "0.1.7") >= 0 &&
+     strcasecmp(version, "1.0.0") < 0 )
   {
       fprintf( stream, " xmlns:gml=\"http://www.opengis.net/gml\"");
   }
-  fprintf( stream, 
-         " xsi:noNamespaceSchemaLocation=\"%s/contexts/%s/context.xsd\">\n",
-           msOWSGetSchemasLocation(map), version );
+  if(strcasecmp(version, "1.0.0") >= 0)
+  {
+      fprintf( stream, " xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
+      fprintf( stream, " xmlns=\"http://www.opengis.net/context\"");
+      //fprintf( stream, " xmlns:sld=\"http://www.opengis.net/sld");
+      fprintf( stream, 
+               " xsi:schemaLocation=\"http://www.opengis.net/context context.xsd\">\n");
+  }
+  else
+  {
+      fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"");
+                   
+      fprintf( stream, 
+               " xsi:noNamespaceSchemaLocation=\"%s/contexts/%s/context.xsd\">\n",
+               msOWSGetSchemasLocation(map), version );
+  }
 
   // set the General information
   fprintf( stream, "  <General>\n" );
@@ -1251,25 +1323,53 @@ int msWriteMapContext(mapObj *map, FILE *stream)
            tabspace, value, map->extent.minx, map->extent.miny, 
            map->extent.maxx, map->extent.maxy );
 
-  // Title, Keyword and Abstractof Context
-  if(strcasecmp(version, "0.1.7") >= 0)
+  // Title, name
+  if(strcasecmp(version, "0.1.7") >= 0 && 
+     strcasecmp(version, "1.0.0") < 0)
   {
       fprintf( stream, "%s<gml:name>%s</gml:name>\n", tabspace, map->name );
   }
-  else
+  else 
   {
-      fprintf( stream, "%s<Name>%s</Name>\n", tabspace, map->name );
+      if (strcasecmp(version, "0.1.7") < 0)
+        fprintf( stream, "%s<Name>%s</Name>\n", tabspace, map->name );
+
       fprintf( stream, "%s<!-- Title of Context -->\n", tabspace );
       msOWSPrintMetadata(stream, map->web.metadata, "wms_title", OWS_WARN,
                          "    <Title>%s</Title>\n", map->name);
   }
 
-  msOWSPrintMetadataList(stream, map->web.metadata, "wms_keywordlist", 
-                    "    <Keywords>\n", "    </Keywords>\n",
-                    "      %s\n");
+  //keyword
+  if (strcasecmp(version, "1.0.0") >= 0)
+  {
+      if (msLookupHashTable(map->web.metadata,"wms_keywordlist")!=NULL)
+      {
+          char **papszKeywords;
+          int nKeywords, iKey;
 
+          pszValue = msLookupHashTable(map->web.metadata, 
+                                       "wms_keywordlist");
+          papszKeywords = split(pszValue, ',', &nKeywords);
+          if(nKeywords > 0 && papszKeywords)
+          {
+              fprintf( stream, "    <KeywordList>\n");
+              for(iKey=0; iKey<nKeywords; iKey++)
+              { 
+                  printf( stream, "      <Keyword>%s</Keyword>\n", 
+                          papszKeywords[iKey]);
+              }
+              fprintf( stream, "    </KeywordList>\n");
+          }
+      }
+  }
+  else
+    msOWSPrintMetadataList(stream, map->web.metadata, "wms_keywordlist", 
+                           "    <Keywords>\n", "    </Keywords>\n",
+                           "      %s\n");
 
-  if(strcasecmp(version, "0.1.7") >= 0)
+  //abstract
+  if(strcasecmp(version, "0.1.7") >= 0 &&
+     strcasecmp(version, "1.0.0") < 0)
   {
       msOWSPrintMetadata(stream, map->web.metadata, "wms_abstract", OWS_NOERR,
                          "    <gml:description>%s</gml:description>\n", NULL);
