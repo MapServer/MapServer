@@ -7,12 +7,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+
+char *processLine(mapservObj* msObj, char* instr, int mode);
+
 /*
  * Redirect to (only use in CGI)
  * 
 */
-
-
 int msRedirect(char *url)
 {
   printf("Status: 302 Found\n");
@@ -1754,10 +1755,10 @@ char *generateLegendTemplate(mapservObj *msObj)
 
 char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
 {
-  int i, records=MS_FALSE;
+  int records=MS_FALSE;
   FILE *stream=NULL;
   char *outbuf; 
-  char instr[MS_BUFFER_LENGTH], substr[MS_BUFFER_LENGTH], *outstr;
+  char line[MS_BUFFER_LENGTH], *outstr;
   char szPath[MS_MAXPATHLEN];
 
   if((outbuf = strdup("")) == NULL) return(NULL); // empty at first
@@ -1775,7 +1776,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
         }
 
         // echo file to the output buffer, no substitutions
-        while(fgets(instr, MS_BUFFER_LENGTH, stream) != NULL) strcatalloc(outbuf, instr);
+        while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) strcatalloc(outbuf, line);
 
         fclose(stream);
       }
@@ -1788,18 +1789,14 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
       records = MS_TRUE;
     }
     
-    while(fgets(instr, MS_BUFFER_LENGTH, stream) != NULL) { // now on to the end of the template
-      outstr = strdup(instr);
-      
-      for(i=0; i<join->numitems; i++) {	  
-	sprintf(substr, "[%s]", join->items[i]);
-	if(strstr(outstr, substr) != NULL) { // do substitution
-	  outstr = gsub(outstr, substr, join->values[i]);
-	}
-      } // next item
-      
-      strcatalloc(outbuf, outstr);
-      free(outstr);
+    while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) { // now on to the end of the template
+      if(strchr(line, '[') != NULL) {
+        outstr = processLine(msObj, line, QUERY);
+        if(!outstr) return NULL;         
+        strcatalloc(outbuf, outstr);
+        free(outstr);
+      } else // no subs, just echo
+        strcatalloc(outbuf, line);
     }
       
     rewind(stream);
@@ -1812,10 +1809,14 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
     }
 
     // echo file to the output buffer, no substitutions
-    while(fgets(instr, MS_BUFFER_LENGTH, stream) != NULL) strcatalloc(outbuf, instr);
+    while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) strcatalloc(outbuf, line);
     
     fclose(stream);
   }
+
+  // clear any data associated with the join
+  msFreeCharArray(join->values, join->numitems);
+  join->values = NULL;
 
   return(outbuf);
 }
@@ -2171,33 +2172,47 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 	outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
     }
     
-    // this handles simple one-to-one joins
+    
     for(i=0; i<msObj->ResultLayer->numjoins; i++) {
-      for(j=0;j<msObj->ResultLayer->joins[i].numitems;j++) {	 
+      if(msObj->ResultLayer->joins[i].values) { // join has data
+        for(j=0;j<msObj->ResultLayer->joins[i].numitems;j++) {	 
 
-        // by default let's encode attributes for HTML presentation
-        sprintf(substr, "[%s_%s]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);        
-        if(strstr(outstr, substr) != NULL) {
-	  encodedstr = msEncodeHTMLEntities(msObj->ResultLayer->joins[i].values[j]);
-	  outstr = gsub(outstr, substr, encodedstr);
-          free(encodedstr);
+          // by default let's encode attributes for HTML presentation
+          sprintf(substr, "[%s_%s]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);        
+          if(strstr(outstr, substr) != NULL) {
+	    encodedstr = msEncodeHTMLEntities(msObj->ResultLayer->joins[i].values[j]);
+	    outstr = gsub(outstr, substr, encodedstr);
+            free(encodedstr);
+          }
+
+          // of course you might want to embed that data in URLs
+          sprintf(substr, "[%s_%s_esc]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
+          if(strstr(outstr, substr) != NULL) {
+            encodedstr = msEncodeUrl(msObj->ResultLayer->joins[i].values[j]);
+            outstr = gsub(outstr, substr, encodedstr);
+            free(encodedstr);
+          }
+
+          // or you might want to access the attributes unaltered
+          sprintf(substr, "[%s_%s_raw]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
+          if(strstr(outstr, substr) != NULL)
+	    outstr = gsub(outstr, substr, msObj->ResultLayer->joins[i].values[j]);
         }
+      } else if(msObj->ResultLayer->joins[i].type ==  MS_JOIN_ONE_TO_MANY){ // one-to-many join
+	char *joinTemplate=NULL;
 
-        // of course you might want to embed that data in URLs
-        sprintf(substr, "[%s_%s_esc]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
+	sprintf(substr, "[join_%s]", msObj->ResultLayer->joins[i].name);        
         if(strstr(outstr, substr) != NULL) {
-          encodedstr = msEncodeUrl(msObj->ResultLayer->joins[i].values[j]);
-          outstr = gsub(outstr, substr, encodedstr);
-          free(encodedstr);
+	  joinTemplate = processOneToManyJoin(msObj, &(msObj->ResultLayer->joins[i]));
+          if(joinTemplate) {
+            outstr = gsub(outstr, substr, joinTemplate);     
+            free(joinTemplate);
+          } else
+            return NULL;
         }
-
-        // or you might want to access the attributes unaltered
-        sprintf(substr, "[%s_%s_raw]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
-        if(strstr(outstr, substr) != NULL)
-	  outstr = gsub(outstr, substr, msObj->ResultLayer->joins[i].values[j]);
       }
-    }
-  }
+    } // next join
+  } // end query mode specific substitutions
 
   for(i=0;i<msObj->NumParams;i++) {
     sprintf(substr, "[%s]", msObj->ParamNames[i]);

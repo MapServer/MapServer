@@ -165,6 +165,10 @@ int msDBFJoinNext(joinObj *join)
     return(MS_FAILURE);
   }
 
+  // clear any old data
+  msFreeCharArray(join->values, join->numitems);
+  join->values = NULL;
+
   n = msDBFGetRecordCount(joininfo->hDBF);
     
   for(i=joininfo->nextrecord; i<n; i++) { // find a match
