@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2001/08/17 17:54:32  dan
+ * Handle SRS and BBOX properly.  Still have to reproject image received from server.
+ *
  * Revision 1.1  2001/08/14 21:26:54  dan
  * Initial revision - only loads and draws WMS CONNECTION URL for now.
  *
@@ -34,6 +37,12 @@
 
 #include "map.h"
 #include "maperror.h"
+
+#include <time.h>
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <process.h>
+#endif
 
 #ifdef USE_WMS_LYR
 
@@ -180,6 +189,33 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
 
 
 /**********************************************************************
+ *                          msTmpFile()
+ *
+ * Generate a Unique temporary filename using PID + timestamp + extension
+ **********************************************************************/
+const char *msTmpFile(const char *path, const char *ext)
+{
+    static char tmpFname[256];
+    static char tmpId[128]; /* big enough for time + pid */
+    static int tmpCount = -1;
+
+    if (tmpCount == -1)
+    {
+        /* We'll use tmpId and tmpCount to generate unique filenames */
+        sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
+        tmpCount = 0;
+    }
+
+    if (path == NULL) path="";
+    if (ext == NULL)  ext = "";
+
+    sprintf(tmpFname, "%s%s%d%s", path, tmpId, tmpCount++, ext);
+
+    return tmpFname;
+}
+
+
+/**********************************************************************
  *                          msDrawWMSLayer()
  *
  **********************************************************************/
@@ -187,18 +223,124 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
 int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img) 
 {
 #ifdef USE_WMS_LYR
+    char *pszURL = NULL, *pszEPSG = NULL;
+    const char *pszTmp;
+    rectObj bbox;
+    
     if (lp->connectiontype != MS_WMS || lp->connection == NULL)
         return MS_FAILURE;
 
-    if (msWMSGetImage(lp->connection, "/tmp/ttt.gif") != MS_SUCCESS)
+/* ------------------------------------------------------------------
+ * Figure the SRS we'll use for the request.
+ * - Fetch the map SRS (if it's EPSG)
+ * - Check if map SRS is listed in layer wms_srs metadata
+ * - If map SRS is valid for this layer then use it
+ * - Otherwise request layer in its default SRS and we'll reproject later
+ * ------------------------------------------------------------------ */
+    if ((pszEPSG = msWMSGetEPSGProj(&(map->projection), NULL, TRUE)) != NULL &&
+        (pszEPSG = strdup(pszEPSG)) != NULL &&
+        strncasecmp(pszEPSG, "EPSG:", 5) == 0)
+    {
+        const char *pszLyrEPSG, *pszFound;
+        int nLen;
+
+        nLen = strlen(pszEPSG);
+
+        pszLyrEPSG = msWMSGetEPSGProj(&(lp->projection), lp->metadata, FALSE);
+
+        if (pszLyrEPSG == NULL ||
+            (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
+            ! (*(pszFound+nLen) == ' ' || *(pszFound+nLen) == '\0'))
+        {
+            // Not found in Layer's list of SRS (including projection object)
+            free(pszEPSG);
+            pszEPSG = NULL;
+        }
+    }
+
+    if (pszEPSG == NULL &&
+        ((pszEPSG = msWMSGetEPSGProj(&(lp->projection), 
+                                     lp->metadata, TRUE)) == NULL ||
+         (pszEPSG = strdup(pszEPSG)) == NULL ||
+         strncasecmp(pszEPSG, "EPSG:", 5) != 0) )
+    {
+        msSetError(MS_MISCERR, "Layer must have an EPSG projection code (in its PROJECTION object or wms_srs metadata)", "msDrawWMSLayer()");
+        if (pszEPSG) free(pszEPSG);
+        return MS_FAILURE;
+    }
+
+    // We'll store the remote server's response to a tmp file.
+    if (lp->data) free(lp->data);
+    lp->data = strdup( msTmpFile(map->web.imagepath, "_img.tmp") );
+
+/* ------------------------------------------------------------------
+ * Set layer SRS and reproject map extents to the layer's SRS
+ * ------------------------------------------------------------------ */
+    // No need to set lp->proj if it's already set to the right EPSG code
+    if ((pszTmp = msWMSGetEPSGProj(&(lp->projection), NULL, TRUE)) == NULL ||
+        strcasecmp(pszEPSG, pszTmp) != 0)
+    {
+        char szProj[20];
+        sprintf(szProj, "init=epsg:%s", pszEPSG+5);
+        if (msLoadProjectionString(&(lp->projection), szProj) != 0)
+            return MS_FAILURE;
+    }
+
+    bbox = map->extent;
+    if (msProjectionsDiffer(&(map->projection), &(lp->projection)))
+    {
+        msProjectRect(&(map->projection), &(lp->projection), &bbox);
+    }
+
+/* ------------------------------------------------------------------
+ * Build the request URL.
+ * At this point we set only the following parameters:
+ *   REQUEST
+ *   SRS
+ *   BBOX
+ *
+ * The connection string should contain all other required params, 
+ * including:
+ *   VERSION
+ *   LAYERS
+ *   FORMAT
+ *   TRANSPARENT
+ *   STYLES
+ * ------------------------------------------------------------------ */
+    // Make sure we have a big enough buffer for the URL
+    if(!(pszURL = (char *)malloc((strlen(lp->connection)+256)*sizeof(char)))) 
+    {
+        msSetError(MS_MEMERR, NULL, "msDrawWMSLayer()");
+        return MS_FAILURE;
+    }
+
+    sprintf(pszURL, 
+            "%s&REQUEST=GetMap&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%g,%g,%g,%g",
+            lp->connection, map->width, map->height, 
+            pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
+
+    if (msWMSGetImage(pszURL, lp->data) != MS_SUCCESS)
         return MS_FAILURE;
 
+
+    // Prepare layer for drawing and render the image directly into the map
+    // without any transformation.
+    // __TODO__ we may have to reproject the image in some cases
+
     lp->type = MS_LAYER_RASTER;
-    if (lp->data) free(lp->data);
-    lp->data = strdup("/tmp/ttt.gif");
     lp->transform = MS_FALSE;
 
-    msDrawRasterLayer(map, lp, img);
+    if (msDrawRasterLayer(map, lp, img) != 0)
+        return MS_FAILURE;
+
+    // We're done with the remote server's response... delete it.
+    //unlink(lp->data);
+
+    free(lp->data);
+    lp->data = NULL;
+
+    free(pszEPSG);
+    free(pszURL);
 
     return MS_SUCCESS;
 
