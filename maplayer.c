@@ -177,28 +177,38 @@ static int string2list(char **list, int *listsize, char *string)
   return(i);
 }
 
-static void expression2list(char **list, int *listsize, char *expression) {
+static void expression2list(char **list, int *listsize, expressionObj *expression) {
   int i, j, l;
-  char tmpstr[1024];
+  char tmpstr1[1024], tmpstr2[1024];
   short in=MS_FALSE;
 
   j = 0;
-  l = strlen(expression);
+  l = strlen(expression->string);
   for(i=0; i<l; i++) {
-    if(expression[i] == '[') {
+    if(expression->string[i] == '[') {
       in = MS_TRUE;
+      tmpstr2[j] = expression->string[i];
+      j++;
       continue;
     }
-    if(expression[i] == ']') {
+    if(expression->string[i] == ']') {
       in = MS_FALSE;
-      tmpstr[j] = '\0';
-      string2list(list, listsize, tmpstr);
+
+      tmpstr2[j] = expression->string[i];
+      tmpstr2[j+1] = '\0';
+      string2list(expression->items, &(expression->numitems), tmpstr2);
+
+      tmpstr1[j-1] = '\0';
+      expression->indexes[expression->numitems - 1] = string2list(list, listsize, tmpstr1);
+
       j = 0; // reset
+
       continue;
     }
 
     if(in) {
-      tmpstr[j] = expression[i];
+      tmpstr2[j] = expression->string[i];
+      tmpstr1[j-1] = expression->string[i];
       j++;
     }
   }
@@ -209,23 +219,58 @@ static void expression2list(char **list, int *listsize, char *expression) {
 */
 int msLayerWhichItems(layerObj *layer, int annotate) 
 {
-  int i, n=0;
+  int i, j, nt=0, ne=0;
 
-  if(layer->classitem) n++;
-  if(annotate && layer->labelitem) n++;
-  if(annotate && layer->labelsizeitem) n++;
-  if(annotate && layer->labelangleitem) n++;
+  if(layer->classitem) nt++;
+  if(annotate && layer->labelitem) nt++;
+  if(annotate && layer->labelsizeitem) nt++;
+  if(annotate && layer->labelangleitem) nt++;
 
   for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i].expression.type == MS_EXPRESSION) n += countChars(layer->class[i].expression.string, '[');
-    if(annotate && layer->class[i].text.type == MS_EXPRESSION) n += countChars(layer->class[i].text.string, '[');
+    ne = 0;
+    if(layer->class[i].expression.type == MS_EXPRESSION) { 
+      ne = countChars(layer->class[i].expression.string, '[');
+      if(ne > 0) {
+	layer->class[i].expression.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
+	if(!(layer->class[i].expression.items)) {
+	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	  return(MS_FAILURE);
+	}
+	layer->class[i].expression.indexes = (int *)malloc(ne*sizeof(int));
+	if(!(layer->class[i].expression.indexes)) {
+	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	  return(MS_FAILURE);
+	}
+	layer->class[i].expression.numitems = 0;
+	nt += ne;
+      }
+    }
+
+    ne = 0;
+    if(annotate && layer->class[i].text.type == MS_EXPRESSION) { 
+      ne = countChars(layer->class[i].text.string, '[');
+      if(ne > 0) {
+	layer->class[i].text.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
+	if(!(layer->class[i].text.items)) {
+	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	  return(MS_FAILURE);
+	}
+	layer->class[i].text.indexes = (int *)malloc(ne*sizeof(int));
+	if(!(layer->class[i].text.indexes)) {
+	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	  return(MS_FAILURE);
+	}
+	layer->class[i].text.numitems = 0;
+	nt += ne;
+      }
+    }
   }
 
-  if(n ==0) return(MS_SUCCESS);
+  if(nt == 0) return(MS_SUCCESS);
 
-  fprintf(stderr, "in msLayerWhichItems() [%d]...\n", n);
+  fprintf(stderr, "in msLayerWhichItems() [%d]...\n", nt);
 
-  layer->items = (char **)calloc(n, sizeof(char *)); // should be more than enough space
+  layer->items = (char **)calloc(nt, sizeof(char *)); // should be more than enough space
   if(!layer->items) {
     msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
     return(MS_FAILURE);
@@ -239,14 +284,25 @@ int msLayerWhichItems(layerObj *layer, int annotate)
   if(annotate && layer->labelangleitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
  
   for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), layer->class[i].expression.string);
-    if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), layer->class[i].text.string);
+    if(layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
+    if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].text));
   }
 
   fprintf(stderr, "itemlist: ");
   for(i=0; i<layer->numitems; i++)
     fprintf(stderr, "%s ", layer->items[i]);
-  fprintf(stderr, "\n");
+  fprintf(stderr, "end\n");
+
+  for(i=0; i<layer->numclasses; i++) {
+    if(layer->class[i].expression.type == MS_EXPRESSION) {
+      fprintf(stderr, "expression: (%s) - ", layer->class[i].expression.string);
+      for(j=0; j<layer->class[i].expression.numitems; j++)
+        fprintf(stderr, "%s (%d)", layer->class[i].expression.items[j], layer->class[i].expression.indexes[j]);
+      fprintf(stderr, "\n");
+    }
+  }
+
+  //exit(0);
 
   return(MS_SUCCESS);
 }

@@ -1037,6 +1037,7 @@ int initClass(classObj *class)
   class->overlaysymbolname = NULL;
 
   initLabel(&(class->label));
+  class->label.sizescaled = class->label.size = -1; // no default
   class->symbolname = NULL;
 
   class->numjoins = 0;
@@ -1100,6 +1101,7 @@ int loadClass(classObj *class, mapObj *map)
       class->numjoins++;
       break;
     case(LABEL):
+      class->label.sizescaled = class->label.size = MS_MEDIUM; // only set a default if the LABEL section is present
       if(loadLabel(&(class->label), map) == -1) return(-1);
       break;
     case(MAXSIZE):
@@ -1925,7 +1927,7 @@ void initLegend(legendObj *legend)
   legend->imagecolor.red = 255;
   legend->imagecolor.green = 255;
   legend->imagecolor.blue = 255;
-  initLabel(&legend->label);  
+  initLabel(&legend->label);
   legend->keysizex = 20;
   legend->keysizey = 10;
   legend->keyspacingx = 5;

@@ -264,6 +264,10 @@
       return(NULL);
   }
 
+  int prepare() {
+    // do scaling
+  }
+
   int draw(mapObj *map, gdImagePtr img) {
     if(self->features) {
       return msDrawInlineLayer(map, self, img);

@@ -19,35 +19,39 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape)
   int i,j;
   char *tmpstr=NULL;
   char found=MS_FALSE;
-
-  if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
-    return(0);
+  int status;
 
   for(i=0; i<layer->numclasses; i++) {
-    if (layer->class[i].expression.string == NULL) /* Empty expression - always matches */
+    if (!layer->class[i].expression.string) // Empty expression - always matches
       found=MS_TRUE;
     else {
       switch(layer->class[i].expression.type) {
       case(MS_STRING):
+	if(layer->classitemindex == -1) {
+	  msSetError(MS_MISCERR, "Cannot evaluate expression, CLASSITEM undefined.", "msShapeGetClass()");
+	  return(-1);
+	}
         if(strcmp(layer->class[i].expression.string, shape->attributes[layer->classitemindex]) == 0) found=MS_TRUE; // got a match
         break;
       case(MS_EXPRESSION):
-        tmpstr = strdup(layer->class[i].expression.string);        
+        tmpstr = strdup(layer->class[i].expression.string);
 
-        for(j=0; j<layer->numitems; j++) {
-	  // FIX: need the right substr
-	  tmpstr = gsub(tmpstr, layer->items[j], shape->attributes[layer->itemindexes[j]]);
-	}
+        for(j=0; j<layer->class[i].expression.numitems; j++)
+	  tmpstr = gsub(tmpstr, layer->class[i].expression.items[j], shape->attributes[layer->class[i].expression.indexes[j]]);
 
         msyystate = 4; msyystring = tmpstr;
-        if(msyyparse() != 0)
-	  return(-1);
-
-        free(tmpstr);
+	status = msyyparse();
+	free(tmpstr);
+	
+	if(status != 0) return(-1);
 
         if(msyyresult) found=MS_TRUE; // got a match  
         break;
       case(MS_REGEX):
+	if(layer->classitemindex == -1) {
+	  msSetError(MS_MISCERR, "Cannot evaluate expression, CLASSITEM undefined.", "msShapeGetClass()");
+	  return(-1);
+	}
         if(regexec(&(layer->class[i].expression.regex), shape->attributes[layer->classitemindex], 0, NULL, 0) == 0) found=MS_TRUE; // got a match	  
         break;
       }
@@ -56,7 +60,7 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape)
     if(found) return(i);
   }
 
-  return(-1); /* not found */
+  return(-1); // not found
 }
 
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
@@ -70,10 +74,10 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
     case(MS_STRING):
       break;
     case(MS_EXPRESSION):
-      for(i=0; i<layer->numitems; i++) {
-	// FIX: need the right substr
-	tmpstr = gsub(tmpstr, layer->items[i], shape->attributes[layer->itemindexes[i]]);
-      }
+      tmpstr = strdup(layer->class[shape->classindex].text.string);
+
+      for(i=0; i<layer->class[shape->classindex].text.numitems; i++)
+	tmpstr = gsub(tmpstr, layer->class[shape->classindex].text.items[i], shape->attributes[layer->class[shape->classindex].text.indexes[i]]);
       break;
     }
   } else {
@@ -389,7 +393,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	msTransformShape(shape, map->extent, map->cellsize);
       }
 
-      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != MS_SUCCESS) {
+      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
 	if(shape->text) text = shape->text;
 	else text = layer->class[c].text.string;
 	
@@ -418,13 +422,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
       break;
     case(MS_POLYGON):
+
       if(layer->transform) {      
 	msClipPolygonRect(shape, cliprect);
 	if(shape->numlines == 0) return(MS_SUCCESS);
 	msTransformShape(shape, map->extent, map->cellsize);
       }
 
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != MS_SUCCESS) {
+      fprintf(stderr, "polygon annotation, here...\n"); 
+
+      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 	if(shape->text) text = shape->text;
 	else text = layer->class[c].text.string;
 
@@ -508,7 +515,6 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	if(shape->text) text = shape->text; 
 	else text = layer->class[c].text.string;
 
-
 	if(text) {
 	  if(layer->labelangleitemindex != -1) 
 	    layer->class[c].label.angle = atof(shape->attributes[layer->labelangleitemindex])*MS_DEG_TO_RAD;
@@ -547,7 +553,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     else text = layer->class[c].text.string;
     
     if(text) {
-      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != MS_SUCCESS) {
+      if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
 	if(layer->labelangleitemindex != -1) 
 	  layer->class[c].label.angle = atof(shape->attributes[layer->labelangleitemindex])*MS_DEG_TO_RAD;
 	
@@ -587,7 +593,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     else text = layer->class[c].text.string;
     
     if(text) {
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != MS_SUCCESS) {
+      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 	if(layer->labelangleitemindex != -1) 
 	  layer->class[c].label.angle = atof(shape->attributes[layer->labelangleitemindex])*MS_DEG_TO_RAD;
 	
@@ -605,10 +611,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     }
     break;
   case MS_POLYGON:
-    // if(shape->type != MS_POLYGON){ 
-    //   msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polygon layer definition.", "msDrawShape()");
-    //   return(MS_FAILURE);
-    // }
+    if(shape->type != MS_POLYGON){ 
+      msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polygon layer definition.", "msDrawShape()");
+      return(MS_FAILURE);
+    }
 
     if(layer->transform) {
       msClipPolygonRect(shape, cliprect);
@@ -623,7 +629,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     else text = layer->class[c].text.string;
 
     if(text) {
-      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != MS_SUCCESS) {
+      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 	if(layer->labelangleitemindex != -1) 
 	  layer->class[c].label.angle = atof(shape->attributes[layer->labelangleitemindex])*MS_DEG_TO_RAD;
 	
@@ -740,7 +746,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
     fprintf(stderr, "got class...\n");
 
-    if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem)) 
+    if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
     if(shape.text) fprintf(stderr, "got annotation (%s)...\n", shape.text);

@@ -802,13 +802,11 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
   if(min_dimension != -1)
     if(MS_MIN(maxx-minx,maxy-miny) < min_dimension) return(MS_FAILURE);
 
+  //if(get_centroid(p, lp, &miny, &maxy) == -1) return(MS_FAILURE);
   lp->x = (maxx+minx)/2.0;
   lp->y = (maxy+miny)/2.0;
 
-  //if(get_centroid(p, lp, &miny, &maxy) == -1) return(MS_FAILURE);
-
-  if(msIntersectPointPolygon(lp, p) == MS_TRUE) /* cool, done */
-    return(MS_SUCCESS);
+  if(msIntersectPointPolygon(lp, p) == MS_TRUE) return(MS_SUCCESS);
 
   /* do it the hard way - scanline */
 
