@@ -162,10 +162,10 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
       sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
       status = msSaveImage(img, buffer, msObj->Map->imagetype, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
       if(status != MS_SUCCESS) return status;
-	  
+
       gdImageDestroy(img);
-	
-      if(msObj->Map->legend.status == MS_ON || msObj->UseShapes)
+
+      if((msObj->Map->legend.status == MS_ON || msObj->UseShapes) && msObj->Map->legend.template == NULL)
       {
          img = msDrawLegend(msObj->Map);
          if(!img) return MS_FAILURE;
