@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/06/21 18:29:45  frank
+ * Added support for GD/PC256 as a pseudo-driver
+ *
  * Revision 1.3  2002/06/13 19:56:15  frank
  * don't automatically emit Imagine format support
  *
@@ -146,6 +149,17 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 
 {
     outputFormatObj *format = NULL;
+
+    if( strcasecmp(driver,"GD/PC256") == 0 )
+    {
+#ifdef USE_GD_GIF
+        return msCreateDefaultOutputFormat( map, "GD/GIF" );
+#elif defined(USE_GD_PNG)
+        return msCreateDefaultOutputFormat( map, "GD/PNG" );
+#else
+        return NULL;
+#endif
+    }
 
 #ifdef USE_GD_GIF
     if( strcasecmp(driver,"GD/GIF") == 0 )
