@@ -313,13 +313,13 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     break;
   }
 
-  l = msGetLayerIndex(map, "scalebar");
+  l = msGetLayerIndex(map, "__embed_scalebar");
   if(l == -1) {
     l = map->numlayers;
     map->numlayers++;
 
     if(initLayer(&(map->layers[l]), map) == -1) return(-1);
-    map->layers[l].name = strdup("scalebar");
+    map->layers[l].name = strdup("__embed__scalebar");
     map->layers[l].type = MS_LAYER_ANNOTATION;
     map->layers[l].status = MS_ON;
 

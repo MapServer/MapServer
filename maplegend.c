@@ -356,13 +356,13 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
     break;
   }
 
-  l = msGetLayerIndex(map, "legend");
+  l = msGetLayerIndex(map, "__embed__legend");
   if(l == -1) {
     l = map->numlayers;
     map->numlayers++;
 
     if(initLayer(&(map->layers[l]), map) == -1) return(-1);
-    map->layers[l].name = strdup("legend");
+    map->layers[l].name = strdup("__embed__legend");
     map->layers[l].type = MS_LAYER_ANNOTATION;
     map->layers[l].status = MS_ON;
 
