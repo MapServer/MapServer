@@ -17,6 +17,11 @@ extern "C" {
 #define SHP_POLYGON 5
 #define SHP_MULTIPOINT 8
 
+#define SHP_POINTZ 11
+#define SHP_ARCZ  13
+#define SHP_POLYGONZ 15
+#define SHP_MULTIPOINTZ 18
+
 #define SHP_POINTM 21
 #define SHP_ARCM  23
 #define SHP_POLYGONM 25
@@ -27,6 +32,11 @@ extern "C" {
 #define MS_SHAPEFILE_ARC 3
 #define MS_SHAPEFILE_POLYGON 5
 #define MS_SHAPEFILE_MULTIPOINT 8
+
+#define MS_SHP_POINTZ 11
+#define MS_SHP_ARCZ  13
+#define MS_SHP_POLYGONZ 15
+#define MS_SHP_MULTIPOINTZ 18
 
 #define MS_SHP_POINTM 21
 #define MS_SHP_ARCM  23

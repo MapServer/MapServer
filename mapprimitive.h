@@ -14,6 +14,7 @@ typedef struct {
 typedef struct {
   double x;
   double y;
+  double z;  
   double m;  
 } pointObj;
 
