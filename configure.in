@@ -186,6 +186,83 @@ else
 fi
 
 dnl ---------------------------------------------------------------------
+dnl libJPEG (included by default if found on system).
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_jpeg_jpeg_read_header
+
+AC_CHECKING(whether we should include JPEG support...)
+AC_ARG_WITH(jpeg,
+[  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
+
+if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
+
+  AC_EXPAND_PATH($with_jpeg, JPEG_DIR)
+  test -f $JPEG_DIR/include/jpeg/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include/jpeg"
+  test -f $JPEG_DIR/include/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include"
+  test -f $JPEG_DIR/lib/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR"
+
+  test -f $JPEG_DIR/lib/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/lib64/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib64"
+  test -f $JPEG_DIR/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR"
+
+  test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/lib64/libjpeg.so -o -f $JPEG_DIR/lib64/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib64"
+  test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR"
+
+  if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then
+      JPEG_ENABLED="-DUSE_JPEG"
+      JPEG_INC=-I$JPEG_INCLUDE
+      JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
+      AC_ADD_RUNPATH("$JPEG_LIBDIR")
+  else
+      if test "$with_jpeg" != "no" ; then
+        AC_MSG_RESULT("Could not find jpeglib.h or libjpeg.a/libjpeg.so in $JPEG_DIR.")
+      fi
+  fi
+
+  dnl if --without-jpeg was requested, disable mapserver from using it, but
+  dnl libjpeg may still be needed by GD
+
+  if test "$with_jpeg" = "no" ; then
+    AC_MSG_RESULT([        disabled by --without-jpeg])
+  else
+    JPEG_ENABLED="-DUSE_JPEG"
+  fi
+
+  if test -z "$JPEG_LIB" ; then
+
+    AC_CHECK_LIB(jpeg, jpeg_read_header, JPEG_LIB="-ljpeg",,,)
+
+    if test -n "$JPEG_LIB" ; then
+        JPEG_LIB="-ljpeg"
+        AC_MSG_RESULT([        using libjpeg from system libs.])
+    else
+        AC_MSG_RESULT([        libjpeg not found. JPEG support not included, possibly needed for GD.])
+    fi
+  else
+     AC_MSG_RESULT([        using libjpeg from system $JPEG_LIB])
+  fi
+
+else
+
+  AC_CHECK_LIB(jpeg, jpeg_read_header, JPEG_ENABLED=-DUSE_JPEG,,,)
+
+  if test -n "$JPEG_ENABLED" ; then
+      JPEG_LIB="-ljpeg"
+      AC_MSG_RESULT([        using libjpeg from system libs.])
+  else
+      AC_MSG_RESULT([        libjpeg not found. JPEG support not included, possibly needed for GD.])
+  fi
+
+fi
+
+AC_SUBST(JPEG_ENABLED,$JPEG_ENABLED)
+AC_SUBST(JPEG_INC,    $JPEG_INC)
+AC_SUBST(JPEG_LIB,    $JPEG_LIB)
+
+dnl ---------------------------------------------------------------------
 dnl Look for X11 and XPM libs used by GD
 dnl ---------------------------------------------------------------------
 
@@ -939,90 +1016,22 @@ ALL_ENABLED="$GDAL_ENABLED $ALL_ENABLED"
 ALL_INC="$GDAL_INC $ALL_INC"
 ALL_LIB="$GDAL_LIB $ALL_LIB"
 
-dnl ---------------------------------------------------------------------
-dnl libJPEG (included by default if found on system).
-dnl ---------------------------------------------------------------------
+dnl ---------------------------------------------------------------------------
+dnl Determine whether we should enable JPEG output - not if we have GDAL.
+dnl ---------------------------------------------------------------------------
 
-unset ac_cv_lib_jpeg_jpeg_read_header
-
-AC_CHECKING(whether we should include JPEG support...)
-AC_ARG_WITH(jpeg,
-[  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
-
-if test -z "$with_jpeg" -a -n "$GDAL_ENABLED" ; then
-  AC_MSG_RESULT([        disabled since gdal is in use])
-
-elif test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
-
-  AC_EXPAND_PATH($with_jpeg, JPEG_DIR)
-  test -f $JPEG_DIR/include/jpeg/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include/jpeg"
-  test -f $JPEG_DIR/include/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include"
-  test -f $JPEG_DIR/lib/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/lib"
-  test -f $JPEG_DIR/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR"
-
-  test -f $JPEG_DIR/lib/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib"
-  test -f $JPEG_DIR/lib64/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib64"
-  test -f $JPEG_DIR/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR"
-
-  test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib"
-  test -f $JPEG_DIR/lib64/libjpeg.so -o -f $JPEG_DIR/lib64/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib64"
-  test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR"
-
-  if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then
-      JPEG_ENABLED="-DUSE_JPEG"
-      JPEG_INC=-I$JPEG_INCLUDE
-      JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
-      AC_ADD_RUNPATH("$JPEG_LIBDIR")
+if test -n "$JPEG_ENABLED" ; then
+  AC_MSG_CHECKING(checking ms JPEG output)
+  if test -n "$GDAL_ENABLED" ; then 
+    JPEG_ENABLED=
+    AC_MSG_RESULT([no we, have GDAL available.])
   else
-      if test "$with_jpeg" != "no" ; then
-        AC_MSG_RESULT("Could not find jpeglib.h or libjpeg.a/libjpeg.so in $JPEG_DIR.")
-      fi
+    ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
+    ALL_INC="$JPEG_INC $ALL_INC"
+    ALL_LIB="$JPEG_LIB $ALL_LIB"
+    AC_MSG_RESULT([yes, GDAL is not available but libjpeg is.])
   fi
-
-  dnl if --without-jpeg was requested, disable mapserver from using it, but
-  dnl libjpeg may still be needed by GD
-
-  if test "$with_jpeg" = "no" ; then
-    AC_MSG_RESULT([        disabled by --without-jpeg])
-  else
-    JPEG_ENABLED="-DUSE_JPEG"
-  fi
-
-  if test -z "$JPEG_LIB" ; then
-
-    AC_CHECK_LIB(jpeg, jpeg_read_header, JPEG_LIB="-ljpeg",,,)
-
-    if test -n "$JPEG_LIB" ; then
-        JPEG_LIB="-ljpeg"
-        AC_MSG_RESULT([        using libjpeg from system libs.])
-    else
-        AC_MSG_RESULT([        libjpeg not found. JPEG support not included, possibly needed for GD.])
-    fi
-  else
-     AC_MSG_RESULT([        using libjpeg from system $JPEG_LIB])
-  fi
-
-else
-
-  AC_CHECK_LIB(jpeg, jpeg_read_header, JPEG_ENABLED=-DUSE_JPEG,,,)
-
-  if test -n "$JPEG_ENABLED" ; then
-      JPEG_LIB="-ljpeg"
-      AC_MSG_RESULT([        using libjpeg from system libs.])
-  else
-      AC_MSG_RESULT([        libjpeg not found. JPEG support not included, possibly needed for GD.])
-  fi
-
 fi
-
-AC_SUBST(JPEG_ENABLED,$JPEG_ENABLED)
-AC_SUBST(JPEG_INC,    $JPEG_INC)
-AC_SUBST(JPEG_LIB,    $JPEG_LIB)
-
-ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
-ALL_INC="$JPEG_INC $ALL_INC"
-ALL_LIB="$JPEG_LIB $ALL_LIB"
-
 
 dnl ---------------------------------------------------------------------
 dnl libTIFF (included by default if found on system).
