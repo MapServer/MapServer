@@ -161,6 +161,31 @@ class LayerClassIterator(MappingIterator):
         }
         return MS_SUCCESS;
     }
+    
+    // getSize() extension
+    PyObject* getSize()
+    {
+        PyObject* output ;
+        output = PyTuple_New(2);
+        PyTuple_SetItem(output,0,PyInt_FromLong((long)self->width));
+        PyTuple_SetItem(output,1,PyInt_FromLong((long)self->height));
+        return output;
+    }    
+%pythoncode {
+
+    def get_height(self):
+        return self.getSize()[1] # <-- second member is the height
+    def get_width(self):
+        return self.getSize()[0] # <-- first member is the width
+    def set_height(self, value):
+        return self.setSize(self.getSize()[0], value)
+    def set_width(self, value):
+        return self.setSize(value, self.getSize()[1])
+    width = property(get_width, set_width)
+    height = property(get_height, set_height)
+    
+}    
+    
 }
 
 /****************************************************************************
