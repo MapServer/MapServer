@@ -1,8 +1,11 @@
 # Run ./configure in the main MapServer directory to turn this Makefile.in
 # into a proper Makefile
 
-LIB_INSTALL=/usr/local/lib/
-HEADER_INSTALL=/usr/local/include/mapserver-3.5/
+prefix		=	@prefix@
+exec_prefix	=	@exec_prefix@
+INST_PREFIX	=	@exec_prefix@
+INST_LIB	=	@libdir@
+INST_BIN	=	@bindir@
 
 #
 # mpatrol runtime memory debugger
@@ -141,6 +144,7 @@ AR= ar rc
 RANLIB= @RANLIB@
 LEX=    @LEX@
 YACC=   @YACC@
+LD_SHARED = g++ -shared
 
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
@@ -154,7 +158,7 @@ CFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
 	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC)
 
 # Link flags and shared libs only
-LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
+SUP_LIBS =  $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
           $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
 	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
 	  $(MPATROL_LIB) $(THREAD_LIB) $(XTRALIBS)
@@ -162,9 +166,14 @@ LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC)
 
+EXE_LDFLAGS =	$(RUNPATHS) -L. -lmap $(SUP_LIBS) $(STATIC_LIBS)
+
 RM= /bin/rm -f
 
 OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o mapmygis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o mapdraw.o mapgd.o mapoutput.o mapgdal.o mapswf.o mapimagemap.o mapows.o mapwfs.o mapwfslayer.o mapcontext.o maphttp.o mapdrawgdal.o mappdf.o mapjoin.o mapgraticule.o mapcopy.o mapogcfilter.o mapogcsld.o maptime.o mapwcs.o cgiutil.o $(EPPL_OBJ) $(REGEX_OBJ)
+
+EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
+		shptreetst scalebar sortshp mapscriptvars tile4ms
 
 #
 # --- You shouldn't have to edit anything else. ---
@@ -172,9 +181,7 @@ OBJS= maptemplate.o mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplex
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: $(MAKE_GD) libmap.a shp2img shp2pdf legend \
-	mapserv shptree shptreevis shptreetst scalebar sortshp mapscriptvars \
-	tile4ms @MAKE_PHPMS@
+all: $(MAKE_GD) libmap.a $(EXE_LIST) @MAKE_PHPMS@ $(EXTRA_DEFAULT)
 
 php3_mapscript:: libmap.a
 	cd mapscript/php3; $(MAKE); cd ../..
@@ -198,49 +205,52 @@ libmap.a: map.h $(OBJS) map.h
 	$(AR) libmap.a $(OBJS)
 	$(RANLIB) libmap.a
 
+libmap.so:	libmap.a
+	$(LD_SHARED) -o libmap.so \
+		$(RUNPATHS) $(OBJS) $(SUP_LIBS) $(STATIC_LIBS)
+
 shp2pdf: libmap.a shp2pdf.o map.h
-	$(LD) $(CFLAGS) shp2pdf.o $(LDFLAGS) $(STATIC_LIBS) -o shp2pdf
+	$(LD) $(CFLAGS) shp2pdf.o $(EXE_LDFLAGS) -o shp2pdf
 
 shp2img: libmap.a  shp2img.o map.h
-	$(LD) $(CFLAGS) shp2img.o $(LDFLAGS) $(STATIC_LIBS) -o shp2img
+	$(LD) $(CFLAGS) shp2img.o $(EXE_LDFLAGS) -o shp2img
 
 sym2img: libmap.a   sym2img.o map.h
-	$(LD) $(CFLAGS) sym2img.o $(LDFLAGS) $(STATIC_LIBS) -o sym2img
+	$(LD) $(CFLAGS) sym2img.o $(EXE_LDFLAGS) -o sym2img
 
 legend: libmap.a  legend.o map.h
-	$(LD) $(CFLAGS) legend.o $(LDFLAGS) $(STATIC_LIBS) -o legend
+	$(LD) $(CFLAGS) legend.o $(EXE_LDFLAGS) -o legend
 
 scalebar: libmap.a  scalebar.o map.h
-	$(LD) $(CFLAGS) scalebar.o $(LDFLAGS) $(STATIC_LIBS) -o scalebar
+	$(LD) $(CFLAGS) scalebar.o $(EXE_LDFLAGS) -o scalebar
 
 mapserv: mapserv.h libmap.a  mapserv.o cgiutil.o map.h
-	$(LD) $(CFLAGS) mapserv.o cgiutil.o  $(LDFLAGS) $(STATIC_LIBS) -o mapserv
+	$(LD) $(CFLAGS) mapserv.o cgiutil.o  $(EXE_LDFLAGS) -o mapserv
 
 mapserv.fcgi: mapserv.h libmap.a  mapserv_fcgi.o cgiutil.o map.h
 	$(LD) $(CFLAGS) mapserv_fcgi.o cgiutil.o  \
-	$(LDFLAGS) $(STATIC_LIBS) -lfcgi \
-	 -o mapserv.fcgi
+		$(EXE_LDFLAGS) -lfcgi -o mapserv.fcgi
 
 shpindex: libmap.a shpindex.o map.h
-	$(LD) $(CFLAGS) shpindex.o $(LDFLAGS) $(STATIC_LIBS) -o shpindex
+	$(LD) $(CFLAGS) shpindex.o $(EXE_LDFLAGS) -o shpindex
 
 shptree: libmap.a shptree.o map.h
-	$(LD) $(CFLAGS) shptree.o $(LDFLAGS) $(STATIC_LIBS) -o shptree
+	$(LD) $(CFLAGS) shptree.o $(EXE_LDFLAGS) -o shptree
 
 shptreevis: libmap.a shptreevis.o map.h
-	$(LD) $(CFLAGS) shptreevis.o $(LDFLAGS) $(STATIC_LIBS) -o shptreevis
+	$(LD) $(CFLAGS) shptreevis.o $(EXE_LDFLAGS) -o shptreevis
 
 shptreetst: libmap.a shptreetst.o map.h
-	$(LD) $(CFLAGS) shptreetst.o $(LDFLAGS) $(STATIC_LIBS) -o shptreetst
+	$(LD) $(CFLAGS) shptreetst.o $(EXE_LDFLAGS) -o shptreetst
 
 sortshp: sortshp.o
-	$(LD) $(CFLAGS) sortshp.o $(LDFLAGS) $(STATIC_LIBS) -o sortshp
+	$(LD) $(CFLAGS) sortshp.o $(EXE_LDFLAGS) -o sortshp
 
 tile4ms: tile4ms.o
-	$(LD) $(CFLAGS) tile4ms.o $(LDFLAGS) $(STATIC_LIBS) -o tile4ms
+	$(LD) $(CFLAGS) tile4ms.o $(EXE_LDFLAGS) -o tile4ms
 
 testexpr: testexpr.o mapparser.o maplexer.o
-	$(LD) $(CFLAGS) testexpr.o $(LDFLAGS) $(STATIC_LIBS) -o testexpr
+	$(LD) $(CFLAGS) testexpr.o $(EXE_LDFLAGS) -o testexpr
 
 mapscriptvars:
 	touch mapscriptvars
@@ -262,8 +272,17 @@ install:
 	@echo "version for installation instructions."
 	@echo ""
 
+install-force:	all
+	cp $(EXE_LIST) $(INST_BIN)
+	if test -x libmap.so ; then \
+	  cp libmap.so $(INST_LIB) ; \
+	fi
+
 clean: @MAKE_PHPMS_CLEAN@
-	rm -f libmap.a *.o shp2img shp2pdf mapserv legend shptree shptreevis shptreetst scalebar sortshp mapscriptvars tile4ms testexpr
+	rm -f libmap.a libmap.so *.o $(EXE_LIST)
+
+exe-clean:
+	rm -f $(EXE_LIST)
 
 distclean:
 	$(MAKE) clean
