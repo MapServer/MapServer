@@ -56,6 +56,8 @@ Here is the list of available options as returned by "./configure --help":
   --with-gdal[=DIR]       Include GDAL support (DIR is path to gdal-config
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
+  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libwww
+                          required).
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
   --disable-ignore-missing-data  Report all missing data files.
@@ -341,8 +343,8 @@ PostGIS Support:
   be found.
 
 
-OGC WMS Compatibility:
----------------------
+OGC WMS Server Compatibility:
+-----------------------------
 
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
 
@@ -351,6 +353,30 @@ OGC WMS Compatibility:
   WMS Compatibility allows MapServer (actually the mapserv CGI) to advertize
   its capabilities and serve maps and feature_info requests following the 
   OpenGIS Web Mapping Server (WMS) Interface Specification.
+
+  See the MapServer WMS Server HOWTO at 
+  http://mapserver.gis.umn.edu/doc/wms-server-howto.html
+
+
+OGC WMS Client Support:
+-----------------------
+
+  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libwww
+                          required).
+
+  This option enables MapServer's 'CONNECTIONTYPE WMS' to include layers
+  from remote WMS servers in MapServer applications.
+  It requires PROJ4 and W3C's libwww.  GDAL is optional but highly 
+  recommended in order to support reprojection of layers obtained from
+  remote WMS servers.
+
+  See the MapServer WMS Client HOWTO for more details at 
+  http://mapserver.gis.umn.edu/doc/wms-client-howto.html
+
+  Note: A conflict has been reported on systems on which the rxposix 
+  library was installed (MapServer wants to use the system regex and 
+  libwww wants to use rxposix).  See MapServer bug#82 for the details
+  at http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=82
 
 
 Miscellaneous flags:
