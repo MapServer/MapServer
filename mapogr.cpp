@@ -29,6 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.39  2001/10/15 19:25:02  dave
+ * More access to the OpenGIS well-known text support already available
+ * from Frank's OGR library. Had to add functions because current accessors
+ * tailored to the needs of GDAL layers.
+ * Added msLoadWKTProjectionString to mapogr.cpp and mapproject.h.
+ * Added loadWKTProjection to mapscript.i in the layerObj and mapObj.
+ *
  * Revision 1.38  2001/07/18 21:06:11  dan
  * Include USE_GD_FT in test for TTF fonts
  *
@@ -599,8 +606,74 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
   return(values);
 }
 
-
 #endif  /* USE_OGR */
+
+/**********************************************************************
+ *                    msLoadWKTProjectionString()
+ *
+ * Init a MapServer projectionObj using an OGC WKT string.
+ * Like the existing msOGCWKT2ProjectionObj only _without_ the
+ * checks for projection AUTO used by gdal layers.
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+int msLoadWKTProjectionString( const char *pszWKT, 
+                            projectionObj *proj )
+
+{
+#if defined(USE_OGR) || defined(USE_GDAL)
+
+    OGRSpatialReference		oSRS;
+    char			*pszAltWKT = (char *) pszWKT;
+
+    if( oSRS.importFromWkt( &pszAltWKT ) != OGRERR_NONE )
+    {
+        msSetError(MS_OGRERR, 
+                   "Ingestion of WKT string failed.",
+                   "msLoadWKTProjectionString()");
+        return MS_FAILURE;
+    }
+
+#ifdef USE_PROJ
+    // First flush the projargs[]... 
+    msFreeProjection( proj );
+
+    if (oSRS.IsLocal())
+    {
+        // Dataset had no set projection or is NonEarth (LOCAL_CS)... 
+        // Nothing else to do. Leave proj empty and no reprojection will happen!
+        return MS_SUCCESS;  
+    }
+
+    // Export OGR SRS to a PROJ4 string
+    char *pszProj = NULL;
+
+    if (oSRS.exportToProj4( &pszProj ) != OGRERR_NONE ||
+      pszProj == NULL || strlen(pszProj) == 0)
+    {
+      msSetError(MS_OGRERR, "Conversion from OGR SRS to PROJ4 failed.",
+                 "msLoadWKTProjectionString()");
+      CPLFree(pszProj);
+      return(MS_FAILURE);
+    }
+
+    msDebug( "AUTO = %s\n", pszProj );
+
+    if( msLoadProjectionString( proj, pszProj ) != 0 )
+      return MS_FAILURE;
+
+    CPLFree(pszProj);
+#endif
+
+    return MS_SUCCESS;
+
+#else
+    msSetError(MS_OGRERR, 
+               "Not implemented since neither OGR nor GDAL is enabled.",
+               "msLoadWKTProjectionString()");
+    return MS_FAILURE;
+#endif
+}
 
 
 #if defined(USE_OGR) || defined(USE_GDAL)

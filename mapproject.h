@@ -30,7 +30,7 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
 int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
 int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect);
 int msProjectionsDiffer(projectionObj *, projectionObj *);
-
+int msLoadWKTProjectionString( const char *pszWKT, projectionObj *proj );
 int msOGCWKT2ProjectionObj( const char *pszWKT, 
                             projectionObj *proj );
 void msFreeProjection(projectionObj *p);

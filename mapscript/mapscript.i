@@ -301,8 +301,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msQueryByShape(self, -1, shape);
   }
 
+  int setWKTProjection(char *string) {
+    return msLoadWKTProjectionString(string, &(self->projection));
+  }
+
   int setProjection(char *string) {
-    return(msLoadProjectionString(&(self->projection), string));
+    return msLoadProjectionString(&(self->projection), string);
   }
 
   int save(char *filename) {
@@ -413,6 +417,10 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   int setFilter(char *string) {    
     return loadExpressionString(&self->filter, string);
+  }
+
+  int setWKTProjection(char *string) {
+    return msLoadWKTProjectionString(string, &(self->projection));
   }
 
   int setProjection(char *string) {
