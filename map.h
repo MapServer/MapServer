@@ -665,6 +665,7 @@ typedef struct layer_obj {
 
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
+  struct layer_obj *sameConnection;
 
   // a variety of data connection objects (probably should be pointers!)
 #ifndef SWIG
