@@ -154,7 +154,7 @@ char *DATAERRORMESSAGE(char *dString, char *preamble)
 		strcat(m,tmp);
 
 
-		sprintf(tmp,"Mappostgis.c - version of June 12/2003.\n");
+		sprintf(tmp,"Mappostgis.c - version of Jan 23/2004.\n");
 		strcat(m,tmp);
 
 //printf("%s",m);
