@@ -243,8 +243,8 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
    /*
     * Initiate to default order
     */
-   for (i=0; i<map->numlayers; i++)
-      map->layerorder[i] = i;
+   for (i=0; i<map->numlayers ;i++)
+      map->layerorder[i] = map->numlayers - i - 1;
      
    if (!pszMetadata)
      return MS_SUCCESS;
@@ -1277,6 +1277,10 @@ char *generateLegendTemplate(mapservObj *msObj)
        return NULL;
 
       
+   msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
+   if(msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale) != MS_SUCCESS)
+     return(NULL);
+   
    /********************************************************************/
 
    /*
