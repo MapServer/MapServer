@@ -1144,6 +1144,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
+int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b);
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */
