@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90.2.3  2005/03/25 18:26:34  sdlime
+ * Removed some debugging printf statements from mapgd.c. (bug 1293)
+ *
  * Revision 1.90.2.2  2004/12/22 16:34:06  sdlime
  * Fixed hatch symbol function so that the size is consistent regardless of angle.
  *
@@ -1182,9 +1185,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
   if(!p) return;
 
-  printf("in msCircleDrawShadeSymbolGD()\n");
-  printf("%d %d %d %d\n", style->color.pen, style->color.red, style->color.green, style->color.blue);
-
   if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor)) { // use msDrawLineSymbolGD() instead (POLYLINE)
     msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
     return;
@@ -1216,8 +1216,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   if(fc < 0) return; // invalid color, -1 is valid
   if(size < 1) return; // size too small
 
-  printf("here (3)...\n");
-      
   if(style->symbol == 0) { // simply draw a single pixel of the specified color    
     imageFilledCircle(img, p, (int) r, fc);
     if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
