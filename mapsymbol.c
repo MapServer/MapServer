@@ -4,6 +4,7 @@
 #include "map.h"
 #include "mapfile.h"
 #include "mapcopy.h"
+#include "mapthread.h"
 
 extern int msyylex(); /* lexer globals */
 extern void msyyrestart();
@@ -473,10 +474,29 @@ void msInitSymbolSet(symbolSetObj *symbolset)
   memset( symbolset->symbol, 0, sizeof(symbolObj) );
 }
 
-/*
-** Load the symbols contained in the given file
-*/
+/* ---------------------------------------------------------------------------
+   msLoadSymbolSet and loadSymbolSet
+
+   msLoadSymbolSet wraps calls to loadSymbolSet with mutex acquisition and
+   release.  It should be used everywhere outside the mapfile loading
+   phase of an application.  loadSymbolSet should only be used when a mutex
+   exists.  It does not check for existence of a mutex!
+
+   See bug 339 for more details -- SG.
+   ------------------------------------------------------------------------ */
+
 int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
+{
+    int retval = MS_FAILURE;
+    
+    msAcquireLock( TLOCK_PARSER );
+    retval = loadSymbolSet( symbolset, map );
+    msReleaseLock( TLOCK_PARSER );
+
+    return retval;
+}
+
+int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 {
 //  char old_path[MS_PATH_LENGTH];
 //  char *symbol_path;

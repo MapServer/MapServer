@@ -7,6 +7,13 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.86  2004/10/09 18:22:41  sean
+ * towards resolving bug 339, have implemented a mutex acquiring wrapper for
+ * the loadExpressionString function.  the new msLoadExpressionString should be
+ * used everywhere outside of the mapfile loading phase, and the previous
+ * loadExpressionString function should be used within the mapfile loading
+ * phase.
+ *
  * Revision 1.85  2004/10/08 22:40:07  dan
  * Moved mapscript's prepareImage() logic into msPrepareImage() which is
  * also going to be used by msDrawMap(). (bug 945)
@@ -448,7 +455,7 @@ int layerObj_setFilter(layerObj *self, char *string) {
         freeExpression(&self->filter);
         return MS_SUCCESS;
     }
-    else return loadExpressionString(&self->filter, string);
+    else return msLoadExpressionString(&self->filter, string);
   }
 
 char *layerObj_getFilter(layerObj *self) {
@@ -563,7 +570,7 @@ int classObj_setExpression(classObj *self, char *string) {
         freeExpression(&self->expression);
         return MS_SUCCESS;
     }
-    else return loadExpressionString(&self->expression, string);
+    else return msLoadExpressionString(&self->expression, string);
   }
 
 char *classObj_getExpressionString(classObj *self) {
@@ -590,7 +597,7 @@ char *classObj_getExpressionString(classObj *self) {
 
 
 int classObj_setText(classObj *self, layerObj *layer, char *string) {
-    return loadExpressionString(&self->text, string);
+    return msLoadExpressionString(&self->text, string);
   }
 
 int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height, gdImagePtr dstImg, int dstX, int dstY) {

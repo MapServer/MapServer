@@ -29,6 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.33  2004/10/09 18:22:41  sean
+ * towards resolving bug 339, have implemented a mutex acquiring wrapper for
+ * the loadExpressionString function.  the new msLoadExpressionString should be
+ * used everywhere outside of the mapfile loading phase, and the previous
+ * loadExpressionString function should be used within the mapfile loading
+ * phase.
+ *
  * Revision 1.32  2004/09/28 15:50:14  assefa
  * Correct bug related to gml bbox (Bug 913).
  *
@@ -249,7 +256,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 
         lp->class[0].type = lp->type;
         lp->numclasses = 1;
-        loadExpressionString(&lp->class[0].expression, 
+        msLoadExpressionString(&lp->class[0].expression, 
                                   szExpression);
 /* -------------------------------------------------------------------- */
 /*      classitems are necessary for filter type PropertyIsLike         */
@@ -276,7 +283,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                     
                     lp->class[1].type = lp->type;
                     lp->numclasses++;
-                    loadExpressionString(&lp->class[1].expression, 
+                    msLoadExpressionString(&lp->class[1].expression, 
                                          szExpression);
                     if (!lp->class[1].template)
                       lp->class[1].template = strdup("ttt.html");

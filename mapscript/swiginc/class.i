@@ -56,7 +56,7 @@
           freeExpression(&self->expression);
           return MS_SUCCESS;
       }
-      else return loadExpressionString(&self->expression, expression);
+      else return msLoadExpressionString(&self->expression, expression);
   }
 
   %newobject getExpressionString;
@@ -78,7 +78,7 @@
 
   // Should be deprecated!  Completely bogus layer argument.  SG.
   int setText(layerObj *layer, char *text) {
-    return loadExpressionString(&self->text, text);
+    return msLoadExpressionString(&self->text, text);
   }
 
 //  char *getMetaData(char *name) {

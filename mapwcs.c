@@ -852,7 +852,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
       
     // finally set the filter
     freeExpression(&tlp->filter);
-    loadExpressionString(&tlp->filter, params->time);
+    msLoadExpressionString(&tlp->filter, params->time);
   }
            
   // Are there any non-spatio/temporal ranges to do subsetting on (e.g. bands)

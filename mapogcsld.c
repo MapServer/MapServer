@@ -29,6 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.40  2004/10/09 18:22:41  sean
+ * towards resolving bug 339, have implemented a mutex acquiring wrapper for
+ * the loadExpressionString function.  the new msLoadExpressionString should be
+ * used everywhere outside of the mapfile loading phase, and the previous
+ * loadExpressionString function should be used within the mapfile loading
+ * phase.
+ *
  * Revision 1.39  2004/09/14 15:15:01  assefa
  * Correct bug related to sld generation for polygon layers (Bug 866)
  *
@@ -742,7 +749,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                       nClassAfterFilter - nClassBeforeFilter;
                                     for (i=0; i<nNewClasses; i++)
                                     {
-                                        loadExpressionString(&psLayer->
+                                        msLoadExpressionString(&psLayer->
                                                              class[psLayer->numclasses-1-i].
                                                              expression, szExpression);
                                     }
@@ -2336,7 +2343,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                               free(psLayer->classitem);
                             psLayer->classitem = strdup("[pixel]");
 
-                            loadExpressionString(&psLayer->class[nClassId].expression,
+                            msLoadExpressionString(&psLayer->class[nClassId].expression,
                                                  szExpression);
                             
                             
@@ -2385,7 +2392,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                       free(psLayer->classitem);
                     psLayer->classitem = strdup("[pixel]");
 
-                    loadExpressionString(&psLayer->class[nClassId].expression,
+                    msLoadExpressionString(&psLayer->class[nClassId].expression,
                                          szExpression);
                 }
             }

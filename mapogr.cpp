@@ -29,6 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.74  2004/10/09 18:22:41  sean
+ * towards resolving bug 339, have implemented a mutex acquiring wrapper for
+ * the loadExpressionString function.  the new msLoadExpressionString should be
+ * used everywhere outside of the mapfile loading phase, and the previous
+ * loadExpressionString function should be used within the mapfile loading
+ * phase.
+ *
  * Revision 1.73  2004/08/30 20:12:57  frank
  * added CLOSE_CONNECTION processing parameter - defer closes
  *
@@ -1983,7 +1990,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
               // Enclose the text sting inside quotes to make sure it is seen
               // as a string by the parser inside loadExpression(). (bug185)
-              loadExpressionString(&(c->text), 
+              msLoadExpressionString(&(c->text), 
                          (char*)CPLSPrintf("\"%s\"", 
                                            poLabelStyle->TextString(bIsNull)));
 

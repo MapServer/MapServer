@@ -215,7 +215,7 @@
             freeExpression(&self->filter);
             return MS_SUCCESS;
         }
-        else return loadExpressionString(&self->filter, filter);
+        else return msLoadExpressionString(&self->filter, filter);
     }
 
     %newobject getFilterString;

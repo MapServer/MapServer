@@ -958,7 +958,10 @@ MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
 
 MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, char *value);
 
+// To be used *only* within the mapfile loading phase
 MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
+// Use this next, thread safe wrapper, function everywhere else
+MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, char *value);
 MS_DLL_EXPORT void freeExpression(expressionObj *exp);
 
 MS_DLL_EXPORT int getClassIndex(layerObj *layer, char *str);
@@ -1111,7 +1114,11 @@ MS_DLL_EXPORT int strcasecmp(const char *s1, const char *s2);
 MS_DLL_EXPORT size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
 
-MS_DLL_EXPORT int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map); // in mapsymbol.c
+// in mapsymbol.c
+// Use this function *only* with mapfile loading phase
+MS_DLL_EXPORT int loadSymbolSet(symbolSetObj *symbolset, mapObj *map);
+// Use this threadsafe wrapper everywhere else
+MS_DLL_EXPORT int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map);
 MS_DLL_EXPORT int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map);
 MS_DLL_EXPORT int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map);
 MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);
