@@ -16,24 +16,48 @@
 
 //static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
 //static unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
+
+static int imgsize;
+
+static void mystrcat(char *dst, char *src)
+{
+	int len;
+	len = strlen(src);
+	memcpy(dst + imgsize, src, len+1);
+	imgsize += len;
+}
+
+static int lastcolor=-1;
 static int matchdxfcolor(colorObj col)
 {
 	int best=7;
-	int delta=20;
+	int delta=128*255;
 	int tcolor = 0;
+	if (lastcolor != -1)
+		return lastcolor;
 	while (tcolor < 256 && (ctable[tcolor].r != col.red || ctable[tcolor].g != col.green || ctable[tcolor].b != col.blue)){
 		tcolor++;
-		if (abs(ctable[tcolor].r - col.red + ctable[tcolor].b - col.blue + ctable[tcolor].g - col.green) < delta){
+		if (abs(
+					(ctable[tcolor].r - col.red) * (ctable[tcolor].r - col.red)+ 
+					(ctable[tcolor].b - col.blue) * (ctable[tcolor].b - col.blue) + 
+					(ctable[tcolor].g - col.green) * (ctable[tcolor].g - col.green) < delta)
+		   ){
 			best = tcolor;
-			delta = abs(ctable[tcolor].r - col.red + ctable[tcolor].b - col.blue + ctable[tcolor].g - col.green);
+			delta = abs(
+					(ctable[tcolor].r - col.red) * (ctable[tcolor].r - col.red)+ 
+					(ctable[tcolor].b - col.blue) * (ctable[tcolor].b - col.blue) + 
+					(ctable[tcolor].g - col.green) * (ctable[tcolor].g - col.green)
+				);
 		}
 	}
 	if (tcolor >= 256) tcolor = best;
+//DEBUG	printf("%d/%d/%d (%d/%d - %d), %d : %d/%d/%d<BR>\n", ctable[tcolor].r, ctable[tcolor].g, ctable[tcolor].b, tcolor, best, delta, lastcolor, col.red, col.green, col.blue);
+	lastcolor = tcolor;
 	return tcolor;
 }
 
 static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int color, int size) {
-  struct imageCacheObj *icp;
+//  struct imageCacheObj *icp;
 DEBUG printf("searchImageCache\n<BR>");
 /*
   icp = ic;
@@ -45,10 +69,27 @@ DEBUG printf("searchImageCache\n<BR>");
   return(NULL);
 }
 
+static char* lname;
+static char layerlist[MS_MAXLAYERS*80]="  2\nLAYER\n 70\n  10\n";
+
+void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image){
+DEBUG printf("ImageStartLayerIM\n<BR>");
+	free(lname);
+	if (layer->name)
+		lname = strdup(layer->name);
+	else
+		lname = strdup("NONE");
+		
+	strcat(layerlist, "  0\nLAYER\n  2\n");
+	strcat(layerlist, lname);
+	strcat(layerlist, "\n 70\n  64\n 6\nCONTINUOUS\n");
+	lastcolor = -1;
+}
+	
 static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, int symbol, int color, int size, gdImagePtr img) {
   struct imageCacheObj *icp;
 DEBUG printf("addImageCache\n<BR>");
-/*
+
   if(*icsize > MS_IMAGECACHESIZE) { // remove last element, size stays the same
     icp = ic;
     while(icp->next && icp->next->next) icp = icp->next;
@@ -67,7 +108,7 @@ DEBUG printf("addImageCache\n<BR>");
   icp->symbol = symbol;
   icp->size = size;
   icp->next = ic; // insert at the beginning
- */
+ 
   return(icp);
 }
 
@@ -81,7 +122,7 @@ static int dxf;
 imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
                           char *imagepath, char *imageurl)
 {
-    imageObj  *image;
+    imageObj  *image=NULL;
     if (setvbuf(stdout, NULL, _IONBF , 0)){
                printf("Whoops...");
     };
@@ -120,14 +161,19 @@ DEBUG printf("msImageCreateIM<BR>\n");
 	    else
 		    dxf = 0;
 	    if (dxf){
-		    sprintf(head, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n");		    
+		    sprintf(head, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\nAC1009\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n");		    
 	    } else
 		    sprintf(head, "<MAP name='map1' width=%d height=%d>", image->width, image->height);
-	    image->img.imagemap = strdup(head);
-//	    if (image->img.imagemap)
-//	            image->img.IMsize = strlen(image->img.imagemap);
-//	    else
+	    lname = strdup("NONE");
+//	    image->img.imagemap = strdup(head);
+	    image->img.imagemap = strdup(" ");
+	    if (image->img.imagemap){
+		    imgsize = strlen(image->img.imagemap);
+	            image->size = strlen(image->img.imagemap);
+	    } else {
 		    image->size = 0;
+		    imgsize = 0;
+	    }
             if (imagepath)
             {
                 image->imagepath = strdup(imagepath);
@@ -743,28 +789,24 @@ DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
 //  if(fc<0 && oc<0) return; // nothing to do
   if(size < 1) return; // size too small
 
-DEBUG printf(".%d.%d.%d.", symbol->type, style->symbol, fc);
+//DEBUG printf(".%d.%d.%d.", symbol->type, style->symbol, fc);
   if(style->symbol == 0) { // simply draw a single pixel of the specified color //
 //    gdImageSetPixel(img, p->x + ox, p->y + oy, fc);
 		int slen = 0;
 		int nchars = 0;
-		char buffer[200] = "";
+		char buffer[300] = "";
 		
-#if defined(_WIN32) && !defined(__CYGWIN__)
-                nchars = sprintf (buffer, "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy);
-#else
-		nchars = snprintf (buffer, 200, dxf ? "  0\nPOINT\n  8\n0\n 10\n%f\n 20\n%f\n 30\n0.0\n 62\n%6d\n" : "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy, dxf ? matchdxfcolor(style->color) : 0);
-#endif
+		nchars = sprintf (buffer, dxf ? "  0\nPOINT\n 10\n%f\n 20\n%f\n 30\n0.0\n 62\n%6d\n  8\n%s\n" : "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy, dxf ? matchdxfcolor(style->color) : 0, lname);
 
 //DEBUG printf ("%d, ",strlen(img->img.imagemap) );
 // DEBUG printf("nchars %d<BR>\n", nchars);
-		slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
+		slen = nchars + imgsize + 8; // add 8 to accomodate </A> tag
 		if (slen > img->size){
 			img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
 			if (img->img.imagemap)
 				img->size = slen*2;
 		}
-		strcat(img->img.imagemap, buffer);
+		mystrcat(img->img.imagemap, buffer);
 		      
 	//        point2 = &( p->line[j].point[i] );
 	//        if(point1->y == point2->y) {}
@@ -906,8 +948,8 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
 //  gdImagePtr brush=NULL;
 //  gdPoint points[MS_MAXVECTORPOINTS];
   int fc, bc;
-  int i,j,k,l;
-int bsize = 100;
+  int i,j,l;
+int bsize = 200;
 char first = 1;
 char *buffer = (char *) malloc (bsize);
 char *fbuffer = (char *) malloc (bsize);
@@ -935,17 +977,9 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
 //  if(fc < 0) return; // nothing to do
 //  if(size < 1) return; // size too small
   if (dxf){
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
-#else
-	nchars = snprintf (fbuffer, bsize, "  0\nPOLYLINE\n  8\n0\n 70\n     0\n 62\n%6d\n", matchdxfcolor(style->color));
-#endif
+	nchars = sprintf (fbuffer, "  0\nPOLYLINE\n 70\n     0\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
   } else {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
-#else
-	   nchars = snprintf (fbuffer, bsize, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
-#endif
+	nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
   }
   if(style->symbol == 0) { // just draw a single width line
 //    imagePolyline(img, p, fc, style->offsetx, style->offsety);
@@ -954,35 +988,30 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
 				int slen = 0;
 				if (dxf){
-#if defined(_WIN32) && !defined(__CYGWIN__)
 					nchars = sprintf (buffer, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
-#else
-					nchars = snprintf (buffer, bsize, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
-#endif
 				} else {
-#if defined(_WIN32) && !defined(__CYGWIN__)
 					nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
-#else
-					nchars = snprintf (buffer, bsize, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
-#endif
 				}
 
-	//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
-	// DEBUG printf("nchars %d<BR>\n", nchars);
-				slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
-				if (slen > img->size){
-					img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
+//	DEBUG printf ("%d, ",strlen(img->img.imagemap) );
+//	 DEBUG printf(" %d, ", img->size);
+				slen = nchars + imgsize; // add 25 to accomodate </A> tag / SEQEND
+//	 DEBUG printf(" %d, ", slen);
+//	 DEBUG printf("nchars %d<BR>\n", nchars);
+				if (slen >= img->size){
+					img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2 + 25); // double allocated string size if needed
 					if (img->img.imagemap)
 						img->size = slen*2;
 				}
-				strcat(img->img.imagemap, buffer);
+				mystrcat(img->img.imagemap, buffer);
 				first = 0;
 			      
 		//        point2 = &( p->line[j].point[i] );
 		//        if(point1->y == point2->y) {}
 		      }
 		  }
-	    strcat(img->img.imagemap, dxf ? "  0\nSEQEND\n" : "'></A>\n");
+	    mystrcat(img->img.imagemap, dxf ? "  0\nSEQEND\n" : "'></A>\n");
+//	DEBUG printf ("%d, ",strlen(img->img.imagemap) );
     return;
   }
 
@@ -1120,8 +1149,8 @@ void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, st
   rectObj rect;
   char *font=NULL;
   */
-  int i,j,k,l;
-int bsize = 100;
+  int i,j,l;
+int bsize = 300;
 char first = 1;
 char *buffer = (char *) malloc (bsize);
 char *fbuffer = (char *) malloc (bsize);
@@ -1159,17 +1188,9 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
       
 //DEBUG printf("BEF%s", img->img.imagemap);
   if (dxf){
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
-#else
-	nchars = snprintf (fbuffer, bsize, "  0\nPOLYLINE\n  8\n0\n 73\n     1\n 62\n%6d\n", matchdxfcolor(style->color));
-#endif
+	nchars = sprintf (fbuffer, "  0\nPOLYLINE\n 73\n     1\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
   } else {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
-#else
-	   nchars = snprintf (fbuffer, bsize, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
-#endif
+	nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
   }
 
 	  if(style->symbol == 0) { // simply draw a single pixel of the specified color //    
@@ -1178,35 +1199,28 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
 				int slen = 0;
 				if (dxf){
-#if defined(_WIN32) && !defined(__CYGWIN__)
 					nchars = sprintf (buffer, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
-#else
-					nchars = snprintf (buffer, bsize, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
-#endif
 				} else {
-#if defined(_WIN32) && !defined(__CYGWIN__)
 					nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
-#else
-					nchars = snprintf (buffer, bsize, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
-#endif
 				}
 
 	//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
 	// DEBUG printf("nchars %d<BR>\n", nchars);
-				slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
+				slen = nchars + imgsize + 8; // add 8 to accomodate </A> tag
+//				slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
 				if (slen > img->size){
 					img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
 					if (img->img.imagemap)
 						img->size = slen*2;
 				}
-				strcat(img->img.imagemap, buffer);
+				mystrcat(img->img.imagemap, buffer);
 				first = 0;
 			      
 		//        point2 = &( p->line[j].point[i] );
 		//        if(point1->y == point2->y) {}
 		      }
 		  }
-	    strcat(img->img.imagemap, dxf ? "  0\nSEQEND\n" : "'></A>\n");
+	    mystrcat(img->img.imagemap, dxf ? "  0\nSEQEND\n" : "'></A>\n");
   
 //DEBUG printf("AFT%s", img->img.imagemap);
 // STOOPID. GD draws polygons pixel by pixel ?!
@@ -1401,21 +1415,40 @@ DEBUG printf("billboardIM<BR>\n");
   msImageFilledPolygon(img, &temp, label->backgroundcolor.pen);
 
   msFreeShape(&temp);
+*/
+  
 }
 
 //
-** Simply draws a label based on the label point and the supplied label object.
+//** Simply draws a label based on the label point and the supplied label object.
 //
-int msDrawTextIM(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
+int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
 {
   int x, y;
+	int slen = 0;
+	int nchars = 0;
+	char buffer[300] = "";
+		
 
+  DEBUG printf("msDrawText<BR>\n");
   if(!string) return(0); // not errors, just don't want to do anything //
   if(strlen(string) == 0) return(0);
-
+  if(!dxf) return (0);
   x = MS_NINT(labelPnt.x);
   y = MS_NINT(labelPnt.y);
 
+	nchars = sprintf (buffer, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
+//DEBUG printf("%s<BR>", buffer);
+//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
+//DEBUG printf("nchars %d<BR>\n", nchars);
+	slen = nchars + imgsize + 8; // add 8 to accomodate </A> tag
+	if (slen > img->size){
+		img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
+		if (img->img.imagemap)
+			img->size = slen*2;
+	}
+	mystrcat(img->img.imagemap, buffer);
+/*
   if(label->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->color));
   if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->outlinecolor));
   if(label->shadowcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->shadowcolor));
@@ -1539,12 +1572,12 @@ int msDrawTextIM(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
   }
 */
-  return;
+  return(0);
 }
 
-int msDrawLabelCacheIM(char* img, mapObj *map)
+int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 {
-/*  pointObj p;
+  pointObj p;
   int i, j, l;
   rectObj r;
   
@@ -1555,9 +1588,9 @@ int msDrawLabelCacheIM(char* img, mapObj *map)
   int marker_width, marker_height;
   int marker_offset_x, marker_offset_y;
   rectObj marker_rect;
-*/
+
 DEBUG printf("msDrawLabelCacheIM\n<BR>");
-/*for(l=map->labelcache.numlabels-1; l>=0; l--) {
+for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
     cachePtr = &(map->labelcache.labels[l]); // point to right spot in the label cache
 
@@ -1570,7 +1603,7 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
     if(cachePtr->label.type == MS_TRUETYPE)
       cachePtr->label.size *= layerPtr->scalefactor;
 
-    if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset)) == -1)
+    if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
       return(-1);
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
@@ -1580,7 +1613,7 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
     if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker      
 
       // TO DO: at the moment only checks the bottom style, perhaps should check all of them
-      msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCESS)
+      if (msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
 	return(-1);
 
       marker_width *= layerPtr->scalefactor;
@@ -1621,10 +1654,10 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
 	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 
 	  if(!labelPtr->partials) { // check against image first
-	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
-	      cachePtr->status = MS_FALSE;
-	      continue; // next angle
-	    }
+//	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
+//	      cachePtr->status = MS_FALSE;
+//	      continue; // next angle
+//	    }
 	  }
 
 	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
@@ -1642,7 +1675,7 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
 	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
 	    if(map->labelcache.labels[i].status == MS_TRUE) { // compare bounding polygons and check for duplicates //
 
-	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { // label is a duplicate //
+	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { // label is a duplicate //
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -1671,10 +1704,10 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
 	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 
 	  if(!labelPtr->partials) { // check against image first
-	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
-	      cachePtr->status = MS_FALSE;
-	      continue; // next position
-	    }
+//	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
+//	      cachePtr->status = MS_FALSE;
+//	      continue; // next position
+//	    }
 	  }
 
 	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
@@ -1692,7 +1725,7 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
 	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
 	    if(map->labelcache.labels[i].status == MS_TRUE) { // compare bounding polygons and check for duplicates //
 
-	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { // label is a duplicate //
+	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { // label is a duplicate //
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -1726,8 +1759,8 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
       if(!labelPtr->force) { // no need to check anything else
 
 	if(!labelPtr->partials) {
-	  if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE)
-	    cachePtr->status = MS_FALSE;
+//	  if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE)
+//	    cachePtr->status = MS_FALSE;
 	}
 
 	if(!cachePtr->status)
@@ -1747,7 +1780,7 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
 
 	for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
 	  if(map->labelcache.labels[i].status == MS_TRUE) { // compare bounding polygons and check for duplicates //
-	    if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { // label is a duplicate //
+	    if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { // label is a duplicate //
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
@@ -1766,16 +1799,16 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
     if(!cachePtr->status)
       continue; // next label //
 
-    if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { // need to draw a marker //
-      for(i=0; i<cachePtr->numstyles; i++)
-        msDrawMarkerSymbolIM(&map->symbolset, img, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
-    }
+//    if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { // need to draw a marker //
+//      for(i=0; i<cachePtr->numstyles; i++)
+//        msDrawMarkerSymbolIM(&map->symbolset, img, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
+//    }
 
-    if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardIM(img, cachePtr->poly, labelPtr);
+//    if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardIM(img, cachePtr->poly, labelPtr);
     msDrawTextIM(img, p, cachePtr->string, labelPtr, &(map->fontset), layerPtr->scalefactor); // actually draw the label, we scaled it in msAddLabel
 
   } // next label in cache //
-*/
+
   return(0);
 }
 
@@ -1821,8 +1854,13 @@ if(filename != NULL && strlen(filename) > 0) {
 DEBUG printf("ALLOCD %d<BR>\n", img->size);
 //DEBUG printf("F %s<BR>\n", img->img.imagemap);
 DEBUG printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
+	  if (dxf){
+	    fprintf(stream, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\n  1\nAC1009\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n  0\nTABLE\n%s0\nENDTAB\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n", layerlist); 
+	  } else {
+	    fprintf(stream, "<MAP name='map1' width=%d height=%d>", img->width, img->height);
+    	  }
 	  fprintf(stream, img->img.imagemap);
-	  if( strcasecmp("OFF",msGetOutputFormatOption( format, "SKIPENDTAG", "OFF" )) == 0)
+	  if( strcasecmp("OFF",msGetOutputFormatOption( format, "SKIPENDTAG", "OFF" )) == 0){
 		  if (dxf)
 			  fprintf(stream, "0\nENDSEC\n0\nEOF\n");
 		  else 
@@ -1833,6 +1871,7 @@ DEBUG printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
     msSetError(MS_MISCERR, "GIF output is not available.", "msSaveImage()");
     return(MS_FAILURE);
 #endif*/
+	  }
   }
   else
   {
