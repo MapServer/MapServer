@@ -79,6 +79,12 @@ OGR=	  @OGR_ENABLED@
 OGR_LIB=  @OGR_LIB@
 OGR_INC=  @OGR_INC@
 
+# Optional GDAL Support (provides read access to a variety of raster formats)
+# See http://www.remotesensing.org/gdal
+GDAL=	  @GDAL_ENABLED@
+GDAL_LIB=  @GDAL_LIB@
+GDAL_INC=  @GDAL_INC@
+
 #
 # UofMN GIS/Image Processing Extension (very experimental)
 #
@@ -111,11 +117,13 @@ XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
 CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) \
-        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(MPATROL) $(GD_INC) $(PROJ_INC) $(TTF_INC) \
-	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) $(REGEX_INC) $(MPATROL_INC)
+        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) $(MPATROL) $(GD_INC) \
+	$(PROJ_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
+	$(REGEX_INC) $(MPATROL_INC) $(GDAL_INC)
 
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TTF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
-          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(MPATROL_LIB) $(XTRALIBS)
+          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
+	$(MPATROL_LIB) $(XTRALIBS)
 
 RM= /bin/rm -f
 
@@ -196,8 +204,8 @@ sortshp: sortshp.o
 perlvars:
 	touch perlvars
 	pwd > perlvars
-	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) >> perlvars
-	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) >> perlvars
+	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(GDAL) >> perlvars
+	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) $(GDAL_INC) >> perlvars
 	echo $(LDFLAGS) >> perlvars
 
 gd_clean:
