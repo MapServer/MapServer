@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.57  2004/11/04 21:47:07  frank
+ * Removed unused variable.
+ *
  * Revision 1.56  2004/10/29 22:48:03  assefa
  * Use of metadata ows_schema_location (Bug 1013).
  *
@@ -1084,7 +1087,6 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 {
 #ifdef USE_WCS_SVR
   wcsParamsObj *params;  
-  int status;
 
   // populate the service parameters
   params = msWCSCreateParams();

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.138  2004/11/04 21:47:36  frank
+ * Removed unused variable.
+ *
  * Revision 1.137  2004/11/03 17:07:13  frank
  * Free mapServObj properly in mapserv.c in OWS dispatch case to fix minor
  * memory leaks.
@@ -1048,8 +1051,6 @@ int main(int argc, char *argv[]) {
     char buffer[1024];
     imageObj *img=NULL;
     int status;
-    char *sname = NULL;
-
 
     if(argc > 1 && strcmp(argv[1], "-v") == 0) {
       printf("%s\n", msGetVersion());
