@@ -3,6 +3,7 @@
 
 #include "map.h"
 #include "mapparser.h"
+#include "mapthread.h"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -79,6 +80,7 @@ int msEvalContext(mapObj *map, char *context)
   return(msyyresult);
 }
 
+/* Parser mutex added for type MS_EXPRESSION -- SG */
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
 {
   int i;
@@ -105,13 +107,24 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     for(i=0; i<expression->numitems; i++)      
       tmpstr = gsub(tmpstr, expression->items[i], items[expression->indexes[i]]);
 
-    msyystate = 4; msyystring = tmpstr; // set lexer state to EXPRESSION_STRING
+    msAcquireLock( TLOCK_PARSER );
+    msyystate = 4;
+    msyystring = tmpstr; // set lexer state to EXPRESSION_STRING
     status = msyyparse();
     free(tmpstr);
 
-    if(status != 0) return(MS_FALSE); // error in parse (TO DO: we should generate an error here!)
+    if (status != 0)
+    {
+        msReleaseLock( TLOCK_PARSER );
+        msSetError(MS_PARSEERR, "Failed to parse expression",
+                                "msEvalExpression");
+        return MS_FALSE;
+    }
 
-    return(msyyresult);
+    msReleaseLock( TLOCK_PARSER );
+    return status;
+    //return(msyyresult);
+    
     break;
   case(MS_REGEX):
     if(itemindex == -1) {
