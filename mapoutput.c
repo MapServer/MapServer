@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/02/08 21:36:23  frank
+ * Return actual error code.
+ *
  * Revision 1.31  2005/02/03 00:06:57  assefa
  * Add SVG function prototypes and related calls.
  *
@@ -980,5 +983,5 @@ int msOutputFormatValidate( outputFormatObj *format )
         && format->renderer != MS_RENDER_WITH_RAWDATA )
         format->renderer = MS_RENDER_WITH_RAWDATA;
 
-    return MS_TRUE;
+    return result;
 }
