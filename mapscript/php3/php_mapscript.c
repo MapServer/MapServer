@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.201  2004/06/21 21:04:21  dan
+ * Make layer->open() produce a PHP Warning instead of a Fatal error (bug 742)
+ *
  * Revision 1.200  2004/06/03 02:02:32  dan
  * Added layerObj requires and labelrequires (bug 717)
  *
@@ -7314,7 +7317,8 @@ DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
     if (self == NULL || 
         (nStatus = layerObj_open(self)) != MS_SUCCESS)
     {
-        _phpms_report_mapserver_error(E_ERROR);
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_LONG(nStatus);
     }
     else
     {

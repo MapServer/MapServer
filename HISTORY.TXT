@@ -99,6 +99,9 @@ Version 4.3 (CVS)
   will only be advertized if the user has defined 
   "WMS_FEATURE_INFO_MIME_TYPE"  "text/html" (bug 736)
 
+- Make PHP MapScript's layer->open() produce a PHP Warning instead of a
+  Fatal error (bug 742)
+
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
