@@ -1316,8 +1316,8 @@ int msSetLayersdrawingOrder(mapObj *self, int *panIndexes);
 //Defined in maputil.c
 int msMoveClassUp(layerObj *layer, int nClassIndex);
 int msMoveClassDown(layerObj *layer, int nClassIndex);
-int msMoveStyleUp(classObj *class, int nStyleIndex);
-int msMoveStyleDown(classObj *class, int nStyleIndex);
+int msMoveStyleUp(classObj *classo, int nStyleIndex);
+int msMoveStyleDown(classObj *classo, int nStyleIndex);
 
 
 char *msGetProjectionString(projectionObj *proj);
