@@ -338,7 +338,8 @@ void msLayerClose(layerObj *layer)
     msPOSTGISLayerClose(layer);
     break;
   case(MS_SDE):
-    msSDELayerClose(layer);
+    // using pooled connections for SDE, closed when map file is closed
+    // msSDELayerClose(layer); 
     break;
   case(MS_ORACLESPATIAL):
     msOracleSpatialLayerClose(layer);

@@ -285,18 +285,29 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 // connects, gets basic information and opens a stream
 int msSDELayerOpen(layerObj *layer) {
 #ifdef USE_SDE
-  long status;
-  char **params;
-  int numparams;
-
+  long status=-1;
+  char **params=NULL;
+  int numparams=0;
   SE_ERROR error;
 
-  msSDELayerInfo *sde;
+  msSDELayerInfo *sde, *same_sde;  
 
-  if(layer->sdelayerinfo) return MS_SUCCESS; // layer already open
+  if(layer->sdelayerinfo) return(MS_SUCCESS); // layer already open, silently return
 
-  layer->sameconnection = msCheckConnection(layer);
-  if(!layer->sameconnection) { // no existing connection to use, open a new one
+  // allocate space for SDE structures
+  sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
+  if(!sde) {
+    msSetError(MS_MEMERR, "Error allocating SDE layer structure.", "msSDELayerOpen()");
+    return(MS_FAILURE);
+  }
+ 
+  // initialize a few things
+  sde->table = sde->column = NULL;
+ 
+  // status = MS_FAILURE;
+  status = msCheckConnection(layer);  
+  if(status != MS_SUCCESS) { // no existing connection to use, open a new one    
+    if(layer->debug) msDebug("msSDELayerOpen(): Layer %s opened from scratch.\n", layer->name);
 
     params = split(layer->connection, ',', &numparams);
     if(!params) {
@@ -308,26 +319,21 @@ int msSDELayerOpen(layerObj *layer) {
       msSetError(MS_SDEERR, "Not enough SDE connection parameters specified.", "msSDELayerOpen()");
       return(MS_FAILURE);
     }
+  
+    status = SE_connection_create(params[0], params[1], params[2], params[3], params[4], &error, &(sde->connection));
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_connection_create()");
+      return(MS_FAILURE);
+    }
 
-  HERE!
+    msFreeCharArray(params, numparams); // done with parameter list
 
-  sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
-  if(!sde) {
-    msSetError(MS_MEMERR, "Error allocating SDE layer structure.", "msSDELayerOpen()");
-    return(MS_FAILURE);
+  } else { // we can share another layers connection
+    if(layer->debug) msDebug("msSDELayerOpen(): Layer %s sharing connection with layer %s.\n", layer->name, layer->sameconnection->name);    
+
+    same_sde = layer->sameconnection->sdelayerinfo;
+    sde->connection = same_sde->connection;    
   }
-  layer->sdelayerinfo = sde;
-
-  // initialize a few things
-  sde->table = sde->column = NULL;
-
-  status = SE_connection_create(params[0], params[1], params[2], params[3], params[4], &error, &(sde->connection));
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerOpen()", "SE_connection_create()");
-    return(MS_FAILURE);
-  }
-
-  msFreeCharArray(params, numparams);
 
   params = split(layer->data, ',', &numparams);
   if(!params) {
@@ -340,7 +346,7 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
 
-  sde->table = params[0]; // no need to free
+  sde->table = params[0]; // no need to free params
   sde->column = params[1];
 
   SE_layerinfo_create(NULL, &(sde->layerinfo));
@@ -373,6 +379,8 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
 
+  layer->sdelayerinfo = sde; // point to the SDE layer information (note this might actually be in another layer)
+
   return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerOpen()");
@@ -387,10 +395,15 @@ void msSDELayerClose(layerObj *layer) {
   sde = layer->sdelayerinfo;
   if (sde == NULL) return;  // Silently return if layer not opened.
 
+  if(layer->debug) msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
+
   SE_stream_free(sde->stream);
   SE_layerinfo_free(sde->layerinfo);
   SE_coordref_free(sde->coordref);
   SE_connection_free(sde->connection);
+
+  if(sde->table) free(sde->table);
+  if(sde->column) free(sde->column);
 
   free(layer->sdelayerinfo);
   layer->sdelayerinfo = NULL;

@@ -904,8 +904,8 @@ char **msTokenizeMap(char *filename, int *numtokens);
 int msInitLabelCache(labelCacheObj *cache);
 int msFreeLabelCache(labelCacheObj *cache);
 
-layerObj *msCheckConnection(layerObj * layer);
-void msCloseConnections(mapObj *map); // connection pooling functions (mapfile.c)
+int msCheckConnection(layerObj * layer); // connection pooling functions (mapfile.c)
+void msCloseConnections(mapObj *map); 
 
 #if defined USE_PDF
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c

@@ -20,8 +20,6 @@ extern char *msyystring;
 extern int loadSymbol(symbolObj *s, char *symbolpath); // in mapsymbol.c
 extern void writeSymbol(symbolObj *s, FILE *stream); // in mapsymbol.c
 
-static void msCloseConnections(mapObj *map);
-
 /*
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in map.h.
@@ -4070,41 +4068,46 @@ char **msTokenizeMap(char *filename, int *numtokens)
     return tokens;
 }
 
-
 /*
 ** Functions for persistent database connections. Code by Jan Hartman (jhart@frw.uva.nl).
 */
-layerObj *msCheckConnection(layerObj * layer) {
+int msCheckConnection(layerObj * layer) {
   int i;
   layerObj *lp;
 
-  // TODO: there may be an issue with layer order since it's possible that layers to be rendered out of order
+  // TODO: there is an issue with layer order since it's possible that layers to be rendered out of order
   for (i=0;i<layer->index;i++) { 	//check all layers previous to this one
     lp = &(layer->map->layers[i]);
 
     if (lp == layer) continue;
+
+    // check to make sure lp even has an open connection (database types only)
+    switch (lp->connectiontype) {
+    case MS_POSTGIS: 
+      if(!lp->postgislayerinfo) continue;
+      break;
+    case MS_ORACLESPATIAL:
+      break;
+      if(!lp->oraclespatiallayerinfo) continue;
+    case MS_SDE:
+      if(!lp->sdelayerinfo) continue;
+      break;
+    default:
+      continue; // not a database layer, skip it
+      break;
+    }
+
+    // check if the layers share this connection
     if (lp->connectiontype != layer->connectiontype) continue;
     if (!lp->connection) continue;
     if (strcmp(lp->connection, layer->connection)) continue;
-
-    // If we reach here, we found a layer with the same connection type and string.
-    // This either has a sameconnection pointing to itself (the first layer found
-    // with this connectionstring), or a sameconnection pointing to a previously
-    // opened layer.  In both cases, set the new layer's sameconnection pointer to
-    // the found layer's sameconnection and return a pointer to this
-    // layer.  The database application should neither open nor close this
-    // layer. It will not be closed by msCloseConnection at the end.
-    layer->sameconnection = lp->sameconnection;
-    return (lp->sameconnection);
+   
+    layer->sameconnection = lp; // this connection can be shared
+    return(MS_SUCCESS);
   }
 
-  // If we reach here, no previous  connection was found.  Set this layer's
-  // sameconnection pointing to itself and return NULL.  This layer should only
-  // be opened by the database application, not closed.  It will be closed at the
-  // end by msCloseConnections
-  // layer->sameconnection = layer;
-
-  return(NULL);
+  layer->sameconnection = NULL;
+  return(MS_FAILURE);
 }
 
 void msCloseConnections(mapObj *map) {
@@ -4113,24 +4116,19 @@ void msCloseConnections(mapObj *map) {
 
   for (i=0;i<map->numlayers;i++) {
     lp = &(map->layers[i]);
-
-    // Check if this layer has a sameconnection layer pointing to itself.
-    // If so, call the close function provided for this database 
-    if (lp->sameconnection  == lp) {
-      switch (lp->connectiontype) {
-      case MS_POSTGIS: 
-	lp->sameconnection = NULL;
-	msPOSTGISLayerClose(lp);
-	break;
-      case MS_ORACLESPATIAL:
-	msOracleSpatialLayerClose(lp);
-	break;
-      case MS_SDE:
-	msSDELayerClose(lp);
-	break;
-      default:
-        break;
-      }
+    
+    switch (lp->connectiontype) {
+    case MS_POSTGIS:	
+      msPOSTGISLayerClose(lp);
+      break;
+    case MS_ORACLESPATIAL:
+      msOracleSpatialLayerClose(lp);
+      break;
+    case MS_SDE:
+      msSDELayerClose(lp);
+      break;
+    default:
+      break;
     }
   }
 }
