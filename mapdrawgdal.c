@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/05/11 22:35:06  frank
+ * Avoid data init warning.
+ *
  * Revision 1.27  2004/05/11 22:33:27  frank
  * bug 493: fixed last fix, memory corruption in some cases
  *
@@ -1468,7 +1471,7 @@ msDrawRasterLayerGDAL_16BitClassification(
     double dfScaleMin=0.0, dfScaleMax=0.0, dfScaleRatio;
     int   nPixelCount = dst_xsize * dst_ysize, i, nBucketCount=0;
     GDALDataType eDataType;
-    float fDataMin, fDataMax, fNoDataValue;
+    float fDataMin=0.0, fDataMax=255.0, fNoDataValue;
     const char *pszScaleInfo;
     int  bUseIntegers = FALSE;
     int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
