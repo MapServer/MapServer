@@ -570,6 +570,14 @@ memory.") const char * {
     return  msSetLayersdrawingOrder(self, panIndexes); 
   }
 
+  void setConfigOption(char *key, char *value) {
+    msSetConfigOption(self,key,value);
+  }
+
+  const char *getConfigOption(char *key) {
+    return msGetConfigOption(self,key);
+  }
+
   /* SLD */
   
     int applySLD(char *sld) {
