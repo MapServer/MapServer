@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.61  2001/10/23 01:32:46  assefa
+ * Add Drawing Priority support.
+ *
  * Revision 1.60  2001/10/19 19:26:36  assefa
  * Bug:extents and unit in the php object where not set in
  * map->setprojection.
@@ -198,6 +201,10 @@ DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_moveLayerDown(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -452,6 +459,9 @@ function_entry php_map_class_functions[] = {
     {"setmetadata",     php3_ms_map_setMetaData,        NULL},
     {"prepareimage",    php3_ms_map_prepareImage,       NULL},
     {"preparequery",    php3_ms_map_prepareQuery,       NULL},
+    {"movelayerup",     php3_ms_map_moveLayerUp,        NULL},
+    {"movelayerdown",   php3_ms_map_moveLayerDown,      NULL},
+    {"getlayersdrawingorder",   php3_ms_map_getLayersDrawingOrder,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -665,6 +675,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     /* layer status constants (see also MS_ON, MS_OFF) */
     REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
     REGISTER_LONG_CONSTANT("MS_EMBED",      MS_EMBED,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_DELETE",     MS_DELETE,       const_flag);
 
     /* font type constants*/
     REGISTER_LONG_CONSTANT("MS_TRUETYPE",   MS_TRUETYPE,    const_flag);
@@ -3560,7 +3571,157 @@ DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
+/**********************************************************************
+ *                        map->movelayerup()
+ *
+ * Move layer up in the list of layers (for drawing purposes).
+ * The layer in this case is drawn earlier.
+ **********************************************************************/
 
+/* {{{ proto int map.movelayerup(int layer_index)
+   Returns true on sucess, else false. */
+
+DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pLyrIdx, *pThis;
+    mapObj *self=NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pLyrIdx) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pLyrIdx);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self != NULL)
+    {
+        if (msMoveLayerUp(self, pLyrIdx->value.lval) == 0)
+            RETURN_TRUE;       
+    }
+
+    RETURN_FALSE;
+}
+/* }}} */
+
+/**********************************************************************
+ *                        map->movelayerdown()
+ *
+ * Move layer down in the list of layers (for drawing purposes).
+ * The layer in this case is drawn later.
+ **********************************************************************/
+
+/* {{{ proto int map.movelayerdown(int layer_index)
+   Returns true on sucess, else false. */
+
+DLEXPORT void php3_ms_map_moveLayerDown(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *pLyrIdx, *pThis;
+    mapObj *self=NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pLyrIdx) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pLyrIdx);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self != NULL)
+    {
+        if (msMoveLayerDown(self, pLyrIdx->value.lval) == 0)
+            RETURN_TRUE;       
+    }
+
+    RETURN_FALSE;
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        map->getLayersDrawingOrder()
+ *
+ * Return an array conating all the layers name.
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_getLayersDrawingOrder()
+   Return an array conating all the layers index sorted by drawing order.
+   Note : the first element in the array is the one drawn first.*/
+DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis;
+    mapObj      *self=NULL;
+    int         nCount = 0;
+    int         i = 0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (array_init(return_value) == FAILURE) 
+    {
+        RETURN_FALSE;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self != NULL)
+    {
+        nCount = self->numlayers;
+
+/* -------------------------------------------------------------------- */
+/*      Go through the prioriy list and return the layers index. If     */
+/*      the priority list is not set, it will return the layer          */
+/*      indexs as they were at the load time.                           */
+/* -------------------------------------------------------------------- */
+        for (i=0; i<nCount; i++)
+        {
+            if (self->panPrioList)
+            {
+                add_next_index_long(return_value,  self->panPrioList[i]);
+            }
+            else
+                add_next_index_long(return_value, i);
+        }
+    }
+    else
+    {
+        RETURN_FALSE;
+    }
+}
+/* }}} */
 
 /*=====================================================================
  *                 PHP function wrappers - image class

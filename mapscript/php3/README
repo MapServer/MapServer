@@ -58,7 +58,7 @@ and the MapServer Map File documentation at:
         MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY
 
     Layer/Legend/Scalebar Status:
-        MS_ON, MS_OFF, MS_DEFAULT, MS_EMBED
+        MS_ON, MS_OFF, MS_DEFAULT, MS_EMBED, MS_DELETE
 
     Font types:
         MS_TRUETYPE, MS_BITMAP
@@ -305,6 +305,12 @@ and the MapServer Map File documentation at:
 
    array getAllLayerNames()
         Return an array containing all the layer names.
+
+   boolean moveLayerUp(int layerindex)
+        Move layer up in the hierarcy of drawing. 
+
+   boolean moveLayerDown(int layerindex)
+        Move layer down in the hierarcy of drawing.     
 
  LayerObj Class:
  ---------------

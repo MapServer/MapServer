@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.25  2001/10/23 01:32:46  assefa
+ * Add Drawing Priority support.
+ *
  * Revision 1.24  2001/10/03 12:41:04  assefa
  * Add function getLayersIndexByGroup.
  *
@@ -293,6 +296,11 @@ layerObj *layerObj_new(mapObj *map) {
       return(NULL);
 
     map->layers[map->numlayers].index = map->numlayers;
+#ifdef USE_PRIOLIST
+      //Update the priority list with the layer's index.
+      map->panPrioList[map->numlayers] = map->numlayers;
+#endif
+
     map->numlayers++;
 
     return &(map->layers[map->numlayers-1]);
