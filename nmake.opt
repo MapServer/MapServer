@@ -32,6 +32,17 @@ DLLBUILD=1
 # Set the following to point to the current directory. 
 MS_BASE = 	C:\projects\mapserver
 
+# Optmization and related compile flags. 
+
+# Optimized, with using MSVCRT. 
+OPTFLAGS =	/nologo /MD $(WARNING_LEVEL) $(DEBUG)
+
+# Debug with MSVCRT
+#OPTFLAGS =	/nologo /Zi /MD $(WARNING_LEVEL) $(DEBUG)
+
+# Optimized, with LIBC.
+#OPTFLAGS =	/nologo $(WARNING_LEVEL) $(DEBUG)
+
 # Input raster format options:
 #
 # The lite version of mapserver 4.x supports only PNG and JPEG data for input.
@@ -528,7 +539,7 @@ EXTERNAL_LIBS=$(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 
-INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
+INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  -DWIN32 -D_WIN32 \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
