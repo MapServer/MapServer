@@ -66,7 +66,7 @@ imageObj *msDrawMap(mapObj *map)
                               map->resolution, &map->scale);
     if(status != MS_SUCCESS) return(NULL);
 
-
+#ifdef USE_WMS_LYR
     // Pre-download all WMS layers in parallel before starting to draw map
     for(i=0; i<map->numlayers; i++) 
     {
@@ -81,13 +81,12 @@ imageObj *msDrawMap(mapObj *map)
             }
         }
     }
-
     if (numWMSRequests && 
         msWMSExecuteRequests(asWMSReqInfo, numWMSRequests) == MS_FAILURE)
     {
         return NULL;
     }
-
+#endif
     // OK, now we can start drawing
 
     for(i=0; i<map->numlayers; i++) {
@@ -99,9 +98,13 @@ imageObj *msDrawMap(mapObj *map)
             if(lp->postlabelcache) // wait to draw
                 continue;
 
-            if (lp->connectiontype == MS_WMS)  
+            if (lp->connectiontype == MS_WMS) 
+#ifdef USE_WMS_LYR 
                 status = msDrawWMSLayerLow(i, asWMSReqInfo, numWMSRequests, 
                                            map, lp, image);
+#else
+	        status = MS_FAILURE;
+#endif
             else 
                 status = msDrawLayer(map, lp, image);
             if(status != MS_SUCCESS) return(NULL);
@@ -126,8 +129,12 @@ imageObj *msDrawMap(mapObj *map)
       continue;
 
     if (lp->connectiontype == MS_WMS)  
+#ifdef USE_WMS_LYR 
         status = msDrawWMSLayerLow(i, asWMSReqInfo, numWMSRequests, 
                                    map, lp, image);
+#else
+	status = MS_FAILURE;
+#endif
     else 
         status = msDrawLayer(map, lp, image);
     if(status != MS_SUCCESS) return(NULL);
@@ -291,9 +298,12 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     // Redirect procesing of some layer types.
     if(layer->connectiontype == MS_WMS) 
     {
+#ifdef USE_WMS_LYR
         retcode = msDrawWMSLayer(map, layer, image);
+#else  
+	retcode = MS_FAILURE;
+#endif
     }
-  
     else if(layer->type == MS_LAYER_RASTER) 
     {
         retcode = msDrawRasterLayer(map, layer, image);
@@ -648,6 +658,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
  * msDrawWMSLayerLow()
  */
 
+#ifdef USE_WMS_LYR
 int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
     int nStatus = MS_FAILURE;
@@ -691,6 +702,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     return nStatus;
 }
+#endif
 
 /*
 ** Function to render an individual shape, the overlay boolean variable enables/disables drawing of the
