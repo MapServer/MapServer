@@ -84,6 +84,8 @@ from cases.symbolsettest import MapSymbolSetTestCase
 from cases.outputformattest import OutputFormatTestCase
 from cases.outputformattest import MapOutputFormatTestCase
 
+from cases.labeltest import LabelCacheMemberTestCase
+
 # Create a test suite
 suite = unittest.TestSuite()
 
@@ -133,6 +135,7 @@ suite.addTests([ZoomPointTestCase,
                 
 suite.addTests([OutputFormatTestCase, MapOutputFormatTestCase])
 
+suite.addTest(LabelCacheMemberTestCase)
 
 # ============================================================================
 # If module is run as a script, execute every test case in the suite
