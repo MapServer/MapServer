@@ -74,6 +74,8 @@ Very important note: Constant names and class member variable names are
     Connection Types:
         MS_LOCAL, MS_SDE, MS_OGR
 
+    Output Image Types:
+        MS_GIF, MS_PNG, MS_JPEG
 
  MapObj Class:
  -------------
@@ -325,6 +327,14 @@ Very important note: Constant names and class member variable names are
 
  Methods:
 
+   void free()
+        Destroys resources used by an image object.
+
+  The saveImage() and saveWebImage() methods are different depending on the
+  version of GD that is used:
+  
+  With GD 1.2, 1.3, 1.6:
+
    int saveImage(string filename, int transparent, int interlace)
         Writes image object to specifed filename.  Returns -1 on error.
         Passing an empty filename sends output to stdout.  In this case,
@@ -334,8 +344,27 @@ Very important note: Constant names and class member variable names are
    string saveWebImage(int transparent, int interlace)
         Writes image to temp directory.  Returns image URL.
 
-   void free()
-        Destroys resources used by an image object.
+  With GD 1.8:
+
+   int saveImage(string filename, int type, int transparent, int interlace, 
+                 int quality)
+        Writes image object to specifed filename.  Returns -1 on error.
+        Passing an empty filename sends output to stdout.  In this case,
+        the PHP header() function should be used to set the documents's
+        content-type prior to calling saveImage().
+        Type can be either MS_PNG or MS_JPEG
+        Quality should be a value in the range 0-95, higher value implies
+        higher image quality and larger image sizes.
+        If quality is negative, then the default IJG JPEG quality value is 
+        used.
+
+   string saveWebImage(int transparent, int type, int interlace, int quality)
+        Writes image to temp directory.  Returns image URL.
+        Type can be either MS_PNG or MS_JPEG
+        Quality should be a value in the range 0-95, higher value implies
+        higher image quality and larger image sizes.
+        If quality is negative, then the default IJG JPEG quality value is 
+        used.
 
 
  LabelObj Class:
