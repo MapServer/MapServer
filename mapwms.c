@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.131  2004/10/27 22:08:12  assefa
+ * Add WCS tytpe in DescribeLayer (Bug 683).
+ *
  * Revision 1.130  2004/10/27 20:41:07  julien
  * in MetadataURL printing write xlink:href instead of link:href.
  *
@@ -2049,8 +2052,10 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
   int numlayers = 0;
   int j, k;
   layerObj *lp = NULL;
-  const char *pszOnlineResMap = NULL, *pszOnlineResLyr = NULL;
-
+  const char *pszOnlineResMapWFS = NULL, *pszOnlineResLyrWFS = NULL; 
+  const char *pszOnlineResMapWCS = NULL, *pszOnlineResLyrWCS = NULL;
+  char *pszOnlineResEncoded=NULL, *pszLayerName=NULL;
+             
    for(i=0; map && i<numentries; i++) {
      if(strcasecmp(names[i], "LAYERS") == 0) {
 
@@ -2065,10 +2070,14 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
    msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"http://schemas.opengeospatial.net/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n");
    msIO_printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
 
-   //check if map-level metadata wfs_onlineresource is available
-   pszOnlineResMap = msLookupHashTable(&(map->web.metadata),"wfs_onlineresource");
-   if (pszOnlineResMap && strlen(pszOnlineResMap) == 0)
-       pszOnlineResMap = NULL;
+   //check if map-level metadata wfs(wcs)_onlineresource is available
+   pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata),"OF", "onlineresource");
+   if (pszOnlineResMapWFS && strlen(pszOnlineResMapWFS) == 0)
+       pszOnlineResMapWFS = NULL;
+
+   pszOnlineResMapWCS = msOWSLookupMetadata(&(map->web.metadata),"OC", "onlineresource");
+   if (pszOnlineResMapWCS && strlen(pszOnlineResMapWCS) == 0)
+     pszOnlineResMapWCS = NULL;
 
    for(j=0; j<numlayers; j++)
    {
@@ -2080,21 +2089,38 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
              /* Look for a WFS onlineresouce at the layer level and then at
               * the map level.
               */
-           pszOnlineResLyr = msLookupHashTable(&(lp->metadata),
-                                               "wfs_onlineresource");
-           if (pszOnlineResLyr == NULL || strlen(pszOnlineResLyr) == 0)
-               pszOnlineResLyr = pszOnlineResMap;
+           pszOnlineResLyrWFS = msOWSLookupMetadata(&(lp->metadata), "OF",
+                                                    "onlineresource");
+           pszOnlineResLyrWCS = msOWSLookupMetadata(&(lp->metadata), "OC",
+                                                    "onlineresource");
+           if (pszOnlineResLyrWFS == NULL || strlen(pszOnlineResLyrWFS) == 0)
+               pszOnlineResLyrWFS = pszOnlineResMapWFS;
 
-           if (pszOnlineResLyr && (lp->type == MS_LAYER_POINT ||
-                                   lp->type == MS_LAYER_LINE ||
-                                   lp->type == MS_LAYER_POLYGON ) )
+           if (pszOnlineResLyrWCS == NULL || strlen(pszOnlineResLyrWCS) == 0)
+               pszOnlineResLyrWCS = pszOnlineResMapWCS;
+
+           if (pszOnlineResLyrWFS && (lp->type == MS_LAYER_POINT ||
+                                      lp->type == MS_LAYER_LINE ||
+                                      lp->type == MS_LAYER_POLYGON) )
            {
-             char *pszOnlineResEncoded, *pszLayerName;
-             pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyr);
+             pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWFS);
              pszLayerName = msEncodeHTMLEntities(lp->name);
 
              msIO_printf("<LayerDescription name=\"%s\" wfs=\"%s\" owsType=\"WFS\" owsURL=\"%s\">\n",
                     pszLayerName, pszOnlineResEncoded, pszOnlineResEncoded);
+             msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
+             msIO_printf("</LayerDescription>\n");
+
+             msFree(pszOnlineResEncoded);
+             msFree(pszLayerName);
+           }
+           else if (pszOnlineResLyrWCS && lp->type == MS_LAYER_RASTER)
+           {
+               pszOnlineResEncoded = msEncodeHTMLEntities(pszOnlineResLyrWCS);
+               pszLayerName = msEncodeHTMLEntities(lp->name);
+
+               msIO_printf("<LayerDescription name=\"%s\"  owsType=\"WCS\" owsURL=\"%s\">\n",
+                    pszLayerName, pszOnlineResEncoded);
              msIO_printf("<Query typeName=\"%s\" />\n", pszLayerName);
              msIO_printf("</LayerDescription>\n");
 
