@@ -752,8 +752,8 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
 
       sprintf(pszImgFname, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
-      pszFullImgFname = strdup(msBuildPath(szPath, 
-         msBuildPath(szPath, map->mappath, map->web.imagepath), pszImgFname));
+      pszFullImgFname = strdup(msBuildPath3(szPath, map->mappath, 
+                                            map->web.imagepath, pszImgFname));
       
       // check if icon already exist in cache
       if ((fIcon = fopen(pszFullImgFname, "r+")) != NULL)

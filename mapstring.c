@@ -265,10 +265,10 @@ char *getPath(char *fn)
 
 /*
 ** Returns a *path* built from abs_path and path.
-** The szReturnPath must be declared by the caller function as an array
+** The pszReturnPath must be declared by the caller function as an array
 ** of MS_MAXPATHLEN char
 */
-char *msBuildPath(char *szReturnPath, char *abs_path, char *path)
+char *msBuildPath(char *pszReturnPath, char *abs_path, char *path)
 {
   int   abslen = 0;
   int   pathlen = 0;
@@ -296,21 +296,35 @@ char *msBuildPath(char *szReturnPath, char *abs_path, char *path)
        (path[0] == '\\') || (path[0] == '/') || 
          (pathlen > 1 && (path[1] == ':')))
   {
-      strcpy(szReturnPath, path);
-      return(szReturnPath);
+      strcpy(pszReturnPath, path);
+      return(pszReturnPath);
   }
 
   // else return abs_path/path
   if((abs_path[abslen-1] == '/') || (abs_path[abslen-1] == '\\'))
   {
-      sprintf(szReturnPath, "%s%s", abs_path, path);
+      sprintf(pszReturnPath, "%s%s", abs_path, path);
   }
   else
   {
-      sprintf(szReturnPath, "%s/%s", abs_path, path);
+      sprintf(pszReturnPath, "%s/%s", abs_path, path);
   }
 
-  return(szReturnPath);
+  return(pszReturnPath);
+}
+
+/*
+** Returns a *path* built from abs_path, path1 and path2.
+** abs_path/path1/path2
+** The pszReturnPath must be declared by the caller function as an array
+** of MS_MAXPATHLEN char
+*/
+char *msBuildPath3(char *pszReturnPath, char *abs_path,char *path1,char *path2)
+{
+  char szPath[MS_MAXPATHLEN];
+
+  return msBuildPath(pszReturnPath, abs_path, 
+                     msBuildPath(szPath, path1, path2));
 }
 
 /*
