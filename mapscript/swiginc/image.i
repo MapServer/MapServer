@@ -35,8 +35,8 @@
      * If the target language is Python, we ignore this constructor and
      * instead use the one in python/pymodule.i. */
 #ifndef SWIGPYTHON
-    imageObj(int width, int height, const char *driver=NULL,
-             const char *file=NULL, mapObj *map=NULL)
+    imageObj(int width, int height, outputFormatObj input_format=NULL,
+             const char *file=NULL)
     {
         imageObj *image=NULL;
         outputFormatObj *format;
@@ -44,10 +44,10 @@
         if (file) {
             return (imageObj *) msImageLoadGD(file);
         }
+        if (input_format) {
+            format = input_format;
+        }
         else {
-            if (driver) {
-                format = msCreateDefaultOutputFormat(NULL, driver);
-            }
             else {
                 format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
                 if (format == NULL)
@@ -62,7 +62,7 @@
                            "imageObj()", driver);
                 return NULL;
             }
-            image = msImageCreate(width, height, format, NULL, NULL, map);
+            image = msImageCreate(width, height, format, NULL, NULL, NULL);
             return image;
         }
     }

@@ -72,5 +72,5 @@ struct PyFileIfaceObj_gdIOCtx {
 
 struct PyFileIfaceObj_gdIOCtx * alloc_PyFileIfaceObj_IOCtx(PyObject *fileIfaceObj);
 void free_PyFileIfaceObj_IOCtx(struct PyFileIfaceObj_gdIOCtx *pctx);
-imageObj *createImageObjFromPyFile(int width, int height, PyObject *file, const char *driver);
+imageObj *createImageObjFromPyFile(PyObject *file, const char *driver);
 

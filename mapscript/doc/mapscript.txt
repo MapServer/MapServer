@@ -911,16 +911,15 @@ width : int immutable
 imageObj Methods
 ----------------
 
-new imageObj( int width, int height [, string driver=NULL [, string filename=NULL [, mapObj_ map=NULL ] ] ] ) : imageObj
+new imageObj( int width, int height [, outputFormatObj_ format=NULL [, string filename=NULL ] ] ) : imageObj
     Create new instance of imageObj.  If *filename* is specified, an imageObj
     is created from the file and any specified *width*, *height*, and
-    *driver* parameters will be overridden by values of the image in 
-    *filename*.  Otherwise, if *driver* is specified an imageObj is created
-    using that driver.  See the *driver* attribute above for details.  If
+    *format* parameters will be overridden by values of the image in 
+    *filename*.  Otherwise, if *format* is specified an imageObj is created
+    using that format.  See the *format* attribute above for details.  If
     *filename* is not specified, then *width* and *height* should be specified.
-    An optional *map* can be provided for other special use cases.
 
-save( string filename [, mapObj parent_map=NULL ] ) : int
+save( string filename [, mapObj_ parent_map=NULL ] ) : int
     Save image to *filename*.  The optional *parent_map* parameter must be
     specified if saving GeoTIFF images.
 

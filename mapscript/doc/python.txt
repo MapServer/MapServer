@@ -71,95 +71,41 @@ all geared towards better integration of PIL in mapscript applications.
 imageObj Methods
 ----------------
 
-imageObj(int width, int height [, string driver [, PyObject file]]) : imageObj_
+imageObj( PyObject arg1, PyObject arg2 [, PyObject arg3 ] ) : imageObj_
     Create a new instance which is either empty or read from a Python
-    file-like object.  If *file* is provided, the size of the
-    file's image override any other parameters passed to the method.  
-    The *driver* must be specified as well as *file* as the method does
-    not auto-detect the file's image format.
+    file-like object that refers to a GD format image.
     
-    If *file* is not specified an imageObj is created with the specified
-    dimensions and of the format specified by *driver* or of a default
-    format obtained by trying "GD/GIF", "GD/PNG", and "GD/JPEG" in that
-    order.
+    The constructor has 2 different modes.  In the blank image mode, arg1
+    and arg2 should be the desired width and height in pixels, and the 
+    optional arg3 should be either an instance of outputFormatObj or
+    a GD driver name as a shortcut to a format.  In the image file mode,
+    arg1 should be a filename or a Python file or file-like object.  If
+    the file-like object does not have a "seek" attribute (such as a
+    urllib resource handle), then a GD driver name *must* be provided as
+    arg2.
+    
+    Here's an example of creating a 320 pixel wide by 240 pixel high JPEG
+    using the constructor's blank image mode::
 
-    Interesting values of *file* to try are instances of *StringIO*
-
-    ::
+        image = mapscript.imageObj(320, 240, 'GD/JPEG')
+        
+    In image file mode, interesting values of *arg1* to try are instances
+    of *StringIO*::
 
         s = StringIO()
         pil_image.save(s)    # Save an image manipulated with PIL
-        ms_image = imageObj(0, 0, 'GD/PNG', s)
+        ms_image = imageObj(s)
 
     Or the file-like object returned from *urlopen*
 
     ::
         
         url = urllib.urlopen('http://mapserver.gis.umn.edu/bugs/ant.jpg')
-        ms_image = imageObj(0, 0, 'GD/JPEG', url)
+        ms_image = imageObj(url, 'GD/JPEG')
 
 
-    
-saveToString() : string
-    Write the image data to a string rather than to a file.  What's the use
-    of this?  Consider the following pointless example :)
-
-    ::
-
-        data = imgobj.saveToString()
-        fh = open('foo.%s' % imgobj.format.extension, 'wb')
-        fh.write(data)
-        fh.close()
-
-    Or the more useful example using PIL
-
-    ::
-
-        data = imgobj.saveToString()
-
-        from StringIO import StringIO
-        from PIL import Image
-
-        pil_image = Image.open(StringIO(data))
-
-        # Now do whatever you want using PIL
-
-    This method will be deprecated as soon as we change the save() method
-    of imageObj to save to Python file-like objects, allowing
-
-    ::
-
-        s = StringIO()
-        imgobj.save(s)
-
-
-------------------------------------------------------------------------------
- lineObj
-------------------------------------------------------------------------------
-
-lineObj Methods
----------------
-
-__iter__( ) : iterator
-    Returns a Python iterator, allowing a new way to iterate over the points
-    of a line:
-
-    ::
-
-        >>> line = shape.getLine(0)    # get first line of a shape
-        >>> for p in line:
-        ...     print (p.x, p.y)       # print point coordinates
-
-
-    This is new Python syntax with potential to replace the traditional
-
-    ::
-
-        >>> line = shape.getLine(0)
-        >>> for i in range(line.numpoints):
-        ...     p = line.getPoint(i)
-        ...     print (p.x, p.y)
-
+write( [ PyObject file ] ) : void
+    Write image data to a Python file-like object.  Default is stdout.
 
 ------------------------------------------------------------------------------
  pointObj
@@ -241,23 +187,4 @@ __str__() : string
         >>> r_dict['minx']
         0.000000
 
-
-------------------------------------------------------------------------------
- shapeObj
-------------------------------------------------------------------------------
-
-shapeObj Methods
-----------------
-
-__contains__( pointObj point ) : boolean
-    Returns True if *point* is inside the rectangle, otherwise returns False.
-
-    ::
-
-        >>> r = mapscript.rectObj(0, 0, 1, 1)
-        >>> p = mapscript.pointObj(2, 0)       # outside
-        >>> p in r
-        False
-        >>> p not in r
-        True
 

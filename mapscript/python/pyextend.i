@@ -131,17 +131,27 @@
      * anyone wants to swig mapscript with the -keyword option, they can
      * omit width and height.  Work done as part of Bugzilla issue 550. */
 
-    imageObj(int width, int height, const char *driver=NULL,
-             PyObject *file=Py_None, mapObj *map=NULL)
+    imageObj(PyObject *arg1=Py_None, PyObject *arg2=Py_None, 
+             PyObject *input_format=Py_None)
     {
         imageObj *image=NULL;
-        outputFormatObj *format;
+        outputFormatObj *format=NULL;
+        int width;
+        int height;
+        const char *driver=NULL;
+        PyObject *pybytes;
+      
+        unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
+        unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
 
-        if (file == Py_None) {
-            if (driver) {
-                format = msCreateDefaultOutputFormat(NULL, driver);
-            }
-            else {
+        // Are arg1 and arg2 ints?
+        if (PyInt_Check(arg1) && PyInt_Check(arg2)) 
+        {
+            /* Create from width, height, format/driver */
+            width = (int) PyInt_AsLong(arg1);
+            height = (int) PyInt_AsLong(arg2);
+            
+            if (input_format == Py_None) {
                 format = msCreateDefaultOutputFormat(NULL, "GD/GIF");
                 if (format == NULL)
                     format = msCreateDefaultOutputFormat(NULL, "GD/PNG");
@@ -150,24 +160,96 @@
                 if (format == NULL)
                     format = msCreateDefaultOutputFormat(NULL, "GD/WBMP");
             }
+            else if (PyString_Check(input_format)) {
+                format = msCreateDefaultOutputFormat(NULL, 
+                                PyString_AsString(input_format));
+            }
+            else {
+                if ((SWIG_ConvertPtr(input_format, (void **) &format,
+                     SWIGTYPE_p_outputFormatObj,
+                     SWIG_POINTER_EXCEPTION | 0 )) == -1) 
+                {
+                    msSetError(MS_IMGERR, "Can't convert format pointer",
+                                          "imageObj()");
+                    return NULL;
+                }
+            }
+        
             if (format == NULL) {
-                msSetError(MS_IMGERR, "Could not create output format %s",
-                           "imageObj()", driver);
+                msSetError(MS_IMGERR, "Could not create output format",
+                           "imageObj()");
                 return NULL;
             }
-            image = msImageCreate(width, height, format, NULL, NULL, map);
+
+            image = msImageCreate(width, height, format, NULL, NULL, NULL);
             return image;
         }
-        // Is file a filename?
-        else if (PyString_Check(file)) {
-            return (imageObj *) msImageLoadGD((char *) PyString_AsString(file));
+        // Is arg1 a filename?
+        else if (PyString_Check(arg1)) 
+        {
+            return (imageObj *) msImageLoadGD((char *) PyString_AsString(arg1));
         }
         // Is a file-like object
-        else if (file && driver) {
-            return (imageObj *) createImageObjFromPyFile(width, height, file, driver);
+        else if (arg1 != Py_None)
+        {
+
+            if (PyObject_HasAttrString(arg1, "seek"))
+            {
+                /* Detect image format */
+                pybytes = PyObject_CallMethod(arg1, "read", "i", 8);
+            
+                if (memcmp(PyString_AsString(pybytes),"GIF8",4)==0) 
+                {
+%#ifdef USE_GD_GIF
+                    driver = "GD/GIF";
+%#else
+                    msSetError(MS_MISCERR, "Unable to load GIF image.",
+                               "msImageLoadGD()");
+                    return(NULL);
+%#endif
+                }
+                else if (memcmp(PyString_AsString(pybytes),PNGsig,8)==0) 
+                {
+%#ifdef USE_GD_PNG
+                    driver = "GD/PNG";
+%#else
+                    msSetError(MS_MISCERR, "Unable to load PNG image.",
+                           "msImageLoadGD()");
+                    return(NULL);
+%#endif
+                }
+                else if (memcmp(PyString_AsString(pybytes),JPEGsig,3)==0) 
+                {
+%#ifdef USE_GD_JPEG
+                    driver = "GD/JPEG";
+%#else
+                    msSetError(MS_MISCERR, "Unable to load JPEG image.", 
+                                "msImageLoadGD()");
+                    return(NULL);
+%#endif
+                }
+
+                PyObject_CallMethod(arg1, "seek", "i", 0);
+                return (imageObj *) createImageObjFromPyFile(arg1, driver);
+            
+            }
+            else // such as a url handle
+            {
+                /* If there is no seek method, we absolutely must
+                   have a driver name */
+                if (!PyString_Check(arg2))
+                {
+                    msSetError(MS_MISCERR, "A driver name absolutely must accompany file objects which do not have a seek() method", "imageObj()");
+                    return NULL;
+                }    
+                return (imageObj *) createImageObjFromPyFile(arg1, 
+                        PyString_AsString(arg2));
+            }
         }
-        else {
-            msSetError(MS_IMGERR, "Failed to create image (%s, %s)", "imageObj()", file, driver);
+        else 
+        {
+            msSetError(MS_IMGERR, "Failed to create image", 
+                       "imageObj()");
             return NULL;
         }
     }

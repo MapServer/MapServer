@@ -96,12 +96,13 @@ Creating a new imageObj
 
 The imageObj class constructor creates new instances without need of a map::
 
-    image = mapscript.imageObj(300, 200, 'GD/JPEG') # 300 wide, 200 high JPEG
+    format = mapscript.outputFormatObj('GD/JPEG')
+    image = mapscript.imageObj(300, 200, format)   # 300 wide, 200 high JPEG
 
 and can even initialize from a file on disk::
 
     # First three args are overriden by attributes of the disk image file
-    disk_image = mapscript.imageObj(-1, -1, '', 'tests/test.png')
+    disk_image = mapscript.imageObj(-1, -1, NULL, 'tests/test.png')
 
 
 Image Output

@@ -80,10 +80,11 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.height == 10
         assert imgobj.width == 10
     
-    def testConstructorWithDriver(self):
+    def testConstructorWithFormat(self):
         """imageObj with an optional driver works"""
         driver = 'GD/PNG'
-        imgobj = mapscript.imageObj(10, 10, driver)
+        format = mapscript.outputFormatObj(driver)
+        imgobj = mapscript.imageObj(10, 10, format)
         assert imgobj.thisown == 1
         assert imgobj.format.driver == driver
         assert imgobj.height == 10
@@ -91,7 +92,7 @@ class ImageObjTestCase(unittest.TestCase):
     
     def testConstructorFilename(self):
         """imageObj with a filename works"""
-        imgobj = mapscript.imageObj(0, 0, None, test_image)
+        imgobj = mapscript.imageObj(test_image)
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
@@ -99,7 +100,7 @@ class ImageObjTestCase(unittest.TestCase):
     
     def testConstructorFilenameDriver(self):
         """imageObj with a filename and a driver works"""
-        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', test_image)
+        imgobj = mapscript.imageObj(test_image)
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
@@ -108,7 +109,7 @@ class ImageObjTestCase(unittest.TestCase):
     def testConstructorStream(self):
         """imageObj with a file stream works"""
         f = open(test_image, 'rb')
-        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', f)
+        imgobj = mapscript.imageObj(f)
         f.close()
         assert imgobj.thisown == 1
         assert imgobj.height == 200
@@ -120,7 +121,7 @@ class ImageObjTestCase(unittest.TestCase):
         data = f.read()
         f.close()
         s = cStringIO.StringIO(data)
-        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', s)
+        imgobj = mapscript.imageObj(s)
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
@@ -128,7 +129,7 @@ class ImageObjTestCase(unittest.TestCase):
     def testConstructorUrlStream(self):
         """imageObj with a URL stream works"""
         url = urllib.urlopen('http://mapserver.gis.umn.edu/bugs/ant.jpg')
-        imgobj = mapscript.imageObj(0, 0, 'GD/JPEG', url)
+        imgobj = mapscript.imageObj(url, 'GD/JPEG')
         assert imgobj.thisown == 1
         assert imgobj.height == 220
         assert imgobj.width == 329
