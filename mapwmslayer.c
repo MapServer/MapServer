@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2001/12/13 02:07:17  dan
+ * Accept any isspace() character as delimiter in wms_srs metadata parsing
+ *
  * Revision 1.16  2001/12/12 00:55:58  dan
  * Took out the old version of msWMSGetImage() that didn't have an event
  * loop as we are relying on the event loop now for timeouts.
@@ -339,7 +342,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         if (pszLyrEPSG == NULL ||
             (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
-            ! (*(pszFound+nLen) == ' ' || *(pszFound+nLen) == '\0'))
+            ! isspace(*(pszFound+nLen)) )
         {
             // Not found in Layer's list of SRS (including projection object)
             free(pszEPSG);
