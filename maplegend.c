@@ -12,6 +12,19 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   int i;
   shapeObj box, zigzag;
   pointObj marker;
+  char szPath[MS_MAXPATHLEN];
+  imageObj *image = NULL;
+
+  // if the class has a keyimage then load it, scale it and we're done
+  if(class->keyimage != NULL) {
+    image = msImageLoadGD(msBuildPath(szPath, map->mappath, class->keyimage));
+    if(!image) return(MS_FAILURE);
+
+    // TO DO: we may want to handle this differently depending on the relative size of the keyimage
+    gdImageCopyResampled(img, image->img.gd, 0, 0, 0, 0,img->sx, img->sy, image->img.gd->sx, image->img.gd->sy);
+      
+    return(MS_SUCCESS);
+  }
 
   // initialize the shapes used to render the legend
   box.line = (lineObj *)malloc(sizeof(lineObj));
