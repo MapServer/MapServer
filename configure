@@ -4886,9 +4886,13 @@ fi
 
 
 
+ALL_ENABLED="$POSTGIS_ENABLED $ALL_ENABLED"
+ALL_INC="$POSTGIS_INC $ALL_INC"
+ALL_LIB="$POSTGIS_LIB $ALL_LIB"
+
 
 echo $ac_n "checking if OracleSpatial support requested""... $ac_c" 1>&6
-echo "configure:4892: checking if OracleSpatial support requested" >&5
+echo "configure:4896: checking if OracleSpatial support requested" >&5
 # Check whether --with-oraclespatial or --without-oraclespatial was given.
 if test "${with_oraclespatial+set}" = set; then
   withval="$with_oraclespatial"
@@ -4928,7 +4932,7 @@ fi
 
 
 echo "checking whether we should include WMS support..." 1>&6
-echo "configure:4932: checking whether we should include WMS support..." >&5
+echo "configure:4936: checking whether we should include WMS support..." >&5
 # Check whether --with-wms or --without-wms was given.
 if test "${with_wms+set}" = set; then
   withval="$with_wms"
@@ -4958,7 +4962,7 @@ ALL_ENABLED="$WMS_ENABLED $ALL_ENABLED"
 
 
 echo "checking whether we should include WMS Client Connections support..." 1>&6
-echo "configure:4962: checking whether we should include WMS Client Connections support..." >&5
+echo "configure:4966: checking whether we should include WMS Client Connections support..." >&5
 # Check whether --with-wms or --without-wms was given.
 if test "${with_wms+set}" = set; then
   withval="$with_wms"
@@ -4979,7 +4983,7 @@ elif test "$with_wmsclient" = "yes" ; then
   # Extract the first word of "libwww-config", so it can be a program name with args.
 set dummy libwww-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:4983: checking for $ac_word" >&5
+echo "configure:4987: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_LIBWWW_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -5032,9 +5036,9 @@ fi
   echo "$ac_t""        OGC WMS Client Connections enabled ($WMS_LYR_ENABLED)." 1>&6
 
   echo "checking for potential conflict between system regex and rxposix..." 1>&6
-echo "configure:5036: checking for potential conflict between system regex and rxposix..." >&5
+echo "configure:5040: checking for potential conflict between system regex and rxposix..." >&5
   echo $ac_n "checking for regexec in -lrx""... $ac_c" 1>&6
-echo "configure:5038: checking for regexec in -lrx" >&5
+echo "configure:5042: checking for regexec in -lrx" >&5
 ac_lib_var=`echo rx'_'regexec | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -5042,7 +5046,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lrx  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 5046 "configure"
+#line 5050 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -5053,7 +5057,7 @@ int main() {
 regexec()
 ; return 0; }
 EOF
-if { (eval echo configure:5057: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:5061: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -5153,7 +5157,7 @@ fi
 
 
 echo "checking whether we should enable debug features..." 1>&6
-echo "configure:5157: checking whether we should enable debug features..." >&5
+echo "configure:5161: checking whether we should enable debug features..." >&5
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
@@ -5222,7 +5226,7 @@ ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
 
 
 echo "checking for PHP/MapScript module options..." 1>&6
-echo "configure:5226: checking for PHP/MapScript module options..." >&5
+echo "configure:5230: checking for PHP/MapScript module options..." >&5
 # Check whether --with-php or --without-php was given.
 if test "${with_php+set}" = set; then
   withval="$with_php"
@@ -5239,7 +5243,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
   fi
 
               echo $ac_n "checking whether 'perl -V' works""... $ac_c" 1>&6
-echo "configure:5243: checking whether 'perl -V' works" >&5
+echo "configure:5247: checking whether 'perl -V' works" >&5
   if  (perl -V > /dev/null 2>&1)  ; then
     echo "$ac_t""yes" 1>&6
     
@@ -5380,7 +5384,7 @@ rm -f perl.out
   fi
 
           echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
-echo "configure:5384: checking for location of config.h or php_config.h" >&5
+echo "configure:5388: checking for location of config.h or php_config.h" >&5
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
@@ -5393,7 +5397,7 @@ echo "configure:5384: checking for location of config.h or php_config.h" >&5
   fi
 
           echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
-echo "configure:5397: checking whether we have PHP3 or PHP4" >&5
+echo "configure:5401: checking whether we have PHP3 or PHP4" >&5
   if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
@@ -5402,7 +5406,7 @@ echo "configure:5397: checking whether we have PHP3 or PHP4" >&5
   echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:5406: checking whether we should use PHP's regex" >&5
+echo "configure:5410: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
 
@@ -5457,7 +5461,7 @@ fi
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:5461: checking for location of Apache headers using apxs" >&5
+echo "configure:5465: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -5484,7 +5488,7 @@ fi
 if test -n "$with_apache" -a "$with_apache" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:5488: checking for location of Apache headers" >&5
+echo "configure:5492: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi
