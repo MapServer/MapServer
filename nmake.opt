@@ -307,6 +307,10 @@ OUTPUT_GIF=-DUSE_GD_GIF -DGD_HAS_GDIMAGEGIFPTR
 
 GD_DIR=c:/projects/gd-2.0.15
 
+#if the GD version you are using is above GD 2.0.22, uncomment the following flag to
+#have a proper support for bitmap fonts (see Bug 969 for more details)
+#GD_HAS_GETBITMAPFONT=-DGD_HAS_GETBITMAPFONT
+
 # REGEX Libary
 # 
 # VC++ does not include the REGEX library... so we must provide our one.
@@ -374,7 +378,7 @@ FT_LIB=$(FT_DIR)/objs/freetype211ST_D.lib
 GD_INC=	-I$(GD_DIR)
 GD_LIB=	$(GD_DIR)/gd.lib  \
 	$(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
-GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT)
+GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT) $(GD_HAS_GETBITMAPFONT)
 
 # Tiff library on input
 !IFDEF TIFF
