@@ -1539,9 +1539,9 @@ Methods
 
 .. _new rectObj:
 
-new rectObj( [ float minx=0.0, float miny=0.0, float maxx=0.0, float maxy=0.0 ] ) : rectObj
+new rectObj( [ float minx=-1.0, float miny=-1.0, float maxx=-1.0, float maxy=-1.0 ] ) : rectObj
     Create new instance.  The four easting and northing arguments
-    are optional.
+    are optional and default to -1.0.
 
 .. _rectObj.draw:
 
