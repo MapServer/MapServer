@@ -95,16 +95,16 @@ int msLayerSetExtent( layerObj *layer,
                     double minx, double miny, double maxx, double maxy) 
 { 
     // Check bounds
-    if (!msRectIsValid(&(layer->extent))) {
-      msSetError(MS_MISCERR, "Given layer extent is invalid.", "msLayerSetExtent()"); 
-      return(NULL);
-      }
+
 
     layer->extent.minx = minx;
     layer->extent.miny = miny;
     layer->extent.maxx = maxx;
     layer->extent.maxy = maxy;
     
+    if (minx == -1.0 && miny == -1.0 && maxx == -1.0 && maxy == -1.0)
+      return(MS_SUCCESS);
+      
     if (!msRectIsValid(&(layer->extent))) {
       msSetError(MS_MISCERR, "Given map extent is invalid.", "msLayerSetExtent()"); 
       return(NULL);
