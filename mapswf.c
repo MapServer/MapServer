@@ -2683,7 +2683,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
                 sprintf(pszURL, "%s%s.%s", map->web.imageurl, msGetBasename(filename), 
                         pszExtension);
               
-                printf("<OBJECT classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0\" WIDTH=%d HEIGHT=%d> <PARAM NAME=movie VALUE=\"%s\"><PARAM NAME=quality VALUE=medium><EMBED src=\"%s\" quality=medium  WIDTH=%d HEIGHT=%d TYPE=\"application/x-shockwave-flash\" PLUGINSPAGE=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\"></EMBED></OBJECT>", map->width, map->height, pszURL, pszURL,  map->width, map->height);
+                msIO_printf("<OBJECT classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0\" WIDTH=%d HEIGHT=%d> <PARAM NAME=movie VALUE=\"%s\"><PARAM NAME=quality VALUE=medium><EMBED src=\"%s\" quality=medium  WIDTH=%d HEIGHT=%d TYPE=\"application/x-shockwave-flash\" PLUGINSPAGE=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\"></EMBED></OBJECT>", map->width, map->height, pszURL, pszURL,  map->width, map->height);
               
                 //unlink( filename );
                 free( filename );
@@ -2877,8 +2877,8 @@ int msSaveImageSWF(imageObj *image, char *filename)
 
             sprintf(pszURL, "%s%s.%s", map->web.imageurl, msGetBasename(filename), 
                     pszExtension);
-              
-            printf("<OBJECT classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0\" WIDTH=%d HEIGHT=%d> <PARAM NAME=movie VALUE=\"%s\"><PARAM NAME=quality VALUE=medium> <EMBED src=\"%s\" quality=medium WIDTH=%d HEIGHT=%d TYPE=\"application/x-shockwave-flash\" PLUGINSPAGE=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\"></EMBED></OBJECT>", map->width, map->height, pszURL, pszURL,  map->width, map->height);
+            
+            msIO_printf("<OBJECT classid=\"clsid:D27CDB6E-AE6D-11cf-96B8-444553540000\" codebase=\"http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0\" WIDTH=%d HEIGHT=%d> <PARAM NAME=movie VALUE=\"%s\"><PARAM NAME=quality VALUE=medium> <EMBED src=\"%s\" quality=medium WIDTH=%d HEIGHT=%d TYPE=\"application/x-shockwave-flash\" PLUGINSPAGE=\"http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash\"></EMBED></OBJECT>", map->width, map->height, pszURL, pszURL,  map->width, map->height);
               
             //unlink( filename );
             free( filename );
