@@ -13,8 +13,8 @@ the CVS logs is updated daily at the following URL:
   http://maptools.org/dl/mapserver_Changelog.txt
 
 
-Version 4.4.0-beta2 ()
-----------------------
+Version 4.4.0-beta2 (2004-11-03)
+--------------------------------
 
 - free mapServObj properly in mapserv.c in OWS dispatch case to fix minor
   memory leaks.

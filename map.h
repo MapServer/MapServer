@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.365  2004/11/03 21:04:44  dan
+ * Update for 4.4.0-beta2
+ *
  * Revision 1.364  2004/10/28 18:16:16  dan
  * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
  * when requested layer was out of scale (bug 1006)
@@ -131,7 +134,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "4.4.0-beta1"
+#define MS_VERSION "4.4.0-beta2"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
