@@ -14,6 +14,21 @@ extern int msyystate;
 extern char *msyystring;
 
 /*
+** Symbol to string static arrays needed for writing map files.
+** Must be kept in sync with enumerations and defines found in map.h.
+*/
+static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
+static char *msFeatureTypes[6]={"POINT", "LINE", "POLYGON", "POLYLINE", "RASTER", "ANNOTATION"};
+static char *msFontTypes[2]={"TRUETYPE", "BITMAP"};
+static char *msLabelPositions[10]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO"};
+static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
+static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
+static char *msStatus[5]={"OFF", "ON", "DEFAULT", "QUERYONLY", "EMBED"};
+static char *msOnOff[2]={"OFF", "ON"};
+static char *msTrueFalse[2]={"FALSE", "TRUE"};
+static char *msYesNo[2]={"NO", "YES"};
+
+/*
 ** Palette maniputation routines. Temporary until a good 24-bit
 ** graphics package for PNG shows up... Function returns a palette
 ** index value from 0 to MS_MAXCOLORS.

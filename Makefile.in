@@ -62,10 +62,9 @@ EPPL_OBJ= @EPPL_OBJ@
 # ESRI SDE Support. You MUST have the SDE Client libraries and include files
 # on your system someplace. The actual SDE server you wish to connect to can
 # be elsewhere.
-#SDE=-DUSE_SDE
-#SDE_HOME=/opt/arcsde801
-#SDE_LIB=-L$(SDE_HOME)/lib -lsde30 -lpe -lsg -lpthread -lsocket
-#SDE_INC=-I$(SDE_HOME)/include
+SDE=	  @SDE_ENABLED@
+SDE_LIB=  @SDE_LIB@
+SDE_INC=  @SDE_INC@
 
 #
 # UofMN GIS/Image Processing Extension (very experimental)
@@ -75,6 +74,7 @@ EPPL_OBJ= @EPPL_OBJ@
 #EGIS_LIB=-L./egis/errLog -lerrLog -L./egis/imgSrc -limgGEN -L./egis -legis
 #MAKE_EGIS=egis
 #MAKE_EGIS_CLEAN=egis_clean                                                     
+
 #
 # Pick a compiler, etc. Flex and bison are only required if you need to modify the mapserver lexer (maplexer.l) or expression parser (mapparser.y).
 #
@@ -88,11 +88,11 @@ XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
 CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) \
-        $(TIFF) $(JPEG) $(GD) $(EGIS) $(PROJ_INC) $(GD_INC) $(TTF_INC) 	\
-	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC)
+        $(TIFF) $(JPEG) $(GD) $(SDE) $(PROJ_INC) $(GD_INC) $(TTF_INC) 	\
+	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC)
 
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TTF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
-          $(JPEG_LIB) $(EGIS_LIB) $(XTRALIBS)
+          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(XTRALIBS)
 
 RM= /bin/rm -f
 

@@ -148,6 +148,7 @@
 
   labelCacheMemberObj *nextLabel() {
     static int i=0;
+
     if(i<self->labelcache.numlabels)
       return &(self->labelcache.labels[i++]);
     else
@@ -585,16 +586,17 @@
 
     shapefile = (shapefileObj *)malloc(sizeof(shapefileObj));
     if(!shapefile)
-      return(NULL);
+      return NULL;
 
     if(type == -1)
       status = msOpenSHPFile(shapefile, NULL, NULL, filename);
     else
       status = msCreateSHPFile(shapefile, filename, type);
+
     if(status == -1) {
       msCloseSHPFile(shapefile);
       free(shapefile);
-      return(NULL);
+      return NULL;
     }
  
     return(shapefile);

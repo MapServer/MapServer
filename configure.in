@@ -430,6 +430,61 @@ ALL_INC="$PROJ_INC $ALL_INC"
 ALL_LIB="$PROJ_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
+dnl Find ESRI SDE ONLY IF REQUESTED.
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_proj_pj_init
+
+AC_CHECKING(whether we should include ESRI SDE support...)
+AC_ARG_WITH(sde,
+[  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).],,)
+
+if test "$with_sde" = "yes" ; then
+
+  AC_CHECK_LIB(sde,SE_connection_create,SDE_ENABLED=-DUSE_SDE,,,)
+
+  if test -n "$SDE_ENABLED" ; then
+      SDE_LIB="-lsde80 -lpe -lsg -lpthread -lsocket"
+      AC_MSG_RESULT([        using ESRI SDE from system libs.])
+  else
+      AC_MSG_WARN([        ESRI SDE not found in system libs... use --with-sde=DIR.])
+  fi
+
+elif test -n "$with_sde" -a "$with_proj" != "no" ; then
+
+  AC_EXPAND_PATH($with_sde, SDE_DIR)
+
+  test -f $SDE_DIR/arcsde/coverages/include/sdetype.h && SDE_INCDIR="$SDE_DIR/arcsde/coverages/include"
+  test -f $SDE_DIR/include/sdetype.h && SDE_INCDIR="$SDE_DIR/include"
+  test -f $SDE_DIR/sdetype.h && SDE_INCDIR="$SDE_DIR"
+  test -f $SDE_DIR/lib/libsde80.a && SDE_LIBDIR="$SDE_DIR/lib"
+  test -f $SDE_DIR/libsde80.a && SDE_LIBDIR="$SDE_DIR"
+
+  if test -n "$SDE_INCDIR" -a -n "$SDE_LIBDIR" ; then 
+      SDE_INC=-I$SDE_INCDIR
+      SDE_LIB="-L$SDE_LIBDIR -lsde80 -lpe80 -lsg80 -lpthread -lsocket"
+      AC_ADD_RUNPATH("$SDE_LIBDIR")
+  else
+      AC_MSG_ERROR("Could not find sdetype.h or libsde30.a in $SDE_DIR.")
+  fi
+
+  SDE_ENABLED=-DUSE_SDE
+  AC_MSG_RESULT([        using ESRI SDE from $SDE_DIR.])
+
+else
+
+  AC_MSG_RESULT([        ESRI SDE support not requested.])
+fi
+
+AC_SUBST(SDE_ENABLED,$SDE_ENABLED)
+AC_SUBST(SDE_INC,    $SDE_INC)
+AC_SUBST(SDE_LIB,    $SDE_LIB)
+
+ALL_ENABLED="$SDE_ENABLED $ALL_ENABLED"
+ALL_INC="$SDE_INC $ALL_INC"
+ALL_LIB="$SDE_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that
 dnl link with it.
 dnl ---------------------------------------------------------------------
