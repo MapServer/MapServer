@@ -978,60 +978,81 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     free(self);
   }
 
-  void saveImage(char *filename, int type, int transparent, int interlace, int quality) {
+  void saveImage(char *filename) {
 
     // save image parameters ignored ... should be in outputFormatObj
     // used to create the imageObj.
     msSaveImage(NULL, self, filename );
   }
 
-  // Method getImageString renders the imageObj into image data and returns
+  // Method getImageGDString renders the imageObj into image data and returns
   // it as a string.  Inspired by and used like the saveImage() method.  Python
   // only at this time.  Questions and comments to Sean Gillies <sgillies@i3.com>
 
 #ifdef SWIGPYTHON
-  PyObject *getImageString(int type, int transparent, int interlace, int quality) {
+
+  PyObject *getImageGDString() {
     unsigned char *imgbytes;
     int size;
+
     PyObject *imgstring; 
 
-    if (interlace) gdImageInterlace(self->bytes, 1);
-    if (transparent) gdImageColorTransparent(self->bytes, 0); 
+#if GD2_VERS > 1
+    if(self->format->imagemode == MS_IMAGEMODE_RGBA) {
+      gdImageSaveAlpha(self->img.gd, 1);
+    } else if (self->format->imagemode == MS_IMAGEMODE_RGB) {
+      gdImageSaveAlpha(self->img.gd, 0);
+    }
+#endif 
 
-    switch(type) {
-    case(MS_GIF):
-      msSetError(MS_MISCERR, "GIF output is not available.", "saveImageString()");
+    if(strcasecmp("ON", msGetOutputFormatOption(self->format, "INTERLACE", "ON" )) == 0) {
+      gdImageInterlace(self->img.gd, 1);
+    }
+
+    if(self->format->transparent) {
+      gdImageColorTransparent(self->img.gd, 0);
+    }
+
+    if(strcasecmp(self->format->driver, "gd/gif") == 0) {
+
+#ifdef USE_GD_GIF
+      imgbytes = gdImageGifPtr(self->img.gd, &size);
+#else
+      msSetError(MS_MISCERR, "GIF output is not available.", "getImageGDString()");
       return(MS_FAILURE);
-      break;
-    case(MS_PNG):
+#endif
+
+    } else if (strcasecmp(self->format->driver, "gd/png") == 0) {
 
 #ifdef USE_GD_PNG
-      imgbytes = gdImagePngPtr(self->bytes, &size);
+      imgbytes = gdImagePngPtr(self->img.gd, &size);
 #else
-      msSetError(MS_MISCERR, "PNG output is not available.", "saveImageString()");
+      msSetError(MS_MISCERR, "PNG output is not available.", "getImageGDString()");
       return(MS_FAILURE);
 #endif
-      break;
-    case(MS_JPEG):
+
+    } else if (strcasecmp(self->format->driver, "gd/jpeg") == 0) {
+
 #ifdef USE_GD_JPEG
-      imgbytes = gdImageJpegPtr(self->bytes, &size, quality);
+       imgbytes = gdImageJpegPtr(self->img.gd, &size, atoi(msGetOutputFormatOption(self->format, "QUALITY", "75" )));
 #else
-      msSetError(MS_MISCERR, "JPEG output is not available.", "saveImageString()");
-      return(MS_FAILURE);
+       msSetError(MS_MISCERR, "JPEG output is not available.", "getImageGDString()");
+       return(MS_FAILURE);
 #endif
-      break;
-    case(MS_WBMP):
+
+    } else if (strcasecmp(self->format->driver, "gd/wbmp") == 0) {
+
 #ifdef USE_GD_WBMP
-      imgbytes = gdImageWBMPPtr(image->bytes, &size, 1);
+       imgbytes = gdImageWBMPPtr(self->img.gd, &size, 1);
 #else
-      msSetError(MS_MISCERR, "WBMP output is not available.", "saveImageString()");
-      return(MS_FAILURE);
+       msSetError(MS_MISCERR, "WBMP output is not available.", "getImageGDString()");
+       return(MS_FAILURE);
 #endif
-      break;
-    default:
-      msSetError(MS_MISCERR, "Unknown output image type.", "saveImageString()");
-      return(MS_FAILURE);
-    }
+        
+    } else {
+       msSetError(MS_MISCERR, "Unknown output image type driver: %s.", "getImageGDString()", self->format->driver );
+       return(MS_FAILURE);
+    } 
 
     // Create a Python string from the (char *) imgbytes.
 
@@ -1042,7 +1063,6 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     gdFree(imgbytes); 
 
     return imgstring;
-
   }
 #endif
 
