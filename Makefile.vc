@@ -62,7 +62,7 @@ $(MS_LIB):	$(MS_OBJS)
 	if exist $(GDAL_DIR)\gdal.pdb copy $(GDAL_DIR)\gdal.pdb .
 	lib /out:$(MS_LIB) $(MS_OBJS)
         link /dll /debug \
-		$(MS_OBJS) $(EXTERNAL_LIBS)\
+		$(MS_OBJS) $(EXTERNAL_LIBS) /def:mapserver.def \
 		 /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
 
 $(MS_EXE):	$(MS_LIB)
@@ -103,4 +103,13 @@ clean:
 #	cd gd-1.2
 #	nmake -f makefile.nt clean
 #	cd ..
+
+
+mapscriptvars: makefile.vc nmake.opt
+	touch mapscriptvars
+	echo $(MS_BASE) > mapscriptvars
+	echo $(MS_DEFS) >> mapscriptvars
+	echo $(INCLUDES) >> mapscriptvars
+	echo $(LIBS_DLL) >> mapscriptvars
+	echo $(LIBS) >> mapscriptvars
 
