@@ -707,7 +707,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-      if(label.position == MS_CC)
+      if(label.position == MS_CC) // don't need the marker_offset
         p = get_metrics(&(cachePtr->point), label.position, r, label.offsetx, label.offsety, label.angle, label.buffer, cachePtr->poly);
       else
         p = get_metrics(&(cachePtr->point), label.position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);

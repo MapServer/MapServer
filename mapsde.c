@@ -390,7 +390,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   */
   for(i=0; i<layer->numclasses; i++) {
 
-    if(layer->class[c].sizescaled == 0) return;
+    if(layer->class[i].sizescaled == 0) return(-1);
 
     /*
     ** should be able to move this outside the loop, but the
@@ -488,8 +488,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  for(j=0; j<transformedshape.line[0].numpoints; j++) {
 	    pnt = &(transformedshape.line[0].point[j]); /* point to the correct point */
 
-	    msDrawMarkerSymbol(&map->symbolset, img, &transformedshape, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
-	    if(layer->class[i].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &transformedshape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
+	    msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
+	    if(layer->class[i].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
 
 	    if(annotate) {	      
 	      if(numcolumns == 2) {
@@ -598,6 +598,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
 	}
 	freeFeatureList(shpcache);
+	shpcache = NULL;
       }
 
       break;
@@ -667,6 +668,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
 	}
 	freeFeatureList(shpcache);
+	shpcache = NULL;
       }
 
       break;
