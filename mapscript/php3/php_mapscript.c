@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.126  2002/12/13 19:33:25  julien
+ * zoomScale receive a double instead of an integer
+ *
  * Revision 1.125  2002/11/26 21:19:02  dan
  * Made load/saveMapContext() produce E_WARNING instead of E_ERROR if
  * context fails to load or save.  (i.e. so we can trap errors)
@@ -2399,7 +2402,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     if (nArgs == 6)
         bMaxExtSet =1;
 
-    convert_to_long(pScale);
+    convert_to_double(pScale);
     convert_to_long(pWidth);
     convert_to_long(pHeight);
          
@@ -2422,7 +2425,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
 /*      check the validity of the parameters.                           */
 /* -------------------------------------------------------------------- */
-    if (pScale->value.lval <= 0.0 || 
+    if (pScale->value.dval <= 0.0 || 
         pWidth->value.lval <= 0 ||
         pHeight->value.lval <= 0 ||
         poGeorefExt == NULL ||
@@ -2485,7 +2488,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
       nTmp = self->height;
 
     dfDeltaExt = 
-        GetDeltaExtentsUsingScale(pScale->value.lval, self->units, nTmp,
+        GetDeltaExtentsUsingScale(pScale->value.dval, self->units, nTmp,
                                   self->resolution);
                                   
     if (dfDeltaExt > 0.0)

@@ -240,10 +240,10 @@ and the MapServer Map File documentation at:
         - Height : Height in pixel of the current image. 
         - Georef extent (rectObj) : current georef extents.
 
-   void zoomscale(int nScale, pointObj oPixelPos, int nImageWidth, 
+   void zoomscale(double nScale, pointObj oPixelPos, int nImageWidth, 
                   int nImageHeight, rectObj oGeorefExt)
 
-	Zoom in or out to a given XY postion so that the map is displayed
+	Zoom in or out to a given XY position so that the map is displayed
         at specified scale.
 
 	Parmeters are :                                                 
