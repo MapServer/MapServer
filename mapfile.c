@@ -3928,7 +3928,6 @@ char **msTokenizeMap(char *filename, int *numtokens)
 /*
 ** Functions for persistent database connections. Code by Jan Hartman (jhart@frw.uva.nl).
 */
-
 layerObj *msCheckConnection(layerObj * layer) {
   int i;
   layerObj *l;

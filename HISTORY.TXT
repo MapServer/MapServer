@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 3.7-dev (CVS)
 ---------------------
 
+- Changed default presentation of feature attributes to escape a few problematic
+  characters for HTML display (eg. > becomes &gt;). Added [itemname_raw] substitution
+  to allow access to unaltered data.
+
+- Added initial version of Jan Hartman's connection pooling code.
+
 - Replaced libwww with libcurl for WMS/WFS client HTTP requests.
   (libcurl 7.10 required, see http://curl.haxx.se/libcurl/c/)
 

@@ -1946,7 +1946,6 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     }
   }
 
-
   sprintf(repstr, "%f", msObj->MapPnt.x);
   outstr = gsub(outstr, "[mapx]", repstr);
   sprintf(repstr, "%f", msObj->MapPnt.y);
@@ -2090,15 +2089,27 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     outstr = gsub(outstr, "[tileidx]", repstr);  
 
     for(i=0;i<msObj->ResultLayer->numitems;i++) {	 
+
+      // by default let's encode attributes for HTML presentation
       sprintf(substr, "[%s]", msObj->ResultLayer->items[i]);
-      if(strstr(outstr, substr) != NULL)
-	outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
+      if(strstr(outstr, substr) != NULL) {
+	encodedstr = msEncodeHTMLEntities(msObj->ResultShape.values[i]);
+	outstr = gsub(outstr, substr, encodedstr);
+        free(encodedstr);
+      }
+
+      // of course you might want to embed that data in URLs
       sprintf(substr, "[%s_esc]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeUrl(msObj->ResultShape.values[i]);
         outstr = gsub(outstr, substr, encodedstr);
         free(encodedstr);
       }
+
+      // or you might want to access the attributes unaltered
+      sprintf(substr, "[%s_raw]", msObj->ResultLayer->items[i]);
+      if(strstr(outstr, substr) != NULL)
+	outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
     }
     
     // FIX: need to re-incorporate JOINS at some point
