@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2001/04/07 17:32:38  frank
+ * Fixed up quirk in sizing of srcImg.
+ * Added true inverse geotransform support, and support for rotated source.
+ * May still be problems with cellsize selection for very rotated source
+ * images.
+ *
  * Revision 1.6  2001/04/06 01:17:31  frank
  * use proj_api.h if available (PROJ.4.4.3)
  *
@@ -126,11 +132,49 @@ typedef struct
 {
     projPJ psSrcProj;
     int bSrcIsGeographic;
-    double adfSrcGeoTransform[6];
+    double adfInvSrcGeoTransform[6];
+
     projPJ psDstProj;
     int bDstIsGeographic;
     double adfDstGeoTransform[6];
 } msProjTransformInfo;
+
+/************************************************************************/
+/*                          InvGeotransform()                           */
+/*                                                                      */
+/*      Invert a standard 3x2 "GeoTransform" style matrix with an       */
+/*      implicit [1 0 0] final row.                                     */
+/************************************************************************/
+
+static int InvGeotransform( double *gt_in, double *gt_out )
+
+{
+    double	det, inv_det;
+
+    /* we assume a 3rd row that is [1 0 0] */
+
+    /* Compute determinate */
+
+    det = gt_in[1] * gt_in[5] - gt_in[2] * gt_in[4];
+
+    if( fabs(det) < 0.000000000000001 )
+        return 0;
+
+    inv_det = 1.0 / det;
+
+    /* compute adjoint, and devide by determinate */
+
+    gt_out[1] =  gt_in[5] * inv_det;
+    gt_out[4] = -gt_in[4] * inv_det;
+
+    gt_out[2] = -gt_in[2] * inv_det;
+    gt_out[5] =  gt_in[1] * inv_det;
+
+    gt_out[0] = ( gt_in[2] * gt_in[3] - gt_in[0] * gt_in[5]) * inv_det;
+    gt_out[3] = (-gt_in[1] * gt_in[3] + gt_in[0] * gt_in[4]) * inv_det;
+
+    return 1;
+}
 
 /************************************************************************/
 /*                       msInitProjTransformer()                        */
@@ -146,15 +190,27 @@ void *msInitProjTransformer( projectionObj *psSrc,
 
     psPTInfo = (msProjTransformInfo *) malloc(sizeof(msProjTransformInfo));
 
+/* -------------------------------------------------------------------- */
+/*      Record source image information.  We invert the source          */
+/*      transformation for more convenient inverse application in       */
+/*      the transformer.                                                */
+/* -------------------------------------------------------------------- */
     psPTInfo->psSrcProj = psSrc->proj;
     psPTInfo->bSrcIsGeographic = pj_is_latlong(psSrc->proj);
-    memcpy( psPTInfo->adfSrcGeoTransform, padfSrcGeoTransform, 
-            sizeof(double) * 6 );
+    
+    if( !InvGeotransform(padfSrcGeoTransform, 
+                         psPTInfo->adfInvSrcGeoTransform) )
+        return NULL;
 
+/* -------------------------------------------------------------------- */
+/*      Record destination image information.                           */
+/* -------------------------------------------------------------------- */
     psPTInfo->psDstProj = psDst->proj;
     psPTInfo->bDstIsGeographic = pj_is_latlong(psDst->proj);
     memcpy( psPTInfo->adfDstGeoTransform, padfDstGeoTransform, 
             sizeof(double) * 6 );
+
+
 
     return psPTInfo;
 }
@@ -242,10 +298,12 @@ int msProjTransformer( void *pCBData, int nPoints,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nPoints; i++ )
     {
-        x_out = (x[i] - psPTInfo->adfSrcGeoTransform[0])
-            / psPTInfo->adfSrcGeoTransform[1];
-        y[i] = (y[i] - psPTInfo->adfSrcGeoTransform[3])
-            / psPTInfo->adfSrcGeoTransform[5];
+        x_out = psPTInfo->adfInvSrcGeoTransform[0] 
+            + psPTInfo->adfInvSrcGeoTransform[1] * x[i]
+            + psPTInfo->adfInvSrcGeoTransform[2] * y[i];
+        y[i] = psPTInfo->adfInvSrcGeoTransform[3] 
+            + psPTInfo->adfInvSrcGeoTransform[4] * x[i]
+            + psPTInfo->adfInvSrcGeoTransform[5] * y[i];
         x[i] = x_out;
     }
 
@@ -275,6 +333,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     double      dfRatio;
     double	x[EDGE_STEPS*4+4], y[EDGE_STEPS*4+4], z[EDGE_STEPS*4+4];
     double	adfSrcGeoTransform[6], adfDstGeoTransform[6];
+    double      adfInvSrcGeoTransform[6];
     rectObj	sSrcExtent;
     mapObj	sDummyMap;
     gdImagePtr  srcImg;
@@ -304,6 +363,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     GDALGetGeoTransform( hDS, adfSrcGeoTransform );
     nSrcXSize = GDALGetRasterXSize( hDS );
     nSrcYSize = GDALGetRasterYSize( hDS );
+
+    InvGeotransform( adfSrcGeoTransform, adfInvSrcGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      We need to find the extents in the source layer projection      */
@@ -376,8 +437,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     {
         double		x_out, y_out; 
 
-        x_out = (x[i] - adfSrcGeoTransform[0]) / adfSrcGeoTransform[1];
-        y_out = (y[i] - adfSrcGeoTransform[3]) / adfSrcGeoTransform[5];
+        x_out =      adfInvSrcGeoTransform[0]
+            +   x[i]*adfInvSrcGeoTransform[1]
+            +   y[i]*adfInvSrcGeoTransform[2];
+        y_out =      adfInvSrcGeoTransform[3]
+            +   x[i]*adfInvSrcGeoTransform[4]
+            +   y[i]*adfInvSrcGeoTransform[5];
 
         if( i == 0 )
         {
@@ -440,10 +505,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 /*      Setup a dummy map object we can use to read from the source     */
 /*      raster, with the newly established extents, and resolution.     */
 /* -------------------------------------------------------------------- */
-    srcImg = gdImageCreate( (int) ((sSrcExtent.maxx - 
-                                    sSrcExtent.minx)/sDummyMap.cellsize+0.01), 
-                            (int) ((sSrcExtent.maxy - 
-                                    sSrcExtent.miny)/sDummyMap.cellsize+0.01));
+    srcImg = gdImageCreate( 
+        (int) ((sDummyMap.extent.maxx - 
+                sDummyMap.extent.minx)/sDummyMap.cellsize+0.01), 
+        (int) ((sDummyMap.extent.maxy - 
+                sDummyMap.extent.miny)/sDummyMap.cellsize+0.01));
     gdImagePaletteCopy( srcImg, img );
 
 /* -------------------------------------------------------------------- */
@@ -498,7 +564,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
         fclose( fp );
     }
 #endif
-
     gdImageDestroy( srcImg );
 
     msFreeProjTransformer( pTCBData );
