@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.193  2004/03/19 17:39:04  sean
+ * Renamed all occurrances of layerObj member num_processing to numprocessing.
+ *
  * Revision 1.192  2004/03/08 17:10:00  dan
  * Added optional angle parameter to pasteImage()
  *
@@ -6273,7 +6276,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
     add_property_long(return_value,   "transparency",player->transparency);
     PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
-    add_property_long(return_value,   "num_processing",player->num_processing);
+    add_property_long(return_value,   "num_processing",player->numprocessing);
     
     MAKE_STD_ZVAL(new_obj_ptr);
     _phpms_build_color_object(&(player->offsite),list, new_obj_ptr);
@@ -7626,15 +7629,15 @@ DLEXPORT void php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS)
     if (!layer)
       RETURN_FALSE;
 
-    layer->num_processing++;
-    if(layer->num_processing == 1)
+    layer->numprocessing++;
+    if(layer->numprocessing == 1)
       layer->processing = (char **) malloc(2*sizeof(char *));
     else
-      layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->num_processing+1));
-    layer->processing[layer->num_processing-1] = strdup(pString->value.str.val);
-    layer->processing[layer->num_processing] = NULL;
+      layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->numprocessing+1));
+    layer->processing[layer->numprocessing-1] = strdup(pString->value.str.val);
+    layer->processing[layer->numprocessing] = NULL;
     
-    _phpms_set_property_long(pThis, "num_processing", layer->num_processing, E_ERROR);
+    _phpms_set_property_long(pThis, "num_processing", layer->numprocessing, E_ERROR);
 
     RETURN_TRUE;
 }    
@@ -7669,11 +7672,11 @@ DLEXPORT void php3_ms_lyr_getProcessing(INTERNAL_FUNCTION_PARAMETERS)
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
                                            list TSRMLS_CC);
    
-    if (self == NULL || self->num_processing <= 0)
+    if (self == NULL || self->numprocessing <= 0)
       RETURN_FALSE;
 
    
-    for (i=0; i<self->num_processing; i++)
+    for (i=0; i<self->numprocessing; i++)
     {
           add_next_index_string(return_value, self->processing[i], 1);
     }
@@ -7707,15 +7710,15 @@ DLEXPORT void php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS)
     if (!layer)
       RETURN_FALSE;
     
-    if (layer->num_processing > 0)
+    if (layer->numprocessing > 0)
     {
-        for(i=0; i<layer->num_processing; i++)
+        for(i=0; i<layer->numprocessing; i++)
           free(layer->processing[i]);
 
-        layer->num_processing = 0;
+        layer->numprocessing = 0;
         free(layer->processing);
 
-        _phpms_set_property_long(pThis, "num_processing", layer->num_processing, E_ERROR);
+        _phpms_set_property_long(pThis, "num_processing", layer->numprocessing, E_ERROR);
 
     }
 }        
@@ -13160,4 +13163,3 @@ DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS)
 
 
 }
-/* }}} */
