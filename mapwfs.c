@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.57  2004/11/25 05:32:02  dan
+ * Fixed problem with wfs_onlineresource used unencoded when
+ * wfs_service_onlineresource was not defined (bug 1082)
+ *
  * Revision 1.56  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -527,7 +531,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                            "FO", "service_onlineresource", OWS_NOERR,
                            "  <OnlineResource>%s</OnlineResource>\n", 
-                           script_url);
+                           script_url_encoded);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "fees", 
                            OWS_NOERR, "  <Fees>%s</Fees>\n", NULL);
