@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- modified raster queries to properly set the classindex in the resultcache.
+
 - modified msDrawQueryCache() to be very careful to not try and lookup 
   information on out-of-range classindex values.  This seems to occur when
   default shapes come back witha classindex of 0 even if there are no classes.

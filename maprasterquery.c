@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/11/03 16:40:24  frank
+ * modified raster queries to properly set the classindex in the resultcache.
+ *
  * Revision 1.13  2004/11/02 02:08:30  frank
  * Changed to use "value_list" instead of "values" for a list of all
  * pixel values.  [values] has a special substitution rule in
@@ -255,6 +258,7 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
 {
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
     int red = 0, green = 0, blue = 0, nodata = FALSE;
+    int p_class = -1;
 
     if( rlinfo->query_results == rlinfo->query_result_hard_max )
         return;
@@ -348,7 +352,7 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
 /* -------------------------------------------------------------------- */
     if( rlinfo->qc_class != NULL )
     {
-        int p_class = msGetClass_Float(layer, values[0] );
+        p_class = msGetClass_Float(layer, values[0] );
 
         if( p_class == -1 )
             nodata = TRUE;
@@ -427,7 +431,7 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
 /* -------------------------------------------------------------------- */
     if( ! nodata )
     {
-        addResult( layer->resultcache, 0, rlinfo->query_results, 0 );
+        addResult( layer->resultcache, p_class, rlinfo->query_results, 0 );
         rlinfo->query_results++;
     }
 }
