@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.49  2004/10/25 18:35:07  assefa
+ * Use wfs_maxfeatures metadata (Bug 798).
+ *
  * Revision 1.48  2004/10/25 17:30:38  julien
  * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
  *
@@ -819,6 +822,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     char *user_namespace_prefix = NULL;
     char *user_namespace_uri = NULL;
     char *encoded, *encoded_typename, *encoded_schema;
+    char *tmpmaxfeatures = NULL;
 
     // Default filter is map extents
     bbox = map->extent;
@@ -977,9 +981,14 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     //{
     //        
     //}
+    tmpmaxfeatures = msLookupHashTable(&(map->web.metadata), "wfs_maxfeatures");
+    if (tmpmaxfeatures)
+      maxfeatures = atoi(tmpmaxfeatures);
     if (paramsObj->nMaxFeatures > 0) 
     {
-        maxfeatures = paramsObj->nMaxFeatures;
+        if (maxfeatures < 0 || (maxfeatures > 0 && 
+                                paramsObj->nMaxFeatures < maxfeatures))
+            maxfeatures = paramsObj->nMaxFeatures;
     }
     //if (strcasecmp(names[i], "FEATUREID") == 0)
     //{
@@ -1103,6 +1112,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                 return msWFSException(map, paramsObj->pszVersion);
             }
             FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE);
+            msSaveMap(map,"c:/msapps/wfs_filter/htdocs/ttt.map");
             
         }
         if (paszFilter)
