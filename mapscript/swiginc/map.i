@@ -32,7 +32,7 @@
 %extend mapObj 
 {
 
-    mapObj(const char *filename="") 
+    mapObj(char *filename="") 
     {
         if (filename && strlen(filename))
             return msLoadMap(filename, NULL);
@@ -461,7 +461,10 @@
     }
 
     // wrapper for msOWSDispatch
-    int loadOWSParameters(const char *wmtver, cgiRequestObj *request) {
+    int loadOWSParameters(cgiRequestObj *request, char *wmtver_string="1.1.1") 
+    {
+        int wmtver;
+        wmtver = msOWSParseVersionString(wmtver_string);
         return msWMSLoadGetMapParams(self, wmtver, request->ParamNames,
                                      request->ParamValues, request->NumParams);
     }

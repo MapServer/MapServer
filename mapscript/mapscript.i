@@ -200,6 +200,7 @@ memory.") const char * {
 %include "../../mapshape.h"
 %include "../../mapproject.h"
 %include "../../map.h"
+%include "../../mapows.h"
 
 // try wrapping mapsymbol.h
 %include "../../mapsymbol.h"

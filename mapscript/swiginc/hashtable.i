@@ -35,7 +35,7 @@
     }
 
     // set a hash item given key and value
-    int set(const char *key, const char *value) {
+    int set(char *key, char *value) {
         if (msInsertHashTable(self, key, value) == NULL) {
 	        return MS_FAILURE;
         }
@@ -43,7 +43,7 @@
     }
 
     // get value from item by its key
-    char *get(const char *key, const char *default_value=NULL) {
+    char *get(char *key, char *default_value=NULL) {
         char *value = NULL;
         if (!key) {
             msSetError(MS_HASHERR, "NULL key", "get");
@@ -57,21 +57,19 @@
     }
 
     // Remove one item from hash table
-    int *remove(const char *key) {
+    int remove(char *key) {
         return msRemoveHashTable(self, key);
     }
 
     // Clear all items in hash table (to NULL)
-    void *clear(void) {
+    void clear(void) {
         msFreeHashItems(self);
         initHashTable(self);
     }
 
     // Return the next key or first key if prevkey == NULL
-    char *nextKey(const char *prevkey=NULL) {
-        char *key;
-        key = msNextKeyFromHashTable(self, prevkey);
-        return key;
+    const char *nextKey(char *prevkey=NULL) {
+        return msNextKeyFromHashTable(self, (const char *) prevkey);
     }
     
 }

@@ -86,7 +86,7 @@ class OWSRequestTestCase(MapTestCase):
         request.setParameter("WIDTH", "60")
         for i in range(self.map.numlayers):
             self.map.getLayer(i).status = mapscript.MS_ON
-        status = self.map.loadOWSParameters("1.1.0", request)
+        status = self.map.loadOWSParameters(request)
         assert status == mapscript.MS_SUCCESS, status
         self.assertEqual(self.map.height, 60)
         self.assertEqual(self.map.width, 60)
@@ -98,7 +98,6 @@ class OWSRequestTestCase(MapTestCase):
         self.assertAlmostEqual(self.map.extent.maxy, 51.795)
         img = self.map.draw()
         img.save("test_load_ows_request.png")
-
 
 # ===========================================================================
 # Run the tests outside of the main suite

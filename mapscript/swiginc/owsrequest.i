@@ -40,7 +40,7 @@
         free(self);
     }
 
-    void setParameter(const char *name, const char *value) 
+    void setParameter(char *name, char *value) 
     {
         int i;
         
