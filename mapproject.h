@@ -3,12 +3,12 @@
 
 #include "mapprimitive.h"
 
-#ifdef USE_PROJ
-#include <projects.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef USE_PROJ
+#include <projects.h>
 #endif
 
 typedef struct {

@@ -511,7 +511,8 @@ static int loadProjection(projectionObj *p)
        return(-1);
     case(END):
       p->numargs = i;
-      if(strcasecmp(p->projargs[0], "GEOGRAPHIC") == 0) {
+      if(strcasecmp(p->projargs[0], "GEOGRAPHIC") == 0 ||
+         strcasecmp(p->projargs[0], "AUTO") == 0) {
 	p->proj = NULL;
       } else {
 	if( !(p->proj = pj_init(p->numargs, p->projargs)) ) {
@@ -522,6 +523,7 @@ static int loadProjection(projectionObj *p)
       return(0);
       break;    
     case(MS_STRING):
+    case(MS_AUTO):
       p->projargs[i] = strdup(msyytext);
       i++;
       break;
@@ -542,7 +544,8 @@ int loadProjectionString(projectionObj *p, char *value)
 #ifdef USE_PROJ
   if(p) freeProjection(p);
   p->projargs = split(value, ',', &p->numargs);      
-  if(strcasecmp(p->projargs[0], "GEOGRAPHIC") == 0) {
+  if(strcasecmp(p->projargs[0], "GEOGRAPHIC") == 0 ||
+     strcasecmp(p->projargs[0], "AUTO") == 0) {
     p->proj = NULL;
   } else {
     if( !(p->proj = pj_init(p->numargs, p->projargs)) ) {

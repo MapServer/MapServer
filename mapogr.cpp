@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2001/03/01 22:37:14  dan
+ * Added support for PROJECTION AUTO to use projection from dataset
+ *
  * Revision 1.15  2001/02/28 04:56:39  dan
  * Support for OGR Label text, angle, size, implemented msOGRLayerGetShape
  * and reworked msLayerNextShape, added layer FILTER support, annotation, etc.
@@ -51,6 +54,7 @@
  **********************************************************************/
 
 #include "map.h"
+#include "mapproject.h"
 
 #ifdef USE_OGR
 
@@ -572,6 +576,100 @@ static char **msOGRGetValues(OGRFeature *poFeature)
 
 #endif  /* USE_OGR */
 
+
+#if defined(USE_OGR) || defined(USE_GDAL)
+
+/**********************************************************************
+ *                     msOGRSpatialRef2ProjectionObj()
+ *
+ * Init a MapServer projectionObj using an OGRSpatialRef
+ * Works only with PROJECTION AUTO
+ *
+ * Returns MS_SUCCESS/MS_FAILURE
+ **********************************************************************/
+int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
+                                  projectionObj *proj)
+{
+  if (proj->numargs == 0  || !EQUAL(proj->projargs[0], "auto"))
+      return MS_SUCCESS;  // Nothing to do!
+
+#ifdef USE_PROJ
+  int i;
+
+  // First flush the "auto" name from the projargs[]... 
+  if(proj->proj) pj_free(proj->proj);
+  msFreeCharArray(proj->projargs, proj->numargs);  
+  proj->numargs = 0;
+
+  proj->projargs = NULL;
+  proj->numargs = 0;
+
+  if (poSRS == NULL)
+  {
+      // Dataset had no set projection... Nothing else to do.
+      // Leave proj empty and no reprojections will happen!
+      return MS_SUCCESS;  
+  }
+
+  // Export OGR SRS to a PROJ4 string
+  char *pszProj = NULL;
+  if (poSRS->exportToProj4( &pszProj ) != OGRERR_NONE ||
+      pszProj == NULL || strlen(pszProj) == 0)
+  {
+      msSetError(MS_OGRERR, "Conversion from OGR SRS to PROJ4 failed.",
+                 "msOGRSpatialRef2ProjectionObj()");
+      CPLFree(pszProj);
+      return(MS_FAILURE);
+  }
+
+  // +proj=longlat is a special case because versions of PROJ4 prior to 4.4.2
+  // didn't accept it.  Just catch that case for now and when we switch to
+  // 4.4.2 to use pj_transform() then we can get rid of that special case.
+  if (strstr(pszProj, "proj=longlat") != NULL)
+  {
+      // Do the same as what loadProjection() does for GEOGRAPHIC
+      proj->projargs = split("GEOGRAPHIC", ' ', &proj->numargs);
+      proj->proj = NULL;
+      CPLFree(pszProj);
+      return MS_SUCCESS;
+  }
+
+  // Set new proj params in projargs[] array
+  // Since OGR and MapServer use different memory management funcs
+  // we have to convert CPL stringlist to mapserver stringlist
+  //
+  char **papszArgs = CSLTokenizeStringComplex(pszProj,"+ ",TRUE,FALSE);
+
+  proj->numargs = CSLCount(papszArgs);
+  proj->projargs =(char**)malloc(proj->numargs*sizeof(char*));
+  if (!proj->projargs) {
+      msSetError(MS_MEMERR, NULL, "msOGRSpatialRef2ProjectionObj()");
+      return(MS_FAILURE);
+  }
+
+  for(i=0; i< proj->numargs; i++)
+      proj->projargs[i] = strdup(papszArgs[i]);
+
+  if( !(proj->proj = pj_init(proj->numargs, proj->projargs))) 
+  {
+      msSetError(MS_PROJERR,(char*) CPLSPrintf("pj_init( %s ) failed: %s. ",
+                                               pszProj, pj_strerrno(pj_errno)),
+                 "msOGRSpatialRef2ProjectionObj()");
+      CPLFree(pszProj);
+      CSLDestroy(papszArgs);
+      return(MS_FAILURE);
+  }
+
+  CPLFree(pszProj);
+  CSLDestroy(papszArgs);
+
+#endif
+
+  return MS_SUCCESS;
+}
+#endif // defined(USE_OGR) || defined(USE_GDAL)
+
+
 /* ==================================================================
  * Here comes the REAL stuff... the functions below are called by maplayer.c
  * ================================================================== */
@@ -651,6 +749,30 @@ int msOGRLayerOpen(layerObj *layer, char *shapepath)
       delete poDS;
       return(MS_FAILURE);
   }
+
+/* ------------------------------------------------------------------
+ * If projection was "auto" then set proj to the dataset's projection
+ * ------------------------------------------------------------------ */
+#ifdef USE_PROJ
+  if (layer->projection.numargs > 0 && 
+      EQUAL(layer->projection.projargs[0], "auto"))
+  {
+      OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
+
+      if (msOGRSpatialRef2ProjectionObj(poSRS,
+                                        &(layer->projection)) != MS_SUCCESS)
+      {
+          msSetError(MS_OGRERR, 
+                  (char*)CPLSPrintf("%s  "
+                                    "PROJECTION AUTO cannot be used for this "
+                                    "OGR connection (`%s').",
+                                    ms_error.message, layer->connection),
+                     "msOGRLayerOpen()");
+          delete poDS;
+          return(MS_FAILURE);
+      }
+  }
+#endif
 
 /* ------------------------------------------------------------------
  * OK... open succeded... alloc and fill msOGRLayerInfo inside layer obj
