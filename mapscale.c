@@ -344,5 +344,9 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   // with saving maps
   map->layers[l].status = MS_DELETE;
 
+  // Free image (but keep the GD image which is in the symbol cache now)
+  image->img.gd = NULL;
+  msFreeImage( image );
+
   return(0);
 }
