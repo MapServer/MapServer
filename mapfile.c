@@ -291,6 +291,50 @@ int msGetLayerIndex(mapObj *map, char *name)
   return(-1);
 }
 
+// Initialize and load a single color object
+void initColor(colorObj *color, int red, int green, int blue) {
+  color->red = red;
+  color->green = green;
+  color->blue = blue;
+  color->pen = MS_PEN_UNSET;
+}
+
+// converts a 2 character hexidecimal string to an integer
+static int hex2int(char *hex) {
+  int number;
+
+  number = (hex[0] >= 'A' ? ((hex[0] & 0xdf) - 'A')+10 : (hex[0] - '0'));
+  number *= 16;
+  number += (hex[1] >= 'A' ? ((hex[1] & 0xdf) - 'A')+10 : (hex[1] - '0'));
+   
+  return(number);
+}
+
+int loadColor(colorObj *color) {
+  char hex[2];
+
+  if(getInteger(&(color->red)) == -1) {
+    if(msyytext[0] == '#' && strlen(msyytext) == 7) { // got a hex color
+      hex[0] = msyytext[1];
+      hex[1] = msyytext[2];
+      color->red = hex2int(hex);      
+      hex[0] = msyytext[3];
+      hex[1] = msyytext[4];
+      color->green = hex2int(hex);
+      hex[0] = msyytext[5];
+      hex[1] = msyytext[6];
+      color->blue = hex2int(hex);
+
+      return(MS_SUCCESS);
+    }
+    return(MS_FAILURE);
+  }
+  if(getInteger(&(color->green)) == -1) return(MS_FAILURE);
+  if(getInteger(&(color->blue)) == -1) return(MS_FAILURE);
+
+  return(MS_SUCCESS);
+}
+
 /*
 ** Initialize, load and free a single join
 */
@@ -2191,12 +2235,8 @@ void initReferenceMap(referenceMapObj *ref)
   ref->height = ref->width = 0;
   ref->extent.minx = ref->extent.miny = ref->extent.maxx = ref->extent.maxy = -1.0;
   ref->image = NULL;
-  ref->color.red = 255;
-  ref->color.green = 0;
-  ref->color.blue = 0;
-  ref->outlinecolor.red = 0;
-  ref->outlinecolor.green = 0;
-  ref->outlinecolor.blue = 0;  
+  initColor(&(ref->color), 255, 0, 0);
+  initColor(&(ref->outlinecolor), 0, 0, 0);  
   ref->status = MS_OFF;
   ref->marker = 0;
   ref->markername = NULL;
@@ -2231,10 +2271,8 @@ int loadReferenceMap(referenceMapObj *ref)
       }
       return(0);
       break;
-    case(COLOR):      
-      if(getInteger(&(ref->color.red)) == -1) return(-1);
-      if(getInteger(&(ref->color.green)) == -1) return(-1);
-      if(getInteger(&(ref->color.blue)) == -1) return(-1);
+    case(COLOR):
+      if(loadColor(&(ref->color)) != MS_SUCCESS) return(-1);
       break;
     case(EXTENT):
       if(getDouble(&(ref->extent.minx)) == -1) return(-1);
@@ -2245,10 +2283,8 @@ int loadReferenceMap(referenceMapObj *ref)
     case(IMAGE):
       if((ref->image = getString()) == NULL) return(-1);
       break;
-    case(OUTLINECOLOR):      
-      if(getInteger(&(ref->outlinecolor.red)) == -1) return(-1);
-      if(getInteger(&(ref->outlinecolor.green)) == -1) return(-1);
-      if(getInteger(&(ref->outlinecolor.blue)) == -1) return(-1);
+    case(OUTLINECOLOR):
+      if(loadColor(&(ref->outlinecolor)) != MS_SUCCESS) return(-1);
       break;
     case(SIZE):
       if(getInteger(&(ref->width)) == -1) return(-1);
