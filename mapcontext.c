@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.45  2003/06/26 12:43:14  assefa
+ * typo : replace printf by fprintf.
+ *
  * Revision 1.44  2003/06/26 02:49:47  assefa
  * Add support for version 1.0.0
  *
@@ -1355,7 +1358,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               fprintf( stream, "    <KeywordList>\n");
               for(iKey=0; iKey<nKeywords; iKey++)
               { 
-                  printf( stream, "      <Keyword>%s</Keyword>\n", 
+                  fprintf( stream, "      <Keyword>%s</Keyword>\n", 
                           papszKeywords[iKey]);
               }
               fprintf( stream, "    </KeywordList>\n");
