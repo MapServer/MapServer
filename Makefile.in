@@ -140,7 +140,7 @@ egis::
 	cd egis/imgSrc; make; cd ..
 	cd egis; make; cd ..
 
-php3_mapscript::
+php3_mapscript:: libmap.a
 	cd mapscript/php3; make; cd ../..
 
 maplexer.o: maplexer.c map.h mapfile.h

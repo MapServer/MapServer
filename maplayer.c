@@ -119,6 +119,10 @@ void msLayerClose(layerObj *layer)
     layer->items = NULL;
     layer->numitems = 0;
   }
+  if (layer->itemindexes) {
+    free(layer->itemindexes);
+    layer->itemindexes = NULL;
+  }
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
@@ -275,6 +279,17 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
 int msLayerWhichItems(layerObj *layer, int classify, int annotate) 
 {
   int i, nt=0, ne=0;
+
+  // Cleanup any previous item selection
+  if(layer->items) {
+    msFreeCharArray(layer->items, layer->numitems);
+    layer->items = NULL;
+    layer->numitems = 0;
+  }
+  if (layer->itemindexes) {
+    free(layer->itemindexes);
+    layer->itemindexes = NULL;
+  }
 
   if(classify && layer->classitem) nt++;
   if(classify && layer->filteritem) nt++;

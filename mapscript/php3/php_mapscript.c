@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.39  2001/03/20 15:55:10  dan
+ * Fixed crash caused by lp->itemindexes[] and lp->items[] becoming out of sync
+ *
  * Revision 1.38  2001/03/18 17:23:03  dan
  * Default to selecting all fields in layer->open()
  *
@@ -4037,6 +4040,9 @@ DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
     {
         // Until we implement selection of fields, default to selecting
         // all fields
+        if (self->itemindexes)
+            free(self->itemindexes);
+        self->itemindexes = NULL;
         msLayerGetItems(self, &(self->items), &(self->numitems));
     }
 
