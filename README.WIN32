@@ -126,7 +126,36 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
 
  - directory ./mapserver/gdft should not be compiled with DEBUG option
 
+--------------------------------------------------------------------
+      Notes libwww : used to support WMS client connection
+-------------------------------------------------------------------- 
+  - the libaray is located at  http://www.w3.org/Library/ 
 
+ Notes on how to build it using MSVC:
+
+  - before starting please refer to http://www.w3.org/INSTALL.html#Windows
+
+  - Get the source code from CVS
+  - Get the latest MSVC makefiles
+  - Do the "bootstrap mechanism" : (http://www.w3.org/Library/cvs.html#Boot). 
+    You will need a Perl module for this.
+  - you can then compile by opening the libwww/windows/world.dsw workspace 
+    and do a batch build of the whole thing.
+
+ other notes :  I had to define #define WWW_MSWINDOWS 1 in wwwsys.h before compiling.
+
+ Notes on mapserver's makefile.vc modifications :
+
+  - flag to add : -DUSE_WMS_LYR
+  - include : -I../Libwww/library/src -I../libwww/modules/expat/xmlparse
+  - libararies : ../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib 
+                ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
+
+ Installation :
+
+ - copy the following dll to a location where dll's can be loaded 
+  (ex : c:/winnt/syetem32) : gnu_regex.dll xmlparse.dll xmltok.dll 
+   (these dlls should be in .libwww/library/external after the build)
 ----------------
 $Id$
 ----------------

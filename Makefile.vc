@@ -42,6 +42,13 @@ PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
 #Use this flag to compile with WMS support
 WMS=-DUSE_WMS
 
+#Use this flag to compile with WMS Client support
+#you need the libwww from http://www.w3.org/Library/.
+#WMSCLIENT= -DUSE_WMS_LYR
+
+#WWWLIB_INC=-I../Libwww/library/src -I../libwww/modules/expat/xmlparse
+#WWWLIB_LIB=../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
+
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
 #   - Version 1.2 is included and writes LZW GIF (-DUSE_GD_GIF -DUSE_GD_SWAP_XY).
@@ -108,6 +115,7 @@ OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../p
 #IMGGEN_INC=-I./imgSrc
 #IMGGEN_LIB=-L./imgSrc -limgGEN
 
+
 #
 # VC++ does not include the REGEX library... so we must provide our one.
 # The following definitions will try to build GNU regex-0.12 located in the
@@ -151,7 +159,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
 		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj \
                 mappostgis.obj maplayer.obj mapresample.obj mapwms.obj \
-		mapwmslayer.obj mapgml.obj\
+		mapwmslayer.obj mapgml.obj maporaclespatial.obj\
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
@@ -163,13 +171,15 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 #
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
-		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB)
+		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB) \
+                $(WWWLIB_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
-		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC)
+		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC) \
+                $(WWWLIB_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS)
+		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT)
 
 default: 	all
 
