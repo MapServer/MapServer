@@ -186,4 +186,6 @@
 
 #define EXTENSION 1155
 
+#define KEYIMAGE 1156
+
 #endif /* MAPFILE_H */

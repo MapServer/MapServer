@@ -1561,6 +1561,8 @@ int initClass(classObj *class)
   for(i=0;i<MS_MAXSTYLES;i++) // need to provide meaningful values
     initStyle(&(class->styles[i]));
 
+  class->keyimage = NULL;
+
   return(0);
 }
 
@@ -1578,6 +1580,7 @@ void freeClass(classObj *class)
   for(i=0;i<class->numstyles;i++) // each style    
     freeStyle(&(class->styles[i]));
   msFree(class->styles);
+  msFree(class->keyimage);
 }
 
 /*
@@ -1645,6 +1648,9 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
       break;
     case(EXPRESSION):
       if(loadExpression(&(class->expression)) == -1) return(-1);
+      break;
+    case(KEYIMAGE):
+      if((class->keyimage = getString()) == NULL) return(-1);
       break;
     case(LABEL):
       class->label.sizescaled = class->label.size = MS_MEDIUM; // only set a default if the LABEL section is present
@@ -1776,6 +1782,10 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   
   case(EXPRESSION):    
     loadExpressionString(&(class->expression), value);
+    break; 
+  case(KEYIMAGE):
+    msFree(class->keyimage);
+    class->keyimage = strdup(value);
     break;
   case(LABEL):
     loadLabelString(map, &(class->label), value);
@@ -1917,6 +1927,7 @@ static void writeClass(classObj *class, FILE *stream)
     writeExpression(&(class->expression), stream);
     fprintf(stream, "\n");
   }
+  if(class->keyimage) fprintf(stream, "      KEYIMAGE \"%s\"\n", class->keyimage);
   writeLabel(&(class->label), stream, "      ");
   if(class->maxscale > -1) fprintf(stream, "      MAXSCALE %g\n", class->maxscale);
   if(class->metadata) writeHashTable(class->metadata, stream, "      ", "METADATA");

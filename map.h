@@ -428,10 +428,10 @@ typedef struct class_obj{
 #endif
 
   double minscale, maxscale;
-
   struct layer_obj *layer;
-
   int debug;
+
+  char *keyimage;
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc

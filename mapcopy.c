@@ -494,6 +494,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer) {
     return(MS_FAILURE);
   }
   
+  copyStringProperty(&(dst->keyimage), src->keyimage);
   copyStringProperty(&(dst->name), src->name);
   copyStringProperty(&(dst->title), src->title);
 
