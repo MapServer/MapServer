@@ -217,6 +217,11 @@ scalebar: libmap.a  scalebar.o map.h
 mapserv: mapserv.h libmap.a  mapserv.o cgiutil.o map.h
 	$(LD) $(CFLAGS) mapserv.o cgiutil.o  $(LDFLAGS) $(STATIC_LIBS) -o mapserv
 
+mapserv.fcgi: mapserv.h libmap.a  mapserv_fcgi.o cgiutil.o map.h
+	$(LD) $(CFLAGS) mapserv_fcgi.o cgiutil.o  \
+	$(LDFLAGS) $(STATIC_LIBS) -lfcgi \
+	 -o mapserv.fcgi
+
 shpindex: libmap.a shpindex.o map.h
 	$(LD) $(CFLAGS) shpindex.o $(LDFLAGS) $(STATIC_LIBS) -o shpindex
 
