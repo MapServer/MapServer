@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.37  2003/01/30 21:17:03  julien
+ * Implement the version 0.1.7
+ *
  * Revision 1.36  2002/12/20 20:21:13  julien
  * wms_style__title is now set correctly
  *
@@ -369,6 +372,56 @@ int msGetMapContextXMLFloatValue( CPLXMLNode *psRoot, char *pszXMLPath,
   return MS_SUCCESS;
 }
 
+
+/*
+**msCombineXMLValueInHash()
+**
+**Get 4 xml value and put it in a hash table, space separated
+**Note that the fourth value will be decoded.
+*/
+int msCombineXMLValueInHash( CPLXMLNode *psRoot, 
+                             char *pszXMLPath1, char *pszXMLPath2, 
+                             char *pszXMLPath3, char *pszXMLPath4, 
+                             hashTableObj *metadata, char *pszMetadata )
+{
+    char *pszValue1=NULL, *pszValue2=NULL, *pszValue3=NULL, *pszValue4=NULL;
+    char *pszCombined=NULL;
+
+    pszValue1 = (char*)CPLGetXMLValue( psRoot, pszXMLPath1, "");
+    pszValue2 = (char*)CPLGetXMLValue( psRoot, pszXMLPath2, "");
+    pszValue3 = (char*)CPLGetXMLValue( psRoot, pszXMLPath3, "");
+    pszValue4 = (char*)CPLGetXMLValue( psRoot, pszXMLPath4, "");
+
+    if( pszValue1 != NULL || pszValue2 != NULL || 
+        pszValue3 != NULL || pszValue4 != NULL )
+    {
+        if(metadata != NULL)
+        {
+            msDecodeHTMLEntities(pszValue4); // Normally this should be an url
+            pszCombined = (char*)malloc(strlen(pszValue1)+
+                                        strlen(pszValue2)+
+                                        strlen(pszValue3)+
+                                        strlen(pszValue4)+6);
+            sprintf(pszCombined, "%s %s %s %s", pszValue1,pszValue2,
+                    pszValue3, pszValue4);
+
+            msInsertHashTable( *metadata, pszMetadata, pszCombined );
+
+            free(pszCombined);
+        }
+        else
+        {
+            return MS_FAILURE;
+        }
+    }
+    else
+    {
+        return MS_FAILURE;
+    }
+
+    return MS_SUCCESS;
+}
+
 #endif
 
 /* msLoadMapContext()
@@ -381,7 +434,7 @@ int msLoadMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
   char *pszWholeText, *pszMapProj=NULL;
-  char *pszValue, *pszValue1, *pszValue2, *pszValue3, *pszValue4;
+  char *pszValue, *pszValue1, *pszValue2;
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
@@ -432,7 +485,8 @@ int msLoadMapContext(mapObj *map, char *filename)
   while( psChild != NULL )
   {
       if( psChild->eType == CXT_Element && 
-          EQUAL(psChild->pszValue,"WMS_Viewer_Context") )
+          (EQUAL(psChild->pszValue,"WMS_Viewer_Context") ||
+           EQUAL(psChild->pszValue,"View_Context")) )
       {
           psMapContext = psChild;
           break;
@@ -474,6 +528,18 @@ int msLoadMapContext(mapObj *map, char *filename)
   // Load the metadata of the WEB obj
   if(map->web.metadata == NULL)
       map->web.metadata =  msCreateHashTable();
+
+  // Version
+  msInsertHashTable( map->web.metadata, "context_version", pszVersion );
+
+  if( strcasecmp(pszVersion, "0.1.7") >= 0 )
+  {
+      if( msGetMapContextXMLHashValue(psMapContext, "fid", 
+                           &(map->web.metadata), "context_fid") == MS_FAILURE )
+      {
+          msDebug("Mandatory data fid in %s.", filename);
+      }
+  }
 
   // Projection
   pszValue = (char*)CPLGetXMLValue(psMapContext, 
@@ -521,7 +587,6 @@ int msLoadMapContext(mapObj *map, char *filename)
   {
       msDebug("Mandatory data General.BoundingBox.maxx missing in %s.",
               filename);
-      return MS_FAILURE;
   }
   if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.maxy",
                                &(map->extent.maxy)) == MS_FAILURE)
@@ -534,13 +599,24 @@ int msLoadMapContext(mapObj *map, char *filename)
   if( msGetMapContextXMLHashValue(psMapContext, "General.Title", 
                               &(map->web.metadata), "wms_title") == MS_FAILURE)
   {
-      msDebug("Mandatory data General.Title missing in %s.",
-              filename);
+      if( msGetMapContextXMLHashValue(psMapContext, "General.gml:name", 
+                             &(map->web.metadata), "wms_title") == MS_FAILURE )
+      {
+          if(strcasecmp(pszVersion, "0.1.7") < 0)
+              msDebug("Mandatory data General.Title missing in %s.", filename);
+          else
+              msDebug("Mandatory data General.gml:name missing in %s.", 
+                      filename);
+      }
   }
 
   // Name
-  msGetMapContextXMLStringValue(psMapContext, "General.Name", 
-                                &(map->name));
+  if(msGetMapContextXMLStringValue(psMapContext, "General.Name", 
+                                   &(map->name)) == MS_FAILURE)
+  {
+      msGetMapContextXMLStringValue(psMapContext, "General.gml:name", 
+                                    &(map->name));
+  }
 
   // Keyword
   msGetMapContextXMLHashValue(psMapContext, "General.Keywords", 
@@ -556,16 +632,28 @@ int msLoadMapContext(mapObj *map, char *filename)
   }
 
   // Abstract
-  msGetMapContextXMLHashValue(psMapContext, "General.Abstract", 
-                              &(map->web.metadata), "wms_abstract");
+  if(msGetMapContextXMLHashValue(psMapContext, "General.Abstract", 
+                                 &(map->web.metadata), "wms_abstract"))
+  {
+      msGetMapContextXMLHashValue(psMapContext, "General.gml:description", 
+                                  &(map->web.metadata), "wms_abstract");
+  }
 
-  // LogoURL, DataURL
+  // DataURL
   msGetMapContextXMLHashValueDecode(psMapContext, 
                                    "General.DataURL.OnlineResource.xlink:href",
                                    &(map->web.metadata), "wms_dataurl");
-  msGetMapContextXMLHashValueDecode(psMapContext, 
-                                   "General.LogoURL.OnlineResource.xlink:href",
-                                   &(map->web.metadata), "wms_logourl");
+
+  // LogoURL
+  // The logourl have a width, height, format and an URL
+  // The metadata will be structured like this: "width height format logourl"
+  psChild = CPLGetXMLNode(psMapContext, "General.LogoURL");
+  if(psChild != NULL)
+  {
+      msCombineXMLValueInHash(psChild, "width", "height", "format", 
+                              "OnlineResource.xlink:href", 
+                              &(map->web.metadata), "wms_logourl");
+  }
 
   // Contact Info
   psContactInfo = CPLGetXMLNode(psMapContext, "General.ContactInformation");
@@ -944,31 +1032,13 @@ int msLoadMapContext(mapObj *map, char *filename)
                           pszStyle = (char*)malloc(strlen(pszStyleName)+25);
                           sprintf(pszStyle, "wms_style_%s_legendurl",
                                   pszStyleName);
-                          pszValue1=(char*)CPLGetXMLValue(psStyle,
-                                                         "LegendURL.width","");
-                          pszValue2=(char*)CPLGetXMLValue(psStyle,
-                                                        "LegendURL.height","");
-                          pszValue3=(char*)CPLGetXMLValue(psStyle,
-                                                        "LegendURL.format","");
-                          if( strcasecmp(pszVersion, "0.1.4") >= 0 )
-                          {
-                              pszValue4=(char*)CPLGetXMLValue(psStyle, 
-                                     "LegendURL.OnlineResource.xlink:href","");
-                          }
-                          else
-                          {
-                              pszValue4 = pszValue;
-                          }
-                          msDecodeHTMLEntities(pszValue4);
-                          pszValue = (char*)malloc(strlen(pszValue1)+
-                                                   strlen(pszValue2)+
-                                                   strlen(pszValue3)+
-                                                   strlen(pszValue4)+6);
-                          sprintf(pszValue, "%s %s %s %s", pszValue1,pszValue2,
-                                  pszValue3, pszValue4);
-                          msInsertHashTable(layer->metadata,pszStyle,pszValue);
+                          msCombineXMLValueInHash(psStyle, 
+                                                  "LegendURL.width", 
+                                                  "LegendURL.height", 
+                                                  "LegendURL.format", 
+                                         "LegendURL.OnlineResource.xlink:href",
+                                                 &(layer->metadata), pszStyle);
                           free(pszStyle);
-                          free(pszValue);
                       }
 
                       free(pszStyleName);
@@ -1043,14 +1113,11 @@ int msSaveMapContext(mapObj *map, char *filename)
 #if defined(USE_WMS_LYR)
   const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
-  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL;
-  char *pszLegendItem, *pszEncodedVal;
+  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL, *pszLogoURL;
+  char *pszLegendItem, *pszEncodedVal, *pszLogoItem;
   FILE *stream;
   int i, nValue;
   char szPath[MS_MAXPATHLEN];
-
-  // Decide which version we're going to return... only 1.0.0 for now
-  version = "0.1.4";
 
   // open file
   if(filename != NULL && strlen(filename) > 0) {
@@ -1066,16 +1133,34 @@ int msSaveMapContext(mapObj *map, char *filename)
       return MS_FAILURE;
   }
 
+  // Decide which version we're going to return...
+  version = msLookupHashTable(map->web.metadata, "context_version");
+  if(version == NULL)
+      version = "0.1.7";
+
   // file header
   fprintf( stream, 
          "<?xml version='1.0' encoding=\"ISO-8859-1\" standalone=\"no\" ?>\n");
 
   // set the WMS_Viewer_Context information
-
-  fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
+  if(strcasecmp(version, "0.1.7") >= 0)
+  {
+      fprintf( stream, "<View_Context version=\"%s\"", version );
+      pszValue = msLookupHashTable(map->web.metadata, "context_fid");
+      if(pszValue != NULL)
+          fprintf( stream, " fid=\"%s\"", pszValue );
+      else
+          fprintf( stream, " fid=\"0\"");
+  }
+  else
+  {
+      fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
+  }
   fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"" );
-  fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-  fprintf( stream, " xsi:noNamespaceSchemaLocation=\"%s/contexts/0.1.4/context.xsd\">\n", 
+  fprintf( stream, 
+           " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+  fprintf( stream, 
+         " xsi:noNamespaceSchemaLocation=\"%s/contexts/0.1.4/context.xsd\">\n",
            msOWSGetSchemasLocation(map) );
 
   // set the General information
@@ -1102,21 +1187,91 @@ int msSaveMapContext(mapObj *map, char *filename)
            map->extent.maxx, map->extent.maxy );
 
   // Title, Keyword and Abstractof Context
-  fprintf( stream, "%s<Name>%s</Name>\n", tabspace, map->name );
-  fprintf( stream, "%s<!-- Title of Context -->\n", tabspace );
-  msOWSPrintMetadata(stream, map->web.metadata, "wms_title", OWS_WARN,
-                "    <Title>%s</Title>\n", map->name);
+  if(strcasecmp(version, "0.1.7") >= 0)
+  {
+      fprintf( stream, "%s<gml:name>%s</gml:name>\n", tabspace, map->name );
+  }
+  else
+  {
+      fprintf( stream, "%s<Name>%s</Name>\n", tabspace, map->name );
+      fprintf( stream, "%s<!-- Title of Context -->\n", tabspace );
+      msOWSPrintMetadata(stream, map->web.metadata, "wms_title", OWS_WARN,
+                         "    <Title>%s</Title>\n", map->name);
+  }
+
   msOWSPrintMetadataList(stream, map->web.metadata, "wms_keywordlist", 
                     "    <Keywords>\n", "    </Keywords>\n",
                     "      %s\n");
-  msOWSPrintMetadata(stream, map->web.metadata, "wms_abstract", OWS_NOERR,
-                "    <Abstract>%s</Abstract>\n", NULL);
 
-  // LogoURL, DataURL
-  msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_logourl", OWS_NOERR,
-                "    <LogoURL>\n      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n    </LogoURL>\n", NULL);
+
+  if(strcasecmp(version, "0.1.7") >= 0)
+  {
+      msOWSPrintMetadata(stream, map->web.metadata, "wms_abstract", OWS_NOERR,
+                         "    <gml:description>%s</gml:description>\n", NULL);
+  }
+  else
+  {
+      msOWSPrintMetadata(stream, map->web.metadata, "wms_abstract", OWS_NOERR,
+                         "    <Abstract>%s</Abstract>\n", NULL);
+  }
+
+  // DataURL
   msOWSPrintEncodeMetadata(stream, map->web.metadata, "wms_dataurl", OWS_NOERR,
                 "    <DataURL>\n      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n    </DataURL>\n", NULL);
+
+  // LogoURL
+  pszLogoURL = msLookupHashTable(map->web.metadata, "wms_logourl");
+  if(pszLogoURL != NULL)
+  {
+      pszChar = strchr(pszLogoURL, ' ');
+      if(pszChar != NULL)
+      {
+          pszLogoItem = strdup(pszLogoURL);
+
+          // logourl width
+          pszChar = strchr(pszLogoItem, ' ');
+          if(pszChar != NULL)
+              pszLogoItem[pszChar - pszLogoItem] = '\0';
+          fprintf(stream, "    <LogoURL width=\"%s\"", pszLogoItem);
+
+          // logourl height
+          pszLogoURL += strlen(pszLogoItem) + 1;
+          strcpy(pszLogoItem, pszLogoURL);
+          pszChar = strchr(pszLogoItem, ' ');
+          if(pszChar != NULL)
+              pszLogoItem[pszChar - pszLogoItem] = '\0';
+          fprintf(stream, " height=\"%s\"", pszLogoItem);
+
+          // logourl format
+          pszLogoURL += strlen(pszLogoItem) + 1;
+          strcpy(pszLogoItem, pszLogoURL);
+          pszChar = strchr(pszLogoItem, ' ');
+          if(pszChar != NULL)
+              pszLogoItem[pszChar - pszLogoItem] = '\0';
+          fprintf(stream, " format=\"%s\">\n", pszLogoItem);
+
+          // logourl url
+          pszLogoURL += strlen(pszLogoItem) + 1;
+          strcpy(pszLogoItem, pszLogoURL);
+          pszChar = strchr(pszLogoItem, ' ');
+          if(pszChar != NULL)
+              pszLogoItem[pszChar - pszLogoItem] = '\0';
+          pszEncodedVal = msEncodeHTMLEntities(pszLogoItem);
+          fprintf(stream, "      <OnlineResource xlink:type=\"simple\" ");
+          fprintf(stream, "xlink:href=\"%s\"/>\n    </LogoURL>\n",
+                  pszEncodedVal);
+
+          free(pszLogoItem);
+      }
+      else
+      {
+          pszEncodedVal = msEncodeHTMLEntities(pszLogoURL);
+          fprintf(stream, "    <LogoURL>\n");
+          fprintf(stream, "      <OnlineResource xlink:type=\"simple\" ");
+          fprintf(stream, "xlink:href=\"%s\"/>\n    </LogoURL>\n",
+                  pszEncodedVal);
+      }
+  }
 
   // Contact Info
   msOWSPrintContactInfo( stream, tabspace, "1.1.0", map->web.metadata );
