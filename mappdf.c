@@ -2,7 +2,7 @@
  *	filename: mappdf.c
  *	created : Thu Oct  4 09:58:19 2001
  *	@author :  <jwall@webpeak.com> , <jspielberg@webpeak.com>
- *	LastEditDate Was "Wed Oct 10 11:55:37 2001"
+ *	LastEditDate Was "Thu Oct 11 18:25:45 2001"
  *
  * [$Author$ $Date$]
  * [$Revision$]
@@ -1288,7 +1288,6 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
 
 
     fontHash = msCreateHashTable();
-    msLoadFontSetPDF((&(map->fontset)), pdf);
     if(map->width == -1 && map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
         return(NULL);
@@ -1307,6 +1306,7 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
         PDF_set_value(pdf,"textrendering",2);
     }
 
+    msLoadFontSetPDF((&(map->fontset)), pdf);
     if (map->imagecolor.red != -1){
         PDF_setrgbcolor(pdf,(float)map->imagecolor.red/255,(float)map->imagecolor.green/255,(float)map->imagecolor.blue/255);
         PDF_rect(pdf,0,0,map->width,map->height);
