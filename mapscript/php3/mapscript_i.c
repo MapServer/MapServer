@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.61  2003/03/24 15:31:14  attila
+ * mapimage module can now generate DXF imagemaps
+ *
  * Revision 1.60  2003/02/24 02:19:43  dan
  * Added map->clone() method
  *
@@ -634,8 +637,9 @@ int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
     return msQueryByShape(map, self->index, shape);
   }
 
-int layerObj_setFilter(layerObj *self, char *string) {    
+int layerObj_setFilter(layerObj *self, char *string) {
     return loadExpressionString(&self->filter, string);
+
   }
 
 int layerObj_setWKTProjection(layerObj *self, char *string) {

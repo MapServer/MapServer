@@ -2,6 +2,7 @@
 
 #include "map.h"
 #include "mapparser.h"
+#include "dxfcolor.h"
 
 #include <time.h>
 
@@ -15,6 +16,21 @@
 
 //static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
 //static unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
+static int matchdxfcolor(colorObj col)
+{
+	int best=7;
+	int delta=20;
+	int tcolor = 0;
+	while (tcolor < 256 && (ctable[tcolor].r != col.red || ctable[tcolor].g != col.green || ctable[tcolor].b != col.blue)){
+		tcolor++;
+		if (abs(ctable[tcolor].r - col.red + ctable[tcolor].b - col.blue + ctable[tcolor].g - col.green) < delta){
+			best = tcolor;
+			delta = abs(ctable[tcolor].r - col.red + ctable[tcolor].b - col.blue + ctable[tcolor].g - col.green);
+		}
+	}
+	if (tcolor >= 256) tcolor = best;
+	return tcolor;
+}
 
 static gdImagePtr searchImageCache(struct imageCacheObj *ic, int symbol, int color, int size) {
   struct imageCacheObj *icp;
@@ -54,6 +70,8 @@ DEBUG printf("addImageCache\n<BR>");
  */
   return(icp);
 }
+
+static int dxf;
 
 
 //*
@@ -97,7 +115,14 @@ DEBUG printf("msImageCreateIM<BR>\n");
             image->height = height;
             image->imagepath = NULL;
             image->imageurl = NULL;
-	    sprintf(head, "<MAP name='map1' width=%d height=%d>", image->width, image->height);
+	    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0)
+		    dxf = 1;
+	    else
+		    dxf = 0;
+	    if (dxf){
+		    sprintf(head, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n");		    
+	    } else
+		    sprintf(head, "<MAP name='map1' width=%d height=%d>", image->width, image->height);
 	    image->img.imagemap = strdup(head);
 //	    if (image->img.imagemap)
 //	            image->img.IMsize = strlen(image->img.imagemap);
@@ -692,7 +717,7 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
   int ox, oy;
   double size;
 	
-	//DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
+DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
 
 // skip this, we don't do text
 
@@ -718,15 +743,17 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
 //  if(fc<0 && oc<0) return; // nothing to do
   if(size < 1) return; // size too small
 
+DEBUG printf(".%d.%d.%d.", symbol->type, style->symbol, fc);
   if(style->symbol == 0) { // simply draw a single pixel of the specified color //
 //    gdImageSetPixel(img, p->x + ox, p->y + oy, fc);
 		int slen = 0;
 		int nchars = 0;
 		char buffer[200] = "";
+		
 #if defined(_WIN32) && !defined(__CYGWIN__)
                 nchars = sprintf (buffer, "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy);
 #else
-		nchars = snprintf (buffer, 200, "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy);
+		nchars = snprintf (buffer, 200, dxf ? "  0\nPOINT\n  8\n0\n 10\n%f\n 20\n%f\n 30\n0.0\n 62\n%6d\n" : "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy, dxf ? matchdxfcolor(style->color) : 0);
 #endif
 
 //DEBUG printf ("%d, ",strlen(img->img.imagemap) );
@@ -743,7 +770,7 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
 	//        if(point1->y == point2->y) {}
     return;
   }  
-
+DEBUG printf("A");
   switch(symbol->type) {  
   case(MS_SYMBOL_TRUETYPE):
 DEBUG printf("T");
@@ -859,6 +886,7 @@ DEBUG printf("V");
     } // end if-then-else //
 */    break;
   default:
+DEBUG printf("DEF");
     break;
   } // end switch statement //
 
@@ -870,27 +898,30 @@ DEBUG printf("V");
 // ------------------------------------------------------------------------------- //
 void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
-/*  int i, j;
   symbolObj *symbol;
-  int styleDashed[100];
-  int x, y;
-  int brush_bc, brush_fc;
-  double size, d;
-  gdImagePtr brush=NULL;
-  gdPoint points[MS_MAXVECTORPOINTS];
+//  int styleDashed[100];
+//  int x, y;
+//  int brush_bc, brush_fc;
+//  double size, d;
+//  gdImagePtr brush=NULL;
+//  gdPoint points[MS_MAXVECTORPOINTS];
   int fc, bc;
-//DEBUG printf("msDrawLineSymbolIM<BR>\n");
-
-// Lines are also of no interest to us
-
+  int i,j,k,l;
+int bsize = 100;
+char first = 1;
+char *buffer = (char *) malloc (bsize);
+char *fbuffer = (char *) malloc (bsize);
+int nchars = 0;
+double size;
+DEBUG printf("msDrawLineSymbolIM<BR>\n");
 
 
   if(!p) return;
   if(p->numlines <= 0) return;
 
-  if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor));
-  if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor));
-  if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color));
+//  if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor));
+//  if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor));
+//  if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color));
 
   symbol = &(symbolset->symbol[style->symbol]);
   bc = style->backgroundcolor.pen;
@@ -901,15 +932,63 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
   size = MS_MIN(size, style->maxsize);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
-  if(fc < 0) return; // nothing to do
-  if(size < 1) return; // size too small
-
+//  if(fc < 0) return; // nothing to do
+//  if(size < 1) return; // size too small
+  if (dxf){
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
+#else
+	nchars = snprintf (fbuffer, bsize, "  0\nPOLYLINE\n  8\n0\n 70\n     0\n 62\n%6d\n", matchdxfcolor(style->color));
+#endif
+  } else {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
+#else
+	   nchars = snprintf (fbuffer, bsize, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
+#endif
+  }
   if(style->symbol == 0) { // just draw a single width line
-    imagePolyline(img, p, fc, style->offsetx, style->offsety);
+//    imagePolyline(img, p, fc, style->offsetx, style->offsety);
+		  for(l=0,j=0; j<p->numlines; j++) {
+		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
+		      for(i=0; i < p->line[j].numpoints; i++,l++) {
+				int slen = 0;
+				if (dxf){
+#if defined(_WIN32) && !defined(__CYGWIN__)
+					nchars = sprintf (buffer, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
+#else
+					nchars = snprintf (buffer, bsize, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
+#endif
+				} else {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+					nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+#else
+					nchars = snprintf (buffer, bsize, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+#endif
+				}
+
+	//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
+	// DEBUG printf("nchars %d<BR>\n", nchars);
+				slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
+				if (slen > img->size){
+					img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
+					if (img->img.imagemap)
+						img->size = slen*2;
+				}
+				strcat(img->img.imagemap, buffer);
+				first = 0;
+			      
+		//        point2 = &( p->line[j].point[i] );
+		//        if(point1->y == point2->y) {}
+		      }
+		  }
+	    strcat(img->img.imagemap, dxf ? "  0\nSEQEND\n" : "'></A>\n");
     return;
   }
 
-  switch(symbol->type) {
+  DEBUG printf("-%d-",symbol->type);
+  
+/*  switch(symbol->type) {
   case(MS_SYMBOL_SIMPLE):
     if(bc == -1) bc = imTransparent;
     break;
@@ -1029,8 +1108,8 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
 // ------------------------------------------------------------------------------- //
 void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
-/*  symbolObj *symbol;
-  gdPoint oldpnt, newpnt;
+  symbolObj *symbol;
+/*  gdPoint oldpnt, newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
   gdImagePtr tile;
   int x, y;
@@ -1049,14 +1128,14 @@ char *fbuffer = (char *) malloc (bsize);
 int nchars = 0;
 double size;
 
-//DEBUG printf("msDrawShadeSymbolIM\n<BR>");
+DEBUG printf("msDrawShadeSymbolIM\n<BR>");
   if(!p) return;
   if(p->numlines <= 0) return;
 //  if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor));
 //  if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color));
 //  if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor));
 
-//  symbol = &(symbolset->symbol[style->symbol]);
+  symbol = &(symbolset->symbol[style->symbol]);
 //  bc = style->backgroundcolor.pen;
 //  fc = style->color.pen;
 //  oc = style->outlinecolor.pen;
@@ -1079,49 +1158,65 @@ double size;
 //DEBUG printf ("3");
       
 //DEBUG printf("BEF%s", img->img.imagemap);
+  if (dxf){
 #if defined(_WIN32) && !defined(__CYGWIN__)
-  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
+	  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
 #else
-   nchars = snprintf (fbuffer, bsize, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
+	nchars = snprintf (fbuffer, bsize, "  0\nPOLYLINE\n  8\n0\n 73\n     1\n 62\n%6d\n", matchdxfcolor(style->color));
 #endif
-
-  if(style->symbol == 0) { // simply draw a single pixel of the specified color //    
-	  for(l=0,j=0; j<p->numlines; j++) {
-	//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
-	      for(i=0; i < p->line[j].numpoints; i++,l++) {
-		        int slen = 0;
+  } else {
 #if defined(_WIN32) && !defined(__CYGWIN__)
-			nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+	  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
 #else
-                        nchars = snprintf (buffer, bsize, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+	   nchars = snprintf (fbuffer, bsize, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
 #endif
+  }
 
-//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
-// DEBUG printf("nchars %d<BR>\n", nchars);
-			slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
- 			if (slen > img->size){
-				img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
-				if (img->img.imagemap)
-					img->size = slen*2;
-			}
-			strcat(img->img.imagemap, buffer);
-			first = 0;
-		      
-	//        point2 = &( p->line[j].point[i] );
-	//        if(point1->y == point2->y) {}
-	      }
-	  }
-    strcat(img->img.imagemap, "'></A>\n");
+	  if(style->symbol == 0) { // simply draw a single pixel of the specified color //    
+		  for(l=0,j=0; j<p->numlines; j++) {
+		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
+		      for(i=0; i < p->line[j].numpoints; i++,l++) {
+				int slen = 0;
+				if (dxf){
+#if defined(_WIN32) && !defined(__CYGWIN__)
+					nchars = sprintf (buffer, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
+#else
+					nchars = snprintf (buffer, bsize, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
+#endif
+				} else {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+					nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+#else
+					nchars = snprintf (buffer, bsize, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+#endif
+				}
+
+	//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
+	// DEBUG printf("nchars %d<BR>\n", nchars);
+				slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
+				if (slen > img->size){
+					img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
+					if (img->img.imagemap)
+						img->size = slen*2;
+				}
+				strcat(img->img.imagemap, buffer);
+				first = 0;
+			      
+		//        point2 = &( p->line[j].point[i] );
+		//        if(point1->y == point2->y) {}
+		      }
+		  }
+	    strcat(img->img.imagemap, dxf ? "  0\nSEQEND\n" : "'></A>\n");
   
 //DEBUG printf("AFT%s", img->img.imagemap);
 // STOOPID. GD draws polygons pixel by pixel ?!
 	
 //    msImageFilledPolygon(img, p, fc);
 //    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
-    return;
-  }
-DEBUG printf ("d");
-//  DEBUG printf("-%d-",symbol->type);
+  	     return;
+	  }
+//DEBUG printf ("d");
+  DEBUG printf("-%d-",symbol->type);
 /*  
   switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE):    
@@ -1723,7 +1818,11 @@ DEBUG printf("ALLOCD %d<BR>\n", img->size);
 //DEBUG printf("F %s<BR>\n", img->img.imagemap);
 DEBUG printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
 	  fprintf(stream, img->img.imagemap);
-	  fprintf(stream, "</MAP>");
+	  if( strcasecmp("OFF",msGetOutputFormatOption( format, "SKIPENDTAG", "OFF" )) == 0)
+		  if (dxf)
+			  fprintf(stream, "0\nENDSEC\n0\nEOF\n");
+		  else 
+			  fprintf(stream, "</MAP>");
 /*#ifdef USE_GD_GIF
     gdImageGif(img, stream);
 #else
