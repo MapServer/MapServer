@@ -863,7 +863,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     int c;
 
     for(i=0; i<gdImageColorsTotal(png); i++) {
-      if(i != layer->offsite) {
+      if(i != layer->offsite && i != gdImageGetTransparent(png)) {
 	sprintf(tmpstr,"%d", i);
 	c = getClass(layer, tmpstr);
 
@@ -880,7 +880,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     }
   } else {
     for(i=0; i<gdImageColorsTotal(png); i++) {
-      if(i != layer->offsite) 
+      if(i != layer->offsite && i != gdImageGetTransparent(png)) 
 	cmap[i] = add_color(map,img, gdImageRed(png,i), gdImageGreen(png,i), gdImageBlue(png,i));
       else
 	cmap[i] = -1;
@@ -966,7 +966,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     int c;
 
     for(i=0; i<gdImageColorsTotal(gif); i++) {
-      if(i != layer->offsite) {
+      if(i != layer->offsite && i != gdImageGetTransparent(gif)) {
 	sprintf(tmpstr,"%d", i);
 	c = getClass(layer, tmpstr);
 
@@ -983,7 +983,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     }
   } else {
     for(i=0; i<gdImageColorsTotal(gif); i++) {
-      if(i != layer->offsite) 
+      if(i != layer->offsite && i != gdImageGetTransparent(gif)) 
 	cmap[i] = add_color(map,img, gdImageRed(gif,i), gdImageGreen(gif,i), gdImageBlue(gif,i));
       else
 	cmap[i] = -1;
