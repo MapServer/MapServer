@@ -806,9 +806,7 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 				case MS_LAYER_LINE:
 					result = force_to_lines(wkb, shape);
 					break;
-				case MS_LAYER_POLYLINE:
-					result = force_to_polygons(wkb, shape);
-					break;
+
 				case MS_LAYER_POLYGON:
 					result = 	force_to_polygons(wkb, shape);
 					break;
@@ -1026,9 +1024,6 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 					break;
 				case MS_LAYER_LINE:
 					result = force_to_lines(wkb, shape);
-					break;
-				case MS_LAYER_POLYLINE:
-					result = force_to_polygons(wkb, shape);
 					break;
 				case MS_LAYER_POLYGON:
 					result = 	force_to_polygons(wkb, shape);
