@@ -56,11 +56,15 @@ int msGMLFinish(FILE *stream, const char *prjElement)
 int msGMLLayerStart(FILE *stream)
 {
   if(!stream) return(MS_FAILURE);
+
+  return MS_SUCCESS;
 }
 
 int msGMLLayerFinish(FILE *stream)
 {
   if(!stream) return(MS_FAILURE);
+
+  return MS_SUCCESS;
 }
 
 /*
