@@ -283,10 +283,10 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   int   anColorCube[256];
   double llx, lly, urx, ury;
   rectObj copyRect, mapRect;
-  unsigned char *pabyRaw1, *pabyRaw2, *pabyRaw3;
+  unsigned char *pabyRaw1, *pabyRaw2, *pabyRaw3, *pabyRawAlpha;
 
   GDALColorTableH hColorMap;
-  GDALRasterBandH hBand1, hBand2, hBand3, hBand4;
+  GDALRasterBandH hBand1, hBand2, hBand3, hBandAlpha;
 
 
   /*
@@ -356,7 +356,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
    * Are we in a one band, RGB or RGBA situation?
    */
   hBand1 = GDALGetRasterBand( hDS, 1 );
-  hBand2 = hBand3 = hBand4 = NULL;
+  hBand2 = hBand3 = hBandAlpha = NULL;
 
   if( GDALGetRasterCount( hDS ) >= 3
       && GDALGetRasterColorTable( hBand1 ) == NULL 
@@ -368,7 +368,11 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
       if( hBand1 == NULL || hBand2 == NULL || hBand3 == NULL )
           return -1;
 
-      /* add alpha support later */
+      if( GDALGetRasterCount( hDS ) >= 4 )
+          hBandAlpha = GDALGetRasterBand( hDS, 4 );
+      if( hBandAlpha != NULL 
+          && GDALGetRasterColorInterpretation( hBandAlpha ) != GCI_AlphaBand )
+          hBandAlpha = NULL;
   }
       
   /*
@@ -496,6 +500,19 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
       GDALRasterIO( hBand3, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
                     pabyRaw3, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
 
+      if( hBandAlpha != NULL )
+      {
+          pabyRawAlpha = (unsigned char *) malloc(dst_xsize * dst_ysize);
+          if( pabyRawAlpha == NULL )
+              return -1;
+          
+          GDALRasterIO( hBandAlpha, GF_Read, 
+                        src_xoff, src_yoff, src_xsize, src_ysize, 
+                        pabyRawAlpha, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+      }
+      else
+          pabyRawAlpha = NULL;
+
       k = 0;
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
       {
@@ -503,12 +520,15 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
           {
               int	cc_index;
 
-              cc_index = RGB_INDEX(pabyRaw1[k], pabyRaw2[k], pabyRaw3[k]);
+              if( pabyRawAlpha == NULL || pabyRawAlpha[k] != 0 )
+              {
+                  cc_index = RGB_INDEX(pabyRaw1[k], pabyRaw2[k], pabyRaw3[k]);
 #ifndef USE_GD_1_2
-              img->pixels[i][j] = anColorCube[cc_index];
+                  img->pixels[i][j] = anColorCube[cc_index];
 #else
-              img->pixels[j][i] = anColorCube[cc_index];
+                  img->pixels[j][i] = anColorCube[cc_index];
 #endif
+              }
 
               k++;
           }
@@ -516,6 +536,8 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
 
       free( pabyRaw2 );
       free( pabyRaw3 );
+      if( pabyRawAlpha != NULL )
+          free( pabyRawAlpha );
   }
 
   free( pabyRaw1 );
@@ -1804,7 +1826,6 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         continue;
       }
     }
-
     if (memcmp(dd,PNGsig,8)==0) {
       if(layer->transform && 
          msProjectionsDiffer(&(map->projection), &(layer->projection))) {
@@ -1861,7 +1882,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         continue;
       }
     }
-    
+
     if (memcmp(dd,JPEGsig,3)==0) 
     {
       if((layer->transform && 
