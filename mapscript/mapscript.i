@@ -322,7 +322,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   %newobject getFontSetFile;
   char *getFontSetFile() {
-    return strdup(self->fontset.filename);
+      if (! &(self->fontset)) return NULL;
+      else {
+          if (! self->fontset.filename) return NULL;
+          else return strdup(self->fontset.filename);
+      }
   }
   
   int saveMapContext(char *szFileName) {

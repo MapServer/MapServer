@@ -109,6 +109,9 @@ class FontSetTestCase(unittest.TestCase):
         self.mapobj1 = mapObj(testMapfile)
     def tearDown(self):
         self.mapobj1 = None
+    def testGetFontSetFile(self):
+        file = self.mapobj1.getFontSetFile()
+        assert file == 'fonts.txt', file
     def testGetFonts(self):
         fonts = [('LucidaSansRegular',
                   '/Users/sean/Library/Fonts/LucidaSansRegular.ttf'), 
@@ -133,6 +136,41 @@ class TestMapExceptionTestCase(unittest.TestCase):
     def testDrawBadData(self):
         self.mapobj1.getLayerByName('ctybdpy2').data = 'foo'
         self.assertRaises(MapservError, self.mapobj1.draw)
+
+# If PIL is available, use it to test the saveToString() method
+
+have_image = 0
+try:
+    import Image
+    have_image = 1
+except ImportError:
+    pass
+    
+from StringIO import StringIO
+
+class SaveToStringTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testSaveToString(self):
+        msimg = self.mapobj1.draw()
+        data = StringIO(msimg.saveToString())
+        if have_image:
+            pyimg = Image.open(data)
+            assert pyimg.format == 'PNG'
+            assert pyimg.size == (600, 600)
+            assert pyimg.mode == 'P'
+        else:
+            assert 1
+
+class NoFontSetTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj('')
+    def tearDown(self):
+        self.mapobj1 = None
+    def testNoGetFontSetFile(self):
+        assert self.mapobj1.getFontSetFile() == None
 
 if __name__ == '__main__':
     unittest.main()
