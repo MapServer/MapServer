@@ -83,10 +83,15 @@ void msGettimeofday(struct mstimeval* tp, void* tzp)
 char *msStrptime(const char *s, const char *format, struct tm *tm)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
+    //we are now using a local strptime found strptime.c
+    return strptime(s, format, tm);
+    /*
+      
     msSetError(MS_MISCERR, 
                "strptime() not available on Windows, see bug 556.", 
                "msStrptime()");
     return (char *) s;
+    */
 #else
     /* Use system strptime() on non-windows systems */
     return strptime(s, format, tm);
