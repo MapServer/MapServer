@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.153  2004/11/17 17:29:18  dan
+ * Fixed GetLegendGraphic in WMS Capabilities that were missing the '?'
+ * or '&' separator if it was not included in wms_onlineresource (bug 1065)
+ *
  * Revision 1.152  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -1110,7 +1114,7 @@ void msWMSPrintScaleHint(const char *tabspace, double minscale,
 /*
 ** msDumpLayer()
 */
-int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
+int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_encoded, const char *indent)
 {
    rectObj ext;
    const char *value;
@@ -1368,12 +1372,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        }
        else
        {
-           const char *script_url;
-           char *script_url_encoded=NULL;
-
-           script_url = msOWSLookupMetadata(&(map->web.metadata), "MO", 
-                                            "onlineresource");
-           if (script_url)
+           if (script_url_encoded)
            {
                if (lp->connectiontype != MS_WMS && 
                    lp->connectiontype != MS_WFS &&
@@ -1404,7 +1403,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                        else
                          sprintf(height, "%d", 20);//default;
                    
-                       script_url_encoded = msEncodeHTMLEntities(script_url);
                        legendurl = (char*)malloc(strlen(script_url_encoded)+200);
 
 #ifdef USE_GD_PNG
@@ -1451,7 +1449,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
 
                        fprintf(stdout, "        </Style>\n");
                        msFree(legendurl);
-                       msFree(script_url_encoded);
                        msFree(mimetype);
 
                    }
@@ -1549,14 +1546,14 @@ int msWMSIsSubGroup(char** currentGroups, int currentLevel, char** otherGroups, 
  * -numNestedGroups: This array holds the number of nested groups for each layer   *
  ***********************************************************************************/
 void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed, 
-	int index, int level, char*** nestedGroups, int* numNestedGroups)
+	int index, int level, char*** nestedGroups, int* numNestedGroups, const char *script_url_encoded)
 {
    int j;
 
    if (numNestedGroups[index] <= level) //no more subgroups
    {
       //we are at the deepest level of the group branchings, so add layer now.
-      msDumpLayer(map, &map->layers[index], nVersion, "");
+      msDumpLayer(map, &map->layers[index], nVersion, script_url_encoded, "");
       pabLayerProcessed[index] = 1; //done
    }
    else //not yet there, we have to deal with this group and possible subgroups and layers.
@@ -1569,7 +1566,8 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
       if (!pabLayerProcessed[index])
       {
          msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed,
-           index, level + 1, nestedGroups, numNestedGroups);
+                                index, level + 1, nestedGroups, 
+                                numNestedGroups, script_url_encoded);
       }
 
       //look for subgroups in other layers.
@@ -1580,7 +1578,8 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
             if (!pabLayerProcessed[j])
             {
                msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed,
-                  j, level + 1, nestedGroups, numNestedGroups);
+                                      j, level + 1, nestedGroups, 
+                                      numNestedGroups, script_url_encoded);
             }
          }
          else
@@ -1888,12 +1887,13 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
          {
             // Has nested groups. 
              msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed, i, 0, 
-               nestedGroups, numNestedGroups);
+                                    nestedGroups, numNestedGroups, 
+                                    script_url_encoded);
          }
          else if (lp->group == NULL || strlen(lp->group) == 0)
          {
              // This layer is not part of a group... dump it directly
-             msDumpLayer(map, lp, nVersion, "");
+             msDumpLayer(map, lp, nVersion, script_url_encoded, "");
              pabLayerProcessed[i] = 1;
          }
          else
@@ -1923,7 +1923,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                      map->layers[j].group &&
                      strcmp(lp->group, map->layers[j].group) == 0 )
                  {
-                     msDumpLayer(map, &(map->layers[j]), nVersion, "  ");
+                     msDumpLayer(map, &(map->layers[j]), nVersion, script_url_encoded, "  ");
                      pabLayerProcessed[j] = 1;
                  }
              }

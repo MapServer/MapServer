@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Fixed GetLegendGraphic in WMS Capabilities that were missing the '?'
+  or '&' separator if it was not included in wms_onlineresource (bug 1065)
+
 - Updated WMS/WFS client and server code to lookup "ows_*" metadata names
   in addition to the default "wms_*" (or "wfs_*") metadatas (WCS was already
   implemented this way). This reduces the amount of duplication in mapfiles
