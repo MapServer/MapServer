@@ -38,6 +38,7 @@ if 'mapObj' not in dir(mapscript):
     mapscript.imageObj = mapscript.Image
     mapscript.shapefileObj = mapscript.Shapefile
     mapscript.projectionObj = mapscript.Projection
+    mapscript.fontSetObj = mapscript.FontSet
 
 # Base class for Primitives Tests -- no actual tests in this class
 
@@ -108,16 +109,19 @@ class MapPrimitivesTestCase(unittest.TestCase):
         self.assertAlmostEqual(first.miny, second.miny)
         self.assertAlmostEqual(first.maxx, second.maxx)
         self.assertAlmostEqual(first.maxy, second.maxy)
-        
-# ---------------------------------------------------------------------------
-# The tests begin here
 
-# Layer ordering tests
-class LayerOrderTestCase(unittest.TestCase):
+class MapTestCase(unittest.TestCase):
+    """Base class for testing with a map fixture"""
     def setUp(self):
         self.mapobj1 = mapscript.mapObj(testMapfile)
     def tearDown(self):
         self.mapobj1 = None
+
+# ---------------------------------------------------------------------------
+# The tests begin here
+
+# Layer ordering tests
+class LayerOrderTestCase(MapTestCase):
     def testGetLayerOrder(self):
         order = self.mapobj1.getLayerOrder()
         assert order == tuple(range(4)), order
@@ -136,11 +140,7 @@ class LayerOrderTestCase(unittest.TestCase):
         assert order == ord, order
 
 # Layer removal tests
-class RemoveLayerTestCase(unittest.TestCase):
-    def setUp(self):
-        self.mapobj1 = mapscript.mapObj(testMapfile)
-    def tearDown(self):
-        self.mapobj1 = None
+class RemoveLayerTestCase(MapTestCase):
     def testRemoveLayer1NumLayers(self):
         self.mapobj1.removeLayer(0)
         assert self.mapobj1.numlayers == 3
@@ -170,11 +170,7 @@ class LayerExtentTestCase(MapPrimitivesTestCase):
         self.assertRectsEqual(e, layer.getExtent())
         
 # class removal tests
-class RemoveClassTestCase(unittest.TestCase):
-    def setUp(self):
-        self.mapobj1 = mapscript.mapObj(testMapfile)
-    def tearDown(self):
-        self.mapobj1 = None
+class RemoveClassTestCase(MapTestCase):
     def testRemoveClass1NumClasses(self):
         self.mapobj1.getLayer(0).removeClass(0)
         assert self.mapobj1.getLayer(0).numclasses == 1
@@ -240,11 +236,7 @@ class SymbolTestCase(MapPrimitivesTestCase):
         assert symbol.setStyle(0, 1) == mapscript.MS_SUCCESS
 
 # symbolset tests
-class SymbolSetTestCase(unittest.TestCase):
-    def setUp(self):
-        self.mapobj1 = mapscript.mapObj(testMapfile)
-    def tearDown(self):
-        self.mapobj1 = None
+class SymbolSetTestCase(MapTestCase):
     def testGetNumSymbols(self):
         num = self.mapobj1.getNumSymbols()
         assert num == 2, num
@@ -291,14 +283,19 @@ class SymbolSetTestCase(unittest.TestCase):
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
                 
 # fontset tests
-class FontSetTestCase(unittest.TestCase):
-    def setUp(self):
-        self.mapobj1 = mapscript.mapObj(testMapfile)
-    def tearDown(self):
-        self.mapobj1 = None
+class FontSetTestCase(MapTestCase):
     def testGetFontSetFile(self):
         file = self.mapobj1.fontset.filename
         assert file == 'fonts.txt', file
+    def testFontSetFonts(self):
+        fonts = []
+        font = None
+        while 1:
+            font = self.mapobj1.fontset.getNextFont(font)
+            if not font:
+                break
+            fonts.append(font)
+        assert fonts == ['LucidaSansRegular', 'LucidaSansDemiBold'], fonts
 
 class EmptyMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -892,13 +889,6 @@ class NewOutputFormatTestCase(unittest.TestCase):
                           self.mapobj1.setImageType, 'gtiffx')
         self.mapobj1.setImageType('GTiff')
         assert self.mapobj1.outputformat.mimetype == 'image/tiff'
-
-class MapTestCase(unittest.TestCase):
-    """Base class for testing with a map fixture"""
-    def setUp(self):
-        self.mapobj1 = mapscript.mapObj(testMapfile)
-    def tearDown(self):
-        self.mapobj1 = None
 
 class MapMetaDataTestCase(MapTestCase):
     def testFirstKeyAccess(self):

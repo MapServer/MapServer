@@ -273,7 +273,8 @@ getMetaData(string key) : string
 
 getNextMetaDataKey(string lastkey) : string
     Returns the next key in the metadata hash table or NULL if
-    *lastkey* is the last valid key.
+    *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
+    first key of the metadata hash table.
    
 .. _getStyle:
 
@@ -362,7 +363,35 @@ setHex(string hexcolor) : int
 toHex() : string 
     Compliments setHex, returning a hexadecimal representation of the
     color components.
+
+
+-----------------------------------------------------------------------------
+ fontSetObj
+-----------------------------------------------------------------------------
+
+A fontSetObj is always an attribute of a mapObj_.
+
+Attributes
+----------
+
+filename : string immutable
+    Path to the fontset file on disk.
     
+numfonts : int immutable
+    Number of fonts in set.
+
+Methods
+-------
+
+getFirstFont() : string
+    Return the name of the first font in the fonts hash table.  Along with
+    getNextFont(), provides an opaque iterator for fonts.
+
+getNextFont(string lastfont) : string
+    Returns the next font following *lastfont* in the fonts hash table or
+    NULL if *lastfont* is the last non-NULL key.  If *lastfont* is NULL,
+    returns the **first** key of the fonts hash table.
+
 -----------------------------------------------------------------------------
  imageObj
 -----------------------------------------------------------------------------
@@ -560,7 +589,8 @@ getMetaData(string key) : string
 
 getNextMetaDataKey(string lastkey) : string
     Returns the next key in the metadata hash table or NULL if
-    *lastkey* is the last valid key.
+    *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
+    first key of the metadata hash table.
     
 .. _layerObj.getShape :
 
@@ -695,7 +725,9 @@ getMetaData(string key) : string
 
 getNextMetaDataKey(string lastkey) : string
     Returns the next key in the web.metadata hash table or NULL if
-    *lastkey* is the last valid key.
+    *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
+    first key of the metadata hash table.
+
     
 getOutputFormat(string imagetype) : outputFormatObj_
     Return the output format corresponding to driver name *imagetype* or

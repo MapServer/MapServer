@@ -153,6 +153,7 @@ memory.") const char * {
 %rename(Projection) projectionObj;
 %rename(Shapefile) shapefileObj;
 %rename(SymbolSet) symbolSetObj;
+%rename(FontSet) fontSetObj;
 #endif
 
 // grab mapserver declarations to wrap
@@ -1853,5 +1854,17 @@ memory.") const char * {
         sprintf(hexcolor, "#%02x%02x%02x", self->red, self->green, self->blue);
         return strdup(hexcolor);
     }
+}
+
+%extend fontSetObj {
+   
+  char *getFirstFont() {
+    return msFirstKeyFromHashTable(self->fonts);
+  }
+ 
+  char *getNextFont(char *font) {
+    return msNextKeyFromHashTable(self->fonts, font);
+  }
+  
 }
 
