@@ -66,20 +66,20 @@ static int gmlWriteBounds(FILE *stream, rectObj *rect, const char *srsname, char
   if(!rect) return(MS_FAILURE);
   if(!tab) return(MS_FAILURE);
 
-  fprintf(stream, "%s<gml:boundedBy>\n", tab);
+  msIO_fprintf(stream, "%s<gml:boundedBy>\n", tab);
   if(srsname)
   {
     srsname_encoded = msEncodeHTMLEntities(srsname);
-    fprintf(stream, "%s\t<gml:Box srsName=\"%s\">\n", tab, srsname_encoded);
+    msIO_fprintf(stream, "%s\t<gml:Box srsName=\"%s\">\n", tab, srsname_encoded);
     msFree(srsname_encoded);
   }
   else
-    fprintf(stream, "%s\t<gml:Box>\n", tab);
-  fprintf(stream, "%s\t\t<gml:coordinates>\n", tab);  
-  fprintf(stream, "%s\t\t\t%.6f,%.6f %.6f,%.6f\n", tab, rect->minx, rect->miny, rect->maxx, rect->maxy );   
-  fprintf(stream, "%s\t\t</gml:coordinates>\n", tab);
-  fprintf(stream, "%s\t</gml:Box>\n", tab);
-  fprintf(stream, "%s</gml:boundedBy>\n", tab);
+    msIO_fprintf(stream, "%s\t<gml:Box>\n", tab);
+  msIO_fprintf(stream, "%s\t\t<gml:coordinates>\n", tab);  
+  msIO_fprintf(stream, "%s\t\t\t%.6f,%.6f %.6f,%.6f\n", tab, rect->minx, rect->miny, rect->maxx, rect->maxy );   
+  msIO_fprintf(stream, "%s\t\t</gml:coordinates>\n", tab);
+  msIO_fprintf(stream, "%s\t</gml:Box>\n", tab);
+  msIO_fprintf(stream, "%s</gml:boundedBy>\n", tab);
   return MS_SUCCESS;
 }
 
@@ -104,92 +104,92 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
   case(MS_SHAPE_POINT):
     if(shape->line[0].numpoints > 1) { // write a MultiPoint
       if(srsname_encoded)
-        fprintf(stream, "%s<gml:MultiPoint srsName=\"%s\">\n", tab, 
+        msIO_fprintf(stream, "%s<gml:MultiPoint srsName=\"%s\">\n", tab, 
                 srsname_encoded);
       else
-        fprintf(stream, "%s<gml:MultiPoint>\n", tab);
+        msIO_fprintf(stream, "%s<gml:MultiPoint>\n", tab);
 
       for(i=0; i<shape->line[0].numpoints; i++) {
-        fprintf(stream, "%s\t<gml:Point>\n", tab);
-        fprintf(stream, "%s\t\t<gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);
-        fprintf(stream, "%s\t</gml:Point>\n", tab);
+        msIO_fprintf(stream, "%s\t<gml:Point>\n", tab);
+        msIO_fprintf(stream, "%s\t\t<gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[0].point[i].x, shape->line[0].point[i].y);
+        msIO_fprintf(stream, "%s\t</gml:Point>\n", tab);
       }
 
-      fprintf(stream, "%s</gml:MultiPoint>\n", tab);
+      msIO_fprintf(stream, "%s</gml:MultiPoint>\n", tab);
     } else { // write a Point
       if(srsname_encoded)
-        fprintf(stream, "%s<gml:Point srsName=\"%s\">\n", tab, 
+        msIO_fprintf(stream, "%s<gml:Point srsName=\"%s\">\n", tab, 
                 srsname_encoded);
       else
-        fprintf(stream, "%s<gml:Point>\n", tab);
+        msIO_fprintf(stream, "%s<gml:Point>\n", tab);
 
-      fprintf(stream, "%s\t<gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[0].point[0].x, shape->line[0].point[0].y);
+      msIO_fprintf(stream, "%s\t<gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[0].point[0].x, shape->line[0].point[0].y);
 
-      fprintf(stream, "%s</gml:Point>\n", tab);
+      msIO_fprintf(stream, "%s</gml:Point>\n", tab);
     }
     break;
   case(MS_SHAPE_LINE):
     if(shape->numlines == 1) { // write a LineString
       if(srsname_encoded)
-        fprintf(stream, "%s<gml:LineString srsName=\"%s\">\n", tab, 
+        msIO_fprintf(stream, "%s<gml:LineString srsName=\"%s\">\n", tab, 
                 srsname_encoded);
       else
-        fprintf(stream, "%s<gml:LineString>\n", tab);
+        msIO_fprintf(stream, "%s<gml:LineString>\n", tab);
 
-      fprintf(stream, "%s\t<gml:coordinates>", tab);
+      msIO_fprintf(stream, "%s\t<gml:coordinates>", tab);
       for(j=0; j<shape->line[0].numpoints-1; j++)
-        fprintf(stream, "%f,%f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
+        msIO_fprintf(stream, "%f,%f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
 /* -------------------------------------------------------------------- */
 /*      Adding a tab at the end of the coordinates string does          */
 /*      create a bug when reading the the coordinates using ogr         */
 /*      (function ParseGMLCoordinates in gml2ogrgeometry.cpp).          */
 /* -------------------------------------------------------------------- */
-      fprintf(stream, "</gml:coordinates>\n");
+      msIO_fprintf(stream, "</gml:coordinates>\n");
 
-      fprintf(stream, "%s</gml:LineString>\n", tab);
+      msIO_fprintf(stream, "%s</gml:LineString>\n", tab);
     } else { // write a MultiLineString      
       if(srsname_encoded)
-        fprintf(stream, "%s<gml:MultiLineString srsName=\"%s\">\n", tab, 
+        msIO_fprintf(stream, "%s<gml:MultiLineString srsName=\"%s\">\n", tab, 
                 srsname_encoded);
       else
-        fprintf(stream, "%s<gml:MultiLineString>\n", tab);
+        msIO_fprintf(stream, "%s<gml:MultiLineString>\n", tab);
 
       for(i=0; i<shape->numlines; i++) {
-        fprintf(stream, "%s\t<gml:LineString>\n", tab); // no srsname at this point
+        msIO_fprintf(stream, "%s\t<gml:LineString>\n", tab); // no srsname at this point
 
-        fprintf(stream, "%s\t\t<gml:coordinates>", tab);
+        msIO_fprintf(stream, "%s\t\t<gml:coordinates>", tab);
         for(j=0; j<shape->line[i].numpoints; j++)
-	  fprintf(stream, "%f,%f", shape->line[i].point[j].x, shape->line[i].point[j].y);
-        fprintf(stream, "</gml:coordinates>\n");
-        fprintf(stream, "%s\t</gml:LineString>\n", tab);
+	  msIO_fprintf(stream, "%f,%f", shape->line[i].point[j].x, shape->line[i].point[j].y);
+        msIO_fprintf(stream, "</gml:coordinates>\n");
+        msIO_fprintf(stream, "%s\t</gml:LineString>\n", tab);
       }
 
-      fprintf(stream, "%s</gml:MultiLineString>\n", tab);
+      msIO_fprintf(stream, "%s</gml:MultiLineString>\n", tab);
     }
     break;
   case(MS_SHAPE_POLYGON): // this gets nasty, since our shapes are so flexible
     if(shape->numlines == 1) { // write a Polygon (no interior rings)
       if(srsname_encoded)
-        fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, 
+        msIO_fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, 
                 srsname_encoded);
       else
-        fprintf(stream, "%s<gml:Polygon>\n", tab);
+        msIO_fprintf(stream, "%s<gml:Polygon>\n", tab);
 
-      fprintf(stream, "%s\t<gml:outerBoundaryIs>\n", tab);
-      fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
+      msIO_fprintf(stream, "%s\t<gml:outerBoundaryIs>\n", tab);
+      msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-      fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
-      fprintf(stream, "%s\t\t\t\t", tab);
+      msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
+      msIO_fprintf(stream, "%s\t\t\t\t", tab);
       for(j=0; j<shape->line[0].numpoints; j++)
-	fprintf(stream, "%f,%f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
-      //fprintf(stream, "\n");
-      // fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
-      fprintf(stream, "</gml:coordinates>\n");
+	msIO_fprintf(stream, "%f,%f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
+      //msIO_fprintf(stream, "\n");
+      // msIO_fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+      msIO_fprintf(stream, "</gml:coordinates>\n");
 
-      fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
-      fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
+      msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
+      msIO_fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
 
-      fprintf(stream, "%s</gml:Polygon>\n", tab);
+      msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
     } else { // need to test for inner and outer rings
       outerlist = getOuterList(shape);
 
@@ -204,53 +204,53 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
 	innerlist = getInnerList(shape, i, outerlist);
 
 	if(srsname_encoded)
-          fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, 
+          msIO_fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, 
                   srsname_encoded);
         else
-          fprintf(stream, "%s<gml:Polygon>\n", tab);
+          msIO_fprintf(stream, "%s<gml:Polygon>\n", tab);
 
-        fprintf(stream, "%s\t<gml:outerBoundaryIs>\n", tab);
-        fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
+        msIO_fprintf(stream, "%s\t<gml:outerBoundaryIs>\n", tab);
+        msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-        fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
-        fprintf(stream, "%s\t\t\t\t", tab);
+        msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
+        msIO_fprintf(stream, "%s\t\t\t\t", tab);
         for(j=0; j<shape->line[i].numpoints; j++)
-	  fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
-        //fprintf(stream, "\n");
-        //fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
-        fprintf(stream, "</gml:coordinates>\n");
+	  msIO_fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
+        //msIO_fprintf(stream, "\n");
+        //msIO_fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+        msIO_fprintf(stream, "</gml:coordinates>\n");
 
-        fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
-        fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
+        msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
+        msIO_fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
 
 	for(k=0; k<shape->numlines; k++) { // now step through all the inner rings
 	  if(innerlist[k] == MS_TRUE) {
-	    fprintf(stream, "%s\t<gml:innerBoundaryIs>\n", tab);
-            fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
+	    msIO_fprintf(stream, "%s\t<gml:innerBoundaryIs>\n", tab);
+            msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-            fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
-            fprintf(stream, "%s\t\t\t\t", tab);
+            msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
+            msIO_fprintf(stream, "%s\t\t\t\t", tab);
             for(j=0; j<shape->line[k].numpoints; j++)
-	      fprintf(stream, "%f,%f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
-            //fprintf(stream, "\n");
-            //fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
-            fprintf(stream, "</gml:coordinates>\n");
+	      msIO_fprintf(stream, "%f,%f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
+            //msIO_fprintf(stream, "\n");
+            //msIO_fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
+            msIO_fprintf(stream, "</gml:coordinates>\n");
 
-            fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
-            fprintf(stream, "%s\t</gml:innerBoundaryIs>\n", tab);
+            msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
+            msIO_fprintf(stream, "%s\t</gml:innerBoundaryIs>\n", tab);
           }
         }
 
-        fprintf(stream, "%s</gml:Polygon>\n", tab);
+        msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
 	free(innerlist);
       } else {  // write a MultiPolygon	
 	if(srsname_encoded)
         {
-          fprintf(stream, "%s<gml:MultiPolygon srsName=\"%s\">\n", tab, 
+          msIO_fprintf(stream, "%s<gml:MultiPolygon srsName=\"%s\">\n", tab, 
                   srsname_encoded);
         }
         else
-          fprintf(stream, "%s<gml:MultiPolygon>\n", tab);
+          msIO_fprintf(stream, "%s<gml:MultiPolygon>\n", tab);
         
  
 
@@ -258,51 +258,51 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
           if(outerlist[i] == MS_TRUE) {
   	    innerlist = getInnerList(shape, i, outerlist);
 
-            fprintf(stream, "%s<gml:polygonMember>\n", tab);
+            msIO_fprintf(stream, "%s<gml:polygonMember>\n", tab);
 
-            fprintf(stream, "%s\t<gml:Polygon>\n", tab);
+            msIO_fprintf(stream, "%s\t<gml:Polygon>\n", tab);
 
-            fprintf(stream, "%s\t\t<gml:outerBoundaryIs>\n", tab);
-            fprintf(stream, "%s\t\t\t<gml:LinearRing>\n", tab);
+            msIO_fprintf(stream, "%s\t\t<gml:outerBoundaryIs>\n", tab);
+            msIO_fprintf(stream, "%s\t\t\t<gml:LinearRing>\n", tab);
 
-            fprintf(stream, "%s\t\t\t\t<gml:coordinates>\n", tab);
-            fprintf(stream, "%s\t\t\t\t\t", tab);
+            msIO_fprintf(stream, "%s\t\t\t\t<gml:coordinates>\n", tab);
+            msIO_fprintf(stream, "%s\t\t\t\t\t", tab);
             for(j=0; j<shape->line[i].numpoints; j++)
-	      fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
-            //fprintf(stream, "\n");
-            //fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
-            fprintf(stream, "</gml:coordinates>\n");
+	      msIO_fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
+            //msIO_fprintf(stream, "\n");
+            //msIO_fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
+            msIO_fprintf(stream, "</gml:coordinates>\n");
 
-            fprintf(stream, "%s\t\t\t</gml:LinearRing>\n", tab);
-            fprintf(stream, "%s\t\t</gml:outerBoundaryIs>\n", tab);
+            msIO_fprintf(stream, "%s\t\t\t</gml:LinearRing>\n", tab);
+            msIO_fprintf(stream, "%s\t\t</gml:outerBoundaryIs>\n", tab);
 
 	    for(k=0; k<shape->numlines; k++) { // now step through all the inner rings
 	      if(innerlist[k] == MS_TRUE) {
-	        fprintf(stream, "%s\t\t<gml:innerBoundaryIs>\n", tab);
-                fprintf(stream, "%s\t\t\t<gml:LinearRing>\n", tab);
+	        msIO_fprintf(stream, "%s\t\t<gml:innerBoundaryIs>\n", tab);
+                msIO_fprintf(stream, "%s\t\t\t<gml:LinearRing>\n", tab);
 
-                fprintf(stream, "%s\t\t\t\t<gml:coordinates>\n", tab);
-                fprintf(stream, "%s\t\t\t\t\t", tab);
+                msIO_fprintf(stream, "%s\t\t\t\t<gml:coordinates>\n", tab);
+                msIO_fprintf(stream, "%s\t\t\t\t\t", tab);
                 for(j=0; j<shape->line[k].numpoints; j++)
-	          fprintf(stream, "%f,%f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
-                //fprintf(stream, "\n");
-                //fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
-                fprintf(stream, "</gml:coordinates>\n");
+	          msIO_fprintf(stream, "%f,%f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
+                //msIO_fprintf(stream, "\n");
+                //msIO_fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
+                msIO_fprintf(stream, "</gml:coordinates>\n");
 
 
-                fprintf(stream, "%s\t\t\t</gml:LinearRing>\n", tab);
-                fprintf(stream, "%s\t\t</gml:innerBoundaryIs>\n", tab);
+                msIO_fprintf(stream, "%s\t\t\t</gml:LinearRing>\n", tab);
+                msIO_fprintf(stream, "%s\t\t</gml:innerBoundaryIs>\n", tab);
               }
             }
 
-            fprintf(stream, "%s\t</gml:Polygon>\n", tab);
-            fprintf(stream, "%s</gml:polygonMember>\n", tab);
+            msIO_fprintf(stream, "%s\t</gml:Polygon>\n", tab);
+            msIO_fprintf(stream, "%s</gml:polygonMember>\n", tab);
 	
 	    free(innerlist);
           }
         }
 
-        fprintf(stream, "%s</gml:MultiPolygon>\n", tab);
+        msIO_fprintf(stream, "%s</gml:MultiPolygon>\n", tab);
       }
       free(outerlist);
     }
@@ -351,12 +351,12 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, "gml_uri", 
                       MS_NOERR, "xmlns=\"%s\"", NULL);
-  fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
-  fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
-  fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+  msIO_fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
+  msIO_fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
+  msIO_fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, "gml_schema", 
                       MS_NOERR, "\n\t xsi:schemaLocation=\"%s\"", NULL);
-  fprintf(stream, ">\n");
+  msIO_fprintf(stream, ">\n");
 
   // a schema *should* be required
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
@@ -412,11 +412,11 @@ int msGMLWriteQuery(mapObj *map, char *filename)
           char *encoded_val;
 
           if(msIsXMLTagValid(lp->items[k]) == MS_FALSE)
-              fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a "
+              msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid in a "
                       "XML tag context. -->\n", lp->items[k]);
 
           encoded_val = msEncodeHTMLEntities(shape.values[k]);
-	  fprintf(stream, "\t\t\t<%s>%s</%s>\n", lp->items[k], encoded_val, 
+	  msIO_fprintf(stream, "\t\t\t<%s>%s</%s>\n", lp->items[k], encoded_val, 
                   lp->items[k]);
           free(encoded_val);
         }
@@ -576,11 +576,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
         else
             layer_name = strdup(lp->name);
 
-	fprintf(stream, "    <gml:featureMember>\n");
+	msIO_fprintf(stream, "    <gml:featureMember>\n");
         if(msIsXMLTagValid(layer_name) == MS_FALSE)
-            fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
+            msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
                     "in a XML tag context. -->\n", layer_name);
-        fprintf(stream, "      <%s>\n", layer_name);
+        msIO_fprintf(stream, "      <%s>\n", layer_name);
 
         //write name and description attributs if specified in the map file
         
@@ -591,7 +591,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
             {
                 if (strcasecmp(lp->items[k], description_gml) == 0)
                 {
-                    fprintf(stream, "      <gml:description>%s</gml:description>\n",  
+                    msIO_fprintf(stream, "      <gml:description>%s</gml:description>\n",  
                             msEncodeHTMLEntities(shape.values[k]));
                     break;
                  }
@@ -604,7 +604,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
              {
                  if (strcasecmp(lp->items[k], name_gml) == 0)
                  {
-                     fprintf(stream, "      <gml:name>%s</gml:name>\n",  
+                     msIO_fprintf(stream, "      <gml:name>%s</gml:name>\n",  
                              msEncodeHTMLEntities(shape.values[k]));
                      break;
                  }
@@ -622,7 +622,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 #endif
 
         
-        fprintf(stream, "        <gml:%s>\n", geom_name); 
+        msIO_fprintf(stream, "        <gml:%s>\n", geom_name); 
 
                     
 	// write the feature geometry
@@ -635,7 +635,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 	gmlWriteGeometry(stream, &(shape), NULL, "          ");
 #endif
 
-        fprintf(stream, "        </gml:%s>\n", geom_name); 
+        msIO_fprintf(stream, "        </gml:%s>\n", geom_name); 
 
 	// write the item/values
 	for(k=0; k<lp->numitems; k++)	
@@ -653,27 +653,27 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
             continue;
 
           if(msIsXMLTagValid(lp->items[k]) == MS_FALSE)
-              fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
+              msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
                       "in a XML tag context. -->\n", lp->items[k]);
           
           if (namespace)
           {
             if(msIsXMLTagValid(namespace) == MS_FALSE)
-              fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
+              msIO_fprintf(stream, "<!-- WARNING: The value '%s' is not valid "
                       "in a XML tag context. -->\n", namespace);
-            fprintf(stream, "        <%s:%s>%s</%s:%s>\n", 
+            msIO_fprintf(stream, "        <%s:%s>%s</%s:%s>\n", 
                     namespace, lp->items[k], encoded_val, 
                     namespace, lp->items[k]);
           }
           else      
-            fprintf(stream, "        <%s>%s</%s>\n", 
+            msIO_fprintf(stream, "        <%s>%s</%s>\n", 
                     lp->items[k], encoded_val, lp->items[k]);
         }
 
 	// end this feature
-        fprintf(stream, "      </%s>\n", layer_name);
+        msIO_fprintf(stream, "      </%s>\n", layer_name);
 
-	fprintf(stream, "    </gml:featureMember>\n");
+	msIO_fprintf(stream, "    </gml:featureMember>\n");
 
         msFree(layer_name);
 

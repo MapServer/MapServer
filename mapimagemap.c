@@ -2055,20 +2055,20 @@ DEBUG_IF printf("ALLOCD %d<BR>\n", img->size);
 //DEBUG_IF printf("F %s<BR>\n", img->img.imagemap);
 DEBUG_IF printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
 	  if (dxf == 2){
-	    fprintf(stream, "%s", layerlist); 
+	    msIO_fprintf(stream, "%s", layerlist); 
 	  } else if (dxf){
-	    fprintf(stream, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\n  1\nAC1009\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n  0\nTABLE\n%s0\nENDTAB\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n", layerlist); 
+	    msIO_fprintf(stream, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\n  1\nAC1009\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n  0\nTABLE\n%s0\nENDTAB\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n", layerlist); 
 	  } else {
-	    fprintf(stream, "<map name=\"%s\" width=\"%d\" height=\"%d\">\n", mapName, img->width, img->height);
+	    msIO_fprintf(stream, "<map name=\"%s\" width=\"%d\" height=\"%d\">\n", mapName, img->width, img->height);
     	  }
-	  fprintf(stream, img->img.imagemap);
+	  msIO_fprintf(stream, img->img.imagemap);
 	  if( strcasecmp("OFF",msGetOutputFormatOption( format, "SKIPENDTAG", "OFF" )) == 0){
 		  if (dxf == 2)
-			  fprintf(stream, "END");
+			  msIO_fprintf(stream, "END");
 		  else if (dxf)
-			  fprintf(stream, "0\nENDSEC\n0\nEOF\n");
+			  msIO_fprintf(stream, "0\nENDSEC\n0\nEOF\n");
 		  else 
-			  fprintf(stream, "</map>");
+			  msIO_fprintf(stream, "</map>");
 /*#ifdef USE_GD_GIF
     gdImageGif(img, stream);
 #else
