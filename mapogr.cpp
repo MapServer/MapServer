@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group Inc
+ * Copyright (c) 2000-2002, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.53  2002/08/14 17:30:44  dan
+ * Fixed problem with numeric labels with STYLEITEM AUTO (bug 185)
+ *
  * Revision 1.52  2002/07/11 18:38:57  frank
  * allow layer names as well as layer indexes in connection string.
  *
@@ -1946,14 +1949,17 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
           {
               OGRStyleLabel *poLabelStyle = (OGRStyleLabel*)poStylePart;
 
+              // Enclose the text sting inside quotes to make sure it is seen
+              // as a string by the parser inside loadExpression(). (bug185)
               loadExpressionString(&(c->text), 
-                                   (char*)poLabelStyle->TextString(bIsNull));
+                         (char*)CPLSPrintf("\"%s\"", 
+                                           poLabelStyle->TextString(bIsNull)));
 
               c->label.angle = poLabelStyle->Angle(bIsNull);
 
               c->label.size = (int)poLabelStyle->Size(bIsNull);
 
-              // msDebug("** Label size=%d, angle=%f **\n", c->label.size, c->label.angle);
+              // msDebug("** Label size=%d, angle=%f, string=%s **\n", c->label.size, c->label.angle, poLabelStyle->TextString(bIsNull));
 
               // OGR default is anchor point = LL, so label is at UR of anchor
               c->label.position = MS_UR;
