@@ -6,6 +6,8 @@
 
 #ifdef USE_POSTGIS
 
+#define LITTLE_ENDIAN 1
+#define BIG_ENDIAN 2
 
 #include "libpq-fe.h"
 #include <string.h>
@@ -20,7 +22,14 @@ typedef struct ms_POSTGIS_layer_info_t
 	long	 	row_num;  	//what row is the NEXT to be read (for random access)
  	PGresult   *query_result;//for fetching rows from the db
 	char	     *fields;	 // results from EXPLAIN VERBOSE (or null)
+	char		*urid_name; // name of user-specified unique identifier or OID
+	char		*user_srid; //zero length = calculate, non-zero means using this value!
+	
 } msPOSTGISLayerInfo;
+
+
+int msPOSTGISLayerParseData(char *data, char *geom_column_name,
+					char *table_name, char *urid_name,char *user_srid);
 
 void postresql_NOTICE_HANDLER(void *arg, const char *message)
 {
@@ -50,11 +59,14 @@ void postresql_NOTICE_HANDLER(void *arg, const char *message)
 				str++; //now points to start of next word
 
 				str2 = strstr(str," ");	//points to end of next word
+				if (strncmp(str, "<>", (str2-str))) { // Not a bogus resname
 				if (strlen(result) > 0)
 				{
 					strcat(result,",");
 				}
-				strncat(result,str, (str2-str) );	
+
+					strncat(result,str, (str2-str) );
+				}
 			}
 		}
 		//fprintf(stderr,"notice returns: %s\n",result);
@@ -173,7 +185,7 @@ int msPOSTGISLayerInitItemInfo(layerObj *layer)
 // geometry column.  For 0.6, we determine the SRID of the column and then
 // tag the bounding box as the same SRID.  
 
-int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string)
+int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
 {
 	PGresult	*result;
 	char	columns_wanted[5000];
@@ -183,15 +195,50 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	int	t;
 	char	box3d[200];
 	msPOSTGISLayerInfo *layerinfo;
+	char *pos_from, *pos_ftab, *pos_space, *pos_paren;
+	char f_table_name[5000];
 
 	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
+	
+	/* Set the urid name */
+	layerinfo->urid_name = urid_name;
 
+	/* Extract the proper f_table_name from the geom_table string.
+	 * We are expecting the geom_table to be either a single word
+	 * or a sub-select clause that possibly includes a join --
+	 *
+	 * (select column[,column[,...]] from ftab[ natural join table2]) as foo
+	 *
+	 * We are expecting whitespace or a ')' after the ftab name.
+	 *
+	 */
+	
+	pos_from = strstr(geom_table, " from ");
+	if (pos_from == NULL) {
+		strcpy(f_table_name, geom_table);
+	}
+	else { // geom_table is a sub-select clause
+		pos_ftab = pos_from + 6; // This should be the start of the ftab name
+		pos_space = strstr(pos_ftab, " "); // First space
+		pos_paren = strstr(pos_ftab, ")"); // Closing paren of clause
+		if (  (pos_space ==NULL)  || (pos_paren ==NULL) ) {
+			msSetError(MS_QUERYERR, "Error parsing POSTGIS sub-select clause.", "prep_DB()");
+			return(MS_FAILURE);
+		}
+		if (pos_paren < pos_space) { // closing parenthesis preceeds any space
+			strncpy(f_table_name, pos_ftab, pos_paren - pos_ftab);
+		}
+		else {
+			strncpy(f_table_name, pos_ftab, pos_space - pos_ftab);
+		}
+	}
+		
 	if (layer->numitems ==0)
 	{
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
-			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR'),oid::text", geom_column);
+			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR'),%s::text", geom_column, urid_name);
 		else
-			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR'),oid::text", geom_column);	
+			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR'),%s::text", geom_column, urid_name);	
 	}
 	else
 	{
@@ -202,9 +249,9 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 			strcat(columns_wanted,temp);
 		}
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
-			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),oid::text", geom_column);
+			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),%s::text", geom_column, urid_name);
 		else
-			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),oid::text", geom_column);
+			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),%s::text", geom_column, urid_name);
 	
 		strcat(columns_wanted,temp);
 	}
@@ -215,15 +262,32 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	{
 		sprintf(query_string_0_5,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && %s",
 						columns_wanted,geom_table,geom_column,box3d);
-		sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )",
-						columns_wanted,geom_table,geom_column,box3d,geom_table,geom_column);
+		if (strlen(user_srid) == 0)
+		{
+			sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )",
+						columns_wanted,geom_table,geom_column,box3d,f_table_name,geom_column);
+		}
+		else	//use the user specified version
+		{
+			sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )",
+						columns_wanted,geom_table,geom_column,box3d,user_srid);
+		}
 	}
 	else
 	{
 		sprintf(query_string_0_5,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && %s)",
 						columns_wanted,geom_table,layer->filter.string,geom_column,box3d);
-		sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))",
-						columns_wanted,geom_table,layer->filter.string,geom_column,box3d,geom_table,geom_column);
+		if (strlen(user_srid) == 0)
+		{
+			sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,find_srid('','%s','%s') ))",
+						columns_wanted,geom_table,layer->filter.string,geom_column,box3d,f_table_name,geom_column);
+		}
+		else
+		{
+			sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE (%s) and (%s && setSRID( %s,%s) )",
+						columns_wanted,geom_table,layer->filter.string,geom_column,box3d,user_srid);
+
+		}
 	}
 
 
@@ -279,8 +343,8 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
     if (!(result) || PQresultStatus(result) != PGRES_COMMAND_OK)
     {
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement (0.6 failed - retried using 0.5 and it failed).", 
-                 "msPOSTGISLayerWhichShapes()");
+	      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement (0.6 failed - retried using 0.5 and it failed). \n%s", 
+                 "msPOSTGISLayerWhichShapes()",query_string_0_6);
      
         	PQclear(result);
 	  	layerinfo->query_result = NULL;
@@ -302,8 +366,8 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
  		return (MS_SUCCESS);	
     }
 
-	      msSetError(MS_QUERYERR, "prep_DB:Error executing POSTGIS  DECLARE statement (0.6 failed - retried 0.5 and it failed too).", 
-                 "msPOSTGISLayerWhichShapes()");
+	      msSetError(MS_QUERYERR, "prep_DB:Error executing POSTGIS  DECLARE statement (0.6 failed - retried 0.5 and it failed too). \n%s", 
+                 "msPOSTGISLayerWhichShapes()",query_string_0_6);
      
         	PQclear(result);
 	  	layerinfo->query_result = NULL;
@@ -325,9 +389,10 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	char	*query_str;
 	char	table_name[5000];
 	char	geom_column_name[5000];
+	char	urid_name[5000];
+	char	user_srid[5000];
 	
 	int	set_up_result;
-	char *temp_scn;
 
 	msPOSTGISLayerInfo	*layerinfo;
 
@@ -353,33 +418,9 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	query_str = (char *) malloc(6000); //should be big enough
 	memset(query_str,0,6000);		//zero it out
 
-	//get the table name and geometry column name
+	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
 
-		// given a string of the from 'geom from ctivalues' or 'geom from () as foo'
-		// return geom_column_name as 'geom'
-		// and table name as 'ctivalues' or 'geom from () as foo'	
-
-		temp_scn = strstr(layer->data," from ");
-		if (temp_scn == NULL)
-		{
-			msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", 
-                 		"msPOSTGISLayerWhichShapes()");
-		 	return(MS_FAILURE);	
-		}
-		memcpy(geom_column_name , layer->data, (temp_scn)- (layer->data)  );
-		geom_column_name[(temp_scn)- (layer->data)] = 0; //null terminate it
-
-		strcpy(table_name, temp_scn+6);	//table name or sub-select clause
-		
-
-	if ( (strlen(table_name) <1) ||  (strlen(geom_column_name) < 1 )  )
-	{
-            msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo'.",
-			"msPOSTGISLayerWhichShapes()");
-	  return(MS_FAILURE);
-	}
-
-	set_up_result= prep_DB(table_name,geom_column_name, layer, &(layerinfo->query_result), rect,query_str);
+	set_up_result= prep_DB(table_name,geom_column_name, layer, &(layerinfo->query_result), rect,query_str, urid_name,user_srid);
 	if (set_up_result != MS_SUCCESS)
 		return set_up_result; //relay error
 	layerinfo->sql = query_str;
@@ -814,7 +855,7 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 				case MS_LAYER_QUERY:
 					result = dont_force(wkb,shape);
 					break;
-				default:		
+			/*	default:*/		
 
 			}
 			if (shape->type != MS_SHAPE_NULL)
@@ -868,6 +909,8 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	char	*query_str;
 	char	table_name[5000];
 	char	geom_column_name[5000];
+	char	urid_name[5000];
+	char	user_srid[5000];
 	//int	nitems;
 	char	columns_wanted[5000];
 	char	temp[5000];
@@ -878,7 +921,6 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	char				*wkb;
 	int				result,t,size;
 	char				*temp1,*temp2;
-	char				*temp_scn;
 
 //fprintf(stderr,"msPOSTGISLayerGetShape called for record = %i\n",record);
 
@@ -894,32 +936,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	query_str = (char *) malloc(6000); //should be big enough
 	memset(query_str,0,6000);		//zero it out
 
-	//get the table name and geometry column name
-
-		// given a string of the from 'geom from ctivalues' or 'geom from () as foo'
-		// return geom_column_name as 'geom'
-		// and table name as 'ctivalues' or 'geom from () as foo'	
-
-		temp_scn = strstr(layer->data," from ");
-		if (temp_scn == NULL)
-		{
-			msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", 
-                 		"msPOSTGISLayerWhichShapes()");
-		 	return(MS_FAILURE);	
-		}
-		memcpy(geom_column_name , layer->data, (temp_scn)- (layer->data)  );
-		geom_column_name[(temp_scn)- (layer->data)] = 0; //null terminate it
-
-		strcpy(table_name, temp_scn+6);	//table name or sub-select clause
-		
-
-	if ( (strlen(table_name) <1) ||  (strlen(geom_column_name) < 1 )  )
-	{
-            msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo'.",
-			"msPOSTGISLayerWhichShapes()");
-	  return(MS_FAILURE);
-	}
-
+	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
 
 	if (layer->numitems ==0) //dont need the oid since its really record
 	{
@@ -946,8 +963,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
 
 
-		sprintf(query_str,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE OID = %li",
-						columns_wanted,table_name,record);
+		sprintf(query_str,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s = %li", columns_wanted,table_name,urid_name,record);
 
 
 //fprintf(stderr,"msPOSTGISLayerGetShape: %s \n",query_str); 
@@ -1032,7 +1048,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 				case MS_LAYER_QUERY:
 					result = dont_force(wkb,shape);
 					break;
-				default:		
+			/*	default:*/		
 
 			}
 			if (shape->type != MS_SHAPE_NULL)
@@ -1092,9 +1108,10 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 	msPOSTGISLayerInfo	*layerinfo;
 	char				table_name[5000];
 	char				geom_column_name[5000];
+	char	urid_name[5000];
+	char user_srid[5000];
 	char				sql[6000];
 	//int				nitems;
-	char				*temp_scn;
 	
 
 	PGresult   *query_result;
@@ -1122,30 +1139,7 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 	}
 	//get the table name and geometry column name
 
-
-		// given a string of the from 'geom from ctivalues' or 'geom from () as foo'
-		// return geom_column_name as 'geom'
-		// and table name as 'ctivalues' or 'geom from () as foo'	
-
-		temp_scn = strstr(layer->data," from ");
-		if (temp_scn == NULL)
-		{
-			msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", 
-                 		"msPOSTGISLayerWhichShapes()");
-		 	return(MS_FAILURE);	
-		}
-		memcpy(geom_column_name , layer->data, (temp_scn)- (layer->data)  );
-		geom_column_name[(temp_scn)- (layer->data)] = 0; //null terminate it
-
-		strcpy(table_name, temp_scn+6);	//table name or sub-select clause
-		
-
-	if ( (strlen(table_name) <1) ||  (strlen(geom_column_name) < 1 )  )
-	{
-            msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo'.",
-			"msPOSTGISLayerWhichShapes()");
-	  return(MS_FAILURE);
-	}
+	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid);
 
 	// two cases here.  One, its a table (use select * from table) otherwise, just use the select clause
 	sprintf(sql,"EXPLAIN VERBOSE SELECT * FROM %s",table_name);
@@ -1243,6 +1237,108 @@ int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
 	extent->maxx = extent->maxy =  FLT_MAX;
 
 	return(MS_SUCCESS); 
+}
+
+/* Function to parse the Mapserver DATA parameter for geometry
+ * column name, table name and name of a column to serve as a
+ * unique record id
+ */
+
+int msPOSTGISLayerParseData(char *data, char *geom_column_name,
+	char *table_name, char *urid_name,char *user_srid)
+{
+	char *pos_opt, *pos_scn, *tmp, *pos_srid;
+	int 	slength;
+	
+	/* given a string of the from 'geom from ctivalues' or 'geom from () as foo'
+	 * return geom_column_name as 'geom' 
+	 * and table name as 'ctivalues' or 'geom from () as foo'
+	 */
+
+	/* First look for the optional ' using unique ID' string */
+	pos_opt = strstr(data, " using unique ");
+	if (pos_opt == NULL) {
+		/* No user specified unique id so we will use the Postgesql OID */
+		strcpy(urid_name, "OID");
+	}
+	else {
+		// CHANGE - protect the trailing edge for thing like 'using unique ftab_id using srid=33'
+		tmp = strstr(pos_opt + 14," ");
+		if (tmp == NULL) //it lookes like 'using unique ftab_id'
+		{
+			strcpy(urid_name, pos_opt + 14);
+		}
+		else
+		{
+			//looks like ' using unique ftab_id ' (space at end)
+			strncpy(urid_name, pos_opt + 14, tmp-(pos_opt + 14  ) );
+		}
+	}
+
+	pos_srid = strstr(data," using SRID=");
+	if (pos_srid == NULL)
+	{	
+		user_srid[0] = 0; // = ""
+	}
+	else
+	{
+		//find the srid
+		slength=strspn(pos_srid+12,"0123456789");
+		if (slength == 0)
+		{
+			msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable: using SRID=# didnt have any numbers!  ", "msPOSTGISLayerParseData()");
+			return(MS_FAILURE);
+		}
+		else
+		{
+			strncpy(user_srid,pos_srid+12,slength);
+		}
+	}
+
+
+	// this is a little hack so the rest of the code works.  If the ' using SRID=' comes before
+	// the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts!
+
+	if (pos_opt == NULL)
+	{
+		pos_opt = pos_srid;
+	}
+	else
+	{	
+		if (pos_srid != NULL)
+		{
+			if (pos_opt>pos_srid)
+				pos_opt = pos_srid;
+		}
+
+	}
+
+	/* Scan for the table or sub-select clause */
+	pos_scn = strstr(data, " from ");
+	if (pos_scn == NULL) {
+		msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", "msPOSTGISLayerParseData()");
+		return(MS_FAILURE);	
+	}
+
+	/* Copy the geometry column name */
+	memcpy(geom_column_name, data, (pos_scn)-(data));
+	geom_column_name[(pos_scn)-(data)] = 0; //null terminate it
+
+	/* Copy out the table name or sub-select clause */
+	if (pos_opt == NULL) {
+		strcpy(table_name, pos_scn + 6);	//table name or sub-select clause
+	}
+	else {
+		strncpy(table_name, pos_scn + 6, (pos_opt) - (pos_scn + 6));
+		table_name[(pos_opt) - (pos_scn + 6)] = 0; //null terminate it
+	}
+
+	if ( (strlen(table_name) < 1 ) ||  (strlen(geom_column_name) < 1 ) ) {
+		msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo'.", "msPOSTGISLayerParseData()");
+		return(MS_FAILURE);
+	}
+printf("unique column = %s, srid='%s'\n", urid_name,user_srid);
+	return(MS_SUCCESS);
 }
 
 #else   
