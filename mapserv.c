@@ -1027,7 +1027,7 @@ char *processLine(char *instr, int mode)
   outstr = gsub(outstr, "[scalebar]", repstr);
 
   if(SaveQuery) {
-    sprintf(repstr, "%s%s%s%s", Map->web.imagepath, Map->name, Id, MS_QUERY_EXT);
+    sprintf(repstr, "%s%s%s%s", Map->web.imagepath, Map->name, Id, MS_QUERY_EXTENSION);
     outstr = gsub(outstr, "[queryfile]", repstr);
   }
   
