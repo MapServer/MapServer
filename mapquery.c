@@ -703,7 +703,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       }
       
 #ifdef USE_PROJ
-      if(slp->project && msProjectionsDiffer(&(slp->projection), &(map->projection)))
+      if(slp->project && msProjectionsDiffer(&(slp->projection), &(map->projection))) {
 	msProjectShape(&(slp->projection), &(map->projection), &selectshape);
 	msComputeBounds(&selectshape); // recompute the bounding box AFTER projection
       } else
