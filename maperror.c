@@ -209,6 +209,9 @@ char *msGetVersion() {
 #ifdef USE_WFS_LYR
   strcat(version, " SUPPORTS=WFS_CLIENT");
 #endif
+#if GD2_VERS > 1 
+  strcat(version, " SUPPORTS=GD2_RGB");
+#endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");
 #endif
