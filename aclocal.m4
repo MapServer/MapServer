@@ -283,27 +283,27 @@ PERL_CCDLFLAGS="`grep ' ccdlflags=' perl.out | cut -d, -f4 | cut -d\' -f2 | sed 
 PERL_LDDLFLAGS=`grep ' lddlflags' perl.out | cut -d, -f2 | cut -d\' -f2`
 #--------
 
-if test -n "$PERL_CCDLFLAGS" ; then
-	echo "-------------------------"
-	echo "----- IMPORTANT !!! -----"
-	echo "-------------------------"
-	echo "To use PHP extensions on your OS, you will need to recompile "
-	echo "PHP.                                                         "
-	echo "You need to edit the Makefile in the php3 directory and add  "
-	echo "$PERL_CCDLFLAGS to the start of the LDFLAGS line at the top  "
-	echo "of the Makefile.  Then type: 'make clean; make'              "
-	echo "You can still go ahead and build the extensions now by typing"
-	echo "'make' in this directory.  They just won't work correctly    "
-	echo "until you recompile your PHP.                                "
-        echo "If you are compiling php as a module, you should also add    "
-        echo "$PERL_CCDLFLAGS to the start of the EXTRA_LDFLAGS in Apache  "
-        echo "Configuration file.  Note that if you are using the APACI    "
-        echo "build mechanism you should make this change in the           "
-        echo "Configuration.tmpl file instead.                             "
-	echo "-------------------------"
-	echo "-------------------------"
-	echo "-------------------------"
-fi
+#if test -n "$PERL_CCDLFLAGS" ; then
+#	echo "-------------------------"
+#	echo "----- IMPORTANT !!! -----"
+#	echo "-------------------------"
+#	echo "To use PHP extensions on your OS, you will need to recompile "
+#	echo "PHP.                                                         "
+#	echo "You need to edit the Makefile in the php3 directory and add  "
+#	echo "$PERL_CCDLFLAGS to the start of the LDFLAGS line at the top  "
+#	echo "of the Makefile.  Then type: 'make clean; make'              "
+#	echo "You can still go ahead and build the extensions now by typing"
+#	echo "'make' in this directory.  They just won't work correctly    "
+#	echo "until you recompile your PHP.                                "
+#        echo "If you are compiling php as a module, you should also add    "
+#        echo "$PERL_CCDLFLAGS to the start of the EXTRA_LDFLAGS in Apache  "
+#        echo "Configuration file.  Note that if you are using the APACI    "
+#        echo "build mechanism you should make this change in the           "
+#        echo "Configuration.tmpl file instead.                             "
+#	echo "-------------------------"
+#	echo "-------------------------"
+#	echo "-------------------------"
+#fi
 
 PERL_CC="$PERL_CC $PERL_OPT $PERL_CCFLAGS -I. -I.. $PERL_LFLAGS"
 PERL_LD="$PERL_LD $PERL_LDDLFLAGS $PERL_CCDLFLAGS"
