@@ -615,7 +615,7 @@ static int _msProcessAutoProjection(projectionObj *p)
         return -1;
     }
 
-    msDebug("%s = %s\n", p->args[0], szProjBuf);
+    //msDebug("%s = %s\n", p->args[0], szProjBuf);
 
     /* OK, pass the definition to pj_init() */
     args = split(szProjBuf, '+', &numargs);
