@@ -116,10 +116,9 @@ gdImagePtr msDrawScalebar(mapObj *map)
       if(state == 1)
 	gdImageFilledRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.color);
       else
-	if(map->scalebar.backgroundcolor != 0)
-	  gdImageFilledRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.backgroundcolor);
+	if(map->scalebar.backgroundcolor >= 0) gdImageFilledRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.backgroundcolor);
 
-      if(map->scalebar.outlinecolor != -1)
+      if(map->scalebar.outlinecolor >= 0)
 	gdImageRectangle(img, ox + j*isx, oy, ox + (j+1)*isx, oy + map->scalebar.height, map->scalebar.outlinecolor);
 
       sprintf(label, "%g", j*i);

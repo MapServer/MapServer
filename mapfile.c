@@ -2136,12 +2136,13 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       if(getInteger(&(red)) == -1) return(-1);
       if(getInteger(&(green)) == -1) return(-1);
       if(getInteger(&(blue)) == -1) return(-1);
-      scalebar->color = msAddColor(map,red,green,blue);
+      scalebar->color = msAddColor(map,red,green,blue);      
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadScalebar()");      
       return(-1);
     case(END):
+      if(scalebar->color == -1) querymap->color = msAddColor(map,0,0,0); /* default to black */
       return(0);
       break;
     case(IMAGECOLOR):      
@@ -2217,7 +2218,8 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
-    scalebar->color =msAddColor(map,red,green,blue);
+    scalebar->color = msAddColor(map,red,green,blue);
+    if(scalebar->color == -1) querymap->color = msAddColor(map,0,0,0); /* default to black */
     break;
   case(IMAGECOLOR):
     msyystate = 2; msyystring = value;
