@@ -1188,7 +1188,7 @@ char *processLine(char *instr, int mode)
   outstr = gsub(outstr, "[rawext_esc]", (char *)encode_url(repstr)); 
     
 #ifdef USE_PROJ
-  if((strstr(outstr, "lat]") || strstr(outstr, "lon]")) 
+  if((strstr(outstr, "lat]") || strstr(outstr, "lon]") || strstr(outstr, "lon_esc]")) 
      && Map->projection.proj != NULL
      && !pj_is_latlong(Map->projection.proj) ) {
     llextent=Map->extent;
