@@ -1085,7 +1085,7 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *file
     return(-1);
   }
 
-  if((*filename == '\\') || (*filename == '/')) { /* already full path */
+  if((*filename == '\\') || (*filename == '/') || (*(filename + 1) == ':')) { /* already full path */
     strcpy(shpfile->source, filename);
   } else {
     getcwd(shpfile->source, MS_PATH_LENGTH); /* save the source (fullpath) information */
