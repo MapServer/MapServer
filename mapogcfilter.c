@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.37  2004/10/25 20:03:27  assefa
+ * Do not use layer tolerance for msQueryByShape (Bug 768).
+ *
  * Revision 1.36  2004/10/25 17:55:16  assefa
  * Correct bug when testing for string values in filter ProperyIsBetween (Bug 464).
  *
@@ -392,15 +395,16 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0)
     {
+        //disable any tolerance value already set for the layerm (Bug 768)
+        dfCurrentTolerance = lp->tolerance;
+        lp->tolerance = 0;
         if (dfDistance > 0)
         {
-            dfCurrentTolerance = lp->tolerance;
             lp->tolerance = dfDistance;
         }
         msQueryByShape(map, lp->index,  psQueryShape);
       
-        if (dfDistance > 0)
-          lp->tolerance = dfCurrentTolerance;
+        lp->tolerance = dfCurrentTolerance;
     }
 
     if (szExpression)
