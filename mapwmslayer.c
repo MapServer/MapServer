@@ -6,7 +6,7 @@
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2001-2003, Daniel Morissette, DM Solutions Group Inc
+ * Copyright (c) 2001-2004, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.62  2004/03/30 14:55:44  dan
+ * Added wms_force_separate_request metadata to prevent a WMS layer from
+ * being included in multi-layer request.
+ *
  * Revision 1.61  2004/03/30 00:12:28  dan
  * Added ability to combine multiple WMS connections to the same server
  * into a single request when the layers are adjacent and compatible.(bug 116)
@@ -756,7 +760,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     char *pszURL = NULL;
     const char *pszTmp;
     rectObj bbox;
-    int nTimeout, bOkToMerge;
+    int nTimeout, bOkToMerge, bForceSeparateRequest;
     wmsParamsObj sThisWMSParams;
 
     if (lp->connectiontype != MS_WMS)
@@ -834,9 +838,18 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
 /* ------------------------------------------------------------------
  * Check if layer can be merged with previous WMS layer requests
+ * Metadata wms_force_separate_request can be set to 1 to prevent this
+ * this layer from being combined with any other layer.
  * ------------------------------------------------------------------ */
+    bForceSeparateRequest = MS_FALSE;
+    if ((pszTmp = msLookupHashTable(lp->metadata, 
+                                    "wms_force_separate_request")) != NULL)
+    {
+        bForceSeparateRequest = atoi(pszTmp); 
+    }
     bOkToMerge = MS_FALSE;
-    if (lastconnectiontype == MS_WMS &&
+    if (!bForceSeparateRequest &&
+        lastconnectiontype == MS_WMS &&
         psLastWMSParams != NULL &&
         sThisWMSParams.numparams == psLastWMSParams->numparams &&
         strcmp(sThisWMSParams.onlineresource, 
@@ -944,11 +957,15 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
 /* ------------------------------------------------------------------
  * Replace contents of psLastWMSParams with sThisWMSParams 
+ * unless bForceSeparateRequest is set in which case we make it empty
  * ------------------------------------------------------------------ */
     if (psLastWMSParams)
     {
         msFreeWmsParamsObj(psLastWMSParams);
-        *psLastWMSParams = sThisWMSParams;
+        if (!bForceSeparateRequest)
+            *psLastWMSParams = sThisWMSParams;
+        else
+            msInitWmsParamsObj(psLastWMSParams);
     }
     else
     {
