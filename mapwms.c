@@ -696,7 +696,7 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   if (strcasecmp(wmtver, "1.0.7") <= 0)
   {
     // WMS 1.0.0 to 1.0.7 - We don't try to use outputformats list here for now
-    msWMSPrintRequestCap(wmtver, "Map", script_url_encoded, 
+    msWMSPrintRequestCap(wmtver, "Map", script_url_encoded, ""
 #ifdef USE_GD_GIF
                       "<GIF />"
 #endif
