@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.87  2004/10/26 17:42:48  dan
+ * Temporarily force layer status to MS_ON in layer->query*() methods and
+ * restore status before returning (bug 925)
+ *
  * Revision 1.86  2004/10/09 18:22:41  sean
  * towards resolving bug 339, have implemented a mutex acquiring wrapper for
  * the loadExpressionString function.  the new msLoadExpressionString should be
@@ -430,24 +434,64 @@ int layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img) {
   }
 
 int layerObj_queryByAttributes(layerObj *self, mapObj *map, char *qitem, char *qstring, int mode) {
-    return msQueryByAttributes(map, self->index, qitem, qstring, mode);
+    int status;
+    int retval;
+        
+    status = self->status;
+    self->status = MS_ON;
+    retval = msQueryByAttributes(map, self->index, qitem, qstring, mode);
+    self->status = status;
+
+    return retval;
   }
 
 int layerObj_queryByPoint(layerObj *self, mapObj *map, 
                           pointObj *point, int mode, double buffer) {
-    return msQueryByPoint(map, self->index, mode, *point, buffer);
+    int status;
+    int retval;
+        
+    status = self->status;
+    self->status = MS_ON;
+    retval = msQueryByPoint(map, self->index, mode, *point, buffer);
+    self->status = status;
+
+    return retval;
   }
 
 int layerObj_queryByRect(layerObj *self, mapObj *map, rectObj rect) {
-    return msQueryByRect(map, self->index, rect);
+    int status;
+    int retval;
+        
+    status = self->status;
+    self->status = MS_ON;
+    retval = msQueryByRect(map, self->index, rect);
+    self->status = status;
+
+    return retval;
   }
 
 int layerObj_queryByFeatures(layerObj *self, mapObj *map, int slayer) {
-    return msQueryByFeatures(map, self->index, slayer);
+    int status;
+    int retval;
+        
+    status = self->status;
+    self->status = MS_ON;
+    retval = msQueryByFeatures(map, self->index, slayer);
+    self->status = status;
+
+    return retval;
   }
 
 int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
-    return msQueryByShape(map, self->index, shape);
+    int status;
+    int retval;
+        
+    status = self->status;
+    self->status = MS_ON;
+    retval = msQueryByShape(map, self->index, shape);
+    self->status = status;
+
+    return retval;
   }
 
 int layerObj_setFilter(layerObj *self, char *string) {
