@@ -16,16 +16,6 @@ int msRectOverlap(rectObj *a, rectObj *b)
 }
 
 /*
-** Returns MS_TRUE if rectangle is valid
-*/
-int msRectIsValid(rectObj *rect)
-{
-	if(rect->minx < rect->maxx && rect->miny < rect->maxy)
-	 	return (MS_TRUE);
-	return(MS_FALSE);
-}
-
-/*
 ** Returns MS_TRUE if rectangle a is contained in rectangle b
 */
 int msRectContained(rectObj *a, rectObj *b)
@@ -114,14 +104,14 @@ int msIntersectSegments(pointObj *a, pointObj *b, pointObj *c, pointObj *d) { /*
   if((denominator == 0) && (numerator == 0)) { /* lines are coincident, intersection is a line segement if it exists */
     if(a->y == c->y) { /* coincident horizontally, check x's */
       if(((a->x >= MS_MIN(c->x,d->x)) && (a->x <= MS_MAX(c->x,d->x))) || ((b->x >= MS_MIN(c->x,d->x)) && (b->x <= MS_MAX(c->x,d->x))))
-	return(MS_TRUE);
+  return(MS_TRUE);
       else
-	return(MS_FALSE);
+  return(MS_FALSE);
     } else { /* test for y's will work fine for remaining cases */
       if(((a->y >= MS_MIN(c->y,d->y)) && (a->y <= MS_MAX(c->y,d->y))) || ((b->y >= MS_MIN(c->y,d->y)) && (b->y <= MS_MAX(c->y,d->y))))
-	return(MS_TRUE);
+  return(MS_TRUE);
       else
-	return(MS_FALSE);
+  return(MS_FALSE);
     }
   }
 
@@ -176,9 +166,9 @@ int msIntersectPolylines(shapeObj *line1, shapeObj *line2) {
   for(c1=0; c1<line1->numlines; c1++)
     for(v1=1; v1<line1->line[c1].numpoints; v1++)
       for(c2=0; c2<line2->numlines; c2++)
-	for(v2=1; v2<line2->line[c2].numpoints; v2++)
-	  if(msIntersectSegments(&(line1->line[c1].point[v1-1]), &(line1->line[c1].point[v1]), &(line2->line[c2].point[v2-1]), &(line2->line[c2].point[v2])) ==  MS_TRUE)
-	    return(MS_TRUE);
+  for(v2=1; v2<line2->line[c2].numpoints; v2++)
+    if(msIntersectSegments(&(line1->line[c1].point[v1-1]), &(line1->line[c1].point[v1]), &(line2->line[c2].point[v2-1]), &(line2->line[c2].point[v2])) ==  MS_TRUE)
+      return(MS_TRUE);
 
   return(MS_FALSE);
 }
@@ -197,9 +187,9 @@ int msIntersectPolylinePolygon(shapeObj *line, shapeObj *poly) {
   for(c1=0; c1<line->numlines; c1++)
     for(v1=1; v1<line->line[c1].numpoints; v1++)
       for(c2=0; c2<poly->numlines; c2++)
-	for(v2=1; v2<poly->line[c2].numpoints; v2++)
-	  if(msIntersectSegments(&(line->line[c1].point[v1-1]), &(line->line[c1].point[v1]), &(poly->line[c2].point[v2-1]), &(poly->line[c2].point[v2])) ==  MS_TRUE)
-	    return(MS_TRUE);
+  for(v2=1; v2<poly->line[c2].numpoints; v2++)
+    if(msIntersectSegments(&(line->line[c1].point[v1-1]), &(line->line[c1].point[v1]), &(poly->line[c2].point[v2-1]), &(poly->line[c2].point[v2])) ==  MS_TRUE)
+      return(MS_TRUE);
   
   return(MS_FALSE);
 }
@@ -223,9 +213,9 @@ int msIntersectPolygons(shapeObj *p1, shapeObj *p2) {
   for(c1=0; c1<p1->numlines; c1++)
     for(v1=1; v1<p1->line[c1].numpoints; v1++)
       for(c2=0; c2<p2->numlines; c2++)
-	for(v2=1; v2<p2->line[c2].numpoints; v2++)
-	  if(msIntersectSegments(&(p1->line[c1].point[v1-1]), &(p1->line[c1].point[v1]), &(p2->line[c2].point[v2-1]), &(p2->line[c2].point[v2])) ==  MS_TRUE)	    
-	    return(MS_TRUE);
+  for(v2=1; v2<p2->line[c2].numpoints; v2++)
+    if(msIntersectSegments(&(p1->line[c1].point[v1-1]), &(p1->line[c1].point[v1]), &(p2->line[c2].point[v2-1]), &(p2->line[c2].point[v2])) ==  MS_TRUE)     
+      return(MS_TRUE);
 
   /*
   ** At this point we know there are are no intersections between edges. There may be other tests necessary
@@ -428,7 +418,7 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
       for(j=0; j<shape1->line[i].numpoints; j++) {
         dist = msDistancePointToShape(&(shape1->line[i].point[j]), shape2);
         if((dist < minDist) || (minDist < 0)) 
-	  minDist = dist;
+    minDist = dist;
       }
     }
     break;
@@ -439,7 +429,7 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
         for(j=0; j<shape2->line[i].numpoints; j++) {
           dist = msDistancePointToShape(&(shape2->line[i].point[j]), shape1);
           if((dist < minDist) || (minDist < 0)) 
-	    minDist = dist;
+      minDist = dist;
         }
       }
       break;
@@ -449,16 +439,16 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
           for(k=0;k<shape2->numlines;k++) {
             for(l=1; l<shape2->line[k].numpoints; l++) {
               // check intersection (i.e. dist=0)
-	      if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
+        if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
                 return(0);
 
-	      // no intersection, compute distance
-	      dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));
-	      if((dist < minDist) || (minDist < 0)) 
-		minDist = dist;
-	    }
-	  }
- 	}
+        // no intersection, compute distance
+        dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));
+        if((dist < minDist) || (minDist < 0)) 
+    minDist = dist;
+      }
+    }
+  }
       }
       break;    
     case(MS_SHAPE_POLYGON):
@@ -473,17 +463,17 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
         for(j=1; j<shape1->line[i].numpoints; j++) {
           for(k=0;k<shape2->numlines;k++) {
             for(l=1; l<shape2->line[k].numpoints; l++) {
-	      // check intersection (i.e. dist=0)
-	      if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
+        // check intersection (i.e. dist=0)
+        if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
                 return(0);
 
-	      // no intersection, compute distance
-	      dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));
-	      if((dist < minDist) || (minDist < 0)) 
-		minDist = dist;
-	    }
-	  }
- 	}
+        // no intersection, compute distance
+        dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));
+        if((dist < minDist) || (minDist < 0)) 
+    minDist = dist;
+      }
+    }
+  }
       }
       break;
     }
@@ -495,7 +485,7 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
         for(j=0; j<shape2->line[i].numpoints; j++) {
           dist = msDistancePointToShape(&(shape2->line[i].point[j]), shape1);
           if((dist < minDist) || (minDist < 0)) 
-	    minDist = dist;
+      minDist = dist;
         }
       }
       break;
@@ -511,17 +501,17 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
         for(j=1; j<shape1->line[i].numpoints; j++) {
           for(k=0;k<shape2->numlines;k++) {
             for(l=1; l<shape2->line[k].numpoints; l++) {
-	      // check intersection (i.e. dist=0)
-	      if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
+        // check intersection (i.e. dist=0)
+        if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
                 return(0);
 
-	      // no intersection, compute distance
-	      dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));
-	      if((dist < minDist) || (minDist < 0)) 
-		minDist = dist;
-	    }
-	  }
- 	}
+        // no intersection, compute distance
+        dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));
+        if((dist < minDist) || (minDist < 0)) 
+    minDist = dist;
+      }
+    }
+  }
       }
       break; 
     case(MS_SHAPE_POLYGON): 
@@ -542,17 +532,17 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
         for(j=1; j<shape1->line[i].numpoints; j++) {
           for(k=0;k<shape2->numlines;k++) {
             for(l=1; l<shape2->line[k].numpoints; l++) {
-	      // check intersection (i.e. dist=0)
-	      if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
-                return(0);	      
+        // check intersection (i.e. dist=0)
+        if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
+                return(0);        
 
-	      // no intersection, compute distance
-	      dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));
-	      if((dist < minDist) || (minDist < 0)) 
-		minDist = dist;
-	    }
-	  }
- 	}
+        // no intersection, compute distance
+        dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));
+        if((dist < minDist) || (minDist < 0)) 
+    minDist = dist;
+      }
+    }
+  }
       }
       break;
     }
