@@ -590,6 +590,54 @@ int msMoveClassDown(layerObj *layer, int nClassIndex)
     return (MS_FAILURE);
 }
 
+
+/**
+ * Move the style up inside the array of styles.
+ */  
+int msMoveStyleUp(classObj *class, int nStyleIndex)
+{
+    styleObj *psTmpStyle = NULL;
+    if (class && nStyleIndex < class->numstyles && nStyleIndex >0)
+    {
+        psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
+        initStyle(psTmpStyle);
+        
+        msCopyStyle(psTmpStyle, &class->styles[nStyleIndex]);
+
+        msCopyStyle(&class->styles[nStyleIndex], 
+                    &class->styles[nStyleIndex-1]);
+        
+        msCopyStyle(&class->styles[nStyleIndex-1], psTmpStyle);
+
+        return(MS_SUCCESS);
+    }
+    return (MS_FAILURE);
+}
+
+
+/**
+ * Move the style down inside the array of styles.
+ */  
+int msMoveStyleDown(classObj *class, int nStyleIndex)
+{
+    styleObj *psTmpStyle = NULL;
+    if (class && nStyleIndex < class->numstyles-1 && nStyleIndex >=0)
+    {
+        psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
+        initStyle(psTmpStyle);
+        
+        msCopyStyle(psTmpStyle, &class->styles[nStyleIndex]);
+
+        msCopyStyle(&class->styles[nStyleIndex], 
+                    &class->styles[nStyleIndex+1]);
+        
+        msCopyStyle(&class->styles[nStyleIndex+1], psTmpStyle);
+
+        return(MS_SUCCESS);
+    }
+    return (MS_FAILURE);
+}
+
 /*
 ** Return the projection string. 
 */

@@ -929,7 +929,8 @@ char *copyStringProperty(char **dst, char *src);
 int msCopyMap(mapObj *, mapObj *);
 int msCopyLayer(layerObj *, layerObj *);
 int msCopyClass(classObj *dst, classObj *src, layerObj *layer);
-
+int msCopyStyle(styleObj *dst, styleObj *src);
+ 
 
 // For maplabel and mappdf
 int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
@@ -1315,6 +1316,8 @@ int msSetLayersdrawingOrder(mapObj *self, int *panIndexes);
 //Defined in maputil.c
 int msMoveClassUp(layerObj *layer, int nClassIndex);
 int msMoveClassDown(layerObj *layer, int nClassIndex);
+int msMoveStyleUp(classObj *class, int nStyleIndex);
+int msMoveStyleDown(classObj *class, int nStyleIndex);
 
 
 char *msGetProjectionString(projectionObj *proj);
