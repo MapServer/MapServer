@@ -1056,7 +1056,7 @@ int msWMSGetMap(mapObj *map, const char *wmtver)
   if (img == NULL)
       return msWMSException(map, wmtver);
 
-  printf("Content-type: image/%s%c%c", MS_IMAGE_MIME_TYPE(map->imagetype), 10,10);
+  printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->imagetype), 10,10);
   if (msSaveImage(img, NULL, map->imagetype, map->transparent, 
                   map->interlace, map->imagequality) != MS_SUCCESS)
       return msWMSException(map, wmtver);
