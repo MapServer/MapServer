@@ -1221,6 +1221,8 @@ void returnPage(char *html, int mode)
 
   regex_t re; /* compiled regular expression to be matched */ 
 
+  fprintf(stderr, "processing %s\n", html);
+
   if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {   
     msSetError(MS_REGEXERR, NULL, "returnPage()");
     writeError();
@@ -1285,7 +1287,7 @@ void returnQuery()
       lp = &(Map->layers[i]);
 
       if(!lp->resultcache) continue;
-      if(!lp->resultcache->numresults == 0) continue;
+      if(lp->resultcache->numresults > 0) break;
     }
 
     if(TEMPLATE_TYPE(lp->class[(int)(lp->resultcache->results[0].classindex)].template) == MS_URL) {
@@ -1306,6 +1308,8 @@ void returnQuery()
       return;
     }
   }
+
+  fprintf(stderr, "here: starting to return query\n");
 
   NR = NL = 0;
   for(i=0; i<Map->numlayers; i++) { // compute some totals
@@ -1328,7 +1332,7 @@ void returnQuery()
     ResultLayer = lp = &(Map->layers[i]);
 
     if(!lp->resultcache) continue;
-    if(!lp->resultcache->numresults == 0) continue;
+    if(lp->resultcache->numresults <= 0) continue;
 
     NLR = lp->resultcache->numresults; 
 

@@ -370,7 +370,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
  
   // was anything found?
   for(l=start; l>=stop; l--) {    
-    if(map->layers[l].resultcache->numresults > 0)
+    if(map->layers[l].resultcache && map->layers[l].resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
  
@@ -502,7 +502,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 
   // was anything found?
   for(l=start; l>=stop; l--) {    
-    if(map->layers[l].resultcache->numresults > 0)
+    if(map->layers[l].resultcache && map->layers[l].resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
  
@@ -615,7 +615,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
 
   // was anything found?
   for(l=start; l>=stop; l--) {    
-    if(map->layers[l].resultcache->numresults > 0)
+    if(map->layers[l].resultcache && map->layers[l].resultcache->numresults > 0)
       return(MS_SUCCESS);
   }
  
