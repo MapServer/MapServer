@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.50  2005/01/03 15:43:38  assefa
+ * Correct bug 1151 : generates twice a </Mark> tag. This was happening the
+ * style did not have a size set.
+ *
  * Revision 1.49  2004/12/09 22:17:27  assefa
  * Delete temporary sld file created on disk (Bug 1123)
  *
@@ -2836,7 +2840,7 @@ char *msSLDGenerateSLD(mapObj *map, int iLayer)
 /************************************************************************/
 /*                            msSLDGetGraphicSLD                        */
 /*                                                                      */
-/*      Get an SLD dor a sytle containg a symbol (Mark or external).    */
+/*      Get an SLD for a sytle containg a symbol (Mark or external).    */
 /************************************************************************/
 char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                          int bNeedMarkSybol)
@@ -3004,8 +3008,10 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         pszSLD = strcatalloc(pszSLD, szTmp);
                     
                         if (psStyle->size > 0)
-                          sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
-                        pszSLD = strcatalloc(pszSLD, szTmp);
+                        {
+                            sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
+                            pszSLD = strcatalloc(pszSLD, szTmp);
+                        }
 
                         sprintf(szTmp, "%s\n", "</Graphic>");
                         pszSLD = strcatalloc(pszSLD, szTmp);
