@@ -21,9 +21,14 @@ $static_libs = <STREAM>;
 chomp $static_libs;
 $static_libs =~ s/\-L\./\-L$home/g;
 
+# Get MapServer version from mapscriptvars
 $ms_version_line = <STREAM>;
-$ms_version_line =~ /MS_VERSION "(.+)"/;
-$ms_version = $1;
+if ($ms_version_line) {
+	$ms_version_line =~ /MS_VERSION "(.+)"/;
+	$ms_version = $1;
+}
+# Default is 4.3
+else { $ms_version = '4.3'; }
 
 print $inc."\n";
 print $libs."\n";

@@ -39,9 +39,12 @@ ms_extra_libraries = fp.readline()
 # Get mapserver version from mapscriptvars, which contains a line like
 # 
 # MS_VERSION "4.x.y"
-ms_version = fp.readline().split()[1]
-ms_version = ms_version.replace('"', '')
-
+ms_version = '4.3' # the default
+ms_version_line = fp.readline()
+if ms_version_line:
+	ms_version = ms_version_line.split()[2]
+	ms_version = ms_version.replace('"', '')
+	
 # Distutils wants a list of library directories and
 # a seperate list of libraries.  Create both lists from
 # lib_opts list.
