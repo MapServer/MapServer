@@ -37,7 +37,8 @@ extern "C" {
 #define MS_MAPCONTEXTERR 29 /* Map Context error */
 #define MS_HTTPERR 30
 #define MS_CHILDERR 31    /* Errors involving arrays of child objects */
-#define MS_NUMERRORCODES 32
+#define MS_WCSERR 32
+#define MS_NUMERRORCODES 33
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
