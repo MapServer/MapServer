@@ -94,8 +94,6 @@ int msMoveClassDown(layerObj *layer, int nClassIndex)
 int msLayerSetExtent( layerObj *layer, 
                     double minx, double miny, double maxx, double maxy) 
 { 
-    // Check bounds
-
 
     layer->extent.minx = minx;
     layer->extent.miny = miny;
@@ -106,8 +104,8 @@ int msLayerSetExtent( layerObj *layer,
       return(MS_SUCCESS);
       
     if (!msRectIsValid(&(layer->extent))) {
-      msSetError(MS_MISCERR, "Given map extent is invalid.", "msLayerSetExtent()"); 
-      return(NULL);
+      msSetError(MS_MISCERR, "Given layer extent is invalid. minx=%lf, miny=%lf, maxx=%lf, maxy=%lf.", "msLayerSetExtent()", layer->extent.minx, layer->extent.miny, layer->extent.maxx, layer->extent.maxy); 
+      return(MS_FAILURE);
       }
       
     return(MS_SUCCESS);
