@@ -227,12 +227,12 @@ and the MapServer Map File documentation at:
    void setextent(double minx, double miny, double maxx, double maxy)
 	Set the map extents using the georef extents passed in argument.
 
-   boolean setRotation(double rotation_angle)
+   int setRotation(double rotation_angle)
         Set map rotation angle. The map view rectangle (specified in 
         EXTENTS) will be rotated by the indicated angle in the counter-
         clockwise direction. Note that this implies the rendered map 
         will be rotated by the angle in the clockwise direction.
-        Returns MS_TRUE/MS_FALSE (true on success, false on error?).
+        Returns MS_SUCCESS or MS_FAILURE.
 
    void zoompoint(int nZoomFactor, pointObj oPixelPos, int nImageWidth, 
                   int nImageHeight, rectObj oGeorefExt)
