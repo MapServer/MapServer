@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.78  2004/11/03 20:01:19  dan
+ * Protect msDebug() call with a if(msp->debug)
+ *
  * Revision 1.77  2004/11/03 16:35:45  frank
  * modified msDrawQueryCache() to be very careful to not try and lookup
  * information on out-of-range classindex values.  This seems to occur when
@@ -215,7 +218,8 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
                 || fabs(cellsize_x/cellsize_y) < 0.99999) )
         {
             map->gt.need_geotransform = MS_TRUE;
-            msDebug( "msDrawMap(): kicking into non-square pixel preserving mode." );
+            if (map->debug)
+                msDebug( "msDrawMap(): kicking into non-square pixel preserving mode." );
         }
         map->cellsize = (cellsize_x*0.5 + cellsize_y*0.5);
     }

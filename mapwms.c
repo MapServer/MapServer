@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.139  2004/11/03 20:01:19  dan
+ * Protect msDebug() call with a if(msp->debug)
+ *
  * Revision 1.138  2004/11/02 13:16:39  dan
  * Fixed problem with msWMSIsSubGroup() when not all layers use
  * wms_layer_group (bug 1024)
@@ -839,7 +842,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       // If more than 1 pixel then enable non-square pixels
       if ( MS_ABS((reqy - (double)map->height)) > 1.0 )
       {
-          msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.");
+          if (map->debug)
+              msDebug("msWMSLoadGetMapParams(): enabling non-square pixels.");
           msSetConfigOption(map, "MS_NONSQUARE", "YES");
           nonsquare_enabled = MS_TRUE;
       }
