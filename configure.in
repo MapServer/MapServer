@@ -1463,15 +1463,15 @@ else
     dnl
     AC_PATH_PROG(HTTPD, httpd, "", "$PATH:/usr/sbin:/usr/bin:/usr/local/bin:/usr/local/apache/bin")
 
-    if test -z "$HTTPD" ; then
-      AC_MSG_RESULT([        'httpd' not found, skipping Apache version detection. You may want to use --with-httpd=/path/to/httpd])
-    else
-      HTTPD_VERSION_STRING=`$HTTPD -v | grep "Server version" | awk '{print $3}'`
-      APACHE_VERSION=`echo "$HTTPD_VERSION_STRING" | grep Apache | awk -F / '{print $2}' | awk -F . '{print $1*1000000 + $2+1000 + $3}'`
+  fi
 
-      AC_MSG_RESULT([        $HTTPD version is $HTTPD_VERSION_STRING ($APACHE_VERSION).])
-    fi
+  if test -z "$HTTPD" ; then
+    AC_MSG_RESULT([        'httpd' not found, skipping Apache version detection. You may want to use --with-httpd=/path/to/httpd])
+  else
+    HTTPD_VERSION_STRING=`$HTTPD -v | grep "Server version" | awk '{print $3}'`
+    APACHE_VERSION=`echo "$HTTPD_VERSION_STRING" | grep Apache | awk -F / '{print $2}' | awk -F . '{print $1*1000000 + $2+1000 + $3}'`
 
+    AC_MSG_RESULT([        $HTTPD version is $HTTPD_VERSION_STRING ($APACHE_VERSION).])
   fi
 
 fi
