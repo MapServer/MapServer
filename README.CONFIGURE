@@ -58,7 +58,10 @@ Here is the list of available options as returned by "./configure --help":
   --with-php3=DIR         Specify directory where PHP3 source tree is
                           installed. Required in order to compile the
                           PHP3/MapScript module. 
-
+  --with-apxs[=FILE]      Use this option only if building the PHP3 MapScript
+                          on a system where PHP3 was built as a shared Apache
+                          module.  FILE is the optional pathname to the
+                          Apache apxs tool; defaults to apxs.                   
 All the options are described in more details below.
 
 
@@ -190,9 +193,13 @@ PHP3/MapScript module:
   --with-php3=DIR         Specify directory where PHP3 source tree is
                           installed. Required in order to compile the
                           PHP3/MapScript module. 
+  --with-apxs[=FILE]      Use this option only if building the PHP3 MapScript
+                          on a system where PHP3 was built as a shared Apache
+                          module.  FILE is the optional pathname to the
+                          Apache apxs tool; defaults to apxs.
 
-  This option will trigger the compilation of the PHP3 MapScript module
-  in the ./mapscript/php3/ directory.
+  The --with-php3 option will trigger the compilation of the PHP3 MapScript
+  module in the ./mapscript/php3/ directory.
 
   DIR should be the location of the PHP3 source distribution.  The module
   was developped for php-3.0.14 and would be expected to work with more
@@ -209,13 +216,17 @@ PHP3/MapScript module:
   site:
 	http://www.php.net/manual/install-unix.php
 
+  If PHP3 is compiled as an Apache module, then you have to pass to the
+  MapServer configure script the same value for the --with-apxs option 
+  that was passed to the PHP3 configure script.  
+
 
 Perl MapScript Module:
 ----------------------
 
   The Perl MapScript module is not yet handled by the configure script.
 
-  See the file ./mapscript/perl/REAMDE for compilation instructions.
+  See the file ./mapscript/perl/README for compilation instructions.
 
 
 ----------------
