@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.28  2002/11/25 14:48:10  julien
+ * One SRS tag with multiple SRS elements space separated
+ *
  * Revision 1.27  2002/11/22 21:50:33  julien
  * Fix SRS and LegendURL for 0.1.2
  *
@@ -994,10 +997,10 @@ int msSaveMapContext(mapObj *map, char *filename)
 #if defined(USE_WMS_LYR)
   const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
-  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL, **papszSRS;
+  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL;
   char *pszLegendItem, *pszEncodedVal;
   FILE *stream;
-  int i, nValue, numSRS, nSRS;
+  int i, nValue;
   char szPath[MS_MAXPATHLEN];
 
   // Decide which version we're going to return... only 1.0.0 for now
@@ -1133,14 +1136,7 @@ int msSaveMapContext(mapObj *map, char *filename)
           // Layer SRS
           pszValue = msGetEPSGProj(&(map->layers[i].projection), 
                                    map->layers[i].metadata, MS_FALSE);
-          papszSRS = split(pszValue, ' ', &numSRS);
-          if(numSRS > 0 && papszSRS)
-          {
-              for(nSRS=0; nSRS<numSRS; nSRS++)
-                  fprintf(stream, "      <SRS>%s</SRS>\n", papszSRS[nSRS]);
-          }
-          if(papszSRS)
-              msFreeCharArray(papszSRS, numSRS);
+          fprintf(stream, "      <SRS>%s</SRS>\n", pszValue);
 
           // Format
           if(msLookupHashTable(map->layers[i].metadata,"wms_formatlist")==NULL)
