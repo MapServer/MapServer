@@ -228,8 +228,8 @@ and the MapServer Map File documentation at:
 	
 	Parmeters are :
 	- oPixelExt (rect object) : Pixel Extents, with (0,0) at the top-left
-          The rectangle contains the coordinates of the LL and UR coordinates in pixel.
-          (the maxy in the rect object should be < to miny value)
+          The rectangle contains the coordinates of the LL and UR coordinates
+          in pixel. (the maxy in the rect object should be < miny value)
           
           ------- UR (values in the rect object : maxx, maxy)
           |     | 
@@ -362,10 +362,11 @@ and the MapServer Map File documentation at:
           - [img], [scalebar], [ref], [legend] would be replaced with the 
             appropriate url if the parameter generateimages is set to 
             MS_TRUE. (Note :  the images corresponding to the diffrent objects 
-            are geneterated if the object is set to MS_ON in the map file)
+            are generated if the object is set to MS_ON in the map file)
          - the user can use the params parameter to specify tags and 
-           their values. For example if the user have a specific tag call [my_tag] and
-           would like it to be replaced by "value_of_my_tag" he would do :
+           their values. For example if the user have a specific tag call
+           [my_tag] and would like it to be replaced by "value_of_my_tag"
+           he would do :
               $tmparray["my_tag"] = "value_of_my_tag";
               $map->processtemplate($tmparray, MS_FASLE);
          
@@ -655,14 +656,16 @@ and the MapServer Map File documentation at:
         Passing an empty filename sends output to stdout.  In this case,
         the PHP header() function should be used to set the documents's
         content-type prior to calling saveImage().
-        The output format is the one that is currently selected in the map file.
+        The output format is the one that is currently selected in the 
+        map file.
         The function returns -1 on error.  On success, it returns either 0
         if writing to an external file, or the number of bytes written if 
         output is sent to stdout.
 
    string saveWebImage()
         Writes image to temp directory.  Returns image URL.
-        The output format is the one that is currently selected in the map file.
+        The output format is the one that is currently selected in the 
+        map file.
        
 
    void pasteImage(imageObj srcImg, int transparentColorIndex 
@@ -807,18 +810,21 @@ Constructor:
 
    double x
    double y
-   double m //used for measured shape files. set to 0 for other types.     
+   double m  (used only for measured shape files. set to 0 for other types.)
+
  Methods:
 
-   int setXY(double x, double y, double m)
+   int setXY(double x, double y [, double m])
         Set X,Y coordinate values.
-        Note : the 3rd parameter m is used for measured shape files. It is not mandatory.
+        Note : the 3rd parameter m is used for measured shape files only.
+        It is not mandatory.
+
    int draw(mapObj map, layerObj layer, imageObj img, 
             int class_index, string text)
         Draws the individual point using layer.  The class_index is used
         to classify the point based on the classes defined for the layer.
         The text string is used to annotate the point.
-        Returns MS_SUCCESS/MS_FAILUREr.
+        Returns MS_SUCCESS/MS_FAILURE.
 
   double distanceToPoint(pointObj poPoint)
        Calculates distance between two points.  
@@ -830,9 +836,9 @@ Constructor:
   double distanceToShape(shapeObj shape)
         Calculates the minimum distance between a point and a shape.
 
-  projectionObj project(projectionObj in, projectionObj out)
+  int project(projectionObj in, projectionObj out)
         Project the point from "in" projection (1st argument) to "out" 
-        projection (2nd argument).
+        projection (2nd argument).  Returns MS_SUCCESS/MS_FAILURE.
       
   void free()
        Releases all resources used by the object.       
@@ -853,17 +859,18 @@ Constructor:
    int add(pointObj point)
         Add a point to the end of line.
 
-   int addXY(double x, double y, double m)
+   int addXY(double x, double y [, double m])
         Add a point to the end of line.
-        Note : the 3rd parameter m is used for measured shape files. It is not mandatory.
+        Note : the 3rd parameter m is used for measured shape files only. 
+        It is not mandatory.
 
    PointObj point(int i)
         Returns a reference to point number i.  Reference is valid only
         during the life of the lineObj that contains the point.
 
-   projectionObj project(projectionObj in, projectionObj out)
+   int project(projectionObj in, projectionObj out)
         Project the line from "in" projection (1st argument) to "out" 
-        projection (2nd argument).
+        projection (2nd argument).  Returns MS_SUCCESS/MS_FAILURE.
 
    void free()
         Destroys resources used by a line object.     
@@ -919,9 +926,9 @@ Constructor:
    boolean intersects(shapeObj shape)
         Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
      
-   projectionObj project(projectionObj in, projectionObj out)
+   int project(projectionObj in, projectionObj out)
         Project the shape from "in" projection (1st argument) to "out" 
-        projection (2nd argument).
+        projection (2nd argument).  Returns MS_SUCCESS/MS_FAILURE.
 
    pointObj getpointusingmeasure(double m)
         Apply only on Measured shape files. Given a measure m, retun the 
@@ -971,9 +978,9 @@ Constructor:
   double fit(int width, int height)
         Adjust extents of the rectangle to fit the width/height specified.
 
-  projectionObj project(projectionObj in, projectionObj out)
+  int project(projectionObj in, projectionObj out)
         Project the rectangle from "in" projection (1st argument) to "out" 
-        projection (2nd argument).
+        projection (2nd argument).  Returns MS_SUCCESS/MS_FAILURE.
 
   void free()
         Destroys resources used by a rect object.  
@@ -1092,7 +1099,8 @@ Constructor:
         Set object property to a new value. Returns -1 on error.
         
       int setimagecolor(int red, int green, int blue)
-        Sets the imagecolor propery (baclground) of the object. Returns false on error.  
+        Sets the imagecolor propery (baclground) of the object.
+        Returns false on error.  
 
  legendObj Class
  -----------
@@ -1160,8 +1168,4 @@ styleObj Class
         ex : o_style->setcolor("color", 0, 0, 0);
 
                      --------------------------
-
-
-
-
 
