@@ -1985,8 +1985,7 @@ void initLegend(legendObj *legend)
   legend->imagecolor.red = 255;
   legend->imagecolor.green = 255;
   legend->imagecolor.blue = 255;
-  initLabel(&legend->label);
-  legend->label.position = MS_XY; /* override */
+  initLabel(&legend->label);  
   legend->keysizex = 20;
   legend->keysizey = 10;
   legend->keyspacingx = 5;
@@ -2014,6 +2013,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       msSetError(MS_EOFERR, NULL, "loadLegend()");      
       return(-1);
     case(END):
+      legend->label.position = MS_XY; /* overrides go here */
       return(0);
       break;
     case(IMAGECOLOR):      

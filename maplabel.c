@@ -421,14 +421,16 @@ int msDrawLabel(gdImagePtr img, mapObj *map, pointObj labelPnt, char *string, la
   if(strlen(string) == 0)
     return(0); /* not an error, just don't want to do anything */
 
-  if(label->position >= 0) {
+  if(label->position != MS_XY) {
     pointObj p;
     rectObj r;
 
     if(msGetLabelSize(string, label, &r, &(map->fontset)) == -1) return(-1);
-    p = get_metrics(&labelPnt, label->position, r, 0, 0, label->angle, 0, NULL);
+    p = get_metrics(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 0, NULL);
     draw_text(img, p, string, label, &(map->fontset)); /* actually draw the label */
   } else {
+    labelPnt.x += label->offsetx;
+    labelPnt.y += label->offsety;
     draw_text(img, labelPnt, string, label, &(map->fontset)); /* actually draw the label */
   }
   
