@@ -63,12 +63,19 @@ PyObject *MSExc_MapServerChildError;
 
 %init %{
 
-// Generic MapServer error
+/* See bug 1203 for discussion of race condition with GD font cache */
+	if (msSetup() != MS_SUCCESS)
+    {
+        msSetError(MS_MISCERR, "Failed to set up threads and font cache",
+                   "msSetup()");
+    }
+
+/* Generic MapServer error */
 MSExc_MapServerError=PyErr_NewException("_mapscript.MapServerError",NULL,NULL);
 if (MSExc_MapServerError != NULL)
     PyDict_SetItemString(d, "MapServerError", MSExc_MapServerError);
 
-// MapServer query MS_CHILD error
+/* MapServer query MS_CHILD error */
 MSExc_MapServerChildError = PyErr_NewException("_mapscript.MapServerChildError", NULL, NULL);
 if (MSExc_MapServerChildError != NULL)
     PyDict_SetItemString(d, "MapServerChildError", MSExc_MapServerChildError);
@@ -87,10 +94,6 @@ static void _raise_ms_exception() {
     errcode = ms_error->code;
     errmsg = msGetErrorString("\n");
     
-    // Map MapServer errors to Python exceptions, will define
-    // custom Python exceptions soon.  The exception we raise
-    // is based on the error at the head of the MapServer error
-    // list.  All other errors appear in the error message.
     switch (errcode) {
         case MS_IOERR:
             PyErr_SetString(PyExc_IOError, errmsg);
@@ -121,7 +124,6 @@ static void _raise_ms_exception() {
     $action {
         errorObj *ms_error = msGetErrorObj();
        
-        /* There are a few bogus errors to dodge, code smell anyone? :( */
         switch(ms_error->code) {
             case MS_NOERR:
                 break;

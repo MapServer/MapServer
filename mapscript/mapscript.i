@@ -191,16 +191,6 @@ typedef struct {
 
 /* Python */
 #ifdef SWIGPYTHON
-
-/* See bug 1203 for discussion of race condition with GD font cache */
-%init %{
-	if (msSetup() != MS_SUCCESS)
-    {
-        msSetError(MS_MISCERR, "Failed to set up threads and font cache",
-                   "msSetup()");
-    }
-%}
-
 %include "pymodule.i"
 #endif /* SWIGPYTHON */
 
