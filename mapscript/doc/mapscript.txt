@@ -1723,6 +1723,14 @@ setConfigOption( string key, string value ) : void
     Set the indicated key configuration option to the indicated value.  
     Equivalent to including a CONFIG keyword in a map file. 
 
+selectOutputFormat( string imagetype ) : void
+    Set the map's active output format to the internal format named
+    *imagetype*.  Built-in formats are "PNG", "PNG24", "JPEG", "GIF",
+    "GTIFF".
+
+.. note:: setImageType() remains in the module but it's use is
+          deprecated.
+
 setExtent( float minx, float miny, float maxx, float maxy ) : int
     Sets the extent of a map.  Returns MS_SUCCESS or MS_FAILURE.
 

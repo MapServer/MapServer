@@ -102,7 +102,10 @@ class MapOutputFormatTestCase(MapTestCase):
         filename = 'testBuiltInJPEGFormat.jpg'
         img.save(filename)
         
-
+    def testSelectBuiltInJPEGFormat(self):
+        """test selection of built-in JPEG format"""
+        self.map.selectOutputFormat('JPEG')
+        assert self.map.outputformat.mimetype == 'image/jpeg'
 
 
 # ===========================================================================

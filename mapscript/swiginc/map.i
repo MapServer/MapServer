@@ -141,6 +141,23 @@
       }
   }
 
+    void selectOutputFormat( char *imagetype )
+    {
+        outputFormatObj *format;
+
+        format = msSelectOutputFormat( self, imagetype );
+        if ( format == NULL )
+	        msSetError(MS_MISCERR, "Unable to find IMAGETYPE '%s'.", 
+		               "setImageType()", imagetype );
+        else
+        {   
+            msFree( self->imagetype );
+            self->imagetype = strdup(imagetype);
+            msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
+                                 MS_NOOVERRIDE, MS_NOOVERRIDE );
+        }
+    }
+        
   void setOutputFormat( outputFormatObj *format ) {
       msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
