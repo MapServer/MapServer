@@ -540,7 +540,8 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   msInitShape(&shape);
   msInitShape(&selectshape);
 
-  fprintf(stderr, "in msQueryByFeatures()\n");
+  if( map->debug )
+      msDebug( "in msQueryByFeatures()\n" );
 
   // is the selection layer valid and has it been queried
   if(slayer < 0 || slayer >= map->numlayers) {
