@@ -5,7 +5,7 @@ MAP
   IMAGECOLOR 255 255 255
   STATUS ON
   SIZE 200 200
-  #FONTSET "fonts.txt"
+  FONTSET "fonts.txt"
   SYMBOLSET "symbols.txt"
 
   WEB
