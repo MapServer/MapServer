@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.36  2004/10/25 17:55:16  assefa
+ * Correct bug when testing for string values in filter ProperyIsBetween (Bug 464).
+ *
  * Revision 1.35  2004/10/22 15:39:18  assefa
  * Correct PropertyIsLike bug (Bug 987).
  *
@@ -2392,6 +2395,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
     int nBounds = 0;
     int i=0, bString=0, nLenght = 0;
 
+
     szBuffer[0] = '\0';
     if (!psFilterNode ||
         !(strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0))
@@ -2430,7 +2434,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
             nLenght = strlen(aszBounds[1]);
             for (i=0; i<nLenght; i++)
             {
-                if (!isdigit(aszBounds[0][i]) && aszBounds[0][i] != '.')
+                if (!isdigit(aszBounds[1][i]) && aszBounds[1][i] != '.')
                 {
                     bString = 1;
                     break;
