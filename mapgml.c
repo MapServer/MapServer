@@ -286,6 +286,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   shapeObj shape;
   FILE *stream=stdout; // defaults to stdout
 
+  msInitShape(&shape);
+
   if(filename && strlen(filename) > 0) { // deal with the filename if present
     stream = fopen(filename, "w");
     if(!stream) {

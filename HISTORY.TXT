@@ -1,0 +1,196 @@
+MapServer Revision History
+==========================
+
+This is a human-readable revision history which will attempt to document
+required changes for users to migrate from one version of MapServer to the
+next.  Developers are strongly encouraged to document their changes and
+their impacts on the users here.  (Please add the most recent changes to 
+the top of the list.)
+
+For a complete change history, please see the CVS log comments.  A copy of
+the CVS logs is updated daily at the following URL:
+
+  http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
+
+
+Version 3.6.6 (2003-06-01)
+--------------------------
+
+- Disabled the 'make install' target since it just leads to confusion.
+  Make install now outputs quick installation instructions for mapserv.
+  (Bug 280)
+
+- Raster layers are set to be not queryable.
+
+- Better looking phpinfo() output for php_mapscript (backported from v3.7)
+
+- Applied fix for GCC 3.x problems (include -lstdc++ by default)
+
+
+Version 3.6.5 (2003-03-18)
+--------------------------
+
+- Fix a little problem with qix files with no depth.
+
+- Fixed problem with STATUS EMBED being written as STATUS QUERYONLY by
+  msSaveMap()
+
+- Fix problem reading WMS layers in GIF format (via GDAL) when GD
+  doesn't support GIF
+
+- Backport bug 186 fix from version 3.7 for $rect->project(), 
+  $point->project(), etc... in php_mapscript.  Note that the project() 
+  methods return MS_SUCCESS/MS_FAILURE and operate on the object itself.
+
+- Do not produce an error if SAPI is 'cgi-fcgi', required for PHP 4.3.x
+
+
+Version 3.6.4 (2003-01-08)
+--------------------------
+
+- Use LD instead of CC to refer to linker program name in the Makefile to
+  help dealing with GCC 3.x issues (doesn't resolve the issue completely)
+
+- Added missing MS_LAYER_CIRCLE and MS_CC constants in PHP MapScript
+
+- Fixed bad memory corruption bug with WMS SRS parameter value mapwms.c
+  (Thanks to Ed M. for finding it)
+
+- Added version 3.7's mappostgis.c
+      - minor bug fixes
+	  - lots of help if you make a mistake
+	  - more functionality
+
+- Fixed problem in space-delimited wms_srs metadata with WMS client mode
+  where the last SRS in the string was never used even if it would have
+  been a best match.  Causing unnecessary WMS reprojections in several cases.
+
+- Fixed configure script to produce an error if --with-gdal does not point
+  to a valid gdal-config file.
+
+
+Version 3.6.3 (2002-10-07)
+--------------------------
+
+- Fixed problem with numeric labels with OGR's STYLEITEM AUTO (bug 185)
+
+- PHP MapScript: fixed set() method on all object types for parameters
+  of type float and string.  The param value was not forced to the right
+  type and this could lead to unexpected values being set or crashes.
+
+- Fixed bug 174 - improperly terminated string buffer in msWMSException()
+
+- Fixed problem with 'gcc undef' appearing in the mapscript/php3/Makefile
+  on FreeBSD.  Also added --enable-internal-ld-detect configure switch to
+  force use of an internal configure macro to detect ld command and args
+  in case the default doesn't work (this is for mapscript/php3/Makefile only)
+
+- Fixed potential crash with WMS GML query output (missing msInitSHape() in 
+  msGMLWriteQuery())
+
+- Fixed Windows-specific problem where WMS capabilities were always returned
+  as 1.0.0 even if 1.1.0 was requested
+
+
+
+Version 3.6.2 (2002-07-08)
+--------------------------
+
+- Added msTokenizeMap() in MapScript (and via 'mapserv -t test.map')
+
+- Added map->setFontSet()
+
+- Fixed Windows-specific problem with PHP MapScript ms_newMapObj("")
+  called with empty filename.
+
+- Fixed problem with double 'gcc' appearing in mapscript/php3/Makefile on
+  some systems.
+
+
+Version 3.6.1 (2002-06-20)
+--------------------------
+
+- Fixed a performance problem in msImageFilledPolygon() (bug 162)
+  3.6.0 was up to 50% slower than 3.5 rendering polygons, and now
+  3.6.1 is up to 10-20% faster than 3.5.
+
+- Removed obsolete PHP3 stuff in README files and configure scripts.
+
+- Fixed color problem with crosshair in reference map.
+
+- Fixed an issue with "LOCATION TINY" being output in legend label objects.
+
+- Postgis bug 165: fix dont_force() to allow for POINT shapes 
+
+- Make sure inline symbols (symbols defined in the mapfile) are saved 
+  when msSaveMap() is called.  They used to be lost.
+
+
+Version 3.6.0 (2002-05-28)
+--------------------------
+
+- No change since 3.6.0-beta2
+
+
+Version 3.6.0-beta2 (2002-05-23)
+--------------------------------
+
+- A few fixes.
+
+- PostGIS: Added Sean Gillies <sgillies@i3.com>'s patch for "using unique 
+  <column name>". Added "using SRID=#" to specify a spatial reference 
+  for an arbitrary sql query.
+
+- WMS Capabilities XML: Return grouped/ungrouped layers in an order closer
+  to the natural mapfile order (bug 154)
+
+- Integrated patch from Tim Mackey to support ROSA applet parameters via 
+  mapserv CGI, see: 
+  http://mapserver.gis.umn.edu/wilma/mapserver-users/0011/msg00077.html
+
+
+Version 3.6.0-beta1 (2002-04-30)
+--------------------------------
+
+- MapScript: qitem and qstring params added to layer->queryByAttribute().
+  Instead of being driven by the layer's FILTER/FILTERITEM, the query by
+  attribute is now driven by the values passed via qitem,qstring, and the 
+  layer's FILTER/FILTERITEM are ignored.
+
+- Symbol and MapFile changes:
+   ANTIALIAS and FILLED keywords now take a boolean (TRUE/FALSE) argument
+   i.e.   ANTIALIAS becomes ANTIALIAS TRUE
+   and    FILLED    becomes FILLED TRUE
+
+- Reference Map:
+  Added options to show a different marker when the reference box becomes
+  too small.  See the mapfile reference docs for more details on the new 
+  reference object parameters (MARKER, MARKERSIZE, MAXBOXSIZE, MINBOXSIZE)
+
+- Added MINSCALE/MAXSCALE at the CLASS level.
+
+- Support for tiled OGR datasets.
+
+- PHP 4.1.2 and 4.2.0 support for PHP MapScript.
+
+- Added LAYER TRANSPARENCY, value between 1-100
+
+- Fixes to the SWIG interface for clean Java build.
+
+- New HTML legend templates for CGI and MapScript.  See HTML-Legend-HOWTO.
+
+- WMS server now supports query results using HTML query templates instead
+  of just plain/text.
+
+- Added support functions for thread safety (--with-thread).  Still not 
+  100% thread-safe.
+
+
+Version 3.5.0 (2002-12-18)
+--------------------------
+
+- No Revision history before version 3.5
+
+
+---------
+$Id$

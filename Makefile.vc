@@ -12,20 +12,20 @@
 # $Id$
 #
 
-#OPTFLAGS =	/nologo /Zi /W3 /DDEBUG
-OPTFLAGS =	/nologo /Zi 
+OPTFLAGS =	/nologo /Zi /W3 /DDEBUG /DWIN32
+#OPTFLAGS =	/nologo /Zi 
 BASE_CFLAGS = 	$(OPTFLAGS) 
-LDFLAGS =	/NODEFAULTLIB:libcd
+LDFLAGS =	/NODEFAULTLIB:libcd /DEBUG
 
 CC=     cl
-LINK=   link
+LINK=   link /debug
 
 #
 # If you want to ignore missing datafile errors uncomment the following
 # line. This is especially useful with large tiled datasets that may not
 # have complete data for each tile.
 #
-#IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
+IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
 
 #
 # Apparently these aren't as commonplace as I'd hoped. Edit the
@@ -44,10 +44,10 @@ WMS=-DUSE_WMS
 
 #Use this flag to compile with WMS Client support
 #you need the libwww from http://www.w3.org/Library/.
-#WMSCLIENT= -DUSE_WMS_LYR
+WMSCLIENT= -DUSE_WMS_LYR
 
-#WWWLIB_INC=-I../Libwww/library/src -I../libwww/modules/expat/xmlparse
-#WWWLIB_LIB=../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
+WWWLIB_INC=-I../Libwww/library/src -I../libwww/modules/expat/xmlparse
+WWWLIB_LIB=../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
@@ -69,16 +69,18 @@ WMS=-DUSE_WMS
 # The following defns will include the patched GD 1.8.4 with TTF:
 GDFONT_OBJ=
 GD_INC=	-I../gd-1.8.4
-GD_LIB=	../gd-1.8.4/gd.lib ../jpeg-6b/libjpeg.lib ../libpng-1.0.8/libpng.lib \
+GD_LIB=	../gd-1.8.4/gd.lib \
+        ../jpeg-6b/libjpeg.lib \
+        ../libpng-1.0.8/libpng.lib \
 	../zlib-1.1.3/zlibstat.lib ../freetype/lib/freetype.lib
 GD=     -DUSE_GD_GIF -DUSE_GD_PNG -DUSE_GD_JPEG -DUSE_GD_WBMP -DUSE_GD_TTF \
 	-DUSE_GD_TTF -DGD_HAS_GDIMAGEGIFPTR
 MAKE_GD=gd
 
 # TIFF distribution (raster support for TIFF and GEOTIFF imagery).(RECOMMENDED)
-TIFF_INC=-I../tiff-v3.5.4/libtiff
-TIFF_LIB=../tiff-v3.5.4/libtiff/libtiff.lib
-TIFF=-DUSE_TIFF
+#TIFF_INC=-I../tiff-v3.5.4/libtiff
+#TIFF_LIB=../tiff-v3.5.4/libtiff/libtiff.lib
+#TIFF=-DUSE_TIFF
 
 # JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
 #JPEG_INC=
@@ -94,8 +96,10 @@ EPPL_OBJ=epplib.obj
 # formats.  See http://gdal.velocet.ca/projects/opengis/
 GDAL_DIR= ..\gdal
 OGR=-DUSE_OGR
-OGR_LIB = $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib $(GDAL_DIR)/ogr/ogr.lib $(GDAL_DIR)/ogr/../port/cpl.lib
-OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port
+OGR_LIB =  $(GDAL_DIR)/gdal.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib $(GDAL_DIR)/ogr/ogr.lib $(GDAL_DIR)/ogr/../port/cpl.lib
+OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port -I$(GDAL_DIR)/core
+
+GDAL=-DUSE_GDAL
 
 # ESRI SDE support.
 #SDE_OPT=-DUSE_SDE -DWIN32
@@ -115,7 +119,9 @@ OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../p
 #IMGGEN_INC=-I./imgSrc
 #IMGGEN_LIB=-L./imgSrc -limgGEN
 
-
+#ECWDIR= C:\ProgFile\ECW_SDK
+#ECW_LIB=$(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+#        $(ECWDIR)\lib\NCSUtil.lib
 #
 # VC++ does not include the REGEX library... so we must provide our one.
 # The following definitions will try to build GNU regex-0.12 located in the
@@ -134,7 +140,10 @@ REGEX_INC=-I./regex-0.12
 # compiled with:
 #
 #PHP_REGEX=..\php-3.0.14\regex
-PHP_REGEX=..\php-4.0.6\regex
+#PHP_REGEX=..\php-4.0.6\regex
+#PHP_REGEX=..\php-4.1.2\regex
+#PHP_REGEX=..\php-4.2.1\regex
+PHP_REGEX=..\php-4.2.2\regex
 REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
           $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
 REGEX_INC=-I$(PHP_REGEX) -DPHP_NO_ALIASES
@@ -167,7 +176,8 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 
 MS_HDRS = 	map.h mapfile.h
 
-MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
+MS_EXE = 	mapserv.exe \
+                shp2img.exe legend.exe  \
 		shptree.exe scalebar.exe sortshp.exe tile4ms.exe
 
 #
@@ -175,7 +185,7 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
 		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB) \
-                $(WWWLIB_LIB)
+                $(WWWLIB_LIB) $(ECW_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC) \
@@ -183,7 +193,7 @@ INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
 		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) \
-                $(PRIOLIST)
+                $(IGNORE_MISSING_DATA) $(GDAL) -DFEATURE_INFO_HTML
 
 default: 	all
 

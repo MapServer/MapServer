@@ -181,6 +181,7 @@ void loadForm()
   int i,j,k,n;
   char **tokens, *tmpstr;
   regex_t re;
+  int rosa_type=0;
 
   if(regcomp(&re, NUMEXP, REG_EXTENDED) != 0) { // what is a number
     msSetError(MS_REGEXERR, NULL, "loadForm()"); 
@@ -739,7 +740,71 @@ void loadForm()
 	writeError();
       continue;
     }
+
+/* -------------------------------------------------------------------- */
+/*      The following code is used to support the rosa applet (for      */
+/*      more information on Rosa, please consult :                      */
+/*      http://www2.dmsolutions.ca/webtools/rosa/index.html) .          */
+/*      This code was provided by Tim.Mackey@agso.gov.au.               */
+/*                                                                      */
+/*      For Application using it can be seen at :                       */
+/*http://mapserver.gis.umn.edu/wilma/mapserver-users/0011/msg00077.html */
+/*   http://www.agso.gov.au/map/pilbara/                                */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+
+    if(strcasecmp(msObj->ParamNames[i],"INPUT_TYPE") == 0)
+    { /* Rosa input type */
+        if(strcasecmp(msObj->ParamValues[i],"auto_rect") == 0) 
+        {
+            rosa_type=1; /* rectangle */
+            continue;
+        }
+            
+        if(strcasecmp(msObj->ParamValues[i],"auto_point") == 0) 
+        {
+            rosa_type=2; /* point */
+            continue;
+        }
+    }
+    if(strcasecmp(msObj->ParamNames[i],"INPUT_COORD") == 0) 
+    { /* Rosa coordinates */
+ 
+       switch(rosa_type)
+       {
+         case 1:
+             sscanf(msObj->ParamValues[i],"%lf,%lf;%lf,%lf",
+                    &msObj->ImgBox.minx,&msObj->ImgBox.miny,&msObj->ImgBox.maxx,
+                    &msObj->ImgBox.maxy);
+             if((msObj->ImgBox.minx != msObj->ImgBox.maxx) && 
+                (msObj->ImgBox.miny != msObj->ImgBox.maxy)) 
+             {
+                 msObj->CoordSource = FROMIMGBOX;
+                 QueryCoordSource = FROMIMGBOX;
+             }
+             else 
+             {
+                 msObj->CoordSource = FROMIMGPNT;
+                 QueryCoordSource = FROMIMGPNT;
+                 msObj->ImgPnt.x=msObj->ImgBox.minx;
+                 msObj->ImgPnt.y=msObj->ImgBox.miny;
+	   }
+           break;
+         case 2:
+           sscanf(msObj->ParamValues[i],"%lf,%lf",&msObj->ImgPnt.x,
+                   &msObj->ImgPnt.y);
+           msObj->CoordSource = FROMIMGPNT;
+           QueryCoordSource = FROMIMGPNT;
+           break;
+         }
+       continue;
+    }    
+/* -------------------------------------------------------------------- */
+/*      end of code for Rosa support.                                   */
+/* -------------------------------------------------------------------- */
+
   }
+
 
   regfree(&re);
 
@@ -909,6 +974,24 @@ int main(int argc, char *argv[]) {
     if(argc > 1 && strcmp(argv[1], "-v") == 0) {
       printf("%s\n", msGetVersion());
       fflush(stdout);
+      exit(0);
+    }
+    else if(argc > 2 && strcmp(argv[1], "-t") == 0) 
+    {
+        char **tokens;
+        int numtokens=0;
+        if ((tokens=msTokenizeMap(argv[2], &numtokens)) != NULL)
+        {
+            int i;
+            for(i=0; i<numtokens; i++)
+                printf("%s\n", tokens[i]);
+            msFreeCharArray(tokens, numtokens);
+        }
+        else
+        {
+            writeError();
+        }
+
       exit(0);
     }
     else if (argc > 1 && strncmp(argv[1], "QUERY_STRING=", 13) == 0) {
@@ -1219,7 +1302,7 @@ int main(int argc, char *argv[]) {
 	    for(i=0; i<msObj->SelectShape.numlines; i++) {
 	      for(j=0; j<msObj->SelectShape.line[i].numpoints; j++) {
 	        msObj->SelectShape.line[i].point[j].x = MS_IMAGE2MAP_X(msObj->SelectShape.line[i].point[j].x, msObj->Map->extent.minx, msObj->Map->cellsize);
-	        msObj->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_X(msObj->SelectShape.line[i].point[j].y, msObj->Map->extent.maxy, msObj->Map->cellsize);
+	        msObj->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_Y(msObj->SelectShape.line[i].point[j].y, msObj->Map->extent.maxy, msObj->Map->cellsize);
 	      }
 	    }
 	  
