@@ -432,8 +432,6 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
       return(-1);
 
     if(label->wrap != '\0') {
-      fprintf(stderr, "wrap char is '%c'.\n", label->wrap);
-
       if((token = split(string, label->wrap, &(num_tokens))) == NULL)
 	return(-1);
       

@@ -34,6 +34,8 @@ static int layerInitItemInfo(layerObj *layer) {
     if(status != MS_SUCCESS) return(MS_FAILURE);
     return(MS_SUCCESS);
     break;
+  case(MS_ORACLESPATIAL):
+    break;
   default:
     break;
   }
@@ -62,6 +64,8 @@ static void layerFreeItemInfo(layerObj *layer)
     break;
   case(MS_SDE):
     msSDELayerFreeItemInfo(layer);
+    break;
+  case(MS_ORACLESPATIAL):
     break;
   default:
     break;
@@ -104,6 +108,8 @@ int msLayerOpen(layerObj *layer, char *shapepath)
     break;
   case(MS_SDE):
     return msSDELayerOpen(layer);
+    break;
+  case(MS_ORACLESPATIAL):
     break;
   default:
     break;
@@ -167,6 +173,8 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
   case(MS_SDE):
     return(msSDELayerWhichShapes(layer, rect));
     break;
+  case(MS_ORACLESPATIAL):
+    break;
   default:
     break;
   }
@@ -227,6 +235,8 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     break;
   case(MS_SDE):
     return(msSDELayerNextShape(layer, shape));
+    break;
+  case(MS_ORACLESPATIAL):
     break;
   default:
     break;
@@ -310,6 +320,8 @@ void msLayerClose(layerObj *layer)
   case(MS_SDE):
     msSDELayerClose(layer);
     break;
+  case(MS_ORACLESPATIAL):
+    break;
   default:
     break;
   }
@@ -354,6 +366,8 @@ int msLayerGetItems(layerObj *layer)
   case(MS_SDE):
     return(msSDELayerGetItems(layer));
     break;
+  case(MS_ORACLESPATIAL):
+    break;
   default:
     break;
   }
@@ -389,6 +403,8 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent) {
     break;
   case(MS_SDE):
     return(msSDELayerGetExtent(layer, extent));
+    break;
+  case(MS_ORACLESPATIAL):
     break;
   default:
     break;
@@ -625,6 +641,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
   case(MS_TILED_OGR):
   case(MS_POSTGIS):
   case(MS_SDE):
+  case(MS_ORACLESPATIAL):
   default:
     msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", 
                "msLayerGetAutoStyle()");
