@@ -655,11 +655,11 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       continue; /* label too large relative to the feature */
 
     draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
-    if((layerPtr->type == MS_LAYER_ANNOTATION || layerPtr->type == MS_LAYER_POINT) && (classPtr->color >= 0 || classPtr->outlinecolor > 0)) { /* there *is* a marker */
+    if((layerPtr->type == MS_LAYER_ANNOTATION || layerPtr->type == MS_LAYER_POINT) && (classPtr->color >= 0 || classPtr->outlinecolor > 0 || classPtr->symbol > 0)) { // there *is* a marker
 
       msGetMarkerSize(&map->symbolset, classPtr, &marker_width, &marker_height);
       marker_offset_x = MS_NINT(marker_width/2.0);
-      marker_offset_y = MS_NINT(marker_height/2.0);
+      marker_offset_y = MS_NINT(marker_height/2.0);      
 
       marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width);
       marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height);

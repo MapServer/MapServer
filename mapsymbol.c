@@ -689,8 +689,13 @@ void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *
     break;
 
   case(MS_SYMBOL_PIXMAP):
-    *width = symbolset->symbol[class->symbol].img->sx;
-    *height = symbolset->symbol[class->symbol].img->sy;
+    if(class->sizescaled == 1) {
+      *width = symbolset->symbol[class->symbol].img->sx;
+      *height = symbolset->symbol[class->symbol].img->sy;
+    } else {
+      *height = class->sizescaled;
+      *width = MS_NINT((class->sizescaled/symbolset->symbol[class->symbol].img->sy) * symbolset->symbol[class->symbol].img->sx);
+    }
     break;
   default: /* vector and ellipses, scalable */
     if(class->sizescaled > 0) {
@@ -764,9 +769,16 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
 
     break;
   case(MS_SYMBOL_PIXMAP):
-    offset_x = MS_NINT(p->x - .5*symbol->img->sx);
-    offset_y = MS_NINT(p->y - .5*symbol->img->sy);
-    gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
+    if(sz == 1) { // don't scale
+      offset_x = MS_NINT(p->x - .5*symbol->img->sx);
+      offset_y = MS_NINT(p->y - .5*symbol->img->sy);
+      gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
+    } else {
+      scale = sz/symbol->img->sy;
+      offset_x = MS_NINT(p->x - .5*symbol->img->sx*scale);
+      offset_y = MS_NINT(p->y - .5*symbol->img->sy*scale);
+      gdImageCopyResized(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*scale, symbol->img->sy*scale, symbol->img->sx, symbol->img->sy);
+    }
     break;
   case(MS_SYMBOL_ELLIPSE):
  
