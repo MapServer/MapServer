@@ -328,8 +328,6 @@ void msLayerClose(layerObj *layer)
 */
 int msLayerGetItems(layerObj *layer) 
 {
-  int i;
-
   // clean up any previously allocated instances
   layerFreeItemInfo(layer);
   if(layer->items) {
@@ -338,8 +336,6 @@ int msLayerGetItems(layerObj *layer)
     layer->numitems = 0;
   }
 
-  printf("in msLayerGetItems()\n"); 
-
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):    
@@ -347,12 +343,6 @@ int msLayerGetItems(layerObj *layer)
     layer->items = msDBFGetItems(layer->shpfile.hDBF);    
     if(!layer->items) return(MS_FAILURE);
     layerInitItemInfo(layer);
-
-    // dump the item list
-    printf("number of items = %d\n",layer->numitems); 
-    for(i=0;i<layer->numitems;i++)
-      printf("item %d = [%s]\n", i, layer->items[i]);
-
     return(MS_SUCCESS);
     break;
   case(MS_INLINE):
@@ -581,11 +571,6 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
     if(classify && layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
     if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].text));
   }
-
-  // dump the item list
-  printf("number of items = %d\n",layer->numitems); 
-  for(i=0;i<layer->numitems;i++)
-    printf("item %d = [%s]\n", i, layer->items[i]);
 
   // populate the iteminfo array
   return(layerInitItemInfo(layer));
