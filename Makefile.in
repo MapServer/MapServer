@@ -124,6 +124,12 @@ REGEX_OBJ=	@PHP_REGEX_OBJ@
 REGEX_INC=	@PHP_REGEX_INC@
 
 #
+# Multithreading support.
+#
+THREAD=@THREAD_FLAG@
+THREAD_LIB=@THREAD_LIB@
+
+#
 # Pick a compiler, etc. Flex and bison are only required if you need to modify the mapserver lexer (maplexer.l) or expression parser (mapparser.y).
 #
 CXX=	@CXX@
@@ -136,8 +142,9 @@ YACC=   @YACC@
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
-CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(WMS) $(ORACLESPATIAL) \
-        $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) $(POSTGIS) $(MPATROL) \
+CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(WMS) \
+	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) \
+	$(POSTGIS) $(MPATROL) $(THREAD) \
 	$(GD_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(REGEX_INC) $(MPATROL_INC) $(OGR_INC) $(GDAL_INC) $(POSTGIS_INC) \
 	$(WWW_INC) $(ORACLESPATIAL_INC)
@@ -145,14 +152,15 @@ CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(WMS) $(ORAC
 # Link flags and shared libs only
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
           $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
-	  $(POSTGIS_LIB) $(WWW_LIB) $(ORACLESPATIAL_LIB) $(MPATROL_LIB) $(XTRALIBS)
+	  $(POSTGIS_LIB) $(WWW_LIB) $(ORACLESPATIAL_LIB) $(MPATROL_LIB) \
+	  $(THREAD_LIB) $(XTRALIBS)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
 STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)
 
 RM= /bin/rm -f
 
-OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o $(EPPL_OBJ) $(REGEX_OBJ) $(PDF_OBJ)
+OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o mappostgis.o maplayer.o mapresample.o mapwms.o mapwmslayer.o maporaclespatial.o mapgml.o mapprojhack.o mapthread.o $(EPPL_OBJ) $(REGEX_OBJ) $(PDF_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---
