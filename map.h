@@ -19,6 +19,12 @@
 #include <unistd.h>
 #endif
 
+#ifndef DISABLE_CVSID
+#  define MS_CVSID(string)     static char ms_cvsid[] = string; \
+static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid ); }
+#else
+#  define MS_CVSID(string)
+#endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define MS_DLL_EXPORT     __declspec(dllexport)
