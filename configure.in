@@ -224,16 +224,16 @@ unset ac_cv_lib_freetype_FT_Init_FreeType
 unset ac_cv_lib_ttf_TT_Init_FreeType
 
 AC_ARG_WITH(freetype,
-[  --with-freetype=DIR     Specify where FreeType is installed (DIR is path to
-                          FreeType 2.x freetype-config program or FreeType 
-                          1.x/2.x install dir).],
+[  --with-freetype=DIR     GD: Specify where FreeType is installed (DIR is path
+                              to FreeType 2.x freetype-config program or 
+                              FreeType 1.x/2.x install dir).],
     FT_DIR=$withval,FT_DIR='')
 
 AC_ARG_ENABLE(force-freetype1,
-[  --enable-force-freetype1 Use this to force detection of freetype1 over 
-                          freetype2 on systems which have both versions
-                          installed in system libs such as RH7.1
-                          (By default, freetype2 is detected first)],,)
+[  --enable-force-freetype1 GD: Use this to force detection of freetype1 over 
+                              freetype2 on systems which have both versions
+                              installed in system libs such as RH7.1
+                              (By default, freetype2 is detected first)],,)
  
 AC_EXPAND_PATH($FT_DIR, FT_DIR)
 AC_CHECKING(where FreeType is installed...)
@@ -311,8 +311,8 @@ dnl ---------------------------------------------------------------------
 unset ac_cv_lib_z_zlibVersion
 
 AC_ARG_WITH(zlib,
-[  --with-zlib=DIR         Specify where zlib is installed (DIR is path to
-                          zlib install dir).],
+[  --with-zlib=DIR         GD: Specify where zlib is installed (DIR is path to
+                              zlib install dir).],
     ZL_DIR=$withval,ZL_DIR='')
 
 AC_EXPAND_PATH($ZL_DIR, ZL_DIR)
@@ -350,8 +350,8 @@ dnl ---------------------------------------------------------------------
 unset ac_cv_lib_png_png_init_io
 
 AC_ARG_WITH(png,
-[  --with-png=DIR          Specify where PNG is installed (DIR is path to
-                          PNG install dir).],
+[  --with-png=DIR          GD: Specify where PNG is installed (DIR is path to
+                              PNG install dir).],
     PNG_DIR=$withval,PNG_DIR='')
 
 AC_EXPAND_PATH($PNG_DIR, PNG_DIR)
@@ -381,8 +381,46 @@ else
 
 fi
 
+dnl ---------------------------------------------------------------------
+dnl Look for X11 and XPM libs used by GD
+dnl ---------------------------------------------------------------------
 
-GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB"
+unset ac_cv_lib_Xpm_XpmFreeXpmImage
+
+AC_ARG_WITH(xpm,
+[  --with-xpm=DIR          GD: Specify where libXpm is installed (DIR it the 
+                              libXpm install prefix).],
+    XPM_DIR=$withval,XPM_DIR='')
+
+AC_EXPAND_PATH($XPM_DIR, XPM_DIR)
+AC_CHECKING(where libXpm is installed...)
+XPM_LIB=''
+
+test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib"
+test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl && XPM_LIBDIR="$XPM_DIR"
+
+if test -n "$XPM_LIBDIR" ; then
+
+  XPM_LIB="-L$XPM_LIBDIR -lXpm -lX11"
+  AC_MSG_RESULT([        using libXpm from $XPM_LIB])
+  AC_ADD_RUNPATH("$XPM_LIBDIR")
+
+else
+
+  dnl check for lib in system libs
+
+  AC_CHECK_LIB(Xpm, XpmFreeXpmImage, XPM_LIB="-lXpm -lX11",,-lX11)
+
+  if test -n "$XPM_LIB" ; then
+    AC_MSG_RESULT([        using libXpm from system libs.])
+  else
+    AC_MSG_RESULT([        XPM (libXpm) library cannot be found, possibly needed for GD])
+  fi
+
+fi
+
+
+GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
 
 
 dnl ---------------------------------------------------------------------
