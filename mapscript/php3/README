@@ -616,59 +616,33 @@ Constructor:
 To compile/install the module on Linux:
 =======================================
 
+- You may have to start by recompiling Apache and PHP to include PHP as
+  a module, there are step by step instructions for that on the PHP web
+  site:
+	http://www.php.net/manual/install-unix.php
+
 - The main MapServer configure script will automatically setup the main
   makefile to compile php_mapscript.so if you pass the --with-php3=DIR
   argument to the configure script.
 
-- Copy the 'php_mapscript.so' library in your PHP development area, and
-  then use the dl() function to load the module at the beginning of
-  your PHP scripts. 
+- Copy the 'php_mapscript.so' library to your PHP extensions directory
+  and then use the dl() function to load the module at the beginning of
+  your PHP scripts.   See also the PHP function extension_loaded() to
+  check whether an extension is already loaded.
 
-  See also the PHP function extension_loaded() to check whether an 
-  extension is already loaded.
-
-  Make sure all directories in the path to the location of php_mapscript.so
-  are at least r-x for the HTTPd user (usually 'nobody'), otherwise dl()
-  may complain that it cannot find the file even if it's there.
+- The file mapscript/php3/examples/phpinfo_mapscript.phtml will test 
+  that the php_mapscript module is properly installed and can be loaded.
 
 - If you get an error from PHP complaining that it cannot load the 
   library, then make sure that you recompiled and reinstalled PHP with
   support for dynamic libraries.  On RedHat 5.x and 6.x, this means
   adding "-rdynamic" to the CLDFLAGS in the main PHP Makefile after
   running ./configure
+  Also make sure all directories in the path to the location of 
+  php_mapscript.so are at least r-x for the HTTPd user (usually 'nobody'),
+  otherwise dl() may complain that it cannot find the file even if it's 
+  there.
+
 
 
                       --------------------------
-
-Following is a copy of the README for PHP3 Dynamic Libs:
-
- ---------------------- begin php-3.0.14/dl/README --------------
- PHP3 Dynamically Loadable Libraries
-
- The build procedure for dynamic modules is not very clean yet.
- It will be improved in PHP4.
-
- Try:
-
- ./setup
-
- This will generate a Makefile.  You should edit this Makefile
- and on the CC line add your Apache include directories.  
- Something similar to: 
-
-   -I/path/apache/src/include -I/path/apache/src/os/unix
-
- To build an individual library type, for example:
-
-   make calendar.so
-
- You can then put the library somewhere and from within PHP
- use: dl("/path/calendar.so");
-
- A function from within the library can then be called like any
- regular PHP function.  For example:
-
-   echo jdmonthname(1,3);
- ---------------------- end of php-3.0.14/dl/README --------------
-
-
