@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2001/06/28 18:22:07  frank
+ * improve debug message
+ *
  * Revision 1.14  2001/06/25 17:47:16  frank
  * added linear approximator transformer
  *
@@ -729,7 +732,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     else
         sDummyMap.cellsize = adfSrcGeoTransform[1];
 
-    msDebug( "cellsize = %f\n", sDummyMap.cellsize );
+    msDebug( "msResampleGDALToMap in effect: cellsize = %f\n", 
+             sDummyMap.cellsize );
 
     sDummyMap.extent.minx = adfSrcGeoTransform[0]
         + sSrcExtent.minx * adfSrcGeoTransform[1]
