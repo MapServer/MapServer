@@ -8,8 +8,8 @@ typedef enum {CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT} CLIP_STATE;
 #define SWAP( a, b, t) ( (t) = (a), (a) = (b), (b) = (t) )
 #define EDGE_CHECK( x0, x, x1) ((x) < MS_MIN( (x0), (x1)) ? CLIP_LEFT : ((x) > MS_MAX( (x0), (x1)) ? CLIP_RIGHT : CLIP_MIDDLE ))
 
-# define INFINITY	(1.0e+30)
-# define NEARZERO	(1.0e-30)	/* 1/INFINITY */
+#define INFINITY	(1.0e+30)
+#define NEARZERO	(1.0e-30)	/* 1/INFINITY */
 
 void msPrintShape(shapeObj *p) 
 {
@@ -538,19 +538,6 @@ void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize)
 	return;
 }
 
-void msImageScanline(gdImagePtr im, int x1, int x2, int y, int c)
-{
-  int x;
-
-  // TO DO: This fix (adding if/then) was to address circumstances in the polygon fill code
-  // where x2 < x1. There may be something wrong in that code, but at any rate this is safer.
-
-  if(x1 < x2)
-    for(x=x1; x<=x2; x++) gdImageSetPixel(im, x, y, c);
-  else
-    for(x=x2; x<=x1; x++) gdImageSetPixel(im, x, y, c);
-}
-
 /*
 ** Not a generic intersection test, we KNOW the lines aren't parallel or coincident. To be used with the next
 ** buffering code only. See code in mapsearch.c for a boolean test for intersection.
@@ -643,158 +630,6 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
   }
   
   return;
-}
-
-void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c)
-{
-  int y;
-  int ymin, ymax, xmin, xmax;
-  double dx, dy;
-
-  ymin = MS_MAX((p->y - r), 0);
-  ymax = MS_MIN((p->y + r), (gdImageSY(im)-1));
-
-  for(y=ymin; y<=ymax; y++) {
-    dy = MS_ABS(p->y - y);
-    dx = sqrt((r*r) - (dy*dy));
-
-    xmin = MS_MAX((p->x - dx), 0);
-    xmax = MS_MIN((p->x + dx), (gdImageSX(im)-1));
-
-    msImageScanline(im, xmin, xmax, y, c);
-  }
-
-  return;
-}
-
-void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
-{
-  float *slope;
-  pointObj *point1, *point2, *testpoint1, *testpoint2;
-  int i, j, k, l, m, nfound, *xintersect, temp, sign;
-  int x, y, ymin, ymax, *horiz, wrong_order;
-  int n;
-
-  if(p->numlines == 0) return;
-
-#if 0
-  if( c & 0xFF000000 )
-	gdImageAlphaBlending( im, 1 );
-#endif
-  
-  /* calculate the total number of vertices */
-  n=0;
-  for(i=0; i<p->numlines; i++)
-    n += p->line[i].numpoints;
-
-  /* Allocate slope and horizontal detection arrays */
-  slope = (float *)calloc(n, sizeof(float));
-  horiz = (int *)calloc(n, sizeof(int));
-  
-  /* Since at most only one intersection is added per edge, there can only be at most n intersections per scanline */
-  xintersect = (int *)calloc(n, sizeof(int));
-  
-  /* Find the min and max Y */
-  ymin = p->line[0].point[0].y;
-  ymax = ymin;
-  
-  for(l=0,j=0; j<p->numlines; j++) {
-    point1 = &( p->line[j].point[p->line[j].numpoints-1] );
-    for(i=0; i < p->line[j].numpoints; i++,l++) {
-      point2 = &( p->line[j].point[i] );
-      if(point1->y == point2->y) {
-	horiz[l] = 1;
-	slope[l] = 0.0;
-      } else {
-	horiz[l] = 0;
-	slope[l] = (float) (point2->x - point1->x) / (point2->y - point1->y);
-      }
-      ymin = MS_MIN(ymin, point1->y);
-      ymax = MS_MAX(ymax, point2->y);
-      point1 = point2;
-    }
-  }  
-
-  for(y = ymin; y <= ymax; y++) { /* for each scanline */
-
-    nfound = 0;
-    for(j=0, l=0; j<p->numlines; j++) { /* for each line, l is overall point counter */
-
-      m = l; /* m is offset from begining of all vertices */
-      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
-      for(i=0; i < p->line[j].numpoints; i++, l++) {
-	point2 = &( p->line[j].point[i] );
-	if(EDGE_CHECK(point1->y, y, point2->y) == CLIP_MIDDLE) {
-	  
-	  if(horiz[l]) /* First, is this edge horizontal ? */
-	    continue;
-
-	  /* Did we intersect the first point point ? */
-	  if(y == point1->y) {
-	    /* Yes, must find first non-horizontal edge */
-	    k = i-1;
-	    if(k < 0) k = p->line[j].numpoints-1;
-	    while(horiz[m+k]) {
-	      k--;
-	      if(k < 0) k = p->line[j].numpoints-1;
-	    }
-	    /* Now perform sign test */
-	    if(k > 0)
-	      testpoint1 = &( p->line[j].point[k-1] );
-	    else
-	      testpoint1 = &( p->line[j].point[p->line[j].numpoints-1] );
-	    testpoint2 = &( p->line[j].point[k] );
-	    sign = (testpoint2->y - testpoint1->y) *
-	      (point2->y - point1->y);
-	    if(sign < 0)
-	      xintersect[nfound++] = point1->x;
-	    /* All done for point matching case */
-	  } else {  
-	    /* Not at the first point,
-	       find the intersection*/
-	    x = ROUND(point1->x + (y - point1->y)*slope[l]);
-	    xintersect[nfound++] = x;
-	  }
-	}                 /* End of checking this edge */
-	
-	point1 = point2;  /* Go on to next edge */
-      }
-    } /* Finished this scanline, draw all of the spans */
-    
-    /* First, sort the intersections */
-    do {
-      wrong_order = 0;
-      for(i=0; i < nfound-1; i++) {
-	if(xintersect[i] > xintersect[i+1]) {
-	  wrong_order = 1;
-	  SWAP(xintersect[i], xintersect[i+1], temp);
-	}
-      }
-    } while(wrong_order);
-    
-    /* Great, now we can draw the spans */
-    for(i=0; i < nfound; i += 2)
-      msImageScanline(im, xintersect[i], xintersect[i+1], y, c);
-  } /* End of scanline loop */
-  
-  /* Finally, draw all of the horizontal edges */
-  for(j=0, l=0; j<p->numlines; j++) {
-    point1 = &( p->line[j].point[p->line[j].numpoints - 1] );
-    for(i=0; i<p->line[j].numpoints; i++, l++) {
-      point2 = &( p->line[j].point[i] );
-      if(horiz[l])
-	msImageScanline(im, point1->x, point2->x, point2->y, c);
-      point1 = point2;
-    }
-  }
-  
-#if 0
-   gdImageAlphaBlending( im, 0 );
-#endif
-
-  free(slope);
-  free(horiz);
-  free(xintersect);
 }
 
 // Currently unused.

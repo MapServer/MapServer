@@ -272,6 +272,44 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
   return(brush);
 }
 
+/*
+** A series of low level drawing routines not available in GD, but specific to GD
+*/
+static void imageScanline(gdImagePtr im, int x1, int x2, int y, int c)
+{
+  int x;
+
+  // TO DO: This fix (adding if/then) was to address circumstances in the polygon fill code
+  // where x2 < x1. There may be something wrong in that code, but at any rate this is safer.
+
+  if(x1 < x2)
+    for(x=x1; x<=x2; x++) gdImageSetPixel(im, x, y, c);
+  else
+    for(x=x2; x<=x1; x++) gdImageSetPixel(im, x, y, c);
+}
+
+static void imageFilledCircle(gdImagePtr im, pointObj *p, int r, int c)
+{
+  int y;
+  int ymin, ymax, xmin, xmax;
+  double dx, dy;
+
+  ymin = MS_MAX((p->y - r), 0);
+  ymax = MS_MIN((p->y + r), (gdImageSY(im)-1));
+
+  for(y=ymin; y<=ymax; y++) {
+    dy = MS_ABS(p->y - y);
+    dx = sqrt((r*r) - (dy*dy));
+
+    xmin = MS_MAX((p->x - dx), 0);
+    xmax = MS_MIN((p->x + dx), (gdImageSX(im)-1));
+
+    imageScanline(im, xmin, xmax, y, c);
+  }
+
+  return;
+}
+
 static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
   int i, j, first;
@@ -343,6 +381,13 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
   }
 }
 
+typedef enum {CLIP_LEFT, CLIP_MIDDLE, CLIP_RIGHT} CLIP_STATE;
+
+#define CLIP_CHECK(min, a, max) ((a) < (min) ? CLIP_LEFT : ((a) > (max) ? CLIP_RIGHT : CLIP_MIDDLE));
+#define ROUND(a)       ( (a) + 0.5 )
+#define SWAP( a, b, t) ( (t) = (a), (a) = (b), (b) = (t) )
+#define EDGE_CHECK( x0, x, x1) ((x) < MS_MIN( (x0), (x1)) ? CLIP_LEFT : ((x) > MS_MAX( (x0), (x1)) ? CLIP_RIGHT : CLIP_MIDDLE ))
+
 static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
   int i, j;
@@ -354,6 +399,136 @@ static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, i
       for(j=1; j<p->line[i].numpoints; j++)
         gdImageLine(img, (int)p->line[i].point[j-1].x, (int)p->line[i].point[j-1].y, (int)p->line[i].point[j].x, (int)p->line[i].point[j].y, color);
   }
+}
+
+static void imageFilledPolygon(gdImagePtr im, shapeObj *p, int c, int offsetx, int offsety)
+{
+  float *slope;
+  pointObj *point1, *point2, *testpoint1, *testpoint2;
+  int i, j, k, l, m, nfound, *xintersect, temp, sign;
+  int x, y, ymin, ymax, *horiz, wrong_order;
+  int n;
+
+  if(p->numlines == 0) return;
+ 
+#if 0
+  if( c & 0xFF000000 )
+	gdImageAlphaBlending( im, 1 );
+#endif
+  
+  /* calculate the total number of vertices */
+  n=0;
+  for(i=0; i<p->numlines; i++)
+    n += p->line[i].numpoints;
+
+  /* Allocate slope and horizontal detection arrays */
+  slope = (float *)calloc(n, sizeof(float));
+  horiz = (int *)calloc(n, sizeof(int));
+  
+  /* Since at most only one intersection is added per edge, there can only be at most n intersections per scanline */
+  xintersect = (int *)calloc(n, sizeof(int));
+  
+  /* Find the min and max Y */
+  ymin = p->line[0].point[0].y;
+  ymax = ymin;
+  
+  for(l=0,j=0; j<p->numlines; j++) {
+    point1 = &( p->line[j].point[p->line[j].numpoints-1] );
+    for(i=0; i < p->line[j].numpoints; i++,l++) {
+      point2 = &( p->line[j].point[i] );
+      if(point1->y == point2->y) {
+	horiz[l] = 1;
+	slope[l] = 0.0;
+      } else {
+	horiz[l] = 0;
+	slope[l] = (float) (point2->x - point1->x) / (point2->y - point1->y);
+      }
+      ymin = MS_MIN(ymin, point1->y);
+      ymax = MS_MAX(ymax, point2->y);
+      point1 = point2;
+    }
+  }  
+
+  for(y = ymin; y <= ymax; y++) { /* for each scanline */
+
+    nfound = 0;
+    for(j=0, l=0; j<p->numlines; j++) { /* for each line, l is overall point counter */
+
+      m = l; /* m is offset from begining of all vertices */
+      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
+      for(i=0; i < p->line[j].numpoints; i++, l++) {
+	point2 = &( p->line[j].point[i] );
+	if(EDGE_CHECK(point1->y, y, point2->y) == CLIP_MIDDLE) {
+	  
+	  if(horiz[l]) /* First, is this edge horizontal ? */
+	    continue;
+
+	  /* Did we intersect the first point point ? */
+	  if(y == point1->y) {
+	    /* Yes, must find first non-horizontal edge */
+	    k = i-1;
+	    if(k < 0) k = p->line[j].numpoints-1;
+	    while(horiz[m+k]) {
+	      k--;
+	      if(k < 0) k = p->line[j].numpoints-1;
+	    }
+	    /* Now perform sign test */
+	    if(k > 0)
+	      testpoint1 = &( p->line[j].point[k-1] );
+	    else
+	      testpoint1 = &( p->line[j].point[p->line[j].numpoints-1] );
+	    testpoint2 = &( p->line[j].point[k] );
+	    sign = (testpoint2->y - testpoint1->y) *
+	      (point2->y - point1->y);
+	    if(sign < 0)
+	      xintersect[nfound++] = point1->x;
+	    /* All done for point matching case */
+	  } else {  
+	    /* Not at the first point,
+	       find the intersection*/
+	    x = ROUND(point1->x + (y - point1->y)*slope[l]);
+	    xintersect[nfound++] = x;
+	  }
+	}                 /* End of checking this edge */
+	
+	point1 = point2;  /* Go on to next edge */
+      }
+    } /* Finished this scanline, draw all of the spans */
+    
+    /* First, sort the intersections */
+    do {
+      wrong_order = 0;
+      for(i=0; i < nfound-1; i++) {
+	if(xintersect[i] > xintersect[i+1]) {
+	  wrong_order = 1;
+	  SWAP(xintersect[i], xintersect[i+1], temp);
+	}
+      }
+    } while(wrong_order);
+    
+    /* Great, now we can draw the spans */
+    for(i=0; i < nfound; i += 2)
+      imageScanline(im, xintersect[i]+offsetx, xintersect[i+1]+offsetx, y+offsety, c);
+  } /* End of scanline loop */
+  
+  /* Finally, draw all of the horizontal edges */
+  for(j=0, l=0; j<p->numlines; j++) {
+    point1 = &( p->line[j].point[p->line[j].numpoints - 1] );
+    for(i=0; i<p->line[j].numpoints; i++, l++) {
+      point2 = &( p->line[j].point[i] );
+      if(horiz[l])
+	imageScanline(im, point1->x+offsetx, point2->x+offsetx, point2->y+offsety, c);
+      point1 = point2;
+    }
+  }
+  
+#if 0
+   gdImageAlphaBlending( im, 0 );
+#endif
+
+  free(slope);
+  free(horiz);
+  free(xintersect);
 }
 
 /* ---------------------------------------------------------------------------*/
@@ -542,7 +717,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   if(size < 1) return; // size too small
       
   if(style->symbol == 0) { // simply draw a single pixel of the specified color    
-    msImageFilledCircle(img, p, r, fc);
+    imageFilledCircle(img, p, r, fc);
     if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
     return;
   }
@@ -580,7 +755,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     y = MS_NINT(symbol->sizey*d)+1;
 
     if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid
-      msImageFilledCircle(img, p, r, fc);
+      imageFilledCircle(img, p, r, fc);
       if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
       return;
     }
@@ -608,7 +783,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     y = MS_NINT(symbol->sizey*d)+1;
 
     if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid
-      msImageFilledCircle(img, p, r, fc);
+      imageFilledCircle(img, p, r, fc);
       if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
       return;
     }
@@ -656,7 +831,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   }
 
   // fill the circle in the main image
-  msImageFilledCircle(img, p, r, gdTiled);
+  imageFilledCircle(img, p, r, gdTiled);
   if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
   if(tile) gdImageDestroy(tile);
 
@@ -867,9 +1042,12 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
+
+  // TODO: Don't get this modification, is it needed elsewhere?
   if(style->size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)style->size;
   if(style->size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)style->size;
   size = MS_NINT(style->size*scalefactor);
+
   //size = MS_MAX(size, style->minsize);
   //size = MS_MIN(size, style->maxsize);
 
@@ -996,7 +1174,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   gdPoint oldpnt, newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
   gdImagePtr tile;
-  int x, y;
+  int x, y, ox, oy;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
   int fc, bc, oc;
   double size, d;
@@ -1019,6 +1197,8 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
+  ox = MS_NINT(style->offsetx*scalefactor); // should we scale the offsets?
+  oy = MS_NINT(style->offsety*scalefactor);
 
   if(fc==-1 && oc!=-1) { // use msDrawLineSymbolGD() instead (POLYLINE)
     msDrawLineSymbolGD(symbolset, img, p, style, scalefactor);
@@ -1031,16 +1211,16 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       
   if(style->symbol == 0) { /* simply draw a single pixel of the specified color */    
     if(style->antialias==MS_TRUE) {      
-      msImageFilledPolygon(img, p, fc); // fill is NOT anti-aliased, the outline IS
+      imageFilledPolygon(img, p, fc, ox, oy); // fill is NOT anti-aliased, the outline IS
       if(oc>-1)
         gdImageSetAntiAliased(img, oc);
       else
 	gdImageSetAntiAliased(img, fc);
-      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+      imagePolyline(img, p, gdAntiAliased, ox, oy);
     } else {
-      msImageFilledPolygon(img, p, fc);
-      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
-    }   
+      imageFilledPolygon(img, p, fc, ox, oy);
+      if(oc>-1) imagePolyline(img, p, oc, ox, oy);
+    }
     return;
   }
   
@@ -1062,16 +1242,17 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     x = -rect.minx;
     y = -rect.miny;
 
+    // TODO, should style->antialias be used here (it'd be nice to ditch antialias from symbols)
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
 
     gdImageSetTile(img, tile);
-    msImageFilledPolygon(img,p,gdTiled);
+    imageFilledPolygon(img, p, gdTiled, ox, oy);
 
     if(style->antialias==MS_TRUE && oc>-1) { 
       gdImageSetAntiAliased(img, oc);     
-      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+      imagePolyline(img, p, gdAntiAliased, ox, oy);
     } else 
-      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+      if(oc>-1) imagePolyline(img, p, oc, ox, oy);
 
     gdImageDestroy(tile);
 #endif
@@ -1080,13 +1261,13 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   case(MS_SYMBOL_PIXMAP):
     
     gdImageSetTile(img, symbol->img);
-    msImageFilledPolygon(img, p, gdTiled);
+    imageFilledPolygon(img, p, gdTiled, ox, oy);
 
     if(style->antialias==MS_TRUE && oc>-1) { 
       gdImageSetAntiAliased(img, oc);     
-      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+      imagePolyline(img, p, gdAntiAliased, ox, oy);
     } else 
-      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+      if(oc>-1) imagePolyline(img, p, oc, ox, oy);
 
     break;
   case(MS_SYMBOL_ELLIPSE):    
@@ -1096,15 +1277,15 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     if((x <= 1) && (y <= 1)) { /* No sense using a tile, just fill solid */
       if(style->antialias==MS_TRUE) {      
-        msImageFilledPolygon(img, p, fc); // fill is NOT anti-aliased, the outline IS
+        imageFilledPolygon(img, p, fc, ox, oy); // fill is NOT anti-aliased, the outline IS
         if(oc>-1)
           gdImageSetAntiAliased(img, oc);
         else
 	  gdImageSetAntiAliased(img, fc);
-        imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+        imagePolyline(img, p, gdAntiAliased, ox, oy);
       } else {
-        msImageFilledPolygon(img, p, fc);
-        if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+        imageFilledPolygon(img, p, fc, oy, oy);
+        if(oc>-1) imagePolyline(img, p, oc, ox, oy);
       }
       return;
     }
@@ -1123,13 +1304,13 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     // fill the polygon in the main image
     gdImageSetTile(img, tile);
-    msImageFilledPolygon(img,p,gdTiled);
+    imageFilledPolygon(img, p, gdTiled, ox, oy);
 
     if(style->antialias==MS_TRUE && oc>-1) { 
       gdImageSetAntiAliased(img, oc);     
-      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+      imagePolyline(img, p, gdAntiAliased, ox, oy);
     } else 
-      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+      if(oc>-1) imagePolyline(img, p, oc, ox, oy);
 
     gdImageDestroy(tile);
     break;
@@ -1140,15 +1321,15 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     if((x <= 1) && (y <= 1)) { /* No sense using a tile, just fill solid */
       if(style->antialias==MS_TRUE) {      
-        msImageFilledPolygon(img, p, fc); // fill is NOT anti-aliased, the outline IS
+        imageFilledPolygon(img, p, fc, ox, oy); // fill is NOT anti-aliased, the outline IS
         if(oc>-1)
           gdImageSetAntiAliased(img, oc);
         else
 	  gdImageSetAntiAliased(img, fc);
-        imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+        imagePolyline(img, p, gdAntiAliased, ox, oy);
       } else {
-        msImageFilledPolygon(img, p, fc);
-        if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+        imageFilledPolygon(img, p, fc, ox, oy);
+        if(oc>-1) imagePolyline(img, p, oc, ox, oy);
       }      
       return;
     }
@@ -1191,13 +1372,13 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
     // Fill the polygon in the main image
     gdImageSetTile(img, tile);
-    msImageFilledPolygon(img, p, gdTiled);
+    imageFilledPolygon(img, p, gdTiled, ox, oy);
 
     if(style->antialias==MS_TRUE && oc>-1) { 
       gdImageSetAntiAliased(img, oc);     
-      imagePolyline(img, p, gdAntiAliased, style->offsetx, style->offsety);
+      imagePolyline(img, p, gdAntiAliased, ox, oy);
     } else
-      if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+      if(oc>-1) imagePolyline(img, p, oc, ox, oy);
 
     gdImageDestroy(tile);
     break;
@@ -1224,14 +1405,14 @@ static void billboardGD(gdImagePtr img, shapeObj *shape, labelObj *label)
       temp.line[0].point[i].x += label->backgroundshadowsizex;
       temp.line[0].point[i].y += label->backgroundshadowsizey;
     }
-    msImageFilledPolygon(img, &temp, label->backgroundshadowcolor.pen);
+    imageFilledPolygon(img, &temp, label->backgroundshadowcolor.pen, 0, 0);
     for(i=0; i<temp.line[0].numpoints; i++) {
       temp.line[0].point[i].x -= label->backgroundshadowsizex;
       temp.line[0].point[i].y -= label->backgroundshadowsizey;
     }
   }
 
-  msImageFilledPolygon(img, &temp, label->backgroundcolor.pen);
+  imageFilledPolygon(img, &temp, label->backgroundcolor.pen, 0, 0);
 
   msFreeShape(&temp);
 }
