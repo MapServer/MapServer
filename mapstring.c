@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/11/19 19:28:13  hobu
+ * check for null inputs in strncasecmp and strcasecmp
+ *
  * Revision 1.29  2004/11/12 00:12:22  sdlime
  * Fixed bug 1040 so when escaping for HTML we use &#39; instead of &apos; for an apostrophe.
  *
@@ -121,7 +124,9 @@ int strncasecmp(const char *s1, const char *s2, int len)
 
   cp1 = s1;
   cp2 = s2;
-  
+  if ((!*cp1) || (!*cp2 )) {
+    return (0);
+  }
   while(*cp1 && *cp2 && len) 
   {
       if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
@@ -153,6 +158,9 @@ int strcasecmp(const char *s1, const char *s2)
 
   cp1 = s1;
   cp2 = s2;
+  if ((!cp1) || (!cp2 )) {
+    return (0);
+  }
   while(*cp1 && *cp2) 
   {
      if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
