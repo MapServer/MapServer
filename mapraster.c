@@ -1714,6 +1714,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
             else
 #endif
             {
+                if( adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0 )
+                {
+                    if( layer->debug || map->debug )
+                        msDebug( "Layer %s has rotational coefficients but we are unable to\nuse them, is projection set?", layer->name );
+                    
+                }
                 status = msDrawRasterLayerGDAL(map, layer, image, hDS );
             }
 
