@@ -143,6 +143,8 @@ and the MapServer Map File documentation at:
    colorObj     imagecolor
    scalebarObj  scalebar
    legendObj    legend          	
+   string       symbolsetfilename (read-only, set by setSymbolSet())
+   string       fontsetfilename (read-only, set by setFontSet())
 
  Methods:
 
