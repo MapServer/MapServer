@@ -625,14 +625,18 @@ typedef struct
 
 // LAYER OBJECT - basic unit of a map
 typedef struct layer_obj {
-  int index;
+  //int index;
 
-  struct map_obj *map;
+  //struct map_obj *map;
 
   char *classitem; // .DBF item to be used for symbol lookup
-  int classitemindex;
+  //int classitemindex;
 
 #ifndef SWIG
+  int classitemindex;
+  resultCacheObj *resultcache; // holds the results of a query against this layer
+  int annotate; // boolean flag for annotation
+  double scalefactor; // computed, not set
 #ifndef __cplusplus
   classObj *class; // always at least 1 class
 #else
@@ -644,6 +648,8 @@ typedef struct layer_obj {
 %immutable;
 #endif
   int numclasses;
+  int index;
+  struct map_obj *map;
 #ifdef SWIG
 %mutable;
 #endif
@@ -656,7 +662,7 @@ typedef struct layer_obj {
   char *_template;
 #endif
 
-  resultCacheObj *resultcache; // holds the results of a query against this layer
+  //resultCacheObj *resultcache; // holds the results of a query against this layer
 
   char *name; // should be unique
   char *group; // shouldn't be unique it's supposed to be a group right?
@@ -666,13 +672,13 @@ typedef struct layer_obj {
 
   enum MS_LAYER_TYPE type;
 
-  int annotate; // boolean flag for annotation
+  //int annotate; // boolean flag for annotation
 
   double tolerance; // search buffer for point and line queries (in toleranceunits)
   int toleranceunits;
 
   double symbolscale; // scale at which symbols are default size
-  double scalefactor; // computed, not set
+  //double scalefactor; // computed, not set
   double minscale, maxscale;
   double labelminscale, labelmaxscale;
   int sizeunits; // applies to all classes
@@ -689,13 +695,14 @@ typedef struct layer_obj {
   int labelitemindex, labelsizeitemindex, labelangleitemindex;
 
   char *tileitem;
-  int tileitemindex;
+  //int tileitemindex;
   char *tileindex; // layer index file for tiling support
 
 #ifndef SWIG
+  int tileitemindex;
   projectionObj projection; // projection information for the layer
-#endif
   int project; // boolean variable, do we need to project this layer or not
+#endif
 
   int units; // units of the projection
 
@@ -706,9 +713,10 @@ typedef struct layer_obj {
 
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
-  struct layer_obj *sameconnection;
+  //struct layer_obj *sameconnection;
  
 #ifndef SWIG
+  struct layer_obj *sameconnection;
   // SDL has converted OracleSpatial, SDE, Graticules, MyGIS
   void *layerinfo; // all connection types should use this generic pointer to a vendor specific structure
   void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
@@ -716,7 +724,7 @@ typedef struct layer_obj {
 #endif
 
   // attribute/classification handling components
-  char **items;
+  //char **items;
 #ifdef SWIG
 %immutable;
 #endif
@@ -726,18 +734,18 @@ typedef struct layer_obj {
 #endif
 
 #ifndef SWIG
+  char **items;
   void *iteminfo; // connection specific information necessary to retrieve values
-#endif
-
-#ifndef SWIG
   expressionObj filter; // connection specific attribute filter
+  int filteritemindex;
+  int styleitemindex;
 #endif
 
   char *filteritem;
-  int filteritemindex;
+  //int filteritemindex;
 
   char *styleitem; // item to be used for style lookup - can also be 'AUTO'
-  int styleitemindex;
+  //int styleitemindex;
 
   char *requires; // context expressions, simple enough to not use expressionObj
   char *labelrequires;

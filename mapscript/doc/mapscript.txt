@@ -162,7 +162,87 @@ example:
 
 
 Now that the style of the documentation has been introduced, on to the
-classes themselves.
+module itself.
+
+
+=============================================================================
+ Mapscript Variables
+=============================================================================
+
+-----------------------------------------------------------------------------
+ General
+-----------------------------------------------------------------------------
+
+=========== ======
+NAME         VALUE
+----------- ------
+MS_VERSION     4.1
+MS_TRUE          1
+MS_FALSE         0
+MS_ON            1
+MS_OFF           0
+MS_DEFAULT       2
+MS_EMBED         3
+MS_DELETE        4
+MS_YES           1
+MS_NO            0
+MS_SINGLE        0
+MS_MULTIPLE      1
+=========== ======
+
+-----------------------------------------------------------------------------
+ MS_UNITS
+-----------------------------------------------------------------------------
+
+============= =====
+NAME          VALUE
+------------- -----
+MS_INCHES         0
+MS_FEET           1
+MS_MILES          2
+MS_METERS         3
+MS_KILOMETERS     4
+MS_DD             5
+MS_PIXELS         6
+============= =====
+
+-----------------------------------------------------------------------------
+ MS_LAYER_TYPE
+-----------------------------------------------------------------------------
+
+=================== =====
+NAME                VALUE
+------------------- -----
+MS_LAYER_POINT          0
+MS_LAYER_LINE           1
+MS_LAYER_POLYGON        2 
+MS_LAYER_RASTER         3 
+MS_LAYER_ANNOTATION     4  
+MS_LAYER_QUERY          5
+MS_LAYER_CIRCLE         6
+MS_LAYER_TILEINDEX      7 
+=================== =====
+
+-----------------------------------------------------------------------------
+ MS_CONNECTION_TYPE
+-----------------------------------------------------------------------------
+
+================== =====
+NAME               VALUE
+------------------ -----
+MS_INLINE              0
+MS_SHAPEFILE           1
+MS_TILED_SHAPEFILE     2
+MS_SDE                 3
+MS_OGR                 4
+MS_UNUSED_1            5
+MS_POSTGIS             6
+MS_WMS                 7
+MS_ORACLESPATIAL       8
+MS_WFS                 9
+MS_GRATICULE          10
+MS_MYGIS              11 
+================== =====
 
 =============================================================================
  Mapscript Classes
@@ -241,19 +321,19 @@ Methods
 
 .. _new classObj:
 
-new classObj(layerObj_ layer) : classObj_
+new classObj( layerObj_ layer ) : classObj_
     Create a new child classObj instance at the tail (highest index) of 
     the class array of the parent *layer*.
 
 .. _createLegendIcon:
  
-createLegendIcon(mapObj_ map, layerObj_ layer, int width, int height) : imageObj_
+createLegendIcon( mapObj_ map, layerObj_ layer, int width, int height ) : imageObj_
     Draw and return a new legend icon.
 
 .. _drawLegendIcon:
 
-drawLegendIcon(mapObj_ map, layerObj_ layer, int width, int height, imageObj_ dstImage, int dstX, int dstY) : int
-    Draw the legend icon onto *dstImage* object at dstX, dstY.  Returns 
+drawLegendIcon( mapObj_ map, layerObj_ layer, int width, int height, imageObj_ image, int dstx, int dsty ) : int
+    Draw the legend icon onto *image* at *dstx*, *dsty*.  Returns 
     MS_SUCCESS or MS_FAILURE.
 
 .. _getExpressionString:
@@ -268,53 +348,53 @@ getFirstMetaDataKey() : string
     
 .. _classObj.getMetaData:
 
-getMetaData(string key) : string
+getMetaData( string key ) : string
     Return the value of the classObj metadata at *key*.
 
-getNextMetaDataKey(string lastkey) : string
+getNextMetaDataKey( string lastkey ) : string
     Returns the next key in the metadata hash table or NULL if
     *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
     first key of the metadata hash table.
    
 .. _getStyle:
 
-getStyle(int index) : styleObj_
+getStyle( int index ) : styleObj_
     Return a reference to the styleObj at *index* in the styles array.
 
     See the styleObj_ section for more details on multiple class styles.
 
 .. _insertStyle:
 
-insertStyle(styleObj_ style [, int index=-1]) : int
+insertStyle( styleObj_ style [, int index=-1 ] ) : int
     Insert a **copy** of *style* into the styles array at index *index*.
     Default is -1, or the end of the array.  Returns the index at which the 
     style was inserted.
 
 .. _moveStyleDown:
 
-moveStyleDown(int index) : int
+moveStyleDown( int index ) : int
     Swap the styleObj at *index* with the styleObj *index* + 1.
     
 .. _moveStyleUp:
 
-moveStyleUp(int index) : int
+moveStyleUp( int index ) : int
     Swap the styleObj at *index* with the styleObj *index* - 1.
 
 .. _removeStyle:
 
-removeStyle(int index) : styleObj_
+removeStyle( int index ) : styleObj_
     Remove the styleObj at *index* from the styles array and return a
     copy.
 
 .. _setExpression:
 
-setExpression(string expression) : int
+setExpression( string expression ) : int
     Set expression string where *expression* is a MapServer regular, logical
     or string expression.  Returns MS_SUCCESS or MS_FAILUIRE.
   
 .. _classObj.setMetaData:
 
-setMetaData(string key, string value) : int
+setMetaData( string key, string value ) : int
     Insert *value* into the classObj metadata at *key*.  Returns MS_SUCCESS
     or MS_FAILURE.
 
@@ -343,17 +423,17 @@ Methods
 
 .. _`new colorObj`:
 
-new colorObj([int red=0, int green=0, int blue=0]) : colorObj_ 
+new colorObj( [ int red=0, int green=0, int blue=0 ] ) : colorObj_ 
     Create a new instance.  The color arguments are optional.
     
 .. _setRGB:
 
-setRGB(int red, int green, int blue) : int 
+setRGB( int red, int green, int blue ) : int 
     Set all three RGB components.  Returns MS_SUCCESS or MS_FAILURE.
     
 .. _setHex:
 
-setHex(string hexcolor) : int 
+setHex( string hexcolor ) : int 
     Set the color to values specified in case-independent hexadecimal
     notation.  Calling setHex('#ffffff') assigns values of 255 to each
     color component.  Returns MS_SUCCESS or MS_FAILURE.
@@ -387,7 +467,7 @@ getFirstFont() : string
     Return the name of the first font in the fonts hash table.  Along with
     getNextFont(), provides an opaque iterator for fonts.
 
-getNextFont(string lastfont) : string
+getNextFont( string lastfont ) : string
     Returns the next font following *lastfont* in the fonts hash table or
     NULL if *lastfont* is the last non-NULL key.  If *lastfont* is NULL,
     returns the **first** key of the fonts hash table.
@@ -429,7 +509,7 @@ Methods
 
 .. _new imageObj:
 
-new imageObj(int width, int height [, string driver=NULL [, string filename=NULL]]) : imageObj_
+new imageObj( int width, int height [, string driver=NULL [, string filename=NULL ] ] ) : imageObj_
     Create new instance of imageObj.  If *filename* is specified, an imageObj
     is created from the file and any specified *width*, *height*, and
     *driver* parameters will be overridden by values of the image in 
@@ -439,7 +519,7 @@ new imageObj(int width, int height [, string driver=NULL [, string filename=NULL
 
 .. _imageObj.save:
 
-save(string filename [, mapObj parent_map=NULL]) : int
+save( string filename [, mapObj parent_map=NULL ] ) : int
     Save image to *filename*.  The optional *parent_map* parameter must be
     specified if saving GeoTIFF images.
 
@@ -580,6 +660,77 @@ Attributes
 
 **TODO**
 
+classitem : string
+    The attribute used to classify layer data.
+   
+connection : string
+    Layer connection or DSN.
+
+connectiontype : int
+    See MS_CONNECTION_TYPE_.
+
+data : string
+    Layer data definition, values depend upon connectiontype.
+  
+debug : int
+    Enable debugging of layer.  MS_ON or MS_OFF (default).
+    
+dump : int
+    Switch to allow mapserver to return data in GML format.  MS_TRUE or
+    MS_FALSE.  Default is MS_FALSE.
+
+filteritem : string
+    Attribute defining filter.
+    
+footer : string
+    **TODO**
+    
+group : string
+    Name of a group of layers.
+    
+header : string
+    **TODO**
+    
+index : int immutable
+    Index of layer within parent map's layers array.
+   
+labelcache : int
+    MS_ON or MS_OFF.  Default is MS_ON.
+    
+labelangleitem : string
+    Attribute defining label angle.
+    
+labelitem : string
+    Attribute defining feature label text.
+
+labelrequires : string
+    Logical expression.
+
+labelsizeitem : string
+    Attribute defining label size.
+    
+labelmaxscale : float
+    Maximum scale at which layer will be labeled.
+
+labelminscale : float
+    Minimum scale at which layer will be labeled.
+
+map : mapObj_ immutable
+    Reference to parent map.
+  
+maxfeatures : int
+    Maximum number of layer features that will be drawn.  For shapefile data
+    this means the first N features where N = maxfeatures.
+    
+maxscale : float
+    Maximum scale at which layer will be drawn.
+
+minscale : float
+    Minimum scale at which layer will be drawn.
+
+name : string
+    Unique identifier for layer.
+    
 numclasses : int immutable
     Number of layer classes.
 
@@ -592,6 +743,57 @@ numjoins : int immutable
 numprocessing : int immutable
     Number of raster processing directives.
 
+offsite : colorObj_
+    transparent pixel value for raster layers.
+    
+postlabelcache : int
+    MS_TRUE or MS_FALSE.  Default is MS_FALSE.  **TODO** not entirely clear
+    whether this overrides the labelcache attribute.
+   
+requires : string
+    Logical expression.
+    
+sizeunits : int
+    Units of class size values.  See MS_UNITS_.
+
+status : int
+    MS_ON, MS_OFF, or MS_DEFAULT.
+  
+styleitem : string
+    Attribute defining styles.
+
+symbolscale : float
+    Scale at which symbols are default size.
+
+template : string
+    Template file.  Note that for historical reasons, the query attribute
+    must be non-NULL for a layer to be queryable.
+  
+tileindex : string
+    Layer index file for tiling support.
+
+tileitem : string
+    Attribute defining tile paths.
+    
+tolerance : float
+    Search buffer for point and line queries.
+
+toleranceunits : int
+    See MS_UNITS_.
+
+transform : int
+    Whether or not layer data is to be transformed to image units.  
+    MS_TRUE or MS_FALSE.  Default is MS_TRUE.  Case of MS_FALSE is for
+    data that are in image coordinates such as annotation points.
+   
+transparency : int
+    Layer transparency in range [0, 100].
+    
+type : int
+    See MS_LAYER_TYPE_.
+    
+units : int
+    Units of the layer.  See MS_UNITS_.
 
 Methods
 -------
