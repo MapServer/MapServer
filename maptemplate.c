@@ -770,13 +770,16 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
   int tagOffset, tagLength;
 
   char *argValue;
-  char *pointFormat;
+  char *pointFormat1, *pointFormat2;
   int pointFormatLength;
 
-  char *xh=" ", *xf=" "; // various header and footers
-  char *yh="", *yf="";  
+  // h = header, f=footer, s=seperator
+  char *xh="", *xf=" ";
+  char *yh="", *yf="";
+  char *cs=","; // coordinate
   char *ph="", *pf=""; // part
   char *sh="", *sf=""; // shape 
+
   int precision=0;
 
   shapeObj tShape;
@@ -817,6 +820,9 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       argValue = msLookupHashTable(tagArgs, "yf");
       if(argValue) yf = argValue;
 
+      argValue = msLookupHashTable(tagArgs, "cs");
+      if(argValue) cs = argValue;
+
       argValue = msLookupHashTable(tagArgs, "ph");
       if(argValue) ph = argValue;
       argValue = msLookupHashTable(tagArgs, "pf");
@@ -834,10 +840,12 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       if(argValue) projectionString = argValue;
     }
 
-    // build the per point format string
-    pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + 10 + 1;
-    pointFormat = (char *) malloc(pointFormatLength);
-    snprintf(pointFormat, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
+    // build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't)
+    pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + strlen("cs") + 10 + 1;
+    pointFormat1 = (char *) malloc(pointFormatLength);
+    snprintf(pointFormat1, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s%s", xh, precision, xf, yh, precision, yf, cs); 
+    pointFormat2 = (char *) malloc(pointFormatLength); 
+    snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
  
     // make a copy of the shape
     msInitShape(&tShape);
@@ -855,19 +863,19 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       switch(tShape.type) {
       case(MS_SHAPE_POINT):
         // at this point we only convert the first point of the first shape
-	    tShape.line[0].point[0].x = MS_MAP2IMAGE_X(tShape.line[0].point[0].x, layer->map->extent.minx, layer->map->cellsize);
+	tShape.line[0].point[0].x = MS_MAP2IMAGE_X(tShape.line[0].point[0].x, layer->map->extent.minx, layer->map->cellsize);
         tShape.line[0].point[0].y = MS_MAP2IMAGE_Y(tShape.line[0].point[0].y, layer->map->extent.maxy, layer->map->cellsize);
-	    break;
+	break;
       case(MS_SHAPE_LINE):
-	    msClipPolylineRect(&tShape, layer->map->extent);
-	    break;
+	msClipPolylineRect(&tShape, layer->map->extent);
+	break;
       case(MS_SHAPE_POLYGON):
         msClipPolygonRect(&tShape, layer->map->extent);
         break;
       default:
         // TO DO: need an error message here 
         return(MS_FAILURE);
-	   break;
+	break;
       }
       msTransformShapeToPixel(&tShape, layer->map->extent, layer->map->cellsize);
     } else if(projectionString) {
@@ -886,10 +894,12 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
     for(i=0; i<tShape.numlines; i++) {      
       if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
-      for(j=0; j<tShape.line[i].numpoints; j++) {
-        snprintf(point, 128, pointFormat, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
+      for(j=0; j<tShape.line[i].numpoints-1; j++) {
+        snprintf(point, 128, pointFormat1, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
         coords = strcatalloc(coords, point);  
       }
+      snprintf(point, 128, pointFormat2, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
+      coords = strcatalloc(coords, point);  
       if(strlen(pf) > 0) coords = strcatalloc(coords, pf);
     }
     if(strlen(sf) > 0) coords = strcatalloc(coords, sf);
@@ -912,7 +922,8 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     // clean up
     free(tag); tag = NULL;
     msFreeHashTable(tagArgs); tagArgs=NULL;
-    free(pointFormat);
+    free(pointFormat1);
+    free(pointFormat2);
     free(coords);
 
     if((*line)[tagOffset] != '\0')
