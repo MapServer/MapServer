@@ -362,6 +362,56 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
   </gml:RectifiedGrid>   
 */
 
+static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
+{
+  const char *value;
+  char tag[100]; // should be plenty of space
+  
+  printf("        <AxisDescription>\n"); // TODO: there are some optional attributes
+  
+  // TODO: add MetadataLink (optional)
+  
+  snprintf(tag, 100, "%s_description", id);
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_NOERR, "          <Description>%s</Description>\n", NULL);
+  snprintf(tag, 100, "%s_name", id);
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_WARN, "          <Name>%s</Name>\n", NULL);
+ 
+  snprintf(tag, 100, "%s_label", id);
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", tag, OWS_WARN, "          <Label>%s</Label>\n", NULL);
+  
+  // Values
+  printf("          <Values>\n"); // TODO: there are some optional attributes
+  
+  // single values
+  snprintf(tag, 100, "%s_values", id);
+  if(msOWSLookupMetadata(layer->metadata, "CO", tag))
+    msOWSPrintMetadataList(stdout, layer->metadata, "CO", tag, NULL, NULL, "            <SingleValue>%s</SingleValue>\n", NULL); // TODO: there are some optional attributes
+  
+  // intervals, only one per axis for now
+  snprintf(tag, 100, "%s_interval", id);
+  if((value = msOWSLookupMetadata(layer->metadata, "CO", tag)) != NULL) {
+    char **tokens;
+    int numtokens;
+
+     tokens = split(value, ',', &numtokens);
+     if(tokens && numtokens > 0) {
+       printf("          <Interval>\n"); // TODO: there are some optional attributes
+       if(numtokens >= 1) printf("          <Min>%s</Min>\n", tokens[0]);
+       if(numtokens >= 2) printf("          <Max>%s</Max>\n", tokens[1]);
+       if(numtokens >= 3) printf("          <Res>%s</Res>\n", tokens[2]);
+       printf("          </Interval>\n"); 
+     }
+  }
+  
+  printf("          </Values>\n");
+  
+  // TODO: add NullValues (optional)
+  
+  printf("        </AxisDescription>\n");
+  
+  return MS_SUCCESS;
+}
+
 static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params) 
 {
   static char *value; 
@@ -426,14 +476,39 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
     // TimePosition (should support a value AUTO, then we could mine positions from the timeitem)
     msOWSPrintMetadataList(stdout, layer->metadata, "CO", "timeposition", NULL, NULL, "        <gml:timePosition>%s</gml:timePosition>\n", NULL);    
 
-    // TODO:  TimePeriod (only one/layer) 
+    // TODO:  add TimePeriod (only one per layer) 
 
     printf("      </TemporalDomain>\n");
   }
   
   printf("    </DomainSet>\n");
   
-  // TODO: Range set
+  // rangeSet
+  printf("    <RangeSet>\n");
+  printf("      <RangeSet>\n"); // TODO: there are some optional attributes
+
+  // TODO: add MetadataLink (optional)
+  
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", "rangeset_description", OWS_NOERR, "        <Description>%s</Description>\n", NULL);
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", "rangeset_name", OWS_WARN, "        <Name>%s</Name>\n", NULL);
+
+  msOWSPrintMetadata(stdout, layer->metadata, "CO", "rangeset_label", OWS_WARN, "        <Label>%s</Label>\n", NULL);
+  
+  // compound range sets
+  if((value = msOWSLookupMetadata(layer->metadata, "C", "rangeset_axes")) != NULL) {
+    char **tokens;
+    int numtokens;
+
+     tokens = split(value, ',', &numtokens);
+     if(tokens && numtokens > 0) {
+       int i;
+       for(i=0; i<numtokens; i++)
+         msWCSDescribeCoverage_AxisDescription(layer, tokens[i]);
+     }
+  }
+  
+  printf("      </RangeSet>\n");
+  printf("    </RangeSet>\n");
 
   // SupportedCRSs
   printf("    <SupportedCRSs>\n");
@@ -463,7 +538,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   msOWSPrintMetadata(stdout, layer->metadata, "CO", "nativeformat", OWS_NOERR, "      <NativeFormat>%s</NativeFormat>\n", NULL);
   printf("    </SupportedFormats>\n");
   
-  // TODO: SupportedInterpolations (optional)
+  // TODO: add SupportedInterpolations (optional)
 
   // done
   printf("  </CoverageOffering>\n");
