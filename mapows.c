@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/10/26 21:54:00  dan
+ * Poor attempt at clarifying the function header docs for msOWSPrintURLType()
+ *
  * Revision 1.46  2004/10/26 15:19:00  julien
  * msOWSPrintURLType: use default values inside the given format. (Bug 944)
  *
@@ -709,19 +712,36 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
 
 /* msOWSPrintURLType()
 **
-** Attempt to output a capability item.  If corresponding metadata is not 
-** found then one of a number of predefined actions will be taken. 
-** Since it's a capability item, five metadata will be used. Only one name
-** will be prevented and _type, _width, _height, _format and _href will be
-** appended in the metadata search. Then the final string will be build from 
+** Attempt to output a URL item in capabilties.  If corresponding metadata 
+** is not found then one of a number of predefined actions will be taken. 
+** Since it's a capability item, five metadata will be used to populate the
+** XML elements.
+**
+** The 'name' argument is the basename of the metadata items relating to this 
+** URL type and the suffixes _type, _width, _height, _format and _href will 
+** be appended to the name in the metadata search.
+** e.g. passing name=metadataurl will result in the following medata entries 
+** being used:
+**    ows_metadataurl_type
+**    ows_metadataurl_format
+**    ows_metadataurl_href
+**    ... (width and height are unused for metadata)
+**
+** As for all the msOWSPrint*() functions, the namespace argument specifies 
+** which prefix (ows_, wms_, wcs_, etc.) is used for the metadata names above.
+**
+** Then the final string will be built from 
 ** the tag_name and the five metadata. The template is:
 ** <tag_name%type%width%height%format>%href</tag_name>
+**
 ** For example the width format will usually be " width=\"%s\"". 
 ** An extern format will be "> <Format>%s</Format"
+**
 ** Another template template may be used, but it needs to contains 5 %s, 
-** otherwise leave it to NULL. If tag_format is used, you don't need the 
+** otherwise leave it to NULL. If tag_format is used then you don't need the 
 ** tag_name and the tabspace.
-** Note that all values will be encoded.
+**
+** Note that all values will be HTML-encoded.
 **/
 int msOWSPrintURLType(FILE *stream, hashTableObj *metadata, 
                       const char *namespaces, const char *name, 
