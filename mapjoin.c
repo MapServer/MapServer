@@ -1,41 +1,74 @@
 #include "map.h"
 
 // wrapper function for DB specific join functions
-int msJoinTable(layerObj *layer, joinObj *join, shapeObj *shape) {
+int msJoinConnect(layerObj *layer, joinObj *join) 
+{
   switch(join->connectiontype) {
   case(MS_DB_XBASE):
-    return msDBFJoinTable(layer, join, shape);
+    return msDBFJoinConnect(layer, join);
     break;
   default:
     break;
   }
 
-  msSetError(MS_JOINERR, "Unsupported join connection type.", "msDBFJoinTable()");
+  msSetError(MS_JOINERR, "Unsupported join connection type.", "msJoinConnect()");
   return MS_FAILURE;
 }
 
-int msJoinCloseTable(joinObj *join) {
+int msJoinPrepare(joinObj *join, shapeObj *shape) 
+{
   switch(join->connectiontype) {
   case(MS_DB_XBASE):
-    return msDBFJoinCloseTable(join);
+    return msDBFJoinPrepare(join, shape);
     break;
   default:
     break;
   }
 
-  msSetError(MS_JOINERR, "Unsupported join connection type.", "msDBFJoinTable()");
+  msSetError(MS_JOINERR, "Unsupported join connection type.", "msJoinPrepare()");
   return MS_FAILURE;
 }
 
+int msJoinNext(joinObj *join) 
+{
+  switch(join->connectiontype) {
+  case(MS_DB_XBASE):
+    return msDBFJoinNext(join);
+    break;
+  default:
+    break;
+  }
+
+  msSetError(MS_JOINERR, "Unsupported join connection type.", "msJoinNext()");
+  return MS_FAILURE;
+}
+
+int msJoinClose(joinObj *join) 
+{
+  switch(join->connectiontype) {
+  case(MS_DB_XBASE):
+    return msDBFJoinClose(join);
+    break;
+  default:
+    break;
+  }
+
+  msSetError(MS_JOINERR, "Unsupported join connection type.", "msJoinClose()");
+  return MS_FAILURE;
+}
+
+//
 // XBASE join functions
+//
 typedef struct {
   DBFHandle hDBF;
   int fromindex, toindex;
-  int *indexes;
-  int numindexes;
+  char *target;
+  int nextrecord;
 } msDBFJoinInfo;
 
-int msDBFJoinOpenTable(layerObj *layer, joinObj *join) {
+int msDBFJoinConnect(layerObj *layer, joinObj *join) 
+{
   int i;
   char szPath[MS_MAXPATHLEN];
   msDBFJoinInfo *joininfo;
@@ -45,7 +78,7 @@ int msDBFJoinOpenTable(layerObj *layer, joinObj *join) {
   // allocate a msDBFJoinInfo struct
   joininfo = (msDBFJoinInfo *) malloc(sizeof(msDBFJoinInfo));
   if(!joininfo) {
-    msSetError(MS_MEMERR, "Error allocating XBase table info structure.", "msDBFJoinOpenTable()");
+    msSetError(MS_MEMERR, "Error allocating XBase table info structure.", "msDBFJoinConnect()");
     return(MS_FAILURE);
   }
 
@@ -54,14 +87,14 @@ int msDBFJoinOpenTable(layerObj *layer, joinObj *join) {
   // open the XBase file
   if((joininfo->hDBF = msDBFOpen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "rb" )) == NULL) {
     if((joininfo->hDBF = msDBFOpen( msBuildPath(szPath, layer->map->mappath, join->table), "rb" )) == NULL) {     
-      msSetError(MS_IOERR, "(%s)", "msDBFJoinOpenTable()", join->table);   
+      msSetError(MS_IOERR, "(%s)", "msDBFJoinConnect()", join->table);   
       return(MS_FAILURE);
     }
   }
 
   // get "to" item index
   if((joininfo->toindex = msDBFGetItemIndex(joininfo->hDBF, join->to)) == -1) { 
-    msSetError(MS_DBFERR, "Item %s not found in table %s.", "msDBFJoinOpenTable()", join->to, join->table); 
+    msSetError(MS_DBFERR, "Item %s not found in table %s.", "msDBFJoinConnect()", join->to, join->table); 
     return(MS_FAILURE);
   }
 
@@ -74,7 +107,7 @@ int msDBFJoinOpenTable(layerObj *layer, joinObj *join) {
   }
 
   if(i == layer->numitems) {
-    msSetError(MS_JOINERR, "Item %s not found in layer %s.", "msDBFJoinOpenTable()", join->from, layer->name); 
+    msSetError(MS_JOINERR, "Item %s not found in layer %s.", "msDBFJoinConnect()", join->from, layer->name); 
     return(MS_FAILURE);
   }
 
@@ -86,100 +119,72 @@ int msDBFJoinOpenTable(layerObj *layer, joinObj *join) {
   return(MS_SUCCESS);
 }
 
-int msDBFJoinCloseTable(joinObj *join) {
+int msDBFJoinPrepare(joinObj *join, shapeObj *shape) 
+{
+  msDBFJoinInfo *joininfo = join->joininfo;
+
+  if(!joininfo) {
+    msSetError(MS_JOINERR, "Join connection has not be created.", "msDBFJoinPrepare()"); 
+    return(MS_FAILURE);
+  }
+
+  joininfo->nextrecord = 0; // starting with the first record
+
+  if(joininfo->target) free(joininfo->target); // clear last target
+  joininfo->target = strdup(shape->values[joininfo->fromindex]);
+  
+  return(MS_SUCCESS);
+}
+
+int msDBFJoinNext(joinObj *join) 
+{
+  int i, n;
+  msDBFJoinInfo *joininfo = join->joininfo;
+
+  if(!joininfo) {
+    msSetError(MS_JOINERR, "Join connection has not be created.", "msDBFJoinNext()"); 
+    return(MS_FAILURE);
+  }
+
+  if(!joininfo->target) {
+    msSetError(MS_JOINERR, "No target specified, run msDBFJoinPrepare() first.", "msDBFJoinNext()");
+    return(MS_FAILURE);
+  }
+
+  n = msDBFGetRecordCount(joininfo->hDBF);
+    
+  for(i=joininfo->nextrecord; i<n; i++) { // find a match
+    if(strcmp(joininfo->target, msDBFReadStringAttribute(joininfo->hDBF, i, joininfo->toindex)) == 0) break;
+  }  
+    
+  if(i == n) { // unable to do the join
+    if((join->values = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
+      msSetError(MS_MEMERR, NULL, "msDBFJoinTable()");
+      return(MS_FAILURE);
+    }
+    for(i=0; i<join->numitems; i++)
+      join->values[i] = strdup("\0"); /* intialize to zero length strings */
+
+    joininfo->nextrecord = n;
+    return(MS_DONE);
+  }
+    
+  if((join->values = msDBFGetValues(joininfo->hDBF,i)) == NULL) 
+    return(MS_FAILURE);
+
+  joininfo->nextrecord = i+1; // so we know where to start looking next time through
+
+  return(MS_SUCCESS);
+}
+
+int msDBFJoinClose(joinObj *join) 
+{
   msDBFJoinInfo *joininfo = join->joininfo;
 
   if(!joininfo) return(MS_SUCCESS); // already closed
   msDBFClose(joininfo->hDBF);
+  if(joininfo->target) free(joininfo->target);
   free(joininfo);
   joininfo = NULL;
-  return(MS_SUCCESS);
-}
-
-int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape) {
-  int i, j;
-  int numrecords, *ids=NULL;
-
-  msDBFJoinInfo *joininfo;
-
-  if(msDBFJoinOpenTable(layer, join) != MS_SUCCESS) return(MS_FAILURE);
-  joininfo = join->joininfo;
-
-  numrecords = msDBFGetRecordCount(joininfo->hDBF);
-
-  if(join->type == MS_JOIN_ONE_TO_ONE) { /* only one row */
-    
-    if((join->values = (char ***)malloc(sizeof(char **))) == NULL) {
-      msSetError(MS_MEMERR, NULL, "msDBFJoinTable()");
-      return(MS_FAILURE);
-    }
-    
-    for(i=0; i<numrecords; i++) { /* find a match */
-      if(strcmp(shape->values[joininfo->fromindex], msDBFReadStringAttribute(joininfo->hDBF, i, joininfo->toindex)) == 0)
-	break;
-    }  
-    
-    if(i == numrecords) { /* just return zero length strings */
-      if((join->values[0] = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
-	msSetError(MS_MEMERR, NULL, "msDBFJoinTable()");
-	return(MS_FAILURE);
-      }
-      for(i=0; i<join->numitems; i++)
-	join->values[0][i] = strdup("\0"); /* intialize to zero length strings */
-    } else {
-      if((join->values[0] = msDBFGetValues(joininfo->hDBF,i)) == NULL) return(MS_FAILURE);      
-    }
-
-  } else {
-
-    if(join->values) { /* free old values */
-      for(i=0; i<join->numrecords; i++)
-	msFreeCharArray(join->values[i], join->numitems);
-      free(join->values);
-      join->numrecords = 0;
-    }
-
-    ids = (int *)malloc(sizeof(int)*numrecords);
-    if(!ids) {
-      msSetError(MS_MEMERR, NULL, "msDBFJoinTable()");
-      return(MS_FAILURE);
-    }
-    
-    j=0;
-    for(i=0; i<numrecords; i++) { /* find the matches, save ids */
-      if(strcmp(shape->values[joininfo->fromindex], msDBFReadStringAttribute(joininfo->hDBF, i, joininfo->toindex)) == 0) {
-	ids[j] = i;
-	j++;
-      }
-    }
-  
-    join->numrecords = j;
-
-    if(join->numrecords > 0) { /* save em */
-      if((join->values = (char ***)malloc(sizeof(char **)*join->numrecords)) == NULL) {
-	msSetError(MS_MEMERR, NULL, "msDBFJoinTable()");
-	free(ids);
-	return(MS_FAILURE);
-      }
-
-      for(i=0; i<join->numrecords; i++) {
-	join->values[i] = (char **)malloc(sizeof(char *)*join->numitems);
-	if(!join->values[i]) {
-	  msSetError(MS_MEMERR, NULL, "msDBFJoinTable()");
-	  free(ids);
-	  return(MS_FAILURE);
-	}
-
-	join->values[i] = msDBFGetValues(joininfo->hDBF,ids[i]);
-	if(!join->values[i]) {
-	  free(ids);
-	  return(MS_FAILURE);
-	}
-      }
-    }
-
-    free(ids);
-  }
-  
   return(MS_SUCCESS);
 }

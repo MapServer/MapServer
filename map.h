@@ -265,7 +265,7 @@ typedef struct {
 // JOIN OBJECT - simple way to access other XBase files, one-to-one or one-to-many supported
 typedef struct {
   char *name;
-  char **items, ***values; // items/values (can have more than one record)
+  char **items, **values; // items/values (process 1 record at a time)
   int numitems, numrecords;
 
   char *table;
@@ -1253,11 +1253,15 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
                        int pct);
 
 // various JOIN functions (in mapjoin.c)
-int msJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
-int msJoinCloseTable(joinObj *join);
-int msDBFJoinOpenTable(layerObj *layer, joinObj *join);
+int msJoinConnect(layerObj *layer, joinObj *join);
+int msJoinPrepare(joinObj *join, shapeObj *shape);
+int msJoinNext(joinObj *join);
+int msJoinClose(joinObj *join);
+int msDBFJoinConnect(layerObj *layer, joinObj *join);
+int msDBFJoinPrepare(joinObj *join, shapeObj *shape);
+int msDBFJoinNext(joinObj *join);
+int msDBFJoinClose(joinObj *join);
 int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
-int msDBFJoinCloseTable(joinObj *join);
 
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);

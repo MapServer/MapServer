@@ -252,16 +252,17 @@ int msCopyExpression(expressionObj *dst, expressionObj *src)
 
 int msCopyJoin(joinObj *dst, joinObj *src)
 {
-  int i, j;
+  int i;
   copyStringProperty(&(dst->name), src->name);
+  
+  // not sure it makes sense to copy the values (or the items for that matter) since
+  // since they are runtime additions to the mapfile, probably should be NULL with numitems=0
   copyProperty(&(dst->numitems), &(src->numitems), sizeof(int));
-  copyProperty(&(dst->numrecords), &(src->numrecords), sizeof(int));
   for (i = 0; i < dst->numitems; i++) {
     copyStringProperty(&(dst->items[i]), src->items[i]);
-    for (j = 0; j < dst->numrecords; j++) {
-      copyStringProperty(&(dst->values[i][j]), src->values[i][j]);
-    }
+    copyStringProperty(&(dst->values[i]), src->values[i]);  
   }
+
   copyStringProperty(&(dst->table), src->table);
   copyStringProperty(&(dst->from), src->from);
   copyStringProperty(&(dst->to), src->to);
@@ -275,8 +276,10 @@ int msCopyJoin(joinObj *dst, joinObj *src)
   copyProperty(&(dst->type), &(src->type), sizeof(enum MS_JOIN_TYPE));
   copyStringProperty(&(dst->connection), src->connection);
   
-  copyProperty(&(dst->connectiontype), &(src->connectiontype),
-               sizeof(enum MS_JOIN_CONNECTION_TYPE));
+  copyProperty(&(dst->connectiontype), &(src->connectiontype), sizeof(enum MS_JOIN_CONNECTION_TYPE));
+
+  // TODO: need to handle joininfo (probably should be just set to NULL)
+  dst->joininfo = NULL;
 
   return(MS_SUCCESS);
 }

@@ -306,8 +306,7 @@ void initJoin(joinObj *join)
 
   join->items = NULL; /* array to hold item names for the joined table */
   join->values = NULL; /* arrays of strings to holds 1 or more records worth of data */
-  join->numrecords = 0;
-
+ 
   join->table = NULL;
 
   join->joininfo = NULL;
@@ -327,26 +326,21 @@ void initJoin(joinObj *join)
 
 void freeJoin(joinObj *join) 
 {
-  int i;
-
   msFree(join->name);
   msFree(join->table);
   msFree(join->from);
   msFree(join->to);
-
 
   msFree(join->header);
   msFree(join->template);
   msFree(join->footer);
 
   msFreeCharArray(join->items, join->numitems); /* these may have been free'd elsewhere */
-  for(i=0; i<join->numrecords; i++)
-    msFreeCharArray(join->values[i], join->numitems);
-  msFree(join->values);
-  join->numrecords = join->numitems = 0;
+  msFreeCharArray(join->values, join->numitems);
+  join->numitems = 0;
 
+  msJoinClose(join);
   msFree(join->connection);
-  msJoinCloseTable(join);
 }
 
 int loadJoin(joinObj *join)
