@@ -29,8 +29,13 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2001/02/28 04:56:39  dan
+ * Support for OGR Label text, angle, size, implemented msOGRLayerGetShape
+ * and reworked msLayerNextShape, added layer FILTER support, annotation, etc.
+ *
  * Revision 1.14  2001/02/25 23:46:17  sdlime
- * Fully implemented FILTER option for shapefiles. Changed parameters for ...NextShapes and ...GetShapes functions.
+ * Fully implemented FILTER option for shapefiles. Changed parameters for 
+ * ...NextShapes and ...GetShapes functions.
  *
  * Revision 1.13  2001/02/23 21:58:00  dan
  * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
@@ -52,6 +57,7 @@
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include "ogr_featurestyle.h"
 
 typedef struct ms_ogr_layer_info_t
 {
@@ -61,8 +67,9 @@ typedef struct ms_ogr_layer_info_t
     OGRLayer    *poLayer;
 } msOGRLayerInfo;
 
+
 /* ==================================================================
- * Some utility functions
+ * Geometry conversion functions
  * ================================================================== */
 
 /**********************************************************************
@@ -169,6 +176,8 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
   msAddLine(outshp, &line);
   free(line.point);
 
+  outshp->type = MS_POINT;
+
   return(0);
 }
 
@@ -188,10 +197,13 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
 /* ------------------------------------------------------------------
  * Use recursive calls for complex geometries
  * ------------------------------------------------------------------ */
-  if (poGeom->getGeometryType() == wkbPolygon)
+  if (poGeom->getGeometryType() == wkbPolygon )
   {
       OGRPolygon *poPoly = (OGRPolygon *)poGeom;
       OGRLinearRing *poRing;
+
+      if (outshp->type == MS_NULL)
+          outshp->type = MS_POLYGON;
 
       for (int iRing=-1; iRing < poPoly->getNumInteriorRings(); iRing++)
       {
@@ -240,6 +252,9 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
       if ((numpoints = poLine->getNumPoints()) < 2)
           return 0;
 
+      if (outshp->type == MS_NULL)
+          outshp->type = MS_LINE;
+
       line.numpoints = 0;
       line.point = (pointObj *)malloc(sizeof(pointObj)*(numpoints+1));
       if(!line.point) 
@@ -279,6 +294,221 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
 
   return(0);
 }
+
+
+/**********************************************************************
+ *                     ogrConvertGeometry()
+ *
+ * Convert OGR geometry into a shape object doing the best possible 
+ * job to match OGR Geometry type and layer type.
+ *
+ * If layer type is incompatible with geometry, then shape is returned with
+ * shape->type = MS_NULL
+ **********************************************************************/
+static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
+                              enum MS_FEATURE_TYPE layertype) 
+{
+/* ------------------------------------------------------------------
+ * Process geometry according to layer type
+ * ------------------------------------------------------------------ */
+  int nStatus = MS_SUCCESS;
+
+  if (poGeom == NULL)
+  {
+      // Empty geometry... this is not an error... we'll just skip it
+      return MS_SUCCESS;
+  }
+
+  switch(layertype) 
+  {
+/* ------------------------------------------------------------------
+ *      MS_POINT layer - Any geometry can be converted to point/multipoint
+ * ------------------------------------------------------------------ */
+    case MS_POINT:
+      if(ogrGeomPoints(poGeom, outshp) == -1)
+      {
+          nStatus = MS_FAILURE; // Error message already produced.
+      }
+      break;
+/* ------------------------------------------------------------------
+ *      MS_LINE / MS_POLYLINE layer
+ * ------------------------------------------------------------------ */
+    case MS_LINE:
+    case MS_POLYLINE:
+      if(ogrGeomLine(poGeom, outshp, MS_FALSE) == -1)
+      {
+          nStatus = MS_FAILURE; // Error message already produced.
+      }
+      break;
+/* ------------------------------------------------------------------
+ *      MS_POLYGON layer
+ * ------------------------------------------------------------------ */
+    case MS_POLYGON:
+      if(ogrGeomLine(poGeom, outshp, MS_TRUE) == -1)
+      {
+          nStatus = MS_FAILURE; // Error message already produced.
+      }
+      break;
+/* ------------------------------------------------------------------
+ *      MS_ANNOTATION layer - return real feature type
+ * ------------------------------------------------------------------ */
+    case MS_ANNOTATION:
+      switch(poGeom->getGeometryType())
+      {
+        case wkbPoint:
+        case wkbMultiPoint:
+          if(ogrGeomPoints(poGeom, outshp) == -1)
+          {
+              nStatus = MS_FAILURE; // Error message already produced.
+          }
+          break;
+        default:
+          // Handle any non-point types as lines/polygons ... ogrGeomLine()
+          // will decide the shape type
+          if(ogrGeomLine(poGeom, outshp, MS_FALSE) == -1)
+          {
+              nStatus = MS_FAILURE; // Error message already produced.
+          }
+      }
+      break;
+
+    default:
+      msSetError(MS_MISCERR, "Unknown or unsupported layer type.", 
+                 "msOGRLayerNextShape()");
+      nStatus = MS_FAILURE;
+  } /* switch layertype */
+
+  return nStatus;
+}
+
+/* ==================================================================
+ * Attributes handling functions
+ * ================================================================== */
+
+// Special field index codes for handling text string and angle coming from
+// OGR style strings.
+#define MSOGR_LABELTEXTNAME     "OGR:LabelText"
+#define MSOGR_LABELTEXTINDEX    -100
+#define MSOGR_LABELANGLENAME    "OGR:LabelAngle"
+#define MSOGR_LABELANGLEINDEX   -101
+#define MSOGR_LABELSIZENAME     "OGR:LabelSize"
+#define MSOGR_LABELSIZEINDEX    -102
+
+
+/**********************************************************************
+ *                     msOGRGetValueList()
+ *
+ * Load selected item (i.e. field) values into a char array
+ *
+ * Some special attribute names are used to return some OGRFeature params
+ * like for instance stuff encoded in the OGRStyleString.
+ * For now the following pseudo-attribute names are supported:
+ *  "OGR:TextString"  OGRFeatureStyle's text string if present
+ *  "OGR:TextAngle"   OGRFeatureStyle's text angle, or 0 if not set
+ **********************************************************************/
+static char **msOGRGetValueList(OGRFeature *poFeature,
+                                char **items, int **itemindexes, int numitems)
+{
+  char **values;
+  int i;
+
+  if(numitems == 0 || poFeature->GetFieldCount() == 0) 
+      return(NULL);
+
+  if(!(*itemindexes)) 
+  { // build the list
+    (*itemindexes) = (int *)malloc(sizeof(int)*numitems);
+    if(!(*itemindexes)) 
+    {
+      msSetError(MS_MEMERR, NULL, "msOGRGetValueList()");
+      return(NULL);
+    }
+
+    for(i=0;i<numitems;i++) 
+    {
+      // Special case for handling text string and angle coming from
+      // OGR style strings.  We use special attribute names.
+      if (EQUAL(items[i], MSOGR_LABELTEXTNAME))
+          (*itemindexes)[i] = MSOGR_LABELTEXTINDEX;
+      else if (EQUAL(items[i], MSOGR_LABELANGLENAME))
+          (*itemindexes)[i] = MSOGR_LABELANGLEINDEX;
+      else if (EQUAL(items[i], MSOGR_LABELSIZENAME))
+          (*itemindexes)[i] = MSOGR_LABELSIZEINDEX;
+      else
+          (*itemindexes)[i] = poFeature->GetFieldIndex(items[i]);
+      if((*itemindexes)[i] == -1) 
+      {
+          msSetError(MS_OGRERR, 
+                     (char*)CPLSPrintf("Invalid Field name: %s", items[i]), 
+                     "msOGRGetValueList()");
+          return(NULL);
+      }
+    }
+  }
+
+  if((values = (char **)malloc(sizeof(char *)*numitems)) == NULL) 
+  {
+    msSetError(MS_MEMERR, NULL, "msOGRGetValueList()");
+    return(NULL);
+  }
+
+  OGRStyleMgr *poStyleMgr = NULL;
+  OGRStyleLabel *poLabelStyle = NULL;
+
+  for(i=0;i<numitems;i++)
+  {
+    if ((*itemindexes)[i] >= 0)
+    {
+        // Extract regular attributes
+        values[i] = strdup(poFeature->GetFieldAsString((*itemindexes)[i]));
+    }
+    else
+    {
+        // Handle special OGR attributes coming from StyleString
+        if (!poStyleMgr)
+        {
+            poStyleMgr = new OGRStyleMgr(NULL);
+            poStyleMgr->InitFromFeature(poFeature);
+            OGRStyleTool *poStylePart = poStyleMgr->GetPart(0);
+            if (poStylePart && poStylePart->GetType() == OGRSTCLabel)
+                poLabelStyle = (OGRStyleLabel*)poStylePart;
+            else if (poStylePart)
+                delete poStylePart;
+        }
+        GBool bDefault;
+        if (poLabelStyle && (*itemindexes)[i] == MSOGR_LABELTEXTINDEX)
+        {
+            values[i] = strdup(poLabelStyle->TextString(bDefault));
+            //msDebug(MSOGR_LABELTEXTNAME " = \"%s\"\n", values[i]);
+        }
+        else if (poLabelStyle && (*itemindexes)[i] == MSOGR_LABELANGLEINDEX)
+        {
+            values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelAngle,
+                                                         bDefault));
+            //msDebug(MSOGR_LABELANGLENAME " = \"%s\"\n", values[i]);
+        }
+        else if (poLabelStyle && (*itemindexes)[i] == MSOGR_LABELSIZEINDEX)
+        {
+            values[i] = strdup(poLabelStyle->GetParamStr(OGRSTLabelSize,
+                                                         bDefault));
+            //msDebug(MSOGR_LABELSIZENAME " = \"%s\"\n", values[i]);
+        }
+        else
+        {
+          msSetError(MS_OGRERR,"Invalid field index!?!","msOGRGetValueList()");
+          return(NULL);
+        }
+    }
+  }
+
+  if (poStyleMgr)
+      delete poStyleMgr;
+  if (poLabelStyle)
+      delete poLabelStyle;
+
+  return(values);
+}
+
 
 /**********************************************************************
  *                     msOGRGetItems()
@@ -340,55 +570,6 @@ static char **msOGRGetValues(OGRFeature *poFeature)
   return(values);
 }
 
-/**********************************************************************
- *                     msOGRGetValueList()
- *
- * Load selected item (i.e. field) values into a char array
- **********************************************************************/
-static char **msOGRGetValueList(OGRFeature *poFeature,
-                                char **items, int **itemindexes, int numitems)
-{
-  char **values;
-  int i;
-
-  if(numitems == 0 || poFeature->GetFieldCount() == 0) 
-      return(NULL);
-
-  if(!(*itemindexes)) 
-  { // build the list
-    (*itemindexes) = (int *)malloc(sizeof(int)*numitems);
-    if(!(*itemindexes)) 
-    {
-      msSetError(MS_MEMERR, NULL, "msOGRGetValueList()");
-      return(NULL);
-    }
-
-    for(i=0;i<numitems;i++) 
-    {
-      (*itemindexes)[i] = poFeature->GetFieldIndex(items[i]);
-      if((*itemindexes)[i] == -1) 
-      {
-          msSetError(MS_OGRERR, 
-                     (char*)CPLSPrintf("Invalid Field name: %s", items[i]), 
-                     "msOGRGetValueList()");
-          return(NULL);
-      }
-    }
-  }
-
-  if((values = (char **)malloc(sizeof(char *)*numitems)) == NULL) 
-  {
-    msSetError(MS_MEMERR, NULL, "msOGRGetValueList()");
-    return(NULL);
-  }
-
-  for(i=0;i<numitems;i++)
-    values[i] = strdup(poFeature->GetFieldAsString((*itemindexes)[i]));
-
-  return(values);
-}
-
-
 #endif  /* USE_OGR */
 
 /* ==================================================================
@@ -443,6 +624,8 @@ int msOGRLayerOpen(layerObj *layer, char *shapepath)
                  "msOGRLayerOpen()");
       return(MS_FAILURE);
   }
+
+  msDebug("msOGRLayerOpen(%s)...\n", layer->connection);
 
   poDS = OGRSFDriverRegistrar::Open( params[0] );
   if( poDS == NULL )
@@ -506,6 +689,8 @@ int msOGRLayerClose(layerObj *layer)
 
   if (psInfo)
   {
+    msDebug("msOGRLayerClose(%s).\n", layer->connection);
+
     CPLFree(psInfo->pszFname);
 
     /* Destroying poDS automatically closes files, destroys the layer, etc. */
@@ -606,77 +791,54 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
     return(MS_FAILURE);
   }
 
-  if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
-  {
-      return MS_DONE;  // No more features to read
-  }
-
 /* ------------------------------------------------------------------
- * Process geometry according to layer type
- *
- * __TODO__: Should we return real feature type and ignore layer type???
- * __TODO__: Handle attribute fields
- * __TODO__: Share conversion code by feature type with msOGRLayerGetShape()
+ * Read until we find a feature that matches attribute filter and 
+ * whose geometry is compatible with current layer type.
  * ------------------------------------------------------------------ */
-  int nStatus = MS_SUCCESS;
   msFreeShape(shape);
-  switch(layer->type) 
+  shape->type = MS_NULL;
+
+  while (shape->type == MS_NULL)
   {
-/* ------------------------------------------------------------------
- *      MS_POINT
- * ------------------------------------------------------------------ */
-    case MS_POINT:
-      if(ogrGeomPoints(poFeature->GetGeometryRef(), shape) == -1)
+      if( (poFeature = psInfo->poLayer->GetNextFeature()) == NULL )
       {
-          nStatus = MS_FAILURE; // Error message already produced.
+          return MS_DONE;  // No more features to read
       }
-      shape->type = layer->type;
-      break;
-/* ------------------------------------------------------------------
- *      MS_LINE
- * ------------------------------------------------------------------ */
-    case MS_LINE:
-      if(ogrGeomLine(poFeature->GetGeometryRef(), shape, MS_FALSE) == -1)
-      {
-          nStatus = MS_FAILURE; // Error message already produced.
-      }
-      shape->type = layer->type;
-      break;
-/* ------------------------------------------------------------------
- *      MS_POLYGON / MS_POLYLINE
- * ------------------------------------------------------------------ */
-    case MS_POLYLINE:
-    case MS_POLYGON:
-      if(ogrGeomLine(poFeature->GetGeometryRef(), shape, MS_TRUE) == -1)
-      {
-          nStatus = MS_FAILURE; // Error message already produced.
-      }
-      if (layer->type == MS_POLYLINE)
-          shape->type = MS_LINE;
-      else
-          shape->type = layer->type;
-      break;
-    default:
-      msSetError(MS_MISCERR, "Unknown or unsupported layer type.", 
-                 "msOGRLayerNextShape()");
-      nStatus = MS_FAILURE;
-  } /* switch layer->type */
 
+      if(layer->numitems > 0) 
+      {
+          shape->attributes = msOGRGetValueList(poFeature, layer->items, 
+                                                &(layer->itemindexes), 
+                                                layer->numitems);
+          if(!shape->attributes) return(MS_FAILURE);
+      }
 
-/* ------------------------------------------------------------------
- * Process shape attributes
- * ------------------------------------------------------------------ */
-    if(layer->numitems > 0) 
-    {
-      shape->attributes = msOGRGetValueList(poFeature, layer->items, 
-                                            &(layer->itemindexes), 
-                                            layer->numitems);
-      if(!shape->attributes) return(MS_FAILURE);
-    }
+      if (msEvalExpression(&(layer->filter), layer->filteritemindex, 
+                           shape->attributes, layer->numitems) == MS_TRUE)
+      {
+          // Feature matched filter expression... process geometry
+          // shape->type will be set if geom is compatible with layer type
+          if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
+                                 layer->type) == MS_SUCCESS)
+          {
+              break; // Shape is ready to be returned!
+          }
+          else
+          {
+              msFreeShape(shape);
+              delete poFeature;
+              return MS_FAILURE; // Error message already produced.
+          }
+      }
+
+      // Feature rejected... free shape to clear attributes values.
+      msFreeShape(shape);
+      shape->type = MS_NULL;
+  }
 
   delete poFeature;
 
-  return nStatus;
+  return MS_SUCCESS;
 
 #else
 /* ------------------------------------------------------------------
@@ -701,11 +863,70 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
                        int tile, int record, int allitems) 
 {
 #ifdef USE_OGR
+  msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
+  OGRFeature *poFeature;
 
-  msSetError(MS_MISCERR, "Not Implemented yet!", 
-             "msOGRLayerGetShape()");
-  return(MS_FAILURE);
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+    msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+               "msOGRLayerNextShape()");
+    return(MS_FAILURE);
+  }
 
+/* ------------------------------------------------------------------
+ * Handle shape geometry... 
+ * ------------------------------------------------------------------ */
+  msFreeShape(shape);
+  shape->type = MS_NULL;
+
+  if( (poFeature = psInfo->poLayer->GetFeature(record)) == NULL )
+  {
+      return MS_FAILURE;
+  }
+
+  // shape->type will be set if geom is compatible with layer type
+  if (ogrConvertGeometry(poFeature->GetGeometryRef(), shape,
+                         layer->type) != MS_SUCCESS)
+  {
+      return MS_FAILURE; // Error message already produced.
+  }
+  
+  if (shape->type == MS_NULL)
+  {
+      msSetError(MS_OGRERR, 
+                 "Requested feature is incompatible with layer type",
+                 "msOGRLayerGetShape()");
+      return MS_FAILURE;
+  }
+
+/* ------------------------------------------------------------------
+ * Process shape attributes
+ * ------------------------------------------------------------------ */
+  if (allitems == MS_TRUE)
+  {
+      if(!layer->items)
+      {
+      	// fill the items layer variable if not already filled
+          layer->numitems = poFeature->GetFieldCount();
+          layer->items = msOGRGetItems(psInfo->poLayer);
+          if(!layer->items)
+              return(MS_FAILURE);
+      }
+      shape->attributes = msOGRGetValues(poFeature);
+      if(!shape->attributes)
+          return(MS_FAILURE);
+  }
+  else if(layer->numitems > 0) 
+  {
+      shape->attributes = msOGRGetValueList(poFeature, layer->items, 
+                                            &(layer->itemindexes), 
+                                            layer->numitems);
+      if(!shape->attributes) return(MS_FAILURE);
+  }   
+
+  delete poFeature;
+
+  return MS_SUCCESS;
 #else
 /* ------------------------------------------------------------------
  * OGR Support not included...
