@@ -23,27 +23,28 @@ imageObj *msDrawMap(mapObj *map)
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
         return(NULL);
     }
- 
-    switch (map->imagetype)
-    {
-        case (MS_GIF):
-        case (MS_PNG):
-        case (MS_JPEG):
-        case (MS_WBMP):
-            image = msImageCreateGD(map->width, map->height, map->imagetype,
-                                    map->web.imagepath, map->web.imageurl);
-            break;
 
+    if( MS_RENDERER_GD(map->outputformat) )
+    {
+        image = msImageCreateGD(map->width, map->height, map->outputformat,
+                                map->web.imagepath, map->web.imageurl);
+
+        if( image != NULL 
+            && msLoadPalette(image->img.gd, &(map->palette), map->imagecolor) == -1)
+            return(NULL);
+
+    }
 #ifdef USE_MING_FLASH
-        case (MS_SWF):
-            image = msImageCreateSWF(map->width, map->height, 
-                                     map->web.imagepath, map->web.imageurl,
-                                     map);
-            break;
+    else if( MS_RENDERER_SWF(map->outputformat) )
+    {
+        image = msImageCreateSWF(map->width, map->height, map->outputformat,
+                                 map->web.imagepath, map->web.imageurl,
+                                 map);
+    }
 #endif
-        default:
-            image = msImageCreateGD(map->width, map->height, map->imagetype,
-                                    map->web.imagepath, map->web.imageurl);
+    else
+    {
+        image = NULL;
     }
   
     if(!image) {
@@ -51,17 +52,9 @@ imageObj *msDrawMap(mapObj *map)
         return(NULL);
     }
 
-    if (map->imagetype == MS_GIF ||
-        map->imagetype == MS_PNG ||
-        map->imagetype == MS_JPEG ||
-        map->imagetype == MS_WBMP)
-    {
-        if(msLoadPalette(image->img.gd, &(map->palette), map->imagecolor) == -1)
-            return(NULL);
-    }
-
     map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-    status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
+    status = msCalculateScale(map->extent, map->units, map->width, map->height,
+                              map->resolution, &map->scale);
     if(status != MS_SUCCESS) return(NULL);
 
     for(i=0; i<map->numlayers; i++) {
@@ -128,34 +121,19 @@ imageObj *msDrawQueryMap(mapObj *map)
     return(NULL);
   }
 
-  switch (map->imagetype)
+  if( MS_RENDERER_GD(map->outputformat) )
   {
-      case (MS_GIF):
-      case (MS_PNG):
-      case (MS_JPEG):
-      case (MS_WBMP):
- 
-          image = msImageCreateGD(map->width, map->height, map->imagetype,
-                                    map->web.imagepath, map->web.imageurl);
-          break;
-        
-      default:
-          image = msImageCreateGD(map->width, map->height, map->imagetype,
-                                    map->web.imagepath, map->web.imageurl);
+      image = msImageCreateGD(map->width, map->height, map->outputformat,
+                              map->web.imagepath, map->web.imageurl);
+
+      if(image != NULL
+       && msLoadPalette(image->img.gd, &(map->palette), map->imagecolor) == -1)
+          return(NULL);
   }
   
   if(!image) {
     msSetError(MS_GDERR, "Unable to initialize image.", "msDrawQueryMap()");
     return(NULL);
-  }
-
-  if (map->imagetype == MS_GIF ||
-        map->imagetype == MS_PNG ||
-        map->imagetype == MS_JPEG ||
-        map->imagetype == MS_WBMP)
-  {
-      if(msLoadPalette(image->img.gd, &(map->palette), map->imagecolor) == -1)
-          return(NULL);
   }
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
@@ -247,10 +225,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     // annotate = MS_FALSE;
   }
 
-  if (map->imagetype == MS_GIF ||
-      map->imagetype == MS_PNG ||
-      map->imagetype == MS_JPEG ||
-      map->imagetype == MS_WBMP)
+  if ( MS_RENDERER_GD(map->outputformat) )
   {
       // Create a temp image for this layer tranparency
       if (layer->transparency > 0) {
@@ -282,19 +257,13 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
 
     // Destroy the temp image for this layer tranparency
-    if (map->imagetype == MS_GIF ||
-        map->imagetype == MS_PNG ||
-        map->imagetype == MS_JPEG ||
-        map->imagetype == MS_WBMP)
+    if( MS_RENDERER_GD(map->outputformat) && layer->transparency > 0 )
     {
-        if (layer->transparency > 0)
-        {
-            gdImageCopyMerge(img_cache, image->img.gd, 0, 0, 0, 0, 
-                             image->img.gd->sx, 
-                             image->img.gd->sy, layer->transparency);
-            gdImageDestroy(image->img.gd);
-            image->img.gd = img_cache;
-        }
+        gdImageCopyMerge(img_cache, image->img.gd, 0, 0, 0, 0, 
+                         image->img.gd->sx, 
+                         image->img.gd->sy, layer->transparency);
+        gdImageDestroy(image->img.gd);
+        image->img.gd = img_cache;
     }
 
     return(retcode);
@@ -387,17 +356,15 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   
                 // Dynamic class update may have extended the color palette...
           
-                if (map->imagetype == MS_GIF ||
-                    map->imagetype == MS_PNG ||
-                    map->imagetype == MS_JPEG ||
-                    map->imagetype == MS_WBMP)
+                if ( MS_RENDERER_GD(map->outputformat) )
+                {
+                    if (!msUpdatePalette(image->img.gd, &(map->palette)))
                     {
-                        if (!msUpdatePalette(image->img.gd, &(map->palette)))
-                            {
-                                retcode = MS_FAILURE;
-                                break;
-                            }
+                        retcode = MS_FAILURE;
+                        break;
                     }
+                }
+
                 // __TODO__ For now, we can't cache features with 'AUTO' style
                 cache = MS_FALSE;
         }
@@ -590,23 +557,14 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
     if (image && map && layer)
     {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                return msDrawRasterLayerGD(map, layer, image->img.gd) ;
-
+        if( MS_RENDERER_GD(image->format) )
+            return msDrawRasterLayerGD(map, layer, image->img.gd);
 #ifdef USE_MING_FLASH
-            case (MS_SWF):
-                return  msDrawRasterLayerSWF(map, layer, image);
+        else if( MS_RENDERER_SWF(image->format) )
+            return  msDrawRasterLayerSWF(map, layer, image);
 #endif
-
-          default:
-              break;
-        }
     }
+
     return 0;
 }
 
@@ -614,23 +572,15 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
     if (image && map && layer)
     {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                return msDrawWMSLayerGD(map, layer, image->img.gd) ;
+        if( MS_RENDERER_GD(image->format) )
+            return msDrawWMSLayerGD(map, layer, image->img.gd) ;
 
 #ifdef USE_MING_FLASH                
-            case (MS_SWF):
-                return  msDrawWMSLayerSWF(map, layer, image);
+        else if( MS_RENDERER_SWF(image->format) )
+            return  msDrawWMSLayerSWF(map, layer, image);
 #endif
-
-          default:
-              break;
-        }
     }
+
     return 0;
 }
 
@@ -936,7 +886,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape,
     if(layer->class[c].color < 0)
       msDrawLineSymbol(&map->symbolset, image, shape, layer->class[c].symbol, layer->class[c].outlinecolor, layer->class[c].backgroundcolor, layer->class[c].sizescaled);
     else
-      msDrawShadeSymbol(&map->symbolset, image, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+      msDrawShadeSymbol(&map->symbolset, image, shape, layer->class[c].symbol,
+                        msLookupColor(map,layer->class[c].color), 
+                        msLookupColor(map,layer->class[c].backgroundcolor),
+                        msLookupColor(map,layer->class[c].outlinecolor), 
+                        layer->class[c].sizescaled);
 
     if(overlay && layer->class[c].overlaysymbol >= 0) {
       if(layer->class[c].overlaycolor < 0)
@@ -1078,21 +1032,12 @@ void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image,
     */
     if (image)
     {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                msCircleDrawLineSymbolGD(symbolset, image->img.gd, p, r, sy, 
-                                         fc, bc, sz);
-              
-              break;
-
-          default:
+        if( MS_RENDERER_GD(image->format) )
+            msCircleDrawLineSymbolGD(symbolset, image->img.gd, p, r, sy, 
+                                     fc, bc, sz);
+        else
              msSetError(MS_MISCERR, "Unknown image type", 
-                        "msCircleDrawLineSymbol()"); 
-        }
+                        "msCircleDrawLineSymbol()");
     }
 }
 
@@ -1102,21 +1047,13 @@ void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image,
 {
     if (image)
     {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                msCircleDrawShadeSymbolGD(symbolset, image->img.gd, p, r, sy, 
-                                          fc, bc, oc, sz);
+        if( MS_RENDERER_GD(image->format) )
+            msCircleDrawShadeSymbolGD(symbolset, image->img.gd, p, r, sy, 
+                                      fc, bc, oc, sz);
               
-              break;
-
-          default:
+        else
              msSetError(MS_MISCERR, "Unknown image type", 
                         "msCircleDrawShadeSymbol()"); 
-        }
     }
 }
 
@@ -1129,25 +1066,14 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p,
     */
    if (image)
    {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                msDrawMarkerSymbolGD(symbolset, image->img.gd, p, sy, 
-                                     fc, bc, oc, sz);
-              
-                break;
-
+       if( MS_RENDERER_GD(image->format) )
+           msDrawMarkerSymbolGD(symbolset, image->img.gd, p, sy, 
+                                fc, bc, oc, sz);
+       
 #ifdef USE_MING_FLASH              
-            case (MS_SWF):
-                msDrawMarkerSymbolSWF(symbolset, image, p, sy, fc, bc, oc, sz);
-                break;
+       else if( MS_RENDERER_SWF(image->format) )
+           msDrawMarkerSymbolSWF(symbolset, image, p, sy, fc, bc, oc, sz);
 #endif
-          default:
-              break;
-        }
     }
 }
 
@@ -1171,7 +1097,7 @@ int msDrawLabel(imageObj *image, pointObj labelPnt, char *string,
 /* ==================================================================== */
 
 #ifdef USE_MING_FLASH
-  if (image->imagetype == MS_SWF)
+  if ( MS_RENDERER_SWF(image->format) )
       return msDrawLabelSWF(image, labelPnt, string, label, fontset);
 #endif
 
@@ -1196,28 +1122,17 @@ int draw_text(imageObj *image, pointObj labelPnt, char *string,
               labelObj *label, fontSetObj *fontset)
 {
     int nReturnVal = -1;
+
     if (image)
     {
-         switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                nReturnVal = draw_textGD(image->img.gd, labelPnt, string, 
-                                      label, fontset);
-                break;
-
+        if( MS_RENDERER_GD(image->format) )
+            nReturnVal = draw_textGD(image->img.gd, labelPnt, string, 
+                                     label, fontset);
 #ifdef USE_MING_FLASH
-            case (MS_SWF): 
-               nReturnVal = draw_textSWF(image, labelPnt, string, label, 
-                                         fontset); 
-               break;
+        else if( MS_RENDERER_SWF(image->format) )
+            nReturnVal = draw_textSWF(image, labelPnt, string, label, 
+                                      fontset); 
 #endif
-
-          default:
-              break;
-        }
     }
 
     return nReturnVal;
@@ -1228,24 +1143,13 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
     int nReturnVal = MS_SUCCESS;
     if (image)
     {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                nReturnVal = msDrawLabelCacheGD(image->img.gd, map);
-                break;
+        if( MS_RENDERER_GD(image->format) )
+            nReturnVal = msDrawLabelCacheGD(image->img.gd, map);
 
 #ifdef USE_MING_FLASH
-            case (MS_SWF):
-                nReturnVal = msDrawLabelCacheSWF(image, map);
-                break;
+        else if( MS_RENDERER_SWF(image->format) )
+            nReturnVal = msDrawLabelCacheSWF(image, map);
 #endif
-
-            default:
-                break;
-        }
     }
 
     return nReturnVal;
@@ -1257,25 +1161,14 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 {
     if (image)
     {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                msDrawLineSymbolGD(symbolset, image->img.gd, p,
-                                   sy, fc, bc, sz);
-                break;
-                
-#ifdef USE_MING_FLASH
-            case (MS_SWF):
-                msDrawLineSymbolSWF(symbolset, image, p, sy, fc, bc, sz);
-                break;
-#endif
+        if( MS_RENDERER_GD(image->format) )
+            msDrawLineSymbolGD(symbolset, image->img.gd, p,
+                               sy, fc, bc, sz);
 
-          default:
-              break;
-        }
+#ifdef USE_MING_FLASH
+        else if( MS_RENDERER_SWF(image->format) )
+            msDrawLineSymbolSWF(symbolset, image, p, sy, fc, bc, sz);
+#endif
     }
 }
 
@@ -1284,25 +1177,14 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 {
     if (image)
     {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                msDrawShadeSymbolGD(symbolset, image->img.gd, p,
-                                    sy, fc, bc, oc, sz);
-                break;
+        if( MS_RENDERER_GD(image->format) )
+            msDrawShadeSymbolGD(symbolset, image->img.gd, p,
+                                sy, fc, bc, oc, sz);
 
 #ifdef USE_MING_FLASH
-            case (MS_SWF):
-                msDrawShadeSymbolSWF(symbolset, image, p, sy, fc, bc, oc, sz);
-                break;
+        else if( MS_RENDERER_SWF(image->format) )
+            msDrawShadeSymbolSWF(symbolset, image, p, sy, fc, bc, oc, sz);
 #endif
-
-          default:
-              break;
-        }
     }
 }
     
@@ -1316,17 +1198,9 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 {
     if (image)
     {
-        switch (image->imagetype)
-        {
-
 #ifdef USE_MING_FLASH
-            case (MS_SWF):
-                msImageStartLayerSWF(map, layer, image);
-                break;
+        if( MS_RENDERER_SWF(image->format) )
+            msImageStartLayerSWF(map, layer, image);
 #endif
-               
-            default:
-                break;
-       }
     }
 }
