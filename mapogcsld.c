@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23  2004/02/20 01:01:10  assefa
+ * Check the wms_name when applying an sld.
+ * Set the layer types when applying an sld.
+ *
  * Revision 1.22  2004/02/12 16:01:06  assefa
  * Test missing in Generate SLD for annotation layers.
  *
@@ -210,6 +214,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     int i, j, k, iClass;
     int bUseSpecificLayer = 0;
     int bSuccess =0;
+    char *pszTmp = NULL;
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
@@ -224,6 +229,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                 bUseSpecificLayer = 1;
             }
 
+            /* compare layer name to wms_name as well */
+            pszTmp = msLookupHashTable(map->layers[i].metadata, "wms_name");
+
             for (j=0; j<nLayers; j++)
             {
                     
@@ -232,7 +240,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 /*              - layer's labelitem                                     */
 /* -------------------------------------------------------------------- */
                 if ((pszStyleLayerName == NULL && 
-                     strcasecmp(map->layers[i].name, pasLayers[j].name) == 0) ||
+                     (strcasecmp(map->layers[i].name, pasLayers[j].name) == 0 ||
+                      (pszTmp && strcasecmp(pszTmp, pasLayers[j].name) == 0))) ||
                     (bUseSpecificLayer && pszStyleLayerName && 
                      strcasecmp(pasLayers[j].name, pszStyleLayerName) == 0))
                 {
@@ -242,6 +251,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 /*      first rule is the most important (mapserver uses the painter    */
 /*      model)                                                          */
 /* -------------------------------------------------------------------- */
+                    map->layers[i].type = pasLayers[j].type;
                     map->layers[i].numclasses = 0;
                     iClass = 0;
                     for (k=pasLayers[j].numclasses-1; k>=0; k--)
@@ -270,6 +280,10 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
                         map->layers[i].classitem = strdup(pasLayers[j].classitem);
                     }
+
+                    /* mark as auto-generate SLD */
+                    if (map->layers[i].connectiontype == MS_WMS)
+                      msInsertHashTable(map->layers[i].metadata, "wms_sld_body", "auto" );
 
                     break;
                 }
@@ -625,10 +639,10 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      one symbolizer of the same type, a style is added in the        */
 /*      same class.                                                     */
 /* ==================================================================== */
-
+        nSymbolizer =0;
+ 
         //line symbolizer
         psLineSymbolizer = CPLGetXMLNode(psRoot, "LineSymbolizer");
-        nSymbolizer =0;
         while (psLineSymbolizer && psLineSymbolizer->pszValue && 
                strcasecmp(psLineSymbolizer->pszValue, 
                           "LineSymbolizer") == 0)
@@ -641,12 +655,12 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 
             msSLDParseLineSymbolizer(psLineSymbolizer, psLayer, bNewClass);
             psLineSymbolizer = psLineSymbolizer->psNext;
+            psLayer->type = MS_LAYER_LINE;
             nSymbolizer++;
         }
 
         //Polygon symbolizer
         psPolygonSymbolizer = CPLGetXMLNode(psRoot, "PolygonSymbolizer");
-        nSymbolizer =0;
         while (psPolygonSymbolizer && psPolygonSymbolizer->pszValue && 
                strcasecmp(psPolygonSymbolizer->pszValue, 
                           "PolygonSymbolizer") == 0)
@@ -659,11 +673,11 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer,
                                         bNewClass);
             psPolygonSymbolizer = psPolygonSymbolizer->psNext;
+            psLayer->type = MS_LAYER_POLYGON;
             nSymbolizer++;
         }
         //Point Symbolizer
         psPointSymbolizer = CPLGetXMLNode(psRoot, "PointSymbolizer");
-        nSymbolizer =0;
         while (psPointSymbolizer && psPointSymbolizer->pszValue && 
                strcasecmp(psPointSymbolizer->pszValue, 
                           "PointSymbolizer") == 0)
@@ -675,6 +689,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
               bNewClass = 0;
             msSLDParsePointSymbolizer(psPointSymbolizer, psLayer, bNewClass);
             psPointSymbolizer = psPointSymbolizer->psNext;
+            psLayer->type = MS_LAYER_POINT;
             nSymbolizer++;
         }
         //Text symbolizer
@@ -693,6 +708,8 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
                strcasecmp(psTextSymbolizer->pszValue, 
                           "TextSymbolizer") == 0)
         {
+            if (nSymbolizer == 0)
+                psLayer->type = MS_LAYER_ANNOTATION;
             msSLDParseTextSymbolizer(psTextSymbolizer, psLayer, bSymbolizer);
             psTextSymbolizer = psTextSymbolizer->psNext;
         }
@@ -705,6 +722,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
         {
             msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer);
             psRasterSymbolizer = psRasterSymbolizer->psNext;
+            psLayer->type = MS_LAYER_RASTER;
         } 
 
 /* -------------------------------------------------------------------- */
@@ -3073,7 +3091,8 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
     double dfAnchorX = 0.5, dfAnchorY = 0.5;
     int i = 0;
 
-    if (psClass && psLayer && psLayer->labelitem)
+    if (psClass && psLayer && psLayer->labelitem && 
+        strlen(psLayer->labelitem) > 0)
     {
         sprintf(szTmp, "%s\n",  "<TextSymbolizer>");
         pszSLD = strcatalloc(pszSLD, szTmp);
