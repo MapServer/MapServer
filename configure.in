@@ -1008,7 +1008,7 @@ if test "$with_geos" = "yes" ; then
 
   GEOS_ENABLED=-DUSE_GEOS
 
-  GEOS_INCDIR=`$GEOS_CONFIG --include`
+  GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
   GEOS_LIB=`$GEOS_CONFIG --libs`
 
@@ -1032,7 +1032,7 @@ elif test -n "$with_geos" -a "$with_geos" != "no" ; then
 
   GEOS_ENABLED=-DUSE_GEOS
 
-  GEOS_INCDIR=`$GEOS_CONFIG --include`
+  GEOS_INCDIR=`$GEOS_CONFIG --includes`
   GEOS_INC="-I$GEOS_INCDIR"
   GEOS_LIB=`$GEOS_CONFIG --libs`
 
