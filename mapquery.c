@@ -649,30 +649,27 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	  
 	  switch(shape.type) { // make sure shape actually intersects the selectshape
 	  case MS_SHAPE_POINT:
-	    status = msIntersectMultipointPolygon(&shape.line[0], &selectshape);
-	    if(status == MS_FALSE && tolerance > 0) { // no intersection, check distance
+	    if(tolerance == 0) // just test for intersection
+	      status = msIntersectMultipointPolygon(&shape.line[0], &selectshape);
+	    else { // check distance, distance=0 means they intersect
 	      distance = msDistanceShapeToShape(&selectshape, &shape);
 	      if(distance < tolerance) status = MS_TRUE;
-
-	      fprintf(stderr, "distance %lf, tolerance %lf\n", distance, tolerance);
             }
 	    break;
 	  case MS_SHAPE_LINE:
-	    status = msIntersectPolylinePolygon(&shape, &selectshape);
-	    if(status == MS_FALSE && tolerance > 0) { // no intersection, check distance
+	    if(tolerance == 0) // just test for intersection
+	      status = msIntersectPolylinePolygon(&shape, &selectshape);
+	    else { // check distance, distance=0 means they intersect
 	      distance = msDistanceShapeToShape(&selectshape, &shape);
 	      if(distance < tolerance) status = MS_TRUE;
-
-	      fprintf(stderr, "distance %lf, tolerance %lf\n", distance, tolerance);
             }
 	    break;
 	  case MS_SHAPE_POLYGON:
-	    status = msIntersectPolygons(&shape, &selectshape);
-	    if(status == MS_FALSE && tolerance > 0) { // no intersection, check distance
+	    if(tolerance == 0) // just test for intersection
+	      status = msIntersectPolygons(&shape, &selectshape);
+	    else { // check distance, distance=0 means they intersect
 	      distance = msDistanceShapeToShape(&selectshape, &shape);
 	      if(distance < tolerance) status = MS_TRUE;
-
-	      fprintf(stderr, "distance %lf, tolerance %lf\n", distance, tolerance);
             }
 	    break;
 	  default:
