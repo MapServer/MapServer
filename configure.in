@@ -1329,13 +1329,13 @@ if test "$with_ming" = "no" -o "$with_ming" = ""; then
 elif test "$with_ming" = "yes"; then
   AC_MSG_RESULT([yes])
   MING_ENABLED=-DUSE_MING_FLASH
-  MING_LIB=-lming
+  MING_LIB="-lming"
   MING_INC=
 else
   AC_MSG_RESULT([yes, user supplied MING directory])
   MING_ENABLED=-DUSE_MING_FLASH
-  MING_LIB=-L$with_ming -lming
-  MING_INC=-I$with_ming
+  MING_LIB="-L$with_ming -lming"
+  MING_INC="-I$with_ming"
 fi
 
 AC_SUBST(MING_ENABLED,$MING_ENABLED)
