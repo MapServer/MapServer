@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.101  2004/11/12 21:53:39  dan
+ * Free legHeaderHtml and legFooterHtml in generateLegendTemplate() (bug 1032)
+ *
  * Revision 1.100  2004/11/12 21:31:11  sdlime
  * Addressed bug 1032. HTML legends now support a [leg_header_html] and [leg_footer_html] tag.
  *
@@ -561,7 +564,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
  * return a substring from instr beetween [tag] and [/tag]
  * char* returned must be freed by caller.
  * pszNextInstr will be a pointer at the end of the 
- * first occurence founded.
+ * first occurence found.
  */
 int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
 {
@@ -2054,6 +2057,9 @@ char *generateLegendTemplate(mapservObj *msObj)
    msFree(legLayerHtmlCopy);
    msFree(legClassHtmlCopy);
       
+   msFree(legHeaderHtml);
+   msFree(legFooterHtml);
+
    msFree(legGroupHtml);
    msFree(legLayerHtml);
    msFree(legClassHtml);
