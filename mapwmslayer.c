@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.74  2005/02/14 04:33:32  sdlime
+ * Changed %.17g to %.15g for WMS/WFS server code.
+ *
  * Revision 1.73  2004/11/18 21:18:36  assefa
  * Make sure that msDrawWMSLayerLow calls msDrawLayer instead of msDrawRasterLayerLow
  * directly ensuring that some logic (transparency) that are in msDrawLayer are
@@ -694,7 +697,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msSetWMSParamInt(   psWMSParams, "HEIGHT",  map->height);
         msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
-        snprintf(szBuf, 100, "%.17g,%.17g,%.17g,%.17g", 
+        snprintf(szBuf, 100, "%.15g,%.15g,%.15g,%.15g", 
                  bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
         msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
  
@@ -732,7 +735,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msSetWMSParamInt(   psWMSParams, "HEIGHT",  map->height);
         msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
 
-        snprintf(szBuf, 100, "%.17g,%.17g,%.17g,%.17g", 
+        snprintf(szBuf, 100, "%.15g,%.15g,%.15g,%.15g", 
                  bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
         msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
         msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE);

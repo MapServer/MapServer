@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/02/14 04:33:32  sdlime
+ * Changed %.17g to %.15g for WMS/WFS server code.
+ *
  * Revision 1.30  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -545,7 +548,7 @@ static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
     }
     else
       sprintf(pszURL + strlen(pszURL), 
-              "&BBOX=%.17g,%.17g,%.17g,%.17g",
+              "&BBOX=%.15g,%.15g,%.15g,%.15g",
               bbox->minx, bbox->miny, bbox->maxx, bbox->maxy);
     
     if (psParams->nMaxFeatures > 0)
