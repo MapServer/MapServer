@@ -229,12 +229,16 @@ int query(msMYGISLayerInfo *layer, char qbuf[]){
 if (SHOWQUERY || MYDEBUG) printf("%s<BR>\n", qbuf);
     if (mysql_query(layer->conn,qbuf) < 0){
       mysql_close(layer->conn);
-printf("mysql query FAILED real bad...<br>\n");
+	msSetError(MS_QUERYERR, "bad mysql query",
+           "query()");
+//printf("mysql query FAILED real bad...<br>\n");
         return MS_FAILURE;
     }
     if (!(layer->query_result=mysql_store_result(layer->conn)))    {
       mysql_close(layer->conn);
-printf("mysql query FAILED...<br>\n");
+//printf("mysql query FAILED...<br>\n");
+	msSetError(MS_QUERYERR, "mysql query failed",
+           "query()");
         return MS_FAILURE;
     }
    layer->query = strdup(qbuf);
@@ -339,18 +343,22 @@ if (MYDEBUG) printf("Parsing DB params...");
 if (MYDEBUG)printf("msMYGISLayerOpen1 called<br>\n");
     if (!(layerinfo->conn = mysql_connect(&(layerinfo->mysql),DB_HOST,DB_USER,DB_PASSWD)))
     {
-	  printf("Connection SQL server failed.");
+//	  printf("Connection SQL server failed.");
 	free(layerinfo);
-      return MS_FAILURE;
+	msSetError(MS_QUERYERR, "Connection to SQL server failed",
+           "msMYGISLayerOpen()");
+        return MS_FAILURE;
     }
 
 if (MYDEBUG)printf("msMYGISLayerOpen2 called<br>\n");
     if (mysql_select_db(layerinfo->conn,DB_DATABASE) < 0)
     {
-	  printf("Database could not be opened.");
+//	  printf("Database could not be opened.");
       mysql_close(layerinfo->conn);
 	  free(layerinfo);
-      return MS_FAILURE;
+	msSetError(MS_QUERYERR, "SQL Database could not be opened",
+           "msMYGISLayerOpen()");
+        return MS_FAILURE;
     }
 if (MYDEBUG)printf("msMYGISLayerOpen3 called<br>\n");
        if( ((char *) &order_test)[0] == 1 )
@@ -766,7 +774,7 @@ int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt
 		line.point[points+1].y = atof(row[6]);
 		line.point[points+1].m = 0;
 		shape->type = MS_SHAPE_LINE;
-	        printf("(%f/%f/%f/%f)<BR>\n",line.point[points].x,line.point[points].y,line.point[points+1].x,line.point[points+1].y);
+//	        printf("(%f/%f/%f/%f)<BR>\n",line.point[points].x,line.point[points].y,line.point[points+1].x,line.point[points+1].y);
 		points += 2;
 	}
 	if (2*ngeoms != points)
@@ -774,7 +782,7 @@ int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt
 	line.numpoints=points;
 	if (points > 1){
 		msAddLine(shape,&line);
-		printf("points: %d<BR>\n",points);
+//		printf("points: %d<BR>\n",points);
 	}	
 	free(line.point);
 	return(MS_SUCCESS);
@@ -835,7 +843,7 @@ int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *
 	
 	if (points > 1){
 		msAddLine(shape,&line);
-		printf("points: %d<BR>\n",points);
+//		printf("points: %d<BR>\n",points);
 	}	
 	free(line.point);
 	return(MS_SUCCESS);
@@ -1400,7 +1408,7 @@ int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	int	t;
 
 if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %u<br>\n",record);
-
+//return (MS_FAILURE);
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	if (layerinfo == NULL)
 	{
@@ -1595,7 +1603,7 @@ int msMYGISLayerGetItems(layerObj *layer)
 	//int				nitems;
 
 
-printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
+if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
@@ -1706,7 +1714,7 @@ printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 // Never seen this function actually called
 int msMYGISLayerGetExtent(layerObj *layer, rectObj *extent)
 {
-printf("msMYGISLayerGetExtent called<br>\n");
+if (MYDEBUG) printf("msMYGISLayerGetExtent called<br>\n");
 
 
 	extent->minx = extent->miny =  -1.0*FLT_MAX ;
