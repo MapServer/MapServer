@@ -117,11 +117,20 @@ Very important note: Constant names and class member variable names are
    int addColor(int r, int g, int b)  
         Add a color to map's palette.  Returns color index.
 
+   int getsymbolbyname(string symbol_name)  
+        Returns the symbol index using the name.
+
+   void preparequery()
+        Calculate the scale of the map and assign it to the map->scale.
+             
    imageObj prepareImage()
         Return handle on blank image object.
 
    imageObj draw()
         Render map and return handle on image object.
+
+    imageObj drawquerymap()
+        Render a query map and return handle on image object.
 
    imageObj drawLegend()
         Render legend and return handle on image object.
@@ -131,6 +140,16 @@ Very important note: Constant names and class member variable names are
 
    imageObj drawScaleBar()
         Render scale bar and return handle on image object.
+
+   int embedlegend() 
+        embeds a legend. Actually the legend is just added to the label 
+        cache so you must invoke drawLabelCache() to actually do the 
+        rendering (unless postlabelcache is set).
+
+    int embedScalebar() 
+        embeds a scalebar. Actually the scalebar is just added to the label 
+        cache so you must invoke drawLabelCache() to actually do the rendering 
+        (unless postlabelcache is set).
 
    int drawLabelCache(imageObj image)
         Renders the labels for a map. Returns -1 on error.
@@ -210,6 +229,15 @@ Very important note: Constant names and class member variable names are
         Note that to be queryable a layer must have a QUERYITEM and at least
         one QUERY object.
 
+   int queryUsingFeatures(queryResultObj pQuery) 
+       Generates a result set based on a previous set of results. At present 
+        the results MUST be based on a polygon layer. Holes and disjoint 
+        polygons should now be handled correctly.
+
+   queryresultObj queryUsingShape(shapeObj shape)
+      Generates a result set based on a single shape, the shape is assumed 
+      to be a polygon at this point.
+
    int save(string filename)
         Save current map object state to a file. Returns -1 on error.
 
@@ -217,6 +245,13 @@ Very important note: Constant names and class member variable names are
         Set map projection and coordinate system.  Parameters are given as 
         a single string of comma-delimited PROJ.4 parameters.
 
+   int addFeature(shapeObj shape)
+        Add a new feature in a layer.  Returns -1 on error.
+
+    int classify(string expression)
+        Return the first class index which matches the string  passed 
+        in parameters.  If there is an empty expression class, the index 
+        will  be returned.
 
  LayerObj Class:
  ---------------
@@ -291,6 +326,15 @@ Very important note: Constant names and class member variable names are
         Note that to be queryable a layer must have a QUERYITEM and at least
         one QUERY object.
 
+   int queryUsingFeatures(queryResultObj pQuery) 
+       Generates a result set based on a previous set of results. At present 
+        the results MUST be based on a polygon layer. Holes and disjoint 
+        polygons should now be handled correctly.
+
+   queryresultObj queryUsingShape(shapeObj shape)
+      Generates a result set based on a single shape, the shape is assumed 
+      to be a polygon at this point.
+
    int setProjection(string proj_params)
         Set layer projection and coordinate system.  Parameters are given as 
         a single string of comma-delimited PROJ.4 parameters.
@@ -331,7 +375,12 @@ Very important note: Constant names and class member variable names are
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
 
-
+   int setexpression(string expression)
+        Set the expression string for the class object.
+           
+   int settext(string text)
+        Set the text string for the class object.
+     
  ImageObj Class:
  ---------------
 
@@ -543,6 +592,25 @@ Constructor:
         Destroys resources used by a QueryResultObj.
 
 
+QueryObj Class:
+ ---------------------
+
+ Constructor:
+
+   QueryObj ms_newQueryObj()     
+
+ Members:
+
+   string    template
+
+ Methods:
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+   int setexpression(string expression)
+        Set the expression string for thequery object.
+     
  ShapeResultObj Class:
  ---------------------
 
@@ -587,6 +655,18 @@ Constructor:
         The text string is used to annotate the point.
         Returns 0 on success, -1 on error.
 
+  double distanceToPoint(pointObj poPoint)
+       Calculates distance between two points.  
+
+  double distanceToLine(pointObject p1, pointObject p2)
+        Calculates distance between a point ad a lined defined by the
+        two points passed in argument. 
+
+  double distanceToShape(shapeObj shape)
+        Calculates the minimum distance between a point and a shape.
+
+  void free()
+       Releases all resources used by the object.       
 
  LineObj Class:
  --------------
@@ -611,6 +691,8 @@ Constructor:
         Returns a reference to point number i.  Reference is valid only
         during the life of the lineObj that contains the point.
 
+   void free()
+        Destroys resources used by a line object.     
 
  ShapeObj Class:
  --------------
@@ -640,6 +722,15 @@ Constructor:
         to classify the shape based on the classes defined for the layer.
         The text string is used to annotate the shape.
         Returns 0 on success, -1 on error.
+
+   boolean contains(pointObj point)
+        Returns MS_TRUE if the point is in a polygone shape. Else MS_FALSE.
+
+   boolean intersects(shapeObj pShape))
+        Returns MS_TRUE or false if the two shapes intersect. Else MS_FALSE.
+     
+   void free()
+        Destroys resources used by a shape object.  
 
 
  RectObj Class:
@@ -674,6 +765,11 @@ Constructor:
         The text string is used to annotate the rectangle.
         Returns 0 on success, -1 on error.
 
+  double fit(int width, int height)
+        Adjust extents of the rectangle to fit the width/height specified.
+
+  void free()
+        Destroys resources used by a rect object.  
 
  ShapefileObj Class:
  -------------------

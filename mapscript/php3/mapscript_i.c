@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.11  2000/11/01 16:31:07  dan
+ * Add missing functions (in sync with mapscript).
+ *
  * Revision 1.10  2000/09/25 22:48:54  dan
  * Aded update access for msOpenShapeFile()  (sync with mapscript.i v1.19)
  *
@@ -204,6 +207,10 @@ int mapObj_queryUsingFeatures(mapObj* self, queryResultObj *results) {
     return msQueryUsingFeatures(self, NULL, results);
   }
 
+queryResultObj *mapObj_queryUsingShape(mapObj *map, shapeObj *shape) {
+    return msQueryUsingShape(map, NULL, shape);
+  }
+
 int mapObj_setProjection(mapObj* self, char *string) {
     return(loadProjectionString(&(self->projection), string));
   }
@@ -220,10 +227,6 @@ queryResultObj *queryResultObj_new(char *filename) {
   }
 
 void queryResultObj_destroy(queryResultObj *self) {
-    if(self) msFreeQueryResults(self);
-  }
-
-void queryResultObj_free(queryResultObj *self) {	
     if(self) msFreeQueryResults(self);
   }
 
@@ -323,12 +326,16 @@ int layerObj_queryUsingFeatures(layerObj *self, mapObj *map,
     return msQueryUsingFeatures(map, self->name, results);
   }
 
+queryResultObj *layerObj_queryUsingShape(layerObj *self, mapObj *map, 
+                                         shapeObj *shape) {
+    return msQueryUsingShape(map, self->name, shape);
+  }
 int layerObj_setProjection(layerObj *self, char *string) {
     return(loadProjectionString(&(self->projection), string));
   }
 
 int layerObj_addFeature(layerObj *self, shapeObj *shape) {
-    if(insertFeatureList(&(self->features), *shape) == NULL) 
+    if(insertFeatureList(&(self->features), shape) == NULL) 
       return -1;
     else
       return 0;
@@ -485,7 +492,7 @@ shapeObj *shapeObj_new(int type) {
       return NULL;
 
     msInitShape(shape);
-
+    shape->type = type;
     return shape;
   }
 

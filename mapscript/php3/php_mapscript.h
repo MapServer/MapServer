@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/11/01 16:31:08  dan
+ * Add missing functions (in sync with mapscript).
+ *
  * Revision 1.3  2000/09/07 20:18:42  dan
  * Sync with mapscript.i version 1.16
  *
@@ -84,6 +87,7 @@ queryResultObj *mapObj_queryUsingPoint(mapObj* self, pointObj *point,
 queryResultObj *mapObj_queryUsingRect(mapObj* self, rectObj *rect);
 int             mapObj_queryUsingFeatures(mapObj* self, 
                                           queryResultObj *results);
+queryResultObj *mapObj_queryUsingShape(mapObj *map, shapeObj *shape);
 int             mapObj_setProjection(mapObj* self, char *string);
 int             mapObj_save(mapObj* self, char *filename);
 
@@ -107,6 +111,8 @@ queryResultObj *layerObj_queryUsingRect(layerObj *self, mapObj *map,
                                         rectObj *rect);
 int             layerObj_queryUsingFeatures(layerObj *self, mapObj *map, 
                                             queryResultObj *results);
+queryResultObj *layerObj_queryUsingShape(layerObj *self, mapObj *map, 
+                                         shapeObj *shape);
 int             layerObj_setProjection(layerObj *self, char *string);
 int             layerObj_addFeature(layerObj *self, shapeObj *shape);
 int             layerObj_classify(layerObj *self, char *string);
