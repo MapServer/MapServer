@@ -1196,7 +1196,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     if(getInteger(&(blue)) == -1) return;
     class->backgroundcolor = msAddColor(map, red, green, blue);
     break;
-  case(COLOR):
+  case(COLOR):    
     msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
@@ -2896,7 +2896,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if((map->imagetype = getSymbol(3, MS_PNG,MS_JPEG,MS_WBMP)) == -1) break;
       break;
 #endif
-    case(LAYER):
+    case(LAYER):      
       if(getInteger(&i) == -1) break;
       if(i>=map->numlayers || i<0) break;
       loadLayerString(map, &(map->layers[i]), value);
@@ -2930,6 +2930,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       i = msGetLayerIndex(map, msyytext);
       if(i>=map->numlayers || i<0) break;
       loadLayerString(map, &(map->layers[i]), value);
+      break;
     case(TRANSPARENT):
       msyystate = 2; msyystring = value;
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
@@ -2952,8 +2953,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
   msyystate = 3; /* restore lexer state */
   msyylex();
 
-  if(ms_error.code != MS_NOERR)
-    return(-1);
+  if(ms_error.code != MS_NOERR) return(-1);
 
   return(0);
 }
