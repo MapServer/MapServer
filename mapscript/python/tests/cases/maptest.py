@@ -80,12 +80,12 @@ class MapExtentTestCase(MapTestCase):
                           1.0, -2.0, -3.0, 4.0)
         
     def testReBindingExtent(self):
-        """MapExtentTestCase.testReBindingExtent: test the rebinding of a map's extent"""
+        """test the rebinding of a map's extent"""
         test_map = mapscript.mapObj(TESTMAPFILE)
         rect1 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
         rect2 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
         test_map.extent = rect1
-        assert str(test_map.extent) != str(rect1)
+        assert repr(test_map.extent) != repr(rect1), (test_map.extent, rect1)
         del rect1
         self.assertRectsEqual(test_map.extent, rect2)
         

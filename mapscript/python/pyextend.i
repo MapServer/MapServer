@@ -15,6 +15,10 @@
  *****************************************************************************/
 
 
+/* ===========================================================================
+   Python rectObj extensions
+   ======================================================================== */
+   
 %extend rectObj {
 
     char *__str__() {
@@ -38,9 +42,54 @@
         else:
             raise TypeError, \
                 '__contains__ does not yet handle %s' % (item_type)
-            
-            
         
+}
+
+}
+
+/* ===========================================================================
+   Python mapserver container iterator class
+   ======================================================================== */
+   
+%pythoncode {
+
+class LineIterator:
+    
+    def __init__(self, line):
+        self.current = 0
+        self.line = line
+        self.limit = line.numpoints - 1
+        
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if self.current <= self.limit:
+            p = None
+            try:
+                p = self.line.getPoint(self.current)
+            except AttributeError:
+                p = self.line.get(self.current)
+            self.current = self.current + 1
+            return p
+        else:
+            raise StopIteration
+        
+}
+
+
+/* ===========================================================================
+   Python lineObj extensions
+   ======================================================================== */
+   
+%extend lineObj 
+{
+
+%pythoncode {
+
+    def __iter__(self):
+        return LineIterator(self)
+    
 }
 
 }

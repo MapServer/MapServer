@@ -105,7 +105,7 @@ class LayerExtentTestCase(MapTestCase):
         rect1 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
         rect2 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
         self.layer.extent = rect1
-        assert str(self.layer.extent) != str(rect1)
+        assert repr(self.layer.extent) != repr(rect1)
         del rect1
         self.assertRectsEqual(self.layer.extent, rect2)
         self.assertRectsEqual(self.layer.getExtent(), rect2)

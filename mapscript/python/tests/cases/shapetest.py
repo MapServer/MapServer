@@ -40,32 +40,6 @@ from testing import mapscript, MapTestCase
 from testing import MapPrimitivesTestCase, ShapeObjTestCase
 from testing import MapscriptTestCase
 
-class LineObjTestCase(MapPrimitivesTestCase):
-    """Testing the lineObj class in stand-alone mode"""
-    def setUp(self):
-        """The test fixture is a line with two points"""
-        self.points = (mapscript.pointObj(0.0, 1.0),
-                       mapscript.pointObj(2.0, 3.0))
-        self.line = mapscript.lineObj()
-        self.addPointToLine(self.line, self.points[0])
-        self.addPointToLine(self.line, self.points[1])
-    def testCreateLine(self):
-        """LineObjTestCase.testCreateLine: the created line has the correct number of points"""
-        assert self.line.numpoints == 2
-    def testGetPointsFromLine(self):
-        """LineObjTestCase.testGetPointsFromLine: the points in the line share are the same that were input"""
-        for i in range(len(self.points)):
-            got_point = self.getPointFromLine(self.line, i)
-            self.assertPointsEqual(got_point, self.points[i])
-    def testAddPointToLine(self):
-        """LineObjTestCase.testAddPointToLine: adding a point to a line behaves correctly"""
-        new_point = mapscript.pointObj(4.0, 5.0)
-        self.addPointToLine(self.line, new_point)
-        assert self.line.numpoints == 3
-    def testAlterNumPoints(self):
-        """LineObjTestCase.testAlterNumPoints: numpoints is immutable, this should raise error"""
-        self.assertRaises(AttributeError, setattr, self.line, 'numpoints', 3)
-
 class ShapePointTestCase(ShapeObjTestCase):
     """Test point type shapeObj in stand-alone mode"""
     def setUp(self):

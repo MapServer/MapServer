@@ -132,6 +132,34 @@ saveToString() : string
 
 
 ------------------------------------------------------------------------------
+ lineObj
+------------------------------------------------------------------------------
+
+Methods
+-------
+
+__iter__( ) : iterator
+    Returns a Python iterator, allowing a new way to iterate over the points
+    of a line:
+
+    ::
+
+        >>> line = shape.getLine(0)    # get first line of a shape
+        >>> for p in line:
+        ...     print (p.x, p.y)       # print point coordinates
+
+
+    This is new Python syntax with potential to replace the traditional
+
+    ::
+
+        >>> line = shape.getLine(0)
+        >>> for i in range(line.numpoints):
+        ...     p = line.getPoint(i)
+        ...     print (p.x, p.y)
+
+
+------------------------------------------------------------------------------
  rectObj
 ------------------------------------------------------------------------------
 
@@ -177,4 +205,23 @@ __str__() : string
         >>> r_dict['minx']
         0.000000
 
+
+------------------------------------------------------------------------------
+ shapeObj
+------------------------------------------------------------------------------
+
+Methods
+-------
+
+__contains__( pointObj point ) : boolean
+    Returns True if *point* is inside the rectangle, otherwise returns False.
+
+    ::
+
+        >>> r = mapscript.rectObj(0, 0, 1, 1)
+        >>> p = mapscript.pointObj(2, 0)       # outside
+        >>> p in r
+        False
+        >>> p not in r
+        True
 
