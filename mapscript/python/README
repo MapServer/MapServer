@@ -1,6 +1,6 @@
 .. $Id$
 
-Python MapScript for MapServer 4.2 README
+Python MapScript for MapServer 4.3 README
 ================================================================
 
 :Author: Sean Gillies
@@ -62,6 +62,7 @@ directory and execute
 ::
 
     python tests/testMapScript.py -v
+    python tests/testCloneMap.py -v
 
 The tests can (and should) be run before the module is installed.
 
