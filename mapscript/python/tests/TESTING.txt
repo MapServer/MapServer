@@ -10,3 +10,10 @@ from the mapscript/python directory.  By default, the unit test
 script will insert the local build directory produced by Python
 distutils into the head of the Python PATH.  This allows us to
 run the unit tests before installing the mapscript module.
+
+The unit tests require that the MapServer Itasca demo data be 
+installed on your system.  Edit test.map so that SHAPEPATH points
+to the proper path.  If your MapServer does not have PROJ.4
+compiled in, you will also need to comment out all PROJECTION
+blocks.
+
