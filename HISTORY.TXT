@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.1 (CVS)
 ------------------------
 
+- Added support for proper classification of non-8bit rasters.  
+
+- Added support for BYTE rawmode output type. 
+
+- Added support for multiple bands of output in rawmode. 
+
 - MySQL joins available
 
 - Fixed detection of OGRRegisterAll() with GDAL 1.1.9 in configure. 
