@@ -625,12 +625,8 @@ typedef struct
 
 // LAYER OBJECT - basic unit of a map
 typedef struct layer_obj {
-  //int index;
-
-  //struct map_obj *map;
 
   char *classitem; // .DBF item to be used for symbol lookup
-  //int classitemindex;
 
 #ifndef SWIG
   int classitemindex;
@@ -662,8 +658,6 @@ typedef struct layer_obj {
   char *_template;
 #endif
 
-  //resultCacheObj *resultcache; // holds the results of a query against this layer
-
   char *name; // should be unique
   char *group; // shouldn't be unique it's supposed to be a group right?
 
@@ -672,13 +666,10 @@ typedef struct layer_obj {
 
   enum MS_LAYER_TYPE type;
 
-  //int annotate; // boolean flag for annotation
-
   double tolerance; // search buffer for point and line queries (in toleranceunits)
   int toleranceunits;
 
   double symbolscale; // scale at which symbols are default size
-  //double scalefactor; // computed, not set
   double minscale, maxscale;
   double labelminscale, labelmaxscale;
   int sizeunits; // applies to all classes
@@ -695,7 +686,6 @@ typedef struct layer_obj {
   int labelitemindex, labelsizeitemindex, labelangleitemindex;
 
   char *tileitem;
-  //int tileitemindex;
   char *tileindex; // layer index file for tiling support
 
 #ifndef SWIG
@@ -713,7 +703,6 @@ typedef struct layer_obj {
 
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
-  //struct layer_obj *sameconnection;
  
 #ifndef SWIG
   struct layer_obj *sameconnection;
@@ -724,7 +713,6 @@ typedef struct layer_obj {
 #endif
 
   // attribute/classification handling components
-  //char **items;
 #ifdef SWIG
 %immutable;
 #endif
@@ -742,10 +730,7 @@ typedef struct layer_obj {
 #endif
 
   char *filteritem;
-  //int filteritemindex;
-
   char *styleitem; // item to be used for style lookup - can also be 'AUTO'
-  //int styleitemindex;
 
   char *requires; // context expressions, simple enough to not use expressionObj
   char *labelrequires;
