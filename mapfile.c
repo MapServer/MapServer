@@ -2045,7 +2045,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->sameconnection = NULL;
 
-  layer->timeindex = layer->timeid = NULL;
+  layer->timeindex = layer->time = NULL;
   
   return(0);
 }
@@ -2098,7 +2098,7 @@ void freeLayer(layerObj *layer) {
   layer->numjoins = 0;
 
   msFree(layer->timeindex);
-  msFree(layer->timeid);
+  msFree(layer->time);
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -2298,8 +2298,8 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(TIMEINDEX):
       if((layer->timeindex = getString()) == NULL) return(-1);
       break;
-    case(TIMEID):
-      if((layer->timeid = getString()) == NULL) return(-1);
+    case(TIME):
+      if((layer->time = getString()) == NULL) return(-1);
       break;
     case(TOLERANCE):
       if(getDouble(&(layer->tolerance)) == -1) return(-1);
@@ -2557,9 +2557,9 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msFree(layer->template);
     layer->template = strdup(value);
     break;
-  case(TIMEID):
-    msFree(layer->timeid);
-    layer->timeid = strdup(value);
+  case(TIME):
+    msFree(layer->time);
+    layer->time = strdup(value);
     break;
   case(TOLERANCE):
     msyystate = 2; msyystring = value;
@@ -2668,7 +2668,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   } 
 
   if(layer->timeindex) fprintf(stream, "    TIMEINDEX \"%s\"\n", layer->timeindex);
-  if(layer->timeid) fprintf(stream, "    TIMEID \"%s\"\n", layer->timeid);
+  if(layer->time) fprintf(stream, "    TIME \"%s\"\n", layer->time);
 
   fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);

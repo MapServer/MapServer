@@ -743,7 +743,7 @@ typedef struct layer_obj {
   int numjoins;
 
   char *timeindex;
-  char *timeid;
+  char *time;
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
