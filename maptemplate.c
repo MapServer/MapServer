@@ -2646,6 +2646,13 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
       else 
         template = lp->template;
 
+      if( template == NULL )
+      {
+          msSetError(MS_WEBERR, "No template for layer %s or it's classes.",
+                     "msReturnQuery()", lp->name );
+          return MS_FAILURE;
+      }
+
       if(TEMPLATE_TYPE(template) == MS_URL) {
         msObj->ResultLayer = lp;
 
