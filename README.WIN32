@@ -144,6 +144,7 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
 
 --------------------------------------------------------------------
       Notes libwww : used to support WMS client connection
+      Depricated. Please refer to notes on libcurl below
 -------------------------------------------------------------------- 
   - the libaray is located at  http://www.w3.org/Library/ 
 
@@ -203,6 +204,36 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
         * wwwxml.dll
         * wwwzip.dll
 
+
+--------------------------------------------------------------------
+      Notes libcurl : used to support WMS client connection
+      Mapserver 3.7 is using libcurl instead of libwww for WMS client
+      support
+-------------------------------------------------------------------- 
+  - the library is located at http://curl.haxx.se/download.html
+
+  Quick notes on how to build the library using MSVC++:
+
+  - Download and extract the library (at this time it is know to work 
+    with version 7.10.2)
+  - Open the workspace curlib.dsw located under curl-XXX/lib
+  - Build libcurl.dll
+
+  Notes on mapserver's makefile.vc modifications :
+
+  - uncomment the flag WMSCLIENT= -DUSE_WMS_LYR
+  - uncomment and modify according to your installation the flags 
+    related to libcurl :
+
+    * CURL_INC = -I../curl-7.10.2/include
+    * CURL_LIB = ../curl-7.10.2/lib/Debug/libcurl.lib
+    * WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
+
+  You also need to install the libcurl.dll in your system directory. (The dll will
+  be located in libc-XXX/lib/debug abfter your build of the library)
+    
+
+
 ------------------------------------------------------------
         Notes on GDAL
 ------------------------------------------------------------
@@ -221,8 +252,8 @@ and build a PDF library from www.pdflib.com (http://www.pdflib.com/pdflib/downlo
 The best option is to download the zip file containing the source code and build it. Please
 refer to the docs inside the zip for informations on how to build the library. 
 Here are some quick notes that can help in building mapserver with PDF :
- 1) Buuild the PDF lib
-  - open the project PDFLib.swf
+ 1) Build the PDF lib
+  - open the project PDFLib.dsw
   - build the project pdflib_dll
   - after a sucessful build, you should have a pdflib.lib and pdblib.dll under the
     pdflib directory
@@ -230,6 +261,7 @@ Here are some quick notes that can help in building mapserver with PDF :
  
  2) Build mapserver with PDF
   - uncomment in the makefile.vc the flags related to PDF
+
 
 
 
