@@ -109,6 +109,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>connection	       { return(CONNECTION); }
 <INITIAL,OBJECT_STRING>connectiontype	       { return(CONNECTIONTYPE); }
 <INITIAL,OBJECT_STRING>data		       { return(DATA); }
+<INITIAL,OBJECT_STRING>debug		       { return(DEBUG); }
 <INITIAL,OBJECT_STRING>driver		       { return(DRIVER); }
 <INITIAL,OBJECT_STRING>dump		       { return(DUMP); }
 <INITIAL,OBJECT_STRING>empty		       { return(EMPTY); }

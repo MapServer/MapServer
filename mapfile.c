@@ -1184,6 +1184,7 @@ int initClass(classObj *class)
   int i;
 
   class->status = MS_ON;
+  class->debug = MS_OFF;
 
   initExpression(&(class->expression));
   class->name = NULL;
@@ -1287,7 +1288,10 @@ int loadClass(classObj *class, mapObj *map, layerObj *layer)
   class->layer = (layerObj *) layer;
 
   for(;;) {
-    switch(msyylex()) {    
+    switch(msyylex()) {
+    case(DEBUG):
+      if((class->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
+      break;      
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadClass()");
       return(-1);
@@ -1580,6 +1584,7 @@ static void writeClass(classObj *class, FILE *stream)
 */
 int initLayer(layerObj *layer)
 {
+  layer->debug = MS_OFF;
 
   if((layer->class = (classObj *)malloc(sizeof(classObj)*MS_MAXCLASSES)) == NULL) {
     msSetError(MS_MEMERR, NULL, "initLayer()");
@@ -1735,6 +1740,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(DATA):
       if((layer->data = getString()) == NULL) return(-1);
+      break;
+    case(DEBUG):
+      if((layer->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;
     case(DUMP):
       if((layer->dump = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
@@ -3380,6 +3388,9 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
   for(;;) {
 
     switch(msyylex()) {   
+    case(DEBUG):
+      if((map->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
+      break;
     case(END):
       fclose(msyyin);      
 
@@ -3389,7 +3400,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 
       if(msLoadSymbolSet(&(map->symbolset), map) == -1) return(NULL);
 
-      /* step through layers and classes to resolve symbol names */
+      // step through layers and classes to resolve symbol names
       for(i=0; i<map->numlayers; i++) {
         for(j=0; j<map->layers[i].numclasses; j++){
 	  for(k=0; k<map->layers[i].class[j].numstyles; k++) {

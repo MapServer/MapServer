@@ -441,6 +441,8 @@ typedef struct class_obj{
   double minscale, maxscale;
 
   struct layer_obj *layer;
+
+  int debug;
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
@@ -709,6 +711,7 @@ typedef struct layer_obj {
   int transparency; // transparency value 0-100 
 
   int dump;
+  int debug;
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
@@ -774,37 +777,31 @@ typedef struct map_obj{ /* structure for a map */
   webObj web;
 
   int *layerorder;
-   
+
+  int debug;   
 } mapObj;
 
 //SWF Object structure
 #ifdef USE_MING_FLASH
-
-typedef struct 
-{
-    mapObj *map;
-    SWFMovie sMainMovie;
-    int nLayerMovies;
-    SWFMovie *pasMovies;
-    int nCurrentMovie;
-    int nCurrentLayerIdx;
-    int nCurrentShapeIdx;
-    void    *imagetmp;  //used when the output format is SINGLE 
-                           //(one movie for the whole map)
-    
-} SWFObj; 
-
+typedef struct  {
+  mapObj *map;
+  SWFMovie sMainMovie;
+  int nLayerMovies;
+  SWFMovie *pasMovies;
+  int nCurrentMovie;
+  int nCurrentLayerIdx;
+  int nCurrentShapeIdx;
+  void    *imagetmp;  //used when the output format is SINGLE 
+                      //(one movie for the whole map)    
+} SWFObj;
 #endif
 
 //PDF Object structure
 #ifdef USE_PDF
-
-typedef struct 
-{
-    mapObj *map;
-    PDF * pdf;
+typedef struct {
+  mapObj *map;
+  PDF *pdf;
 } PDFObj; 
-
 #endif
 
 // IMAGE OBJECT - a wrapper for GD images
@@ -819,22 +816,20 @@ typedef struct {
 #endif
 
   outputFormatObj *format;
-  int              renderer;
+  int renderer;
 
 #ifndef SWIG
-  union
-  {
-      gdImagePtr gd;
+  union {
+    gdImagePtr gd;
 #ifdef USE_MING_FLASH
-      SWFObj     *swf;
+    SWFObj *swf;
 #endif
 #ifdef USE_PDF
-      PDFObj       *pdf;
+    PDFObj *pdf;
 #endif
-      short       *raw_16bit;
-      float       *raw_float;
-  }img;
-
+    short *raw_16bit;
+    float *raw_float;
+  } img;
 #endif
 } imageObj;
 

@@ -165,5 +165,6 @@
 #define FORMATOPTION 1139
 
 #define GRATICULE 1140
+#define DEBUG 1141
 
 #endif /* MAPFILE_H */
