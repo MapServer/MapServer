@@ -36,8 +36,8 @@ extern "C" {
 #define MS_WFSCONNERR 28  /* WFS connectiontype error */
 #define MS_MAPCONTEXTERR 29 /* Map Context error */
 #define MS_HTTPERR 30
-
-#define MS_NUMERRORCODES 31
+#define MS_CHILDERR 31    /* Errors involving arrays of child objects */
+#define MS_NUMERRORCODES 32
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
