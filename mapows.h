@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.31  2004/04/19 22:08:39  sdlime
+ * Added msOWSGetEPSGProj() to mapows.h/.c and updated the original from mapproject.c to use Dan's namespaces.
+ *
  * Revision 1.30  2004/04/14 07:31:40  dan
  * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
  *
@@ -198,7 +201,7 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
                            int nErrorCode, const char *pszFuncName);
 char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL, 
                             const char *pszExt);
-
+const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj metadata, const char *namespaces, int bReturnOnlyFirstOne);
 #endif
 
 /*====================================================================

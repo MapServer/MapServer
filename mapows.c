@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.27  2004/04/19 22:08:39  sdlime
+ * Added msOWSGetEPSGProj() to mapows.h/.c and updated the original from mapproject.c to use Dan's namespaces.
+ *
  * Revision 1.26  2004/04/14 07:31:40  dan
  * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
  *
@@ -928,6 +931,50 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
     return pszBuf;
 }
 
+/*
+** msOWSGetEPSGProj()
+**
+** Extract projection code for this layer/map.
+**
+** First look for a xxx_srs metadata. If not found then look for an EPSG 
+** code in projectionObj, and if not found then return NULL.
+**
+** If bReturnOnlyFirstOne=TRUE and metadata contains multiple EPSG codes
+** then only the first one (which is assumed to be the layer's default
+** projection) is returned.
+*/
+const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj metadata, const char *namespaces, int bReturnOnlyFirstOne)
+{
+  static char epsgCode[20] ="";
+  static char *value;
+
+  if (metadata && msOWSLookupMetadata(metadata, namespaces, "srs")) {
+    // Metadata value should already be in format "EPSG:n" or "AUTO:..."
+    if (!bReturnOnlyFirstOne)
+        return value;
+
+    // Caller requested only first projection code.
+    strncpy(epsgCode, value, 19);
+    epsgCode[19] = '\0';
+    if ((value=strchr(epsgCode, ' ')) != NULL)
+        *value = '\0';
+    return epsgCode;
+  }
+  else if (proj && proj->numargs > 0 && 
+           (value = strstr(proj->args[0], "init=epsg:")) != NULL &&
+           strlen(value) < 20)
+  {
+    sprintf(epsgCode, "EPSG:%s", value+10);
+    return epsgCode;
+  }
+  else if (proj && proj->numargs > 0 && 
+           strncasecmp(proj->args[0], "AUTO:", 5) == 0 )
+  {
+    return proj->args[0];
+  }
+
+  return NULL;
+}
 
 #endif /* USE_WMS_SVR || USE_WFS_SVR */
 
