@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.77  2004/11/03 16:35:45  frank
+ * modified msDrawQueryCache() to be very careful to not try and lookup
+ * information on out-of-range classindex values.  This seems to occur when
+ * default shapes come back witha classindex of 0 even if there are no classes.
+ * (ie. raster query results).
+ *
  * Revision 1.76  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -1025,8 +1031,13 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     /* classindex may be -1 here if there was a template at the top level
      * in this layer and the current shape selected even if it didn't
      * match any class 
+     *
+     * FrankW: classindex is also sometimes 0 even if there are no classes, so 
+     * we are careful not to use out of range class values as an index.
      */
-    if(shape.classindex==-1 || layer->class[shape.classindex].status == MS_OFF) {
+    if(shape.classindex==-1 
+       || shape.classindex >= layer->numclasses
+       || layer->class[shape.classindex].status == MS_OFF) {
       msFreeShape(&shape);
       continue;
     }
