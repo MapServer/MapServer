@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2003/09/10 13:30:15  assefa
+ * Correct test in IsBetween filter.
+ *
  * Revision 1.4  2003/09/10 03:54:09  assefa
  * Add partial support for BBox.
  * Add Node validating functions.
@@ -440,7 +443,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
                     
                     if (psXMLNode->psChild->psChild && 
-                        psFilterNode->psLeftNode->pszValue)
+                        psXMLNode->psChild->psChild->pszValue)
                     {
                         psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
                         psFilterNode->psLeftNode->pszValue = 
