@@ -54,7 +54,7 @@ MS_EXE = 	mapserv.exe  \
 #
 default: 	all
 
-all:		$(MS_LIB) $(MS_EXE)
+all:		$(MS_LIB) $(MS_EXE) mapscriptvars
 
 $(MS_OBJS):	$(MS_HDRS)
 
@@ -106,7 +106,7 @@ clean:
 
 
 mapscriptvars: makefile.vc nmake.opt
-	touch mapscriptvars
+	-del mapscriptvars
 	echo $(MS_BASE) > mapscriptvars
 	echo $(MS_DEFS) >> mapscriptvars
 	echo $(INCLUDES) >> mapscriptvars
