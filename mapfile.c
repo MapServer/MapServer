@@ -1327,7 +1327,7 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); // we're totally replacing the old expression so free then init to start over
   // initExpression(exp);
 
-  if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) {
+  if((exp->type = getSymbol(2, MS_EXPRESSION,MS_REGEX)) == -1) {
     exp->type = MS_STRING; // take the whole value as a string expression
     exp->string = strdup(value);
   } else
