@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.214  2004/11/10 15:55:02  assefa
+ * Correct transparency problem when doing $oImage->saveImage (Bug 425).
+ *
  * Revision 1.213  2004/11/02 21:03:36  assefa
  * Add a 2nd optional argument to LoadMapContext function (Bug 1023).
  *
@@ -6005,52 +6008,13 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         php3_header();
 #endif
 
-        if( MS_DRIVER_GD(im->format) )
-          //if ((strncasecmp((im->format)->driver,"gd/",3)==0))
-        {
-            if(strcasecmp("ON",
-                          msGetOutputFormatOption(im->format, 
-                                                  "INTERLACE", "ON" ))
-                == 0 )
-              gdImageInterlace(im->img.gd, 1);
-
-            if(im->format->transparent)
-              gdImageColorTransparent(im->img.gd, 0);
-        }
-
-        if(im->format->name && strcasecmp(im->format->name, "imagemap")==0){ 
-            iptr = im->img.imagemap;
-	    size = strlen(im->img.imagemap); //TODO
-	} else
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
-
-#ifdef USE_GD_GIF
-        if(im->format->name && strcasecmp(im->format->driver, "gd/gif")==0)
-            iptr = gdImageGifPtr(im->img.gd, &size); //TODO
-        else
-#endif
-#ifdef USE_GD_PNG
-        if(im->format->name && strcasecmp(im->format->driver, "gd/png")==0) 
-            iptr = gdImagePngPtr(im->img.gd, &size); //TODO
-        else
-#endif
-#ifdef USE_GD_JPEG
-        if(im->format->name && strcasecmp(im->format->driver, "gd/jpeg")==0) 
-            iptr = 
-              gdImageJpegPtr(im->img.gd, &size, 
-                             atoi(msGetOutputFormatOption(im->format, "QUALITY",
-                                                           "75" )));
-        else
-#endif
-#ifdef USE_GD_WBMP
-          if(im->format->name && strcasecmp(im->format->driver, "gd/wbmp")==0)
-            iptr = gdImageWBMPPtr(im->img.gd, &size, 1); //TODO
-        else
-#endif
+        if( MS_DRIVER_GD(im->format) )
+          iptr = (void *)msSaveImageBufferGD(im->img.gd, &size, im->format);
+        else if (im->format->name && strcasecmp(im->format->name, "imagemap")==0)
         {
-            php3_error(E_ERROR, 
-                       "Output to '%s' not available via this method.", 
-                       im->format->name);
+            iptr = im->img.imagemap;
+	    size = strlen(im->img.imagemap);
         }
         if (size == 0) {
             _phpms_report_mapserver_error(E_WARNING);
