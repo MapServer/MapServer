@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.25  2000/11/08 15:24:34  dan
+ * Add #ifdef necessary for PHP4 compilation.
+ *
  * Revision 1.24  2000/11/06 17:05:54  dan
  * Added ifdef USE_PROJ in getLatLongExtent() and removed some unused vars
  *
@@ -138,7 +141,9 @@
 #define ZEND_DEBUG 0
 #endif
 
-
+#ifndef DLEXPORT 
+#define DLEXPORT ZEND_DLEXPORT
+#endif
 
 /*=====================================================================
  *                         Prototypes
@@ -852,6 +857,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
+
 
     if (getParameters(ht, 1, &pFname) != SUCCESS)
     {
