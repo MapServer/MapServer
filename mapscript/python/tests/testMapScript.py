@@ -537,6 +537,34 @@ class ZoomScaleTestCase(unittest.TestCase):
         assert new_extent.maxx == max.maxx, new_extent.maxx
         assert new_extent.maxy == max.maxy, new_extent.maxy
 
+# Tests of getScale
+
+class SetExtentTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testSetOwnExtent(self):
+        self.mapobj1.setExtent()
+        assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
+    def testSetNewExtent(self):
+        e = self.mapobj1.extent
+        self.mapobj1.setExtent(e)
+        assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
+
+class CLonedSetExtentTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testSetOwnExtent(self):
+        self.mapobj1.setExtent()
+        assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
+    def testSetNewExtent(self):
+        e = self.mapobj1.extent
+        self.mapobj1.setExtent(e)
+        assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
+
 if __name__ == '__main__':
     unittest.main()
 
