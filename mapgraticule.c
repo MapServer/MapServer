@@ -29,8 +29,8 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
- * Revision 1.4  2003/02/17 03:12:53  novak
- * Rename structure variables with map file keywords so that they are identical
+ * Revision 1.5  2003/03/10 17:15:36  novak
+ * Fix hang when no projection specified on graticule layer
  *
  **********************************************************************/
 
@@ -143,6 +143,7 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 {
 	graticuleObj 		*pInfo			= (graticuleObj *) layer->graticulelayerinfo;
 	int					 iAxisTickCount	= 0;
+	rectObj				 rectMapCoordinates;
 
 	pInfo->dstartlatitude			= rect.miny;
 	pInfo->dstartlongitude			= rect.minx;
@@ -183,14 +184,11 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 //  If using PROJ, project rect back into map system, and generate rect corner points in native system.
 //  These lines will be used when generating labels to get correct placement at arc/rect edge intersections.
 //
-#ifdef USE_PROJ
-	if( layer->map->projection.numargs > 0 
-	  && layer->projection.numargs > 0 )
-#endif
+	rectMapCoordinates				= layer->map->extent;
+	pInfo->pboundinglines			= (lineObj *)  malloc( sizeof( lineObj )  * 4 );
+	pInfo->pboundingpoints			= (pointObj *) malloc( sizeof( pointObj ) * 8 );
+	
 	{
-		rectObj		 rectMapCoordinates	= layer->map->extent;
-		pInfo->pboundinglines			= (lineObj *)  malloc( sizeof( lineObj )  * 4 );
-		pInfo->pboundingpoints			= (pointObj *) malloc( sizeof( pointObj ) * 8 );
 //
 //  top
 //
@@ -202,7 +200,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 		pInfo->pboundinglines[0].point[1].y		= rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-		msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[0] );
+		if( layer->map->projection.numargs > 0 
+		  && layer->projection.numargs > 0 )
+			msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[0] );
 #endif
 //
 //  bottom
@@ -215,7 +215,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 		pInfo->pboundinglines[1].point[1].y		= rectMapCoordinates.miny;
 
 #ifdef USE_PROJ
-		msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[1] );
+		if( layer->map->projection.numargs > 0 
+		  && layer->projection.numargs > 0 )
+			msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[1] );
 #endif
 //
 //  left
@@ -228,7 +230,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 		pInfo->pboundinglines[2].point[1].y		= rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-		msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[2] );
+		if( layer->map->projection.numargs > 0 
+		  && layer->projection.numargs > 0 )
+			msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[2] );
 #endif
 //
 //  right
@@ -241,7 +245,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 		pInfo->pboundinglines[3].point[1].y		= rectMapCoordinates.maxy;
 
 #ifdef USE_PROJ
-		msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[3] );
+		if( layer->map->projection.numargs > 0 
+		  && layer->projection.numargs > 0 )
+			msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[3] );
 #endif
 	}
 
@@ -486,7 +492,6 @@ void msGraticuleLayerFreeItemInfo(layerObj *layer)
 		free( *((char **) layer->items) );
 		free( ((char **) layer->items)  );
 	}
-
 	return;
 }
 
