@@ -1,7 +1,8 @@
 #ifndef MAP_H
 #define MAP_H
 
-/*
+/* $Id$
+**
 ** Main includes. If a particular header was needed by several .c files then
 ** I just put it here. What the hell, it works and it's all right here. -SDL-
 */
@@ -877,6 +878,8 @@ int initClass(classObj *_class);
 void initLabel(labelObj *label);
 void resetClassStyle(classObj *_class);
 int initStyle(styleObj *style);
+void initReferenceMap(referenceMapObj *ref);
+void initScalebar(scalebarObj *scalebar);
 
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 void freeFeatureList(featureListNodeObjPtr list);
