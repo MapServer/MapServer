@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.156  2004/11/26 17:24:55  assefa
+ * Url encode Service online resource (Bug 1093).
+ *
  * Revision 1.155  2004/11/24 00:00:13  assefa
  * SLD rasters was failing when there is Spatial Filter into it (Bug 1087).
  *
@@ -1719,12 +1722,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                              "MO", "service_onlineresource", OWS_NOERR,
                              "  <OnlineResource>%s</OnlineResource>\n", 
-                             script_url);
+                             script_url_encoded);
   else
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                              "MO", "service_onlineresource", OWS_NOERR,
                              "  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", 
-                             script_url);
+                             script_url_encoded);
 
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
