@@ -550,6 +550,7 @@ typedef struct { /* structure for a map */
   int imagetype, imagequality;
 
   projectionObj projection; /* projection information for output map */
+  projectionObj io_projection; /* Display projection, usually geographic */
 
   referenceMapObj reference;
   scalebarObj scalebar;
