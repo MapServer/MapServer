@@ -285,17 +285,37 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         }
 #ifdef USE_GDAL
         else if( MS_DRIVER_GDAL(img->format) )
-            nReturnVal = msSaveImageGDAL(map, img, filename);
+        {
+           if (map != NULL)
+             nReturnVal = msSaveImageGDAL(map, img,
+                                          msBuildPath(szPath, map->mappath, 
+                                                      filename));
+           else
+             nReturnVal = msSaveImageGDAL(map, img, filename);
+        }
 #endif
 #ifdef USE_MING_FLASH
-        else if( MS_DRIVER_SWF(img->format) )
-            nReturnVal = msSaveImageSWF(img, 
-                                  msBuildPath(szPath, map->mappath, filename));
+        else if(MS_DRIVER_SWF(img->format) )
+        {
+            if (map != NULL)
+              nReturnVal = msSaveImageSWF(img, 
+                                          msBuildPath(szPath, map->mappath, 
+                                                      filename));
+            else
+              nReturnVal = msSaveImageSWF(img, filename);
+        }
+
 #endif
 #ifdef USE_PDF
         else if( MS_RENDERER_PDF(img->format) )
-            nReturnVal = msSaveImagePDF(img, 
-                                  msBuildPath(szPath, map->mappath, filename));
+        {
+            if (map != NULL)
+              nReturnVal = msSaveImagePDF(img, 
+                                          msBuildPath(szPath, map->mappath, 
+                                                      filename));
+            else
+              nReturnVal = msSaveImagePDF(img, filename);
+        }
 #endif
         else
             msSetError(MS_MISCERR, "Unknown image type", 
