@@ -63,7 +63,6 @@
         }
         image = msImageCreate(width, height, format, NULL, NULL, NULL);
         return image;
-        }
     }
 #endif // SWIGPYTHON
 
