@@ -1128,6 +1128,7 @@ MS_DLL_EXPORT gdImagePtr msGDSetImage(imageObj *image);
 
 MS_DLL_EXPORT int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
 MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);
+MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
 MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
 
 MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map); // in maplegend.c

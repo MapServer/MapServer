@@ -1083,8 +1083,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   msDrawStartShape(map, layer, image, shape);
 
   c = shape->classindex;
-  
-  csz = MS_NINT((layer->class[c].styles[0].size*layer->scalefactor)/2.0); // changed when Tomas added CARTOLINE symbols
+
+  // changed when Tomas added CARTOLINE symbols
+  if(layer->class[c].styles[0].size == -1)
+      csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c].styles[0].symbol]))) * layer->scalefactor) / 2.0);
+  else
+      csz = MS_NINT((layer->class[c].styles[0].size*layer->scalefactor)/2.0);
   cliprect.minx = map->extent.minx - csz*map->cellsize;
   cliprect.miny = map->extent.miny - csz*map->cellsize;
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;

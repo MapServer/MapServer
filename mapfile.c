@@ -1475,7 +1475,7 @@ int initStyle(styleObj *style) {
   MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
   style->symbol = 0; // there is always a default symbol
   style->symbolname = NULL;
-  style->sizescaled = style->size = 1; // in SIZEUNITS (layerObj)
+  style->sizescaled = style->size = -1; // in SIZEUNITS (layerObj)
   style->minsize = MS_MINSYMBOLSIZE;
   style->maxsize = MS_MAXSYMBOLSIZE;
   style->offsetx = style->offsety = 0; // no offset
@@ -1582,7 +1582,7 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->maxsize > -1) fprintf(stream, "        MAXSIZE %d\n", style->maxsize);
   if(style->minsize > -1) fprintf(stream, "        MINSIZE %d\n", style->minsize);
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
-  fprintf(stream, "        SIZE %d\n", style->size);
+  if(style->size > 0) fprintf(stream, "        SIZE %d\n", style->size);
   if(style->sizeitem) fprintf(stream, "        SIZEITEM %s\n", style->sizeitem);
   if(style->symbolname)
     fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);

@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Use the symbol size instead of 1 for the default style size value. This is
+  done by setting the default size to -1 and adding msSymbolGetDefaultSize() 
+  everywhere to get the default symbolsize. (Bug 751)
+
 - Coorect Bug with GML BBOX output when using a <Filter> with a 
   GetFeature request (Bug 913) 
 

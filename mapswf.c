@@ -1183,7 +1183,12 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
         return;
 
     symbol = &(symbolset->symbol[style->symbol]);
-    size = MS_NINT(style->size*scalefactor);
+    if(style->size == -1) {
+        size = msSymbolGetDefaultSize( symbol );
+        size = MS_NINT(size*scalefactor);
+    }
+    else
+        size = MS_NINT(style->size*scalefactor);
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
 
@@ -1634,7 +1639,12 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
       return;
 
     symbol = &(symbolset->symbol[style->symbol]);
-    size = MS_NINT(style->size*scalefactor);
+    if(style->size == -1) {
+        size = msSymbolGetDefaultSize( symbol );
+        size = MS_NINT(size*scalefactor);
+    }
+    else
+        size = MS_NINT(style->size*scalefactor);
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
 
@@ -1750,7 +1760,12 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
       return;
 
     symbol = &(symbolset->symbol[style->symbol]);
-    size = MS_NINT(style->size*scalefactor);
+    if(style->size == -1) {
+        size = msSymbolGetDefaultSize( symbol );
+        size = MS_NINT(size*scalefactor);
+    }
+    else
+        size = MS_NINT(style->size*scalefactor);
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
 

@@ -264,7 +264,12 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
     int size;
     PDF *pdf;
 
-    size = MS_NINT(style->size*scalefactor);
+    if(style->size == -1) {
+        size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+        size = MS_NINT(size*scalefactor);
+    }
+    else
+        size = MS_NINT(style->size*scalefactor);
     pdf = image->img.pdf->pdf;
 
     if(p->numlines <= 0)
@@ -781,7 +786,12 @@ void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image,
     int size;
     PDF *pdf;
 
-    size = MS_NINT(style->size*scalefactor);
+    if(style->size == -1) {
+        size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+        size = MS_NINT(size*scalefactor);
+    }
+    else
+        size = MS_NINT(style->size*scalefactor);
     pdf = image->img.pdf->pdf;
 
     if(p->numlines <= 0)
@@ -833,7 +843,12 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 
     /*  set up the symbol scale and type */
     symbol = &(symbolset->symbol[style->symbol]);
-    size = MS_NINT(style->size*scalefactor);
+    if(style->size == -1) {
+        size = msSymbolGetDefaultSize( symbol );
+        size = MS_NINT(size*scalefactor);
+    }
+    else
+        size = MS_NINT(style->size*scalefactor);
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
 

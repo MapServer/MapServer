@@ -348,7 +348,11 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *cl
     fg = gdAntiAliased;
   }
 
-  size = style->size;
+  if(style->size == -1)
+      // TODO: Can we use msSymbolGetDefaultSize() here? See bug 751.
+      size = 1;
+  else
+      size = style->size;
 
   // normalize the angle (180 to 0, 0 is east, 90 is north 180 is west)
   angle = fmod(style->angle, 360.0);
@@ -781,7 +785,15 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   if(fc==-1) fc = style->outlinecolor.pen;
   ox = style->offsetx; // TODO: add scaling?
   oy = style->offsety;
-  size = MS_NINT(style->size*scalefactor);
+
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+      size = MS_NINT(size*scalefactor);
+  }
+  else
+  {
+      size = MS_NINT(style->size*scalefactor);
+  }
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
@@ -931,7 +943,15 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   oc = style->outlinecolor.pen;
   ox = style->offsetx; // TODO: add scaling?
   oy = style->offsety;
-  size = MS_NINT(style->size*scalefactor);
+
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+      size = MS_NINT(size*scalefactor);
+  }
+  else
+  {
+      size = MS_NINT(style->size*scalefactor);
+  }
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
@@ -1101,7 +1121,15 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   oc = style->outlinecolor.pen;
   ox = style->offsetx; // TODO: add scaling?
   oy = style->offsety;
-  size = MS_NINT(style->size*scalefactor);
+
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+      size = MS_NINT(size*scalefactor);
+  }
+  else
+  {
+      size = MS_NINT(style->size*scalefactor);
+  }
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
@@ -1274,10 +1302,16 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
 
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+  }
+  else
+      size = style->size;
+
   // TODO: Don't get this modification, is it needed elsewhere?
-  if(style->size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)style->size;
-  if(style->size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)style->size;
-  size = MS_NINT(style->size*scalefactor);
+  if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
+  if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
+  size = MS_NINT(size*scalefactor);
 
   //size = MS_MAX(size, style->minsize);
   //size = MS_MIN(size, style->maxsize);
@@ -1425,7 +1459,12 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
-  size = MS_NINT(style->size*scalefactor);
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+      size = MS_NINT(size*scalefactor);
+  }
+  else
+      size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
   ox = MS_NINT(style->offsetx*scalefactor); // should we scale the offsets?
@@ -1952,7 +1991,11 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
   /* Style settings - continue with style on the next line from the same symbol */
   if (symbol->stylelength > 0 && (last_style_c != c || last_style_size != size || last_style_stylelength != symbol->stylelength)) {
     styleIndex = symbol->stylelength;
-    styleCoef = size/style->size;
+    if(style->size == -1) {
+        styleCoef = size/(msSymbolGetDefaultSize(symbol));
+    }
+    else
+        styleCoef = size/style->size;
     styleVis=0;
     last_styleVis=1;
   }

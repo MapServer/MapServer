@@ -503,7 +503,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   rectObj label_rect;
   int label_width;
   int position, rot, gap, in;
-  double rx, ry;
+  double rx, ry, size;
 
   symbolObj *symbol;
 
@@ -516,10 +516,15 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   label.type = MS_TRUETYPE;
   label.font = symbol->font;
   //-- rescaling symbol and gap
-  if(style->size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)style->size;
-  if(style->size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)style->size;
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( symbol );
+  }
+  else
+      size = style->size;
+  if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
+  if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
   gap = MS_ABS(symbol->gap)* (int) scalefactor;
-  label.size = style->size* (int) scalefactor;
+  label.size = (int) (size * scalefactor);
   //label.minsize = style->minsize;
   //label.maxsize = style->maxsize;
 

@@ -941,7 +941,12 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
   oc = style->outlinecolor.pen;
   ox = style->offsetx; // TODO: add scaling?
   oy = style->offsety;
-  size = MS_NINT(style->size*scalefactor);
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( symbol );
+      size = MS_NINT(size*scalefactor);
+  }
+  else
+      size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
@@ -1140,7 +1145,12 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
-  size = MS_NINT(style->size*scalefactor);
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( symbol );
+      size = MS_NINT(size*scalefactor);
+  }
+  else
+      size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
@@ -1345,7 +1355,12 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
 //  bc = style->backgroundcolor.pen;
 //  fc = style->color.pen;
 //  oc = style->outlinecolor.pen;
-  size = MS_NINT(style->size*scalefactor);
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( symbol );
+      size = MS_NINT(size*scalefactor);
+  }
+  else
+      size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
@@ -1807,9 +1822,13 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
       marker_rect.maxx = marker_rect.minx + (marker_width-1);
       marker_rect.maxy = marker_rect.miny + (marker_height-1);
 
-      for(i=0; i<cachePtr->numstyles; i++)
+      for(i=0; i<cachePtr->numstyles; i++) {
+        if(cachePtr->styles[i].size == -1)
+          cachePtr->styles[i].size = (int) msSymbolGetDefaultSize( 
+              &( map->symbolset.symbol[cachePtr->styles[i].symbol] ) );
 	cachePtr->styles[i].size = (int)
             ( cachePtr->styles[i].size * layerPtr->scalefactor);
+      }
     }
 
     if(labelPtr->position == MS_AUTO) {

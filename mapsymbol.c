@@ -51,6 +51,38 @@ int msGetCharacterSize(char *character, int size, char *font, rectObj *rect) {
 #endif
 }
 
+/*
+** msSymbolGetDefaultSize()
+**
+** Return the default size of a symbol.
+** Note: The size of a symbol is the height. Everywhere in the code, the width
+** is adjusted to the size that becomes the height.
+** See mapgd.c // size ~ height in pixels
+*/
+double msSymbolGetDefaultSize(symbolObj *s) {
+  double size;
+
+  if(s == NULL)
+      return 1;
+
+  switch(s->type) {  
+    case(MS_SYMBOL_TRUETYPE):
+      size = 1;
+      break;
+    case(MS_SYMBOL_PIXMAP):
+      size = (double)s->img->sy;
+      break;
+    default: /* vector and ellipses, scalable */
+      size = s->sizey;
+      break;
+  }
+
+  if(size <= 0)
+      return 1;
+
+  return size;
+}
+
 void initSymbol(symbolObj *s)
 {
   s->type = MS_SYMBOL_VECTOR;
@@ -529,7 +561,12 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
     return(MS_SUCCESS);
   }
 
-  size = MS_NINT(style->size*scalefactor);
+  if(style->size == -1) {
+      size = msSymbolGetDefaultSize( &( symbolset->symbol[style->symbol] ) );
+      size = MS_NINT(size*scalefactor);
+  }
+  else
+      size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
