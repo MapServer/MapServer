@@ -871,9 +871,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features)
   return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
-  if(layer->connectiontype == MS_WMS) return(msDrawWMSLayer(map, layer, img));
-
-  if(layer->type == MS_LAYER_RASTER) return(msDrawRasterLayer(map, layer, img));
   if(layer->type == MS_LAYER_QUERY) return(MS_SUCCESS);
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
@@ -891,6 +888,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
       annotate = MS_FALSE;
   }
+
+  // Redirect procesing of some layer types.
+  if(layer->connectiontype == MS_WMS) return(msDrawWMSLayer(map, layer, img));
+
+  if(layer->type == MS_LAYER_RASTER) return(msDrawRasterLayer(map, layer, img));
 
   // open this layer
   status = msLayerOpen(layer, map->shapepath);
