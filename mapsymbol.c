@@ -42,8 +42,9 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
 
   if(*icsize > MS_IMAGECACHESIZE) { // remove last element, size stays the same
     icp = ic;
-    while(icp->next) icp = icp->next;
-    freeImageCache(icp);
+    while(icp->next && icp->next->next) icp = icp->next;
+    freeImageCache(icp->next);
+    icp->next = NULL;
   } else 
     *icsize += 1;
 
