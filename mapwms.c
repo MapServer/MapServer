@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.145  2004/11/09 18:31:42  assefa
+ * Use msOWSPrintURLType for GetLegendGraphic request in the capabilities.
+ * (Bug 1011).
+ *
  * Revision 1.144  2004/11/09 16:42:47  hobu
  * conditionally include <process.h> on the windows
  * platform for getpid
@@ -1401,24 +1405,26 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                        fprintf(stdout, "        <Style>\n");
                        fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
                        fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
-                       
+                       /*
                        fprintf(stdout, "          <LegendURL width=\"%s\" height=\"%s\">\n",width, height);
                        fprintf(stdout, "             <Format>%s</Format>\n", mimetype);
                        fprintf(stdout, "             <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\" />\n", legendurl);
                        fprintf(stdout, "          </LegendURL>\n");
-                       
-                       /*
-                       msOWSPrintURLType(stdout, NULL, "O", "ttt",
-                             OWS_NOERR, NULL, "LegendURL", NULL, 
-                             " width=\"%s\"", " height=\"%s\"", 
-                             ">\n             <Format>%s</Format", 
-                             "\n             <OnlineResource "
-                             "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                             " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
-                             "          ",
-                             MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
-                             NULL, width, height, mimetype, legendurl, "          ");
                        */
+                       
+                       msOWSPrintURLType(stdout, NULL, 
+                                         "O", "ttt",
+                                         OWS_NOERR, NULL, 
+                                         "LegendURL", NULL, 
+                                         " width=\"%s\"", " height=\"%s\"", 
+                                         ">\n             <Format>%s</Format", 
+                                         "\n             <OnlineResource "
+                                         "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                                         " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                                         "          ",
+                                         MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, MS_FALSE, 
+                                         NULL, width, height, mimetype, legendurl, "          ");
+                       
 
                        fprintf(stdout, "        </Style>\n");
                        msFree(legendurl);
