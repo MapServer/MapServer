@@ -874,6 +874,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   symbolObj *symbol;
   int styleDashed[100];
   int x, y;
+  int ox, oy;
   int fc, bc;
   int brush_bc, brush_fc;
   double size, d;
@@ -891,16 +892,20 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
+  if(style->size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)style->size;
+  if(style->size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)style->size;
   size = MS_NINT(style->size*scalefactor);
-  size = MS_MAX(size, style->minsize);
-  size = MS_MIN(size, style->maxsize);
+  //size = MS_MAX(size, style->minsize);
+  //size = MS_MIN(size, style->maxsize);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
   if(fc < 0) return; // nothing to do
   if(size < 1) return; // size too small
+  ox = MS_NINT(style->offsetx*scalefactor);
+  oy = (style->offsety == -99) ? -99 : style->offsety*scalefactor;
 
   if(style->symbol == 0) { // just draw a single width line
-    imagePolyline(img, p, fc, style->offsetx, style->offsety);
+    imagePolyline(img, p, fc, ox, oy);
     return;
   }
 
@@ -935,7 +940,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       // draw in the brush image
       gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
       if(symbol->filled)
-	gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
+        gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
       
       symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style->symbol, fc, size, brush);
     }
@@ -962,8 +967,8 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
 
       // draw in the brush image 
       for(i=0;i < symbol->numpoints;i++) {
-	points[i].x = MS_NINT(d*symbol->points[i].x);
-	points[i].y = MS_NINT(d*symbol->points[i].y);
+        points[i].x = MS_NINT(d*symbol->points[i].x);
+        points[i].y = MS_NINT(d*symbol->points[i].y);
       }
       gdImageFilledPolygon(brush, points, symbol->numpoints, brush_fc);
 
@@ -981,27 +986,26 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     sc = fc; // start with foreground color
     for(i=0; i<symbol->stylelength; i++) {      
       for(j=0; j<symbol->style[i]; j++) {
-	styleDashed[k] = sc;
-	k++;
+        styleDashed[k] = sc;
+        k++;
       } 
       if(sc==fc) sc = bc; else sc = fc;
     }
     gdImageSetStyle(img, styleDashed, k);
 
     if(!brush && !symbol->img)
-      imagePolyline(img, p, gdStyled, style->offsetx, style->offsety);
+      imagePolyline(img, p, gdStyled, ox, oy);
     else 
-      imagePolyline(img, p, gdStyledBrushed, style->offsetx, style->offsety);
+      imagePolyline(img, p, gdStyledBrushed, ox, oy);
   } else {
     if(!brush && !symbol->img)
-      imagePolyline(img, p, fc, style->offsetx, style->offsety);
+      imagePolyline(img, p, fc, ox, oy);
     else
-      imagePolyline(img, p, gdBrushed, style->offsetx, style->offsety);
+      imagePolyline(img, p, gdBrushed, ox, oy);
   }
 
   return;
 }
-
 
 /* ------------------------------------------------------------------------------- */
 /*       Draw a shade symbol of the specified size and color                       */
