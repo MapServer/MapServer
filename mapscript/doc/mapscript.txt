@@ -165,7 +165,7 @@ classes themselves.
 References to sections below will be added here as the documentation grows.
 
 classObj_, colorObj_, imageObj_, labelObj_, outputFormatObj_, pointObj_,
-rectObj_, shapeObj_, styleObj_
+rectObj_, shapeObj_, styleObj_, symbolObj_, symbolSetObj_
 
 -----------------------------------------------------------------------------
  classObj
