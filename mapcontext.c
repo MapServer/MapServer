@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.34  2002/12/11 18:10:39  julien
+ * Remove possible WARNING inside other tags
+ *
  * Revision 1.33  2002/11/29 19:28:17  julien
  * Replace ' ' by ',' in stylelist and formatlist srs
  *
@@ -986,33 +989,39 @@ int msLoadMapContext(mapObj *map, char *filename)
               if(msLookupHashTable(layer->metadata, 
                                    "wms_stylelist") == NULL)
               {
-                  pszValue = strdup(layer->connection);
-                  pszValue = strstr(pszValue, "STYLELIST=");
-                  if(pszValue != NULL)
+                  if(layer->connection)
+                      pszValue = strdup(layer->connection);
+                  else
+                      pszValue = strdup( "" ); 
+                  pszValue1 = strstr(pszValue, "STYLELIST=");
+                  if(pszValue1 != NULL)
                   {                          
-                      pszValue += 10;
-                      pszValue1 = strchr(pszValue, '&');
-                      if(pszValue1 != NULL)
-                          pszValue[pszValue1-pszValue] = '\0';
+                      pszValue1 += 10;
+                      pszValue2 = strchr(pszValue, '&');
+                      if(pszValue2 != NULL)
+                          pszValue1[pszValue2-pszValue1] = '\0';
                       msInsertHashTable(layer->metadata, "wms_stylelist",
-                                        pszValue);
-                      free(pszValue);
+                                        pszValue1);
                   }
+                  free(pszValue);
               }
               if(msLookupHashTable(layer->metadata, "wms_style") == NULL)
               {
-                  pszValue = strdup(layer->connection);
-                  pszValue = strstr(pszValue, "STYLE=");
-                  if(pszValue != NULL)
+                  if(layer->connection)
+                      pszValue = strdup(layer->connection);
+                  else
+                      pszValue = strdup( "" ); 
+                  pszValue1 = strstr(pszValue, "STYLE=");
+                  if(pszValue1 != NULL)
                   {                          
-                      pszValue += 6;
-                      pszValue1 = strchr(pszValue, '&');
-                      if(pszValue1 != NULL)
-                          pszValue[pszValue1-pszValue] = '\0';
+                      pszValue1 += 6;
+                      pszValue2 = strchr(pszValue, '&');
+                      if(pszValue2 != NULL)
+                          pszValue1[pszValue2-pszValue1] = '\0';
                       msInsertHashTable(layer->metadata, "wms_style",
-                                        pszValue);
-                      free(pszValue);
+                                        pszValue1);
                   }
+                  free(pszValue);
               }
           }
       }
@@ -1095,6 +1104,9 @@ int msSaveMapContext(mapObj *map, char *filename)
   fprintf( stream, 
           "%s<!-- Bounding box corners and spatial reference system -->\n", 
            tabspace );
+  if(!value || (strcasecmp(value, "(null)") == 0))
+              fprintf(stream, "<!-- WARNING: Mandatory data 'projection' was missing in this context. -->\n");
+
   fprintf( stream, "%s<BoundingBox SRS=\"%s\" minx=\"%f\" miny=\"%f\" maxx=\"%f\" maxy=\"%f\"/>\n", 
            tabspace, value, map->extent.minx, map->extent.miny, 
            map->extent.maxx, map->extent.maxy );
@@ -1151,10 +1163,20 @@ int msSaveMapContext(mapObj *map, char *filename)
                              "wms_server_version", OWS_WARN,
                              "      <Server service=\"WMS\" version=\"%s\" ",
                              "1.1.0");
-          msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_title",
+          if(map->layers[i].name)
+              msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_title",
                             OWS_NOERR, "title=\"%s\">\n", map->layers[i].name);
+          else
+          {
+              msOWSPrintMetadata(stream, map->layers[i].metadata, "wms_title", 
+                                 OWS_NOERR, "title=\"%s\">\n", "");
+          }
+
           // Get base url of the online resource to be the default value
-          pszValue = strdup( map->layers[i].connection );
+          if(map->layers[i].connection)
+              pszValue = strdup( map->layers[i].connection );
+          else
+              pszValue = strdup( "" );
           pszChar = strchr(pszValue, '?');
           if( pszChar )
               pszValue[pszChar - pszValue] = '\0';
@@ -1162,7 +1184,7 @@ int msSaveMapContext(mapObj *map, char *filename)
                                       "wms_onlineresource", OWS_WARN, 
          "        <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n",
                                       pszValue) == OWS_WARN)
-              fprintf(stream, "<!-- wms_onlineresource not set, using base URL , but probably not what you want -->");
+              fprintf(stream, "<!-- wms_onlineresource not set, using base URL , but probably not what you want -->\n");
           fprintf(stream, "      </Server>\n");
           if(pszValue)
               free(pszValue);
@@ -1183,12 +1205,16 @@ int msSaveMapContext(mapObj *map, char *filename)
           // Layer SRS
           pszValue = (char*)msGetEPSGProj(&(map->layers[i].projection), 
                                           map->layers[i].metadata, MS_FALSE);
-          fprintf(stream, "      <SRS>%s</SRS>\n", pszValue);
+          if(pszValue && (strcasecmp(pszValue, "(null)") != 0))
+              fprintf(stream, "      <SRS>%s</SRS>\n", pszValue);
 
           // Format
           if(msLookupHashTable(map->layers[i].metadata,"wms_formatlist")==NULL)
           {
-              pszURL = strdup( map->layers[i].connection );
+              if(map->layers[i].connection)
+                  pszURL = strdup( map->layers[i].connection );
+              else
+                  pszURL = strdup( "" );
               pszValue = pszURL;
               pszValue = strstr( pszValue, "FORMAT=" );
               if( pszValue )
@@ -1241,7 +1267,10 @@ int msSaveMapContext(mapObj *map, char *filename)
           // Style
           if(msLookupHashTable(map->layers[i].metadata,"wms_stylelist") ==NULL)
           {
-              pszURL = strdup( map->layers[i].connection );
+              if(map->layers[i].connection)
+                  pszURL = strdup( map->layers[i].connection );
+              else
+                  pszURL = strdup( "" );
               pszValue = pszURL;
               pszValue = strstr( pszValue, "STYLES=" );
               if( pszValue )
@@ -1251,7 +1280,10 @@ int msSaveMapContext(mapObj *map, char *filename)
                   if( pszChar )
                       pszValue[pszChar - pszValue] = '\0';
 
-                  pszSLD2 = strdup(map->layers[i].connection);
+                  if(map->layers[i].connection)
+                      pszSLD2 = strdup(map->layers[i].connection);
+                  else
+                      pszSLD2 = strdup( "" );
                   if(pszSLD2)
                       pszSLD = strstr(pszSLD2, "SLD=");
                   else
@@ -1268,14 +1300,14 @@ int msSaveMapContext(mapObj *map, char *filename)
                   {
                       fprintf( stream, "      <StyleList>\n");
                       fprintf( stream, "        <Style current=\"1\">\n");
-                      if( pszValue )
+                      if( pszValue && (strcasecmp(pszValue, "") != 0))
                       {
                           fprintf(stream, "          <Name>%s</Name>\n", 
                                   pszValue);
                           fprintf(stream,"          <Title>%s</Title>\n",
                                   pszValue);
                       }
-                      if( pszSLD )
+                      if( pszSLD && (strcasecmp(pszSLD, "") != 0))
                       {
                           pszEncodedVal = msEncodeHTMLEntities(pszSLD);
                           fprintf( stream, "          <SLD>\n" );
