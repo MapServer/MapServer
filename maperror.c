@@ -366,15 +366,13 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
           nLength = nEnd-nStart;
 
           strncpy(papszLines[i], errormsg+nStart, nLength);
-          papszLines[i][nLength+1] = '\0';
+          papszLines[i][nLength] = '\0';
         }
       }
     } else {
       nLines = 1;
       papszLines = (char **)malloc(nLines*sizeof(char *));
-      papszLines[0] = (char *)malloc((strlen(errormsg)+1)*sizeof(char));
-      papszLines[0] = strcpy(papszLines[0], errormsg);
-      papszLines[0][strlen(papszLines[0])+1]='\0';
+      papszLines[0] = strdup(errormsg);
     }   
     for (i=0; i<nLines; i++) {
       nYPos = (nSpaceBewteenLines) * ((i*2) +1); 

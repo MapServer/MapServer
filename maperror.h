@@ -67,7 +67,7 @@ typedef struct error_obj {
 ** Function prototypes
 */
 MS_DLL_EXPORT errorObj *msGetErrorObj(void);
-MS_DLL_EXPORT void msResetErrorList();
+MS_DLL_EXPORT void msResetErrorList(void);
 MS_DLL_EXPORT char *msGetVersion(void);
 MS_DLL_EXPORT char *msGetErrorString(char *delimiter);
 

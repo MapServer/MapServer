@@ -33,10 +33,11 @@
  Python Appendix
 *****************************************************************************
 
-:Author: Sean Gillies
-:Contact: sgillies@frii.com
+:Release: 4.2.2
 :Revision: $Revision$
 :Date: $Date$
+:Author: Sean Gillies
+:Contact: sgillies@frii.com
 
 ..  The next heading encountered becomes our H2
 ..
@@ -130,4 +131,3 @@ saveToString() : string
     ::
 
         s = StringIO()
-        imgobj.save(s)

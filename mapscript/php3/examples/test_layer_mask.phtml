@@ -20,7 +20,7 @@
 //
 if (PHP_OS == "WINNT" || PHP_OS == "WIN32")
 {
-  dl("php3_mapscript.dll");
+  dl("php_mapscript.dll");
 }
 else
 {
@@ -41,6 +41,8 @@ $map = ms_newMapObj("gmap75.map");
 // writable by the httpd user.
 //
 
+// This works only with GIF or PNG
+$map->SelectOutputFormat("PNG");
 
 ////////
 // Draw the base layers into an imageObj
@@ -50,7 +52,7 @@ $layer->set("status", 1);
 $layer->draw($img1);
 
 //$img = $map->draw();
-$url = $img1->saveWebImage(MS_GIF, 0, 0, 0);
+$url = $img1->saveWebImage();
 echo "<P>Draw the base layers into an image...<p>\n";
 printf("<IMG SRC=%s WIDTH=%d HEIGHT=%d>\n", $url, $map->width, $map->height);
 
@@ -60,23 +62,38 @@ printf("<IMG SRC=%s WIDTH=%d HEIGHT=%d>\n", $url, $map->width, $map->height);
 // through the area of the park polygons and the rest should be light grey.
 
 // Start by creating a new image ... 
-// (we need to allocate the mask's transparent color first)
-$maskColor = $map->addColor(222, 222, 222);
 $img2 = $map->prepareimage();
 
-// Now fetch the park layer and change its only class to use the transparent 
-// mask color so the parks polygons will create transparent holes in the mask
+// ... and we'll use a rectObj to draw the opaque mask background
+$rect = ms_newRectObj();
+$rect->setExtent(0, 0, $map->width, $map->height);
+
+// We need to create a temporary layer and class to use in drawing the 
+// filled rectangle that will be the opaque part of the mask.
+$tmplayer = ms_newLayerObj($map);
+$tmplayer->set("type", MS_LAYER_POLYGON);
+$tmplayer->set("status", 1);
+$tmplayer->set("transform", MS_FALSE);
+$tmpclass = ms_newClassObj($tmplayer);
+$tmpstyle = ms_newStyleObj($tmpclass);
+$tmpstyle->color->setRGB(222,222,222);
+$rect->draw($map, $tmplayer, $img2, 0, "");  // Draw rect with class 0
+
+// Now fetch the park layer and change its only class to use color index 0
+// which is the transparent background color... so the parks polygons will
+// create transparent holes in the mask
 
 $layer = $map->getLayerByName("park");
 $layer->set("status", 1);
 
 $class = $layer->getClass(0);
-$class->set("color", $maskColor);
-$class->set("outlinecolor", -1);  // No outline
+$style = $class->getStyle(0);
+$style->color->setRGB(12,12,12);
+$style->outlinecolor->setRGB(12,12,12);
 
 $layer->draw($img2);
 
-$url = $img2->saveWebImage(MS_GIF, 0, 0, 0);
+$url = $img2->saveWebImage();
 echo "<P>Draw the mask into another image...<p>\n";
 printf("<IMG SRC=%s WIDTH=%d HEIGHT=%d>\n", $url, $map->width, $map->height);
 
@@ -84,8 +101,8 @@ printf("<IMG SRC=%s WIDTH=%d HEIGHT=%d>\n", $url, $map->width, $map->height);
 // Last step... combine the two images using pasteImage()
 //
 echo "<P>And combine the two with pasteImage()... you see the base layer through the holes in the mask...<p>\n";
-$img1->pasteImage($img2, $maskColor);
-$url = $img1->saveWebImage(MS_GIF, 0, 0, 0);
+$img1->pasteImage($img2, 0x0c0c0c);
+$url = $img1->saveWebImage();
 printf("<IMG SRC=%s WIDTH=%d HEIGHT=%d>\n", $url, $map->width, $map->height);
 
  

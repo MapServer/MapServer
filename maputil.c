@@ -707,9 +707,13 @@ styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
     }
     else {
         style = (styleObj *)malloc(sizeof(styleObj));
+        if (!style) {
+            msSetError(MS_MEMERR, "Failed to allocate styleObj to return as removed style", "msRemoveStyle");
+            return NULL;
+        }
         msCopyStyle(style, &(class->styles[nStyleIndex]));
-        for (i=nStyleIndex+1; i<class->numstyles; i++) {
-            class->styles[i-1] = class->styles[i];
+        for (i=nStyleIndex; i<class->numstyles-1; i++) {
+             msCopyStyle(&class->styles[i], &class->styles[i+1]);
         }
         class->numstyles--;
         return style;
