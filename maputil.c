@@ -1,6 +1,8 @@
 #include "map.h"
 #include "mapparser.h"
 
+#include <time.h>
+
 #ifdef _WIN32
 #include <fcntl.h>
 #include <io.h>
@@ -1581,3 +1583,34 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
    
     return papszGroups;
 }
+
+/**********************************************************************
+ *                          msTmpFile()
+ *
+ * Generate a Unique temporary filename using PID + timestamp + extension
+ * char* returned must be freed by caller
+ **********************************************************************/
+char *msTmpFile(const char *path, const char *ext)
+{
+    char *tmpFname;
+    static char tmpId[128]; /* big enough for time + pid */
+    static int tmpCount = -1;
+
+    if (tmpCount == -1)
+    {
+        /* We'll use tmpId and tmpCount to generate unique filenames */
+        sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
+        tmpCount = 0;
+    }
+
+    if (path == NULL) path="";
+    if (ext == NULL)  ext = "";
+
+    tmpFname = (char*)malloc(strlen(path) + strlen(tmpId) + 4  + strlen(ext) + 1);
+   
+    sprintf(tmpFname, "%s%s%d.%s%c", path, tmpId, tmpCount++, ext, '\0');
+
+    return tmpFname;
+}
+
+

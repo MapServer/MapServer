@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.21  2002/02/01 00:08:36  sacha
+ * Move msTmpFile function from mapwmslayer.c to maputil.c
+ *
  * Revision 1.20  2002/01/24 18:31:14  dan
  * Use REQUEST=map instead of REQUEST=Map for WMS 1.0.0 requests.
  *
@@ -239,33 +242,6 @@ int msWMSGetImage(const char *geturl, const char *outputfile, int nTimeout)
 
 
 /**********************************************************************
- *                          msTmpFile()
- *
- * Generate a Unique temporary filename using PID + timestamp + extension
- **********************************************************************/
-const char *msTmpFile(const char *path, const char *ext)
-{
-    static char tmpFname[256];
-    static char tmpId[128]; /* big enough for time + pid */
-    static int tmpCount = -1;
-
-    if (tmpCount == -1)
-    {
-        /* We'll use tmpId and tmpCount to generate unique filenames */
-        sprintf(tmpId, "%ld%d",(long)time(NULL),(int)getpid());
-        tmpCount = 0;
-    }
-
-    if (path == NULL) path="";
-    if (ext == NULL)  ext = "";
-
-    sprintf(tmpFname, "%s%s%d%s", path, tmpId, tmpCount++, ext);
-
-    return tmpFname;
-}
-
-
-/**********************************************************************
  *                          msBuildWMSLayerURL()
  *
  * Build a GetMap or GetFeatureInfo URL.  
@@ -373,7 +349,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     // We'll store the remote server's response to a tmp file.
     if (lp->data) free(lp->data);
-    lp->data = strdup( msTmpFile(map->web.imagepath, "_img.tmp") );
+    lp->data =  msTmpFile(map->web.imagepath, "img.tmp");
 
 /* ------------------------------------------------------------------
  * Set layer SRS and reproject map extents to the layer's SRS
