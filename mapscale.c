@@ -9,7 +9,7 @@
 ** Match this with with unit enumerations is map.h
 */
 static char *unitText[5]={"in", "ft", "mi", "m", "km"};
-static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
+double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};  // also used in mapwms.c
 
 static double roundInterval(double d)
 {
