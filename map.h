@@ -511,10 +511,6 @@ typedef struct {
   colorObj color;
   colorObj outlinecolor;
   char *image;
-#ifndef SWIG
-  char *imagetype;
-  outputFormatObj *outputformat;
-#endif
   int status;
   int marker;
   char *markername;
