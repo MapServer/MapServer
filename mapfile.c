@@ -1338,7 +1338,7 @@ int loadExpressionString(expressionObj *exp, char *value)
     exp->string = strdup(value);
   } else
     exp->string = strdup(msyytext);
-  
+    
   // if(exp->type == MS_REGEX) {
   //   if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
   //     sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);

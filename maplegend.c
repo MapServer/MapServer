@@ -62,7 +62,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   box.line[0].point[4].x = box.line[0].point[0].x;
   box.line[0].point[4].y = box.line[0].point[0].y;
   box.line[0].numpoints = 5;
-
+  
   /* 
   ** now draw the appropriate color/symbol/size combination 
   */      

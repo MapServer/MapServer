@@ -542,8 +542,13 @@ void msImageScanline(gdImagePtr im, int x1, int x2, int y, int c)
 {
   int x;
 
-  for(x=x1; x<=x2; x++)
-    gdImageSetPixel(im, x, y, c);
+  // TO DO: This fix (adding if/then) was to address circumstances in the polygon fill code
+  // where x2 < x1. There may be something wrong in that code, but at any rate this is safer.
+
+  if(x1 < x2)
+    for(x=x1; x<=x2; x++) gdImageSetPixel(im, x, y, c);
+  else
+    for(x=x2; x<=x1; x++) gdImageSetPixel(im, x, y, c);
 }
 
 /*
