@@ -461,6 +461,11 @@ typedef struct {
   int transparent;
   int interlace;
   int postlabelcache;
+#ifndef __cplusplus
+   char *template;
+#else
+   char *_template;
+#endif
 } legendObj;
 
 // LAYER OBJECT - basic unit of a map
@@ -696,6 +701,7 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape);
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 double msAdjustExtent(rectObj *rect, int width, int height);
 int msAdjustImage(rectObj rect, int *width, int *height);
+char *msTmpFile(const char *path, const char *ext);
 gdImagePtr msDrawMap(mapObj *map);
 #if defined USE_PDF
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c
@@ -706,6 +712,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
 int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 
+   
 gdImagePtr msDrawScalebar(mapObj *map); // in mapscale.c
 int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);

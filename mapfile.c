@@ -174,7 +174,7 @@ char *getString() {
   if(msyylex() == MS_STRING)
     return(strdup(msyytext));
 
-  msSetError(MS_SYMERR, "(%s):(%d)", "getString()", msyytext, msyylineno);   
+  msSetError(MS_SYMERR, "(%s):(%d)", "getString()", msyytext, msyylineno);
   return(NULL);
 }
 
@@ -2264,10 +2264,13 @@ void initLegend(legendObj *legend)
   legend->interlace = MS_ON;
   legend->position = MS_LL;
   legend->postlabelcache = MS_FALSE; // draw with labels
+  legend->template = NULL;
 }
 
 void freeLegend(legendObj *legend)
 {
+  if (legend->template)
+     free(legend->template);
   freeLabel(&(legend->label));
 }
 
@@ -2322,6 +2325,9 @@ int loadLegend(legendObj *legend, mapObj *map)
     case(TRANSPARENT):
       if((legend->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;
+    case(TEMPLATE):
+      if((legend->template = getString()) == NULL) return(-1);
+      break;
     default:
       msSetError(MS_IDENTERR, "(%s):(%d)", "loadLegend()", 
                  msyytext, msyylineno);      
@@ -2374,6 +2380,10 @@ static void loadLegendString(mapObj *map, legendObj *legend, char *value)
     msyystate = 2; msyystring = value;
     if((legend->status = getSymbol(3, MS_ON,MS_OFF,MS_EMBED)) == -1) return;      
     break;   
+  case(TEMPLATE):
+    msFree(legend->template);
+    legend->template = strdup(value);
+    break;
   default:
     break;
   }
@@ -2394,6 +2404,7 @@ static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
   if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
   fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[legend->transparent]);
+  if (legend->template) fprintf(stream, "    TEMPLATE %s\n", legend->template);
   fprintf(stream, "  END\n\n");
 }
 

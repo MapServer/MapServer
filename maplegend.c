@@ -52,6 +52,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
       ** now draw the appropriate color/symbol/size combination 
       */      
       switch(lp->type) {
+      case MS_LAYER_ANNOTATION:
       case MS_LAYER_POINT:
          msDrawMarkerSymbol(&map->symbolset,
                             img,
@@ -126,7 +127,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
          else {
            if(class->overlaycolor >= 0) { // use the box
               if(class->color < 0)
-                msDrawLineSymbol(&map->symbolset, 
+                msDrawLineSymbol(&map->symbolset,
                                  img, 
                                  &box, 
                                  class->symbol, 
@@ -143,14 +144,6 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
                                   class->outlinecolor, 
                                   class->sizescaled);
 
-              msDrawShadeSymbol(&map->symbolset, 
-                                img, 
-                                &box, 
-                                class->overlaysymbol, 
-                                class->overlaycolor, 
-                                class->overlaybackgroundcolor, 
-                                class->overlayoutlinecolor, 
-                                class->overlaysizescaled);
            } else { // use the zigzag
               msDrawLineSymbol(&map->symbolset, 
                                img, 
@@ -160,7 +153,7 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
                                class->backgroundcolor, 
                                class->sizescaled);
               
-              if(class->overlaysymbol >= 0) 
+              if(class->overlaysymbol >= 0)
                 msDrawLineSymbol(&map->symbolset, 
                                  img, 
                                  &zigzag, 
@@ -176,11 +169,29 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int 
          break;
       } /* end symbol drawing */
 
+   if (class->overlayoutlinecolor > 0)
+   {
+        msDrawShadeSymbol(&map->symbolset, 
+                          img, 
+                          &box, 
+                          class->overlaysymbol, 
+                          class->overlaycolor, 
+                          class->overlaybackgroundcolor, 
+                          class->overlayoutlinecolor, 
+                          class->overlaysizescaled);
+   }
+   else
+     if (class->outlinecolor > 0)
+     {
+        msImagePolyline(img, &box, class->outlinecolor);
+     }
+     else
+     {
+        // Draw the outline if a color is specified (0 is background, so who cares about drawing it)
+        if(map->legend.outlinecolor > 0)
+          msImagePolyline(img, &box, map->legend.outlinecolor);
+     }
    
-   // Draw the outline if a color is specified (0 is background, so who cares about drawing it)
-   if(map->legend.outlinecolor > 0)
-     msImagePolyline(img, &box, map->legend.outlinecolor);
-
    free(box.line[0].point);
    free(box.line);
    free(zigzag.line[0].point);
