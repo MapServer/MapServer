@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.116  2004/05/28 18:34:34  frank
+ * removed drawERD() ... now handled by GDAL
+ *
  * Revision 1.115  2004/05/28 05:12:34  sdlime
  * Fixed (I believe) bug 660, a memory leak in msDrawRasterLow()...
  *
@@ -1051,175 +1054,6 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 }
 
 /************************************************************************/
-/*                              drawERD()                               */
-/************************************************************************/
-typedef struct erdhead {
-  char hdword[6];
-  short pack,bands;
-  char res1[6];
-  long cols,rows,col1,row1;
-  char res2[56];
-  short maptyp,nclass;
-  char res3[14];
-  short utyp;
-  float area,xl,yt,xcell,ycell;
-} erdhead;
-
-static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
-{
-#ifdef USE_EPPL
-  int i,j,rowsz,reverse;
-  char trec[128],tname[128];
-  unsigned char gc[256],rc[256],bc[256],*pb;
-  int startj,endj,rr,yi,vv;
-  double startx,starty,skipx,skipy,x,y;
-  int cmap[MAXCOLORS];
-  FILE *erd,*trl;
-  erdhead hd;
-  char szPath[MS_MAXPATHLEN];
-  colorObj pixel;
-
-  {union {long i;char c[4];} u; u.i=1; reverse=(u.c[0]==0);}
-
-  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
-
-  erd=fopen(msBuildPath3(szPath, map->mappath, map->shapepath, filename),"rb");
-  if (erd==NULL) {  
-    msSetError(MS_IMGERR, "Error loading ERDAS image.", "drawERD()");
-    return(-1);
-  }
-  fread(&hd,128,1,erd);
-  /* need byte swapper here */
-  if (reverse) {
-    swap2(&hd.pack,2);
-    swap4(&hd.cols,4);
-    swap2(&hd.maptyp,2);
-    swap2(&hd.utyp,1);
-    swap4((long *)&hd.area,5);
-  }  
-  if (!strncmp(hd.hdword,"HEADER",6)) {   /*old format,convert to new*/
-    memcpy(hd.hdword,"HEAD74",6);
-    hd.cols=(long)MS_NINT((float)hd.cols);
-    hd.rows=(long)MS_NINT((float)hd.rows);
-    hd.col1=(long)MS_NINT((float)hd.col1);
-    hd.row1=(long)MS_NINT((float)hd.row1);
-  }
-  if (strncmp(hd.hdword,"HEAD74",6) || hd.pack > 1 || hd.bands!=1) {
-    msSetError(MS_IMGERR,"Bad header or unsupported header options.","drawERD()");
-    fclose(erd);
-    return -1;
-  }
-  strcpy(tname,filename);
-  strcpy(strrchr(tname,'.'),".trl");
-  trl=fopen(msBuildPath3(szPath, map->mappath, map->shapepath, tname),"rb");
-  if (trl!=NULL) {  /**** check for trailer file*/
-    fread(trec,128,1,trl);
-    if (!strncmp(trec,"TRAILER",7)) memcpy(trec,"TRAIL74",7);
-    if (!strncmp(trec,"TRAIL74",7)) {
-      fread(gc,256,1,trl);
-      fread(rc,256,1,trl);
-      fread(bc,256,1,trl);
-
-      if(layer->numclasses > 0) {	
-	int c;
-
-	for(i=0; i<hd.nclass; i++) {
-
-  	  pixel.red = rc[i];
-	  pixel.green = gc[i];
-	  pixel.blue = bc[i];
-          pixel.pen = i;
-
-	  if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {	    
-	    c = msGetClass(layer, &pixel);
-	    
-	    if(c == -1) /* doesn't belong to any class, so handle like offsite */
-	      cmap[i] = -1;
-	    else {
-              RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
-	      if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	        cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
-	      else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
-	        cmap[i] = -1; // make transparent
-	      else
-                cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color
-	    }
-	  }
-	}
-      } else {
-	for(i=0; i<hd.nclass; i++) {
-	  pixel.red = rc[i];
-  	  pixel.green = gc[i];
-	  pixel.blue = bc[i];
-	  pixel.pen = i;
-
-	  if(!MS_COMPARE_COLORS(pixel, layer->offsite))	   
-  	    cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color
-	}
-      }
-    }
-    fclose(trl);
-  } else {
-    for (i=0; i<hd.nclass; i++) {  /* no trailer file, make gray, classes are not honored */
-
-      pixel.red = pixel.green = pixel.blue = pixel.pen = i;
-
-      if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {
-        j=((i*16)/hd.nclass)*17; 
-	cmap[i] = msAddColorGD(map,img, 0, j, j, j); // use raster color, streched over the 256 color range
-      }
-    } 
-  }
-
-  skipx=map->cellsize/hd.xcell;
-  skipy=map->cellsize/hd.ycell;
-  startx=(map->extent.minx-hd.xl)/hd.xcell;
-  starty=(hd.yt-map->extent.maxy)/hd.ycell;
-  pb=(unsigned char *)malloc(hd.cols);
-  x=startx;
-  for (j=0; j<img->sx && MS_NINT(x)<0; j++) x+=skipx;
-  startx=x; startj=j;
-  for (j=startj; j<img->sx && MS_NINT(x)<hd.cols; j++) x+=skipx;
-  endj=j;
-  rr=-1;
-  y=starty;  
-  if (hd.pack==0) rowsz=hd.cols;
-   else rowsz=(hd.cols+1)/2;
-  for (i=0; i<img->sy; i++) {
-    yi=MS_NINT(y);
-    if (yi>=0 && yi<hd.rows) {
-      if (yi!=rr) {
-        fseek(erd,128+rr*rowsz,0);
-        fread(pb,rowsz,1,erd);
-        rr=yi;
-      }  
-      x=startx;
-      for (j=startj; j<endj; j++) {
-        if (hd.pack==0) vv=pb[(int)MS_NINT(x)];
-        else {
-          vv=(int)MS_NINT(x);
-          if (vv & 1) vv=(pb[vv >> 1]) >> 4;
-          else vv=(pb[vv >> 1]) & 15;
-        }  
-        
-	if(cmap[vv] != -1)
-	  img->pixels[i][j] = cmap[vv];
-
-       x+=skipx;
-      }
-    }
-    y+=skipy;
-  }
-  free(pb);
-  fclose(erd);
-  return 0;
-#else
-   msSetError(MS_IMGERR, "ERDAS support is not available.", "drawERD()");
-   return(-1);
-#endif
-}
-
-/************************************************************************/
 /*                              drawEPP()                               */
 /************************************************************************/
   
@@ -1548,18 +1382,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       continue;
     }
 
-    if (memcmp(dd,"HEAD",4)==0) {
-      if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
-        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library, but it does not support Erdas 7.x files.", "msDrawRasterLayer( ERD )");
-        return(MS_FAILURE);
-      }
-      status = drawERD(map, layer, img, filename);
-      if(status == -1) {
-  	    return(MS_FAILURE);
-      }
-      continue;
-    }
-    
 #ifdef USE_GDAL
     {
       GDALDatasetH  hDS;
