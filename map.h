@@ -824,21 +824,17 @@ typedef struct map_obj{ /* structure for a map */
   paletteObj palette; /* holds a map palette */
   colorObj imagecolor; /* holds the initial image color value */
 
+#ifdef SWIG
+%immutable;
+#endif
   int numoutputformats;
   outputFormatObj **outputformatlist;
   outputFormatObj *outputformat;
 
-#ifdef SWIG
-%immutable;
-#endif
   char *imagetype; /* name of current outputformat */
 #ifdef SWIG
   %mutable;
 #endif // SWIG
-
-#ifdef SWIG
-%immutable;
-#endif
 
 #ifndef SWIG
   projectionObj projection; /* projection information for output map */
