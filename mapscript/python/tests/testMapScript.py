@@ -571,7 +571,7 @@ class SetExtentTestCase(unittest.TestCase):
                           1.0, -2.0, -3.0, 4.0)
 
 
-class CLonedSetExtentTestCase(unittest.TestCase):
+class ClonedSetExtentTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile).clone()
     def tearDown(self):
@@ -600,9 +600,9 @@ class RectObjTestCase(unittest.TestCase):
         assert r.miny == -2.0
         assert r.maxx == 3.0
         assert r.maxy == 4.0
-    def testRectObjConstructorBad1(self):
+    def testRectObjConstructorBadly1(self):
         self.assertRaises(MapServerError, rectObj, 1.0, -2.0, -3.0, 4.0)
-    def testRectObjConstructorBad1(self):
+    def testRectObjConstructorBadly2(self):
         self.assertRaises(MapServerError, rectObj, -1.0, 2.0, 3.0, -2.0)
         
 # pointObj constructor tests
