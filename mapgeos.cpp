@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/23 04:52:33  sdlime
+ * Added GEOS=>shape conversion for GEOS_MULTIPOINT geometries.
+ *
  * Revision 1.5  2005/02/23 04:40:17  sdlime
  * Added wrapper for creating convex hulls to GEOS support. Added to MapScript as well.
  *
@@ -180,7 +183,44 @@ static shapeObj *msGEOSGeometry2Shape_point(Geometry *g)
 
     return shape;
   } catch (GEOSException *ge) {
-    msSetError(MS_GEOSERR, "%s", "msGEOSGeometry2Shape()", (char *) ge->toString().c_str());
+    msSetError(MS_GEOSERR, "%s", "msGEOSGeometry2Shape_point()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+}
+
+static shapeObj *msGEOSGeometry2Shape_multipoint(Geometry *g)
+{
+  try {
+    int i;
+    int numPoints = g->getNumPoints();
+    CoordinateSequence *coords = g->getCoordinates();
+    Coordinate c;
+    shapeObj *shape=NULL;
+
+    shape = (shapeObj *) malloc(sizeof(shapeObj));
+    msInitShape(shape);
+
+    shape->type = MS_SHAPE_POINT;
+    shape->line = (lineObj *) malloc(sizeof(lineObj));
+    shape->numlines = 1;
+    shape->line[0].point = (pointObj *) malloc(sizeof(pointObj)*numPoints);
+    shape->line[0].numpoints = numPoints;
+
+    for(i=0; i<numPoints; i++) {
+      c = coords->getAt(i);
+
+      shape->line[0].point[i].x = c.x;
+      shape->line[0].point[i].y = c.y;
+      /* shape->line[0].point[i].z = c.z; */
+    }
+
+    delete coords;
+    return shape;
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSGeometry2Shape_multipoint()", (char *) ge->toString().c_str());
     delete ge;
     return NULL;
   } catch (...) {
@@ -304,7 +344,7 @@ shapeObj *msGEOSGeometry2Shape(Geometry *g)
       return msGEOSGeometry2Shape_point(g);
       break;
     case GEOS_MULTIPOINT:
-      return NULL;
+      return msGEOSGeometry2Shape_multipoint(g);
       break;
     case GEOS_LINESTRING:
       return msGEOSGeometry2Shape_line(g);
