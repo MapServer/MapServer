@@ -458,7 +458,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
    const char *value;
    char **tokens;
    int n, i; 
-   char *projstring;
+   const char *projstring;
 
    if (strcasecmp(wmtver, "1.0.7") <= 0)
    {
