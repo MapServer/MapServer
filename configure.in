@@ -674,6 +674,37 @@ ALL_ENABLED="$GDAL_ENABLED $ALL_ENABLED"
 ALL_INC="$GDAL_INC $ALL_INC"
 ALL_LIB="$GDAL_LIB $ALL_LIB"
 
+dnl ---------------------------------------------------------------------------
+dnl Try to find PostgreSQL if PostGIS support requested.
+dnl ---------------------------------------------------------------------------
+
+AC_MSG_CHECKING(if PostGIS support requested)
+
+AC_ARG_WITH(postgis,[  --with-postgis[=ARG]         Include PostGIS Support (ARG=yes/path to pg_config)],,)
+
+if test "$with_postgis" = "no" -o "$with_postgis" = "" ; then
+  AC_MSG_RESULT(no)
+  PG_CONFIG=no
+elif test "$with_postgis" = "yes" ; then
+  AC_MSG_RESULT(yes)
+  AC_PATH_PROG(PG_CONFIG, pg_config, no)
+else 
+  PG_CONFIG=$with_ppostgis
+fi
+
+if test "PG_CONFIG" = "no" ; then
+  POSTGIS_ENABLED=
+  POSTGIS_INC=
+  POSTGIS_LIB=
+else
+  POSTGIS_ENABLED=-DUSE_POSTGIS
+  POSTGIS_LIB="-L`$PG_CONFIG --libdir`"
+  POSTGIS_INC="-I`$PG_CONFIG --includedir`"
+fi
+
+AC_SUBST(POSTGIS_ENABLED,$POSTGIS_ENABLED)
+AC_SUBST(POSTGIS_INC,$POSTGIS_INC)
+AC_SUBST(POSTGIS_LIB,$POSTGIS_LIB)
 
 dnl ---------------------------------------------------------------------
 dnl WMS Compatibility - Enabled by default if PROJ.4 is there.

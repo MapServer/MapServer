@@ -514,6 +514,7 @@ typedef struct {
   shapefileObj tileshpfile;
   void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
   void *sdelayer; // For SDE layers, will contain a sdeLayerObj struct
+  void *postgislayerinfo; //For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
 
   // attribute/classification handling components
   char **items;
@@ -620,7 +621,6 @@ void freeFeatureList(featureListNodeObjPtr list);
 
 int msLoadProjectionString(projectionObj *p, char *value);
 int loadExpressionString(expressionObj *exp, char *value);
-void freeExpression(expressionObj *exp);
 
 int getClassIndex(layerObj *layer, char *str);
 
@@ -780,6 +780,18 @@ int msOGRLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msOGRLayerGetExtent(layerObj *layer, rectObj *extent);
 int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                            int tile, long record);
+
+
+int msPOSTGISLayerOpen(layerObj *layer);
+void msPOSTGISLayerFreeItemInfo(layerObj *layer);
+int msPOSTGISLayerInitItemInfo(layerObj *layer);
+int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect);
+int msPOSTGISLayerClose(layerObj *layer);
+int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape);
+int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record);
+int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent);
+int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long record);
+int msPOSTGISLayerGetItems(layerObj *layer);
 
 int msSDELayerOpen(layerObj *layer); // in mapsde.c
 void msSDELayerClose(layerObj *layer);

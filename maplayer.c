@@ -24,6 +24,9 @@ static int layerInitItemInfo(layerObj *layer) {
   case(MS_OGR):
     return msOGRLayerInitItemInfo(layer);
     break;
+  case(MS_POSTGIS):
+    return msPOSTGISLayerInitItemInfo(layer);
+    break;
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
@@ -40,6 +43,7 @@ static int layerInitItemInfo(layerObj *layer) {
 
 static void layerFreeItemInfo(layerObj *layer) 
 {
+
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):
@@ -50,6 +54,9 @@ static void layerFreeItemInfo(layerObj *layer)
     break;
   case(MS_OGR):
     msOGRLayerFreeItemInfo(layer);
+    break;
+  case(MS_POSTGIS):
+    msPOSTGISLayerFreeItemInfo(layer);
     break;
   case(MS_TILED_OGR):
     break;
@@ -67,7 +74,8 @@ static void layerFreeItemInfo(layerObj *layer)
 ** Does exactly what it implies, readies a layer for processing.
 */
 int msLayerOpen(layerObj *layer, char *shapepath)
-{  
+{
+
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
     layer->connectiontype = MS_TILED_SHAPEFILE;
 
@@ -88,6 +96,9 @@ int msLayerOpen(layerObj *layer, char *shapepath)
     break;
   case(MS_OGR):
     return msOGRLayerOpen(layer);
+    break;
+  case(MS_POSTGIS):
+    return msPOSTGISLayerOpen(layer);
     break;
   case(MS_TILED_OGR):
     break;
@@ -110,6 +121,7 @@ int msLayerOpen(layerObj *layer, char *shapepath)
 */
 int msLayerWhichShapes(layerObj *layer, rectObj rect)
 {
+
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     return(msSHPWhichShapes(&(layer->shpfile), rect));
@@ -122,6 +134,9 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     break;
   case(MS_OGR):
     return msOGRLayerWhichShapes(layer, rect);
+    break;
+  case(MS_POSTGIS):
+    return msPOSTGISLayerWhichShapes(layer, rect);
     break;
   case(MS_TILED_OGR):
     break;
@@ -141,6 +156,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
 */
 int msLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
+
   int i, filter_passed;
   char **values=NULL;
 
@@ -155,7 +171,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 
       filter_passed = MS_TRUE;  // By default accept ANY shape
       if(layer->numitems > 0 && layer->iteminfo) {
-        values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);	
+        values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
         if(!values) return(MS_FAILURE);
         if ((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
             msFreeCharArray(values, layer->numitems);
@@ -180,6 +196,9 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   case(MS_OGR):
     return msOGRLayerNextShape(layer, shape);
     break;
+  case(MS_POSTGIS):
+    return msPOSTGISLayerNextShape(layer, shape);
+    break;
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
@@ -198,6 +217,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 */
 int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
+
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     msSHPReadShape(layer->shpfile.hSHP, record, shape);
@@ -217,6 +237,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   case(MS_OGR):
     return msOGRLayerGetShape(layer, shape, tile, record);
     break;
+  case(MS_POSTGIS):
+    return msPOSTGISLayerGetShape(layer, shape, record);
+    break;
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
@@ -234,6 +257,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 */
 void msLayerClose(layerObj *layer) 
 {
+
   // no need for items once the layer is closed
   layerFreeItemInfo(layer);
   if(layer->items) {
@@ -254,6 +278,9 @@ void msLayerClose(layerObj *layer)
   case(MS_OGR):
     msOGRLayerClose(layer);
     break;
+  case(MS_POSTGIS):
+    msPOSTGISLayerClose(layer);
+    break;
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
@@ -271,6 +298,7 @@ void msLayerClose(layerObj *layer)
 */
 int msLayerGetItems(layerObj *layer) 
 {
+
   // clean up any previously allocated instances
   layerFreeItemInfo(layer);
   if(layer->items) {
@@ -294,6 +322,9 @@ int msLayerGetItems(layerObj *layer)
   case(MS_OGR):
     return(msOGRLayerGetItems(layer));
     break;
+  case(MS_POSTGIS):
+    return(msPOSTGISLayerGetItems(layer));
+    break;
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
@@ -310,6 +341,7 @@ int msLayerGetItems(layerObj *layer)
 ** Returns extent of spatial coverage for a layer. Used for WMS compatability.
 */
 int msLayerGetExtent(layerObj *layer, rectObj *extent) {
+
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     *extent = layer->shpfile.bounds;
@@ -325,6 +357,9 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent) {
     break;
   case(MS_OGR):
     return(msOGRLayerGetExtent(layer, extent));
+    break;
+  case(MS_POSTGIS):
+    return(msPOSTGISLayerGetExtent(layer, extent));
     break;
   case(MS_TILED_OGR):
     break;
@@ -399,6 +434,7 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
 int msLayerWhichItems(layerObj *layer, int classify, int annotate) 
 {
   int i, nt=0, ne=0;
+
 
   // Cleanup any previous item selection
   layerFreeItemInfo(layer);
@@ -507,10 +543,6 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
 
   // populate the iteminfo array
   return(layerInitItemInfo(layer));
-
-  fprintf(stderr, "In msLayerWhichItems().\n");
-
-  return(MS_SUCCESS);
 }
 
 /*
@@ -558,6 +590,7 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
 int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                         int tile, long record)
 {
+
   switch(layer->connectiontype) {
   case(MS_OGR):
     return(msOGRLayerGetAutoStyle(map, layer, c, tile, record));
@@ -566,6 +599,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
   case(MS_TILED_SHAPEFILE):
   case(MS_INLINE):
   case(MS_TILED_OGR):
+  case(MS_POSTGIS):
   case(MS_SDE):
   default:
     msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", 
