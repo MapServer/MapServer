@@ -1158,6 +1158,9 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 
+void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
+                       int dstX, int dstY, int srcX, int srcY, int w, int h,
+                       int pct);
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b);
@@ -1321,6 +1324,7 @@ void msSetOutputFormatOption( outputFormatObj *format, const char *key,
                               const char *value );
 void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime );
 outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
+int msOutputFormatValidate( outputFormatObj *format );
 
 #ifndef gdImageTrueColor
 #  define gdImageTrueColor(x) (0)
