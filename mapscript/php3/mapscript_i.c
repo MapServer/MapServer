@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.81  2004/07/22 19:44:10  assefa
+ * Function names have cganhed to use the ms prefix.
+ *
  * Revision 1.80  2004/06/23 20:17:57  dan
  * Updated current methods for changes to the hashTableObj (bug 737)
  *
@@ -853,7 +856,7 @@ int shapeObj_intersects(shapeObj *self, shapeObj *shape) {
 pointObj *shapeObj_getpointusingmeasure(shapeObj *self, double m) 
 {       
    if (self)
-     return getPointUsingMeasure(self, m);
+     return msGetPointUsingMeasure(self, m);
    
    return NULL;
 }
@@ -861,7 +864,7 @@ pointObj *shapeObj_getpointusingmeasure(shapeObj *self, double m)
 pointObj *shapeObj_getmeasureusingpoint(shapeObj *self, pointObj *point) 
 {       
    if (self)
-     return getMeasureUsingPoint(self, point);
+     return msGetMeasureUsingPoint(self, point);
    
    return NULL;
 }
