@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2004/01/07 19:02:53  assefa
+ * Correct return value on applysld functions.
+ * Add ifdef in functions using libcurl related functions (httpxxx).
+ *
  * Revision 1.15  2004/01/05 21:17:53  assefa
  * ApplySLD and ApplySLDURL on a layer can now take a NamedLayer name as argument.
  *
@@ -119,11 +123,14 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
 {
 #ifdef USE_OGR
 
+//needed for libcurl function msHTTPGetFile in maphttp.c
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+
     char *pszSLDTmpFile = NULL;
     int status = 0;
     char *pszSLDbuf=NULL;
     FILE *fp = NULL;               
-    
+    int nStatus = MS_FAILURE;
  
     if (map && szURL)
     {
@@ -143,10 +150,15 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
         }
 
         if (pszSLDbuf)
-          msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName);
+          nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName);
     }
 
-    return MS_SUCCESS;
+    return nStatus;
+
+#else
+    msSetError(MS_MISCERR, "WMS/WFS client support is not enabled .", "msSLDApplySLDURL()");
+    return(MS_FAILURE);
+#endif
 
 #else
 /* ------------------------------------------------------------------
@@ -1773,6 +1785,9 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, 
                                styleObj *psStyle,  mapObj *map)
 {
+//needed for libcurl function msHTTPGetFile in maphttp.c
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+
     char *pszFormat = NULL;
     CPLXMLNode *psURL=NULL, *psFormat=NULL;
     char *pszURL=NULL, *pszTmpSymbolName=NULL;
@@ -1822,6 +1837,7 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
             }
         }
     }
+#endif
 }
 
 
