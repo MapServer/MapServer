@@ -628,8 +628,8 @@ static void writeGrid( graticuleObj *pGraticule, FILE *stream)
 	fprintf( stream, "      GRID\n");
 	fprintf( stream, "        MINSUBDIVIDE %d\n", (int)	pGraticule->minsubdivides		);
 	fprintf( stream, "        MAXSUBDIVIDE %d\n", (int)	pGraticule->maxsubdivides		);
-	fprintf( stream, "        MININCREMENT %f\n",		pGraticule->minincrement		);
-	fprintf( stream, "        MAXINCREMENT %f\n",		pGraticule->maxincrement		);
+	fprintf( stream, "        MININTERVAL %f\n",		pGraticule->minincrement		);
+	fprintf( stream, "        MAXINTERVAL %f\n",		pGraticule->maxincrement		);
 	fprintf( stream, "        MINARCS %g\n",			pGraticule->maxarcs				);
 	fprintf( stream, "        MAXARCS %g\n",			pGraticule->maxarcs				);
 	fprintf( stream, "        LABELFORMAT %s\n",		pGraticule->labelformat			);
