@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/08/16 20:50:50  julien
+ * Fixed a MS_INIT_COLOR call
+ *
  * Revision 1.25  2002/08/14 14:10:07  frank
  * changes for 'colorObj' offsite values
  *
@@ -893,7 +896,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      temporary image with this color otherwise applying the          */
 /*      offsite twice results in a solid color in the offsite area      */
 /* -------------------------------------------------------------------- */
-    if( MS_VALID_COLOR(&(layer->offsite))
+    if( MS_VALID_COLOR(layer->offsite)
         && MS_RENDERER_GD(srcImage->format) )
     {
         RESOLVE_PEN_GD( srcImage->img.gd, layer->offsite );
