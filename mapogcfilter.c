@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2003/09/29 14:19:06  assefa
+ * Correct srsname extraction from the Box element.
+ *
  * Revision 1.7  2003/09/29 12:52:45  assefa
  * Correct string comparison for BBox.
  *
@@ -341,11 +344,12 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
             psFilterNode->eType = FILTER_NODE_TYPE_SPATIAL;
 
-            pszSRS = (char *)CPLGetXMLValue(psXMLNode, "srsName", NULL);
             psPropertyName = CPLGetXMLNode(psXMLNode, "PropertyName");
             psBox = CPLGetXMLNode(psXMLNode, "Box");
             if (psBox)
             {
+                pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
+            
                 psCoordinates = CPLGetXMLNode(psBox, "coordinates");
                 if (psCoordinates && psCoordinates->psChild && 
                     psCoordinates->psChild->pszValue)
