@@ -21,6 +21,9 @@ Current Version (CVS)
 
 - Added layer->dump property in PHP MapScript
 
+- Copied 4.1 mappostgis.c back with changes for pg7.4 support, error
+  reporting, etc.
+
 
 Version 4.0.1 (2003-10-14)
 --------------------------
