@@ -940,7 +940,8 @@ void returnCoordinate()
 char *processLine(char *instr, int mode) 
 {
   int i, j;
-  char repstr[1024], substr[1024], *outstr; // repstr = replace string, substr = sub string
+  //char repstr[1024], substr[1024], *outstr; // repstr = replace string, substr = sub string
+  char repstr[5120], substr[5120], *outstr;
   struct hashObj *tp=NULL;
 
 #ifdef USE_PROJ
