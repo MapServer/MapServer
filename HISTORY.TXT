@@ -10,7 +10,7 @@ the top of the list.)
 For a complete change history, please see the CVS log comments.  A copy of
 the CVS logs is updated daily at the following URL:
 
-  http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
+  http://maptools.org/dl/mapserver_Changelog.txt
 
 
 Version 4.3 (CVS)
