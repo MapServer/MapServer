@@ -141,9 +141,10 @@ if (MSExc_MapservError != NULL)
         char errbuf[256];
         char errmsg[2048]; // room for up to 8 * 256 byte messages
         int errcode;
+        errorObj *ms_error;
         
         strcpy(errmsg, "");
-        errorObj *ms_error = msGetErrorObj();
+        ms_error = msGetErrorObj();
         errcode = ms_error->code;
         
         // Step through the error list, appending to the output error
