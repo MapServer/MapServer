@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.36  2001/07/03 04:55:40  dan
+ * Fixed scale problem with text size, line width, etc, reading OGR Styles.
+ *
  * Revision 1.35  2001/06/27 20:16:02  dan
  * Improved font and symbol name mapping for STYLEITEM AUTO
  *
@@ -1306,7 +1309,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
  * ------------------------------------------------------------------ */
   if (psInfo->poLastFeature)
   {
-      GBool bDefault, bIsBrush=FALSE, bIsPen=FALSE;
+      GBool bIsNull, bIsBrush=FALSE, bIsPen=FALSE;
       int r=0,g=0,b=0,t=0;
 
       OGRStyleMgr *poStyleMgr = new OGRStyleMgr(NULL);
@@ -1321,25 +1324,41 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               continue;
 
           // We want all size values returned in pixels.
-          poStylePart->SetUnit(OGRSTUPixel, map->cellsize);
+          //
+          // The scale factor that OGR expect is the ground/paper scale
+          // e.g. if 1 ground unit = 0.01 paper unit then scale=1/0.01=100
+          // cellsize if number of ground units/pixel, and OGR assumes that
+          // there is 72*39.37 pixels/ground units (since meter is assumed 
+          // for ground... but what ground units we have does not matter
+          // as long as use the same assumptions everywhere)
+          // That gives scale = cellsize*72*39.37
+
+          poStylePart->SetUnit(OGRSTUPixel, map->cellsize*72.0*39.37);
 
           if (poStylePart->GetType() == OGRSTCLabel)
           {
               OGRStyleLabel *poLabelStyle = (OGRStyleLabel*)poStylePart;
 
               loadExpressionString(&(c->text), 
-                                   (char*)poLabelStyle->TextString(bDefault));
+                                   (char*)poLabelStyle->TextString(bIsNull));
 
-              c->label.angle = poLabelStyle->Angle(bDefault);
-              c->label.size = (int)poLabelStyle->Size(bDefault);
+              c->label.angle = poLabelStyle->Angle(bIsNull);
+
+              c->label.size = (int)poLabelStyle->Size(bIsNull);
+
+              // msDebug("** Label size=%d, angle=%f **\n", c->label.size, c->label.angle);
+
+              // OGR default is anchor point = LL, so label is at UR of anchor
+              c->label.position = MS_UR;
+
               if (poLabelStyle->GetRGBFromString(poLabelStyle->
-                                                 ForeColor(bDefault),r,g,b,t))
+                                                 ForeColor(bIsNull),r,g,b,t))
               {
                   c->label.color = msAddColor(map, r,g,b);
               }
               if (poLabelStyle->GetRGBFromString(poLabelStyle->
-                                                 BackColor(bDefault),r,g,b,t) 
-                  && !bDefault)
+                                                 BackColor(bIsNull),r,g,b,t) 
+                  && !bIsNull)
               {
                   c->label.backgroundcolor = msAddColor(map, r,g,b);
               }
@@ -1348,8 +1367,8 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               // fallback on bitmap fonts.
 #ifdef USE_GD_TTF
               const char *pszName;
-              if ((pszName = poLabelStyle->FontName(bDefault)) != NULL && 
-                  !bDefault && pszName[0] != '\0' &&
+              if ((pszName = poLabelStyle->FontName(bIsNull)) != NULL && 
+                  !bIsNull && pszName[0] != '\0' &&
                   msLookupHashTable(map->fontset.fonts, (char*)pszName) != NULL)
               {
                   c->label.type = MS_TRUETYPE;
@@ -1376,7 +1395,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               bIsPen = TRUE;
 
               if (poPenStyle->GetRGBFromString(poPenStyle->
-                                               Color(bDefault),r,g,b,t))
+                                               Color(bIsNull),r,g,b,t))
               {
                   // With multipart symbology, a pen color defines the 
                   // outline color of a polygon
@@ -1387,8 +1406,8 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, c->outlinecolor);
               }
 
-              c->size = (int)poPenStyle->Width(bDefault);
-              if (c->size > 1 && !bDefault)
+              c->size = (int)poPenStyle->Width(bIsNull);
+              if (c->size > 1 && !bIsNull)
               {
                   // If user provided a "default-circle" symbol then we'll use
                   // it for producing thick lines.  Otherwise symbol will be
@@ -1403,14 +1422,14 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               bIsBrush = TRUE;
 
               if (poBrushStyle->GetRGBFromString(poBrushStyle->
-                                                 ForeColor(bDefault),r,g,b,t))
+                                                 ForeColor(bIsNull),r,g,b,t))
               {
                   c->color = msAddColor(map, r,g,b);
                   // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
               }
               if (poBrushStyle->GetRGBFromString(poBrushStyle->
-                                                 BackColor(bDefault),r,g,b,t) 
-                  && !bDefault)
+                                                 BackColor(bIsNull),r,g,b,t) 
+                  && !bIsNull)
               {
                   c->label.backgroundcolor = msAddColor(map, r,g,b);
               }
@@ -1420,12 +1439,12 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               OGRStyleSymbol *poSymbolStyle = (OGRStyleSymbol*)poStylePart;
 
               if (poSymbolStyle->GetRGBFromString(poSymbolStyle->
-                                                  Color(bDefault),r,g,b,t))
+                                                  Color(bIsNull),r,g,b,t))
               {
                   c->color = msAddColor(map, r,g,b);
               }
 
-              c->size = (int)poSymbolStyle->Size(bDefault);
+              c->size = (int)poSymbolStyle->Size(bIsNull);
 
               // Symbol name mapping:
               // First look for the native symbol name, then the ogr-...
@@ -1434,8 +1453,8 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               const char *pszName;
               char  **params;
               int   numparams;
-              if ((pszName = poSymbolStyle->Id(bDefault)) != NULL && 
-                  !bDefault && pszName[0] != '\0' &&
+              if ((pszName = poSymbolStyle->Id(bIsNull)) != NULL && 
+                  !bIsNull && pszName[0] != '\0' &&
                   (params = split(pszName, '.', &numparams))!=NULL)
               {
                   c->symbol = -1;
