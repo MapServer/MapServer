@@ -787,6 +787,11 @@ static int processCoords(mapObj *map, char **line, shapeObj *shape)
     return(MS_FAILURE);
   }
 
+  if(!shape || shape->numlines <= 0) { // I suppose we need to make sure the part has vertices (need shape checker?)
+    msSetError(MS_WEBERR, "Null or empty shape.", "processCoords()");
+    return(MS_FAILURE);
+  }
+
   tagStart = findTag(*line, "shpxy");
   while (tagStart) {  
     tagOffset = tagStart - *line;
@@ -818,10 +823,10 @@ static int processCoords(mapObj *map, char **line, shapeObj *shape)
       if(argValue) precision = atoi(argValue);
 
       argValue = msLookupHashTable(tagArgs, "transform");
-	  if(argValue) {
-	    transform = MS_TRUE;       
+      if(argValue) {
+	transform = MS_TRUE;       
         precision = 0;
-	  }
+      }
     }
 
     // build the per point format string
@@ -829,26 +834,32 @@ static int processCoords(mapObj *map, char **line, shapeObj *shape)
     pointFormat = (char *) malloc(pointFormatLength);
     snprintf(pointFormat, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
     
-	// no big deal to convert from file to image coordinates, but what are the image parameters
-	if(transform) {
+    // no big deal to convert from file to image coordinates, but what are the image parameters
+    if(transform) {
       shapeObj tempShape;
 
+      msInitShape(&tempShape);
       status = msCopyShape(shape, &tempShape);
-	  if(status != 0) return(MS_FAILURE); // copy failed
+      if(status != 0) return(MS_FAILURE); // copy failed
 
-	  switch(tempShape.type) {
-	  case(MS_SHAPE_POINT):
-	    break;
-	  case(MS_SHAPE_LINE):
-	    msClipPolylineRect(&tempShape, map->extent);
-	    break;
-	  case(MS_SHAPE_POLYGON):
-	    msClipPolygonRect(&tempShape, map->extent);
+      switch(tempShape.type) {
+      case(MS_SHAPE_POINT):
+        // at this point we only convert the first point of the first shape
+	tempShape.line[0].point.x = MS_MAP2IMAGE_X(tempShape.line[0].point.x, map->extent.minx, map->cellsize);
+        tempShape.line[0].point.y = MS_MAP2IMAGE_Y(tempShape.line[0].point.y, map->extent.maxy, map->cellsize);
+	break;
+      case(MS_SHAPE_LINE):
+	msClipPolylineRect(&tempShape, map->extent);
+	break;
+      case(MS_SHAPE_POLYGON):
+        msClipPolygonRect(&tempShape, map->extent);
         break;
       default:
-	    break;
+        // TO DO: need an error message here 
+        return(MS_FAILURE);
+	break;
       }
-	  msTransformShapeToPixel(&tempShape, map->extent, map->cellsize);
+      msTransformShapeToPixel(&tempShape, map->extent, map->cellsize);
 
       // build the coordinate string (from tempShape)
       if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
@@ -863,7 +874,7 @@ static int processCoords(mapObj *map, char **line, shapeObj *shape)
       if(strlen(sf) > 0) coords = strcatalloc(coords, sf);
 
       msFreeShape(&tempShape);
-	} else {	
+    } else {	
       // build the coordinate string (from shape)   
       if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
       for(i=0; i<shape->numlines; i++) {      
