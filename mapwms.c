@@ -748,22 +748,16 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
                     NULL );
 
     pszMimeType = msLookupHashTable(map->web.metadata, "WMS_FEATURE_INFO_MIME_TYPE");
-    if (pszMimeType && strcasecmp(pszMimeType, "NONE") == 0)
-       msWMSPrintRequestCap(wmtver, "GetFeatureInfo", script_url_encoded,
-                       "text/plain",
-                       "application/vnd.ogc.gml",
-                       NULL);
-    else
+    
     if (pszMimeType)
-       msWMSPrintRequestCap(wmtver, "GetFeatureInfo", script_url_encoded,
-                       "text/plain",
-                       pszMimeType,
-                       "application/vnd.ogc.gml",
-                       NULL);
+      msWMSPrintRequestCap(wmtver, "GetFeatureInfo", script_url_encoded,
+                           "text/plain",
+                           pszMimeType,
+                           "application/vnd.ogc.gml",
+                           NULL);
     else
        msWMSPrintRequestCap(wmtver, "GetFeatureInfo", script_url_encoded,
                        "text/plain",
-                       "text/html",
                        "application/vnd.ogc.gml",
                        NULL);       
        
@@ -1061,14 +1055,9 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   errorObj *ms_error = msGetErrorObj();
   int status;
   const char *pszMimeType=NULL;
-   
+
   pszMimeType = msLookupHashTable(map->web.metadata, "WMS_FEATURE_INFO_MIME_TYPE");
-  if (!pszMimeType)
-  {
-     pszMimeType = "text/html";
-  }
-   
-   
+     
   for(i=0; map && i<numentries; i++) {
     if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
       char **layers;
