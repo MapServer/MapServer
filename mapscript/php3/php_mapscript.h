@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.31  2003/02/14 20:17:27  assefa
+ * Add savequery and loadquery functions.
+ *
  * Revision 1.30  2003/02/11 19:01:08  assefa
  * Distnace points functions have changed names.
  *
@@ -180,6 +183,9 @@ int             mapObj_queryByPoint(mapObj* self, pointObj *point,
 int             mapObj_queryByRect(mapObj* self, rectObj rect);
 int             mapObj_queryByFeatures(mapObj* self, int slayer);
 int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
+int             mapObj_saveQuery(mapObj *self, char *filename);
+int              mapObj_loadQuery(mapObj *self, char *filename);
+
 int             mapObj_setWKTProjection(mapObj *self, char *string);
 char*           mapObj_getProjection(mapObj* self);
 int             mapObj_setProjection(mapObj* self, char *string);

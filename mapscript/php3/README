@@ -298,6 +298,14 @@ and the MapServer Map File documentation at:
         message in case nothing was found can be avoided in PHP using 
         the '@' control operator).
 
+   int savequery(filename)
+        Save the current query in a file. Returns MS_SUCESS or MS_FAILURE.
+        Can be used with loadquery
+
+   int loadquery(filename)
+        Loads a query from a file. Returns MS_SUCESS or MS_FAILURE.
+        To be used with savequery.
+
    int save(string filename)
         Save current map object state to a file. Returns -1 on error.
         Use absolute path. If a relative path is used, then it will be 

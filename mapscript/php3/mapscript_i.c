@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.58  2003/02/14 20:17:27  assefa
+ * Add savequery and loadquery functions.
+ *
  * Revision 1.57  2003/02/11 19:01:08  assefa
  * Distnace points functions have changed names.
  *
@@ -386,6 +389,13 @@ int mapObj_queryByFeatures(mapObj* self, int slayer) {
 int mapObj_queryByShape(mapObj *self, shapeObj *shape) {
     return msQueryByShape(self, -1, shape);
   }
+
+int mapObj_saveQuery(mapObj *self, char *filename) {
+  return msSaveQuery(self, filename);
+}
+int mapObj_loadQuery(mapObj *self, char *filename) {
+  return msLoadQuery(self, filename);
+}
 
 int mapObj_setWKTProjection(mapObj *self, char *string) {
     return msLoadWKTProjectionString(string, &(self->projection));

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.145  2003/02/14 20:17:26  assefa
+ * Add savequery and loadquery functions.
+ *
  * Revision 1.144  2003/02/12 14:19:48  assefa
  * layer_open does not take any argument.
  *
@@ -235,6 +238,8 @@ DLEXPORT void php3_ms_map_queryByPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_savequery(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_loadquery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
@@ -546,6 +551,8 @@ function_entry php_map_class_functions[] = {
     {"querybyrect",     php3_ms_map_queryByRect,        NULL},
     {"querybyfeatures", php3_ms_map_queryByFeatures,    NULL},
     {"querybyshape",    php3_ms_map_queryByShape,       NULL},
+    {"savequery",       php3_ms_map_savequery,       NULL},
+    {"loadquery",       php3_ms_map_loadquery,       NULL},
     {"save",            php3_ms_map_save,               NULL},
     {"getlatlongextent", php3_ms_map_getLatLongExtent,  NULL},
     {"getmetadata",     php3_ms_map_getMetaData,        NULL},
@@ -2876,6 +2883,7 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self;
     imageObj *im = NULL;
 
+
 #ifdef PHP4
     pval   **pExtent;
 #else
@@ -3615,6 +3623,7 @@ DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     rectObj *poRect=NULL;
     int      nStatus = MS_FAILURE;
 
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -3741,6 +3750,90 @@ DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(nStatus);
 }
 
+ 
+
+/**********************************************************************
+ *                    map->savequery(filename)
+ *
+ * Save the current query to a specfied file. Cal be used with loadquery
+ **********************************************************************/
+
+/* {{{ proto int map.savequery(filename) */
+DLEXPORT void php3_ms_map_savequery(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis, *pFileName;
+    mapObj      *self=NULL;
+    int         nStatus = MS_FAILURE;
+
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pFileName) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pFileName);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    
+    nStatus = mapObj_saveQuery(self, pFileName->value.str.val);
+
+    RETURN_LONG(nStatus);
+}
+
+
+/**********************************************************************
+ *                    map->loadquery(filename)
+ *
+ * Load the query from a specfied file. Used with savequery
+ **********************************************************************/
+
+/* {{{ proto int map.loadquery(filename) */
+DLEXPORT void php3_ms_map_loadquery(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis, *pFileName;
+    mapObj      *self=NULL;
+    int         nStatus = MS_FAILURE;
+
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pFileName) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pFileName);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    
+    nStatus = mapObj_loadQuery(self, pFileName->value.str.val);
+
+    RETURN_LONG(nStatus);
+}
+
+  
    
 /**********************************************************************
  *                        map->save()
