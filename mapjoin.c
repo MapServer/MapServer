@@ -14,6 +14,19 @@ int msJoinTable(layerObj *layer, joinObj *join, shapeObj *shape) {
   return MS_FAILURE;
 }
 
+int msJoinCloseTable(joinObj *join) {
+  switch(join->connectiontype) {
+  case(MS_DB_XBASE):
+    return msDBFJoinCloseTable(join);
+    break;
+  default:
+    break;
+  }
+
+  msSetError(MS_JOINERR, "Unsupported join connection type.", "msDBFJoinTable()");
+  return MS_FAILURE;
+}
+
 // XBASE join functions
 typedef struct {
   DBFHandle hDBF;

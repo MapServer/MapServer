@@ -1181,6 +1181,7 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
 
 // various JOIN functions (in mapjoin.c)
 int msJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
+int msJoinCloseTable(joinObj *join);
 int msDBFJoinOpenTable(layerObj *layer, joinObj *join);
 int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
 int msDBFJoinCloseTable(joinObj *join);

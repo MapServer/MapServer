@@ -346,7 +346,7 @@ void freeJoin(joinObj *join)
   join->numrecords = join->numitems = 0;
 
   msFree(join->connection);
-  msDBFJoinCloseTable(join);
+  msJoinCloseTable(join);
 }
 
 int loadJoin(joinObj *join)
