@@ -1021,8 +1021,18 @@ memory.") const char * {
         return msMoveClassDown(self, index);
     }
 
-    void setProcessing(const char *directive) {
-	    msLayerAddProcessing( self, directive );
+    void setProcessingKey(const char *key, const char *value) 
+    {
+	msLayerSetProcessingKey( self, key, value );
+    }
+ 
+    /* this method is deprecated ... should use addProcessing() */
+    void setProcessing(const char *directive ) {
+        msLayerAddProcessing( self, directive );
+    }
+
+    void addProcessing(const char *directive ) {
+        msLayerAddProcessing( self, directive );
     }
 
     char *getProcessing(int index) {
