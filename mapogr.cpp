@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.57  2002/11/17 17:47:51  frank
+ * use msTryBuildPath() for open statement
+ *
  * Revision 1.56  2002/09/23 13:33:26  julien
  * Swapped map_path for mappath for consistency.
  *
@@ -902,7 +905,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   msDebug("msOGRFileOpen(%s)...\n", connection);
 
   poDS = OGRSFDriverRegistrar::Open( 
-      msBuildPath(szPath, layer->map->mappath, papszTokens[0]) );
+      msTryBuildPath(szPath, layer->map->mappath, papszTokens[0]) );
   if( poDS == NULL )
   {
       msSetError(MS_OGRERR, 
