@@ -19,6 +19,7 @@ Current Version (CVS)
 - Fixed the way PROCESSING directives are written in $map->save()
   (chameleon bug 154)
 
+- Added layer->dump property in PHP MapScript
 
 
 Version 4.0.1 (2003-10-14)

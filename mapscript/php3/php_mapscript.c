@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.177.2.1  2003/12/12 13:31:41  dan
+ * Added layer->dump property
+ *
  * Revision 1.177  2003/07/30 19:01:31  dan
  * Fixed compile warnings
  *
@@ -5922,6 +5925,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "group",      player->group);
     PHPMS_ADD_PROP_STR(return_value,  "data",       player->data);
     add_property_long(return_value,   "type",       player->type);
+    add_property_long(return_value,   "dump",       player->dump);
     add_property_double(return_value, "tolerance",  player->tolerance);
     add_property_long(return_value,   "toleranceunits",player->toleranceunits);
     add_property_double(return_value, "symbolscale",player->symbolscale);
@@ -6077,6 +6081,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("group",      self->group)
     else IF_SET_STRING("data",       self->data)
     else IF_SET_LONG(  "type",       self->type)
+    else IF_SET_LONG(  "dump",       self->dump)
     else IF_SET_DOUBLE("tolerance",  self->tolerance)
     else IF_SET_LONG(  "toleranceunits",self->toleranceunits)
     else IF_SET_DOUBLE("symbolscale",self->symbolscale)

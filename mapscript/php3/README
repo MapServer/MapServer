@@ -478,6 +478,7 @@ and the MapServer Map File documentation at:
    string group
    string data
    int    type
+   int    dump
    double tolerance
    int    toleranceunits
    double symbolscale
