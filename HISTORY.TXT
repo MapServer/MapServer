@@ -114,6 +114,10 @@ Version 4.3 (CVS)
   to a mapObj using the insertLayer method.  mapObj.removeLayer now 
   returns a copy of the removed Layer rather than an integer (bug 759).
 
+- Fixed $map->processTemplate() which was always returning NULL.
+  Bug introduced in version 4.0 in all flavours of MapScript (bug 410)
+
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 
