@@ -195,7 +195,7 @@ void msResetErrorList()
   ms_error->message[0] = '\0';
 }
 
-char *msGetErrorString(int code) {
+char *msGetErrorCodeString(int code) {
   
   if(code<0 || code>MS_NUMERRORCODES-1)
     return("Invalid error code.");

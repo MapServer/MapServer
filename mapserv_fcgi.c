@@ -9,6 +9,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2003/07/15 03:51:13  sdlime
+ * Changed the name of the function msGetErrorString to msGetErrorCodeString which is more descriptive. That function was used a few places so I changed references in a few places. maperror.h has been edited to expose a few functions to SWIG. mapscript.i has been updated to mimic the PHP error handling (not sure that I like it, too clunky.
+ *
  * Revision 1.2  2003/06/18 13:52:00  frank
  * Added little header
  *
@@ -88,7 +91,7 @@ void writeError()
     FCGI_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
 
     FCGI_printf("%s: %s %s\n", ms_error->routine, 
-                msGetErrorString(ms_error->code), 
+                msGetErrorCodeString(ms_error->code), 
                 ms_error->message);
     FCGI_printf("</BODY></HTML>");
     exit(0);

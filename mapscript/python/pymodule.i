@@ -160,7 +160,7 @@ if (MSExc_MapServerNotFoundError != NULL)
         // message.
         while (ms_error && ms_error->code > 0) {
             snprintf(errbuf, 255, "%s: %s %s\n", ms_error->routine,
-                     msGetErrorString(ms_error->code), ms_error->message);
+                     msGetErrorCodeString(ms_error->code), ms_error->message);
             strcat(errmsg, errbuf);
             ms_error = ms_error->next;
         }

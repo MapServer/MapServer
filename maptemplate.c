@@ -1796,8 +1796,6 @@ int processOneToManyJoin(mapservObj* msObj, joinObj *join)
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH], substr[MS_BUFFER_LENGTH], *outstr;
 
-  if(join->numrecords == 0) return(MS_SUCCESS); // nothing to do
-
   if(join->header != NULL) {
     if((stream = fopen(join->header, "r")) == NULL) {
       msSetError(MS_IOERR, join->header, "returnOneToManyJoin()");

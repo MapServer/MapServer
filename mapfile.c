@@ -305,7 +305,7 @@ void initJoin(joinObj *join)
   join->name = NULL; /* unique join name, used for variable substitution */
 
   join->items = NULL; /* array to hold item names for the joined table */
-  join->values = NULL; /* arrays of strings to holds 1 or more records worth of data */
+  join->values = NULL; /* arrays of strings to holds one record worth of data */
  
   join->table = NULL;
 
@@ -366,7 +366,7 @@ int loadJoin(joinObj *join)
       if((join->type == MS_MULTIPLE) && ((join->template == NULL) || (join->name == NULL))) {
 	msSetError(MS_EOFERR, "One-to-many joins must define template and name properties.", "loadJoin()");
 	return(-1);
-      }
+      }      
       return(0);
     case(FOOTER):
       if((join->footer = getString()) == NULL) return(-1);

@@ -46,7 +46,9 @@ typedef struct error_obj {
   int code;
   char routine[ROUTINELENGTH];
   char message[MESSAGELENGTH];
+#ifndef SWIG
   struct error_obj *next;
+#endif
 } errorObj;
 
 /*
@@ -57,19 +59,18 @@ typedef struct error_obj {
 /*
 ** Function prototypes
 */
-
 errorObj *msGetErrorObj(void);
 void msResetErrorList();
+char *msGetVersion(void);
+
+#ifndef SWIG
 void msSetError(int code, const char *message, const char *routine, ...);
 void msWriteError(FILE *stream);
-char *msGetVersion(void);
-char *msGetErrorString(int code);
+char *msGetErrorCodeString(int code);
 
 struct map_obj;
 void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
 
-
-#ifndef SWIG
 void msDebug( const char * pszFormat, ... );
 void msWebDebug( const char * pszFormat, ... );
 #endif

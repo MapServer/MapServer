@@ -50,14 +50,37 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 // try wrapping mapsymbol.h
 %include "../../mapsymbol.h"
 
+// wrap the errorObj and a few functions
+%include "../../maperror.h"
+
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
 
-// Python-specific extensions to mapserver classes are included here
+// Language-specific extensions to mapserver classes are included here
 
 #ifdef SWIGPYTHON
 %include "pyextend.i"
 #endif //SWIGPYTHON
+
+//
+// class extensions for errorObj
+//
+%extend errorObj {
+  errorObj *next() {
+    errorObj *ep;	
+
+    if(self == NULL || self->next == NULL) return NULL;
+
+    ep = msGetErrorObj();
+    while(ep != self) {
+      // We reached end of list of active errorObj and didn't find the errorObj... this is bad!
+      if(ep->next == NULL) return NULL;
+      ep = ep->next;
+    }
+    
+    return ep->next;
+  }
+}
 
 //
 // class extensions for mapObj, need to figure out how to deal with Dan's extension to msLoadMap()...

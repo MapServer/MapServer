@@ -266,7 +266,7 @@ typedef struct {
 typedef struct {
   char *name;
   char **items, **values; // items/values (process 1 record at a time)
-  int numitems, numrecords;
+  int numitems;
 
   char *table;
   char *from, *to; // item names
