@@ -73,10 +73,6 @@
         msFreeImage(self);    
     }
 
-    void free() {
-        msFreeImage(self);    
-    }
-
     /* saveGeo - see Bugzilla issue 549 */ 
     void save(char *filename, mapObj *map=NULL) 
     {
