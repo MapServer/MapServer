@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.38  2004/08/17 17:53:01  assefa
+ * Correct bug when generating sld filters based on expressions.
+ *
  * Revision 1.37  2004/07/29 21:50:19  assefa
  * Use wfs_filter metedata when generating an SLD (Bug 782)
  *
@@ -260,6 +263,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     char *pszTmp = NULL;
     int bFreeTemplate = 0;
     int nLayerStatus = 0;
+
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
@@ -3554,6 +3558,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     double dfMinScale =-1, dfMaxScale = -1;
     const char *pszWfsFilter= NULL;
 
+    
     if (psLayer && 
         (psLayer->status == MS_ON || psLayer->status == MS_DEFAULT) &&
         (psLayer->type == MS_LAYER_POINT ||
@@ -3749,18 +3754,18 @@ char *msSLDGetComparisonValue(char *pszExpression)
     if (!pszExpression)
       return NULL;
 
-    if (strstr(pszExpression, "=") || strstr(pszExpression, " eq "))
-      pszValue = strdup("PropertyIsEqualTo");
+    if (strstr(pszExpression, "<=") || strstr(pszExpression, " le "))
+      pszValue = strdup("PropertyIsLessThanOrEqualTo");
+    else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
+      pszValue = strdup("PropertyIsGreaterThanOrEqualTo");
     else if (strstr(pszExpression, "!=") || strstr(pszExpression, " ne "))
       pszValue = strdup("PropertyIsNotEqualTo");
+    else if (strstr(pszExpression, "=") || strstr(pszExpression, " eq "))
+      pszValue = strdup("PropertyIsEqualTo");
     else if (strstr(pszExpression, "<") || strstr(pszExpression, " lt "))
       pszValue = strdup("PropertyIsLessThan");
     else if (strstr(pszExpression, ">") || strstr(pszExpression, " gt "))
       pszValue = strdup("PropertyIsGreaterThan");
-    else if (strstr(pszExpression, "<=") || strstr(pszExpression, " le "))
-      pszValue = strdup("PropertyIsLessThanOrEqualTo");
-    else if (strstr(pszExpression, ">=") || strstr(pszExpression, " ge "))
-      pszValue = strdup("PropertyIsGreaterThanOrEqualTo");
 
     return pszValue;
 }
@@ -3777,14 +3782,17 @@ char *msSLDGetLogicalOperator(char *pszExpression)
       return strdup("AND");
     
     if(strstr(pszExpression, " OR ") || strstr(pszExpression, "OR("))
-      return strdup("AND");
+      return strdup("OR");
+
+     if(strstr(pszExpression, "NOT ") || strstr(pszExpression, "NOT("))
+      return strdup("NOT");
 
     return NULL;
 }
 
 char *msSLDGetRightExpressionOfOperator(char *pszExpression)
 {
-    char *pszAnd = NULL, *pszOr = NULL;
+    char *pszAnd = NULL, *pszOr = NULL, *pszNot=NULL;
 
     pszAnd = strstr(pszExpression, " AND "); 
     if (!pszAnd)
@@ -3800,6 +3808,19 @@ char *msSLDGetRightExpressionOfOperator(char *pszExpression)
 
         if (pszOr)
           return strdup(pszOr+3);
+        else
+        {
+            pszNot = strstr(pszExpression, "NOT ");
+            if (!pszNot)
+              pszNot = strstr(pszExpression, "not ");
+            if (!pszNot)
+              strstr(pszExpression, "NOT(");
+            if (!pszNot)
+              strstr(pszExpression, "not(");
+
+            if (pszNot)
+              return strdup(pszNot+4);
+        }
     }
     return NULL;
         
@@ -3890,10 +3911,15 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
 {
     char *pszAnd = NULL;
     char *pszOr = NULL;
+    char *pszNot = NULL;
     char *pszSecondAnd=NULL, *pszSecondOr=NULL;
     if (!pszExpression)
       return 0;
 
+/* -------------------------------------------------------------------- */
+/*      tests here are minimal to be able to parse simple expression    */
+/*      like A AND B, A OR B, NOT A.                                    */
+/* -------------------------------------------------------------------- */
     pszAnd = strstr(pszExpression, " AND ");
     if (!pszAnd)
        pszAnd = strstr(pszExpression, " and ");
@@ -3901,7 +3927,14 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
     pszOr = strstr(pszExpression, " OR ");
     if (!pszOr)
       pszOr = strstr(pszExpression, " or ");
-    //TODO for NOT
+    
+
+    pszNot = strstr(pszExpression, "NOT ");
+    if (!pszNot)
+    {
+        pszNot = strstr(pszExpression, "not ");
+    }
+    
 
     if (!pszAnd && !pszOr)
     {
@@ -3914,11 +3947,11 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
           strstr(pszExpression, "or(");
     }
 
-    if (!pszAnd && !pszOr)
+    if (!pszAnd && !pszOr && !pszNot)
       return 0;
 
     //doen not matter how many exactly if there are 2 or more
-    if (pszAnd && pszOr) 
+    if ((pszAnd && pszOr) || (pszAnd && pszNot) || (pszOr && pszNot)) 
       return 2;
 
     if (pszAnd)
@@ -4197,6 +4230,18 @@ char *msSLDGetAttributeValue(char *pszExpression,
 }
 
 
+
+/************************************************************************/
+/*                           BuildExpressionTree                        */
+/*                                                                      */
+/*      Build a filter expression node based on mapserver's class       */
+/*      expression. This is limited to simple expressions like :        */
+/*        A = B, A < B, A <= B, A > B, A >= B, A != B                   */
+/*       It also handles one level of logical expressions :             */
+/*        A AND B                                                       */
+/*        A OR B                                                        */
+/*        NOT A                                                         */
+/************************************************************************/
 FilterEncodingNode *BuildExpressionTree(char *pszExpression, 
                                         FilterEncodingNode *psNode)
 {
@@ -4280,62 +4325,70 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
             pszLeftExpression = msSLDGetLeftExpressionOfOperator(pszExpression);
             pszRightExpression = msSLDGetRightExpressionOfOperator(pszExpression);
             
-            if (pszLeftExpression && pszRightExpression)
+            if (pszLeftExpression || pszRightExpression)
             {
-                pszComparionValue = msSLDGetComparisonValue(pszLeftExpression);
-                pszAttibuteName = msSLDGetAttributeName(pszLeftExpression, 
-                                                        pszComparionValue);
-                pszAttibuteValue = msSLDGetAttributeValue(pszLeftExpression, 
-                                                          pszComparionValue);
-
-                if (pszComparionValue && pszAttibuteName && pszAttibuteValue)
+                if (pszLeftExpression)
                 {
-                    psNode->psLeftNode = FLTCreateFilterEncodingNode();
-                    psNode->psLeftNode->eType = FILTER_NODE_TYPE_COMPARISON;
-                    psNode->psLeftNode->pszValue = strdup(pszComparionValue);
+                    pszComparionValue = msSLDGetComparisonValue(pszLeftExpression);
+                    pszAttibuteName = msSLDGetAttributeName(pszLeftExpression, 
+                                                            pszComparionValue);
+                    pszAttibuteValue = msSLDGetAttributeValue(pszLeftExpression, 
+                                                              pszComparionValue);
 
-                    psNode->psLeftNode->psLeftNode = FLTCreateFilterEncodingNode();
-                    psNode->psLeftNode->psLeftNode->eType = 
-                      FILTER_NODE_TYPE_PROPERTYNAME;
-                    psNode->psLeftNode->psLeftNode->pszValue = strdup(pszAttibuteName);
+                    if (pszComparionValue && pszAttibuteName && pszAttibuteValue)
+                    {
+                        psNode->psLeftNode = FLTCreateFilterEncodingNode();
+                        psNode->psLeftNode->eType = FILTER_NODE_TYPE_COMPARISON;
+                        psNode->psLeftNode->pszValue = strdup(pszComparionValue);
 
-                    psNode->psLeftNode->psRightNode = FLTCreateFilterEncodingNode();
-                    psNode->psLeftNode->psRightNode->eType = 
-                      FILTER_NODE_TYPE_LITERAL;
-                    psNode->psLeftNode->psRightNode->pszValue = 
-                      strdup(pszAttibuteValue);
+                        psNode->psLeftNode->psLeftNode = FLTCreateFilterEncodingNode();
+                        psNode->psLeftNode->psLeftNode->eType = 
+                          FILTER_NODE_TYPE_PROPERTYNAME;
+                        psNode->psLeftNode->psLeftNode->pszValue = strdup(pszAttibuteName);
 
-                    free(pszComparionValue);
-                    free(pszAttibuteName);
-                    free(pszAttibuteValue);
+                        psNode->psLeftNode->psRightNode = FLTCreateFilterEncodingNode();
+                        psNode->psLeftNode->psRightNode->eType = 
+                          FILTER_NODE_TYPE_LITERAL;
+                        psNode->psLeftNode->psRightNode->pszValue = 
+                          strdup(pszAttibuteValue);
+
+                        free(pszComparionValue);
+                        free(pszAttibuteName);
+                        free(pszAttibuteValue);
+                    }
                 }
-                
-                pszComparionValue = msSLDGetComparisonValue(pszRightExpression);
-                pszAttibuteName = msSLDGetAttributeName(pszRightExpression, 
-                                                        pszComparionValue);
-                pszAttibuteValue = msSLDGetAttributeValue(pszRightExpression, 
-                                                          pszComparionValue);
-
-                if (pszComparionValue && pszAttibuteName && pszAttibuteValue)
+                if (pszRightExpression)
                 {
-                    psNode->psRightNode = FLTCreateFilterEncodingNode();
-                    psNode->psRightNode->eType = FILTER_NODE_TYPE_COMPARISON;
-                    psNode->psRightNode->pszValue = strdup(pszComparionValue);
+                    pszComparionValue = msSLDGetComparisonValue(pszRightExpression);
+                    pszAttibuteName = msSLDGetAttributeName(pszRightExpression, 
+                                                            pszComparionValue);
+                    pszAttibuteValue = msSLDGetAttributeValue(pszRightExpression, 
+                                                              pszComparionValue);
 
-                    psNode->psRightNode->psLeftNode = FLTCreateFilterEncodingNode();
-                    psNode->psRightNode->psLeftNode->eType = 
-                      FILTER_NODE_TYPE_PROPERTYNAME;
-                    psNode->psRightNode->psLeftNode->pszValue = strdup(pszAttibuteName);
+                    if (pszComparionValue && pszAttibuteName && pszAttibuteValue)
+                    {
+                        psNode->psRightNode = FLTCreateFilterEncodingNode();
+                        psNode->psRightNode->eType = FILTER_NODE_TYPE_COMPARISON;
+                        psNode->psRightNode->pszValue = strdup(pszComparionValue);
 
-                    psNode->psRightNode->psRightNode = FLTCreateFilterEncodingNode();
-                    psNode->psRightNode->psRightNode->eType = 
-                      FILTER_NODE_TYPE_LITERAL;
-                    psNode->psRightNode->psRightNode->pszValue = 
-                      strdup(pszAttibuteValue);
+                        psNode->psRightNode->psLeftNode = 
+                          FLTCreateFilterEncodingNode();
+                        psNode->psRightNode->psLeftNode->eType = 
+                          FILTER_NODE_TYPE_PROPERTYNAME;
+                        psNode->psRightNode->psLeftNode->pszValue = 
+                          strdup(pszAttibuteName);
 
-                    free(pszComparionValue);
-                    free(pszAttibuteName);
-                    free(pszAttibuteValue);
+                        psNode->psRightNode->psRightNode = 
+                          FLTCreateFilterEncodingNode();
+                        psNode->psRightNode->psRightNode->eType = 
+                          FILTER_NODE_TYPE_LITERAL;
+                        psNode->psRightNode->psRightNode->pszValue = 
+                          strdup(pszAttibuteValue);
+
+                        free(pszComparionValue);
+                        free(pszAttibuteName);
+                        free(pszAttibuteValue);
+                    }
                 }
             }
         }
@@ -4504,24 +4557,30 @@ char *msSLDBuildFilterEncoding(FilterEncodingNode *psNode)
         pszExpression = strdup(szTmp);
     }
     else if (psNode->eType == FILTER_NODE_TYPE_LOGICAL && 
-             psNode->pszValue && psNode->psLeftNode && psNode->psLeftNode->pszValue &&
-             psNode->psRightNode && psNode->psRightNode->pszValue)
+             psNode->pszValue && 
+             ((psNode->psLeftNode && psNode->psLeftNode->pszValue) ||
+              (psNode->psRightNode && psNode->psRightNode->pszValue)))
     {
         sprintf(szTmp, "<%s>", psNode->pszValue);
         pszExpression = strcatalloc(pszExpression, szTmp);
-        pszTmp = msSLDBuildFilterEncoding(psNode->psLeftNode);
-        if (pszTmp)
+        if (psNode->psLeftNode)
         {
-            pszExpression = strcatalloc(pszExpression, pszTmp); 
-            free(pszTmp);
+            pszTmp = msSLDBuildFilterEncoding(psNode->psLeftNode);
+            if (pszTmp)
+            {
+                pszExpression = strcatalloc(pszExpression, pszTmp); 
+                free(pszTmp);
+            }
         }
-        pszTmp = msSLDBuildFilterEncoding(psNode->psRightNode);
-        if (pszTmp)
+        if (psNode->psRightNode)
         {
-            pszExpression = strcatalloc(pszExpression, pszTmp); 
-            free(pszTmp);
+            pszTmp = msSLDBuildFilterEncoding(psNode->psRightNode);
+            if (pszTmp)
+            {
+                pszExpression = strcatalloc(pszExpression, pszTmp); 
+                free(pszTmp);
+            }
         }
-
         sprintf(szTmp, "</%s>", psNode->pszValue);
         pszExpression = strcatalloc(pszExpression, szTmp);
     }
@@ -4678,7 +4737,6 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
     char *pszFilter = NULL;
     char szBuffer[500];
 
-
     if (psClass && psClass->expression.string)
     {   
         //string expression
@@ -4714,7 +4772,11 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
             }
         }
     }
-
+    else if (pszWfsFilter)
+    {
+        sprintf(szBuffer, "<ogc:Filter>%s</ogc:Filter>\n", pszWfsFilter);
+        pszFilter = strdup(szBuffer);
+    }
     return pszFilter;
 }            
 
