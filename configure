@@ -4735,7 +4735,7 @@ if test "$ORA_HOME" = "no" ; then
   ORACLESPATIAL_LIB=
 else
   ORACLESPATIAL_ENABLED=-DUSE_ORACLESPATIAL
-  ORACLESPATIAL_LIB="-L$ORA_HOME/lib -ltracepls8"
+  ORACLESPATIAL_LIB="-L$ORA_HOME/lib -lclntsh"
   ORACLESPATIAL_INC="-I$ORA_HOME/rdbms/demo -I$ORA_HOME/rdbms/public"
 fi
 
