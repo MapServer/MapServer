@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.368  2004/11/05 16:29:40  assefa
+ * add function msGetOutputFormatMimeListGD.
+ *
  * Revision 1.367  2004/11/04 22:01:11  frank
  * Removed the msDrawWMSLayerPDF declaration.  It depends on stuff we don't have
  * in map.h.
@@ -1606,6 +1609,7 @@ MS_DLL_EXPORT outputFormatObj *msCreateDefaultOutputFormat( mapObj *map, const c
 MS_DLL_EXPORT int msPostMapParseOutputFormatSetup( mapObj *map );
 MS_DLL_EXPORT void msSetOutputFormatOption( outputFormatObj *format, const char *key, const char *value );
 MS_DLL_EXPORT void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime );
+MS_DLL_EXPORT void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime );
 MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
 MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format );
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2004/11/05 16:29:40  assefa
+ * add function msGetOutputFormatMimeListGD.
+ *
  * Revision 1.25  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -834,6 +837,39 @@ void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime )
     if( mime_count < max_mime )
         mime_list[mime_count] = NULL;
 }
+
+/************************************************************************/
+/*                     msGetOutputFormatMimeList()                      */
+/************************************************************************/
+
+void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime )
+
+{
+    int mime_count = 0, i;
+
+    for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ )
+    {
+        int  j;
+        
+        if( map->outputformatlist[i]->mimetype == NULL )
+            continue;
+
+        for( j = 0; j < mime_count; j++ )
+        {
+            if( strcasecmp(mime_list[j],
+                           map->outputformatlist[i]->mimetype) == 0 )
+                break;
+        }
+
+        if( j == mime_count && 
+            map->outputformatlist[i]->renderer == MS_RENDER_WITH_GD)
+            mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
+    }
+
+    if( mime_count < max_mime )
+        mime_list[mime_count] = NULL;
+}
+
 
 /************************************************************************/
 /*                       msOutputFormatValidate()                       */
