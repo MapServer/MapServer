@@ -121,7 +121,7 @@ char *msGetErrorString(int code) {
   return(ms_errorCodes[code]);
 }
 
-void msSetError(int code, char *message_fmt, char *routine, ...)
+void msSetError(int code, const char *message_fmt, const char *routine, ...)
 {
   char *errfile=NULL;
   FILE *errstream;

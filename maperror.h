@@ -57,7 +57,7 @@ typedef struct {
 */
 
 errorObj *msGetErrorObj(void);
-void msSetError(int code, char *message, char *routine, ...);
+void msSetError(int code, const char *message, const char *routine, ...);
 void msWriteError(FILE *stream);
 char *msGetVersion(void);
 char *msGetErrorString(int code);
