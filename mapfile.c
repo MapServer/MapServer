@@ -582,8 +582,8 @@ int msLoadProjectionString(projectionObj *p, char *value)
       char 	*trimmed;
       int	i, i_out=0;
 
-      trimmed = strdup(value);
-      for( i = 0; value[i] != '\0'; i++ )
+      trimmed = strdup(value+1);
+      for( i = 1; value[i] != '\0'; i++ )
       {
           if( !isspace( value[i] ) )
               trimmed[i_out++] = value[i];
