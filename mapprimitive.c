@@ -118,7 +118,7 @@ int msAddLine(shapeObj *p, lineObj *new_line)
   /* Create an extended line array */
   if((extended_line = (lineObj *)malloc((p->numlines + 1) * sizeof(lineObj))) == NULL) {
     msSetError(MS_MEMERR, NULL, "msAddLine()");
-    return(-1);
+    return(MS_FAILURE);
   }
 
   /* Copy the old line into the extended line array */
@@ -130,7 +130,7 @@ int msAddLine(shapeObj *p, lineObj *new_line)
   extended_line[c].numpoints = new_line->numpoints;  
   if((extended_line[c].point = (pointObj *)malloc(new_line->numpoints * sizeof(pointObj))) == NULL) {
     msSetError(MS_MEMERR, NULL, "msAddLine()");
-    return(-1);
+    return(MS_FAILURE);
   }
 
   for (v= 0; v < new_line->numpoints; v++)
@@ -143,7 +143,7 @@ int msAddLine(shapeObj *p, lineObj *new_line)
   p->numlines++;
   p->line = extended_line;
 
-  return(0);
+  return(MS_SUCCESS);
 }
 
 /*
