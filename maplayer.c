@@ -432,11 +432,7 @@ void msLayerClose(layerObj *layer)
     msWFSLayerClose(layer);
     break;
   case(MS_POSTGIS):
-    /*
-     * Due to connection sharing, we need to close the results
-     * and free the cursor, but not close the connection.
-     */
-    msPOSTGISLayerResultClose(layer);
+    msPOSTGISLayerClose(layer);
     break;
   case(MS_MYGIS):
     msMYGISLayerClose(layer);
