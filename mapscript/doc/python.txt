@@ -160,6 +160,40 @@ __iter__( ) : iterator
 
 
 ------------------------------------------------------------------------------
+ pointObj
+------------------------------------------------------------------------------
+
+Methods
+-------
+
+__str__() : string
+    Return a string formatted like
+
+    ::
+
+        { 'x': %f , 'y': %f }
+
+    
+    with the coordinate values substituted appropriately.  Usage example:
+
+    ::
+
+        >>> p = mapscript.pointObj(1, 1)
+        >>> str(p)
+        { 'x': 1.000000 , 'y': 1.000000 }
+
+
+    Note that the return value can be conveniently eval'd into a Python
+    dictionary:
+
+    ::
+
+        >>> p_dict = eval(str(p))
+        >>> p_dict['x']
+        1.000000
+
+
+------------------------------------------------------------------------------
  rectObj
 ------------------------------------------------------------------------------
 

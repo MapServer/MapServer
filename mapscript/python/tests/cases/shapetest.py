@@ -1,7 +1,7 @@
 # $Id$
 #
 # Project:  MapServer
-# Purpose:  xUnit style Python mapscript tests of Map "zooming"
+# Purpose:  xUnit style Python mapscript tests of Shape
 # Author:   Sean Gillies, sgillies@frii.com
 #
 # ===========================================================================
@@ -56,32 +56,6 @@ class ShapePointTestCase(ShapeObjTestCase):
         """ShapePointTestCase.testShapeCopy: test shape can be copied"""
         s = self.copyShape(self.shape)
         self.assertShapesEqual(self.shape, s)
-
-class PointObjTestCase(MapscriptTestCase):
-    def testPointObjConstructorNoArgs(self):
-        """PointObjTestCase.testPointObjConstructorNoArgs: point can be created with no arguments"""
-        p = mapscript.pointObj()
-        self.assertAlmostEqual(p.x, 0.0)
-        self.assertAlmostEqual(p.y, 0.0)
-    def testPointObjConstructorArgs(self):
-        """PointObjTestCase.testPointObjConstructorArgs: point can be created with arguments"""
-        p = mapscript.pointObj(1.0, 1.0)
-        self.assertAlmostEqual(p.x, 1.0)
-        self.assertAlmostEqual(p.y, 1.0)
-    def testSetXY(self):
-        """PointObjTestCase.testSetXY: point can have its x and y reset"""
-        p = mapscript.pointObj()
-        p.setXY(1.0, 1.0)
-        self.assertAlmostEqual(p.x, 1.0)
-        self.assertAlmostEqual(p.y, 1.0)
-        self.assertAlmostEqual(p.m, 0.0)
-    def testSetXYM(self):
-        """PointObjTestCase.testSetXYM: point can have its x and y reset (with m value)"""
-        p = mapscript.pointObj()
-        p.setXY(1.0, 1.0, 1.0)
-        self.assertAlmostEqual(p.x, 1.0)
-        self.assertAlmostEqual(p.y, 1.0)
-        self.assertAlmostEqual(p.m, 1.0)
 
 class InlineFeatureTestCase(MapTestCase):
     """tests for issue http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=562"""

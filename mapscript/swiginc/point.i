@@ -84,5 +84,12 @@
         return MS_SUCCESS;
     }
 
+    char *toString() 
+    {
+        char buffer[256];
+        char fmt[]="{ 'x': %f , 'y': %f }";
+        msPointToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
+        return strdup(buffer);
+    }
 }
 

@@ -14,6 +14,21 @@
  *
  *****************************************************************************/
 
+/* ===========================================================================
+   Python rectObj extensions
+   ======================================================================== */
+
+%extend pointObj {
+
+    char *__str__() {
+        char buffer[256];
+        char fmt[]="{ 'x': %f , 'y': %f }";
+        msPointToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
+        return strdup(buffer);
+    }
+    
+}
+
 
 /* ===========================================================================
    Python rectObj extensions
@@ -23,7 +38,7 @@
 
     char *__str__() {
         char buffer[256];
-        char fmt[]="{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }";
+        char fmt[]="{ 'minx': %f , 'miny': %f , 'maxx': %f }";
         msRectToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
         return strdup(buffer);
     }

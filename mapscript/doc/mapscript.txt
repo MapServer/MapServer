@@ -1441,6 +1441,24 @@ setXY( float x, float y [, float m=2e-38 ] ) : int
     The measure will be set only if the value of *m* is greater than the
     ESRI measure no-data value of 1e-38.  Returns MS_SUCCESS or MS_FAILURE.
 
+toString() : string
+    Return a string formatted like
+
+    ::
+
+        { 'x': %f , 'y': %f }
+
+    
+    with the coordinate values substituted appropriately.  Python users can
+    get the same effect via the pointObj __str__ method
+
+    ::
+
+        >>> p = mapscript.pointObj(1, 1)
+        >>> str(p)
+        { 'x': 1.000000 , 'y': 1.000000 }
+
+
 ------------------------------------------------------------------------------
  projectionObj
 ------------------------------------------------------------------------------
