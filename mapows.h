@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.11  2002/12/18 16:45:49  dan
+ * Fixed WFS capabilities to validate against schema
+ *
  * Revision 1.10  2002/12/17 21:33:54  dan
  * Enable following redirections with libcurl (requires libcurl 7.10.1+)
  *
@@ -91,6 +94,11 @@ const char *msOWSGetSchemasLocation(mapObj *map);
 #define OWS_NOERR   0
 #define OWS_WARN    1
 
+// OWS_WMS and OWS_WFS used for functions that differ in behavior between
+// WMS and WFS services (e.g. msOWSPrintLatLonBoundingBox())
+#define OWS_WMS     1
+#define OWS_WFS     2
+
 int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name, 
                        int action_if_not_found, const char *format, 
                        const char *default_value);
@@ -107,7 +115,8 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata,
                            const char *name, const char *startTag, 
                            const char *endTag, const char *itemFormat);
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
-                                 rectObj *extent, projectionObj *srcproj);
+                                 rectObj *extent, projectionObj *srcproj,
+                                 int nService);
 void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.10  2002/12/18 16:45:49  dan
+ * Fixed WFS capabilities to validate against schema
+ *
  * Revision 1.9  2002/12/13 00:57:31  dan
  * Modified WFS implementation to behave more as a real vector data source
  *
@@ -394,20 +397,30 @@ int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata,
 }
 
 /*
+** msOWSPrintLatLonBoundingBox()
+**
+** Print a LatLonBoundingBox tag for WMS, or LatLongBoundingBox for WFS
+** ... yes, the tag name differs between WMS and WFS, yuck!
 **
 */
 void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace, 
-                                 rectObj *extent, projectionObj *srcproj)
+                                 rectObj *extent, projectionObj *srcproj,
+                                 int nService)
 {
+  const char *pszTag = "LatLonBoundingBox";  /* The default for WMS */
   rectObj ll_ext;
+
   ll_ext = *extent;
 
   if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
     msProjectRect(srcproj, NULL, &ll_ext);
   }
 
-  fprintf(stream, "%s<LatLonBoundingBox minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
-         tabspace, ll_ext.minx, ll_ext.miny, ll_ext.maxx, ll_ext.maxy);
+  if (nService == OWS_WFS)
+      pszTag = "LatLongBoundingBox";
+
+  fprintf(stream, "%s<%s minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
+         tabspace, pszTag, ll_ext.minx, ll_ext.miny, ll_ext.maxx, ll_ext.maxy);
 }
 
 /*

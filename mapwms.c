@@ -521,14 +521,14 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
        if(lp->projection.numargs > 0) 
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
-                                       &(lp->projection));
+                                       &(lp->projection), OWS_WMS);
            msOWSPrintBoundingBox( stdout,"        ", &(ext), &(lp->projection),
                                   lp->metadata );
        } 
        else 
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
-                                       &(map->projection));
+                                       &(map->projection), OWS_WMS);
            msOWSPrintBoundingBox(stdout,"        ", &(ext), &(map->projection),
                                   map->web.metadata );
        }
@@ -790,7 +790,7 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
              OWS_WARN, "    <SRS>%s</SRS>\n", "");
 
   msOWSPrintLatLonBoundingBox(stdout, "    ", &(map->extent), 
-                              &(map->projection));
+                              &(map->projection), OWS_WMS);
   msOWSPrintBoundingBox( stdout, "    ", &(map->extent), &(map->projection),
                          map->web.metadata );
   msWMSPrintScaleHint("    ", map->web.minscale, map->web.maxscale,

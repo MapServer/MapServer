@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2002/12/18 16:45:49  dan
+ * Fixed WFS capabilities to validate against schema
+ *
  * Revision 1.9  2002/12/17 04:50:43  dan
  * Fixed a few WFS XML validation issues
  *
@@ -257,12 +260,12 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
        if(lp->projection.numargs > 0) 
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
-                                       &(lp->projection));
+                                       &(lp->projection), OWS_WFS);
        } 
        else 
        {
            msOWSPrintLatLonBoundingBox(stdout, "        ", &(ext), 
-                                       &(map->projection));
+                                       &(map->projection), OWS_WFS);
        }
    }
    else
@@ -306,8 +309,11 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
          "   version=\"%s\" \n"
          "   updateSequence=\"0\" \n"
          "   xmlns=\"http://www.opengis.net/wfs\" \n"
-         "   xmlns:ogc=\"http://www.opengis.net/ogc\" >\n",
-         wmtver);
+         "   xmlns:ogc=\"http://www.opengis.net/ogc\" \n"
+         "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+         "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-capabilities.xsd\">\n", 
+         wmtver,
+         msOWSGetSchemasLocation(map), wmtver);
 
   // Report MapServer Version Information
   printf("\n<!-- %s -->\n\n", msGetVersion());
@@ -389,6 +395,12 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
   printf("      <ogc:BBOX/>\n");
   printf("    </ogc:Spatial_Operators>\n");
   printf("  </ogc:Spatial_Capabilities>\n");
+
+  printf("  <!-- Provide some ScalarCapabilties just for the XML to validate against the schema even if we don't support any.  (Yes this is stupid!) -->\n");
+  printf("  <ogc:Scalar_Capabilities>\n");
+  printf("    <ogc:Logical_Operators />\n");
+  printf("  </ogc:Scalar_Capabilities>\n");
+
   printf("</ogc:Filter_Capabilities>\n\n");
 
   /*
