@@ -204,6 +204,11 @@ PHP3/MapScript module:
   be loaded as a Dynamic Module by the PHP interpreter using the dl()
   PHP command.  See the file ./mapscript/php3/README for more details.
 
+  You may have to start by recompiling Apache and PHP to include PHP as
+  a module, there are step by step instructions for that on the PHP web
+  site:
+	http://www.php.net/manual/install-unix.php
+
 
 Perl MapScript Module:
 ----------------------
