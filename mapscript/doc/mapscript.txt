@@ -1013,13 +1013,70 @@ Methods
 .. _new styleObj:
 
 new styleObj() : styleObj_
-    Returns new instance.
+    Returns new default style Obj instance.
+
+
+-----------------------------------------------------------------------------
+ symbolObj
+-----------------------------------------------------------------------------
+
+A symbolObj is associated with one symbolSetObj_.
+
+::
+
+    +--------+ 0..*    1 +-----------+
+    | Symbol | <-------- | SymbolSet |
+    +--------+           +-----------+
+
+A styleObj_ will often refer to a symbolObj by name or index, but this is
+not really an object association, is it?
+
+Methods
+-------
+
+**TODO**
+
+new symbolObj(string name) : symbolObj_
+    Create new default symbol named *name*.
+
 
 -----------------------------------------------------------------------------
  symbolSetObj
 -----------------------------------------------------------------------------
 
-x
+A symbolSetObj is an attribute of a mapObj_ and is associated with instances
+of symbolObj_.
+
+::
+
+    +-----------+ 1    0..* +--------+
+    | SymbolSet | --------> | Symbol |
+    +-----------+           +--------+
+
+Attributes
+----------
+
+numsymbols : int immutable
+    Number of symbols in the set.
+
+Methods
+-------
+
+new symbolSetObj([string symbolfile]) : symbolSetObj_
+    Create new instance.  If *symbolfile* is specified, symbols will be 
+    loaded from the file.
+
+appendSymbol(symbolObj_ symbol) : int
+    Add a copy of *symbol* to the symbolset and return its index.
+
+getSymbol(int index) : symbolObj_
+    Returns a reference to the symbol at *index*.
+
+getSymbolByName(string name) : symbolObj_
+    Returns a reference to the symbol named *name*.
+
+removeSymbol(int index) : symbolObj_
+    Remove the symbol at *index* and return a copy of the symbol.
 
 
 ..  [1] This **really** needs to be changed in the future.  In fact a layer

@@ -120,6 +120,27 @@ class RemoveClassTestCase(unittest.TestCase):
         self.mapobj1.getLayer(0).removeClass(1)
         assert self.mapobj1.getLayer(0).getClass(0).name == c1name
 
+# symbol tests
+class SymbolTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapscript.mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testConstructor(self):
+        symbol = mapscript.symbolObj('test')
+        assert symbol.name == 'test'
+    def testAddSymbolToMapSymbolSet(self):
+        symbola = mapscript.symbolObj('testa')
+        symbolb = mapscript.symbolObj('testb')
+        self.mapobj1.symbolset.appendSymbol(symbola) 
+        self.mapobj1.symbolset.appendSymbol(symbolb) 
+        num = self.mapobj1.symbolset.numsymbols
+        assert num == 4, num
+    def testRemoveSymbolFromMapSymbolSet(self):
+        self.mapobj1.symbolset.removeSymbol(1)
+        num = self.mapobj1.symbolset.numsymbols
+        assert num == 1, num
+
 # symbolset tests
 class SymbolSetTestCase(unittest.TestCase):
     def setUp(self):
@@ -129,15 +150,40 @@ class SymbolSetTestCase(unittest.TestCase):
     def testGetNumSymbols(self):
         num = self.mapobj1.getNumSymbols()
         assert num == 2, num
-    def testSymbolsetNumsymbols(self):
+    def testSymbolSetNumsymbols(self):
         num = self.mapobj1.symbolset.numsymbols
         assert num == 2, num
-    def testSymbolsetSymbolNames(self):
+    def testSymbolSetSymbolNames(self):
         set = self.mapobj1.symbolset
         names = [None, 'line', 'tie']
         for i in range(set.numsymbols):
             symbol = set.getSymbol(i)
             assert symbol.name == names[i], symbol.name
+    def testConstructorNoArgs(self):
+        symbolset = mapscript.symbolSetObj()
+        num = symbolset.numsymbols
+        assert num == 1, num
+    def testConstructorFile(self):
+        symbolset = mapscript.SymbolSet('../../tests/symbols.txt')
+        num = symbolset.numsymbols
+        assert num == 2, num
+    def testAddSymbolToNewSymbolSet(self):
+        symbolset = mapscript.SymbolSet('../../tests/symbols.txt')
+        symbola = mapscript.symbolObj('testa')
+        symbolb = mapscript.symbolObj('testb')
+        symbolset.appendSymbol(symbola) 
+        symbolset.appendSymbol(symbolb) 
+        num = symbolset.numsymbols
+        assert num == 4, num
+        names = [None, 'line', 'testa', 'testb']
+        for i in range(symbolset.numsymbols):
+            symbol = symbolset.getSymbol(i)
+            assert symbol.name == names[i], symbol.name
+    def testRemoveSymbolFromNewSymbolSet(self):
+        symbolset = mapscript.SymbolSet('../../tests/symbols.txt')
+        symbolset.removeSymbol(1)
+        num = symbolset.numsymbols
+        assert num == 1, num
 
 # fontset tests
 class FontSetTestCase(unittest.TestCase):

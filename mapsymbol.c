@@ -595,3 +595,43 @@ int msAddNewSymbol(mapObj *map, char *name)
     return i;
 }
 
+/* msAppendSymbol and msRemoveSymbol are part of the work to resolve
+ * MapServer bug 579.
+ * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=579 */
+
+
+int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol) {
+    // Possible to add another symbol?
+    if (symbolset->numsymbols == MS_MAXSYMBOLS) {
+        msSetError(MS_CHILDERR, "Maximum number of symbols, %d, has been reached", "msAppendSymbol()", MS_MAXSYMBOLS);
+        return -1;
+    }
+    symbolset->numsymbols++;
+    msCopySymbol(&(symbolset->symbol[symbolset->numsymbols-1]), symbol);
+    return symbolset->numsymbols;
+}
+
+
+symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
+    int i;
+    symbolObj *symbol;
+    if (symbolset->numsymbols == 1) {
+        msSetError(MS_CHILDERR, "Cannot remove a symbolset's sole symbol", "removeSymbol()");
+        return NULL;
+    }
+    else if (nSymbolIndex < 0 || nSymbolIndex >= symbolset->numsymbols) {
+        msSetError(MS_CHILDERR, "Cannot remove symbol, invalid nSymbolIndex %d", "removeSymbol()", nSymbolIndex);
+        return NULL;
+    }
+    else {
+        symbol = (symbolObj *)malloc(sizeof(symbolObj));
+        msCopySymbol(symbol, &(symbolset->symbol[nSymbolIndex]));
+        for (i=nSymbolIndex+1; i<symbolset->numsymbols; i++) {
+            symbolset->symbol[i-1] = symbolset->symbol[i];
+        }
+        symbolset->numsymbols--;
+        return symbol;
+    }
+}
+
+

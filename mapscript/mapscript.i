@@ -617,25 +617,76 @@ memory.") const char * {
     }
 }
 
+/* Full support for symbols and addition of them to the map symbolset
+ * is done to resolve MapServer bug 579
+ * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=579 */
+
+%extend symbolObj {
+    symbolObj(char *name) {
+        symbolObj *symbol;
+        symbol = (symbolObj *) malloc(sizeof(symbolObj));
+        initSymbol(symbol);
+        symbol->name = strdup(name);
+        return symbol;
+    }
+
+    ~symbolObj() {
+        if (self->name) free(self->name);
+        if (self->img) gdImageDestroy(self->img);
+        if (self->font) free(self->font);
+        if (self->imagepath) free(self->imagepath);
+    }
+}
+
 %extend symbolSetObj {
-  symbolObj *getSymbol(int i) {
-    if(i >= 0 && i < self->numsymbols)	
-      return (symbolObj *) &(self->symbol[i]);
-    else
-      return NULL;
-  }
 
-  symbolObj *getSymbolByName(char *name) {
-    int i;
+    symbolSetObj(const char *symbolfile=NULL) {
+        symbolSetObj *symbolset;
+        mapObj *temp_map=NULL;
+        symbolset = (symbolSetObj *) malloc(sizeof(symbolSetObj));
+        msInitSymbolSet(symbolset);
+        if (symbolfile) {
+            symbolset->filename = strdup(symbolfile);
+            temp_map = msNewMapObj();
+            msLoadSymbolSet(symbolset, temp_map);
+            symbolset->map = NULL;
+            msFreeMap(temp_map);
+        }
+        return symbolset;
+    }
+   
+    ~symbolSetObj() {
+        msFreeSymbolSet(self);
+    }
 
-    if(!name) return NULL;
+    symbolObj *getSymbol(int i) {
+        if(i >= 0 && i < self->numsymbols)	
+            return (symbolObj *) &(self->symbol[i]);
+        else
+            return NULL;
+    }
 
-    i = msGetSymbolIndex(self, name);
-    if(i == -1)
-      return NULL; // no such symbol
-    else
-      return (symbolObj *) &(self->symbol[i]);
-  }
+    symbolObj *getSymbolByName(char *name) {
+        int i;
+
+        if (!name) return NULL;
+
+        i = msGetSymbolIndex(self, name);
+        if (i == -1)
+            return NULL; // no such symbol
+        else
+            return (symbolObj *) &(self->symbol[i]);
+    }
+
+    int appendSymbol(symbolObj *symbol) {
+        return msAppendSymbol(self, symbol);
+    }
+ 
+    %newobject removeSymbol;
+    symbolObj *removeSymbol(int index) {
+        return msRemoveSymbol(self, index);
+    }
+
 }
 
 //
