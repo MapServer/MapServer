@@ -12,6 +12,8 @@
  *
  **********************************************************************/
 
+#ifdef USE_MING_FLASH
+
 #include "map.h"
 
 static char gszFilename[128];
@@ -1502,6 +1504,282 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
 
 
 /************************************************************************/
+/*                         int msDrawLabelCacheSWF                      */
+/*                                                                      */
+/*       Draws labels saved in the cache. Each label is drawn to        */
+/*      the approporiate movie pointer.                                 */
+/************************************************************************/
+/* ==================================================================== */
+/*      This could easily be integrated with a more generic             */
+/*      msDrawLabelCache.                                               */
+/*       The only functions that need to be wrapped here are :          */
+/*                                                                      */
+/*        -  billboard                                                  */
+/*        -  draw_text                                                  */
+/*        - labelInImage                                                */
+/* ==================================================================== */
+int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
+{
+    pointObj p;
+    int i, j, l;
+
+    rectObj r;
+  
+    labelCacheMemberObj *cachePtr=NULL;
+    classObj *classPtr=NULL;
+    layerObj *layerPtr=NULL;
+    labelObj *labelPtr=NULL;
+
+    int draw_marker;
+    int marker_width, marker_height;
+    int marker_offset_x, marker_offset_y;
+    rectObj marker_rect;
+    
+    int         nCurrentMovie = 0;
+
+    if (!image || image->imagetype != MS_SWF)
+        return -1;
+
+
+/* -------------------------------------------------------------------- */
+/*      keep the current layer index.                                   */
+/* -------------------------------------------------------------------- */
+    nCurrentMovie = image->img.swf->nCurrentMovie;
+
+    for(l=map->labelcache.numlabels-1; l>=0; l--) {
+
+        cachePtr = &(map->labelcache.labels[l]); /* point to right spot in cache */
+
+        layerPtr = &(map->layers[cachePtr->layeridx]); /* set a couple of other pointers, avoids nasty references */
+
+/* ==================================================================== */
+/*      set the current layer so the label will be drawn in the         */
+/*      using the correct SWF handle.                                   */
+/* ==================================================================== */
+        image->img.swf->nCurrentMovie = cachePtr->layeridx;
+        
+        classPtr = &(cachePtr->class);
+        labelPtr = &(cachePtr->class.label);
+
+        if(!cachePtr->string)
+            continue; /* not an error, just don't want to do anything */
+
+        if(strlen(cachePtr->string) == 0)
+            continue; /* not an error, just don't want to do anything */
+
+        if(msGetLabelSizeSWF(cachePtr->string, labelPtr, &r, 
+                             &(map->fontset)) == -1)
+            return(-1);
+
+        if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
+            continue; /* label too large relative to the feature */
+
+        draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
+        if((layerPtr->type == MS_LAYER_ANNOTATION || layerPtr->type == MS_LAYER_POINT) && (classPtr->color >= 0 || classPtr->outlinecolor > 0 || classPtr->symbol > 0)) { // there *is* a marker
+
+            msGetMarkerSize(&map->symbolset, classPtr, &marker_width, &marker_height);
+            marker_offset_x = MS_NINT(marker_width/2.0);
+            marker_offset_y = MS_NINT(marker_height/2.0);      
+
+            marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width);
+            marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height);
+            marker_rect.maxx = marker_rect.minx + (marker_width-1);
+            marker_rect.maxy = marker_rect.miny + (marker_height-1);
+
+            if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
+        }
+
+        if(labelPtr->position == MS_AUTO) {
+
+            if(layerPtr->type == MS_LAYER_LINE) {
+                int position = MS_UC;
+
+                for(j=0; j<2; j++) { /* Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. */
+
+                    msFreeShape(cachePtr->poly);
+                    cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+
+                    if(j == 1) {
+                        if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
+                            labelPtr->angle += 180.0;
+                        else
+                            position = MS_LC;
+                    }
+
+                    p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+
+                    if(draw_marker)
+                        msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+
+                    if(!labelPtr->partials) { // check against image first
+                        if(labelInImage(map->width, map->height, cachePtr->poly,
+                                        labelPtr->buffer) == MS_FALSE) {
+                            cachePtr->status = MS_FALSE;
+                            continue; // next angle
+                        }
+                    }
+
+                    for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
+                        if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
+                            if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                                cachePtr->status = MS_FALSE;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(!cachePtr->status)
+                        continue; // next angle
+
+                    for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
+                        if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+
+                            if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                                cachePtr->status = MS_FALSE;
+                                break;
+                            }
+
+                            if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                                cachePtr->status = MS_FALSE;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(cachePtr->status) // found a suitable place for this label
+                        break;
+
+                } // next angle
+
+            } else {
+                for(j=0; j<=7; j++) { /* loop through the outer label positions */
+
+                    msFreeShape(cachePtr->poly);
+                    cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+
+                    p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+
+                    if(draw_marker)
+                        msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+
+                    if(!labelPtr->partials) { // check against image first
+                        if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
+                            cachePtr->status = MS_FALSE;
+                            continue; // next position
+                        }
+                    }
+
+                    for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
+                        if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
+                            if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                                cachePtr->status = MS_FALSE;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(!cachePtr->status)
+                        continue; // next position
+
+                    for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
+                        if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+
+                            if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                                cachePtr->status = MS_FALSE;
+                                break;
+                            }
+
+                            if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                                cachePtr->status = MS_FALSE;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(cachePtr->status) // found a suitable place for this label
+                        break;
+                } // next position
+            }
+
+            if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+
+        } else {
+
+            cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+
+            if(labelPtr->position == MS_CC) // don't need the marker_offset
+                p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+            else
+                p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+
+            if(draw_marker)
+                msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
+
+            if(!labelPtr->force) { // no need to check anything else
+
+                if(!labelPtr->partials) {
+                    if(labelInImage(map->width, map->height, cachePtr->poly, 
+                                    labelPtr->buffer) == MS_FALSE)
+                        cachePtr->status = MS_FALSE;
+                }
+
+                if(!cachePtr->status)
+                    continue; // next label
+
+                for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
+                    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
+                        if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                            cachePtr->status = MS_FALSE;
+                            break;
+                        }
+                    }
+                }
+
+                if(!cachePtr->status)
+                    continue; // next label
+
+                for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
+                    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+                        if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                            cachePtr->status = MS_FALSE;
+                            break;
+                        }
+
+                        if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                            cachePtr->status = MS_FALSE;
+                            break;
+                        }
+                    }
+                }
+            }
+        } /* end position if-then-else */
+
+        /* msImagePolyline(img, cachePtr->poly, 1); */
+
+        if(!cachePtr->status)
+            continue; /* next label */
+
+        if(draw_marker) { /* need to draw a marker */
+            msDrawMarkerSymbolSWF(&map->symbolset, image, &(cachePtr->point), classPtr->symbol, classPtr->color, classPtr->backgroundcolor, classPtr->outlinecolor, classPtr->sizescaled);
+            if(classPtr->overlaysymbol >= 0) msDrawMarkerSymbolSWF(&map->symbolset, image, &(cachePtr->point), classPtr->overlaysymbol, classPtr->overlaycolor, classPtr->overlaybackgroundcolor, classPtr->overlayoutlinecolor, classPtr->overlaysizescaled);
+        }
+
+        //TODO
+        //if(labelPtr->backgroundcolor >= 0)
+        //    billboard(img, cachePtr->poly, labelPtr);
+
+        draw_textSWF(image, p, cachePtr->string, labelPtr, &(map->fontset)); /* actually draw the label */
+
+    } /* next in cache */
+
+    image->img.swf->nCurrentMovie = nCurrentMovie;
+
+    return(0);
+}
+
+
+
+/************************************************************************/
 /*                              msDrawLabelSWF                          */
 /*                                                                      */
 /*      Draw a label.                                                   */
@@ -1511,6 +1789,9 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 {
     pointObj p;
     rectObj r;
+
+    if (!image || image->imagetype != MS_SWF)
+        return 0;
 
     if(!string)
         return(0); /* not an error, just don't want to do anything */
@@ -1527,6 +1808,37 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 
 }
 
+
+/************************************************************************/
+/*                         int msDrawRasterLayerSWF                     */
+/*                                                                      */
+/*      Renders a raster layer in a temporary GD image and adds it      */
+/*      in the current movie.                                           */
+/************************************************************************/
+int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
+{
+    int         nTmp = 0;
+    gdImagePtr  imgtmp = NULL;
+    SWFShape    oShape;
+
+    if (!image || image->imagetype != MS_SWF || image->width <= 0 ||
+        image->height <= 0)
+        return -1;
+    
+/* -------------------------------------------------------------------- */
+/*      create a temprary GD image and render in it.                    */
+/* -------------------------------------------------------------------- */
+    imgtmp = gdImageCreate(image->width, image->height);
+
+    if (msDrawRasterLayerGD(map, layer, imgtmp) != -1)
+    {
+        oShape = gdImage2Shape(imgtmp);
+        nTmp = image->img.swf->nCurrentMovie;
+        SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+    }
+
+    return 0;
+}
 
 /************************************************************************/
 /*                            int msSaveImageSWF                        */
@@ -1616,5 +1928,5 @@ void msFreeImageSWF(imageObj *image)
 }
 
 
-
+#endif
 
