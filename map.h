@@ -596,6 +596,7 @@ typedef struct {
   int toleranceunits;
 
   double symbolscale; // scale at which symbols are default size
+  double scalefactor; // computed, not set
   double minscale, maxscale;
   double labelminscale, labelmaxscale;
 
