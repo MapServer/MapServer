@@ -2239,10 +2239,12 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 
 int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 {
-    int         nTmp = 0;
-    outputFormatObj *format = NULL;
-    imageObj    *image_tmp = NULL;
-    SWFShape    oShape;
+    int                 nTmp = 0;
+    outputFormatObj     *format = NULL;
+    imageObj            *image_tmp = NULL;
+    SWFShape            oShape;
+    httpRequestObj      asReqInfo[1];
+    int                 numReq = 0;
 
     if (!image || !MS_DRIVER_SWF(image->format) || image->width <= 0 ||
         image->height <= 0)
@@ -2264,7 +2266,16 @@ int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
                          map->imagecolor.red, map->imagecolor.green, 
                          map->imagecolor.blue);
 
-    if (msDrawWMSLayerLow(map, layer, image_tmp) != -1)
+     
+        
+     if ( msPrepareWMSLayerRequest(1, map, layer,
+                                   asReqInfo, &numReq) == MS_FAILURE  ||
+          msWMSExecuteRequests(asReqInfo, numReq) == MS_FAILURE )
+     {
+         return -1;
+       
+     }
+    if (msDrawWMSLayerLow(1, asReqInfo, numReq, map, layer, image_tmp) != -1)
     {
         oShape = gdImage2Shape(image_tmp->img.gd);
         nTmp = image->img.swf->nCurrentMovie;
