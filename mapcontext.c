@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2002/11/15 18:53:10  assefa
+ * Correct test on fread cuasing problems on Windows.
+ *
  * Revision 1.14  2002/11/14 18:46:14  julien
  * Include the ifdef to compile without the USE_WMS_LYR tag
  *
@@ -95,7 +98,7 @@ char * msGetMapContextFileText(char *filename)
   char *pszBuffer;
   FILE *stream;
   int	 nLength;
-
+ 
   // open file
   if(filename != NULL && strlen(filename) > 0) {
       stream = fopen(filename, "r");
@@ -121,8 +124,8 @@ char * msGetMapContextFileText(char *filename)
       fclose( stream );
       return NULL;
   }
-    
-  if( fread( pszBuffer, nLength, 1, stream ) != 1 )
+  
+  if(fread( pszBuffer, nLength, 1, stream ) == 0 &&  !feof(stream))
   {
       free( pszBuffer );
       fclose( stream );
@@ -258,6 +261,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   //
   // Load the raw XML file
   //
+  
   pszWholeText = msGetMapContextFileText(
       msBuildPath(szPath, map->mappath, filename));
   if(pszWholeText == NULL)
