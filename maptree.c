@@ -102,9 +102,14 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree)
     pszFullname = (char *) malloc(strlen(pszBasename) + 5);
     sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
     psTree->fp = fopen(pszFullname, "rb" );
-    if( psTree->fp == NULL )
+
+    msFree(pszBasename); // don't need these any more
+    msFree(pszFullname);    
+
+    if( psTree->fp == NULL ) {      
+      msFree(psTree);
       return( NULL );
-    
+    }
     
     fread( pabyBuf, 8, 1, psTree->fp );
 
@@ -142,8 +147,7 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree)
 
 void msSHPDiskTreeClose(SHPTreeHandle disktree)
 {
-    fclose( disktree->fp );
-  
+    fclose( disktree->fp );  
     free( disktree );
 }
 
@@ -626,86 +630,86 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   /*	Compute the base (layer) name.  If there is any extension	    */
   /*	on the passed in filename we will strip it off.			    */
   /* -------------------------------------------------------------------- */
-    pszBasename = (char *) malloc(strlen(filename)+5);
-    strcpy( pszBasename, filename );
-    for( i = strlen(pszBasename)-1; 
+  pszBasename = (char *) malloc(strlen(filename)+5);
+  strcpy( pszBasename, filename );
+  for( i = strlen(pszBasename)-1; 
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
 	 && pszBasename[i] != '\\';
        i-- ) {}
   
-    if( pszBasename[i] == '.' )
-      pszBasename[i] = '\0';
+  if( pszBasename[i] == '.' )
+    pszBasename[i] = '\0';
   
   /* -------------------------------------------------------------------- */
   /*	Open the .shp and .shx files.  Note that files pulled from	    */
   /*	a PC to Unix with upper case filenames won't work!		    */
   /* -------------------------------------------------------------------- */
-    pszFullname = (char *) malloc(strlen(pszBasename) + 5);
-    sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
-
-  if((disktree->fp = fopen(pszFullname, "wb")) == NULL) {
+  pszFullname = (char *) malloc(strlen(pszBasename) + 5);
+  sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
+  disktree->fp = fopen(pszFullname, "wb");
+  
+  msFree(pszBasename); // not needed
+  msFree(pszFullname);
+  
+  if(!disktree->fp) {
+    msFree(disktree);
     msSetError(MS_IOERR, NULL, "msWriteTree()");
     return(MS_FALSE);
   }
-
+  
   
   // for efficiency, trim the tree
   msTreeTrim(tree);
-
+  
   /* -------------------------------------------------------------------- */
   /*	Establish the byte order on this machine.			    */
   /* -------------------------------------------------------------------- */
-    i = 1;
-    if( *((uchar *) &i) == 1 )
-      mtBigEndian = MS_FALSE;
-    else
-      mtBigEndian = MS_TRUE;
-
-    if( !(mtBigEndian ^ ( B_order == MS_LSB_ORDER || B_order == MS_NEW_LSB_ORDER )) )
-    {
-      disktree->needswap = 1;
-    }
-    else
-    {
-      disktree->needswap = 0;
-    }
-    if( B_order == MS_NATIVE_ORDER )
-    {
-      disktree->needswap = 0;
-    }
-    
+  i = 1;
+  if( *((uchar *) &i) == 1 )
+    mtBigEndian = MS_FALSE;
+  else
+    mtBigEndian = MS_TRUE;
+  
+  if( !(mtBigEndian ^ ( B_order == MS_LSB_ORDER || B_order == MS_NEW_LSB_ORDER )) )
+    disktree->needswap = 1;
+  else
+    disktree->needswap = 0;
+  
+  if( B_order == MS_NATIVE_ORDER )
+    disktree->needswap = 0;
+  
   // write the header
-   if ( B_order > 0 )
-    {  
-      memcpy( pabyBuf, &signature, 3 );
-      memcpy (&disktree->signature, &signature, 3);
-      pabyBuf[3] = B_order;
+  if ( B_order > 0 ) {  
+    memcpy( pabyBuf, &signature, 3 );
+    memcpy (&disktree->signature, &signature, 3);
+    pabyBuf[3] = B_order;
     
-      memcpy( pabyBuf+4, &version, 1);
-      memcpy( pabyBuf+5, &reserved, 3);
-
-      memcpy( &disktree->version, &version, 1);
-      memcpy( &disktree->flags, &reserved, 3);
-
-      fwrite( pabyBuf, 8, 1, disktree->fp );
-    }
+    memcpy( pabyBuf+4, &version, 1);
+    memcpy( pabyBuf+5, &reserved, 3);
     
-    memcpy( pabyBuf, &tree->numshapes, 4 );
-    if( disktree->needswap ) SwapWord( 4, pabyBuf );
-
-    memcpy( pabyBuf+4, &tree->maxdepth, 4 );
-    if( disktree->needswap ) SwapWord( 4, pabyBuf+4 );
+    memcpy( &disktree->version, &version, 1);
+    memcpy( &disktree->flags, &reserved, 3);
     
-    i = fwrite( pabyBuf, 8, 1, disktree->fp );
-    if( !i )
-    {
-      fprintf (stderr, "unable to write to index file ... exiting \n");
-      return (MS_FALSE);
-    }
+    fwrite( pabyBuf, 8, 1, disktree->fp );
+  }
+  
+  memcpy( pabyBuf, &tree->numshapes, 4 );
+  if( disktree->needswap ) SwapWord( 4, pabyBuf );
+  
+  memcpy( pabyBuf+4, &tree->maxdepth, 4 );
+  if( disktree->needswap ) SwapWord( 4, pabyBuf+4 );
+  
+  i = fwrite( pabyBuf, 8, 1, disktree->fp );
+  if( !i ) {
+    fprintf (stderr, "unable to write to index file ... exiting \n");
+    return (MS_FALSE);
+  }
+  
+  writeTreeNode(disktree, tree->root);  
 
-    writeTreeNode(disktree, tree->root);
+  msSHPDiskTreeClose( disktree );
 
-    return(MS_TRUE);
+  return(MS_TRUE);
 }
 
 // Function to filter search results further against feature bboxes

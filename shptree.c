@@ -3,31 +3,32 @@
 #include <string.h>
 
 char* AddFileSuffix ( const char * Filename, const char * Suffix ) {
-    char	*pszFullname, *pszBasename;
-    int	i;
-      
+  char	*pszFullname, *pszBasename;
+  int	i;
+  
   /* -------------------------------------------------------------------- */
   /*	Compute the base (layer) name.  If there is any extension	    */
   /*	on the passed in filename we will strip it off.			    */
   /* -------------------------------------------------------------------- */
-    pszBasename = (char *) malloc(strlen(Filename)+5);
-    strcpy( pszBasename, Filename );
-    for( i = strlen(pszBasename)-1; 
+  pszBasename = (char *) malloc(strlen(Filename)+5);
+  strcpy( pszBasename, Filename );
+  for( i = strlen(pszBasename)-1; 
        i > 0 && pszBasename[i] != '.' && pszBasename[i] != '/'
 	 && pszBasename[i] != '\\';
        i-- ) {}
   
-    if( pszBasename[i] == '.' )
-      pszBasename[i] = '\0';
+  if( pszBasename[i] == '.' )
+    pszBasename[i] = '\0';
   
   /* -------------------------------------------------------------------- */
   /*	Open the .shp and .shx files.  Note that files pulled from	    */
   /*	a PC to Unix with upper case filenames won't work!		    */
   /* -------------------------------------------------------------------- */
-    pszFullname = (char *) malloc(strlen(pszBasename) + 5);
-    sprintf( pszFullname, "%s%s", pszBasename, Suffix); 
-      
-    return (pszFullname);
+  pszFullname = (char *) malloc(strlen(pszBasename) + 5);
+  sprintf( pszFullname, "%s%s", pszBasename, Suffix); 
+  
+  free(pszBasename);
+  return (pszFullname);
 }
 
 
@@ -35,7 +36,6 @@ int main(int argc, char *argv[])
 {
   shapefileObj shapefile;
 
-  char *filename;
   treeObj *tree;
   int byte_order;
   int depth=0;
@@ -100,11 +100,6 @@ int main(int argc, char *argv[])
   ** Clean things up
   */
   msSHPCloseFile(&shapefile);
-  free(filename);
 
-  exit(0);
+  return(0);
 }
-
-
-
-

@@ -2738,9 +2738,11 @@ int loadWeb(webObj *web)
       if((web->header = getString()) == NULL) return(-1);
       break;
     case(IMAGEPATH):
+      free(web->imagepath); // there is a default
       if((web->imagepath = getString()) == NULL) return(-1);
       break;
     case(IMAGEURL):
+      free(web->imageurl); // there is a default
       if((web->imageurl = getString()) == NULL) return(-1);
       break;
     case(LOG):
