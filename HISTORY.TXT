@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Renamed 'string' member of labelCacheMemberObj to 'text' to avoid
+  conflicts in SWIG mapscript with C# and Java types (bug 852).
+  
 - Fixed Bug 866 : problem when generating an sld on a pplygon layer
 
 - SWIG mapscript: map's output image width and height should be set 
