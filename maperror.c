@@ -1,6 +1,6 @@
 #include "map.h"
 #include "maperror.h"
-#include <time.h>
+#include <sys/time.h>
 #include <stdarg.h>
 
 static char *ms_errorCodes[MS_NUMERRORCODES]={"",
@@ -77,13 +77,11 @@ void msWriteError(FILE *stream)
 }
 
 char *msGetVersion() {
-  char *version;
-
-  version = (char *)malloc(sizeof(char)*128);
+  static char version[256];
 
   sprintf(version, "MapServer version %s", MS_VERSION);
 
-#ifdef USE_GD_1_2
+#ifdef USE_GD_GIF
   strcat(version, " OUTPUT=GIF");
 #endif
 #ifdef USE_GD_PNG
@@ -116,6 +114,9 @@ char *msGetVersion() {
 #ifdef USE_OGR
   strcat(version, " INPUT=OGR");
 #endif
+#ifdef USE_GDAL
+  strcat(version, " INPUT=GDAL");
+#endif
 
   return(version);
 }
@@ -125,6 +126,10 @@ void msDebug( const char * pszFormat, ... )
 {
 #ifndef _WIN32
     va_list args;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    fprintf(stderr, "[%s].%ld ", chop(ctime(&(tv.tv_sec))), tv.tv_usec);
+
     va_start(args, pszFormat);
     vfprintf(stderr, pszFormat, args);
     va_end(args);
