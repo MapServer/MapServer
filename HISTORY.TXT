@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Make sure that msDrawWMSLayerLow calls msDrawLayer instead of 
+  msDrawRasterLayerLow directly ensuring that some logic (transparency) that 
+  are in msDrawLayer are applied (Bug 541).
+
 - Force GD/JPEG outputFormatObjects to IMAGEMODE RGB and TRANSPARENT OFF
   if they are RGBA or ON.  Makes user error such as in bug 1703 less likely.
 
