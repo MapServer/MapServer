@@ -236,7 +236,7 @@ int msyyreturncomments = 0;
 <INITIAL,VALUE_STRING>default		       { return(MS_DEFAULT); }
 <INITIAL,VALUE_STRING>dd                       { return(MS_DD); }
 <INITIAL>ellipse                               { return(MS_SYMBOL_ELLIPSE); }
-<INITIAL,OBJECT_STRING>embed		       { return(MS_EMBED); }
+<INITIAL,VALUE_STRING>embed		       { return(MS_EMBED); }
 <INITIAL,VALUE_STRING>false                    { return(MS_FALSE); }
 <INITIAL,VALUE_STRING>feet		       { return(MS_FEET); }
 <INITIAL,VALUE_STRING>giant		       { return(MS_GIANT); }
