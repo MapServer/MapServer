@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 ----------------- 
 
+- Fixed problem with WMS GetFeatureInfo when map was reprojected. Was a
+  problem with msProjectRect and zero-size search rectangles (bug 794)
+
 - MapServer version now output to mapscriptvars and read by Perl Makefile.PL
   and Python setup.py (bug 795).
 
