@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.134  2004/10/29 00:13:17  assefa
+ * Support RULE parameter for GetLegendGraphic (Bug 843)
+ * Change link:href="...to "xlink:href="... (Bug 1001)
+ *
  * Revision 1.133  2004/10/28 21:28:06  assefa
  * Auto generate GetLegndGraphic URL if wms_stle_<stylename>_legendurl_href
  * is not present (Bug 1001).
@@ -1117,7 +1121,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                          ">\n          <Format>%s</Format", 
                          "\n          <OnlineResource xmlns:xlink=\""
                          "http://www.w3.org/1999/xlink\" "
-                         "xlink:type=\"simple\" link:href=\"%s\"/>\n        ", 
+                         "xlink:type=\"simple\" xlink:href=\"%s\"/>\n        ", 
                          MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
                          NULL, NULL, NULL, NULL, NULL, "        ");
 
@@ -1172,7 +1176,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                                  ">\n             <Format>%s</Format", 
                                  "\n             <OnlineResource "
                                  "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                                 " xlink:type=\"simple\" link:href=\"%s\"/>\n"
+                                 " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
                                  "          ",
                                  MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
                                  NULL, NULL, NULL, NULL, NULL, "          ");
@@ -1210,7 +1214,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                    fprintf(stdout, "          <LegendURL width=\"%d\" height=\"%d\">\n", 
                            width, height);
                    fprintf(stdout, "             <Format>%s</Format>\n", MS_IMAGE_MIME_TYPE(map->outputformat));
-                   fprintf(stdout, "             <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" link:href=\"%s\" />\n", legendurl);
+                   fprintf(stdout, "             <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\" />\n", legendurl);
                    fprintf(stdout, "          </LegendURL>\n");
                    fprintf(stdout, "        </Style>\n");
                    free(legendurl);
@@ -2217,7 +2221,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
     char *psScale = NULL;
     int iLayerIndex = -1;
     outputFormatObj *psFormat = NULL;
-    imageObj *img;
+    imageObj *img=NULL;
     int i = 0;
     int nWidth = -1, nHeight =-1;
 
@@ -2341,26 +2345,47 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
      }
      else
      {
-         // RULE was specified.
-
+         // RULE was specified. Get the class corresponding to the RULE
+         //(RULE = class->name)
+         
+         for (i=0; i<map->layers[iLayerIndex].numclasses; i++)
+         {
+             if (map->layers[iLayerIndex].class[i].name && 
+                 strlen(map->layers[iLayerIndex].class[i].name) > 0 &&
+                 strcasecmp(map->layers[iLayerIndex].class[i].name,psRule) == 0)
+               break;
+             
+         }
+         if (i < map->layers[iLayerIndex].numclasses)
+         {
          //set the map legend parameters
-         if (nWidth < 0)
-         {
-             if (map->legend.keysizex > 0)
-               nWidth = map->legend.keysizex;
-             else
-               nWidth = 20; //default values : this in not defined in the specs
+             if (nWidth < 0)
+             {
+                 if (map->legend.keysizex > 0)
+                   nWidth = map->legend.keysizex;
+                 else
+                   nWidth = 20; //default values : this in not defined in the specs
+             }
+             if (nHeight < 0)
+             {
+                 if (map->legend.keysizey > 0)
+                   nHeight = map->legend.keysizey;
+                 else
+                   nHeight = 20;
+             }
+             
+             img = msCreateLegendIcon(map, &map->layers[iLayerIndex], 
+                                      &map->layers[iLayerIndex].class[i],
+                                      nWidth, nHeight);
          }
-         if (nHeight < 0)
+         if (img == NULL)
          {
-             if (map->legend.keysizey > 0)
-               nHeight = map->legend.keysizey;
-             else
-               nHeight = 20;
+             msSetError(MS_IMGERR,
+                        "Unavailable RULE (%s).",
+                        "msWMSGetLegendGraphic()",
+                        psRule);
+              return msWMSException(map, nVersion, "InvalidRule");
          }
-
-         img = msCreateLegendIcon(map, &map->layers[iLayerIndex], NULL,
-                                  nWidth, nHeight);
      }
 
      if (img == NULL)
