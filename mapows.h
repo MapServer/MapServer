@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.24  2004/03/29 14:41:55  dan
+ * Use CURL's internal timer instead of custom gettimeofday() calls for
+ * timing WMS/WFS requests
+ *
  * Revision 1.23  2004/03/18 23:11:12  dan
  * Added detailed reporting (using msDebug) of layer rendering times
  *
@@ -72,9 +76,6 @@ typedef struct http_request_info
 
     /* For debugging/profiling */
     int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
-    struct timeval start_tv;       /* Time when download started */
-    struct timeval firstpacket_tv; /* Time when first packet arrived */
-    struct timeval end_tv;         /* Time when download completed */
 
     /* Private members */
     void      * curl_handle;   /* CURLM * handle */

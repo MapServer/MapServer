@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2004/03/29 14:41:56  dan
+ * Use CURL's internal timer instead of custom gettimeofday() calls for
+ * timing WMS/WFS requests
+ *
  * Revision 1.15  2004/03/18 23:11:12  dan
  * Added detailed reporting (using msDebug) of layer rendering times
  *
@@ -174,12 +178,6 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         pasReqInfo[i].pszErrBuf = NULL;
 
         pasReqInfo[i].debug = MS_FALSE;
-        pasReqInfo[i].start_tv.tv_sec = 0;
-        pasReqInfo[i].start_tv.tv_usec = 0;
-        pasReqInfo[i].firstpacket_tv.tv_sec = 0;
-        pasReqInfo[i].firstpacket_tv.tv_usec = 0;
-        pasReqInfo[i].end_tv.tv_sec = 0;
-        pasReqInfo[i].end_tv.tv_usec = 0;
 
         pasReqInfo[i].curl_handle = NULL;
         pasReqInfo[i].fp = NULL;
@@ -247,11 +245,6 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
     {
         msDebug("msHTTPWriteFct(id=%d, %d bytes)\n",
                 psReq->nLayerId, size*nmemb);
-        if (psReq->firstpacket_tv.tv_sec == 0)
-        {
-            /* Keep track of when the first bit of data arrived */
-            gettimeofday(&(psReq->firstpacket_tv), NULL);
-        }
     }
 
     return fwrite(buffer, size, nmemb, psReq->fp);
@@ -332,9 +325,6 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         {
             msDebug("HTTP request: id=%d, %s\n", 
                     pasReqInfo[i].nLayerId, pasReqInfo[i].pszGetUrl);
-
-            /* Init start time for this request */
-            gettimeofday(&(pasReqInfo[i].start_tv), NULL);
         }
 
         /* Reset some members */
@@ -519,6 +509,12 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         }
     }
 
+    if (debug)
+    {
+        /* Print a msDebug header for timings reported in the loop below */
+        msDebug("msHTTPExecuteRequests() timing summary per layer (connect_time + time_to_first_packet + download_time = total_time in seconds)\n");
+    }
+
     /* Check status of all requests, close files, report errors and cleanup
      * handles 
      */
@@ -605,44 +601,37 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             }
         }
 
+        /* Report download times foreach handle, in debug mode */
+        if (psReq->debug)
+        {
+            double dConnectTime=0.0, dTotalTime=0.0, dStartTfrTime=0.0;
+
+            curl_easy_getinfo(http_handle, 
+                              CURLINFO_CONNECT_TIME, &dConnectTime);
+            curl_easy_getinfo(http_handle, 
+                              CURLINFO_STARTTRANSFER_TIME, &dStartTfrTime);
+            curl_easy_getinfo(http_handle, 
+                              CURLINFO_TOTAL_TIME, &dTotalTime);
+            /* STARTTRANSFER_TIME includes CONNECT_TIME, but TOTAL_TIME
+             * doesn't, so we need to add it.
+             */
+            dTotalTime += dConnectTime;
+
+            msDebug("Layer %d: %.3f + %.3f + %.3f = %.3fs\n", psReq->nLayerId,
+                    dConnectTime, dStartTfrTime-dConnectTime, 
+                    dTotalTime-dStartTfrTime, dTotalTime);
+        }
+
         /* Cleanup this handle */
         curl_easy_setopt(http_handle, CURLOPT_URL, "" );
         curl_multi_remove_handle(multi_handle, http_handle);
         curl_easy_cleanup(http_handle);
         psReq->curl_handle = NULL;
 
-        /* Mark the end time for this request... we should do this elsewhere
-         * if/when we find a way to detect the end of each request
-         */
-        if (psReq->debug)
-            gettimeofday(&(psReq->end_tv), NULL);
     }
 
     /* Cleanup multi handle, each handle had to be cleaned up individually */
     curl_multi_cleanup(multi_handle);
-
-    /* Report download times foreach layer, in debug mode */
-    if (debug)
-    {
-        msDebug("msHTTPExecuteRequests() timing summary per layer (time_to_first_packet + download_time = total_time in seconds)\n");
-        for (i=0; i<numRequests; i++)
-        {
-            httpRequestObj *psReq;
-            psReq = &(pasReqInfo[i]);
-
-            if (psReq->debug)
-            {
-                double dStart, dFirstPacket, dEnd;
-                dStart = psReq->start_tv.tv_sec +psReq->start_tv.tv_usec/1.0e6;
-                dFirstPacket = psReq->firstpacket_tv.tv_sec + 
-                                     psReq->firstpacket_tv.tv_usec/1.0e6;
-                dEnd = psReq->end_tv.tv_sec + psReq->end_tv.tv_usec/1.0e6;
-
-                msDebug("Layer %d: %.3fs + %.3fs = %.3fs\n", psReq->nLayerId,
-                        dFirstPacket-dStart, dEnd-dFirstPacket, dEnd-dStart);
-            }
-        }
-    }
 
     return nStatus;
 }
