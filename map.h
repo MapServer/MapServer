@@ -135,6 +135,7 @@ extern "C" {
 
 #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
 
+#define MS_INIT_COLOR(color,r,g,b) { (color).red = r; (color).green = g; (color.blue = b; (color).pen = MS_PEN_UNSET; }
 #define MS_VALID_COLOR(color) (((color)->red==-1 || (color)->green==-1 || (color)->blue==-1)?MS_FALSE:MS_TRUE)
 #define MS_TRANSPARENT_COLOR(color) (((color)->red==-255 || (color)->green==-255 || (color)->blue==-255)?MS_FALSE:MS_TRUE)
 #define MS_COMPARE_COLORS(a,b) (((a)->red!=(b)->red || (a)->green!=(b)->green || (a)->blue!=(b)->blue)?MS_FALSE:MS_TRUE)
@@ -1088,6 +1089,8 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
 imageObj *msImageLoadGD( const char *filename );
 void      msImageInitGD( imageObj *image, colorObj *background );
 int msImageSetPenGD(gdImagePtr img, colorObj *color);
+
+#define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
 
 int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
 int msSaveImageGD_LL(gdImagePtr img, char *filename, int type,
