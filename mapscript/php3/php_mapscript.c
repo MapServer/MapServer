@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.149  2003/03/14 13:43:03  attila
+ * Introduce MySQL generic support, enabled with --with-mygis when configuring, imagemap output
+ *
  * Revision 1.148  2003/02/24 02:19:43  dan
  * Added map->clone() method
  *
@@ -901,6 +904,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_SDE",        MS_SDE,         const_flag);
     REGISTER_LONG_CONSTANT("MS_OGR",        MS_OGR,         const_flag);
     REGISTER_LONG_CONSTANT("MS_POSTGIS",    MS_POSTGIS,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_MYGIS",      MS_MYGIS,       const_flag);
     REGISTER_LONG_CONSTANT("MS_WMS",        MS_WMS,         const_flag);
     REGISTER_LONG_CONSTANT("MS_ORACLESPATIAL", MS_ORACLESPATIAL,const_flag);
  
@@ -5267,6 +5271,10 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         php3_header();
 #endif
 
+        if(im->format->name && strcasecmp(im->format->name, "imagemap")==0){ 
+            iptr = im->img.imagemap;
+	    size = strlen(im->img.imagemap); //TODO
+	} else
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
 
 #ifdef USE_GD_GIF
@@ -6249,7 +6257,6 @@ DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS)
     {
         WRONG_PARAM_COUNT;
     }
-
     convert_to_string(pFilterString);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
