@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.164  2004/11/22 15:44:42  sean
+ * quick fixes to work around new requirement for non-null layer names in msValidateContext.  Set ltag to '[NULL]' for a NULL name in msValidateContext, skip null-named layers in msEvalContext (bug 1081).
+ *
  * Revision 1.163  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -118,8 +121,15 @@ int msValidateContexts(mapObj *map)
 
   ltags = (char **) malloc(map->numlayers*sizeof(char *));
   for(i=0; i<map->numlayers; i++) {
-    ltags[i] = (char *) malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
-    sprintf(ltags[i], "[%s]", map->layers[i].name);
+    if (map->layers[i].name == NULL) 
+    {
+      ltags[i] = strdup("[NULL]");
+    }
+    else
+    {
+      ltags[i] = (char *) malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
+      sprintf(ltags[i], "[%s]", map->layers[i].name);
+    }
   }
 
   // check each layer's REQUIRES and LABELREQUIRES parameters
@@ -156,6 +166,8 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
 
   for(i=0; i<map->numlayers; i++) { // step through all the layers
     if(layer->index == i) continue; // skip the layer in question
+    // Layer without name cannot be used in contexts
+    if (map->layers[i].name == NULL) continue;
     visible = msLayerIsVisible(map, &(map->layers[i]));
 
     if(map->layers[i].type == MS_LAYER_RASTER && visible)
