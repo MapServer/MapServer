@@ -51,6 +51,8 @@
     ~symbolSetObj() 
     {
         msFreeSymbolSet(self);
+        if (self->filename) free(self->filename);
+        free(self);
     }
 
     symbolObj *getSymbol(int i) 
