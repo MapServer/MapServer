@@ -16,6 +16,17 @@ the CVS logs is updated daily at the following URL:
 Version 4.1 (CVS)
 ------------------------
 
+- Added support for WMS 1.1.1 in the WMS interface. 
+
+- Added support for WMS-SLD in client and server mode.
+
+- Added support for attribute filters in the WFS interface.
+
+- WMS Interface: several fixes to address issues found in running tests
+  against the OGC testsuite. One of the side-effects is that incomplete
+  GetMap requests that used to work in previous versions will produce
+  errors now (see bug 622).
+
 - Modified configure scripts to be able to configure/build PHP MapScript
   using an installed PHP instead of requiring the full source tree.
 
