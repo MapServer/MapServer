@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.26  2004/02/26 14:48:03  frank
+ * Avoid warnings by pre-include cpl_minixml.h before ogr_api.h is included.
+ *
  * Revision 1.25  2004/02/20 22:18:29  assefa
  * Make sure that arrays are  sorted at th end of the And/Or functions.
  *
@@ -126,13 +129,14 @@
  **********************************************************************/
 
 
+#ifdef USE_OGR
+#include "cpl_minixml.h"
+#endif
+
 #include "mapogcfilter.h"
 #include "map.h"
 
 #ifdef USE_OGR
-
-#include "ogr_api.h"
-
 
 static int compare_ints( const void * a, const void * b)
 {
@@ -153,7 +157,7 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape)
         OGRGeometryH hGeometry = NULL;
 
         psTree->psNext = NULL;
-        hGeometry = OGR_G_CreateFromGMLTree((const)psTree );
+        hGeometry = OGR_G_CreateFromGMLTree(psTree );
         psTree->psNext = psNext;
 
         if (hGeometry)
