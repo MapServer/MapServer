@@ -4,7 +4,7 @@
  *  Authors: Fernando Simon (fsimon@univali.br)                              * 
  *           Rodrigo Becke Cabral (cabral@univali.br)                        *
  *  Collaborator: Adriana Gomes Alves                                        *
- *  MapServer: MapServer 4.3 (cvs)                                           *
+ *  MapServer: MapServer 4.4 (cvs)                                           *
  *  Oracle: Oracle 9.2 Spatial Cartridge 9.2 release 9.0.1                   *
  *                                                                           *
  *****************************************************************************
@@ -17,6 +17,9 @@
  = and FUNCITEC (www.funcitec.rct-sc.br) under process FCTP1523-031.
  *****************************************************************************
  * $Id$
+ *
+ * Revision 1.12  $Date$
+ * Added debug messages.
  *
  * Revision 1.11  $Date$
  * Connection Pool support.
@@ -819,6 +822,10 @@ int msOracleSpatialLayerOpen( layerObj *layer )
   
   memset( layerinfo, 0, sizeof(msOracleSpatialLayerInfo) );  
   
+  if (layer->debug)
+    msDebug("msOracleSpatialLayerOpen called with: %s\n",layer->data);
+  
+  
   if (layer->layerinfo != NULL)
     return MS_SUCCESS;
 
@@ -828,7 +835,7 @@ int msOracleSpatialLayerOpen( layerObj *layer )
            "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
            "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'."
            "If want to set the FUNCTION statement you can use: FILTER, RELATE or GEOMRELATE.",
-           "msOracleSpatialLayerWhichShapes()");
+           "msOracleSpatialLayerOpen()");
     return MS_FAILURE;
   }
 
@@ -877,9 +884,20 @@ int msOracleSpatialLayerClose( layerObj *layer )
 { 
   msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
   
+  if (layer->debug)
+    msDebug("msOracleSpatialLayerClose was called. Layer connection: %s\n",layer->connection);
+  
   if (layerinfo != NULL){
-    msConnPoolRelease( layer, layerinfo->orahandlers );
+    
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerClose. Cleaning Oracle handlers.\n");
+    
+    msConnPoolRelease( layer, layerinfo->orahandlers );    
     layerinfo->orahandlers = NULL;
+    
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerClose. Cleaning layerinfo handlers.\n");
+    
     msOCIClearLayerInfo( layerinfo );
     /*msOCIDisconnect( layerinfo );*/
     free( layerinfo );
@@ -898,9 +916,11 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   char table_name[2000], geom_column_name[100], unique[100], srid[100];
   OCIDefine *adtp = NULL, *items[ARRAY_SIZE] = { NULL };
 
+  if (layer->debug)
+    msDebug("msOracleSpatialLayerWhichShapes was called.\n");
+  
   /* get layerinfo */
-  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
-      
+  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;      
   msOracleSpatialHandler *hand = layerinfo->orahandlers;
   
   if (layerinfo == NULL) {
@@ -1047,8 +1067,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
   int success, i;    
   
   /* get layerinfo */
-  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
-      
+  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;      
   msOracleSpatialHandler *hand = layerinfo->orahandlers;
   
   if (layerinfo == NULL) {
@@ -1115,86 +1134,87 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     char query_str[6000], table_name[2000], geom_column_name[100], unique[100], srid[100];
     OCIParam *pard = (OCIParam *) 0;
 
-    msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *) layer->layerinfo;
-         
-    msOracleSpatialHandler *hand = layerinfo->orahandlers;
-          
-     if (layerinfo == NULL)
-     {
-       msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetItems called on unopened layer", "msOracleSpatialLayerGetItems()" );
-       return MS_FAILURE;
-     }
-     
-     if (!msSplitData(layer->data, geom_column_name, table_name, unique, srid, &function)){
-       msSetError( MS_ORACLESPATIALERR, 
-           "Error parsing OracleSpatial DATA variable. Must be: "
-           "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
-           "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
-           "If want to set the FUNCTION statement you can use: FILTER, RELATE or GEOMRELATE. "
-           "Your data statement: %s", 
-           "msOracleSpatialLayerWhichShapes()", layer->data );  
-       return MS_FAILURE;
-     }    
-     
-     sprintf( query_str, "SELECT * FROM %s", table_name );
-     success =  TRY( hand, OCIStmtPrepare( layerinfo->stmthp, hand->errhp, (text *)query_str, (ub4)strlen(query_str), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DESCRIBE_ONLY) )
-             && TRY( hand, OCIStmtExecute( hand->svchp, layerinfo->stmthp, hand->errhp, (ub4)QUERY_SIZE, (ub4)0, (OCISnapshot *)NULL, (OCISnapshot *)NULL, (ub4)OCI_DESCRIBE_ONLY ) )
-             && TRY( hand, OCIAttrGet( (dvoid *)layerinfo->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&layer->numitems, (ub4 *)0, OCI_ATTR_PARAM_COUNT, hand->errhp) );
-                  
-     if (!success){
-       msSetError( MS_QUERYERR, "Cannot retrieve column list", "msOracleSpatialLayerGetItems()" );
-       return MS_FAILURE;
-     }   
-          
-     layerinfo->row_num = layerinfo->row = 0;
-     
-     layer->numitems = layer->numitems-1;  
-     layer->items = malloc (sizeof(char *) * (layer->numitems));     
-          
-     if (layer->numitems > 0) 
-     {
-       layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
-       if (layerinfo->items_query == NULL){
-         msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer", "msOracleSpatialLayerGetItems()" );
-         return MS_FAILURE;
-       }
-     }
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerGetItems was called.\n");
     
-     count_item = 0;
-     existgeom = 0;
-      
-     /*Upcase conversion for the geom_column_name*/
-     for (i=0; geom_column_name[i] != '\0'; i++)
-         geom_column_name[i] = toupper(geom_column_name[i]);
-      
-     /*Retrive columns name from the user table*/
-     for (i = 0; i <= layer->numitems; i++){   
-         success = TRY( hand, OCIParamGet ((dvoid*)layerinfo->stmthp, (ub4)OCI_HTYPE_STMT,hand->errhp,(dvoid*)&pard, (ub4)i+1))
-                && TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,(dvoid*)&rzt,(ub4 *)&flk_len, (ub4) OCI_ATTR_NAME, hand->errhp ));
-         
-         /*It's possible to use strdup????? - verify */
-         flk = (char *)malloc(flk_len+1 );
-         memcpy(flk, rzt, flk_len);
-         flk[flk_len] = '\0';
-
-         /*Comapre the column name (flk) with geom_column_name and ignore with true*/
-         if (strcmp(flk, geom_column_name) != 0){
-             layer->items[count_item] = malloc(flk_len);
-             strcpy(layer->items[count_item], flk);
-             count_item++;
-         }
-         else
-            existgeom = 1;
-         strcpy( rzt, "" );
-         strcpy( flk, "" );
-         flk_len = 0;
-     }     
-     if (!(existgeom)){
-         msSetError (MS_ORACLESPATIALERR, "No geometry column, check stmt", "msOracleSpatialLayerGetItems()" );
-         return MS_FAILURE;      
-     }
+    msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *) layer->layerinfo;         
+    msOracleSpatialHandler *hand = layerinfo->orahandlers;
+    
+    if (layerinfo == NULL){
+      msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetItems called on unopened layer", "msOracleSpatialLayerGetItems()" );
+      return MS_FAILURE;
+    }
      
-     return msOracleSpatialLayerInitItemInfo( layer );  
+    if (!msSplitData(layer->data, geom_column_name, table_name, unique, srid, &function)){
+      msSetError( MS_ORACLESPATIALERR, 
+          "Error parsing OracleSpatial DATA variable. Must be: "
+          "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
+          "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
+          "If want to set the FUNCTION statement you can use: FILTER, RELATE or GEOMRELATE. "
+          "Your data statement: %s", 
+          "msOracleSpatialLayerWhichShapes()", layer->data );  
+      return MS_FAILURE;
+    }    
+     
+    sprintf( query_str, "SELECT * FROM %s", table_name );
+    success =  TRY( hand, OCIStmtPrepare( layerinfo->stmthp, hand->errhp, (text *)query_str, (ub4)strlen(query_str), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DESCRIBE_ONLY) )
+            && TRY( hand, OCIStmtExecute( hand->svchp, layerinfo->stmthp, hand->errhp, (ub4)QUERY_SIZE, (ub4)0, (OCISnapshot *)NULL, (OCISnapshot *)NULL, (ub4)OCI_DESCRIBE_ONLY ) )
+            && TRY( hand, OCIAttrGet( (dvoid *)layerinfo->stmthp, (ub4)OCI_HTYPE_STMT, (dvoid *)&layer->numitems, (ub4 *)0, OCI_ATTR_PARAM_COUNT, hand->errhp) );
+                 
+    if (!success){
+      msSetError( MS_QUERYERR, "Cannot retrieve column list", "msOracleSpatialLayerGetItems()" );
+      return MS_FAILURE;
+    }   
+          
+    layerinfo->row_num = layerinfo->row = 0;
+    
+    layer->numitems = layer->numitems-1;  
+    layer->items = malloc (sizeof(char *) * (layer->numitems));     
+         
+    if (layer->numitems > 0){
+      layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
+      if (layerinfo->items_query == NULL){
+        msSetError( MS_ORACLESPATIALERR,"Cannot allocate items buffer", "msOracleSpatialLayerGetItems()" );
+        return MS_FAILURE;
+      }
+    }
+    
+    count_item = 0;
+    existgeom = 0;
+     
+    /*Upcase conversion for the geom_column_name*/
+    for (i=0; geom_column_name[i] != '\0'; i++)
+        geom_column_name[i] = toupper(geom_column_name[i]);
+     
+    /*Retrive columns name from the user table*/
+    for (i = 0; i <= layer->numitems; i++){   
+        success = TRY( hand, OCIParamGet ((dvoid*)layerinfo->stmthp, (ub4)OCI_HTYPE_STMT,hand->errhp,(dvoid*)&pard, (ub4)i+1))
+               && TRY( hand, OCIAttrGet ((dvoid *) pard,(ub4) OCI_DTYPE_PARAM,(dvoid*)&rzt,(ub4 *)&flk_len, (ub4) OCI_ATTR_NAME, hand->errhp ));
+        
+        /*It's possible to use strdup????? - verify */
+        flk = (char *)malloc(flk_len+1 );
+        memcpy(flk, rzt, flk_len);
+        flk[flk_len] = '\0';
+         
+        /*Comapre the column name (flk) with geom_column_name and ignore with true*/
+        if (strcmp(flk, geom_column_name) != 0){
+            layer->items[count_item] = malloc(flk_len);
+            strcpy(layer->items[count_item], flk);
+            count_item++;
+        }
+        else
+           existgeom = 1;
+         
+        strcpy( rzt, "" );
+        strcpy( flk, "" );
+        flk_len = 0;
+    }     
+    if (!(existgeom)){
+        msSetError (MS_ORACLESPATIALERR, "No geometry column, check stmt", "msOracleSpatialLayerGetItems()" );
+        return MS_FAILURE;      
+    }
+     
+    return msOracleSpatialLayerInitItemInfo( layer );  
 }
 
 int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record )
@@ -1206,9 +1226,11 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     SDOGeometryObj *obj = NULL;
     SDOGeometryInd *ind = NULL;    
 
-    msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
-    
+    msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;    
     msOracleSpatialHandler *hand = layerinfo->orahandlers;
+    
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerGetShape was called. Using the record = %ld.\n", record);
     
     if (layerinfo == NULL){
         msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetShape called on unopened layer","msOracleSpatialLayerGetShape()" );
@@ -1256,6 +1278,9 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     if (layer->filter.string != NULL)
         sprintf( query_str + strlen(query_str), " AND %s", (layer->filter.string));
 
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerGetShape. Sql: %s\n", query_str);
+    
     /*Prepare the handlers to the query*/
     success = TRY( hand,OCIStmtPrepare( layerinfo->stmthp, hand->errhp, (text *)query_str, (ub4)strlen(query_str), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT) );
 
@@ -1333,6 +1358,9 @@ int msOracleSpatialLayerInitItemInfo( layerObj *layer )
     int i;
     int *itemindexes ;
     
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerInitItemInfo was called.\n");
+    
     if (layer->numitems == 0)
       return MS_SUCCESS;
 
@@ -1354,6 +1382,9 @@ int msOracleSpatialLayerInitItemInfo( layerObj *layer )
 
 void msOracleSpatialLayerFreeItemInfo( layerObj *layer )
 {
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerFreeItemInfo was called.\n");
+      
     if (layer->iteminfo)
         free(layer->iteminfo);
     layer->iteminfo = NULL;
