@@ -1,3 +1,4 @@
+/* $Id$ */
 #include "map.h"
 
 #ifndef FLT_MAX
@@ -197,6 +198,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	layerinfo->row_num=0;
 	layerinfo->query_result= NULL;
 	layerinfo->urid_name= NULL; 
+	layerinfo->user_srid= NULL;
 
 	layerinfo->conn = PQconnectdb( layer->connection );
 
