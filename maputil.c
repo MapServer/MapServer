@@ -37,12 +37,16 @@ int msEvalContext(mapObj *map, char *context)
 {
   int i, status;
   char *tmpstr1=NULL, *tmpstr2=NULL;
+  int raster=MS_FALSE;
 
   if(!context) return(MS_TRUE); // no context requirements
 
   tmpstr1 = strdup(context);
 
   for(i=0; i<map->numlayers; i++) { // step through all the layers
+    if(map->layers[i].type == MS_LAYER_RASTER && map->layers[i].status != MS_OFF)
+      raster = MS_TRUE; // there are raster layers ON/DEFAULT
+
     if(strstr(tmpstr1, map->layers[i].name)) {
       tmpstr2 = (char *)malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
       sprintf(tmpstr2, "[%s]", map->layers[i].name);
@@ -55,6 +59,12 @@ int msEvalContext(mapObj *map, char *context)
       free(tmpstr2);
     }
   }
+
+  // special option to catch raster (i.e. background) layers, easier than having to list all layers individually
+  if(raster == MS_TRUE)
+    tmpstr1 = gsub(tmpstr1, "[raster]", "1");
+  else
+    tmpstr1 = gsub(tmpstr1, "[raster]", "0");
 
   msyystate = 4; msyystring = tmpstr1;
   status = msyyparse();
