@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.2.4 
 --------------------------
 
+- Fixed bug 857: Fix msDecodeHTMLEntities to not skip characters after each 
+  decoding.
+
 - Fixed bug 834: SE_ROW_ID in SDE not initialized for unregistered SDE tables
 
 Version 4.2.3 (2004-08-30)
