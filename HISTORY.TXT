@@ -16,7 +16,58 @@ the CVS logs is updated daily at the following URL:
 Version 4.0-dev (CVS)
 ------------------------------
 
+
+Version 4.0-beta2 (2003-07-11)
+------------------------------
+
 - Added prototype of FastCGI support in mapserv_fcgi.c (not built by default).
+
+- Report full error stack in the mapserv CGI and PHP MapScript (bug 346)
+
+- Old index (.qix) format is deprecated (bug 273)
+
+- Fixed problem with embedded legend and scalebar that would result in
+  layers being added to the HTML legends (bug 171)
+
+- Changed joins (XBase only at this point) over to the open-prepare-next...
+  next-close way of doing things. Compiles fine, but needs more testing. 
+  One-to-many support should work now but it needs to be hooked into the 
+  template code yet.  Last thing before a candidate 4.0 release.
+
+- Added ability to generate images in MapScript processQueryTemplate (bug 341)
+
+- Added saving of output formats in msSaveMap()
+
+- Fixed problem in PHP MapScript with variables that were not dereferenced
+  before their values were changed by the MapScript wrappers (bug 323)
+
+- Added support for Web Map Context 1.0.0
+
+- Treat zero-length template values as NULL so that it's possible to
+  set("template", "") from MapScript to make layer non-queryable (bug 338)
+
+- Ditched the shapepath argument to the shapefileObj constructor
+
+- CARTOLINE join style default changed to MS_CJC_NONE
+
+- Tweaked code in legend builder to handle polygon layers slightly different.
+  Now if a polygon layer contains only outlines and no fills (i.e. a polyline)
+  then it is drawn using the zigzag legend shape rather than the box. I'll 
+  add legend outlines back in shortly.
+
+- Restored legend key outlines (triggered by setting OUTLINECOLOR). If an 
+  outline is requested then line symbols are clipped to the outline, 
+  otherwise lines are allowed to bleed a pixel or two beyond those 
+  boundaries- for most cases this looks	fine but for fat lines it is 
+  gonna look goofy regardless. In those cases use the KEYIMAGE.
+
+- Fixed a bug in the scanline writer so that x coordinates can be in any 
+  order when passed in to the function. (bug 336)
+
+- Updated loadExpressionString in mapfile.c to be a bit more tolerant of
+  input. Now if a string does not match the logical or regex pattern it is
+  automatically cast as a string expression. Removes the need for silly quotes.
+
 
 Version 4.0-beta1 (2003-06-06)
 ------------------------------
