@@ -15,6 +15,8 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.4.0-beta3 ()
 ----------------------
+- Output warning in capabilities document if layer,group,map names have
+  space in them. (Bug 486).
 
 - maporaclespatial.c: fixed declarations problems. (bug #1044)
 
