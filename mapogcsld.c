@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.45  2004/11/01 17:28:42  assefa
+ * HTML encode names and filter when generating SLD (Bug 892).
+ *
  * Revision 1.44  2004/10/29 22:18:54  assefa
  * Use ows_schama_location metadata. The default value if metadata is not found
  * is http://schemas.opengeospatial.net
@@ -3596,6 +3599,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     char *pszTmp = NULL;
     double dfMinScale =-1, dfMaxScale = -1;
     const char *pszWfsFilter= NULL;
+    char *pszEncoded = NULL, *pszWfsFilterEncoded=NULL;
 
     
     if (psLayer && 
@@ -3610,9 +3614,17 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 
         pszTmp = msLookupHashTable(&(psLayer->metadata), "wms_name");
         if (pszTmp)
-          sprintf(szTmp, "<Name>%s</Name>\n", pszTmp);
+        {
+            pszEncoded = msEncodeHTMLEntities(pszTmp);
+            sprintf(szTmp, "<Name>%s</Name>\n", pszEncoded);
+            msFree(pszEncoded);
+        }
         else if (psLayer->name)
-          sprintf(szTmp, "<Name>%s</Name>\n", psLayer->name);
+        {
+            pszEncoded = msEncodeHTMLEntities(psLayer->name);
+            sprintf(szTmp, "<Name>%s</Name>\n", pszEncoded);
+            msFree(pszEncoded);
+        }
         else
           sprintf(szTmp, "<Name>%s</Name>\n", "NamedLayer");
 
@@ -3625,6 +3637,8 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
         pszWfsFilter = msLookupHashTable(&(psLayer->metadata), "wfs_filter");
+        if (pszWfsFilter)
+          pszWfsFilterEncoded = msEncodeHTMLEntities(pszWfsFilter);
         if (psLayer->numclasses > 0)
         {
             for (i=psLayer->numclasses-1; i>=0; i--)
@@ -3635,14 +3649,17 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 //if class has a name, use it as the RULE name
                 if (psLayer->class[i].name)
                 {
-                    sprintf(szTmp, "<Name>%s</Name>\n",  psLayer->class[i].name);
+                    pszEncoded = msEncodeHTMLEntities(psLayer->class[i].name);
+                    sprintf(szTmp, "<Name>%s</Name>\n",  pszEncoded);
+                    msFree(pszEncoded);
+
                     pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
                 }
 /* -------------------------------------------------------------------- */
 /*      get the Filter if there is a class expression.                  */
 /* -------------------------------------------------------------------- */
-            
-                pszFilter = msSLDGetFilter(&psLayer->class[i], pszWfsFilter);
+                pszFilter = msSLDGetFilter(&psLayer->class[i], 
+                                           pszWfsFilterEncoded);
                     
                 if (pszFilter)
                 {
@@ -3758,6 +3775,8 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
             
             }
         }
+        if (pszWfsFilterEncoded)
+          msFree(pszWfsFilterEncoded);
         sprintf(szTmp, "%s\n",  "</FeatureTypeStyle>");
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
