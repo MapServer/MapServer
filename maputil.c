@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.165  2004/11/22 16:19:42  sdlime
+ * Trivial formating change.
+ *
  * Revision 1.164  2004/11/22 15:44:42  sean
  * quick fixes to work around new requirement for non-null layer names in msValidateContext.  Set ltag to '[NULL]' for a NULL name in msValidateContext, skip null-named layers in msEvalContext (bug 1081).
  *
@@ -121,12 +124,9 @@ int msValidateContexts(mapObj *map)
 
   ltags = (char **) malloc(map->numlayers*sizeof(char *));
   for(i=0; i<map->numlayers; i++) {
-    if (map->layers[i].name == NULL) 
-    {
+    if(map->layers[i].name == NULL) {
       ltags[i] = strdup("[NULL]");
-    }
-    else
-    {
+    } else {
       ltags[i] = (char *) malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
       sprintf(ltags[i], "[%s]", map->layers[i].name);
     }
