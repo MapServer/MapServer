@@ -1695,7 +1695,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
 #if !defined(USE_GDAL) || defined(USE_TIFF)
     if (memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) {
-      if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection)) {
+      if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
         msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( TIFF )");
         return(-1);
       }
