@@ -1537,7 +1537,7 @@ pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point)
 /* ==================================================================== */
 
 
-char **msgetAllGroupNames(mapObj *map, int *numTok)
+char **msGetAllGroupNames(mapObj *map, int *numTok)
 {
     char        **papszGroups = NULL;
     int         bFound = 0;

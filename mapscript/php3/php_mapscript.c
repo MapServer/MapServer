@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.81  2002/01/24 20:01:36  sacha
+ * Change msgetAllGroupNames to msGetAllGroupNames
+ *
  * Revision 1.80  2002/01/24 19:58:14  sacha
  * Move the function GetAllGroupNames from php to mapserver binaries
  *
@@ -3228,7 +3231,7 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
     if (self != NULL && self->numlayers > 0)
     {
        int numTok;
-       papszGroups = msgetAllGroupNames(self, &numTok);
+       papszGroups = msGetAllGroupNames(self, &numTok);
        
        for (i=0; i<numTok; i++)
        {

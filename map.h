@@ -688,7 +688,7 @@ int msLoadMapString(mapObj *map, char *object, char *value);
 void msFree(void *p);
 
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems); // in maputil.c
-char **msgetAllGroupNames(mapObj* map, int *numTok);
+char **msGetAllGroupNames(mapObj* map, int *numTok);
 int msEvalContext(mapObj *map, char *context);
 int msShapeGetClass(layerObj *layer, shapeObj *shape);
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
