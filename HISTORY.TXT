@@ -22,6 +22,13 @@ Version 4.1 (CVS)
 
 - Added simple dataset for unit and regression tests (bug 453)
 
+- PostGIS: added postresql_NOTICE_HANDLER() sending output via msDebug() 
+  and only when layer->debug is set (bug 418)
+
+- Added Apache version detection in configure and added non-blocking flag
+  on stderr in msDebug() to work around Apache 2.x bug (bug 458)
+
+
 Version 4.0 (2003-08-01)
 ------------------------
 
