@@ -6,6 +6,11 @@
 #include "mapfile.h"
 #include "mapthread.h"
 
+#ifdef USE_GDAL
+#  include "cpl_conv.h"
+#  include "gdal.h"
+#endif
+
 extern int msyylex();
 extern void msyyrestart();
 extern double msyynumber;
@@ -3734,9 +3739,7 @@ int initMap(mapObj *map)
   map->outputformatlist = NULL;
   map->outputformat = NULL;
 
-  map->numconfigoptions = 0;
-  map->configoptionkeys = NULL;
-  map->configoptionvalues = NULL;
+  map->configoptions = msCreateHashTable();;
 
   map->imagetype = NULL;
 
@@ -3906,13 +3909,7 @@ void msFreeMap(mapObj *map) {
 
   msFree(map->templatepattern);
   msFree(map->datapattern);
-  for( i=0; i < map->numconfigoptions; i++ )
-  {
-      msFree( map->configoptionkeys[i] );
-      msFree( map->configoptionvalues[i] );
-  }
-  msFree( map->configoptionkeys );
-  msFree( map->configoptionvalues );
+  msFreeHashTable(map->configoptions);
   msFree(map);
 }
 
@@ -3921,6 +3918,7 @@ int msSaveMap(mapObj *map, char *filename)
   int i;
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
+  const char *key;
 
   if(!map) {
     msSetError(MS_MISCERR, "Map is undefined.", "msSaveMap()");
@@ -3961,6 +3959,13 @@ int msSaveMap(mapObj *map, char *filename)
       fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
 
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
+  for( key = msFirstKeyFromHashTable( map->configoptions );
+       key != NULL;
+       key = msNextKeyFromHashTable( map->configoptions, key ) )
+  {
+      fprintf( stream, "  CONFIG %s \"%s\"\n", 
+               key, msLookupHashTable( map->configoptions, key ) );
+  }
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
   if(map->debug) fprintf(stream, "  DEBUG ON\n");
 
@@ -4584,65 +4589,40 @@ void msCloseConnections(mapObj *map) {
 const char *msGetConfigOption( mapObj *map, const char *key)
 
 {
-    int i;
-
-    for( i = 0; i < map->numconfigoptions; i++ )
-    {
-        if( strcasecmp(key,map->configoptionkeys[i]) == 0 )
-        {
-            return map->configoptionvalues[i];
-        }
-    }
-
-    return NULL;
+    return msLookupHashTable( map->configoptions, key );
 }
 
 void msSetConfigOption( mapObj *map, const char *key, const char *value)
 
 {
-    int i;
-
     // We have special "early" handling of this so that it will be
     // in effect when the projection blocks are parsed and pj_init is called.
     if( strcasecmp(key,"PROJ_LIB") == 0 )
         msSetPROJ_LIB( value );
 
-    for( i = 0; i < map->numconfigoptions; i++ )
-    {
-        if( strcasecmp(key,map->configoptionkeys[i]) == 0 )
-        {
-            free( map->configoptionvalues[i] );
-            map->configoptionvalues[i] = strdup(value);
-            return;
-        }
-    }
-
-    map->numconfigoptions++;
-    map->configoptionkeys = (char **) 
-        realloc(map->configoptionkeys,sizeof(char*) * map->numconfigoptions);
-    map->configoptionvalues = (char **) 
-        realloc(map->configoptionvalues,sizeof(char*) * map->numconfigoptions);
-
-    map->configoptionkeys[map->numconfigoptions-1] = strdup(key);
-    map->configoptionvalues[map->numconfigoptions-1] = strdup(value);
+    if( msLookupHashTable( map->configoptions, key ) != NULL )
+        msRemoveHashTable( map->configoptions, key );
+    msInsertHashTable( map->configoptions, key, value );
 }
 
 void msApplyMapConfigOptions( mapObj *map )
 
 {
-    int i;
+    const char *key;
 
-    for( i = 0; i < map->numconfigoptions; i++ )
+    for( key = msFirstKeyFromHashTable( map->configoptions );
+         key != NULL;
+         key = msNextKeyFromHashTable( map->configoptions, key ) )
     {
-        if( strcasecmp(map->configoptionkeys[i],"PROJ_LIB") == 0 )
+        const char *value = msLookupHashTable( map->configoptions, key );
+        if( strcasecmp(key,"PROJ_LIB") == 0 )
         {
-            msSetPROJ_LIB( map->configoptionvalues[i] );
+            msSetPROJ_LIB( value );
         }
         else 
         {
-#ifdef USE_GDAL
-            CPLSetConfigOption( map->configoptionkeys[i], 
-                                map->configoptionvalues[i] );
+#if defined(USE_GDAL) && GDAL_RELEASE_DATE > 20030601
+            CPLSetConfigOption( key, value );
 #endif         
         }   
     }
