@@ -44,6 +44,9 @@ int msLoadProjectionString(projectionObj *p, char *value);
 #endif
 #endif
 
+/*utility functions */
+int GetMapserverUnitUsingProj(projectionObj *psProj);
+
 #ifdef __cplusplus
 }
 #endif

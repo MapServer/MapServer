@@ -291,6 +291,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
                           char **names, char **values, int numentries)
 {
   int i, adjust_extent = MS_FALSE;
+  int iUnits = -1;
 
   // Some of the getMap parameters are actually required depending on the 
   // request, but for now we assume all are optional and the map file 
@@ -351,6 +352,10 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
 
         if (msLoadProjectionString(&(map->projection), buffer) != 0)
           return msWMSException(map, wmtver);
+        
+        iUnits = GetMapserverUnitUsingProj(&(map->projection));
+        if (iUnits != -1)
+          map->units = iUnits;
       }
       else {
         msSetError(MS_MISCERR, 
@@ -1197,7 +1202,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
         if(msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
           return msWMSException(map, wmtver);
 
-	if(msGMLWriteShape(stdout, &shape, NULL, NULL) != MS_SUCCESS)
+	if(msGMLWriteShape(stdout, &shape, NULL, NULL, NULL, NULL) != MS_SUCCESS)
 	  return msWMSException(map, wmtver);
 
         msFreeShape(&shape);
