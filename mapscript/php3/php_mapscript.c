@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.144  2003/02/12 14:19:48  assefa
+ * layer_open does not take any argument.
+ *
  * Revision 1.143  2003/02/04 15:39:43  julien
  * Use MS_SUCCESS to validate success in load/save map context
  *
@@ -6255,12 +6258,12 @@ DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS)
  *                        layer->open()
  **********************************************************************/
 
-/* {{{ proto int layer.open(string shapepath)
+/* {{{ proto int layer.open()
    Open the layer for use with getShape().  Returns MS_SUCCESS/MS_FAILURE. */
 
 DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
 { 
-    pval  *pThis, *pShapePath;
+    pval  *pThis;
     layerObj *self=NULL;
     int         nStatus = MS_FAILURE;
 #ifdef PHP4
@@ -6273,19 +6276,16 @@ DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
-    if (pThis == NULL ||
-        getParameters(ht, 1, &pShapePath) == FAILURE)
+    if (pThis == NULL || ARG_COUNT(ht) > 0)
     {
         WRONG_PARAM_COUNT;
     }
 
-    convert_to_string(pShapePath);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
                                            list TSRMLS_CC);
     if (self == NULL || 
-        (nStatus = layerObj_open(self, 
-                                 pShapePath->value.str.val)) != MS_SUCCESS)
+        (nStatus = layerObj_open(self)) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
     }
