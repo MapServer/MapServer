@@ -29,6 +29,9 @@ struct hashObj *msInsertHashTable(hashTableObj table, char *string, char *data)
   struct hashObj *tp;
   unsigned hashval;
 
+  if(!table || !string || !data)
+    return(NULL);
+
   for(tp=table[hash(string)]; tp!=NULL; tp=tp->next)
     if(strcmp(string, tp->key) == 0)
       break;
@@ -54,7 +57,7 @@ char *msLookupHashTable(hashTableObj table, char *string)
  {
   struct hashObj *tp;
 
-  if(!table)
+  if(!table || !string)
     return(NULL);
 
   for(tp=table[hash(string)]; tp!=NULL; tp=tp->next)

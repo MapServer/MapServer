@@ -801,6 +801,9 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
     }
   }
 
+  if(segment_index == 0) /* must have a degenerate line, skip it */
+    return(-1);
+
   if((min_length != -1) && (total_length < min_length)) /* too short to label */
     return(-1);
 
