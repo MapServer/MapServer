@@ -401,7 +401,7 @@ and the MapServer Map File documentation at:
         array with all the layer's index. 
         Return TRUE on success or else FALSE.
 
-   char *processtemplate(array params, boolean generateimages)
+   string processtemplate(array params, boolean generateimages)
         Process the template file specified in the web object and return 
         the resut in a buffer. 
         The processing consists of opening the template file and replace
@@ -420,14 +420,14 @@ and the MapServer Map File documentation at:
               $tmparray["my_tag"] = "value_of_my_tag";
               $map->processtemplate($tmparray, MS_FASLE);
          
-   char *processquerytemplate(array params, boolean generateimages)     
+   string processquerytemplate(array params, boolean generateimages)     
        Process query template files and return the resut in a buffer.
        Second argument generateimages is not manadatory. If not given
         It will be set to TRUE.
 
        See also : processtemplate function.
    
-   char *processlegendtemplate(array params)     
+   string processlegendtemplate(array params)     
        Process legend template files and return the resut in a buffer.
 
      See also : processtemplate function.
@@ -667,7 +667,7 @@ and the MapServer Map File documentation at:
         Returns "" and outputs a warning if layer is not a WMS layer 
         or if it is not queriable.
         
-   char ** getItems()
+   aString getItems()
         return a list of items. Must call open function first.
 
    boolean setProcessing(string)
