@@ -650,30 +650,20 @@ and the MapServer Map File documentation at:
    void free()
         Destroys resources used by an image object.
 
-   int saveImage(string filename, int type, int transparent, int interlace, 
-                 int quality)
+   int saveImage(string filename)
         Writes image object to specifed filename.
         Passing an empty filename sends output to stdout.  In this case,
         the PHP header() function should be used to set the documents's
         content-type prior to calling saveImage().
-        Type can be either MS_GIF, MS_PNG, MS_JPEG or MS_WBMP (depends on
-        which version of GD was used to compile MapScript)
-        Quality should be a value in the range 0-95, higher value implies
-        higher image quality and larger image sizes.
-        If quality is negative, then the default IJG JPEG quality value is 
-        used (the quality value is ignored for all formats other than JPEG).
+        The output format is the one that is currently selected in the map file.
         The function returns -1 on error.  On success, it returns either 0
         if writing to an external file, or the number of bytes written if 
         output is sent to stdout.
 
-   string saveWebImage(int type, int transparent, int interlace, int quality)
+   string saveWebImage()
         Writes image to temp directory.  Returns image URL.
-        Type can be either MS_GIF, MS_PNG, MS_JPEG or MS_WBMP (depends on
-        which version of GD was used to compile MapScript)
-        Quality should be a value in the range 0-95, higher value implies
-        higher image quality and larger image sizes.
-        If quality is negative, then the default IJG JPEG quality value is 
-        used  (the quality value is ignored for all formats other than JPEG).
+        The output format is the one that is currently selected in the map file.
+       
 
    void pasteImage(imageObj srcImg, int transparentColorIndex 
                    [, int dstX, dstY])
