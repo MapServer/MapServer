@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2001/07/20 13:50:27  dan
+ * Call zend_list_addref() when creating resource member variables
+ *
  * Revision 1.5  2001/03/18 17:48:46  dan
  * Fixed crash with PHP4 version of _phpms_fetch_property_handle2()
  *
@@ -602,6 +605,7 @@ int _phpms_object_init(pval *return_value, int  handle_id,
 
     object_init_ex(return_value, new_class_entry_ptr);
     add_property_resource(return_value, "_handle_", handle_id);
+    zend_list_addref(handle_id);
 #else
     object_init(return_value);
     add_property_long(return_value, "_handle_", handle_id);

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.44  2001/07/20 13:50:27  dan
+ * Call zend_list_addref() when creating resource member variables
+ *
  * Revision 1.43  2001/04/19 15:11:34  dan
  * Sync with mapscript.i v.1.32
  *
@@ -116,7 +119,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Apr 3, 2001)"
+#define PHP3_MS_VERSION "(Jul 20, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -3404,7 +3407,12 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     _phpms_object_init(return_value, layer_id, php_layer_class_functions,
                        PHP4_CLASS_ENTRY(layer_class_entry_ptr));
 
+#ifdef PHP4
+    add_property_resource(return_value, "_map_handle_", parent_map_id);
+    zend_list_addref(parent_map_id);
+#else
     add_property_long(return_value, "_map_handle_", parent_map_id);
+#endif
 
     /* read-only properties */
     add_property_long(return_value,   "numclasses", player->numclasses);
@@ -4546,7 +4554,12 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
     _phpms_object_init(return_value, class_id, php_class_class_functions,
                        PHP4_CLASS_ENTRY(class_class_entry_ptr));
 
+#ifdef PHP4
+    add_property_resource(return_value, "_layer_handle_", parent_layer_id);
+    zend_list_addref(parent_layer_id);
+#else
     add_property_long(return_value, "_layer_handle_", parent_layer_id);
+#endif
 
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "name",       pclass->name);
