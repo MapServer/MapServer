@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.15  2001/03/16 22:08:36  dan
+ * Removed allitems param to msLayerGetShape()
+ *
  * Revision 1.14  2001/03/12 19:02:46  dan
  * Added query-related stuff in PHP MapScript
  *
@@ -259,7 +262,7 @@ void layerObj_close(layerObj *self) {
 
 int layerObj_getShape(layerObj *self, char *path, shapeObj *shape, 
                       int tileindex, int shapeindex, int allitems) {
-    return msLayerGetShape(self, path, shape, tileindex, shapeindex, allitems);
+    return msLayerGetShape(self, path, shape, tileindex, shapeindex);
   }
 
 resultCacheMemberObj *layerObj_getResult(layerObj *self, int i) {
