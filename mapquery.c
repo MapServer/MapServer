@@ -657,9 +657,9 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
             }
 	    break;
 	  case MS_SHAPE_LINE:
-	    if(tolerance == 0) // just test for intersection
+	    if(tolerance == 0) { // just test for intersection
 	      status = msIntersectPolylinePolygon(&shape, &selectshape);
-	    else { // check distance, distance=0 means they intersect
+	    } else { // check distance, distance=0 means they intersect
 	      distance = msDistanceShapeToShape(&selectshape, &shape);
 	      if(distance < tolerance) status = MS_TRUE;
             }

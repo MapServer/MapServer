@@ -603,18 +603,27 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if(self->numpoints == 0) { /* new */	
       self->point = (pointObj *)malloc(sizeof(pointObj));      
       if(!self->point)
-	return -1;
+	return MS_FAILURE;
     } else { /* extend array */
       self->point = (pointObj *)realloc(self->point, sizeof(pointObj)*(self->numpoints+1));
       if(!self->point)
-	return -1;
+	return MS_FAILURE;
     }
 
     self->point[self->numpoints].x = p->x;
     self->point[self->numpoints].y = p->y;
     self->numpoints++;
 
-    return 0;
+    return MS_SUCCESS;
+  }
+
+  int set(int i, pointObj *p) {
+    if(i<0 || i>=self->numpoints) // invalid index
+      return MS_FAILURE;
+
+    self->point[i].x = p->x;
+    self->point[i].y = p->y;
+    return MS_SUCCESS;    
   }
 }
 

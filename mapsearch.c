@@ -321,7 +321,7 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
     }
   } else if(tN > tD) {
     tN = tD;
-    if((-d + b) > 0)
+    if((-d + b) < 0)
       sN = 0.0;
     else if((-d + b) > a)
       sN = sD;
