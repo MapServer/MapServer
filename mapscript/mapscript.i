@@ -250,28 +250,12 @@ memory.") const char * {
     return dstMap;
   }
 
-    // Modeled after PHP-Mapscript method
-    // 
-    // Adjusts map extents and sets map scale
-    //
-    // Difference from PHP-Mapscript is the rectObj arg is optional, default
-    // value is NULL, in which case the current extent values will be
-    // used, making this function useful to set the scale of a new mapObj.
     int setExtent(double minx, double miny, double maxx, double maxy) {	
-        // Check bounds
-        if (minx > maxx || miny > maxy) {
-            msSetError(MS_MISCERR, "Invalid bounds.", "setExtent()");
-            return MS_FAILURE;
-        }
-        self->extent.minx = minx;
-        self->extent.miny = miny;
-        self->extent.maxx = maxx;
-        self->extent.maxy = maxy;
-        self->cellsize = msAdjustExtent(&(self->extent), self->width, 
-                                        self->height);
-        msCalculateScale(self->extent, self->units, self->width, self->height, 
-                         self->resolution, &(self->scale));
-        return MS_SUCCESS;
+	return msMapSetExtent( self, minx, miny, maxx, maxy );
+    }
+
+    int setRotation( double rotation_angle ) {
+        return msMapSetRotation( self, rotation_angle );
     }
  
   /* removeLayer() adjusts the layers array, the indices of
