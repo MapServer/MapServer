@@ -337,6 +337,8 @@ void msFreeImage(imageObj *image)
 
         image->imagepath = NULL;
         image->imageurl = NULL;
+
+        msFree( image );
     }     
 }
 
