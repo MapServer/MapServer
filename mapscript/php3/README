@@ -116,6 +116,8 @@ and the MapServer Map File documentation at:
    int    	height
    int    	transparent
    int    	interlace
+   int    	imagetype
+   int    	imagequality
    rectObj 	extent;	
    double 	cellsize
    int          units (map units type)

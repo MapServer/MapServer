@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.76  2002/01/20 21:30:01  dan
+ * Added imagetype and imagequality params in mapObj
+ *
  * Revision 1.75  2002/01/17 21:05:53  dan
  * Changed img->pasteImage() to take transparent color index as argument
  *
@@ -1029,6 +1032,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value,  "height",    pNewObj->height);
     add_property_long(return_value,  "transparent", pNewObj->transparent);
     add_property_long(return_value,  "interlace", pNewObj->interlace);
+    add_property_long(return_value,  "imagetype", pNewObj->imagetype);
+    add_property_long(return_value,  "imagequality", pNewObj->imagequality);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
@@ -1127,6 +1132,8 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "height",      self->height)
     else IF_SET_LONG(  "transparent", self->transparent)
     else IF_SET_LONG(  "interlace",   self->interlace)
+    else IF_SET_LONG(  "imagetype",   self->imagetype)
+    else IF_SET_LONG(  "imagequality",self->imagequality)
     else IF_SET_DOUBLE("cellsize",    self->cellsize)
     else IF_SET_LONG(  "units",       self->units)
     else IF_SET_DOUBLE("scale",       self->scale)
