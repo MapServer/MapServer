@@ -11,7 +11,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "map.h" // for TRUE/FALSE
+#include "map.h" // for TRUE/FALSE and REGEX includes
 
 extern int msyylex(); /* lexer globals */
 extern int msyyerror();
@@ -29,9 +29,10 @@ int msyyresult;
 
 %token <dblval> NUMBER
 %token <strval> STRING
+%token <strval> REGEX
 %left OR
 %left AND
-%left EQ NE LT GT LE GE
+%left RE EQ NE LT GT LE GE
 %left LENGTH
 %left '+' '-'
 %left '*' '/'
@@ -41,6 +42,7 @@ int msyyresult;
 %type <intval> logical_exp
 %type <dblval> math_exp
 %type <strval> string_exp
+%type <strval> regular_exp
 
 /* Bison/Yacc grammar */
 
@@ -49,6 +51,8 @@ int msyyresult;
 input: /* empty string */
        | logical_exp      { msyyresult = $1; }
 ;
+
+regular_exp: REGEX ;
 
 logical_exp:
        logical_exp OR logical_exp      {
@@ -69,6 +73,19 @@ logical_exp:
 			                 else
 			                   $$ = MS_FALSE;
 		                       }
+       | string_exp RE regular_exp     {
+                                         regex_t re;
+
+                                         if(regcomp(&re, $3, REG_EXTENDED|REG_NOSUB) != 0) 
+                                           $$ = MS_FALSE;
+
+                                         if(regexec(&re, $1, 0, NULL, 0) == 0)
+                                  	   $$ = MS_TRUE;
+			                 else
+			                   $$ = MS_FALSE;
+
+                                         regfree(&re);
+                                       }
        | math_exp EQ math_exp          {
 	                                 if($1 == $3)
 	 		                   $$ = MS_TRUE;
