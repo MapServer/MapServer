@@ -440,14 +440,22 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
     script_url = strdup(value);
   }
   else {
-    const char *hostname, *port, *script;
+    const char *hostname, *port, *script, *protocol="http";
     hostname = getenv("SERVER_NAME");
     port = getenv("SERVER_PORT");
     script = getenv("SCRIPT_NAME");
 
+    // HTTPS is set by Apache to "on" in an HTTPS server ... if not set then
+    // check SERVER_PORT: 443 is the default https port.
+    if ( ((value=getenv("HTTPS")) && strcasecmp(value, "on") == 0) ||
+         ((value=getenv("SERVER_PORT")) && atoi(value) == 443) )
+    {
+        protocol = "https";
+    }
+
     if (hostname && port && script) {
       script_url = (char*)malloc(sizeof(char)*(strlen(hostname)+strlen(port)+strlen(script)+10));
-      if (script_url) sprintf(script_url, "http://%s:%s%s", hostname, port, script);
+      if (script_url) sprintf(script_url, "%s://%s:%s%s", protocol, hostname, port, script);
     }
     else {
       msSetError(MS_CGIERR, "Impossible to establish server URL.  Please set \"onlineresource\" metadata.", "msWMSCapabilities()");
