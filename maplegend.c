@@ -310,7 +310,7 @@ imageObj *msDrawLegend(mapObj *map)
   ** Initialize the legend image
   */
   //TODO
-  image = msImageCreateGD(size_x, size_y, map->imagetype,
+  image = msImageCreateGD(size_x, size_y, map->outputformat,
                           map->web.imagepath, map->web.imageurl);
   if (image)
       img = image->img.gd;
@@ -399,7 +399,8 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
   map->symbolset.symbol[s].name = strdup("legend");  
 
-  if(map->legend.transparent)
+  // I'm not too sure this test is sufficient ... NFW.
+  if(map->legend.transparent == MS_ON)
     gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
 
   switch(map->legend.position) {

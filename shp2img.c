@@ -21,9 +21,10 @@ int main(int argc, char *argv[])
   if( argc < 3 ) {
     fprintf(stdout,
             "Syntax: shp2img -m [mapfile] -o [image] -e minx miny maxx maxy\n"
-            "                -t -l [layers]\n");
+            "                -t -l [layers] -i [format]\n");
 
     fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
+    fprintf(stdout,"  -i format: Override the IMAGETYPE value to pick output format.\n" );
     fprintf(stdout,"  -t: enable transparency\n" );
     fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
     fprintf(stdout,"  -e minx miny maxx maxy: extents to render - optional\n");
@@ -55,6 +56,23 @@ int main(int argc, char *argv[])
 
     if(strncmp(argv[i],"-o",2) == 0) { /* load the output image filename */
       outfile = strdup(argv[i+1]);
+      i+=1;
+    }
+
+    if(strncmp(argv[i],"-i",2) == 0) { 
+      outputFormatObj *format;
+
+      format = msSelectOutputFormat( map, argv[i+1] );
+
+      if( format == NULL )
+          printf( "No such OUTPUTFORMAT as %s.\n", argv[i+1] );
+      else
+      {
+          msFree( (char *) map->imagetype );
+          map->imagetype = strdup( argv[i+1] );
+          msApplyOutputFormat( &(map->outputformat), format, MS_NOOVERRIDE,
+                               MS_NOOVERRIDE, MS_NOOVERRIDE );
+      }
       i+=1;
     }
 
@@ -109,8 +127,10 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  msSaveImage(image, outfile, map->transparent, map->interlace, map->imagequality);
-
+  if( msSaveImage(map, image, outfile) != MS_SUCCESS ) {
+    msWriteError(stderr);
+    exit(0);
+  }
   msFreeImage(image);
 
   msFreeMap(map);

@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  msSaveImage(img, argv[2], map->legend.transparent, map->legend.interlace, map->imagequality);
+  msSaveImage(NULL, img, argv[2]);
 
   msFreeImage(img);
 

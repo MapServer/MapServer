@@ -30,8 +30,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  msSaveImage(image, argv[2], map->scalebar.transparent, map->scalebar.interlace, 
-              map->imagequality);
+  msSaveImage(NULL, image, argv[2]);
 
   msFreeImage(image);
 

@@ -227,33 +227,34 @@ double msAdjustExtent(rectObj *rect, int width, int height)
 
 /*
 ** Generic function to save an image to a file.
+**
+** Note that map is NULL for images other than the main map, and it is 
+** intended to be used only to extract the georeferenced extents and coordinate
+** system of the map for writing out with the image when appropriate 
+** (primarily this means via msSaveImageGDAL() to something like GeoTIFF). 
+**
+** The filename is NULL when the image is supposed to be written to stdout. 
 */
 
-int msSaveImage(imageObj *img, char *filename, int transparent, 
-                int interlace, int quality)
+int msSaveImage(mapObj *map, imageObj *img, char *filename)
 {
     int nReturnVal = -1;
     if (img)
     {
-        switch (img->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                nReturnVal =  msSaveImageGD(img->img.gd, filename, 
-                                            img->imagetype,
-                                            transparent, interlace, quality);
-              break;
-              
-#ifdef USE_MING_FLASH
-            case (MS_SWF):
-                nReturnVal = msSaveImageSWF(img, filename);
+        if( MS_DRIVER_GD(img->format) )
+            nReturnVal =  msSaveImageGD(img->img.gd, filename, img->format );
+#ifdef USE_GDAL
+        else if( MS_DRIVER_GDAL(img->format) )
+            nReturnVal = msSaveImageGDAL(map, img->img.gd, filename, 
+                                         img->format );
 #endif
-            default:
-                msSetError(MS_MISCERR, "Unknown image type", 
-                           "msSaveImage()"); 
-        }
+#ifdef USE_MING_FLASH
+        else if( MS_DRIVER_SWF(img->format) )
+            nReturnVal = msSaveImageSWF(img, filename);
+#endif
+        else
+            msSetError(MS_MISCERR, "Unknown image type", 
+                       "msSaveImage()"); 
     }
 
     return nReturnVal;
@@ -266,36 +267,28 @@ void msFreeImage(imageObj *image)
 {
     if (image)
     {
-        switch (image->imagetype)
-        {
-            case (MS_GIF):
-            case (MS_PNG):
-            case (MS_JPEG):
-            case (MS_WBMP):
-                
-                msFreeImageGD(image->img.gd);
-                break;
+        if( MS_RENDERER_GD(image->format) )
+            msFreeImageGD(image->img.gd);
 
 #ifdef USE_MING_FLASH
-            case (MS_SWF):
-                msFreeImageSWF(image);
-                break;
+        else if( MS_RENDERER_SWF(image->format) )
+            msFreeImageSWF(image);
 #endif
-
-           default:
-               msSetError(MS_MISCERR, "Unknown image type", 
-                          "msFreeImage()"); 
-        }
+        else
+            msSetError(MS_MISCERR, "Unknown image type", 
+                       "msFreeImage()"); 
 
         if (image->imagepath)
             free(image->imagepath);
         if (image->imageurl)
             free(image->imageurl);
 
+        if( --image->format->refcount < 1 )
+            msFreeOutputFormat( image->format );
+
         image->imagepath = NULL;
         image->imageurl = NULL;
     }     
-
 }
 
 /*
@@ -912,22 +905,15 @@ char *msTmpFile(const char *path, const char *ext)
 /**
  *  Generic function to Initalize an image object.
  */
-imageObj *msImageCreate(int width, int height, int imagetype, char *imagepath,
-                        char *imageurl)
+imageObj *msImageCreate(int width, int height, outputFormatObj *format, 
+                        char *imagepath, char *imageurl)
 {
     imageObj *image = NULL;
 
-    switch (imagetype)
-    {
-      case (MS_GIF):
-      case (MS_PNG):
-      case (MS_JPEG):
-      case (MS_WBMP):
- 
-          image = msImageCreateGD(width, height, imagetype,
-                                  imagepath, imageurl);
-          break;
-    }
+    if( MS_RENDERER_GD(format) )
+        image = msImageCreateGD(width, height, format,
+                                imagepath, imageurl);
+
     if(!image) 
         msSetError(MS_GDERR, "Unable to initialize image.", "msImageCreate()");
 
@@ -943,8 +929,7 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 {
 
 #ifdef USE_MING_FLASH
-    if (image != NULL && 
-        image->imagetype == MS_SWF)
+    if (image != NULL && MS_RENDERER_SWF(image->format) )
     {
         msTransformShapeSWF(shape, extent, cellsize);
         return;
