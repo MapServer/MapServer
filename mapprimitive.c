@@ -1142,10 +1142,11 @@ static void imageFilledSegment(gdImagePtr im, double x, double y, double sz, dou
 /* ------------------------------------------------------------------------------- */
 static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bcoord, double da, double db, double angle_n, double size, int c, symbolObj *symbol, double styleCoef, double *styleSize, int *styleIndex, int *styleVis, gdPoint *points, double *da_px, double *db_px, int offseta, int offsetb, int antialias) 
 {
-  double an, bn, da_pxn, db_pxn, d_size, a, b, last_style_size;
+  double an, bn, da_pxn, db_pxn, d_size, a, b;
   double d_step_coef, da_pxn_coef, db_pxn_coef, da_px_coef, db_px_coef;
   int db_line, s, first, drawpoly;
   gdPoint poly_points[4];
+  static double last_style_size;
 
   /* Steps for one pixel */
   *da_px = da/MS_ABS(db);
@@ -1268,7 +1269,7 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
             poly_points[1].x = MS_NINT(an+da_pxn*size);
             poly_points[1].y = MS_NINT(bn+db_pxn*size);
           }
-          last_style_size = *styleSize; 
+          last_style_size = *styleSize+d_size;
           drawpoly = 1;
         } else {
           if (gox) {
@@ -1283,7 +1284,7 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
             poly_points[2].y = MS_NINT(bn+db_pxn*size);
           }
           if (drawpoly) {
-            if (last_style_size < 2*d_size) {
+            if (last_style_size <= 1) {
               if (antialias) {
                 //gdImageSetAntiAliased(img, c);
                 gdImageSetAntiAliasedDontBlend(img, c, c);
@@ -1531,8 +1532,8 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[2].x = MS_NINT(points[0].x); 
               cap_join_points[2].y = MS_NINT(points[0].y); 
               if ((angle == last_angle + MS_PI) || (angle == last_angle - MS_PI)) {
-                cap_join_points[1].x = MS_NINT(x)+dx_px*size*symbol->linejoinmaxsize;
-                cap_join_points[1].y = MS_NINT(y)+dy_px*size*symbol->linejoinmaxsize;
+                cap_join_points[1].x = MS_NINT(x+dx_px*size*symbol->linejoinmaxsize);
+                cap_join_points[1].y = MS_NINT(y+dy_px*size*symbol->linejoinmaxsize);
               } else { 
                 cap_join_points[1] = generateGDLineIntersection(last_points[0], last_points[3], points[0], points[3]);
               } 
@@ -1543,8 +1544,8 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
               cap_join_points[2].x = MS_NINT(points[1].x); 
               cap_join_points[2].y = MS_NINT(points[1].y); 
               if ((angle == last_angle + MS_PI) || (angle == last_angle - MS_PI)) {
-                cap_join_points[1].x = MS_NINT(x)-dx_px*size*symbol->linejoinmaxsize;
-                cap_join_points[1].y = MS_NINT(y)-dy_px*size*symbol->linejoinmaxsize;
+                cap_join_points[1].x = MS_NINT(x-dx_px*size*symbol->linejoinmaxsize);
+                cap_join_points[1].y = MS_NINT(y-dy_px*size*symbol->linejoinmaxsize);
               } else { 
                 cap_join_points[1] = generateGDLineIntersection(last_points[1], last_points[2], points[1], points[2]); 
               }
