@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.83  2005/03/25 07:01:27  frank
+ * construct proper polygon spatial filter
+ *
  * Revision 1.82  2005/03/25 05:43:43  frank
  * use msAddLineDirectly() to avoid extra alloc/copy of points
  *
@@ -1133,14 +1136,17 @@ static int msOGRFileWhichShapes(layerObj *layer, rectObj rect,
  * region and matches the layer's FILTER expression, but there is currently
  * no _efficient_ way to do that with OGR.
  * ------------------------------------------------------------------ */
-  OGRLinearRing oSpatialFilter;
+  OGRPolygon oSpatialFilter;
+  OGRLinearRing oRing;
 
-  oSpatialFilter.setNumPoints(5);
-  oSpatialFilter.setPoint(0, rect.minx, rect.miny);
-  oSpatialFilter.setPoint(1, rect.maxx, rect.miny);
-  oSpatialFilter.setPoint(2, rect.maxx, rect.maxy);
-  oSpatialFilter.setPoint(3, rect.minx, rect.maxy);
-  oSpatialFilter.setPoint(4, rect.minx, rect.miny);
+  oRing.setNumPoints(5);
+  oRing.setPoint(0, rect.minx, rect.miny);
+  oRing.setPoint(1, rect.maxx, rect.miny);
+  oRing.setPoint(2, rect.maxx, rect.maxy);
+  oRing.setPoint(3, rect.minx, rect.maxy);
+  oRing.setPoint(4, rect.minx, rect.miny);
+
+  oSpatialFilter.addRing( &oRing );
 
   psInfo->poLayer->SetSpatialFilter( &oSpatialFilter );
 
