@@ -198,8 +198,10 @@ AC_DEFUN(AC_LD_SHARED,
 
   SHARED_FLAG="-shared"
 
+  dnl MacOSX
   if test -n "`uname -a | grep Darwin`" ; then
     SHARED_FLAG="-bundle -flat_namespace -undefined suppress"
+    LD_SHARED="${CXX} $SHARED_FLAG"
   fi
 
   if test -z "`${CXX} $SHARED_FLAG $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
@@ -269,6 +271,8 @@ AC_DEFUN(AC_LD_SHARED,
     fi
   fi
   rm -f conftest* libconftest* 
+
+  echo "        using '${CXX} $SHARED_FLAG' for dynamic linking"
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
   AC_SUBST(SO_EXT,$SO_EXT)

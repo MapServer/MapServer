@@ -5466,8 +5466,9 @@ rm -f perl.out
 
   SHARED_FLAG="-shared"
 
-  if test -n "`uname -a | grep Darwin`" ; then
+    if test -n "`uname -a | grep Darwin`" ; then
     SHARED_FLAG="-bundle -flat_namespace -undefined suppress"
+    LD_SHARED="${CXX} $SHARED_FLAG"
   fi
 
   if test -z "`${CXX} $SHARED_FLAG $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
@@ -5538,6 +5539,8 @@ rm -f perl.out
   fi
   rm -f conftest* libconftest* 
 
+  echo "        using '${CXX} $SHARED_FLAG' for dynamic linking"
+
   
   
 
@@ -5546,7 +5549,7 @@ rm -f perl.out
   fi
 
           echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
-echo "configure:5550: checking for location of config.h or php_config.h" >&5
+echo "configure:5553: checking for location of config.h or php_config.h" >&5
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
@@ -5559,7 +5562,7 @@ echo "configure:5550: checking for location of config.h or php_config.h" >&5
   fi
 
           echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
-echo "configure:5563: checking whether we have PHP3 or PHP4" >&5
+echo "configure:5566: checking whether we have PHP3 or PHP4" >&5
   if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
@@ -5571,7 +5574,7 @@ echo "configure:5563: checking whether we have PHP3 or PHP4" >&5
   echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:5575: checking whether we should use PHP's regex" >&5
+echo "configure:5578: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
 
@@ -5633,7 +5636,7 @@ if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:5637: checking for location of Apache headers using apxs" >&5
+echo "configure:5640: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -5666,7 +5669,7 @@ if test -n "$with_apache" -a "$with_apache" != "no" ; then
 !!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!" 1>&2; exit 1; }
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:5670: checking for location of Apache headers" >&5
+echo "configure:5673: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi
