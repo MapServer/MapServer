@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.148  2004/11/11 01:03:33  assefa
+ * You can now use wms_group_abstarct metedata for capabilities output (Bug 754)
+ *
  * Revision 1.147  2004/11/10 22:49:23  assefa
  * Send warning for "invalid" layers in the capabilities document (Bug 646).
  *
@@ -1890,6 +1893,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
              msOWSPrintGroupMetadata(stdout, map, lp->group,
                                      NULL, "WMS_GROUP_TITLE", OWS_WARN,
                                      "      <Title>%s</Title>\n", lp->group);
+             msOWSPrintGroupMetadata(stdout, map, lp->group,
+                                     NULL, "WMS_GROUP_ABSTRACT", OWS_NOERR,
+                                     "      <Abstract>%s</Abstract>\n", lp->group);
 
              // Dump all layers for this group
              for(j=i; j<map->numlayers; j++)
