@@ -20,6 +20,8 @@ Version 3.6.7 (current CVS)
 
 - Fixed seg fault with WMS GetFeatureInfo of type text/html
 
+- mappostgis.c upgraded to the version used by MapServer 4.0
+
 
 Version 3.6.6 (2003-06-01)
 --------------------------
