@@ -961,15 +961,24 @@ int msLayerGetNumFeatures(layerObj *layer) {
 void msLayerAddProcessing( layerObj *layer, const char *directive )
 
 {
-    layer->numprocessing++;
-    if( layer->numprocessing == 1 )
-        layer->processing = (char **) malloc(2*sizeof(char *));
-    else
-        layer->processing = (char **) 
-            realloc(layer->processing, 
-                    sizeof(char*) * (layer->numprocessing+1) );
-    layer->processing[layer->numprocessing-1] = strdup(directive);
-    layer->processing[layer->numprocessing] = NULL;
+  int i, len;
+  
+  len = strcspn(directive, "="); // we only want to compare characters up to the equal sign
+  for(i=0; i<layer->numprocessing; i++) { // check to see if option is already set
+    if(strncasecmp(directive, layer->processing[i], len) == 0) {
+	  free(layer->processing[i]);
+	  layer->processing[i] = strdup(directive);
+      return;
+    }
+  }
+
+  layer->numprocessing++;
+  if( layer->numprocessing == 1 )
+    layer->processing = (char **) malloc(2*sizeof(char *));
+  else
+    layer->processing = (char **) realloc(layer->processing, sizeof(char*) * (layer->numprocessing+1) );
+  layer->processing[layer->numprocessing-1] = strdup(directive);
+  layer->processing[layer->numprocessing] = NULL;
 }
 
 char *msLayerGetProcessing( layerObj *layer, int proc_index) {
