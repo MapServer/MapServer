@@ -1346,7 +1346,7 @@ if (layer->debug)
 	msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid,layer->debug);
 
 	// two cases here.  One, its a table (use select * from table) otherwise, just use the select clause
-	sprintf(sql,"SELECT * FROM %s LIMIT 0",table_name); // attempt the query, but dont actually do much (this might take some time if there is an order by!)
+	sprintf(sql,"SELECT * FROM %s WHERE false LIMIT 0",table_name); // attempt the query, but dont actually do much (this might take some time if there is an order by!)
 
 	query_result = PQexec(layerinfo->conn, sql );
     if (!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK)
