@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2004/10/18 14:49:12  frank
+ * implemented msAlphaBlend
+ *
  * Revision 1.51  2004/09/28 20:29:18  frank
  * avoid double to int casting warnings
  *
@@ -327,7 +330,6 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
                     nSetPoints++;
                     dstImg->pixels[nDstY][nDstX] = nValue; 
                 }
-#if GD2_VERS > 1
                 else
                 {
                     int nValue = srcImg->tpixels[nSrcY][nSrcX];
@@ -338,43 +340,16 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
                         nSetPoints++;
                         dstImg->tpixels[nDstY][nDstX] = nValue;
                     }
-                    /* overlay translucent RGBA value */
-                    else if( gd_alpha < 127 )
-                    {
-                        int gd_original_alpha, gd_new_alpha;
-                        
-                        gd_original_alpha = 
-                          gdTrueColorGetAlpha( dstImg->tpixels[nDstY][nDstX] );
-
-                        /* I assume a fairly simple additive model for 
-                           opaqueness.  Note that gdAlphaBlend() always returns
-                           opaque values (alpha byte is 0). */
-                        
-                        if( gd_original_alpha == 127 )
-                        {
-                            nSetPoints++;
-                            dstImg->tpixels[nDstY][nDstX] = nValue;
-                        }
-                        else
-                        {
-                            gd_new_alpha = (127 - gd_alpha) 
-                                + (127 - gd_original_alpha);
-                            gd_new_alpha = MAX(0,127 - gd_new_alpha);
-                            
-                            nSetPoints++;
-                            dstImg->tpixels[nDstY][nDstX] = 
-                                gdAlphaBlend( dstImg->tpixels[nDstY][nDstX], 
-                                              nValue );
-                            dstImg->tpixels[nDstY][nDstX] &= 0x00ffffff;
-                            dstImg->tpixels[nDstY][nDstX] |= gd_new_alpha << 24;
-                        }
-                    }
+                    else if( gd_alpha == 127 )
+                        /* overlay is transparent, do nothing */;
                     else
                     {
-                        /* pixel is transparent, doesn't effect dst pixel */
+                        nSetPoints++;
+                        dstImg->tpixels[nDstY][nDstX] = 
+                            gdAlphaBlend( dstImg->tpixels[nDstY][nDstX], 
+                                          nValue );
                     }
                 }
-#endif
             }
             else if( MS_RENDERER_RAWDATA(psSrcImage->format) )
             {

@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.34  2004/10/18 14:49:12  frank
+ * implemented msAlphaBlend
+ *
  * Revision 1.33  2004/10/18 13:05:14  frank
  * Fixed typos in alpha handling cleanup.
  *
@@ -845,7 +848,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                   /* mix alpha into "result" */
                   result += (127 - (alpha >> 1)) << 24;
                   gdImg->tpixels[i][j] = 
-                      gdAlphaBlend( gdImg->tpixels[i][j], result );
+                      msAlphaBlend( gdImg->tpixels[i][j], result );
               }
           }
       }
@@ -973,7 +976,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                          the source alpha into account at all */
 
                       gdImg->tpixels[i][j] = 
-                          gdAlphaBlend( gdImg->tpixels[i][j], gd_color );
+                          msAlphaBlend( gdImg->tpixels[i][j], gd_color );
                   }
               }
           }

@@ -1468,6 +1468,8 @@ MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *fo
 
 MS_DLL_EXPORT void msCleanup(void);
 
+MS_DLL_EXPORT int msAlphaBlend (int dst, int src);
+
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
 /* ==================================================================== */

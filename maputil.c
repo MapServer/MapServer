@@ -1085,3 +1085,60 @@ void msCleanup()
 #endif
     msResetErrorList();
 }
+
+/************************************************************************/
+/*                            msAlphaBlend()                            */
+/*                                                                      */
+/*      MapServer variation on gdAlphaBlend() that, I think, does a     */
+/*      better job of merging a non-opaque color into an opaque         */
+/*      color.  In particular from gd 2.0.12 on the GD                  */
+/*      gdAlphaBlend() will give a transparent "dst" color influence    */
+/*      in the result if the overlay is non-opaque.                     */
+/*                                                                      */
+/*      Note that "src" is layered over "dst".                          */
+/************************************************************************/
+
+int msAlphaBlend (int dst, int src)
+{
+    int src_alpha = gdTrueColorGetAlpha(src);
+    int dst_alpha, alpha, red, green, blue;
+    int src_weight, dst_weight, tot_weight;
+
+/* -------------------------------------------------------------------- */
+/*      Simple cases we want to handle fast.                            */
+/* -------------------------------------------------------------------- */
+    if( src_alpha == gdAlphaOpaque )
+        return src;
+
+    dst_alpha = gdTrueColorGetAlpha(dst);
+    if( src_alpha == gdAlphaTransparent )
+        return dst;
+    if( dst_alpha == gdAlphaTransparent )
+        return src;
+
+/* -------------------------------------------------------------------- */
+/*      What will the source and destination alphas be?  Note that      */
+/*      the destination weighting is substantially reduced as the       */
+/*      overlay becomes quite opaque.                                   */
+/* -------------------------------------------------------------------- */
+    src_weight = gdAlphaTransparent - src_alpha;
+    dst_weight = (gdAlphaTransparent - dst_alpha) * src_alpha / gdAlphaMax;
+    tot_weight = src_weight + dst_weight;
+    
+/* -------------------------------------------------------------------- */
+/*      What red, green and blue result values will we use?             */
+/* -------------------------------------------------------------------- */
+    alpha = src_alpha * dst_alpha / gdAlphaMax;
+
+    red = (gdTrueColorGetRed(src) * src_weight
+           + gdTrueColorGetRed(dst) * dst_weight) / tot_weight;
+    green = (gdTrueColorGetGreen(src) * src_weight
+           + gdTrueColorGetGreen(dst) * dst_weight) / tot_weight;
+    blue = (gdTrueColorGetBlue(src) * src_weight
+           + gdTrueColorGetBlue(dst) * dst_weight) / tot_weight;
+
+/* -------------------------------------------------------------------- */
+/*      Return merged result.                                           */
+/* -------------------------------------------------------------------- */
+    return ((alpha << 24) + (red << 16) + (green << 8) + blue);
+}
