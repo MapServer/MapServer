@@ -130,6 +130,8 @@ extern "C" {
 #define MS_SGN(a)	(((a)<0) ? -1 : 1)
 #define MS_NINT(x)      ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
 
+#define MS_PEN_UNSET	-4
+
 #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
 
 #define MS_IMAGE_MIME_TYPE(format) (format->mimetype ? format->mimetype : "unknown")
@@ -140,7 +142,7 @@ extern "C" {
 #define MS_DRIVER_GDAL(format)	(strncasecmp((format)->driver,"gdal/",5)==0)
 
 #define MS_RENDER_WITH_GD	1
-#define MS_RENDER_WITH_SWF    2
+#define MS_RENDER_WITH_SWF    	2
 
 #define MS_RENDERER_GD(format)	((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format)	((format)->renderer == MS_RENDER_WITH_SWF)
@@ -204,6 +206,7 @@ typedef featureListNodeObj * featureListNodeObjPtr;
 
 // COLOR OBJECT
 typedef struct {
+  int pen;
   int red;
   int green;
   int blue;
