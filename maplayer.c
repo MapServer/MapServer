@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2005/01/11 00:24:59  frank
+ * added msLayerLabelsRotateWithMap
+ *
  * Revision 1.99  2004/11/16 19:18:43  assefa
  * Make sure that the timestring is complete for pg layers (Bug 837)
  *
@@ -1192,6 +1195,25 @@ int msLayerClearProcessing( layerObj *layer ) {
         layer->numprocessing = 0;
     }
     return layer->numprocessing;
+}
+
+int msLayerLabelsRotateWithMap( layerObj *layer ) {
+
+    // Eventually we need some sort of caching logic on the layer
+    // or we will find we spend quite a bit of time searching for the
+    // processing directive for rotated maps. 
+    const char *rotate_setting = 
+        msLayerGetProcessingKey( layer, "LABELS_ROTATE_WITH_MAP" );
+
+    if( rotate_setting == NULL )
+        return MS_FALSE;
+    
+    if( strcasecmp(rotate_setting,"YES") == 0 
+        || strcasecmp(rotate_setting,"ON") == 0 
+        || strcasecmp(rotate_setting,"TRUE") == 0 )
+        return MS_TRUE;
+    else
+        return MS_FALSE;
 }
 
 
