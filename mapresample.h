@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/02/24 21:25:00  frank
+ * include cpl_string.h
+ *
  * Revision 1.3  2002/10/29 16:40:59  frank
  * removed prototype for function that is now static
  *
@@ -48,6 +51,7 @@
 
 #ifdef USE_GDAL
 #  include <gdal.h>
+#  include <cpl_string.h>
 #endif
 
 typedef int (*SimpleTransformer)( void *pCBData, int nPoints, 
