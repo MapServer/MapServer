@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2001/11/13 22:44:38  assefa
+ * Use a metadata wms_connectiontimeout that can be set in the map
+ * file.
+ *
  * Revision 1.13  2001/11/08 15:26:10  dan
  * Include FEATURE_COUNT in GetFeatureInfo URL only if greater than zero
  *
@@ -251,7 +255,7 @@ static int terminate_handler (HTRequest * request, HTResponse * response,
  *
  * Based on sample code from http://www.w3.org/Library/Examples/LoadToFile.c
  **********************************************************************/
-int msWMSGetImage(const char *geturl, const char *outputfile)
+int msWMSGetImage(const char *geturl, const char *outputfile, int nTimeout)
 {
     HTRequest *         request = NULL;
     int                 nHTTPStatus = 0;
@@ -273,7 +277,11 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
     HTNet_addAfter(terminate_handler, NULL, &nHTTPStatus, HT_ALL, HT_FILTER_LAST);
 
     /* Set the timeout for how long we are going to wait for a response */
-    HTHost_setEventTimeout(25000);
+    if (nTimeout <= 0)
+        nTimeout = 30000;
+            
+    HTHost_setEventTimeout(nTimeout);
+
 
     if (geturl == NULL || outputfile == NULL)
     {
@@ -297,6 +305,12 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
 
     if (nHTTPStatus != 200)
     {
+        if (nHTTPStatus == HT_TIMEOUT)
+        {
+            char err[256];
+            sprintf(err, "TIMEOUT of %d millseconds execeeded", nTimeout);
+            msSetError(MS_WMSCONNERR, err, "msGetImage()");
+        }
         // msSetError() already called in terminate_handler
         nStatus = MS_FAILURE;
     }
@@ -606,7 +620,8 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     const char *pszTmp;
     rectObj bbox;
     int status = MS_SUCCESS;
-    
+    int nTimeout;
+
     if (lp->connectiontype != MS_WMS || lp->connection == NULL)
         return MS_FAILURE;
 
@@ -664,11 +679,34 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
  * Download image
  * ------------------------------------------------------------------ */
     msDebug("WMS GET %s\n", pszURL);
-    if (msWMSGetImage(pszURL, lp->data) != MS_SUCCESS)
+
+/* ------------------------------------------------------------------
+ * check to see if a the metedata wms_connectiontimeout is set. If it is 
+ * the case we will use it, else we use the default which is 30000 
+ * millseconds. 
+ * First check the metedata in the layer object and then in the map object.
+ * ------------------------------------------------------------------ */
+    nTimeout = 30000;
+    if ((pszTmp = msLookupHashTable(lp->metadata, 
+                                    "wms_connectiontimeout")) != NULL)
+    {
+        nTimeout = atoi(pszTmp);
+    }
+    else if ((pszTmp = msLookupHashTable(map->web.metadata, 
+                                         "wms_connectiontimeout")) != NULL)
+    {
+        nTimeout = atoi(pszTmp);
+    }
+    if (msWMSGetImage(pszURL, lp->data, nTimeout) != MS_SUCCESS)
     {
         msDebug("WMS GET failed.\n", pszURL);
         free(pszURL);
-        return MS_FAILURE;
+        //return MS_FAILURE;
+/* ==================================================================== 
+      we still return SUCCESS here so that the layer is only          
+      skipped intead of aborting the whole draw map.                   
+ ==================================================================== */
+        return MS_SUCCESS;
     }
     msDebug("WMS GET completed OK.\n");
 
