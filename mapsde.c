@@ -2,6 +2,12 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.82  2004/10/15 18:13:02  hobu
+ * sde->state_id was being used before it was initialized
+ * sde->connection was being set to null *after* the sde
+ * structure was already freed in msSDELayerClose causing heap
+ * corruption.  (Thanks Frank!)
+ *
  * Revision 1.81  2004/10/14 15:20:08  hobu
  * make sure that we call SE_stream_free
  * when the layer is closed
@@ -422,6 +428,7 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
  
+  sde->state_id = SE_BASE_STATE_ID;
   // initialize the table and spatial column names
   sde->table = sde->column = NULL;
   
@@ -635,9 +642,9 @@ void msSDELayerClose(layerObj *layer) {
   if (sde->row_id_column) free(sde->row_id_column);
   if (sde->stream) SE_stream_free(sde->stream);
   msConnPoolRelease( layer, sde->connection );  
+  sde->connection = NULL;
   free(layer->layerinfo);
   layer->layerinfo = NULL;
-  sde->connection = NULL;
 #else
   msSetError( MS_MISCERR, 
               "SDE support is not available.", 
