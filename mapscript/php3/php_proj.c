@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/02/23 20:35:57  assefa
+ * Free function does not work for PHP4. Disable it for now.
+ *
  * Revision 1.3  2001/01/09 05:24:41  dan
  * Fixes to build with PHP 4.0.4
  *
@@ -139,6 +142,12 @@ DLEXPORT void php_info_proj(void);
 DLEXPORT int  php_init_proj(INIT_FUNC_ARGS);
 DLEXPORT int  php_end_proj(SHUTDOWN_FUNC_ARGS);
 
+DLEXPORT void ttt(INTERNAL_FUNCTION_PARAMETERS);
+
+
+#ifdef PHP4
+static zend_class_entry *proj_class_entry_ptr;
+#endif 
 
 #define PHPMS_GLOBAL(a) a
 static int le_projobj;
@@ -166,6 +175,15 @@ DLEXPORT php3_module_entry *get_module(void)
 #endif
 
 
+function_entry php_proj_class_functions[] = {
+    {"ttt",             ttt,        NULL},
+    {NULL, NULL, NULL}
+};
+
+DLEXPORT void ttt(INTERNAL_FUNCTION_PARAMETERS)
+{
+}
+
 DLEXPORT void php_info_proj(void) 
 {
     php3_printf(" Version %s<br>\n", PHP_PROJ_VERSION);
@@ -175,9 +193,19 @@ DLEXPORT void php_info_proj(void)
 
 DLEXPORT int php_init_proj(INIT_FUNC_ARGS)
 {
+#ifdef PHP4
+    zend_class_entry tmp_class_entry;
+#endif
+
     PHPMS_GLOBAL(le_projobj)  = 
         register_list_destructors(php_proj_pj_free,
                                   NULL);
+
+#ifdef PHP4
+    INIT_CLASS_ENTRY(tmp_class_entry, "proj", php_proj_class_functions);
+    proj_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+#endif
+
     return SUCCESS;
 }
 
@@ -208,7 +236,8 @@ static long _php_proj_build_proj_object(PJ *pj,
 
     pj_id = php3_list_insert(pj, PHPMS_GLOBAL(le_projobj));
 
-    _phpms_object_init(return_value, pj_id, NULL, NULL);
+    _phpms_object_init(return_value, pj_id, php_proj_class_functions,
+                       PHP4_CLASS_ENTRY(proj_class_entry_ptr));
 
     return pj_id;
 }
@@ -253,7 +282,10 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
     
     char        **papszBuf = NULL;
 
+//    char        *strttt = NULL;
+//    int         ttt;
 
+    //ttt = strlen(strttt);
 /* -------------------------------------------------------------------- */
 /*      extract parameters.                                             */
 /* -------------------------------------------------------------------- */
@@ -432,12 +464,17 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
     add_assoc_double(return_value, "v", pntReturn.u);
 }
 
-
 /************************************************************************/
 /*       DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)   */
 /************************************************************************/
 DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)
 {
+
+/* ==================================================================== */
+/*      TODO : freeing does not work properly on PHP4.                  */
+/* ==================================================================== */
+#ifndef PHP4
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -459,7 +496,7 @@ DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)
     {
         pj_free(popj);
     }
-
+#endif
 }
 
 #endif /* USE_PROJ */
