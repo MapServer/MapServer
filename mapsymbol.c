@@ -140,7 +140,9 @@ int loadSymbol(symbolObj *s)
       if((getInteger(&s->gap)) == -1) return(-1);
       break;
     case(POSITION):
-      if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1) 
+      // if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1) 
+      //   return(-1);
+      if((s->position = getSymbol(9, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) 
 	return(-1);
       break;
     case(IMAGE):

@@ -872,7 +872,7 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
   shapeObj label_poly;
   rectObj label_rect;
   int label_width;
-  int offset, position;
+  int position, rot, gap, in;
   double rx, ry;
 
   msInitShape(&label_poly);
@@ -889,37 +889,50 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
 
   label_width = label_rect.maxx - label_rect.minx;
 
-  offset = 0; // initial padding
+  rot = (s->gap < 0);
+  gap = MS_ABS(s->gap);
+
   for(i=0; i<p->numlines; i++) {
+    current_length = gap+label_width/2.0; // initial padding for each line
     
     for(j=1;j<p->line[i].numpoints;j++) {
       length = sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2)));
       
       rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
-      ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;
-      
+      ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;  
       position = s->position;
       theta = asin(ry);
-      if(rx < 0)
-	theta += MS_PI;
-      else
-        theta = -theta;
+      if(rx < 0) {
+        if(rot){
+	  theta += MS_PI;
+      	  if((position == MS_UR)||(position == MS_UL)) position = MS_LC;
+	  if((position == MS_LR)||(position == MS_LL)) position = MS_UC;
+	}else{
+	  if(position == MS_UC) position = MS_LC;
+	  else if(position == MS_LC) position = MS_UC;
+	}
+      }
+      else theta = -theta;	
+      if((position == MS_UR)||(position == MS_UL)) position = MS_UC;
+      if((position == MS_LR)||(position == MS_LL)) position = MS_LC;
       label.angle = MS_RAD_TO_DEG * theta;
 
-      current_length = offset + label_width/2.0;
-      while(current_length <= (length - label_width/2.0)) {
+      in = 0;
+      while(current_length <= length) {
         point.x = MS_NINT(p->line[i].point[j-1].x + current_length*rx);
 	point.y = MS_NINT(p->line[i].point[j-1].y + current_length*ry);
 
   	label_point = get_metrics(&point, position, label_rect, 0, 0, label.angle, 0, &label_poly);
         draw_text(img, label_point, s->character, &label, fontset);
 
-	current_length += label_width + s->gap;
+	current_length += label_width + gap;
+	in = 1;
       }
 
-      current_length -= label_width + s->gap; // revert back to last good length
-
-      offset = MS_MAX((s->gap - MS_NINT(length - current_length)), 0);
+      if(in){
+        current_length -= label_width + gap; // revert back to last good length
+	current_length += gap - length + label_width/2.0;
+      } else current_length -= length;
     }
   }
 
