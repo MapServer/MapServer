@@ -54,7 +54,7 @@ and the MapServer Map File documentation at:
         MS_PIXELS
 
     Layer types:
-        MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, MS_LAYER_POLYLINE, 
+        MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, 
         MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY
 
     Layer/Legend/Scalebar Status:
@@ -84,7 +84,7 @@ and the MapServer Map File documentation at:
 
     Connection Types:
         MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, 
-        MS_TILED_OGR
+        MS_TILED_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL
 
     Output Image Types:
         MS_GIF, MS_PNG, MS_JPEG, MS_WBMP
@@ -460,6 +460,17 @@ and the MapServer Map File documentation at:
    int setMetaData(string name, string value)
         Set a metadata entry for the layer.  Returns MS_SUCCESS/MS_FAILURE.
 
+   int getWMSFeatureInfoURL(int clickX, int clickY, int featureCount, 
+                            string infoFormat)
+        Return a WMS GetFeatureInfo URL (works only for WMS layers)
+        clickX, clickY is the location of to query in pixel coordinates
+        with (0,0) at the top left of the image.
+        featureCount is the number of results to return.
+        infoFormat is the format the format in which the result should be
+        requested.  Depends on remote server's capabilities.  MapServer
+        WMS servers support only "MIME" (and should support "GML.1" soon).
+        Returns "" and outputs a warning if layer is not a WMS layer 
+        or if it is not queriable.
 
  ClassObj Class:
  ---------------

@@ -447,6 +447,15 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 	return MS_FAILURE;
     return MS_SUCCESS;
   }
+
+  char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y,     
+                             int feature_count, char *info_format) {
+    // NOTE: the returned string should be freed by the caller but right 
+    // now we're leaking it.
+    return(msWMSGetFeatureInfoURL(map, self, click_x, click_y,
+                                  feature_count, info_format));
+  }
+
 }
 
 //

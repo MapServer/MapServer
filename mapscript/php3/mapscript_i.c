@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.27  2001/11/01 02:47:06  dan
+ * Added layerObj->getWMSFeatureInfoURL()
+ *
  * Revision 1.26  2001/10/23 19:17:38  assefa
  * Use layerorder instead of panPrioList.
  *
@@ -394,6 +397,14 @@ int layerObj_setMetaData(layerObj *self, char *name, char *value) {
     if (msInsertHashTable(self->metadata, name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
+  }
+
+char *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map, int click_x, int click_y,     
+                                    int feature_count, char *info_format) {
+    // NOTE: the returned string should be freed by the caller but right 
+    // now we're leaking it.
+    return(msWMSGetFeatureInfoURL(map, self, click_x, click_y,
+                                  feature_count, info_format));
   }
 
 /**********************************************************************

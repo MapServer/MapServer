@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.65  2001/11/01 02:47:06  dan
+ * Added layerObj->getWMSFeatureInfoURL()
+ *
  * Revision 1.64  2001/10/31 15:17:14  dan
  * Added missing ref. to php3_ms_lyr_setFilter in layerObj class
  *
@@ -235,6 +238,7 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -537,6 +541,7 @@ function_entry php_layer_class_functions[] = {
     {"getmetadata",     php3_ms_lyr_getMetaData,        NULL},
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
     {"setfilter",       php3_ms_lyr_setFilter,          NULL},
+    {"getwmsfeatureinfourl", php3_ms_lyr_getWMSFeatureInfoURL, NULL},
     {NULL, NULL, NULL}
 };
 
@@ -678,7 +683,6 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_LAYER_POINT",MS_LAYER_POINT, const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_LINE", MS_LAYER_LINE,  const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_POLYGON",MS_LAYER_POLYGON, const_flag);
-    REGISTER_LONG_CONSTANT("MS_LAYER_POLYLINE",MS_LAYER_POLYLINE, const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_RASTER",MS_LAYER_RASTER, const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_ANNOTATION",MS_LAYER_ANNOTATION,const_flag);
     REGISTER_LONG_CONSTANT("MS_LAYER_QUERY",MS_LAYER_QUERY, const_flag);
@@ -5147,6 +5151,65 @@ DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     RETURN_LONG(nStatus);
+}
+/* }}} */
+
+/**********************************************************************
+ *                        layer->getWMSFeatureInfoURL()
+ **********************************************************************/
+
+/* {{{ proto string layer.getWMSFeatureInfoURL(int clickX, int clickY, int featureCount, string infoFormat)
+   Return a WMS GetFeatureInfo URL (only for WMS layers). */
+
+DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pThis, *pX, *pY, *pCount, *pFormat;
+    char   *pszValue = NULL;
+    mapObj *parent_map;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 4, &pX, &pY, &pCount, &pFormat) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pX);
+    convert_to_long(pY);
+    convert_to_long(pCount);
+    convert_to_string(pFormat);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list, E_ERROR);
+
+
+    if (self == NULL || parent_map == NULL ||
+        (pszValue = layerObj_getWMSFeatureInfoURL(self, parent_map, 
+                                                  pX->value.lval,
+                                                  pY->value.lval,
+                                                  pCount->value.lval,
+                                                  pFormat->value.str.val)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_STRING("", 1);
+    }
+
+    RETVAL_STRING(pszValue, 1);
+    free(pszValue);
 }
 /* }}} */
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2001/11/01 02:47:06  dan
+ * Added layerObj->getWMSFeatureInfoURL()
+ *
  * Revision 1.12  2001/10/03 12:41:05  assefa
  * Add function getLayersIndexByGroup.
  *
@@ -144,6 +147,10 @@ int             layerObj_setProjection(layerObj *self, char *string);
 int             layerObj_addFeature(layerObj *self, shapeObj *shape);
 char            *layerObj_getMetaData(layerObj *self, char *name);
 int             layerObj_setMetaData(layerObj *self, char *name, char *value);
+char            *layerObj_getWMSFeatureInfoURL(layerObj *self, mapObj *map, 
+                                               int click_x, int click_y,     
+                                               int feature_count, 
+                                               char *info_format);
 
 classObj       *classObj_new(layerObj *layer);
 void            classObj_destroy(classObj* self);
