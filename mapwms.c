@@ -1069,10 +1069,13 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
 	map->layers[j].status = MS_OFF;
 
         for(k=0; k<numlayers; k++) {
-	  if(strcasecmp(map->layers[j].name, layers[k]) == 0) {
-	    map->layers[j].status = MS_ON;
-            numlayers_found++;
-          }
+          if ((map->layers[j].name && strcasecmp(map->layers[j].name, layers[k]) == 0) ||
+              (map->name && strcasecmp(map->name, layers[k]) == 0) ||
+              (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0))
+            {
+              map->layers[j].status = MS_ON;
+              numlayers_found++;
+            }
         }
       }
 
