@@ -26,7 +26,7 @@ typedef struct {
   char *service;		// MUST be WCS
   char *section;		// of capabilities document: /WCS_Capabilities/Service|/WCS_Capabilities/Capability|/WCS_Capabilities/ContentMetadata
   char **coverages;		// NULL terminated list of coverages (in the case of a GetCoverage there will only be 1)
-  char *crs;			// request coordinate reference system
+  char *request_crs;	// request coordinate reference system
   char *response_crs;	// response coordinate reference system
   rectObj bbox;		    // subset bounding box (3D), although we'll only use 2D
   char *time;
@@ -140,8 +140,8 @@ static void msWCSFreeParams(wcsParamsObj *params)
     if(params->request) free(params->request);
     if(params->service) free(params->service);
     if(params->section) free(params->section);
-    if(params->crs) free(params->crs);
-    if(params->response_crs) free(params->crs);      
+    if(params->request_crs) free(params->request_crs);
+    if(params->response_crs) free(params->response_crs);      
     if(params->format) free(params->format);
     if(params->exceptions) free(params->exceptions);
     if(params->time) free(params->time);
@@ -221,6 +221,11 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
 	     params->time = strdup(request->ParamValues[i]);
        else if(strcasecmp(request->ParamNames[i], "FORMAT") == 0)
 	     params->format = strdup(request->ParamValues[i]);
+	   else if(strcasecmp(request->ParamNames[i], "REQUEST_CRS") == 0)
+	     params->request_crs = strdup(request->ParamValues[i]);
+	   else if(strcasecmp(request->ParamNames[i], "RESPONSE_CRS") == 0)
+	     params->response_crs = strdup(request->ParamValues[i]);
+
 	   
        // and so on...
     }
@@ -453,7 +458,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
     char **tokens;
     int numtokens;
 
-     tokens = split(value, ',', &numtokens);
+     tokens = split(value, '/', &numtokens);
      if(tokens && numtokens > 0) {
        printf("          <interval>\n");
        if(numtokens >= 1) printf("          <min>%s</min>\n", tokens[0]); // TODO: handle closure
@@ -676,7 +681,7 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     // Find the layer we are working with. 
     lp = NULL;
     for(i=0; i<map->numlayers; i++) {
-      if( EQUAL(map->layers[i].name,params->coverages[0]) ) {
+      if( EQUAL(map->layers[i].name, params->coverages[0]) ) {
         lp = map->layers + i;
         break;
       }
@@ -689,6 +694,14 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
 
     // Make sure the layer is on!
     lp->status = MS_ON;
+
+    // Handle the response CRS, that is set the map object projection
+    if(params->response_crs) {
+      if(msLoadProjectionString(&map->projection, params->response_crs) != 0) { 
+        msSetError( MS_WCSERR, "Error setting map object projection.", "msWCSGetCoverage()", params->response_crs );
+        return msWCSException(params->version);
+      }
+    }
 
     // Did we get a TIME value (support only a single value for now)
     if(params->time) {
