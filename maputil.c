@@ -1015,3 +1015,49 @@ void msFreeImage(gdImagePtr img)
 {
   gdImageDestroy(img);
 }
+
+/*
+** Return an array containing all the layer's index given a group name. 
+** If nothing is found, NULL is returned. The nCount is initalized
+** to the number of elements in the returned array.
+** Note : the caller of the function should free the array.
+*/
+int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
+{
+    int         i;
+    int         iLayer = 0;
+    int         *aiIndex;
+
+    if(!groupname || !map || !pnCount) 
+    {
+        return NULL;
+    }
+
+    aiIndex = (int *)malloc(sizeof(int) * map->numlayers);
+    
+    for(i=0;i<map->numlayers; i++) 
+    {
+        if(!map->layers[i].group) /* skip it */
+            continue;
+        if(strcmp(groupname, map->layers[i].group) == 0)
+        {
+            aiIndex[iLayer] = i;
+            iLayer++;
+        }
+    }
+    
+    if (iLayer == 0)
+    {
+        free(aiIndex);
+        aiIndex = NULL;
+        *pnCount = 0;
+    }
+    else
+    {
+        aiIndex = (int *)realloc(aiIndex, sizeof(int)* iLayer);
+        *pnCount = iLayer;
+    }
+
+  return aiIndex;
+}
+

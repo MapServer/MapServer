@@ -641,6 +641,7 @@ int getClassIndex(layerObj *layer, char *str);
 ** Main API Functions
 */
 int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
+int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);    
 int msGetSymbolIndex(symbolSetObj *set, char *name);
 mapObj *msLoadMap(char *filename);
 int msSaveMap(mapObj *map, char *filename);
