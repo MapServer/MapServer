@@ -8,6 +8,18 @@ INST_LIB	=	@libdir@
 INST_BIN	=	@bindir@
 
 #
+# MS_VERSION - Set by configure based in map.h
+#
+MS_VERSION=	@MS_VERSION@
+
+#
+# Name of static and shared libs to produce
+#
+LIBMAP_STATIC=	libmap.a
+LIBMAP_SHARED=	libmap.so
+LIBMAP_SH_VER=	libmap.so.$(MS_VERSION)
+
+#
 # mpatrol runtime memory debugger
 #
 MPATROL=  	@MPATROL_ENABLED@
@@ -162,7 +174,12 @@ AR= ar rc
 RANLIB= @RANLIB@
 LEX=    @LEX@
 YACC=   @YACC@
+
+#
+# This should really be figured out by configure
+#
 LD_SHARED = g++ -shared
+LD_SONAME_LIBMAP= -Wl,-soname,$(LIBMAP_SH_VER)
 
 XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
@@ -204,7 +221,7 @@ EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 
 all: $(MAKE_GD) libmap.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
 
-php3_mapscript:: libmap.a
+php3_mapscript:: $(LIBMAP_STATIC)
 	cd mapscript/php3; $(MAKE); cd ../..
 
 maplexer.o: maplexer.c map.h mapfile.h
@@ -223,48 +240,50 @@ mapogr.o: mapogr.cpp
 mapgeos.o: mapgeos.cpp
 	$(CXX) -c $(CFLAGS) mapgeos.cpp -o mapgeos.o
 
-lib: libmap.a
-libmap: libmap.a
+lib:    $(LIBMAP_STATIC)
+libmap: $(LIBMAP_STATIC)
 libmap.a: map.h $(OBJS) map.h
-	$(AR) libmap.a $(OBJS)
-	$(RANLIB) libmap.a
+	$(AR) $(LIBMAP_STATIC) $(OBJS)
+	$(RANLIB) $(LIBMAP_STATIC)
 
-libmap.so:	libmap.a
-	$(LD_SHARED) -o libmap.so \
-		$(RUNPATHS) $(OBJS) $(SUP_LIBS) $(STATIC_LIBS)
+shared:	$(LIBMAP_SHARED)
+$(LIBMAP_SHARED):	$(LIBMAP_STATIC)
+	$(LD_SHARED) $(LD_SONAME_LIBMAP) -o $(LIBMAP_SH_VER) \
+		$(RUNPATHS) $(OBJS) $(SUP_LIBS) $(STATIC_LIBS) \
+	&& ln -f -s $(LIBMAP_SH_VER) $(LIBMAP_SHARED)
 
-shp2pdf: libmap.a shp2pdf.o map.h
+shp2pdf: $(LIBMAP_STATIC) shp2pdf.o map.h
 	$(LD) $(CFLAGS) shp2pdf.o $(EXE_LDFLAGS) -o shp2pdf
 
-shp2img: libmap.a  shp2img.o map.h
+shp2img: $(LIBMAP_STATIC)  shp2img.o map.h
 	$(LD) $(CFLAGS) shp2img.o $(EXE_LDFLAGS) -o shp2img
 
-sym2img: libmap.a   sym2img.o map.h
+sym2img: $(LIBMAP_STATIC)   sym2img.o map.h
 	$(LD) $(CFLAGS) sym2img.o $(EXE_LDFLAGS) -o sym2img
 
-legend: libmap.a  legend.o map.h
+legend: $(LIBMAP_STATIC)  legend.o map.h
 	$(LD) $(CFLAGS) legend.o $(EXE_LDFLAGS) -o legend
 
-scalebar: libmap.a  scalebar.o map.h
+scalebar: $(LIBMAP_STATIC)  scalebar.o map.h
 	$(LD) $(CFLAGS) scalebar.o $(EXE_LDFLAGS) -o scalebar
 
-mapserv: mapserv.h libmap.a  mapserv.o cgiutil.o map.h
+mapserv: mapserv.h $(LIBMAP_STATIC)  mapserv.o cgiutil.o map.h
 	$(LD) $(CFLAGS) mapserv.o cgiutil.o  $(EXE_LDFLAGS) -o mapserv
 
-mapserv.fcgi: mapserv.h libmap.a  mapserv_fcgi.o cgiutil.o map.h
+mapserv.fcgi: mapserv.h $(LIBMAP_STATIC)  mapserv_fcgi.o cgiutil.o map.h
 	$(LD) $(CFLAGS) mapserv_fcgi.o cgiutil.o  \
 		$(EXE_LDFLAGS) -lfcgi -o mapserv.fcgi
 
-shpindex: libmap.a shpindex.o map.h
+shpindex: $(LIBMAP_STATIC) shpindex.o map.h
 	$(LD) $(CFLAGS) shpindex.o $(EXE_LDFLAGS) -o shpindex
 
-shptree: libmap.a shptree.o map.h
+shptree: $(LIBMAP_STATIC) shptree.o map.h
 	$(LD) $(CFLAGS) shptree.o $(EXE_LDFLAGS) -o shptree
 
-shptreevis: libmap.a shptreevis.o map.h
+shptreevis: $(LIBMAP_STATIC) shptreevis.o map.h
 	$(LD) $(CFLAGS) shptreevis.o $(EXE_LDFLAGS) -o shptreevis
 
-shptreetst: libmap.a shptreetst.o map.h
+shptreetst: $(LIBMAP_STATIC) shptreetst.o map.h
 	$(LD) $(CFLAGS) shptreetst.o $(EXE_LDFLAGS) -o shptreetst
 
 sortshp: sortshp.o
@@ -276,7 +295,7 @@ tile4ms: tile4ms.o
 testexpr: testexpr.o mapparser.o maplexer.o
 	$(LD) $(CFLAGS) testexpr.o $(EXE_LDFLAGS) -o testexpr
 
-testcopy: libmap.a testcopy.o mapcopy.o map.h
+testcopy: $(LIBMAP_STATIC) testcopy.o mapcopy.o map.h
 	$(LD) $(CFLAGS) testcopy.o $(EXE_LDFLAGS) -o testcopy
 
 mapscriptvars:	Makefile
@@ -302,12 +321,17 @@ install:
 
 install-force:	all
 	cp $(EXE_LIST) $(INST_BIN)
-	if test -x libmap.so ; then \
-	  cp libmap.so $(INST_LIB) ; \
+	if test -x $(LIBMAP_SHARED) ; then \
+	  cp $(LIBMAP_SH_VER) $(INST_LIB) ; \
+	  (cd $(INST_LIB) ; ln -f -s $(LIBMAP_SH_VER) $(LIBMAP_SHARED) ) ; \
 	fi
 
+uninstall:
+	(cd $(INST_BIN) && rm $(EXE_LIST) )
+	(cd $(INST_LIB) && rm $(LIBMAP_SH_VER) $(LIBMAP_SHARED) )
+
 clean: @MAKE_PHPMS_CLEAN@
-	rm -f libmap.a libmap.so *.o $(EXE_LIST)
+	rm -f $(LIBMAP_STATIC) $(LIBMAP_SHARED) $(LIBMAP_SH_VER) *.o $(EXE_LIST)
 
 exe-clean:
 	rm -f $(EXE_LIST)

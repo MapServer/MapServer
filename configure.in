@@ -48,6 +48,13 @@ AC_CHECK_FUNC(strlcat, ,      STRINGS="-DNEED_STRLCAT $STRINGS")
 AC_SUBST(STRINGS, $STRINGS)
 
 dnl ---------------------------------------------------------------------
+dnl Look for MapServer version in map.h
+dnl ---------------------------------------------------------------------
+MS_VERSION=`grep MS_VERSION map.h | grep '#define' | cut -d\" -f2`
+AC_MSG_RESULT([MapServer Version from map.h: '$MS_VERSION'])
+AC_SUBST(MS_VERSION,    "$MS_VERSION")
+
+dnl ---------------------------------------------------------------------
 dnl Several libraries might be needed for GD: png, zlib, freetype,
 dnl and jpeg (processed above).  Use where GD was found as default.
 dnl ---------------------------------------------------------------------
