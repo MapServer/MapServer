@@ -416,7 +416,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
       }
       msImageInitGD(image_draw, &map->imagecolor);
       /* We really just do this because gdImageCopyMerge() needs it later */
-      if( image_draw->format == MS_IMAGEMODE_PC256 )
+      if( image_draw->format->imagemode == MS_IMAGEMODE_PC256 )
           gdImageColorTransparent(image_draw->img.gd, 0);
     }
   }
