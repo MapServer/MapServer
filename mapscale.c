@@ -97,7 +97,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
     i = roundInterval(msx/map->scalebar.intervals);
     sprintf(label, "%g", map->scalebar.intervals*i); // last label
     isx = MS_NINT((i/(inchesPerUnit[map->units]/inchesPerUnit[map->scalebar.units]))/map->cellsize);  
-    sx = (map->scalebar.intervals*isx) + (1.5 + MS_NINT(strlen(label)/2.0) + (strlen(unitText[map->scalebar.units])))*fontPtr->w;
+    sx = (map->scalebar.intervals*isx) + MS_NINT((1.5 + strlen(label)/2.0 + strlen(unitText[map->scalebar.units]))*fontPtr->w);
 
     if(sx <= (map->scalebar.width - 2*HMARGIN)) break; // it will fit
 
@@ -114,8 +114,8 @@ gdImagePtr msDrawScalebar(mapObj *map)
   if(msLoadPalette(img, &(map->palette), map->scalebar.imagecolor) == -1)  
     return(NULL);
   
-  ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2); // center the computed scalebar
-  oy = VMARGIN;  
+  ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); // center the computed scalebar
+  oy = VMARGIN;
 
   switch(map->scalebar.style) {
   case(0):
@@ -132,7 +132,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
 
       sprintf(label, "%g", j*i);
       map->scalebar.label.position = MS_CC;
-      p.x = ox + j*isx;
+      p.x = ox + j*isx; // + MS_NINT(fontPtr->w/2);
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
       msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
 
@@ -142,7 +142,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
     ox = ox + j*isx - MS_NINT((strlen(label)*fontPtr->w)/2.0);
     sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
     map->scalebar.label.position = MS_CR;
-    p.x = ox;
+    p.x = ox; // + MS_NINT(fontPtr->w/2);
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
     msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
     break;
@@ -157,7 +157,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
       
       sprintf(label, "%g", j*i);
       map->scalebar.label.position = MS_CC;
-      p.x = ox + j*isx;
+      p.x = ox + j*isx; // + MS_NINT(fontPtr->w/2);
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
       msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
 
@@ -170,7 +170,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
     ox = ox + j*isx - MS_NINT((strlen(label)*fontPtr->w)/2.0);
     sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
     map->scalebar.label.position = MS_CR;
-    p.x = ox;
+    p.x = ox; // + MS_NINT(fontPtr->w/2);
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
     msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
     break;
