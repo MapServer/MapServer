@@ -59,39 +59,41 @@ class HashTableTestCase(unittest.TestCase):
         self.table = None
 
     def testConstructor(self):
+        """HashTableTestCase.testConstructor: ensure that instance is proper type"""
         table = mapscript.hashTableObj()
         tabletype = type(table)
         assert str(tabletype) == "<class 'mapscript.hashTableObj'>", tabletype
 
     def testSanity(self):
-        "sanity check"
+        """HashTableTestCase.testSanity: sanity check"""
         self.table.set('foo', 'bar')
         assert self.table.get('foo') == 'bar'
 
     def testUseNonExistentKey(self):
-        "accessing non-existent key should raise exception"
+        """HashTableTestCase.testUseNonExistentKey: accessing non-existent key should raise exception"""
         self.assertRaises(mapscript.MapServerError, self.table.get, 'bogus')
 
     def testGetValue(self):
-        "get value at a key using either case"
+        """HashTableTestCase.testGetValue: get value at a key using either case"""
         for key, value in zip(self.keys, self.values):
             assert self.table.get(key) == value
             assert self.table.get(key.upper()) == value
             assert self.table.get(key.capitalize()) == value
 
     def testClear(self):
-        "clear table, expect exceptions"
+        """HashTableTestCase.testClear: clear table, expect exceptions"""
         self.table.clear()
         for key in self.keys:
             self.assertRaises(mapscript.MapServerError, self.table.get, key)
 
     def testRemoveItem(self):
-        "remove item and expect expection on access"
+        """HashTableTestCase.testRemoveItem: remove item and expect expection on access"""
         key = self.keys[0]
         self.table.remove(key)
         self.assertRaises(mapscript.MapServerError, self.table.get, key)
 
     def testNextKey(self):
+        """HashTableTestCase"""
         key = self.table.nextKey()
         assert key == self.keys[0], key
         for i in range(1, len(self.keys)):

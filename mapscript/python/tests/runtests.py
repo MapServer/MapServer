@@ -45,17 +45,34 @@ from cases.clonetest import MapCloningTestCase
 from cases.maptest import MapConstructorTestCase
 from cases.maptest import MapLayersTestCase
 from cases.maptest import MapExtentTestCase
+from cases.maptest import MapExceptionTestCase
+from cases.maptest import EmptyMapExceptionTestCase
+from cases.maptest import MapMetaDataTestCase
 
 from cases.layertest import LayerConstructorTestCase
 from cases.layertest import LayerExtentTestCase
 from cases.layertest import LayerRasterProcessingTestCase
+from cases.layertest import LayerTestCase
+from cases.layertest import RemoveLayerTestCase
 
 from cases.zoomtest import ZoomPointTestCase
 from cases.zoomtest import ZoomRectangleTestCase
 from cases.zoomtest import ZoomScaleTestCase
 
-from cases.symboltest import SymbolTestCase, MapSymbolTestCase
-from cases.symbolsettest import SymbolSetTestCase, MapSymbolSetTestCase
+from cases.shapetest import LineObjTestCase
+from cases.shapetest import ShapePointTestCase
+from cases.shapetest import PointObjTestCase
+from cases.shapetest import InlineFeatureTestCase
+
+from cases.styletest import DrawProgrammedStylesTestCase
+from cases.styletest import NewStylesTestCase
+from cases.styletest import ColorObjTestCase
+
+from cases.symboltest import SymbolTestCase
+from cases.symboltest import MapSymbolTestCase
+
+from cases.symbolsettest import SymbolSetTestCase
+from cases.symbolsettest import MapSymbolSetTestCase
 
 # Create a test suite
 suite = unittest.TestSuite()
@@ -68,20 +85,35 @@ suite.addTests([OWSRequestTestCase])
 
 suite.addTests([MapConstructorTestCase,
                 MapLayersTestCase,
-                MapExtentTestCase])
+                MapExtentTestCase,
+                MapExceptionTestCase,
+                EmptyMapExceptionTestCase,
+                MapMetaDataTestCase])
 
 suite.addTests([LayerConstructorTestCase,
                 LayerExtentTestCase,
-                LayerRasterProcessingTestCase])
+                LayerRasterProcessingTestCase,
+                RemoveLayerTestCase])
+
+suite.addTests([LineObjTestCase,
+                ShapePointTestCase,
+                PointObjTestCase,
+                InlineFeatureTestCase])
+
+
+suite.addTests([DrawProgrammedStylesTestCase,
+                NewStylesTestCase,
+                ColorObjTestCase])
+                
+suite.addTests([SymbolTestCase,
+                MapSymbolTestCase])
+
+suite.addTests([SymbolSetTestCase,
+                MapSymbolSetTestCase])
 
 suite.addTests([ZoomPointTestCase,
                 ZoomRectangleTestCase,
                 ZoomScaleTestCase])
-            
-suite.addTests([SymbolTestCase, MapSymbolTestCase,
-                SymbolSetTestCase, MapSymbolSetTestCase])
-
-
 # If module is run as a script, execute every test case in the suite
 if __name__ == '__main__':
     unittest.main()

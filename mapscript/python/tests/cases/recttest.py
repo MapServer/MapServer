@@ -44,22 +44,27 @@ from testing import MapPrimitivesTestCase
 
 class RectObjTestCase(MapPrimitivesTestCase):
     def testRectObjConstructorNoArgs(self):
+        """RectObjTestCase.testRectObjConstructorNoArgs: a rect can be initialized with no args"""
         r = mapscript.rectObj()
         self.assertAlmostEqual(r.minx, -1.0)
         self.assertAlmostEqual(r.miny, -1.0)
         self.assertAlmostEqual(r.maxx, -1.0)
         self.assertAlmostEqual(r.maxy, -1.0)
     def testRectObjConstructorArgs(self):
+        """RectObjTestCase.testRectObjConstructorArgs: a rect can be initialized with arguments"""
         r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
         self.assertAlmostEqual(r.minx, -1.0)
         self.assertAlmostEqual(r.miny, -2.0)
         self.assertAlmostEqual(r.maxx, 3.0)
         self.assertAlmostEqual(r.maxy, 4.0)
     def testRectObjConstructorBadly1(self):
+        """RectObjTestCase.testRectObjConstructorBadly1: an invalid extent raises proper error (x direction)"""
         self.assertRaises(mapscript.MapServerError, mapscript.rectObj, 1.0, -2.0, -3.0, 4.0)
     def testRectObjConstructorBadly2(self):
+        """RectObjTestCase.testRectObjConstructorBadly2: an invalid extent raises proper error (y direction)"""
         self.assertRaises(mapscript.MapServerError, mapscript.rectObj, -1.0, 2.0, 3.0, -2.0)
     def testRectObjToPolygon(self):
+        """RectObjTestCase.testRectObjToPolygon: a rect can be converted into a MS_POLYGON shape"""
         r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
         s = r.toPolygon()
         assert s.numlines == 1, s.numlines

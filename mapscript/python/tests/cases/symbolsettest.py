@@ -44,19 +44,19 @@ from testing import mapscript, MapTestCase, TESTMAPFILE, XMARKS_IMAGE
 class SymbolSetTestCase(unittest.TestCase):
 
     def testConstructorNoArgs(self):
-        """new instance of symbolSetObj should have one symbol"""
+        """SymbolSetTestCase.testConstructorNoArgs: new instance of symbolSetObj should have one symbol"""
         symbolset = mapscript.symbolSetObj()
         num = symbolset.numsymbols
         assert num == 1, num
         
     def testConstructorFile(self):
-        """new instance of symbolSetObj from symbols.txt"""
+        """SymbolSetTestCase.testConstructorFile: new instance of symbolSetObj from symbols.txt"""
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         num = symbolset.numsymbols
         assert num == 2, num
 
     def testAddSymbolToNewSymbolSet(self):
-        """add two new symbols to a SymbolSet"""
+        """SymbolSetTestCase.testAddSymbolToNewSymbolSet: add two new symbols to a SymbolSet"""
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbola = mapscript.symbolObj('testa')
         symbolb = mapscript.symbolObj('testb')
@@ -70,14 +70,14 @@ class SymbolSetTestCase(unittest.TestCase):
             assert symbol.name == names[i], symbol.name
             
     def testRemoveSymbolFromNewSymbolSet(self):
-        """after removing a symbol, expect numsymbols -= 1"""
+        """SymbolSetTestCase.testRemoveSymbolFromNewSymbolSet: after removing a symbol, expect numsymbols -= 1"""
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbolset.removeSymbol(1)
         num = symbolset.numsymbols
         assert num == 1, num
         
     def testSaveNewSymbolSet(self):
-        """save a new SymbolSet to disk"""
+        """SymbolSetTestCase.testSaveNewSymbolSet: save a new SymbolSet to disk"""
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbola = mapscript.symbolObj('testa')
         symbolb = mapscript.symbolObj('testb')
@@ -89,17 +89,17 @@ class SymbolSetTestCase(unittest.TestCase):
 class MapSymbolSetTestCase(MapTestCase):
 
     def testGetNumSymbols(self):
-        """expect getNumSymbols == 2 from test fixture test.map"""
+        """MapSymbolSetTestCase.testGetNumSymbols: expect getNumSymbols == 2 from test fixture test.map"""
         num = self.map.getNumSymbols()
         assert num == 2, num
         
     def testSymbolSetNumsymbols(self):
-        """expect numsymbols == 2 from test fixture test.map"""
+        """MapSymbolSetTestCase.testSymbolSetNumsymbols: expect numsymbols == 2 from test fixture test.map"""
         num = self.map.symbolset.numsymbols
         assert num == 2, num
         
     def testSymbolSetSymbolNames(self):
-        """test names of symbols in test fixture's symbolset"""
+        """MapSymbolSetTestCase.testSymbolSetSymbolNames: test names of symbols in test fixture's symbolset"""
         set = self.map.symbolset
         names = [None, 'line', 'tie']
         for i in range(set.numsymbols):
@@ -107,12 +107,12 @@ class MapSymbolSetTestCase(MapTestCase):
             assert symbol.name == names[i], symbol.name
             
     def testSymbolIndex(self):
-        """expect index of 'line' symbol to be 1 in test fixture symbolset"""
+        """MapSymbolSetTestCase.testSymbolIndex: expect index of 'line' symbol to be 1 in test fixture symbolset"""
         i = self.map.symbolset.index('line')
         assert i == 1, i
         
     def testDrawNewSymbol(self):
-        """draw using a new symbol added to the fixture"""
+        """MapSymbolSetTestCase.testDrawNewSymbol: draw using a new symbol added to the fixture"""
         symbol = mapscript.symbolObj('xmarks', XMARKS_IMAGE)
         symbol_index = self.map.symbolset.appendSymbol(symbol)
         assert symbol_index == 2, symbol_index

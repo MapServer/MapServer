@@ -61,21 +61,26 @@ class MapCloneTestCase(MapscriptTestCase):
 class MapCloningTestCase(MapCloneTestCase):
 
     def testClonedName(self):
+        """MapCloningTestCase.testClonedName: the name of a cloned map equals the original"""
         assert self.mapobj_clone.name == self.mapobj_orig.name
 
     def testClonedLayers(self):
+        """MapCloningTestCase.testClonedLayers: the layers of a cloned map equal the original"""
         assert self.mapobj_clone.numlayers == self.mapobj_orig.numlayers
         assert self.mapobj_clone.getLayer(0).data \
             == self.mapobj_orig.getLayer(0).data
 
     def testSetFontSet(self):
+        """MapCloningTestCase.testSetFontSet: the number of fonts in a cloned map equal original"""
         assert self.mapobj_clone.fontset.numfonts == 2
     
     def testSetSymbolSet(self):
+        """MapCloningTestCase.testSetSymbolSet: the number of symbols in a cloned map equal original"""
         num = self.mapobj_clone.symbolset.numsymbols
         assert num == 2, num
    
     def testDrawClone(self):
+        """MapCloningTestCase.testDrawClone: drawing a cloned map works properly"""
         msimg = self.mapobj_clone.draw()
         assert msimg.thisown == 1
         data = msimg.saveToString()

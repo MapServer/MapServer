@@ -44,12 +44,12 @@ from testing import mapscript, MapTestCase, TESTMAPFILE, XMARKS_IMAGE
 class SymbolTestCase(unittest.TestCase):
 
     def testConstructor(self):
-        """create new instance of symbolObj"""
+        """SymbolTestCase.testConstructor: create new instance of symbolObj"""
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
 
     def testConstructorImage(self):
-        """create new instance of symbolObj from an image"""
+        """SymbolTestCase.testConstructorImage: create new instance of symbolObj from an image"""
         symbol = mapscript.symbolObj('xmarks', XMARKS_IMAGE)
         assert symbol.name == 'xmarks'
         assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
@@ -57,7 +57,7 @@ class SymbolTestCase(unittest.TestCase):
 class MapSymbolTestCase(MapTestCase):
         
     def testGetPoints(self):
-        """get symbol points as line and test coords"""
+        """MapSymbolTestCase.testGetPoints: get symbol points as line and test coords"""
         symbol = self.map.symbolset.getSymbol(1)
         assert symbol.name == 'line'
         line = symbol.getPoints()
@@ -66,7 +66,7 @@ class MapSymbolTestCase(MapTestCase):
         self.assertPointsEqual(pt, mapscript.pointObj(1.0, 1.0))
         
     def testSetPoints(self):
-        """add lines of points to an existing symbol"""
+        """MapSymbolTestCase.testSetPoints: add lines of points to an existing symbol"""
         symbol = self.map.symbolset.getSymbol(1)
         assert symbol.name == 'line'
         line = mapscript.lineObj()
@@ -79,7 +79,7 @@ class MapSymbolTestCase(MapTestCase):
         self.assertPointsEqual(pt, mapscript.pointObj(3.0, 3.0))
         
     def testSetStyle(self):
-        """expect success after setting an existing symbol's style"""
+        """MapSymbolTestCase.testSetStyle: expect success after setting an existing symbol's style"""
         symbol = self.map.symbolset.getSymbol(1)
         assert symbol.setStyle(0, 1) == mapscript.MS_SUCCESS
 

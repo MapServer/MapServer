@@ -44,21 +44,21 @@ from testing import mapscript, MapTestCase, TESTMAPFILE
 class MapConstructorTestCase(unittest.TestCase):
 
     def testMapConstructorNoArg(self):
-        "test map constructor with no argument"
+        """MapConstructorTestCase.testMapConstructorNoArg: test map constructor with no argument"""
         test_map = mapscript.mapObj()
         maptype = type(test_map)
         assert str(maptype) == "<class 'mapscript.mapObj'>", maptype
         assert test_map.thisown == 1
     
     def testMapConstructorEmptyStringArg(self):
-        "test map constructor with old-style empty string argument"
+        """MapConstructorTestCase.testMapConstructorEmptyStringArg: test map constructor with old-style empty string argument"""
         test_map = mapscript.mapObj('')
         maptype = type(test_map)
         assert str(maptype) == "<class 'mapscript.mapObj'>", maptype
         assert test_map.thisown == 1
         
     def testMapConstructorFilenameArg(self):
-        "test map constructor with filename argument"
+        """MapConstructorTestCasetest.testMapConstructorEmptyStringArg: map constructor with filename argument"""
         test_map = mapscript.mapObj(TESTMAPFILE)
         maptype = type(test_map)
         assert str(maptype) == "<class 'mapscript.mapObj'>", maptype
@@ -66,7 +66,7 @@ class MapConstructorTestCase(unittest.TestCase):
 
 class MapExtentTestCase(MapTestCase):
     def testSetExtent(self):
-        """test the setting of a mapObj's extent"""
+        """MapExtentTestCase.testSetExtent: test the setting of a mapObj's extent"""
         test_map = mapscript.mapObj(TESTMAPFILE)
         e = test_map.extent
         result = test_map.setExtent(e.minx, e.miny, e.maxx, e.maxy)
@@ -74,13 +74,13 @@ class MapExtentTestCase(MapTestCase):
         assert result == mapscript.MS_SUCCESS, result
         
     def testSetExtentBadly(self):
-        """test that mapscript raises an error for an invalid mapObj extent"""
+        """MapExtentTestCase.testSetExtentBadly: test that mapscript raises an error for an invalid mapObj extent"""
         test_map = mapscript.mapObj(TESTMAPFILE)
         self.assertRaises(mapscript.MapServerError, test_map.setExtent,
                           1.0, -2.0, -3.0, 4.0)
         
     def testReBindingExtent(self):
-        """test the rebinding of a map's extent"""
+        """MapExtentTestCase.testReBindingExtent: test the rebinding of a map's extent"""
         test_map = mapscript.mapObj(TESTMAPFILE)
         rect1 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
         rect2 = mapscript.rectObj(-10.0, -10.0, 10.0, 10.0)
@@ -92,7 +92,7 @@ class MapExtentTestCase(MapTestCase):
 class MapLayersTestCase(MapTestCase):
 
     def testMapInsertLayer(self):
-        "test insertion of a new layer at default (last) index"
+        """MapLayersTestCase.testMapInsertLayer: test insertion of a new layer at default (last) index"""
         n = self.map.numlayers
         layer = mapscript.layerObj()
         layer.name = 'new'
@@ -105,7 +105,7 @@ class MapLayersTestCase(MapTestCase):
         assert order == (0, 1, 2, 3, 4), order
         
     def testMapInsertLayerAtZero(self):
-        "test insertion of a new layer at first index"
+        """MapLayersTestCase.testMapInsertLayerAtZero: test insertion of a new layer at first index"""
         n = self.map.numlayers
         layer = mapscript.layerObj()
         layer.name = 'new'
@@ -118,7 +118,7 @@ class MapLayersTestCase(MapTestCase):
         assert order == (0, 1, 2, 3, 4), order
 
     def testMapInsertLayerDrawingOrder(self):
-        "test affect of insertion of a new layer at index 1 on drawing order"
+        """MapLayersTestCase.testMapInsertLayerDrawingOrder: test affect of insertion of a new layer at index 1 on drawing order"""
         n = self.map.numlayers
         # reverse layer drawing order
         o_start = (3, 2, 1, 0)
@@ -133,13 +133,13 @@ class MapLayersTestCase(MapTestCase):
         assert order == (4, 1, 3, 2, 0), order
 
     def testMapInsertLayerBadIndex(self):
-        "expect an exception when index is too large"
+        """MapLayersTestCase.testMapInsertLayerBadIndex: expect an exception when index is too large"""
         layer = mapscript.layerObj()
         self.assertRaises(mapscript.MapServerChildError, self.map.insertLayer, 
                           layer, 1000)
          
     def testMapRemoveLayerAtTail(self):
-        "test removal of highest index (tail) layer"
+        """MapLayersTestCase.testMapRemoveLayerAtTail: test removal of highest index (tail) layer"""
         n = self.map.numlayers
         layer = self.map.removeLayer(n-1)
         assert self.map.numlayers == n-1
@@ -148,7 +148,7 @@ class MapLayersTestCase(MapTestCase):
         assert order == (0, 1, 2), order
 
     def testMapRemoveLayerAtZero(self):
-        "test removal of lowest index (0) layer"
+        """MapLayersTestCase.testMapInsertLayerAtZero: test removal of lowest index (0) layer"""
         n = self.map.numlayers
         layer = self.map.removeLayer(0)
         assert self.map.numlayers == n-1
@@ -157,7 +157,7 @@ class MapLayersTestCase(MapTestCase):
         assert order == (0, 1, 2), order
         
     def testMapRemoveLayerDrawingOrder(self):
-        "test affect of layer removal on drawing order"
+        """MapLayersTestCase.testMapInsertLayerDrawingOrder: test affect of layer removal on drawing order"""
         n = self.map.numlayers
         # reverse layer drawing order
         o_start = (3, 2, 1, 0)
@@ -170,7 +170,79 @@ class MapLayersTestCase(MapTestCase):
         names = [self.map.getLayer(i).name for i in range(self.map.numlayers)]
         assert names == ['POLYGON', 'POINT', 'INLINE'], names  
         
-                
+class MapExceptionTestCase(MapTestCase):
+    def testDrawBadData(self):
+        """MapExceptionTestCase.testDrawBadData: a bad data descriptor in a layer returns proper error"""
+        self.map.getLayerByName('POLYGON').data = 'foo'
+        self.assertRaises(mapscript.MapServerError, self.map.draw)
+    def testZeroResultsQuery(self):
+        """MapExceptionTestCase.testZeroResultsQuery: zero query results returns proper error"""
+        p = mapscript.pointObj()
+        p.x, p.y = (-600000,1000000) # Way outside demo
+        self.assertRaises(mapscript.MapServerNotFoundError, \
+                         self.map.queryByPoint, p, mapscript.MS_SINGLE, 1.0)
+
+class EmptyMapExceptionTestCase(unittest.TestCase):
+    def setUp(self):
+        self.map = mapscript.mapObj('')
+    def tearDown(self):
+        self.map = None
+    def testDrawEmptyMap(self):
+        """EmptyMapExceptionTestCase.testDrawEmptyMap: drawing an empty map returns proper error"""
+        self.assertRaises(mapscript.MapServerError, self.map.draw)
+
+class MapMetaDataTestCase(MapTestCase):
+    def testInvalidKeyAccess(self):
+        """MapMetaDataTestCase.testInvalidKeyAccess: an invalid map metadata key returns proper error"""
+        self.assertRaises(mapscript.MapServerError, self.map.getMetaData, 'foo')
+    def testFirstKeyAccess(self):
+        """MapMetaDataTestCase.testFirstKeyAccess: first metadata key is correct value"""
+        key = self.map.getFirstMetaDataKey()
+        assert key == 'key1'
+        val = self.map.getMetaData(key)
+        assert val == 'value1'
+    def testLastKeyAccess(self):
+        """MapMetaDataTestCase.testLastKeyAccess: last metadata key is correct value"""
+        key = self.map.getFirstMetaDataKey()
+        for i in range(3):
+            key = self.map.getNextMetaDataKey(key)
+            assert key is not None
+        key = self.map.getNextMetaDataKey(key)
+        assert key is None
+    def testMapMetaData(self):
+        """MapMetaDataTestCase.testMapMetaData: map metadata keys are correct values"""
+        keys = []
+        key = self.map.getFirstMetaDataKey()
+        if key is not None: keys.append(key)
+        while 1:
+            key = self.map.getNextMetaDataKey(key)
+            if not key:
+                break
+            keys.append(key)
+        assert keys == ['key1', 'key2', 'key3', 'key4'], keys
+    def testLayerMetaData(self):
+        """MapMetaDataTestCase.testLayerMetaData: layer metadata keys are correct values"""
+        keys = []
+        key = self.map.getLayer(0).getFirstMetaDataKey()
+        if key is not None: keys.append(key)
+        while 1:
+            key = self.map.getLayer(0).getNextMetaDataKey(key)
+            if not key:
+                break
+            keys.append(key)
+        assert keys == ['key1', 'key2', 'key3', 'key4'], keys
+    def testClassMetaData(self):
+        """MapMetaDataTestCase.testClassMetaData: class metadata keys are correct values"""
+        keys = []
+        key = self.map.getLayer(0).getClass(0).getFirstMetaDataKey()
+        if key is not None: keys.append(key)
+        while 1:
+            key = self.map.getLayer(0).getClass(0).getNextMetaDataKey(key)
+            if not key:
+                break
+            keys.append(key)
+        assert keys == ['key1', 'key2', 'key3', 'key4'], keys
+        
 # ===========================================================================
 # Run the tests outside of the main suite
 

@@ -45,6 +45,7 @@ from testing import MapTestCase
 class OWSRequestTestCase(MapTestCase):
     
     def testInit(self):
+        """OWSRequestTestCase.testInit: OWS initializer works right"""
         request = mapscript.OWSRequest()
         request.setParameter("BBOX", "-0.3,51.2,0.3,51.8")
         assert request.NumParams == 1
@@ -52,16 +53,19 @@ class OWSRequestTestCase(MapTestCase):
         assert request.getValue(0) == "-0.3,51.2,0.3,51.8"
     
     def testGetParameter(self):
+        """OWSRequestTestCase.testGetParameter: OWS can get request parameters by index"""
         request = mapscript.OWSRequest()
         request.setParameter('foo', 'bar')
         assert request.getValue(0) == 'bar'
     
     def testGetParameterByName(self):
+        """OWSRequestTestCase.testGetParameterByName: OWS can get request parameters by name"""
         request = mapscript.OWSRequest()
         request.setParameter('foo', 'bar')
         assert request.getValueByName('Foo') == 'bar'
     
     def testResetParam(self):
+        """OWSRequestTestCase.testResetParam: OWS can reset parameters by name"""
         request = mapscript.OWSRequest()
         request.setParameter('foo', 'bar')
         assert request.NumParams == 1
@@ -70,6 +74,7 @@ class OWSRequestTestCase(MapTestCase):
         assert request.getValue(0) == 'bra'
     
     def testLoadWMSRequest(self):
+        """OWSRequestTestCase.testLoadWMSRequest: OWS can load a WMS request"""
         request = mapscript.OWSRequest()
         request.setParameter("REQUEST", "GetMap")
         request.setParameter("VERSION", "1.1.0")
