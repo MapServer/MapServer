@@ -787,9 +787,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
 
     if(type == -1)
-      status = msSHPOpenFile(shapefile, "rb", NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb", filename);
     else if(type == -2)
-      status = msSHPOpenFile(shapefile, "rb+", NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb+", filename);
     else
       status = msSHPCreateFile(shapefile, filename, type);
 

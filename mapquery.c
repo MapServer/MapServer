@@ -164,7 +164,7 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   }
 
   // open this layer
-  status = msLayerOpen(lp, map->shapepath);
+  status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // build item list (no annotation) since we do have to classify the shape
@@ -254,7 +254,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   }
 
   // open this layer
-  status = msLayerOpen(lp, map->shapepath);
+  status = msLayerOpen(lp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
   
   // build item list (no annotation)
@@ -390,7 +390,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     }    
 
     // open this layer
-    status = msLayerOpen(lp, map->shapepath);
+    status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // build item list (no annotation)
@@ -524,7 +524,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   else
     start = stop = qlayer;
 
-  status = msLayerOpen(slp, map->shapepath);
+  status = msLayerOpen(slp);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   for(l=start; l>=stop; l--) {
@@ -548,7 +548,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     }
     
     // open this layer
-    status = msLayerOpen(lp, map->shapepath);
+    status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
     // build item list (no annotation)
@@ -736,7 +736,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     rect.maxy = p.y + t;
 
     // open this layer
-    status = msLayerOpen(lp, map->shapepath);
+    status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // build item list (no annotation)
@@ -868,7 +868,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     }
    
     // open this layer
-    status = msLayerOpen(lp, map->shapepath);
+    status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // build item list (no annotation)

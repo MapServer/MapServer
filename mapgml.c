@@ -336,7 +336,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 	fprintf(stream, "\t<%s_layer>\n", lp->name); // fall back on the layer name + "Layer"
 
       // actually open the layer
-      status = msLayerOpen(lp, map->shapepath);
+      status = msLayerOpen(lp);
       if(status != MS_SUCCESS) return(status);
 
       // retrieve all the item names
@@ -457,7 +457,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
       geom_name = msWFSGetGeomElementName(map, lp);
 
       // actually open the layer
-      status = msLayerOpen(lp, map->shapepath);
+      status = msLayerOpen(lp);
       if(status != MS_SUCCESS) return(status);
 
       // retrieve all the item names

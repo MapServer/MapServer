@@ -1758,7 +1758,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->status = MS_OFF;
   layer->data = NULL;
 
-  layer->map = map;
+  layer->map = map; // point back to the encompassing structure
 
   layer->type = -1;
 

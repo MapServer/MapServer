@@ -1006,7 +1006,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, const char* wmtver, int feature_c
       if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0)
         continue;
 
-      if(msLayerOpen(lp, map->shapepath) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
+      if(msLayerOpen(lp) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
         return msWMSException(map, wmtver);
 
       printf("\nLayer '%s'\n", lp->name);

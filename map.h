@@ -1026,7 +1026,7 @@ int msGetBit(char *array, int index);
 void msSetBit(char *array, int index, int value);
 void msFlipBit(char *array, int index);
 
-int msLayerOpen(layerObj *layer, char *shapepath); // in maplayer.c
+int msLayerOpen(layerObj *layer); // in maplayer.c
 void msLayerClose(layerObj *layer);
 int msLayerWhichShapes(layerObj *layer, rectObj rect);
 int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadata);
@@ -1038,7 +1038,7 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent);
 int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                         int tile, long record);
 
-int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
+int msTiledSHPOpenFile(layerObj *layer); // in mapshape.c
 int msTiledSHPWhichShapes(layerObj *layer, rectObj rect);
 int msTiledSHPNextShape(layerObj *layer, shapeObj *shape);
 int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record);

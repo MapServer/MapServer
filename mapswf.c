@@ -2135,7 +2135,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         if (msLookupHashTable(layerPtr->metadata, "SWFDUMPATTRIBUTES") &&
             layerPtr->numitems <= 0)
         {
-            msLayerOpen(layerPtr, map->shapepath);
+            msLayerOpen(layerPtr);
             msLayerWhichItems(layerPtr, MS_TRUE, MS_FALSE, 
                               msLookupHashTable(layerPtr->metadata, 
                                                 "SWFDUMPATTRIBUTES"));

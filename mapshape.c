@@ -1181,11 +1181,10 @@ int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   return(0);
 }
 
-int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *filename)
+int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename)
 {
   int i;
   char *dbfFilename;
-  char szPath[MS_MAXPATHLEN];
 
   if(!filename) {
     msSetError(MS_IOERR, "No (NULL) filename provided.", "msOpenSHPFile()");
@@ -1195,28 +1194,20 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *file
   /* initialize a few things */
   shpfile->status = NULL;
   shpfile->lastshape = -1;
-  shpfile->shapepath = NULL;
-
-  if(shapepath) shpfile->shapepath = strdup(shapepath);
 
   /* open the shapefile file (appending ok) and get basic info */
   if(!mode) 	
-    shpfile->hSHP = msSHPOpen( msBuildPath(szPath, shapepath, filename), "rb");
+    shpfile->hSHP = msSHPOpen( filename, "rb");
   else
-    shpfile->hSHP = msSHPOpen( msBuildPath(szPath, shapepath, filename), mode);
+    shpfile->hSHP = msSHPOpen( filename, mode);
 
   if(!shpfile->hSHP) {
-    msSetError(MS_IOERR, "(%s)", "msOpenSHPFile()", 
-               msBuildPath(szPath, shapepath, filename ));
+    msSetError(MS_IOERR, "(%s)", "msOpenSHPFile()", filename);
     return(-1);
   }
 
-  if((*filename == '\\') || (*filename == '/') || (*(filename + 1) == ':')) { /* already full path */
-    strcpy(shpfile->source, filename);
-  } else {
-    strcpy(shpfile->source, msBuildPath( szPath, shapepath, filename )); /* save the source (fullpath) information */
-  }
-
+  strcpy(shpfile->source, filename);
+  
   /* load some information about this shapefile */
   msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
   msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
@@ -1234,7 +1225,7 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *file
   
   strcat(dbfFilename, ".dbf");
 
-  shpfile->hDBF = msDBFOpen(msBuildPath( szPath, shapepath, dbfFilename ), "rb");
+  shpfile->hDBF = msDBFOpen(dbfFilename, "rb");
 
   if(!shpfile->hDBF) {
     msSetError(MS_IOERR, "(%s)", "msOpenSHPFile()", dbfFilename);    
@@ -1270,7 +1261,6 @@ int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
   // initialize a few other things
   shpfile->status = NULL;
   shpfile->lastshape = -1;
-  shpfile->shapepath = NULL;
 
   shpfile->hDBF = NULL; // XBase file is NOT created here...
   return(0);
@@ -1282,7 +1272,6 @@ void msSHPCloseFile(shapefileObj *shpfile)
     if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
     if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
     if(shpfile->status) free(shpfile->status);
-    if(shpfile->shapepath) free(shpfile->shapepath);
   }
 }
 
@@ -1344,12 +1333,15 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
   return(MS_SUCCESS); /* success */
 }
 
-int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
+int msTiledSHPOpenFile(layerObj *layer)
 {
   int i;
-  char *filename, tilename[MS_PATH_LENGTH], szPath[MS_MAXPATHLEN];
+  char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
 
-  if(msSHPOpenFile(&(layer->tileshpfile), "rb", msBuildPath(szPath, ((layer->map)?(layer->map->mappath):(NULL)) , ((shapepath)?(shapepath):(""))), layer->tileindex) == -1) return(MS_FAILURE);
+  if(msSHPOpenFile(&(layer->tileshpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->tileindex)) == -1) 
+    if(msSHPOpenFile(&(layer->tileshpfile), "rb", msBuildPath(szPath, layer->map->mappath, layer->tileindex)) == -1)
+      return(MS_FAILURE);
+
   if((layer->tileitemindex = msDBFGetItemIndex(layer->tileshpfile.hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
  
   // position the source at the FIRST tile to use as a template, this is so the functions that fill the iteminfo array have something to work from
@@ -1366,12 +1358,16 @@ int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
       
     // open the shapefile
 #ifndef IGNORE_MISSING_DATA
-    if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
+    if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+      if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+        return(MS_FAILURE);
 #else
-    if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) continue; // check again
+    if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+      if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+        continue; // check again
 #endif
 
-    return(MS_SUCCESS); // found the template, ok to proceed
+    return(MS_SUCCESS); // found a template, ok to proceed
   }
 
   msSetError(MS_SHPERR, "Unable to open a single tile to use as a template.", "msTiledSHPOpenFile()");
@@ -1381,7 +1377,7 @@ int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
 int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 {
   int i, status;
-  char *filename, tilename[MS_PATH_LENGTH];
+  char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
 
   msSHPCloseFile(&(layer->shpfile)); // close previously opened files
 
@@ -1402,9 +1398,13 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
       
       // open the shapefile
 #ifndef IGNORE_MISSING_DATA
-      if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
+      if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+        if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+          return(MS_FAILURE);
 #else
-      if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) continue; // check again
+      if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+        if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+	  continue; // check again
 #endif
 
       status = msSHPWhichShapes(&(layer->shpfile), rect);
@@ -1427,7 +1427,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 int msTiledSHPNextShape(layerObj *layer, shapeObj *shape) 
 {
   int i, status, filter_passed = MS_FALSE;
-  char *filename, tilename[MS_PATH_LENGTH];
+  char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
   char **values=NULL;
 
   do {
@@ -1451,9 +1451,13 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 	  
 	  // open the shapefile
 #ifndef IGNORE_MISSING_DATA
-	  if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
+	  if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+            if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+	      return(MS_FAILURE);
 #else
-	  if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) continue; // check again
+	  if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+            if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+	      continue; // check again
 #endif
 	  
 	  status = msSHPWhichShapes(&(layer->shpfile), layer->tileshpfile.statusbounds);
@@ -1496,7 +1500,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 
 int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record) 
 {
-  char *filename, tilename[MS_PATH_LENGTH];
+  char *filename, tilename[MS_MAXPATHLEN], szPath[MS_MAXPATHLEN];
 
   if((tile < 0) || (tile >= layer->tileshpfile.numshapes)) return(MS_FAILURE); // invalid tile id
 
@@ -1512,7 +1516,9 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
       
     // open the shapefile, since a specific tile was request an error should be generated if that tile does not exist
     if(strlen(filename) == 0) return(MS_FAILURE);
-    if(msSHPOpenFile(&(layer->shpfile), "rb",  layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
+    if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+      if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+        return(MS_FAILURE);
   }
 
   if((record < 0) || (record >= layer->shpfile.numshapes)) return(MS_FAILURE);

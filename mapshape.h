@@ -119,8 +119,6 @@ typedef struct {
 
   int lastshape;
 
-  char *shapepath; // used by tiled shapefiles to access tiles
-
   char *status;
   rectObj statusbounds; // holds extent associated with the status vector
 
@@ -132,7 +130,7 @@ typedef struct {
 #ifndef SWIG
 
 // shapefileObj function prototypes 
-int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *filename);
+int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename);
 int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type);
 void msSHPCloseFile(shapefileObj *shpfile);
 int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect);

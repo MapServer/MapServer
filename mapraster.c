@@ -1533,13 +1533,11 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   force_gdal = MS_TRUE;
 #endif
 
-  if(map->shapepath)
-      msBuildPath(cwd, map->mappath, map->shapepath);
-  else
-      msBuildPath(cwd, map->mappath, "");
-
   if(layer->tileindex) { /* we have in index file */
-    if(msSHPOpenFile(&tilefile, "rb", cwd, layer->tileindex) == -1) return(MS_FAILURE);    
+    if(msSHPOpenFile(&tilefile, "rb", msBuildPath3(szPath, map->mappath, map->shapepath, layer->tileindex)) == -1) 
+      if(msSHPOpenFile(&tilefile, "rb", msBuildPath(szPath, map->mappath, layer->tileindex)) == -1) 
+        return(MS_FAILURE);    
+
     if((tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
     searchrect = map->extent;
 #ifdef USE_PROJ

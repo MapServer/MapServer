@@ -498,7 +498,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   // open this layer
-  status = msLayerOpen(layer, map->shapepath);
+  status = msLayerOpen(layer);
   if(status != MS_SUCCESS) return MS_FAILURE;
   
   // build item list
@@ -667,7 +667,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   }
 
   // open this layer
-  status = msLayerOpen(layer, map->shapepath);
+  status = msLayerOpen(layer);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // build item list

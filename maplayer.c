@@ -76,8 +76,8 @@ static void layerFreeItemInfo(layerObj *layer)
 /*
 ** Does exactly what it implies, readies a layer for processing.
 */
-int msLayerOpen(layerObj *layer, char *shapepath)
-{
+int msLayerOpen(layerObj *layer)
+{ 
   char szPath[MS_MAXPATHLEN];
 
   if(layer->features) 
@@ -88,12 +88,13 @@ int msLayerOpen(layerObj *layer, char *shapepath)
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    if(msSHPOpenFile(&(layer->shpfile), "rb", 
-                     msBuildPath(szPath, ((layer->map)?(layer->map->mappath):(NULL)), ((shapepath)?(shapepath):(""))), layer->data) == -1) return(MS_FAILURE);
+    if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->data)) == -1) 
+      if(msSHPOpenFile(&(layer->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, layer->data)) == -1)
+        return(MS_FAILURE);
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPOpenFile(layer, shapepath));
+    return(msTiledSHPOpenFile(layer));
     break;
   case(MS_INLINE):
     layer->currentfeature = layer->features; // point to the begining of the feature list

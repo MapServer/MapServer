@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2003/02/05 04:40:11  sdlime
+ * Removed shapepath as an argument from msLayerOpen and msSHPOpenFile. The shapefile opening routine now expects just a filename. So, you must use msBuildPath or msBuildPath3 to create a full qualified filename. Relatively simple change, but required lots of changes. Demo still works...
+ *
  * Revision 1.12  2002/12/19 05:17:09  dan
  * Report WFS exceptions, and do not fail on WFS requests returning 0 features
  *
@@ -534,7 +537,7 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
                    msWFSGetGeomElementName(map, lp),
                    msWFSGetGeomType(lp) );
 
-            if (msLayerOpen(lp, map->shapepath) == MS_SUCCESS)
+            if (msLayerOpen(lp) == MS_SUCCESS)
             {
                 if (msLayerGetItems(lp) == MS_SUCCESS)
                 {

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.15  2003/02/05 04:40:10  sdlime
+ * Removed shapepath as an argument from msLayerOpen and msSHPOpenFile. The shapefile opening routine now expects just a filename. So, you must use msBuildPath or msBuildPath3 to create a full qualified filename. Relatively simple change, but required lots of changes. Demo still works...
+ *
  * Revision 1.14  2003/01/10 06:39:06  sdlime
  * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c to mapstring.c so they can be used a bit more freely.
  *
@@ -640,7 +643,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
   }
   else
   {
-    if (msLayerOpen(lp, map->shapepath) == MS_SUCCESS) {
+    if (msLayerOpen(lp) == MS_SUCCESS) {
       int status;
       status = msLayerGetExtent(lp, ext);
       msLayerClose(lp);

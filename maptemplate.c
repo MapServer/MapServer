@@ -2312,7 +2312,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
       if(TEMPLATE_TYPE(template) == MS_URL) {
         msObj->ResultLayer = lp;
 
-        status = msLayerOpen(lp, msObj->Map->shapepath);
+        status = msLayerOpen(lp);
         if(status != MS_SUCCESS) return status;
 
         // retrieve all the item names
@@ -2384,7 +2384,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
     }
 
     // open this layer
-    status = msLayerOpen(lp, msObj->Map->shapepath);
+    status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return status;
 
     // retrieve all the item names

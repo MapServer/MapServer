@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
       byte_order = MS_NEW_MSB_ORDER; 
   }
     
-  if(msSHPOpenFile(&shapefile, "rb", NULL, argv[1]) == -1) {
+  if(msSHPOpenFile(&shapefile, "rb", argv[1]) == -1) {
     fprintf(stdout, "Error opening shapefile %s.\n", argv[1]);
     exit(0);
   }
