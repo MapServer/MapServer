@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.46  2003/01/15 19:05:54  dan
+ * Fixed the fix from v1.39 - the test on pszFormatsList had been removed
+ * instead of the test on pszStylesList
+ *
  * Revision 1.45  2003/01/14 04:13:45  dan
  * Added support for WMS AUTO projections
  *
@@ -179,13 +183,13 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         return NULL;
     }
 
-    if (pszStyle==NULL && pszStyleList==NULL)
+    if (pszStyle==NULL)
     {
         // "" is a valid default for style.
         pszStyle = "";
     }
 
-    if (pszFormat==NULL)
+    if (pszFormat==NULL && pszFormatList==NULL)
     {
         msSetError(MS_WMSCONNERR, 
                    "At least wms_format or wms_formatlist is required for "
