@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.157.2.3  2005/01/24 15:48:37  assefa
+ * Error : missing index in the source.
+ *
  * Revision 1.157.2.2  2005/01/14 05:07:30  frank
  * fixed bug 1152 - wms capabilities in fastcgi builds - use msIO_fprintf
  *
@@ -1959,7 +1962,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      //free the stuff used for nested layers
      for (i = 0; i < map->numlayers; i++)
      {
-       if (numNestedGroups > 0)
+       if (numNestedGroups[i] > 0)
        {
          msFreeCharArray(nestedGroups[i], numNestedGroups[i]);
        }
