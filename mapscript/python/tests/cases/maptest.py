@@ -242,6 +242,21 @@ class MapMetaDataTestCase(MapTestCase):
                 break
             keys.append(key)
         assert keys == ['key1', 'key2', 'key3', 'key4'], keys
+
+class NoFontSetTestCase(unittest.TestCase):
+
+    def testNoGetFontSetFile(self):
+        """an empty map should have fontset filename == None"""
+        self.map = mapscript.mapObj()
+        assert self.map.fontset.filename == None
+
+
+class MapFontSetTestCase(MapTestCase):
+
+    def testGetFontSetFile(self):
+        """expect fontset file to be 'fonts.txt'"""
+        file = self.map.fontset.filename
+        assert file == 'fonts.txt', file
         
 # ===========================================================================
 # Run the tests outside of the main suite

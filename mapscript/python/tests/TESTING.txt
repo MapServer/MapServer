@@ -1,9 +1,10 @@
 .. $Id$
 
 Python MapScript Unit Tests
-===========================
+========================================
 
-Author: Sean Gillies, sgillies@frii.com
+Authors: Sean Gillies, sgillies@frii.com
+         Howard Butler, hobu@iastate.edu
 
 
 Running the tests
@@ -11,7 +12,7 @@ Running the tests
 
 To run the tests, execute 
 
-   python tests/testMapScript.py -v
+   python tests/runtests.py -v
 
 from the mapscript/python directory of the mapserver distribution.  The
 tests cannot be run properly from another path.  By default, the unit
@@ -21,19 +22,11 @@ unit tests before installing the mapscript module.  The unit tests use a
 map config file, symbolset file, fontset file, and data located in the 
 'tests' directory of the mapserver distribution.
 
+If you encounter any errors, please create a new issue in the MapServer
+bug tracker
 
-New testing framework
----------------------
+    http://mapserver.gis.umn.edu/bugs/enter_bug.cgi
 
-I'm slowly changing to a state where modules of test cases are kept in
-tests/cases.  These cases are incorporated into a test suite module
-runtests.py.  The testing.py is a module of mapscript testing utility
-classes and functions.
-
-To try the new testing framework, execute
-
-    python tests/runtests.py -v
-
-from the mapscript/python directory.  Eventually all tests in the
-testMapScript.py file will be moved into the suite in runtests.py.
+under the SWIG-MapScript component.  Copy the relevant error messages
+and we'll get to the bug ASAP.  Thanks!
 
