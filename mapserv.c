@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.134  2004/10/29 22:32:36  frank
+ * Added a bit of debugging for new requests in fastcgi mode, with the
+ * process id.
+ *
  * Revision 1.133  2004/10/28 20:12:31  frank
  * added win32/fastcgi support using atexit()
  *
@@ -1096,6 +1100,18 @@ int main(int argc, char *argv[]) {
 
     msObj->request->NumParams = loadParams(msObj->request);
     msObj->Map = loadMap();
+
+#ifdef USE_FASTCGI
+    if( msObj->Map->debug )
+    {
+        static int nRequestCounter = 1;
+
+        msDebug( "CGI Request %d on process %d\n", 
+                 nRequestCounter, getpid() );
+
+        nRequestCounter++;
+    }
+#endif
 
     /*
     ** Start by calling the WMS/WFS/WCS Dispatchers.  If they fail then we'll 
