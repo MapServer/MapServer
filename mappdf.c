@@ -1335,7 +1335,7 @@ int msEmbedScalebarPDF(mapObj *map, PDF *pdf, hashTableObj fontHash)
     map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
     map->symbolset.symbol[s].name = strdup("scalebar");
 
-    if(map->scalebar.transparent)
+    if(map->scalebar.transparent == MS_ON)
         gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
 
     switch(map->scalebar.position) {
