@@ -1036,10 +1036,11 @@ memory.") const char * {
         styleObj *style;
         int result;
         if (!parent_class) { 
-            style = (styleObj *)calloc(1, sizeof(styleObj));
+            style = (styleObj *) malloc(sizeof(styleObj));
             if (!style) return NULL;
             result = initStyle(style);
             if (result == MS_SUCCESS) {
+                style->isachild = MS_FALSE;
                 return style;
             }
             else {
@@ -1058,7 +1059,12 @@ memory.") const char * {
             return &(parent_class->styles[parent_class->numstyles-1]);
         }
     }
-    
+   
+    ~styleObj() {
+        if (self->isachild == MS_FALSE) 
+            free(self);
+        // else we let the parent class clean up
+    }
 }
 
 //

@@ -42,7 +42,17 @@ if 'mapObj' not in dir(mapscript):
 
 # Base class for Primitives Tests -- no actual tests in this class
 
-class MapPrimitivesTestCase(unittest.TestCase):
+class MapServerTestCase(unittest.TestCase):
+
+    def assertAlmostEqual(first, second, places=7):
+        if hasattr(unittest.TestCase, 'assertAlmostEqual'):
+            unittest.TestCase.assertAlmostEqual(first, second, places)
+        else:
+            if round(second-first, places) != 0:
+                raise AssertionError, \
+                    '%s != %s within %s places' % (`first`, `second`, `places`)
+        
+class MapPrimitivesTestCase(MapServerTestCase):
     """Base class for testing primitives (points, lines, shapes)
     in stand-alone mode"""
 
@@ -110,7 +120,7 @@ class MapPrimitivesTestCase(unittest.TestCase):
         self.assertAlmostEqual(first.maxx, second.maxx)
         self.assertAlmostEqual(first.maxy, second.maxy)
 
-class MapTestCase(unittest.TestCase):
+class MapTestCase(MapServerTestCase):
     """Base class for testing with a map fixture"""
     def setUp(self):
         self.mapobj1 = mapscript.mapObj(testMapfile)
@@ -119,6 +129,12 @@ class MapTestCase(unittest.TestCase):
 
 # ---------------------------------------------------------------------------
 # The tests begin here
+
+class LayerTestCase(MapTestCase):
+
+    def testLayerConstructor(self):
+        layer = mapscript.layerObj(self.mapobj1)
+        assert layer.thisown == 1
 
 # Layer ordering tests
 class LayerOrderTestCase(MapTestCase):
@@ -831,11 +847,11 @@ class NewStylesTestCase(unittest.TestCase):
         class0 = p_layer.getClass(0)
         assert class0.numstyles == 2, class0.numstyles
         new_style = mapscript.styleObj(class0)
+        assert new_style.thisown == 1, new_style.thisown
         new_style.color.setRGB(0, 0, 0)
         new_style.symbol = 1
         new_style.size = 3
         msimg = self.mapobj1.draw()
-        assert msimg.thisown == 1
         data = msimg.saveToString()
         filename = 'testAppendNewStyleOldWay.png'
         fh = open(filename, 'wb')
