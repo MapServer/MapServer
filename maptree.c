@@ -487,7 +487,10 @@ char *msSearchDiskTree(char *filename, rectObj aoi, int debug)
 
   disktree = msSHPDiskTreeOpen (filename, debug);
   if(!disktree) {
-    msSetError(MS_IOERR, "Unable to open spatial index for %s. In most cases you can safely ignore this message, otherwise check file names and permissions.", "msSearchDiskTree()", filename);
+
+    // only set this error IF debugging is turned on, gets annoying otherwise
+    if(debug) msSetError(MS_IOERR, "Unable to open spatial index for %s. In most cases you can safely ignore this message, otherwise check file names and permissions.", "msSearchDiskTree()", filename);
+
     return(NULL);
   }
 
