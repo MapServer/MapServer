@@ -27,8 +27,8 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
- * Revision 1.59  2004/03/23 05:43:28  sean
- * Completed layerObj development documentation and took opp to protect some layerObj members from SWIG (bug 585).
+ * Revision 1.60  2004/03/25 21:59:23  sean
+ * Undoing accidental changes to mapwmslayer.c
  *
  * Revision 1.58  2004/02/13 15:28:56  assefa
  * Use wms_sld_url to send sld request.
@@ -390,7 +390,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         pszVersionKeyword = "VERSION";
 
     sprintf(pszURL + strlen(pszURL),
-            "=WMS&%s=%s&layers=%s&FORMAT=%s&TRANSPARENT=TRUE",
+            "SERVICE=WMS&%s=%s&LAYERS=%s&FORMAT=%s&TRANSPARENT=TRUE",
             pszVersionKeyword, pszVersion, pszNameEnc, pszFormatEnc);
 
     if (pszSLD == NULL)
@@ -712,7 +712,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             pszExceptionsParam = "INIMAGE";
 
         sprintf(pszURL + strlen(pszURL), 
-                "&request=%s&width=%d&height=%d&srs=%s&bbox=%f,%f,%f,%f"
+                "&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
                 "&EXCEPTIONS=%s",
                 pszRequestParam, map->width, map->height, 
                 pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
