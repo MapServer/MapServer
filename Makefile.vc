@@ -180,7 +180,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
 		mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
 		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj\
-		mapgdal.obj mapwfs.obj mapwfslayer.obj mapows.obj maphttpd.obj\
+		mapgdal.obj mapwfs.obj mapwfslayer.obj mapows.obj maphttp.obj\
 		mappdf.obj \
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
