@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/11/04 21:13:02  frank
+ * ensure we include io.h on win32
+ *
  * Revision 1.5  2004/11/04 21:06:09  frank
  * centralize 'stdout binary mode setting' for win32, add for gdal output
  *
@@ -47,6 +50,11 @@
 #include <stdarg.h>
 
 #include "map.h"
+
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
 
 MS_CVSID("$Id$")
 
