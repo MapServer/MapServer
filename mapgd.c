@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90  2004/11/19 23:11:42  sean
+ * in msImageLoadGD, call msImageLoadGDCtx with a const char string rather than a pointer
+ *
  * Revision 1.89  2004/11/19 20:10:41  sean
  * use strdup to set driver values in msImageLoadGD
  *
@@ -470,7 +473,6 @@ imageObj *msImageLoadGD(const char *filename)
     gdIOCtx *ctx;
     imageObj *image;
     char bytes[8];
-    char *driver=NULL;
     
     stream = fopen(filename, "rb");
     if (!stream) {
@@ -482,10 +484,13 @@ imageObj *msImageLoadGD(const char *filename)
 
     fread(bytes,8,1,stream); // read some bytes to try and identify the file
     rewind(stream); // reset the image for the readers
+
     if (memcmp(bytes,"GIF8",4)==0) 
     {
 #ifdef USE_GD_GIF
-        driver = strdup("GD/GIF");
+        ctx = msNewGDFileCtx(stream);
+        image = msImageLoadGDCtx(ctx, "GD/GIF");
+        ctx->gd_free(ctx);
 #else
         msSetError(MS_MISCERR, "Unable to load GIF image.",
                    "msImageLoadGD()");
@@ -496,7 +501,9 @@ imageObj *msImageLoadGD(const char *filename)
     else if (memcmp(bytes,PNGsig,8)==0) 
     {
 #ifdef USE_GD_PNG
-        driver = strdup("GD/PNG");
+        ctx = msNewGDFileCtx(stream);
+        image = msImageLoadGDCtx(ctx, "GD/PNG");
+        ctx->gd_free(ctx);
 #else
         msSetError(MS_MISCERR, "Unable to load PNG image.",
                    "msImageLoadGD()");
@@ -507,15 +514,16 @@ imageObj *msImageLoadGD(const char *filename)
     else if (memcmp(bytes,JPEGsig,3)==0) 
     {
 #ifdef USE_GD_JPEG
-        driver = strdup("GD/JPEG");
+        ctx = msNewGDFileCtx(stream);
+        image = msImageLoadGDCtx(ctx, "GD/JPEG");
+        ctx->gd_free(ctx);
 #else
         msSetError(MS_MISCERR, "Unable to load JPEG image.", "msImageLoadGD()");
         fclose(stream);
         return(NULL);
 #endif
     }
-    
-    if (!driver)
+    else 
     {
         msSetError(MS_MISCERR, "Unable to load %s in any format.",
                    "msImageLoadGD()", filename);
@@ -523,12 +531,7 @@ imageObj *msImageLoadGD(const char *filename)
         return(NULL);
     }
     
-    ctx = msNewGDFileCtx(stream);
-    image = msImageLoadGDCtx(ctx, driver);
-    ctx->gd_free(ctx);
     fclose(stream);
-
-    msFree(driver);
     
     if (!image) {
         msSetError(MS_GDERR, "Unable to initialize image '%s'", 
