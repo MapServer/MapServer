@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.47  2002/08/09 22:55:38  assefa
+ * Update code to be in sync with mapserver addition of Styles.
+ *
  * Revision 1.46  2002/07/08 19:07:06  dan
  * Added map->setFontSet() to MapScript
  *
@@ -226,9 +229,6 @@ int *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname,
     return msGetLayersIndexByGroup(self, groupname, pnCount);
 }
 
-int mapObj_addColor(mapObj* self, int r, int g, int b) {
-    return msAddColor(self, r, g, b);
-  }
 
 int mapObj_getSymbolByName(mapObj* self, char *name) {
     return msGetSymbolIndex(&self->symbolset, name);
@@ -244,7 +244,7 @@ void mapObj_prepareQuery(mapObj* self) {
 //TODO create for now GD image
 imageObj *mapObj_prepareImage(mapObj* self) {
     int status;
-    imageObj *img;
+    imageObj *img = NULL;
 
     if(self->width == -1 && self->height == -1) {
       msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
@@ -255,19 +255,24 @@ imageObj *mapObj_prepareImage(mapObj* self) {
       if(msAdjustImage(self->extent, &self->width, &self->height) == -1)
         return NULL;
 
-    img = msImageCreate(self->width, self->height, self->outputformat,
-                        self->web.imagepath, self->web.imageurl);
+    if( MS_RENDERER_GD(self->outputformat) )
+    {
+        img = msImageCreateGD(self->width, self->height, self->outputformat, 
+				self->web.imagepath, self->web.imageurl);        
+        if( img != NULL ) msImageInitGD( img, &self->imagecolor );
+    }
+    else if( MS_RENDERER_RAWDATA(self->outputformat) )
+    {
+        img = msImageCreate(self->width, self->height, self->outputformat,
+                            self->web.imagepath, self->web.imageurl);
+    }
+
     if(!img) {
       msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
     }
   
-    if (MS_RENDERER_GD(self->outputformat))
-    {
-        if(msLoadPalette(img->img.gd, &(self->palette), self->imagecolor) == -1)
-          return NULL;
-    }
-
+   
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
     status = msCalculateScale(self->extent, self->units, self->width, self->height, 
                               self->resolution, &self->scale);
@@ -606,13 +611,20 @@ imageObj *classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer
 
 
 int classObj_setSymbolByName(classObj *self, mapObj *map, char* pszSymbolName) {
-    self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName);
+  /*
+   self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName);
     return self->symbol;
+  */
+  return -1;
 }
   
 int classObj_setOverlaySymbolByName(classObj *self, mapObj *map, char* pszOverlaySymbolName) {
+  /*
     self->overlaysymbol = msGetSymbolIndex(&map->symbolset, pszOverlaySymbolName);
     return self->overlaysymbol;
+  */
+  return -1;
+
   }
 
 
@@ -1008,4 +1020,22 @@ DBFFieldType DBFInfo_getFieldType(DBFInfo *self, int iField) {
 	return msDBFGetFieldInfo(self, iField, NULL, NULL, NULL);
     }    
 
+/**********************************************************************
+ * class extensions for styleObj, always within the context of a class
+ **********************************************************************/
+styleObj *styleObj_new(classObj *class) {
+    if(class->numstyles == MS_MAXSTYLES) // no room
+      return NULL;
+
+    if(initStyle(&(class->styles[class->numstyles])) == -1)
+      return NULL;
+
+    class->numstyles++;
+
+    return &(class->styles[class->numstyles-1]);
+  }
+
+void  styleObj_destroy(styleObj *self) {
+    return; /* do nothing, map deconstrutor takes care of it all */
+  }
 

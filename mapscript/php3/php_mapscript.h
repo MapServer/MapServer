@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/08/09 22:55:38  assefa
+ * Update code to be in sync with mapserver addition of Styles.
+ *
  * Revision 1.24  2002/07/08 19:07:06  dan
  * Added map->setFontSet() to MapScript
  *
@@ -140,7 +143,6 @@ layerObj       *mapObj_getLayer(mapObj* self, int i);
 layerObj       *mapObj_getLayerByName(mapObj* self, char *name);
 int             *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname, 
                                              int *pnCount);
-int             mapObj_addColor(mapObj* self, int r, int g, int b);
 int             mapObj_getSymbolByName(mapObj* self, char *name);
 void            mapObj_prepareQuery(mapObj* self);
 imageObj        *mapObj_prepareImage(mapObj* self);
@@ -299,5 +301,7 @@ int             DBFInfo_getFieldWidth(DBFInfo *self, int iField);
 int             DBFInfo_getFieldDecimals(DBFInfo *self, int iField);
 DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 
+styleObj       *styleObj_new(classObj *class);
+void            styleObj_destroy(styleObj* self);
 
 #endif /* _PHP_MAPSCRIPT_H_INCLUDED_ */

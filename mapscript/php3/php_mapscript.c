@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.114  2002/08/09 22:55:38  assefa
+ * Update code to be in sync with mapserver addition of Styles.
+ *
  * Revision 1.113  2002/07/08 21:28:57  dan
  * Added symbolsetfilename and fontsetfilename in PHP MapScript's mapObj
  *
@@ -249,7 +252,6 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS);
@@ -395,6 +397,8 @@ DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value);
@@ -430,6 +434,12 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
                                          HashTable *list, pval *return_value);
 static long _phpms_build_legend_object(legendObj *plegend,
                                        HashTable *list, pval *return_value);
+
+static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id, 
+                                      int parent_layer_id, 
+                                      int parent_class_id,
+                                      HashTable *list, 
+                                      pval *return_value TSRMLS_DC);
 
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
@@ -467,6 +477,7 @@ static int le_msrefmap;
 static int le_msprojection_new;
 static int le_msscalebar;
 static int le_mslegend;
+static int le_msstyle;
 
 static char tmpId[128] = "ttt"; /* big enough for time + pid */
 static int  tmpCount = 0;
@@ -491,6 +502,7 @@ static zend_class_entry *shapefile_class_entry_ptr;
 static zend_class_entry *projection_class_entry_ptr;
 static zend_class_entry *scalebar_class_entry_ptr;
 static zend_class_entry *legend_class_entry_ptr;
+static zend_class_entry *style_class_entry_ptr;
 
 #endif
 
@@ -509,6 +521,7 @@ function_entry php3_ms_functions[] = {
     {"ms_getscale",     php3_ms_getscale,       NULL},
     {"ms_newprojectionobj",   php3_ms_projection_new,       NULL},
     {"ms_tokenizemap",  php3_ms_tokenizeMap,    NULL},
+    {"ms_newstyleobj",  php3_ms_style_new,      NULL},
     {NULL, NULL, NULL}
 };
 
@@ -544,7 +557,6 @@ function_entry php_map_class_functions[] = {
     {"set",             php3_ms_map_setProperty,        NULL},
     {"setprojection",   php3_ms_map_setProjection,      NULL},
     {"getprojection",   php3_ms_map_getProjection,      NULL},
-    {"addcolor",        php3_ms_map_addColor,           NULL},
     {"getsymbolbyname", php3_ms_map_getSymbolByName,    NULL},
     {"draw",            php3_ms_map_draw,               NULL},
     {"drawquery",       php3_ms_map_drawQuery,          NULL},
@@ -719,6 +731,11 @@ function_entry php_shapefile_class_functions[] = {
 
 function_entry php_projection_class_functions[] = {
     {"free",            php3_ms_projection_free,              NULL},    
+    {NULL, NULL, NULL}
+};
+
+function_entry php_style_class_functions[] = {
+    {"set",              php3_ms_style_setProperty,      NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -962,6 +979,8 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
                      php_projection_class_functions);
     projection_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
+     INIT_CLASS_ENTRY(tmp_class_entry, "style", php_style_class_functions);
+    style_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 #endif
 
     return SUCCESS;
@@ -1067,7 +1086,11 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     pval        *new_obj_ptr;
     new_obj_ptr = &new_obj_param;
 #endif
+    
+    int nttt;
+    char *sttt = NULL;
 
+    //nttt = strlen(sttt);
 
 #if defined(PHP4)
     /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
@@ -2592,49 +2615,6 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 
 }
     
-/**********************************************************************
- *                        map->addColor()
- **********************************************************************/
-
-/* {{{ proto int map.addColor(int r, int g, int b)
-   Add a color to map's palette.  Returns color index.*/
-
-DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS)
-{
-    mapObj *self;
-    pval   *pR, *pG, *pB, *pThis;
-    int     nColorId = 0;
-
-
-#ifdef PHP4
-    HashTable   *list=NULL;
-#endif
-
-#ifdef PHP4
-    pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
-    if (pThis == NULL ||
-        getParameters(ht, 3, &pR, &pG, &pB) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
-    }
-
-    convert_to_long(pR);
-    convert_to_long(pG);
-    convert_to_long(pB);
-    
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
-    if (self == NULL || 
-        (nColorId = mapObj_addColor(self, pR->value.lval, 
-                                    pG->value.lval, pB->value.lval)) == -1)
-        _phpms_report_mapserver_error(E_ERROR);
-
-    RETURN_LONG(nColorId);
-}
-/* }}} */
 
 
 /************************************************************************/
@@ -6335,7 +6315,8 @@ DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS)
 static long _phpms_build_label_object(labelObj *plabel,
                                       HashTable *list, pval *return_value)
 {
-    int label_id;
+    int         label_id;
+    pval        *new_obj_ptr;
 
     if (plabel == NULL)
         return 0;
@@ -6348,15 +6329,8 @@ static long _phpms_build_label_object(labelObj *plabel,
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "font",       plabel->font);
     add_property_long(return_value,   "type",       plabel->type);
-    add_property_long(return_value,   "color",      plabel->color);
-    add_property_long(return_value,   "outlinecolor", plabel->outlinecolor);
-    add_property_long(return_value,   "shadowcolor",plabel->shadowcolor);
     add_property_long(return_value,   "shadowsizex",plabel->shadowsizex);
     add_property_long(return_value,   "shadowsizey",plabel->shadowsizey);
-    add_property_long(return_value,   "backgroundcolor",
-                                                plabel->backgroundcolor);
-    add_property_long(return_value,   "backgroundshadowcolor",
-                                                plabel->backgroundshadowcolor);
     add_property_long(return_value,   "backgroundshadowsizex",
                                                 plabel->backgroundshadowsizex);
     add_property_long(return_value,   "backgroundshadowsizey",
@@ -6377,6 +6351,28 @@ static long _phpms_build_label_object(labelObj *plabel,
     add_property_long(return_value,   "mindistance",plabel->mindistance);
     add_property_long(return_value,   "partials",   plabel->partials);
     add_property_long(return_value,   "force",      plabel->force);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(plabel->color),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(plabel->outlinecolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(plabel->shadowcolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "shadowcolor",new_obj_ptr,E_ERROR);
+ 
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(plabel->backgroundcolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(plabel->backgroundshadowcolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "backgroundshadowcolor",new_obj_ptr,E_ERROR);
+
 
     return label_id;
 }
@@ -6420,13 +6416,8 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     IF_SET_STRING(     "font",         self->font)
     else IF_SET_LONG(  "type",         self->type)
-    else IF_SET_LONG(  "color",        self->color)
-    else IF_SET_LONG(  "outlinecolor", self->outlinecolor)
-    else IF_SET_LONG(  "shadowcolor",  self->shadowcolor)
     else IF_SET_LONG(  "shadowsizex",  self->shadowsizex)
     else IF_SET_LONG(  "shadowsizey",  self->shadowsizey)
-    else IF_SET_LONG(  "backgroundcolor",       self->backgroundcolor)
-    else IF_SET_LONG(  "backgroundshadowcolor", self->backgroundshadowcolor)
     else IF_SET_LONG(  "backgroundshadowsizex", self->backgroundshadowsizex)
     else IF_SET_LONG(  "backgroundshadowsizey", self->backgroundshadowsizey)
     else IF_SET_LONG(  "size",         self->size)
@@ -6501,29 +6492,12 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
 
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "name",       pclass->name);
+    PHPMS_ADD_PROP_STR(return_value,  "title",       pclass->title);
     add_property_long(return_value,   "type",       pclass->type);
     add_property_long(return_value,   "status",     pclass->status);
-    add_property_long(return_value,   "color",      pclass->color);
-    add_property_long(return_value, "backgroundcolor",pclass->backgroundcolor);
-    add_property_long(return_value,   "outlinecolor", pclass->outlinecolor);
-    add_property_long(return_value,   "overlaycolor", pclass->overlaycolor);
-    add_property_long(return_value, "overlaybackgroundcolor",
-                                               pclass->overlaybackgroundcolor);
-    add_property_long(return_value,   "overlayoutlinecolor", 
-                                               pclass->overlayoutlinecolor);
-    add_property_long(return_value,   "symbol",     pclass->symbol);
-    add_property_long(return_value,   "size",       pclass->size);
-    add_property_long(return_value,   "minsize",    pclass->minsize);
-    add_property_long(return_value,   "maxsize",    pclass->maxsize);
-    PHPMS_ADD_PROP_STR(return_value,  "symbolname", pclass->symbolname);
-    add_property_long(return_value,   "overlaysymbol", pclass->overlaysymbol);
-    add_property_long(return_value,   "overlaysize", pclass->overlaysize);
-    add_property_long(return_value,   "overlayminsize",pclass->overlayminsize);
-    add_property_long(return_value,   "overlaymaxsize",pclass->overlaymaxsize);
-    PHPMS_ADD_PROP_STR(return_value,  "overlaysymbolname", 
-                                                pclass->overlaysymbolname);
     PHPMS_ADD_PROP_STR(return_value,  "template",   pclass->template);
-
+    add_property_long(return_value,   "numstyles",  pclass->numstyles);
+    
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);
 #endif
@@ -6633,27 +6607,18 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pPropertyName);
 
     IF_SET_STRING(     "name",         self->name)
+    else IF_SET_STRING("title",         self->title)
     else IF_SET_LONG(  "type",         self->type)
     else IF_SET_LONG(  "status",       self->status)
-    else IF_SET_LONG(  "color",        self->color)
-    else IF_SET_LONG(  "backgroundcolor",self->backgroundcolor)
-    else IF_SET_LONG(  "outlinecolor", self->outlinecolor)
-    else IF_SET_LONG(  "overlaycolor", self->overlaycolor)
-    else IF_SET_LONG(  "overlaybackgroundcolor",self->overlaybackgroundcolor)
-    else IF_SET_LONG(  "overlayoutlinecolor", self->overlayoutlinecolor)
-    else IF_SET_LONG(  "symbol",       self->symbol)
-    else IF_SET_LONG(  "size",         self->sizescaled = self->size)
-    else IF_SET_LONG(  "minsize",      self->minsize)
-    else IF_SET_LONG(  "maxsize",      self->maxsize)
-    else IF_SET_STRING("symbolname",   self->symbolname)
-    else IF_SET_LONG(  "overlaysymbol",self->overlaysymbol)
-    else IF_SET_LONG(  "overlaysize",  self->overlaysizescaled = self->overlaysize)
-    else IF_SET_LONG(  "overlayminsize", self->overlayminsize)
-    else IF_SET_LONG(  "overlaymaxsize", self->overlaymaxsize)
-    else IF_SET_STRING("overlaysymbolname", self->overlaysymbolname)
     else IF_SET_DOUBLE("minscale", self->minscale)
     else IF_SET_DOUBLE("maxscale", self->maxscale)
     else IF_SET_STRING("template",      self->template)
+    else if (strcmp( "numstyles", pPropertyName->value.str.val) == 0)
+    {
+        php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
+                            pPropertyName->value.str.val);
+        RETURN_LONG(-1);
+    }
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.",
@@ -6661,28 +6626,6 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_LONG(-1);
     }
 
-    if (strcmp(pPropertyName->value.str.val, "symbolname") == 0)
-    {
-        if (classObj_setSymbolByName(self,
-                                     parent_map,
-                                     self->symbolname) == -1)
-        {
-            RETURN_LONG(-1);
-        }
-        _phpms_set_property_long(pThis,"symbol", self->symbol, E_ERROR); 
-    }
-    else
-    if (strcmp(pPropertyName->value.str.val, "overlaysymbolname") == 0)
-    {
-        if (classObj_setOverlaySymbolByName(self,
-                                            parent_map,
-                                            self->overlaysymbolname) == -1)
-        {
-            RETURN_LONG(-1);
-        }
-        _phpms_set_property_long(pThis,"overlaysymbol", 
-                                 self->overlaysymbol, E_ERROR); 
-    }
 
     RETURN_LONG(0);
 }
@@ -9766,11 +9709,7 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
     add_property_long(return_value,  "width",           pscalebar->width);
     add_property_long(return_value,  "style",           pscalebar->style);
     add_property_long(return_value,  "intervals",       pscalebar->intervals);
-    add_property_long(return_value,  "color",           pscalebar->color);
-    add_property_long(return_value,  "backgroundcolor",   
-                      pscalebar->backgroundcolor);
-    add_property_long(return_value,  "outlinecolor",      
-                      pscalebar->outlinecolor);
+
     add_property_long(return_value,  "units",           pscalebar->units);
     add_property_long(return_value,  "status",          pscalebar->status);
     add_property_long(return_value,  "position",        pscalebar->position);
@@ -9792,6 +9731,21 @@ static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
     _phpms_build_color_object(&(pscalebar->imagecolor),list, new_obj_ptr);
     _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
 
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(pscalebar->color),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR);
+
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(pscalebar->backgroundcolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR);
+
+  
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(pscalebar->outlinecolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR);
+    
     return scalebar_id;
 }
 
@@ -9845,9 +9799,6 @@ DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "width",   self->width)
     else IF_SET_LONG(  "style",   self->style)
     else IF_SET_LONG(  "intervals",   self->intervals)
-    else IF_SET_LONG(  "color",   self->color)
-    else IF_SET_LONG(  "backgroundcolor",   self->backgroundcolor)
-    else IF_SET_LONG(  "outlinecolor",   self->outlinecolor)
     else IF_SET_LONG(  "units",   self->units)
     else IF_SET_LONG(  "status",   self->status)
     else IF_SET_LONG(  "position",   self->position)
@@ -9955,7 +9906,6 @@ static long _phpms_build_legend_object(legendObj *plegend,
     add_property_long(return_value,  "keysizey",        plegend->keysizey);
     add_property_long(return_value,  "keyspacingx",     plegend->keyspacingx);
     add_property_long(return_value,  "keyspacingy",     plegend->keyspacingy);
-    add_property_long(return_value,  "outlinecolor",    plegend->outlinecolor);
     add_property_long(return_value,  "status",          plegend->status);
     add_property_long(return_value,  "position",        plegend->position);
     add_property_long(return_value,  "transparent",     plegend->transparent);
@@ -9976,6 +9926,10 @@ static long _phpms_build_legend_object(legendObj *plegend,
 #endif
     _phpms_build_color_object(&(plegend->imagecolor),list, new_obj_ptr);
     _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(plegend->outlinecolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR);
 
     return legend_id;
 }
@@ -10032,7 +9986,6 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "keysizey",      self->keysizey)
     else IF_SET_LONG(  "keyspacingx",   self->keyspacingx)
     else IF_SET_LONG(  "keyspacingy",   self->keyspacingy)
-    else IF_SET_LONG(  "outlinecolor",  self->outlinecolor)
     else IF_SET_LONG(  "status",        self->status)
     else IF_SET_LONG(  "position",      self->position)
     else IF_SET_LONG(  "transparent",   self->transparent)
@@ -10049,8 +10002,186 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(0);
 }           
 
+/*=====================================================================
+ *                 PHP function wrappers - styleObj class
+ *====================================================================*/
+
+/**********************************************************************
+ *                     _phpms_build_style_object()
+ **********************************************************************/
+static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id, 
+                                      int parent_layer_id, 
+                                      int parent_class_id,
+                                      HashTable *list, 
+                                      pval *return_value TSRMLS_DC)
+{
+    int style_id;
+
+    pval        *new_obj_ptr;
 
 
+    if (pstyle == NULL)
+        return 0;
+
+    style_id = php3_list_insert(pstyle, PHPMS_GLOBAL(le_msstyle));
+
+    _phpms_object_init(return_value, style_id, php_style_class_functions,
+                       PHP4_CLASS_ENTRY(style_class_entry_ptr));
+
+    add_property_resource(return_value, "_class_handle_", parent_class_id);
+    zend_list_addref(parent_class_id);
+
+    add_property_resource(return_value, "_layer_handle_", parent_layer_id);
+    zend_list_addref(parent_layer_id);
+
+    add_property_resource(return_value, "_map_handle_", parent_map_id);
+    zend_list_addref(parent_map_id);
+
+
+    /* editable properties */
+    add_property_long(return_value,   "symbol",     pstyle->symbol);
+    PHPMS_ADD_PROP_STR(return_value,  "symbolname", pstyle->symbolname);
+    add_property_long(return_value,   "size",       pstyle->size);
+    add_property_long(return_value,   "sizescaled",       pstyle->sizescaled);
+    add_property_long(return_value,   "minsize",       pstyle->minsize);
+    add_property_long(return_value,   "maxsize",       pstyle->maxsize);
+    add_property_long(return_value,   "offsetx",       pstyle->offsetx);
+    add_property_long(return_value,   "offsety",       pstyle->offsety);
+    
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(pstyle->color),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "color",new_obj_ptr,E_ERROR);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(pstyle->backgroundcolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "backgroundcolor",new_obj_ptr,E_ERROR);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_color_object(&(pstyle->outlinecolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "outlinecolor",new_obj_ptr,E_ERROR);
+
+    return style_id;
+}
+
+
+/**********************************************************************
+ *                        ms_newStyleObj()
+ **********************************************************************/
+
+/* {{{ proto ms_newStyleObj(classObj class)
+   Create a new style in the specified class. */
+
+DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pClassObj;
+    classObj *parent_class;
+    styleObj *pNewStyle;
+    int layer_id, map_id, class_id;
+    HashTable   *list=NULL;
+
+    if (getParameters(ht, 1, &pClassObj) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    parent_class = (classObj*)_phpms_fetch_handle(pClassObj, 
+                                                  PHPMS_GLOBAL(le_msclass),
+                                                  list TSRMLS_CC);
+
+    if (parent_class == NULL ||
+        (pNewStyle = styleObj_new(parent_class)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        RETURN_FALSE;
+    }
+
+     _phpms_set_property_long(pClassObj,"numstyles", parent_class->numstyles, 
+                              E_ERROR); 
+
+     
+    /* We will store a reference to the parent_class object id inside
+     * the obj.
+     */
+    class_id = _phpms_fetch_property_resource(pClassObj, "_handle_", E_ERROR);
+
+    /* We will store a reference to the parent_layer object id inside
+     * the obj.
+     */
+    layer_id = _phpms_fetch_property_resource(pClassObj, "_layer_handle_", E_ERROR);
+
+    /* We will store a reference to the parent_map object id inside
+     * the obj.
+     */
+    map_id = _phpms_fetch_property_resource(pClassObj, "_map_handle_", E_ERROR);
+   
+    /* Return class object */
+    _phpms_build_style_object(pNewStyle, map_id, layer_id, class_id, list, 
+                              return_value TSRMLS_CC);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        style->set()
+ **********************************************************************/
+
+/* {{{ proto int style.set(string property_name, new_value)
+   Set object property to a new value. Returns -1 on error. */
+
+DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
+{
+    styleObj *self;
+    mapObj *parent_map;
+    pval   *pPropertyName, *pNewValue, *pThis;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (styleObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msstyle),
+                                           list TSRMLS_CC);
+   
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list TSRMLS_CC, E_ERROR);
+
+    if (self == NULL || parent_map == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    IF_SET_LONG(  "symbol",         self->symbol)
+    else IF_SET_STRING( "symbolname",         self->symbolname)
+    else IF_SET_LONG(  "size",         self->size)
+    else IF_SET_LONG(  "sizescaled",       self->sizescaled)
+    else IF_SET_LONG("minsize", self->minsize)
+    else IF_SET_LONG("maxsize", self->maxsize)
+    else IF_SET_LONG("offsetx",      self->offsetx)
+    else IF_SET_LONG("offsety",      self->offsety)
+    else
+    {
+        php3_error(E_ERROR,"Property '%s' does not exist in this object.",
+                            pPropertyName->value.str.val);
+        RETURN_LONG(-1);
+    }
+
+
+    RETURN_LONG(0);
+}
+/* }}} */
 
 /* ==================================================================== */
 /*      utility functions                                               */
