@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2004/11/15 21:39:15  frank
+ * fix last fix: GDALPrintPointer to CPLPrintPointer
+ *
  * Revision 1.37  2004/11/15 21:28:48  frank
  * Use GDALPrintPointer() to avoid pointer conversion errors on win32. Bug 722.
  *
@@ -1227,7 +1230,7 @@ static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
 #ifdef ENABLE_DITHER
 
 #if GDAL_VERSION_NUM <= 1240 
-static int GDALPrintPointer( char *buffer, void *pData, int nMax )
+static int CPLPrintPointer( char *buffer, void *pData, int nMax )
 
 {
 #ifdef WIN32
