@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.26  2002/06/21 18:33:15  frank
+ * added support for IMAGEMODE INT16 and FLOAT
+ *
  * Revision 1.25  2002/06/11 13:54:08  frank
  * avoid warning
  *
@@ -512,7 +515,7 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
  *
  **********************************************************************/
 
-int msDrawWMSLayerGD(mapObj *map, layerObj *lp, gdImagePtr img) 
+int msDrawWMSLayerLow(mapObj *map, layerObj *lp, imageObj *img) 
 {
 #ifdef USE_WMS_LYR
     char *pszURL = NULL;
@@ -620,7 +623,7 @@ int msDrawWMSLayerGD(mapObj *map, layerObj *lp, gdImagePtr img)
     {
         // The simple case... no reprojection needed... render layer directly.
         lp->transform = MS_FALSE;
-        if (msDrawRasterLayerGD(map, lp, img) != 0)
+        if (msDrawRasterLayerLow(map, lp, img) != 0)
             status = MS_FAILURE;
     }
     else
@@ -646,7 +649,7 @@ int msDrawWMSLayerGD(mapObj *map, layerObj *lp, gdImagePtr img)
             fclose(fp);
 
             // GDAL should be called to reproject automatically.
-            if (msDrawRasterLayerGD(map, lp, img) != 0)
+            if (msDrawRasterLayerLow(map, lp, img) != 0)
                 status = MS_FAILURE;
 
             unlink(wldfile);
