@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2004/02/04 19:46:24  assefa
+ * Add support for multiple spatial opertaors inside one filter.
+ * Add support for opeartors DWithin and Intersect.
+ *
  * Revision 1.5  2004/01/13 19:33:10  assefa
  * Correct in bug when builing expression for the IsLIke operator.
  *
@@ -76,7 +80,10 @@ typedef enum
     FILTER_NODE_TYPE_PROPERTYNAME = 3,
     FILTER_NODE_TYPE_BBOX = 4,
     FILTER_NODE_TYPE_LITERAL = 5,
-    FILTER_NODE_TYPE_BOUNDARY = 6
+    FILTER_NODE_TYPE_BOUNDARY = 6,
+    FILTER_NODE_TYPE_GEOMETRY_POINT = 7,
+    FILTER_NODE_TYPE_GEOMETRY_LINE = 8,
+    FILTER_NODE_TYPE_GEOMETRY_POLYGON = 9
 } FilterNodeType;
 
 
@@ -105,6 +112,8 @@ typedef struct
 /* -------------------------------------------------------------------- */
 FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
 FilterEncodingNode *FLTCreateFilterEncodingNode();
+int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                         int iLayerIndex);
 
 void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
 
@@ -113,6 +122,9 @@ int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode);
 int FLTNumberOfFilterType(FilterEncodingNode *psFilterNode, 
                           const char *szType);
 int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode);
+int FLTIsPointFilter(FilterEncodingNode *psFilterNode);
+int FLTIsLineFilter(FilterEncodingNode *psFilterNode);
+int FLTIsPolygonFilter(FilterEncodingNode *psFilterNode);
 
 int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode);
 char *FLTGetMapserverIsPropertyExpression(FilterEncodingNode *psFilterNode);
@@ -130,6 +142,8 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode);
 char *FLTGetMapserverExpressionClassItem(FilterEncodingNode *psFilterNode);
 char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode);
 char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
+
+shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance);
 
 char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);

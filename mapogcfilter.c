@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2004/02/04 19:46:24  assefa
+ * Add support for multiple spatial opertaors inside one filter.
+ * Add support for opeartors DWithin and Intersect.
+ *
  * Revision 1.15  2004/01/13 19:33:10  assefa
  * Correct in bug when builing expression for the IsLIke operator.
  *
@@ -99,6 +103,673 @@
 
 #ifdef USE_OGR
 
+#include "ogr_api.h"
+
+static int compare_ints( const void * a, const void * b)
+{
+    return (*(int*)a) - (*(int*)b);
+}
+
+int FLTogrConvertGeometry(OGRGeometryH hGeometry, shapeObj *psShape,
+                          OGRwkbGeometryType nType) 
+{
+    return msOGRGeometryToShape(hGeometry, psShape, nType);
+}
+
+int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape)
+{
+    if (psTree && psShape)
+    {
+        CPLXMLNode *psNext = psTree->psNext;
+        OGRGeometryH hGeometry = NULL;
+
+        psTree->psNext = NULL;
+        hGeometry = OGR_G_CreateFromGMLTree( psTree );
+        psTree->psNext = psNext;
+
+        if (hGeometry)
+        {
+            FLTogrConvertGeometry(hGeometry, psShape, 
+                                  OGR_G_GetGeometryType(hGeometry));
+        }
+        return MS_TRUE;
+    }
+
+    return MS_FALSE;
+}
+/************************************************************************/
+/*                        FLTGetQueryResultsForNode                     */
+/*                                                                      */
+/*      Return an array of shape id's selected after the filter has     */
+/*      been applied.                                                   */
+/*      Assuming here that the node is not a logical node but           */
+/*      spatial or comparaison.                                         */
+/************************************************************************/
+int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map, 
+                               int iLayerIndex, int *pnResults)
+{
+    char *szExpression = NULL;
+    int bIsBBoxFilter =0, nEpsgTmp = 0, i=0;
+    char *szEPSG = NULL;
+    rectObj sQueryRect = map->extent;
+    layerObj *lp = NULL;
+    char *szClassItem = NULL;
+    char **tokens = NULL;
+    int nTokens = 0;
+    projectionObj sProjTmp;
+    int *panResults = NULL;
+    int nResults = 0;
+    int bPointQuery = 0, bShapeQuery=0;
+    shapeObj *psQueryShape = NULL;
+    double dfDistance = -1;
+
+    if (!psNode || !map || iLayerIndex < 0 ||
+        iLayerIndex > map->numlayers-1)
+      return NULL;
+      
+    szExpression = FLTGetMapserverExpression(psNode);
+    bIsBBoxFilter = FLTIsBBoxFilter(psNode);
+    if (bIsBBoxFilter)
+      szEPSG = FLTGetBBOX(psNode, &sQueryRect);
+    else if ((bPointQuery = FLTIsPointFilter(psNode)))
+    {
+        psQueryShape = FLTGetShape(psNode, &dfDistance);
+    }
+    else if (FLTIsLineFilter(psNode) || FLTIsPolygonFilter(psNode))
+    {
+        bShapeQuery = 1;
+        psQueryShape = FLTGetShape(psNode, NULL);
+    }
+
+    if (!szExpression && !szEPSG && !bIsBBoxFilter && !bPointQuery)
+      return NULL;
+
+    lp = &(map->layers[iLayerIndex]);
+
+    if (szExpression)
+    {
+        szClassItem = FLTGetMapserverExpressionClassItem(psNode);
+                
+        initClass(&(lp->class[0]));
+
+        lp->class[0].type = lp->type;
+        lp->numclasses = 1;
+        loadExpressionString(&lp->class[0].expression, 
+                                  szExpression);
+/* -------------------------------------------------------------------- */
+/*      classitems are necessary for filter type PropertyIsLike         */
+/* -------------------------------------------------------------------- */
+        if (szClassItem)
+        {
+            if (lp->classitem)
+              free (lp->classitem);
+            lp->classitem = strdup(szClassItem);
+
+/* ==================================================================== */
+/*      If there is a case where PorprtyIsLike is combined with an      */
+/*      Or, then we need to create a second class with the              */
+/*      PrpertyIsEqual expression. Note that the first expression       */
+/*      returned does not include the IslikePropery.                    */
+/* ==================================================================== */
+            if (!FLTIsOnlyPropertyIsLike(psNode))
+            {
+                szExpression = 
+                  FLTGetMapserverIsPropertyExpression(psNode);
+                if (szExpression)
+                {
+                    initClass(&(lp->class[1]));
+                    
+                    lp->class[1].type = lp->type;
+                    lp->numclasses++;
+                    loadExpressionString(&lp->class[1].expression, 
+                                         szExpression);
+                    if (!lp->class[1].template)
+                      lp->class[1].template = strdup("ttt.html");
+                }
+            }
+        }
+
+        if (!lp->class[0].template)
+          lp->class[0].template = strdup("ttt.html");
+/* -------------------------------------------------------------------- */
+/*      Need to free the template so the all shapes's will not end      */
+/*      up being queried. The query is dependent on the class           */
+/*      expression.                                                     */
+/* -------------------------------------------------------------------- */
+        if (lp->template)
+        {
+            free(lp->template);
+            lp->template = NULL;
+        }
+    }
+/* -------------------------------------------------------------------- */
+/*      Use the epsg code to reproject the values from the QueryRect    */
+/*      to the map projection.                                          */
+/*      The srs should be a string like                                 */
+/*      srsName="http://www.opengis.net/gml/srs/epsg.xml#4326".         */
+/*      We will just extract the value after the # and assume that      */
+/*      It corresponds        projectionObj sProjTmp;
+ to the epsg code on the system. This syntax      */
+/*      is the one descibed in the GML specification.                   */
+/*                                                                      */
+/*       There is also several servers requesting the box with the      */
+/*      srsName using the following syntax : <Box                       */
+/*      srsName="EPSG:42304">. So we also support this syntax.          */
+/*      (Note that at this point the ESPG ha been stripped and we       */
+/*      should only have 42304 as a value).                             */
+/*                                                                      */
+/* -------------------------------------------------------------------- */
+    if(szEPSG && map->projection.numargs > 0)
+    {
+#ifdef USE_PROJ
+        nTokens = 0;
+        tokens = split(szEPSG,'#', &nTokens);
+        if (tokens && nTokens == 2)
+        {
+            char szTmp[32];
+            sprintf(szTmp, "init=epsg:%s",tokens[1]);
+            msInitProjection(&sProjTmp);
+            if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
+              msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+        }
+        else if (tokens &&  nTokens == 1)
+        {
+            nEpsgTmp = atoi(tokens[0]);
+            if (nEpsgTmp > 0)
+            {
+                char szTmp[32];
+                sprintf(szTmp, "init=epsg:%s",tokens[0]);
+                msInitProjection(&sProjTmp);
+                if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
+                  msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+            }
+        }
+        if (tokens)
+          msFreeCharArray(tokens, nTokens);
+#endif
+    }
+
+    if (szExpression || bIsBBoxFilter)
+      msQueryByRect(map, lp->index, sQueryRect);
+    else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
+             && psQueryShape->line[0].numpoints > 0 && dfDistance >=0)
+      msQueryByPoint(map, lp->index, MS_MULTIPLE, 
+                     psQueryShape->line[0].point[0], dfDistance);
+    else if (bShapeQuery && psQueryShape && psQueryShape->numlines > 0
+             && psQueryShape->line[0].numpoints > 0)
+      msQueryByShape(map, lp->index,  psQueryShape);
+      
+
+    if (szExpression)
+      free(szExpression);
+
+    if (lp && lp->resultcache->numresults > 0)
+    {
+        panResults = (int *)malloc(sizeof(int)*lp->resultcache->numresults);
+        for (i=0; i<lp->resultcache->numresults; i++)
+          panResults[i] = lp->resultcache->results[i].shapeindex;
+
+        qsort(panResults, lp->resultcache->numresults, 
+              sizeof(int), compare_ints);
+
+        *pnResults = lp->resultcache->numresults;
+        
+    }
+
+    return panResults;
+
+}
+ 
+int FLTGML2Shape_XMLNode(CPLXMLNode *psNode, shapeObj *psShp)
+{
+    lineObj line={0,NULL};
+    CPLXMLNode *psCoordinates = NULL;
+    char *pszTmpCoord = NULL;
+    char **szCoords = NULL;
+    int nCoords = 0;
+
+
+    if (!psNode || !psShp)
+      return MS_FALSE;
+
+    
+    if( strcasecmp(psNode->pszValue,"PointType") == 0
+        || strcasecmp(psNode->pszValue,"Point") == 0)
+    {
+        psCoordinates = CPLGetXMLNode(psNode, "coordinates");
+        
+        if (psCoordinates && psCoordinates->psChild && 
+            psCoordinates->psChild->pszValue)
+        {
+            pszTmpCoord = psCoordinates->psChild->pszValue;
+            szCoords = split(pszTmpCoord, ',', &nCoords);
+            if (szCoords && nCoords >= 2)
+            {
+                line.numpoints = 1;
+                line.point = (pointObj *)malloc(sizeof(pointObj));
+                line.point[0].x = atof(szCoords[0]);
+                line.point[0].y =  atof(szCoords[1]);
+                line.point[0].m = 0;
+
+                psShp->type = MS_SHAPE_POINT;
+
+                msAddLine(psShp, &line);
+                free(line.point);
+
+                return MS_TRUE;
+            }
+        }
+    }
+    
+    return MS_FALSE;
+}
+
+
+
+static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int tileindex)
+{
+  int i;
+
+  if(cache->numresults == cache->cachesize) { // just add it to the end
+    if(cache->cachesize == 0)
+      cache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*MS_RESULTCACHEINCREMENT);
+    else
+      cache->results = (resultCacheMemberObj *) realloc(cache->results, sizeof(resultCacheMemberObj)*(cache->cachesize+MS_RESULTCACHEINCREMENT));
+    if(!cache->results) {
+      msSetError(MS_MEMERR, "Realloc() error.", "addResult()");
+      return(MS_FAILURE);
+    }   
+    cache->cachesize += MS_RESULTCACHEINCREMENT;
+  }
+
+  i = cache->numresults;
+
+  cache->results[i].classindex = classindex;
+  cache->results[i].tileindex = tileindex;
+  cache->results[i].shapeindex = shapeindex;
+  cache->numresults++;
+
+  return(MS_SUCCESS);
+}
+ 
+
+
+/************************************************************************/
+/*                         FLTAddToLayerResultCache                     */
+/*                                                                      */
+/*      Utility function to add shaped to the layer result              */
+/*      cache. This function is used with the WFS GetFeature            */
+/*      interface and the cache will be used later on to output the     */
+/*      result into gml (the only important thing here is the shape     */
+/*      id).                                                            */
+/************************************************************************/
+void FLTAddToLayerResultCache(int *anValues, int nSize, mapObj *map, 
+                              int iLayerIndex)
+{
+    layerObj *psLayer = NULL;
+    int i = 0;
+
+    if (!anValues || nSize <= 0 || !map || iLayerIndex < 0 ||
+        iLayerIndex > map->numlayers-1)
+      return;
+
+    psLayer = &(map->layers[iLayerIndex]);
+    if (psLayer->resultcache)
+    {
+        if (psLayer->resultcache->results)
+          free (psLayer->resultcache->results);
+        free(psLayer->resultcache);
+    }
+
+    psLayer->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj));
+
+    psLayer->resultcache->results = NULL;
+    psLayer->resultcache->numresults =  0;
+    psLayer->resultcache->cachesize = 0;
+    psLayer->resultcache->bounds.minx = -1;
+    psLayer->resultcache->bounds.miny = -1;
+    psLayer->resultcache->bounds.maxx = -1;
+    psLayer->resultcache->bounds.maxy = -1;
+
+
+    for (i=0; i<nSize; i++)
+      addResult(psLayer->resultcache, 0, anValues[i], -1);
+
+
+}
+
+/************************************************************************/
+/*                               FTLIsInArray                           */
+/*                                                                      */
+/*      Verify if a certain value is inside an ordered array.           */
+/************************************************************************/
+int FTLIsInArray(int *panArray, int nSize, int nValue)
+{
+    int i = 0;
+    if (panArray && nSize > 0)
+    {
+        for (i=0; i<nSize; i++)
+        {
+            if (panArray[i] == nValue)
+              return MS_TRUE;
+            if (panArray[i] > nValue)
+              return MS_FALSE;
+        }
+    }
+
+    return MS_FALSE;
+}
+
+
+
+
+/************************************************************************/
+/*                               FLTArraysNot                           */
+/*                                                                      */
+/*      Return the list of all shape id's in a layer that are not in    */
+/*      the array.                                                      */
+/************************************************************************/
+int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
+                  int iLayerIndex, int *pnResult)
+{
+    layerObj *psLayer = NULL;
+    int *panResults = NULL;
+    int *panTmp = NULL;
+    int i = 0, iResult = 0;
+    
+    if (!panArray || nSize <= 0 || !map || 
+        iLayerIndex < 0 || iLayerIndex > map->numlayers-1)
+      return NULL;
+
+     psLayer = &(map->layers[iLayerIndex]);
+     msQueryByRect(map, psLayer->index, map->extent);
+
+     if (psLayer->resultcache->numresults <= 0)
+       return NULL;
+
+     panResults = (int *)malloc(sizeof(int)*psLayer->resultcache->numresults);
+     panTmp = (int *)malloc(sizeof(int)*psLayer->resultcache->numresults);
+     for (i=0; i<psLayer->resultcache->numresults; i++)
+       panTmp[i] = psLayer->resultcache->results[i].shapeindex;
+     qsort(panTmp, psLayer->resultcache->numresults, 
+           sizeof(int), compare_ints);
+     
+     iResult = 0;
+      for (i=0; i<psLayer->resultcache->numresults; i++)
+      {
+          if (!FTLIsInArray(panArray, nSize, panTmp[i]))
+            panResults[iResult++] = 
+              psLayer->resultcache->results[i].shapeindex;
+      }
+
+      if (iResult > 0)
+      {
+          panResults = (int *)realloc(panResults, sizeof(int)*iResult);
+          *pnResult = iResult;
+      }
+
+      return panResults;
+}
+ 
+/************************************************************************/
+/*                               FLTArraysOr                            */
+/*                                                                      */
+/*      Utility function to do an OR on 2 arrays.                       */
+/************************************************************************/
+int *FLTArraysOr(int *aFirstArray, int nSizeFirst, 
+                 int *aSecondArray, int nSizeSecond,
+                 int *pnResult)
+{
+    int nResultSize = 0;
+    int *panResults = 0;
+    int iResult = 0;
+    int i, j;
+
+    if (aFirstArray && aSecondArray && nSizeFirst > 0 && 
+        nSizeSecond > 0)
+    {
+        nResultSize = nSizeFirst + nSizeSecond;
+
+        panResults = (int *)malloc(sizeof(int)*nResultSize);
+        iResult= 0;
+
+        if (nSizeFirst < nSizeSecond)
+        {
+            for (i=0; i<nSizeFirst; i++)
+              panResults[iResult++] = aFirstArray[i];
+
+            for (i=0; i<nSizeSecond; i++)
+            {
+                for (j=0; j<nSizeFirst; j++)
+                {
+                    if (aSecondArray[i] ==  aFirstArray[j])
+                      break;
+                    if (aSecondArray[i] < aFirstArray[j])
+                    {
+                        panResults[iResult++] = aSecondArray[i];
+                        break;
+                    }
+                }
+                if (j == nSizeFirst)
+                    panResults[iResult++] = aSecondArray[i];
+            }
+        }
+        else
+        {       
+            for (i=0; i<nSizeSecond; i++)
+              panResults[iResult++] = aSecondArray[i];
+
+            for (i=0; i<nSizeFirst; i++)
+            {
+                for (j=0; j<nSizeSecond; j++)
+                {
+                    if (aFirstArray[i] ==  aSecondArray[j])
+                      break;
+                    if (aFirstArray[i] < aSecondArray[j])
+                    {
+                        panResults[iResult++] = aFirstArray[i];
+                        break;
+                    }
+                }
+                if (j == nSizeSecond)
+                    panResults[iResult++] = aFirstArray[i];
+            }
+        }
+          
+        if (iResult > 0)
+        {
+            panResults = (int *)realloc(panResults, sizeof(int)*iResult);
+            *pnResult = iResult;
+            return panResults;
+        }
+
+    }
+
+    return NULL;
+}
+
+/************************************************************************/
+/*                               FLTArraysAnd                           */
+/*                                                                      */
+/*      Utility function to do an AND on 2 arrays.                      */
+/************************************************************************/
+int *FLTArraysAnd(int *aFirstArray, int nSizeFirst, 
+                  int *aSecondArray, int nSizeSecond,
+                  int *pnResult)
+{
+    int *panResults = NULL;
+    int nResultSize =0;
+    int iResult = 0;
+    int i, j;
+
+    //assuming arrays are sorted.
+    if (aFirstArray && aSecondArray && nSizeFirst > 0 && 
+        nSizeSecond > 0)
+    {
+        if (nSizeFirst < nSizeSecond)
+          nResultSize = nSizeFirst;
+        else
+          nResultSize = nSizeSecond;
+ 
+        panResults = (int *)malloc(sizeof(int)*nResultSize);
+        iResult= 0;
+
+        if (nSizeFirst > nSizeSecond)
+        {
+            for (i=0; i<nSizeFirst; i++)
+            {
+                for (j=0; j<nSizeSecond; j++)
+                {
+                    if (aFirstArray[i] == aSecondArray[j])
+                    {
+                        panResults[iResult++] = aFirstArray[i];
+                        break;
+                    }
+                    if (aFirstArray[i] < aSecondArray[j])
+                      break;
+                }
+            }
+        }
+        else
+        {
+             for (i=0; i<nSizeSecond; i++)
+             {
+                 for (j=0; j<nSizeFirst; j++)
+                 {
+                     if (aSecondArray[i] == aFirstArray[j])
+                     {
+                         panResults[iResult++] = aSecondArray[i];
+                         break;
+                     }
+                     if (aSecondArray[i] < aFirstArray[j])
+                       break;
+                }
+            }
+        }
+        
+        if (iResult > 0)
+        {
+            panResults = (int *)realloc(panResults, sizeof(int)*iResult);
+            *pnResult = iResult;
+            return panResults;
+        }
+
+    }
+
+    return NULL;
+}
+
+
+
+/************************************************************************/
+/*                            FLTGetQueryResults                        */
+/*                                                                      */
+/*      Return an arry of shpe id's after a filetr node was applied     */
+/*      on a layer.                                                     */
+/************************************************************************/
+int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map, 
+                        int iLayerIndex, int *pnResults)
+{
+    int *panResults = NULL, *panLeftResults=NULL, *panRightResults=NULL;
+    int nLeftResult=0, nRightResult=0, nResults = 0;
+    
+    
+
+    if (psNode->eType == FILTER_NODE_TYPE_LOGICAL)
+    {
+        if (psNode->psLeftNode)
+          panLeftResults =  FLTGetQueryResults(psNode->psLeftNode, map, 
+                                             iLayerIndex, &nLeftResult);
+        if (psNode->psRightNode)
+          panRightResults =  FLTGetQueryResults(psNode->psRightNode, map,
+                                               iLayerIndex, &nRightResult);
+        
+        if (psNode->pszValue && strcasecmp(psNode->pszValue, "AND") == 0)
+          panResults = FLTArraysAnd(panLeftResults, nLeftResult, 
+                                  panRightResults, nRightResult, &nResults);
+        else if (psNode->pszValue && strcasecmp(psNode->pszValue, "OR") == 0)
+          panResults = FLTArraysOr(panLeftResults, nLeftResult, 
+                                 panRightResults, nRightResult, &nResults);
+
+        else if (psNode->pszValue, "NOT")
+          panResults = FLTArraysNot(panLeftResults, nLeftResult, map, 
+                                   iLayerIndex, &nResults);
+    }
+    else
+    {
+        panResults = FLTGetQueryResultsForNode(psNode, map, iLayerIndex, 
+                                             &nResults);
+    }
+
+    if (pnResults)
+      *pnResults = nResults;
+
+    return panResults;
+}
+
+
+/************************************************************************/
+/*                          FLTApplyFilterToLayer                       */
+/*                                                                      */
+/*      Use the filter encoding node to create mapserver expressions    */
+/*      and apply it to the layer.                                      */
+/************************************************************************/
+int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                          int iLayerIndex)
+{
+    int *panResults = NULL;
+    int nResults = 0;
+    layerObj *psLayer = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      If it is a "simple" (meaning only one bbox and/or one           */
+/*      propertyislike, just call FLTGetQueryResultsForNode (builds     */
+/*      the appropriate expression and does the query).                 */
+/*       Else, we have to do a recursive query (use each node to do     */
+/*      a query and the use th operators (and, not, or) to merge        */
+/*      results.                                                        */
+/* -------------------------------------------------------------------- */
+
+    
+    /*    if (FLTValidForBBoxFilter(psNode) && 
+        FLTValidForPropertyIsLikeFilter(psNode))
+    {
+        panResults= FLTGetQueryResultsForNode(psNode, map, iLayerIndex,
+                                            &nResults);
+    }
+    
+    else
+    {
+    */
+    panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
+                                    &nResults);
+    if (panResults)
+      FLTAddToLayerResultCache(panResults, nResults, map, iLayerIndex);
+    //clear the cache if the results is NULL to make sure there aren't
+    //any left over from intermediate queries.
+    else 
+    {
+        psLayer = &(map->layers[iLayerIndex]);
+            
+        if (psLayer && psLayer->resultcache)
+        {
+            if (psLayer->resultcache->results)
+              free (psLayer->resultcache->results);
+            free(psLayer->resultcache);
+            
+            psLayer->resultcache = NULL;
+        }
+    }
+    
+
+    if (panResults)
+      free(panResults);
+
+    return MS_SUCCESS;
+}
+
+
+
 /************************************************************************/
 /*            FilterNode *FLTPaserFilterEncoding(char *szXMLString)     */
 /*                                                                      */
@@ -111,8 +782,10 @@
 /************************************************************************/
 FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
 {
-    CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL, *psFilterStart = NULL;
+    CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL;
+    CPLXMLNode  *psFilterStart = NULL;
     FilterEncodingNode *psFilterNode = NULL;
+
 
     if (szXMLString == NULL || strlen(szXMLString) <= 0 ||
         (strstr(szXMLString, "Filter") == NULL))
@@ -179,15 +852,15 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
 /*       - only one BBox filter is supported                            */
 /*       - a Bbox is only acceptable with an AND logical operator       */
 /* -------------------------------------------------------------------- */
-    if (!FLTValidForBBoxFilter(psFilterNode))
-        return NULL;
+    //if (!FLTValidForBBoxFilter(psFilterNode))
+    //    return NULL;
 
 /* -------------------------------------------------------------------- */
 /*      validate for the PropertyIsLike case :                          */
 /*       - only one PropertyIsLike filter is supported                  */
 /* -------------------------------------------------------------------- */
-    if (!FLTValidForPropertyIsLikeFilter(psFilterNode))
-        return NULL;
+    //if (!FLTValidForPropertyIsLikeFilter(psFilterNode))
+    //    return NULL;
 
 
 
@@ -245,6 +918,7 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
         }
 
         free(psFilterNode);
+        //TODO free pOther point for some operators.
     }
 }
 
@@ -331,7 +1005,7 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
             }                           
         }//end if is logical
 /* -------------------------------------------------------------------- */
-/*      Spatial Filter. Only BBox is supported. Eg of Filer using       */
+/*      Spatial Filter.                                                 */
 /*      BBOX :                                                          */
 /*      <Filter>                                                        */
 /*       <BBOX>                                                         */
@@ -342,126 +1016,279 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 /*       </BBOX>                                                        */
 /*      </Filter>                                                       */
 /*                                                                      */
-/*      This BBox type is not supported : TODO                          */
-/*      <Box srsName="http://www.opengis.net/gml/srs/epsg.xml#4326">    */
-/*      <coord><X>0.0</X><Y>0.0</Y></coord>                             */
-/*      <coord><X>100.0</X><Y>100.0</Y></coord>                         */
-/*      </Box>                                                          */
+/*       DWithin                                                        */
 /*                                                                      */
+/*      <xsd:element name="DWithin"                                     */
+/*      type="ogc:DistanceBufferType"                                   */
+/*      substitutionGroup="ogc:spatialOps"/>                            */
+/*                                                                      */
+/*      <xsd:complexType name="DistanceBufferType">                     */
+/*         <xsd:complexContent>                                         */
+/*            <xsd:extension base="ogc:SpatialOpsType">                 */
+/*               <xsd:sequence>                                         */
+/*                  <xsd:element ref="ogc:PropertyName"/>               */
+/*                  <xsd:element ref="gml:_Geometry"/>                  */
+/*                  <xsd:element name="Distance" type="ogc:DistanceType"/>*/
+/*               </xsd:sequence>                                        */
+/*            </xsd:extension>                                          */
+/*         </xsd:complexContent>                                        */
+/*      </xsd:complexType>                                              */
+/*                                                                      */
+/*                                                                      */
+/*       <Filter>                                                       */
+/*       <DWithin>                                                      */
+/*        <PropertyName>Geometry</PropertyName>                         */
+/*        <gml:Point>                                                   */
+/*          <gml:coordinates>13.0983,31.5899</gml:coordinates>          */
+/*        </gml:Point>                                                  */
+/*        <Distance units="url#m">10</Distance>                         */
+/*       </DWithin>                                                     */
+/*      </Filter>                                                       */
+/*                                                                      */
+/*       Intersect                                                      */
+/*                                                                      */
+/*       type="ogc:BinarySpatialOpType" substitutionGroup="ogc:spatialOps"/>*/
+/*      <xsd:element name="Intersects"                                  */
+/*      type="ogc:BinarySpatialOpType"                                  */
+/*      substitutionGroup="ogc:spatialOps"/>                            */
+/*                                                                      */
+/*      <xsd:complexType name="BinarySpatialOpType">                    */
+/*      <xsd:complexContent>                                            */
+/*      <xsd:extension base="ogc:SpatialOpsType">                       */
+/*      <xsd:sequence>                                                  */
+/*      <xsd:element ref="ogc:PropertyName"/>                           */
+/*      <xsd:choice>                                                    */
+/*      <xsd:element ref="gml:_Geometry"/>                              */
+/*      <xsd:element ref="gml:Box"/>                                    */
+/*      </xsd:sequence>                                                 */
+/*      </xsd:extension>                                                */
+/*      </xsd:complexContent>                                           */
+/*      </xsd:complexType>                                              */
 /* -------------------------------------------------------------------- */
         else if (FLTIsSpatialFilterType(psXMLNode->pszValue))
         {
-            char *pszSRS = NULL;
-            CPLXMLNode *psPropertyName = NULL;
-            CPLXMLNode *psBox = NULL;
-            CPLXMLNode *psCoordinates = NULL;
-            CPLXMLNode *psCoord1 = NULL, *psCoord2 = NULL;
-            CPLXMLNode *psX = NULL, *psY = NULL;
-            char **szCoords=NULL, **szMin=NULL, **szMax = NULL;
-            char  *szCoords1=NULL, *szCoords2 = NULL;
-            int nCoords = 0;
-            char *pszTmpCoord = NULL;
-            int bCoordinatesValid = 0;
-
             psFilterNode->eType = FILTER_NODE_TYPE_SPATIAL;
 
-            psPropertyName = CPLGetXMLNode(psXMLNode, "PropertyName");
-            psBox = CPLGetXMLNode(psXMLNode, "Box");
-            if (psBox)
+            if (strcasecmp(psXMLNode->pszValue, "BBOX") == 0)
             {
-                pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
+                char *pszSRS = NULL;
+                CPLXMLNode *psPropertyName = NULL;
+                CPLXMLNode *psBox = NULL;
+                CPLXMLNode *psCoordinates = NULL;
+                CPLXMLNode *psCoord1 = NULL, *psCoord2 = NULL;
+                CPLXMLNode *psX = NULL, *psY = NULL;
+                char **szCoords=NULL, **szMin=NULL, **szMax = NULL;
+                char  *szCoords1=NULL, *szCoords2 = NULL;
+                int nCoords = 0;
+                char *pszTmpCoord = NULL;
+                int bCoordinatesValid = 0;
+
+                
+
+                psPropertyName = CPLGetXMLNode(psXMLNode, "PropertyName");
+                psBox = CPLGetXMLNode(psXMLNode, "Box");
+                if (!psBox)
+                  psBox = CPLGetXMLNode(psXMLNode, "BoxType");
+
+                if (psBox)
+                {
+                    pszSRS = (char *)CPLGetXMLValue(psBox, "srsName", NULL);
             
-                psCoordinates = CPLGetXMLNode(psBox, "coordinates");
-                if (psCoordinates && psCoordinates->psChild && 
-                    psCoordinates->psChild->pszValue)
-                {
-                    pszTmpCoord = psCoordinates->psChild->pszValue;
-                    szCoords = split(pszTmpCoord, ' ', &nCoords);
-                    if (szCoords && nCoords == 2)
+                    psCoordinates = CPLGetXMLNode(psBox, "coordinates");
+                    if (psCoordinates && psCoordinates->psChild && 
+                        psCoordinates->psChild->pszValue)
                     {
-                        szCoords1 = strdup(szCoords[0]);
-                        szCoords2 = strdup(szCoords[1]);
-                        szMin = split(szCoords1, ',', &nCoords);
-                        if (szMin && nCoords == 2)
-                          szMax = split(szCoords2, ',', &nCoords);
-                        if (szMax && nCoords == 2)
-                          bCoordinatesValid =1;
-
-                        free(szCoords1);        
-                        free(szCoords2);
-                    }
-                }
-                else
-                {
-                    psCoord1 = CPLGetXMLNode(psBox, "coord");
-                    if (psCoord1 && psCoord1->psNext && 
-                        psCoord1->psNext->pszValue && 
-                        strcmp(psCoord1->psNext->pszValue, "coord") ==0)
-                    {
-                        szMin = (char **)malloc(sizeof(char *)*2);
-                        szMax = (char **)malloc(sizeof(char *)*2);
-                        psCoord2 = psCoord1->psNext;
-                        psX =  CPLGetXMLNode(psCoord1, "X");
-                        psY =  CPLGetXMLNode(psCoord1, "Y");
-                        if (psX && psY && psX->psChild && psY->psChild &&
-                            psX->psChild->pszValue && psY->psChild->pszValue)
+                        pszTmpCoord = psCoordinates->psChild->pszValue;
+                        szCoords = split(pszTmpCoord, ' ', &nCoords);
+                        if (szCoords && nCoords == 2)
                         {
-                            szMin[0] = psX->psChild->pszValue;
-                            szMin[1] = psY->psChild->pszValue;
+                            szCoords1 = strdup(szCoords[0]);
+                            szCoords2 = strdup(szCoords[1]);
+                            szMin = split(szCoords1, ',', &nCoords);
+                            if (szMin && nCoords == 2)
+                              szMax = split(szCoords2, ',', &nCoords);
+                            if (szMax && nCoords == 2)
+                              bCoordinatesValid =1;
 
-                            psX =  CPLGetXMLNode(psCoord2, "X");
-                            psY =  CPLGetXMLNode(psCoord2, "Y");
-                            if (psX && psY && psX->psChild && psY->psChild &&
-                            psX->psChild->pszValue && psY->psChild->pszValue)
-                            {
-                                szMax[0] = psX->psChild->pszValue;
-                                szMax[1] = psY->psChild->pszValue;
-                                bCoordinatesValid = 1;
-                            }
+                            free(szCoords1);        
+                            free(szCoords2);
                         }
                     }
+                    else
+                    {
+                        psCoord1 = CPLGetXMLNode(psBox, "coord");
+                        if (psCoord1 && psCoord1->psNext && 
+                            psCoord1->psNext->pszValue && 
+                            strcmp(psCoord1->psNext->pszValue, "coord") ==0)
+                        {
+                            szMin = (char **)malloc(sizeof(char *)*2);
+                            szMax = (char **)malloc(sizeof(char *)*2);
+                            psCoord2 = psCoord1->psNext;
+                            psX =  CPLGetXMLNode(psCoord1, "X");
+                            psY =  CPLGetXMLNode(psCoord1, "Y");
+                            if (psX && psY && psX->psChild && psY->psChild &&
+                                psX->psChild->pszValue && psY->psChild->pszValue)
+                            {
+                                szMin[0] = psX->psChild->pszValue;
+                                szMin[1] = psY->psChild->pszValue;
+
+                                psX =  CPLGetXMLNode(psCoord2, "X");
+                                psY =  CPLGetXMLNode(psCoord2, "Y");
+                                if (psX && psY && psX->psChild && psY->psChild &&
+                                    psX->psChild->pszValue && psY->psChild->pszValue)
+                                {
+                                    szMax[0] = psX->psChild->pszValue;
+                                    szMax[1] = psY->psChild->pszValue;
+                                    bCoordinatesValid = 1;
+                                }
+                            }
+                        }
                     
+                    }
+                }
+            
+                if (psPropertyName == NULL || !bCoordinatesValid)
+                  psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+
+                if (psPropertyName && bCoordinatesValid)
+                {
+                    psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+                    //not really using the property name anywhere ?? 
+                    //Is is always Geometry ? 
+                    if (psPropertyName->psChild && 
+                        psPropertyName->psChild->pszValue)
+                    {
+                        psFilterNode->psLeftNode->eType = 
+                          FILTER_NODE_TYPE_PROPERTYNAME;
+                        psFilterNode->psLeftNode->pszValue = 
+                          strdup(psPropertyName->psChild->pszValue);
+                    }
+                
+                    //srs and coordinates
+                    psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
+                    psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BBOX;
+                    //srs might be empty
+                    if (pszSRS)
+                      psFilterNode->psRightNode->pszValue = strdup(pszSRS);
+
+                    psFilterNode->psRightNode->pOther =     
+                      (rectObj *)malloc(sizeof(rectObj));
+                    ((rectObj *)psFilterNode->psRightNode->pOther)->minx = 
+                      atof(szMin[0]);
+                    ((rectObj *)psFilterNode->psRightNode->pOther)->miny = 
+                      atof(szMin[1]);
+
+                    ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = 
+                      atof(szMax[0]);
+                    ((rectObj *)psFilterNode->psRightNode->pOther)->maxy = 
+                      atof(szMax[1]);
+
+                    free(szMin);
+                    free(szMax);
+                }
+            }
+            else if (strcasecmp(psXMLNode->pszValue, "DWithin") == 0)
+            {
+                shapeObj *psShape = NULL;
+                int bPoint = 0, bLine = 0, bPolygon = 0;
+
+                
+                CPLXMLNode *psGMLElement = NULL, *psDistance=NULL;
+
+
+                psGMLElement = CPLGetXMLNode(psXMLNode, "Point");
+                if (!psGMLElement)
+                  psGMLElement =  CPLGetXMLNode(psXMLNode, "PointType");
+                if (psGMLElement)
+                  bPoint =1;
+                else
+                {
+                    psGMLElement= CPLGetXMLNode(psXMLNode, "Polygon");
+                    if (psGMLElement)
+                      bPolygon = 1;
+                    else
+                    {
+                        psGMLElement= CPLGetXMLNode(psXMLNode, "LineString");
+                        if (psGMLElement)
+                          bLine = 1;
+                    }		
+                }
+
+                psDistance = CPLGetXMLNode(psXMLNode, "Distance");
+                if (psGMLElement && psDistance && psDistance->psChild &&  
+                    psDistance->psChild->psNext && psDistance->psChild->psNext->pszValue)
+                {
+                    psShape = (shapeObj *)malloc(sizeof(shapeObj));
+                    msInitShape(psShape);
+                    if (FLTShapeFromGMLTree(psGMLElement, psShape))
+                      //if (FLTGML2Shape_XMLNode(psPoint, psShape))
+                    {
+                        psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+                        //not really using the property name anywhere ?? Is is always
+                        //Geometry ? 
+                    
+                        psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+                        psFilterNode->psLeftNode->pszValue = strdup("Geometry");
+
+                        psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
+                        if (bPoint)
+                          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POINT;
+                        else if (bLine)
+                          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_LINE;
+                        else if (bPolygon)
+                          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POLYGON;
+                        psFilterNode->psRightNode->pOther = (shapeObj *)psShape;
+                        psFilterNode->psRightNode->pszValue = 
+                          strdup(psDistance->psChild->psNext->pszValue);
+                    }
+                }
+            }
+            else if (strcasecmp(psXMLNode->pszValue, "Intersect") == 0)
+            {
+                shapeObj *psShape = NULL;
+                int  bLine = 0, bPolygon = 0;
+
+                
+                CPLXMLNode *psGMLElement = NULL, *psDistance=NULL;
+
+
+                psGMLElement = CPLGetXMLNode(psXMLNode, "Polygon");
+                if (psGMLElement)
+                  bPolygon = 1;
+                else
+                {
+                    psGMLElement= CPLGetXMLNode(psXMLNode, "LineString");
+                    if (psGMLElement)
+                      bLine = 1;
+                }		
+                
+
+                if (psGMLElement)
+                {
+                    psShape = (shapeObj *)malloc(sizeof(shapeObj));
+                    msInitShape(psShape);
+                    if (FLTShapeFromGMLTree(psGMLElement, psShape))
+                      //if (FLTGML2Shape_XMLNode(psPoint, psShape))
+                    {
+                        psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
+                        //not really using the property name anywhere ?? Is is always
+                        //Geometry ? 
+                    
+                        psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+                        psFilterNode->psLeftNode->pszValue = strdup("Geometry");
+
+                        psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
+                        if (bLine)
+                          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_LINE;
+                        else if (bPolygon)
+                          psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_GEOMETRY_POLYGON;
+                        psFilterNode->psRightNode->pOther = (shapeObj *)psShape;
+
+                    }
                 }
             }
             
-            if (psPropertyName == NULL || !bCoordinatesValid)
-              psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
-
-            if (psPropertyName && bCoordinatesValid)
-            {
-                psFilterNode->psLeftNode = FLTCreateFilterEncodingNode();
-                //not really using the property name anywhere ?? Is is always
-                //Geometry ? 
-                if (psPropertyName->psChild && psPropertyName->psChild->pszValue)
-                {
-                    psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
-                    psFilterNode->psLeftNode->pszValue = 
-                      strdup(psPropertyName->psChild->pszValue);
-                }
                 
-                //srs and coordinates
-                psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
-                psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_BBOX;
-                //srs might be empty
-                if (pszSRS)
-                  psFilterNode->psRightNode->pszValue = strdup(pszSRS);
-
-                psFilterNode->psRightNode->pOther =     
-                  (rectObj *)malloc(sizeof(rectObj));
-                ((rectObj *)psFilterNode->psRightNode->pOther)->minx = 
-                  atof(szMin[0]);
-                ((rectObj *)psFilterNode->psRightNode->pOther)->miny = 
-                  atof(szMin[1]);
-
-                ((rectObj *)psFilterNode->psRightNode->pOther)->maxx = 
-                  atof(szMax[0]);
-                ((rectObj *)psFilterNode->psRightNode->pOther)->maxy = 
-                  atof(szMax[1]);
-
-                free(szMin);
-                free(szMax);
-            }
-
         }//end of is spatial
 
 
@@ -502,7 +1329,11 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
                     psFilterNode->psRightNode = FLTCreateFilterEncodingNode();
 
-                    
+                  
+                    //special case where the user puts an empty value
+                    //for the Literal so it can end up as an empty 
+                    //string query in the expression
+                    psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
                     if (psXMLNode->psChild->psNext->psChild &&
                         psXMLNode->psChild->psNext->psChild->pszValue &&
                         strlen(psXMLNode->psChild->psNext->psChild->pszValue) > 0)
@@ -511,6 +1342,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                         psFilterNode->psRightNode->pszValue = 
                           strdup(psXMLNode->psChild->psNext->psChild->pszValue);
                     }
+                    else
+                      psFilterNode->psRightNode->pszValue = NULL;
                 }
             }
 /* -------------------------------------------------------------------- */
@@ -732,7 +1565,8 @@ int FLTIsSpatialFilterType(char *pszValue)
 {
     if (pszValue)
     {
-        if ( strcasecmp(pszValue, "BBOX") == 0)
+        if ( strcasecmp(pszValue, "BBOX") == 0 ||
+             strcasecmp(pszValue, "DWithin") == 0)
           return MS_TRUE;
     }
 
@@ -942,9 +1776,46 @@ int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
     }
 
     return 0;
-}       
+}    
+
+int FLTIsLineFilter(FilterEncodingNode *psFilterNode)
+{
+    if (!psFilterNode || !psFilterNode->pszValue)
+      return 0;
+
+    if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL && 
+        psFilterNode->psRightNode &&  
+        psFilterNode->psRightNode->eType == FILTER_NODE_TYPE_GEOMETRY_LINE)
+      return 1;
+
+    return 0;
+}
+  
+int FLTIsPolygonFilter(FilterEncodingNode *psFilterNode)
+{
+    if (!psFilterNode || !psFilterNode->pszValue)
+      return 0;
+
+    if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL && 
+        psFilterNode->psRightNode &&  
+        psFilterNode->psRightNode->eType == FILTER_NODE_TYPE_GEOMETRY_POLYGON)
+      return 1;
+
+    return 0;
+}
     
-   
+int FLTIsPointFilter(FilterEncodingNode *psFilterNode)
+{
+    if (!psFilterNode || !psFilterNode->pszValue)
+      return 0;
+
+    if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL && 
+        psFilterNode->psRightNode &&  
+        psFilterNode->psRightNode->eType == FILTER_NODE_TYPE_GEOMETRY_POINT)
+      return 1;
+
+    return 0;
+}
 
 int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode)
 {
@@ -954,16 +1825,37 @@ int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode)
     if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
       return 1;
 
-    if (strcasecmp(psFilterNode->pszValue, "AND") == 0)
+    /*    if (strcasecmp(psFilterNode->pszValue, "AND") == 0)
     {
       if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0 ||
           strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)
         return 1;
     }
-
+    */
     return 0;
 }       
-            
+
+shapeObj *FLTGetShape(FilterEncodingNode *psFilterNode, double *pdfDistance)
+{
+    FilterEncodingNode *psNode = psFilterNode;
+    if (psNode)
+    {
+        if (psNode->eType == FILTER_NODE_TYPE_SPATIAL && psNode->psRightNode)
+          psNode = psNode->psRightNode;
+
+        if (psNode->eType == FILTER_NODE_TYPE_GEOMETRY_POINT ||
+            psNode->eType == FILTER_NODE_TYPE_GEOMETRY_LINE ||
+            psNode->eType == FILTER_NODE_TYPE_GEOMETRY_POLYGON)
+        {
+            if (psNode->eType == FILTER_NODE_TYPE_GEOMETRY_POINT &&
+                psNode->pszValue && pdfDistance)
+              *pdfDistance = atof(psNode->pszValue);
+
+            return (shapeObj *)psNode->pOther;
+        }
+    }
+    return NULL;   
+}
 
 /************************************************************************/
 /*                                FLTGetBBOX                            */
@@ -1246,6 +2138,11 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
             }
         }
     }
+    
+    //specical case to be able to have empty strings in the expression.
+    if (psFilterNode->psRightNode->pszValue == NULL)
+      bString = 1;
+      
 
     if (bString)
       strcat(szBuffer, " (\"[");
@@ -1285,7 +2182,10 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
     //value
     if (bString)
       strcat(szBuffer, "\"");
-    strcat(szBuffer, psFilterNode->psRightNode->pszValue);
+    
+    if (psFilterNode->psRightNode->pszValue)
+      strcat(szBuffer, psFilterNode->psRightNode->pszValue);
+
     if (bString)
       strcat(szBuffer, "\"");
     strcat(szBuffer, ") ");
