@@ -29,6 +29,11 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.43  2004/09/25 23:33:38  frank
+ * Quick fix to two compile problems presumably committed recently by Julien.
+ * My fixes seem obvious, but I haven't tested them.  Will refer Julien to
+ * review.
+ *
  * Revision 1.42  2004/09/25 17:16:31  julien
  * Don't encode XML tag (Bug 897)
  * Don't compile mapgml.c function if not necessary (Bug 896)
@@ -226,7 +231,7 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
     fmt = formats;
     while(fmt != NULL)
     {
-      printf("        <%s/>\n", encoded);
+      printf("        <%s/>\n", fmt);
       fmt = va_arg(argp, const char *);
     }
     va_end(argp);
@@ -624,7 +629,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     user_namespace_prefix = msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix");
     if(user_namespace_prefix && 
        msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
-        fprintf(stream, "<!-- WARNING: The value '%s' is not valid XML "
+        fprintf(stdout, "<!-- WARNING: The value '%s' is not valid XML "
                 "namespace. -->\n", user_namespace_prefix);
     user_namespace_uri = msEncodeHTMLEntities( 
       msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri") );
@@ -1145,7 +1150,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                                               "wfs_namespace_prefix");
     if(user_namespace_prefix != NULL &&
        msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
-        fprintf(stream, "<!-- WARNING: The value '%s' is not valid XML "
+        fprintf(stdout, "<!-- WARNING: The value '%s' is not valid XML "
                 "namespace. -->\n", user_namespace_prefix);
 
     if (user_namespace_prefix && user_namespace_uri)
