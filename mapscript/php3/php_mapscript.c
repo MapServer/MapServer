@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.99  2002/03/21 23:13:58  dan
+ * Produce a fatal error in ms_newMapObj() if PHP is NOT configured as a CGI.
+ *
  * Revision 1.98  2002/03/21 14:58:40  assefa
  * Set the numclasses memeber properly after adding a new class in a layer.
  *
@@ -144,6 +147,7 @@
 #ifdef PHP4
 #include "php.h"
 #include "php_globals.h"
+#include "SAPI.h"
 #else
 #include "phpdl.h"
 #include "php3_list.h"
@@ -1000,6 +1004,26 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     {
         WRONG_PARAM_COUNT;
     }
+
+#if defined(PHP4)
+    /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
+     * as an Apache (or ISAPI) module.  It works fine only with PHP configured
+     * as a CGI.
+     *
+     * Hopefully we'll be able to get rid of that limitation soon, but for
+     * now we'll produce an error of PHP is not running as a CGI.
+     */
+    if (sapi_module.name && strcmp(sapi_module.name, "cgi") != 0)
+    {
+        php3_error(E_ERROR, 
+             "Due to thread-safety problems, php_mapscript cannot be used "
+             "as a '%s' module.  You will have to reconfigure your PHP as "
+             "a CGI to run this version of MapScript. \n"
+             "See <a href=\"http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI\">http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI</a>.\n",
+              sapi_module.name);
+        RETURN_FALSE;
+    }
+#endif
 
     /* Attempt to open the MAP file 
      */
