@@ -997,13 +997,13 @@ char *processLine(char *instr, int mode)
 
   outstr = strdup(instr); // work from a copy
   
-  sprintf(repstr, "%s%s%s.%s", Map->web.imageurl, Map->name, Id, outputImageType[Map->imagetype]);
+  sprintf(repstr, "%s%s%s.%s", Map->web.imageurl, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
   outstr = gsub(outstr, "[img]", repstr);
-  sprintf(repstr, "%s%sref%s.%s", Map->web.imageurl, Map->name, Id, outputImageType[Map->imagetype]);
+  sprintf(repstr, "%s%sref%s.%s", Map->web.imageurl, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
   outstr = gsub(outstr, "[ref]", repstr);
-  sprintf(repstr, "%s%sleg%s.%s", Map->web.imageurl, Map->name, Id, outputImageType[Map->imagetype]);
+  sprintf(repstr, "%s%sleg%s.%s", Map->web.imageurl, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
   outstr = gsub(outstr, "[legend]", repstr);
-  sprintf(repstr, "%s%ssb%s.%s", Map->web.imageurl, Map->name, Id, outputImageType[Map->imagetype]);
+  sprintf(repstr, "%s%ssb%s.%s", Map->web.imageurl, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
   outstr = gsub(outstr, "[scalebar]", repstr);
 
   if(SaveQuery) {
@@ -1555,7 +1555,7 @@ int main(int argc, char *argv[]) {
 	else
 	  img = msDrawMap(Map);
 	if(!img) writeError();
-	sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);	
+	sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));	
 	if(msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality) == -1) writeError();
 	gdImageDestroy(img);
       }
@@ -1563,7 +1563,7 @@ int main(int argc, char *argv[]) {
       if(Map->legend.status == MS_ON) {
 	img = msDrawLegend(Map);
 	if(!img) writeError();
-	sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
 	if(msSaveImage(img, buffer, Map->imagetype, Map->legend.transparent, Map->legend.interlace, Map->imagequality) == -1) writeError();
 	gdImageDestroy(img);
       }
@@ -1571,7 +1571,7 @@ int main(int argc, char *argv[]) {
       if(Map->scalebar.status == MS_ON) {
 	img = msDrawScalebar(Map);
 	if(!img) writeError();
-	sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
 	if(msSaveImage(img, buffer, Map->imagetype, Map->scalebar.transparent, Map->scalebar.interlace, Map->imagequality) == -1) writeError();
 	gdImageDestroy(img);
       }
@@ -1579,7 +1579,7 @@ int main(int argc, char *argv[]) {
       if(Map->reference.status == MS_ON) {
 	img = msDrawReferenceMap(Map);
 	if(!img) writeError();
-	sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
 	if(msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality) == -1) writeError();
 	gdImageDestroy(img);
       }
@@ -1623,7 +1623,7 @@ int main(int argc, char *argv[]) {
       
       if(!img) writeError();
       
-      printf("Content-type: image/%s%c%c", outputImageMimeType[Map->imagetype], 10,10);
+      printf("Content-type: image/%s%c%c",MS_IMAGE_MIME_TYPE(Map->imagetype), 10,10);
       status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
       if(status != MS_SUCCESS) writeError();
       
@@ -1815,12 +1815,12 @@ int main(int argc, char *argv[]) {
 	if(!img) writeError();
 	
 	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP) { // just return the image
-	  printf("Content-type: image/%s%c%c", outputImageMimeType[Map->imagetype], 10,10);
+	  printf("Content-type: image/%s%c%c",MS_IMAGE_MIME_TYPE(Map->imagetype), 10,10);
 	  status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 	  if(status != MS_SUCCESS) writeError();
 	  gdImageDestroy(img);
 	} else {
-	  sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	  sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
 	  status = msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 	  if(status != MS_SUCCESS) writeError();
 	  gdImageDestroy(img);
@@ -1828,7 +1828,7 @@ int main(int argc, char *argv[]) {
 	  if(Map->legend.status == MS_ON || UseShapes) {
 	    img = msDrawLegend(Map);
 	    if(!img) writeError();
-	    sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	    sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
 	    status = msSaveImage(img, buffer, Map->imagetype, Map->legend.transparent, Map->legend.interlace, Map->imagequality);
 	    if(status != MS_SUCCESS) writeError();
 	    gdImageDestroy(img);
@@ -1837,7 +1837,7 @@ int main(int argc, char *argv[]) {
 	  if(Map->scalebar.status == MS_ON) {
 	    img = msDrawScalebar(Map);
 	    if(!img) writeError();
-	    sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	    sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
 	    status = msSaveImage(img, buffer, Map->imagetype, Map->scalebar.transparent, Map->scalebar.interlace, Map->imagequality);
 	    if(status != MS_SUCCESS) writeError();
 	    gdImageDestroy(img);
@@ -1846,7 +1846,7 @@ int main(int argc, char *argv[]) {
 	  if(Map->reference.status == MS_ON) {
 	    img = msDrawReferenceMap(Map);
 	    if(!img) writeError();
-	    sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+	    sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
 	    status = msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 	    if(status != MS_SUCCESS) writeError();
 	    gdImageDestroy(img);

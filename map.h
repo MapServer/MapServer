@@ -115,6 +115,16 @@ extern "C" {
 #define MS_ABS(a)	(((a)<0) ? -(a) : (a))
 #define MS_SGN(a)	(((a)<0) ? -1 : 1)
 #define MS_NINT(x)      ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
+
+#define MS_IMAGE_MIME_TYPE(type)  ((type)==MS_GIF?"gif": \
+                                   (type)==MS_PNG?"png": \
+                                   (type)==MS_JPEG?"jpeg": \
+                                   (type)==MS_WBMP?"wbmp":"unknown")
+
+#define MS_IMAGE_EXTENSION(type)  ((type)==MS_GIF?"gif": \
+                                   (type)==MS_PNG?"png": \
+                                   (type)==MS_JPEG?"jpg": \
+                                   (type)==MS_WBMP?"wbmp":"unknown")
 #endif
 
 // General enumerated types - needed by scripts

@@ -2,17 +2,6 @@
 #include "maperror.h"
 #include "gdfonts.h"
 
-/* 
-** Future home of the MapServer OpenGIS WMS module.
-*/
-
-////////////
-// These should be moved to map.h for general use 
-#define MS_IMAGE_MIME_TYPE(type)  ((type)==MS_GIF?"gif": \
-                                   (type)==MS_PNG?"png": \
-                                   (type)==MS_JPEG?"jpeg": \
-                                   (type)==MS_WBMP?"wbmp":"???unsupported???")
-
 /*
 ** msIsLayerQueryable()  returns MS_TRUE/MS_FALSE
 */
