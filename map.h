@@ -298,6 +298,7 @@ typedef struct {
   int  numformatoptions;
   char **formatoptions;
   int  refcount;
+  int inmapfile; //boolean value for writing
 } outputFormatObj;
 
 // The following is used for "don't care" values in transparent, interlace and

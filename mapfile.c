@@ -940,6 +940,7 @@ static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
 #endif
 }
 
+
 /*
 ** Initialize, load and free a labelObj structure
 */
@@ -2960,6 +2961,8 @@ static int loadOutputFormat(mapObj *map)
                     sizeof(char *)*numformatoptions );
         }
 
+        format->inmapfile = MS_TRUE;
+
         if( !msOutputFormatValidate( format ) )
             return -1;
         else
@@ -3023,6 +3026,63 @@ static int loadOutputFormat(mapObj *map)
   } /* next token */
 }
 
+/*
+** utility function to write an output format structure to file
+*/
+static void writeOutputformatobject(outputFormatObj *outputformat,
+                                    FILE *stream)
+{
+    int i = 0;
+    if (outputformat)
+    {
+        fprintf(stream, "  OUTPUTFORMAT\n");
+        fprintf(stream, "    NAME %s\n", outputformat->name);
+        fprintf(stream, "    MIMETYPE %s\n", outputformat->mimetype);
+        fprintf(stream, "    DRIVER %s\n", outputformat->driver);
+        fprintf(stream, "    EXTENSION %s\n", outputformat->extension);
+        if (outputformat->imagemode == MS_IMAGEMODE_PC256)
+          fprintf(stream, "    IMAGEMODE %s\n", "PC256");
+        else if (outputformat->imagemode == MS_IMAGEMODE_RGB)
+           fprintf(stream, "    IMAGEMODE %s\n", "RGB");
+        else if (outputformat->imagemode == MS_IMAGEMODE_RGBA)
+           fprintf(stream, "    IMAGEMODE %s\n", "RGBA");
+        else if (outputformat->imagemode == MS_IMAGEMODE_INT16)
+           fprintf(stream, "    IMAGEMODE %s\n", "INT16");
+         else if (outputformat->imagemode == MS_IMAGEMODE_FLOAT32)
+           fprintf(stream, "    IMAGEMODE %s\n", "FLOAT32");
+
+        fprintf(stream, "    TRANSPARENT %s\n", 
+                msTrueFalse[outputformat->transparent]);
+
+        for (i=0; i<outputformat->numformatoptions; i++)
+          fprintf(stream, "    FORMATOPTION \"%s\"\n", 
+                  outputformat->formatoptions[i]);
+
+        fprintf(stream, "  END\n\n");
+        
+    }
+}
+
+
+/*
+** Write the output formats to file
+*/
+static void writeOutputformat(mapObj *map, FILE *stream)
+{
+    int i = 0;
+    if (map->outputformat)
+    {
+        writeOutputformatobject(map->outputformat, stream);
+        for (i=0; i<map->numoutputformats; i++)
+        {
+            if (map->outputformatlist[i]->inmapfile == MS_TRUE &&
+                strcmp(map->outputformatlist[i]->driver,
+                       map->outputformat->driver) != 0)
+              writeOutputformatobject(map->outputformatlist[i], stream);
+        }
+    }
+}
+                              
 /*
 ** Initialize, load and free a legendObj structure
 */
@@ -3891,6 +3951,8 @@ int msSaveMap(mapObj *map, char *filename)
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
   if(map->debug) fprintf(stream, "  DEBUG ON\n");
+
+  writeOutputformat(map, stream);
 
   // write symbol with INLINE tag in mapfile
   for(i=0; i<map->symbolset.numsymbols; i++)

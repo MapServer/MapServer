@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2003/07/03 03:01:58  assefa
+ * Add support for saving the output formats.
+ *
  * Revision 1.18  2003/03/14 13:12:11  attila
  * Introduce MySQL generic support, enabled with --with-mygis when configuring
  *
@@ -302,6 +305,8 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = 0;
         format->renderer = MS_RENDER_WITH_IMAGEMAP;
     }
+
+    format->inmapfile = MS_FALSE;
 
     return format;
 }
