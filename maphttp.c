@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2003/04/23 21:32:25  dan
+ * More fixes to return value and error reporting in msHTTPExecuteRequests()
+ *
  * Revision 1.10  2003/04/23 15:06:56  dan
  * Added better error reporting for timeout situations
  *
@@ -426,10 +429,6 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
     /* Scan message stack from CURL and report fatal errors*/
 
-    // __TODO__ We really need an error stack in maperror.c to report
-    // multiple errors in places like here.
-    // For now we'll just log errors using msDebug()
-
     while((curl_msg = curl_multi_info_read( multi_handle, &num_msgs)) != NULL)
     {
         httpRequestObj *psReq = NULL;
@@ -452,41 +451,6 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             {
                 /* Record error code in nStatus as a negative value */
                 psReq->nStatus = -curl_msg->data.result;
-
-                switch(curl_msg->data.result)
-                {
-                  case CURLE_OPERATION_TIMEOUTED:
-                    if (psReq->debug)
-                      msDebug("HTTP: TIMEOUT of %d seconds exceeded for %s\n",
-                                nTimeout, psReq->pszGetUrl );
-
-                    msSetError(MS_HTTPERR, 
-                               "HTTP: TIMEOUT of %d seconds exceeded for %s\n",
-                               "msHTTPExecuteRequests()", 
-                               nTimeout, psReq->pszGetUrl);
-
-                    /* Rewrite error message, the curl timeout message isn't
-                     * of much use to our users.
-                     */
-                    sprintf(psReq->pszErrBuf, 
-                            "TIMEOUT of %d seconds exceeded.", nTimeout);
-                    break;
-
-                  default:
-                    if (psReq->debug)
-                        msDebug("HTTP: request failed with curl error "
-                                "code %d (%s) for %s\n",
-                                curl_msg->data.result, psReq->pszErrBuf, 
-                                psReq->pszGetUrl);
-
-                    msSetError(MS_HTTPERR, 
-                               "HTTP: request failed with curl error "
-                               "code %d (%s) for %s",
-                               "msHTTPExecuteRequests()", 
-                               curl_msg->data.result, psReq->pszErrBuf, 
-                               psReq->pszGetUrl);
-                    break;
-                }
             }
         }
     }
@@ -496,50 +460,84 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
      */
     for (i=0; i<numRequests; i++)
     {
+        httpRequestObj *psReq;
         CURL *http_handle;
         long lVal=0;
 
-        if (pasReqInfo[i].nStatus == 242)
+        psReq = &(pasReqInfo[i]);
+
+        if (psReq->nStatus == 242)
             continue;  // Nothing to do here, this file was in cache already
 
-        if (pasReqInfo[i].fp)
-            fclose(pasReqInfo[i].fp);
-        pasReqInfo[i].fp = NULL;
+        if (psReq->fp)
+            fclose(psReq->fp);
+        psReq->fp = NULL;
 
-        http_handle = (CURL*)(pasReqInfo[i].curl_handle);
+        http_handle = (CURL*)(psReq->curl_handle);
 
-        if (pasReqInfo[i].nStatus == 0 &&
+        if (psReq->nStatus == 0 &&
             curl_easy_getinfo(http_handle,
                               CURLINFO_HTTP_CODE, &lVal) == CURLE_OK)
         {
-            pasReqInfo[i].nStatus = lVal;
+            psReq->nStatus = lVal;
         }
 
-        if (!MS_HTTP_SUCCESS(pasReqInfo[i].nStatus))
+        if (!MS_HTTP_SUCCESS(psReq->nStatus))
         {
-            if (pasReqInfo[i].nStatus == -(CURLE_OPERATION_TIMEOUTED))
+            // Set status to MS_DONE to indicate that transfers were 
+            // completed but may not be succesfull
+            nStatus = MS_DONE;
+
+            if (psReq->nStatus == -(CURLE_OPERATION_TIMEOUTED))
             {
                 // Timeout isn't a fatal error
+                if (psReq->debug)
+                    msDebug("HTTP: TIMEOUT of %d seconds exceeded for %s\n",
+                            nTimeout, psReq->pszGetUrl );
+
+                msSetError(MS_HTTPERR, 
+                           "HTTP: TIMEOUT of %d seconds exceeded for %s\n",
+                           "msHTTPExecuteRequests()", 
+                           nTimeout, psReq->pszGetUrl);
+
+                /* Rewrite error message, the curl timeout message isn't
+                 * of much use to our users.
+                 */
+                sprintf(psReq->pszErrBuf, 
+                        "TIMEOUT of %d seconds exceeded.", nTimeout);
             }
-            else if (pasReqInfo[i].nStatus > 0)
+            else if (psReq->nStatus > 0)
             {
-                if (pasReqInfo[i].debug)
+                // Got an HTTP Error, e.g. 404, etc.
+
+                if (psReq->debug)
                     msDebug("HTTP: HTTP GET request failed with status %d (%s)"
                             " for %s\n",
-                            pasReqInfo[i].nStatus, pasReqInfo[i].pszErrBuf, 
-                            pasReqInfo[i].pszGetUrl);
+                            psReq->nStatus, psReq->pszErrBuf, 
+                            psReq->pszGetUrl);
 
                 msSetError(MS_HTTPERR, 
                            "HTTP GET request failed with status %d (%s) "
                            "for %s",
-                           "msHTTPExecuteRequests()", pasReqInfo[i].nStatus, 
-                           pasReqInfo[i].pszErrBuf, pasReqInfo[i].pszGetUrl);
-
-                nStatus = MS_DONE;  // Transfers were completed but may not be succesfull
+                           "msHTTPExecuteRequests()", psReq->nStatus, 
+                           psReq->pszErrBuf, psReq->pszGetUrl);
             }
             else
             {
-                nStatus = MS_FAILURE;
+                // Got a curl error
+
+                if (psReq->debug)
+                    msDebug("HTTP: request failed with curl error "
+                            "code %d (%s) for %s",
+                            -psReq->nStatus, psReq->pszErrBuf, 
+                            psReq->pszGetUrl);
+
+                msSetError(MS_HTTPERR, 
+                           "HTTP: request failed with curl error "
+                           "code %d (%s) for %s",
+                           "msHTTPExecuteRequests()", 
+                           -psReq->nStatus, psReq->pszErrBuf, 
+                           psReq->pszGetUrl);
             }
         }
 
@@ -547,7 +545,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         curl_easy_setopt(http_handle, CURLOPT_URL, "" );
         curl_multi_remove_handle(multi_handle, http_handle);
         curl_easy_cleanup(http_handle);
-        pasReqInfo[i].curl_handle = NULL;
+        psReq->curl_handle = NULL;
 
     }
 
