@@ -8,6 +8,10 @@
 
 
 #include "libpq-fe.h"
+#include <string.h>
+
+void postresql_NOTICE_HANDLER(void *arg, const char *message);
+
 
 typedef struct ms_POSTGIS_layer_info_t
 {
@@ -15,7 +19,48 @@ typedef struct ms_POSTGIS_layer_info_t
 	PGconn     *conn; 	//connection to db
 	long	 	row_num;  	//what row is the NEXT to be read (for random access)
  	PGresult   *query_result;//for fetching rows from the db
+	char	     *fields;	 // results from EXPLAIN VERBOSE (or null)
 } msPOSTGISLayerInfo;
+
+void postresql_NOTICE_HANDLER(void *arg, const char *message)
+{
+	char	*str,*str2;
+	char  *result;
+	
+	if (strstr(message,"QUERY DUMP"))
+	{
+		if (	((msPOSTGISLayerInfo *) arg)->fields)
+		{
+			free(((msPOSTGISLayerInfo *) arg)->fields); 	// free up space
+
+		}
+			result = malloc ( 6000) ;
+			((msPOSTGISLayerInfo *) arg)->fields = result;
+			result[0] = 0; //null terminate it
+
+		//need to parse it a bit
+		str = (char *) message;
+		while (str != NULL)
+		{
+			str = strstr(str," :resname ");
+			if (str != NULL)
+			{
+				str++; // now points at ":"
+				str= strstr(str," ");	//now points to last " "
+				str++; //now points to start of next word
+
+				str2 = strstr(str," ");	//points to end of next word
+				if (strlen(result) > 0)
+				{
+					strcat(result,",");
+				}
+				strncat(result,str, (str2-str) );	
+			}
+		}
+		//fprintf(stderr,"notice returns: %s\n",result);
+	}
+}
+
 
 static int gBYTE_ORDER = 0;
 
@@ -44,6 +89,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	layerinfo->sql = NULL; //calc later
 	layerinfo->row_num=0;
 	layerinfo->query_result= NULL;
+	layerinfo->fields = NULL;
 
 	layerinfo->conn = PQconnectdb( layer->connection );
 
@@ -55,6 +101,10 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	  free(layerinfo);
 	  return(MS_FAILURE);
     }
+
+	PQsetNoticeProcessor(layerinfo->conn, postresql_NOTICE_HANDLER ,(void *) layerinfo);
+
+	
 
 	layer->postgislayerinfo = (void *) layerinfo;
 
@@ -238,7 +288,8 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
     }
 
     PQclear(result);
-//fprintf (stderr,"query_string_0_5:%s\n",query_string_0_5);
+
+//fprintf (stderr,"prep_DB:query_string_0_5:%s\n",query_string_0_5);
 
 
     result = PQexec(layerinfo->conn, query_string_0_5 );
@@ -251,7 +302,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
  		return (MS_SUCCESS);	
     }
 
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  DECLARE statement (0.6 failed - retried 0.5 and it failed too).", 
+	      msSetError(MS_QUERYERR, "prep_DB:Error executing POSTGIS  DECLARE statement (0.6 failed - retried 0.5 and it failed too).", 
                  "msPOSTGISLayerWhichShapes()");
      
         	PQclear(result);
@@ -272,10 +323,11 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 {
 	char	*query_str;
-	char	table_name[100];
-	char	geom_column_name[100];
-	int	nitems;
+	char	table_name[5000];
+	char	geom_column_name[5000];
+	
 	int	set_up_result;
+	char *temp_scn;
 
 	msPOSTGISLayerInfo	*layerinfo;
 
@@ -293,7 +345,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
         if( layer->data == NULL )
         {
             msSetError(MS_QUERYERR, 
-                       "Missing DATA clause in PostGIS Layer definition.  DATA statement must contain 'geometry_column from table_name'.",
+                       "Missing DATA clause in PostGIS Layer definition.  DATA statement must contain 'geometry_column from table_name' or 'geometry_column from (sub-query) as foo.",
                        "msPOSTGISLayerWhichShapes()");
             return(MS_FAILURE);
         }
@@ -302,12 +354,28 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	memset(query_str,0,6000);		//zero it out
 
 	//get the table name and geometry column name
-	nitems = sscanf(layer->data,"%99s from %99s",geom_column_name,table_name);
 
-	if (nitems !=2)
+		// given a string of the from 'geom from ctivalues' or 'geom from () as foo'
+		// return geom_column_name as 'geom'
+		// and table name as 'ctivalues' or 'geom from () as foo'	
+
+		temp_scn = strstr(layer->data," from ");
+		if (temp_scn == NULL)
+		{
+			msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", 
+                 		"msPOSTGISLayerWhichShapes()");
+		 	return(MS_FAILURE);	
+		}
+		memcpy(geom_column_name , layer->data, (temp_scn)- (layer->data)  );
+		geom_column_name[(temp_scn)- (layer->data)] = 0; //null terminate it
+
+		strcpy(table_name, temp_scn+6);	//table name or sub-select clause
+		
+
+	if ( (strlen(table_name) <1) ||  (strlen(geom_column_name) < 1 )  )
 	{
-            msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column FROM table_name'.", 
-                 "msPOSTGISLayerWhichShapes()");
+            msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo'.",
+			"msPOSTGISLayerWhichShapes()");
 	  return(MS_FAILURE);
 	}
 
@@ -800,11 +868,11 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 {
 
 	char	*query_str;
-	char	table_name[100];
-	char	geom_column_name[100];
-	int	nitems;
+	char	table_name[5000];
+	char	geom_column_name[5000];
+	//int	nitems;
 	char	columns_wanted[5000];
-	char	temp[200];
+	char	temp[5000];
 	
 
 	PGresult   *query_result;
@@ -812,6 +880,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	char				*wkb;
 	int				result,t,size;
 	char				*temp1,*temp2;
+	char				*temp_scn;
 
 //fprintf(stderr,"msPOSTGISLayerGetShape called for record = %i\n",record);
 
@@ -828,14 +897,31 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	memset(query_str,0,6000);		//zero it out
 
 	//get the table name and geometry column name
-	nitems = sscanf(layer->data,"%99s from %99s",geom_column_name,table_name);
 
-	if (nitems !=2)
+		// given a string of the from 'geom from ctivalues' or 'geom from () as foo'
+		// return geom_column_name as 'geom'
+		// and table name as 'ctivalues' or 'geom from () as foo'	
+
+		temp_scn = strstr(layer->data," from ");
+		if (temp_scn == NULL)
+		{
+			msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", 
+                 		"msPOSTGISLayerWhichShapes()");
+		 	return(MS_FAILURE);	
+		}
+		memcpy(geom_column_name , layer->data, (temp_scn)- (layer->data)  );
+		geom_column_name[(temp_scn)- (layer->data)] = 0; //null terminate it
+
+		strcpy(table_name, temp_scn+6);	//table name or sub-select clause
+		
+
+	if ( (strlen(table_name) <1) ||  (strlen(geom_column_name) < 1 )  )
 	{
-        msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.", 
-                 "msPOSTGISLayerGetShape()");
+            msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo'.",
+			"msPOSTGISLayerWhichShapes()");
 	  return(MS_FAILURE);
 	}
+
 
 	if (layer->numitems ==0) //dont need the oid since its really record
 	{
@@ -866,7 +952,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 						columns_wanted,table_name,record);
 
 
-//fprintf(stderr,query_str); fprintf(stderr,"\n");
+//fprintf(stderr,"msPOSTGISLayerGetShape: %s \n",query_str); 
 
     query_result = PQexec(layerinfo->conn, "BEGIN");
     if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
@@ -1000,8 +1086,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 
 //query the DB for info about the requested table
 //
-//dont really know why or when this function is called, so I'm making
-// things up here.
+// CHEAT: dont look in the system tables, get query optimization infomation
 //
 // get the table name, return a list of the possible columns (except GEOMETRY column)
 // 
@@ -1010,13 +1095,16 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 int msPOSTGISLayerGetItems(layerObj *layer)
 {
 	msPOSTGISLayerInfo	*layerinfo;
-	char				table_name[100];
-	char				geom_column_name[100];
-	char				sql[1000];
-	int				nitems;
+	char				table_name[5000];
+	char				geom_column_name[5000];
+	char				sql[6000];
+	//int				nitems;
+	char				*temp_scn;
+	
 
 	PGresult   *query_result;
 	int		t;
+	char		*str,*str2;
 
 
 //fprintf(stderr, "in msPOSTGISLayerGetItems  (find column names)\n");
@@ -1038,28 +1126,39 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 		return(MS_FAILURE);
 	}
 	//get the table name and geometry column name
-	nitems = sscanf(layer->data,"%99s from %99s",geom_column_name,table_name);
 
-	if (nitems !=2)
+
+		// given a string of the from 'geom from ctivalues' or 'geom from () as foo'
+		// return geom_column_name as 'geom'
+		// and table name as 'ctivalues' or 'geom from () as foo'	
+
+		temp_scn = strstr(layer->data," from ");
+		if (temp_scn == NULL)
+		{
+			msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", 
+                 		"msPOSTGISLayerWhichShapes()");
+		 	return(MS_FAILURE);	
+		}
+		memcpy(geom_column_name , layer->data, (temp_scn)- (layer->data)  );
+		geom_column_name[(temp_scn)- (layer->data)] = 0; //null terminate it
+
+		strcpy(table_name, temp_scn+6);	//table name or sub-select clause
+		
+
+	if ( (strlen(table_name) <1) ||  (strlen(geom_column_name) < 1 )  )
 	{
-        msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.", 
-                 "sPOSTGISLayerGetItems()");
+            msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo'.",
+			"msPOSTGISLayerWhichShapes()");
 	  return(MS_FAILURE);
 	}
-	//now we're going to find column name info about the table
-	//
-	// select attname from pg_attribute where 
-	//			attrelid = (select OID from pg_class where relname = '<table name>') and attnum>0
-	//			and attname <> '<geom_column_name>';
 
-	sprintf(sql,"select attname from pg_attribute where attrelid = (select OID from pg_class where relname = '%s') and attnum>0 and attname <> '%s'",table_name,geom_column_name);
-
-	//execute the sql query, and read the results
-
-    query_result = PQexec(layerinfo->conn, sql );
+	// two cases here.  One, its a table (use select * from table) otherwise, just use the select clause
+	sprintf(sql,"EXPLAIN VERBOSE SELECT * FROM %s",table_name);
+		// this will call the postresql_NOTICE_HANDLER() callback!  layer->fields will be populated
+	query_result = PQexec(layerinfo->conn, sql );
 
 
-    if (!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK)
+    if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
     {
 		char tmp[4000];
 
@@ -1071,21 +1170,65 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 	  	query_result = NULL;
 		return(MS_FAILURE);
     }
-	//read each of the results, and put it into the layer
+	//layerinfo->fields is a string with a list of all the columns
 
-	layer->numitems =  PQntuples(query_result);
+		// # of items is number of "," in string + 1
+		//layerinfo->fields looks like "geo_value,geo_id,desc"
+			//since we dont want to return the geometry column, we remove it.
+				// # columns is reduced by 1
+
+		str = layerinfo->fields;
+		t = 0;
+		while ((str = strstr(str,",")))
+		{
+			str++;
+			t++;
+		}
+
+		
+	layer->numitems =  t; // one less because dont want to do anything with geometry column
 	layer->items = malloc (sizeof(char *) * layer->numitems);
 
 
-
-	for (t=0; t < layer->numitems; t++)
+	str = layerinfo->fields ;
+	t = 0;
+	while (str != NULL)
 	{
-		//get the name, put it into the layer->items array
-		layer->items[t] = malloc(PQgetlength(query_result, t, 0) +1) ;
-		memset(layer->items[t], 0, PQgetlength(query_result, t, 0) +1);
-		memcpy(layer->items[t], PQgetvalue(query_result, t, 0), PQgetlength(query_result, t, 0) );
+		str2 = strstr(str,","); //NULL or points to the next ","
+		if (str2 != NULL)
+		{
+
+			if (strncmp(geom_column_name, str, str2-str) != 0)
+			{
+				//its not the geometry column
+				layer->items[t] = malloc(str2-str +1) ;
+				memset(layer->items[t],0, str2-str +1);
+				strncpy(layer->items[t], str, str2-str);
+					//memset will null terminate it
+				t++;
+			}
+		}
+		else
+		{
+			if (strcmp(geom_column_name, str) != 0)
+			{
+				layer->items[t] = malloc( strlen(str)+1 )  ;
+				memset(layer->items[t],0, strlen(str) +1);
+				strcpy(layer->items[t], str);
+				t++;
+			}
+		}
+		if (str2 != NULL)
+		{
+			str = str2;
+			str++;
+		}
+		else
+		{
+			str = NULL;
+		}
 	}
-	PQclear(query_result);
+
 	return msPOSTGISLayerInitItemInfo(layer);
 }
 
