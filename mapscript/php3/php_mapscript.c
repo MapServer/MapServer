@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.63  2001/10/29 16:33:24  dan
+ * Attempt at fixing the random map image problem with mod_php (bug67).
+ *
  * Revision 1.62  2001/10/23 19:17:38  assefa
  * Use layerorder instead of panPrioList.
  *
@@ -128,7 +131,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Oct 10, 2001)"
+#define PHP3_MS_VERSION "(Oct 29, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -364,8 +367,8 @@ static int le_msprojection_new;
 static int le_msscalebar;
 static int le_mslegend;
 
-static char tmpId[128]; /* big enough for time + pid */
-static int  tmpCount;
+static char tmpId[128] = "ttt"; /* big enough for time + pid */
+static int  tmpCount = 0;
 
 /* -------------------------------------------------------------------- */
 /*      class entries.                                                  */
@@ -752,9 +755,12 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_FAILURE",    MS_FAILURE,     const_flag);
     REGISTER_LONG_CONSTANT("MS_DONE",       MS_DONE,        const_flag);
    
-    /* We'll use tmpId and tmpCount to generate unique filenames */
-    sprintf(PHPMS_GLOBAL(tmpId), "%ld%d",(long)time(NULL),(int)getpid());
-    tmpCount = 0;
+    /* We'll use tmpId and tmpCount to generate unique filenames 
+     * Note that tmpId and tmpCount are shared between multiple instances
+     * of PHP MapScript when PHP4 is running as a module.
+     */
+    if (tmpCount == 0)
+        sprintf(PHPMS_GLOBAL(tmpId), "%ld%d",(long)time(NULL),(int)getpid());
 
 #ifdef PHP4
     INIT_CLASS_ENTRY(tmp_class_entry, "map", php_map_class_functions);
