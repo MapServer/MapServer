@@ -1156,7 +1156,7 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
                   strcasecmp(request, "GetCapabilities") == 0) ) 
   {
       if (!wmtver) 
-          wmtver = "1.0.7";  // VERSION is optional with getCapabilities only
+          wmtver = "1.1.0";  // VERSION is optional with getCapabilities only
       if ((status = msWMSMakeAllLayersUnique(map, wmtver)) != MS_SUCCESS) 
           return status;
       return msWMSCapabilities(map, wmtver);
