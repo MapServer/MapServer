@@ -476,15 +476,15 @@ void msSDELayerClose(layerObj *layer) {
 	
   if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
   if (sde->coordref) SE_coordref_free(sde->coordref);
-  if (sde->connection) { 
+  //if (sde->connection) { 
   	//We need to provoke SDE into telling us whether or 
   	//not the connection object is valid.  
-  	status= SE_connection_free_all_locks (sde->connection);
-  	if (status == SE_SUCCESS) {
-  		if (sde->stream) SE_stream_free(sde->stream);
-  		SE_connection_free(sde->connection);
-  	}
-}
+  //	status= SE_connection_free_all_locks (sde->connection);
+  //	if (status == SE_SUCCESS) {
+  //		if (sde->stream) SE_stream_free(sde->stream);
+  //		SE_connection_free(sde->connection);
+ // 	}
+//}
   if(sde->table) free(sde->table);
   if(sde->column) free(sde->column);
   if(sde->row_id_column) free(sde->row_id_column);
