@@ -1752,63 +1752,72 @@ char *generateLegendTemplate(mapservObj *msObj)
    return pszResult;
 }
 
-int processOneToManyJoin(mapservObj* msObj, joinObj *join)
+char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
 {
-  int i;
-  FILE *stream;
-  char buffer[MS_BUFFER_LENGTH], substr[MS_BUFFER_LENGTH], *outstr;
+  int i, records=MS_FALSE;
+  FILE *stream=NULL;
+  char *outbuf; 
+  char instr[MS_BUFFER_LENGTH], substr[MS_BUFFER_LENGTH], *outstr;
+  char szPath[MS_MAXPATHLEN];
 
-  if(join->header != NULL) {
-    if((stream = fopen(join->header, "r")) == NULL) {
-      msSetError(MS_IOERR, join->header, "returnOneToManyJoin()");
-      return(MS_FAILURE);
-    }
+  if((outbuf = strdup("")) == NULL) return(NULL); // empty at first
 
-    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) // echo file, no substitutions
-    printf("%s", buffer);
-
-    fclose(stream);
-  }
-
-  if((stream = fopen(join->template, "r")) == NULL) { // open main template file
-    msSetError(MS_IOERR, join->template, "returnOneToManyJoin()");
-    return(MS_FAILURE);
-  }
-
-  msJoinPrepare(join, &(msObj->ResultShape));
-
+  msJoinPrepare(join, &(msObj->ResultShape)); // execute the join
   while(msJoinNext(join) == MS_SUCCESS) {
-    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) { /* now on to the end of the file */
-      outstr = strdup(buffer);
+
+    // First time through, deal with the header (if necessary) and open the main template. We only
+    // want to do this if there are joined records.
+    if(records == MS_FALSE) { 
+      if(join->header != NULL) {
+        if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->header), "r")) == NULL) {
+          msSetError(MS_IOERR, "Error while opening join header file %s.", "returnOneToManyJoin()", join->header);
+          return(NULL);
+        }
+
+        // echo file to the output buffer, no substitutions
+        while(fgets(instr, MS_BUFFER_LENGTH, stream) != NULL) strcatalloc(outbuf, instr);
+
+        fclose(stream);
+      }
+
+      if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->template), "r")) == NULL) {
+        msSetError(MS_IOERR, "Error while opening join template file %s.", "returnOneToManyJoin()", join->template);
+        return(NULL);
+      }      
+      
+      records = MS_TRUE;
+    }
+    
+    while(fgets(instr, MS_BUFFER_LENGTH, stream) != NULL) { // now on to the end of the template
+      outstr = strdup(instr);
       
       for(i=0; i<join->numitems; i++) {	  
 	sprintf(substr, "[%s]", join->items[i]);
-	if(strstr(outstr, substr) != NULL) { /* do substitution */
+	if(strstr(outstr, substr) != NULL) { // do substitution
 	  outstr = gsub(outstr, substr, join->values[i]);
 	}
-      } /* next item */
+      } // next item
       
-      printf("%s", outstr);
-      fflush(stdout);	
+      strcatalloc(outbuf, outstr);
       free(outstr);
     }
       
     rewind(stream);
-  }
+  } // next record
 
-  if(join->footer != NULL) {
-    if((stream = fopen(join->footer, "r")) == NULL) {
-      msSetError(MS_IOERR, join->footer, "returnOneToManyJoin()");
-      return(MS_FAILURE);
+  if(records==MS_TRUE && join->footer) {    
+    if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->footer), "r")) == NULL) {
+      msSetError(MS_IOERR, "Error while opening join footer file %s.", "returnOneToManyJoin()", join->footer);
+      return(NULL);
     }
 
-    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) /* echo file, no substitutions */
-      printf("%s", buffer);
-
+    // echo file to the output buffer, no substitutions
+    while(fgets(instr, MS_BUFFER_LENGTH, stream) != NULL) strcatalloc(outbuf, instr);
+    
     fclose(stream);
   }
 
-  return(MS_SUCCESS);
+  return(outbuf);
 }
 
 char *processLine(mapservObj* msObj, char* instr, int mode)
