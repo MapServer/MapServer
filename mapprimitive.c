@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2005/03/25 05:42:58  frank
+ * added msAddLineDirectly(), msAddLine() uses memcpy()
+ *
  * Revision 1.48  2005/03/24 22:27:20  frank
  * optimized msTransformShapeToPixel - avoid division
  *
@@ -233,7 +236,7 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
 
 int msAddLine(shapeObj *p, lineObj *new_line)
 {
-  int c, v;
+  int c;
   lineObj *extended_line;
 
   /* Create an extended line array */
@@ -254,8 +257,46 @@ int msAddLine(shapeObj *p, lineObj *new_line)
     return(MS_FAILURE);
   }
 
-  for (v= 0; v < new_line->numpoints; v++)
-    extended_line[c].point[v]= new_line->point[v];
+  memcpy( extended_line[c].point, new_line->point, 
+          sizeof(pointObj) * new_line->numpoints );
+
+  /* Dispose of the old line */
+  if(p->line) free(p->line);
+
+  /* Update the polygon information */
+  p->numlines++;
+  p->line = extended_line;
+
+  return(MS_SUCCESS);
+}
+
+/*
+** Same as msAddLine(), except that this version "seizes" the points
+** array from the passed in line and uses it instead of copying it.  
+*/
+int msAddLineDirectly(shapeObj *p, lineObj *new_line)
+{
+  int c;
+  lineObj *extended_line;
+
+  /* Create an extended line array */
+  if((extended_line = (lineObj *)malloc((p->numlines + 1) * sizeof(lineObj))) == NULL) {
+    msSetError(MS_MEMERR, NULL, "msAddLine()");
+    return(MS_FAILURE);
+  }
+
+  /* Copy the old line into the extended line array */
+  for (c= 0; c < p->numlines; c++)
+    extended_line[c]= p->line[c];
+
+  /* Copy the new line onto the end of the extended line array */
+  c= p->numlines;
+  extended_line[c].numpoints = new_line->numpoints;  
+  extended_line[c].point = new_line->point;
+
+  /* strip points reference off the passed in lineObj */
+  new_line->point = NULL;
+  new_line->numpoints = 0;
 
   /* Dispose of the old line */
   if(p->line) free(p->line);
