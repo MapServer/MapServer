@@ -1,18 +1,18 @@
 # Run ./configure in the main MapServer directory to turn this Makefile.in
 # into a proper Makefile
 
-prefix		=	/usr/local
-exec_prefix	=	${prefix}
-INST_PREFIX	=	${prefix}
-INST_LIB	=	${exec_prefix}/lib
-INST_BIN	=	${exec_prefix}/bin
+prefix		=	@prefix@
+exec_prefix	=	@exec_prefix@
+INST_PREFIX	=	@exec_prefix@
+INST_LIB	=	@libdir@
+INST_BIN	=	@bindir@
 
 #
 # mpatrol runtime memory debugger
 #
-MPATROL=  	
-MPATROL_INC=	
-MPATROL_LIB=	
+MPATROL=  	@MPATROL_ENABLED@
+MPATROL_INC=	@MPATROL_INC@
+MPATROL_LIB=	@MPATROL_LIB@
 
 #
 # If you want to ignore missing datafile errors uncomment the following
@@ -20,19 +20,19 @@ MPATROL_LIB=
 # have complete data for each tile.
 #
 #IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
-IGNORE_MISSING_DATA = -DIGNORE_MISSING_DATA
+IGNORE_MISSING_DATA = @IGNORE_MISSING_DATA@
 
 #
 # Apparently these aren't as commonplace as I'd hoped. Edit the
 # following line to reflect the missing functions on your platform.
 #
 # STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP -DNEED_STRLCAT
-STRINGS= -DNEED_STRLCAT 
+STRINGS= @STRINGS@
 
 # Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
-PROJ_INC= -I/usr/local/include
-PROJ_LIB= -L/usr/local/lib -lproj
-PROJ=     -DUSE_PROJ -DUSE_PROJ_API_H
+PROJ_INC= @PROJ_INC@
+PROJ_LIB= @PROJ_LIB@
+PROJ=     @PROJ_ENABLED@
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
@@ -41,75 +41,75 @@ PROJ=     -DUSE_PROJ -DUSE_PROJ_API_H
 #
 #
 GDFONT_OBJ=gd-1.2/gdfontt.o gd-1.2/gdfonts.o gd-1.2/gdfontmb.o gd-1.2/gdfontl.o gd-1.2/gdfontg.o
-GD_INC=  -I/usr/local/include
-GD_LIB=  -L/usr/local/lib -lgd -ljpeg -lfreetype -lpng -lz  
-GD=       -DUSE_GD_GIF -DUSE_GD_PNG -DUSE_GD_JPEG -DUSE_GD_WBMP -DUSE_GD_FT -DGD_HAS_GDIMAGEGIFPTR
-GD_STATIC = 
+GD_INC=  @GD_INC@
+GD_LIB=  @GD_LIB@
+GD=      @GD_DEF@
+GD_STATIC = @GD_STATIC@
 
 # PDFlib distribution (PDF library w/ PDF support). (EXPERIMENTAL)
 #
 #
 #
-PDF_INC=  
-PDF_LIB=  
-PDF=      
+PDF_INC=  @PDF_INC@
+PDF_LIB=  @PDF_LIB@
+PDF=      @PDF_ENABLED@
 
 # TIFF distribution (raster support for TIFF and GEOTIFF imagery). (RECOMMENDED)
-TIFF_INC= 
-TIFF_LIB=  -ljpeg -lfreetype -lpng -lz  
-TIFF=     
+TIFF_INC= @TIFF_INC@
+TIFF_LIB= @TIFF_LIB@
+TIFF=     @TIFF_ENABLED@
 
 # JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
-JPEG_INC= 
-JPEG_LIB= -ljpeg
-JPEG=     
+JPEG_INC= @JPEG_INC@
+JPEG_LIB= @JPEG_LIB@
+JPEG=     @JPEG_ENABLED@
 
 # EPPL7 Support (this activates ERDAS as well) Included in the distribution. Probably the best raster alternative if
 # you've got EPPL7 laying around. See http://www.lmic.state.mn.us/ for more information. (RECOMMENDED)
-EPPL=     -DUSE_EPPL
-EPPL_OBJ= epplib.o
+EPPL=     @EPPL_ENABLED@
+EPPL_OBJ= @EPPL_OBJ@
 
 # ESRI SDE Support. You MUST have the SDE Client libraries and include files
 # on your system someplace. The actual SDE server you wish to connect to can
 # be elsewhere.
-SDE=	  
-SDE_LIB=  
-SDE_INC=  
+SDE=	  @SDE_ENABLED@
+SDE_LIB=  @SDE_LIB@
+SDE_INC=  @SDE_INC@
 
 # Optional OGR Support.  OGC Simple Feature inspired interface for vector
 # formats.  See http://ogr.maptools.org/
 # Note that since OGR is part of the GDAL library, it uses GDAL_LIB + GDAL_INC
-OGR=	  -DUSE_OGR
+OGR=	  @OGR_ENABLED@
 
 # Optional GDAL Support (provides read access to a variety of raster formats)
 # See http://www.remotesensing.org/gdal/
-GDAL=	  -DUSE_GDAL
-GDAL_LIB=  -L/usr/local/lib -lgdal
-GDAL_INC=  -I/usr/local/include
+GDAL=	  @GDAL_ENABLED@
+GDAL_LIB=  @GDAL_LIB@
+GDAL_INC=  @GDAL_INC@
 
 # Optional PostGIS Support.  See http://postgis.refractions.net/
-POSTGIS=      -DUSE_POSTGIS
-POSTGIS_LIB=  -L/usr/local/pgsql_743/lib -lpq
-POSTGIS_INC=  -I/usr/local/pgsql_743/include
+POSTGIS=      @POSTGIS_ENABLED@
+POSTGIS_LIB=  @POSTGIS_LIB@
+POSTGIS_INC=  @POSTGIS_INC@
 
 # Optional MyGIS Support.  See http://postgis.refractions.net/
-MYGIS=      
-MYGIS_LIB=  
-MYGIS_INC=  
+MYGIS=      @MYGIS_ENABLED@
+MYGIS_LIB=  @MYGIS_LIB@
+MYGIS_INC=  @MYGIS_INC@
 
 # Optional ORACLESPATIAL Support. Contact: cabral@cttmar.univali.br
-ORACLESPATIAL=
-ORACLESPATIAL_LIB=
-ORACLESPATIAL_INC=
+ORACLESPATIAL=@ORACLESPATIAL_ENABLED@
+ORACLESPATIAL_LIB=@ORACLESPATIAL_LIB@
+ORACLESPATIAL_INC=@ORACLESPATIAL_INC@
 
 # Optional MING/SWF/FLASH Support. Contact: assefa@dmsolutions.ca
-MING=
-MING_LIB=
-MING_INC=
+MING=@MING_ENABLED@
+MING_LIB=@MING_LIB@
+MING_INC=@MING_INC@
 
 # libcurl ... required for WMS/WFS Client Connections
-CURL_INC=
-CURL_LIB=-L/usr/lib -lcurl -L/usr/kerberos/lib -lssl -lcrypto -lgssapi_krb5 -lkrb5 -lcom_err -lk5crypto -lresolv -ldl -lz -L/usr/kerberos/lib -lssl -lcrypto -lssl -lcrypto -lgssapi_krb5 -lkrb5 -lcom_err -lk5crypto -lresolv -ldl -lz -lz
+CURL_INC=@CURL_INC@
+CURL_LIB=@CURL_LIB@
 
 # OWS: OGC Web Services support
 # OGC WMS Server:  -DUSE_WMS_SVR (Requires PROJ4 support)
@@ -117,7 +117,7 @@ CURL_LIB=-L/usr/lib -lcurl -L/usr/kerberos/lib -lssl -lcrypto -lgssapi_krb5 -lkr
 # OGC WFS Server: -DUSE_WFS_SVR (Requires OGR, PROJ4 recommended)
 # OGC WFS Client: -DUSE_WFS_LYR (Requires OGR, PROJ4 and libcurl)
 # OGC WCS Server: -DUSE_WCS_SVR (Requires GDAL and PROJ4)
-OWS=-DUSE_WMS_SVR -DUSE_WMS_LYR -DUSE_WFS_SVR -DUSE_WFS_LYR
+OWS=@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@
 
 #
 # IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
@@ -125,31 +125,31 @@ OWS=-DUSE_WMS_SVR -DUSE_WMS_LYR -DUSE_WFS_SVR -DUSE_WFS_LYR
 # In order to compile the PHP_MAPSCRIPT module, we have to make MapServer
 # uses the same version of the REGEX library that PHP was compiled with:
 #
-REGEX_OBJ=
-REGEX_INC=
+REGEX_OBJ=@PHP_REGEX_OBJ@
+REGEX_INC=@PHP_REGEX_INC@
 
 #
 # Multithreading support.
 #
-THREAD=-DUSE_THREAD
-THREAD_LIB=-lpthread
+THREAD=@THREAD_FLAG@
+THREAD_LIB=@THREAD_LIB@
 
 #
 # Pick a compiler, etc. Flex and bison are only required if you need to modify the mapserver lexer (maplexer.l) or expression parser (mapparser.y).
 #
-CXX=	g++
-CC=     gcc
-LD=     gcc
+CXX=	@CXX@
+CC=     @CC@
+LD=     @CC@
 AR= ar rc
-RANLIB= ranlib
-LEX=    flex
-YACC=   bison -y
+RANLIB= @RANLIB@
+LEX=    @LEX@
+YACC=   @YACC@
 LD_SHARED = g++ -shared
 
-XTRALIBS=  -lm -lstdc++
-RUNPATHS= 
+XTRALIBS= @XTRALIBS@
+RUNPATHS= @RPATHS@
 
-CCFLAGS= -g -O2 -fPIC -Wall -DENABLE_STDERR_DEBUG -DNEED_NONBLOCKING_STDERR \
+CCFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
         $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(OWS) $(MING) \
 	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) \
 	$(POSTGIS) $(MYGIS) $(MPATROL) $(THREAD) $(GD_INC) $(PDF_INC) \

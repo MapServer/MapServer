@@ -10072,7 +10072,7 @@ ALL_STATIC_LIB=$ALL_STATIC_LIB
 RPATHS=$RPATHS
 
 
-                    ac_config_files="$ac_config_files Makefile $PHPMS_MAKEFILE"
+                              ac_config_files="$ac_config_files Makefile $PHPMS_MAKEFILE mapscript/java/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -10625,6 +10625,7 @@ do
   # Handling of arguments.
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "$PHPMS_MAKEFILE" ) CONFIG_FILES="$CONFIG_FILES $PHPMS_MAKEFILE" ;;
+  "mapscript/java/Makefile" ) CONFIG_FILES="$CONFIG_FILES mapscript/java/Makefile" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
