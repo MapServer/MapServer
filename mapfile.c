@@ -422,6 +422,15 @@ int loadProjectionString(projectionObj *p, char *value)
 #endif
 }
 
+void writeProjection(projectionObj *p, FILE *stream, char *tab) {
+  int i;
+
+  fprintf(stream, "%sPROJECTION\n", tab);
+  for(i=0; i<p->numargs; i++)
+    fprintf(stream, "%s%s\n", tab, p->projargs[i]);
+  fprintf(stream, "%sEND\n", tab);
+}
+
 /*
 ** Initialize, load and free a labelObj structure
 */
