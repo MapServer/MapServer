@@ -585,6 +585,7 @@ int initMap(mapObj *map);
 int initLayer(layerObj *layer);
 int initClass(classObj *_class);
 int initQuery(queryObj *query);
+void initLabel(labelObj *label);
 
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 void freeFeatureList(featureListNodeObjPtr list);
@@ -689,12 +690,15 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int 
 gdImagePtr msDrawLegend(mapObj *map); /* in maplegend.c */
 int msEmbedLegend(mapObj *map, gdImagePtr img);
 
-int msLoadFontSet(fontSetObj *fontSet);
-int msDrawLabel(gdImagePtr img, mapObj *map, pointObj labelPnt, char *string, labelObj *label);
+int msLoadFontSet(fontSetObj *fontSet); /* in maplabel.c */
+int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset);
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
 int msAddLabel(mapObj *map, int layer, int nclass, int tile, int shape, pointObj point, char *string, double featuresize);
 int msDrawLabelCache(gdImagePtr img, mapObj *map);
 gdFontPtr msGetBitmapFont(int size);
+
+int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
+int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
 
 void msFreeShape(shapeObj *shape); /* in mapprimative.c */
 void msInitShape(shapeObj *shape);
@@ -705,7 +709,6 @@ void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out);
 void msTransformPolygon(rectObj extent, double cellsize, shapeObj *p);
 void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
 void msImagePolyline(gdImagePtr img, shapeObj *p, int c);
-void msImagePolylineOffset(gdImagePtr img, shapeObj *p, int offset, int c);
 void msImageFilledPolygon(gdImagePtr img, shapeObj *p, int c);
 int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
 int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);

@@ -475,35 +475,103 @@ void msImagePolyline(gdImagePtr im, shapeObj *p, int c)
 {
   int i, j;
   
-  for (i = 0; i < p->numlines; i++) {
+  for (i = 0; i < p->numlines; i++)
     for(j=1; j<p->line[i].numpoints; j++)
       gdImageLine(im, (int)p->line[i].point[j-1].x, (int)p->line[i].point[j-1].y, (int)p->line[i].point[j].x, (int)p->line[i].point[j].y, c);
-  }
 }
 
-void msImagePolylineOffset(gdImagePtr im, shapeObj *p, int offset, int c)
+/*
+** Not a generic intersection test, we KNOW the lines aren't parallel or coincident. To be used with the next
+** buffering code only. See code in mapsearch.c for a boolean test for intersection.
+*/
+pointObj generateLineIntersection(pointObj a, pointObj b, pointObj c, pointObj d) 
+{
+  pointObj p;
+  double r;
+  double denominator, numerator;
+
+  if(b.x == c.x && b.y == c.y) return(b);
+
+  numerator = ((a.y-c.y)*(d.x-c.x) - (a.x-c.x)*(d.y-c.y));  
+  denominator = ((b.x-a.x)*(d.y-c.y) - (b.y-a.y)*(d.x-c.x));  
+
+  r = numerator/denominator;
+
+  p.x = MS_NINT(a.x + r*(b.x-a.x));
+  p.y = MS_NINT(a.y + r*(b.y-a.y));
+
+  return(p);
+}
+
+void bufferPolyline(shapeObj *p, shapeObj *op, int w)
 {
   int i, j;
-  double dx, dy;
-  int ox=0, oy=0;
-  
-  if(offset == 0) {
-    msImagePolyline(im, p, c);
-    return;
-  }
+  pointObj a;
+  lineObj inside, outside;
+  double angle;
+  double dx, dy;  
 
   for (i = 0; i < p->numlines; i++) {
-    for(j=1; j<p->line[i].numpoints; j++) {
-      dx = abs(p->line[i].point[j-1].x - p->line[i].point[j].x);
-      dy = abs(p->line[i].point[j-1].y - p->line[i].point[j].y);
-      if(dx<=dy)
-	ox=offset;
+
+    inside.point = (pointObj *)malloc(sizeof(pointObj)*p->line[i].numpoints);
+    outside.point = (pointObj *)malloc(sizeof(pointObj)*p->line[i].numpoints);
+    inside.numpoints = outside.numpoints = p->line[i].numpoints;    
+
+    angle = asin(MS_ABS(p->line[i].point[1].x - p->line[i].point[0].x)/sqrt((pow((p->line[i].point[1].x - p->line[i].point[0].x),2) + pow((p->line[i].point[1].y - p->line[i].point[0].y),2))));
+    if(p->line[i].point[0].x < p->line[i].point[1].x)
+      dy = sin(angle) * (w/2);
+    else
+      dy = -sin(angle) * (w/2);
+    if(p->line[i].point[0].y < p->line[i].point[1].y)
+      dx = -cos(angle) * (w/2);
+    else
+      dx = cos(angle) * (w/2);
+
+    inside.point[0].x = p->line[i].point[0].x + dx;
+    inside.point[1].x = p->line[i].point[1].x + dx;
+    inside.point[0].y = p->line[i].point[0].y + dy;
+    inside.point[1].y = p->line[i].point[1].y + dy;
+    
+    outside.point[0].x = p->line[i].point[0].x - dx;
+    outside.point[1].x = p->line[i].point[1].x - dx;
+    outside.point[0].y = p->line[i].point[0].y - dy;
+    outside.point[1].y = p->line[i].point[1].y - dy;
+
+    for(j=2; j<p->line[i].numpoints; j++) {
+
+      angle = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2))));
+      if(p->line[i].point[j-1].x < p->line[i].point[j].x)
+	dy = sin(angle) * (w/2);
       else
-	oy=offset;
-      gdImageLine(im, (int)p->line[i].point[j-1].x+ox, (int)p->line[i].point[j-1].y+oy, (int)p->line[i].point[j].x+ox, (int)p->line[i].point[j].y+oy, c);
-      ox = oy = 0;
+	dy = -sin(angle) * (w/2);
+      if(p->line[i].point[j-1].y < p->line[i].point[j].y)
+	dx = -cos(angle) * (w/2);
+      else
+        dx = cos(angle) * (w/2);
+
+      a.x = p->line[i].point[j-1].x + dx;
+      inside.point[j].x = p->line[i].point[j].x + dx;
+      a.y = p->line[i].point[j-1].y + dy;
+      inside.point[j].y = p->line[i].point[j].y + dy;
+      inside.point[j-1] = generateLineIntersection(inside.point[j-2], inside.point[j-1], a, inside.point[j]);      
+
+      a.x = p->line[i].point[j-1].x - dx;
+      outside.point[j].x = p->line[i].point[j].x - dx;
+      a.y = p->line[i].point[j-1].y - dy;
+      outside.point[j].y = p->line[i].point[j].y - dy;
+      outside.point[j-1] = generateLineIntersection(outside.point[j-2], outside.point[j-1], a, outside.point[j]);
     }
+
+    // need a touch of code if 1st point equals last point in p (find intersection)
+
+    msAddLine(op, &inside);
+    msAddLine(op, &outside);
+
+    free(inside.point);
+    free(outside.point);
   }
+  
+  return;
 }
 
 void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)

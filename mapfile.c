@@ -460,7 +460,7 @@ static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
 /*
 ** Initialize, load and free a labelObj structure
 */
-static void initLabel(labelObj *label)
+void initLabel(labelObj *label)
 {
   label->antialias = -1; /* off */
 

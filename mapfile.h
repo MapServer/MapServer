@@ -49,7 +49,7 @@
 
 #define LOG 1043
 #define MAP 1044
-#define MARKER 1045
+
 
 #define MAXFEATURES 1047
 #define MAXSCALE 1048
@@ -125,5 +125,7 @@
 
 #define IMAGETYPE 1113
 #define IMAGEQUALITY 1114
+
+#define GAP 1115
 
 #endif /* MAPFILE_H */

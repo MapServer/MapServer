@@ -69,16 +69,14 @@ static void initSymbol(symbolObj *s)
   s->type = MS_SYMBOL_VECTOR;
   s->transparent = MS_FALSE;
   s->transparentcolor = 0;
-  s->numarcs = 1; // always at least 1 arc
-  s->numon[0] = 0;
-  s->numoff[0] = 0;
-  s->offset[0] = 0;
+  s->stylelength = 0; // solid line
   s->sizex = 0;
   s->sizey = 0;
   s->filled = MS_FALSE;
   s->numpoints=0;
   s->img = NULL;
   s->name = NULL;
+  s->gap = 0;
 
   s->antialias = -1;
   s->font = NULL;
@@ -94,7 +92,6 @@ static void freeSymbol(symbolObj *s) {
 
 int loadSymbol(symbolObj *s)
 {
-  int i=0;
   int done=MS_FALSE;
   FILE *stream;
 
@@ -133,6 +130,9 @@ int loadSymbol(symbolObj *s)
     case(FONT):
       if((s->font = getString()) == NULL) return(-1);
       break;  
+    case(GAP):
+      if((getInteger(&s->gap)) == -1) return(-1);
+      break; 
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
 	sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
@@ -166,7 +166,6 @@ int loadSymbol(symbolObj *s)
       if((s->name = getString()) == NULL) return(-1);
       break;
     case(POINTS):
-      i = 0;
       done = MS_FALSE;
       for(;;) {
 	switch(msyylex()) { 
@@ -174,11 +173,11 @@ int loadSymbol(symbolObj *s)
 	  done = MS_TRUE;
 	  break;
 	case(MS_NUMBER):
-	  s->points[i].x = atof(msyytext); /* grab the x */
-	  if(getDouble(&(s->points[i].y)) == -1) return(-1); /* grab the y */
-	  s->sizex = MS_MAX(s->sizex, s->points[i].x);
-	  s->sizey = MS_MAX(s->sizey, s->points[i].y);	
-	  i++;
+	  s->points[s->numpoints].x = atof(msyytext); /* grab the x */
+	  if(getDouble(&(s->points[s->numpoints].y)) == -1) return(-1); /* grab the y */
+	  s->sizex = MS_MAX(s->sizex, s->points[s->numpoints].x);
+	  s->sizey = MS_MAX(s->sizey, s->points[s->numpoints].y);	
+	  s->numpoints++;
 	  break;
 	default:
 	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
@@ -189,22 +188,26 @@ int loadSymbol(symbolObj *s)
 
 	if(done == MS_TRUE)
 	  break;
-      }      
-      s->numpoints = i;
+      }
       break;    
-    case(STYLE):
-      i = 0;
+    case(STYLE):      
       done = MS_FALSE;
       for(;;) { /* read till the next END */
 	switch(msyylex()) {  
 	case(END):
+	  if(s->stylelength < 2) {
+	    msSetError(MS_SYMERR, "Not enough style elements. A minimum of 2 are required", "loadSymbol()");
+	    return(-1);
+	  }	  
 	  done = MS_TRUE;
 	  break;
 	case(MS_NUMBER): /* read the style values */
-	  s->offset[i] = atoi(msyytext);
-	  if(getInteger(&(s->numon[i])) == -1) return(-1);
-	  if(getInteger(&(s->numoff[i])) == -1) return(-1);
-	  i++;
+	  if(s->stylelength == MS_MAXSTYLELENGTH) {
+	    msSetError(MS_SYMERR, "Style too long.", "loadSymbol()");
+	    return(-1);
+	  }
+	  s->style[s->stylelength] = atoi(msyytext);
+	  s->stylelength++;
 	  break;
 	default:
 	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
@@ -214,8 +217,7 @@ int loadSymbol(symbolObj *s)
 	}
 	if(done == MS_TRUE)
 	  break;
-      }
-      s->numarcs = i;
+      }      
       break;
     case(TRANSPARENT):
       s->transparent = MS_TRUE;
@@ -223,10 +225,10 @@ int loadSymbol(symbolObj *s)
       break;
     case(TYPE):
 #ifdef USE_TTF
-      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_STYLED,MS_SYMBOL_TRUETYPE)) == -1)
+      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_TRUETYPE)) == -1)
 	return(-1);	
 #else
-      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_STYLED)) == -1)
+      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE)) == -1)
 	return(-1);
 #endif
       break;
@@ -860,11 +862,16 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int 
   symbol = &(symbolset->symbol[sy]);
 
   switch(symbol->type) {
-  case(MS_SYMBOL_STYLED):
+  case(MS_SYMBOL_SIMPLE):
     if(bc == -1) bc = gdTransparent;
     break;
+  case(MS_SYMBOL_TRUETYPE):
+    msImageTruetypePolyline(img, p, symbol, fc, sz, &(symbolset->fontset));
+    return;
+    break;
   case(MS_SYMBOL_ELLIPSE):
-     
+    bc = gdTransparent;
+
     scale = (sz)/symbol->sizey;
     x = MS_NINT(symbol->sizex*scale);    
     y = MS_NINT(symbol->sizey*scale);
@@ -897,6 +904,8 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int 
     fc = 1; bc = 0;
     break;
   case(MS_SYMBOL_VECTOR):
+    if(bc == -1) bc = gdTransparent;
+
     scale = sz/symbol->sizey;
     x = MS_NINT(symbol->sizex*scale);    
     y = MS_NINT(symbol->sizey*scale);
@@ -927,32 +936,31 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int 
     gdImageSetBrush(img, brush);
     fc = 1; bc = 0;
     break;
-  }
+  }  
 
-  for(i=0;i<symbol->numarcs;i++) { // Draw each line in the style
-    if(symbol->numon[i] > 0) {
-      for(j=0; j<symbol->numon[i]+symbol->numoff[i]; j++) {
-	if(j<symbol->numon[i])
-	  styleDashed[j] = fc;
-	else
-	  styleDashed[j] = bc;
-      }
-      gdImageSetStyle(img, styleDashed, j);    
-
-      if(!brush && !symbol->img)
-	msImagePolylineOffset(img, p, MS_NINT(scale*symbol->offset[i]), gdStyled);
-      else 
-	msImagePolylineOffset(img, p, MS_NINT(scale*symbol->offset[i]), gdStyledBrushed);
-    } else {
-      if(!brush && !symbol->img)
-	msImagePolylineOffset(img, p, MS_NINT(scale*symbol->offset[i]), fc);
-      else
-	msImagePolylineOffset(img, p, MS_NINT(scale*symbol->offset[i]), gdBrushed);
+  if(symbol->stylelength > 0) {
+    int k=0, sc;
+   
+    sc = fc; // start with foreground color
+    for(i=0; i<symbol->stylelength; i++) {      
+      for(j=0; j<symbol->style[i]; j++) {
+	styleDashed[k] = sc;
+	k++;
+      } 
+      if(sc==fc) sc = bc; else sc = fc;
     }
-  }
+    gdImageSetStyle(img, styleDashed, k);
 
-  // if(brush)
-  //   gdImageDestroy(brush);
+    if(!brush && !symbol->img)
+      msImagePolyline(img, p, gdStyled);
+    else 
+      msImagePolyline(img, p, gdStyledBrushed);
+  } else {
+    if(!brush && !symbol->img)
+      msImagePolyline(img, p, fc);
+    else
+      msImagePolyline(img, p, gdBrushed);
+  }
 
   return;
 }

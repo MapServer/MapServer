@@ -683,6 +683,5 @@
     
     DBFFieldType getFieldType(int iField) {
 	return DBFGetFieldInfo(self, iField, NULL, NULL, NULL);
-    }
-    
+    }    
 }

@@ -184,7 +184,7 @@ gdImagePtr msDrawLegend(mapObj *map)
       }
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
-      msDrawLabel(img, map, pnt, lp->class[j].name, &(map->legend.label));
+      msDrawLabel(img, pnt, lp->class[j].name, &(map->legend.label), &map->fontset);
 
       pnt.y += map->legend.keyspacingy; /* bump y for next label */
 	

@@ -514,7 +514,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 		if(layer->labelcache)
 		  msAddLabel(map, layer->index, i, -1, -1, *pnt, annotation, -1);
 		else
-		  msDrawLabel(img, map, *pnt, annotation, &(layer->class[i].label));
+		  msDrawLabel(img, *pnt, annotation, &(layer->class[i].label), &map->fontset);
 	      }
 	    }
 	  }
@@ -574,7 +574,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 		if(layer->labelcache)
 		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, length);
 		else
-		  msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+		  msDrawLabel(img, annopnt, annotation, &(layer->class[i].label), &map->fontset);
 	      }
 	    }
 	  }
@@ -644,7 +644,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 		if(layer->labelcache)
 		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
 		else
-		  msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+		  msDrawLabel(img, annopnt, annotation, &(layer->class[i].label), &map->fontset);
 	      }
 	    }
 	  }
@@ -716,7 +716,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 		if(layer->labelcache)
 		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
 		else
-		  msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+		  msDrawLabel(img, annopnt, annotation, &(layer->class[i].label), &map->fontset);
 	      }
 	    }
 	  }

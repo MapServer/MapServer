@@ -125,7 +125,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx;
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      msDrawLabel(img, map, p, label, &(map->scalebar.label));
+      msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
 
       state = -state;
     }
@@ -135,7 +135,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
     map->scalebar.label.position = MS_CR;
     p.x = ox;
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    msDrawLabel(img, map, p, label, &(map->scalebar.label));
+    msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
     break;
   case(1):
     sprintf(label, "%g", map->scalebar.intervals*i);
@@ -163,7 +163,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
       map->scalebar.label.position = MS_CC;
       p.x = ox + j*isx;
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      msDrawLabel(img, map, p, label, &(map->scalebar.label));
+      msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
 
       state = -state;
     }
@@ -176,7 +176,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
     map->scalebar.label.position = MS_CR;
     p.x = ox;
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    msDrawLabel(img, map, p, label, &(map->scalebar.label));
+    msDrawLabel(img, p, label, &(map->scalebar.label), &(map->fontset));
     break;
   default:
     msSetError(MS_MISCERR, "Unsupported scalebar style.", "msDrawScalebar()");

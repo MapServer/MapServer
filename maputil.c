@@ -599,7 +599,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
 	  msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	  if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	}
-	msDrawLabel(img, map, *point, text, &layer->class[c].label);
+	msDrawLabel(img, *point, text, &layer->class[c].label, &map->fontset);
       }
     }
     break;
@@ -621,7 +621,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
       if(layer->labelcache)
 	msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
       else
-	msDrawLabel(img, map, *point, text, &layer->class[c].label);
+	msDrawLabel(img, *point, text, &layer->class[c].label, &map->fontset);
     }
     break;
   default:
@@ -700,7 +700,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	      msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	      if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	    }
-	    msDrawLabel(img, map, *point, text, &layer->class[c].label);
+	    msDrawLabel(img, *point, text, &layer->class[c].label, &map->fontset);
 	  }
 	}
       }    
@@ -729,7 +729,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	  if(layer->labelcache)
 	    msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
 	  else
-	    msDrawLabel(img, map, *point, text, &layer->class[c].label);
+	    msDrawLabel(img, *point, text, &layer->class[c].label, &map->fontset);
 	}
       }    
     }
@@ -757,7 +757,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	if(layer->labelcache)
 	  msAddLabel(map, layer->index, c, -1, -1, annopnt, text, length);
 	else
-	  msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	  msDrawLabel(img, annopnt, text, &layer->class[c].label, &map->fontset);
       }
     }
     break;
@@ -781,7 +781,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	if(layer->labelcache)
 	  msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
 	else
-	  msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	  msDrawLabel(img, annopnt, text, &layer->class[c].label, &map->fontset);
       }
     }
     break;
@@ -803,7 +803,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	if(layer->labelcache)
 	  msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
 	else
-	  msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	  msDrawLabel(img, annopnt, text, &layer->class[c].label, &map->fontset);
       }
     }
     break;      
@@ -906,7 +906,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	      msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	      if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	    }
-	    msDrawLabel(img, map, *pnt, text, &layer->class[c].label);
+	    msDrawLabel(img, *pnt, text, &layer->class[c].label, &map->fontset);
 	  }
 	}    
       }
@@ -949,7 +949,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, -1, -1, *pnt, text, -1);
 	    else
-	      msDrawLabel(img, map, *pnt, text, &layer->class[c].label);
+	      msDrawLabel(img, *pnt, text, &layer->class[c].label, &map->fontset);
 	  }
 	}    
       }
@@ -990,7 +990,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	  if(layer->labelcache)
 	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, length);
 	  else
-	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	    msDrawLabel(img, annopnt, text, &layer->class[c].label, &map->fontset);
 	}
       }
     }   
@@ -1038,7 +1038,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	  if(layer->labelcache)
 	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
 	  else
-	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	    msDrawLabel(img, annopnt, text, &layer->class[c].label, &map->fontset);
 	}
       }
     }
@@ -1082,7 +1082,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	  if(layer->labelcache)
 	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
 	  else
-	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	    msDrawLabel(img, annopnt, text, &layer->class[c].label, &map->fontset);
 	}
       }
     }    
@@ -1312,7 +1312,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 		msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	      }
-	      msDrawLabel(img, map, *pnt, annotxt, &(layer->class[c].label));
+	      msDrawLabel(img, *pnt, annotxt, &(layer->class[c].label), &map->fontset);
 	    }
 	  }
 
@@ -1367,7 +1367,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 		msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	      }
-	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));	    
+	      msDrawLabel(img, annopnt, annotxt, &(layer->class[c].label), &map->fontset);	    
 	    }
 
 	    if(annotxt) free(annotxt);
@@ -1419,7 +1419,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 		msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	      }
-	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));	    
+	      msDrawLabel(img, annopnt, annotxt, &(layer->class[c].label), &map->fontset);	    
 	    }
 
 	    if(annotxt) free(annotxt);
@@ -1476,7 +1476,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      if(layer->labelcache)
 		msAddLabel(map, layer->index, c, t, i, *pnt, annotxt, -1);
 	      else
-		msDrawLabel(img, map, *pnt, annotxt, &layer->class[c].label);
+		msDrawLabel(img, *pnt, annotxt, &layer->class[c].label, &map->fontset);
 	    }
 	  }
 	}
@@ -1539,7 +1539,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, length);
 	    else
-	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
+	      msDrawLabel(img, annopnt, annotxt, &(layer->class[c].label), &map->fontset);
 
 	    if(annotxt) free(annotxt);
 	  }
@@ -1608,7 +1608,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
 	    else
-	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
+	      msDrawLabel(img, annopnt, annotxt, &(layer->class[c].label), &map->fontset);
 	    
 	    if(annotxt) free(annotxt);
 	  }
@@ -1679,7 +1679,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
 	    else
-	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
+	      msDrawLabel(img, annopnt, annotxt, &(layer->class[c].label), &map->fontset);
 	    
 	    if(annotxt) free(annotxt);
 	  }

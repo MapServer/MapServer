@@ -100,6 +100,7 @@ char *msyystring=NULL;
 <INITIAL>fontset		               { return(FONTSET); }
 <INITIAL>force		                       { return(FORCE); }
 <INITIAL,OBJECT_STRING>from                    { return(FROM); }
+<INITIAL,OBJECT_STRING>gap                     { return(GAP); }
 <INITIAL,OBJECT_STRING>group                   { return(GROUP); }
 <INITIAL,OBJECT_STRING>header		       { return(HEADER); }
 <INITIAL>image			               { return(IMAGE); }
@@ -125,7 +126,6 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>legend		       { return(LEGEND); }
 <INITIAL>log		                       { return(LOG); }
 <INITIAL,OBJECT_STRING>map	               { return(MAP); }
-<INITIAL>marker                                { return(MARKER); }
 <INITIAL,OBJECT_STRING>maxfeatures             { return(MAXFEATURES); }
 <INITIAL,OBJECT_STRING>maxscale		       { return(MAXSCALE); }
 <INITIAL,OBJECT_STRING>maxsize	               { return(MAXSIZE); }
@@ -215,7 +215,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>ogr		       { return(MS_OGR); }
 <INITIAL,VALUE_STRING>on		       { return(MS_ON); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
-<INITIAL>pixels                                { return(MS_PIXELS); }
+<INITIAL,VALUE_STRING>pixels                   { return(MS_PIXELS); }
 <INITIAL,VALUE_STRING>png		       { return(MS_PNG); }
 <INITIAL,VALUE_STRING>point		       { return(MS_POINT); }
 <INITIAL,VALUE_STRING>polygon 		       { return(MS_POLYGON); }
@@ -224,9 +224,9 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>raster		       { return(MS_RASTER); }
 <INITIAL,VALUE_STRING>sde		       { return(MS_SDE); }
 <INITIAL,VALUE_STRING>selected		       { return(MS_SELECTED); }
+<INITIAL>simple                                { return(MS_SYMBOL_SIMPLE); }
 <INITIAL,VALUE_STRING>single                   { return(MS_SINGLE); }
 <INITIAL,VALUE_STRING>small		       { return(MS_SMALL); }
-<INITIAL>styled                                { return(MS_SYMBOL_STYLED); }
 <INITIAL,VALUE_STRING>tiny		       { return(MS_TINY); }
 <INITIAL,VALUE_STRING>true                     { return(MS_TRUE); }
 <INITIAL,VALUE_STRING>truetype		       { if(msyyfiletype == MS_FILE_SYMBOL) return(MS_SYMBOL_TRUETYPE); else return(MS_TRUETYPE); }

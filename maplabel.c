@@ -425,7 +425,7 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
   return(0);
 }
 
-int msDrawLabel(gdImagePtr img, mapObj *map, pointObj labelPnt, char *string, labelObj *label)
+int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset)
 {
   if(!string)
     return(0); /* not an error, just don't want to do anything */
@@ -437,13 +437,13 @@ int msDrawLabel(gdImagePtr img, mapObj *map, pointObj labelPnt, char *string, la
     pointObj p;
     rectObj r;
 
-    if(msGetLabelSize(string, label, &r, &(map->fontset)) == -1) return(-1);
+    if(msGetLabelSize(string, label, &r, fontset) == -1) return(-1);
     p = get_metrics(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 0, NULL);
-    draw_text(img, p, string, label, &(map->fontset)); /* actually draw the label */
+    draw_text(img, p, string, label, fontset); /* actually draw the label */
   } else {
     labelPnt.x += label->offsetx;
     labelPnt.y += label->offsety;
-    draw_text(img, labelPnt, string, label, &(map->fontset)); /* actually draw the label */
+    draw_text(img, labelPnt, string, label, fontset); /* actually draw the label */
   }
   
   return(0);
@@ -775,4 +775,97 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
   } /* next in cache */
 
   return(0);
+}
+
+int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset)
+{
+#ifdef USE_TTF
+  return(0);
+#else
+  msSetError(MS_TTFERR, "TrueType font support is not available.", "msImageTruetypeArrow()");
+  return(-1);
+#endif
+}
+
+int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset)
+{
+#ifdef USE_TTF
+  int i,j, k;
+  double theta, length;
+  labelObj label;
+  pointObj point, label_point;
+  shapeObj label_poly;
+  rectObj label_rect;
+  int label_width;
+  int n, ip;
+  double rx, ry;
+
+  int blue, yellow;
+
+  blue = gdImageColorAllocate(img, 0, 0, 255);
+  yellow = gdImageColorAllocate(img, 255, 255, 0);
+
+  initLabel(&label);
+  label.type = MS_TRUETYPE;
+  label.font = s->font;
+  label.sizescaled = size;
+  label.color = color;
+  label.antialias = s->antialias;
+
+  fprintf(stderr, "in msImageTruetypePolyline() %d %d\n", color, size);
+
+  if(msGetLabelSize(s->character, &label, &label_rect, fontset) == -1)
+    return(-1);
+
+  label_width = label_rect.maxx - label_rect.minx;
+
+  fprintf(stderr, "label width = %d\n", label_width);
+
+  ip = 0; // initial padding
+  for(i=0; i<p->numlines; i++) {
+
+    for(j=1;j<p->line[i].numpoints;j++) {
+      length = sqrt((pow((p->line[i].point[j].x - p->line[i].point[j-1].x),2) + pow((p->line[i].point[j].y - p->line[i].point[j-1].y),2)));
+      theta = asin(MS_ABS(p->line[i].point[j].x - p->line[i].point[j-1].x)/length);
+
+      if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
+	if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
+	  label.angle = -MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);
+	else
+	  label.angle = MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);      
+      } else {
+	if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
+	  label.angle = MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);
+	else
+	  label.angle = -MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);      
+      }
+
+      // how many symbols can we cram on this segment
+      n = (int)((length + s->gap - ip)/(label_width + s->gap));
+
+      rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
+      ry = (p->line[i].point[j].y - p->line[i].point[j-1].y)/length;
+
+      fprintf(stderr, "segment parameters: %f %f\n", length, label.angle, rx, ry);
+
+      for(k=0; k<n; k++) {
+	point.x = MS_NINT(p->line[i].point[j-1].x + ((ip + label_width/2.0) + k*(label_width + s->gap))*rx);
+	point.y = MS_NINT(p->line[i].point[j-1].y + ((ip + label_width/2.0) + k*(label_width + s->gap))*ry);
+
+	label_point = get_metrics(&point, MS_CC, label_rect, 0, 0, label.angle, 0, &label_poly);
+        draw_text(img, label_point, s->character, &label, fontset);
+
+	gdImageSetPixel(img, (int)point.x, (int)point.y, yellow);
+        gdImageSetPixel(img, (int)label_point.x, (int)label_point.y, blue);
+      }
+
+      ip = s->gap - MS_NINT(length + s->gap - n*(label_width + s->gap));
+    }
+  }
+
+  return(0);
+#else
+  msSetError(MS_TTFERR, "TrueType font support is not available.", "msImageTruetypePolyline()");
+  return(-1);
+#endif
 }

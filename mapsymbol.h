@@ -3,11 +3,11 @@
 
 #include <gd.h>
 
-enum MS_SYMBOL_TYPE {MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_STYLED, MS_SYMBOL_TRUETYPE};
+enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE};
 
 #define MS_MAXSYMBOLS 64            // maximum number of symbols in a symbol file
 #define MS_MAXVECTORPOINTS 100      // shade, marker and line symbol parameters
-#define MS_MAXSTYLESIZE 5
+#define MS_MAXSTYLELENGTH 10
 
 #define MS_IMAGECACHESIZE 6
 
@@ -22,15 +22,7 @@ struct imageCacheObj {
 typedef struct {
   char *name;
   int type;
-
-  /*
-  ** MS_SYMBOL_STYLED options
-  */
-  int numarcs;                      // Number of arcs in the line symbol
-  int numon[MS_MAXSTYLESIZE];       // number of pixels on - a bit finer control
-  int numoff[MS_MAXSTYLESIZE];      // number of pixels off
-  int offset[MS_MAXSTYLESIZE];      // Offset from a non-offseted line
-
+ 
   /*
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options
   */
@@ -38,6 +30,9 @@ typedef struct {
   pointObj points[MS_MAXVECTORPOINTS];
   int numpoints;
   int filled;
+
+  int stylelength;                      // Number of intervals (eg. dashes) in the style
+  int style[MS_MAXSTYLELENGTH];
 
   /*
   ** MS_SYMBOL_PIXMAP options
@@ -52,6 +47,7 @@ typedef struct {
   char *character;
   int antialias;
   char *font;
+  int gap;
 
 } symbolObj;
 

@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/12/05 14:39:12  sdlime
+ * Symbol file changes. There is no longer a STYLED type. Added SIMPLE line type and advanced dashing patterns. Offset symbols are also a thing of the past. TTF line symbols are close.
+ *
  * Revision 1.10  2000/11/06 16:57:20  dan
  * Changed layer->class to layer->_class in overlaysize handling
  *
@@ -572,8 +575,8 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                           msAddLabel(map, layer->index, nClassId, -1, -1, 
                                      *pnt, pszLabel, -1);
                       else
-                          msDrawLabel(img, map, *pnt, pszLabel,
-                                      &(layer->_class[nClassId].label));
+                          msDrawLabel(img, *pnt, pszLabel,
+                                      &(layer->_class[nClassId].label), &map->fontset);
                   }
               }
           }
@@ -610,8 +613,8 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                       msAddLabel(map, layer->index, nClassId, -1, -1, 
                                  annopnt, pszLabel, length);
                   else
-                      msDrawLabel(img, map, annopnt, pszLabel,
-                                  &(layer->_class[nClassId].label));
+                      msDrawLabel(img, annopnt, pszLabel,
+                                  &(layer->_class[nClassId].label), &map->fontset);
               }
           }
 
@@ -687,8 +690,8 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                       msAddLabel(map, layer->index, nClassId, -1, -1, 
                                  annopnt, pszLabel, length);
                   else
-                      msDrawLabel(img, map, annopnt, pszLabel,
-                                  &(layer->_class[nClassId].label));
+                      msDrawLabel(img, annopnt, pszLabel,
+                                  &(layer->_class[nClassId].label), &map->fontset);
               }
           }
 
