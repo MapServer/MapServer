@@ -183,6 +183,12 @@ char *msGetVersion() {
 #ifdef USE_GD_WBMP
   strcat(version, " OUTPUT=WBMP");
 #endif
+#ifdef USE_PDF
+  strcat(version, " OUTPUT=PDF");
+#endif
+#ifdef USE_MING_FLASH
+  strcat(version, " OUTPUT=SWF");
+#endif
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
 #endif
