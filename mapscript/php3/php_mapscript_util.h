@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/03/08 23:16:41  assefa
+ * Add PHP4.1 support.
+ *
  * Revision 1.5  2002/03/07 22:31:01  assefa
  * Add template processing functions.
  *
@@ -54,6 +57,13 @@
 #else
 #include "phpdl.h"
 #include "php3_list.h"
+#endif
+
+#if ZEND_MODULE_API_NO < 20010901
+#define TSRMLS_D	void
+#define TSRMLS_DC
+#define TSRMLS_C
+#define TSRMLS_CC
 #endif
 
 /**********************************************************************
@@ -102,7 +112,7 @@
 /* -------------------------------------------------------------------- */
 int _phpms_object_init(pval *return_value, int  handle_id,
                        function_entry *class_functions,
-                       void           *zend_class_entry_ptr );
+                       void           *zend_class_entry_ptr);
 #ifdef PHP4
 #  define PHP4_CLASS_ENTRY(a) a
 #else
@@ -117,16 +127,16 @@ void _phpms_report_mapserver_error(int php_err_type);
 
 void *_phpms_fetch_handle2(pval *pObj, 
                            int handle_type1, int handle_type2, 
-                           HashTable *list);
+                           HashTable *list TSRMLS_DC);
 
 void *_phpms_fetch_handle(pval *pObj, int handle_type, 
-                          HashTable *list);
+                          HashTable *list TSRMLS_DC);
 
 char *_phpms_fetch_property_handle2(pval *pObj, char *property_name, 
                                     int handle_type1, int handle_type2,
-                                    HashTable *list, int err_type);
+                                    HashTable *list TSRMLS_DC, int err_type);
 char *_phpms_fetch_property_handle(pval *pObj, char *property_name, 
-                                   int handle_type, HashTable *list,
+                                   int handle_type, HashTable *list TSRMLS_DC,
                                    int err_type);
 char *_phpms_fetch_property_string(pval *pObj, char *property_name, 
                                    int err_type);

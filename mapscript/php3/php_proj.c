@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2002/03/08 23:16:41  assefa
+ * Add PHP4.1 support.
+ *
  * Revision 1.7  2002/01/22 19:18:54  dan
  * Fixed a typo in pj_transform() docs
  *
@@ -177,6 +180,11 @@ DLEXPORT int  php_end_proj(SHUTDOWN_FUNC_ARGS);
 
 DLEXPORT void ttt(INTERNAL_FUNCTION_PARAMETERS);
 
+#ifdef ZEND_VERSION
+PHP_MINFO_FUNCTION(phpproj);
+#else
+DLEXPORT void php_info_proj(void);
+#endif
 
 #ifdef PHP4
 static zend_class_entry *proj_class_entry_ptr;
@@ -197,8 +205,20 @@ function_entry php_proj_functions[] = {
 
 
 php3_module_entry php_proj_module_entry = {
+#if ZEND_MODULE_API_NO >= 20010901
+    STANDARD_MODULE_HEADER,
+#endif
     "PHPPROJ", php_proj_functions, php_init_proj, php_end_proj,
-    NULL, NULL, php_info_proj, STANDARD_MODULE_PROPERTIES 
+    NULL, NULL, 
+#ifdef ZEND_VERSION
+    PHP_MINFO(phpproj),
+#else
+    php_info_proj, 
+#endif
+#if ZEND_MODULE_API_NO >= 20010901
+    "phpproj, php4.1version",          /* extension version number (string) */
+#endif
+    STANDARD_MODULE_PROPERTIES 
 };
 
 
@@ -219,7 +239,11 @@ DLEXPORT void ttt(INTERNAL_FUNCTION_PARAMETERS)
 {
 }
 
+#ifdef ZEND_VERSION 
+PHP_MINFO_FUNCTION(phpproj)
+#else
 DLEXPORT void php_info_proj(void) 
+#endif
 {
     php3_printf(" Version %s<br>\n", PHP_PROJ_VERSION);
 
@@ -238,7 +262,7 @@ DLEXPORT int php_init_proj(INIT_FUNC_ARGS)
 
 #ifdef PHP4
     INIT_CLASS_ENTRY(tmp_class_entry, "proj", php_proj_class_functions);
-    proj_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    proj_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 #endif
 
     return SUCCESS;
@@ -414,7 +438,7 @@ DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_double(p2);
 
     popj = (PJ *)_phpms_fetch_handle(pj, 
-                                     PHPMS_GLOBAL(le_projobj), list);
+                                     PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (popj)
     {
@@ -483,7 +507,7 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_double(p2);
 
     popj = (PJ *)_phpms_fetch_handle(pj, 
-                                     PHPMS_GLOBAL(le_projobj), list);
+                                     PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (popj)
     {
@@ -545,10 +569,10 @@ DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_double(p2);
 
     in = (PJ *)_phpms_fetch_handle(pjin, 
-                                   PHPMS_GLOBAL(le_projobj), list);
+                                   PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     out = (PJ *)_phpms_fetch_handle(pjout, 
-                                    PHPMS_GLOBAL(le_projobj), list);
+                                    PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (in && out)
     {
@@ -633,10 +657,10 @@ DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_double(p2);
 
     in = (PJ *)_phpms_fetch_handle(pjin, 
-                                   PHPMS_GLOBAL(le_projobj), list);
+                                   PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     out = (PJ *)_phpms_fetch_handle(pjout, 
-                                    PHPMS_GLOBAL(le_projobj), list);
+                                    PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (in && out)
     {
@@ -701,7 +725,7 @@ DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)
     }
     
     popj = (PJ *)_phpms_fetch_handle(pj, 
-                                     PHPMS_GLOBAL(le_projobj), list);
+                                     PHPMS_GLOBAL(le_projobj), list TSRMLS_CC);
 
     if (popj)
     {

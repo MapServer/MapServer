@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.93  2002/03/08 23:16:41  assefa
+ * Add PHP4.1 support.
+ *
  * Revision 1.92  2002/03/08 00:39:38  assefa
  * Remove unused variables.
  *
@@ -163,6 +166,7 @@ DLEXPORT int  php3_init_mapscript(INIT_FUNC_ARGS);
 DLEXPORT int  php3_end_mapscript(SHUTDOWN_FUNC_ARGS);
 
 DLEXPORT void php3_ms_free_mapObj(mapObj *pMap);
+
 DLEXPORT void php3_ms_free_image(gdImagePtr im);
 DLEXPORT void php3_ms_free_point(pointObj *pPoint);
 DLEXPORT void php3_ms_free_line(lineObj *pLine);
@@ -323,9 +327,10 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
-                                      HashTable *list, pval *return_value);
-static long _phpms_build_class_object(classObj *pclass, int parent_map_id, int parent_layer_id,
-                                      HashTable *list, pval *return_value);
+                                      HashTable *list, pval *return_value TSRMLS_DC);
+static long _phpms_build_class_object(classObj *pclass, int parent_map_id, 
+                                      int parent_layer_id, HashTable *list, 
+                                      pval *return_value TSRMLS_DC);
 static long _phpms_build_label_object(labelObj *plabel,
                                       HashTable *list, pval *return_value);
 
@@ -343,7 +348,7 @@ static long _phpms_build_rect_object(rectObj *prect, int handle_type,
 static long _phpms_build_referenceMap_object(referenceMapObj *preferenceMap,
                                           HashTable *list, pval *return_value);
 static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
-                                                  HashTable *list, 
+                                                  HashTable *list TSRMLS_DC, 
                                                   pval *return_value);
 
 static long _phpms_build_projection_object(projectionObj *pproj, 
@@ -436,12 +441,18 @@ function_entry php3_ms_functions[] = {
 
 
 php3_module_entry php3_ms_module_entry = {
+#if ZEND_MODULE_API_NO >= 20010901
+    STANDARD_MODULE_HEADER,
+#endif
     "MapScript", php3_ms_functions, php3_init_mapscript, php3_end_mapscript,
     NULL, NULL,
 #ifdef ZEND_VERSION
     PHP_MINFO(mapscript),
 #else
     php3_info_mapscript,
+#endif
+#if ZEND_MODULE_API_NO >= 20010901
+    "ms_35, php4.1.1version",          /* extension version number (string) */
 #endif
     STANDARD_MODULE_PROPERTIES 
 };
@@ -655,7 +666,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     PHPMS_GLOBAL(le_msmap)  = register_list_destructors(php3_ms_free_mapObj,
                                                         NULL);
     PHPMS_GLOBAL(le_msimg)  = register_list_destructors(php3_ms_free_image,
-                                                        NULL);
+                                                        NULL);    
     PHPMS_GLOBAL(le_mslayer)= register_list_destructors(php3_ms_free_stub,
                                                         NULL);
     PHPMS_GLOBAL(le_msclass)= register_list_destructors(php3_ms_free_stub,
@@ -809,55 +820,55 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
 #ifdef PHP4
     INIT_CLASS_ENTRY(tmp_class_entry, "map", php_map_class_functions);
-    map_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    map_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
     
     INIT_CLASS_ENTRY(tmp_class_entry, "img", php_img_class_functions);
-    img_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    img_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "rect", php_rect_class_functions);
-    rect_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    rect_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "color", php_color_class_functions);
-    color_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    color_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "web", php_web_class_functions);
-    web_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    web_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "reference", 
                      php_reference_class_functions);
-    reference_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    reference_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
     
     INIT_CLASS_ENTRY(tmp_class_entry, "scalebar", php_scalebar_class_functions);
-    scalebar_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    scalebar_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "legend", php_legend_class_functions);
-    legend_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    legend_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "layer", php_layer_class_functions);
-    layer_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    layer_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "label", php_label_class_functions);
-    label_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    label_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "class", php_class_class_functions);
-    class_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    class_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "point", php_point_class_functions);
-    point_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    point_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "line", php_line_class_functions);
-    line_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    line_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "shape", php_shape_class_functions);
-    shape_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    shape_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
     
     INIT_CLASS_ENTRY(tmp_class_entry, "shapefile", 
                      php_shapefile_class_functions);
-    shapefile_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    shapefile_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
     INIT_CLASS_ENTRY(tmp_class_entry, "projection", 
                      php_projection_class_functions);
-    projection_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+    projection_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
 #endif
 
@@ -980,7 +991,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         char    szFname[MAXPATHLEN];
-        if (virtual_getcwd(szFname, MAXPATHLEN) != NULL)
+        if (virtual_getcwd(szFname, MAXPATHLEN TSRMLS_CC) != NULL)
         {
             strcat(szFname, "\\");
             strcat(szFname, pFname->value.str.val);
@@ -1101,7 +1112,7 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -1181,7 +1192,7 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -1295,7 +1306,7 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -1414,7 +1425,7 @@ DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_FALSE;
@@ -1541,7 +1552,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 
 
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_FALSE;
@@ -1557,18 +1568,18 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     poGeorefExt = (rectObj *)_phpms_fetch_handle2(pGeorefExt, 
                                                   PHPMS_GLOBAL(le_msrect_ref),
                                                   PHPMS_GLOBAL(le_msrect_new),
-                                                  list);
+                                                  list TSRMLS_CC);
     poPixPos = (pointObj *)_phpms_fetch_handle2(pPixelPos, 
                                                 PHPMS_GLOBAL(le_mspoint_new), 
                                                 PHPMS_GLOBAL(le_mspoint_ref),
-                                                list);
+                                                list TSRMLS_CC);
     
     if (bMaxExtSet)
         poMaxGeorefExt = 
             (rectObj *)_phpms_fetch_handle2(pMaxGeorefExt, 
                                             PHPMS_GLOBAL(le_msrect_ref),
                                             PHPMS_GLOBAL(le_msrect_new),
-                                            list);
+                                            list TSRMLS_CC);
 
 /* -------------------------------------------------------------------- */
 /*      check the validity of the parameters.                           */
@@ -1871,7 +1882,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_FALSE;
@@ -1886,18 +1897,18 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     poGeorefExt = (rectObj *)_phpms_fetch_handle2(pGeorefExt, 
                                                   PHPMS_GLOBAL(le_msrect_ref),
                                                   PHPMS_GLOBAL(le_msrect_new),
-                                                  list);
+                                                  list TSRMLS_CC);
     poPixExt = (rectObj *)_phpms_fetch_handle2(pPixelExt, 
                                                PHPMS_GLOBAL(le_msrect_ref), 
                                                PHPMS_GLOBAL(le_msrect_new),
-                                               list);
+                                               list TSRMLS_CC);
 
     if (bMaxExtSet)
         poMaxGeorefExt = 
             (rectObj *)_phpms_fetch_handle2(pMaxGeorefExt, 
                                             PHPMS_GLOBAL(le_msrect_ref),
                                             PHPMS_GLOBAL(le_msrect_new),
-                                            list);
+                                            list TSRMLS_CC);
 /* -------------------------------------------------------------------- */
 /*      check the validity of the parameters.                           */
 /* -------------------------------------------------------------------- */
@@ -2168,7 +2179,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_FALSE;
@@ -2184,18 +2195,18 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     poGeorefExt = (rectObj *)_phpms_fetch_handle2(pGeorefExt, 
                                                   PHPMS_GLOBAL(le_msrect_ref),
                                                   PHPMS_GLOBAL(le_msrect_new),
-                                                  list);
+                                                  list TSRMLS_CC);
     poPixPos = (pointObj *)_phpms_fetch_handle2(pPixelPos, 
                                                 PHPMS_GLOBAL(le_mspoint_new), 
                                                 PHPMS_GLOBAL(le_mspoint_ref),
-                                                list);
+                                                list TSRMLS_CC);
     
     if (bMaxExtSet)
         poMaxGeorefExt = 
             (rectObj *)_phpms_fetch_handle2(pMaxGeorefExt, 
                                             PHPMS_GLOBAL(le_msrect_ref),
                                             PHPMS_GLOBAL(le_msrect_new),
-                                            list);
+                                            list TSRMLS_CC);
 
 /* -------------------------------------------------------------------- */
 /*      check the validity of the parameters.                           */
@@ -2478,7 +2489,7 @@ DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pG);
     convert_to_long(pB);
     
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || 
         (nColorId = mapObj_addColor(self, pR->value.lval, 
                                     pG->value.lval, pB->value.lval)) == -1)
@@ -2523,7 +2534,8 @@ DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pSymName);
 
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL)
     {
         nSymbolId = 
@@ -2563,7 +2575,7 @@ DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im = mapObj_prepareImage(self)) == NULL)
         _phpms_report_mapserver_error(E_ERROR);
 
@@ -2599,7 +2611,7 @@ DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self != NULL)
       mapObj_prepareQuery(self);
     
@@ -2639,7 +2651,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im = mapObj_draw(self)) == NULL)
     {
         _phpms_report_mapserver_error(E_WARNING);
@@ -2726,7 +2738,7 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im =  mapObj_drawQuery(self)) == NULL)
     {
         _phpms_report_mapserver_error(E_WARNING);
@@ -2809,7 +2821,7 @@ DLEXPORT void php3_ms_map_drawLegend(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im = mapObj_drawLegend(self)) == NULL)
         _phpms_report_mapserver_error(E_ERROR);
 
@@ -2846,7 +2858,7 @@ DLEXPORT void php3_ms_map_drawReferenceMap(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im = mapObj_drawReferenceMap(self)) == NULL)
         _phpms_report_mapserver_error(E_ERROR);
 
@@ -2883,7 +2895,7 @@ DLEXPORT void php3_ms_map_drawScaleBar(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im = mapObj_drawScalebar(self)) == NULL)
         _phpms_report_mapserver_error(E_ERROR);
 
@@ -2922,9 +2934,9 @@ DLEXPORT void php3_ms_map_embedScalebar(INTERNAL_FUNCTION_PARAMETERS)
     }
         
     im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
-                                         PHPMS_GLOBAL(le_msimg), list);
+                                         PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (retVal = mapObj_embedScalebar(self, im)) == -1)
         _phpms_report_mapserver_error(E_ERROR);
 
@@ -2962,9 +2974,9 @@ DLEXPORT void php3_ms_map_embedLegend(INTERNAL_FUNCTION_PARAMETERS)
     }
         
     im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
-                                         PHPMS_GLOBAL(le_msimg), list);
+                                         PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (retVal = mapObj_embedLegend(self, im)) == -1)
         _phpms_report_mapserver_error(E_ERROR);
 
@@ -3003,9 +3015,9 @@ DLEXPORT void php3_ms_map_drawLabelCache(INTERNAL_FUNCTION_PARAMETERS)
     }
         
     im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
-                                         PHPMS_GLOBAL(le_msimg), list);
+                                         PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (retVal = mapObj_drawLabelCache(self, im)) == -1)
         _phpms_report_mapserver_error(E_ERROR);
 
@@ -3050,7 +3062,8 @@ DLEXPORT void php3_ms_map_getLayer(INTERNAL_FUNCTION_PARAMETERS)
     /* pLyrIndex is the 0-based index of the requested layer */
     convert_to_long(pLyrIndex);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self == NULL || 
         (newLayer = mapObj_getLayer(self, pLyrIndex->value.lval)) == NULL)
     {
@@ -3063,7 +3076,7 @@ DLEXPORT void php3_ms_map_getLayer(INTERNAL_FUNCTION_PARAMETERS)
     map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
 
     /* Return layer object */
-    _phpms_build_layer_object(newLayer, map_id, list, return_value);
+    _phpms_build_layer_object(newLayer, map_id, list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3102,7 +3115,8 @@ DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_string(pLyrName);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL)
     {
         newLayer = mapObj_getLayerByName(self, pLyrName->value.str.val);
@@ -3124,7 +3138,7 @@ DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS)
     map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
 
     /* Return layer object */
-    _phpms_build_layer_object(newLayer, map_id, list, return_value);
+    _phpms_build_layer_object(newLayer, map_id, list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -3169,7 +3183,8 @@ DLEXPORT void php3_ms_map_getLayersIndexByGroup(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL)
     {
         aiIndex = 
@@ -3230,7 +3245,8 @@ DLEXPORT void php3_ms_map_getAllLayerNames(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL)
     {
         nCount = self->numlayers;
@@ -3282,7 +3298,8 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL && self->numlayers > 0)
     {
        int numTok;
@@ -3339,7 +3356,8 @@ DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_long(pColorIndex);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL)
     {
         palette = self->palette;
@@ -3406,11 +3424,12 @@ DLEXPORT void php3_ms_map_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pType);
     convert_to_double(pBuffer);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     poPoint = (pointObj *)_phpms_fetch_handle2(pPoint,
                                                PHPMS_GLOBAL(le_mspoint_ref),
                                                PHPMS_GLOBAL(le_mspoint_new),
-                                               list);
+                                               list TSRMLS_CC);
 
     if (self && poPoint && 
         (nStatus=mapObj_queryByPoint(self, poPoint, pType->value.lval, 
@@ -3459,11 +3478,12 @@ DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     }
 
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     poRect = (rectObj *)_phpms_fetch_handle2(pRect,
                                              PHPMS_GLOBAL(le_msrect_ref),
                                              PHPMS_GLOBAL(le_msrect_new),
-                                             list);
+                                             list TSRMLS_CC);
 
     if (self && poRect && 
         (nStatus=mapObj_queryByRect(self, *poRect)) != MS_SUCCESS)
@@ -3503,7 +3523,8 @@ DLEXPORT void php3_ms_map_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_long(pSLayer);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
 
     if (self &&
         (nStatus=mapObj_queryByFeatures(self, 
@@ -3548,13 +3569,14 @@ DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
     }
 
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
 
     poShape = 
         (shapeObj *)_phpms_fetch_handle2(pShape, 
                                          PHPMS_GLOBAL(le_msshape_ref),
                                          PHPMS_GLOBAL(le_msshape_new),
-                                         list);
+                                         list TSRMLS_CC);
     
     if (self && poShape && 
         (nStatus = mapObj_queryByShape(self, poShape))!= MS_SUCCESS)
@@ -3596,7 +3618,7 @@ DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_string(pFname);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || 
         (retVal = mapObj_save(self, pFname->value.str.val)) != 0)
         _phpms_report_mapserver_error(E_ERROR);
@@ -3637,7 +3659,8 @@ DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL)
     {
         oGeorefExt.minx = self->extent.minx;
@@ -3692,7 +3715,7 @@ DLEXPORT void php3_ms_map_getMetaData(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pName);
 
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL || 
         (pszValue = mapObj_getMetaData(self, pName->value.str.val)) == NULL)
     {
@@ -3735,7 +3758,7 @@ DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pValue);
 
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL || 
         (nStatus = mapObj_setMetaData(self, 
                                       pName->value.str.val,  
@@ -3782,7 +3805,8 @@ DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_long(pLyrIdx);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL)
     {
         if (mapObj_moveLayerup(self, pLyrIdx->value.lval) == 0)
@@ -3826,7 +3850,8 @@ DLEXPORT void php3_ms_map_moveLayerDown(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_long(pLyrIdx);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     if (self != NULL)
     {
         if (mapObj_moveLayerdown(self, pLyrIdx->value.lval) == 0)
@@ -3875,7 +3900,8 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
     panLayers = mapObj_getLayersdrawingOrder(self);
     if (self != NULL)
     {
@@ -3953,7 +3979,7 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
     }
     
         
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     if (self == NULL)
       RETURN_FALSE;
 
@@ -4046,7 +4072,7 @@ DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS)
     
     convert_to_long(pGenerateImage);
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     if (self == NULL)
         RETURN_FALSE;
 
@@ -4152,7 +4178,7 @@ DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
     
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     if (self == NULL)
         RETURN_FALSE;
 
@@ -4263,7 +4289,7 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
     }
     
 
-    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     if (self == NULL)
         RETURN_FALSE;
 
@@ -4404,7 +4430,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pType);
     convert_to_long(pQuality);
 
-    im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list);
+    im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
 
     if(pFname->value.str.val != NULL && strlen(pFname->value.str.val) > 0)
     {
@@ -4480,7 +4506,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         else
         {
 #ifdef PHP4
-                php_write(iptr, size);
+                php_write(iptr, size TSRMLS_CC);
 #else
                 php3_write(iptr, size);
 #endif
@@ -4512,7 +4538,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             while ((b = fread(buf, 1, sizeof(buf), tmp)) > 0) 
             {
 #ifdef PHP4
-                php_write(buf, b);
+                php_write(buf, b TSRMLS_CC);
 #else
                 php3_write(buf, b);
 #endif
@@ -4571,7 +4597,7 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 
     pszImageExt = MS_IMAGE_FORMAT_EXT(pType->value.lval);
 
-    im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list);
+    im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
     pImagepath = _phpms_fetch_property_string(pThis, "imagepath", E_ERROR);
     pImageurl = _phpms_fetch_property_string(pThis, "imageurl", E_ERROR);
 
@@ -4643,10 +4669,10 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    imgDst = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list);
+    imgDst = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
 
     imgSrc = (gdImagePtr)_phpms_fetch_handle(pSrcImg, PHPMS_GLOBAL(le_msimg), 
-                                             list);
+                                             list TSRMLS_CC);
     
     convert_to_long(pTransparent);
 
@@ -4710,7 +4736,7 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list);
+    self = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
     if (self)
     {
         /* Note: we do not have to call the object destructor...
@@ -4748,7 +4774,7 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_layer_object()
  **********************************************************************/
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
-                                      HashTable *list, pval *return_value)
+                                      HashTable *list, pval *return_value TSRMLS_DC)
 {
     int layer_id;
 
@@ -4833,7 +4859,7 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
 
     parent_map = (mapObj*)_phpms_fetch_handle(pMapObj, 
                                               PHPMS_GLOBAL(le_msmap),
-                                              list);
+                                              list TSRMLS_CC);
 
     if (parent_map == NULL ||
         (pNewLayer = layerObj_new(parent_map)) == NULL)
@@ -4852,7 +4878,7 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
     map_id = _phpms_fetch_property_resource(pMapObj, "_handle_", E_ERROR);
 
     /* Return layer object */
-    _phpms_build_layer_object(pNewLayer, map_id, list, return_value);
+    _phpms_build_layer_object(pNewLayer, map_id, list, return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -4884,7 +4910,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (layerObj *)_phpms_fetch_handle(pThis, le_mslayer, list);
+    self = (layerObj *)_phpms_fetch_handle(pThis, le_mslayer, list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -4971,13 +4997,13 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
-                                         PHPMS_GLOBAL(le_msimg), list);
+                                         PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
    
     self = (layerObj *)_phpms_fetch_handle(pThis, 
-                                           PHPMS_GLOBAL(le_mslayer),list);
+                                           PHPMS_GLOBAL(le_mslayer),list TSRMLS_CC);
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (im == NULL || self == NULL || parent_map == NULL ||
         (retVal = layerObj_draw(self, parent_map, im)) == -1)
@@ -5018,13 +5044,13 @@ DLEXPORT void php3_ms_lyr_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
-                                         PHPMS_GLOBAL(le_msimg), list);
+                                         PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
    
     self = (layerObj *)_phpms_fetch_handle(pThis, 
-                                           PHPMS_GLOBAL(le_mslayer),list);
+                                           PHPMS_GLOBAL(le_mslayer),list TSRMLS_CC);
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (im == NULL || self == NULL || parent_map == NULL ||
         (retVal = layerObj_drawQuery(self, parent_map, im)) == -1)
@@ -5072,7 +5098,7 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pClassIndex);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL || 
         (newClass = layerObj_getClass(self, pClassIndex->value.lval)) == NULL)
     {
@@ -5090,7 +5116,8 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
     map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
 
     /* Return layer object */
-    _phpms_build_class_object(newClass, map_id, layer_id, list, return_value);
+    _phpms_build_class_object(newClass, map_id, layer_id, list, 
+                              return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -5130,10 +5157,10 @@ DLEXPORT void php3_ms_lyr_queryByAttributes(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pType);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (self && parent_map &&
         (nStatus=layerObj_queryByAttributes(self, parent_map,
@@ -5185,14 +5212,14 @@ DLEXPORT void php3_ms_lyr_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_double(pBuffer);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     poPoint = (pointObj *)_phpms_fetch_handle2(pPoint,
                                                PHPMS_GLOBAL(le_mspoint_ref),
                                                PHPMS_GLOBAL(le_mspoint_new),
-                                               list);
+                                               list TSRMLS_CC);
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (self && poPoint && parent_map &&
         (nStatus=layerObj_queryByPoint(self, parent_map, poPoint, 
@@ -5239,14 +5266,14 @@ DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     poRect = (rectObj *)_phpms_fetch_handle2(pRect,
                                              PHPMS_GLOBAL(le_msrect_ref),
                                              PHPMS_GLOBAL(le_msrect_new),
-                                             list);
+                                             list TSRMLS_CC);
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (self && poRect && parent_map &&
         (nStatus=layerObj_queryByRect(self, parent_map, 
@@ -5290,10 +5317,10 @@ DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pSLayer);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (self && parent_map &&
         (nStatus=layerObj_queryByFeatures(self, parent_map, 
@@ -5339,16 +5366,16 @@ DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     poShape = 
         (shapeObj *)_phpms_fetch_handle2(pShape, 
                                          PHPMS_GLOBAL(le_msshape_ref),
                                          PHPMS_GLOBAL(le_msshape_new),
-                                         list);
+                                         list TSRMLS_CC);
 
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (self && poShape && parent_map &&
         (nStatus=layerObj_queryByShape(self, parent_map, 
@@ -5395,7 +5422,7 @@ DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pFilterString);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL || 
         (nStatus = layerObj_setFilter(self, 
                                       pFilterString->value.str.val)) != 0)
@@ -5440,7 +5467,7 @@ DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pProjString);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -5484,7 +5511,7 @@ DLEXPORT void php3_ms_lyr_getProjection(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_FALSE;
@@ -5539,12 +5566,12 @@ DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     poShape = 
         (shapeObj *)_phpms_fetch_handle2(pShape, 
                                          PHPMS_GLOBAL(le_msshape_ref),
                                          PHPMS_GLOBAL(le_msshape_new),
-                                         list);
+                                         list TSRMLS_CC);
 
     if (self && poShape)
     {
@@ -5584,7 +5611,7 @@ DLEXPORT void php3_ms_lyr_getNumResults(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self && self->resultcache) 
     {
         RETURN_LONG(self->resultcache->numresults);
@@ -5625,7 +5652,7 @@ DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pIndex);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
 
     if (self== NULL ||
         (poResult = layerObj_getResult(self, pIndex->value.lval)) == NULL)
@@ -5637,7 +5664,7 @@ DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS)
     /* Return a resultCacheMemberObj object */
     _phpms_build_resultcachemember_object(&(self->resultcache->
                                             results[pIndex->value.lval]),
-                                          list, return_value);
+                                          list TSRMLS_CC, return_value);
 }
 /* }}} */
 
@@ -5674,7 +5701,7 @@ DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pShapePath);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL || 
         (nStatus = layerObj_open(self, 
                                  pShapePath->value.str.val)) != MS_SUCCESS)
@@ -5720,7 +5747,7 @@ DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self)
         layerObj_close(self);
 
@@ -5770,7 +5797,7 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
 
     if (self == NULL || 
         layerObj_getShape(self, poShape, pTileId->value.lval, 
@@ -5820,7 +5847,7 @@ DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pName);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL || 
         (pszValue = layerObj_getMetaData(self, pName->value.str.val)) == NULL)
     {
@@ -5863,7 +5890,7 @@ DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pValue);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL || 
         (nStatus = layerObj_setMetaData(self, 
                                         pName->value.str.val,  
@@ -5912,11 +5939,11 @@ DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pFormat);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
+                                           list TSRMLS_CC);
 
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
 
     if (self == NULL || parent_map == NULL ||
@@ -6021,7 +6048,7 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (labelObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslabel),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -6074,8 +6101,10 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 /**********************************************************************
  *                     _phpms_build_class_object()
  **********************************************************************/
-static long _phpms_build_class_object(classObj *pclass, int parent_map_id, int parent_layer_id,
-                                      HashTable *list, pval *return_value)
+static long _phpms_build_class_object(classObj *pclass, int parent_map_id, 
+                                      int parent_layer_id,
+                                      HashTable *list, 
+                                      pval *return_value TSRMLS_DC)
 {
     int class_id;
 #ifdef PHP4
@@ -6167,7 +6196,7 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
 
     parent_layer = (layerObj*)_phpms_fetch_handle(pLayerObj, 
                                                   PHPMS_GLOBAL(le_mslayer),
-                                                  list);
+                                                  list TSRMLS_CC);
 
     if (parent_layer == NULL ||
         (pNewClass = classObj_new(parent_layer)) == NULL)
@@ -6187,7 +6216,8 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
     map_id = _phpms_fetch_property_resource(pLayerObj, "_map_handle_", E_ERROR);
    
     /* Return class object */
-    _phpms_build_class_object(pNewClass, map_id, layer_id, list, return_value);
+    _phpms_build_class_object(pNewClass, map_id, layer_id, list, 
+                              return_value TSRMLS_CC);
 }
 /* }}} */
 
@@ -6221,11 +6251,11 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
-                                           list);
+                                           list TSRMLS_CC);
    
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (self == NULL || parent_map == NULL)
     {
@@ -6323,7 +6353,7 @@ DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pString);
 
     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
-                                           list);
+                                           list TSRMLS_CC);
 
     if (self == NULL || 
         (nStatus = classObj_setExpression(self, pString->value.str.val)) != 0)
@@ -6373,11 +6403,11 @@ DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pString);
 
     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
-                                           list);
+                                           list TSRMLS_CC);
 
     parent_layer = (layerObj*)_phpms_fetch_handle(pLayerObj, 
                                                   PHPMS_GLOBAL(le_mslayer),
-                                                  list);
+                                                  list TSRMLS_CC);
 
     if (self == NULL || parent_layer == NULL ||
         (nStatus = classObj_setText(self, parent_layer, pString->value.str.val)) != 0)
@@ -6429,7 +6459,7 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     im = (gdImagePtr)_phpms_fetch_handle(imgObj,
-                                         PHPMS_GLOBAL(le_msimg), list);
+                                         PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     convert_to_long(pWidth);
     convert_to_long(pHeight);
@@ -6438,15 +6468,15 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (classObj *)_phpms_fetch_handle(pThis, 
                                            PHPMS_GLOBAL(le_msclass),
-                                           list);
+                                           list TSRMLS_CC);
 
     parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
                                                            PHPMS_GLOBAL(le_mslayer),
-                                                           list, E_ERROR);
+                                                           list TSRMLS_CC, E_ERROR);
 
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (im == NULL || self == NULL || parent_map == NULL || parent_layer == NULL ||
         (retVal = classObj_drawLegendIcon(self, 
@@ -6502,15 +6532,15 @@ DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (classObj *)_phpms_fetch_handle(pThis,
                                            PHPMS_GLOBAL(le_msclass),
-                                           list);
+                                           list TSRMLS_CC);
 
     parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
                                                            PHPMS_GLOBAL(le_mslayer),
-                                                           list, E_ERROR);
+                                                           list TSRMLS_CC, E_ERROR);
 
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list, E_ERROR);
+                                                       list TSRMLS_CC, E_ERROR);
 
     if (self == NULL || parent_map == NULL || parent_layer == NULL ||
         (im = classObj_createLegendIcon(self, 
@@ -6584,7 +6614,7 @@ DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (colorObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mscolor),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -6708,7 +6738,7 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
     self = (pointObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_mspoint_ref),
                                             PHPMS_GLOBAL(le_mspoint_new),
-                                            list);
+                                            list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -6772,15 +6802,15 @@ DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
     self = (pointObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_mspoint_ref),
                                             PHPMS_GLOBAL(le_mspoint_new),
-                                            list);
+                                            list TSRMLS_CC);
     poInProj = 
         (projectionObj*)_phpms_fetch_handle(pIn, 
                                             PHPMS_GLOBAL(le_msprojection_new), 
-                                            list);
+                                            list TSRMLS_CC);
     poOutProj = 
         (projectionObj*)_phpms_fetch_handle(pOut, 
                                             PHPMS_GLOBAL(le_msprojection_new), 
-                                            list);
+                                            list TSRMLS_CC);
 
     if (self && poInProj && poOutProj &&
         (pointObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
@@ -6832,12 +6862,12 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     self = (pointObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_mspoint_ref),
                                             PHPMS_GLOBAL(le_mspoint_new),
-                                            list);
+                                            list TSRMLS_CC);
 
-    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list);
+    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     poLayer = (layerObj*)_phpms_fetch_handle(pLayer, PHPMS_GLOBAL(le_mslayer),
-                                             list);
-    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list);
+                                             list TSRMLS_CC);
+    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     if (self &&
         (nRetVal = pointObj_draw(self, poMap, poLayer, im, 
@@ -6883,12 +6913,12 @@ DLEXPORT void php3_ms_point_distanceToPoint(INTERNAL_FUNCTION_PARAMETERS)
     self = (pointObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_mspoint_ref),
                                             PHPMS_GLOBAL(le_mspoint_new),
-                                            list);
+                                            list TSRMLS_CC);
 
     poPoint = (pointObj *)_phpms_fetch_handle2(pPoint, 
                                                PHPMS_GLOBAL(le_mspoint_new), 
                                                PHPMS_GLOBAL(le_mspoint_ref),
-                                               list);
+                                               list TSRMLS_CC);
     if (self != NULL && poPoint != NULL)
         dfDist = pointObj_distanceToPoint(self, poPoint);
 
@@ -6932,17 +6962,17 @@ DLEXPORT void php3_ms_point_distanceToLine(INTERNAL_FUNCTION_PARAMETERS)
     self = (pointObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_mspoint_ref),
                                             PHPMS_GLOBAL(le_mspoint_new),
-                                            list);
+                                            list TSRMLS_CC);
 
     poPoint1 = (pointObj *)_phpms_fetch_handle2(pPoint1, 
                                                 PHPMS_GLOBAL(le_mspoint_new), 
                                                 PHPMS_GLOBAL(le_mspoint_ref),
-                                                list);
+                                                list TSRMLS_CC);
 
     poPoint2 = (pointObj *)_phpms_fetch_handle2(pPoint2, 
                                                 PHPMS_GLOBAL(le_mspoint_new), 
                                                 PHPMS_GLOBAL(le_mspoint_ref),
-                                                list);
+                                                list TSRMLS_CC);
     if (self != NULL && poPoint1 != NULL && poPoint2 != NULL)
         dfDist = pointObj_distanceToLine(self, poPoint1, poPoint2);
 
@@ -6983,12 +7013,12 @@ DLEXPORT void php3_ms_point_distanceToShape(INTERNAL_FUNCTION_PARAMETERS)
     self = (pointObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_mspoint_ref),
                                             PHPMS_GLOBAL(le_mspoint_new),
-                                            list);
+                                            list TSRMLS_CC);
 
     poShape = (shapeObj *)_phpms_fetch_handle2(pShape, 
                                                PHPMS_GLOBAL(le_msshape_ref),
                                                PHPMS_GLOBAL(le_msshape_new),
-                                               list);
+                                               list TSRMLS_CC);
     if (self != NULL && poShape != NULL)
         dfDist = pointObj_distanceToShape(self, poShape);
 
@@ -7026,7 +7056,7 @@ DLEXPORT void php3_ms_point_free(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (pointObj *)_phpms_fetch_handle(pThis, le_mspoint_new, list);
+    self = (pointObj *)_phpms_fetch_handle(pThis, le_mspoint_new, list TSRMLS_CC);
 
     if (self)
     {
@@ -7151,16 +7181,16 @@ DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS)
     self = (lineObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msline_ref),
                                            PHPMS_GLOBAL(le_msline_new),
-                                           list);
+                                           list TSRMLS_CC);
 
     poInProj = 
         (projectionObj*)_phpms_fetch_handle(pIn, 
                                             PHPMS_GLOBAL(le_msprojection_new), 
-                                            list);
+                                            list TSRMLS_CC);
     poOutProj = 
         (projectionObj*)_phpms_fetch_handle(pOut, 
                                             PHPMS_GLOBAL(le_msprojection_new), 
-                                            list);
+                                            list TSRMLS_CC);
     if (self && poInProj && poOutProj &&
         (lineObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
     {
@@ -7209,12 +7239,12 @@ DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS)
     self = (lineObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msline_ref),
                                            PHPMS_GLOBAL(le_msline_new),
-                                           list);
+                                           list TSRMLS_CC);
 
     poPoint = (pointObj*)_phpms_fetch_handle2(pPoint,
                                               PHPMS_GLOBAL(le_mspoint_ref),
                                               PHPMS_GLOBAL(le_mspoint_new),
-                                              list);
+                                              list TSRMLS_CC);
 
     if (self && poPoint)
         nRetVal = lineObj_add(self, poPoint);
@@ -7278,7 +7308,7 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
     self = (lineObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msline_ref),
                                            PHPMS_GLOBAL(le_msline_new),
-                                           list);
+                                           list TSRMLS_CC);
 
     if (self)
         nRetVal = lineObj_add(self, &oPoint);
@@ -7321,7 +7351,7 @@ DLEXPORT void php3_ms_line_point(INTERNAL_FUNCTION_PARAMETERS)
     self = (lineObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msline_ref),
                                            PHPMS_GLOBAL(le_msline_new),
-                                           list);
+                                           list TSRMLS_CC);
 
     if (self==NULL || 
         pIndex->value.lval < 0 || pIndex->value.lval >= self->numpoints)
@@ -7368,7 +7398,7 @@ DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (lineObj *)_phpms_fetch_handle(pThis, le_msline_new, list);
+    self = (lineObj *)_phpms_fetch_handle(pThis, le_msline_new, list TSRMLS_CC);
 
     if (self)
     {
@@ -7540,7 +7570,7 @@ DLEXPORT void php3_ms_shape_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msshape_ref),
                                             PHPMS_GLOBAL(le_msshape_new),
-                                            list);
+                                            list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -7605,15 +7635,15 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
      self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msshape_ref),
                                            PHPMS_GLOBAL(le_msshape_new),
-                                           list);
+                                           list TSRMLS_CC);
      poInProj = 
         (projectionObj*)_phpms_fetch_handle(pIn, 
                                             PHPMS_GLOBAL(le_msprojection_new), 
-                                            list);
+                                            list TSRMLS_CC);
     poOutProj = 
         (projectionObj*)_phpms_fetch_handle(pOut, 
                                             PHPMS_GLOBAL(le_msprojection_new), 
-                                            list);
+                                            list TSRMLS_CC);
 
     if (self && poInProj && poOutProj &&
         (shapeObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
@@ -7660,12 +7690,12 @@ DLEXPORT void php3_ms_shape_add(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msshape_ref),
                                            PHPMS_GLOBAL(le_msshape_new),
-                                           list);
+                                           list TSRMLS_CC);
 
     poLine = (lineObj*)_phpms_fetch_handle2(pLine,
                                             PHPMS_GLOBAL(le_msline_ref),
                                             PHPMS_GLOBAL(le_msline_new),
-                                            list);
+                                            list TSRMLS_CC);
 
     if (self && poLine)
         nRetVal = shapeObj_add(self, poLine);
@@ -7707,7 +7737,7 @@ DLEXPORT void php3_ms_shape_line(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msshape_ref),
                                            PHPMS_GLOBAL(le_msshape_new),
-                                           list);
+                                           list TSRMLS_CC);
 
     if (self==NULL || 
         pIndex->value.lval < 0 || pIndex->value.lval >= self->numlines)
@@ -7759,12 +7789,12 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msshape_ref),
                                             PHPMS_GLOBAL(le_msshape_new),
-                                            list);
+                                            list TSRMLS_CC);
 
-    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list);
+    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     poLayer = (layerObj*)_phpms_fetch_handle(pLayer, PHPMS_GLOBAL(le_mslayer),
-                                             list);
-    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list);
+                                             list TSRMLS_CC);
+    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     if (self && 
         (nRetVal = shapeObj_draw(self, poMap, poLayer, im)) != MS_SUCCESS)
@@ -7807,11 +7837,11 @@ DLEXPORT void php3_ms_shape_contains(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msshape_ref),
                                             PHPMS_GLOBAL(le_msshape_new),
-                                            list);
+                                            list TSRMLS_CC);
      poPoint = (pointObj *)_phpms_fetch_handle2(pPoint,
                                                PHPMS_GLOBAL(le_mspoint_ref),
                                                PHPMS_GLOBAL(le_mspoint_new),
-                                               list);
+                                               list TSRMLS_CC);
     if (self==NULL || poPoint == NULL || !shapeObj_contains(self, poPoint))
       RETURN_FALSE;
 
@@ -7849,12 +7879,12 @@ DLEXPORT void php3_ms_shape_intersects(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msshape_ref),
                                             PHPMS_GLOBAL(le_msshape_new),
-                                            list);
+                                            list TSRMLS_CC);
     poShape = 
     (shapeObj *)_phpms_fetch_handle2(pShape, 
                                      PHPMS_GLOBAL(le_msshape_ref),
                                      PHPMS_GLOBAL(le_msshape_new),
-                                     list);
+                                     list TSRMLS_CC);
     
     if (self==NULL || poShape == NULL || !shapeObj_intersects(self, poShape))
       RETURN_FALSE;
@@ -7893,10 +7923,10 @@ DLEXPORT void php3_ms_shape_getvalue(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msshape_ref),
                                             PHPMS_GLOBAL(le_msshape_new),
-                                            list);
+                                            list TSRMLS_CC);
 
     poLayer = (layerObj*)_phpms_fetch_handle(pLayer, PHPMS_GLOBAL(le_mslayer),
-                                             list);
+                                             list TSRMLS_CC);
     
     if (self && poLayer && self->numvalues == poLayer->numitems)
     {
@@ -7948,7 +7978,7 @@ DLEXPORT void php3_ms_shape_getpointusingmeasure(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msshape_ref),
                                             PHPMS_GLOBAL(le_msshape_new),
-                                            list);
+                                            list TSRMLS_CC);
     if (self == NULL)
       RETURN_FALSE;
 
@@ -7995,7 +8025,7 @@ DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS)
     point = (pointObj *)_phpms_fetch_handle2(pPoint,
                                              PHPMS_GLOBAL(le_mspoint_ref),
                                              PHPMS_GLOBAL(le_mspoint_new),
-                                             list);
+                                             list TSRMLS_CC);
     if (point == NULL)
       RETURN_FALSE;
 
@@ -8003,7 +8033,7 @@ DLEXPORT void php3_ms_shape_getmeasureusingpoint(INTERNAL_FUNCTION_PARAMETERS)
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msshape_ref),
                                             PHPMS_GLOBAL(le_msshape_new),
-                                            list);
+                                            list TSRMLS_CC);
     if (self == NULL)
       RETURN_FALSE;
 
@@ -8045,7 +8075,7 @@ DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (shapeObj *)_phpms_fetch_handle(pThis, le_msshape_new, list);
+    self = (shapeObj *)_phpms_fetch_handle(pThis, le_msshape_new, list TSRMLS_CC);
 
     if (self)
     {
@@ -8154,7 +8184,7 @@ DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (webObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msweb),
-                                         list);
+                                         list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -8293,15 +8323,15 @@ DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (rectObj *)_phpms_fetch_handle2(pThis, PHPMS_GLOBAL(le_msrect_ref),
-                                           PHPMS_GLOBAL(le_msrect_new), list);
+                                           PHPMS_GLOBAL(le_msrect_new), list TSRMLS_CC);
     poInProj = 
         (projectionObj*)_phpms_fetch_handle(pIn, 
                                             PHPMS_GLOBAL(le_msprojection_new), 
-                                            list);
+                                            list TSRMLS_CC);
     poOutProj = 
         (projectionObj*)_phpms_fetch_handle(pOut, 
                                             PHPMS_GLOBAL(le_msprojection_new), 
-                                            list);
+                                            list TSRMLS_CC);
 
     if (self && poInProj && poOutProj &&
         (rectObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
@@ -8344,7 +8374,7 @@ DLEXPORT void php3_ms_rect_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (rectObj *)_phpms_fetch_handle2(pThis, PHPMS_GLOBAL(le_msrect_ref),
-                                           PHPMS_GLOBAL(le_msrect_new), list);
+                                           PHPMS_GLOBAL(le_msrect_new), list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -8403,7 +8433,7 @@ DLEXPORT void php3_ms_rect_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     self = (rectObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msrect_ref),
                                            PHPMS_GLOBAL(le_msrect_new),
-                                           list);
+                                           list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -8466,12 +8496,12 @@ DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
     self = (rectObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msrect_ref),
                                             PHPMS_GLOBAL(le_msrect_new),
-                                            list);
+                                            list TSRMLS_CC);
 
-    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list);
+    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     poLayer = (layerObj*)_phpms_fetch_handle(pLayer, PHPMS_GLOBAL(le_mslayer),
-                                             list);
-    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list);
+                                             list TSRMLS_CC);
+    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     if (self &&
         (nRetVal = rectObj_draw(self, poMap, poLayer, im, 
@@ -8521,7 +8551,7 @@ DLEXPORT void php3_ms_rect_fit(INTERNAL_FUNCTION_PARAMETERS)
     self = (rectObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msrect_ref),
                                            PHPMS_GLOBAL(le_msrect_new),
-                                           list);
+                                           list TSRMLS_CC);
 
     if (self != NULL)
       dfRetVal = rectObj_fit(self, pWidth->value.lval, pHeight->value.lval);
@@ -8559,7 +8589,7 @@ DLEXPORT void php3_ms_rect_free(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (rectObj *)_phpms_fetch_handle(pThis, le_msrect_new, list);
+    self = (rectObj *)_phpms_fetch_handle(pThis, le_msrect_new, list TSRMLS_CC);
 
     if (self)
     {
@@ -8675,7 +8705,7 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (referenceMapObj *)_phpms_fetch_handle(pThis, 
                                                   PHPMS_GLOBAL(le_msrefmap),
-                                                  list);
+                                                  list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -8824,12 +8854,12 @@ DLEXPORT void php3_ms_shapefile_addshape(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
-                                               list);
+                                               list TSRMLS_CC);
 
     poShape = (shapeObj*)_phpms_fetch_handle2(pShape,
                                               PHPMS_GLOBAL(le_msshape_ref),
                                               PHPMS_GLOBAL(le_msshape_new),
-                                              list);
+                                              list TSRMLS_CC);
 
     if (self && poShape)
         nRetVal = shapefileObj_add(self, poShape);
@@ -8871,12 +8901,12 @@ DLEXPORT void php3_ms_shapefile_addpoint(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
-                                               list);
+                                               list TSRMLS_CC);
 
     poPoint = (pointObj*)_phpms_fetch_handle2(pPoint,
                                               PHPMS_GLOBAL(le_mspoint_ref),
                                               PHPMS_GLOBAL(le_mspoint_new),
-                                              list);
+                                              list TSRMLS_CC);
 
     if (self && poPoint)
         nRetVal = shapefileObj_addPoint(self, poPoint);
@@ -8919,7 +8949,7 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
-                                               list);
+                                               list TSRMLS_CC);
 
     /* Create a new shapeObj to hold the result 
      * Note that the type used to create the shape (MS_NULL) does not matter
@@ -8981,7 +9011,7 @@ DLEXPORT void php3_ms_shapefile_getpoint(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
-                                               list);
+                                               list TSRMLS_CC);
 
     /* Create a new PointObj to hold the result */
     if ((poPoint = pointObj_new()) == NULL)
@@ -9040,9 +9070,9 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
-                                               list);
+                                               list TSRMLS_CC);
 
-    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list);
+    poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
 
     /* Create a new shapeObj to hold the result 
      * Note that the type used to create the shape (MS_NULL) does not matter
@@ -9104,7 +9134,7 @@ DLEXPORT void php3_ms_shapefile_getextent(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
-                                               list);
+                                               list TSRMLS_CC);
 
     if (self == NULL)
     {
@@ -9157,7 +9187,7 @@ DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (shapefileObj*)_phpms_fetch_handle(pThis, le_msshapefile, list);
+    self = (shapefileObj*)_phpms_fetch_handle(pThis, le_msshapefile, list TSRMLS_CC);
     if (self)
     {
         /* Note: we do not have to call the object destructor...
@@ -9194,7 +9224,7 @@ DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS)
  *                     _phpms_build_resultCacheMember_object()
  **********************************************************************/
 static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
-                                                  HashTable *list, 
+                                                  HashTable *list TSRMLS_DC, 
                                                   pval *return_value)
 {
     if (pRes == NULL)
@@ -9305,7 +9335,7 @@ DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (projectionObj *)_phpms_fetch_handle(pThis, 
-                                                le_msprojection_new, list);
+                                                le_msprojection_new, list TSRMLS_CC);
 
     if (self)
     {
@@ -9425,7 +9455,7 @@ DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     self = 
         (scalebarObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msscalebar),
-                                         list);
+                                         list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -9494,7 +9524,7 @@ DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS)
 
     self = 
         (scalebarObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msscalebar),
-                                         list);
+                                         list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_FALSE;
@@ -9609,7 +9639,7 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     self = 
         (legendObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslegend),
-                                         list);
+                                         list TSRMLS_CC);
     if (self == NULL)
     {
         RETURN_LONG(-1);
@@ -9745,7 +9775,7 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
         (rectObj *)_phpms_fetch_handle2(pGeorefExt, 
                                         PHPMS_GLOBAL(le_msrect_ref),
                                         PHPMS_GLOBAL(le_msrect_new),
-                                        list);
+                                        list TSRMLS_CC);
 
     if (msCalculateScale(*poGeorefExt, pUnit->value.lval, 
                          pWidth->value.lval, pHeight->value.lval,

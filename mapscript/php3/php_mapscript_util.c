@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.13  2002/03/08 23:16:41  assefa
+ * Add PHP4.1 support.
+ *
  * Revision 1.12  2002/03/07 22:31:01  assefa
  * Add template processing functions.
  *
@@ -111,7 +114,7 @@ void _phpms_report_mapserver_error(int php_err_type)
 #ifdef PHP4
 void *_phpms_fetch_handle2(pval *pObj, 
                            int handle_type1, int handle_type2,
-                            HashTable *list)
+                            HashTable *list TSRMLS_DC)
                                   
 {
     pval **phandle;
@@ -190,9 +193,9 @@ void *_phpms_fetch_handle2(pval *pObj,
  *                     _phpms_fetch_handle()
  **********************************************************************/
 void *_phpms_fetch_handle(pval *pObj, int handle_type, 
-                          HashTable *list)
+                          HashTable *list TSRMLS_DC)
 {
-    return _phpms_fetch_handle2(pObj, handle_type, handle_type, list);
+    return _phpms_fetch_handle2(pObj, handle_type, handle_type, list TSRMLS_CC);
 }
 
 
@@ -202,7 +205,7 @@ void *_phpms_fetch_handle(pval *pObj, int handle_type,
 #ifdef PHP4
 char *_phpms_fetch_property_handle2(pval *pObj, char *property_name, 
                                     int handle_type1, int handle_type2,
-                                    HashTable *list, int err_type)
+                                    HashTable *list TSRMLS_DC, int err_type)
 {
     pval **phandle;
     void *retVal = NULL;
@@ -275,12 +278,12 @@ char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
  *                     _phpms_fetch_property_handle()
  **********************************************************************/
 char *_phpms_fetch_property_handle(pval *pObj, char *property_name, 
-                                   int handle_type, HashTable *list,
-                                   int err_type)
+                                   int handle_type, HashTable *list
+                                   TSRMLS_DC, int err_type)
 {
     return _phpms_fetch_property_handle2(pObj, property_name, 
-                                         handle_type, handle_type, list,
-                                         err_type);
+                                         handle_type, handle_type, list
+                                         TSRMLS_CC, err_type);
 }
 
 /**********************************************************************
@@ -672,9 +675,10 @@ int _phpms_add_property_object(pval *pObj,
  **********************************************************************/
 int _phpms_object_init(pval *return_value, int  handle_id,
                        function_entry *class_functions,
-                       void           *zend_class_entry_ptr )
+                       void *zend_class_entry_ptr)
 {
 #ifdef PHP4
+    void ***tsrm_ls = NULL; 
     zend_class_entry *new_class_entry_ptr;
     new_class_entry_ptr = (zend_class_entry *)zend_class_entry_ptr;
 
