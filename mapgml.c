@@ -437,6 +437,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
   shapeObj shape;
   rectObj  resultBounds = {-1.0,-1.0,-1.0,-1.0};
   int features = 0;
+  char *name_gml = NULL;
+  char *description_gml = NULL;
 
   msInitShape(&shape);
 
@@ -488,6 +490,35 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
         else
            fprintf(stream, "      <%s>\n", lp->name);
 
+        //write name and description attributs if specified in the map file
+        
+        description_gml = msLookupHashTable(lp->metadata, "wfs_gml_description_item");
+        if (description_gml)
+        {
+            for(k=0; k<lp->numitems; k++)	
+            {
+                if (strcasecmp(lp->items[k], description_gml) == 0)
+                {
+                    fprintf(stream, "      <gml:description>%s</gml:description>\n",  
+                            msEncodeHTMLEntities(shape.values[k]));
+                    break;
+                 }
+             }
+         }
+        name_gml = msLookupHashTable(lp->metadata, "wfs_gml_name_item");
+        if (name_gml)
+         {
+             for(k=0; k<lp->numitems; k++)	
+             {
+                 if (strcasecmp(lp->items[k], name_gml) == 0)
+                 {
+                     fprintf(stream, "      <gml:name>%s</gml:name>\n",  
+                             msEncodeHTMLEntities(shape.values[k]));
+                     break;
+                 }
+             }
+         }
+         
 	// write the bounding box
 	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
 #ifdef USE_PROJ
@@ -498,8 +529,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 	gmlWriteBounds(stream, &(shape.bounds), NULL, "        "); // no projection information
 #endif
 
+        
         fprintf(stream, "        <gml:%s>\n", geom_name); 
 
+                    
 	// write the feature geometry
 #ifdef USE_PROJ
 	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
@@ -518,6 +551,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
           char *encoded_val;
           encoded_val = msEncodeHTMLEntities(shape.values[k]);
          
+          if (name_gml && strcmp(name_gml,  lp->items[k]) == 0)
+            continue;
+          if (description_gml && strcmp(description_gml,  lp->items[k]) == 0)
+            continue;
+          
           if (namespace)
             fprintf(stream, "        <%s:%s>%s</%s:%s>\n", 
                     namespace, lp->items[k], encoded_val, namespace, lp->items[k]);
