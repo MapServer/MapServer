@@ -14,7 +14,13 @@ the CVS logs is updated daily at the following URL:
 
 
 Version 4.3 (CVS)
------------------ 
+-----------------
+- Fixed bug 832 (validate srs value) : When the SRS parameter in a GetMap 
+  request contains a SRS that is valid for some, but not all of the layers 
+  being requested, then the server shall throw a Service Exception 
+  (code = "InvalidSRS"). Before this fix, mapserver use to reproject
+  the layers to the requested SRS. 
+
 - Fixed bug 834: SE_ROW_ID in SDE not initialized for unregistered SDE tables
 
 - Fixed bug 823 : adding a validation of the SRS parameter when doing
