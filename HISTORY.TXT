@@ -48,6 +48,20 @@ Version 4.1 (CVS)
 - Added Apache version detection in configure and added non-blocking flag
   on stderr in msDebug() to work around Apache 2.x bug (bug 458)
 
+- MapScript rectObj: added optional bounding value args to constructor and
+  extended rectObj class with a toPolygon method (bug 508).
+  
+- MapScript pointObj: added optional x/y args to constructor (bug 508).
+
+- MapScript colorObj: added optional RGB color value args to colorObj
+  constructor, and extended colorObj class with setRGB, setHex, and toHex
+  methods.  The *Hex methods use hex color strings like '#ffffff' rather
+  than '0xffffff' for compatibility with HTML (bug 509).
+
+- MapScript outputFormatObj: extended with a getOption method (bug 510). 
+
+- MapScript imageObj: added optional filename argument to the constructor
+  which allows imageObj instances to be created from a file on disk (bug 530).
 
 Version 4.0 (2003-08-01)
 ------------------------
