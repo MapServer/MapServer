@@ -132,16 +132,18 @@ extern "C" {
 
 #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
 
-#define MS_IMAGE_MIME_TYPE(type)  ((type)==MS_GIF?"image/gif": \
-                                   (type)==MS_PNG?"image/png": \
-                                   (type)==MS_JPEG?"image/jpeg": \
-                                   (type)==MS_GML?"application/xml": \
-                                   (type)==MS_WBMP?"image/wbmp":"unknown")
+#define MS_IMAGE_MIME_TYPE(format) (format->mimetype ? format->mimetype : "unknown")
+#define MS_IMAGE_EXTENSION(format)  (format->extension ? format->extension : "unknown")
 
-#define MS_IMAGE_EXTENSION(type)  ((type)==MS_GIF?"gif": \
-                                   (type)==MS_PNG?"png": \
-                                   (type)==MS_JPEG?"jpg": \
-                                   (type)==MS_WBMP?"wbmp":"unknown")
+#define MS_DRIVER_GD(format)	(strncasecmp((format)->driver,"gd/",3)==0)
+#define MS_DRIVER_SWF(format)	(strncasecmp((format)->driver,"swf",3)==0)
+#define MS_DRIVER_GDAL(format)	(strncasecmp((format)->driver,"gdal/",5)==0)
+
+#define MS_RENDER_WITH_GD	1
+#define MS_RENDER_WITH_SWF    2
+
+#define MS_RENDERER_GD(format)	((format)->renderer == MS_RENDER_WITH_GD)
+#define MS_RENDERER_SWF(format)	((format)->renderer == MS_RENDER_WITH_SWF)
 
 // ok, we'll switch to an UL cell model to make this work with WMS
 #define MS_CELLSIZE(min,max,d)    ((max - min)/d)
@@ -171,11 +173,12 @@ enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
 enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL};
-enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG, MS_WBMP, MS_GML, MS_SWF};
 
 enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
 
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
+
+enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_GREY256 };
 
 #define MS_FILE_DEFAULT MS_FILE_MAP   
    
@@ -210,6 +213,7 @@ typedef struct {
 // PALETTE OBJECT - used to hold colors while a map file is read
 typedef struct {
   colorObj colors[MS_MAXCOLORS-1];
+  int      colorvalue[MS_MAXCOLORS-1];
   int numcolors;
 } paletteObj;
 #endif
@@ -257,6 +261,23 @@ typedef struct {
 } joinObj;
 #endif
 
+// OUTPUT FORMAT OBJECT - see mapoutput.c for most related code.
+typedef struct {
+  char *name;
+  char *mimetype;
+  char *driver;
+  char *extension;
+  int  renderer;  // MS_RENDER_WITH_*
+  int  imagemode; // MS_IMAGEMODE_* value.
+  int  transparent;
+  int  numformatoptions;
+  char **formatoptions;
+  int  refcount;
+} outputFormatObj;
+
+// The following is used for "don't care" values in transparent, interlace and
+// imagequality values. 
+#define MS_NOOVERRIDE  -1111 
 
 // QUERY MAP OBJECT - used to visualize query results
 typedef struct {
@@ -491,7 +512,8 @@ typedef struct {
   colorObj outlinecolor;
   char *image;
 #ifndef SWIG
-  int imagetype;
+  char *imagetype;
+  outputFormatObj *outputformat;
 #endif
   int status;
   int marker;
@@ -686,8 +708,9 @@ typedef struct { /* structure for a map */
 
   labelCacheObj labelcache; /* we need this here so multiple feature processors can access it */
 
-  int transparent;
-  int interlace;
+  int transparent; // TODO - Deprecated
+  int interlace; // TODO - Deprecated
+  int imagequality; // TODO - Deprecated
 
   rectObj extent; /* map extent array */
   double cellsize; /* in map units */
@@ -701,7 +724,14 @@ typedef struct { /* structure for a map */
   paletteObj palette; /* holds a map palette */
   colorObj imagecolor; /* holds the initial image color value */
 
-  int imagetype, imagequality;
+  int numoutputformats;
+  outputFormatObj **outputformatlist;
+  outputFormatObj *outputformat;
+
+#ifdef SWIG
+%readonly
+#endif
+  char *imagetype; /* name of current outputformat */
 
 #ifndef SWIG
   projectionObj projection; /* projection information for output map */
@@ -745,7 +775,9 @@ typedef struct {
 %readwrite
 #endif
 
-  int imagetype;
+  outputFormatObj *format;
+  int              renderer;
+
 #ifndef SWIG
   union
   {
@@ -761,8 +793,7 @@ typedef struct {
 } imageObj;
 
 // Function prototypes, wrapable
-int msSaveImage(imageObj *img, char *filename, int transparent, 
-                int interlace, int quality);
+int msSaveImage(mapObj *map, imageObj *img, char *filename);
 void msFreeImage(imageObj *img);
 
 
@@ -775,7 +806,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapsde.c
 ** helper functions not part of the general API but needed in
 ** a few other places (like mapscript)... found in mapfile.c
 */
-char *getString();
+char *getString(void);
 int getDouble(double *d);
 int getInteger(int *i);
 int getSymbol(int n, ...);
@@ -819,6 +850,7 @@ void msFreeCharArray(char **array, int num_items);
 int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color);
 int msUpdatePalette(gdImagePtr img, paletteObj *palette);
 int msAddColor(mapObj *map, int red, int green, int blue);
+int msLookupColor(mapObj *map, int color_index );
 int msLoadMapString(mapObj *map, char *object, char *value);
 void msFree(void *p);
 
@@ -990,7 +1022,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent);
 int msSDELayerInitItemInfo(layerObj *layer);
 void msSDELayerFreeItemInfo(layerObj *layer);
 char *msSDELayerGetSpatialColumn(layerObj *layer);
-char *msSDELayerGetRowIDColumn();
+char *msSDELayerGetRowIDColumn(void);
 
 int msOracleSpatialLayerOpen(layerObj *layer);
 int msOracleSpatialLayerClose(layerObj *layer);
@@ -1066,11 +1098,13 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image);
 /* ==================================================================== */
 /*      Prototypes for functions in mapgd.c                             */
 /* ==================================================================== */
-imageObj *msImageCreateGD(int width, int height, int type,
+imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
                           char *imagepath, char *imageurl);
+imageObj *msImageLoadGD( const char *filename );
 
-int msSaveImageGD(gdImagePtr img, char *filename, int type, int transparent, 
-                  int interlace, int quality);
+int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
+int msSaveImageGD_LL(gdImagePtr img, char *filename, int type,
+                     int transparent, int interlace, int quality);
 
 void msFreeImageGD(gdImagePtr img);
 
@@ -1139,8 +1173,8 @@ pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point);
 char **msGetAllGroupNames(mapObj* map, int *numTok);
 char *msTmpFile(const char *path, const char *ext);
 
-imageObj *msImageCreate(int width, int height, int imagetype, char *imagepath,
-                        char *imageurl);
+imageObj *msImageCreate(int width, int height, outputFormatObj *format, 
+                        char *imagepath, char *imageurl);
 
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
@@ -1149,8 +1183,8 @@ imageObj *msImageCreate(int width, int height, int imagetype, char *imagepath,
 /*      prototypes for functions in mapswf.c                            */
 /* ==================================================================== */
 #ifdef USE_MING_FLASH
-imageObj *msImageCreateSWF(int width, int height, char *imagepath,
-                           char *imageurl, mapObj *map);
+imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
+                           char *imagepath, char *imageurl, mapObj *map);
 
 void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 
@@ -1184,6 +1218,41 @@ void msFreeImageSWF(imageObj *image);
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapswf.c                     */
+/* ==================================================================== */
+
+/* ==================================================================== */
+/*      prototypes for functions in mapoutput.c                         */
+/* ==================================================================== */
+
+void msApplyDefaultOutputFormats( mapObj * );
+void msFreeOutputFormat( outputFormatObj * );
+outputFormatObj *msSelectOutputFormat( mapObj *map, const char *imagetype );
+void msApplyOutputFormat( outputFormatObj **target, outputFormatObj *format,
+                          int transparent, int interlaced, int imagequality );
+const char *msGetOutputFormatOption( outputFormatObj *format, 
+                                     const char *optionkey, 
+                                     const char *defaultresult );
+outputFormatObj *msCreateDefaultOutputFormat( mapObj *map, 
+                                              const char *driver );
+int msPostMapParseOutputFormatSetup( mapObj *map );
+void msSetOutputFormatOption( outputFormatObj *format, const char *key, 
+                              const char *value );
+void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime );
+outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
+
+#ifndef gdImageTrueColor
+#  define gdImageTrueColor(x) (0)
+#endif
+
+/* ==================================================================== */
+/*      prototypes for functions in mapoutput.c                         */
+/* ==================================================================== */
+int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename, 
+                     outputFormatObj *format );
+int msInitDefaultGDALOutputFormat( outputFormatObj *format );
+
+/* ==================================================================== */
+/*      End of prototypes for functions in mapoutput.c                  */
 /* ==================================================================== */
 
 #endif

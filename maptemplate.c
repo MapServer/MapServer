@@ -164,9 +164,9 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
       img = msDrawQueryMap(msObj->Map);
       if(!img) return MS_FAILURE;
 
-      sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+      sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
 
-      status = msSaveImage(img, buffer, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+      status = msSaveImage(msObj->Map, img, buffer);
       if(status != MS_SUCCESS) return status;
 
       msFreeImage(img);
@@ -175,8 +175,8 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
       {
          img = msDrawLegend(msObj->Map);
          if(!img) return MS_FAILURE;
-         sprintf(buffer, "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
-         status = msSaveImage(img, buffer, msObj->Map->legend.transparent, msObj->Map->legend.interlace, msObj->Map->imagequality);
+         sprintf(buffer, "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         status = msSaveImage(NULL, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
       }
@@ -185,8 +185,8 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
       {
          img = msDrawScalebar(msObj->Map);
          if(!img) return MS_FAILURE;
-         sprintf(buffer, "%s%ssb%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
-         status = msSaveImage(img, buffer, msObj->Map->scalebar.transparent, msObj->Map->scalebar.interlace, msObj->Map->imagequality);
+         sprintf(buffer, "%s%ssb%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         status = msSaveImage( NULL, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
       }
@@ -195,8 +195,8 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType)
       {
          img = msDrawReferenceMap(msObj->Map);
          if(!img) return MS_FAILURE;
-         sprintf(buffer, "%s%sref%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
-         status = msSaveImage(img, buffer, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+         sprintf(buffer, "%s%sref%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         status = msSaveImage(NULL, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
       }
@@ -749,7 +749,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          nHeight = atoi(msLookupHashTable(myHashTable, "height"));
       }
 
-      sprintf(pszImgFname, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->imagetype),'\0');
+      sprintf(pszImgFname, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
       pszFullImgFname = (char*)malloc(strlen(map->web.imagepath) + strlen(pszImgFname) + 1);
 
@@ -793,7 +793,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          
          // save it with a unique file name
          //TODO
-         if(msSaveImageGD(img, pszFullImgFname, map->imagetype, map->legend.transparent, map->legend.interlace, map->imagequality) == -1) {
+         if(msSaveImageGD(img, pszFullImgFname, map->outputformat) == -1) {
             if (myHashTable)
               msFreeHashTable(myHashTable);
 
@@ -1725,9 +1725,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   outstr = gsub(outstr, "[version]",  msGetVersion());
 
-  sprintf(repstr, "%s%s%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+  sprintf(repstr, "%s%s%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
   outstr = gsub(outstr, "[img]", repstr);
-  sprintf(repstr, "%s%sref%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+  sprintf(repstr, "%s%sref%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
   outstr = gsub(outstr, "[ref]", repstr);
   
   if (strstr(outstr, "[legend]")) {
@@ -1745,12 +1745,12 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
           return NULL;
      }
      else { // if not display gif image with all legend icon
-        sprintf(repstr, "%s%sleg%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+        sprintf(repstr, "%s%sleg%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
         outstr = gsub(outstr, "[legend]", repstr);
      }
   }
    
-  sprintf(repstr, "%s%ssb%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+  sprintf(repstr, "%s%ssb%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
   outstr = gsub(outstr, "[scalebar]", repstr);
 
   if(msObj->SaveQuery) {
@@ -2477,12 +2477,9 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
             { 
                 sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, 
                         msObj->Map->name, msObj->Id, 
-                        MS_IMAGE_EXTENSION(msObj->Map->imagetype));	
+                        MS_IMAGE_EXTENSION(msObj->Map->outputformat));	
                 //TODO
-                if (msSaveImage(image, buffer,
-                                msObj->Map->transparent, 
-                                msObj->Map->interlace, 
-                                msObj->Map->imagequality) == -1 &&
+                if (msSaveImage(msObj->Map, image, buffer) == -1 &&
                     bReturnOnError)
                 {
                     //TODO
@@ -2506,12 +2503,9 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
             { 
                 sprintf(buffer, "%s%sleg%s.%s", msObj->Map->web.imagepath, 
                         msObj->Map->name, msObj->Id, 
-                        MS_IMAGE_EXTENSION(msObj->Map->imagetype));
+                        MS_IMAGE_EXTENSION(msObj->Map->outputformat));
                 
-                if (msSaveImage(image, buffer,
-                                msObj->Map->legend.transparent, 
-                                msObj->Map->legend.interlace, 
-                                msObj->Map->imagequality) == -1 &&
+                if (msSaveImage(NULL, image, buffer) == -1 &&
                     bReturnOnError)
                 {
                     msFreeImage(image);
@@ -2533,11 +2527,8 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
             {
                 sprintf(buffer, "%s%ssb%s.%s", msObj->Map->web.imagepath, 
                         msObj->Map->name, msObj->Id, 
-                        MS_IMAGE_EXTENSION(msObj->Map->imagetype));
-                if (msSaveImage(image, buffer,
-                                msObj->Map->scalebar.transparent, 
-                                msObj->Map->scalebar.interlace, 
-                                msObj->Map->imagequality) == -1 &&
+                        MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+                if (msSaveImage(NULL, image, buffer) == -1 &&
                     bReturnOnError)
                 {
                     msFreeImage(image);
@@ -2559,11 +2550,8 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
             { 
                 sprintf(buffer, "%s%sref%s.%s", msObj->Map->web.imagepath, 
                         msObj->Map->name, msObj->Id, 
-                        MS_IMAGE_EXTENSION(msObj->Map->imagetype));
-                if (msSaveImage(image, buffer,
-                                msObj->Map->transparent, 
-                                msObj->Map->interlace, 
-                                msObj->Map->imagequality) == -1 &&
+                        MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+                if (msSaveImage(NULL, image, buffer) == -1 &&
                     bReturnOnError)
                 {
                     msFreeImage(image);
