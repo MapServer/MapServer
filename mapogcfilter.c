@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.44  2005/02/21 20:37:55  assefa
+ * Initialize buffer properly (Bug 1252).
+ *
  * Revision 1.43  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -2567,7 +2570,8 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 /*      classitem.                                                      */
 /* -------------------------------------------------------------------- */
     szBuffer[0] = '/';
-    /* szBuffer[1] = '^'; */
+    szBuffer[1] = '\0';
+    //szBuffer[1] = '^';
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
     iBuffer = 1;
