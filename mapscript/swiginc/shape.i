@@ -56,6 +56,7 @@
         {
             for (i=0; i<4; i++) shape->values[i] = strdup("");
         }
+        shape->numvalues = 4;
         
         return shape;
     }
@@ -181,10 +182,7 @@
                 return MS_FAILURE;
             }
             else 
-            {
-                self->numvalues++;
                 return MS_SUCCESS;
-            }
         }
         else
         {
