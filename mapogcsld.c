@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.30  2004/06/17 20:26:33  assefa
+ * Comment lines between Rules (or betwwen Symbolizers) was causing the
+ * rest of the Rules to be ignored. Bug 731.
+ *
  * Revision 1.29  2004/06/14 17:26:13  assefa
  * Add opacity support for raster symbolizer.
  *
@@ -483,6 +487,14 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                        strcasecmp(psFeatureTypeStyle->pszValue, 
                                   "FeatureTypeStyle") == 0)
                 {
+                    if (!psFeatureTypeStyle->pszValue ||
+                        strcasecmp(psFeatureTypeStyle->pszValue, 
+                                   "FeatureTypeStyle") != 0)
+                    {
+                        psFeatureTypeStyle = psFeatureTypeStyle->psNext;
+                        continue;
+                    }
+
                     psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
 /* -------------------------------------------------------------------- */
 /*      First parse rules with the else filter. These rules will        */
@@ -490,9 +502,13 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      list. (See how classes are applied to layers in function        */
 /*      msSLDApplySLD).                                                 */
 /* -------------------------------------------------------------------- */
-                    while (psRule && psRule->pszValue && 
-                           strcasecmp(psRule->pszValue, "Rule") == 0)
+                    while (psRule)
                     {
+                        if (!psRule->pszValue || strcasecmp(psRule->pszValue, "Rule") != 0)
+                        {
+                            psRule = psRule->psNext;
+                            continue;
+                        }
                         psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
                         if (psElseFilter)
                            msSLDParseRule(psRule, psLayer);
@@ -502,9 +518,13 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      Parse rules with no Else filter.                                */
 /* -------------------------------------------------------------------- */
                     psRule = CPLGetXMLNode(psFeatureTypeStyle, "Rule");
-                    while (psRule && psRule->pszValue && 
-                           strcasecmp(psRule->pszValue, "Rule") == 0)
+                    while (psRule)
                     {
+                        if (!psRule->pszValue || strcasecmp(psRule->pszValue, "Rule") != 0)
+                        {
+                            psRule = psRule->psNext;
+                            continue;
+                        }
                         //used for scale setting
                         nClassBeforeRule = psLayer->numclasses;
 
@@ -664,10 +684,16 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
  
         //line symbolizer
         psLineSymbolizer = CPLGetXMLNode(psRoot, "LineSymbolizer");
-        while (psLineSymbolizer && psLineSymbolizer->pszValue && 
-               strcasecmp(psLineSymbolizer->pszValue, 
-                          "LineSymbolizer") == 0)
+        while (psLineSymbolizer)
         {
+            if (!psLineSymbolizer->pszValue || 
+                strcasecmp(psLineSymbolizer->pszValue, 
+                           "LineSymbolizer") != 0)
+            {
+                psLineSymbolizer = psLineSymbolizer->psNext;
+                continue;
+            }
+
             bSymbolizer = 1;
             if (nSymbolizer == 0)
               bNewClass = 1;
@@ -682,10 +708,15 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 
         //Polygon symbolizer
         psPolygonSymbolizer = CPLGetXMLNode(psRoot, "PolygonSymbolizer");
-        while (psPolygonSymbolizer && psPolygonSymbolizer->pszValue && 
-               strcasecmp(psPolygonSymbolizer->pszValue, 
-                          "PolygonSymbolizer") == 0)
+        while (psPolygonSymbolizer)        
         {
+            if (!psPolygonSymbolizer->pszValue || 
+                strcasecmp(psPolygonSymbolizer->pszValue, 
+                           "PolygonSymbolizer") != 0)
+            {
+                psPolygonSymbolizer = psPolygonSymbolizer->psNext;
+                continue;
+            }
             bSymbolizer = 1;
             if (nSymbolizer == 0)
               bNewClass = 1;
@@ -699,10 +730,15 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
         }
         //Point Symbolizer
         psPointSymbolizer = CPLGetXMLNode(psRoot, "PointSymbolizer");
-        while (psPointSymbolizer && psPointSymbolizer->pszValue && 
-               strcasecmp(psPointSymbolizer->pszValue, 
-                          "PointSymbolizer") == 0)
+        while (psPointSymbolizer)
         {
+            if (!psPointSymbolizer->pszValue || 
+                strcasecmp(psPointSymbolizer->pszValue, 
+                           "PointSymbolizer") != 0)
+            {
+                psPointSymbolizer = psPointSymbolizer->psNext;
+                continue;
+            }
             bSymbolizer = 1;
             if (nSymbolizer == 0)
               bNewClass = 1;
@@ -729,6 +765,13 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
                strcasecmp(psTextSymbolizer->pszValue, 
                           "TextSymbolizer") == 0)
         {
+            if (!psTextSymbolizer->pszValue || 
+                strcasecmp(psTextSymbolizer->pszValue, 
+                           "TextSymbolizer") != 0)
+            {
+                psTextSymbolizer = psTextSymbolizer->psNext;
+                continue;
+            }
             if (nSymbolizer == 0)
                 psLayer->type = MS_LAYER_ANNOTATION;
             msSLDParseTextSymbolizer(psTextSymbolizer, psLayer, bSymbolizer);
@@ -741,6 +784,13 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
                strcasecmp(psRasterSymbolizer->pszValue, 
                           "RasterSymbolizer") == 0)
         {
+            if (!psRasterSymbolizer->pszValue || 
+                strcasecmp(psRasterSymbolizer->pszValue, 
+                           "RasterSymbolizer") != 0)
+            {
+                psRasterSymbolizer = psRasterSymbolizer->psNext;
+                continue;
+            }
             msSLDParseRasterSymbolizer(psRasterSymbolizer, psLayer);
             psRasterSymbolizer = psRasterSymbolizer->psNext;
             psLayer->type = MS_LAYER_RASTER;
