@@ -28,6 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.371  2004/11/10 19:22:23  sean
+ * Comment out msImageLoadGDStream and pipe all gd image input through existing
+ * msImageLoadGDCtx function.  Moved Frank's recent transparency and interlacing
+ * work to msImageLoadGDCtx and moved the image format detection up into
+ * msImageLoadGD.  All this to avoid passing a FILE* to GD (bug 1047).
+ *
  * Revision 1.370  2004/11/10 17:51:50  sean
  * copy fileIOCtx code from gd_io_file.c to end of mapgd.c, renaming the struct
  * allocation function to msNewGDFileCtx (bug 1047).
@@ -1423,7 +1429,6 @@ MS_DLL_EXPORT void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
 MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 MS_DLL_EXPORT imageObj *msImageLoadIM( const char *filename );
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
-MS_DLL_EXPORT imageObj *msImageLoadGDStream( FILE *file );
 MS_DLL_EXPORT imageObj *msImageLoadGDCtx( gdIOCtx *ctx, const char *driver );
 MS_DLL_EXPORT void msImageInitIM( imageObj *image );
 MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);

@@ -72,42 +72,50 @@ class SaveToStringTestCase(MapTestCase):
             assert 1
             
 class ImageObjTestCase(unittest.TestCase):
+    
     def testConstructor(self):
-        """ImageObjTestCase.testConstructor: imageObj constructor works"""
+        """imageObj constructor works"""
         imgobj = mapscript.imageObj(10, 10)
         assert imgobj.thisown == 1
         assert imgobj.height == 10
         assert imgobj.width == 10
+    
     def testConstructorWithDriver(self):
-        """ImageObjTestCase.testConstructorWithDriver: imageObj with an optional driver works"""
+        """imageObj with an optional driver works"""
         driver = 'GD/PNG'
         imgobj = mapscript.imageObj(10, 10, driver)
         assert imgobj.thisown == 1
         assert imgobj.format.driver == driver
         assert imgobj.height == 10
         assert imgobj.width == 10
+    
     def testConstructorFilename(self):
-        """ImageObjTestCase.testConstructorFilename: imageObj with a filename works"""
+        """imageObj with a filename works"""
         imgobj = mapscript.imageObj(0, 0, None, test_image)
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
+        imgobj.save('testConstructorFilename.png')
+    
     def testConstructorFilenameDriver(self):
-        """ImageObjTestCase.testConstructorFilenameDriver: imageObj with a filename and a driver works"""
+        """imageObj with a filename and a driver works"""
         imgobj = mapscript.imageObj(0, 0, 'GD/PNG', test_image)
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
+        imgobj.save('testConstructorFilenameDriver.png')
+        
     def testConstructorStream(self):
-        """ImageObjTestCase.testConstructorStream: imageObj with a file stream works"""
+        """imageObj with a file stream works"""
         f = open(test_image, 'rb')
         imgobj = mapscript.imageObj(0, 0, 'GD/PNG', f)
         f.close()
         assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
+    
     def testConstructorStringIO(self):
-        """ImageObjTestCase.testConstructorStringIO: imageObj with a cStringIO works"""
+        """imageObj with a cStringIO works"""
         f = open(test_image, 'rb')
         data = f.read()
         f.close()
@@ -124,6 +132,7 @@ class ImageObjTestCase(unittest.TestCase):
         assert imgobj.thisown == 1
         assert imgobj.height == 220
         assert imgobj.width == 329
+        imgobj.save('testConstructorUrlStream.jpg')
 
 class ImageWriteTestCase(MapTestCase):
 

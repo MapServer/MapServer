@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.85  2004/11/10 19:22:23  sean
+ * Comment out msImageLoadGDStream and pipe all gd image input through existing
+ * msImageLoadGDCtx function.  Moved Frank's recent transparency and interlacing
+ * work to msImageLoadGDCtx and moved the image format detection up into
+ * msImageLoadGD.  All this to avoid passing a FILE* to GD (bug 1047).
+ *
  * Revision 1.84  2004/11/10 17:51:50  sean
  * copy fileIOCtx code from gd_io_file.c to end of mapgd.c, renaming the struct
  * allocation function to msNewGDFileCtx (bug 1047).
@@ -265,7 +271,7 @@ void msImageInitGD( imageObj *image, colorObj *background )
 
 /* msImageLoadGDStream is called by msImageLoadGD and is useful
  * by itself */
-imageObj *msImageLoadGDStream(FILE *stream)
+/*imageObj *msImageLoadGDStream(FILE *stream)
 {
   gdImagePtr img=NULL;
   const char *driver = NULL;
@@ -326,7 +332,6 @@ imageObj *msImageLoadGDStream(FILE *stream)
     return(NULL);
   }
 
-  /* Create an outputFormatObj for the format. */
   image->format = msCreateDefaultOutputFormat( NULL, driver );
   image->format->refcount++;
 
@@ -336,11 +341,6 @@ imageObj *msImageLoadGDStream(FILE *stream)
     return(NULL);
   }
 
-  /*
-  ** Try to ensure that truecolor images are handled as MS_IMAGEMODE_RGB
-  ** and that colormapped images are MS_IMAGEMODE_PC256.  This would generally
-  ** only be an issue for PNG which can be either. 
-  */
   if( gdImageTrueColor(img) && image->format->imagemode == MS_IMAGEMODE_PC256 )
   {
       image->format->imagemode = MS_IMAGEMODE_RGB;
@@ -352,10 +352,6 @@ imageObj *msImageLoadGDStream(FILE *stream)
       image->format->imagemode = MS_IMAGEMODE_PC256;
   }
 
-  /*
-  ** Try to ensure we use the same interlacing on the output image as we
-  ** found in the source image. (Bug 1039)
-  */
   if (gdImageGetInterlaced(img)) {
       msSetOutputFormatOption( image->format, "INTERLACE", "ON" );
   } else {
@@ -363,14 +359,20 @@ imageObj *msImageLoadGDStream(FILE *stream)
   }  
   
   return image;
-}
+}*/
 
-/* msImageLoadGDCtx creates an imageObj using the GD's IOCtx interface */
-imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver) {
+/* ===========================================================================
+   msImageLoadGDCtx
+   
+   So that we can avoid passing a FILE* to GD, all gd image IO is now done
+   through the fileIOCtx interface defined at the end of this file.  The
+   old msImageLoadStreamGD function has been removed.
+   ========================================================================= */
+   
+imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver) 
+{
     gdImagePtr img=NULL;
     imageObj *image = NULL;
-
-    image = (imageObj *) calloc(1, sizeof(imageObj));
 
     if (strcasecmp(driver, "gd/gif") == MS_SUCCESS) {
 #ifdef USE_GD_GIF
@@ -394,43 +396,125 @@ imageObj *msImageLoadGDCtx(gdIOCtx* ctx, const char *driver) {
         return(NULL);
     }
 
+    /* Initialize an imageObj */
+    image = (imageObj *) calloc(1, sizeof(imageObj));
     image->img.gd = img;
     image->imagepath = NULL;
     image->imageurl = NULL;
-    image->width = img->sx;
-    image->height = img->sy;
+    image->width = gdImageSX(img);
+    image->height = gdImageSY(img);
 
     /* Create an outputFormatObj for the format. */
     image->format = msCreateDefaultOutputFormat( NULL, driver );
     image->format->refcount++;
 
     if( image->format == NULL ) {
-        msSetError(MS_GDERR, "Unable to create default OUTPUTFORMAT definition for driver '%s'.", "msImageLoadGDStream()", driver );
+        msSetError(MS_GDERR, 
+            "Unable to create default OUTPUTFORMAT for driver '%s'.", 
+            "msImageLoadGDStream()", driver );
+        msFreeImage(image);
         return(NULL);
     }
 
+    /*
+    ** Try to ensure that truecolor images are handled as MS_IMAGEMODE_RGB
+    ** and that colormapped images are MS_IMAGEMODE_PC256.  This would generally
+    ** only be an issue for PNG which can be either. 
+    */
+    if ( gdImageTrueColor(img) 
+         && image->format->imagemode == MS_IMAGEMODE_PC256 )
+    {
+        image->format->imagemode = MS_IMAGEMODE_RGB;
+    }
+    else if ( !gdImageTrueColor(img) 
+              && (image->format->imagemode == MS_IMAGEMODE_RGB 
+              || image->format->imagemode == MS_IMAGEMODE_RGBA) )
+    {
+        image->format->imagemode = MS_IMAGEMODE_PC256;
+    }
+
+    /*
+    ** Try to ensure we use the same interlacing on the output image as we
+    ** found in the source image. (Bug 1039)
+    */
+    if (gdImageGetInterlaced(img)) 
+    {
+        msSetOutputFormatOption( image->format, "INTERLACE", "ON" );
+    } 
+    else 
+    {
+        msSetOutputFormatOption( image->format, "INTERLACE", "OFF" );
+    }   
+  
     return image;
 }
 
-/* msImageLoadGD now calls msImageLoadGDStream to do the work, change
- * made as part of the resolution of bug 550 */
+/* msImageLoadGD now calls msImageLoadGDCtx to do the work, change
+ * made as part of the resolution of bugs 550 and 1047 */
 
-imageObj *msImageLoadGD(const char *filename) {
+imageObj *msImageLoadGD(const char *filename) 
+{
     FILE *stream;
+    gdIOCtx *ctx;
     imageObj *image;
+    char bytes[8];
+    const char *driver=NULL;
+    
     stream = fopen(filename, "rb");
     if (!stream) {
         msSetError(MS_IOERR, "(%s)", "msImageLoadGD()", filename );
         return(NULL);
     }
-    image = msImageLoadGDStream(stream);
+
+    /* Detect image format */
+
+    fread(bytes,8,1,stream); // read some bytes to try and identify the file
+    rewind(stream); // reset the image for the readers
+    if (memcmp(bytes,"GIF8",4)==0) 
+    {
+#ifdef USE_GD_GIF
+        driver = "GD/GIF";
+#else
+        msSetError(MS_MISCERR, "Unable to load GIF image.",
+                   "msImageLoadGD()");
+        fclose(stream);
+        return(NULL);
+#endif
+    }
+    else if (memcmp(bytes,PNGsig,8)==0) 
+    {
+#ifdef USE_GD_PNG
+        driver = "GD/PNG";
+#else
+        msSetError(MS_MISCERR, "Unable to load PNG image.",
+                   "msImageLoadGD()");
+        fclose(stream);
+        return(NULL);
+#endif
+    }
+    else if (memcmp(bytes,JPEGsig,3)==0) 
+    {
+#ifdef USE_GD_JPEG
+        driver = "GD/JPEG";
+#else
+        msSetError(MS_MISCERR, "Unable to load JPEG image.", "msImageLoadGD()");
+        fclose(stream);
+        return(NULL);
+#endif
+    }
+
+    ctx = msNewGDFileCtx(stream);
+    image = msImageLoadGDCtx(ctx, driver);
+    ctx->gd_free(ctx);
+    fclose(stream);
+
     if (!image) {
         msSetError(MS_GDERR, "Unable to initialize image '%s'", 
                    "msLoadImageGD()", filename);
-        fclose(stream);
         return(NULL);
     }
-    else return(image);
+    
+    return(image);
 }
 
 static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *style, int *fgcolor, int *bgcolor)
