@@ -18,6 +18,8 @@ static int layerInitItemInfo(layerObj *layer) {
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
+    status = msSDELayerInitItemInfo(layer);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
     break;
   default:
     break;
@@ -37,11 +39,12 @@ static void layerFreeItemInfo(layerObj *layer)
   case(MS_INLINE):
     break;
   case(MS_OGR):
-    msOGRLayerFreeItemInfo(layer);    
+    msOGRLayerFreeItemInfo(layer);
     break;
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
+    msSDELayerFreeItemInfo(layer);
     break;
   default:
     break;

@@ -751,6 +751,8 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape);
 int msSDELayerGetItems(layerObj *layer);
 int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record);
 int msSDELayerGetExtent(layerObj *layer, rectObj *extent);
+int msSDELayerInitItemInfo(layerObj *layer);
+void msSDELayerFreeItemInfo(layerObj *layer);
 
 #endif
 
