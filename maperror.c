@@ -329,9 +329,12 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   errorObj *ms_error = msGetErrorObj();
 
   if (map) {
-    width = map->width;
-    height = map->height;
-    format = map->outputformat;
+      if( map->width != -1 && map->height != -1 )
+      {
+          width = map->width;
+          height = map->height;
+      }
+      format = map->outputformat;
   }
 
   if (format == NULL) format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
