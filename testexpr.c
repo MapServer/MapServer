@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/18 03:06:48  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.4  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -43,7 +46,7 @@ extern int msyyparse();
 extern int msyylex();
 extern char *msyytext;
 
-extern int msyyresult; // result of parsing, true/false
+extern int msyyresult; /* result of parsing, true/false */
 extern int msyystate;
 extern char *msyystring;
 

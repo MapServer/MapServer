@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.14  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -133,7 +136,7 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
     sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
     psTree->fp = fopen(pszFullname, "rb" );
 
-    msFree(pszBasename); // don't need these any more
+    msFree(pszBasename); /* don't need these any more */
     msFree(pszFullname);    
 
     if( psTree->fp == NULL ) {      
@@ -478,7 +481,7 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, char *status
   fread( &numshapes, 4, 1, disktree->fp );
   if ( disktree->needswap ) SwapWord ( 4, &numshapes );
 
-  if(!msRectOverlap(&rect, &aoi)) { // skip rest of this node and sub-nodes
+  if(!msRectOverlap(&rect, &aoi)) { /* skip rest of this node and sub-nodes */
     offset += numshapes*sizeof(int) + sizeof(int);
     fseek(disktree->fp, offset, SEEK_CUR);
     return;
@@ -520,7 +523,7 @@ char *msSearchDiskTree(char *filename, rectObj aoi, int debug)
   disktree = msSHPDiskTreeOpen (filename, debug);
   if(!disktree) {
 
-    // only set this error IF debugging is turned on, gets annoying otherwise
+    /* only set this error IF debugging is turned on, gets annoying otherwise */
     if(debug) msSetError(MS_IOERR, "Unable to open spatial index for %s. In most cases you can safely ignore this message, otherwise check file names and permissions.", "msSearchDiskTree()", filename);
 
     return(NULL);
@@ -703,7 +706,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   sprintf( pszFullname, "%s%s", pszBasename, MS_INDEX_EXTENSION); 
   disktree->fp = fopen(pszFullname, "wb");
   
-  msFree(pszBasename); // not needed
+  msFree(pszBasename); /* not needed */
   msFree(pszFullname);
   
   if(!disktree->fp) {
@@ -713,7 +716,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   }
   
   
-  // for efficiency, trim the tree
+  /* for efficiency, trim the tree */
   msTreeTrim(tree);
   
   /* -------------------------------------------------------------------- */
@@ -733,7 +736,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   if( B_order == MS_NATIVE_ORDER )
     disktree->needswap = 0;
   
-  // write the header
+  /* write the header */
   if ( B_order > 0 ) {  
     memcpy( pabyBuf, &signature, 3 );
     memcpy (&disktree->signature, &signature, 3);
@@ -767,7 +770,7 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
   return(MS_TRUE);
 }
 
-// Function to filter search results further against feature bboxes
+/* Function to filter search results further against feature bboxes */
 void msFilterTreeSearch(shapefileObj *shp, char *status, rectObj search_rect)
 {
   int i;

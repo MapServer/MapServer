@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.75  2005/02/18 03:06:48  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.74  2005/02/14 04:33:32  sdlime
  * Changed %.17g to %.15g for WMS/WFS server code.
  *
@@ -377,21 +380,21 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 
     if (pszStyle==NULL)
     {
-        // When no style is selected, use "" which is a valid default.
+        /* When no style is selected, use "" which is a valid default. */
         pszStyle = "";
     }
     else
     {
-        // Was a wms_style_..._sld URL provided?
+        /* Was a wms_style_..._sld URL provided? */
         char szBuf[100];
         sprintf(szBuf, "style_%.80s_sld", pszStyle);
         pszSLD = msOWSLookupMetadata(&(lp->metadata), "MO", szBuf);
 
         if (pszSLD)
         {
-            // SLD URL is set.  If this defn. came from a map context then
-            // the style name may just be an internal name: "Style{%d}" if
-            // that's the case then we should not pass this name via the URL
+            /* SLD URL is set.  If this defn. came from a map context then */
+            /* the style name may just be an internal name: "Style{%d}" if */
+            /* that's the case then we should not pass this name via the URL */
             if (strncmp(pszStyle, "Style{", 6) == 0)
                 pszStyle = "";
         }
@@ -399,18 +402,18 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
 
     if (pszSLD == NULL)
     {
-        // STYLES is mandatory if SLD not set
+        /* STYLES is mandatory if SLD not set */
         msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
     }
     else if (strlen(pszStyle) > 0)
     {
-        // Both STYLES and SLD are set
+        /* Both STYLES and SLD are set */
         msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
         msSetWMSParamString(psWMSParams, "SLD",    pszSLD,   MS_TRUE);
     }
     else
     {
-        // Only SLD is set
+        /* Only SLD is set */
         msSetWMSParamString(psWMSParams, "SLD",    pszSLD,   MS_TRUE);
     }
 
@@ -497,11 +500,11 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
          (pszVersion = strstr(lp->connection, "WMTVER=")) == NULL &&
          (pszVersion = strstr(lp->connection, "wmtver=")) == NULL ) )
     {
-        // CONNECTION missing or seems incomplete... try to build from metadata
+        /* CONNECTION missing or seems incomplete... try to build from metadata */
         if (msBuildWMSLayerURLBase(map, lp, psWMSParams) != MS_SUCCESS)
-            return MS_FAILURE;  // An error already produced.
+            return MS_FAILURE;  /* An error already produced. */
 
-        // If we received MS_SUCCESS then version must have been set
+        /* If we received MS_SUCCESS then version must have been set */
         pszVersion = msLookupHashTable(psWMSParams->params, "VERSION");
         if (pszVersion ==NULL)
             pszVersion = msLookupHashTable(psWMSParams->params, "WMTVER");
@@ -509,7 +512,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
     else
     {
-        // CONNECTION string seems complete, start with that.
+        /* CONNECTION string seems complete, start with that. */
         psWMSParams->onlineresource = strdup(lp->connection);
         pszVersion = strchr(pszVersion, '=')+1;
     }
@@ -524,10 +527,10 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
       case OWS_1_0_7:
       case OWS_1_1_0:
       case OWS_1_1_1:
-        // All is good, this is a supported version.
+        /* All is good, this is a supported version. */
         break;
       default:
-        // Not a supported version
+        /* Not a supported version */
         msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.1.1 (please verify the VERSION parameter in the connection string).", "msBuildWMSLayerURL()");
         return MS_FAILURE;
     }
@@ -563,8 +566,8 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         int nLen;
         char *pszPtr = NULL;
 
-        // If it's an AUTO projection then keep only id and strip off 
-        // the parameters for now (we'll restore them at the end)
+        /* If it's an AUTO projection then keep only id and strip off  */
+        /* the parameters for now (we'll restore them at the end) */
         if (strncasecmp(pszEPSG, "AUTO:", 5) == 0)
         {
             if ((pszPtr = strchr(pszEPSG, ',')))
@@ -580,12 +583,12 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
             ! ((*(pszFound+nLen) == '\0') || isspace(*(pszFound+nLen))) )
         {
-            // Not found in Layer's list of SRS (including projection object)
+            /* Not found in Layer's list of SRS (including projection object) */
             free(pszEPSG);
             pszEPSG = NULL;
         }
         if (pszEPSG && pszPtr)
-            *pszPtr = ',';  // Restore full AUTO:... definition
+            *pszPtr = ',';  /* Restore full AUTO:... definition */
     }
 
     if (pszEPSG == NULL &&
@@ -609,7 +612,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         pointObj oPoint;
         char *pszNewEPSG;
 
-        // Use center of map view for lon0,lat0
+        /* Use center of map view for lon0,lat0 */
         oPoint.x = (map->extent.minx + map->extent.maxx)/2.0;
         oPoint.y = (map->extent.miny + map->extent.maxy)/2.0;
         msProjectPoint(&(map->projection), &(map->latlon), &oPoint);
@@ -626,7 +629,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 /* ------------------------------------------------------------------
  * Set layer SRS and reproject map extents to the layer's SRS
  * ------------------------------------------------------------------ */
-    // No need to set lp->proj if it's already set to the right EPSG code
+    /* No need to set lp->proj if it's already set to the right EPSG code */
     if ((pszTmp = msOWSGetEPSGProj(&(lp->projection), NULL, "MO", MS_TRUE)) == NULL ||
         strcasecmp(pszEPSG, pszTmp) != 0)
     {
@@ -707,9 +710,9 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msSetWMSParamString(psWMSParams, "EXCEPTIONS", pszExceptionsParam, MS_FALSE);
         msSetWMSParamString(psWMSParams, "INFO_FORMAT",pszInfoFormat, MS_TRUE);
 
-        // If FEATURE_COUNT <= 0 then don't pass this parameter
-        // The spec states that FEATURE_COUNT must be greater than zero
-        // and if not passed then the behavior is up to the server
+        /* If FEATURE_COUNT <= 0 then don't pass this parameter */
+        /* The spec states that FEATURE_COUNT must be greater than zero */
+        /* and if not passed then the behavior is up to the server */
         if (nFeatureCount > 0)
         {
             msSetWMSParamInt(psWMSParams, "FEATURE_COUNT", nFeatureCount);
@@ -849,16 +852,16 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
         msFreeCharArray(tokens, n);
 
-        // Reproject latlonboundingbox to the selected SRS for the layer and
-        // check if it overlaps the bbox that we calculated for the request
+        /* Reproject latlonboundingbox to the selected SRS for the layer and */
+        /* check if it overlaps the bbox that we calculated for the request */
 
         msProjectRect(&(map->latlon), &(lp->projection), &ext);
         if (!msRectOverlap(&bbox, &ext))
         {
-            // No overlap... nothing to do
+            /* No overlap... nothing to do */
 
             msFreeWmsParamsObj(&sThisWMSParams);
-            return MS_SUCCESS;  // No overlap.
+            return MS_SUCCESS;  /* No overlap. */
         }
     }
 
@@ -867,7 +870,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * the case we will use it, else we use the default which is 30 seconds.
  * First check the metadata in the layer object and then in the map object.
  * ------------------------------------------------------------------ */
-    nTimeout = 30;  // Default is 30 seconds 
+    nTimeout = 30;  /* Default is 30 seconds  */
     if ((pszTmp = msOWSLookupMetadata(&(lp->metadata), 
                                       "MO", "connectiontimeout")) != NULL)
     {
@@ -904,7 +907,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         key = msFirstKeyFromHashTable(sThisWMSParams.params);
         while (key != NULL && bOkToMerge == MS_TRUE)
         {
-            // Skip parameters whose values can be different
+            /* Skip parameters whose values can be different */
             if (!(strcmp(key, "LAYERS") == 0 ||
                   strcmp(key, "QUERY_LAYERS") == 0 ||
                   strcmp(key, "STYLES") == 0) )
@@ -986,7 +989,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         pasReqInfo[(*numRequests)].nLayerId = nLayerId;
         pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
         pszURL = NULL;
-        // We'll store the remote server's response to a tmp file.
+        /* We'll store the remote server's response to a tmp file. */
         if (map->web.imagepath == NULL || strlen(map->web.imagepath) == 0)
         {
             msSetError(MS_WMSERR, 
@@ -1091,15 +1094,15 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
  * Prepare layer for drawing, reprojecting the image received from the
  * server if needed...
  * ------------------------------------------------------------------ */
-    //keep the current type that will be restored at the end of this 
-    //function.
+    /* keep the current type that will be restored at the end of this  */
+    /* function. */
     currenttype = lp->type;
     currentconnectiontype = lp->connectiontype;
     lp->type = MS_LAYER_RASTER;
     lp->connectiontype = MS_SHAPEFILE;
 
-    //set the classes to 0 so that It won't do client side
-    //classification if an sld was set.
+    /* set the classes to 0 so that It won't do client side */
+    /* classification if an sld was set. */
     numclasses = lp->numclasses;
     if (msOWSLookupMetadata(&(lp->metadata), "MO", "sld_body") ||
         msOWSLookupMetadata(&(lp->metadata), "MO", "sld_url"))        
@@ -1110,10 +1113,10 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
     if (!msProjectionsDiffer(&(map->projection), &(lp->projection)))
     {
-        // The simple case... no reprojection needed... render layer directly.
+        /* The simple case... no reprojection needed... render layer directly. */
         lp->transform = MS_FALSE;
-        //if (msDrawRasterLayerLow(map, lp, img) != 0)
-        //   status = MS_FAILURE;
+        /* if (msDrawRasterLayerLow(map, lp, img) != 0) */
+        /* status = MS_FAILURE; */
          if (msDrawLayer(map, lp, img) != 0)
             status = MS_FAILURE;
     }
@@ -1121,11 +1124,11 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     {
         FILE *fp;
         char *wldfile;
-        // OK, we have to resample the raster to map projection...
+        /* OK, we have to resample the raster to map projection... */
         lp->transform = MS_TRUE;
 
-        // Create a world file with raster extents
-        // One line per value, in this order: cx, 0, 0, cy, ulx, uly
+        /* Create a world file with raster extents */
+        /* One line per value, in this order: cx, 0, 0, cy, ulx, uly */
         wldfile = msBuildPath(szPath, lp->map->mappath, lp->data);
         if (wldfile)    
             strcpy(wldfile+strlen(wldfile)-3, "wld");
@@ -1148,7 +1151,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
                     pasReqInfo[iReq].bbox.maxy + dfCellSizeY * 0.5 );
             fclose(fp);
 
-            // GDAL should be called to reproject automatically.
+            /* GDAL should be called to reproject automatically. */
             if (msDrawRasterLayerLow(map, lp, img) != 0)
                 status = MS_FAILURE;
 
@@ -1165,15 +1168,15 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
     } 
 
-    // We're done with the remote server's response... delete it.
+    /* We're done with the remote server's response... delete it. */
     if (!lp->debug)
       unlink(lp->data);
 
-    //restore prveious type
+    /* restore prveious type */
     lp->type = currenttype;
     lp->connectiontype = currentconnectiontype;
 
-    //restore previous numclasses
+    /* restore previous numclasses */
     lp->numclasses = numclasses;
 
     free(lp->data);

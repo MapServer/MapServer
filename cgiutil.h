@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/02/18 03:06:44  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.15  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -49,7 +52,7 @@
 
 enum MS_REQUEST_TYPE {MS_GET_REQUEST, MS_POST_REQUEST};
 
-//structure to hold request information
+/* structure to hold request information */
 typedef struct
 {
 #ifndef SWIG

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.94  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.93  2004/11/18 23:06:10  hobu
  * allow bands and raster column for
  * SDE rasters to be specified with
@@ -123,10 +126,10 @@
 #include <sderaster.h>
 #endif
 
-#define MS_SDE_MAXBLOBSIZE 1024*50 // 50 kbytes
+#define MS_SDE_MAXBLOBSIZE 1024*50 /* 50 kbytes */
 #define MS_SDE_NULLSTRING "<null>"
 #define MS_SDE_SHAPESTRING "<shape>"
-#define MS_SDE_TIMEFMTSIZE 128 // bytes
+#define MS_SDE_TIMEFMTSIZE 128 /* bytes */
 #define MS_SDE_TIMEFMT "%T %m/%d/%Y"
 #define MS_SDE_ROW_ID_COLUMN "SE_ROW_ID"
 
@@ -381,7 +384,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   
   switch(type) {
   case(SG_NIL_SHAPE):
-    return(MS_SUCCESS); // skip null shapes
+    return(MS_SUCCESS); /* skip null shapes */
     break;
   case(SG_POINT_SHAPE):
   case(SG_MULTI_POINT_SHAPE):
@@ -438,7 +441,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
     return(MS_FAILURE);
   }
 
-  k = 0; // overall point counter
+  k = 0; /* overall point counter */
   for(i=0; i<numsubparts; i++) {
     
     if( i == numsubparts-1)
@@ -467,7 +470,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   free(subparts);
   free(points);
 
-  // finally copy the bounding box for the entire shape
+  /* finally copy the bounding box for the entire shape */
   SE_shape_get_extent(inshp, 0, &envelope);
   outshp->bounds.minx = envelope.minx;
   outshp->bounds.miny = envelope.miny;
@@ -491,13 +494,13 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   long longval;
   struct tm dateval;
 
-  short shortval; // new gdv
+  short shortval; /* new gdv */
   float floatval;
 
   SE_COLUMN_DEF *itemdefs;
   SE_SHAPE shapeval=0;
   SE_BLOB_INFO blobval;
- // blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO));
+ /* blobval = (SE_BLOB_INFO *) malloc(sizeof(SE_BLOB_INFO)); */
   msSDELayerInfo *sde;
 
   sde = layer->layerinfo;
@@ -529,14 +532,14 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
          return(MS_FAILURE);
       }
 
-      shape->values[i] = (char *)malloc(64); // should be enough
+      shape->values[i] = (char *)malloc(64); /* should be enough */
       sprintf(shape->values[i], "%ld", shape->index);
       continue;
     }    
     
     switch(itemdefs[i].sde_type) {
     case SE_SMALLINT_TYPE:
-      // changed by gdv
+      /* changed by gdv */
       status = SE_stream_get_smallint(sde->stream, (short)(i+1), &shortval); 
       if(status == SE_SUCCESS)
         shape->values[i] = long2string(shortval);
@@ -559,7 +562,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }      
       break;
     case SE_FLOAT_TYPE:
-      // changed by gdv
+      /* changed by gdv */
       status = SE_stream_get_float(sde->stream, (short)(i+1), &floatval); 
       if(status == SE_SUCCESS)
         shape->values[i] = double2string(floatval);
@@ -587,7 +590,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
                                     (short) (i+1), 
                                     shape->values[i]);
       if(status == SE_NULL_VALUE)
-        shape->values[i][0] = '\0'; // empty string
+        shape->values[i][0] = '\0'; /* empty string */
       else if(status != SE_SUCCESS) {
         sde_error(status, "sdeGetRecord()", "SE_stream_get_string()");
         return(MS_FAILURE);
@@ -645,11 +648,11 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 
   if(SE_shape_is_nil(shapeval)) return(MS_SUCCESS);
   
-  // copy sde shape to a mapserver shape
+  /* copy sde shape to a mapserver shape */
   status = sdeShapeCopy(shapeval, shape);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  // clean up
+  /* clean up */
   SE_shape_free(shapeval);
 
   
@@ -687,10 +690,10 @@ int msSDELayerOpen(layerObj *layer) {
   msSDEConnPoolInfo *poolinfo;
 
 
-  // layer already open, silently return
-  //if(layer->layerinfo) return(MS_SUCCESS); 
+  /* layer already open, silently return */
+  /* if(layer->layerinfo) return(MS_SUCCESS);  */
 
-  // allocate space for SDE structures
+  /* allocate space for SDE structures */
   sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
   if(!sde) {
     msSetError( MS_MEMERR, 
@@ -700,16 +703,16 @@ int msSDELayerOpen(layerObj *layer) {
   }
  
   sde->state_id = SE_BASE_STATE_ID;
-  // initialize the table and spatial column names
+  /* initialize the table and spatial column names */
   sde->table = sde->column = NULL;
-  // initialize the row_id column
+  /* initialize the row_id column */
   sde->row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
 
-  // request a connection and stream from the pool
+  /* request a connection and stream from the pool */
   poolinfo = (msSDEConnPoolInfo *)msConnPoolRequest( layer ); 
 
   
-  // If we weren't returned a connection and stream, initialize new ones
+  /* If we weren't returned a connection and stream, initialize new ones */
   if (!poolinfo) {
     if (layer->debug) 
       msDebug("msSDELayerOpen(): "
@@ -721,7 +724,7 @@ int msSDELayerOpen(layerObj *layer) {
       return MS_FAILURE;
     } 		
 
-	  // Split the connection parameters and make sure we have enough of them
+	  /* Split the connection parameters and make sure we have enough of them */
     params = split(layer->connection, ',', &numparams);
     if(!params) {
       msSetError( MS_MEMERR, 
@@ -736,7 +739,7 @@ int msSDELayerOpen(layerObj *layer) {
       return(MS_FAILURE);
     }
   
-    // Create the connection handle and put into poolinfo->connection
+    /* Create the connection handle and put into poolinfo->connection */
     status = SE_connection_create(params[0], 
                                   params[1], 
                                   params[2], 
@@ -770,16 +773,16 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
     }
 
-    // Register the connection with the connection pooling API.  Give 
-    // msSDECloseConnection as the function to call when we run out of layer 
-    // instances using it
+    /* Register the connection with the connection pooling API.  Give  */
+    /* msSDECloseConnection as the function to call when we run out of layer  */
+    /* instances using it */
     msConnPoolRegister(layer, poolinfo, msSDECloseConnection);
-    msFreeCharArray(params, numparams); // done with parameter list
+    msFreeCharArray(params, numparams); /* done with parameter list */
   }
   
-  // Split the DATA member into its parameters using the comma
-  // Periods (.) are used to denote table names and schemas in SDE, 
-  // as are underscores (_).
+  /* Split the DATA member into its parameters using the comma */
+  /* Periods (.) are used to denote table names and schemas in SDE,  */
+  /* as are underscores (_). */
   params = split(layer->data, ',', &numparams);
   if(!params) {
     msSetError(MS_MEMERR, 
@@ -797,7 +800,7 @@ int msSDELayerOpen(layerObj *layer) {
   sde->column = params[1];
 
   if (numparams < 3){ 
-    // User didn't specify a version, we won't use one
+    /* User didn't specify a version, we won't use one */
     if (layer->debug) {
       msDebug("msSDELayerOpen(): Layer %s did not have a " 
               "specified version.\n", layer->name);
@@ -819,9 +822,9 @@ int msSDELayerOpen(layerObj *layer) {
     if(status != SE_SUCCESS) {
        
       if (status == SE_INVALID_RELEASE) {
-        // The user has incongruent versions of SDE, ie 8.2 client and 
-        // 8.3 server set the state_id to SE_DEFAULT_STATE_ID, which means   
-        // no version queries are done
+        /* The user has incongruent versions of SDE, ie 8.2 client and  */
+        /* 8.3 server set the state_id to SE_DEFAULT_STATE_ID, which means    */
+        /* no version queries are done */
         sde->state_id = SE_DEFAULT_STATE_ID;
       }
       else {
@@ -831,8 +834,8 @@ int msSDELayerOpen(layerObj *layer) {
     } 
   }
 
-  // Get the STATEID from the given version and set the stream to 
-  // that if we didn't already set it to SE_DEFAULT_STATE_ID.  
+  /* Get the STATEID from the given version and set the stream to  */
+  /* that if we didn't already set it to SE_DEFAULT_STATE_ID.   */
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
     status = SE_versioninfo_get_state_id(version, &sde->state_id);
     if(status != SE_SUCCESS) {
@@ -851,7 +854,7 @@ int msSDELayerOpen(layerObj *layer) {
       return(MS_FAILURE);
     }  
     if (SE_stateinfo_is_open (state)) {
-      // If the state is open for edits, we shouldn't be querying from it
+      /* If the state is open for edits, we shouldn't be querying from it */
       sde_error(status, 
                 "msSDELayerOpen()", 
                 "SE_stateinfo_is_open() -- State for version is open");
@@ -859,7 +862,7 @@ int msSDELayerOpen(layerObj *layer) {
     }
     SE_stateinfo_free (state); 
     
-  } // if (!(sde->state_id == SE_DEFAULT_STATE_ID))
+  } /* if (!(sde->state_id == SE_DEFAULT_STATE_ID)) */
   
   
   status = SE_layerinfo_create(NULL, &(sde->layerinfo));
@@ -894,7 +897,7 @@ int msSDELayerOpen(layerObj *layer) {
   }
 
 
-  // reset the stream
+  /* reset the stream */
   status = SE_stream_close(poolinfo->stream, 1);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerOpen()", "SE_stream_close()");
@@ -902,8 +905,8 @@ int msSDELayerOpen(layerObj *layer) {
   }  
 
 
-  // point to the SDE layer information 
-  // (note this might actually be in another layer)
+  /* point to the SDE layer information  */
+  /* (note this might actually be in another layer) */
   layer->layerinfo = sde; 
 
   sde->connection = poolinfo->connection;
@@ -952,7 +955,7 @@ void msSDELayerClose(layerObj *layer) {
   msSDELayerInfo *sde=NULL;
 
   sde = layer->layerinfo;
-  if (sde == NULL) return;  // Silently return if layer not opened.
+  if (sde == NULL) return;  /* Silently return if layer not opened. */
 
   if(layer->debug) 
     msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
@@ -1015,15 +1018,15 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     return(MS_FAILURE);
   }
   
-  // there is NO overlap, return MS_DONE
-  // (FIX: use this in ALL which shapes functions)
+  /* there is NO overlap, return MS_DONE */
+  /* (FIX: use this in ALL which shapes functions) */
   if(envelope.minx > rect.maxx) return(MS_DONE); 
   if(envelope.maxx < rect.minx) return(MS_DONE);
   if(envelope.miny > rect.maxy) return(MS_DONE);
   if(envelope.maxy < rect.miny) return(MS_DONE);
 
-  // set spatial constraint search shape
-  // crop against SDE layer extent *argh*
+  /* set spatial constraint search shape */
+  /* crop against SDE layer extent *argh* */
   envelope.minx = MS_MAX(rect.minx, envelope.minx); 
   envelope.miny = MS_MAX(rect.miny, envelope.miny);
   envelope.maxx = MS_MIN(rect.maxx, envelope.maxx);
@@ -1038,25 +1041,25 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   }
   constraint.filter.shape = shape;
 
-  // set spatial constraint column and table
+  /* set spatial constraint column and table */
   strcpy(constraint.table, sde->table);
   strcpy(constraint.column, sde->column);
 
-  // set a couple of other spatial constraint properties
+  /* set a couple of other spatial constraint properties */
   constraint.method = SM_ENVP;
   constraint.filter_type = SE_SHAPE_FILTER;
   constraint.truth = TRUE;
 
-  // See http://forums.esri.com/Thread.asp?c=2&f=59&t=108929&mc=4#msgid310273
-  // SE_queryinfo is a new SDE struct in ArcSDE 8.x that is a bit easier 
-  // (and faster) to use and will allow us to support joins in the future.  HCB
+  /* See http://forums.esri.com/Thread.asp?c=2&f=59&t=108929&mc=4#msgid310273 */
+  /* SE_queryinfo is a new SDE struct in ArcSDE 8.x that is a bit easier  */
+  /* (and faster) to use and will allow us to support joins in the future.  HCB */
   status = SE_queryinfo_create (&query_info);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_queryinfo_create()");
     return(MS_FAILURE);
   }
 
-  // set the tables -- just one at this point
+  /* set the tables -- just one at this point */
   status = SE_queryinfo_set_tables (query_info, 
                                     1, 
                                     (const CHAR **) &(sde->table),
@@ -1066,13 +1069,13 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     return(MS_FAILURE);
   }
 
-  // set the "where" clause
+  /* set the "where" clause */
   if(!(layer->filter.string))
-    // set to empty string
+    /* set to empty string */
     status = SE_queryinfo_set_where_clause (query_info, 
                                             (const CHAR * ) strdup(""));
   else
-    // set to the layer's filter.string
+    /* set to the layer's filter.string */
     status = SE_queryinfo_set_where_clause (query_info, 
                                  (const CHAR * ) strdup(layer->filter.string));
   if(status != SE_SUCCESS) {
@@ -1090,8 +1093,8 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     return(MS_FAILURE);
   }
   
-  // Join the spatial and feature tables.  If we specify the type of join
-  // we'll query faster than querying all tables individually (old method)
+  /* Join the spatial and feature tables.  If we specify the type of join */
+  /* we'll query faster than querying all tables individually (old method) */
   status = SE_queryinfo_set_query_type (query_info,SE_QUERYTYPE_JSF);
   if(status != SE_SUCCESS) {
     sde_error(status, 
@@ -1102,15 +1105,15 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   
 
 
-  // reset the stream
+  /* reset the stream */
   status = SE_stream_close(sde->stream, 1);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetShape()", "SE_stream_close()");
     return(MS_FAILURE);
   }
-  //Set the stream state back to the state_id of our user-specified version
-  //This must be done every time after the stream is reset before the 
-  //query happens.
+  /* Set the stream state back to the state_id of our user-specified version */
+  /* This must be done every time after the stream is reset before the  */
+  /* query happens. */
 
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
 
@@ -1144,14 +1147,14 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     return(MS_FAILURE);
   }
   
-  // *should* be ready to step through shapes now
+  /* *should* be ready to step through shapes now */
   status = SE_stream_execute(sde->stream); 
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_stream_execute()");
     return(MS_FAILURE);
   }
 
-  // clean-up
+  /* clean-up */
   SE_shape_free(shape);
   SE_queryinfo_free (query_info);
   
@@ -1183,7 +1186,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
     return(MS_FAILURE);
   }
 
-  // fetch the next record from the stream
+  /* fetch the next record from the stream */
   status = SE_stream_fetch(sde->stream);
 
   if(status == SE_FINISHED)
@@ -1193,13 +1196,13 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
     return(MS_FAILURE);
   }
 
-  // get the shape and values (first column is the shape id, 
-  // second is the shape itself)
+  /* get the shape and values (first column is the shape id,  */
+  /* second is the shape itself) */
   status = sdeGetRecord(layer, shape);
   if(status != MS_SUCCESS)
-    return(MS_FAILURE); // something went wrong fetching the record/shape
+    return(MS_FAILURE); /* something went wrong fetching the record/shape */
 
-  if(shape->numlines == 0) // null shape, skip it
+  if(shape->numlines == 0) /* null shape, skip it */
     return(msSDELayerNextShape(layer, shape));
 
   return(MS_SUCCESS);
@@ -1254,7 +1257,7 @@ int msSDELayerGetItems(layerObj *layer) {
   }
 
   for(i=0; i<n; i++) layer->items[i] = strdup(itemdefs[i].column_name);
-  layer->items[n] = strdup(sde->row_id_column); // row id
+  layer->items[n] = strdup(sde->row_id_column); /* row id */
 
   layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, 
                                               sizeof(SE_COLUMN_DEF));
@@ -1267,13 +1270,13 @@ int msSDELayerGetItems(layerObj *layer) {
 
 
   
-  for(i=0; i<layer->numitems; i++) { // requested columns
+  for(i=0; i<layer->numitems; i++) { /* requested columns */
     if(strcmp(layer->items[i],sde->row_id_column) == 0)      
       continue;
 
-    for(j=0; j<n; j++) { // all columns
+    for(j=0; j<n; j++) { /* all columns */
       if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { 
-        // found it
+        /* found it */
         ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = itemdefs[j];
         break;
       }
@@ -1354,7 +1357,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
     return(MS_FAILURE);
   }
 
-  // must be at least one thing to retrieve (i.e. spatial column)
+  /* must be at least one thing to retrieve (i.e. spatial column) */
   if(layer->numitems < 1) { 
     msSetError( MS_MISCERR, 
                 "No items requested, SDE requires at least one item.", 
@@ -1364,7 +1367,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 
 
 
-  // reset the stream
+  /* reset the stream */
   status = SE_stream_close(sde->stream, 1);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetShape()", "SE_stream_close()");
@@ -1383,7 +1386,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
  
   status = sdeGetRecord(layer, shape);
   if(status != MS_SUCCESS)
-    return(MS_FAILURE); // something went wrong fetching the record/shape
+    return(MS_FAILURE); /* something went wrong fetching the record/shape */
 
   return(MS_SUCCESS);
 #else
@@ -1438,13 +1441,13 @@ int msSDELayerInitItemInfo(layerObj *layer)
     return(MS_FAILURE);
   }
 
-  for(i=0; i<layer->numitems; i++) { // requested columns
+  for(i=0; i<layer->numitems; i++) { /* requested columns */
     if(strcmp(layer->items[i],sde->row_id_column) == 0)      
       continue;
 
-    for(j=0; j<n; j++) { // all columns
+    for(j=0; j<n; j++) { /* all columns */
       if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { 
-        // found it
+        /* found it */
         ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = itemdefs[j];
         break;
       }
@@ -1597,12 +1600,12 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
 #endif
 }
 
-// -------- Raster support --------
+/* -------- Raster support -------- */
 
 #define MAXCOLORS 256
 
 #ifdef USE_SDERASTER
-void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDINFO rasterband, int cmap[]) { //FIXME: size check for cmap[] !
+void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDINFO rasterband, int cmap[]) { /* FIXME: size check for cmap[] ! */
   LONG rc, cm_bottom, cm, num_cm_entries;
   SE_COLORMAP_TYPE colormap_type;
   SE_COLORMAP_DATA_TYPE data_type;
@@ -1613,12 +1616,12 @@ void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDIN
   
   if (!SE_rasbandinfo_has_colormap(rasterband)) {
     if(layer->debug) msDebug("msSDEGetColorMap(): Generating color map\n");
-    //TODO: other than 8 bit (from drawTIFF mapraster.c)
+    /* TODO: other than 8 bit (from drawTIFF mapraster.c) */
     for (cm=0; cm<256; cm++) {
-      pixel.red = pixel.green = pixel.blue = pixel.pen = cm; // offsite would be specified in range 0 to 255
+      pixel.red = pixel.green = pixel.blue = pixel.pen = cm; /* offsite would be specified in range 0 to 255 */
 
-      //if(!MS_COMPARE_COLORS(pixel, layer->offsite))	    
-      //  cmap[cm] = msAddColorGD(map,img, 0, (cm>>4)*17, (cm>>4)*17, (cm>>4)*17); // use raster color
+      /* if(!MS_COMPARE_COLORS(pixel, layer->offsite))	     */
+      /* cmap[cm] = msAddColorGD(map,img, 0, (cm>>4)*17, (cm>>4)*17, (cm>>4)*17); // use raster color */
       cmap[cm] = gdImageColorAllocate(img, (cm>>4)*17, (cm>>4)*17, (cm>>4)*17);
     }
     return;
@@ -1782,7 +1785,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   }
   num_cols = 1;
   attrs = (CHAR **) malloc (num_cols * sizeof(CHAR *));
-  attrs[0] = proc_value;//sde->column;
+  attrs[0] = proc_value;/* sde->column; */
 
   proc_value = NULL;
   free(proc_value);
@@ -1912,7 +1915,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
       effminx, effminy, effmaxx, effmaxy);
 
     if (((maxx-minx)/cell_size) >= img->sx && ((maxy-miny)/cell_size) >= img->sy)
-      break; //use this level        
+      break; /* use this level         */
   }
 
   /* make sure the user enter extent overlaps the image extent */
@@ -1955,13 +1958,13 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
     return(MS_FAILURE);
   }
 
-  //Setup RGB image
+  /* Setup RGB image */
   rgbimg = gdImageCreateTrueColor((constrmaxx-constrminx+1)*tile_width, (constrmaxy-constrminy+1)*tile_height);
-  //int backcol = gdImageColorAllocate(rgbimg, map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
+  /* int backcol = gdImageColorAllocate(rgbimg, map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue); */
   backcol = gdImageColorAllocate(rgbimg, 0, 0, 0);
   gdImageFilledRectangle(rgbimg, 0, 0, rgbimg->sx, rgbimg->sy, backcol);
   
-  // set up the color map (for 1-band images)
+  /* set up the color map (for 1-band images) */
   msSDEGetColorMap(map, layer, rgbimg, hRasBnd, cmap);
 
   while (SE_SUCCESS == status)
@@ -1994,7 +1997,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
         return(MS_FAILURE);
       }
 
-      if (length==0) continue; //holes (partial tiles: length != tile_height*tile_width)
+      if (length==0) continue; /* holes (partial tiles: length != tile_height*tile_width) */
       
       for(i=0; i<tile_height; i++)
         for(j=0; j<tile_width; j++) {
@@ -2036,21 +2039,21 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   free (sqlc->where);
   free (&tpix);
   SE_sql_construct_free (sqlc);
-  //ret = SE_stream_free (sde->stream);
+  /* ret = SE_stream_free (sde->stream); */
 
-  //backcol = gdImageColorResolve(img, map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
-  //gdImageFilledRectangle(img, 0, 0, img->sx, img->sy, backcol);
+  /* backcol = gdImageColorResolve(img, map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue); */
+  /* gdImageFilledRectangle(img, 0, 0, img->sx, img->sy, backcol); */
   
   gdImageCopyResized(img, rgbimg, 0, 0, 
     (LONG) ((minx - (env.minx-coord_offset_x)-constrminx*coord_tile_width) / cell_size),
     (LONG) (((env.maxy - coord_offset_y) - maxy -constrminy*coord_tile_height) / cell_size),
     img->sx, img->sy,
     (LONG) ((maxx-minx)/cell_size), (LONG) ((maxy-miny)/cell_size));
-    //int dstX, int dstY, int srcX, int srcY, int destW, int destH, int srcW, int srcH)
+    /* int dstX, int dstY, int srcX, int srcY, int destW, int destH, int srcW, int srcH) */
   gdImageDestroy(rgbimg);
   
-  // using pooled connections for SDE, closed when map file is closed
-  //msSDELayerClose(layer); 
+  /* using pooled connections for SDE, closed when map file is closed */
+  /* msSDELayerClose(layer);  */
 
   return(0);
 #else

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.45  2005/02/06 18:07:16  dave
  * Rolling back the patch.
  *
@@ -68,12 +71,12 @@ MS_CVSID("$Id$")
 
 typedef struct ms_POSTGIS_layer_info_t
 {
-    char        *sql;       //sql query to send to DB
-    PGconn     *conn;   //connection to db
-    long        row_num;    //what row is the NEXT to be read (for random access)
-    PGresult   *query_result;//for fetching rows from the db
-    char        *urid_name; // name of user-specified unique identifier or OID
-    char        *user_srid; //zero length = calculate, non-zero means using this value!
+    char        *sql;       /* sql query to send to DB */
+    PGconn     *conn;   /* connection to db */
+    long        row_num;    /* what row is the NEXT to be read (for random access) */
+    PGresult   *query_result;/* for fetching rows from the db */
+    char        *urid_name; /* name of user-specified unique identifier or OID */
+    char        *user_srid; /* zero length = calculate, non-zero means using this value! */
 
 } msPOSTGISLayerInfo;
 
@@ -99,8 +102,8 @@ void setPostGISLayerInfo(layerObj *layer,msPOSTGISLayerInfo *postgislayerinfo )
 }
 
 
-//remove white space
-//dont send in empty strings or strings with just " " in them!
+/* remove white space */
+/* dont send in empty strings or strings with just " " in them! */
 char* removeWhite(char *str)
 {
     int initial;
@@ -111,12 +114,12 @@ char* removeWhite(char *str)
     {
         memmove(str, str+ initial, strlen(str) - initial+1);
     }
-    //now final
+    /* now final */
     if (strlen(str) == 0)
         return str;
     if (str[ strlen(str)-1] == ' ')
     {
-        //have to remove from end
+        /* have to remove from end */
         orig = str;
         loc = &str[ strlen(str)-1];
         while (( *loc = ' ') && (loc >orig) )
@@ -196,8 +199,8 @@ static char *DATAERRORMESSAGE(char *dString, char *preamble)
         sprintf(tmp,"Mappostgis.c - version of Jan 23/2004.\n");
         strcat(m,tmp);
 
-//printf("%s",m);
-//printf("size = %i\n",strlen(m));
+/* printf("%s",m); */
+/* printf("size = %i\n",strlen(m)); */
 
     return m;
 
@@ -220,8 +223,8 @@ static void msPOSTGISCloseConnection( void *conn_handle )
 
 static int gBYTE_ORDER = 0;
 
-//open up a connection to the postgresql database using the connection string in layer->connection
-// ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv"
+/* open up a connection to the postgresql database using the connection string in layer->connection */
+/* ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv" */
 int msPOSTGISLayerOpen(layerObj *layer)
 {
     msPOSTGISLayerInfo  *layerinfo;
@@ -235,7 +238,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
     {
         if (layer->debug)
             msDebug("msPOSTGISLayerOpen :: layer is already open!!\n");
-        return MS_SUCCESS;  //already open
+        return MS_SUCCESS;  /* already open */
     }
 
     if( layer->data == NULL )
@@ -249,10 +252,10 @@ int msPOSTGISLayerOpen(layerObj *layer)
         return(MS_FAILURE);
     }
 
-    //have to setup a connection to the database
+    /* have to setup a connection to the database */
 
     layerinfo = (msPOSTGISLayerInfo *) malloc( sizeof(msPOSTGISLayerInfo) );
-    layerinfo->sql = NULL; //calc later
+    layerinfo->sql = NULL; /* calc later */
     layerinfo->row_num=0;
     layerinfo->query_result= NULL;
     layerinfo->urid_name= NULL;
@@ -296,7 +299,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
     return MS_SUCCESS;
 }
 
-// Return MS_TRUE if layer is open, MS_FALSE otherwise.
+/* Return MS_TRUE if layer is open, MS_FALSE otherwise. */
 int msPOSTGISLayerIsOpen(layerObj *layer)
 {
     if (getPostGISLayerInfo(layer))
@@ -306,7 +309,7 @@ int msPOSTGISLayerIsOpen(layerObj *layer)
 }
 
 
-// Free the itemindexes array in a layer.
+/* Free the itemindexes array in a layer. */
 void    msPOSTGISLayerFreeItemInfo(layerObj *layer)
 {
 
@@ -319,7 +322,7 @@ void    msPOSTGISLayerFreeItemInfo(layerObj *layer)
 }
 
 
-//allocate the iteminfo index array - same order as the item list
+/* allocate the iteminfo index array - same order as the item list */
 int msPOSTGISLayerInitItemInfo(layerObj *layer)
 {
     int   i;
@@ -346,24 +349,24 @@ if (layer->debug)
     itemindexes = (int*)layer->iteminfo;
     for(i=0;i<layer->numitems;i++)
     {
-        itemindexes[i] = i; //last one is always the geometry one - the rest are non-geom
+        itemindexes[i] = i; /* last one is always the geometry one - the rest are non-geom */
     }
 
     return(MS_SUCCESS);
 }
 
 
-//Since we now have PostGIST 0.5, and 0.6  calling conventions,
-// we have to attempt to handle the database in several ways.  If we do the wrong
-// thing, then it'll throw an error and we can rollback and try again.
-//
-// 2. attempt to do 0.6 calling convention (spatial ref system needed)
-// 3. attempt to do 0.5 calling convention (no spatial ref system)
+/* Since we now have PostGIST 0.5, and 0.6  calling conventions, */
+/* we have to attempt to handle the database in several ways.  If we do the wrong */
+/* thing, then it'll throw an error and we can rollback and try again. */
+/*  */
+/* 2. attempt to do 0.6 calling convention (spatial ref system needed) */
+/* 3. attempt to do 0.5 calling convention (no spatial ref system) */
 
-// The difference between 0.5 and 0.6 is that the bounding box must be
-// declared to be in the same the same spatial reference system as the
-// geometry column.  For 0.6, we determine the SRID of the column and then
-// tag the bounding box as the same SRID.
+/* The difference between 0.5 and 0.6 is that the bounding box must be */
+/* declared to be in the same the same spatial reference system as the */
+/* geometry column.  For 0.6, we determine the SRID of the column and then */
+/* tag the bounding box as the same SRID. */
 
 static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
 {
@@ -398,15 +401,15 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
 
     pos_from = strstr(geom_table, " from ");
     if (pos_from ==NULL)
-        pos_from = strstr(geom_table, " FROM "); //try uppercase
+        pos_from = strstr(geom_table, " FROM "); /* try uppercase */
 
     if (pos_from == NULL) {
         strcpy(f_table_name, geom_table);
     }
-    else { // geom_table is a sub-select clause
-        pos_ftab = pos_from + 6; // This should be the start of the ftab name
-        pos_space = strstr(pos_ftab, " "); // First space
-        //pos_paren = strstr(pos_ftab, ")"); // Closing paren of clause
+    else { /* geom_table is a sub-select clause */
+        pos_ftab = pos_from + 6; /* This should be the start of the ftab name */
+        pos_space = strstr(pos_ftab, " "); /* First space */
+        /* pos_paren = strstr(pos_ftab, ")"); // Closing paren of clause */
 
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -424,7 +427,7 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
 
             return(MS_FAILURE);
         }
-        if (pos_paren < pos_space) { // closing parenthesis preceeds any space
+        if (pos_paren < pos_space) { /* closing parenthesis preceeds any space */
             strncpy(f_table_name, pos_ftab, pos_paren - pos_ftab);
             f_table_name[pos_paren - pos_ftab] = '\0';
         }
@@ -443,7 +446,7 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
     }
     else
     {
-        columns_wanted[0] = 0; //len=0
+        columns_wanted[0] = 0; /* len=0 */
         for (t=0;t<layer->numitems; t++)
         {
             sprintf(temp,"%s::text,",layer->items[t]);
@@ -460,11 +463,11 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
     sprintf(box3d,"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy);
 
 
-    // substitute token '!BOX!' in geom_table with the box3d - do at most 1 substitution
+    /* substitute token '!BOX!' in geom_table with the box3d - do at most 1 substitution */
 
     if (strstr(geom_table,"!BOX!"))
     {
-        // need to do a substition
+        /* need to do a substition */
         char    *start, *end;
         char    *result;
 
@@ -489,7 +492,7 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
             sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )",
                     columns_wanted,geom_table,geom_column,box3d,removeWhite(f_table_name),removeWhite(geom_column));
         }
-        else    //use the user specified version
+        else    /* use the user specified version */
         {
             sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )",
                     columns_wanted,geom_table,geom_column,box3d,user_srid);
@@ -512,7 +515,7 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
 
 
 
-    //start transaction required by cursor
+    /* start transaction required by cursor */
 
     result = PQexec(layerinfo->conn, "BEGIN");
     if (!(result) || PQresultStatus(result) != PGRES_COMMAND_OK)
@@ -522,13 +525,13 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
 
         PQclear(result);
         layerinfo->query_result = NULL;
-        return(MS_FAILURE);     // totally screwed
+        return(MS_FAILURE);     /* totally screwed */
     }
 
 
     PQclear(result);
 
-    //set enable_seqscan=off not required (already done)
+    /* set enable_seqscan=off not required (already done) */
 
     if (layer->debug)
         msDebug("query_string_0_6:%s\n",query_string_0_6);
@@ -536,7 +539,7 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
 
     if ( (result!=NULL) && (PQresultStatus(result) == PGRES_COMMAND_OK) )
     {
-        //PQclear(result);
+        /* PQclear(result); */
         *sql_results = result;
         strcpy(query_string, query_string_0_6 );
         return (MS_SUCCESS);
@@ -545,8 +548,8 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
 
     strncpy(postgresqlError,PQerrorMessage(layerinfo->conn),900);
 
-    //okay, that command didnt work.  Its probably a 0.5 database
-    // We have to everything again, after performing a rollback.
+    /* okay, that command didnt work.  Its probably a 0.5 database */
+    /* We have to everything again, after performing a rollback. */
 
     PQclear(result);
     result = PQexec(layerinfo->conn, "rollback" );
@@ -559,7 +562,7 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
                    "prep_DB()",query_string_0_6);
         PQclear(result);
         layerinfo->query_result = NULL;
-        return(MS_FAILURE);     // totally screwed
+        return(MS_FAILURE);     /* totally screwed */
     }
 
     PQclear(result);
@@ -582,18 +585,18 @@ static int prep_DB(char *geom_table,char  *geom_column,layerObj *layer, PGresult
 
     PQclear(result);
     layerinfo->query_result = NULL;
-    return(MS_FAILURE);     // totally screwed
+    return(MS_FAILURE);     /* totally screwed */
 
 
 }
 
 
-// build the neccessary SQL
-// allocate a cursor for the SQL query
-// get ready to read from the cursor
-//
-// For queries, we need to also retreive the OID for each of the rows
-// So GetShape() can randomly access a row.
+/* build the neccessary SQL */
+/* allocate a cursor for the SQL query */
+/* get ready to read from the cursor */
+/*  */
+/* For queries, we need to also retreive the OID for each of the rows */
+/* So GetShape() can randomly access a row. */
 
 int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 {
@@ -619,7 +622,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 
     if (layerinfo == NULL)
     {
-        //layer not opened yet
+        /* layer not opened yet */
         msSetError(MS_QUERYERR, "msPOSTGISLayerWhichShapes called on unopened layer (layerinfo = NULL)",
                    "msPOSTGISLayerWhichShapes()");
         return(MS_FAILURE);
@@ -633,8 +636,8 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
         return(MS_FAILURE);
     }
 
-    query_str = (char *) malloc(6000); //should be big enough
-    memset(query_str,0,6000);       //zero it out
+    query_str = (char *) malloc(6000); /* should be big enough */
+    memset(query_str,0,6000);       /* zero it out */
 
     msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid,layer->debug);
 
@@ -645,7 +648,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
     free(table_name);
 
     if (set_up_result != MS_SUCCESS)
-        return set_up_result; //relay error
+        return set_up_result; /* relay error */
     layerinfo->sql = query_str;
 
 
@@ -672,7 +675,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 
     return(MS_SUCCESS);
 }
-// Releases the cursor and closes the results of the given layer
+/* Releases the cursor and closes the results of the given layer */
 int msPOSTGISLayerResultClose(layerObj *layer)
 {
     msPOSTGISLayerInfo  *layerinfo;
@@ -690,7 +693,7 @@ int msPOSTGISLayerResultClose(layerObj *layer)
         return MS_SUCCESS;
 }
 
-// Close the postgis record set and connection
+/* Close the postgis record set and connection */
 int msPOSTGISLayerClose(layerObj *layer)
 {
     msPOSTGISLayerInfo  *layerinfo;
@@ -736,25 +739,25 @@ int msPOSTGISLayerClose(layerObj *layer)
     return(MS_SUCCESS);
 }
 
-//*******************************************************
-// wkb is assumed to be 2d (force_2d)
-// and wkb is a GEOMETRYCOLLECTION (force_collection)
-// and wkb is in the endian of this computer (asbinary(...,'[XN]DR'))
-// each of the sub-geom inside the collection are point,linestring, or polygon
-//
-// also, int is 32bits long
-//       double is 64bits long
-//*******************************************************
+/* ******************************************************* */
+/* wkb is assumed to be 2d (force_2d) */
+/* and wkb is a GEOMETRYCOLLECTION (force_collection) */
+/* and wkb is in the endian of this computer (asbinary(...,'[XN]DR')) */
+/* each of the sub-geom inside the collection are point,linestring, or polygon */
+/*  */
+/* also, int is 32bits long */
+/* double is 64bits long */
+/* ******************************************************* */
 
 
-// convert the wkb into points
-//  points -> pass through
-//  lines->   constituent points
-//  polys->   treat ring like line and pull out the consituent points
+/* convert the wkb into points */
+/* points -> pass through */
+/* lines->   constituent points */
+/* polys->   treat ring like line and pull out the consituent points */
 
 static int  force_to_points(char    *wkb, shapeObj *shape)
 {
-    //we're going to make a 'line' for each entity (point, line or ring) in the geom collection
+    /* we're going to make a 'line' for each entity (point, line or ring) in the geom collection */
 
     int offset =0,pt_offset;
     int ngeoms ;
@@ -762,15 +765,15 @@ static int  force_to_points(char    *wkb, shapeObj *shape)
     int type,nrings,npoints;
     lineObj line={0,NULL};
 
-    shape->type = MS_SHAPE_NULL;  //nothing in it
+    shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
     memcpy( &ngeoms, &wkb[5], 4);
-    offset = 9;  //were the first geometry is
+    offset = 9;  /* were the first geometry is */
     for (t=0; t<ngeoms; t++)
     {
-        memcpy( &type, &wkb[offset+1], 4);  // type of this geometry
+        memcpy( &type, &wkb[offset+1], 4);  /* type of this geometry */
 
-        if (type ==1)   //POINT
+        if (type ==1)   /* POINT */
         {
             shape->type = MS_SHAPE_POINT;
             line.numpoints = 1;
@@ -783,38 +786,38 @@ static int  force_to_points(char    *wkb, shapeObj *shape)
             free(line.point);
         }
 
-        if (type == 2) //linestring
+        if (type == 2) /* linestring */
         {
             shape->type = MS_SHAPE_POINT;
-            memcpy(&line.numpoints, &wkb[offset+5],4); //num points
-            line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); //point struct
+            memcpy(&line.numpoints, &wkb[offset+5],4); /* num points */
+            line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); /* point struct */
             for(u=0;u<line.numpoints ; u++)
             {
                 memcpy( &line.point[u].x , &wkb[offset+9 + (16 * u)], 8);
                 memcpy( &line.point[u].y , &wkb[offset+9 + (16 * u)+8], 8);
             }
-            offset += 9 +(16)*line.numpoints;  //length of object
+            offset += 9 +(16)*line.numpoints;  /* length of object */
             msAddLine(shape,&line);
             free(line.point);
         }
-        if (type == 3) //polygon
+        if (type == 3) /* polygon */
         {
             shape->type = MS_SHAPE_POINT;
-            memcpy(&nrings, &wkb[offset+5],4); //num rings
-            //add a line for each polygon ring
+            memcpy(&nrings, &wkb[offset+5],4); /* num rings */
+            /* add a line for each polygon ring */
             pt_offset = 0;
-            offset += 9; //now points at 1st linear ring
-            for (u=0;u<nrings;u++)  //for each ring, make a line
+            offset += 9; /* now points at 1st linear ring */
+            for (u=0;u<nrings;u++)  /* for each ring, make a line */
             {
-                memcpy(&npoints, &wkb[offset],4); //num points
+                memcpy(&npoints, &wkb[offset],4); /* num points */
                 line.numpoints = npoints;
-                line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); //point struct
+                line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
                 for(v=0;v<npoints;v++)
                 {
                     memcpy( &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
                     memcpy( &line.point[v].y , &wkb[offset+4 + (16 * v)+8], 8);
                 }
-                //make offset point to next linear ring
+                /* make offset point to next linear ring */
                 msAddLine(shape,&line);
                 free(line.point);
                 offset += 4+ (16)*npoints;
@@ -825,10 +828,10 @@ static int  force_to_points(char    *wkb, shapeObj *shape)
     return(MS_SUCCESS);
 }
 
-//convert the wkb into lines
-//  points-> remove
-//  lines -> pass through
-//  polys -> treat rings as lines
+/* convert the wkb into lines */
+/* points-> remove */
+/* lines -> pass through */
+/* polys -> treat rings as lines */
 
 static int  force_to_lines(char *wkb, shapeObj *shape)
 {
@@ -839,48 +842,48 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
     lineObj line={0,NULL};
 
 
-    shape->type = MS_SHAPE_NULL;  //nothing in it
+    shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
     memcpy( &ngeoms, &wkb[5], 4);
-    offset = 9;  //were the first geometry is
+    offset = 9;  /* were the first geometry is */
     for (t=0; t<ngeoms; t++)
     {
-        memcpy( &type, &wkb[offset+1], 4);  // type of this geometry
+        memcpy( &type, &wkb[offset+1], 4);  /* type of this geometry */
 
-        //cannot do anything with a point
+        /* cannot do anything with a point */
 
-        if (type == 2) //linestring
+        if (type == 2) /* linestring */
         {
             shape->type = MS_SHAPE_LINE;
-            memcpy(&line.numpoints, &wkb[offset+5],4); //num points
-            line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); //point struct
+            memcpy(&line.numpoints, &wkb[offset+5],4); /* num points */
+            line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); /* point struct */
             for(u=0;u<line.numpoints ; u++)
             {
                 memcpy( &line.point[u].x , &wkb[offset+9 + (16 * u)], 8);
                 memcpy( &line.point[u].y , &wkb[offset+9 + (16 * u)+8], 8);
             }
-            offset += 9 +(16)*line.numpoints;  //length of object
+            offset += 9 +(16)*line.numpoints;  /* length of object */
             msAddLine(shape,&line);
             free(line.point);
         }
-        if (type == 3) //polygon
+        if (type == 3) /* polygon */
         {
             shape->type = MS_SHAPE_LINE;
-            memcpy(&nrings, &wkb[offset+5],4); //num rings
-            //add a line for each polygon ring
+            memcpy(&nrings, &wkb[offset+5],4); /* num rings */
+            /* add a line for each polygon ring */
             pt_offset = 0;
-            offset += 9; //now points at 1st linear ring
-            for (u=0;u<nrings;u++)  //for each ring, make a line
+            offset += 9; /* now points at 1st linear ring */
+            for (u=0;u<nrings;u++)  /* for each ring, make a line */
             {
-                memcpy(&npoints, &wkb[offset],4); //num points
+                memcpy(&npoints, &wkb[offset],4); /* num points */
                 line.numpoints = npoints;
-                line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); //point struct
+                line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
                 for(v=0;v<npoints;v++)
                 {
                     memcpy( &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
                     memcpy( &line.point[v].y , &wkb[offset+4 + (16 * v)+8], 8);
                 }
-                //make offset point to next linear ring
+                /* make offset point to next linear ring */
                 msAddLine(shape,&line);
                 free(line.point);
                 offset += 4+ (16)*npoints;
@@ -890,9 +893,9 @@ static int  force_to_lines(char *wkb, shapeObj *shape)
     return(MS_SUCCESS);
 }
 
-// point   -> reject
-// line    -> reject
-// polygon -> lines of linear rings
+/* point   -> reject */
+/* line    -> reject */
+/* polygon -> lines of linear rings */
 static int  force_to_polygons(char  *wkb, shapeObj *shape)
 {
 
@@ -903,32 +906,32 @@ static int  force_to_polygons(char  *wkb, shapeObj *shape)
     lineObj line={0,NULL};
 
 
-    shape->type = MS_SHAPE_NULL;  //nothing in it
+    shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
     memcpy( &ngeoms, &wkb[5], 4);
-    offset = 9;  //were the first geometry is
+    offset = 9;  /* were the first geometry is */
     for (t=0; t<ngeoms; t++)
     {
-        memcpy( &type, &wkb[offset+1], 4);  // type of this geometry
+        memcpy( &type, &wkb[offset+1], 4);  /* type of this geometry */
 
-        if (type == 3) //polygon
+        if (type == 3) /* polygon */
         {
             shape->type = MS_SHAPE_POLYGON;
-            memcpy(&nrings, &wkb[offset+5],4); //num rings
-            //add a line for each polygon ring
+            memcpy(&nrings, &wkb[offset+5],4); /* num rings */
+            /* add a line for each polygon ring */
             pt_offset = 0;
-            offset += 9; //now points at 1st linear ring
-            for (u=0;u<nrings;u++)  //for each ring, make a line
+            offset += 9; /* now points at 1st linear ring */
+            for (u=0;u<nrings;u++)  /* for each ring, make a line */
             {
-                memcpy(&npoints, &wkb[offset],4); //num points
+                memcpy(&npoints, &wkb[offset],4); /* num points */
                 line.numpoints = npoints;
-                line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); //point struct
+                line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
                 for(v=0;v<npoints;v++)
                 {
                     memcpy( &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
                     memcpy( &line.point[v].y , &wkb[offset+4 + (16 * v)+8], 8);
                 }
-                //make offset point to next linear ring
+                /* make offset point to next linear ring */
                 msAddLine(shape,&line);
                 free(line.point);
                 offset += 4+ (16)*npoints;
@@ -938,9 +941,9 @@ static int  force_to_polygons(char  *wkb, shapeObj *shape)
     return(MS_SUCCESS);
 }
 
-// if there is any polygon in wkb, return force_polygon
-// if there is any line in wkb, return force_line
-// otherwise return force_point
+/* if there is any polygon in wkb, return force_polygon */
+/* if there is any line in wkb, return force_line */
+/* otherwise return force_point */
 
 static int  dont_force(char *wkb, shapeObj *shape)
 {
@@ -949,17 +952,17 @@ static int  dont_force(char *wkb, shapeObj *shape)
     int type,t;
     int     best_type;
 
-//printf("dont force");
+/* printf("dont force"); */
 
-    best_type = MS_SHAPE_NULL;  //nothing in it
+    best_type = MS_SHAPE_NULL;  /* nothing in it */
 
     memcpy( &ngeoms, &wkb[5], 4);
-    offset = 9;  //were the first geometry is
+    offset = 9;  /* were the first geometry is */
     for (t=0; t<ngeoms; t++)
     {
-        memcpy( &type, &wkb[offset+1], 4);  // type of this geometry
+        memcpy( &type, &wkb[offset+1], 4);  /* type of this geometry */
 
-        if (type == 3) //polygon
+        if (type == 3) /* polygon */
         {
             best_type = MS_SHAPE_POLYGON;
         }
@@ -987,10 +990,10 @@ static int  dont_force(char *wkb, shapeObj *shape)
     }
 
 
-    return(MS_FAILURE); //unknown type
+    return(MS_FAILURE); /* unknown type */
 }
 
-//find the bounds of the shape
+/* find the bounds of the shape */
 static void find_bounds(shapeObj *shape)
 {
     int t,u;
@@ -1027,9 +1030,9 @@ static void find_bounds(shapeObj *shape)
 }
 
 
-//find the next shape with the appropriate shape type (convert it if necessary)
-// also, load in the attribute data
-//MS_DONE => no more data
+/* find the next shape with the appropriate shape type (convert it if necessary) */
+/* also, load in the attribute data */
+/* MS_DONE => no more data */
 
 int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
 {
@@ -1040,8 +1043,8 @@ int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
     layerinfo = getPostGISLayerInfo(layer);
 
 
-//if (layer->debug)
-//    msDebug("msPOSTGISLayerNextShape called\n");
+/* if (layer->debug) */
+/* msDebug("msPOSTGISLayerNextShape called\n"); */
 
     if (layerinfo == NULL)
     {
@@ -1052,18 +1055,18 @@ int msPOSTGISLayerNextShape(layerObj *layer, shapeObj *shape)
 
 
     result= msPOSTGISLayerGetShapeRandom(layer, shape, &(layerinfo->row_num)   );
-    // getshaperandom will increment the row_num
-    //layerinfo->row_num   ++;
+    /* getshaperandom will increment the row_num */
+    /* layerinfo->row_num   ++; */
 
     return result;
 }
 
 
 
-//Used by NextShape() to access a shape in the query set
-// TODO: only fetch 1000 rows at a time.  This should check to see if the
-//       requested feature is in the set.  If it is, return it, otherwise
-//     grab the next 1000 rows.
+/* Used by NextShape() to access a shape in the query set */
+/* TODO: only fetch 1000 rows at a time.  This should check to see if the */
+/* requested feature is in the set.  If it is, return it, otherwise */
+/* grab the next 1000 rows. */
 int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 {
     msPOSTGISLayerInfo  *layerinfo;
@@ -1075,7 +1078,7 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 
     layerinfo = getPostGISLayerInfo( layer);
 
-//fprintf(stderr,"msPOSTGISLayerGetShapeRandom : called row %li\n",record);
+/* fprintf(stderr,"msPOSTGISLayerGetShapeRandom : called row %li\n",record); */
 
     if (layerinfo == NULL)
     {
@@ -1104,7 +1107,7 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 
         if (  (*record) < PQntuples(layerinfo->query_result) )
         {
-            //retreive an item
+            /* retreive an item */
             wkb = (char *) PQgetvalue(layerinfo->query_result, (*record), layer->numitems);
             switch(layer->type)
             {
@@ -1137,7 +1140,7 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
             }
             if (shape->type != MS_SHAPE_NULL)
             {
-                //have to retreive the attributes
+                /* have to retreive the attributes */
                     shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
                 for (t=0;t<layer->numitems;t++)
                 {
@@ -1146,23 +1149,23 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
                      size = PQgetlength(layerinfo->query_result,(*record), t ) ;
                      temp2 = (char *) malloc(size+1 );
                      memcpy(temp2, temp, size);
-                     temp2[size] = 0; //null terminate it
+                     temp2[size] = 0; /* null terminate it */
 
                      shape->values[t] = temp2;
                 }
-                temp = (char *) PQgetvalue(layerinfo->query_result, (*record), t+1); // t is WKB, t+1 is OID
+                temp = (char *) PQgetvalue(layerinfo->query_result, (*record), t+1); /* t is WKB, t+1 is OID */
                 record_oid = strtol (temp,NULL,10);
 
                 shape->index = record_oid;
                 shape->numvalues = layer->numitems;
 
                 find_bounds(shape);
-                (*record)++;        //move to next shape
+                (*record)++;        /* move to next shape */
                 return (MS_SUCCESS);
             }
             else
             {
-                (*record)++; //move to next shape
+                (*record)++; /* move to next shape */
             }
         }
         else
@@ -1178,7 +1181,7 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 }
 
 
-// Execute a query on the DB based on record being an OID.
+/* Execute a query on the DB based on record being an OID. */
 
 int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 {
@@ -1188,7 +1191,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     char    geom_column_name[5000];
     char    urid_name[5000];
     char    user_srid[5000];
-    //int   nitems;
+    /* int   nitems; */
     char    columns_wanted[5000];
     char    temp[5000];
 
@@ -1206,18 +1209,18 @@ if (layer->debug)
 
     if (layerinfo == NULL)
     {
-        //layer not opened yet
+        /* layer not opened yet */
         msSetError(MS_QUERYERR, "msPOSTGISLayerGetShape called on unopened layer (layerinfo = NULL)",
                  "msPOSTGISLayerGetShape()");
         return(MS_FAILURE);
     }
 
-    query_str = (char *) malloc(6000); //should be big enough
-    memset(query_str,0,6000);       //zero it out
+    query_str = (char *) malloc(6000); /* should be big enough */
+    memset(query_str,0,6000);       /* zero it out */
 
     msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid,layer->debug);
 
-    if (layer->numitems ==0) //dont need the oid since its really record
+    if (layer->numitems ==0) /* dont need the oid since its really record */
     {
         if (gBYTE_ORDER == LITTLE_ENDIAN)
             sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
@@ -1226,7 +1229,7 @@ if (layer->debug)
     }
     else
     {
-        columns_wanted[0] = 0; //len=0
+        columns_wanted[0] = 0; /* len=0 */
         for (t=0;t<layer->numitems; t++)
         {
             sprintf(temp,"%s::text,",layer->items[t]);
@@ -1300,15 +1303,15 @@ if (layer->debug)
         return(MS_FAILURE);
     }
 
-            //query has been done, so we can retreive the results
+            /* query has been done, so we can retreive the results */
 
 
         shape->type = MS_SHAPE_NULL;
 
-        if (  0 < PQntuples(query_result) )  //only need to get one shape
+        if (  0 < PQntuples(query_result) )  /* only need to get one shape */
         {
-            //retreive an item
-            wkb = (char *) PQgetvalue(query_result, 0, layer->numitems);  // layer->numitems is the wkt column
+            /* retreive an item */
+            wkb = (char *) PQgetvalue(query_result, 0, layer->numitems);  /* layer->numitems is the wkt column */
             switch(layer->type)
             {
                 case MS_LAYER_POINT:
@@ -1339,21 +1342,21 @@ if (layer->debug)
             }
             if (shape->type != MS_SHAPE_NULL)
             {
-                //have to retreive the attributes
+                /* have to retreive the attributes */
                 shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
                 for (t=0;t<layer->numitems;t++)
                 {
-//fprintf(stderr,"msPOSTGISLayerGetShape: finding attribute info for '%s'\n",layer->items[t]);
+/* fprintf(stderr,"msPOSTGISLayerGetShape: finding attribute info for '%s'\n",layer->items[t]); */
 
 
                      temp1= (char *) PQgetvalue(query_result, 0, t);
                      size = PQgetlength(query_result,0, t ) ;
                      temp2 = (char *) malloc(size+1 );
                      memcpy(temp2, temp1, size);
-                     temp2[size] = 0; //null terminate it
+                     temp2[size] = 0; /* null terminate it */
 
                      shape->values[t] = temp2;
-//fprintf(stderr,"msPOSTGISLayerGetShape: shape->values[%i] has value '%s'\n",t,shape->values[t]);
+/* fprintf(stderr,"msPOSTGISLayerGetShape: shape->values[%i] has value '%s'\n",t,shape->values[t]); */
 
                 }
                 shape->index = record;
@@ -1407,13 +1410,13 @@ if (layer->debug)
 
 
 
-//query the DB for info about the requested table
-//
-// CHEAT: dont look in the system tables, get query optimization infomation
-//
-// get the table name, return a list of the possible columns (except GEOMETRY column)
-//
-// found out this is called during a query
+/* query the DB for info about the requested table */
+/*  */
+/* CHEAT: dont look in the system tables, get query optimization infomation */
+/*  */
+/* get the table name, return a list of the possible columns (except GEOMETRY column) */
+/*  */
+/* found out this is called during a query */
 
 int msPOSTGISLayerGetItems(layerObj *layer)
 {
@@ -1423,7 +1426,7 @@ int msPOSTGISLayerGetItems(layerObj *layer)
     char    urid_name[5000];
     char user_srid[5000];
     char                sql[6000];
-    //int               nitems;
+    /* int               nitems; */
 
 
     PGresult   *query_result;
@@ -1441,7 +1444,7 @@ if (layer->debug)
 
     if (layerinfo == NULL)
     {
-        //layer not opened yet
+        /* layer not opened yet */
         msSetError(MS_QUERYERR, "msPOSTGISLayerGetItems called on unopened layer",
                  "msPOSTGISLayerGetItems()");
         return(MS_FAILURE);
@@ -1453,12 +1456,12 @@ if (layer->debug)
                  "msPOSTGISLayerGetItems()");
         return(MS_FAILURE);
     }
-    //get the table name and geometry column name
+    /* get the table name and geometry column name */
 
     msPOSTGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid,layer->debug);
 
-    // two cases here.  One, its a table (use select * from table) otherwise, just use the select clause
-    sprintf(sql,"SELECT * FROM %s WHERE false LIMIT 0",table_name); // attempt the query, but dont actually do much (this might take some time if there is an order by!)
+    /* two cases here.  One, its a table (use select * from table) otherwise, just use the select clause */
+    sprintf(sql,"SELECT * FROM %s WHERE false LIMIT 0",table_name); /* attempt the query, but dont actually do much (this might take some time if there is an order by!) */
 
     query_result = PQexec(layerinfo->conn, sql );
     if (!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK)
@@ -1477,17 +1480,17 @@ if (layer->debug)
         return(MS_FAILURE);
     }
 
-    layer->numitems = PQnfields(query_result)-1; //dont include the geometry column
-    layer->items = malloc (sizeof(char *) * (layer->numitems+1) ); // +1 incase there is a problem finding goeometry column
-                                                                // it will return an error if there is no geometry column found,
-                                                                // so this isnt a problem
+    layer->numitems = PQnfields(query_result)-1; /* dont include the geometry column */
+    layer->items = malloc (sizeof(char *) * (layer->numitems+1) ); /* +1 incase there is a problem finding goeometry column */
+                                                                /* it will return an error if there is no geometry column found, */
+                                                                /* so this isnt a problem */
 
-        found_geom = 0; //havent found the geom field
+        found_geom = 0; /* havent found the geom field */
         item_num = 0;
     for (t=0;t<PQnfields(query_result);t++)
     {
         col = PQfname(query_result,t);
-        if (strcmp(col, geom_column_name) != 0) // this isnt the geometry column
+        if (strcmp(col, geom_column_name) != 0) /* this isnt the geometry column */
         {
             layer->items[item_num] = (char*)malloc(strlen(col)+1);
             strcpy(layer->items[item_num], col);
@@ -1522,12 +1525,12 @@ if (layer->debug)
 }
 
 
-//we return an infinite extent
-// we could call the SQL AGGREGATE extent(GEOMETRY), but that would take FOREVER
-// to return (it has to read the entire table).
-// So, we just tell it that we're everywhere and lets the spatial indexing figure things out for us
-//
-// Never seen this function actually called
+/* we return an infinite extent */
+/* we could call the SQL AGGREGATE extent(GEOMETRY), but that would take FOREVER */
+/* to return (it has to read the entire table). */
+/* So, we just tell it that we're everywhere and lets the spatial indexing figure things out for us */
+/*  */
+/* Never seen this function actually called */
 int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
 {
 
@@ -1545,9 +1548,9 @@ int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
     return(MS_SUCCESS);
 
 
-        //this should get the real extents,but it requires a table read
-        // unforunately, there is no way to call this function from mapscript, so its
-        // pretty useless.  Untested since you cannot actually call it.
+        /* this should get the real extents,but it requires a table read */
+        /* unforunately, there is no way to call this function from mapscript, so its */
+        /* pretty useless.  Untested since you cannot actually call it. */
 
 /*
 
@@ -1652,17 +1655,17 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
         strcpy(urid_name, "OID");
     }
     else {
-        // CHANGE - protect the trailing edge for thing like 'using unique ftab_id using srid=33'
+        /* CHANGE - protect the trailing edge for thing like 'using unique ftab_id using srid=33' */
         tmp = strstr(pos_opt + 14," ");
-        if (tmp == NULL) //it lookes like 'using unique ftab_id'
+        if (tmp == NULL) /* it lookes like 'using unique ftab_id' */
         {
             strcpy(urid_name, pos_opt + 14);
         }
         else
         {
-            //looks like ' using unique ftab_id ' (space at end)
+            /* looks like ' using unique ftab_id ' (space at end) */
             strncpy(urid_name, pos_opt + 14, tmp-(pos_opt + 14  ) );
-            urid_name[tmp-(pos_opt + 14)] = 0; // null terminate it
+            urid_name[tmp-(pos_opt + 14)] = 0; /* null terminate it */
         }
 
     }
@@ -1670,11 +1673,11 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
     pos_srid = strstrIgnoreCase(data," using SRID=");
     if (pos_srid == NULL)
     {
-        user_srid[0] = 0; // = ""
+        user_srid[0] = 0; /* = "" */
     }
     else
     {
-        //find the srid
+        /* find the srid */
         slength=strspn(pos_srid+12,"-0123456789");
         if (slength == 0)
         {
@@ -1687,13 +1690,13 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
         else
         {
             strncpy(user_srid,pos_srid+12,slength);
-            user_srid[slength] = 0; // null terminate it
+            user_srid[slength] = 0; /* null terminate it */
         }
     }
 
 
-    // this is a little hack so the rest of the code works.  If the ' using SRID=' comes before
-    // the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts!
+    /* this is a little hack so the rest of the code works.  If the ' using SRID=' comes before */
+    /* the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts! */
 
     if (pos_opt == NULL)
     {
@@ -1715,21 +1718,21 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
                     DATAERRORMESSAGE(data,"Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').  More help: <br><br>\n\n"),
                     "msPOSTGISLayerParseData()");
 
-        //msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", "msPOSTGISLayerParseData()");
+        /* msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", "msPOSTGISLayerParseData()"); */
         return(MS_FAILURE);
     }
 
     /* Copy the geometry column name */
     memcpy(geom_column_name, data, (pos_scn)-(data));
-    geom_column_name[(pos_scn)-(data)] = 0; //null terminate it
+    geom_column_name[(pos_scn)-(data)] = 0; /* null terminate it */
 
     /* Copy out the table name or sub-select clause */
     if (pos_opt == NULL) {
-        strcpy(table_name, pos_scn + 6);    //table name or sub-select clause
+        strcpy(table_name, pos_scn + 6);    /* table name or sub-select clause */
     }
     else {
         strncpy(table_name, pos_scn + 6, (pos_opt) - (pos_scn + 6));
-        table_name[(pos_opt) - (pos_scn + 6)] = 0; //null terminate it
+        table_name[(pos_opt) - (pos_scn + 6)] = 0; /* null terminate it */
     }
 
     if ( (strlen(table_name) < 1 ) ||  (strlen(geom_column_name) < 1 ) ) {
@@ -1746,7 +1749,7 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
 
 #else
 
-//prototypes if postgis isnt supposed to be compiled
+/* prototypes if postgis isnt supposed to be compiled */
 
 int msPOSTGISLayerOpen(layerObj *layer)
 {
@@ -1831,5 +1834,5 @@ int msPOSTGISLayerGetItems(layerObj *layer)
 }
 
 
-// end above's #ifdef USE_POSTGIS
+/* end above's #ifdef USE_POSTGIS */
 #endif

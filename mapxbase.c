@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/02/18 03:06:48  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.19  2005/02/07 18:37:43  frank
  * Removed dangerous junk in leading space trimmer.
  *
@@ -521,7 +524,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
       }
     }
 
-    if(i == -1) psDBF->pszStringField[0] = '\0'; // whole string is blank (SDL fix)      
+    if(i == -1) psDBF->pszStringField[0] = '\0'; /* whole string is blank (SDL fix)       */
 
     /*
     ** Trim/skip leading blanks (SDL/DM Modification - only on numeric types)
@@ -847,7 +850,7 @@ int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems)
     itemindexes[i] = msDBFGetItemIndex(dbffile, items[i]);
     if(itemindexes[i] == -1) { 
       free(itemindexes);
-      return(NULL); // item not found
+      return(NULL); /* item not found */
     }
   }
 

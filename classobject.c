@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/18 03:06:44  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.4  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -109,24 +112,24 @@ int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
         return -1;
     }
 
-    // Possible to add another style?
+    /* Possible to add another style? */
     if (class->numstyles == MS_MAXSTYLES) {
         msSetError(MS_CHILDERR, "Maximum number of class styles, %d, has been reached", "insertStyle()", MS_MAXSTYLES);
         return -1;
     }
-    // Catch attempt to insert past end of styles array
+    /* Catch attempt to insert past end of styles array */
     else if (nStyleIndex >= MS_MAXSTYLES) {
         msSetError(MS_CHILDERR, "Cannot insert style beyond index %d", "insertStyle()", MS_MAXSTYLES-1);
         return -1;
     }
-    else if (nStyleIndex < 0) { // Insert at the end by default
+    else if (nStyleIndex < 0) { /* Insert at the end by default */
         msCopyStyle(&(class->styles[class->numstyles]), style);
         class->numstyles++;
         return class->numstyles-1;
     }
     else if (nStyleIndex >= 0 && nStyleIndex < MS_MAXSTYLES) {
-        // Move styles existing at the specified nStyleIndex or greater
-        // to a higher nStyleIndex
+        /* Move styles existing at the specified nStyleIndex or greater */
+        /* to a higher nStyleIndex */
         for (i=class->numstyles-1; i>=nStyleIndex; i--) {
             class->styles[i+1] = class->styles[i];
         }

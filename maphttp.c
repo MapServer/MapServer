@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.18  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.17  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -344,7 +347,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             fp = fopen(pasReqInfo[i].pszOutputFile, "r");
             if (fp)
             {
-                // File already there, don't download again.
+                /* File already there, don't download again. */
                 if (pasReqInfo[i].debug)
                     msDebug("HTTP request: id=%d, found in cache, skipping.\n",
                             pasReqInfo[i].nLayerId);
@@ -419,7 +422,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             curl_easy_setopt(http_handle, CURLOPT_POSTFIELDS, 
                              pasReqInfo[i].pszPostRequest);
             curl_easy_setopt(http_handle, CURLOPT_HTTPHEADER, headers);
-            //curl_slist_free_all(headers); /* free the header list */
+            /* curl_slist_free_all(headers); */ /* free the header list */
         }
         /* Add to multi handle */
         curl_multi_add_handle(multi_handle, http_handle);
@@ -532,7 +535,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         psReq = &(pasReqInfo[i]);
 
         if (psReq->nStatus == 242)
-            continue;  // Nothing to do here, this file was in cache already
+            continue;  /* Nothing to do here, this file was in cache already */
 
         if (psReq->fp)
             fclose(psReq->fp);
@@ -549,13 +552,13 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 
         if (!MS_HTTP_SUCCESS(psReq->nStatus))
         {
-            // Set status to MS_DONE to indicate that transfers were 
-            // completed but may not be succesfull
+            /* Set status to MS_DONE to indicate that transfers were  */
+            /* completed but may not be succesfull */
             nStatus = MS_DONE;
 
             if (psReq->nStatus == -(CURLE_OPERATION_TIMEOUTED))
             {
-                // Timeout isn't a fatal error
+                /* Timeout isn't a fatal error */
                 if (psReq->debug)
                     msDebug("HTTP: TIMEOUT of %d seconds exceeded for %s\n",
                             nTimeout, psReq->pszGetUrl );
@@ -573,7 +576,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             }
             else if (psReq->nStatus > 0)
             {
-                // Got an HTTP Error, e.g. 404, etc.
+                /* Got an HTTP Error, e.g. 404, etc. */
 
                 if (psReq->debug)
                     msDebug("HTTP: HTTP GET request failed with status %d (%s)"
@@ -589,7 +592,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             }
             else
             {
-                // Got a curl error
+                /* Got a curl error */
 
                 if (psReq->debug)
                     msDebug("HTTP: request failed with curl error "

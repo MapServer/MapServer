@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.6  2005/02/03 04:54:47  frank
  * Fixed lock releaseing in msConnPoolRelease().
  *
@@ -475,8 +478,8 @@ void msConnPoolCloseUnreferenced()
 {
     int  i;
 
-    // this really needs to be commented out before commiting. 
-    // msDebug( "msConnPoolCloseUnreferenced()\n" );
+    /* this really needs to be commented out before commiting.  */
+    /* msDebug( "msConnPoolCloseUnreferenced()\n" ); */
 
     msAcquireLock( TLOCK_POOL );
     for( i = connectionCount - 1; i >= 0; i-- )
@@ -485,8 +488,8 @@ void msConnPoolCloseUnreferenced()
 
         if( conn->ref_count == 0 )
         {
-            // for now we don't assume the locks are re-entrant, so release
-            // it so msConnPoolClose() can get it. 
+            /* for now we don't assume the locks are re-entrant, so release */
+            /* it so msConnPoolClose() can get it.  */
             msReleaseLock( TLOCK_POOL );
             msConnPoolClose( i );
             msAcquireLock( TLOCK_POOL );
@@ -505,8 +508,8 @@ void msConnPoolCloseUnreferenced()
 void msConnPoolFinalCleanup()
 
 {
-    // this really needs to be commented out before commiting. 
-    // msDebug( "msConnPoolFinalCleanup()\n" );
+    /* this really needs to be commented out before commiting.  */
+    /* msDebug( "msConnPoolFinalCleanup()\n" ); */
 
     while( connectionCount > 0 )
         msConnPoolClose( 0 );

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.14  2004/11/29 15:09:34  sean
  * hide itemObj and geotransformObj from swig, these are not ready for use
  *
@@ -79,7 +82,7 @@ typedef struct {
 #endif
 
   rectObj bounds;
-  int type; // MS_SHAPE_TYPE
+  int type; /* MS_SHAPE_TYPE */
   long index;
   int tileindex;
   int classindex;
@@ -108,8 +111,8 @@ typedef struct {
 typedef struct {
   int  need_geotransform;
   double rotation_angle;  
-  double geotransform[6];    // Pixel/line to georef.
-  double invgeotransform[6]; // georef to pixel/line  
+  double geotransform[6];    /* Pixel/line to georef. */
+  double invgeotransform[6]; /* georef to pixel/line */
 } geotransformObj;
 #endif
 

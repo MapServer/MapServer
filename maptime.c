@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.14  2004/10/21 10:54:17  assefa
  * Add postgis date_trunc support.
  *
@@ -76,7 +79,7 @@ int ms_num_limited_pattern;
 
 void msTimeInit(struct tm *time)
 {
-  // set all members to zero
+  /* set all members to zero */
   time->tm_sec = 0;
   time->tm_min = 0;
   time->tm_hour = 0;
@@ -101,13 +104,13 @@ int msDateCompare(struct tm *time1, struct tm *time2)
   int result;
 
   if((result = compareIntVals(time1->tm_year, time2->tm_year)) != 0)
-    return result; // not equal based on year
+    return result; /* not equal based on year */
   else if((result = compareIntVals(time1->tm_mon, time2->tm_mon)) != 0)
-    return result; // not equal based on month
+    return result; /* not equal based on month */
   else if((result = compareIntVals(time1->tm_mday, time2->tm_mday)) != 0)
-    return result; // not equal based on day of month
+    return result; /* not equal based on day of month */
   
-  return(0); // must be equal
+  return(0); /* must be equal */
 }
 
 int msTimeCompare(struct tm *time1, struct tm *time2)
@@ -115,19 +118,19 @@ int msTimeCompare(struct tm *time1, struct tm *time2)
   int result;
 
   if((result = compareIntVals(time1->tm_year, time2->tm_year)) != 0)
-    return result; // not equal based on year
+    return result; /* not equal based on year */
   else if((result = compareIntVals(time1->tm_mon, time2->tm_mon)) != 0)
-    return result; // not equal based on month
+    return result; /* not equal based on month */
   else if((result = compareIntVals(time1->tm_mday, time2->tm_mday)) != 0)
-    return result; // not equal based on day of month
+    return result; /* not equal based on day of month */
   else if((result = compareIntVals(time1->tm_hour, time2->tm_hour)) != 0)
-    return result; // not equal based on hour
+    return result; /* not equal based on hour */
   else if((result = compareIntVals(time1->tm_min, time2->tm_min)) != 0)
-    return result; // not equal based on minute
+    return result; /* not equal based on minute */
   else if((result = compareIntVals(time1->tm_sec, time2->tm_sec)) != 0)
-    return result; // not equal based on second
+    return result; /* not equal based on second */
 
-  return(0); // must be equal
+  return(0); /* must be equal */
 }
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -143,14 +146,14 @@ void msGettimeofday(struct mstimeval* tp, void* tzp)
 #endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-// we need to provide our own prototype on windows.
+/* we need to provide our own prototype on windows. */
 char *strptime( const char *buf, const char *format, struct tm *timeptr );
 #endif
 
 char *msStrptime(const char *s, const char *format, struct tm *tm)
 {
 #if defined(_WIN32) && !defined(__CYGWIN__)
-    //we are now using a local strptime found strptime.c
+    /* we are now using a local strptime found strptime.c */
     return strptime(s, format, tm);
 #else
     /* Use system strptime() on non-windows systems */
@@ -166,8 +169,8 @@ int msTimeMatchPattern(char *timestring, char *timeformat)
 {
     int i =-1;
 
-    //match the pattern format first and then check if the time string 
-    //matchs the pattern. If it is the case retrurn the MS_TRUE
+    /* match the pattern format first and then check if the time string  */
+    /* matchs the pattern. If it is the case retrurn the MS_TRUE */
     for (i=0; i<MS_NUMTIMEFORMATS; i++)
     {
         if (strcasecmp(ms_timeFormats[i].userformat, timeformat) == 0)
@@ -206,7 +209,7 @@ void msSetLimitedPattersToUse(char *patternstring)
 
     limitedpatternindice = (int *)malloc(sizeof(int)*MS_NUMTIMEFORMATS);
     
-    //free previous setting
+    /* free previous setting */
     msUnsetLimitedPatternToUse();
 
     if (patternstring)
@@ -250,8 +253,8 @@ int msParseTime(const char *string, struct tm *tm) {
   int i, indice = 0;
   int num_patterns = 0;
   
-  //if limited patterns are set, use then. Else use all the
-  //patterns defined
+  /* if limited patterns are set, use then. Else use all the */
+  /* patterns defined */
   if (ms_limited_pattern &&  ms_num_limited_pattern > 0)
     num_patterns = ms_num_limited_pattern;
   else
@@ -263,7 +266,7 @@ int msParseTime(const char *string, struct tm *tm) {
       else
         indice = i;
 
-      if(!ms_timeFormats[indice].regex) { // compile the expression
+      if(!ms_timeFormats[indice].regex) { /* compile the expression */
       ms_timeFormats[indice].regex = (regex_t *) malloc(sizeof(regex_t)); 
       if(regcomp(ms_timeFormats[indice].regex, ms_timeFormats[indice].pattern, REG_EXTENDED|REG_NOSUB) != 0) {
 	msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[indice].pattern);
@@ -271,9 +274,9 @@ int msParseTime(const char *string, struct tm *tm) {
       }
     }  
 
-    // test the expression against the string
+    /* test the expression against the string */
     if(regexec(ms_timeFormats[indice].regex, string, 0, NULL, 0) == 0) 
-    { // match   
+    { /* match    */
         msStrptime(string, ms_timeFormats[indice].format, tm);
         return(MS_TRUE);
     }
@@ -305,9 +308,9 @@ int msTimeGetResolution(const char *timestring)
                  return -1;
              }
          }
-         // test the expression against the string
+         /* test the expression against the string */
          if(regexec(ms_timeFormats[i].regex, timestring, 0, NULL, 0) == 0) 
-         { // match   
+         { /* match    */
              return ms_timeFormats[i].resolution;
          }
      }

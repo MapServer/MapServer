@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.56  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.55  2004/12/21 15:59:14  dan
  * Do not include port number in online resource if it's http/80 (bug 1075)
  *
@@ -286,7 +289,7 @@ int msOWSMakeAllLayersUnique(mapObj *map)
 {
   int i, j;
 
-  // Make sure all layers in the map file have valid and unique names
+  /* Make sure all layers in the map file have valid and unique names */
   for(i=0; i<map->numlayers; i++)
   {
       int count=1;
@@ -306,7 +309,7 @@ int msOWSMakeAllLayersUnique(mapObj *map)
           }
       }
 
-      // Don't forget to rename the first layer if duplicates were found
+      /* Don't forget to rename the first layer if duplicates were found */
       if (count > 1 && msRenameLayer(&(map->layers[i]), 1) != MS_SUCCESS)
       {
           return MS_FAILURE;
@@ -343,7 +346,7 @@ char * msOWSTerminateOnlineResource(const char *src_url)
 
     strcpy(online_resource, src_url);
 
-    // Append trailing '?' or '&' if missing.
+    /* Append trailing '?' or '&' if missing. */
     if (strchr(online_resource, '?') == NULL)
         strcat(online_resource, "?");
     else
@@ -372,11 +375,11 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
     const char *value;
     char *online_resource = NULL;
 
-    // We need this script's URL, including hostname.
-    // Default to use the value of the "onlineresource" metadata, and if not
-    // set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?"
-    // (+append the map=... param if it was explicitly passed in QUERY_STRING)
-    //
+    /* We need this script's URL, including hostname. */
+    /* Default to use the value of the "onlineresource" metadata, and if not */
+    /* set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?" */
+    /* (+append the map=... param if it was explicitly passed in QUERY_STRING) */
+    /*  */
     if ((value = msOWSLookupMetadata(&(map->web.metadata), namespaces, metadata_name))) 
     {
         online_resource = msOWSTerminateOnlineResource(value);
@@ -390,8 +393,8 @@ char * msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *m
         port = getenv("SERVER_PORT");
         script = getenv("SCRIPT_NAME");
 
-        // HTTPS is set by Apache to "on" in an HTTPS server ... if not set
-        // then check SERVER_PORT: 443 is the default https port.
+        /* HTTPS is set by Apache to "on" in an HTTPS server ... if not set */
+        /* then check SERVER_PORT: 443 is the default https port. */
         if ( ((value=getenv("HTTPS")) && strcasecmp(value, "on") == 0) ||
              ((value=getenv("SERVER_PORT")) && atoi(value) == 443) )
         {
@@ -465,7 +468,7 @@ const char *msOWSGetSchemasLocation(mapObj *map)
     schemas_location = msLookupHashTable(&(map->web.metadata), 
                                          "ows_schemas_location");
     if (schemas_location == NULL)
-      schemas_location = "http://schemas.opengeospatial.net";//"..";
+      schemas_location = "http://schemas.opengeospatial.net"; /* ".."; */
 
     return schemas_location;
 }
@@ -585,8 +588,8 @@ const char *msOWSLookupMetadata(hashTableObj *metadata,
                 buf[2] = 'l';
                 break;
               default:
-                // We should never get here unless an invalid code (typo) is
-                // present in the code, but since this happened before...
+                /* We should never get here unless an invalid code (typo) is */
+                /* present in the code, but since this happened before... */
                 msSetError(MS_WMSERR, 
                            "Unsupported metadata namespace code (%c).",
                            "msOWSLookupMetadata()", *namespaces );
@@ -830,7 +833,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
 
     metadata_name = (char*)malloc(strlen(name)*sizeof(char)+10);
 
-    // Get type
+    /* Get type */
     if(type_format != NULL)
     {
         sprintf(metadata_name, "%s_type", name);
@@ -844,7 +847,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         }
     }
 
-    // Get width
+    /* Get width */
     if(width_format != NULL)
     {
         sprintf(metadata_name, "%s_width", name);
@@ -858,7 +861,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         }
     }
 
-    // Get height
+    /* Get height */
     if(height_format != NULL)
     {
         sprintf(metadata_name, "%s_height", name);
@@ -872,7 +875,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         }
     }
 
-    // Get format
+    /* Get format */
     if(urlfrmt_format != NULL)
     {
         sprintf(metadata_name, "%s_format", name);
@@ -886,7 +889,7 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         }
     }
 
-    // Get href
+    /* Get href */
     if(href_format != NULL)
     {
         sprintf(metadata_name, "%s_href", name);
@@ -1200,9 +1203,9 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 {
   int bEnableContact = 0;
 
-  // contact information is a required element in 1.0.7 but the
-  // sub-elements such as ContactPersonPrimary, etc. are not!
-  // In 1.1.0, ContactInformation becomes optional.
+  /* contact information is a required element in 1.0.7 but the */
+  /* sub-elements such as ContactPersonPrimary, etc. are not! */
+  /* In 1.1.0, ContactInformation becomes optional. */
   if (nVersion > OWS_1_0_0) 
   {
     if(msOWSLookupMetadata(metadata, namespaces, "contactperson") ||
@@ -1214,8 +1217,8 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
           bEnableContact = 1;
       }
 
-      // ContactPersonPrimary is optional, but when present then all its 
-      // sub-elements are mandatory
+      /* ContactPersonPrimary is optional, but when present then all its  */
+      /* sub-elements are mandatory */
       msIO_fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
 
       msOWSPrintEncodeMetadata(stream, metadata, namespaces, "contactperson", 
@@ -1256,8 +1259,8 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
           bEnableContact = 1;
       }
 
-      // ContactAdress is optional, but when present then all its 
-      // sub-elements are mandatory
+      /* ContactAdress is optional, but when present then all its  */
+      /* sub-elements are mandatory */
       msIO_fprintf(stream, "%s  <ContactAddress>\n", tabspace);
 
       msOWSPrintEncodeMetadata(stream, metadata, namespaces,"addresstype", OWS_WARN,
@@ -1386,7 +1389,7 @@ int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
 {
     int nStatus, iReq;
 
-    // Execute requests
+    /* Execute requests */
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     nStatus = msHTTPExecuteRequests(pasReqInfo, numRequests, bCheckLocalCache);
 #else
@@ -1395,8 +1398,8 @@ int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     return MS_FAILURE;
 #endif
 
-    // Scan list of layers and call the handler for each layer type to
-    // pass them the request results.
+    /* Scan list of layers and call the handler for each layer type to */
+    /* pass them the request results. */
     for(iReq=0; iReq<numRequests; iReq++)
     {
         if (pasReqInfo[iReq].nLayerId >= 0 && 
@@ -1451,11 +1454,11 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
         pszBuf[nBufSize] = '\0';
 
 
-        // OK, got the data in the buffer.  Look for the <Message> tags
-        if ((strstr(pszBuf, "<WFS_Exception>") &&            // WFS style
+        /* OK, got the data in the buffer.  Look for the <Message> tags */
+        if ((strstr(pszBuf, "<WFS_Exception>") &&            /* WFS style */
              (pszStart = strstr(pszBuf, "<Message>")) &&
              (pszEnd = strstr(pszStart, "</Message>")) ) ||
-            (strstr(pszBuf, "<ServiceExceptionReport>") &&   // WMS style
+            (strstr(pszBuf, "<ServiceExceptionReport>") &&   /* WMS style */
              (pszStart = strstr(pszBuf, "<ServiceException>")) &&
              (pszEnd = strstr(pszStart, "</ServiceException>")) ))
         {
@@ -1544,12 +1547,12 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
   static char epsgCode[20] ="";
   static char *value;
 
-  // metadata value should already be in format "EPSG:n" or "AUTO:..."
+  /* metadata value should already be in format "EPSG:n" or "AUTO:..." */
   if (metadata && ((value = (char *) msOWSLookupMetadata(metadata, namespaces, "srs")) != NULL)) {
     
     if (!bReturnOnlyFirstOne) return value;
 
-    // caller requested only first projection code
+    /* caller requested only first projection code */
     strncpy(epsgCode, value, 19);
     epsgCode[19] = '\0';
     if ((value=strchr(epsgCode, ' ')) != NULL) *value = '\0';

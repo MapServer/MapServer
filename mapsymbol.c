@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.81  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.80  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -150,7 +153,7 @@ void initSymbol(symbolObj *s)
   s->type = MS_SYMBOL_VECTOR;
   s->transparent = MS_FALSE;
   s->transparentcolor = 0;
-  s->stylelength = 0; // solid line
+  s->stylelength = 0; /* solid line */
   s->sizex = 0;
   s->sizey = 0;
   s->filled = MS_FALSE;
@@ -226,8 +229,8 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       if((getInteger(&s->gap)) == -1) return(-1);
       break;
     case(POSITION):
-      // if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1) 
-      //   return(-1);
+      /* if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1)  */
+      /* return(-1); */
       if((s->position = getSymbol(9, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR)) == -1) 
 	return(-1);
       break;
@@ -246,12 +249,12 @@ int loadSymbol(symbolObj *s, char *symbolpath)
 	return(-1);
       }
       
-      // Set imagepath
+      /* Set imagepath */
       s->imagepath = strdup(msyytext);
 
           
-      fread(bytes,8,1,stream); // read some bytes to try and identify the file
-      rewind(stream); // reset the image for the readers
+      fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
+      rewind(stream); /* reset the image for the readers */
       if (memcmp(bytes,"GIF8",4)==0) 
       {
 #ifdef USE_GD_GIF
@@ -365,7 +368,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_CARTOLINE,MS_SYMBOL_HATCH)) == -1)
 	return(-1);
 #endif
-      if(s->type == MS_TRUETYPE) // TrueType keyword is valid several place in map files and symbol files, this simplifies the lexer
+      if(s->type == MS_TRUETYPE) /* TrueType keyword is valid several place in map files and symbol files, this simplifies the lexer */
 	s->type = MS_SYMBOL_TRUETYPE;
       break;
     default:
@@ -388,7 +391,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
   
   switch (s->type) {
   case(MS_SYMBOL_HATCH):
-    // todo!
+    /* todo! */
     break;
   case(MS_SYMBOL_PIXMAP):
     fprintf(stream, "    TYPE PIXMAP\n");
@@ -412,7 +415,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
   case(MS_SYMBOL_SIMPLE):
     break;
   case(MS_SYMBOL_ELLIPSE):
-    //default = MS_SYMBOL_VECTOR
+    /* default = MS_SYMBOL_VECTOR */
   default:
     if(s->type == MS_SYMBOL_ELLIPSE)
       fprintf(stream, "    TYPE ELLIPSE\n");
@@ -421,7 +424,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
     
     if(s->filled == MS_TRUE) fprintf(stream, "    FILLED TRUE\n");
     
-    // POINT
+    /* POINT */
     if(s->numpoints != 0) {
       fprintf(stream, "    POINTS\n");
       for(i=0; i<s->numpoints; i++) {
@@ -429,7 +432,7 @@ void writeSymbol(symbolObj *s, FILE *stream)
       }
       fprintf(stream, "    END\n");
     }
-    // STYLE
+    /* STYLE */
     if(s->stylelength != 0) {
       fprintf(stream, "    STYLE\n     ");
       for(i=0; i<s->stylelength; i++) {
@@ -461,7 +464,7 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   if(!filename || strlen(filename) == 0) return(-1);
 
-  if(symbolset->numsymbols == MS_MAXSYMBOLS) { // no room
+  if(symbolset->numsymbols == MS_MAXSYMBOLS) { /* no room */
     msSetError(MS_SYMERR, "Maximum number of symbols reached.", "msAddImageSymbol()");
     return(-1);
   }
@@ -487,8 +490,8 @@ int msAddImageSymbol(symbolSetObj *symbolset, char *filename)
 
   initSymbol(&symbolset->symbol[i]);
 
-  fread(bytes,8,1,stream); // read some bytes to try and identify the file
-  rewind(stream); // reset the image for the readers
+  fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
+  rewind(stream); /* reset the image for the readers */
   if (memcmp(bytes,"GIF8",4)==0) {
 #ifdef USE_GD_GIF
     symbolset->symbol[i].img = gdImageCreateFromGif(stream);
@@ -568,8 +571,8 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 
 int loadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 {
-//  char old_path[MS_PATH_LENGTH];
-//  char *symbol_path;
+/* char old_path[MS_PATH_LENGTH]; */
+/* char *symbol_path; */
   int status=1;
   char szPath[MS_MAXPATHLEN], *pszSymbolPath=NULL;
 
@@ -641,11 +644,11 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
   const char *font=NULL;
   int size;
 
-  *width = *height = 0; // set a starting value
+  *width = *height = 0; /* set a starting value */
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return(MS_FAILURE); // no such symbol, 0 is OK
+  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return(MS_FAILURE); /* no such symbol, 0 is OK */
 
-  if(style->symbol == 0) { // single point
+  if(style->symbol == 0) { /* single point */
     *width = 1;
     *height = 1;
     return(MS_SUCCESS);
@@ -737,7 +740,7 @@ int msAddNewSymbol(mapObj *map, char *name)
 
 
 int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol) {
-    // Possible to add another symbol?
+    /* Possible to add another symbol? */
     if (symbolset->numsymbols == MS_MAXSYMBOLS) {
         msSetError(MS_CHILDERR, "Maximum number of symbols, %d, has been reached", "msAppendSymbol()", MS_MAXSYMBOLS);
         return -1;
@@ -776,7 +779,7 @@ int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
         msSetError(MS_SYMERR, "Cannot save symbolset.", "msSaveSymbolSetStream()");
         return MS_FAILURE;
     }
-    // Don't ever write out the default symbol at index 0
+    /* Don't ever write out the default symbol at index 0 */
     for (i=1; i<symbolset->numsymbols; i++) {
         symbolset->symbol[i].inmapfile = MS_TRUE;
         writeSymbol(&(symbolset->symbol[i]), stream);
@@ -811,8 +814,8 @@ int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
           return MS_FAILURE;
     }
 
-    fread(bytes,8,1,stream); // read some bytes to try and identify the file
-    rewind(stream); // reset the image for the readers
+    fread(bytes,8,1,stream); /* read some bytes to try and identify the file */
+    rewind(stream); /* reset the image for the readers */
     if (memcmp(bytes,"GIF8",4)==0) 
     {
 #ifdef USE_GD_GIF
@@ -952,7 +955,7 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
 
   MS_COPYSTELEM(imagecachesize);
   
-  // I have a feeling that the code below is not quite right - Sean
+  /* I have a feeling that the code below is not quite right - Sean */
   /*copyProperty(&(dst->imagecache), &(src->imagecache),
                sizeof(struct imageCacheObj));
    */

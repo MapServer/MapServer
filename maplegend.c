@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.51  2005/01/11 00:24:07  frank
  * added labelObj arg to msAddLabel()
  *
@@ -65,11 +68,11 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   imageObj *image = NULL;
   styleObj outline_style;
 
-  // if drawing an outline (below) we need to set clipping to keep symbols withing the outline
+  /* if drawing an outline (below) we need to set clipping to keep symbols withing the outline */
   if(MS_VALID_COLOR(map->legend.outlinecolor))
     gdImageSetClip(img, dstX, dstY, dstX + width - 1, dstY + height - 1);
 
-  // initialize the box used for polygons and for outlines
+  /* initialize the box used for polygons and for outlines */
   box.line = (lineObj *)malloc(sizeof(lineObj));
   box.numlines = 1;
   box.line[0].point = (pointObj *)malloc(sizeof(pointObj)*5);
@@ -87,20 +90,20 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   box.line[0].point[4].y = box.line[0].point[0].y;
   box.line[0].numpoints = 5;
     
-  // if the class has a keyimage then load it, scale it and we're done
+  /* if the class has a keyimage then load it, scale it and we're done */
   if(class->keyimage != NULL) {
     image = msImageLoadGD(msBuildPath(szPath, map->mappath, class->keyimage));
     if(!image) return(MS_FAILURE);
 
-    // TO DO: we may want to handle this differently depending on the relative size of the keyimage
+    /* TO DO: we may want to handle this differently depending on the relative size of the keyimage */
     gdImageCopyResampled(img, image->img.gd, dstX, dstY, 0, 0, width, height, image->img.gd->sx, image->img.gd->sy);
   } else {        
-    // some polygon layers may be better drawn using zigzag if there is no fill
+    /* some polygon layers may be better drawn using zigzag if there is no fill */
     type = lp->type;
     if(type == MS_LAYER_POLYGON) {
       type = MS_LAYER_LINE;
       for(i=0; i<class->numstyles; i++) {
-        if(MS_VALID_COLOR(class->styles[i].color)) { // there is a fill
+        if(MS_VALID_COLOR(class->styles[i].color)) { /* there is a fill */
 	  type = MS_LAYER_POLYGON;
 	  break;
         }
@@ -153,12 +156,12 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
     } /* end symbol drawing */
   }   
 
-  // handle an outline if necessary
+  /* handle an outline if necessary */
   if(MS_VALID_COLOR(map->legend.outlinecolor)) {
     initStyle(&outline_style);
     outline_style.color = map->legend.outlinecolor;
     msDrawLineSymbolGD(&map->symbolset, img, &box, &outline_style, 1.0);    
-    gdImageSetClip(img, 0, 0, img->sx - 1, img->sy - 1); // undo any clipping settings
+    gdImageSetClip(img, 0, 0, img->sx - 1, img->sy - 1); /* undo any clipping settings */
   }
 
   free(box.line[0].point);
@@ -181,13 +184,13 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
       return(NULL);
   }
 
-  // ensure we have an image format representing the options for the legend
+  /* ensure we have an image format representing the options for the legend */
   msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
 
-  // create image
+  /* create image */
   image = msImageCreateGD(width, height, map->outputformat, map->web.imagepath, map->web.imageurl);
 
-  // drop this reference to output format
+  /* drop this reference to output format */
   msApplyOutputFormat( &format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
 
   if(image == NULL) {
@@ -195,15 +198,15 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
     return(NULL);
   }
 
-  // allocate the background color
+  /* allocate the background color */
   msImageInitGD( image, &(map->legend.imagecolor));
 
-  // Call drawLegendIcon with destination (0, 0)
-  // Return an empty image if lp==NULL || class=NULL 
-  //(If class is NULL draw the legend for all classes. Modifications done
-  // Fev 2004 by AY)
+  /* Call drawLegendIcon with destination (0, 0) */
+  /* Return an empty image if lp==NULL || class=NULL  */
+  /* (If class is NULL draw the legend for all classes. Modifications done */
+  /* Fev 2004 by AY) */
   if (lp) {
-    msClearLayerPenValues(lp); // just in case the mapfile has already been processed
+    msClearLayerPenValues(lp); /* just in case the mapfile has already been processed */
     if (class) {
       msDrawLegendIcon(map, lp, class, width, height, image->img.gd, 0, 0);
     }
@@ -249,7 +252,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       if(status != MS_SUCCESS) return(NULL);
   }
 
-  if(msValidateContexts(map) != MS_SUCCESS) return NULL; // make sure there are no recursive REQUIRES or LABELREQUIRES expressions
+  if(msValidateContexts(map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
 
   /*
   ** allocate heights array
@@ -305,13 +308,13 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
     size_y += MS_MAX(heights[i], map->legend.keysizey);
   }
 
-  // ensure we have an image format representing the options for the legend.
+  /* ensure we have an image format representing the options for the legend. */
   msApplyOutputFormat(&format, map->outputformat, map->legend.transparent, map->legend.interlace, MS_NOOVERRIDE);
 
-  // initialize the legend image
+  /* initialize the legend image */
   image = msImageCreateGD(size_x, size_y, format, map->web.imagepath, map->web.imageurl);
 
-  // drop this reference to output format
+  /* drop this reference to output format */
   msApplyOutputFormat(&format, NULL, MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE);
 
   if (image)
@@ -325,7 +328,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
   if(image != NULL)
     msImageInitGD(image, &(map->legend.imagecolor));
 
-  msClearPenValues(map); // just in case the mapfile has already been processed
+  msClearPenValues(map); /* just in case the mapfile has already been processed */
 
   pnt.y = VMARGIN;
     
@@ -350,25 +353,25 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
-      //TODO
+      /* TODO */
       if (msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, (int) pnt.y) != MS_SUCCESS)
          return NULL;
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
-      //TODO
+      /* TODO */
       msDrawLabel(image, pnt, lp->class[j].name, &(map->legend.label), &map->fontset, 1.0);
 
       pnt.y += map->legend.keyspacingy; /* bump y for next label */
 	
-    } // next label
-  } // next layer
+    } /* next label */
+  } /* next layer */
 
   free(heights);
   return(image);
 }
 
 
-//TODO
+/* TODO */
 int msEmbedLegend(mapObj *map, gdImagePtr img)
 {
   int s,l;
@@ -386,13 +389,13 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   }
   
   image = msDrawLegend(map, MS_FALSE);
-  map->symbolset.symbol[s].img = image->img.gd; //TODO 
-  if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
+  map->symbolset.symbol[s].img = image->img.gd; /* TODO  */
+  if(!map->symbolset.symbol[s].img) return(-1); /* something went wrong creating scalebar */
 
-  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
+  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; /* intialize a few things */
   map->symbolset.symbol[s].name = strdup("legend");  
 
-  // I'm not too sure this test is sufficient ... NFW.
+  /* I'm not too sure this test is sufficient ... NFW. */
   if(map->legend.transparent == MS_ON)
     gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
 
@@ -433,9 +436,9 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
     map->layers[l].type = MS_LAYER_ANNOTATION;
 
     if(initClass(&(map->layers[l].class[0])) == -1) return(-1);
-    map->layers[l].numclasses = 1; // so we make sure to free it
+    map->layers[l].numclasses = 1; /* so we make sure to free it */
         
-    // update the layer order list with the layer's index.
+    /* update the layer order list with the layer's index. */
     map->layerorder[l] = l;
   }
 
@@ -445,15 +448,15 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].styles[0].symbol = s;
   map->layers[l].class[0].styles[0].color.pen = -1;
   map->layers[l].class[0].label.force = MS_TRUE;
-  map->layers[l].class[0].label.size = MS_MEDIUM; // must set a size to have a valid label definition
+  map->layers[l].class[0].label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
 
-  if(map->legend.postlabelcache) // add it directly to the image
+  if(map->legend.postlabelcache) /* add it directly to the image */
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   else
     msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0, NULL);
 
-  // Mark layer as deleted so that it doesn't interfere with html legends or
-  // with saving maps
+  /* Mark layer as deleted so that it doesn't interfere with html legends or */
+  /* with saving maps */
   map->layers[l].status = MS_DELETE;
 
   return(0);

@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.6  2005/02/11 22:14:08  frank
  * Fixed imagePolyline declaration.
  *
@@ -127,12 +130,12 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
         return NULL;
     }
     
-    //initialize it with the svg header
+    /* initialize it with the svg header */
 
     msIO_fprintf(image->img.svg->stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    //TODO : seems to have a problem of dtd validation using IE (http://www.24help.info/printthread.php?t=52147)
-    //msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
-    msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-flat.dtd\">\n");
+    /* TODO : seems to have a problem of dtd validation using IE (http://www.24help.info/printthread.php?t=52147) */
+    /* msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"); */
+    msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-/* W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-flat.dtd\">\n"); */
 
 
 /* -------------------------------------------------------------------- */
@@ -141,7 +144,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
     if (strcasecmp(msGetOutputFormatOption(image->format, "GOSVG",""),
                    "TRUE") == 0)
     {
-        //transformation from geographical coordinates to pixel coordinates
+        /* transformation from geographical coordinates to pixel coordinates */
         a = width/(map->extent.maxx-map->extent.minx);
         b = 0;
         c = 0;
@@ -149,21 +152,21 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
         e = -width/(map->extent.maxx-map->extent.minx) *map->extent.minx;
         f = height/(map->extent.maxy-map->extent.miny)*map->extent.maxy;
 
-        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:au=\"http://www.svgmovile.jp/2004/kddip\"  au:boundingBox=\"0 0 %d %d\">\n",  width, height, width, height);   
+        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http:/* www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:au=\"http://www.svgmovile.jp/2004/kddip\"  au:boundingBox=\"0 0 %d %d\">\n",  width, height, width, height);    */
         msIO_fprintf(image->img.svg->stream, "<title>%s</title>\n", map->name);
         msIO_fprintf(image->img.svg->stream, "<metadata> \n");
-        msIO_fprintf(image->img.svg->stream,"<rdf:RDF xmlns:rdf = \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \n");
-        msIO_fprintf(image->img.svg->stream, "xmlns:crs = \"http://www.ogc.org/crs\" xmlns:svg=\"http://wwww.w3.org/2000/svg\"> \n");
+        msIO_fprintf(image->img.svg->stream,"<rdf:RDF xmlns:rdf = \"http:/* www.w3.org/1999/02/22-rdf-syntax-ns#\" \n"); */
+        msIO_fprintf(image->img.svg->stream, "xmlns:crs = \"http:/* www.ogc.org/crs\" xmlns:svg=\"http://wwww.w3.org/2000/svg\"> \n"); */
         msIO_fprintf(image->img.svg->stream, "<rdf:Description> \n");
         msIO_fprintf(image->img.svg->stream, "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f,%f,%f,%f,%f,%f)\" \n", a, b, c, d, e, f);
         
-        //get epsg code: TODO : test what if espg code is not set ?
+        /* get epsg code: TODO : test what if espg code is not set ? */
         if (map->projection.numargs > 0 && 
             (value = strstr(map->projection.args[0], "init=epsg:")) != NULL && 
             strlen(value) < 20) 
         {
             sprintf(epsgCode, "%s", value+10);
-            msIO_fprintf(image->img.svg->stream, "rdf:resource=\"http://www.opengis.net/gml/srs/epsg.xml#%s\"/> \n",epsgCode);
+            msIO_fprintf(image->img.svg->stream, "rdf:resource=\"http:/* www.opengis.net/gml/srs/epsg.xml#%s\"/> \n",epsgCode); */
         }
             
         msIO_fprintf(image->img.svg->stream, "</rdf:Description> \n </rdf:RDF> \n"); 
@@ -189,7 +192,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
     }
     else
     {
-        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n",  width, height);   
+        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http:/* www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n",  width, height);    */
     }
     
     return image;
@@ -214,7 +217,7 @@ static void imagePolyline(FILE *fp, shapeObj *p, colorObj *color, int size,
     if (!fp || !p || !color || size <0 )
       return;
 
-    //the default size is 1.
+    /* the default size is 1. */
     if (size <= 0)
       size = 1;
 
@@ -291,23 +294,23 @@ void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
 
     bUseGeoCoord= 0;
     
-    //if (strcasecmp(msGetOutputFormatOption(image->format, "USE_GEOGRAPHICAL_COORDINATES",""), 
-    //              "TRUE") == 0)
-    // bUseGeoCoord = 1;
+    /* if (strcasecmp(msGetOutputFormatOption(image->format, "USE_GEOGRAPHICAL_COORDINATES",""),  */
+    /* "TRUE") == 0) */
+    /* bUseGeoCoord = 1; */
 
-    //if it is full resolution and we want geographical output
-    //just return, no transformations needed.
+    /* if it is full resolution and we want geographical output */
+    /* just return, no transformations needed. */
     if (bFullRes && bUseGeoCoord)
       return;
 
-    //low resolution and pixel output
+    /* low resolution and pixel output */
     if (!bFullRes && !bUseGeoCoord)
     {
         msTransformShapeToPixel(shape, extent, cellsize);
         return;
     }
 
-    //full resolution, pixel output
+    /* full resolution, pixel output */
     if (bFullRes && !bUseGeoCoord)
     {
         if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) 
@@ -336,9 +339,9 @@ void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
         }
     }
 
-    //low resolution, geographical output. 
-    //Function comes from mapprimitive.c msTransformPixelToShape
-    //TODO : adapat this function. For now just return fullres with geo coordinates
+    /* low resolution, geographical output.  */
+    /* Function comes from mapprimitive.c msTransformPixelToShape */
+    /* TODO : adapat this function. For now just return fullres with geo coordinates */
     if (!bFullRes && bUseGeoCoord)
     {
         return;
@@ -394,11 +397,11 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
                                        shapeObj *p, styleObj *style, 
                                        double scalefactor)
 {
-    //int styleDashed[100];
+    /* int styleDashed[100]; */
     int ox, oy;
     double size;
     int width;
-    //gdPoint points[MS_MAXVECTORPOINTS];
+    /* gdPoint points[MS_MAXVECTORPOINTS]; */
     symbolObj *symbol;
 
 
@@ -417,7 +420,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     else
       size = style->size;
 
-    // TODO: Don't get this modification, is it needed elsewhere?
+    /* TODO: Don't get this modification, is it needed elsewhere? */
     if(size*scalefactor > style->maxsize) scalefactor = (float)style->maxsize/(float)size;
     if(size*scalefactor < style->minsize) scalefactor = (float)style->minsize/(float)size;
     size = MS_NINT(size*scalefactor);
@@ -428,25 +431,25 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     width = MS_MAX(width, style->minwidth);
     width = MS_MIN(width, style->maxwidth);
 
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
 
      if (!MS_VALID_COLOR( style->color))
       return;
     
-    if(size < 1) return; // size too small
+    if(size < 1) return; /* size too small */
 
-    //TODO : do we need offset ??
+    /* TODO : do we need offset ?? */
     ox = MS_NINT(style->offsetx*scalefactor);
     oy = (style->offsety == -99) ? -99 : (int)(style->offsety*scalefactor);
 
     symbol = &(symbolset->symbol[style->symbol]);
 
 
-    //TODO : all lines are draw as filled lines. 
+    /* TODO : all lines are draw as filled lines.  */
     
-    //if default symbol 0 is used, use the style's width parameter
-    // else use the symbol size.
-    //TODO : size needs to be double ?
+    /* if default symbol 0 is used, use the style's width parameter */
+    /* else use the symbol size. */
+    /* TODO : size needs to be double ? */
     if(style->symbol == 0) 
       imagePolyline(image->img.svg->stream, p, &style->color, width,
                     symbol->stylelength,  symbol->style);
@@ -463,7 +466,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
 /************************************************************************/
 void msImageStartLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
 {
-    if (image && MS_DRIVER_SVG(image->format) && layer && map)// && filename)
+    if (image && MS_DRIVER_SVG(image->format) && layer && map)/* && filename) */
         msIO_fprintf(image->img.svg->stream, "\n<!-- START LAYER %s -->\n", layer->name); 
 }
 
@@ -481,7 +484,7 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
     if (!fp || !p || (psFillColor==NULL && psOutlineColor==NULL) || size <0 )
       return;
 
-    //the default size is 1.
+    /* the default size is 1. */
     if (size <= 0)
       size = 1;
 
@@ -519,7 +522,7 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
                            psOutlineColor->blue,
                            size, pszDashArray);
             }
-            else //fill color valid 
+            else /* fill color valid  */
             {
                 msIO_fprintf(fp, "<polygon fill=\"#%02x%02x%02x\" points=\"",
                              psFillColor->red, psFillColor->green, 
@@ -754,7 +757,7 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
         pszStrokeString = strcatalloc(pszStrokeString, szTmp);
     }
 
-    //angle
+    /* angle */
     if (dfAngle > 0.0)
     {
         sprintf(szTmp, "transform=\"rotate(%f %d %d)\"",
@@ -762,7 +765,7 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
         pszAngleString = strcatalloc(pszAngleString, szTmp);
     }
 
-    //anchor point
+    /* anchor point */
     if (nAnchorPosition == MS_UL || nAnchorPosition == MS_CL ||
         nAnchorPosition == MS_LL)
     {
@@ -801,7 +804,7 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
     else
       pszFinalString = string;
 
-    //TODO : font size set to unit pt
+    /* TODO : font size set to unit pt */
     msIO_fprintf(fp, "<text  x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%dpt\" %s %s %s %s %s %s>%s</text>\n",
                  x, y, pszFontFamilily, (int)size, 
                  pszFontStyleString, pszFontWeightString, 
@@ -856,14 +859,14 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
         bEncoding = 1;
     }
 
-    //TODO : not transform it to integer is layer transform is false
+    /* TODO : not transform it to integer is layer transform is false */
     x = MS_NINT(labelPnt.x);
     y = MS_NINT(labelPnt.y);
 
 
 #ifndef USE_GD_FT
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextSVG()");
-    //if(label->encoding != NULL) msFree(string);
+    /* if(label->encoding != NULL) msFree(string); */
     return(-1); 
 #endif
 
@@ -878,9 +881,9 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
         sOutlineColor.green = -1;
         sOutlineColor.blue = -1;
 
-        //TODO : check support for all parameters 
-        //color, outlinecolor, shadowcolor, backgroundcolor, backgroundshadowcolor
-        //position, offset, angle, buffer, antialias, wrap, encoding
+        /* TODO : check support for all parameters  */
+        /* color, outlinecolor, shadowcolor, backgroundcolor, backgroundshadowcolor */
+        /* position, offset, angle, buffer, antialias, wrap, encoding */
 
         size = label->size*scalefactor;
         size = MS_MAX(size, label->minsize);
@@ -932,7 +935,7 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
 /*        - font-style (italic, oblique, nomal)                         */
 /*        - font-weight (normal | bold | bolder | lighter | 100 | 200 ..*/
 /* -------------------------------------------------------------------- */
-        //parse font string : 
+        /* parse font string :  */
         aszFontsParts = split(label->font, '_', &nFontParts);
  
         pszFontFamily = aszFontsParts[0];
@@ -956,7 +959,7 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
                     pszFontFamily,  pszFontStyle, pszFontWeight,
                     label->position, label->angle, bEncoding);
 
-        //msFreeCharArray(aszFontsParts, nFontParts);
+        /* msFreeCharArray(aszFontsParts, nFontParts); */
 
         return 0;
     }
@@ -994,13 +997,13 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
   
   for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
-    cachePtr = &(map->labelcache.labels[l]); // point to right spot in the label cache
+    cachePtr = &(map->labelcache.labels[l]); /* point to right spot in the label cache */
 
-    layerPtr = &(map->layers[cachePtr->layerindex]); // set a couple of other pointers, avoids nasty references
+    layerPtr = &(map->layers[cachePtr->layerindex]); /* set a couple of other pointers, avoids nasty references */
     labelPtr = &(cachePtr->label);
 
     if(!cachePtr->text || strlen(cachePtr->text) == 0)
-      continue; // not an error, just don't want to do anything
+      continue; /* not an error, just don't want to do anything */
 
     if(msGetLabelSize(cachePtr->text, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
       return(-1);
@@ -1009,9 +1012,9 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
       continue; /* label too large relative to the feature */
 
     marker_offset_x = marker_offset_y = 0; /* assume no marker */
-    if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker      
+    if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { /* there *is* a marker       */
 
-      // TO DO: at the moment only checks the bottom style, perhaps should check all of them
+      /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
       if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
 	return(-1);
 
@@ -1044,17 +1047,17 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
-	  if(!labelPtr->partials) { // check against image first
+	  if(!labelPtr->partials) { /* check against image first */
 	    if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
 	      cachePtr->status = MS_FALSE;
-	      continue; // next angle
+	      continue; /* next angle */
 	    }
 	  }
 
-	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-	    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
+	  for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
+	    if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
 	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
@@ -1063,9 +1066,9 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	  }
 
 	  if(!cachePtr->status)
-	    continue; // next angle
+	    continue; /* next angle */
 
-	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
+	  for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered labels */
 	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
 	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
@@ -1080,10 +1083,10 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	    }
 	  }
 
-	  if(cachePtr->status) // found a suitable place for this label
+	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
 
-	} // next angle
+	} /* next angle */
 
       } else {
 	for(j=0; j<=7; j++) { /* loop through the outer label positions */
@@ -1094,17 +1097,17 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
-	  if(!labelPtr->partials) { // check against image first
+	  if(!labelPtr->partials) { /* check against image first */
 	    if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
 	      cachePtr->status = MS_FALSE;
-	      continue; // next position
+	      continue; /* next position */
 	    }
 	  }
 
-	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-	    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
+	  for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
+	    if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
 	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
@@ -1113,9 +1116,9 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	  }
 
 	  if(!cachePtr->status)
-	    continue; // next position
+	    continue; /* next position */
 
-	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
+	  for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered labels */
 	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
 	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
@@ -1130,9 +1133,9 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	    }
 	  }
 
-	  if(cachePtr->status) // found a suitable place for this label
+	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
-	} // next position
+	} /* next position */
       }
 
       if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
@@ -1140,7 +1143,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
     } else {
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-      if(labelPtr->position == MS_CC) // don't need the marker_offset
+      if(labelPtr->position == MS_CC) /* don't need the marker_offset */
         p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
       else
         p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
@@ -1148,7 +1151,7 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
       if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
 	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
-      if(!labelPtr->force) { // no need to check anything else
+      if(!labelPtr->force) { /* no need to check anything else */
 
 	if(!labelPtr->partials) {
 	  if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE)
@@ -1156,10 +1159,10 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	}
 
 	if(!cachePtr->status)
-	  continue; // next label
+	  continue; /* next label */
 
-	for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-	  if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
+	for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
+	  if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
 	    if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 	      cachePtr->status = MS_FALSE;
 	      break;
@@ -1168,9 +1171,9 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
 	}
 
 	if(!cachePtr->status)
-	  continue; // next label
+	  continue; /* next label */
 
-	for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
+	for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered label */
 	  if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 	    if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text, map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
 	      cachePtr->status = MS_FALSE;
@@ -1196,11 +1199,11 @@ int msDrawLabelCacheSVG(imageObj *image, mapObj *map)
         msDrawMarkerSymbolSVG(&map->symbolset, image, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
     }
 
-    //background not supported
-    //if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardGD(img, cachePtr->poly, labelPtr);
-    msDrawTextSVG(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); // actually draw the label
+    /* background not supported */
+    /* if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardGD(img, cachePtr->poly, labelPtr); */
+    msDrawTextSVG(image, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label */
 
-  } // next label
+  } /* next label */
 
   
   return(0);
@@ -1277,7 +1280,7 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
     unsigned char block[4000];
     int bytes_read;
 
-    if (image && MS_DRIVER_SVG(image->format))// && filename)
+    if (image && MS_DRIVER_SVG(image->format))/* && filename) */
     {
         if (!image->img.svg->streamclosed)
         {
@@ -1288,8 +1291,8 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
         
         if (!filename)
         {
-            //if( msIO_needBinaryStdout() == MS_FAILURE )
-            //    return MS_FAILURE;
+            /* if( msIO_needBinaryStdout() == MS_FAILURE ) */
+            /* return MS_FAILURE; */
 
             fp = fopen(image->img.svg->filename, "rb" );
             if( fp == NULL )
@@ -1376,8 +1379,8 @@ int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
     imagetmp = msImageCreate(image->width, image->height, format, 
                                NULL, NULL, map );
 
-    //TODO : msDrawRasterLayerLow returns 0 (ms_success) in some cases
-    // without drawing anything (ex : if it does not fit in scale)
+    /* TODO : msDrawRasterLayerLow returns 0 (ms_success) in some cases */
+    /* without drawing anything (ex : if it does not fit in scale) */
     if (msDrawRasterLayerLow(map, layer, imagetmp) != MS_FAILURE)
     {
         pszTmpfile = msTmpFile(map->mappath,map->web.imagepath,format->extension);
@@ -1399,7 +1402,7 @@ int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
          msFree(tmpfile);
          msFree(pszURL);
 
-         //TODO : should we keep track of the file and delete it ?
+         /* TODO : should we keep track of the file and delete it ? */
          return MS_SUCCESS;
     }
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.101  2005/01/12 21:11:21  frank
  * removed LABELS_ROTATE_WITH_MAP, rotate labels if angle!=0 or labelangleitem
  *
@@ -76,17 +79,17 @@ static int layerInitItemInfo(layerObj *layer)
       return(MS_FAILURE);
     }
 
-    // iteminfo needs to be a bit more complex, a list of indexes plus the length of the list
+    /* iteminfo needs to be a bit more complex, a list of indexes plus the length of the list */
     layer->iteminfo = (int *) msDBFGetItemIndexes(shpfile->hDBF, layer->items, layer->numitems);
     if(!layer->iteminfo) return(MS_FAILURE);
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
-    // iteminfo needs to be a bit more complex, a list of indexes plus the length of the list
+    /* iteminfo needs to be a bit more complex, a list of indexes plus the length of the list */
     return(msTiledSHPLayerInitItemInfo(layer));
     break;
   case(MS_INLINE):
-    return(MS_SUCCESS); // inline shapes have no items
+    return(MS_SUCCESS); /* inline shapes have no items */
     break;
   case(MS_OGR):
     return(msOGRLayerInitItemInfo(layer));
@@ -177,9 +180,9 @@ int msLayerOpen(layerObj *layer)
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    if(layer->layerinfo) return(MS_SUCCESS); // layer already open
+    if(layer->layerinfo) return(MS_SUCCESS); /* layer already open */
 
-    // allocate space for a shapefileObj using layer->layerinfo	
+    /* allocate space for a shapefileObj using layer->layerinfo	 */
     shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
     if(!shpfile) {
       msSetError(MS_MEMERR, "Error allocating shapefileObj structure.", "msLayerOpen()");
@@ -202,7 +205,7 @@ int msLayerOpen(layerObj *layer)
     return(msTiledSHPOpenFile(layer));
     break;
   case(MS_INLINE):
-    layer->currentfeature = layer->features; // point to the begining of the feature list
+    layer->currentfeature = layer->features; /* point to the begining of the feature list */
     return(MS_SUCCESS);
     break;
   case(MS_OGR):
@@ -315,7 +318,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     status = msSHPWhichShapes(shpfile, rect, layer->debug);
     if(status != MS_SUCCESS) return(status);
 
-    // now apply the maxshapes criteria (NOTE: this ignores the filter so you could get less than maxfeatures)
+    /* now apply the maxshapes criteria (NOTE: this ignores the filter so you could get less than maxfeatures) */
     if(layer->maxfeatures > 0) {
       for(i=0; i<shpfile->numshapes; i++)
         n1 += msGetBit(shpfile->status,i);
@@ -393,12 +396,12 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
 
     do {
       i = shpfile->lastshape + 1;
-      while(i<shpfile->numshapes && !msGetBit(shpfile->status,i)) i++; // next "in" shape
+      while(i<shpfile->numshapes && !msGetBit(shpfile->status,i)) i++; /* next "in" shape */
       shpfile->lastshape = i;
 
-      if(i == shpfile->numshapes) return(MS_DONE); // nothing else to read
+      if(i == shpfile->numshapes) return(MS_DONE); /* nothing else to read */
 
-      filter_passed = MS_TRUE;  // By default accept ANY shape
+      filter_passed = MS_TRUE;  /* By default accept ANY shape */
       if(layer->numitems > 0 && layer->iteminfo) {
         values = msDBFGetValueList(shpfile->hDBF, i, layer->iteminfo, layer->numitems);
         if(!values) return(MS_FAILURE);
@@ -407,11 +410,11 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
             values = NULL;
         }
       }
-    } while(!filter_passed);  // Loop until both spatial and attribute filters match
+    } while(!filter_passed);  /* Loop until both spatial and attribute filters match */
 
-    msSHPReadShape(shpfile->hSHP, i, shape); // ok to read the data now
+    msSHPReadShape(shpfile->hSHP, i, shape); /* ok to read the data now */
 
-    // skip NULL shapes (apparently valid for shapefiles, at least ArcView doesn't care)
+    /* skip NULL shapes (apparently valid for shapefiles, at least ArcView doesn't care) */
     if(shape->type == MS_SHAPE_NULL) return(msLayerNextShape(layer, shape));
 
     shape->values = values;
@@ -421,7 +424,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPNextShape(layer, shape));
   case(MS_INLINE):
-    if(!(layer->currentfeature)) return(MS_DONE); // out of features    
+    if(!(layer->currentfeature)) return(MS_DONE); /* out of features     */
     msCopyShape(&(layer->currentfeature->shape), shape);
     layer->currentfeature = layer->currentfeature->next;
     return(MS_SUCCESS);
@@ -452,9 +455,9 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     break;
   }
 
-  // TO DO! This is where dynamic joins will happen. Joined attributes will be
-  // tagged on to the main attributes with the naming scheme [join name].[item name].
-  // We need to leverage the iteminfo (I think) at this point
+  /* TO DO! This is where dynamic joins will happen. Joined attributes will be */
+  /* tagged on to the main attributes with the naming scheme [join name].[item name]. */
+  /* We need to leverage the iteminfo (I think) at this point */
 
   return(MS_FAILURE);
 }
@@ -476,7 +479,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
       return(MS_FAILURE);
     }
 
-    // msSHPReadShape *should* return success or failure so we don't have to test here
+    /* msSHPReadShape *should* return success or failure so we don't have to test here */
     if(record < 0 || record >= shpfile->numshapes) {
       msSetError(MS_MISCERR, "Invalid feature id.", "msLayerGetShape()");
       return(MS_FAILURE);
@@ -494,8 +497,8 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     return(msTiledSHPGetShape(layer, shape, tile, record));
   case(MS_INLINE):
     return msINLINELayerGetShape(layer, shape, record);
-    //msSetError(MS_MISCERR, "Cannot retrieve inline shapes randomly.", "msLayerGetShape()");
-    //return(MS_FAILURE);
+    /* msSetError(MS_MISCERR, "Cannot retrieve inline shapes randomly.", "msLayerGetShape()"); */
+    /* return(MS_FAILURE); */
     break;
   case(MS_OGR):
   case(MS_WFS):
@@ -523,8 +526,8 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     break;
   }
 
-  // TO DO! This is where dynamic joins will happen. Joined attributes will be
-  // tagged on to the main attributes with the naming scheme [join name].[item name].
+  /* TO DO! This is where dynamic joins will happen. Joined attributes will be */
+  /* tagged on to the main attributes with the naming scheme [join name].[item name]. */
 
   return(MS_FAILURE);
 }
@@ -536,7 +539,7 @@ void msLayerClose(layerObj *layer)
 {
   shapefileObj *shpfile;
 
-  // no need for items once the layer is closed
+  /* no need for items once the layer is closed */
   layerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
@@ -547,7 +550,7 @@ void msLayerClose(layerObj *layer)
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     shpfile = layer->layerinfo;
-    if(!shpfile) return; // nothing to do
+    if(!shpfile) return; /* nothing to do */
     msSHPCloseFile(shpfile);
     free(layer->layerinfo);
     layer->layerinfo = NULL;
@@ -574,8 +577,8 @@ void msLayerClose(layerObj *layer)
     msMYGISLayerClose(layer);
     break;
   case(MS_SDE):
-    // using pooled connections for SDE, closed when map file is closed
-    // msSDELayerClose(layer); 
+    /* using pooled connections for SDE, closed when map file is closed */
+    /* msSDELayerClose(layer);  */
     break;
   case(MS_ORACLESPATIAL):
     msOracleSpatialLayerClose(layer);
@@ -600,7 +603,7 @@ int msLayerGetItems(layerObj *layer)
 {
   shapefileObj *shpfile;
 
-  // clean up any previously allocated instances
+  /* clean up any previously allocated instances */
   layerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
@@ -627,7 +630,7 @@ int msLayerGetItems(layerObj *layer)
     return(msTiledSHPLayerGetItems(layer));
     break;
   case(MS_INLINE):
-    return(MS_SUCCESS); // inline shapes have no items
+    return(MS_SUCCESS); /* inline shapes have no items */
     break;
   case(MS_OGR):
     return(msOGRLayerGetItems(layer));
@@ -657,7 +660,7 @@ int msLayerGetItems(layerObj *layer)
     break;
   }
 
-  // TO DO! Need to add any joined itemd on to the core layer items, one long list! 
+  /* TO DO! Need to add any joined itemd on to the core layer items, one long list!  */
 
   return(MS_FAILURE);
 }
@@ -740,19 +743,19 @@ static int string2list(char **list, int *listsize, char *string)
 
   for(i=0; i<(*listsize); i++)
     if(strcmp(list[i], string) == 0) { 
-        // printf("string2list (duplicate): %s %d\n", string, i);
+        /* printf("string2list (duplicate): %s %d\n", string, i); */
       return(i);
     }
 
   list[i] = strdup(string);
   (*listsize)++;
 
-  // printf("string2list: %s %d\n", string, i);
+  /* printf("string2list: %s %d\n", string, i); */
 
   return(i);
 }
 
-// TO DO: this function really needs to use the lexer
+/* TO DO: this function really needs to use the lexer */
 static void expression2list(char **list, int *listsize, expressionObj *expression) 
 {
   int i, j, l;
@@ -778,12 +781,12 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
       tmpstr2[j+1] = '\0';
       string2list(expression->items, &(expression->numitems), tmpstr2);
 
-      if(tmpint != expression->numitems) { // not a duplicate, so no need to calculate the index
+      if(tmpint != expression->numitems) { /* not a duplicate, so no need to calculate the index */
         tmpstr1[j-1] = '\0';
         expression->indexes[expression->numitems - 1] = string2list(list, listsize, tmpstr1);
       }
 
-      j = 0; // reset
+      j = 0; /* reset */
 
       continue;
     }
@@ -800,16 +803,16 @@ int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *meta
 {
   int status;
   int numchars;
-//  int i;
+/* int i; */
 
-  status = msLayerGetItems(layer); // get a list of all attributes available for this layer (including JOINs)
+  status = msLayerGetItems(layer); /* get a list of all attributes available for this layer (including JOINs) */
   if(status != MS_SUCCESS) return(status);
 
-  // allocate space for the various item lists
+  /* allocate space for the various item lists */
   if(classify && layer->filter.type == MS_EXPRESSION) { 
     numchars = countChars(layer->filter.string, '[');
     if(numchars > 0) {
-      layer->filter.items = (char **)calloc(numchars, sizeof(char *)); // should be more than enough space
+      layer->filter.items = (char **)calloc(numchars, sizeof(char *)); /* should be more than enough space */
       if(!(layer->filter.items)) {
 	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
 	return(MS_FAILURE);
@@ -823,7 +826,7 @@ int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *meta
     }
   }
 
-  // for(i=0; i<layer->numitems; i++) { }
+  /* for(i=0; i<layer->numitems; i++) { } */
 
   return(MS_SUCCESS);
 }
@@ -840,18 +843,18 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   int i, j;
   int nt=0, ne=0;
   
-  //
-  // TO DO! I have a better algorithm.
-  // 
-  // 1) call msLayerGetItems to get a complete list (including joins)
-  // 2) loop though item-based parameters and expressions to identify items to keep
-  // 3) based on 2) build a list of items
-  //
-  // This is more straight forward and robust, fixes the problem of [...] regular expressions
-  // embeded in logical expressions. It also opens up to using dynamic joins anywhere...
-  //
+  /*  */
+  /* TO DO! I have a better algorithm. */
+  /*  */
+  /* 1) call msLayerGetItems to get a complete list (including joins) */
+  /* 2) loop though item-based parameters and expressions to identify items to keep */
+  /* 3) based on 2) build a list of items */
+  /*  */
+  /* This is more straight forward and robust, fixes the problem of [...] regular expressions */
+  /* embeded in logical expressions. It also opens up to using dynamic joins anywhere... */
+  /*  */
 
-  // Cleanup any previous item selection
+  /* Cleanup any previous item selection */
   layerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
@@ -874,7 +877,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     if(layer->filter.type == MS_EXPRESSION) {
       ne = countChars(layer->filter.string, '[');
       if(ne > 0) {
-	layer->filter.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
+	layer->filter.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
 	if(!(layer->filter.items)) {
 	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
 	  return(MS_FAILURE);
@@ -901,7 +904,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     if(classify && layer->class[i].expression.type == MS_EXPRESSION) { 
       ne = countChars(layer->class[i].expression.string, '[');
       if(ne > 0) {
-	layer->class[i].expression.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
+	layer->class[i].expression.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
 	if(!(layer->class[i].expression.items)) {
 	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
 	  return(MS_FAILURE);
@@ -920,7 +923,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     if(annotate && layer->class[i].text.type == MS_EXPRESSION) { 
       ne = countChars(layer->class[i].text.string, '[');
       if(ne > 0) {
-	layer->class[i].text.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
+	layer->class[i].text.items = (char **)calloc(ne, sizeof(char *)); /* should be more than enough space */
 	if(!(layer->class[i].text.items)) {
 	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
 	  return(MS_FAILURE);
@@ -936,20 +939,20 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     }
   }
 
-  // TODO: it would be nice to move this into the SDE code itself, feels wrong here...
+  /* TODO: it would be nice to move this into the SDE code itself, feels wrong here... */
   if(layer->connectiontype == MS_SDE) {
-    layer->items = (char **)calloc(nt+2, sizeof(char *)); // should be more than enough space, SDE always needs a couple of additional items
+    layer->items = (char **)calloc(nt+2, sizeof(char *)); /* should be more than enough space, SDE always needs a couple of additional items */
     if(!layer->items) {
       msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
       return(MS_FAILURE);
     }
-    layer->items[0] = msSDELayerGetRowIDColumn(layer); // row id
+    layer->items[0] = msSDELayerGetRowIDColumn(layer); /* row id */
     layer->items[1] = msSDELayerGetSpatialColumn(layer);
     layer->numitems = 2;
   } else {
-    //if(nt == 0) return(MS_SUCCESS);
+    /* if(nt == 0) return(MS_SUCCESS); */
     if(nt > 0) {
-      layer->items = (char **)calloc(nt, sizeof(char *)); // should be more than enough space
+      layer->items = (char **)calloc(nt, sizeof(char *)); /* should be more than enough space */
       if(!layer->items) {
         msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
         return(MS_FAILURE);
@@ -1011,7 +1014,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     }
   }
 
-  // populate the iteminfo array
+  /* populate the iteminfo array */
   if(layer->numitems == 0)
     return(MS_SUCCESS);
 
@@ -1025,7 +1028,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 int msLayerSetItems(layerObj *layer, char **items, int numitems)
 {
   int i;
-  // Cleanup any previous item selection
+  /* Cleanup any previous item selection */
   layerFreeItemInfo(layer);
   if(layer->items) {
     msFreeCharArray(layer->items, layer->numitems);
@@ -1033,7 +1036,7 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
     layer->numitems = 0;
   }
 
-  // now allocate and set the layer item parameters 
+  /* now allocate and set the layer item parameters  */
   layer->items = (char **)malloc(sizeof(char *)*numitems);
   if(!layer->items) {
     msSetError(MS_MEMERR, NULL, "msLayerSetItems()");
@@ -1044,7 +1047,7 @@ int msLayerSetItems(layerObj *layer, char **items, int numitems)
     layer->items[i] = strdup(items[i]);
   layer->numitems = numitems;
 
-  // populate the iteminfo array
+  /* populate the iteminfo array */
   return(layerInitItemInfo(layer));
 
   return(MS_SUCCESS);
@@ -1217,7 +1220,7 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
       return MS_FALSE;
 
     if (strstr(timestring, ",") == NULL && 
-        strstr(timestring, "/") == NULL) //discrete time
+        strstr(timestring, "/") == NULL) /* discrete time */
       tmpstimestring = strdup(timestring);
     else
     {
@@ -1228,12 +1231,12 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
         if (numtimes >= 1)
         {
             tokens = split(atimes[0],  '/', &ntmp);
-            if (ntmp == 2) //ranges
+            if (ntmp == 2) /* ranges */
             {
                 tmpstimestring = strdup(tokens[0]);
                 msFreeCharArray(tokens, ntmp);
             }
-            else if (ntmp == 1) //multiple times
+            else if (ntmp == 1) /* multiple times */
             {
                 tmpstimestring = strdup(atimes[0]);
             }
@@ -1282,9 +1285,9 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
     if (!timeresolution)
       return MS_FALSE;
 
-    //where date_trunc('month', _cwctstamp) = '2004-08-01'
+    /* where date_trunc('month', _cwctstamp) = '2004-08-01' */
     if (strstr(timestring, ",") == NULL && 
-        strstr(timestring, "/") == NULL) //discrete time
+        strstr(timestring, "/") == NULL) /* discrete time */
     {
         if(lp->filteritem) free(lp->filteritem);
         lp->filteritem = strdup(timefield);
@@ -1304,12 +1307,12 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
         strcat(buffer, " = ");
         strcat(buffer,  "'");
         strcat(buffer, timestring);
-        //make sure that the timestring is complete and acceptable
-        //to the date_trunc function :
-        // - if the resolution is year (2004) or month (2004-01), 
-        //a complete string for time would be 2004-01-01
-        // - if the resolluion is hour or minute (2004-01-01 15), a 
-        // complete time is 2004-01-01 15:00:00
+        /* make sure that the timestring is complete and acceptable */
+        /* to the date_trunc function : */
+        /* - if the resolution is year (2004) or month (2004-01),  */
+        /* a complete string for time would be 2004-01-01 */
+        /* - if the resolluion is hour or minute (2004-01-01 15), a  */
+        /* complete time is 2004-01-01 15:00:00 */
         if (strcasecmp(timeresolution, "year")==0)
         {
             nlength = strlen(timestring);
@@ -1348,7 +1351,7 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
 
         strcat(buffer, ")");
         
-        //loadExpressionString(&lp->filter, (char *)timestring);
+        /* loadExpressionString(&lp->filter, (char *)timestring); */
         loadExpressionString(&lp->filter, buffer);
 
         free(timeresolution);
@@ -1361,9 +1364,9 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
 
     if (numtimes >= 1)
     {
-        //check to see if we have ranges by parsing the first entry
+        /* check to see if we have ranges by parsing the first entry */
         tokens = split(atimes[0],  '/', &ntmp);
-        if (ntmp == 2) //ranges
+        if (ntmp == 2) /* ranges */
         {
             msFreeCharArray(tokens, ntmp);
             for (i=0; i<numtimes; i++)
@@ -1389,10 +1392,10 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
                     strcat(buffer,  "'");
 
                     strcat(buffer, tokens[0]);
-                    // - if the resolution is year (2004) or month (2004-01), 
-                    //a complete string for time would be 2004-01-01
-                    // - if the resolluion is hour or minute (2004-01-01 15), a 
-                    // complete time is 2004-01-01 15:00:00
+                    /* - if the resolution is year (2004) or month (2004-01),  */
+                    /* a complete string for time would be 2004-01-01 */
+                    /* - if the resolluion is hour or minute (2004-01-01 15), a  */
+                    /* complete time is 2004-01-01 15:00:00 */
                     if (strcasecmp(timeresolution, "year")==0)
                     {
                         nlength = strlen(tokens[0]);
@@ -1441,10 +1444,10 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
                     strcat(buffer,  "'");
                     strcat(buffer, tokens[1]);
 
-                    // - if the resolution is year (2004) or month (2004-01), 
-                    //a complete string for time would be 2004-01-01
-                    // - if the resolluion is hour or minute (2004-01-01 15), a 
-                    // complete time is 2004-01-01 15:00:00
+                    /* - if the resolution is year (2004) or month (2004-01),  */
+                    /* a complete string for time would be 2004-01-01 */
+                    /* - if the resolluion is hour or minute (2004-01-01 15), a  */
+                    /* complete time is 2004-01-01 15:00:00 */
                     if (strcasecmp(timeresolution, "year")==0)
                     {
                         nlength = strlen(tokens[1]);
@@ -1487,7 +1490,7 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
             if (strlen(buffer) > 0)
               strcat(buffer, ")");
         }
-        else if (ntmp == 1) //multiple times
+        else if (ntmp == 1) /* multiple times */
         {
             msFreeCharArray(tokens, ntmp);
             strcat(buffer, "(");
@@ -1510,12 +1513,12 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
 
                 strcat(buffer, atimes[i]);
                 
-                //make sure that the timestring is complete and acceptable
-                //to the date_trunc function :
-                // - if the resolution is year (2004) or month (2004-01), 
-                //a complete string for time would be 2004-01-01
-                // - if the resolluion is hour or minute (2004-01-01 15), a 
-                // complete time is 2004-01-01 15:00:00
+                /* make sure that the timestring is complete and acceptable */
+                /* to the date_trunc function : */
+                /* - if the resolution is year (2004) or month (2004-01),  */
+                /* a complete string for time would be 2004-01-01 */
+                /* - if the resolluion is hour or minute (2004-01-01 15), a  */
+                /* complete time is 2004-01-01 15:00:00 */
                 if (strcasecmp(timeresolution, "year")==0)
                 {
                     nlength = strlen(atimes[i]);
@@ -1562,7 +1565,7 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
 
         msFreeCharArray(atimes, numtimes);
 
-        //load the string to the filter
+        /* load the string to the filter */
         if (strlen(buffer) > 0)
         {
             if(lp->filteritem) 
@@ -1605,8 +1608,8 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
         return msPOSTGISLayerSetTimeFilter(lp,timestring, timefield);
     }
 
-    //for shape and ogr files time expressions are
-    //delimited using backtics (ex `[TIME]` eq `2004-01-01`)
+    /* for shape and ogr files time expressions are */
+    /* delimited using backtics (ex `[TIME]` eq `2004-01-01`) */
     if (lp->connectiontype == MS_SHAPEFILE ||
         lp->connectiontype == MS_OGR ||
         lp->connectiontype == MS_TILED_SHAPEFILE ||
@@ -1616,12 +1619,12 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
       addtimebacktics = 0;
 
     
-    //parse the time string. We support dicrete times (eg 2004-09-21), 
-    //multiple times (2004-09-21, 2004-09-22, ...)
-    //and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29)
+    /* parse the time string. We support dicrete times (eg 2004-09-21),  */
+    /* multiple times (2004-09-21, 2004-09-22, ...) */
+    /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
 
     if (strstr(timestring, ",") == NULL && 
-        strstr(timestring, "/") == NULL) //discrete time
+        strstr(timestring, "/") == NULL) /* discrete time */
     {
         if(lp->filteritem) free(lp->filteritem);
         lp->filteritem = strdup(timefield);
@@ -1656,7 +1659,7 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
 
         strcat(buffer, ")");
         
-        //loadExpressionString(&lp->filter, (char *)timestring);
+        /* loadExpressionString(&lp->filter, (char *)timestring); */
         loadExpressionString(&lp->filter, buffer);
 
         return MS_TRUE;
@@ -1668,9 +1671,9 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
 
     if (numtimes >= 1)
     {
-        //check to see if we have ranges by parsing the first entry
+        /* check to see if we have ranges by parsing the first entry */
         tokens = split(atimes[0],  '/', &ntmp);
-        if (ntmp == 2) //ranges
+        if (ntmp == 2) /* ranges */
         {
                 
             msFreeCharArray(tokens, ntmp);
@@ -1740,7 +1743,7 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
              if (strlen(buffer) > 0)
                strcat(buffer, ")");
         }
-        else if (ntmp == 1) //multiple times
+        else if (ntmp == 1) /* multiple times */
         {
              msFreeCharArray(tokens, ntmp);
              strcat(buffer, "(");
@@ -1785,7 +1788,7 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
 
         msFreeCharArray(atimes, numtimes);
 
-        //load the string to the filter
+        /* load the string to the filter */
         if (strlen(buffer) > 0)
         {
             if(lp->filteritem) 

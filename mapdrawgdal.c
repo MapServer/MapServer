@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.41  2005/01/23 20:40:23  frank
  * LoadGDALImage() should return int, not CPLErr.
  *
@@ -179,9 +182,9 @@ static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube);
 
 #define RED_LEVELS 5
 #define RED_DIV 52
-//#define GREEN_LEVELS 7
+/* #define GREEN_LEVELS 7 */
 #define GREEN_LEVELS 5
-//#define GREEN_DIV 37
+/* #define GREEN_DIV 37 */
 #define GREEN_DIV 52
 #define BLUE_LEVELS 5
 #define BLUE_DIV 52
@@ -224,7 +227,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*      and then dumped into the SWF or the PDF file.                   */
 /* -------------------------------------------------------------------- */
   
-  //if( MS_RENDERER_GD(map->outputformat) )
+  /* if( MS_RENDERER_GD(map->outputformat) ) */
   if( MS_RENDERER_GD(image->format) )
   {
       gdImg = image->img.gd;

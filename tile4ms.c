@@ -75,16 +75,16 @@ int     tilesProcessed = 0;
   line.point = (pointObj *)malloc(sizeof(pointObj)*5);
   line.numpoints = 5;
  
-  // open metafile
-  // -------------
+  /* open metafile */
+  /* ------------- */
   if (NULL==(metaFP=fopen(metaFileNameP, "r"))) {
     printf( "Unable to open:%s\n", metaFileNameP);
     return(1);
     }
 
 
-  // create new tileindex shapefiles and create a header
-  // --------------------------------------------------
+  /* create new tileindex shapefiles and create a header */
+  /* -------------------------------------------------- */
   sprintf(tileshapeName, "%s.shp", tileFileNameP);
   if(NULL==(tileSHP=msSHPCreate(tileFileNameP, SHP_POLYGON))) {
     fclose(metaFP);
@@ -93,8 +93,8 @@ int     tilesProcessed = 0;
     }
 
   
-  // create new tileindex dbf-file
-  // -----------------------------
+  /* create new tileindex dbf-file */
+  /* ----------------------------- */
   sprintf(tiledbfName, "%s.dbf", tileFileNameP);
   if (NULL==(tileDBF=msDBFCreate(tiledbfName))) {
     fclose(metaFP);
@@ -113,8 +113,8 @@ int     tilesProcessed = 0;
 
 
 
-  // loop through files listed in metafile
-  // =====================================
+  /* loop through files listed in metafile */
+  /* ===================================== */
   while (fgets(shapeFileName, 255, metaFP)) {
     
 
@@ -125,8 +125,8 @@ int     tilesProcessed = 0;
 
     tilesFound++;
 
-    // read the DBFFields for this shapefile
-    // and save them if the first, otherwise compare them
+    /* read the DBFFields for this shapefile */
+    /* and save them if the first, otherwise compare them */
     
     shpDBF = msDBFOpen(shapeFileName, "rb");
 
@@ -161,7 +161,7 @@ int     tilesProcessed = 0;
     }
     msDBFClose(shpDBF);
 
-        // Get rid of .shp extension if it was included.
+        /* Get rid of .shp extension if it was included. */
     if (strlen(shapeFileName) > 4 && 
             (p=shapeFileName+strlen(shapeFileName)-4) &&
             strcasecmp(p, ".shp") == 0)
@@ -170,8 +170,8 @@ int     tilesProcessed = 0;
     if (!strlen(shapeFileName))
         break;
 
-    // read extent from shapefile
-    // --------------------------
+    /* read extent from shapefile */
+    /* -------------------------- */
     hSHP = msSHPOpen(shapeFileName, "rb");
 
     if( hSHP == NULL )  {
@@ -180,45 +180,45 @@ int     tilesProcessed = 0;
         }
 
     msSHPReadBounds(hSHP, -1, &extentRect);
-    // SHPGetInfo(hSHP, &nEntities, &nShapeType, adfBndsMin, adfBndsMax);
+    /* SHPGetInfo(hSHP, &nEntities, &nShapeType, adfBndsMin, adfBndsMax); */
 
-    //printf("File:  %s Bounds 0/1: (%15.10lg,%15.10lg)\n\t(%15.10lg,%15.10lg)\n", shapeFileName, adfBndsMin[0], adfBndsMin[1], adfBndsMax[0], adfBndsMax[1] );
+    /* printf("File:  %s Bounds 0/1: (%15.10lg,%15.10lg)\n\t(%15.10lg,%15.10lg)\n", shapeFileName, adfBndsMin[0], adfBndsMin[1], adfBndsMax[0], adfBndsMax[1] ); */
 
     msSHPClose(hSHP);
 
 
-    // create rectangle describing current shapefile extent
-    // ----------------------------------------------------
+    /* create rectangle describing current shapefile extent */
+    /* ---------------------------------------------------- */
 
-    line.point[0].x = line.point[4].x = extentRect.minx; // bottom left
+    line.point[0].x = line.point[4].x = extentRect.minx; /* bottom left */
     line.point[0].y = line.point[4].y  = extentRect.miny;
-    line.point[1].x = extentRect.minx; // top left
+    line.point[1].x = extentRect.minx; /* top left */
     line.point[1].y = extentRect.maxy;
-    line.point[2].x = extentRect.maxx; // top left
+    line.point[2].x = extentRect.maxx; /* top left */
     line.point[2].y = extentRect.maxy;
-    line.point[3].x = extentRect.maxx; // bottom right
+    line.point[3].x = extentRect.maxx; /* bottom right */
     line.point[3].y = extentRect.miny;
 
 
-    // create and add shape object.  Returns link to entry in DBF file
-    // ---------------------------------------------------------------
+    /* create and add shape object.  Returns link to entry in DBF file */
+    /* --------------------------------------------------------------- */
 
     msAddLine(&shapeRect, &line);
     entityNum = msSHPWriteShape( tileSHP, &shapeRect );
     
     msFreeShape(&shapeRect);
 
-    // store filepath of current shapefile as attribute of rectangle
-    // -------------------------------------------------------------
+    /* store filepath of current shapefile as attribute of rectangle */
+    /* ------------------------------------------------------------- */
 
-    // Strip off filename if requested
+    /* Strip off filename if requested */
     if (tile_path_only)
     {
         char *pszTmp;
         if ((pszTmp = strrchr(shapeFileName, '/')) != NULL ||
             (pszTmp = strrchr(shapeFileName, '\\')) != NULL )
         {
-            *(pszTmp+1) = '\0';  // Keep the trailing '/' only.
+            *(pszTmp+1) = '\0';  /* Keep the trailing '/' only. */
         }
     }
 
@@ -260,16 +260,16 @@ int main( int argc, char **argv )
 {
   int tile_path_only = 0;
 
-  // stun user with existence of help 
-  // --------------------------------
+  /* stun user with existence of help  */
+  /* -------------------------------- */
   if ((argc == 2)&&(strstr(argv[1], "-h"))) 
   {
       print_usage_and_exit();
   }
 
 
-  // check arguments
-  // ---------------
+  /* check arguments */
+  /* --------------- */
   if( argc < 3 )
   {
       print_usage_and_exit();

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.9  2005/02/03 04:55:17  frank
  * Added POOL lock name.
  *
@@ -277,7 +280,7 @@ static HANDLE mutex_locks[TLOCK_MAX];
 void msThreadInit()
 
 {
-//    static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER;
+/* static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER; */
     static HANDLE core_lock = NULL;
 
     if( mutexes_initialized >= TLOCK_STATIC_MAX )

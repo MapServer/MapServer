@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.25  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -39,28 +42,28 @@ MS_CVSID("$Id$")
 #define ROW_ALLOCATION_SIZE 10
 
 
-// DBF/XBase function prototypes
+/* DBF/XBase function prototypes */
 int msDBFJoinConnect(layerObj *layer, joinObj *join);
 int msDBFJoinPrepare(joinObj *join, shapeObj *shape);
 int msDBFJoinNext(joinObj *join);
 int msDBFJoinClose(joinObj *join);
 int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
 
-// CSV (comma delimited text file) function prototypes
+/* CSV (comma delimited text file) function prototypes */
 int msCSVJoinConnect(layerObj *layer, joinObj *join);
 int msCSVJoinPrepare(joinObj *join, shapeObj *shape);
 int msCSVJoinNext(joinObj *join);
 int msCSVJoinClose(joinObj *join);
 int msCSVJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
 
-// MySQL function prototypes
+/* MySQL function prototypes */
 int msMySQLJoinConnect(layerObj *layer, joinObj *join);
 int msMySQLJoinPrepare(joinObj *join, shapeObj *shape);
 int msMySQLJoinNext(joinObj *join);
 int msMySQLJoinClose(joinObj *join);
 int msMySQLJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
 
-// wrapper function for DB specific join functions
+/* wrapper function for DB specific join functions */
 int msJoinConnect(layerObj *layer, joinObj *join) 
 {
   switch(join->connectiontype) {
@@ -141,9 +144,9 @@ int msJoinClose(joinObj *join)
   return MS_FAILURE;
 }
 
-//
-// XBASE join functions
-//
+/*  */
+/* XBASE join functions */
+/*  */
 typedef struct {
   DBFHandle hDBF;
   int fromindex, toindex;
@@ -157,22 +160,22 @@ int msDBFJoinConnect(layerObj *layer, joinObj *join)
   char szPath[MS_MAXPATHLEN];
   msDBFJoinInfo *joininfo;
 
-  if(join->joininfo) return(MS_SUCCESS); // already open
+  if(join->joininfo) return(MS_SUCCESS); /* already open */
     
-  // allocate a msDBFJoinInfo struct
+  /* allocate a msDBFJoinInfo struct */
   joininfo = (msDBFJoinInfo *) malloc(sizeof(msDBFJoinInfo));
   if(!joininfo) {
     msSetError(MS_MEMERR, "Error allocating XBase table info structure.", "msDBFJoinConnect()");
     return(MS_FAILURE);
   }
 
-  // initialize any members that won't get set later on in this function
+  /* initialize any members that won't get set later on in this function */
   joininfo->target = NULL;
   joininfo->nextrecord = 0;
 
   join->joininfo = joininfo;
 
-  // open the XBase file
+  /* open the XBase file */
   if((joininfo->hDBF = msDBFOpen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "rb" )) == NULL) {
     if((joininfo->hDBF = msDBFOpen( msBuildPath(szPath, layer->map->mappath, join->table), "rb" )) == NULL) {     
       msSetError(MS_IOERR, "(%s)", "msDBFJoinConnect()", join->table);   
@@ -180,15 +183,15 @@ int msDBFJoinConnect(layerObj *layer, joinObj *join)
     }
   }
 
-  // get "to" item index
+  /* get "to" item index */
   if((joininfo->toindex = msDBFGetItemIndex(joininfo->hDBF, join->to)) == -1) { 
     msSetError(MS_DBFERR, "Item %s not found in table %s.", "msDBFJoinConnect()", join->to, join->table); 
     return(MS_FAILURE);
   }
 
-  // get "from" item index  
+  /* get "from" item index   */
   for(i=0; i<layer->numitems; i++) {
-    if(strcasecmp(layer->items[i],join->from) == 0) { // found it
+    if(strcasecmp(layer->items[i],join->from) == 0) { /* found it */
       joininfo->fromindex = i;
       break;
     }
@@ -199,7 +202,7 @@ int msDBFJoinConnect(layerObj *layer, joinObj *join)
     return(MS_FAILURE);
   }
 
-  // finally store away the item names in the XBase table
+  /* finally store away the item names in the XBase table */
   join->numitems =  msDBFGetFieldCount(joininfo->hDBF);
   join->items = msDBFGetItems(joininfo->hDBF);
   if(!join->items) return(MS_FAILURE);  
@@ -226,9 +229,9 @@ int msDBFJoinPrepare(joinObj *join, shapeObj *shape)
     return(MS_FAILURE);
   }
 
-  joininfo->nextrecord = 0; // starting with the first record
+  joininfo->nextrecord = 0; /* starting with the first record */
 
-  if(joininfo->target) free(joininfo->target); // clear last target
+  if(joininfo->target) free(joininfo->target); /* clear last target */
   joininfo->target = strdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
@@ -249,7 +252,7 @@ int msDBFJoinNext(joinObj *join)
     return(MS_FAILURE);
   }
 
-  // clear any old data
+  /* clear any old data */
   if(join->values) { 
     msFreeCharArray(join->values, join->numitems);
     join->values = NULL;
@@ -257,11 +260,11 @@ int msDBFJoinNext(joinObj *join)
 
   n = msDBFGetRecordCount(joininfo->hDBF);
     
-  for(i=joininfo->nextrecord; i<n; i++) { // find a match
+  for(i=joininfo->nextrecord; i<n; i++) { /* find a match */
     if(strcmp(joininfo->target, msDBFReadStringAttribute(joininfo->hDBF, i, joininfo->toindex)) == 0) break;
   }  
     
-  if(i == n) { // unable to do the join
+  if(i == n) { /* unable to do the join */
     if((join->values = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
       msSetError(MS_MEMERR, NULL, "msDBFJoinNext()");
       return(MS_FAILURE);
@@ -276,7 +279,7 @@ int msDBFJoinNext(joinObj *join)
   if((join->values = msDBFGetValues(joininfo->hDBF,i)) == NULL) 
     return(MS_FAILURE);
 
-  joininfo->nextrecord = i+1; // so we know where to start looking next time through
+  joininfo->nextrecord = i+1; /* so we know where to start looking next time through */
 
   return(MS_SUCCESS);
 }
@@ -285,7 +288,7 @@ int msDBFJoinClose(joinObj *join)
 {
   msDBFJoinInfo *joininfo = join->joininfo;
 
-  if(!joininfo) return(MS_SUCCESS); // already closed
+  if(!joininfo) return(MS_SUCCESS); /* already closed */
 
   msDBFClose(joininfo->hDBF);
   if(joininfo->target) free(joininfo->target);
@@ -295,9 +298,9 @@ int msDBFJoinClose(joinObj *join)
   return(MS_SUCCESS);
 }
 
-//
-// CSV (comma separated value) join functions
-//
+/*  */
+/* CSV (comma separated value) join functions */
+/*  */
 typedef struct {
   int fromindex, toindex;
   char *target;
@@ -314,21 +317,21 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   msCSVJoinInfo *joininfo;
   char buffer[MS_BUFFER_LENGTH];
 
-  if(join->joininfo) return(MS_SUCCESS); // already open
+  if(join->joininfo) return(MS_SUCCESS); /* already open */
     
-  // allocate a msCSVJoinInfo struct
+  /* allocate a msCSVJoinInfo struct */
   if((joininfo = (msCSVJoinInfo *) malloc(sizeof(msCSVJoinInfo))) == NULL) {
     msSetError(MS_MEMERR, "Error allocating CSV table info structure.", "msCSVJoinConnect()");
     return(MS_FAILURE);
   }
 
-  // initialize any members that won't get set later on in this function
+  /* initialize any members that won't get set later on in this function */
   joininfo->target = NULL;
   joininfo->nextrow = 0;
 
   join->joininfo = joininfo;
 
-  // open the CSV file
+  /* open the CSV file */
   if((stream = fopen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "r" )) == NULL) {
     if((stream = fopen( msBuildPath(szPath, layer->map->mappath, join->table), "r" )) == NULL) {     
       msSetError(MS_IOERR, "(%s)", "msCSVJoinConnect()", join->table);   
@@ -336,7 +339,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
     }
   }
   
-  // once through to get the number of rows
+  /* once through to get the number of rows */
   joininfo->numrows = 0;
   while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) joininfo->numrows++;
   rewind(stream);
@@ -346,7 +349,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
     return(MS_FAILURE);
   }
 
-  // load the rows
+  /* load the rows */
   i = 0;
   while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {  
     trimEOL(buffer);  
@@ -355,9 +358,9 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   }
   fclose(stream);
 
-  // get "from" item index  
+  /* get "from" item index   */
   for(i=0; i<layer->numitems; i++) {
-    if(strcasecmp(layer->items[i],join->from) == 0) { // found it
+    if(strcasecmp(layer->items[i],join->from) == 0) { /* found it */
       joininfo->fromindex = i;
       break;
     }
@@ -368,20 +371,20 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
     return(MS_FAILURE);
   }
 
-  // get "to" index (for now the user tells us which column, 1..n)
+  /* get "to" index (for now the user tells us which column, 1..n) */
   joininfo->toindex = atoi(join->to) - 1;
   if(joininfo->toindex < 0 || joininfo->toindex > join->numitems) {
     msSetError(MS_JOINERR, "Invalid column index %s.", "msCSVJoinConnect()", join->to); 
     return(MS_FAILURE);
   }
 
-  // store away the column names (1..n)
+  /* store away the column names (1..n) */
   if((join->items = (char **) malloc(sizeof(char *)*join->numitems)) == NULL) {
     msSetError(MS_MEMERR, "Error allocating space for join item names.", "msCSVJoinConnect()");
     return(MS_FAILURE);
   }
   for(i=0; i<join->numitems; i++) {
-    join->items[i] = (char *) malloc(8); // plenty of space
+    join->items[i] = (char *) malloc(8); /* plenty of space */
     sprintf(join->items[i], "%d", i+1);
   }
 
@@ -407,9 +410,9 @@ int msCSVJoinPrepare(joinObj *join, shapeObj *shape)
     return(MS_FAILURE);
   }
 
-  joininfo->nextrow = 0; // starting with the first record
+  joininfo->nextrow = 0; /* starting with the first record */
 
-  if(joininfo->target) free(joininfo->target); // clear last target
+  if(joininfo->target) free(joininfo->target); /* clear last target */
   joininfo->target = strdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
@@ -425,13 +428,13 @@ int msCSVJoinNext(joinObj *join)
     return(MS_FAILURE);
   }
 
-  // clear any old data
+  /* clear any old data */
   if(join->values) { 
     msFreeCharArray(join->values, join->numitems);
     join->values = NULL;
   }
 
-  for(i=joininfo->nextrow; i<joininfo->numrows; i++) { // find a match    
+  for(i=joininfo->nextrow; i<joininfo->numrows; i++) { /* find a match     */
     if(strcmp(joininfo->target, joininfo->rows[i][joininfo->toindex]) == 0) break;
   }  
 
@@ -440,9 +443,9 @@ int msCSVJoinNext(joinObj *join)
     return(MS_FAILURE);
   }
   
-  if(i == joininfo->numrows) { // unable to do the join    
+  if(i == joininfo->numrows) { /* unable to do the join     */
     for(j=0; j<join->numitems; j++)
-      join->values[j] = strdup("\0"); // intialize to zero length strings
+      join->values[j] = strdup("\0"); /* intialize to zero length strings */
 
     joininfo->nextrow = joininfo->numrows;
     return(MS_DONE);
@@ -451,7 +454,7 @@ int msCSVJoinNext(joinObj *join)
   for(j=0; j<join->numitems; j++)
     join->values[j] = strdup(joininfo->rows[i][j]);
 
-  joininfo->nextrow = i+1; // so we know where to start looking next time through
+  joininfo->nextrow = i+1; /* so we know where to start looking next time through */
 
   return(MS_SUCCESS);
 }
@@ -461,7 +464,7 @@ int msCSVJoinClose(joinObj *join)
   int i;
   msCSVJoinInfo *joininfo = join->joininfo;
 
-  if(!joininfo) return(MS_SUCCESS); // already closed
+  if(!joininfo) return(MS_SUCCESS); /* already closed */
 
   for(i=0; i<joininfo->numrows; i++)
     msFreeCharArray(joininfo->rows[i], join->numitems);
@@ -504,9 +507,9 @@ MYSQL_RES *msMySQLQuery(char *q, MYSQL *conn)
     return qresult;
 }
 
-//
-// mysql join functions
-//
+/*  */
+/* mysql join functions */
+/*  */
 typedef struct {
   MYSQL mysql, *conn;
 	MYSQL_RES *qresult;
@@ -532,23 +535,23 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
   msMySQLJoinInfo *joininfo;
 
   MYDEBUG if (setvbuf(stdout, NULL, _IONBF , 0)){printf("Whoops...");};
-  if(join->joininfo) return(MS_SUCCESS); // already open
+  if(join->joininfo) return(MS_SUCCESS); /* already open */
     
-  // allocate a msMySQLJoinInfo struct
+  /* allocate a msMySQLJoinInfo struct */
   joininfo = (msMySQLJoinInfo *) malloc(sizeof(msMySQLJoinInfo));
   if(!joininfo) {
     msSetError(MS_MEMERR, "Error allocating mysql table info structure.", "msMySQLJoinConnect()");
     return(MS_FAILURE);
   }
 
-  // initialize any members that won't get set later on in this function
+  /* initialize any members that won't get set later on in this function */
   joininfo->qresult = NULL;
   joininfo->target = NULL;
   joininfo->nextrecord = 0;
 
   join->joininfo = joininfo;
 
-  // open the mysql connection
+  /* open the mysql connection */
 
   if( join->connection == NULL ) {
       msSetError(MS_QUERYERR, "Error parsing MYSQL JOIN: nothing specified in CONNECTION statement.",
@@ -590,7 +593,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
       mysql_close(joininfo->conn);
 		}
     MYDEBUG printf("msMYGISLayerOpen3 called<br>\n");
-		if (joininfo->qresult != NULL) // query leftover
+		if (joininfo->qresult != NULL) /* query leftover */
 		{
     	MYDEBUG printf("msMYGISLayerOpen4 called<br>\n");
 			mysql_free_result(joininfo->qresult);
@@ -598,7 +601,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
     MYDEBUG printf("msMYGISLayerOpen5 called<br>\n");
 		sprintf(qbuf, "SELECT count(%s) FROM %s", join->to, join->table);
 		MYDEBUG printf("%s<br>\n", qbuf);
-   	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) //There were some rows found, write 'em out for debug
+   	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) /* There were some rows found, write 'em out for debug */
 		{
 	  		int numrows = mysql_affected_rows(joininfo->conn);
 				MYDEBUG printf("%d rows<br>\n", numrows);
@@ -613,7 +616,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 	    return(MS_FAILURE);
 		}
 		sprintf(qbuf, "EXPLAIN %s", join->table);
-   	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) //There were some rows found, write 'em out for debug
+   	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) /* There were some rows found, write 'em out for debug */
 		{
 	  		join->numitems = mysql_affected_rows(joininfo->conn);
 			  if((join->items = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
@@ -635,9 +638,9 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 
 	
 
-  // get "from" item index  
+  /* get "from" item index   */
   for(i=0; i<layer->numitems; i++) {
-    if(strcasecmp(layer->items[i],join->from) == 0) { // found it
+    if(strcasecmp(layer->items[i],join->from) == 0) { /* found it */
       joininfo->fromindex = i;
       break;
     }
@@ -648,7 +651,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
     return(MS_FAILURE);
   }
 
-  // finally store away the item names in the XBase table
+  /* finally store away the item names in the XBase table */
   if(!join->items) return(MS_FAILURE);  
 
   return(MS_SUCCESS);
@@ -678,9 +681,9 @@ int msMySQLJoinPrepare(joinObj *join, shapeObj *shape)
     return(MS_FAILURE);
   }
 
-  joininfo->nextrecord = 0; // starting with the first record
+  joininfo->nextrecord = 0; /* starting with the first record */
 
-  if(joininfo->target) free(joininfo->target); // clear last target
+  if(joininfo->target) free(joininfo->target); /* clear last target */
   joininfo->target = strdup(shape->values[joininfo->fromindex]);
 
   return(MS_SUCCESS);
@@ -707,7 +710,7 @@ int msMySQLJoinNext(joinObj *join)
     return(MS_FAILURE);
   }
 
-  // clear any old data
+  /* clear any old data */
   if(join->values) { 
     msFreeCharArray(join->values, join->numitems);
     join->values = NULL;
@@ -715,12 +718,12 @@ int msMySQLJoinNext(joinObj *join)
 
   n = joininfo->rows;
     
-//  for(i=joininfo->nextrecord; i<n; i++) { // find a match
-//    if(strcmp(joininfo->target, msMySQLReadStringAttribute(joininfo->conn, i, joininfo->toindex)) == 0) break;
-//  }  
+/* for(i=joininfo->nextrecord; i<n; i++) { // find a match */
+/* if(strcmp(joininfo->target, msMySQLReadStringAttribute(joininfo->conn, i, joininfo->toindex)) == 0) break; */
+/* }   */
    	sprintf(qbuf, "SELECT * FROM %s WHERE %s = %s", join->table, joininfo->tocolumn, joininfo->target); 
 		MYDEBUG printf("%s<BR>\n", qbuf);
-   	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) //There were some rows found, write 'em out for debug
+   	if ((joininfo->qresult = msMySQLQuery(qbuf, joininfo->conn))) /* There were some rows found, write 'em out for debug */
 		{
 	  		int numrows = mysql_affected_rows(joininfo->conn);
 	  		int numfields = mysql_field_count(joininfo->conn);
@@ -738,9 +741,9 @@ int msMySQLJoinNext(joinObj *join)
 							return(MS_FAILURE);
 						}
 						for(i=0; i<join->numitems; i++){
-//							join->values[i] = strdup("\0"); /* intialize to zero length strings */
+/* join->values[i] = strdup("\0"); */ /* intialize to zero length strings */
 							join->values[i] = strdup(row[i]); /* intialize to zero length strings */
-				//						rows = atoi(row[0]);
+				/* rows = atoi(row[0]); */
 						}
 				}	else {
 						if((join->values = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
@@ -748,7 +751,7 @@ int msMySQLJoinNext(joinObj *join)
 							return(MS_FAILURE);
 						}
 						for(i=0; i<join->numitems; i++)
-							join->values[i] = strdup("\0"); // intialize to zero length strings 
+							join->values[i] = strdup("\0"); /* intialize to zero length strings  */
 
 						return(MS_DONE);
 				} 
@@ -757,13 +760,14 @@ int msMySQLJoinNext(joinObj *join)
 			return(MS_FAILURE);
 		}
 
-/*  if(i == n) { // unable to do the join
+#ifdef __NOTDEF__
+  if(i == n) { /* unable to do the join */
     if((join->values = (char **)malloc(sizeof(char *)*join->numitems)) == NULL) {
       msSetError(MS_MEMERR, NULL, "msMySQLJoinNext()");
       return(MS_FAILURE);
     }
     for(i=0; i<join->numitems; i++)
-      join->values[i] = strdup("\0"); // intialize to zero length strings 
+      join->values[i] = strdup("\0"); /* intialize to zero length strings  */
 
     joininfo->nextrecord = n;
     return(MS_DONE);
@@ -772,8 +776,9 @@ int msMySQLJoinNext(joinObj *join)
   if((join->values = msMySQLGetValues(joininfo->conn,i)) == NULL) 
     return(MS_FAILURE);
 
-  joininfo->nextrecord = i+1; // so we know where to start looking next time through
-*/
+  joininfo->nextrecord = i+1; /* so we know where to start looking next time through */
+#endif /* __NOTDEF__ */
+
   return(MS_SUCCESS);
 #endif
 }
@@ -786,7 +791,7 @@ int msMySQLJoinClose(joinObj *join)
 #else
   msMySQLJoinInfo *joininfo = join->joininfo;
 
-  if(!joininfo) return(MS_SUCCESS); // already closed
+  if(!joininfo) return(MS_SUCCESS); /* already closed */
 
   mysql_close(joininfo->conn);
   if(joininfo->target) free(joininfo->target);

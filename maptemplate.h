@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.12  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -64,7 +67,7 @@ enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, REFERENCE, SCALEBAR, COORDINAT
 */
 typedef struct
 {
-   /// should the query and/or map be saved
+   /* should the query and/or map be saved */
    int SaveMap, SaveQuery;
 
   cgiRequestObj *request;
@@ -73,12 +76,12 @@ typedef struct
 
    char *Layers[MS_MAXLAYERS];
    
-   /// number of layers specfied by a use
+   /* number of layers specfied by a use */
    int NumLayers;
 
    layerObj *ResultLayer;
    
-   int UseShapes; // are results of a query to be used in calculating an extent of some sort
+   int UseShapes; /* are results of a query to be used in calculating an extent of some sort */
 
 
    shapeObj SelectShape, ResultShape;
@@ -87,16 +90,16 @@ typedef struct
 
    pointObj MapPnt;
 
-   /// default for browsing
+   /* default for browsing */
    double fZoom, Zoom;
    
-   /// whether zooming in or out, default is pan or 0
+   /* whether zooming in or out, default is pan or 0 */
    int ZoomDirection; 
 
-   /// can be BROWSE, QUERY, etc.
+   /* can be BROWSE, QUERY, etc. */
    int Mode; 
    
-   /// big enough for time + pid
+   /* big enough for time + pid */
    char Id[IDSIZE]; 
    
    int CoordSource;
@@ -116,11 +119,11 @@ typedef struct
    /* 
     ** variables for multiple query results processing 
     */
-   int RN; /// overall result number
-   int LRN; /// result number within a layer
-   int NL; /// total number of layers with results
-   int NR; /// total number or results
-   int NLR; /// number of results in a layer
+   int RN; /* overall result number */
+   int LRN; /* result number within a layer */
+   int NL; /* total number of layers with results */
+   int NR; /* total number or results */
+   int NLR; /* number of results in a layer */
 } mapservObj;
    
    
@@ -136,7 +139,7 @@ MS_DLL_EXPORT mapservObj* msAllocMapServObj(void);
 */
 MS_DLL_EXPORT void msFreeMapServObj(mapservObj* msObj);
 
-// For Mapserv.c
+/* For Mapserv.c */
 MS_DLL_EXPORT int isOn(mapservObj* msObj, char *name, char *group);
 MS_DLL_EXPORT int checkWebScale(mapservObj *msObj);
 MS_DLL_EXPORT int setExtent(mapservObj *msObj);

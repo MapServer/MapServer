@@ -198,9 +198,9 @@ set_week_number_mon4 (struct tm *timeptr, int wnum)
 }
 
 /* strptime: roken */
-//extern "C"
+/* extern "C" */
 char *
-//strptime (const char *buf, const char *format, struct tm *timeptr)
+/* strptime (const char *buf, const char *format, struct tm *timeptr) */
 strptime (const char *buf, const char *format, struct tm *timeptr)
 {
     char c;

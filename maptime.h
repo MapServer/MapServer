@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.9  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -71,7 +74,7 @@ typedef enum
     TIME_RESOLUTION_YEAR =7
 }MS_TIME_RESOLUTION;
 
-// function prototypes
+/* function prototypes */
 void msTimeInit(struct tm *time);
 int msDateCompare(struct tm *time1, struct tm *time2);
 int msTimeCompare(struct tm *time1, struct tm *time2);

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.49  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.48  2004/12/29 22:49:57  sdlime
  * Added GML3 writing capabilities to mapgml.c. Not hooked up to anything yet.
  *
@@ -169,8 +172,8 @@ typedef  struct
   char *pszTypeName;
   char *pszFilter;
   int nMaxFeatures;
-  char *pszBbox; //only used with a Get Request
-  char *pszOutputFormat; //only used with DescibeFeatureType
+  char *pszBbox; /* only used with a Get Request */
+  char *pszOutputFormat; /* only used with DescibeFeatureType */
 
 } wfsParamsObj;
 
@@ -210,7 +213,7 @@ MS_DLL_EXPORT char *msOWSTerminateOnlineResource(const char *src_url);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *namespaces, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 
-// Constants for OWS Service version numbers
+/* Constants for OWS Service version numbers */
 #define OWS_0_1_2   0x000102
 #define OWS_0_1_4   0x000104
 #define OWS_0_1_6   0x000106
@@ -221,18 +224,18 @@ MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 #define OWS_1_0_8   0x010008
 #define OWS_1_1_0   0x010100
 #define OWS_1_1_1   0x010101
-#define OWS_VERSION_MAXLEN   20  // Buffer size for msOWSGetVersionString()
+#define OWS_VERSION_MAXLEN   20  /* Buffer size for msOWSGetVersionString() */
 
 MS_DLL_EXPORT int msOWSParseVersionString(const char *pszVersion);
 MS_DLL_EXPORT const char *msOWSGetVersionString(int nVersion, char *pszBuffer);
 
 
-// OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata()
+/* OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata() */
 #define OWS_NOERR   0
 #define OWS_WARN    1
 
-// OWS_WMS and OWS_WFS used for functions that differ in behavior between
-// WMS and WFS services (e.g. msOWSPrintLatLonBoundingBox())
+/* OWS_WMS and OWS_WFS used for functions that differ in behavior between */
+/* WMS and WFS services (e.g. msOWSPrintLatLonBoundingBox()) */
 #define OWS_WMS     1
 #define OWS_WFS     2
 
@@ -306,11 +309,11 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 /*====================================================================
  *   mapgml.c
  *====================================================================*/
-#define OWS_GML2 0 // Supported GML formats
+#define OWS_GML2 0 /* Supported GML formats */
 #define OWS_GML3 1
 
 #ifdef USE_WMS_SVR
-// export to fix bug 851
+/* export to fix bug 851 */
 MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces);
 #endif
 
@@ -389,7 +392,7 @@ MS_DLL_EXPORT int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique
  *   mapwcs.c
  *====================================================================*/
 
-int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj); // only 1 public function
+int msWCSDispatch(mapObj *map, cgiRequestObj *requestobj); /* only 1 public function */
 
 #endif /* MAPOWS_H */
 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.26  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -73,7 +76,7 @@ static char *modeStrings[26] = {"BROWSE","ZOOMIN","ZOOMOUT","MAP","LEGEND","REFE
 /*
 ** Global variables
 */
-int SearchMap=MS_FALSE; // apply pan/zoom BEFORE doing the query (e.g. query the output image rather than the input image)
+int SearchMap=MS_FALSE; /* apply pan/zoom BEFORE doing the query (e.g. query the output image rather than the input image) */
 
 char *QueryFile=NULL;
 char *QueryLayer=NULL, *SelectLayer=NULL;

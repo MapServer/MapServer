@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.63  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.62  2005/02/02 02:21:50  sdlime
  * Applied Jerry/Dan patch for bug 1194.
  *
@@ -270,9 +273,9 @@ char *msGetErrorString(char *delimiter)
 
   if(!delimiter || !error) return(NULL);
 
-  if((errstr = strdup("")) == NULL) return(NULL); // empty at first
+  if((errstr = strdup("")) == NULL) return(NULL); /* empty at first */
   while(error && error->code != MS_NOERR) {
-    if(error->next && error->next->code != MS_NOERR) // (peek ahead) more errors, use delimiter
+    if(error->next && error->next->code != MS_NOERR) /* (peek ahead) more errors, use delimiter */
       snprintf(errbuf, 255, "%s: %s %s%s", error->routine, ms_errorCodes[error->code], error->message, delimiter);
     else
       snprintf(errbuf, 255, "%s: %s %s", error->routine, ms_errorCodes[error->code], error->message);   
@@ -393,8 +396,8 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   img = gdImageCreate(width, height);
   color = gdImageColorAllocate(img, map->imagecolor.red, 
                                map->imagecolor.green,
-                               map->imagecolor.blue); // BG color
-  nBlack = gdImageColorAllocate(img, 0,0,0); // Text color
+                               map->imagecolor.blue); /* BG color */
+  nBlack = gdImageColorAllocate(img, 0,0,0); /* Text color */
 
   if (map->outputformat && map->outputformat->transparent)
     gdImageColorTransparent(img, 0);
@@ -404,7 +407,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   nWidthTxt  =  nTextLength * font->w;
   nUsableWidth = width - (nMargin*2);
 
-  // Check to see if it all fits on one line. If not, split the text on several lines.
+  /* Check to see if it all fits on one line. If not, split the text on several lines. */
   if(!blank) {
     if (nWidthTxt > nUsableWidth) {
       nMaxCharsPerLine =  nUsableWidth/font->w;
@@ -447,7 +450,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
     }
   }
 
-  // actually write the image
+  /* actually write the image */
   if(!filename) 
       msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
   msSaveImageGD(img, filename, format);
@@ -551,9 +554,9 @@ void msDebug( const char * pszFormat, ... )
 #endif
 
 #if !defined(USE_FASTCGI) && !defined(_WIN32)
-    // It seems the FastCGI stuff inserts a timestamp anyways, so 
-    // we might as well skip this one.  And the struct timeval doesn't
-    // appear to exist on win32. 
+    /* It seems the FastCGI stuff inserts a timestamp anyways, so  */
+    /* we might as well skip this one.  And the struct timeval doesn't */
+    /* appear to exist on win32.  */
     {
         struct timeval tv;
         msGettimeofday(&tv, NULL);

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.47  2004/12/29 22:49:57  sdlime
  * Added GML3 writing capabilities to mapgml.c. Not hooked up to anything yet.
  *
@@ -55,7 +58,7 @@
 
 MS_CVSID("$Id$")
 
-// Use only mapgml.c if WMS or WFS is available
+/* Use only mapgml.c if WMS or WFS is available */
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
@@ -63,7 +66,7 @@ MS_CVSID("$Id$")
 ** Functions that write the feature boundary geometry (i.e. a rectObj).
 */
 
-// GML 2.1.2
+/* GML 2.1.2 */
 static int gmlWriteBounds_GML2(FILE *stream, rectObj *rect, const char *srsname, char *tab)
 { 
   char *srsname_encoded;
@@ -89,7 +92,7 @@ static int gmlWriteBounds_GML2(FILE *stream, rectObj *rect, const char *srsname,
   return MS_SUCCESS;
 }
 
-// GML 3.1 (MapServer limits GML encoding to the level 0 profile)
+/* GML 3.1 (MapServer limits GML encoding to the level 0 profile) */
 static int gmlWriteBounds_GML3(FILE *stream, rectObj *rect, const char *srsname, char *tab)
 { 
   char *srsname_encoded;
@@ -115,7 +118,7 @@ static int gmlWriteBounds_GML3(FILE *stream, rectObj *rect, const char *srsname,
   return MS_SUCCESS;
 }
 
-// GML 2.1.2
+/* GML 2.1.2 */
 static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsname, char *tab) 
 {
   int i, j, k;
@@ -126,15 +129,15 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
   if(!shape) return(MS_FAILURE);
   if(!tab) return(MS_FAILURE);
 
-  if(shape->numlines <= 0) return(MS_SUCCESS); // empty shape, nothing to output
+  if(shape->numlines <= 0) return(MS_SUCCESS); /* empty shape, nothing to output */
 
   if(srsname)
     srsname_encoded = msEncodeHTMLEntities(srsname);
 
-  // feature geometry
+  /* feature geometry */
   switch(shape->type) {
   case(MS_SHAPE_POINT):
-    if(shape->line[0].numpoints == 1) { // write a Point
+    if(shape->line[0].numpoints == 1) { /* write a Point */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
       else
@@ -143,7 +146,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
       msIO_fprintf(stream, "%s\t<gml:coordinates>%f,%f</gml:coordinates>\n", tab, shape->line[0].point[0].x, shape->line[0].point[0].y);
 
       msIO_fprintf(stream, "%s</gml:Point>\n", tab);
-    } else { // write a MultiPoint
+    } else { /* write a MultiPoint */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:MultiPoint srsName=\"%s\">\n", tab, srsname_encoded);
       else
@@ -159,26 +162,26 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
     }
     break;
   case(MS_SHAPE_LINE):
-    if(shape->numlines == 1) { // write a LineString
+    if(shape->numlines == 1) { /* write a LineString */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:LineString srsName=\"%s\">\n", tab, srsname_encoded);
       else
         msIO_fprintf(stream, "%s<gml:LineString>\n", tab);
 
       msIO_fprintf(stream, "%s\t<gml:coordinates>", tab);
-      for(i=0; i<shape->line[0].numpoints; i++) // was numpoints-1?
+      for(i=0; i<shape->line[0].numpoints; i++) /* was numpoints-1? */
         msIO_fprintf(stream, "%f,%f ", shape->line[0].point[i].x, shape->line[0].point[i].y);
       msIO_fprintf(stream, "</gml:coordinates>\n");
 
       msIO_fprintf(stream, "%s</gml:LineString>\n", tab);
-    } else { // write a MultiLineString      
+    } else { /* write a MultiLineString       */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:MultiLineString srsName=\"%s\">\n", tab, srsname_encoded);
       else
         msIO_fprintf(stream, "%s<gml:MultiLineString>\n", tab);
 
       for(j=0; j<shape->numlines; j++) {
-        msIO_fprintf(stream, "%s\t<gml:LineString>\n", tab); // no srsname at this point
+        msIO_fprintf(stream, "%s\t<gml:LineString>\n", tab); /* no srsname at this point */
 
         msIO_fprintf(stream, "%s\t\t<gml:coordinates>", tab);
         for(i=0; i<shape->line[j].numpoints; i++)
@@ -190,8 +193,8 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
       msIO_fprintf(stream, "%s</gml:MultiLineString>\n", tab);
     }
     break;
-  case(MS_SHAPE_POLYGON): // this gets nasty, since our shapes are so flexible
-    if(shape->numlines == 1) { // write a basic Polygon (no interior rings)
+  case(MS_SHAPE_POLYGON): /* this gets nasty, since our shapes are so flexible */
+    if(shape->numlines == 1) { /* write a basic Polygon (no interior rings) */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, srsname_encoded);
       else
@@ -209,15 +212,15 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
       msIO_fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
 
       msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
-    } else { // need to test for inner and outer rings
+    } else { /* need to test for inner and outer rings */
       outerlist = msGetOuterList(shape);
 
       numouters = 0;
       for(i=0; i<shape->numlines; i++)
         if(outerlist[i] == MS_TRUE) numouters++;
 
-      if(numouters == 1) { // write a Polygon (with interior rings)
-	for(i=0; i<shape->numlines; i++) // find the outer ring
+      if(numouters == 1) { /* write a Polygon (with interior rings) */
+	for(i=0; i<shape->numlines; i++) /* find the outer ring */
           if(outerlist[i] == MS_TRUE) break;
 
 	innerlist = msGetInnerList(shape, i, outerlist);
@@ -238,7 +241,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
         msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
         msIO_fprintf(stream, "%s\t</gml:outerBoundaryIs>\n", tab);
 
-	for(k=0; k<shape->numlines; k++) { // now step through all the inner rings
+	for(k=0; k<shape->numlines; k++) { /* now step through all the inner rings */
 	  if(innerlist[k] == MS_TRUE) {
 	    msIO_fprintf(stream, "%s\t<gml:innerBoundaryIs>\n", tab);
             msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
@@ -255,13 +258,13 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
 
         msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
 	free(innerlist);
-      } else {  // write a MultiPolygon	
+      } else {  /* write a MultiPolygon	 */
 	if(srsname_encoded)
           msIO_fprintf(stream, "%s<gml:MultiPolygon srsName=\"%s\">\n", tab, srsname_encoded);
         else
           msIO_fprintf(stream, "%s<gml:MultiPolygon>\n", tab);
         
-	for(i=0; i<shape->numlines; i++) { // step through the outer rings
+	for(i=0; i<shape->numlines; i++) { /* step through the outer rings */
           if(outerlist[i] == MS_TRUE) {
   	    innerlist = msGetInnerList(shape, i, outerlist);
 
@@ -280,7 +283,7 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
             msIO_fprintf(stream, "%s\t\t\t</gml:LinearRing>\n", tab);
             msIO_fprintf(stream, "%s\t\t</gml:outerBoundaryIs>\n", tab);
 
-	    for(k=0; k<shape->numlines; k++) { // now step through all the inner rings
+	    for(k=0; k<shape->numlines; k++) { /* now step through all the inner rings */
 	      if(innerlist[k] == MS_TRUE) {
 	        msIO_fprintf(stream, "%s\t\t<gml:innerBoundaryIs>\n", tab);
                 msIO_fprintf(stream, "%s\t\t\t<gml:LinearRing>\n", tab);
@@ -311,13 +314,13 @@ static int gmlWriteGeometry_GML2(FILE *stream, shapeObj *shape, const char *srsn
     break;
   }
 
-  // clean-up
+  /* clean-up */
   msFree(srsname_encoded);
 
   return(MS_SUCCESS);
 }
 
-// GML 3.1 (MapServer limits GML encoding to the level 0 profile)
+/* GML 3.1 (MapServer limits GML encoding to the level 0 profile) */
 static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsname, char *tab) 
 {
   int i, j, k;
@@ -328,17 +331,17 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
   if(!shape) return(MS_FAILURE);
   if(!tab) return(MS_FAILURE);
 
-  if(shape->numlines <= 0) return(MS_SUCCESS); // empty shape, nothing to output
+  if(shape->numlines <= 0) return(MS_SUCCESS); /* empty shape, nothing to output */
 
   if(srsname)
     srsname_encoded = msEncodeHTMLEntities(srsname);
 
-  // TODO: What about ID's?
+  /* TODO: What about ID's? */
 
-  // feature geometry
+  /* feature geometry */
   switch(shape->type) {
   case(MS_SHAPE_POINT):
-    if(shape->line[0].numpoints == 1) { // write a Point
+    if(shape->line[0].numpoints == 1) { /* write a Point */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:Point srsName=\"%s\">\n", tab, srsname_encoded);
       else
@@ -347,7 +350,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
       msIO_fprintf(stream, "%s\t<gml:pos>%f %f</gml:pos>\n", tab, shape->line[0].point[0].x, shape->line[0].point[0].y);
 
       msIO_fprintf(stream, "%s</gml:Point>\n", tab);
-    } else { // write a MultiPoint
+    } else { /* write a MultiPoint */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:MultiPoint srsName=\"%s\">\n", tab, srsname_encoded);
       else
@@ -365,19 +368,19 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
     }
     break;
   case(MS_SHAPE_LINE):
-    if(shape->numlines == 1) { // write a LineString
+    if(shape->numlines == 1) { /* write a LineString */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:LineString srsName=\"%s\">\n", tab, srsname_encoded);
       else
         msIO_fprintf(stream, "%s<gml:LineString>\n", tab);
 
       msIO_fprintf(stream, "%s\t<gml:posList dimension=\"2\">", tab);
-      for(i=0; i<shape->line[0].numpoints; i++)  // was numpoints-1?
+      for(i=0; i<shape->line[0].numpoints; i++)  /* was numpoints-1? */
         msIO_fprintf(stream, "%f %f ", shape->line[0].point[i].x, shape->line[0].point[i].y);
       msIO_fprintf(stream, "</gml:posList>\n");
 
       msIO_fprintf(stream, "%s</gml:LineString>\n", tab);
-    } else { // write a MultiCurve (MultiLineString is depricated in GML3)
+    } else { /* write a MultiCurve (MultiLineString is depricated in GML3) */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:MultiCurve srsName=\"%s\">\n", tab, srsname_encoded);
       else
@@ -385,7 +388,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
 
       msIO_fprintf(stream, "%s\t<gml:curveMembers>\n", tab);
       for(j=0; j<shape->numlines; j++) {
-        msIO_fprintf(stream, "%s\t\t<gml:LineString>\n", tab); // no srsname at this point
+        msIO_fprintf(stream, "%s\t\t<gml:LineString>\n", tab); /* no srsname at this point */
 
         msIO_fprintf(stream, "%s\t\t\t<gml:posList dimension=\"2\">", tab);
         for(i=0; i<shape->line[j].numpoints; i++)
@@ -398,8 +401,8 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
       msIO_fprintf(stream, "%s</gml:MultiCurve>\n", tab);
     }
     break;
-  case(MS_SHAPE_POLYGON): // this gets nasty, since our shapes are so flexible
-    if(shape->numlines == 1) { // write a basic polygon (no interior rings)
+  case(MS_SHAPE_POLYGON): /* this gets nasty, since our shapes are so flexible */
+    if(shape->numlines == 1) { /* write a basic polygon (no interior rings) */
       if(srsname_encoded)
         msIO_fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, srsname_encoded);
       else
@@ -417,15 +420,15 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
       msIO_fprintf(stream, "%s\t</gml:exterior>\n", tab);
 
       msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
-    } else { // need to test for inner and outer rings
+    } else { /* need to test for inner and outer rings */
       outerlist = msGetOuterList(shape);
 
       numouters = 0;
       for(i=0; i<shape->numlines; i++)
         if(outerlist[i] == MS_TRUE) numouters++;
 
-      if(numouters == 1) { // write a Polygon (with interior rings)
-	for(i=0; i<shape->numlines; i++) // find the outer ring
+      if(numouters == 1) { /* write a Polygon (with interior rings) */
+	for(i=0; i<shape->numlines; i++) /* find the outer ring */
           if(outerlist[i] == MS_TRUE) break;
 
 	innerlist = msGetInnerList(shape, i, outerlist);
@@ -446,7 +449,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
         msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
         msIO_fprintf(stream, "%s\t</gml:exterior>\n", tab);
 
-	for(k=0; k<shape->numlines; k++) { // now step through all the inner rings
+	for(k=0; k<shape->numlines; k++) { /* now step through all the inner rings */
 	  if(innerlist[k] == MS_TRUE) {
 	    msIO_fprintf(stream, "%s\t<gml:interior>\n", tab);
             msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
@@ -463,14 +466,14 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
 
         msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
 	free(innerlist);
-      } else {  // write a MultiSurface (MultiPolygon is depricated in GML3)
+      } else {  /* write a MultiSurface (MultiPolygon is depricated in GML3) */
 	if(srsname_encoded)
           msIO_fprintf(stream, "%s<gml:MultiSurface srsName=\"%s\">\n", tab, srsname_encoded);
         else
           msIO_fprintf(stream, "%s<gml:MultiSurface>\n", tab);
 
         msIO_fprintf(stream, "%s\t<gml:surfaceMembers>\n", tab);
-	for(i=0; i<shape->numlines; i++) { // step through the outer rings
+	for(i=0; i<shape->numlines; i++) { /* step through the outer rings */
           if(outerlist[i] == MS_TRUE) {
   	    innerlist = msGetInnerList(shape, i, outerlist);            
 
@@ -487,7 +490,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
             msIO_fprintf(stream, "%s\t\t\t\t</gml:LinearRing>\n", tab);
             msIO_fprintf(stream, "%s\t\t\t</gml:exterior>\n", tab);
 
-	    for(k=0; k<shape->numlines; k++) { // now step through all the inner rings
+	    for(k=0; k<shape->numlines; k++) { /* now step through all the inner rings */
 	      if(innerlist[k] == MS_TRUE) {
 	        msIO_fprintf(stream, "%s\t\t\t<gml:interior>\n", tab);
                 msIO_fprintf(stream, "%s\t\t\t\t<gml:LinearRing>\n", tab);
@@ -517,7 +520,7 @@ static int gmlWriteGeometry_GML3(FILE *stream, shapeObj *shape, const char *srsn
     break;
   }
 
-  // clean-up
+  /* clean-up */
   msFree(srsname_encoded);
 
   return(MS_SUCCESS);
@@ -566,13 +569,13 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
   int i,j,k;
   layerObj *lp=NULL;
   shapeObj shape;
-  FILE *stream=stdout; // defaults to stdout
+  FILE *stream=stdout; /* defaults to stdout */
   char szPath[MS_MAXPATHLEN];
   char *value;
 
   msInitShape(&shape);
 
-  if(filename && strlen(filename) > 0) { // deal with the filename if present
+  if(filename && strlen(filename) > 0) { /* deal with the filename if present */
     stream = fopen(msBuildPath(szPath, map->mappath, filename), "w");
     if(!stream) {
       msSetError(MS_IOERR, "(%s)", "msGMLWriteQuery()", filename);
@@ -580,8 +583,8 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
     }
   }
 
-  // charset encoding: lookup "gml_encoding" metadata first, then 
-  // "wms_encoding", and if not found then use "ISO-8859-1" as default.
+  /* charset encoding: lookup "gml_encoding" metadata first, then  */
+  /* "wms_encoding", and if not found then use "ISO-8859-1" as default. */
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, "encoding", 
                       OWS_NOERR, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", "ISO-8859-1");
 
@@ -597,31 +600,31 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
                       OWS_NOERR, "\n\t xsi:schemaLocation=\"%s\"", NULL);
   msIO_fprintf(stream, ">\n");
 
-  // a schema *should* be required
+  /* a schema *should* be required */
   msOWSPrintEncodeMetadata(stream, &(map->web.metadata), namespaces, 
                            "description", OWS_NOERR, 
                            "\t<gml:description>%s</gml:description>\n", NULL);
 
-  // step through the layers looking for query results
+  /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
 
-    if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { // found results
+    if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { /* found results */
 
-      // start this collection (layer)
-      // if no layer name provided 
-      // fall back on the layer name + "Layer"
+      /* start this collection (layer) */
+      /* if no layer name provided  */
+      /* fall back on the layer name + "Layer" */
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
       msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
                                  "layername", OWS_NOERR, "\t<%s>\n", value);
       msFree(value);
 
-      // actually open the layer
+      /* actually open the layer */
       status = msLayerOpen(lp);
       if(status != MS_SUCCESS) return(status);
 
-      // retrieve all the item names
+      /* retrieve all the item names */
       status = msLayerGetItems(lp);
       if(status != MS_SUCCESS) return(status);
 
@@ -630,14 +633,14 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
         if(status != MS_SUCCESS) return(status);
 
 #ifdef USE_PROJ
-	// project the shape into the map projection (if necessary), note that this projects the bounds as well
+	/* project the shape into the map projection (if necessary), note that this projects the bounds as well */
         if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
           msProjectShape(&lp->projection, &map->projection, &shape);
 #endif
 
-	// start this feature
-        // specify a feature name, if nothing provided 
-        // fall back on the layer name + "Feature"
+	/* start this feature */
+        /* specify a feature name, if nothing provided  */
+        /* fall back on the layer name + "Feature" */
         value = (char*) malloc(strlen(lp->name)+9);
         sprintf(value, "%s_feature", lp->name);
         msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
@@ -645,7 +648,7 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
                                    "\t\t<%s>\n", value);
         msFree(value);
 
-	// write the item/values
+	/* write the item/values */
 	for(k=0; k<lp->numitems; k++)	
         {
           char *encoded_val;
@@ -660,29 +663,29 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
           free(encoded_val);
         }
 
-	// write the bounding box
+	/* write the bounding box */
 #ifdef USE_PROJ
-	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) // use the map projection first
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) /* use the map projection first */
 	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
-	else // then use the layer projection and/or metadata
+	else /* then use the layer projection and/or metadata */
 	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), "\t\t\t");	
 #else
-	gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "\t\t\t"); // no projection information
+	gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "\t\t\t"); /* no projection information */
 #endif
 
-	// write the feature geometry
+	/* write the feature geometry */
 #ifdef USE_PROJ
-	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) // use the map projection first
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE)) /* use the map projection first */
 	  gmlWriteGeometry(stream,  OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), namespaces, MS_TRUE), "\t\t\t");
-        else // then use the layer projection and/or metadata
+        else /* then use the layer projection and/or metadata */
 	  gmlWriteGeometry(stream,  OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), namespaces, MS_TRUE), "\t\t\t");      
 #else
 	gmlWriteGeometry(stream,  OWS_GML2, &(shape), NULL, "\t\t\t");
 #endif
 
-	// end this feature
-        // specify a feature name if nothing provided
-        // fall back on the layer name + "Feature"
+	/* end this feature */
+        /* specify a feature name if nothing provided */
+        /* fall back on the layer name + "Feature" */
         value = (char*) malloc(strlen(lp->name)+9);
         sprintf(value, "%s_feature", lp->name);
         msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
@@ -690,12 +693,12 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
                                    "\t\t</%s>\n", value);
         msFree(value);
 
-	msFreeShape(&shape); // init too
+	msFreeShape(&shape); /* init too */
       }
 
-      // end this collection (layer)
-      // if no layer name provided 
-      // fall back on the layer name + "Layer"
+      /* end this collection (layer) */
+      /* if no layer name provided  */
+      /* fall back on the layer name + "Layer" */
       value = (char*) malloc(strlen(lp->name)+7);
       sprintf(value, "%s_layer", lp->name);
       msOWSPrintValidateMetadata(stream, &(lp->metadata), namespaces, 
@@ -704,9 +707,9 @@ int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces)
 
       msLayerClose(lp);
     }
-  } // next layer
+  } /* next layer */
 
-  // end this document
+  /* end this document */
   msOWSPrintValidateMetadata(stream, &(map->web.metadata), namespaces, "rootname",
                              OWS_NOERR, "</%s>\n", "msGMLOutput");
 
@@ -742,7 +745,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 
   msInitShape(&shape);
 
-  // Need to start with BBOX of the whole resultset
+  /* Need to start with BBOX of the whole resultset */
   if (msGetQueryResultBounds(map, &resultBounds) > 0)
   {
       gmlWriteBounds(stream, OWS_GML2, &resultBounds, 
@@ -750,26 +753,26 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
                      "      ");
   }
 
-  // step through the layers looking for query results
+  /* step through the layers looking for query results */
   for(i=0; i<map->numlayers; i++) 
   {
     lp = &(map->layers[i]);
 
     if(lp->dump == MS_TRUE && 
        lp->resultcache && lp->resultcache->numresults > 0) 
-    { // found results
+    { /* found results */
       int   *item_is_xml = NULL;
       const char *geom_name, *xml_items;
       char *layer_name;
       geom_name = msWFSGetGeomElementName(map, lp);
 
-      // actually open the layer
+      /* actually open the layer */
       status = msLayerOpen(lp);
       if(status != MS_SUCCESS) return(status);
 
-      // retrieve all the item names. (Note : there might be no attributs)
+      /* retrieve all the item names. (Note : there might be no attributs) */
       status = msLayerGetItems(lp);
-      //if(status != MS_SUCCESS) return(status);
+      /* if(status != MS_SUCCESS) return(status); */
       
       /* 
       ** Determine which items, if any, should be treated as raw XML and not 
@@ -804,12 +807,12 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
         if(status != MS_SUCCESS) return(status);
 
 #ifdef USE_PROJ
-	// project the shape into the map projection (if necessary), note that this projects the bounds as well
+	/* project the shape into the map projection (if necessary), note that this projects the bounds as well */
         if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
           msProjectShape(&lp->projection, &map->projection, &shape);
 #endif
         
-	// start this feature
+	/* start this feature */
         if (wfs_namespace)
         {
             layer_name = (char*) malloc(strlen(wfs_namespace)+strlen(lp->name)+2);
@@ -824,7 +827,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
                     "in a XML tag context. -->\n", layer_name);
         msIO_fprintf(stream, "      <%s>\n", layer_name);
 
-        //write name and description attributs if specified in the map file
+        /* write name and description attributs if specified in the map file */
         
         description_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_description_item");
         if (description_gml)
@@ -853,25 +856,25 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
              }
          }
          
-	// write the bounding box
-	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) // use the map projection first
+	/* write the bounding box */
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) /* use the map projection first */
 #ifdef USE_PROJ
 	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "        ");
-	else // then use the layer projection and/or metadata
+	else /* then use the layer projection and/or metadata */
 	  gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "        ");	
 #else
-	gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "        "); // no projection information
+	gmlWriteBounds(stream, OWS_GML2, &(shape.bounds), NULL, "        "); /* no projection information */
 #endif
 
         
         msIO_fprintf(stream, "        <gml:%s>\n", geom_name); 
 
                     
-	// write the feature geometry
+	/* write the feature geometry */
 #ifdef USE_PROJ
-	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) // use the map projection first
+	if(msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE)) /* use the map projection first */
 	  gmlWriteGeometry(stream, OWS_GML2, &(shape), msOWSGetEPSGProj(&(map->projection), &(map->web.metadata), "FGO", MS_TRUE), "          ");
-        else // then use the layer projection and/or metadata
+        else /* then use the layer projection and/or metadata */
 	  gmlWriteGeometry(stream, OWS_GML2, &(shape), msOWSGetEPSGProj(&(lp->projection), &(lp->metadata), "FGO", MS_TRUE), "          ");      
 #else
 	gmlWriteGeometry(stream, OWS_GML2, &(shape), NULL, "          ");
@@ -879,7 +882,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 
         msIO_fprintf(stream, "        </gml:%s>\n", geom_name); 
 
-	// write the item/values
+	/* write the item/values */
 	for(k=0; k<lp->numitems; k++)	
         {
           char *encoded_val;
@@ -912,20 +915,20 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
                     lp->items[k], encoded_val, lp->items[k]);
         }
 
-	// end this feature
+	/* end this feature */
         msIO_fprintf(stream, "      </%s>\n", layer_name);
 
 	msIO_fprintf(stream, "    </gml:featureMember>\n");
 
         msFree(layer_name);
 
-	msFreeShape(&shape); // init too
+	msFreeShape(&shape); /* init too */
 
          features++;
          if (maxfeatures > 0 && features == maxfeatures)
            break;
          
-         // end this layer
+         /* end this layer */
       }
 
       free( item_is_xml );
@@ -936,7 +939,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
     if (maxfeatures > 0 && features == maxfeatures)
       break;
 
-  } // next layer
+  } /* next layer */
 
 
   return(MS_SUCCESS);

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.20  2004/10/28 02:24:01  frank
  * Added special putenv() case in msApplyMapConfigOptions() for MS_ERRORFILE
  *
@@ -165,7 +168,7 @@ void msFreeMap(mapObj *map) {
 
   msFreeFontSet(&(map->fontset));
 
-  msFreeSymbolSet(&map->symbolset); // free symbols
+  msFreeSymbolSet(&map->symbolset); /* free symbols */
   msFree(map->symbolset.filename);
 
   freeWeb(&(map->web));
@@ -204,8 +207,8 @@ const char *msGetConfigOption( mapObj *map, const char *key)
 void msSetConfigOption( mapObj *map, const char *key, const char *value)
 
 {
-    // We have special "early" handling of this so that it will be
-    // in effect when the projection blocks are parsed and pj_init is called.
+    /* We have special "early" handling of this so that it will be */
+    /* in effect when the projection blocks are parsed and pj_init is called. */
     if( strcasecmp(key,"PROJ_LIB") == 0 )
         msSetPROJ_LIB( value );
 
@@ -320,7 +323,7 @@ int msMapSetSize( mapObj *map, int width, int height )
     map->width = width;
     map->height = height;
 
-    return msMapComputeGeotransform( map ); // like SetRotation -- sean
+    return msMapComputeGeotransform( map ); /* like SetRotation -- sean */
 }
 
 /************************************************************************/
@@ -337,7 +340,7 @@ int msMapComputeGeotransform( mapObj * map )
 
     map->saved_extent = map->extent;
 
-    // Do we have all required parameters?
+    /* Do we have all required parameters? */
     if( map->extent.minx == map->extent.maxx 
         || map->width == 0 || map->height == 0 )
         return MS_FALSE;
@@ -469,19 +472,19 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         return -1;
     }
 
-    // Possible to add another?
+    /* Possible to add another? */
     if (map->numlayers == MS_MAXLAYERS) {
         msSetError(MS_CHILDERR, "Maximum number of Layer, %d, has been reached",
                    "msInsertLayer()", MS_MAXLAYERS);
         return -1;
     }
-    // Catch attempt to insert past end of styles array
+    /* Catch attempt to insert past end of styles array */
     else if (nIndex >= MS_MAXLAYERS) {
         msSetError(MS_CHILDERR, "Cannot insert Layer beyond index %d",
                    "msInsertLayer()", MS_MAXLAYERS-1);
         return -1;
     }
-    else if (nIndex < 0) { // Insert at the end by default
+    else if (nIndex < 0) { /* Insert at the end by default */
         initLayer(&(map->layers[map->numlayers]), map);
         msCopyLayer(&(map->layers[map->numlayers]), layer);
         map->layerorder[map->numlayers] = map->numlayers;
@@ -491,8 +494,8 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     }
     else if (nIndex >= 0 && nIndex < MS_MAXLAYERS) {
     
-        // Copy layers existing at the specified nIndex or greater
-        // to an index one higher
+        /* Copy layers existing at the specified nIndex or greater */
+        /* to an index one higher */
         for (i=map->numlayers; i>nIndex; i--) {
             if (i<map->numlayers) freeLayer(&(map->layers[i]));
             initLayer(&(map->layers[i]), map);
@@ -602,7 +605,7 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex)
         }
         if (iCurrentIndex >=0) 
         {
-            // we do not need to promote if it is the first one.
+            /* we do not need to promote if it is the first one. */
             if (iCurrentIndex == 0)
                 return MS_FAILURE;
 
@@ -638,7 +641,7 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
         }
         if (iCurrentIndex >=0) 
         {
-            // we do not need to demote if it is the last one.
+            /* we do not need to demote if it is the last one. */
             if (iCurrentIndex == map->numlayers-1)
                 return MS_FAILURE;
 

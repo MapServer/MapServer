@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.125  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.124  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -85,7 +88,7 @@ extern int msyyparse(void);
 extern int msyylex(void);
 extern char *msyytext;
 
-extern int msyyresult; // result of parsing, true/false
+extern int msyyresult; /* result of parsing, true/false */
 extern int msyystate;
 extern char *msyystring;
 
@@ -116,9 +119,9 @@ extern char *msyystring;
 
 #define NUMGRAYS 16
 
-// FIX: need WBMP sig
-unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
-unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
+/* FIX: need WBMP sig */
+unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; /* 89 50 4E 47 0D 0A 1A 0A hex */
+unsigned char JPEGsig[3] = {255, 216, 255}; /* FF D8 FF hex */
 
 /************************************************************************/
 /*                             msGetClass()                             */
@@ -128,7 +131,7 @@ int msGetClass(layerObj *layer, colorObj *color)
 {
   int i;
   char *tmpstr1=NULL;
-  char tmpstr2[12]; // holds either a single color index or something like 'rrr ggg bbb'
+  char tmpstr2[12]; /* holds either a single color index or something like 'rrr ggg bbb' */
   
   if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
     return(0);
@@ -141,13 +144,13 @@ int msGetClass(layerObj *layer, colorObj *color)
     switch(layer->class[i].expression.type) {
     case(MS_STRING):
       sprintf(tmpstr2, "%d %d %d", color->red, color->green, color->blue);
-      if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); // matched
+      if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); /* matched */
       sprintf(tmpstr2, "%d", color->pen);
-      if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); // matched
+      if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); /* matched */
       break;
     case(MS_REGEX):
       if(!layer->class[i].expression.compiled) {
-	if(regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
+	if(regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, REG_EXTENDED|REG_NOSUB) != 0) { /* compile the expression  */
 	  msSetError(MS_REGEXERR, "Invalid regular expression.", "msGetClass()");
 	  return(-1);
 	}
@@ -155,9 +158,9 @@ int msGetClass(layerObj *layer, colorObj *color)
       }
 
       sprintf(tmpstr2, "%d %d %d", color->red, color->green, color->blue);
-      if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); // got a match
+      if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
       sprintf(tmpstr2, "%d", color->pen);
-      if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); // got a match
+      if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
       break;
     case(MS_EXPRESSION):
       tmpstr1 = strdup(layer->class[i].expression.string);
@@ -173,11 +176,11 @@ int msGetClass(layerObj *layer, colorObj *color)
       tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
 
       msyystate = 4; msyystring = tmpstr1;
-      if(msyyparse() != 0) return(-1); // error parsing the expression
+      if(msyyparse() != 0) return(-1); /* error parsing the expression */
 
       free(tmpstr1);
 
-      if(msyyresult) return(i); // got a match	
+      if(msyyresult) return(i); /* got a match	 */
     }
   }
 
@@ -207,12 +210,12 @@ int msGetClass_Float(layerObj *layer, float fValue)
         switch(layer->class[i].expression.type) {
           case(MS_STRING):
             sprintf(tmpstr2, "%18g", fValue );
-            if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); // matched
+            if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); /* matched */
             break;
 
           case(MS_REGEX):
             if(!layer->class[i].expression.compiled) {
-                if(regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
+                if(regcomp(&(layer->class[i].expression.regex), layer->class[i].expression.string, REG_EXTENDED|REG_NOSUB) != 0) { /* compile the expression  */
                     msSetError(MS_REGEXERR, "Invalid regular expression.", "msGetClass()");
                     return(-1);
                 }
@@ -220,7 +223,7 @@ int msGetClass_Float(layerObj *layer, float fValue)
             }
 
             sprintf(tmpstr2, "%18g", fValue );
-            if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); // got a match
+            if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); /* got a match */
             break;
 
           case(MS_EXPRESSION):
@@ -230,11 +233,11 @@ int msGetClass_Float(layerObj *layer, float fValue)
             tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
 
             msyystate = 4; msyystring = tmpstr1;
-            if(msyyparse() != 0) return(-1); // error parsing the expression
+            if(msyyparse() != 0) return(-1); /* error parsing the expression */
 
             free(tmpstr1);
 
-            if(msyyresult) return(i); // got a match	
+            if(msyyresult) return(i); /* got a match	 */
         }
     }
 
@@ -505,9 +508,9 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   if( layer->debug )
       msDebug( "drawTIFF(%s): entering\n", layer->name );
 
-  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
+  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; /* initialize the colormap to all transparent */
 
-  TIFFSetWarningHandler(NULL); // can these be directed to the mapserver error functions?
+  TIFFSetWarningHandler(NULL); /* can these be directed to the mapserver error functions? */
   TIFFSetErrorHandler(NULL);
 
   tif = TIFFOpen(msBuildPath3(szPath, map->mappath, map->shapepath, filename), "rb");
@@ -564,11 +567,11 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	  else {
             RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
 	    if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); /* use class color */
 	    else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
-	      cmap[i] = -1; // make transparent
+	      cmap[i] = -1; /* make transparent */
 	    else
-              cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color
+              cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); /* use raster color */
 	  }
 	} 
       }
@@ -581,32 +584,32 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	pixel.pen = i;
 
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
-	  cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color        
+	  cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); /* use raster color         */
       }
     }
     break;
   case PHOTOMETRIC_MINISBLACK: /* classes are NOT honored for non-colormapped data */
     if (nbits==1) {
       for (i=0; i<2; i++) {
-	pixel.red = pixel.green = pixel.blue = pixel.pen = i; // offsite would be specified as 0 or 1
+	pixel.red = pixel.green = pixel.blue = pixel.pen = i; /* offsite would be specified as 0 or 1 */
 
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
-          cmap[i]=msAddColorGD(map,img, 0, i*255,i*255,i*255); // use raster color, stretched to use entire grayscale range
+          cmap[i]=msAddColorGD(map,img, 0, i*255,i*255,i*255); /* use raster color, stretched to use entire grayscale range */
       }      
     } else { 
       if (nbits==4) {	
 	for (i=0; i<16; i++) {
-	  pixel.red = pixel.green = pixel.blue = pixel.pen = i; // offsite would be specified in range 0 to 15
+	  pixel.red = pixel.green = pixel.blue = pixel.pen = i; /* offsite would be specified in range 0 to 15 */
 
 	  if(!MS_COMPARE_COLORS(pixel, layer->offsite))
-	    cmap[i] = msAddColorGD(map,img,0, i*17, i*17, i*17); // use raster color, stretched to use entire grayscale range	  
+	    cmap[i] = msAddColorGD(map,img,0, i*17, i*17, i*17); /* use raster color, stretched to use entire grayscale range	   */
 	}
       } else { /* 8-bit */
 	for (i=0; i<256; i++) {
-	  pixel.red = pixel.green = pixel.blue = pixel.pen = i; // offsite would be specified in range 0 to 255
+	  pixel.red = pixel.green = pixel.blue = pixel.pen = i; /* offsite would be specified in range 0 to 255 */
 
 	  if(!MS_COMPARE_COLORS(pixel, layer->offsite))	    
-	    cmap[i] = msAddColorGD(map,img, 0, (i>>4)*17, (i>>4)*17, (i>>4)*17); // use raster color
+	    cmap[i] = msAddColorGD(map,img, 0, (i>>4)*17, (i>>4)*17, (i>>4)*17); /* use raster color */
 	}
       }
     }
@@ -614,10 +617,10 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   case PHOTOMETRIC_MINISWHITE: /* classes are NOT honored for non-colormapped data */
     if (nbits==1) {
       for (i=0; i<2; i++) {
-	pixel.red = pixel.green = pixel.blue = pixel.pen = i; // offsite would be specified as 0 or 1
+	pixel.red = pixel.green = pixel.blue = pixel.pen = i; /* offsite would be specified as 0 or 1 */
 
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
-	  cmap[i]=msAddColorGD(map,img, 0, i*255,i*255,i*255); // use raster color, stretched to use entire grayscale range
+	  cmap[i]=msAddColorGD(map,img, 0, i*255,i*255,i*255); /* use raster color, stretched to use entire grayscale range */
       }      
     }
     else {
@@ -731,7 +734,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   double cx,cy; /* cell sizes (x and y) */
   char szPath[MS_MAXPATHLEN];
 
-  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
+  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; /* initialize the colormap to all transparent */
 
   pngStream = fopen(msBuildPath3(szPath, map->mappath, map->shapepath, filename), "rb");
   if(!pngStream) {
@@ -782,11 +785,11 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	else {
           RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
           if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); /* use class color */
 	  else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
-	    cmap[i] = -1; // make transparent
+	    cmap[i] = -1; /* make transparent */
 	  else
-            cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color	  
+            cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); /* use raster color	   */
 	}
       }
     }
@@ -852,7 +855,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   double cx,cy; /* cell sizes (x and y) */
   char szPath[MS_MAXPATHLEN];
 
-  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
+  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; /* initialize the colormap to all transparent */
 
   gifStream = fopen(msBuildPath3(szPath, map->mappath, map->shapepath, filename), "rb");
   if(!gifStream) {
@@ -903,11 +906,11 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	else {
           RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
           if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	    cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); /* use class color */
 	  else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
-	    cmap[i] = -1; // make transparent
+	    cmap[i] = -1; /* make transparent */
 	  else
-            cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); // use raster color	  
+            cmap[i] = msAddColorGD(map,img, 0, pixel.red, pixel.green, pixel.blue); /* use raster color	   */
 	}	
       }
     }
@@ -997,11 +1000,11 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
     return(-1);
   }
 
-  // set up the color map
+  /* set up the color map */
   for (i=0; i<MAXCOLORS; i++) {
     pixel.red = pixel.green = pixel.blue = pixel.pen = i;
 
-    cmap[i] = -1; // initialize to transparent
+    cmap[i] = -1; /* initialize to transparent */
     if(!MS_COMPARE_COLORS(pixel, layer->offsite))      
       cmap[i] = msAddColorGD(map,img, 0, (i>>4)*17,(i>>4)*17,(i>>4)*17);
   }
@@ -1013,7 +1016,7 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   skipx = map->cellsize/cx;
   skipy = map->cellsize/cy;
 
-  // muck with scaling
+  /* muck with scaling */
   if(MS_MIN(skipx, skipy) >= 8)
     cinfo.scale_denom = 8;
   else
@@ -1028,16 +1031,16 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   startx = (map->extent.minx - ulx)/(cinfo.scale_denom*cx);
   starty = (uly - map->extent.maxy)/(cinfo.scale_denom*cy);
 
-  // initialize the decompressor, this sets output sizes etc...
+  /* initialize the decompressor, this sets output sizes etc... */
   jpeg_start_decompress(&cinfo);
 
   w = cinfo.output_width - .5; /* to avoid rounding problems */
   h = cinfo.output_height - .5;
 
-  // one pixel high buffer as wide as the image, goes away when done with the image
+  /* one pixel high buffer as wide as the image, goes away when done with the image */
   buffer = (*cinfo.mem->alloc_sarray) ((j_common_ptr) &cinfo, JPOOL_IMAGE, cinfo.output_width, 1);
 
-  // skip any unneeded scanlines *yuck*
+  /* skip any unneeded scanlines *yuck* */
   for(i=0; i<starty-1; i++)
     jpeg_read_scanlines(&cinfo, buffer, 1);
 
@@ -1056,14 +1059,14 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	    img->pixels[i][j] = cmap[vv];
 	}
 	x+=skipx;
-	if(x>=cinfo.output_width) // next x is out of the image, so quit
+	if(x>=cinfo.output_width) /* next x is out of the image, so quit */
 	  break;
       }
     }
     
     y+=skipy;
 
-    if(y>=cinfo.output_height) // next y is out of the image, so quit
+    if(y>=cinfo.output_height) /* next y is out of the image, so quit */
       break;
 
     for(k=cinfo.output_scanline; k<y-1; k++)
@@ -1097,7 +1100,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
   colorObj pixel;
 
-  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
+  for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; /* initialize the colormap to all transparent */
 
   strcpy(epp.filname,msBuildPath3(szPath, map->mappath, map->shapepath,
                                   filename));
@@ -1150,12 +1153,12 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  else {
             RESOLVE_PEN_GD(img, layer->class[c].styles[0].color);
 	    if(MS_VALID_COLOR(layer->class[c].styles[0].color)) 
-	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); // use class color
+	      cmap[i] = msAddColorGD(map,img, 0, layer->class[c].styles[0].color.red, layer->class[c].styles[0].color.green, layer->class[c].styles[0].color.blue); /* use class color */
 	    else if(MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color)) 
-	      cmap[i] = -1; // make transparent
+	      cmap[i] = -1; /* make transparent */
 	    else {              
 	      clrget(&clr,i,&color);
-	      cmap[i] = msAddColorGD(map,img, 0, color.red, color.green, color.blue); // use raster color
+	      cmap[i] = msAddColorGD(map,img, 0, color.red, color.green, color.blue); /* use raster color */
 	    }
 	  }
 	}
@@ -1224,7 +1227,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
   char dd[8];
   char *filename=NULL, tilename[MS_MAXPATHLEN];
 
-  layerObj *tlp=NULL; // pointer to the tile layer either real or temporary
+  layerObj *tlp=NULL; /* pointer to the tile layer either real or temporary */
   int tileitemindex=-1, tilelayerindex=-1;
   shapeObj tshp;
 
@@ -1269,7 +1272,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     force_gdal = MS_TRUE;
   }
 
-  // Only GDAL supports 24bit GD output.
+  /* Only GDAL supports 24bit GD output. */
   if(img != NULL && gdImageTrueColor(img)){
 #ifndef USE_GDAL
     msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayerLow()" );
@@ -1279,7 +1282,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 #endif
   }
 
-  // Only GDAL support image warping.
+  /* Only GDAL support image warping. */
   if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
 #ifndef USE_GDAL
     msSetError(MS_MISCERR, "Attempt to render raster layer that requires reprojection but\nwithout GDAL available.  Image reprojection requires GDAL.", "msDrawRasterLayerLow()" );
@@ -1289,20 +1292,20 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 #endif
   }
 
-  // This force use of GDAL if available.  This is usually but not always a
-  // good idea.  Remove this line for local builds if necessary.
+  /* This force use of GDAL if available.  This is usually but not always a */
+  /* good idea.  Remove this line for local builds if necessary. */
 #ifdef USE_GDAL 
   force_gdal = MS_TRUE;
 #endif
 
-  if(layer->tileindex) { // we have an index file
+  if(layer->tileindex) { /* we have an index file */
     
     msInitShape(&tshp);
     
     tilelayerindex = msGetLayerIndex(layer->map, layer->tileindex);
-    if(tilelayerindex == -1) { // the tileindex references a file, not a layer
+    if(tilelayerindex == -1) { /* the tileindex references a file, not a layer */
 
-      // so we create a temporary layer
+      /* so we create a temporary layer */
       tlp = (layerObj *) malloc(sizeof(layerObj));
       if(!tlp) {
         msSetError(MS_MEMERR, "Error allocating temporary layerObj.", "msDrawRasterLayerLow()");
@@ -1310,7 +1313,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       }
       initLayer(tlp, map);
 
-      // set a few parameters for a very basic shapefile-based layer
+      /* set a few parameters for a very basic shapefile-based layer */
       tlp->name = strdup("TILE");
       tlp->type = MS_LAYER_TILEINDEX;
       tlp->data = strdup(layer->tileindex);
@@ -1324,7 +1327,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
         goto cleanup;
     }
 
-    // build item list (no annotation) since we may have to classify the shape, plus we want the tileitem
+    /* build item list (no annotation) since we may have to classify the shape, plus we want the tileitem */
     status = msLayerWhichItems(tlp, MS_TRUE, MS_FALSE, layer->tileitem);
     if(status != MS_SUCCESS)
     {
@@ -1332,14 +1335,14 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
         goto cleanup;
     }
  
-    // get the tileitem index
+    /* get the tileitem index */
     for(i=0; i<tlp->numitems; i++) {
       if(strcasecmp(tlp->items[i], layer->tileitem) == 0) {
         tileitemindex = i;
         break;
       }
     }
-    if(i == tlp->numitems) { // didn't find it
+    if(i == tlp->numitems) { /* didn't find it */
         msSetError(MS_MEMERR, 
                    "Could not find attribute %s in tileindex.", 
                    "msDrawRasterLayerLow()", 
@@ -1350,12 +1353,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
  
     searchrect = map->extent;
 #ifdef USE_PROJ
-    // if necessary, project the searchrect to source coords
+    /* if necessary, project the searchrect to source coords */
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) msProjectRect(&map->projection, &layer->projection, &searchrect);
 #endif
     status = msLayerWhichShapes(tlp, searchrect);
     if (status != MS_SUCCESS) {
-        // Can be either MS_DONE or MS_FAILURE
+        /* Can be either MS_DONE or MS_FAILURE */
         if (status != MS_DONE) 
             final_status = status;
 
@@ -1373,18 +1376,18 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
           break;
       }
 
-      if(status == MS_DONE) break; // no more tiles/images
+      if(status == MS_DONE) break; /* no more tiles/images */
        
-      if(layer->data == NULL) // assume whole filename is in attribute field
+      if(layer->data == NULL) /* assume whole filename is in attribute field */
           strcpy( tilename, tshp.values[tileitemindex] );
       else
           sprintf(tilename, "%s/%s", tshp.values[tileitemindex], layer->data);
       filename = tilename;
       
-      msFreeShape(&tshp); // done with the shape
+      msFreeShape(&tshp); /* done with the shape */
     } else {
       filename = layer->data;
-      done = MS_TRUE; // only one image so we're done after this
+      done = MS_TRUE; /* only one image so we're done after this */
     }
 
     if(strlen(filename) == 0) continue;
@@ -1407,7 +1410,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       memset( dd, 0, 8 );
       strcpy( szPath, filename );
     } else {
-      fread(dd,8,1,f); // read some bytes to try and identify the file
+      fread(dd,8,1,f); /* read some bytes to try and identify the file */
       fclose(f);
     }
 
@@ -1552,7 +1555,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       if( layer->debug || map->debug )
           msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", filename, layer->name );
 
-      continue; // skip it, next tile
+      continue; /* skip it, next tile */
 #endif
     }
 
@@ -1566,10 +1569,10 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       return(MS_FAILURE);
     }
     continue;
-  } // next tile
+  } /* next tile */
 
 cleanup:
-  if(layer->tileindex) { // tiling clean-up
+  if(layer->tileindex) { /* tiling clean-up */
     msLayerClose(tlp);
     if(tilelayerindex == -1) {
       freeLayer(tlp);
@@ -1584,7 +1587,7 @@ cleanup:
 /*                         msDrawReferenceMap()                         */
 /************************************************************************/
 
-//TODO : this will msDrawReferenceMapGD
+/* TODO : this will msDrawReferenceMapGD */
 imageObj *msDrawReferenceMap(mapObj *map) {
   double cellsize;
   int c=-1, oc=-1;
@@ -1606,29 +1609,29 @@ imageObj *msDrawReferenceMap(mapObj *map) {
 
   img = image->img.gd;
   
-  // make sure the extent given in mapfile fits the image
+  /* make sure the extent given in mapfile fits the image */
   cellsize = msAdjustExtent(&(map->reference.extent), 
                             image->width, image->height);
 
-  // Allocate a fake bg color because when using gd-1.8.4 with a PNG reference
-  // image, the box color could end up being set to color index 0 which is 
-  // transparent (yes, that's odd!).
+  /* Allocate a fake bg color because when using gd-1.8.4 with a PNG reference */
+  /* image, the box color could end up being set to color index 0 which is  */
+  /* transparent (yes, that's odd!). */
   gdImageColorAllocate(img, 255,255,255);
 
-  // allocate some colors
+  /* allocate some colors */
   if( MS_VALID_COLOR(map->reference.outlinecolor) )
     oc = gdImageColorAllocate(img, map->reference.outlinecolor.red, map->reference.outlinecolor.green, map->reference.outlinecolor.blue);
   if( MS_VALID_COLOR(map->reference.color) )
     c = gdImageColorAllocate(img, map->reference.color.red, map->reference.color.green, map->reference.color.blue); 
 
-  // convert map extent to reference image coordinates
+  /* convert map extent to reference image coordinates */
   x1 = MS_MAP2IMAGE_X(map->extent.minx,  map->reference.extent.minx, cellsize);
   x2 = MS_MAP2IMAGE_X(map->extent.maxx,  map->reference.extent.minx, cellsize);  
   y1 = MS_MAP2IMAGE_Y(map->extent.maxy,  map->reference.extent.maxy, cellsize);
   y2 = MS_MAP2IMAGE_Y(map->extent.miny,  map->reference.extent.maxy, cellsize);
 
-  // if extent are smaller than minbox size
-  // draw that extent on the reference image
+  /* if extent are smaller than minbox size */
+  /* draw that extent on the reference image */
   if( (abs(x2 - x1) > map->reference.minboxsize) || 
           (abs(y2 - y1) > map->reference.minboxsize) )
   {
@@ -1643,7 +1646,7 @@ imageObj *msDrawReferenceMap(mapObj *map) {
       }
   
   }
-  else // else draw the marker symbol
+  else /* else draw the marker symbol */
   {
       if( map->reference.maxboxsize == 0 || 
               ((abs(x2 - x1) < map->reference.maxboxsize) && 
@@ -1656,7 +1659,7 @@ imageObj *msDrawReferenceMap(mapObj *map) {
           style.outlinecolor = map->reference.outlinecolor;
           style.size = map->reference.markersize;
 
-          //if the marker symbol is specify draw this symbol else draw a cross
+          /* if the marker symbol is specify draw this symbol else draw a cross */
           if(map->reference.marker != 0)
           {
               pointObj *point = NULL;
@@ -1686,15 +1689,15 @@ imageObj *msDrawReferenceMap(mapObj *map) {
           else
           {
               int x21, y21;
-              //determine the center point
+              /* determine the center point */
               x21 = MS_NINT((x1 + x2)/2);
               y21 = MS_NINT((y1 + y2)/2);
 
-              //get the color
+              /* get the color */
               if(c == -1)
                   c = oc;
 
-              //draw a cross
+              /* draw a cross */
               if(c != -1)
               {
                   gdImageLine(img, x21-8, y21, x21-3, y21, c);

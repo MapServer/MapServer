@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/18 03:06:48  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.7  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -43,7 +46,7 @@ MS_CVSID("$Id$")
 #define CELLSIZE 100
 #define NCOLS 5
 #define RATIO .5
-#define LBUF 5 // space to reserve around line symbols
+#define LBUF 5 /* space to reserve around line symbols */
 
 int main(int argc, char *argv[])
 {

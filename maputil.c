@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.175  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.174  2005/02/09 21:51:17  frank
  * added msForceTmpFileBase and -tmpbase mapserv switch
  *
@@ -96,7 +99,7 @@ extern int msyyparse(void);
 extern int msyylex(void);
 extern char *msyytext;
 
-extern int msyyresult; // result of parsing, true/false
+extern int msyyresult; /* result of parsing, true/false */
 extern int msyystate;
 extern char *msyystring;
 
@@ -105,7 +108,7 @@ extern char *msyystring;
  * Used to get red, green, blue integers separately based upon the color index
  */
 int getRgbColor(mapObj *map,int i,int *r,int *g,int *b) {
-// check index range
+/* check index range */
     int status=1;
     *r=*g=*b=-1;
     if ((i > 0 ) && (i <= map->palette.numcolors) ) {
@@ -123,13 +126,13 @@ static int searchContextForTag(mapObj *map, char **ltags, char *tag, char *conte
 
   if(!context) return MS_FAILURE;
 
-  // printf("\tin searchContextForTag, searching %s for %s\n", context, tag);
+  /* printf("\tin searchContextForTag, searching %s for %s\n", context, tag); */
 
-  if(strstr(context, tag) != NULL) return MS_SUCCESS; // found the tag
+  if(strstr(context, tag) != NULL) return MS_SUCCESS; /* found the tag */
 
-  // check referenced layers for the tag too
+  /* check referenced layers for the tag too */
   for(i=0; i<map->numlayers; i++) {
-    if(strstr(context, ltags[i]) != NULL) { // need to check this layer
+    if(strstr(context, ltags[i]) != NULL) { /* need to check this layer */
       if(requires == MS_TRUE) {
         if(searchContextForTag(map, ltags, tag, map->layers[i].requires, MS_TRUE) == MS_SUCCESS) return MS_SUCCESS;
       } else {
@@ -162,9 +165,9 @@ int msValidateContexts(mapObj *map)
     }
   }
 
-  // check each layer's REQUIRES and LABELREQUIRES parameters
+  /* check each layer's REQUIRES and LABELREQUIRES parameters */
   for(i=0; i<map->numlayers; i++) { 
-    // printf("working on layer %s, looking for references to %s\n", map->layers[i].name, ltags[i]);
+    /* printf("working on layer %s, looking for references to %s\n", map->layers[i].name, ltags[i]); */
     if(searchContextForTag(map, ltags, ltags[i], map->layers[i].requires, MS_TRUE) == MS_SUCCESS) {
       msSetError(MS_PARSEERR, "Recursion error found for REQUIRES parameter for layer %s.", "msValidateContexts", map->layers[i].name);
       status = MS_FAILURE;
@@ -177,7 +180,7 @@ int msValidateContexts(mapObj *map)
     }
   }
 
-  // clean up
+  /* clean up */
   msFreeCharArray(ltags, map->numlayers);
 
   return status;
@@ -188,20 +191,20 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
   int i, status;
   char *tmpstr1=NULL, *tmpstr2=NULL;
   int raster=MS_FALSE, visible;
-  int expresult;       // result of expression parsing operation
+  int expresult;       /* result of expression parsing operation */
 
-  if(!context) return(MS_TRUE); // no context requirements
+  if(!context) return(MS_TRUE); /* no context requirements */
 
   tmpstr1 = strdup(context);
 
-  for(i=0; i<map->numlayers; i++) { // step through all the layers
-    if(layer->index == i) continue; // skip the layer in question
-    // Layer without name cannot be used in contexts
+  for(i=0; i<map->numlayers; i++) { /* step through all the layers */
+    if(layer->index == i) continue; /* skip the layer in question */
+    /* Layer without name cannot be used in contexts */
     if (map->layers[i].name == NULL) continue;
     visible = msLayerIsVisible(map, &(map->layers[i]));
 
     if(map->layers[i].type == MS_LAYER_RASTER && visible)
-      raster = MS_TRUE; // there are raster layers ON/DEFAULT
+      raster = MS_TRUE; /* there are raster layers ON/DEFAULT */
 
     if(strstr(tmpstr1, map->layers[i].name)) {
       tmpstr2 = (char *)malloc(sizeof(char)*strlen(map->layers[i].name) + 3);
@@ -216,7 +219,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
     }
   }
 
-  // special option to catch raster (i.e. background) layers, easier than having to list all layers individually
+  /* special option to catch raster (i.e. background) layers, easier than having to list all layers individually */
   if(raster == MS_TRUE)
     tmpstr1 = gsub(tmpstr1, "[raster]", "1");
   else
@@ -233,7 +236,7 @@ int msEvalContext(mapObj *map, layerObj *layer, char *context)
   {
     msSetError(MS_PARSEERR, "Failed to parse context",
                             "msEvalContext");
-    return MS_FALSE; // error in parse
+    return MS_FALSE; /* error in parse */
   }
   return expresult;
 }
@@ -252,9 +255,9 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
   int i;
   char *tmpstr=NULL;
   int status;
-  int expresult;  // result of logical expression parsing operation
+  int expresult;  /* result of logical expression parsing operation */
   
-  if(!expression->string) return(MS_TRUE); // empty expressions are ALWAYS true
+  if(!expression->string) return(MS_TRUE); /* empty expressions are ALWAYS true */
 
   switch(expression->type) {
   case(MS_STRING):
@@ -266,7 +269,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
       msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
       return(MS_FALSE);
     }
-    if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); // got a match
+    if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); /* got a match */
     break;
   case(MS_EXPRESSION):
     tmpstr = strdup(expression->string);
@@ -276,7 +279,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
 
     msAcquireLock( TLOCK_PARSER );
     msyystate = 4;
-    msyystring = tmpstr; // set lexer state to EXPRESSION_STRING
+    msyystring = tmpstr; /* set lexer state to EXPRESSION_STRING */
     status = msyyparse();
     expresult = msyyresult;
     msReleaseLock( TLOCK_PARSER );
@@ -303,14 +306,14 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     }
 
     if(!expression->compiled) {
-      if(regcomp(&(expression->regex), expression->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression
+      if(regcomp(&(expression->regex), expression->string, REG_EXTENDED|REG_NOSUB) != 0) { /* compile the expression */
         msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
         return(MS_FALSE);
       }
       expression->compiled = MS_TRUE;
     }
 
-    if(regexec(&(expression->regex), items[itemindex], 0, NULL, 0) == 0) return(MS_TRUE); // got a match
+    if(regexec(&(expression->regex), items[itemindex], 0, NULL, 0) == 0) return(MS_TRUE); /* got a match */
     break;
   }
 
@@ -335,16 +338,16 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
 {
   int i;
 
-  // INLINE features do not work with expressions, allow the classindex
-  // value set prior to calling this function to carry through.
+  /* INLINE features do not work with expressions, allow the classindex */
+  /* value set prior to calling this function to carry through. */
   if(layer->connectiontype == MS_INLINE) {
     if(shape->classindex < 0 || shape->classindex >= layer->numclasses) return(-1);
 
-    if(scale > 0) {  // verify scale here
+    if(scale > 0) {  /* verify scale here */
       if((layer->class[shape->classindex].maxscale > 0) && (scale > layer->class[shape->classindex].maxscale))
-        return(-1); // can skip this feature
+        return(-1); /* can skip this feature */
       if((layer->class[shape->classindex].minscale > 0) && (scale <= layer->class[shape->classindex].minscale))
-        return(-1); // can skip this feature
+        return(-1); /* can skip this feature */
     }
 
     return(shape->classindex);
@@ -352,18 +355,18 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
 
   for(i=0; i<layer->numclasses; i++) {
     
-    if(scale > 0) {  // verify scale here 
+    if(scale > 0) {  /* verify scale here  */
       if((layer->class[i].maxscale > 0) && (scale > layer->class[i].maxscale))
-        continue; // can skip this one, next class
+        continue; /* can skip this one, next class */
       if((layer->class[i].minscale > 0) && (scale <= layer->class[i].minscale))
-        continue; // can skip this one, next class
+        continue; /* can skip this one, next class */
     }
 
     if(layer->class[i].status != MS_DELETE && msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
       return(i);
   }
 
-  return(-1); // no match
+  return(-1); /* no match */
 }
 
 char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
@@ -371,7 +374,7 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
   int i;
   char *tmpstr=NULL;
 
-  if(layer->class[shape->classindex].text.string) { // test for global label first
+  if(layer->class[shape->classindex].text.string) { /* test for global label first */
     tmpstr = strdup(layer->class[shape->classindex].text.string);
     switch(layer->class[shape->classindex].text.type) {
     case(MS_STRING):
@@ -421,7 +424,7 @@ double msAdjustExtent(rectObj *rect, int width, int height)
   if(cellsize <= 0) /* avoid division by zero errors */
     return(0);
 
-  ox = MS_MAX((width - (rect->maxx - rect->minx)/cellsize)/2,0); // these were width-1 and height-1
+  ox = MS_MAX((width - (rect->maxx - rect->minx)/cellsize)/2,0); /* these were width-1 and height-1 */
   oy = MS_MAX((height - (rect->maxy - rect->miny)/cellsize)/2,0);
 
   rect->minx = rect->minx - ox*cellsize;
@@ -441,25 +444,25 @@ int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay)
 {
   double offset=0;
 
-  // check left edge, and if necessary the right edge of bounds
+  /* check left edge, and if necessary the right edge of bounds */
   if(rect->maxx <= bounds->minx) {
     offset = overlay*(rect->maxx - rect->minx);
-    rect->minx += offset; // shift right
+    rect->minx += offset; /* shift right */
     rect->maxx += offset;
   } else if(rect->minx >= bounds->maxx) {
     offset = overlay*(rect->maxx - rect->minx);
-    rect->minx -= offset; // shift left
+    rect->minx -= offset; /* shift left */
     rect->maxx -= offset;
   }
 
-  // check top edge, and if necessary the bottom edge of bounds
+  /* check top edge, and if necessary the bottom edge of bounds */
   if(rect->maxy <= bounds->miny) {
     offset = overlay*(rect->maxy - rect->miny);
-    rect->miny -= offset; // shift down
+    rect->miny -= offset; /* shift down */
     rect->maxy -= offset;
   } else if(rect->miny >= bounds->maxy) {
     offset = overlay*(rect->maxy - rect->miny);
-    rect->miny += offset; // shift up
+    rect->miny += offset; /* shift up */
     rect->maxy += offset;
   }
 
@@ -700,13 +703,13 @@ pointObj *msGetPointUsingMeasure(shapeObj *shape, double m)
 /* -------------------------------------------------------------------- */
 /*      get the previous node xy values.                                */
 /* -------------------------------------------------------------------- */
-                        if (j > 0) //not the first point of the line
+                        if (j > 0) /* not the first point of the line */
                         {
                             dfFirstPointX = line.point[j-1].x;
                             dfFirstPointY = line.point[j-1].y;
                             dfFirstPointM = line.point[j-1].m;
                         }
-                        else // get last point of previous line
+                        else /* get last point of previous line */
                         {
                             dfFirstPointX = shape->line[i-1].point[0].x;
                             dfFirstPointY = shape->line[i-1].point[0].y;

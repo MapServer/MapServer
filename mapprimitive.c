@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.44  2005/02/13 22:16:06  dan
  * Use double as second arg to pow() (bug 1235)
  *
@@ -71,22 +74,22 @@ void msPrintShape(shapeObj *p)
 
 void msInitShape(shapeObj *shape)
 {
-  // spatial component
+  /* spatial component */
   shape->line = NULL;
   shape->numlines = 0;
   shape->type = MS_SHAPE_NULL;
   shape->bounds.minx = shape->bounds.miny = -1;
   shape->bounds.maxx = shape->bounds.maxy = -1;
   
-  // attribute component
+  /* attribute component */
   shape->values = NULL;
   shape->numvalues = 0;
 
-  // annotation component
+  /* annotation component */
   shape->text = NULL;
 
-  // bookkeeping component
-  shape->classindex = 0; // default class
+  /* bookkeeping component */
+  shape->classindex = 0; /* default class */
   shape->tileindex = shape->index = -1;
 }
 
@@ -96,7 +99,7 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
   if(!from || !to) return(-1);
 
   for(i=0; i<from->numlines; i++)
-    msAddLine(to, &(from->line[i])); // copy each line
+    msAddLine(to, &(from->line[i])); /* copy each line */
 
   to->type = from->type;
 
@@ -132,7 +135,7 @@ void msFreeShape(shapeObj *shape)
   if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
   if(shape->text) free(shape->text);
   
-  msInitShape(shape); // now reset
+  msInitShape(shape); /* now reset */
 }
 
 void msComputeBounds(shapeObj *shape)
@@ -155,21 +158,21 @@ void msComputeBounds(shapeObj *shape)
   }
 }
 
-// checks to see if ring r is an outer ring of shape
+/* checks to see if ring r is an outer ring of shape */
 static int isOuterRing(shapeObj *shape, int r) 
 {
-  pointObj point; // a point in the ring
+  pointObj point; /* a point in the ring */
   shapeObj ring;
 
   if(shape->numlines == 1) return(MS_TRUE);
 
-  msInitShape(&ring); // convert the ring of interest into its own shape
+  msInitShape(&ring); /* convert the ring of interest into its own shape */
   msAddLine(&ring, &(shape->line[r]));
 
-  msPolygonLabelPoint(&ring, &point, -1); // generate a point in that ring
-  msFreeShape(&ring); // done with it
+  msPolygonLabelPoint(&ring, &point, -1); /* generate a point in that ring */
+  msFreeShape(&ring); /* done with it */
 
-  return(msIntersectPointPolygon(&point, shape)); // test the point against the main shape
+  return(msIntersectPointPolygon(&point, shape)); /* test the point against the main shape */
 }
 
 /*
@@ -201,9 +204,9 @@ int *msGetInnerList(shapeObj *shape, int r, int *outerlist)
   list = (int *)malloc(sizeof(int)*shape->numlines);
   if(!list) return(NULL);
 
-  for(i=0; i<shape->numlines; i++) { // test all rings against the ring
+  for(i=0; i<shape->numlines; i++) { /* test all rings against the ring */
 
-    if(outerlist[i] == MS_TRUE) { // ring is an outer and can't be an inner
+    if(outerlist[i] == MS_TRUE) { /* ring is an outer and can't be an inner */
       list[i] = MS_FALSE;
       continue;
     }
@@ -278,7 +281,7 @@ void msRectToPolygon(rectObj rect, shapeObj *poly)
   line.numpoints = 5;
   
   msAddLine(poly, &line);
-  if(poly->numlines == 1) { // poly was empty to begin with
+  if(poly->numlines == 1) { /* poly was empty to begin with */
     poly->type = MS_SHAPE_POLYGON;
     poly->bounds = rect;
   } else
@@ -547,7 +550,7 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
     }
 
     if(line.numpoints > 0) {
-      line.point[line.numpoints].x = line.point[0].x; // force closure
+      line.point[line.numpoints].x = line.point[0].x; /* force closure */
       line.point[line.numpoints].y = line.point[0].y;
       line.numpoints++;
       msAddLine(&tmp, &line);
@@ -573,11 +576,11 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
   int i,j,k; /* loop counters */
 
 
-  if(shape->numlines == 0) return; // nothing to transform
+  if(shape->numlines == 0) return; /* nothing to transform */
 
-  if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { // remove co-linear vertices
+  if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) { /* remove co-linear vertices */
   
-    for(i=0; i<shape->numlines; i++) { // for each part
+    for(i=0; i<shape->numlines; i++) { /* for each part */
       
       shape->line[i].point[0].x = MS_MAP2IMAGE_X(shape->line[i].point[0].x, extent.minx, cellsize);
       shape->line[i].point[0].y = MS_MAP2IMAGE_Y(shape->line[i].point[0].y, extent.maxy, cellsize);
@@ -601,10 +604,10 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
 	  }
 	}
       }
-      shape->line[i].numpoints = k; // save actual number kept
+      shape->line[i].numpoints = k; /* save actual number kept */
     }
-  } else { // points or untyped shapes
-    for(i=0; i<shape->numlines; i++) { // for each part
+  } else { /* points or untyped shapes */
+    for(i=0; i<shape->numlines; i++) { /* for each part */
       for(j=1; j < shape->line[i].numpoints; j++ ) {
 	shape->line[i].point[j].x = MS_MAP2IMAGE_X(shape->line[i].point[j].x, extent.minx, cellsize);
 	shape->line[i].point[j].y = MS_MAP2IMAGE_Y(shape->line[i].point[j].y, extent.maxy, cellsize);
@@ -619,11 +622,11 @@ void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize)
 {
 	int i,j; /* loop counters */
 
-	if(shape->numlines == 0) return; // nothing to transform
+	if(shape->numlines == 0) return; /* nothing to transform */
 
-	if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON)  // remove co-linear vertices
+	if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON)  /* remove co-linear vertices */
 	{
-		for(i=0; i<shape->numlines; i++)  // for each part
+		for(i=0; i<shape->numlines; i++)  /* for each part */
 		{ 
 			for(j=0; j < shape->line[i].numpoints; j++ ) 
 			{
@@ -632,9 +635,9 @@ void msTransformPixelToShape(shapeObj *shape, rectObj extent, double cellsize)
 			}
 		}
 	}
-	else  // points or untyped shapes
+	else  /* points or untyped shapes */
 	{
-		for(i=0; i<shape->numlines; i++)  // for each part
+		for(i=0; i<shape->numlines; i++)  /* for each part */
 		{
 			for(j=1; j < shape->line[i].numpoints; j++ ) 
 			{
@@ -729,7 +732,7 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
       outside.point[j-1] = generateLineIntersection(outside.point[j-2], outside.point[j-1], a, outside.point[j]);
     }
 
-    // need a touch of code if 1st point equals last point in p (find intersection)
+    /* need a touch of code if 1st point equals last point in p (find intersection) */
 
     msAddLine(op, &inside);
     msAddLine(op, &outside);
@@ -741,7 +744,7 @@ void bufferPolyline(shapeObj *p, shapeObj *op, int w)
   return;
 }
 
-// Currently unused.
+/* Currently unused. */
 #ifdef notdef
 static int get_centroid(shapeObj *p, pointObj *lp, double *miny, double *maxy)
 {
@@ -809,7 +812,7 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
   if(min_dimension != -1)
     if(MS_MIN(maxx-minx,maxy-miny) < min_dimension) return(MS_FAILURE);
 
-  //if(get_centroid(p, lp, &miny, &maxy) == -1) return(MS_FAILURE);
+  /* if(get_centroid(p, lp, &miny, &maxy) == -1) return(MS_FAILURE); */
   lp->x = (maxx+minx)/2.0;
   lp->y = (maxy+miny)/2.0;
 
@@ -954,7 +957,7 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
   if((min_length != -1) && (total_length < min_length)) /* too short to label */
     return(MS_FAILURE);
 
-  // ok, now we know which line and which segment within that line
+  /* ok, now we know which line and which segment within that line */
   i = line_index;
   j = segment_index;
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.46  2005/01/11 00:24:07  frank
  * added labelObj arg to msAddLabel()
  *
@@ -86,7 +89,7 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
 {
   double md, gd, center_y;
 
-  // if((extent.maxx == extent.minx) || (extent.maxy == extent.miny))  
+  /* if((extent.maxx == extent.minx) || (extent.maxy == extent.miny))   */
   if(!MS_VALID_EXTENT(extent)) {
     msSetError(MS_MISCERR, "Invalid image extent, minx=%lf, miny=%lf, maxx=%lf, maxy=%lf.", "msCalculateScale()", extent.minx, extent.miny, extent.maxx, extent.maxy);
     return(MS_FAILURE);
@@ -105,12 +108,12 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
   case(MS_INCHES):  
   case(MS_FEET):
     center_y = (extent.miny+extent.maxy)/2.0;
-    md = width/(resolution*msInchesPerUnit(units, center_y)); // was (width-1)
+    md = width/(resolution*msInchesPerUnit(units, center_y)); /* was (width-1) */
     gd = extent.maxx - extent.minx;
     *scale = gd/md;
     break;
   default:
-    *scale = -1; // this is not an error
+    *scale = -1; /* this is not an error */
     break;
   }
 
@@ -154,7 +157,7 @@ double msInchesPerUnit(int units, double center_lat)
 
 #define X_STEP_SIZE 5
 
-//TODO : the will be msDrawScalebarGD
+/* TODO : the will be msDrawScalebarGD */
 imageObj *msDrawScalebar(mapObj *map)
 {
   int status;
@@ -184,13 +187,13 @@ imageObj *msDrawScalebar(mapObj *map)
   do {
     msx = (map->cellsize * dsx)/(msInchesPerUnit(map->scalebar.units,0)/msInchesPerUnit(map->units,0));
     i = roundInterval(msx/map->scalebar.intervals);
-    sprintf(label, "%g", map->scalebar.intervals*i); // last label
+    sprintf(label, "%g", map->scalebar.intervals*i); /* last label */
     isx = MS_NINT((i/(msInchesPerUnit(map->units,0)/msInchesPerUnit(map->scalebar.units,0)))/map->cellsize);  
     sx = (map->scalebar.intervals*isx) + MS_NINT((1.5 + strlen(label)/2.0 + strlen(unitText[map->scalebar.units]))*fontPtr->w);
 
-    if(sx <= (map->scalebar.width - 2*HMARGIN)) break; // it will fit
+    if(sx <= (map->scalebar.width - 2*HMARGIN)) break; /* it will fit */
 
-    dsx -= X_STEP_SIZE; // change the desired size in hopes that it will fit in user supplied width
+    dsx -= X_STEP_SIZE; /* change the desired size in hopes that it will fit in user supplied width */
   } while(1);
 
   sy = (2*VMARGIN) + MS_NINT(VSPACING*fontPtr->h) + fontPtr->h + map->scalebar.height - VSLOP;
@@ -221,10 +224,10 @@ imageObj *msDrawScalebar(mapObj *map)
   
   if (map->outputformat->imagemode == MS_IMAGEMODE_RGB || map->outputformat->imagemode == MS_IMAGEMODE_RGBA) gdImageAlphaBlending(image->img.gd, 1);
 
-  ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); // center the computed scalebar
+  ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); /* center the computed scalebar */
   oy = VMARGIN;
 
-  // turn RGB colors into indexed values
+  /* turn RGB colors into indexed values */
   msImageSetPenGD(img, &(map->scalebar.backgroundcolor));
   msImageSetPenGD(img, &(map->scalebar.color));
   msImageSetPenGD(img, &(map->scalebar.outlinecolor));
@@ -244,9 +247,9 @@ imageObj *msDrawScalebar(mapObj *map)
 
       sprintf(label, "%g", j*i);
       map->scalebar.label.position = MS_CC;
-      p.x = ox + j*isx; // + MS_NINT(fontPtr->w/2);
+      p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      //TODO
+      /* TODO */
       msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
 
       state = -state;
@@ -255,9 +258,9 @@ imageObj *msDrawScalebar(mapObj *map)
     ox = ox + j*isx - MS_NINT((strlen(label)*fontPtr->w)/2.0);
     sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
     map->scalebar.label.position = MS_CR;
-    p.x = ox; // + MS_NINT(fontPtr->w/2);
+    p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    //TODO
+    /* TODO */
     msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
     break;
 
@@ -272,9 +275,9 @@ imageObj *msDrawScalebar(mapObj *map)
       
       sprintf(label, "%g", j*i);
       map->scalebar.label.position = MS_CC;
-      p.x = ox + j*isx; // + MS_NINT(fontPtr->w/2);
+      p.x = ox + j*isx; /* + MS_NINT(fontPtr->w/2); */
       p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-      //TODO
+      /* TODO */
       msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
 
       state = -state;
@@ -286,9 +289,9 @@ imageObj *msDrawScalebar(mapObj *map)
     ox = ox + j*isx - MS_NINT((strlen(label)*fontPtr->w)/2.0);
     sprintf(label, "%g %s", j*i, unitText[map->scalebar.units]);
     map->scalebar.label.position = MS_CR;
-    p.x = ox; // + MS_NINT(fontPtr->w/2);
+    p.x = ox; /* + MS_NINT(fontPtr->w/2); */
     p.y = oy + map->scalebar.height + MS_NINT(VSPACING*fontPtr->h);
-    //TODO
+    /* TODO */
     msDrawLabel(image, p, label, &(map->scalebar.label), &(map->fontset), 1.0);
     break;
   default:
@@ -319,10 +322,10 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   }
   
   image = msDrawScalebar(map);
-  map->symbolset.symbol[s].img =  image->img.gd; //TODO 
-  if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
+  map->symbolset.symbol[s].img =  image->img.gd; /* TODO  */
+  if(!map->symbolset.symbol[s].img) return(-1); /* something went wrong creating scalebar */
 
-  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
+  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; /* intialize a few things */
   map->symbolset.symbol[s].name = strdup("scalebar");  
 
   /* in 8 bit, mark 0 as being transparent.  In 24bit hopefully already
@@ -368,13 +371,13 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     map->layers[l].type = MS_LAYER_ANNOTATION;
 
     if(initClass(&(map->layers[l].class[0])) == -1) return(-1);
-    map->layers[l].numclasses = 1; // so we make sure to free it
+    map->layers[l].numclasses = 1; /* so we make sure to free it */
     
-    // update the layer order list with the layer's index.
+    /* update the layer order list with the layer's index. */
     map->layerorder[l] = l;
   }
 
-  // to resolve bug 490
+  /* to resolve bug 490 */
   map->layers[l].transparency = MS_GD_ALPHA;
   
   map->layers[l].status = MS_ON;
@@ -383,20 +386,20 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].styles[0].symbol = s;
   map->layers[l].class[0].styles[0].color.pen = -1;
   map->layers[l].class[0].label.force = MS_TRUE;
-  map->layers[l].class[0].label.size = MS_MEDIUM; // must set a size to have a valid label definition
+  map->layers[l].class[0].label.size = MS_MEDIUM; /* must set a size to have a valid label definition */
 
-  if(map->scalebar.postlabelcache) // add it directly to the image //TODO
+  if(map->scalebar.postlabelcache) /* add it directly to the image //TODO */
   {
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   }
   else
     msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0, NULL);
 
-  // Mark layer as deleted so that it doesn't interfere with html legends or
-  // with saving maps
+  /* Mark layer as deleted so that it doesn't interfere with html legends or */
+  /* with saving maps */
   map->layers[l].status = MS_DELETE;
 
-  // Free image (but keep the GD image which is in the symbol cache now)
+  /* Free image (but keep the GD image which is in the symbol cache now) */
   image->img.gd = NULL;
   msFreeImage( image );
 

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.84  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.83  2005/02/03 00:06:57  assefa
  * Add SVG function prototypes and related calls.
  *
@@ -71,14 +74,14 @@ void msClearLayerPenValues(layerObj *layer) {
   int i, j;  
 
   for(i=0; i<layer->numclasses; i++) {
-    layer->class[i].label.backgroundcolor.pen = MS_PEN_UNSET; // set in billboardXX function
+    layer->class[i].label.backgroundcolor.pen = MS_PEN_UNSET; /* set in billboardXX function */
     layer->class[i].label.backgroundshadowcolor.pen = MS_PEN_UNSET;
-    layer->class[i].label.color.pen = MS_PEN_UNSET; // set in MSXXDrawText function
+    layer->class[i].label.color.pen = MS_PEN_UNSET; /* set in MSXXDrawText function */
     layer->class[i].label.outlinecolor.pen = MS_PEN_UNSET;
     layer->class[i].label.shadowcolor.pen = MS_PEN_UNSET;      
 
     for(j=0; j<layer->class[i].numstyles; j++) {
-      layer->class[i].styles[j].backgroundcolor.pen = MS_PEN_UNSET; // set in various symbol drawing functions
+      layer->class[i].styles[j].backgroundcolor.pen = MS_PEN_UNSET; /* set in various symbol drawing functions */
 	  layer->class[i].styles[j].color.pen = MS_PEN_UNSET;
       layer->class[i].styles[j].outlinecolor.pen = MS_PEN_UNSET; 
     }
@@ -166,9 +169,9 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         return(NULL);
     }
 
-    msInitLabelCache(&(map->labelcache)); // this clears any previously allocated cache
+    msInitLabelCache(&(map->labelcache)); /* this clears any previously allocated cache */
 
-    status = msValidateContexts(map); // make sure there are no recursive REQUIRES or LABELREQUIRES expressions
+    status = msValidateContexts(map); /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
     if(status != MS_SUCCESS) return NULL;
 
     if(!map->outputformat) {
@@ -260,15 +263,15 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
         return(NULL);
     }
 
-   // update geotransform based on adjusted extent.
+   /* update geotransform based on adjusted extent. */
     msMapComputeGeotransform( map );
 
-    // Do we need to fake out stuff for rotated support?
+    /* Do we need to fake out stuff for rotated support? */
     if( map->gt.need_geotransform )
         msMapSetFakedExtent( map );
 
-    // We will need a cellsize that represents a real georeferenced
-    // coordinate cellsize here, so compute it from saved extents.  
+    /* We will need a cellsize that represents a real georeferenced */
+    /* coordinate cellsize here, so compute it from saved extents.   */
 
     geo_cellsize = map->cellsize;
     if( map->gt.need_geotransform == MS_TRUE ) {
@@ -281,7 +284,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
             / sqrt(2.0);
     } 
 
-    // compute layer scale factors now
+    /* compute layer scale factors now */
     for(i=0;i<map->numlayers; i++) {
       if(map->layers[i].sizeunits != MS_PIXELS)
       {
@@ -313,7 +316,7 @@ imageObj *msDrawMap(mapObj *map)
     imageObj *image = NULL;
     struct mstimeval mapstarttime, mapendtime;
     struct mstimeval starttime, endtime;
-    int oldAlphaBlending;  // allows toggling of gd alpha blending (bug 490)
+    int oldAlphaBlending;  /* allows toggling of gd alpha blending (bug 490) */
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
@@ -342,7 +345,7 @@ imageObj *msDrawMap(mapObj *map)
     }
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    // Pre-download all WMS/WFS layers in parallel before starting to draw map
+    /* Pre-download all WMS/WFS layers in parallel before starting to draw map */
     lastconnectiontype = MS_SHAPEFILE;
     for(i=0; i<map->numlayers; i++) 
     {
@@ -394,7 +397,7 @@ imageObj *msDrawMap(mapObj *map)
     }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
 
-    // OK, now we can start drawing
+    /* OK, now we can start drawing */
 
     for(i=0; i<map->numlayers; i++) {
 
@@ -404,7 +407,7 @@ imageObj *msDrawMap(mapObj *map)
         if (map->layerorder[i] != -1) {
             lp = &(map->layers[ map->layerorder[i]]);
 
-            if(lp->postlabelcache) // wait to draw
+            if(lp->postlabelcache) /* wait to draw */
                 continue;
 
             if (!msLayerIsVisible(map, lp))
@@ -483,8 +486,8 @@ imageObj *msDrawMap(mapObj *map)
     
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
   {
-      // We need to temporarily restore the original extent for drawing
-      // the scalebar as it uses the extent to recompute cellsize.
+      /* We need to temporarily restore the original extent for drawing */
+      /* the scalebar as it uses the extent to recompute cellsize. */
       if( map->gt.need_geotransform )
           msMapRestoreRealExtent( map );
 
@@ -492,7 +495,7 @@ imageObj *msDrawMap(mapObj *map)
       oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
       gdImageAlphaBlending(image->img.gd, 1);
       
-      msEmbedScalebar(map, image->img.gd); //TODO  
+      msEmbedScalebar(map, image->img.gd); /* TODO   */
 
       /* restore original alpha blending */
       gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
@@ -522,7 +525,7 @@ imageObj *msDrawMap(mapObj *map)
   }
 
 
-  for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
+  for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
 
     lp = &(map->layers[map->layerorder[i]]);
 
@@ -580,30 +583,30 @@ imageObj *msDrawMap(mapObj *map)
 
   }
   
-  // Do we need to fake out stuff for rotated support?
-  // This really needs to be done on every preceeding exit point too...
+  /* Do we need to fake out stuff for rotated support? */
+  /* This really needs to be done on every preceeding exit point too... */
   if( map->gt.need_geotransform )
       msMapRestoreRealExtent( map );
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
   {
-      //msEmbedScalebar(map, image->img.gd); //TODO
+      /* msEmbedScalebar(map, image->img.gd); //TODO */
 
       /* fix for bug 490 - turn on alpha blending for embedded scalebar */
       oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
       gdImageAlphaBlending(image->img.gd, 1);
       
-      msEmbedScalebar(map, image->img.gd); //TODO  
+      msEmbedScalebar(map, image->img.gd); /* TODO   */
 
       /* restore original alpha blending */
       gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
   }
 
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
-      msEmbedLegend(map, image->img.gd); //TODO
+      msEmbedLegend(map, image->img.gd); /* TODO */
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-  // Cleanup WMS/WFS Request stuff
+  /* Cleanup WMS/WFS Request stuff */
   msHTTPFreeRequestObj(asOWSReqInfo, numOWSRequests);
 #endif
 
@@ -630,14 +633,14 @@ imageObj *msDrawQueryMap(mapObj *map)
   if(map->querymap.width != -1) map->width = map->querymap.width;
   if(map->querymap.height != -1) map->height = map->querymap.height;
 
-  if(map->querymap.style == MS_NORMAL) return(msDrawMap(map)); // no need to do anything fancy
+  if(map->querymap.style == MS_NORMAL) return(msDrawMap(map)); /* no need to do anything fancy */
 
   if(map->width == -1 || map->height == -1) {
     msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawQueryMap()");
     return(NULL);
   }
 
-  msInitLabelCache(&(map->labelcache)); // this clears any previously allocated cache
+  msInitLabelCache(&(map->labelcache)); /* this clears any previously allocated cache */
 
   if( MS_RENDERER_GD(map->outputformat) )
   {
@@ -654,7 +657,7 @@ imageObj *msDrawQueryMap(mapObj *map)
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
   if(status != MS_SUCCESS) return(NULL);
 
-  // compute layer scale factors now
+  /* compute layer scale factors now */
   for(i=0;i<map->numlayers; i++) {
     if(map->layers[i].sizeunits != MS_PIXELS)
       map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
@@ -667,7 +670,7 @@ imageObj *msDrawQueryMap(mapObj *map)
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
 
-    if(lp->postlabelcache) // wait to draw
+    if(lp->postlabelcache) /* wait to draw */
       continue;
 
     status = msDrawQueryLayer(map, lp, image); 
@@ -675,29 +678,29 @@ imageObj *msDrawQueryMap(mapObj *map)
   }
 
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
-      msEmbedScalebar(map, image->img.gd); //TODO
+      msEmbedScalebar(map, image->img.gd); /* TODO */
 
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
-      msEmbedLegend(map, image->img.gd); //TODO
+      msEmbedLegend(map, image->img.gd); /* TODO */
 
-  if(msDrawLabelCache(image, map) == -1) //TODO
+  if(msDrawLabelCache(image, map) == -1) /* TODO */
     return(NULL);
 
-  for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
+  for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
     lp = &(map->layers[i]);
 
     if(!lp->postlabelcache)
       continue;
 
-    status = msDrawQueryLayer(map, lp, image); //TODO
+    status = msDrawQueryLayer(map, lp, image); /* TODO */
     if(status != MS_SUCCESS) return(NULL);
   }
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
-      msEmbedScalebar(map, image->img.gd); //TODO
+      msEmbedScalebar(map, image->img.gd); /* TODO */
 
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
-      msEmbedLegend(map, image->img.gd); //TODO
+      msEmbedLegend(map, image->img.gd); /* TODO */
 
   return(image);
 }
@@ -712,7 +715,7 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
   int i;
 
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features && !layer->layerinfo)
-    return(MS_FALSE); // no data associated with this layer, not an error since layer may be used as a template from MapScript
+    return(MS_FALSE); /* no data associated with this layer, not an error since layer may be used as a template from MapScript */
 
   if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_FALSE);
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_FALSE);
@@ -720,26 +723,26 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
   if(map->scale > 0) {
     
-    // layer scale boundaries should be checked first
+    /* layer scale boundaries should be checked first */
     if((layer->maxscale > 0) && (map->scale > layer->maxscale)) return(MS_FALSE);
     if((layer->minscale > 0) && (map->scale <= layer->minscale)) return(MS_FALSE);
 
-    // now check class scale boundaries (all layers *must* pass these tests)
+    /* now check class scale boundaries (all layers *must* pass these tests) */
     if(layer->numclasses > 0) {
       for(i=0; i<layer->numclasses; i++) {
         if((layer->class[i].maxscale > 0) && (map->scale > layer->class[i].maxscale))
-          continue; // can skip this one, next class
+          continue; /* can skip this one, next class */
         if((layer->class[i].minscale > 0) && (map->scale <= layer->class[i].minscale))
-          continue; // can skip this one, next class
+          continue; /* can skip this one, next class */
 
-        break; // can't skip this class (or layer for that matter)
+        break; /* can't skip this class (or layer for that matter) */
       } 
       if(i == layer->numclasses) return(MS_FALSE);
     }
 
   }
 
-  return MS_TRUE;  // All tests passed.  Layer is visible.
+  return MS_TRUE;  /* All tests passed.  Layer is visible. */
 }
 /*
  * Generic function to render a layer object.
@@ -749,17 +752,17 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   imageObj *image_draw = image;
   outputFormatObj *transFormat = NULL;
   int retcode=MS_SUCCESS;
-  int oldAlphaBlending=0;  // allow toggling of gd alpha blending (bug 490)
+  int oldAlphaBlending=0;  /* allow toggling of gd alpha blending (bug 490) */
 
   if (!msLayerIsVisible(map, layer))
-      return MS_SUCCESS;  // Nothing to do, layer is either turned off, out of
-                          // scale, has no classes, etc.
+      return MS_SUCCESS;  /* Nothing to do, layer is either turned off, out of */
+                          /* scale, has no classes, etc. */
 
-  // Inform the rendering device that layer draw is starting.
+  /* Inform the rendering device that layer draw is starting. */
   msImageStartLayer(map, layer, image);
 
   if ( MS_RENDERER_GD(image_draw->format) ) {
-    // Create a temp image for this layer tranparency
+    /* Create a temp image for this layer tranparency */
     if (layer->transparency > 0 && layer->transparency <= 100) {
       msApplyOutputFormat( &transFormat, image->format, 
                            MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
@@ -784,7 +787,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
   }
 
-  // Redirect procesing of some layer types.
+  /* Redirect procesing of some layer types. */
   if(layer->connectiontype == MS_WMS) 
   {
 #ifdef USE_WMS_LYR
@@ -797,12 +800,12 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   {
       retcode = msDrawRasterLayer(map, layer, image_draw);
   }
-  //Must be a Vector layer
+  /* Must be a Vector layer */
   else {
       retcode = msDrawVectorLayer(map, layer, image_draw);
   }
 
-  // Destroy the temp image for this layer tranparency
+  /* Destroy the temp image for this layer tranparency */
   if( MS_RENDERER_GD(image_draw->format) && layer->transparency > 0 
       && layer->transparency <= 100 ) {
 
@@ -817,7 +820,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 #endif
     msFreeImage( image_draw );
 
-    // deref and possibly free temporary transparent output format. 
+    /* deref and possibly free temporary transparent output format.  */
     msApplyOutputFormat( &transFormat, NULL, 
                          MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
@@ -881,14 +884,14 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale)) annotate = MS_FALSE;
   }
 
-  // reset layer pen values just in case the map has been previously processed
+  /* reset layer pen values just in case the map has been previously processed */
   msClearLayerPenValues(layer);
   
-  // open this layer
+  /* open this layer */
   status = msLayerOpen(layer);
   if(status != MS_SUCCESS) return MS_FAILURE;
   
-  // build item list
+  /* build item list */
 /* ==================================================================== */
 /*      For Flash, we use a metadata called SWFDUMPATTRIBUTES that      */
 /*      contains a list of attributes that we want to write to the      */
@@ -900,7 +903,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL);
   if(status != MS_SUCCESS) return MS_FAILURE;
   
-  // identify target shapes
+  /* identify target shapes */
   if(layer->transform == MS_TRUE)
     searchrect = map->extent;
   else {
@@ -911,11 +914,11 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   
 #ifdef USE_PROJ
   if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-    msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
+    msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
 #endif
     
   status = msLayerWhichShapes(layer, searchrect);
-  if(status == MS_DONE) { // no overlap
+  if(status == MS_DONE) { /* no overlap */
     msLayerClose(layer);
     return MS_SUCCESS;
   } else if(status != MS_SUCCESS) {
@@ -923,7 +926,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     return MS_FAILURE;
   }
   
-  // step through the target shapes
+  /* step through the target shapes */
   msInitShape(&shape);
   
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
@@ -936,17 +939,17 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   
     cache = MS_FALSE;
     if(layer->type == MS_LAYER_LINE && layer->class[shape.classindex].numstyles > 1) 
-      cache = MS_TRUE; // only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL)
+      cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
          
-    // With 'STYLEITEM AUTO', we will have the datasource fill the class'
-    // style parameters for this shape.
+    /* With 'STYLEITEM AUTO', we will have the datasource fill the class' */
+    /* style parameters for this shape. */
     if(layer->styleitem && strcasecmp(layer->styleitem, "AUTO") == 0) {
       if(msLayerGetAutoStyle(map, layer, &(layer->class[shape.classindex]), shape.tileindex, shape.index) != MS_SUCCESS) {
         retcode = MS_FAILURE;
         break;
       }
                   
-      // __TODO__ For now, we can't cache features with 'AUTO' style
+      /* __TODO__ For now, we can't cache features with 'AUTO' style */
       cache = MS_FALSE;
     }
   
@@ -954,23 +957,23 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
     if(cache)
-      status = msDrawShape(map, layer, &shape, image, 0); // draw only the first style
+      status = msDrawShape(map, layer, &shape, image, 0); /* draw only the first style */
     else
-      status = msDrawShape(map, layer, &shape, image, -1); // all styles 
+      status = msDrawShape(map, layer, &shape, image, -1); /* all styles  */
     if(status != MS_SUCCESS) {
       msLayerClose(layer);
       retcode = MS_FAILURE;
       break;
     }
 
-    if(shape.numlines == 0) { // once clipped the shape didn't need to be drawn
+    if(shape.numlines == 0) { /* once clipped the shape didn't need to be drawn */
       msFreeShape(&shape);
       continue;
     }
   
     if(cache) {
       if(insertFeatureList(&shpcache, &shape) == NULL) {
-        retcode = MS_FAILURE; // problem adding to the cache
+        retcode = MS_FAILURE; /* problem adding to the cache */
         break;
       }
     }  
@@ -1020,13 +1023,13 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     return(msDrawLayer(map, layer, image));
 
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features) 
-   return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
+   return(MS_SUCCESS); /* no data associated with this layer, not an error since layer may be used as a template from MapScript */
 
-  if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_SUCCESS); // query and tileindex layers simply can't be drawn, not an error
+  if(layer->type == MS_LAYER_QUERY || layer->type == MS_LAYER_TILEINDEX) return(MS_SUCCESS); /* query and tileindex layers simply can't be drawn, not an error */
 
-  if(map->querymap.style == MS_HILITE) { // first, draw normally, but don't return
+  if(map->querymap.style == MS_HILITE) { /* first, draw normally, but don't return */
     status = msDrawLayer(map, layer, image);
-    if(status != MS_SUCCESS) return(MS_FAILURE); // oops
+    if(status != MS_SUCCESS) return(MS_FAILURE); /* oops */
   }
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
@@ -1042,17 +1045,17 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale)) annotate = MS_FALSE;
   }
 
-  // reset layer pen values just in case the map has been previously processed
+  /* reset layer pen values just in case the map has been previously processed */
   msClearLayerPenValues(layer);
 
-  // if MS_HILITE, alter the first class (always at least 1 class), and set a MINDISTANCE for the labelObj to avoid duplicates
+  /* if MS_HILITE, alter the first class (always at least 1 class), and set a MINDISTANCE for the labelObj to avoid duplicates */
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
       if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color)) {
-        colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].color; // save the color from the TOP style
+        colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].color; /* save the color from the TOP style */
         layer->class[i].styles[layer->class[i].numstyles-1].color = map->querymap.color;
       } else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor)) {
-	colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor; // if no color, save the outlinecolor from the TOP style
+	colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor; /* if no color, save the outlinecolor from the TOP style */
         layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = map->querymap.color;
       }
 
@@ -1061,12 +1064,12 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     }
   }
 
-  // open this layer
+  /* open this layer */
   status = msLayerOpen(layer);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  // build item list
-  status = msLayerWhichItems(layer, MS_FALSE, annotate, NULL); // FIX: results have already been classified (this may change)
+  /* build item list */
+  status = msLayerWhichItems(layer, MS_FALSE, annotate, NULL); /* FIX: results have already been classified (this may change) */
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   msInitShape(&shape);
@@ -1092,27 +1095,27 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
     cache = MS_FALSE;
     if(layer->type == MS_LAYER_LINE && layer->class[shape.classindex].numstyles > 1) 
-      cache = MS_TRUE; // only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL)
+      cache = MS_TRUE; /* only line layers with multiple styles need be cached (I don't think POLYLINE layers need caching - SDL) */
 
     if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
     if(cache)
-      status = msDrawShape(map, layer, &shape, image, 0); // draw only the first style
+      status = msDrawShape(map, layer, &shape, image, 0); /* draw only the first style */
     else
-      status = msDrawShape(map, layer, &shape, image, -1); // all styles 
+      status = msDrawShape(map, layer, &shape, image, -1); /* all styles  */
     if(status != MS_SUCCESS) {
       msLayerClose(layer);
       return MS_FAILURE;
     }
 
-    if(shape.numlines == 0) { // once clipped the shape didn't need to be drawn
+    if(shape.numlines == 0) { /* once clipped the shape didn't need to be drawn */
       msFreeShape(&shape);
       continue;
     }
 
     if(cache) {
-      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); // problem adding to the cache
+      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); /* problem adding to the cache */
     }
 
     maxnumstyles = MS_MAX(maxnumstyles, layer->class[shape.classindex].numstyles);
@@ -1133,13 +1136,13 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     shpcache = NULL;  
   }
 
-  // if MS_HILITE, restore color and mindistance values
+  /* if MS_HILITE, restore color and mindistance values */
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
       if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color))
         layer->class[i].styles[layer->class[i].numstyles-1].color = colorbuffer[i];        
       else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor))
-	layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = colorbuffer[i]; // if no color, restore outlinecolor for the TOP style
+	layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = colorbuffer[i]; /* if no color, restore outlinecolor for the TOP style */
     }
     layer->class[i].label.mindistance = mindistancebuffer[i];
   }
@@ -1239,9 +1242,9 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
             msSetError(MS_WMSCONNERR, 
                        "Output format '%s' doesn't support WMS layers.", 
                        "msDrawWMSLayer()", image->format->name);
-            nStatus = MS_SUCCESS; // Should we fail if output doesn't support WMS?
+            nStatus = MS_SUCCESS; /* Should we fail if output doesn't support WMS? */
         }
-        // Cleanup
+        /* Cleanup */
         msHTTPFreeRequestObj(asReqInfo, numReq);
     }
 
@@ -1262,9 +1265,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   pointObj annopnt, *point;
   double angle, length = 0.0;
  
-  pointObj center; // circle origin
-  double r; // circle radius
-  int csz; // clip over size
+  pointObj center; /* circle origin */
+  double r; /* circle radius */
+  int csz; /* clip over size */
 
 
 /* Steve's original code
@@ -1278,7 +1281,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
   c = shape->classindex;
 
-  // changed when Tomas added CARTOLINE symbols
+  /* changed when Tomas added CARTOLINE symbols */
   if(layer->class[c].styles[0].size == -1)
       csz = MS_NINT(((msSymbolGetDefaultSize(&(map->symbolset.symbol[layer->class[c].styles[0].symbol]))) * layer->scalefactor) / 2.0);
   else
@@ -1290,8 +1293,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 
   switch(layer->type) {
   case MS_LAYER_CIRCLE:
-    if(shape->numlines != 1) return(MS_SUCCESS); // invalid shape
-    if(shape->line[0].numpoints != 2) return(MS_SUCCESS); // invalid shape
+    if(shape->numlines != 1) return(MS_SUCCESS); /* invalid shape */
+    if(shape->line[0].numpoints != 2) return(MS_SUCCESS); /* invalid shape */
 
     center.x = (shape->line[0].point[0].x + shape->line[0].point[1].x)/2.0;
     center.y = (shape->line[0].point[0].y + shape->line[0].point[1].y)/2.0;
@@ -1310,18 +1313,18 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       r *= (msInchesPerUnit(layer->units,0)/msInchesPerUnit(map->units,0))/map->cellsize;      
     }
 
-    // shade symbol drawing will call outline function if color not set
+    /* shade symbol drawing will call outline function if color not set */
     if(style != -1)
       msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c].styles[style]), layer->scalefactor);
     else
       for(s=0; s<layer->class[c].numstyles; s++)
         msCircleDrawShadeSymbol(&map->symbolset, image, &center, r, &(layer->class[c].styles[s]), layer->scalefactor);
 
-    // TO DO: need to handle circle annotation
+    /* TO DO: need to handle circle annotation */
 
     break;
   case MS_LAYER_ANNOTATION:
-    if(!shape->text) return(MS_SUCCESS); // nothing to draw
+    if(!shape->text) return(MS_SUCCESS); /* nothing to draw */
 
 #ifdef USE_PROJ
     if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
@@ -1350,7 +1353,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         if( label.angle != 0 || layer->labelangleitemindex != -1 )
             label.angle -= map->gt.rotation_angle;
 
-        // Angle derived from line overrides even the rotation value.
+        /* Angle derived from line overrides even the rotation value. */
 	if(label.autoangle) label.angle = angle;
 
         if(layer->labelcache) {
@@ -1396,7 +1399,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
         }
       }
       break;
-    default: // points and anything with out a proper type
+    default: /* points and anything with out a proper type */
       for(j=0; j<shape->numlines;j++) {
 	for(i=0; i<shape->line[j].numpoints;i++) {
 
@@ -1434,7 +1437,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	}
       }
     }
-    break;  // end MS_LAYER_ANNOTATION
+    break;  /* end MS_LAYER_ANNOTATION */
 
   case MS_LAYER_POINT:
 
@@ -1451,7 +1454,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	point = &(shape->line[j].point[i]);
 
 	if(layer->transform) {
-	  if(!msPointInRect(point, &map->extent)) continue; // next point
+	  if(!msPointInRect(point, &map->extent)) continue; /* next point */
 	  point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
 	  point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
 	}
@@ -1477,7 +1480,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	}
       }
     }
-    break; // end MS_LAYER_POINT
+    break; /* end MS_LAYER_POINT */
 
   case MS_LAYER_LINE:
     if(shape->type != MS_SHAPE_POLYGON && shape->type != MS_SHAPE_LINE){

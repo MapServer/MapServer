@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.9  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -206,18 +209,18 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 		pInfo->dincrementlongitude	= pInfo->maxincrement;
 		pInfo->dincrementlatitude	= pInfo->maxincrement;
 	}
-//
-//  If using PROJ, project rect back into map system, and generate rect corner points in native system.
-//  These lines will be used when generating labels to get correct placement at arc/rect edge intersections.
-//
+/*
+ * If using PROJ, project rect back into map system, and generate rect corner points in native system.
+ * These lines will be used when generating labels to get correct placement at arc/rect edge intersections.
+ */
 	rectMapCoordinates				= layer->map->extent;
 	pInfo->pboundinglines			= (lineObj *)  malloc( sizeof( lineObj )  * 4 );
 	pInfo->pboundingpoints			= (pointObj *) malloc( sizeof( pointObj ) * 8 );
 	
 	{
-//
-//  top
-//
+/*
+ * top
+ */
 		pInfo->pboundinglines[0].numpoints		= 2;
 		pInfo->pboundinglines[0].point			= &pInfo->pboundingpoints[0];
 		pInfo->pboundinglines[0].point[0].x		= rectMapCoordinates.minx;
@@ -230,9 +233,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 		  && layer->projection.numargs > 0 )
 			msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[0] );
 #endif
-//
-//  bottom
-//
+/*
+ * bottom
+ */
 		pInfo->pboundinglines[1].numpoints		= 2;
 		pInfo->pboundinglines[1].point			= &pInfo->pboundingpoints[2];
 		pInfo->pboundinglines[1].point[0].x		= rectMapCoordinates.minx;
@@ -245,9 +248,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 		  && layer->projection.numargs > 0 )
 			msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[1] );
 #endif
-//
-//  left
-//
+/*
+ * left
+ */
 		pInfo->pboundinglines[2].numpoints		= 2;
 		pInfo->pboundinglines[2].point			= &pInfo->pboundingpoints[4];
 		pInfo->pboundinglines[2].point[0].x		= rectMapCoordinates.minx;
@@ -260,9 +263,9 @@ int msGraticuleLayerWhichShapes(layerObj *layer, rectObj rect)
 		  && layer->projection.numargs > 0 )
 			msProjectLine( &layer->map->projection, &layer->projection, &pInfo->pboundinglines[2] );
 #endif
-//
-//  right
-//
+/*
+ * right
+ */
 		pInfo->pboundinglines[3].numpoints		= 2;
 		pInfo->pboundinglines[3].point			= &pInfo->pboundingpoints[6];
 		pInfo->pboundinglines[3].point[0].x		= rectMapCoordinates.maxx;
@@ -299,9 +302,9 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 	shape->line						= (lineObj *) malloc( sizeof( lineObj ) );
 
 	shape->line->numpoints			= (int) pInfo->maxsubdivides;	
-//
-//  Subdivide and draw current arc, rendering the arc labels first
-//
+/*
+ * Subdivide and draw current arc, rendering the arc labels first
+ */
 	if( pInfo->bvertical )
 	{
 		int		iPointIndex;
@@ -312,7 +315,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 		switch( pInfo->ilabelstate )
 		{
 			case 0:
-				if( ! pInfo->blabelaxes )		//  Bottom
+				if( ! pInfo->blabelaxes )		/* Bottom */
 				{
 					pInfo->ilabelstate++;
 					shape->numlines				= 0;
@@ -336,7 +339,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				return MS_SUCCESS;
 
 			case 1:
-				if( ! pInfo->blabelaxes )		//  Top
+				if( ! pInfo->blabelaxes )		/* Top */
 				{
 					pInfo->ilabelstate++;
 					shape->numlines				= 0;
@@ -393,7 +396,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 		switch( pInfo->ilabelstate )
 		{
 			case 0:
-				if( ! pInfo->blabelaxes )			//  Left  side
+				if( ! pInfo->blabelaxes )			/* Left  side */
 				{
 					pInfo->ilabelstate++;
 					shape->numlines				= 0;
@@ -417,7 +420,7 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				return MS_SUCCESS;
 
 			case 1:
-				if( ! pInfo->blabelaxes )			//  Right side
+				if( ! pInfo->blabelaxes )			/* Right side */
 				{
 					pInfo->ilabelstate++;
 					shape->numlines				= 0;
@@ -463,9 +466,9 @@ int msGraticuleLayerNextShape(layerObj *layer, shapeObj *shape)
 				break;
 		}
 	}
-//
-//  Increment and move to next arc
-//
+/*
+ * Increment and move to next arc
+ */
 	pInfo->dwhichlatitude		   += pInfo->dincrementlatitude;
 
 	if( pInfo->dwhichlatitude > pInfo->dendlatitude )
@@ -670,26 +673,26 @@ static void _AdjustLabelPosition( layerObj *pLayer, shapeObj *pShape, msGraticul
 }
 
 /**********************************************************************************************************************
- **********************************************************************************************************************/
-//  DefineAxes - Copyright (c) 2000, Michael P.D. Bramley.
-//
-//  Permission is granted to use this code without restriction as long as
-//  this copyright notice appears in all source files.
-//
-//  Minor tweaks to incrment calculations - jnovak
-//
+ **********************************************************************************************************************
+ * DefineAxes - Copyright (c) 2000, Michael P.D. Bramley.
+ *
+ * Permission is granted to use this code without restriction as long as
+ * this copyright notice appears in all source files.
+ *
+ * Minor tweaks to incrment calculations - jnovak
+ */
 void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc )
 {
-	// define local variables...
+	/* define local variables... */
 
-	double Test_inc,              // candidate increment value
-		Test_min,              // minimum scale value
-		Test_max,              // maximum scale value
-		Range = *Max - *Min ;  // range of data
+	double Test_inc,              /* candidate increment value */
+		Test_min,              /* minimum scale value */
+		Test_max,              /* maximum scale value */
+		Range = *Max - *Min ;  /* range of data */
 
-	int i = 0 ;                   // counter
+	int i = 0 ;                   /* counter */
 
-	// don't create problems -- solve them
+	/* don't create problems -- solve them */
 
 	if( Range < 0 ) 
 	{
@@ -697,7 +700,7 @@ void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc )
 		return ;
 	}
 
-	// handle special case of repeated values
+	/* handle special case of repeated values */
 
 	else if( Range == 0) 
 	{        
@@ -707,18 +710,18 @@ void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc )
 		return ;
 	}
 
-	// compute candidate for increment
+	/* compute candidate for increment */
 
 	Test_inc = pow( 10.0, ceil( log10( Range/10 ) ) ) ;
 
-	// establish maximum scale value...
+	/* establish maximum scale value... */
 
 	Test_max = ( (long)(*Max / Test_inc)) * Test_inc ;
 
 	if( Test_max < *Max )
 		Test_max += Test_inc ;
 
-	// establish minimum scale value...
+	/* establish minimum scale value... */
 
 	Test_min = Test_max ;
 
@@ -729,15 +732,15 @@ void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc )
 	}
 	while( Test_min > *Min ) ;
 
-	// subtracting small values can screw up the scale limits,
-	// eg: if DefineAxis is called with (min,max)=(0.01, 0.1),
-	// then the calculated scale is 1.0408E17 TO 0.05 BY 0.01.
-	// the following if statment corrects for this...
+	/* subtracting small values can screw up the scale limits, */
+	/* eg: if DefineAxis is called with (min,max)=(0.01, 0.1), */
+	/* then the calculated scale is 1.0408E17 TO 0.05 BY 0.01. */
+	/* the following if statment corrects for this... */
 
-	//if( fabs(Test_min) < 1E-10 )
-	//   Test_min = 0 ;
+	/* if( fabs(Test_min) < 1E-10 ) */
+	/* Test_min = 0 ; */
 
-	// adjust for too few tick marks
+	/* adjust for too few tick marks */
 
 	if( iTickCountTarget <= 0 )
 		iTickCountTarget	= MAPGRATICULE_ARC_MINIMUM;
@@ -757,7 +760,7 @@ void DefineAxis( int iTickCountTarget, double *Min, double *Max, double *Inc )
 			Test_max -= Test_inc ;
 	}
 
-	// pass back axis definition to caller
+	/* pass back axis definition to caller */
 
 	*Min = Test_min ;
 	*Max = Test_max ;

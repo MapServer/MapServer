@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.160  2005/02/18 03:06:48  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.159  2005/01/24 15:46:20  assefa
  * Error : missing index in the source.
  *
@@ -199,22 +202,22 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 {
     char *schemalocation = NULL;
 
-    // Default to WMS 1.1.1 exceptions if version not set yet
+    /* Default to WMS 1.1.1 exceptions if version not set yet */
     if (nVersion <= 0)
         nVersion = OWS_1_1_1;
 
-    //get scheam location
+    /* get scheam location */
     schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
-  // Establish default exception format depending on VERSION
+  /* Establish default exception format depending on VERSION */
   if (wms_exception_format == NULL)
   {
       if (nVersion <= OWS_1_0_0)
-        wms_exception_format = "INIMAGE";  // WMS 1.0.0
+        wms_exception_format = "INIMAGE";  /* WMS 1.0.0 */
       else if (nVersion <= OWS_1_0_7)
-        wms_exception_format = "SE_XML";   // WMS 1.0.1 to 1.0.7
+        wms_exception_format = "SE_XML";   /* WMS 1.0.1 to 1.0.7 */
       else
-        wms_exception_format = "application/vnd.ogc.se_xml"; // WMS 1.1.0 and later
+        wms_exception_format = "application/vnd.ogc.se_xml"; /* WMS 1.1.0 and later */
   }
 
   if (strcasecmp(wms_exception_format, "INIMAGE") == 0 ||
@@ -233,19 +236,19 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     msWriteErrorImage(map, NULL, blank);
 
   }
-  else if (strcasecmp(wms_exception_format, "WMS_XML") == 0) // Only in V1.0.0
+  else if (strcasecmp(wms_exception_format, "WMS_XML") == 0) /* Only in V1.0.0 */
   {
     msIO_printf("Content-type: text/xml%c%c",10,10);
     msIO_printf("<WMTException version=\"1.0.0\">\n");
     msWriteErrorXML(stdout);
     msIO_printf("</WMTException>\n");
   }
-  else // XML error, the default: SE_XML (1.0.1 to 1.0.7)
-       // or application/vnd.ogc.se_xml (1.1.0 and later)
+  else /* XML error, the default: SE_XML (1.0.1 to 1.0.7) */
+       /* or application/vnd.ogc.se_xml (1.1.0 and later) */
   {
     if (nVersion <= OWS_1_0_7)
     {
-      // In V1.0.1 to 1.0.7, the MIME type was text/xml
+      /* In V1.0.1 to 1.0.7, the MIME type was text/xml */
       msIO_printf("Content-type: text/xml%c%c",10,10);
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -258,8 +261,8 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     }
     else if (nVersion <= OWS_1_1_0)
     {
-      // In V1.1.0 and later, we have OGC-specific MIME types
-      // we cannot return anything else than application/vnd.ogc.se_xml here.
+      /* In V1.1.0 and later, we have OGC-specific MIME types */
+      /* we cannot return anything else than application/vnd.ogc.se_xml here. */
       msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
@@ -272,7 +275,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 
       msIO_printf("<ServiceExceptionReport version=\"1.1.0\">\n");
     }
-    else //1.1.1
+    else /* 1.1.1 */
     {
         msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
@@ -297,7 +300,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
 
   }
 
-  return MS_FAILURE; // so that we can call 'return msWMSException();' anywhere
+  return MS_FAILURE; /* so that we can call 'return msWMSException();' anywhere */
 }
 
 int msValidateTimeValue(char *timestring, const char *timeextent)
@@ -307,21 +310,21 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
     struct tm tm, tmstart, tmend;
 
 
-    //we need to validate the time passsed in the request
-    //against the time extent defined
+    /* we need to validate the time passsed in the request */
+    /* against the time extent defined */
 
 
     if (!timestring || !timeextent)
       return MS_FALSE;
 
-    //parse time extent. Only supports one range (2004-09-21/2004-09-25)
+    /* parse time extent. Only supports one range (2004-09-21/2004-09-25) */
     atimeextent = split (timeextent, '/', &numtimeextent);
     if (atimeextent == NULL || numtimeextent != 2)
     {
         msFreeCharArray(atimeextent, numtimeextent);
         return MS_FALSE;
     }
-    //build time structure for the extents
+    /* build time structure for the extents */
     msTimeInit(&tmstart);
     msTimeInit(&tmend);
     if (msParseTime(atimeextent[0], &tmstart) != MS_TRUE ||
@@ -332,11 +335,11 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
     }
 
      msFreeCharArray(atimeextent, numtimeextent);
-    //parse the time string. We support descrete times (eg 2004-09-21),
-    //multiple times (2004-09-21, 2004-09-22, ...)
-    //and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29)
+    /* parse the time string. We support descrete times (eg 2004-09-21), */
+    /* multiple times (2004-09-21, 2004-09-22, ...) */
+    /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
     if (strstr(timestring, ",") == NULL &&
-        strstr(timestring, "/") == NULL) //discrete time
+        strstr(timestring, "/") == NULL) /* discrete time */
     {
         msTimeInit(&tm);
         if (msParseTime(timestring, &tm) == MS_TRUE)
@@ -352,7 +355,7 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
         if (numtimes >=1)
         {
             tokens = split(atimes[0],  '/', &ntmp);
-            if (ntmp == 2)//ranges
+            if (ntmp == 2)/* ranges */
             {
                  for (i=0; i<numtimes; i++)
                  {
@@ -383,7 +386,7 @@ int msValidateTimeValue(char *timestring, const char *timeextent)
                  msFreeCharArray(atimes, numtimes);
                  return MS_TRUE;
             }
-            else if (ntmp == 1) //multiple times
+            else if (ntmp == 1) /* multiple times */
             {
                 msFreeCharArray(tokens, ntmp);
                 for (i=0; i<numtimes; i++)
@@ -415,12 +418,12 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
 
     if (timepatternstring && timestring)
     {
-        //parse the time parameter to extract a distinct time.
-        //time value can be dicrete times (eg 2004-09-21),
-        //multiple times (2004-09-21, 2004-09-22, ...)
-        //and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29)
+        /* parse the time parameter to extract a distinct time. */
+        /* time value can be dicrete times (eg 2004-09-21), */
+        /* multiple times (2004-09-21, 2004-09-22, ...) */
+        /* and range(s) (2004-09-21/2004-09-25, 2004-09-27/2004-09-29) */
         if (strstr(timestring, ",") == NULL &&
-            strstr(timestring, "/") == NULL) //discrete time
+            strstr(timestring, "/") == NULL) /* discrete time */
         {
             time = strdup(timestring);
         }
@@ -430,11 +433,11 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
             if (numtimes >=1 && atimes)
             {
                 tokens = split(atimes[0],  '/', &ntmp);
-                if (ntmp == 2 && tokens) //range
+                if (ntmp == 2 && tokens) /* range */
                 {
                     time = strdup(tokens[0]);
                 }
-                else //multiple times
+                else /* multiple times */
                 {
                     time = strdup(atimes[0]);
                 }
@@ -442,7 +445,7 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
                 msFreeCharArray(atimes, numtimes);
             }
         }
-        //get the pattern to use
+        /* get the pattern to use */
         if (time)
         {
             tokens = split(timepatternstring, ',', &ntmp);
@@ -485,7 +488,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
             lp = &(map->layers[i]);
             if (lp->status != MS_ON && lp->status != MS_DEFAULT)
               continue;
-            //check if the layer is time aware
+            /* check if the layer is time aware */
             timeextent = msOWSLookupMetadata(&(lp->metadata), "MO",
                                              "timeextent");
             timefield =  msOWSLookupMetadata(&(lp->metadata), "MO",
@@ -494,9 +497,9 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                                              "timedefault");
             if (timeextent && timefield)
             {
-                //check to see if the time value is given. If not
-                //use default time. If default time is not available
-                //send an exception
+                /* check to see if the time value is given. If not */
+                /* use default time. If default time is not available */
+                /* send an exception */
                 if (time == NULL || strlen(time) <=0)
                 {
                     if (timedefault == NULL)
@@ -510,7 +513,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                         if (msValidateTimeValue((char *)timedefault, timeextent) == MS_FALSE)
                         {
                             msSetError(MS_WMSERR, "No Time value was given, and the default time value %s is invalid or outside the time extent defined %s", "msWMSApplyTime", timedefault, timeextent);
-                        //return MS_FALSE;
+                        /* return MS_FALSE; */
                             return msWMSException(map, version,
                                               "InvalidDimensionValue");
                         }
@@ -519,13 +522,13 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                 }
                 else
                 {
-                    //check if given time is in the range
+                    /* check if given time is in the range */
                     if (msValidateTimeValue(time, timeextent) == MS_FALSE)
                     {
                         if (timedefault == NULL)
                         {
                             msSetError(MS_WMSERR, "Time value(s) %s given is invalid or outside the time extent defined (%s).", "msWMSApplyTime", time, timeextent);
-                        //return MS_FALSE;
+                        /* return MS_FALSE; */
                             return msWMSException(map, version,
                                                   "InvalidDimensionValue");
                         }
@@ -534,7 +537,7 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                             if (msValidateTimeValue((char *)timedefault, timeextent) == MS_FALSE)
                             {
                                 msSetError(MS_WMSERR, "Time value(s) %s given is invalid or outside the time extent defined (%s), and default time set is invalid (%s)", "msWMSApplyTime", time, timeextent, timedefault);
-                        //return MS_FALSE;
+                        /* return MS_FALSE; */
                                 return msWMSException(map, version,
                                                       "InvalidDimensionValue");
                             }
@@ -545,16 +548,16 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
                     }
                     else
                     {
-                    //build the time string
+                    /* build the time string */
                         msLayerSetTimeFilter(lp, time, timefield);
                         timeextent= NULL;
                     }
                 }
             }
         }
-        //check to see if there is a list of possible patterns defined
-        //if it is the case, use it to set the time pattern to use
-        //for the request
+        /* check to see if there is a list of possible patterns defined */
+        /* if it is the case, use it to set the time pattern to use */
+        /* for the request */
 
         timpattern = msOWSLookupMetadata(&(map->web.metadata), "MO",
                                          "timeformat");
@@ -595,13 +598,13 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
 
-  // Some of the getMap parameters are actually required depending on the
-  // request, but for now we assume all are optional and the map file
-  // defaults will apply.
+  /* Some of the getMap parameters are actually required depending on the */
+  /* request, but for now we assume all are optional and the map file */
+  /* defaults will apply. */
 
   for(i=0; map && i<numentries; i++)
   {
-    // getMap parameters
+    /* getMap parameters */
     if (strcasecmp(names[i], "LAYERS") == 0)
     {
       int  j, k, iLayer;
@@ -619,8 +622,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       for(j=0; j<map->numlayers; j++)
       {
-        // Keep only layers with status=DEFAULT by default
-        // Layer with status DEFAULT is drawn first.
+        /* Keep only layers with status=DEFAULT by default */
+        /* Layer with status DEFAULT is drawn first. */
         if (map->layers[j].status != MS_DEFAULT)
            map->layers[j].status = MS_OFF;
         else
@@ -632,7 +635,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
           layerfound = 0;
           for (j=0; j<map->numlayers; j++)
           {
-              // Turn on selected layers only.
+              /* Turn on selected layers only. */
               if ((map->layers[j].name &&
                    strcasecmp(map->layers[j].name, layers[k]) == 0) ||
                   (map->name && strcasecmp(map->name, layers[k]) == 0) ||
@@ -649,7 +652,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       }
 
-      // set all layers with status off at end of array
+      /* set all layers with status off at end of array */
       for (j=0; j<map->numlayers; j++)
       {
          if (map->layers[j].status == MS_OFF)
@@ -663,17 +666,17 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
     }
     else if (strcasecmp(names[i], "SRS") == 0) {
-      // SRS is in format "EPSG:epsg_id" or "AUTO:proj_id,unit_id,lon0,lat0"
+      /* SRS is in format "EPSG:epsg_id" or "AUTO:proj_id,unit_id,lon0,lat0" */
       if (strncasecmp(values[i], "EPSG:", 5) == 0)
       {
-        // SRS=EPSG:xxxx
+        /* SRS=EPSG:xxxx */
 
           sprintf(srsbuffer, "init=epsg:%.20s", values[i]+5);
           sprintf(epsgbuf, "EPSG:%.20s",values[i]+5);
 
-        //we need to wait until all params are read before
-        //loding the projection into the map. This will help
-        //insure that the passes srs is valid for all layers.
+        /* we need to wait until all params are read before */
+        /* loding the projection into the map. This will help */
+        /* insure that the passes srs is valid for all layers. */
         /*
         if (msLoadProjectionString(&(map->projection), buffer) != 0)
           return msWMSException(map, nVersion, NULL);
@@ -686,7 +689,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       else if (strncasecmp(values[i], "AUTO:", 5) == 0)
       {
         sprintf(srsbuffer, "%s",  values[i]);
-        // SRS=AUTO:proj_id,unit_id,lon0,lat0
+        /* SRS=AUTO:proj_id,unit_id,lon0,lat0 */
         /*
         if (msLoadProjectionString(&(map->projection), values[i]) != 0)
           return msWMSException(map, nVersion, NULL);
@@ -720,7 +723,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       msFreeCharArray(tokens, n);
 
-      //validate bbox values
+      /* validate bbox values */
       if ( map->extent.minx >= map->extent.maxx ||
            map->extent.miny >=  map->extent.maxy)
       {
@@ -785,9 +788,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
 
 
-    //value of time can be empty. We should look for a default value
-    //see function msWMSApplyTime
-    else if (strcasecmp(names[i], "TIME") == 0)// &&  values[i])
+    /* value of time can be empty. We should look for a default value */
+    /* see function msWMSApplyTime */
+    else if (strcasecmp(names[i], "TIME") == 0)/* &&  values[i]) */
     {
         stime = values[i];
         timerequest = 1;
@@ -800,7 +803,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   {
       if (msWMSApplyTime(map, nVersion, stime) == MS_FAILURE)
       {
-          return MS_FAILURE;// msWMSException(map, nVersion, "InvalidTimeRequest");
+          return MS_FAILURE;/* msWMSException(map, nVersion, "InvalidTimeRequest"); */
       }
   } 
   /*
@@ -893,7 +896,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   {
       msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
 
-      // Restore valid default values in case errors INIMAGE are used
+      /* Restore valid default values in case errors INIMAGE are used */
       map->width = 400;
       map->height= 300;
       return msWMSException(map, nVersion, NULL);
@@ -910,8 +913,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       reqy = ((double)map->width) * dy / dx;
 
-      // Allow up to 1 pixel of error on the width/height ratios.
-      // If more than 1 pixel then enable non-square pixels
+      /* Allow up to 1 pixel of error on the width/height ratios. */
+      /* If more than 1 pixel then enable non-square pixels */
       if ( MS_ABS((reqy - (double)map->height)) > 1.0 )
       {
           if (map->debug)
@@ -959,9 +962,9 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
                   map->layers[i].status != MS_OFF &&
                   map->layers[i].transform == MS_TRUE)
               {
-                  // This layer is turned on and needs a projection
+                  /* This layer is turned on and needs a projection */
 
-                  // Fetch main map projection string only now that we need it
+                  /* Fetch main map projection string only now that we need it */
                   if (original_srs == NULL)
                       original_srs = msGetProjectionString(&(map->projection));
 
@@ -981,8 +984,8 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       msFreeProjection(&newProj);
   }
 
-  //apply the srs to the map file. This is only done after validating
-  //that the srs given as parameter is valid for all layers
+  /* apply the srs to the map file. This is only done after validating */
+  /* that the srs given as parameter is valid for all layers */
   if (srsbuffer && strlen(srsbuffer) > 1)
   {
       if (msLoadProjectionString(&(map->projection), srsbuffer) != 0)
@@ -1056,7 +1059,7 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
 
   msIO_printf("    <%s>\n", request);
 
-  // We expect to receive a NULL-terminated args list of formats
+  /* We expect to receive a NULL-terminated args list of formats */
   va_start(argp, formats);
   fmt = formats;
   while(fmt != NULL)
@@ -1082,7 +1085,7 @@ static void msWMSPrintRequestCap(int nVersion, const char *request,
 
   msIO_printf("      <DCPType>\n");
   msIO_printf("        <HTTP>\n");
-  // The URL should already be HTML encoded.
+  /* The URL should already be HTML encoded. */
   if (nVersion == OWS_1_0_0) {
     msIO_printf("          <Get onlineResource=\"%s\" />\n", script_url);
     msIO_printf("          <Post onlineResource=\"%s\" />\n", script_url);
@@ -1148,7 +1151,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    const char *pszLegendURL=NULL;
    char *pszMetadataName=NULL, *mimetype=NULL;
    
-   //if the layer status is set to MS_DEFAULT, output a warning
+   /* if the layer status is set to MS_DEFAULT, output a warning */
    if (lp->status == MS_DEFAULT)
      msIO_fprintf(stdout, "<!-- WARNING: This layer has its status set to DEFAULT and will always be displayed when doing a GetMap request even if it is not requested by the client. This is not in line with the expected behavior of a WMS server. Using status ON or OFF is recommended. -->\n");
  
@@ -1159,7 +1162,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    }
    else
    {
-       // 1.1.0 and later: opaque and cascaded are new.
+       /* 1.1.0 and later: opaque and cascaded are new. */
        int cascaded=0, opaque=0;
        if ((value = msOWSLookupMetadata(&(lp->metadata), "MO", "opaque")) != NULL)
            opaque = atoi(value);
@@ -1178,7 +1181,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_WARN,
                          "        <Name>%s</Name>\n", NULL);
 
-   // the majority of this section is dependent on appropriately named metadata in the LAYER object
+   /* the majority of this section is dependent on appropriately named metadata in the LAYER object */
    msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "title",
                             OWS_WARN, "        <Title>%s</Title>\n", lp->name);
 
@@ -1187,8 +1190,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
    if (nVersion == OWS_1_0_0)
    {
-       // <Keywords> in V 1.0.0
-       // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
+       /* <Keywords> in V 1.0.0 */
+       /* The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces */
        msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), "MO",
                                     "keywordlist",
                                     "        <Keywords>",
@@ -1197,7 +1200,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    }
    else
    {
-       // <KeywordList><Keyword> ... in V1.0.6+
+       /* <KeywordList><Keyword> ... in V1.0.6+ */
        msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), "MO",
                                     "keywordlist",
                                     "        <KeywordList>\n",
@@ -1231,7 +1234,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
            }
        }
        else
-         // If map has no proj then every layer MUST have one or produce a warning
+         /* If map has no proj then every layer MUST have one or produce a warning */
          msOWSPrintEncodeParam(stdout, "(at least one of) MAP.PROJECTION, "
                                "LAYER.PROJECTION or wms_srs metadata",
                                msOWSGetEPSGProj(&(lp->projection),
@@ -1240,7 +1243,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    }
    else
    {
-       //starting 1.1.1 SRS are given in individual tags
+       /* starting 1.1.1 SRS are given in individual tags */
        if (nVersion > OWS_1_1_0)
        {
            projstring = msOWSGetEPSGProj(&(lp->projection), &(lp->metadata),
@@ -1262,7 +1265,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
            }
        }
        else
-       // No warning required in this case since there's at least a map proj.
+       /* No warning required in this case since there's at least a map proj. */
          msOWSPrintEncodeParam(stdout,
                                " LAYER.PROJECTION (or wms_srs metadata)",
                                msOWSGetEPSGProj(&(lp->projection),
@@ -1270,7 +1273,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                                OWS_NOERR, "        <SRS>%s</SRS>\n", NULL);
    }
 
-   // If layer has no proj set then use map->proj for bounding box.
+   /* If layer has no proj set then use map->proj for bounding box. */
    if (msOWSGetLayerExtent(map, lp, "MO", &ext) == MS_SUCCESS)
    {
        if(lp->projection.numargs > 0)
@@ -1289,7 +1292,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
        }
    }
 
-   //time support
+   /* time support */
    pszWmsTimeExtent = msOWSLookupMetadata(&(lp->metadata), "MO", "timeextent");
    if (pszWmsTimeExtent)
    {
@@ -1328,12 +1331,12 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                          MS_FALSE, MS_FALSE, MS_FALSE, MS_TRUE, MS_TRUE, 
                          NULL, NULL, NULL, NULL, NULL, "        ");
 
-   // The LegendURL reside in a style. The Web Map Context spec already 
-   // included the support on this in mapserver. However, it is not in the 
-   // wms_legendurl_... metadatas it's in the styles metadata,
-   // In wms_style_<style_name>_lengendurl_... metadata. So we have to detect
-   // the current style before reading it. Also in the Style block, we need
-   // a Title and a name. We can get those in wms_style.
+   /* The LegendURL reside in a style. The Web Map Context spec already  */
+   /* included the support on this in mapserver. However, it is not in the  */
+   /* wms_legendurl_... metadatas it's in the styles metadata, */
+   /* In wms_style_<style_name>_lengendurl_... metadata. So we have to detect */
+   /* the current style before reading it. Also in the Style block, we need */
+   /* a Title and a name. We can get those in wms_style. */
    pszStyle = msOWSLookupMetadata(&(lp->metadata), "MO", "style");
    if (pszStyle)
    {
@@ -1347,20 +1350,20 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
        
    if(nVersion <= OWS_1_0_0 && pszLegendURL)
    {
-       // First, print the style block
+       /* First, print the style block */
        msIO_fprintf(stdout, "        <Style>\n");
        msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
        msIO_fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
 
           
-       // Inside, print the legend url block
+       /* Inside, print the legend url block */
        msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", 
                                 pszMetadataName,
                                 OWS_NOERR, 
                                 "          <StyleURL>%s</StyleURL>\n", 
                                 NULL);
 
-       // close the style block
+       /* close the style block */
        msIO_fprintf(stdout, "        </Style>\n");
 
    }
@@ -1368,13 +1371,13 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
    {
        if (pszLegendURL)
        {
-           // First, print the style block
+           /* First, print the style block */
            msIO_fprintf(stdout, "        <Style>\n");
            msIO_fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
            msIO_fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
 
            
-           // Inside, print the legend url block
+           /* Inside, print the legend url block */
            sprintf(pszMetadataName, "style_%s_legendurl", pszStyle);
            msOWSPrintURLType(stdout, &(lp->metadata), "MO",pszMetadataName,
                              OWS_NOERR, NULL, "LegendURL", NULL, 
@@ -1415,12 +1418,12 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                        if (map->legend.keysizex > 0)
                          sprintf(width, "%d", map->legend.keysizex);
                        else
-                         sprintf(width, "%d", 20);//default;
+                         sprintf(width, "%d", 20);/* default; */
 
                        if (map->legend.keysizey > 0)
                           sprintf(height, "%d", map->legend.keysizey);
                        else
-                         sprintf(height, "%d", 20);//default;
+                         sprintf(height, "%d", 20);/* default; */
                    
                        legendurl = (char*)malloc(strlen(script_url_encoded)+200);
 
@@ -1496,8 +1499,8 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
 
   for (i = 0; i < map->numlayers; i++)
   {
-    nestedGroups[i] = NULL; //default
-    numNestedGroups[i] = 0; //default
+    nestedGroups[i] = NULL; /* default */
+    numNestedGroups[i] = 0; /* default */
     
     groups = msOWSLookupMetadata(&(map->layers[i].metadata), "MO", "layer_group");
     if ((groups != NULL) && (strlen(groups) != 0))
@@ -1507,7 +1510,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
         errorMsg = "It is not allowed to set both the GROUP and WMS_LAYER_GROUP for a layer";
         msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
         msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
-        //cannot return exception at this point because we are already writing to stdout
+        /* cannot return exception at this point because we are already writing to stdout */
       }
       else
       {
@@ -1516,11 +1519,11 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
           errorMsg = "The WMS_LAYER_GROUP metadata does not start with a '/'";
           msSetError(MS_WMSERR, errorMsg, "msWMSPrepareNestedGroups()", NULL);
           msIO_fprintf(stdout, "<!-- ERROR: %s -->\n", errorMsg);
-          //cannot return exception at this point because we are already writing to stdout
+          /* cannot return exception at this point because we are already writing to stdout */
         }
         else
         {
-          //split into subgroups. Start at adres + 1 because the first '/' would cause an extra emtpy group
+          /* split into subgroups. Start at adres + 1 because the first '/' would cause an extra emtpy group */
           nestedGroups[i] = split(groups + 1, '/', &numNestedGroups[i]); 
         }
       }
@@ -1538,12 +1541,12 @@ int msWMSIsSubGroup(char** currentGroups, int currentLevel, char** otherGroups, 
    {
       return MS_FALSE;
    }
-   //compare all groups below the current level
+   /* compare all groups below the current level */
    for (i = 0; i <= currentLevel; i++)
    {
       if (strncmp(currentGroups[i], otherGroups[i], strlen(currentGroups[i])) != 0)
       {
-         return MS_FALSE; // if one of these is not equal it is not a sub group
+         return MS_FALSE; /* if one of these is not equal it is not a sub group */
       }
    }
    return MS_TRUE;
@@ -1570,19 +1573,19 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
 {
    int j;
 
-   if (numNestedGroups[index] <= level) //no more subgroups
+   if (numNestedGroups[index] <= level) /* no more subgroups */
    {
-      //we are at the deepest level of the group branchings, so add layer now.
+      /* we are at the deepest level of the group branchings, so add layer now. */
       msDumpLayer(map, &map->layers[index], nVersion, script_url_encoded, "");
-      pabLayerProcessed[index] = 1; //done
+      pabLayerProcessed[index] = 1; /* done */
    }
-   else //not yet there, we have to deal with this group and possible subgroups and layers.
+   else /* not yet there, we have to deal with this group and possible subgroups and layers. */
    {
-      // Beginning of a new group... enclose the group in a layer block
+      /* Beginning of a new group... enclose the group in a layer block */
       msIO_printf("    <Layer>\n");
       msIO_printf("    <Title>%s</Title>\n", nestedGroups[index][level]);      
 
-      //Look for one group deeper in the current layer
+      /* Look for one group deeper in the current layer */
       if (!pabLayerProcessed[index])
       {
          msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed,
@@ -1590,7 +1593,7 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
                                 numNestedGroups, script_url_encoded);
       }
 
-      //look for subgroups in other layers.
+      /* look for subgroups in other layers. */
       for (j = index + 1; j < map->numlayers; j++) 
       {
          if (msWMSIsSubGroup(nestedGroups[index], level, nestedGroups[j], numNestedGroups[j]))
@@ -1604,16 +1607,16 @@ void msWMSPrintNestedGroups(mapObj* map, int nVersion, char* pabLayerProcessed,
          }
          else
          {
-            //TODO: if we would sort all layers on "WMS_LAYER_GROUP" beforehand
-            //we could break out of this loop at this point, which would increase
-            //performance. 
+            /* TODO: if we would sort all layers on "WMS_LAYER_GROUP" beforehand */
+            /* we could break out of this loop at this point, which would increase */
+            /* performance.  */
          }
       }
-      // Close group layer block
+      /* Close group layer block */
       msIO_printf("    </Layer>\n");
    }
    
-} // msWMSPrintNestedGroups
+} /* msWMSPrintNestedGroups */
 
 /*
 ** msWMSGetCapabilities()
@@ -1630,9 +1633,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
    schemalocation = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
 
   if (nVersion < 0)
-      nVersion = OWS_1_1_1;     // Default to 1.1.1
+      nVersion = OWS_1_1_1;     /* Default to 1.1.1 */
 
-  // Decide which version we're going to return.
+  /* Decide which version we're going to return. */
   if (nVersion < OWS_1_0_7) {
     nVersion = OWS_1_0_0;
     dtd_url = strdup(schemalocation);
@@ -1655,10 +1658,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
   }
 
-  // We need this server's onlineresource.
-  // Default to use the value of the "onlineresource" metadata, and if not
-  // set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?"
-  // the returned string should be freed once we're done with it.
+  /* We need this server's onlineresource. */
+  /* Default to use the value of the "onlineresource" metadata, and if not */
+  /* set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?" */
+  /* the returned string should be freed once we're done with it. */
   if ((script_url=msOWSGetOnlineResource(map, "MO", "onlineresource", req)) == NULL ||
       (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
   {
@@ -1666,9 +1669,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   }
 
   if (nVersion <= OWS_1_0_7)
-      msIO_printf("Content-type: text/xml%c%c",10,10);  // 1.0.0 to 1.0.7
+      msIO_printf("Content-type: text/xml%c%c",10,10);  /* 1.0.0 to 1.0.7 */
   else
-      msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.1.0 and later
+      msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  /* 1.1.0 and later */
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                            "MO", "encoding", OWS_NOERR,
@@ -1677,7 +1680,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   msIO_printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
   msIO_printf(" [\n");
 
-  // some mapserver specific declarations will go here
+  /* some mapserver specific declarations will go here */
   msIO_printf(" <!ELEMENT VendorSpecificCapabilities EMPTY>\n");
 
   msIO_printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
@@ -1685,19 +1688,19 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   msIO_printf("<WMT_MS_Capabilities version=\"%s\">\n",
          msOWSGetVersionString(nVersion, szVersionBuf));
 
-  // Report MapServer Version Information
+  /* Report MapServer Version Information */
   msIO_printf("\n<!-- %s -->\n\n", msGetVersion());
 
-  // WMS definition
+  /* WMS definition */
   msIO_printf("<Service>\n");
 
-  // Service name is defined by the spec and changed at v1.0.0
+  /* Service name is defined by the spec and changed at v1.0.0 */
   if (nVersion <= OWS_1_0_7)
-      msIO_printf("  <Name>GetMap</Name>\n");  // v 1.0.0 to 1.0.7
+      msIO_printf("  <Name>GetMap</Name>\n");  /* v 1.0.0 to 1.0.7 */
   else
-      msIO_printf("  <Name>OGC:WMS</Name>\n"); // v 1.1.0+
+      msIO_printf("  <Name>OGC:WMS</Name>\n"); /* v 1.1.0+ */
 
-  // the majority of this section is dependent on appropriately named metadata in the WEB object
+  /* the majority of this section is dependent on appropriately named metadata in the WEB object */
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title",
                            OWS_WARN, "  <Title>%s</Title>\n", map->name);
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "abstract",
@@ -1705,8 +1708,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
   if (nVersion == OWS_1_0_0)
   {
-      // <Keywords> in V 1.0.0
-      // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
+      /* <Keywords> in V 1.0.0 */
+      /* The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces */
       msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata),
                                    "MO", "keywordlist",
                                    "        <Keywords>",
@@ -1715,7 +1718,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   }
   else
   {
-      // <KeywordList><Keyword> ... in V1.0.6+
+      /* <KeywordList><Keyword> ... in V1.0.6+ */
       msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata),
                                    "MO", "keywordlist",
                                    "        <KeywordList>\n",
@@ -1723,9 +1726,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                    "          <Keyword>%s</Keyword>\n", NULL);
   }
 
-  // Service/onlineresource
-  // Defaults to same as request onlineresource if wms_service_onlineresource 
-  // is not set.
+  /* Service/onlineresource */
+  /* Defaults to same as request onlineresource if wms_service_onlineresource  */
+  /* is not set. */
   if (nVersion== OWS_1_0_0)
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                              "MO", "service_onlineresource", OWS_NOERR,
@@ -1734,12 +1737,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   else
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
                              "MO", "service_onlineresource", OWS_NOERR,
-                             "  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", 
+                             "  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n",
                              script_url_encoded);
 
-  // contact information is a required element in 1.0.7 but the
-  // sub-elements such as ContactPersonPrimary, etc. are not!
-  // In 1.1.0, ContactInformation becomes optional.
+  /* contact information is a required element in 1.0.7 but the */
+  /* sub-elements such as ContactPersonPrimary, etc. are not! */
+  /* In 1.1.0, ContactInformation becomes optional. */
   msOWSPrintContactInfo(stdout, "  ", nVersion, &(map->web.metadata), "MO");
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "fees",
@@ -1751,13 +1754,13 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 
   msIO_printf("</Service>\n\n");
 
-  // WMS capabilities definitions
+  /* WMS capabilities definitions */
   msIO_printf("<Capability>\n");
   msIO_printf("  <Request>\n");
 
   if (nVersion <= OWS_1_0_7)
   {
-    // WMS 1.0.0 to 1.0.7 - We don't try to use outputformats list here for now
+    /* WMS 1.0.0 to 1.0.7 - We don't try to use outputformats list here for now */
     msWMSPrintRequestCap(nVersion, "Map", script_url_encoded, ""
 #ifdef USE_GD_GIF
                       "<GIF />"
@@ -1778,8 +1781,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   else
   {
     char *mime_list[20];
-    // WMS 1.1.0 and later
-    // Note changes to the request names, their ordering, and to the formats
+    /* WMS 1.1.0 and later */
+    /* Note changes to the request names, their ordering, and to the formats */
 
     msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
                     "application/vnd.ogc.wms_xml",
@@ -1830,7 +1833,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
       msIO_printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
   else
   {
-      // 1.1.0 and later
+      /* 1.1.0 and later */
       msIO_printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
       msIO_printf("    <Format>application/vnd.ogc.se_inimage</Format>\n");
       msIO_printf("    <Format>application/vnd.ogc.se_blank</Format>\n");
@@ -1838,15 +1841,15 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   msIO_printf("  </Exception>\n");
 
 
-  msIO_printf("  <VendorSpecificCapabilities />\n"); // nothing yet
+  msIO_printf("  <VendorSpecificCapabilities />\n"); /* nothing yet */
 
-  //SLD support
+  /* SLD support */
   msIO_printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
 
-  // Top-level layer with map extents and SRS, encloses all map layers
+  /* Top-level layer with map extents and SRS, encloses all map layers */
   msIO_printf("  <Layer>\n");
 
-  // Layer Name is optional but title is mandatory.
+  /* Layer Name is optional but title is mandatory. */
   if (map->name && strlen(map->name) > 0 &&
       (msIsXMLTagValid(map->name) == MS_FALSE || isdigit(map->name[0])))
     msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
@@ -1857,9 +1860,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title",
                            OWS_WARN, "    <Title>%s</Title>\n", map->name);
 
-  // According to normative comments in the 1.0.7 DTD, the root layer's SRS tag
-  // is REQUIRED.  It also suggests that we use an empty SRS element if there
-  // is no common SRS.
+  /* According to normative comments in the 1.0.7 DTD, the root layer's SRS tag */
+  /* is REQUIRED.  It also suggests that we use an empty SRS element if there */
+  /* is no common SRS. */
   msOWSPrintEncodeParam(stdout, "MAP.PROJECTION (or wms_srs metadata)",
              msOWSGetEPSGProj(&(map->projection), &(map->web.metadata),
                               "MO", MS_FALSE),
@@ -1873,10 +1876,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                       map->resolution);
 
 
-  //
-  // Dump list of layers organized by groups.  Layers with no group are listed
-  // individually, at the same level as the groups in the layer hierarchy
-  //
+  /*  */
+  /* Dump list of layers organized by groups.  Layers with no group are listed */
+  /* individually, at the same level as the groups in the layer hierarchy */
+  /*  */
   if (map->numlayers)
   {
      int i, j;
@@ -1884,12 +1887,12 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
      char ***nestedGroups = NULL; 
      int *numNestedGroups = NULL; 
 
-     // We'll use this array of booleans to track which layer/group have been
-     // processed already
+     /* We'll use this array of booleans to track which layer/group have been */
+     /* processed already */
      pabLayerProcessed = (char *)calloc(map->numlayers, sizeof(char*));
-     // This array holds the arrays of groups that have been set through the WMS_LAYER_GROUP metadata
+     /* This array holds the arrays of groups that have been set through the WMS_LAYER_GROUP metadata */
      nestedGroups = (char***)calloc(map->numlayers, sizeof(char**));
-     // This array holds the number of groups set in WMS_LAYER_GROUP for each layer
+     /* This array holds the number of groups set in WMS_LAYER_GROUP for each layer */
      numNestedGroups = (int*)calloc(map->numlayers, sizeof(int));
 
      msWMSPrepareNestedGroups(map, nVersion, nestedGroups, numNestedGroups);
@@ -1900,28 +1903,28 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
          lp = &(map->layers[i]);
 
          if (pabLayerProcessed[i])
-             continue;  // Layer has already been handled
+             continue;  /* Layer has already been handled */
 
 
          if (numNestedGroups[i] > 0) 
          {
-            // Has nested groups. 
+            /* Has nested groups.  */
              msWMSPrintNestedGroups(map, nVersion, pabLayerProcessed, i, 0, 
                                     nestedGroups, numNestedGroups, 
                                     script_url_encoded);
          }
          else if (lp->group == NULL || strlen(lp->group) == 0)
          {
-             // This layer is not part of a group... dump it directly
+             /* This layer is not part of a group... dump it directly */
              msDumpLayer(map, lp, nVersion, script_url_encoded, "");
              pabLayerProcessed[i] = 1;
          }
          else
          {
-             // Beginning of a new group... enclose the group in a layer block
+             /* Beginning of a new group... enclose the group in a layer block */
              msIO_printf("    <Layer>\n");
 
-             // Layer Name is optional but title is mandatory.
+             /* Layer Name is optional but title is mandatory. */
              if (lp->group &&  strlen(lp->group) > 0 &&
                  (msIsXMLTagValid(lp->group) == MS_FALSE || isdigit(lp->group[0])))
                msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
@@ -1936,7 +1939,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                      "MO", "GROUP_ABSTRACT", OWS_NOERR,
                                      "      <Abstract>%s</Abstract>\n", lp->group);
 
-             // Dump all layers for this group
+             /* Dump all layers for this group */
              for(j=i; j<map->numlayers; j++)
              {
                  if (!pabLayerProcessed[j] &&
@@ -1948,14 +1951,14 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  }
              }
 
-             // Close group layer block
+             /* Close group layer block */
              msIO_printf("    </Layer>\n");
          }
      }
 
      free(pabLayerProcessed);
 
-     //free the stuff used for nested layers
+     /* free the stuff used for nested layers */
      for (i = 0; i < map->numlayers; i++)
      {
        if (numNestedGroups[i] > 0)
@@ -2054,7 +2057,7 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
       {
          char *imgext;
 
-         // Note gsub() works on the string itself, so we need to make a copy
+         /* Note gsub() works on the string itself, so we need to make a copy */
          imgext = strdup(values[i]);
          imgext = gsub(imgext, ",", " ");
 
@@ -2079,17 +2082,17 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   int i = 0;
   int sldrequested = MS_FALSE,  sldspatialfilter = MS_FALSE;
 
-  // __TODO__ msDrawMap() will try to adjust the extent of the map
-  // to match the width/height image ratio.
-  // The spec states that this should not happen so that we can deliver
-  // maps to devices with non-square pixels.
+  /* __TODO__ msDrawMap() will try to adjust the extent of the map */
+  /* to match the width/height image ratio. */
+  /* The spec states that this should not happen so that we can deliver */
+  /* maps to devices with non-square pixels. */
 
 
-//      If there was an SLD in the request, we need to treat it
-//      diffrently : some SLD may contain spatial filters requiring
-//      to do a query. While parsing the SLD and applying it to the
-//      layer, we added a temporary metadata on the layer
-//      (tmp_wms_sld_query) for layers with a spatial filter.
+/* If there was an SLD in the request, we need to treat it */
+/* diffrently : some SLD may contain spatial filters requiring */
+/* to do a query. While parsing the SLD and applying it to the */
+/* layer, we added a temporary metadata on the layer */
+/* (tmp_wms_sld_query) for layers with a spatial filter. */
 
   for (i=0; i<numentries; i++)
   {
@@ -2114,7 +2117,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
 
   if (sldrequested && sldspatialfilter)
   {
-      //set the quermap style so that only selected features will be retruned
+      /* set the quermap style so that only selected features will be retruned */
       map->querymap.status = MS_ON;
       map->querymap.style = MS_SELECTED;
 
@@ -2124,7 +2127,7 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
       msCalculateScale(map->extent, map->units, map->width,
                        map->height, map->resolution, &map->scale);
-      // compute layer scale factors now
+      /* compute layer scale factors now */
       for(i=0;i<map->numlayers; i++) {
           if(map->layers[i].sizeunits != MS_PIXELS)
             map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize;
@@ -2143,8 +2146,8 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
                map->layers[i].type == MS_LAYER_TILEINDEX))
                
           {
-              //make sure that there is a resultcache. If not just ignore
-              //the layer
+              /* make sure that there is a resultcache. If not just ignore */
+              /* the layer */
               if (map->layers[i].resultcache)
                 msDrawQueryLayer(map, &map->layers[i], img);
           }
@@ -2234,7 +2237,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       char **layers;
       int numlayers, j, k;
 
-      query_layer = 1; //flag set if QUERY_LAYERS is the request
+      query_layer = 1; /* flag set if QUERY_LAYERS is the request */
 
       layers = split(values[i], ',', &numlayers);
       if(layers==NULL || numlayers < 1 || strlen(trimLeft(values[i])) < 1) {
@@ -2243,7 +2246,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       }
 
       for(j=0; j<map->numlayers; j++) {
-        // Force all layers OFF by default
+        /* Force all layers OFF by default */
 	map->layers[j].status = MS_OFF;
 
         for(k=0; k<numlayers; k++) {
@@ -2268,10 +2271,10 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
       point.y = atof(values[i]);
     else if (strcasecmp(names[i], "RADIUS") == 0)
     {
-        // RADIUS in pixels.
-        // This is not part of the spec, but some servers such as cubeserv
-        // support it as a vendor-specific feature.
-        // It's easy for MapServer to handle this so let's do it!
+        /* RADIUS in pixels. */
+        /* This is not part of the spec, but some servers such as cubeserv */
+        /* support it as a vendor-specific feature. */
+        /* It's easy for MapServer to handle this so let's do it! */
         int j;
         for(j=0; j<map->numlayers; j++)
         {
@@ -2313,8 +2316,8 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     return msWMSException(map, nVersion, NULL);
   }
 
-  // Perform the actual query
-  cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); // note: don't adjust extent, WMS assumes incoming extent is correct
+  /* Perform the actual query */
+  cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); /* note: don't adjust extent, WMS assumes incoming extent is correct */
   celly = MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
   point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
   point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
@@ -2322,11 +2325,11 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0) != MS_SUCCESS)
     if(ms_error->code != MS_NOTFOUND) return msWMSException(map, nVersion, NULL);
 
-  // Generate response
+  /* Generate response */
   if (strcasecmp(info_format, "MIME") == 0 ||
       strcasecmp(info_format, "text/plain") == 0) {
 
-    // MIME response... we're free to use any valid MIME type
+    /* MIME response... we're free to use any valid MIME type */
     int numresults = 0;
 
     msIO_printf("Content-type: text/plain%c%c", 10,10);
@@ -2336,7 +2339,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
     if (numresults == 0) msIO_printf("\n  Search returned no results.\n");
 
-  } else if (strncasecmp(info_format, "GML", 3) == 0 ||  // accept GML.1 or GML
+  } else if (strncasecmp(info_format, "GML", 3) == 0 ||  /* accept GML.1 or GML */
              strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
 
     if (nVersion <= OWS_1_0_7)
@@ -2344,7 +2347,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
     else
         msIO_printf("Content-type: application/vnd.ogc.gml%c%c", 10,10);
 
-    msGMLWriteQuery(map, NULL, "GMO"); // default is stdout
+    msGMLWriteQuery(map, NULL, "GMO"); /* default is stdout */
 
   } else
   if (pszMimeType && (strcmp(pszMimeType, info_format) == 0))
@@ -2353,14 +2356,14 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
 
      msObj = msAllocMapServObj();
 
-     // Translate some vars from WMS to mapserv
+     /* Translate some vars from WMS to mapserv */
      msTranslateWMS2Mapserv(names, values, &numentries);
 
      msObj->Map = map;
      msObj->request->ParamNames = names;
      msObj->request->ParamValues = values;
      msObj->Mode = QUERY;
-     sprintf(msObj->Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
+     sprintf(msObj->Id, "%ld%d",(long)time(NULL),(int)getpid()); /* asign now so it can be overridden */
      msObj->request->NumParams = numentries;
      msObj->MapPnt.x = point.x;
      msObj->MapPnt.y = point.y;
@@ -2368,8 +2371,8 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
      if ((status = msReturnTemplateQuery(msObj, (char*)pszMimeType,NULL)) != MS_SUCCESS)
          return msWMSException(map, nVersion, NULL);
 
-     // We don't want to free the map, and param names/values since they
-     // belong to the caller, set them to NULL before freeing the mapservObj
+     /* We don't want to free the map, and param names/values since they */
+     /* belong to the caller, set them to NULL before freeing the mapservObj */
      msObj->Map = NULL;
      msObj->request->ParamNames = NULL;
      msObj->request->ParamValues = NULL;
@@ -2419,7 +2422,7 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
 
    msIO_printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
 
-   //check if map-level metadata wfs(wcs)_onlineresource is available
+   /* check if map-level metadata wfs(wcs)_onlineresource is available */
    pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata), "FO", "onlineresource");
    if (pszOnlineResMapWFS && strlen(pszOnlineResMapWFS) == 0)
        pszOnlineResMapWFS = NULL;
@@ -2565,8 +2568,8 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          return msWMSException(map, nVersion, "InvalidFormat");
      }
 
-     //check if layer name is valid. We only test the layer name and not
-     //the group name.
+     /* check if layer name is valid. We only test the layer name and not */
+     /* the group name. */
      for (i=0; i<map->numlayers; i++)
      {
          if (map->layers[i].name &&
@@ -2584,7 +2587,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          return msWMSException(map, nVersion, "LayerNotDefined");
      }
 
-     //validate format
+     /* validate format */
      psFormat = msSelectOutputFormat( map, pszFormat);
      if( psFormat == NULL || 
          psFormat->renderer != MS_RENDER_WITH_GD)
@@ -2600,7 +2603,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
 
      if ( psRule == NULL )
      {
-         // turn off all other layers
+         /* turn off all other layers */
          for (i=0; i<map->numlayers; i++)
          {
              if (map->layers[i].name &&
@@ -2610,7 +2613,7 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
              }
          }
 
-         // if SCALE was provided in request, calculate an extent and use a default width and height
+         /* if SCALE was provided in request, calculate an extent and use a default width and height */
          if ( psScale != NULL )
          {
              double center_y, scale, cellsize;
@@ -2631,14 +2634,14 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          }
          else
          {
-             // Scale-independent legend
+             /* Scale-independent legend */
              img = msDrawLegend(map, MS_TRUE);
          }
      }
      else
      {
-         // RULE was specified. Get the class corresponding to the RULE
-         //(RULE = class->name)
+         /* RULE was specified. Get the class corresponding to the RULE */
+         /* (RULE = class->name) */
          
          for (i=0; i<map->layers[iLayerIndex].numclasses; i++)
          {
@@ -2650,13 +2653,13 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
          }
          if (i < map->layers[iLayerIndex].numclasses)
          {
-         //set the map legend parameters
+         /* set the map legend parameters */
              if (nWidth < 0)
              {
                  if (map->legend.keysizex > 0)
                    nWidth = map->legend.keysizex;
                  else
-                   nWidth = 20; //default values : this in not defined in the specs
+                   nWidth = 20; /* default values : this in not defined in the specs */
              }
              if (nHeight < 0)
              {
@@ -2709,7 +2712,7 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
 
     for(i=0; map && i<numentries; i++)
     {
-        // getMap parameters
+        /* getMap parameters */
         if (strcasecmp(names[i], "LAYERS") == 0)
         {
             layers = split(values[i], ',', &numlayers);
@@ -2739,7 +2742,7 @@ int msWMSGetStyles(mapObj *map, int nVersion, char **names,
 
     }
 
-    //validate all layers given. If an invalid layer is sent, return an exception.
+    /* validate all layers given. If an invalid layer is sent, return an exception. */
     if (validlayer == 0)
     {
         msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
@@ -2779,19 +2782,19 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   /*
   ** Process Params common to all requests
   */
-  // VERSION (WMTVER in 1.0.0) and REQUEST must be present in a valid request
+  /* VERSION (WMTVER in 1.0.0) and REQUEST must be present in a valid request */
   for(i=0; i<req->NumParams; i++) {
       if(strcasecmp(req->ParamNames[i], "VERSION") == 0)
       {
         nVersion = msOWSParseVersionString(req->ParamValues[i]);
         if (nVersion == -1)
-            return msWMSException(map, OWS_1_1_1, NULL); // Invalid format
+            return msWMSException(map, OWS_1_1_1, NULL); /* Invalid format */
       }
       else if (strcasecmp(req->ParamNames[i], "WMTVER") == 0 && nVersion == -1)
       {
         nVersion = msOWSParseVersionString(req->ParamValues[i]);
         if (nVersion == -1)
-            return msWMSException(map, OWS_1_1_1, NULL); // Invalid format
+            return msWMSException(map, OWS_1_1_1, NULL); /* Invalid format */
       }
       else if (strcasecmp(req->ParamNames[i], "REQUEST") == 0)
         request = req->ParamValues[i];
@@ -2815,7 +2818,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
                   strcasecmp(request, "GetCapabilities") == 0) )
   {
       if (nVersion == -1)
-          nVersion = OWS_1_1_1;// VERSION is optional with getCapabilities only
+          nVersion = OWS_1_1_1;/* VERSION is optional with getCapabilities only */
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
           return msWMSException(map, nVersion, NULL);
       return msWMSGetCapabilities(map, nVersion, req);
@@ -2834,13 +2837,13 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
 
       if (nVersion != -1)
       {
-          // VERSION, if specified, is Map Context version, not WMS version
-          // Pass it via wms_context_version metadata
+          /* VERSION, if specified, is Map Context version, not WMS version */
+          /* Pass it via wms_context_version metadata */
           char szVersion[OWS_VERSION_MAXLEN];
           msInsertHashTable(&(map->web.metadata), "wms_context_version",
                             msOWSGetVersionString(nVersion, szVersion));
       }
-      // Now set version to 1.1.1 for error handling purposes
+      /* Now set version to 1.1.1 for error handling purposes */
       nVersion = OWS_1_1_1;
 
       if (getcontext_enabled==NULL || atoi(getcontext_enabled) == 0)
@@ -2855,13 +2858,13 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
       msIO_printf("Content-type: text/xml\n\n");
       if ( msWriteMapContext(map, stdout) != MS_SUCCESS )
           return msWMSException(map, nVersion, NULL);
-      // Request completed
+      /* Request completed */
       return MS_SUCCESS;
   }
   else if (request && strcasecmp(request, "GetMap") == 0 &&
            format && strcasecmp(format,  "image/txt") == 0)
   {
-      // Until someone adds full support for ASCII graphics this should do. ;)
+      /* Until someone adds full support for ASCII graphics this should do. ;) */
       msIO_printf("Content-type: text/plain\n\n");
       msIO_printf(".\n               ,,ggddY\"\"\"Ybbgg,,\n          ,agd888b,_ "
              "\"Y8, ___'\"\"Ybga,\n       ,gdP\"\"88888888baa,.\"\"8b    \""
@@ -2888,7 +2891,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   if (service == NULL && nVersion == -1 && request==NULL)
       return MS_DONE;  /* Not a WMS request */
 
-  // VERSION *and* REQUEST required by both getMap and getFeatureInfo
+  /* VERSION *and* REQUEST required by both getMap and getFeatureInfo */
   if (nVersion == -1)
   {
       msSetError(MS_WMSERR,
@@ -2914,7 +2917,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
   if (strcasecmp(request, "GetStyles") == 0)
     return msWMSGetStyles(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams);
 
-  // getMap parameters are used by both getMap and getFeatureInfo
+  /* getMap parameters are used by both getMap and getFeatureInfo */
   status = msWMSLoadGetMapParams(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams);
   if (status != MS_SUCCESS) return status;
 
@@ -2928,7 +2931,7 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
       return msWMSDescribeLayer(map, nVersion, req->ParamNames, req->ParamValues, req->NumParams);
   }
 
-  // Hummmm... incomplete or unsupported WMS request
+  /* Hummmm... incomplete or unsupported WMS request */
   msSetError(MS_WMSERR, "Incomplete or unsupported WMS request", "msWMSDispatch()");
   return msWMSException(map, nVersion, NULL);
 #else

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2005/02/18 03:06:48  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.5  2004/11/04 21:48:47  frank
  * Removed unused variables.
  *
@@ -76,12 +79,12 @@ int main(int argc, char *argv[])
   
   mapObj *map=NULL;
   outputFormatObj *format=NULL;
-  //gdImagePtr       img=NULL;
+  /* gdImagePtr       img=NULL; */
 
   char **layers=NULL;
   int num_layers=0;
 
-  char *outfile=NULL; // no -o sends image to STDOUT
+  char *outfile=NULL; /* no -o sends image to STDOUT */
 
   /* A4 Portrait */
   int PagePixelWidth = 595;

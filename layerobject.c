@@ -29,6 +29,9 @@
  *****************************************************************************
  *
  * $Log$
+ * Revision 1.10  2005/02/18 03:06:44  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.9  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -59,19 +62,19 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
         return -1;
     }
         
-    // Possible to add another?
+    /* Possible to add another? */
     if (layer->numclasses == MS_MAXCLASSES) {
         msSetError(MS_CHILDERR, "Max number of classes, %d, has been reached",
                    "msInsertClass()", MS_MAXCLASSES);
         return -1;
     }
-    // Catch attempt to insert past end of styles array
+    /* Catch attempt to insert past end of styles array */
     else if (nIndex >= MS_MAXCLASSES) {
         msSetError(MS_CHILDERR, "Cannot insert class beyond index %d",
                    "msInsertClass()", MS_MAXCLASSES-1);
         return -1;
     }
-    else if (nIndex < 0) { // Insert at the end by default
+    else if (nIndex < 0) { /* Insert at the end by default */
 #ifndef __cplusplus
         initClass(&(layer->class[layer->numclasses]));
         msCopyClass(&(layer->class[layer->numclasses]), classobj, layer);
@@ -84,8 +87,8 @@ int msInsertClass(layerObj *layer, classObj *classobj, int nIndex)
     }
     else if (nIndex >= 0 && nIndex < MS_MAXCLASSES) {
     
-        // Copy classes existing at the specified nIndex or greater
-        // to an index one higher
+        /* Copy classes existing at the specified nIndex or greater */
+        /* to an index one higher */
 
 #ifndef __cplusplus
         initClass(&(layer->class[layer->numclasses]));

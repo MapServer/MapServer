@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.7  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -44,10 +47,10 @@ extern "C" {
 #define MAX_SUBNODES 4
 
 typedef struct shape_tree_node {
-  // area covered by this node
+  /* area covered by this node */
   rectObj rect;
   
-  // list of shapes stored at this node.
+  /* list of shapes stored at this node. */
   int numshapes;
   int *ids;
   

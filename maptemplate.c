@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.105  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.104  2005/01/28 15:09:41  julien
  * HTML Legend: Add opt_flag support for layer groups. Default flag=15. Bug 1173
  *
@@ -83,7 +86,7 @@ int msRedirect(char *url)
     msIO_printf("Location: %s\n", url);
     msIO_printf("Content-type: text/html%c%c",10,10);
 
-    // the following may be an issue for fastcgi/msIO_. 
+    /* the following may be an issue for fastcgi/msIO_.  */
     fflush(stdout);
     return MS_SUCCESS;
 }
@@ -104,7 +107,7 @@ int setExtent(mapservObj *msObj)
      celly = MS_CELLSIZE(msObj->ImgExt.miny, msObj->ImgExt.maxy, msObj->ImgRows);
      msObj->Map->extent.minx = MS_IMAGE2MAP_X(msObj->ImgBox.minx, msObj->ImgExt.minx, cellx);
      msObj->Map->extent.maxx = MS_IMAGE2MAP_X(msObj->ImgBox.maxx, msObj->ImgExt.minx, cellx);
-     msObj->Map->extent.maxy = MS_IMAGE2MAP_Y(msObj->ImgBox.miny, msObj->ImgExt.maxy, celly); // y's are flip flopped because img/map coordinate systems are
+     msObj->Map->extent.maxy = MS_IMAGE2MAP_Y(msObj->ImgBox.miny, msObj->ImgExt.maxy, celly); /* y's are flip flopped because img/map coordinate systems are */
      msObj->Map->extent.miny = MS_IMAGE2MAP_Y(msObj->ImgBox.maxy, msObj->ImgExt.maxy, celly);
      break;
    case FROMIMGPNT:
@@ -113,7 +116,7 @@ int setExtent(mapservObj *msObj)
      msObj->MapPnt.x = MS_IMAGE2MAP_X(msObj->ImgPnt.x, msObj->ImgExt.minx, cellx);
      msObj->MapPnt.y = MS_IMAGE2MAP_Y(msObj->ImgPnt.y, msObj->ImgExt.maxy, celly);
 
-     msObj->Map->extent.minx = msObj->MapPnt.x - .5*((msObj->ImgExt.maxx - msObj->ImgExt.minx)/msObj->fZoom); // create an extent around that point
+     msObj->Map->extent.minx = msObj->MapPnt.x - .5*((msObj->ImgExt.maxx - msObj->ImgExt.minx)/msObj->fZoom); /* create an extent around that point */
      msObj->Map->extent.miny = msObj->MapPnt.y - .5*((msObj->ImgExt.maxy - msObj->ImgExt.miny)/msObj->fZoom);
      msObj->Map->extent.maxx = msObj->MapPnt.x + .5*((msObj->ImgExt.maxx - msObj->ImgExt.minx)/msObj->fZoom);
      msObj->Map->extent.maxy = msObj->MapPnt.y + .5*((msObj->ImgExt.maxy - msObj->ImgExt.miny)/msObj->fZoom);
@@ -124,19 +127,19 @@ int setExtent(mapservObj *msObj)
      msObj->MapPnt.x = MS_IMAGE2MAP_X(msObj->RefPnt.x, msObj->Map->reference.extent.minx, cellx);
      msObj->MapPnt.y = MS_IMAGE2MAP_Y(msObj->RefPnt.y, msObj->Map->reference.extent.maxy, celly);  
 
-     msObj->Map->extent.minx = msObj->MapPnt.x - .5*(msObj->ImgExt.maxx - msObj->ImgExt.minx); // create an extent around that point
+     msObj->Map->extent.minx = msObj->MapPnt.x - .5*(msObj->ImgExt.maxx - msObj->ImgExt.minx); /* create an extent around that point */
      msObj->Map->extent.miny = msObj->MapPnt.y - .5*(msObj->ImgExt.maxy - msObj->ImgExt.miny);
      msObj->Map->extent.maxx = msObj->MapPnt.x + .5*(msObj->ImgExt.maxx - msObj->ImgExt.minx);
      msObj->Map->extent.maxy = msObj->MapPnt.y + .5*(msObj->ImgExt.maxy - msObj->ImgExt.miny);
      break;
    case FROMBUF:
-     msObj->Map->extent.minx = msObj->MapPnt.x - msObj->Buffer; // create an extent around that point, using the buffer
+     msObj->Map->extent.minx = msObj->MapPnt.x - msObj->Buffer; /* create an extent around that point, using the buffer */
      msObj->Map->extent.miny = msObj->MapPnt.y - msObj->Buffer;
      msObj->Map->extent.maxx = msObj->MapPnt.x + msObj->Buffer;
      msObj->Map->extent.maxy = msObj->MapPnt.y + msObj->Buffer;
      break;
    case FROMSCALE: 
-     cellsize = (msObj->Scale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); // user supplied a point and a scale
+     cellsize = (msObj->Scale/msObj->Map->resolution)/msInchesPerUnit(msObj->Map->units,0); /* user supplied a point and a scale */
      msObj->Map->extent.minx = msObj->MapPnt.x - cellsize*msObj->Map->width/2.0;
      msObj->Map->extent.miny = msObj->MapPnt.y - cellsize*msObj->Map->height/2.0;
      msObj->Map->extent.maxx = msObj->MapPnt.x + cellsize*msObj->Map->width/2.0;
@@ -163,11 +166,11 @@ int checkWebScale(mapservObj *msObj)
 {
    int status;
 
-   msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); // we do this cause we need a scale
+   msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); /* we do this cause we need a scale */
    if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) return status;
 
    if((msObj->Map->scale < msObj->Map->web.minscale) && (msObj->Map->web.minscale > 0)) {
-      if(msObj->Map->web.mintemplate) { // use the template provided
+      if(msObj->Map->web.mintemplate) { /* use the template provided */
          if(TEMPLATE_TYPE(msObj->Map->web.mintemplate) == MS_FILE) {
             if ((status = msReturnPage(msObj, msObj->Map->web.mintemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
          }
@@ -182,7 +185,7 @@ int checkWebScale(mapservObj *msObj)
          msObj->ZoomDirection = 0;
          msObj->CoordSource = FROMSCALE;
          msObj->Scale = msObj->Map->web.minscale;
-         msObj->MapPnt.x = (msObj->Map->extent.maxx + msObj->Map->extent.minx)/2; // use center of bad extent
+         msObj->MapPnt.x = (msObj->Map->extent.maxx + msObj->Map->extent.minx)/2; /* use center of bad extent */
          msObj->MapPnt.y = (msObj->Map->extent.maxy + msObj->Map->extent.miny)/2;
          setExtent(msObj);
          msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);      
@@ -191,7 +194,7 @@ int checkWebScale(mapservObj *msObj)
    } 
    else 
    if((msObj->Map->scale > msObj->Map->web.maxscale) && (msObj->Map->web.maxscale > 0)) {
-      if(msObj->Map->web.maxtemplate) { // use the template provided
+     if(msObj->Map->web.maxtemplate) { /* use the template provided */
          if(TEMPLATE_TYPE(msObj->Map->web.maxtemplate) == MS_FILE) {
             if ((status = msReturnPage(msObj, msObj->Map->web.maxtemplate, BROWSE, NULL)) != MS_SUCCESS) return status;
          }
@@ -203,7 +206,7 @@ int checkWebScale(mapservObj *msObj)
          msObj->ZoomDirection = 0;
          msObj->CoordSource = FROMSCALE;
          msObj->Scale = msObj->Map->web.maxscale;
-         msObj->MapPnt.x = (msObj->Map->extent.maxx + msObj->Map->extent.minx)/2; // use center of bad extent
+         msObj->MapPnt.x = (msObj->Map->extent.maxx + msObj->Map->extent.minx)/2; /* use center of bad extent */
          msObj->MapPnt.y = (msObj->Map->extent.maxy + msObj->Map->extent.miny)/2;
          setExtent(msObj);
          msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
@@ -362,16 +365,16 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
    {
      int *pnLayerOrder;
 
-     // Backup the original layer order to be able to reverse it
+     /* Backup the original layer order to be able to reverse it */
      pnLayerOrder = (int*)malloc(map->numlayers * sizeof(int));
      for (i=0; i<map->numlayers ;i++)
        pnLayerOrder[i] = map->layerorder[i];
 
-     // Get a new layerorder array
+     /* Get a new layerorder array */
      free(map->layerorder);
      map->layerorder = (int*)malloc(map->numlayers * sizeof(int));
 
-     // Reverse the layerorder array
+     /* Reverse the layerorder array */
      for (i=0; i<map->numlayers ;i++)
        map->layerorder[i] = pnLayerOrder[map->numlayers - i - 1];
 
@@ -470,21 +473,21 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
      return MS_FAILURE;
    }
    
-   // set position to the begining of tag
+   /* set position to the begining of tag */
    pszStart = findTag(pszInstr, pszTag);
 
    if (pszStart) {
-      // find ending position
+      /* find ending position */
       pszEnd = strchr(pszStart, ']');
    
       if (pszEnd) {
-         // skit the tag name
+	 /* skit the tag name */
          pszStart = pszStart + strlen(pszTag) + 1;
 
-         // get lenght of all args
+         /* get lenght of all args */
          nLength = pszEnd - pszStart;
    
-         if (nLength > 0) { // is there arguments ?
+         if (nLength > 0) { /* is there arguments ? */
             pszArgs = (char*)malloc(nLength + 1);
             strncpy(pszArgs, pszStart, nLength);
             pszArgs[nLength] = '\0';
@@ -492,9 +495,9 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
             if (!(*ppoHashTable))
               *ppoHashTable = msCreateHashTable();
             
-            // Enable the use of "" in args
-            // To do so, extract all "" values 
-            // and replace the " in it by spaces
+            /* Enable the use of "" in args */
+            /* To do so, extract all "" values */
+            /* and replace the " in it by spaces */
             if(strchr(pszArgs, '"'))
             {
                 pszQuoteEnd = pszArgs;
@@ -507,14 +510,14 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
                         while((pszQuoteStr = strchr(pszQuoteStart, ' ')))
                             pszQuoteStr[0] = '"';
 
-                        // Replace also the '=' to be able to use it in the
-                        // quoted argument. The '=' is replaced by ']' which
-                        // is illegal before here since this is the closing  
-                        // character of the whole tag.
+                        /* Replace also the '=' to be able to use it in the */
+			/* quoted argument. The '=' is replaced by ']' which */
+                        /* is illegal before here since this is the closing */
+                        /* character of the whole tag. */
                         while((pszQuoteStr = strchr(pszQuoteStart, '=')))
                             pszQuoteStr[0] = ']';
 
-                        // Then remove the starting and ending quote
+                        /* Then remove the starting and ending quote */
                         pszQuoteEnd[0] = '"';
                         for(i=(pszQuoteStart-pszArgs); i<nLength; i++)
                         {
@@ -530,12 +533,12 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
                 }
             }
 
-            // put all arguments seperate by space in a hash table
+            /* put all arguments seperate by space in a hash table */
             papszArgs = split(pszArgs, ' ', &nArgs);
 
-            // msReturnTemplateQuerycheck all argument if they have values
+            /* msReturnTemplateQuerycheck all argument if they have values */
             for (i=0; i<nArgs; i++) {
-               // Quotes are in fact spaces
+	       /* Quotes are in fact spaces */
                if(strchr(papszArgs[i],'"'))
                    while((pszQuoteStr = strchr(papszArgs[i],'"')))
                        pszQuoteStr[0] = ' ';
@@ -544,7 +547,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
                {
                   papszVarVal = split(papszArgs[i], '=', &nDummy);
                
-                  // ']' are in fact '=' (See above).
+                  /* ']' are in fact '=' (See above). */
                   if(strchr(papszVarVal[1],']'))
                       while((pszQuoteStr = strchr(papszVarVal[1],']')))
                           pszQuoteStr[0] = '=';
@@ -555,7 +558,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
                   free(papszVarVal[1]);
                   free(papszVarVal);                  
                }
-               else // no value specified. set it to 1
+               else /* no value specified. set it to 1 */
                   msInsertHashTable(*ppoHashTable, papszArgs[i], "1");
                
                free(papszArgs[i]);
@@ -592,7 +595,7 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
    strcpy(pszEndTag, "[/");
    strcat(pszEndTag, pszTag);
 
-   // find start tag
+   /* find start tag */
    pszPatIn  = findTag(pszInstr, pszTag);
    pszPatOut = strstr(pszInstr, pszEndTag);      
 
@@ -626,7 +629,7 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
    }
 
    if (pszStart && pszEnd) {
-      // find end of start tag
+      /* find end of start tag */
       pszStart = strchr(pszStart, ']');
    
       if (pszStart) {
@@ -637,7 +640,7 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
          if (nLength > 0) {
             *pszResult = (char*)malloc(nLength + 1);
 
-            // copy string beetween start and end tag
+            /* copy string beetween start and end tag */
             strncpy(*pszResult, pszStart, nLength);
 
             (*pszResult)[nLength] = '\0';
@@ -666,7 +669,7 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
 */
 int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
 {
-//   char *pszNextInstr = pszInstr;
+/*   char *pszNextInstr = pszInstr; */
    char *pszStart, *pszEnd=NULL;
    char *pszName, *pszValue, *pszOperator, *pszThen=NULL, *pszHTValue;
    char *pszIfTag;
@@ -682,7 +685,7 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
      return MS_FAILURE;
    }
 
-   // find the if start tag
+   /* find the if start tag */
    
    pszStart  = findTag(*pszInstr, "if");
 
@@ -715,14 +718,14 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
       
       }while (pszTmp != NULL && nInst > 0);
 
-      // get the then string (if expression is true)
+      /* get the then string (if expression is true) */
       if (getInlineTag("if", pszStart, &pszThen) != MS_SUCCESS)
       {
          msSetError(MS_WEBERR, "Malformed then if tag.", "processIf()");
          return MS_FAILURE;
       }
       
-      // retrieve if tag args
+      /* retrieve if tag args */
       if (getTagArgs("if", pszStart, &ifArgs) != MS_SUCCESS)
       {
          msSetError(MS_WEBERR, "Malformed args if tag.", "processIf()");
@@ -732,16 +735,16 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
       pszName = msLookupHashTable(ifArgs, "name");
       pszValue = msLookupHashTable(ifArgs, "value");
       pszOperator = msLookupHashTable(ifArgs, "oper");
-      // Default operator if not set is "eq"
+      /* Default operator if not set is "eq" */
       if (pszOperator == NULL)
           pszOperator = "eq";
 
       bEmpty = 0;
       
       if (pszName) {
-         // build the complete if tag ([if all_args]then string[/if])
-         // to replace if by then string if expression is true
-         // or by a white space if not.
+	 /* build the complete if tag ([if all_args]then string[/if]) */
+         /* to replace if by then string if expression is true */
+         /* or by a white space if not. */
          nLength = pszEnd - pszStart;
          pszIfTag = (char*)malloc(nLength + 6);
          strncpy(pszIfTag, pszStart, nLength);
@@ -775,25 +778,25 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
          else if (strcmp(pszOperator, "isnull") == 0) {
              if (pszHTValue != NULL)
              {
-                 // We met a non-null value... condition is false
+	         /* We met a non-null value... condition is false */
                  *pszInstr = gsub(*pszInstr, pszIfTag, "");
                  bEmpty = 1;
              }
              else if (bLastPass)
              {
-                 // On last pass, if value is still null then condition is true
+	         /* On last pass, if value is still null then condition is true */
                  *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
              }
          }
          else if (strcmp(pszOperator, "isset") == 0) {
              if (pszHTValue != NULL)
              {
-                 // Found a non-null value... condition is true
+	         /* Found a non-null value... condition is true */
                  *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
              }
              else if (bLastPass)
              {
-                 // On last pass, if value still not set then condition is false
+	         /* On last pass, if value still not set then condition is false */
                  *pszInstr = gsub(*pszInstr, pszIfTag, "");
                  bEmpty = 1;
              }
@@ -818,7 +821,7 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
       msFreeHashTable(ifArgs);
       ifArgs=NULL;
       
-      // find the if start tag
+      /* find the if start tag */
       if (bEmpty)
         pszStart = findTag(pszStart, "if");
       else
@@ -849,12 +852,12 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
   char *pointFormat1, *pointFormat2;
   int pointFormatLength;
 
-  // h = header, f=footer, s=seperator
+  /* h = header, f=footer, s=seperator */
   char *xh="", *xf=" ";
   char *yh="", *yf="";
-  char *cs=","; // coordinate
-  char *ph="", *pf="", *ps=""; // part
-  char *sh="", *sf=""; // shape 
+  char *cs=","; /* coordinate */
+  char *ph="", *pf="", *ps=""; /* part */
+  char *sh="", *sf=""; /* shape */
 
   int precision=0;
 
@@ -871,11 +874,11 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
 
   tagStart = findTag(*line, "shpxy");
 
-  // It is OK to have no shpxy tags, just return. 
+  /* It is OK to have no shpxy tags, just return. */
   if( !tagStart )
       return MS_SUCCESS;
 
-  if(!shape || shape->numlines <= 0) { // I suppose we need to make sure the part has vertices (need shape checker?)
+  if(!shape || shape->numlines <= 0) { /* I suppose we need to make sure the part has vertices (need shape checker?) */
     msSetError(MS_WEBERR, "Null or empty shape.", "processCoords()");
     return(MS_FAILURE);
   }
@@ -883,7 +886,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
   while (tagStart) {  
     tagOffset = tagStart - *line;
     
-    // check for any tag arguments
+    /* check for any tag arguments */
     if(getTagArgs("shpxy", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
       argValue = msLookupHashTable(tagArgs, "xh");
@@ -918,29 +921,29 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       if(argValue) projectionString = argValue;
     }
 
-    // build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't)
+    /* build the per point format strings (version 1 contains the coordinate seperator, version 2 doesn't) */
     pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + strlen("cs") + 10 + 1;
     pointFormat1 = (char *) malloc(pointFormatLength);
     snprintf(pointFormat1, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s%s", xh, precision, xf, yh, precision, yf, cs); 
     pointFormat2 = (char *) malloc(pointFormatLength); 
     snprintf(pointFormat2, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
  
-    // make a copy of the shape
+    /* make a copy of the shape */
     msInitShape(&tShape);
     status = msCopyShape(shape, &tShape);
-    if(status != 0) return(MS_FAILURE); // copy failed
+    if(status != 0) return(MS_FAILURE); /* copy failed */
     
-    // no big deal to convert from file to image coordinates, but what are the image parameters
+    /* no big deal to convert from file to image coordinates, but what are the image parameters */
     if(projectionString && strcasecmp(projectionString,"image") ==0) {
       precision = 0;
 
-      // if necessary, project the shape to match the map 
+      /* if necessary, project the shape to match the map */
       if(msProjectionsDiffer(&(layer->projection), &(layer->map->projection)))
         msProjectShape(&layer->projection, &layer->map->projection, &tShape);
       
       switch(tShape.type) {
       case(MS_SHAPE_POINT):
-        // at this point we only convert the first point of the first shape
+        /* at this point we only convert the first point of the first shape */
 	tShape.line[0].point[0].x = MS_MAP2IMAGE_X(tShape.line[0].point[0].x, layer->map->extent.minx, layer->map->cellsize);
         tShape.line[0].point[0].y = MS_MAP2IMAGE_Y(tShape.line[0].point[0].y, layer->map->extent.maxy, layer->map->cellsize);
 	break;
@@ -951,7 +954,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
         msClipPolygonRect(&tShape, layer->map->extent);
         break;
       default:
-        // TO DO: need an error message here 
+        /* TO DO: need an error message here */
         return(MS_FAILURE);
 	break;
       }
@@ -967,11 +970,11 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
          msProjectShape(&layer->projection, &projection, &tShape);
     }
       
-    // TODO: add thinning support here  
+    /* TODO: add thinning support here */
       
-    // build the coordinate string
+    /* build the coordinate string */
     if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
-    for(i=0; i<tShape.numlines; i++) { // e.g. part      
+    for(i=0; i<tShape.numlines; i++) { /* e.g. part */
       if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
       for(j=0; j<tShape.line[i].numpoints-1; j++) {
         snprintf(point, 128, pointFormat1, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
@@ -986,20 +989,20 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
 
     msFreeShape(&tShape);
     
-    // find the end of the tag
+    /* find the end of the tag */
     tagEnd = strchr(tagStart, ']');
     tagEnd++;
 
-    // build the complete tag so we can do substitution           
+    /* build the complete tag so we can do substitution */
     tagLength = tagEnd - tagStart;
     tag = (char *) malloc(tagLength + 1);
     strncpy(tag, tagStart, tagLength);
     tag[tagLength] = '\0';
 
-    // do the replacement
+    /* do the replacement */
     *line = gsub(*line, tag, coords);
 
-    // clean up
+    /* clean up */
     free(tag); tag = NULL;
     msFreeHashTable(tagArgs); tagArgs=NULL;
     free(pointFormat1);
@@ -1024,7 +1027,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
 */
 int processMetadata(char** pszInstr, hashTableObj *ht)
 {
-//   char *pszNextInstr = pszInstr;
+/* char *pszNextInstr = pszInstr; */
    char *pszEnd, *pszStart;
    char *pszMetadataTag;
    char *pszHashName;
@@ -1038,11 +1041,11 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
      return MS_FAILURE;
    }
 
-   // set position to the begining of metadata tag
+   /* set position to the begining of metadata tag */
    pszStart = findTag(*pszInstr, "metadata");
 
    while (pszStart) {
-      // get metadata args
+      /* get metadata args */
       if (getTagArgs("metadata", pszStart, &metadataArgs) != MS_SUCCESS)
         return MS_FAILURE;
 
@@ -1052,12 +1055,12 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
       nOffset = pszStart - *pszInstr;
 
       if (pszHashName && pszHashValue) {
-           // set position to the end of metadata start tag
+           /* set position to the end of metadata start tag */
            pszEnd = strchr(pszStart, ']');
            pszEnd++;
 
-           // build the complete metadata tag ([metadata all_args])
-           // to replace it by the corresponding value from ht
+           /* build the complete metadata tag ([metadata all_args]) */
+           /* to replace it by the corresponding value from ht */
            nLength = pszEnd - pszStart;
            pszMetadataTag = (char*)malloc(nLength + 1);
            strncpy(pszMetadataTag, pszStart, nLength);
@@ -1073,7 +1076,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
       metadataArgs=NULL;
 
 
-      // set position to the begining of the next metadata tag
+      /* set position to the begining of the next metadata tag */
       if ((*pszInstr)[nOffset] != '\0')
         pszStart = findTag(*pszInstr+nOffset+1, "metadata");
       else
@@ -1104,7 +1107,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
      return MS_FAILURE;
    }
 
-   // find the begining of tag
+   /* find the begining of tag */
    pszImgTag = strstr(*pszInstr, "[leg_icon");
    
    while (pszImgTag) {
@@ -1112,7 +1115,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       if (getTagArgs("leg_icon", pszImgTag, &myHashTable) != MS_SUCCESS)
         return MS_FAILURE;
 
-      // if no specified width or height, set them to map default
+      /* if no specified width or height, set them to map default */
       if (!msLookupHashTable(myHashTable, "width") || !msLookupHashTable(myHashTable, "height")) {
          nWidth = map->legend.keysizex;
          nHeight= map->legend.keysizey;
@@ -1127,7 +1130,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       pszFullImgFname = strdup(msBuildPath3(szPath, map->mappath, 
                                             map->web.imagepath, szImgFname));
       
-      // check if icon already exist in cache
+      /* check if icon already exist in cache */
       if ((fIcon = fopen(pszFullImgFname, "r+")) != NULL)
       {
          char cTmp[1];
@@ -1140,13 +1143,13 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       }
       else
       {
-         // Create an image corresponding to the current class
+         /* Create an image corresponding to the current class */
           imageObj *img=NULL;
 
          if (map->layers[nIdxLayer].numclasses <= 0 || 
              nIdxClass > map->layers[nIdxLayer].numclasses || nIdxClass < 0)
          {
-             // Nonexistent class.  Create an empty image
+             /* Nonexistent class.  Create an empty image */
              img = msCreateLegendIcon(map, NULL, NULL, nWidth, nHeight);
          }
          else
@@ -1164,7 +1167,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
             return MS_FAILURE;
          }
          
-         // save it with a unique file name
+         /* save it with a unique file name */
          if(msSaveImage(map, img, pszFullImgFname) != MS_SUCCESS) {
             if (myHashTable)
               msFreeHashTable(myHashTable);
@@ -1187,8 +1190,8 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       if (nLen > 0) {
          char *pszTag;
 
-         // rebuid image tag ([leg_class_img all_args])
-         // to replace it by the image url
+         /* rebuid image tag ([leg_class_img all_args]) */
+         /* to replace it by the image url */
          pszTag = (char*)malloc(nLen + 1);
          strncpy(pszTag, pszImgTag, nLen);
             
@@ -1204,7 +1207,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          pszFullImgFname = NULL;
          msFree(pszTag);
 
-         // find the begining of tag
+         /* find the begining of tag */
          pszImgTag = strstr(*pszInstr, "[leg_icon");
       }
       else {
@@ -1267,25 +1270,25 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
        if (map->layers[map->layerorder[j]].group && 
            strcmp(map->layers[map->layerorder[j]].group, pszGroupName) == 0)
        {
-           // dont display layer is off.
+           /* dont display layer is off. */
            if( (nOptFlag & 2) == 0 && 
                map->layers[map->layerorder[j]].status == MS_OFF )
                bShowGroup = 0;
            else
                bShowGroup = 1;
 
-           // dont display layer is query.
+           /* dont display layer is query. */
            if( (nOptFlag & 4) == 0  && 
                map->layers[map->layerorder[j]].type == MS_LAYER_QUERY )
                bShowGroup = 0;
 
-           // dont display layer is annotation.
+           /* dont display layer is annotation. */
            if( (nOptFlag & 8) == 0 && 
                map->layers[map->layerorder[j]].type == MS_LAYER_ANNOTATION )
                bShowGroup = 0;
                
 
-           // dont display layer if out of scale.
+           /* dont display layer if out of scale. */
            if ((nOptFlag & 1) == 0)
            {
                if(map->scale > 0) {
@@ -1298,8 +1301,8 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
                }
            }
 
-           // The group contains one visible layer
-           // Draw the group
+           /* The group contains one visible layer */
+           /* Draw the group */
            if( bShowGroup )
                break;
        }
@@ -1373,7 +1376,7 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
     */
    pszClassImg = strstr(*pszTemp, "[leg_icon");
    if (pszClassImg) {
-      // find first layer of this group
+      /* find first layer of this group */
       for (i=0; i<map->numlayers; i++)
         if (map->layers[map->layerorder[i]].group && strcmp(map->layers[map->layerorder[i]].group, pszGroupName) == 0)
           processIcon(map, map->layerorder[i], 0, pszTemp, pszPrefix);
@@ -1417,27 +1420,27 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    if (pszOptFlag)
      nOptFlag = atoi(pszOptFlag);
 
-   // don't display deleted layers
+   /* don't display deleted layers */
    if (map->layers[nIdxLayer].status == MS_DELETE)
      return MS_SUCCESS;
 
-   // dont display layer is off.
-   // check this if Opt flag is not set
+   /* dont display layer is off. */
+   /* check this if Opt flag is not set */
    if((nOptFlag & 2) == 0 && map->layers[nIdxLayer].status == MS_OFF)
      return MS_SUCCESS;
 
-   // dont display layer is query.
-   // check this if Opt flag is not set
+   /* dont display layer is query. */
+   /* check this if Opt flag is not set */
    if ((nOptFlag & 4) == 0  && map->layers[nIdxLayer].type == MS_LAYER_QUERY)
      return MS_SUCCESS;
 
-   // dont display layer is annotation.
-   // check this if Opt flag is not set      
+   /* dont display layer is annotation. */
+   /* check this if Opt flag is not set       */
    if ((nOptFlag & 8) == 0 && map->layers[nIdxLayer].type == MS_LAYER_ANNOTATION)
      return MS_SUCCESS;      
 
-   // dont display layer if out of scale.
-   // check this if Opt flag is not set            
+   /* dont display layer if out of scale. */
+   /* check this if Opt flag is not set             */
    if ((nOptFlag & 1) == 0) {
       if(map->scale > 0) {
          if((map->layers[nIdxLayer].maxscale > 0) && (map->scale > map->layers[nIdxLayer].maxscale))
@@ -1547,27 +1550,27 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    if (pszOptFlag)
      nOptFlag = atoi(pszOptFlag);
       
-   // don't display deleted layers
+   /* don't display deleted layers */
    if (map->layers[nIdxLayer].status == MS_DELETE)
      return MS_SUCCESS;
 
-   // dont display class if layer is off.
-   // check this if Opt flag is not set
+   /* dont display class if layer is off. */
+   /* check this if Opt flag is not set */
    if((nOptFlag & 2) == 0 && map->layers[nIdxLayer].status == MS_OFF)
      return MS_SUCCESS;
 
-   // dont display class if layer is query.
-   // check this if Opt flag is not set      
+   /* dont display class if layer is query. */
+   /* check this if Opt flag is not set       */
    if ((nOptFlag & 4) == 0 && map->layers[nIdxLayer].type == MS_LAYER_QUERY)
      return MS_SUCCESS;
       
-   // dont display class if layer is annotation.
-   // check this if Opt flag is not set      
+   /* dont display class if layer is annotation. */
+   /* check this if Opt flag is not set       */
    if ((nOptFlag & 8) == 0 && map->layers[nIdxLayer].type == MS_LAYER_ANNOTATION)
      return MS_SUCCESS;
       
-   // dont display layer if out of scale.
-   // check this if Opt flag is not set
+   /* dont display layer if out of scale. */
+   /* check this if Opt flag is not set */
    if ((nOptFlag & 1) == 0) {
       if(map->scale > 0) {
          if((map->layers[nIdxLayer].maxscale > 0) && (map->scale > map->layers[nIdxLayer].maxscale))
@@ -1714,7 +1717,7 @@ char *generateLegendTemplate(mapservObj *msObj)
     * build prefix filename
     * for legend icon creation
    */
-   for(i=0;i<msObj->request->NumParams;i++) // find the mapfile parameter first
+   for(i=0;i<msObj->request->NumParams;i++) /* find the mapfile parameter first */
      if(strcasecmp(msObj->request->ParamNames[i], "map") == 0) break;
   
    if(i == msObj->request->NumParams)
@@ -1724,7 +1727,7 @@ char *generateLegendTemplate(mapservObj *msObj)
    }
    else 
    {
-      if(getenv(msObj->request->ParamValues[i])) // an environment references the actual file to use
+      if(getenv(msObj->request->ParamValues[i])) /* an environment references the actual file to use */
         pszMapFname = strcatalloc(pszMapFname, getenv(msObj->request->ParamValues[i]));
       else
         pszMapFname = strcatalloc(pszMapFname, msObj->request->ParamValues[i]);
@@ -1761,7 +1764,7 @@ char *generateLegendTemplate(mapservObj *msObj)
        pszPrefix = strcatalloc(pszPrefix, pszTime);
    }
 
-       // open template
+       /* open template */
    if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, msObj->Map->legend.template), "r")) == NULL) {
       msSetError(MS_IOERR, "Error while opening template file.", "generateLegendTemplate()");
       return NULL;
@@ -1784,7 +1787,7 @@ char *generateLegendTemplate(mapservObj *msObj)
    fread(file, 1, length, stream);
    file[length] = '\0';
 
-   if(msValidateContexts(msObj->Map) != MS_SUCCESS) return NULL; // make sure there are no recursive REQUIRES or LABELREQUIRES expressions
+   if(msValidateContexts(msObj->Map) != MS_SUCCESS) return NULL; /* make sure there are no recursive REQUIRES or LABELREQUIRES expressions */
 
    /*
     * Seperate header/footer, groups, layers and class
@@ -1819,7 +1822,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                        msObj->Map->resolution, &msObj->Map->scale) != MS_SUCCESS)
      return(NULL);
    
-   // start with the header if present
+   /* start with the header if present */
    if(legHeaderHtml) pszResult = strcatalloc(pszResult, legHeaderHtml);
 
    /********************************************************************/
@@ -1846,11 +1849,11 @@ char *generateLegendTemplate(mapservObj *msObj)
    }
    
    if (legGroupHtml) {
-      // retrieve group names
+      /* retrieve group names */
       papszGroups = msGetAllGroupNames(msObj->Map, &nGroupNames);
 
       for (i=0; i<nGroupNames; i++) {
-         // process group tags
+         /* process group tags */
          if (generateGroupTemplate(legGroupHtml, msObj->Map, papszGroups[i], groupArgs, &legGroupHtmlCopy, pszPrefix) != MS_SUCCESS)
          {
             if (pszResult)
@@ -1859,7 +1862,7 @@ char *generateLegendTemplate(mapservObj *msObj)
             goto error;
          }
             
-         // concatenate it to final result
+         /* concatenate it to final result */
          pszResult = strcatalloc(pszResult, legGroupHtmlCopy);
 
 /*         
@@ -1878,7 +1881,7 @@ char *generateLegendTemplate(mapservObj *msObj)
            legGroupHtmlCopy = NULL;
          }
          
-         // for all layers in group
+         /* for all layers in group */
          if (legLayerHtml) {
            for (j=0; j<msObj->Map->numlayers; j++) {
               /*
@@ -1896,7 +1899,7 @@ char *generateLegendTemplate(mapservObj *msObj)
               }
 
               if (msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
-                 // process all layer tags
+                 /* process all layer tags */
                  if (generateLayerTemplate(legLayerHtml, msObj->Map, msObj->Map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
                  {
                     if (pszResult)
@@ -1906,7 +1909,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                  }
               
                   
-                 // concatenate to final result
+                 /* concatenate to final result */
                  pszResult = strcatalloc(pszResult, legLayerHtmlCopy);
 
                  if (legLayerHtmlCopy)
@@ -1916,10 +1919,10 @@ char *generateLegendTemplate(mapservObj *msObj)
                  }
                  
             
-                 // for all classes in layer
+                 /* for all classes in layer */
                  if (legClassHtml) {
                     for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
-                       // process all class tags
+                       /* process all class tags */
                        if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
                          continue;
 
@@ -1932,7 +1935,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                        }
                  
                
-                       // concatenate to final result
+                       /* concatenate to final result */
                        pszResult = strcatalloc(pszResult, legClassHtmlCopy);
 
                        if (legClassHtmlCopy) {
@@ -1945,7 +1948,7 @@ char *generateLegendTemplate(mapservObj *msObj)
            }
          }
          else
-         if (legClassHtml){ // no layer template specified but class and group template
+         if (legClassHtml){ /* no layer template specified but class and group template */
            for (j=0; j<msObj->Map->numlayers; j++) {
               /*
                * if order_metadata is set and the order
@@ -1962,10 +1965,10 @@ char *generateLegendTemplate(mapservObj *msObj)
               }
 
               if (msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
-                 // for all classes in layer
+                 /* for all classes in layer */
                  if (legClassHtml) {
                     for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
-                       // process all class tags
+                       /* process all class tags */
                        if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
                          continue;
 
@@ -1978,7 +1981,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                        }
                  
                
-                       // concatenate to final result
+                       /* concatenate to final result */
                        pszResult = strcatalloc(pszResult, legClassHtmlCopy);
 
                        if (legClassHtmlCopy) {
@@ -1993,7 +1996,7 @@ char *generateLegendTemplate(mapservObj *msObj)
       }
    }
    else {
-      // if no group template specified
+      /* if no group template specified */
       if (legLayerHtml) {
          for (j=0; j<msObj->Map->numlayers; j++) {
             /*
@@ -2012,7 +2015,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                   nLegendOrder=0;
             }
 
-            // process a layer tags
+            /* process a layer tags */
             if (generateLayerTemplate(legLayerHtml, msObj->Map, msObj->Map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
             {
                if (pszResult)
@@ -2021,7 +2024,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                goto error;
             }
               
-            // concatenate to final result
+            /* concatenate to final result */
             pszResult = strcatalloc(pszResult, legLayerHtmlCopy);
 
             if (legLayerHtmlCopy) {
@@ -2029,10 +2032,10 @@ char *generateLegendTemplate(mapservObj *msObj)
                legLayerHtmlCopy = NULL;
             }
             
-            // for all classes in layer
+            /* for all classes in layer */
             if (legClassHtml) {
                for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
-                  // process all class tags
+                  /* process all class tags */
                   if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
                     continue;
 
@@ -2045,7 +2048,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                   }
           
                
-                  // concatenate to final result
+                  /* concatenate to final result */
                   pszResult = strcatalloc(pszResult, legClassHtmlCopy);
   
                   if (legClassHtmlCopy) {
@@ -2056,7 +2059,7 @@ char *generateLegendTemplate(mapservObj *msObj)
             }         
          }
       }
-      else { // if no group and layer template specified
+      else { /* if no group and layer template specified */
          if (legClassHtml) {
             for (j=0; j<msObj->Map->numlayers; j++) {
                /*
@@ -2098,7 +2101,7 @@ char *generateLegendTemplate(mapservObj *msObj)
       }
    }
    
-   // finish with the footer if present
+   /* finish with the footer if present */
    if(legFooterHtml) pszResult = strcatalloc(pszResult, legFooterHtml);
 
    /*
@@ -2164,12 +2167,12 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
   char line[MS_BUFFER_LENGTH], *tmpline;
   char szPath[MS_MAXPATHLEN];
 
-  if((outbuf = strdup("")) == NULL) return(NULL); // empty at first
+  if((outbuf = strdup("")) == NULL) return(NULL); /* empty at first */
 
-  msJoinPrepare(join, &(msObj->ResultShape)); // execute the join
+  msJoinPrepare(join, &(msObj->ResultShape)); /* execute the join */
   while(msJoinNext(join) == MS_SUCCESS) {
-    // First time through, deal with the header (if necessary) and open the main template. We only
-    // want to do this if there are joined records.
+    /* First time through, deal with the header (if necessary) and open the main template. We only */
+    /* want to do this if there are joined records. */
     if(records == MS_FALSE) { 
       if(join->header != NULL) {
         if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->header), "r")) == NULL) {
@@ -2177,7 +2180,7 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
           return(NULL);
         }
 
-        // echo file to the output buffer, no substitutions
+        /* echo file to the output buffer, no substitutions */
         while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = strcatalloc(outbuf, line);
 
         fclose(stream);
@@ -2191,18 +2194,18 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
       records = MS_TRUE;
     }
     
-    while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) { // now on to the end of the template
+    while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) { /* now on to the end of the template */
       if(strchr(line, '[') != NULL) {
         tmpline = processLine(msObj, line, QUERY);
         if(!tmpline) return NULL;
         outbuf = strcatalloc(outbuf, tmpline);
         free(tmpline);
-      } else // no subs, just echo
+      } else /* no subs, just echo */
         strcatalloc(outbuf, line);
     }
       
     rewind(stream);
-  } // next record
+  } /* next record */
 
   if(records==MS_TRUE && join->footer) {    
     if((stream = fopen(msBuildPath(szPath, msObj->Map->mappath, join->footer), "r")) == NULL) {
@@ -2210,13 +2213,13 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
       return(NULL);
     }
 
-    // echo file to the output buffer, no substitutions
+    /* echo file to the output buffer, no substitutions */
     while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) outbuf = strcatalloc(outbuf, line);
     
     fclose(stream);
   }
 
-  // clear any data associated with the join
+  /* clear any data associated with the join */
   msFreeCharArray(join->values, join->numitems);
   join->values = NULL;
 
@@ -2227,7 +2230,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 {
   int i, j;
 #define PROCESSLINE_BUFLEN 5120
-  char repstr[PROCESSLINE_BUFLEN], substr[PROCESSLINE_BUFLEN], *outstr; // repstr = replace string, substr = sub string
+  char repstr[PROCESSLINE_BUFLEN], substr[PROCESSLINE_BUFLEN], *outstr; /* repstr = replace string, substr = sub string */
   struct hashObj *tp=NULL;
   char *encodedstr;
    
@@ -2236,7 +2239,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   pointObj llpoint;
 #endif
 
-  outstr = strdup(instr); // work from a copy
+  outstr = strdup(instr); /* work from a copy */
 
   if(strstr(outstr, "[version]")) outstr = gsub(outstr, "[version]",  msGetVersion());
 
@@ -2247,7 +2250,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   if(strstr(outstr, "[errmsg")) {
     char *errmsg = msGetErrorString(";");
-    if(!errmsg) errmsg = strdup("Error message buffer is empty."); // should never happen, but just in case...
+    if(!errmsg) errmsg = strdup("Error message buffer is empty."); /* should never happen, but just in case... */
     outstr = gsub(outstr, "[errmsg]", errmsg);
     encodedstr = msEncodeUrl(errmsg);
     outstr = gsub(outstr, "[errmsg_esc]", encodedstr);
@@ -2256,7 +2259,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   }
   
   if (strstr(outstr, "[legend]")) {
-     // if there's a template legend specified, use it
+     /* if there's a template legend specified, use it */
      if (msObj->Map->legend.template) {
         char *legendTemplate;
 
@@ -2266,10 +2269,10 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
      
            free(legendTemplate);
         }
-        else // error already generated by (generateLegendTemplate())
+        else /* error already generated by (generateLegendTemplate()) */
           return NULL;
      }
-     else { // if not display gif image with all legend icon
+     else { /* if not display gif image with all legend icon */
         snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sleg%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
         outstr = gsub(outstr, "[legend]", repstr);
      }
@@ -2296,7 +2299,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   snprintf(repstr, PROCESSLINE_BUFLEN, "%s", msObj->Id);
   outstr = gsub(outstr, "[id]", repstr);
   
-  repstr[0] = '\0'; // Layer list for a "POST" request
+  repstr[0] = '\0'; /* Layer list for a "POST" request */
   for(i=0;i<msObj->NumLayers;i++) {    
     strlcat(repstr, msObj->Layers[i], sizeof(repstr));
     strlcat(repstr, " ", sizeof(repstr));
@@ -2308,7 +2311,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   outstr = gsub(outstr, "[layers_esc]", encodedstr);
   free(encodedstr);
 
-  strcpy(repstr, ""); // list of ALL layers that can be toggled
+  strcpy(repstr, ""); /* list of ALL layers that can be toggled */
   repstr[0] = '\0';
   for(i=0;i<msObj->Map->numlayers;i++) {
     if(msObj->Map->layers[i].status != MS_DEFAULT) {
@@ -2323,7 +2326,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   outstr = gsub(outstr, "[toggle_layers_esc]", encodedstr);
   free(encodedstr);
   
-  for(i=0;i<msObj->Map->numlayers;i++) { // Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here
+  for(i=0;i<msObj->Map->numlayers;i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */
     if(isOn(msObj, msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) {
       if(msObj->Map->layers[i].group) {
 	sprintf(substr, "[%s_select]", msObj->Map->layers[i].group);
@@ -2377,7 +2380,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     }
   }
 
-  // allow web object metadata access in template
+  /* allow web object metadata access in template */
   
   /* 
    * reworked by SG to use HashTable methods
@@ -2399,7 +2402,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     }
   }
 
-  // allow layer metadata access in template
+  /* allow layer metadata access in template */
   for(i=0;i<msObj->Map->numlayers;i++) {
     if(&(msObj->Map->layers[i].metadata) && strstr(outstr, msObj->Map->layers[i].name)) {
       for(j=0; j<MS_HASHSIZE; j++) {
@@ -2429,7 +2432,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%f", msObj->MapPnt.y);
   outstr = gsub(outstr, "[mapy]", repstr);
   
-  sprintf(repstr, "%f", msObj->Map->extent.minx); // Individual mapextent elements for spatial query building 
+  sprintf(repstr, "%f", msObj->Map->extent.minx); /* Individual mapextent elements for spatial query building  */
   outstr = gsub(outstr, "[minx]", repstr);
   sprintf(repstr, "%f", msObj->Map->extent.maxx);
   outstr = gsub(outstr, "[maxx]", repstr);
@@ -2444,12 +2447,12 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   outstr = gsub(outstr, "[mapext_esc]", encodedstr);
   free(encodedstr);
   
-  sprintf(repstr, "%f", (msObj->Map->extent.maxx-msObj->Map->extent.minx)); // useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars
+  sprintf(repstr, "%f", (msObj->Map->extent.maxx-msObj->Map->extent.minx)); /* useful for creating cachable extents (i.e. 0 0 dx dy) with legends and scalebars */
   outstr = gsub(outstr, "[dx]", repstr);
   sprintf(repstr, "%f", (msObj->Map->extent.maxy-msObj->Map->extent.miny));
   outstr = gsub(outstr, "[dy]", repstr);
 
-  sprintf(repstr, "%f", msObj->RawExt.minx); // Individual raw extent elements for spatial query building
+  sprintf(repstr, "%f", msObj->RawExt.minx); /* Individual raw extent elements for spatial query building */
   outstr = gsub(outstr, "[rawminx]", repstr);
   sprintf(repstr, "%f", msObj->RawExt.maxx);
   outstr = gsub(outstr, "[rawmaxx]", repstr);
@@ -2495,9 +2498,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   }
 #endif
 
-  // submitted by J.F (bug 1102)
+  /* submitted by J.F (bug 1102) */
   if (msObj->Map->reference.status == MS_ON) {
-    sprintf(repstr, "%f", msObj->Map->reference.extent.minx); // Individual reference map extent elements for spatial query building
+    sprintf(repstr, "%f", msObj->Map->reference.extent.minx); /* Individual reference map extent elements for spatial query building */
     outstr = gsub(outstr, "[refminx]", repstr);
     sprintf(repstr, "%f", msObj->Map->reference.extent.maxx);
     outstr = gsub(outstr, "[refmaxx]", repstr);
@@ -2530,17 +2533,17 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%f", msObj->Map->cellsize);
   outstr = gsub(outstr, "[cellsize]", repstr);
   
-  sprintf(repstr, "%.1f %.1f", (msObj->Map->width)/2.0, (msObj->Map->height)/2.0); // not subtracting 1 from image dimensions (see bug 633)
+  sprintf(repstr, "%.1f %.1f", (msObj->Map->width)/2.0, (msObj->Map->height)/2.0); /* not subtracting 1 from image dimensions (see bug 633) */
   outstr = gsub(outstr, "[center]", repstr);
   sprintf(repstr, "%.1f", (msObj->Map->width)/2.0);
   outstr = gsub(outstr, "[center_x]", repstr);
   sprintf(repstr, "%.1f", (msObj->Map->height)/2.0);
   outstr = gsub(outstr, "[center_y]", repstr);      
 
-  // These are really for situations with multiple result sets only, but often used in header/footer  
-  sprintf(repstr, "%d", msObj->NR); // total number of results
+  /* These are really for situations with multiple result sets only, but often used in header/footer   */
+  sprintf(repstr, "%d", msObj->NR); /* total number of results */
   outstr = gsub(outstr, "[nr]", repstr);  
-  sprintf(repstr, "%d", msObj->NL); // total number of layers with results
+  sprintf(repstr, "%d", msObj->NL); /* total number of layers with results */
   outstr = gsub(outstr, "[nl]", repstr);
 
   if(msObj->ResultLayer) {    
@@ -2552,19 +2555,19 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
       free(itemstr);
     }
 
-    sprintf(repstr, "%d", msObj->NLR); // total number of results within this layer
+    sprintf(repstr, "%d", msObj->NLR); /* total number of results within this layer */
     outstr = gsub(outstr, "[nlr]", repstr);
-    sprintf(repstr, "%d", msObj->RN); // sequential (eg. 1..n) result number within all layers
+    sprintf(repstr, "%d", msObj->RN); /* sequential (eg. 1..n) result number within all layers */
     outstr = gsub(outstr, "[rn]", repstr);
-    sprintf(repstr, "%d", msObj->LRN); // sequential (eg. 1..n) result number within this layer
+    sprintf(repstr, "%d", msObj->LRN); /* sequential (eg. 1..n) result number within this layer */
     outstr = gsub(outstr, "[lrn]", repstr);
-    outstr = gsub(outstr, "[cl]", msObj->ResultLayer->name); // current layer name    
-    // if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description    
+    outstr = gsub(outstr, "[cl]", msObj->ResultLayer->name); /* current layer name     */
+    /* if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description     */
   }
 
-  if(mode == QUERY) { // return shape and/or values	
+  if(mode == QUERY) { /* return shape and/or values	 */
 
-    // allow layer metadata access in a query template, within the context of a query no layer name is necessary    
+    /* allow layer metadata access in a query template, within the context of a query no layer name is necessary     */
     if(&(msObj->ResultLayer->metadata) && strstr(outstr, "[metadata_")) {
       for(i=0; i<MS_HASHSIZE; i++) {
 	if (msObj->ResultLayer->metadata.items[i] != NULL) {
@@ -2615,7 +2618,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     sprintf(repstr, "%d", msObj->ResultShape.tileindex);
     outstr = gsub(outstr, "[tileidx]", repstr);  
 
-    // return ALL attributes in one delimeted list
+    /* return ALL attributes in one delimeted list */
     if(strstr(outstr, "[values]") != NULL) {
       char *valuestr=NULL;
 
@@ -2626,7 +2629,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
     for(i=0;i<msObj->ResultLayer->numitems;i++) {	 
 
-      // by default let's encode attributes for HTML presentation
+      /* by default let's encode attributes for HTML presentation */
       sprintf(substr, "[%s]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
 	encodedstr = msEncodeHTMLEntities(msObj->ResultShape.values[i]);
@@ -2634,7 +2637,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
         free(encodedstr);
       }
 
-      // of course you might want to embed that data in URLs
+      /* of course you might want to embed that data in URLs */
       sprintf(substr, "[%s_esc]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL) {
         encodedstr = msEncodeUrl(msObj->ResultShape.values[i]);
@@ -2642,19 +2645,19 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
         free(encodedstr);
       }
 
-      // or you might want to access the attributes unaltered
+      /* or you might want to access the attributes unaltered */
       sprintf(substr, "[%s_raw]", msObj->ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL)
 	outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
     }
     
-    //
-    // handle joins in this next section
-    //
+    /*  */
+    /* handle joins in this next section */
+    /*  */
     for(i=0; i<msObj->ResultLayer->numjoins; i++) {
-      if(msObj->ResultLayer->joins[i].values) { // join has data
+      if(msObj->ResultLayer->joins[i].values) { /* join has data */
         for(j=0;j<msObj->ResultLayer->joins[i].numitems;j++) {
-          // by default let's encode attributes for HTML presentation
+          /* by default let's encode attributes for HTML presentation */
           sprintf(substr, "[%s_%s]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);        
           if(strstr(outstr, substr) != NULL) {
 	    encodedstr = msEncodeHTMLEntities(msObj->ResultLayer->joins[i].values[j]);
@@ -2662,7 +2665,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
             free(encodedstr);
           }
 
-          // of course you might want to embed that data in URLs
+          /* of course you might want to embed that data in URLs */
           sprintf(substr, "[%s_%s_esc]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
           if(strstr(outstr, substr) != NULL) {
             encodedstr = msEncodeUrl(msObj->ResultLayer->joins[i].values[j]);
@@ -2670,12 +2673,12 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
             free(encodedstr);
           }
 
-          // or you might want to access the attributes unaltered
+          /* or you might want to access the attributes unaltered */
           sprintf(substr, "[%s_%s_raw]", msObj->ResultLayer->joins[i].name, msObj->ResultLayer->joins[i].items[j]);
           if(strstr(outstr, substr) != NULL)
 	    outstr = gsub(outstr, substr, msObj->ResultLayer->joins[i].values[j]);
         }
-      } else if(msObj->ResultLayer->joins[i].type ==  MS_JOIN_ONE_TO_MANY){ // one-to-many join
+      } else if(msObj->ResultLayer->joins[i].type ==  MS_JOIN_ONE_TO_MANY){ /* one-to-many join */
 	char *joinTemplate=NULL;
 
 	sprintf(substr, "[join_%s]", msObj->ResultLayer->joins[i].name);        
@@ -2688,9 +2691,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
             return NULL;
         }
       }
-    } // next join
+    } /* next join */
 
-  } // end query mode specific substitutions
+  } /* end query mode specific substitutions */
 
   for(i=0;i<msObj->request->NumParams;i++) {
     sprintf(substr, "[%s]", msObj->request->ParamNames[i]);
@@ -2705,7 +2708,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   return(outstr);
 }
 
-#define MS_TEMPLATE_BUFFER 1024 //1k
+#define MS_TEMPLATE_BUFFER 1024 /* 1k */
 
 int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
 {
@@ -2802,7 +2805,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
     }
     if (!papszBuffer)
         fflush(stdout);
-  } // next line
+  } /* next line */
 
   fclose(stream);
 
@@ -2863,7 +2866,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
   
   msInitShape(&(msObj->ResultShape));
 
-  if((msObj->Mode == ITEMQUERY) || (msObj->Mode == QUERY)) { // may need to handle a URL result set
+  if((msObj->Mode == ITEMQUERY) || (msObj->Mode == QUERY)) { /* may need to handle a URL result set */
 
     for(i=(msObj->Map->numlayers-1); i>=0; i--) {
       lp = &(msObj->Map->layers[i]);
@@ -2872,7 +2875,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
       if(lp->resultcache->numresults > 0) break;
     }
 
-    if(i >= 0) { // at least if no result found, mapserver will display an empty template.
+    if(i >= 0) { /* at least if no result found, mapserver will display an empty template. */
 
       if(lp->resultcache->results[0].classindex >= 0 && lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
         template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
@@ -2892,7 +2895,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
         status = msLayerOpen(lp);
         if(status != MS_SUCCESS) return status;
 
-        // retrieve all the item names
+        /* retrieve all the item names */
         status = msLayerGetItems(lp);
         if(status != MS_SUCCESS) return status;
 
@@ -2903,7 +2906,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 	  for(k=0; k<lp->numjoins; k++) { 
 	    msJoinConnect(lp, &(lp->joins[k]));
 	    msJoinPrepare(&(lp->joins[k]), &(msObj->ResultShape));
-	    msJoinNext(&(lp->joins[k])); // fetch the first row
+	    msJoinNext(&(lp->joins[k])); /* fetch the first row */
 	  }
 	}
 
@@ -2921,7 +2924,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
   }
 
   msObj->NR = msObj->NL = 0;
-  for(i=0; i<msObj->Map->numlayers; i++) { // compute some totals
+  for(i=0; i<msObj->Map->numlayers; i++) { /* compute some totals */
     lp = &(msObj->Map->layers[i]);
 
     if(!lp->resultcache) continue;
@@ -2934,7 +2937,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 
   if(papszBuffer && pszMimeType) {
     sprintf(buffer, "Content-type: %s%c%c\n", pszMimeType, 10, 10);
-    // sprintf(buffer, "<!-- %s -->\n",  msGetVersion());     
+    /* sprintf(buffer, "<!-- %s -->\n",  msGetVersion());      */
 
     if(nBufferSize <= (int)(nCurrentSize + strlen(buffer) + 1)) {
       nExpandBuffer++;
@@ -2944,8 +2947,8 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
     strcat((*papszBuffer), buffer);
     nCurrentSize += strlen(buffer);
   } else if(pszMimeType) {
-      msIO_printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
-    // printf("<!-- %s -->\n", msGetVersion());
+      msIO_printf("Content-type: %s%c%c", pszMimeType, 10, 10); /* write MIME header */
+    /* printf("<!-- %s -->\n", msGetVersion()); */
     fflush(stdout);
   }
 
@@ -2953,7 +2956,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
     if(msReturnPage(msObj, msObj->Map->web.header, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
   }
 
-  msObj->RN = 1; // overall result number
+  msObj->RN = 1; /* overall result number */
   for(i=(msObj->Map->numlayers-1); i>=0; i--) {
     msObj->ResultLayer = lp = &(msObj->Map->layers[i]);
 
@@ -2966,15 +2969,15 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
       if(msReturnPage(msObj, lp->header, BROWSE, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
     }
 
-    // open this layer
+    /* open this layer */
     status = msLayerOpen(lp);
     if(status != MS_SUCCESS) return status;
 
-    // retrieve all the item names
+    /* retrieve all the item names */
     status = msLayerGetItems(lp);
     if(status != MS_SUCCESS) return status;
 
-    // open any necessary JOINs here
+    /* open any necessary JOINs here */
     if(lp->numjoins > 0) {
       for(k=0; k<lp->numjoins; k++) {
 	status = msJoinConnect(lp, &(lp->joins[k]));
@@ -2982,17 +2985,17 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
       }
     }  
 
-    msObj->LRN = 1; // layer result number
+    msObj->LRN = 1; /* layer result number */
     for(j=0; j<lp->resultcache->numresults; j++) {
       status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
       if(status != MS_SUCCESS) return status;
 
-      // prepare any necessary JOINs here (one-to-one only)
+      /* prepare any necessary JOINs here (one-to-one only) */
       if(lp->numjoins > 0) {
 	for(k=0; k<lp->numjoins; k++) {
 	  if(lp->joins[k].type == MS_JOIN_ONE_TO_ONE) {
 	    msJoinPrepare(&(lp->joins[k]), &(msObj->ResultShape));
-	    msJoinNext(&(lp->joins[k])); // fetch the first row
+	    msJoinNext(&(lp->joins[k])); /* fetch the first row */
 	  }
 	}
       }
@@ -3004,9 +3007,9 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 
       if(msReturnPage(msObj, template, QUERY, papszBuffer) != MS_SUCCESS) return MS_FAILURE;
 
-      msFreeShape(&(msObj->ResultShape)); // init too
+      msFreeShape(&(msObj->ResultShape)); /* init too */
 
-      msObj->RN++; // increment counters
+      msObj->RN++; /* increment counters */
       msObj->LRN++;
     }
 
@@ -3030,7 +3033,7 @@ mapservObj*  msAllocMapServObj()
    mapservObj* msObj = malloc(sizeof(mapservObj));
    
    msObj->SaveMap=MS_FALSE;
-   msObj->SaveQuery=MS_FALSE; // should the query and/or map be saved 
+   msObj->SaveQuery=MS_FALSE; /* should the query and/or map be saved  */
 
    msObj->request = msAllocCgiObj();
 
@@ -3285,8 +3288,8 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
             pszBuffer = NULL;
         }
 
-        // Don't free the map and names and values arrays since they were
-        // passed by ref
+        /* Don't free the map and names and values arrays since they were */
+        /* passed by ref */
         msObj->Map = NULL;
         msObj->request->ParamNames = msObj->request->ParamValues = NULL;
         msObj->request->NumParams = 0;
@@ -3332,8 +3335,8 @@ char *msProcessLegendTemplate(mapObj *map,
 
         pszOutBuf = generateLegendTemplate(msObj);
 
-        // Don't free the map and names and values arrays since they were
-        // passed by ref
+        /* Don't free the map and names and values arrays since they were */
+        /* passed by ref */
         msObj->Map = NULL;
         msObj->request->ParamNames = msObj->request->ParamValues = NULL;
         msObj->request->NumParams = 0;
@@ -3381,8 +3384,8 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages,
 
         msReturnQuery(msObj, NULL, &pszBuffer );
 
-        // Don't free the map and names and values arrays since they were
-        // passed by ref
+        /* Don't free the map and names and values arrays since they were */
+        /* passed by ref */
         msObj->Map = NULL;
         msObj->request->ParamNames = msObj->request->ParamValues = NULL;
         msObj->request->NumParams = 0;

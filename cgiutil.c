@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2005/02/18 03:06:44  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.19  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -188,7 +191,7 @@ int loadParams(cgiRequestObj *request){
     }
   }
 
-  // check for any available cookies
+  /* check for any available cookies */
   s = getenv("HTTP_COOKIE");
   if(s != NULL) {    
     for(x=0;s[0] != '\0';x++) {

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.20  2005/02/02 19:36:12  frank
  * Preliminary implementation of MS_SYMBOL_VECTOR in msDrawMarkerSymbolIM
  *
@@ -223,14 +226,14 @@ static int matchdxfcolor(colorObj col)
 		}
 	}
 	if (tcolor >= 256) tcolor = best;
-//DEBUG_IF	printf("%d/%d/%d (%d/%d - %d), %d : %d/%d/%d<BR>\n", ctable[tcolor].r, ctable[tcolor].g, ctable[tcolor].b, tcolor, best, delta, lastcolor, col.red, col.green, col.blue);
+/* DEBUG_IF	printf("%d/%d/%d (%d/%d - %d), %d : %d/%d/%d<BR>\n", ctable[tcolor].r, ctable[tcolor].g, ctable[tcolor].b, tcolor, best, delta, lastcolor, col.red, col.green, col.blue); */
 	lastcolor = tcolor;
 	return tcolor;
 }
 
 #ifdef notdef /* not currently used */
 static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, int size) {
-//  struct imageCacheObj *icp;
+/* struct imageCacheObj *icp; */
 DEBUG_IF printf("searchImageCache\n<BR>");
 /*
   icp = ic;
@@ -268,7 +271,7 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
   struct imageCacheObj *icp;
 DEBUG_IF printf("addImageCache\n<BR>");
 
-  if(*icsize > MS_IMAGECACHESIZE) { // remove last element, size stays the same
+  if(*icsize > MS_IMAGECACHESIZE) { /* remove last element, size stays the same */
     icp = ic;
     while(icp->next && icp->next->next) icp = icp->next;
     freeImageCache(icp->next);
@@ -285,17 +288,17 @@ DEBUG_IF printf("addImageCache\n<BR>");
   icp->color = style->color;
   icp->symbol = style->symbol;
   icp->size = size;
-  icp->next = ic; // insert at the beginning
+  icp->next = ic; /* insert at the beginning */
  
   return(icp);
 }
 #endif /* def notdef */
 
 
-//*
-// * Utility function to create a IM image. Returns
-// * a pointer to an imageObj structure.
- //  
+/*
+ * Utility function to create a IM image. Returns
+ * a pointer to an imageObj structure.
+ */
 imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
                           char *imagepath, char *imageurl)
 {
@@ -398,12 +401,12 @@ DEBUG_IF printf("msImageCreateIM<BR>\n");
     return image;
 }
 
-//*
-// * Utility function to initialize the color of an image.  The background
-// * color is passed, but the outputFormatObj is consulted to see if the
-// * transparency should be set (for RGBA images).   Note this function only
-// * affects TrueColor images. 
- //  
+/*
+ * Utility function to initialize the color of an image.  The background
+ * color is passed, but the outputFormatObj is consulted to see if the
+ * transparency should be set (for RGBA images).   Note this function only
+ * affects TrueColor images.
+ */
 
 void msImageInitIM( imageObj *image )
 
@@ -442,10 +445,10 @@ DEBUG_IF printf("msImageInitIM<BR>\n");
 */
 }
 
-//*
-// * Utility function to load an image in a IM supported format, and
-// * return it as a valid imageObj.
- //  
+/*
+ * Utility function to load an image in a IM supported format, and
+ * return it as a valid imageObj.
+ */
 imageObj *msImageLoadIM( const char *filename )
 {
 /*  FILE *stream;
@@ -531,7 +534,7 @@ imageObj *msImageLoadIM( const char *filename )
 
 #ifdef notdef /* not currently used */
 
-// TODO: might be a way to optimize this (halve the number of additions)
+/* TODO: might be a way to optimize this (halve the number of additions) */
 static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
 /*  int i, j;
@@ -565,7 +568,7 @@ static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offs
 
 static void imagePolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
-//  int i, j;
+/* int i, j; */
   
 DEBUG_IF printf("imagePolyline\n<BR>");
 /*
@@ -580,9 +583,9 @@ DEBUG_IF printf("imagePolyline\n<BR>");
 }
 #endif /* def notdef */
 
-// ---------------------------------------------------------------------------//
-//       Stroke an ellipse with a line symbol of the specified size and color //
-// ---------------------------------------------------------------------------//
+/* ------------------------------------------------------------------------- */
+/* Stroke an ellipse with a line symbol of the specified size and color      */
+/* ------------------------------------------------------------------------- */
 void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, double r, styleObj *style, double scalefactor)
 {
 /*  int i, j;
@@ -687,7 +690,7 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
       }
       brush_fc = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
       
-      // draw in the brush image 
+      // draw in the brush image
       for(i=0;i < symbol->numpoints;i++) {
 	points[i].x = MS_NINT(d*symbol->points[i].x);
 	points[i].y = MS_NINT(d*symbol->points[i].y);
@@ -731,9 +734,9 @@ void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *
   return;
 }
 
-// ------------------------------------------------------------------------------- //
-//       Fill a circle with a shade symbol of the specified size and color       //
-// ------------------------------------------------------------------------------- //
+/* ------------------------------------------------------------------------- */
+/* Fill a circle with a shade symbol of the specified size and color         */
+/* ------------------------------------------------------------------------- */
 void msCircleDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, 
                                pointObj *p, double r, styleObj *style, double scalefactor)
 {
@@ -779,7 +782,7 @@ DEBUG_IF printf("msCircleDrawShadeSymbolIM<BR>\n");
   if(fc ) return; // invalid color, -1 is valid
   if(size < 1) return; // size too small
       
-  if(style->symbol == 0) { // simply draw a single pixel of the specified color    
+  if(style->symbol == 0) { // simply draw a single pixel of the specified color
     msImageFilledCircle(img, p, r, fc);
     if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
     return;
@@ -943,9 +946,9 @@ DEBUG_IF printf("msCircleDrawShadeSymbolIM<BR>\n");
 }
 
 
-// ------------------------------------------------------------------------------- //
-//       Draw a single marker symbol of the specified size and color               //
-// ------------------------------------------------------------------------------- //
+/* ------------------------------------------------------------------------- */
+/* Draw a single marker symbol of the specified size and color               */
+/* ------------------------------------------------------------------------- */
 void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
@@ -969,21 +972,21 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
 	
 DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
 
-// skip this, we don't do text
+/* skip this, we don't do text */
 
 
 
   if(!p) return;
 
-//  if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor));
-//  if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color));
-//  if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor));
+/* if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor)); */
+/* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
+/* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
 
   symbol = &(symbolset->symbol[style->symbol]);
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
-  ox = style->offsetx; // TODO: add scaling?
+  ox = style->offsetx; /* TODO: add scaling? */
   oy = style->offsety;
   if(style->size == -1) {
       size = msSymbolGetDefaultSize( symbol );
@@ -994,13 +997,13 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
-//  if(fc<0 && oc<0) return; // nothing to do
-  if(size < 1) return; // size too small
+  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+/* if(fc<0 && oc<0) return; // nothing to do */
+  if(size < 1) return; /* size too small */
 
-//DEBUG_IF printf(".%d.%d.%d.", symbol->type, style->symbol, fc);
-  if(style->symbol == 0) { // simply draw a single pixel of the specified color //
-//    gdImageSetPixel(img, p->x + ox, p->y + oy, fc);
+/* DEBUG_IF printf(".%d.%d.%d.", symbol->type, style->symbol, fc); */
+  if(style->symbol == 0) { /* simply draw a single pixel of the specified color */
+/* gdImageSetPixel(img, p->x + ox, p->y + oy, fc); */
 		
     if (dxf) {
       if (dxf==2)
@@ -1032,8 +1035,8 @@ DEBUG_IF printf("msDrawMarkerSymbolIM\n<BR>");
 	       p->x + ox, p->y + oy);
     }
 		      
-	//        point2 = &( p->line[j].point[i] );
-	//        if(point1->y == point2->y) {}
+	/* point2 = &( p->line[j].point[i] ); */
+	/* if(point1->y == point2->y) {} */
     return;
   }  
 DEBUG_IF printf("A");
@@ -1119,10 +1122,10 @@ DEBUG_IF printf("V");
      offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
      offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
 
-     // For now I only render filled vector symbols in imagemap, and no
-     // dxf support available yet. 
+     /* For now I only render filled vector symbols in imagemap, and no */
+     /* dxf support available yet.  */
      if(symbol->filled && !dxf /* && fc >= 0 */ ) {
-//         char *title=(p->numvalues) ? p->values[0] : "";
+/* char *title=(p->numvalues) ? p->values[0] : ""; */
          char *title = "";
          int  j;
 
@@ -1151,30 +1154,30 @@ DEBUG_IF printf("V");
                          MS_NINT(d*symbol->points[j].y + offset_y) );
          }
          im_iprintf (&imgStr, "\" />\n");
-     } // end of imagemap, filled case.
+     } /* end of imagemap, filled case. */
  }
  break;
 
   default:
 DEBUG_IF printf("DEF");
     break;
-  } // end switch statement //
+  } /* end switch statement */
 
   return;
 }
 
-// ------------------------------------------------------------------------------- //
-//       Draw a line symbol of the specified size and color                        //
-// ------------------------------------------------------------------------------- //
+/* ------------------------------------------------------------------------- */
+/* Draw a line symbol of the specified size and color                        */
+/* ------------------------------------------------------------------------- */
 void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
-//  int styleDashed[100];
-//  int x, y;
-//  int brush_bc, brush_fc;
-//  double size, d;
-//  gdImagePtr brush=NULL;
-//  gdPoint points[MS_MAXVECTORPOINTS];
+/* int styleDashed[100]; */
+/* int x, y; */
+/* int brush_bc, brush_fc; */
+/* double size, d; */
+/* gdImagePtr brush=NULL; */
+/* gdPoint points[MS_MAXVECTORPOINTS]; */
   int fc, bc;
   int i,j,l;
 char first = 1;
@@ -1185,9 +1188,9 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
   if(!p) return;
   if(p->numlines <= 0) return;
 
-//  if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor));
-//  if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor));
-//  if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color));
+/* if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor)); */
+/* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
+/* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
 
   symbol = &(symbolset->symbol[style->symbol]);
   bc = style->backgroundcolor.pen;
@@ -1202,12 +1205,12 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
-  if (suppressEmpty && p->numvalues==0) return;//suppress area with empty title
-//  if(fc < 0) return; // nothing to do
-//  if(size < 1) return; // size too small
-  if(style->symbol == 0) { // just draw a single width line
-//    imagePolyline(img, p, fc, style->offsetx, style->offsety);
+  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; /* no such symbol, 0 is OK */
+  if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
+/* if(fc < 0) return; // nothing to do */
+/* if(size < 1) return; // size too small */
+  if(style->symbol == 0) { /* just draw a single width line */
+/* imagePolyline(img, p, fc, style->offsetx, style->offsety); */
 		  for(l=0,j=0; j<p->numlines; j++) {
 		    if (dxf == 2){
 		      im_iprintf (&imgStr, "LINE\n%d\n", matchdxfcolor(style->color));
@@ -1233,7 +1236,7 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 		      }
 		      im_iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
 		    }
-		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
+		/* point1 = &( p->line[j].point[p->line[j].numpoints-1] ); */
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
 				if (dxf == 2){
 					im_iprintf (&imgStr, "%.0f %.0f\n", p->line[j].point[i].x, p->line[j].point[i].y);
@@ -1244,13 +1247,13 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 				}
 				first = 0;
 			      
-		//        point2 = &( p->line[j].point[i] );
-		//        if(point1->y == point2->y) {}
+		/* point2 = &( p->line[j].point[i] ); */
+		/* if(point1->y == point2->y) {} */
 		      }
 		      im_iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
 
-//	DEBUG_IF printf ("%d, ",strlen(img->img.imagemap) );
+/* DEBUG_IF printf ("%d, ",strlen(img->img.imagemap) ); */
     return;
   }
 
@@ -1371,9 +1374,9 @@ DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
 }
 
 
-// ------------------------------------------------------------------------------- //
-//       Draw a shade symbol of the specified size and color                       //
-// ------------------------------------------------------------------------------- //
+/* ------------------------------------------------------------------------- */
+/* Draw a shade symbol of the specified size and color                       */
+/* ------------------------------------------------------------------------- */
 void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor)
 {
   symbolObj *symbol;
@@ -1395,14 +1398,14 @@ double size;
 DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   if(!p) return;
   if(p->numlines <= 0) return;
-//  if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor));
-//  if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color));
-//  if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor));
+/* if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->backgroundcolor)); */
+/* if(style->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->color)); */
+/* if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(style->outlinecolor)); */
 
   symbol = &(symbolset->symbol[style->symbol]);
-//  bc = style->backgroundcolor.pen;
-//  fc = style->color.pen;
-//  oc = style->outlinecolor.pen;
+/* bc = style->backgroundcolor.pen; */
+/* fc = style->color.pen; */
+/* oc = style->outlinecolor.pen; */
   if(style->size == -1) {
       size = msSymbolGetDefaultSize( symbol );
       size = MS_NINT(size*scalefactor);
@@ -1412,23 +1415,23 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
 
-//DEBUG_IF printf ("a");
-//  if(fc==-1 && oc!=-1) { // use msDrawLineSymbolIM() instead (POLYLINE)
-//    msDrawLineSymbolIM(symbolset, img, p, style, scalefactor);
-//    return;
-//  }
-//DEBUG_IF printf ("b");
+/* DEBUG_IF printf ("a"); */
+/* if(fc==-1 && oc!=-1) { // use msDrawLineSymbolIM() instead (POLYLINE) */
+/* msDrawLineSymbolIM(symbolset, img, p, style, scalefactor); */
+/* return; */
+/* } */
+/* DEBUG_IF printf ("b"); */
 
-//  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
-  if (suppressEmpty && p->numvalues==0) return;//suppress area with empty title
-//DEBUG_IF printf ("1");
-//  if(fc < 0) return; // nothing to do
-//DEBUG_IF printf ("2");
-//  if(size < 1) return; // size too small
-//DEBUG_IF printf ("3");
+/* if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK */
+  if (suppressEmpty && p->numvalues==0) return;/* suppress area with empty title */
+/* DEBUG_IF printf ("1"); */
+/* if(fc < 0) return; // nothing to do */
+/* DEBUG_IF printf ("2"); */
+/* if(size < 1) return; // size too small */
+/* DEBUG_IF printf ("3"); */
       
-//DEBUG_IF printf("BEF%s", img->img.imagemap);
-	  if(style->symbol == 0) { // simply draw a single pixel of the specified color //    
+/* DEBUG_IF printf("BEF%s", img->img.imagemap); */
+	  if(style->symbol == 0) { /* simply draw a single pixel of the specified color //     */
 		  for(l=0,j=0; j<p->numlines; j++) {
 		    if (dxf == 2){
 		      im_iprintf (&imgStr, "POLY\n%d\n", matchdxfcolor(style->color));
@@ -1455,7 +1458,7 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
 		      im_iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
 		    }
 
-		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
+		/* point1 = &( p->line[j].point[p->line[j].numpoints-1] ); */
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
 				if (dxf == 2){
 					im_iprintf (&imgStr, "%.0f %.0f\n", p->line[j].point[i].x, p->line[j].point[i].y);
@@ -1466,20 +1469,20 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
 				}
 				first = 0;
 			      
-		//        point2 = &( p->line[j].point[i] );
-		//        if(point1->y == point2->y) {}
+		/* point2 = &( p->line[j].point[i] ); */
+		/* if(point1->y == point2->y) {} */
 		      }
 		      im_iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
   
-//DEBUG_IF printf("AFT%s", img->img.imagemap);
-// STOOPID. GD draws polygons pixel by pixel ?!
+/* DEBUG_IF printf("AFT%s", img->img.imagemap); */
+/* STOOPID. GD draws polygons pixel by pixel ?! */
 	
-//    msImageFilledPolygon(img, p, fc);
-//    if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
+/* msImageFilledPolygon(img, p, fc); */
+/* if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety); */
   	     return;
 	  }
-//DEBUG_IF printf ("d");
+/* DEBUG_IF printf ("d"); */
   DEBUG_IF printf("-%d-",symbol->type);
 /*  
   switch(symbol->type) {
@@ -1641,8 +1644,8 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
 #ifdef notdef /* not currently used */
 static void billboardIM(imageObj* img, shapeObj *shape, labelObj *label)
 {
-//  int i;
-//  shapeObj temp;
+/* int i; */
+/* shapeObj temp; */
 DEBUG_IF printf("billboardIM<BR>\n");
 /*
   msInitShape(&temp);
@@ -1671,16 +1674,16 @@ DEBUG_IF printf("billboardIM<BR>\n");
 }
 #endif /* def notdef */
 
-//
-//** Simply draws a label based on the label point and the supplied label object.
-//
+/*
+ * Simply draws a label based on the label point and the supplied label object.
+ */
 int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
 {
   int x, y;
 		
 
   DEBUG_IF printf("msDrawText<BR>\n");
-  if(!string) return(0); // not errors, just don't want to do anything //
+  if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);
   if(!dxf) return (0);
   x = MS_NINT(labelPnt.x);
@@ -1835,13 +1838,13 @@ int msDrawLabelCacheIM(imageObj* img, mapObj *map)
 DEBUG_IF printf("msDrawLabelCacheIM\n<BR>");
 for(l=map->labelcache.numlabels-1; l>=0; l--) {
 
-    cachePtr = &(map->labelcache.labels[l]); // point to right spot in the label cache
+    cachePtr = &(map->labelcache.labels[l]); /* point to right spot in the label cache */
 
-    layerPtr = &(map->layers[cachePtr->layerindex]); // set a couple of other pointers, avoids nasty references
+    layerPtr = &(map->layers[cachePtr->layerindex]); /* set a couple of other pointers, avoids nasty references */
     labelPtr = &(cachePtr->label);
 
     if(!cachePtr->text || strlen(cachePtr->text) == 0)
-      continue; // not an error, just don't want to do anything
+      continue; /* not an error, just don't want to do anything */
 
     if(cachePtr->label.type == MS_TRUETYPE)
       cachePtr->label.size = (int)(cachePtr->label.size*layerPtr->scalefactor);
@@ -1850,12 +1853,12 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
       return(-1);
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
-      continue; // label too large relative to the feature //
+      continue; /* label too large relative to the feature */
 
-    marker_offset_x = marker_offset_y = 0; // assume no marker //
-    if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker      
+    marker_offset_x = marker_offset_y = 0; /* assume no marker */
+    if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { /* there *is* a marker       */
 
-      // TO DO: at the moment only checks the bottom style, perhaps should check all of them
+      /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
       if (msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
 	return(-1);
 
@@ -1884,10 +1887,10 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
       if(layerPtr->type == MS_LAYER_LINE) {
 	int position = MS_UC;
 
-	for(j=0; j<2; j++) { // Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. //
+	for(j=0; j<2; j++) { /* Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. */
 
 	  msFreeShape(cachePtr->poly);
-	  cachePtr->status = MS_TRUE; // assume label *can* be drawn //
+	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
 	  if(j == 1) {
 	    if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
@@ -1899,18 +1902,18 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
-	  if(!labelPtr->partials) { // check against image first
-//	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
-//	      cachePtr->status = MS_FALSE;
-//	      continue; // next angle
-//	    }
+	  if(!labelPtr->partials) { /* check against image first */
+/* if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) { */
+/* cachePtr->status = MS_FALSE; */
+/* continue; // next angle */
+/* } */
 	  }
 
-	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-	    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
-	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { // polys intersect //
+	  for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
+	    if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
+	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -1918,49 +1921,49 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 	  }
 
 	  if(!cachePtr->status)
-	    continue; // next angle
+	    continue; /* next angle */
 
-	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
-	    if(map->labelcache.labels[i].status == MS_TRUE) { // compare bounding polygons and check for duplicates //
+	  for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered labels */
+	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { // label is a duplicate //
+	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
 
-	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { // polys intersect //
+	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
 	    }
 	  }
 
-	  if(cachePtr->status) // found a suitable place for this label
+	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
 
-	} // next angle
+	} /* next angle */
 
       } else {
-	for(j=0; j<=7; j++) { // loop through the outer label positions //
+	for(j=0; j<=7; j++) { /* loop through the outer label positions */
 
 	  msFreeShape(cachePtr->poly);
-	  cachePtr->status = MS_TRUE; // assume label *can* be drawn //
+	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
 	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
 	  if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+	    msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon */
 
-	  if(!labelPtr->partials) { // check against image first
-//	    if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
-//	      cachePtr->status = MS_FALSE;
-//	      continue; // next position
-//	    }
+	  if(!labelPtr->partials) { /* check against image first */
+/* if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) { */
+/* cachePtr->status = MS_FALSE; */
+/* continue; // next position */
+/* } */
 	  }
 
-	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-	    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
-	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { // polys intersect //
+	  for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
+	    if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
+	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
@@ -1968,55 +1971,55 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 	  }
 
 	  if(!cachePtr->status)
-	    continue; // next position
+	    continue; /* next position */
 
-	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
-	    if(map->labelcache.labels[i].status == MS_TRUE) { // compare bounding polygons and check for duplicates //
+	  for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered labels */
+	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { // label is a duplicate //
+	      if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text,map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
 
-	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { // polys intersect //
+	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
 	    }
 	  }
 
-	  if(cachePtr->status) // found a suitable place for this label
+	  if(cachePtr->status) /* found a suitable place for this label */
 	    break;
-	} // next position
+	} /* next position */
       }
 
-      if(labelPtr->force) cachePtr->status = MS_TRUE; // draw in spite of collisions based on last position, need a *best* position //
+      if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
 
     } else {
 
-      cachePtr->status = MS_TRUE; // assume label *can* be drawn //
+      cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-      if(labelPtr->position == MS_CC) // don't need the marker_offset
+      if(labelPtr->position == MS_CC) /* don't need the marker_offset */
         p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
       else
         p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
       if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
-	msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon, part of overlap tests //
+	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
-      if(!labelPtr->force) { // no need to check anything else
+      if(!labelPtr->force) { /* no need to check anything else */
 
 	if(!labelPtr->partials) {
-//	  if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE)
-//	    cachePtr->status = MS_FALSE;
+/* if(labelInImage(img->sx, img->sy, cachePtr->poly, labelPtr->buffer) == MS_FALSE) */
+/* cachePtr->status = MS_FALSE; */
 	}
 
 	if(!cachePtr->status)
-	  continue; // next label
+	  continue; /* next label */
 
-	for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-	  if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
-	    if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { // polys intersect //
+	for(i=0; i<map->labelcache.nummarkers; i++) { /* compare against points already drawn */
+	  if(l != map->labelcache.markers[i].id) { /* labels can overlap their own marker */
+	    if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
@@ -2024,45 +2027,45 @@ for(l=map->labelcache.numlabels-1; l>=0; l--) {
 	}
 
 	if(!cachePtr->status)
-	  continue; // next label
+	  continue; /* next label */
 
-	for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
-	  if(map->labelcache.labels[i].status == MS_TRUE) { // compare bounding polygons and check for duplicates //
-	    if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text, map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { // label is a duplicate //
+	for(i=l+1; i<map->labelcache.numlabels; i++) { /* compare against rendered label */
+	  if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+	    if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->text, map->labelcache.labels[i].text) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
 
-	    if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { // polys intersect //
+	    if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
 	  }
 	}
       }
-    } // end position if-then-else //
+    } /* end position if-then-else */
 
-    // imagePolyline(img, cachePtr->poly, 1, 0, 0); //
+    /* imagePolyline(img, cachePtr->poly, 1, 0, 0); */
 
     if(!cachePtr->status)
-      continue; // next label //
+      continue; /* next label */
 
-//    if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { // need to draw a marker //
-//      for(i=0; i<cachePtr->numstyles; i++)
-//        msDrawMarkerSymbolIM(&map->symbolset, img, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
-//    }
+/* if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) { // need to draw a marker */
+/* for(i=0; i<cachePtr->numstyles; i++) */
+/* msDrawMarkerSymbolIM(&map->symbolset, img, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor); */
+/* } */
 
-//    if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardIM(img, cachePtr->poly, labelPtr);
-    msDrawTextIM(img, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); // actually draw the label, we scaled it in msAddLabel
+/* if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardIM(img, cachePtr->poly, labelPtr); */
+    msDrawTextIM(img, p, cachePtr->text, labelPtr, &(map->fontset), layerPtr->scalefactor); /* actually draw the label, we scaled it in msAddLabel */
 
-  } // next label in cache //
+  } /* next label in cache */
 
   return(0);
 }
 
-//
-//** Save an image to a file named filename, if filename is NULL it goes to stdout
-//
+/*
+ * Save an image to a file named filename, if filename is NULL it goes to stdout
+ */
 
 int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format )
 
@@ -2076,12 +2079,12 @@ if(filename != NULL && strlen(filename) > 0) {
       msSetError(MS_IOERR, "(%s)", "msSaveImage()", filename);
       return(MS_FAILURE);
     }
-  } else { // use stdout //
+  } else { /* use stdout */
 
 #ifdef _WIN32
-    //
-   //Change stdout mode to binary on win32 platforms
-    //
+    /*
+     * Change stdout mode to binary on win32 platforms
+     */
     if(_setmode( _fileno(stdout), _O_BINARY) == -1) {
       msSetError(MS_IOERR, "Unable to change stdout to binary mode.", "msSaveImage()");
       return(MS_FAILURE);
@@ -2100,7 +2103,7 @@ if(filename != NULL && strlen(filename) > 0) {
   if( strcasecmp(format->driver,"imagemap") == 0 )
   {
 DEBUG_IF printf("ALLOCD %d<BR>\n", img->size);
-//DEBUG_IF printf("F %s<BR>\n", img->img.imagemap);
+/* DEBUG_IF printf("F %s<BR>\n", img->img.imagemap); */
 DEBUG_IF printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
 	  if (dxf == 2){
 	    msIO_fprintf(stream, "%s", layerlist); 
@@ -2137,9 +2140,9 @@ DEBUG_IF printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
 }
 
 
-//*
-// * Free gdImagePtr
- //
+/*
+ * Free gdImagePtr
+ */
 void msFreeImageIM(imageObj* img)
 {
   free(img->img.imagemap);

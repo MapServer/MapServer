@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.51  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.50  2005/01/03 15:43:38  assefa
  * Correct bug 1151 : generates twice a </Mark> tag. This was happening the
  * style did not have a size set.
@@ -236,7 +239,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
 {
 #ifdef USE_OGR
 
-//needed for libcurl function msHTTPGetFile in maphttp.c
+/* needed for libcurl function msHTTPGetFile in maphttp.c */
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
     char *pszSLDTmpFile = NULL;
@@ -374,7 +377,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
                         map->layers[i].classitem = strdup(pasLayers[j].classitem);
                     }
                     
-                    //transparency for sld raster (opacity parameter)
+                    /* transparency for sld raster (opacity parameter) */
                     if (map->layers[i].type == MS_LAYER_RASTER && 
                         pasLayers[j].transparency != -1)
                       map->layers[i].transparency = pasLayers[j].transparency;
@@ -498,7 +501,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
         return NULL;
     }
 
-    //strip namespaces ogc and sld and gml
+    /* strip namespaces ogc and sld and gml */
     CPLStripXMLNamespace(psRoot, "ogc", 1); 
     CPLStripXMLNamespace(psRoot, "sld", 1); 
     CPLStripXMLNamespace(psRoot, "gml", 1); 
@@ -741,7 +744,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                             psRule = psRule->psNext;
                             continue;
                         }
-                        //used for scale setting
+                        /* used for scale setting */
                         nClassBeforeRule = psLayer->numclasses;
 
                         psElseFilter = CPLGetXMLNode(psRule, "ElseFilter");
@@ -760,8 +763,8 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                             psFilter->psChild->pszValue)
                         {
                             
-                            //clone the tree and set the next node to null
-                            //so we only have the Filter node
+                            /* clone the tree and set the next node to null */
+                            /* so we only have the Filter node */
                             psTmpNode = CPLCloneXMLTree(psFilter);
                             psTmpNode->psNext = NULL;
                             pszTmpFilter = CPLSerializeXMLTree(psTmpNode);
@@ -769,11 +772,11 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                             if (pszTmpFilter)
                             {
-                            //nTmp = strlen(psFilter->psChild->pszValue)+17;
-                            //pszTmpFilter = malloc(sizeof(char)*nTmp);
-                            //sprintf(pszTmpFilter,"<Filter>%s</Filter>",
-                            //        psFilter->psChild->pszValue);
-                            //pszTmpFilter[nTmp-1]='\0';
+                            /* nTmp = strlen(psFilter->psChild->pszValue)+17; */
+                            /* pszTmpFilter = malloc(sizeof(char)*nTmp); */
+                            /* sprintf(pszTmpFilter,"<Filter>%s</Filter>", */
+                            /* psFilter->psChild->pszValue); */
+                            /* pszTmpFilter[nTmp-1]='\0'; */
                                 psNode = FLTParseFilterEncoding(pszTmpFilter);
                             
                                 CPLFree(pszTmpFilter);
@@ -811,10 +814,10 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                         nClassAfterRule = psLayer->numclasses;
                         nNewClasses = nClassAfterRule - nClassBeforeRule;
 
-                        //apply scale and title to newly created classes
+                        /* apply scale and title to newly created classes */
                         _SLDApplyRuleValues(psRule, psLayer, nNewClasses);
 
-                        //TODO : parse legendgraphic
+                        /* TODO : parse legendgraphic */
                         psRule = psRule->psNext;
 
                     }
@@ -844,7 +847,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 
     if (psRoot && psLayer)
     {
-        //TODO : parse name of the rule
+        /* TODO : parse name of the rule */
 /* -------------------------------------------------------------------- */
 /*      The SLD specs assumes here that a certain FeatureType can only have*/
 /*      rules for only one type of symbolizer.                          */
@@ -856,7 +859,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 /* ==================================================================== */
         nSymbolizer =0;
  
-        //line symbolizer
+        /* line symbolizer */
         psLineSymbolizer = CPLGetXMLNode(psRoot, "LineSymbolizer");
         while (psLineSymbolizer)
         {
@@ -880,7 +883,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             nSymbolizer++;
         }
 
-        //Polygon symbolizer
+        /* Polygon symbolizer */
         psPolygonSymbolizer = CPLGetXMLNode(psRoot, "PolygonSymbolizer");
         while (psPolygonSymbolizer)        
         {
@@ -902,7 +905,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             psLayer->type = MS_LAYER_POLYGON;
             nSymbolizer++;
         }
-        //Point Symbolizer
+        /* Point Symbolizer */
         psPointSymbolizer = CPLGetXMLNode(psRoot, "PointSymbolizer");
         while (psPointSymbolizer)
         {
@@ -923,7 +926,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             psLayer->type = MS_LAYER_POINT;
             nSymbolizer++;
         }
-        //Text symbolizer
+        /* Text symbolizer */
 /* ==================================================================== */
 /*      For text symbolizer, here is how it is translated into          */
 /*      mapserver classes :                                             */
@@ -952,7 +955,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
             psTextSymbolizer = psTextSymbolizer->psNext;
         }
 
-        //Raster symbolizer
+        /* Raster symbolizer */
         psRasterSymbolizer = CPLGetXMLNode(psRoot, "RasterSymbolizer");
         while (psRasterSymbolizer && psRasterSymbolizer->pszValue && 
                strcasecmp(psRasterSymbolizer->pszValue, 
@@ -1073,7 +1076,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
 
     if (psStroke && psStyle)
     {
-        //parse css parameters
+        /* parse css parameters */
         psCssParam =  CPLGetXMLNode(psStroke, "CssParameter");
             
         while (psCssParam && psCssParam->pszValue && 
@@ -1092,7 +1095,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                     if (psColor)
                     {
                         nLength = strlen(psColor);
-                        //expecting hexadecimal ex : #aaaaff
+                        /* expecting hexadecimal ex : #aaaaff */
                         if (nLength == 7 && psColor[0] == '#')
                         {
                             if (iColorParam == 0)
@@ -1124,7 +1127,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                         psStyle->size = 
                           atoi(psCssParam->psChild->psNext->pszValue);
                                 
-                        //use an ellipse symbol for the width
+                        /* use an ellipse symbol for the width */
                         if (psStyle->symbol <=0)
                         {
                             psStyle->symbol = 
@@ -1143,7 +1146,7 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                     {
                         pszDashValue = 
                           strdup(psCssParam->psChild->psNext->pszValue);
-                        //use an ellipse symbol with dash arrays
+                        /* use an ellipse symbol with dash arrays */
                         psStyle->symbol = 
                           msSLDGetDashLineSymbol(map, 
                                                  psCssParam->psChild->psNext->pszValue);
@@ -1157,11 +1160,11 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
             psCssParam = psCssParam->psNext;
         }
 
-        //parse graphic fill or stroke
-        //graphic fill and graphic stroke pare parsed the same way : 
-        //TODO : It seems inconsistent to me since the only diffrence
-        //between them seems to be fill (fill) or not fill (stroke). And
-        //then again the fill parameter can be used inside both elements.
+        /* parse graphic fill or stroke */
+        /* graphic fill and graphic stroke pare parsed the same way :  */
+        /* TODO : It seems inconsistent to me since the only diffrence */
+        /* between them seems to be fill (fill) or not fill (stroke). And */
+        /* then again the fill parameter can be used inside both elements. */
         psGraphicFill =  CPLGetXMLNode(psStroke, "GraphicFill");
         if (psGraphicFill)
           msSLDParseGraphicFillOrStroke(psGraphicFill, pszDashValue, psStyle, map, 0);
@@ -1279,8 +1282,8 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
             msSLDParsePolygonFill(psFill, &psLayer->class[nClassId].styles[iStyle],
                                   psLayer->map);
         }
-        //stroke wich corresponds to the outilne in mapserver
-        //is drawn after the fill
+        /* stroke wich corresponds to the outilne in mapserver */
+        /* is drawn after the fill */
         psStroke =  CPLGetXMLNode(psRoot, "Stroke");
         if (psStroke)
         {
@@ -1333,7 +1336,7 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
 
     if (psFill && psStyle && map)
     {
-        //sets the default fill color defined in the spec #808080
+        /* sets the default fill color defined in the spec #808080 */
         psStyle->color.red = 128;
         psStyle->color.green = 128;
         psStyle->color.blue = 128;
@@ -1354,7 +1357,7 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
                     if (psColor)
                     {
                         nLength = strlen(psColor);
-                        //expecting hexadecimal ex : #aaaaff
+                        /* expecting hexadecimal ex : #aaaaff */
                         if (nLength == 7 && psColor[0] == '#')
                         {
                             psStyle->color.red = hex2int(psColor+1);
@@ -1367,10 +1370,10 @@ void msSLDParsePolygonFill(CPLXMLNode *psFill, styleObj *psStyle,
             psCssParam = psCssParam->psNext;
         }
         
-        //graphic fill and graphic stroke pare parsed the same way : 
-        //TODO : It seems inconsistent to me since the only diffrence
-        //between them seems to be fill (fill) or not fill (stroke). And
-        //then again the fill parameter can be used inside both elements.
+        /* graphic fill and graphic stroke pare parsed the same way :  */
+        /* TODO : It seems inconsistent to me since the only diffrence */
+        /* between them seems to be fill (fill) or not fill (stroke). And */
+        /* then again the fill parameter can be used inside both elements. */
         psGraphicFill =  CPLGetXMLNode(psFill, "GraphicFill");
         if (psGraphicFill)
           msSLDParseGraphicFillOrStroke(psGraphicFill, NULL, psStyle, map, 0);
@@ -1416,14 +1419,14 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
         psGraphic =  CPLGetXMLNode(psRoot, "Graphic");
         if (psGraphic)
         {
-            //extract symbol size
+            /* extract symbol size */
             psSize = CPLGetXMLNode(psGraphic, "Size");
             if (psSize && psSize->psChild && psSize->psChild->pszValue)
               psStyle->size = atoi(psSize->psChild->pszValue);
             else
-              psStyle->size = 6; //defualt value
+              psStyle->size = 6; /* defualt value */
 
-            //extract symbol
+            /* extract symbol */
             psMark =  CPLGetXMLNode(psGraphic, "Mark");
             if (psMark)
             {
@@ -1434,7 +1437,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                   pszSymbolName = 
                     strdup(psWellKnownName->psChild->pszValue);
                     
-                //default symbol is square
+                /* default symbol is square */
                 if (!pszSymbolName || 
                     (strcasecmp(pszSymbolName, "square") != 0 &&
                      strcasecmp(pszSymbolName, "circle") != 0 &&
@@ -1446,7 +1449,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                     
                 
                 
-                //check if the symbol should be filled or not
+                /* check if the symbol should be filled or not */
                 psFill = CPLGetXMLNode(psMark, "Fill");
                 psStroke = CPLGetXMLNode(psMark, "Stroke");
                     
@@ -1514,9 +1517,9 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                                     nLength = strlen(psColor);
                                     if (nLength == 7 && psColor[0] == '#')
                                     {
-                                        //we should set the color for point layers since the
-                                        //outline color is not used when 
-                                        //rendering symbols
+                                        /* we should set the color for point layers since the */
+                                        /* outline color is not used when  */
+                                        /* rendering symbols */
                                         if (bPointLayer)
                                           msSLDSetColorObject(psColor,
                                                            &psStyle->color);
@@ -1534,7 +1537,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                     }
                     
 
-                     //set the default color if color is not not already set
+                     /* set the default color if color is not not already set */
                     if ((psStyle->color.red < 0 || 
                         psStyle->color.green == -1 ||
                          psStyle->color.blue == -1) &&
@@ -1548,7 +1551,7 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                     }
                     
                 }
-                //Get the corresponding symbol id 
+                /* Get the corresponding symbol id  */
                 psStyle->symbol = msSLDGetMarkSymbol(map, pszSymbolName, 
                                                      bFilled, pszDashValue);
                 if (psStyle->symbol > 0 &&
@@ -1590,7 +1593,7 @@ int msSLDGetLineSymbol(mapObj *map)
     if(map->symbolset.numsymbols == MS_MAXSYMBOLS) 
     { 
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msSLDGetLineSymbol()");
-        return 0; //returs 0 for no symbol
+        return 0; /* returs 0 for no symbol */
     }
 
     psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
@@ -1635,7 +1638,7 @@ int msSLDGetDashLineSymbol(mapObj *map, char *pszDashArray)
     if(map->symbolset.numsymbols == MS_MAXSYMBOLS) 
     { 
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msSLDGetDashLineSymbol()");
-        return 0; //returs 0 for no symbol
+        return 0; /* returs 0 for no symbol */
     }
 
     psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
@@ -1777,7 +1780,7 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         {    
             msSetError(MS_SYMERR, "Too many symbols defined.", 
                        "msSLDGetMarkSymbol()");
-            return 0; //returs 0 for no symbol
+            return 0; /* returs 0 for no symbol */
         }
         psSymbol = &map->symbolset.symbol[map->symbolset.numsymbols];
         nSymbolId = map->symbolset.numsymbols;
@@ -1911,18 +1914,18 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
             psSymbol->points[psSymbol->numpoints].y = 0.625;
             psSymbol->numpoints++;
         }
-        //cross is like plus (+) since there is also X symbol ??
+        /* cross is like plus (+) since there is also X symbol ?? */
         else if (strcasecmp(pszSymbolName, "cross") == 0)
         {
-            //NEVER FILL CROSS
-            //if (bFilled)
-            //  psSymbol->name = strdup(SLD_MARK_SYMBOL_CROSS_FILLED);
-            //else
+            /* NEVER FILL CROSS */
+            /* if (bFilled) */
+            /* psSymbol->name = strdup(SLD_MARK_SYMBOL_CROSS_FILLED); */
+            /* else */
               psSymbol->name = strdup(SLD_MARK_SYMBOL_CROSS);
             
             psSymbol->type = MS_SYMBOL_VECTOR;
-            //if (bFilled)
-            // psSymbol->filled = MS_TRUE;
+            /* if (bFilled) */
+            /* psSymbol->filled = MS_TRUE; */
 
             psSymbol->points[psSymbol->numpoints].x = 0.5;
             psSymbol->points[psSymbol->numpoints].y = 0;
@@ -1942,15 +1945,15 @@ int msSLDGetMarkSymbol(mapObj *map, char *pszSymbolName, int bFilled,
         }
         else if (strcasecmp(pszSymbolName, "x") == 0)
         {
-            //NEVER FILL X
-            //if (bFilled)
-            //  psSymbol->name = strdup(SLD_MARK_SYMBOL_X_FILLED);
-            //else
+            /* NEVER FILL X */
+            /* if (bFilled) */
+            /* psSymbol->name = strdup(SLD_MARK_SYMBOL_X_FILLED); */
+            /* else */
               psSymbol->name = strdup(SLD_MARK_SYMBOL_X);
             
             psSymbol->type = MS_SYMBOL_VECTOR;
-            //if (bFilled)
-            //  psSymbol->filled = MS_TRUE;
+            /* if (bFilled) */
+            /* psSymbol->filled = MS_TRUE; */
             psSymbol->points[psSymbol->numpoints].x = 0;
             psSymbol->points[psSymbol->numpoints].y = 0;
             psSymbol->numpoints++;
@@ -1991,7 +1994,7 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName)
 
     if (map && pszFileName)
     {
-        //check if a symbol of a 
+        /* check if a symbol of a  */
         fp = fopen(pszFileName, "rb");
         if (fp)
         {
@@ -2083,7 +2086,7 @@ void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic, 
                                styleObj *psStyle,  mapObj *map)
 {
-//needed for libcurl function msHTTPGetFile in maphttp.c
+/* needed for libcurl function msHTTPGetFile in maphttp.c */
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
 
     char *pszFormat = NULL;
@@ -2097,13 +2100,13 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
         if (psFormat && psFormat->psChild && psFormat->psChild->pszValue)
           pszFormat = psFormat->psChild->pszValue;
 
-        //supports GIF and PNG
+        /* supports GIF and PNG */
         if (pszFormat && 
             (strcasecmp(pszFormat, "GIF") == 0 ||
              strcasecmp(pszFormat, "PNG") == 0))
         {
           
-          //<OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.vendor.com/geosym/2267.svg"/>
+          /* <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href="http://www.vendor.com/geosym/2267.svg"/> */
             psURL = CPLGetXMLNode(psExternalGraphic, "OnlineResource");
             if (psURL && psURL->psChild)
             {
@@ -2132,8 +2135,8 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                           psStyle->symbolname = 
                             strdup(map->symbolset.symbol[psStyle->symbol].name);
 
-                        //set the color parameter if not set. Does not make sense
-                        //for pixmap but mapserver needs it.
+                        /* set the color parameter if not set. Does not make sense */
+                        /* for pixmap but mapserver needs it. */
                         if (psStyle->color.red == -1 || psStyle->color.green ||
                             psStyle->color.blue)
                         {
@@ -2262,11 +2265,11 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
         else
         {
             nClassId = psLayer->numclasses - 1;
-            if (nClassId >= 0)//should always be true
+            if (nClassId >= 0)/* should always be true */
               nStyleId = psLayer->class[nClassId].numstyles -1;
         }
 
-        if (nStyleId >= 0 && nClassId >= 0) //should always be true
+        if (nStyleId >= 0 && nClassId >= 0) /* should always be true */
           msSLDParseTextParams(psRoot, psLayer,
                                &psLayer->class[nClassId]);
     }
@@ -2338,7 +2341,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
         if (psOpacity->psChild && psOpacity->psChild->pszValue)
           dfOpacity = atof(psOpacity->psChild->pszValue);
         
-        //values in sld goes from 0.0 (for transparent) to 1.0 (for full opacity);
+        /* values in sld goes from 0.0 (for transparent) to 1.0 (for full opacity); */
         if (dfOpacity >=0.0 && dfOpacity <=1.0)
           psLayer->transparency = (int)(dfOpacity * 100);
         else
@@ -2368,7 +2371,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                         sColor.green= hex2int(pszPreviousColor+3);
                         sColor.blue = hex2int(pszPreviousColor+5);
 
-                        //?? Test if pszPreviousQuality < pszQuantity
+                        /* ?? Test if pszPreviousQuality < pszQuantity */
                         sprintf(szExpression, 
                                 "([pixel] >= %d AND [pixel] < %d)",
                                 atoi(pszPreviousQuality), 
@@ -2414,7 +2417,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
             }
             psColorEntry = psColorEntry->psNext;
         }
-        //do the last Color Map Entry
+        /* do the last Color Map Entry */
         if (pszColor && pszQuantity)
         {
             if (strlen(pszColor) == 7 && pszColor[0] == '#')
@@ -2474,22 +2477,22 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
 
     if (psRoot && psClass && psLayer)
     {
-        //label 
-        //support only literal expression instead of propertyname
+        /* label  */
+        /* support only literal expression instead of propertyname */
         psLabel = CPLGetXMLNode(psRoot, "Label");
         if (psLabel )
         {
             if (psLabel->psChild && psLabel->psChild->pszValue)
-            //psPropertyName = CPLGetXMLNode(psLabel, "PropertyName");
-              //if (psPropertyName && psPropertyName->psChild &&
-              //psPropertyName->psChild->pszValue)
+            /* psPropertyName = CPLGetXMLNode(psLabel, "PropertyName"); */
+              /* if (psPropertyName && psPropertyName->psChild && */
+              /* psPropertyName->psChild->pszValue) */
             {
                 if (psLayer->labelitem)
                   free (psLayer->labelitem);
                 psLayer->labelitem = strdup(psLabel->psChild->pszValue);
-                  //strdup(psPropertyName->psChild->pszValue);
+                  /* strdup(psPropertyName->psChild->pszValue); */
 
-                //font
+                /* font */
                 psFont = CPLGetXMLNode(psRoot, "Font");
                 if (psFont)
                 {
@@ -2506,21 +2509,21 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                                   psCssParam->psChild->psNext->pszValue)
                                   pszFontFamily = psCssParam->psChild->psNext->pszValue;
                             }
-                            //normal, italic, oblique
+                            /* normal, italic, oblique */
                             else if (strcasecmp(pszName, "font-style") == 0)
                             {
                                 if(psCssParam->psChild && psCssParam->psChild->psNext && 
                                    psCssParam->psChild->psNext->pszValue)
                                   pszFontStyle = psCssParam->psChild->psNext->pszValue;
                             }
-                            //normal or bold
+                            /* normal or bold */
                             else if (strcasecmp(pszName, "font-weight") == 0)
                             {
                                  if(psCssParam->psChild && psCssParam->psChild->psNext && 
                                    psCssParam->psChild->psNext->pszValue)
                                   pszFontWeight = psCssParam->psChild->psNext->pszValue;
                             }
-                            //default is 10 pix
+                            /* default is 10 pix */
                             else if (strcasecmp(pszName, "font-size") == 0)
                             {
 
@@ -2607,7 +2610,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                                 if (pszColor)
                                 {
                                     nLength = strlen(pszColor);
-                                    //expecting hexadecimal ex : #aaaaff
+                                    /* expecting hexadecimal ex : #aaaaff */
                                     if (nLength == 7 && pszColor[0] == '#')
                                     {
                                         psClass->label.color.red = hex2int(pszColor+1);
@@ -2621,9 +2624,9 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                     }
                 }
             
-            }//labelitem
+            }/* labelitem */
         }
-        //TODO : support Halo parameter => shadow
+        /* TODO : support Halo parameter => shadow */
     }
 }
 
@@ -2641,7 +2644,7 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
 
     if (psRoot && psClass)
     {
-        //init the label with the default position
+        /* init the label with the default position */
         psClass->label.position = MS_CL;
 
 /* -------------------------------------------------------------------- */
@@ -2653,7 +2656,7 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
         {
             psAnchorX = CPLGetXMLNode(psAnchor, "AnchorPointX");
             psAnchorY = CPLGetXMLNode(psAnchor, "AnchorPointY");
-            //psCssParam->psChild->psNext->pszValue)
+            /* psCssParam->psChild->psNext->pszValue) */
             if (psAnchorX &&
                 psAnchorX->psChild && 
                 psAnchorX->psChild->pszValue &&
@@ -2699,7 +2702,7 @@ void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass)
         {
             psDisplacementX = CPLGetXMLNode(psDisplacement, "DisplacementX");
             psDisplacementY = CPLGetXMLNode(psDisplacement, "DisplacementY");
-            //psCssParam->psChild->psNext->pszValue)
+            /* psCssParam->psChild->psNext->pszValue) */
             if (psDisplacementX &&
                 psDisplacementX->psChild && 
                 psDisplacementX->psChild->pszValue &&
@@ -2877,7 +2880,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
             if (psSymbol->type == MS_SYMBOL_VECTOR || 
                 psSymbol->type == MS_SYMBOL_ELLIPSE)
             {
-                //Mark symbol
+                /* Mark symbol */
                 if (psSymbol->name)
                     
                 {
@@ -3044,7 +3047,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         sprintf(szTmp, "<OnlineResource>%s%s</OnlineResource>\n", 
                                 pszURL,psSymbol->imagepath);
                         pszSLD = strcatalloc(pszSLD, szTmp);
-                        //TODO : extract format from symbol
+                        /* TODO : extract format from symbol */
 
                         szFormat[0] = '\0';
                         nLength = strlen(psSymbol->imagepath);
@@ -3080,7 +3083,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                     
             }
         }
-        if (bGenerateDefaultSymbol) //genrate a default square symbol
+        if (bGenerateDefaultSymbol) /* genrate a default square symbol */
         {
             sprintf(szTmp, "%s\n", "<Graphic>");
             pszSLD = strcatalloc(pszSLD, szTmp);
@@ -3127,7 +3130,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
             }
             if (!bColorAvailable)
             {       
-                //default color
+                /* default color */
                 sprintf(szTmp, 
                         "<CssParameter name=\"fill\">%s</CssParameter>\n",
                         "#808080");
@@ -3181,8 +3184,8 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
     sprintf(szTmp, "%s\n",  "<Stroke>");
     pszSLD = strcatalloc(pszSLD, szTmp);
 
-    //TODO : does not work (color is not picked)
-    //pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer);
+    /* TODO : does not work (color is not picked) */
+    /* pszGraphicSLD = msSLDGetGraphicSLD(psStyle, psLayer); */
     if (pszGraphicSLD)
     {
         sprintf(szTmp, "%s\n",  "<GraphicFill>");
@@ -3212,8 +3215,8 @@ char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
       nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
                                  psStyle->symbolname, MS_FALSE);
                             
-    //if no symbol or symbol 0 is used, size is set to 1
-    //which is the way mapserver works
+    /* if no symbol or symbol 0 is used, size is set to 1 */
+    /* which is the way mapserver works */
     if (nSymbol <=0)
       nSize = 1;
     else
@@ -3273,7 +3276,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
 
     sprintf(szTmp, "%s\n",  "<PolygonSymbolizer>");
     pszSLD = strcatalloc(pszSLD, szTmp);
-    //fill
+    /* fill */
     if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
         psStyle->color.blue != -1)
     {
@@ -3308,7 +3311,7 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
         sprintf(szTmp, "%s\n",  "</Fill>");
         pszSLD = strcatalloc(pszSLD, szTmp);
     }
-    //stroke
+    /* stroke */
     if (psStyle->outlinecolor.red != -1 && 
         psStyle->outlinecolor.green != -1 &&
         psStyle->outlinecolor.blue != -1)
@@ -3318,8 +3321,8 @@ char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
 
         
 
-        //If there is a symbol to be used for sroke, the color in the
-        //style sholud be set to -1. Else It won't apply here.
+        /* If there is a symbol to be used for sroke, the color in the */
+        /* style sholud be set to -1. Else It won't apply here. */
         if (psStyle->color.red == -1 && psStyle->color.green == -1 &&
             psStyle->color.blue == -1)
         {
@@ -3428,7 +3431,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
                 sprintf(szTmp, "%s\n",  "<Font>");
                 pszSLD = strcatalloc(pszSLD, szTmp);
 
-                //assuming first one is font-family
+                /* assuming first one is font-family */
                 sprintf(szTmp, 
                         "<CssParameter name=\"font-family\">%s</CssParameter>\n",
                         aszFontsParts[0]);
@@ -3451,7 +3454,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
                         pszSLD = strcatalloc(pszSLD, szTmp);
                     }
                 }
-                //size
+                /* size */
                 if (psClass->label.size > 0)
                 {
                     sprintf(szTmp, 
@@ -3467,7 +3470,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
         }
         
         
-        //label placement
+        /* label placement */
         sprintf(szTmp, "%s\n%s\n",  "<LabelPlacement>", "<PointPlacement>");
         pszSLD = strcatalloc(pszSLD, szTmp);
 
@@ -3529,7 +3532,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
         sprintf(szTmp, "%s\n",  "</AnchorPoint>");
         pszSLD = strcatalloc(pszSLD, szTmp);
 
-        //displacement
+        /* displacement */
         if (psClass->label.offsetx > 0 || psClass->label.offsety > 0)
         {
             sprintf(szTmp, "%s\n",  "<Displacement>");
@@ -3551,7 +3554,7 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
             sprintf(szTmp, "%s\n",  "</Displacement>");
             pszSLD = strcatalloc(pszSLD, szTmp);
         }
-        //rotation
+        /* rotation */
         if (psClass->label.angle > 0)
         {
             sprintf(szTmp, "<Rotation>%.2f</Rotation>\n", 
@@ -3559,13 +3562,13 @@ char *msSLDGenerateTextSLD(classObj *psClass, layerObj *psLayer)
             pszSLD = strcatalloc(pszSLD, szTmp);
         }
 
-         //TODO : support Halo parameter => shadow
+         /* TODO : support Halo parameter => shadow */
 
         sprintf(szTmp, "%s\n%s\n",  "</PointPlacement>", "</LabelPlacement>");
         pszSLD = strcatalloc(pszSLD, szTmp);
 
 
-        //color
+        /* color */
         if (psClass->label.color.red != -1 &&
             psClass->label.color.green != -1 &&
             psClass->label.color.blue != -1)
@@ -3671,7 +3674,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 sprintf(szTmp, "%s\n",  "<Rule>");
                 pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
-                //if class has a name, use it as the RULE name
+                /* if class has a name, use it as the RULE name */
                 if (psLayer->class[i].name)
                 {
                     pszEncoded = msEncodeHTMLEntities(psLayer->class[i].name);
@@ -3684,7 +3687,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 /*      get the Filter if there is a class expression.                  */
 /* -------------------------------------------------------------------- */
                 pszFilter = msSLDGetFilter(&psLayer->class[i], 
-                                           pszWfsFilter);//pszWfsFilterEncoded);
+                                           pszWfsFilter);/* pszWfsFilterEncoded); */
                     
                 if (pszFilter)
                 {
@@ -3787,7 +3790,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                     } 
                     
                 }
-                //label if it exists
+                /* label if it exists */
                 pszSLD = msSLDGenerateTextSLD(&psLayer->class[i], psLayer);
                 if (pszSLD)
                 {
@@ -3865,7 +3868,7 @@ char *msSLDGetLogicalOperator(char *pszExpression)
     if (!pszExpression)
       return NULL;
 
-    //TODO for NOT
+    /* TODO for NOT */
 
     if(strstr(pszExpression, " AND ") || strstr(pszExpression, "AND("))
       return strdup("AND");
@@ -4039,7 +4042,7 @@ int msSLDNumberOfLogicalOperators(char *pszExpression)
     if (!pszAnd && !pszOr && !pszNot)
       return 0;
 
-    //doen not matter how many exactly if there are 2 or more
+    /* doen not matter how many exactly if there are 2 or more */
     if ((pszAnd && pszOr) || (pszAnd && pszNot) || (pszOr && pszNot)) 
       return 2;
 
@@ -4336,13 +4339,13 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
 {
     char *apszExpression[20]; 
     int nLength = 0;
-    //int bInsideExpression = 0;
+    /* int bInsideExpression = 0; */
     int i =0, nOperators=0;
     char *pszFinalExpression = NULL;
-    int iFinal = 0, iIndiceExp=0, nOpeningBrackets=0;// nIndice=0;
-    //    char szTmp[6];
+    int iFinal = 0, iIndiceExp=0, nOpeningBrackets=0;/* nIndice=0; */
+    /* char szTmp[6]; */
     int iExpression = 0;
-    //    char *pszSimplifiedExpression = NULL;
+    /* char *pszSimplifiedExpression = NULL; */
     char *pszComparionValue=NULL, *pszAttibuteName=NULL;
     char *pszAttibuteValue=NULL;
     char *pszLeftExpression=NULL, *pszRightExpression=NULL, *pszOperator=NULL;
@@ -4356,7 +4359,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
     pszFinalExpression = (char *)malloc(sizeof(char)*(nLength+1));
     pszFinalExpression[0] = '\0';
 
-    iExpression = -1; //first incremnt will put it to 0;
+    iExpression = -1; /* first incremnt will put it to 0; */
     iFinal = 0;
     iIndiceExp = 0;
     nOpeningBrackets = 0;
@@ -4515,7 +4518,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
                 }
                 else
                 {
-                    //end of an expression
+                    // end of an expression
                     pszFinalExpression[iFinal++] = ' ';
                     pszFinalExpression[iFinal] = '\0';
                     sprintf(szTmp, "exp%d ", iExpression);
@@ -4552,7 +4555,7 @@ FilterEncodingNode *BuildExpressionTree(char *pszExpression,
           msSLDSimplifyExpression(pszFinalExpression);
         free(pszFinalExpression);
         
-        //increase the size so it can fit the brakets () that will be added
+        // increase the size so it can fit the brakets () that will be added
         pszFinalExpression = (char *)malloc(sizeof(char)*(nLength+3));
         if(iExpression > 0)
         {
@@ -4687,7 +4690,7 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
     if (!pszExpression || strlen(pszExpression) <=0)
       return NULL;
 
-    //psNode = BuildExpressionTree(pszExpression, NULL);
+    /* psNode = BuildExpressionTree(pszExpression, NULL); */
     psNode = BuildExpressionTree(pszExpression, NULL);
     
     if (psNode)
@@ -4755,7 +4758,7 @@ char *msSLDParseExpression(char *pszExpression)
                 sprintf(szAttribute, aszElements[i-1]);
                 sprintf(szValue, aszElements[i+1]);
 
-                //parse attribute
+                /* parse attribute */
                 nLength = strlen(szAttribute);
                 if (nLength > 0)
                 {
@@ -4778,7 +4781,7 @@ char *msSLDParseExpression(char *pszExpression)
                     }
                 }
 
-                //parse value
+                /* parse value */
                 nLength = strlen(szValue);
                 if (nLength > 0)
                 {
@@ -4828,7 +4831,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
 
     if (psClass && psClass->expression.string)
     {   
-        //string expression
+        /* string expression */
         if (psClass->expression.type == MS_STRING)
         {
             if (psClass->layer && psClass->layer->classitem)

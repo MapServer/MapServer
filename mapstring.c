@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.31  2005/02/04 14:06:46  sdlime
  * Fixed bug 1207, thread safety issue in mapstring.c
  *
@@ -184,14 +187,14 @@ int strcasecmp(const char *s1, const char *s2)
 #endif
 
 char *long2string(long value) {
-  char buffer[256]; // plenty of space
+  char buffer[256]; /* plenty of space */
 
   sprintf(buffer, "%ld", value);
   return(strdup(buffer));
 }
 
 char *double2string(double value) {
-  char buffer[256]; // plenty of space
+  char buffer[256]; /* plenty of space */
 
   sprintf(buffer, "%g", value);
   return(strdup(buffer));
@@ -424,7 +427,7 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
       return NULL;
   }
 
-  // Check if path is absolute
+  /* Check if path is absolute */
   if((abs_path == NULL) || (abslen == 0) || 
        (path[0] == '\\') || (path[0] == '/') || 
          (pathlen > 1 && (path[1] == ':')))
@@ -433,7 +436,7 @@ char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
       return(pszReturnPath);
   }
 
-  // else return abs_path/path
+  /* else return abs_path/path */
   if((abs_path[abslen-1] == '/') || (abs_path[abslen-1] == '\\'))
   {
       sprintf(pszReturnPath, "%s%s", abs_path, path);
@@ -621,8 +624,8 @@ char *msEncodeHTMLEntities(const char *string)
     if(string == NULL)
         return NULL;
 
-    // Start with 100 extra chars for replacements... 
-    // should be good enough for most cases
+    /* Start with 100 extra chars for replacements...  */
+    /* should be good enough for most cases */
     buflen = strlen(string) + 100;
     newstring = (char*)malloc(buflen+1*sizeof(char*));
     if (newstring == NULL)
@@ -633,11 +636,11 @@ char *msEncodeHTMLEntities(const char *string)
 
     for(i=0, c=string; *c != '\0'; c++)
     {
-        // Need to realloc buffer?
+        /* Need to realloc buffer? */
         if (i+6 > buflen)
         {
-            // If we had to realloc then this string must contain several
-            // entities... so let's go with twice the previous buffer size
+            /* If we had to realloc then this string must contain several */
+            /* entities... so let's go with twice the previous buffer size */
             buflen *= 2;
             newstring = (char*)realloc(newstring, buflen+1*sizeof(char*));
             if (newstring == NULL)
@@ -666,7 +669,7 @@ char *msEncodeHTMLEntities(const char *string)
             i += 6;
             break;
           case '\'':
-            strcpy(newstring+i, "&#39;"); // changed from &apos; and i += 6 (bug 1040)
+            strcpy(newstring+i, "&#39;"); /* changed from &apos; and i += 6 (bug 1040) */
             i += 5;
             break;
           default:
@@ -702,7 +705,7 @@ void msDecodeHTMLEntities(const char *string)
 
     while((pszAmp = strchr(pszBuffer, '&')) != NULL)
     {
-        // Get the &...;
+        /* Get the &...; */
         strcpy(pszReplace, pszAmp);
         pszSemiColon = strchr(pszReplace, ';');
         if(pszSemiColon == NULL)
@@ -710,12 +713,12 @@ void msDecodeHTMLEntities(const char *string)
         else
             pszSemiColon++;
 
-        // Get everything after the &...;
+        /* Get everything after the &...; */
         strcpy(pszEnd, pszSemiColon);
 
         pszReplace[pszSemiColon-pszReplace] = '\0';
 
-        // Replace the &...;
+        /* Replace the &...; */
         if(strcasecmp(pszReplace, "&amp;") == 0)
         {
             pszBuffer[pszAmp - pszBuffer] = '&';
@@ -793,11 +796,11 @@ char *strcatalloc(char *pszDest, char *pszSrc)
    if (pszSrc == NULL)
       return pszDest;
 
-   // if destination is null, allocate memory
+   /* if destination is null, allocate memory */
    if (pszDest == NULL) {
       pszDest = strdup(pszSrc);
    }
-   else { // if dest is not null, reallocate memory
+   else { /* if dest is not null, reallocate memory */
       char *pszTemp;
 
       nLen = strlen(pszDest) + strlen(pszSrc);
@@ -838,7 +841,7 @@ char *msJoinStrings(char **array, int arrayLength, const char *delimeter)
     strcat(string, array[i]);
     strcat(string, delimeter);
   }
-  strcat(string, array[i]); // add last element, no delimiter
+  strcat(string, array[i]); /* add last element, no delimiter */
 
   return string;
 }
@@ -857,7 +860,7 @@ char *msHashString(const char *pszStr)
     pszOutBuf = (char*)malloc( (HASH_SIZE*2+1)*sizeof(char) );
     if (pszOutBuf == NULL)
     {
-        // msSetError(MS_MEMERR, ...);
+        /* msSetError(MS_MEMERR, ...); */
     }
 
     for(i=0; pszStr && pszStr[i]; i++)

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.32  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -45,7 +48,7 @@ extern "C" {
 #ifndef SWIG
 #define MS_PATH_LENGTH 1024
 
-// Shapefile types
+/* Shapefile types */
 #define SHP_POINT 1
 #define SHP_ARC 3
 #define SHP_POLYGON 5
@@ -97,7 +100,7 @@ typedef	struct {
 
     int		bUpdated;
 
-    int		nBufSize; // these used static vars in shape readers, moved to be thread-safe
+    int		nBufSize; /* these used static vars in shape readers, moved to be thread-safe */
     uchar   *pabyRec;
     int		nPartMax;
     int		*panParts;
@@ -142,29 +145,29 @@ typedef DBFInfo * DBFHandle;
 
 typedef enum {FTString, FTInteger, FTDouble, FTInvalid} DBFFieldType;
 
-// Shapefile object, no write access via scripts                               
+/* Shapefile object, no write access via scripts */
 typedef struct {
 #ifdef SWIG
 %immutable;
 #endif
-  char source[MS_PATH_LENGTH]; // full path to this file data
+  char source[MS_PATH_LENGTH]; /* full path to this file data */
 
 #ifndef SWIG
-  SHPHandle hSHP; // SHP/SHX file pointer
+  SHPHandle hSHP; /* SHP/SHX file pointer */
 #endif
 
-  int type; // shapefile type
-  int numshapes; // number of shapes
-  rectObj bounds; // shape extent
+  int type; /* shapefile type */
+  int numshapes; /* number of shapes */
+  rectObj bounds; /* shape extent */
 
 #ifndef SWIG
-  DBFHandle hDBF; // DBF file pointer 
+  DBFHandle hDBF; /* DBF file pointer */
 #endif
 
   int lastshape;
 
   char *status;
-  rectObj statusbounds; // holds extent associated with the status vector
+  rectObj statusbounds; /* holds extent associated with the status vector */
 
   int isopen;
 #ifdef SWIG
@@ -172,7 +175,7 @@ typedef struct {
 #endif
 } shapefileObj;
 
-// layerInfo structure for tiled shapefiles
+/* layerInfo structure for tiled shapefiles */
 typedef struct { 
   shapefileObj *shpfile;
   shapefileObj *tileshpfile;
@@ -181,13 +184,13 @@ typedef struct {
 
 #ifndef SWIG
 
-// shapefileObj function prototypes 
+/* shapefileObj function prototypes  */
 MS_DLL_EXPORT int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename);
 MS_DLL_EXPORT int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type);
 MS_DLL_EXPORT void msSHPCloseFile(shapefileObj *shpfile);
 MS_DLL_EXPORT int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug);
 
-// SHP/SHX function prototypes
+/* SHP/SHX function prototypes */
 MS_DLL_EXPORT SHPHandle msSHPOpen( const char * pszShapeFile, const char * pszAccess );
 MS_DLL_EXPORT SHPHandle msSHPCreate( const char * pszShapeFile, int nShapeType );
 MS_DLL_EXPORT void msSHPClose( SHPHandle hSHP );
@@ -198,9 +201,9 @@ MS_DLL_EXPORT int msSHPReadPoint(SHPHandle psSHP, int hEntity, pointObj *point )
 MS_DLL_EXPORT int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
 MS_DLL_EXPORT int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
 
-// tiledShapefileObj function prototypes are in map.h
+/* tiledShapefileObj function prototypes are in map.h */
 
-// XBase function prototypes
+/* XBase function prototypes */
 MS_DLL_EXPORT DBFHandle msDBFOpen( const char * pszDBFFile, const char * pszAccess );
 MS_DLL_EXPORT void msDBFClose( DBFHandle hDBF );
 MS_DLL_EXPORT DBFHandle msDBFCreate( const char * pszDBFFile );

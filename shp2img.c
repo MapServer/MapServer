@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/02/18 03:06:48  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.15  2004/11/05 02:28:39  frank
  * Reorganize error cases a bit to cleanup properly so we can test error
  * logic leak issues, such as in bug 139.
@@ -56,7 +59,7 @@ int main(int argc, char *argv[])
   char **layers=NULL;
   int num_layers=0;
 
-  char *outfile=NULL; // no -o sends image to STDOUT
+  char *outfile=NULL; /* no -o sends image to STDOUT */
 
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());

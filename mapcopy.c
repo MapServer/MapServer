@@ -39,6 +39,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.35  2005/01/26 06:14:53  sdlime
  * Added style maxwidth/minwidth read/write/copy.
  *
@@ -179,8 +182,8 @@ int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map)
     MS_COPYSTRING(dst->filename, src->filename);
     MS_COPYSTELEM(numfonts);
     if (&(src->fonts)) {
-        //if (!dst->fonts)
-        //    dst->fonts = msCreateHashTable();
+        /* if (!dst->fonts) */
+        /* dst->fonts = msCreateHashTable(); */
         if (msCopyHashTable(&(dst->fonts), &(src->fonts)) != MS_SUCCESS)
             return MS_FAILURE;
     }
@@ -216,8 +219,8 @@ int msCopyJoin(joinObj *dst, joinObj *src)
     int i;
     MS_COPYSTRING(dst->name, src->name);
 
-    // not sure it makes sense to copy the values (or the items for that matter) since
-    // since they are runtime additions to the mapfile, probably should be NULL with numitems=0
+    /* not sure it makes sense to copy the values (or the items for that matter) since */
+    /* since they are runtime additions to the mapfile, probably should be NULL with numitems=0 */
     MS_COPYSTELEM(numitems);
     for (i = 0; i < dst->numitems; i++) {
         MS_COPYSTRING(dst->items[i], src->items[i]);
@@ -239,7 +242,7 @@ int msCopyJoin(joinObj *dst, joinObj *src)
 
     MS_COPYSTELEM(connectiontype);
 
-    // TODO: need to handle joininfo (probably should be just set to NULL)
+    /* TODO: need to handle joininfo (probably should be just set to NULL) */
     dst->joininfo = NULL;
 
     return MS_SUCCESS;
@@ -340,7 +343,7 @@ int msCopyWeb(webObj *dst, webObj *src, mapObj *map)
     MS_COPYSTRING(dst->maxtemplate, src->maxtemplate);
 
     if (&(src->metadata)) {
-        //dst->metadata = msCreateHashTable();
+        /* dst->metadata = msCreateHashTable(); */
         if (msCopyHashTable(&(dst->metadata), &(src->metadata)) != MS_SUCCESS)
             return MS_FAILURE;
     }
@@ -435,7 +438,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
     MS_COPYSTELEM(type);
 
     if (&(src->metadata) != NULL) {
-        //dst->metadata = msCreateHashTable();
+        /* dst->metadata = msCreateHashTable(); */
         msCopyHashTable(&(dst->metadata), &(src->metadata));
     }
 
@@ -475,7 +478,7 @@ int msCopyLabelCacheMember(labelCacheMemberObj *dst,
     MS_COPYSTELEM(tileindex);
     MS_COPYSTELEM(shapeindex);
     MS_COPYPOINT(&(dst->point), &(src->point));
-    //msCopyShape(&(dst->poly), &(src->poly));
+    /* msCopyShape(&(dst->poly), &(src->poly)); */
     MS_COPYSTELEM(status);
 
     return MS_SUCCESS;
@@ -492,7 +495,7 @@ int msCopyMarkerCacheMember(markerCacheMemberObj *dst,
 {  
     MS_COPYSTELEM(id);
   
-    //msCopyShape(&(dst->poly), &(src->poly));
+    /* msCopyShape(&(dst->poly), &(src->poly)); */
     return MS_SUCCESS;
 }
 
@@ -773,9 +776,9 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTELEM(connectiontype);
     MS_COPYSTELEM(sameconnection);
 
-    //MS_COPYSTELEM(layerinfo);
-    //MS_COPYSTELEM(ogrlayerinfo); 
-    //MS_COPYSTELEM(wfslayerinfo);
+    /* MS_COPYSTELEM(layerinfo); */
+    /* MS_COPYSTELEM(ogrlayerinfo);  */
+    /* MS_COPYSTELEM(wfslayerinfo); */
     MS_COPYSTELEM(numitems);
 
     for (i = 0; i < dst->numitems; i++) {
@@ -867,7 +870,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
         return MS_FAILURE;
     }
 
-    //msCopyLabelCache(&(dst->labelcache), &(src->labelcache));
+    /* msCopyLabelCache(&(dst->labelcache), &(src->labelcache)); */
     MS_COPYSTELEM(transparent);
     MS_COPYSTELEM(interlace);
     MS_COPYSTELEM(imagequality);
@@ -904,7 +907,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
         msAppendOutputFormat( dst, 
         msCloneOutputFormat( src->outputformatlist[i]) );
 
-    // set the active output format
+    /* set the active output format */
     MS_COPYSTRING(dst->imagetype, src->imagetype); 
     format = msSelectOutputFormat( dst, dst->imagetype );
     msApplyOutputFormat(&(dst->outputformat), format, MS_NOOVERRIDE, 

@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.6  2005/01/24 14:30:14  frank
  * Avoid pj_units init warnings.
  *
@@ -151,7 +154,7 @@ int GetMapserverUnitUsingProj(projectionObj *psProj)
         if (psProj->proj->is_latlong)
             return MS_DD;
 
-        //psProj->proj->to_meter;
+        /* psProj->proj->to_meter; */
         for (lu = pj_units_copy; lu->id ; ++lu)
         {
             if (strtod(lu->to_meter, NULL) == psProj->proj->to_meter)

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.38  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.37  2004/11/16 21:56:18  dan
  * msGetEPSGProj() obsolete, replaced by msOWSGetEPSGProj() (bug 568)
  *
@@ -400,7 +403,7 @@ int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
     if( proj1->numargs != proj2->numargs )
         return MS_TRUE;
 
-    // This test should be more rigerous.
+    /* This test should be more rigerous. */
     if( proj1->gt.need_geotransform 
         || proj2->gt.need_geotransform )
         return MS_TRUE;
@@ -597,7 +600,7 @@ char *msGetProjectionString(projectionObj *proj)
                 continue;
             if (pszProjString[0] == '\0')
             {
-                // no space at beginning of line
+                /* no space at beginning of line */
                 if (proj->args[i][0] != '+')
                     strcat(pszProjString, "+");
             }

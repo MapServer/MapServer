@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.26  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.25  2005/02/17 17:55:19  frank
  * ignore USE_PROJ_API_H, just always use proj_api.h
  *
@@ -68,7 +71,7 @@ typedef struct {
 #else
   void *proj;
 #endif
-  geotransformObj gt; // extra transformation to apply
+  geotransformObj gt; /* extra transformation to apply */
 #endif
 } projectionObj;
 

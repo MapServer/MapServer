@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2005/02/18 03:06:48  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.6  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -46,27 +49,34 @@ int main(int argc, char *argv[]) {
      * Test 1: free original before freeing clone
      * --------------------------------------------------------------------- */
 
-    // Load map file 
+    /* Load map file 
+ */
     original_map = msLoadMap("tests/test.map", NULL);
     
-    // Dump out some attributes
+    /* Dump out some attributes
+ */
     printAtts(original_map, "Original"); 
 
-    // Clone it
+    /* Clone it
+ */
     clone_map = msNewMapObj();
     msCopyMap(clone_map, original_map);
 
-    // Write errors
+    /* Write errors
+ */
     msWriteError(stderr);
     msResetErrorList();
 
-    // Free
+    /* Free
+ */
     msFreeMap(original_map);
 
-    // Dump clone's attributes
+    /* Dump clone's attributes
+ */
     printAtts(clone_map, "Clone");
   
-    // Free clone
+    /* Free clone
+ */
     msFreeMap(clone_map);
 
     exit(0);    

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.32  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.31  2004/12/07 00:38:51  dan
  * Fixed segmentation fault when generating PDF output (bug 1105)
  *
@@ -280,7 +283,7 @@ void drawPolylinePDF(PDF *pdf, shapeObj *p, colorObj  *c, double width)
         }
     }
     PDF_stroke(pdf);
-//    PDF_setlinejoin(pdf,0);
+/* PDF_setlinejoin(pdf,0); */
     PDF_setlinewidth(pdf,1);
 
 }
@@ -457,7 +460,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
 
         /* set a couple of other pointers, avoids nasty references */
         layerPtr = &(map->layers[cachePtr->layerindex]);
-        //classPtr = &(cachePtr->class);
+        /* classPtr = &(cachePtr->class); */
         labelPtr = &(cachePtr->label);
 
         if(!cachePtr->text)
@@ -476,7 +479,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         if(layerPtr->type == MS_LAYER_ANNOTATION || layerPtr->type == MS_LAYER_POINT)
         { /* there *is* a marker */
 
-	    // TO DO: at the moment only checks the bottom style, perhaps should check all of them
+	    /* TO DO: at the moment only checks the bottom style, perhaps should check all of them */
             if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
 	      return(-1);
 
@@ -796,9 +799,9 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         }
 
         /*handle a filled label background*/
-        //TODO
-        //if(labelPtr->backgroundcolor >= 0)
-        //    billboardPDF(img, cachePtr->poly, labelPtr);
+        /* TODO */
+        /* if(labelPtr->backgroundcolor >= 0) */
+        /* billboardPDF(img, cachePtr->poly, labelPtr); */
 
         msDrawTextPDF(image, p, cachePtr->text,
                       labelPtr, &(map->fontset), layerPtr->scalefactor);
@@ -863,7 +866,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
     pdf = image->img.pdf->pdf;
 
     /* set the colors */
-    // if no outline color, make the stroke and fill the same
+    /* if no outline color, make the stroke and fill the same */
     if (!(MS_VALID_COLOR(style->outlinecolor))) style->outlinecolor=style->color;
 
     PDF_setrgbcolor_stroke(pdf,(float)(style->outlinecolor.red/255),
@@ -902,16 +905,16 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 
 /*            font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);*/
 /*            if(!font) return;*/
-/*                //plot using pdf*/
+/*                */ /* plot using pdf*/
             sprintf(symbolBuffer,"%c",(char)*symbol->character);
 /**/
 /*            if (font != NULL){*/
-/*                    // we have a match.. set the fonthandle*/
+/*                   */ /* we have a match.. set the fonthandle */
 /*                font_id = atoi(font);*/
 /*            }*/
 /*            else {*/
-                    // there was no match so insert a key value pair into the table
-                    // this is so that only one font is searched per file
+                    /* there was no match so insert a key value pair into the table */
+                    /* this is so that only one font is searched per file */
 /*                char buffer[5];*/
 
                 font_id = PDF_findfont(pdf, symbol->font ,"winansi",1);
@@ -979,7 +982,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 /*      symbol : Ellipse                                                */
 /* -------------------------------------------------------------------- */
         case(MS_SYMBOL_ELLIPSE):
-                // ok, this is going to be just a circle
+                /* ok, this is going to be just a circle */
 
             scale = size/symbol->sizey;
             x = MS_NINT(symbol->sizex*scale);
@@ -999,7 +1002,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
         case(MS_SYMBOL_VECTOR):
 
             scale = size/symbol->sizey;
-            //set the joins to be mitered - better for small shapes
+            /* set the joins to be mitered - better for small shapes */
             PDF_setlinejoin(pdf, 0);
 
             offset_x = MS_NINT(p->x - scale*.5*symbol->sizex);
@@ -1037,7 +1040,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
             { /* NOT filled */
                 PDF_stroke(pdf);
             }
-            //set the joins back to rounded
+            /* set the joins back to rounded */
             PDF_setlinejoin(pdf, 1);
         
             break;
@@ -1157,7 +1160,7 @@ int msDrawVectorLayerAsRasterPDF(mapObj *map, layerObj *layer, imageObj*image)
     if (imagetmp)
     {
         msImageInitGD( imagetmp, &map->imagecolor );
-        //msLoadPalette(imagetmp->img.gd, &(map->palette), map->imagecolor);
+        /* msLoadPalette(imagetmp->img.gd, &(map->palette), map->imagecolor); */
         msDrawVectorLayer(map, layer, imagetmp);
         
         return MS_SUCCESS;
@@ -1218,14 +1221,14 @@ int msSaveImagePDF(imageObj *image, char *filename)
         if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_TYPE",""), 
                    "RASTER") == 0)    
         {
-            //FILE *out;
+            /* FILE *out; */
 
             pdf = image->img.pdf->pdf;
 
-            //test
-            //out = fopen("c:/msapps/gmap_pdf/htdocs/test.png", "wb");
-            //gdImagePng(image->img.pdf->imagetmp, out);
-            //fclose(out);
+            /* test */
+            /* out = fopen("c:/msapps/gmap_pdf/htdocs/test.png", "wb"); */
+            /* gdImagePng(image->img.pdf->imagetmp, out); */
+            /* fclose(out); */
             imagetmp = (imageObj *)image->img.pdf->imagetmp;
             jpeg = gdImageJpegPtr(imagetmp->img.gd, &nLength, 95);
             nResult = PDF_open_image(pdf, "jpeg", "memory",
@@ -1271,7 +1274,7 @@ int msSaveImagePDF(imageObj *image, char *filename)
       fwrite(pdfBuffer, sizeof(char), size, stream);
       if(filename != NULL && strlen(filename) > 0)
          fclose(stream);
-      //free(pdfBuffer);
+      /* free(pdfBuffer); */
 
       return(MS_SUCCESS);
     }
@@ -1424,7 +1427,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
     else{
         char *headPtr;
         headPtr = string;
-            // break the string into pieces separated by \r\n
+            /* break the string into pieces separated by \r\n */
         while(wrappedString){
             char *piece;
             int length = wrappedString - headPtr;
@@ -1448,7 +1451,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
     if (phi!=0){
         PDF_rotate(pdf, phi);
         PDF_translate(pdf, -x1, -y1);
-//        PDF_restore(pdf);
+/* PDF_restore(pdf); */
     }
     PDF_setlinewidth(pdf,1);
     return 0;
@@ -1501,7 +1504,7 @@ int msDrawWMSLayerPDF(int nLayerId, httpRequestObj *pasReqInfo,
     char                *driver = strdup("GD/GIF");
     char                *jpeg = NULL;
     int                 nLength = 0, nResult = 0;
-    //char                ttt[200];
+    /* char                ttt[200]; */
 
     int                 bRasterOutput = 0;
 

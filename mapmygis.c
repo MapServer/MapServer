@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/02/18 03:06:46  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.15  2004/12/07 16:56:31  dan
  * Fixed build error introduced by adding msLayerIsOpen() (bug 1116)
  *
@@ -162,17 +165,17 @@ static char *DATAERRORMESSAGE(char *dataString, char *preamble)
 
 typedef struct ms_MYGIS_layer_info_t
 {
-	char		*sql;		//sql query to send to DB
+	char		*sql;		/* sql query to send to DB */
 	MYSQL mysql,*conn;
 	MYSQL_RES *query_result;
 	MYSQL_RES *query2_result;
-	long	 	row_num;  	//what row is the NEXT to be read (for random access)
-	long	 	total_num;  	//what row is the NEXT to be read (for random access)
+	long	 	row_num;  	/* what row is the NEXT to be read (for random access) */
+	long	 	total_num;  	/* what row is the NEXT to be read (for random access) */
 	char	     *query;	
 	char	     *query2;	
-	char	     *fields;	 // results from EXPLAIN VERBOSE (or null)
-	char		*urid_name; // name of user-specified unique identifier or OID
-	char		*user_srid; //zero length = calculate, non-zero means using this value!
+	char	     *fields;	 /* results from EXPLAIN VERBOSE (or null) */
+	char		*urid_name; /* name of user-specified unique identifier or OID */
+	char		*user_srid; /* zero length = calculate, non-zero means using this value! */
 	char	*table;
 	char	*feature;
 	int attriboffset;
@@ -192,26 +195,26 @@ void mysql_NOTICE_HANDLER(void *arg, const char *message)
 	{
 		if (	((msMYGISLayerInfo *) arg)->fields)
 		{
-			free(((msMYGISLayerInfo *) arg)->fields); 	// free up space
+			free(((msMYGISLayerInfo *) arg)->fields); 	/* free up space */
 
 		}
 			result = malloc ( 6000) ;
 			((msMYGISLayerInfo *) arg)->fields = result;
-			result[0] = 0; //null terminate it
+			result[0] = 0; /* null terminate it */
 
-		//need to parse it a bit
+		/* need to parse it a bit */
 		str = (char *) message;
 		while (str != NULL)
 		{
 			str = strstr(str," :resname ");
 			if (str != NULL)
 			{
-				str++; // now points at ":"
-				str= strstr(str," ");	//now points to last " "
-				str++; //now points to start of next word
+				str++; /* now points at ":" */
+				str= strstr(str," ");	/* now points to last " " */
+				str++; /* now points to start of next word */
 
-				str2 = strstr(str," ");	//points to end of next word
-				if (strncmp(str, "<>", (str2-str))) { // Not a bogus resname
+				str2 = strstr(str," ");	/* points to end of next word */
+				if (strncmp(str, "<>", (str2-str))) { /* Not a bogus resname */
 				if (strlen(result) > 0)
 				{
 					strcat(result,",");
@@ -235,10 +238,10 @@ void end_memcpy(char order, void* dest, void* src, int num)
 
 	if (
 		(gBYTE_ORDER == LITTLE_ENDIAN && order == 1) ||
-		(gBYTE_ORDER == BIG_ENDIAN && order == 0) 		// no change required
+		(gBYTE_ORDER == BIG_ENDIAN && order == 0) 		/* no change required */
 	){
-	} else if ((gBYTE_ORDER == LITTLE_ENDIAN && order == 0)){	// we're little endian but data is big endian
-	} else if ((gBYTE_ORDER == BIG_ENDIAN && order == 1)){	// we're big endian but data is little endian
+	} else if ((gBYTE_ORDER == LITTLE_ENDIAN && order == 0)){	/* we're little endian but data is big endian */
+	} else if ((gBYTE_ORDER == BIG_ENDIAN && order == 1)){	/* we're big endian but data is little endian */
 		
 		switch (num){
 			case 2:
@@ -275,7 +278,7 @@ int query(msMYGISLayerInfo *layer, char qbuf[]){
     int numrows=-1;
     int i;
 
-   if (layer->query_result) // query leftover 
+   if (layer->query_result) /* query leftover  */
    {
     	mysql_free_result(layer->query_result);
    }
@@ -284,34 +287,34 @@ if (SHOWQUERY || MYDEBUG) printf("%s<BR>\n", qbuf);
       mysql_close(layer->conn);
 	msSetError(MS_QUERYERR, " bad mysql query ",
            qbuf);
-//printf("mysql query FAILED real bad...<br>\n");
+/* printf("mysql query FAILED real bad...<br>\n"); */
         return MS_FAILURE;
     }
     if (!(layer->query_result=mysql_store_result(layer->conn)))    {
       mysql_close(layer->conn);
-//printf("mysql query FAILED...<br>\n");
+/* printf("mysql query FAILED...<br>\n"); */
 	msSetError(MS_QUERYERR, " mysql query failed ",
            qbuf);
         return MS_FAILURE;
     }
    layer->query = strdup(qbuf);
-   if (layer->query_result) //There were some rows found, write 'em out for debug
+   if (layer->query_result) /* There were some rows found, write 'em out for debug */
    {
        numrows = mysql_affected_rows(&(layer->mysql));
 if (SHOWQUERY || MYDEBUG) printf("%d rows<br>\n", numrows);
         for(i=0;i<numrows;i++)
         {
-//            row = mysql_fetch_row(layer->query_result);
-//            printf("(%s)<BR>\n",row[0]);
+/* row = mysql_fetch_row(layer->query_result); */
+/* printf("(%s)<BR>\n",row[0]); */
         }
    }
-   // mysql_free_result(layer->query_result); // don't free, might be used later
+   /* mysql_free_result(layer->query_result); // don't free, might be used later */
    return MS_SUCCESS;
 }
 
 
-//open up a connection to the postgresql database using the connection string in layer->connection
-// ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv"
+/* open up a connection to the postgresql database using the connection string in layer->connection */
+/* ie. "host=192.168.50.3 user=postgres port=5555 dbname=mapserv" */
 int msMYGISLayerOpen(layerObj *layer)
 {
 	msMYGISLayerInfo	*layerinfo;
@@ -330,13 +333,13 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 	};
 	if (getMyGISLayerInfo(layer)) {
      if (layer->debug) msDebug("msPOSTGISLayerOpen :: layer is already open!!\n");
-     return MS_SUCCESS;  //already open
+     return MS_SUCCESS;  /* already open */
   }
 	
-	//have to setup a connection to the database
+	/* have to setup a connection to the database */
 
 	layerinfo = (msMYGISLayerInfo *) malloc( sizeof(msMYGISLayerInfo) );
-	layerinfo->sql = NULL; //calc later
+	layerinfo->sql = NULL; /* calc later */
 	layerinfo->row_num=0;
 	layerinfo->query_result= NULL;
 	layerinfo->query2_result= NULL;
@@ -345,7 +348,7 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 	layerinfo->feature = NULL;
 	layerinfo->attriboffset = 3;
 
-    // check whether previous connection can be used
+    /* check whether previous connection can be used */
 
 	if (msCheckConnection(layer) != MS_SUCCESS){
 			
@@ -395,9 +398,9 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
            "msMYGISLayerOpen()");
       return MS_FAILURE;
     }
-	} else {		// connection reusable
+	} else {		/* connection reusable */
 			layerinfo = layer->sameconnection->layerinfo;
-//			layerinfo->conn = layer->sameconnection->layerinfo->conn;
+/* layerinfo->conn = layer->sameconnection->layerinfo->conn; */
 	}
 	if (MYDEBUG)printf("msMYGISLayerOpen3 called<br>\n");
 	
@@ -410,7 +413,7 @@ if (MYDEBUG) printf("msMYGISLayerOpen called<br>\n");
 }
 
 
-// Return MS_TRUE if layer is open, MS_FALSE otherwise.
+/* Return MS_TRUE if layer is open, MS_FALSE otherwise. */
 int msMYGISLayerIsOpen(layerObj *layer)
 {
     if (getMyGISLayerInfo(layer))
@@ -419,7 +422,7 @@ int msMYGISLayerIsOpen(layerObj *layer)
     return MS_FALSE;
 }
 
-// Free the itemindexes array in a layer.
+/* Free the itemindexes array in a layer. */
 void    msMYGISLayerFreeItemInfo(layerObj *layer)
 {
 if (MYDEBUG)printf("msMYGISLayerFreeItemInfo called<br>\n");
@@ -430,7 +433,7 @@ if (MYDEBUG)printf("msMYGISLayerFreeItemInfo called<br>\n");
 }
 
 
-//allocate the iteminfo index array - same order as the item list
+/* allocate the iteminfo index array - same order as the item list */
 int msMYGISLayerInitItemInfo(layerObj *layer)
 {
 	int   i;
@@ -455,21 +458,21 @@ if (MYDEBUG)printf("msMYGISLayerInitItemInfo called<br>\n");
 	itemindexes = (int*)layer->iteminfo;
   	for(i=0;i<layer->numitems;i++)
  	{
-		itemindexes[i] = i; //last one is always the geometry one - the rest are non-geom
+		itemindexes[i] = i; /* last one is always the geometry one - the rest are non-geom */
 	}
 
  	return(MS_SUCCESS);
 }
 
 
-//int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
+/* int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid) */
 static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RES **sql_results,rectObj rect,char *query_string, char *urid_name, char *user_srid)
 {
 	char	columns_wanted[5000]="";
 	char	temp[5000]="";
 	char	query_string_0_5[6000];
 	char	query_string_0_5_real[6000];
-//	char	query_string_0_6[6000];
+/* char	query_string_0_6[6000]; */
 	char	box3d[200];
 	msMYGISLayerInfo *layerinfo;
 	char *pos_from, *pos_ftab, *pos_space, *pos_paren;
@@ -493,21 +496,21 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 	 *
 	 */
 
-	pos_space = strstr(geom_table, " "); // First space
+	pos_space = strstr(geom_table, " "); /* First space */
 	strncpy(ftable, geom_table, pos_space - geom_table);
 	ftable[pos_space - geom_table] = NULL;
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	layerinfo->feature = strdup(ftable);
-//printf("FEATURE %s/%s/%s/%s<BR>", ftable, pos_ftab, pos_space, pos_paren);
+/* printf("FEATURE %s/%s/%s/%s<BR>", ftable, pos_ftab, pos_space, pos_paren); */
 	
 	pos_from = strstr(geom_table, " from ");
 	if (pos_from == NULL) {
 		strcpy(f_table_name, geom_table);
 	}
-	else { // geom_table is a sub-select clause
-		pos_ftab = pos_from + 6; // This should be the start of the ftab name
-		pos_space = strstr(pos_ftab, " "); // First space
-		pos_paren = strstr(pos_ftab, ")"); // Closing paren of clause
+	else { /* geom_table is a sub-select clause */
+		pos_ftab = pos_from + 6; /* This should be the start of the ftab name */
+		pos_space = strstr(pos_ftab, " "); /* First space */
+		pos_paren = strstr(pos_ftab, ")"); /* Closing paren of clause */
 		if (  (pos_space ==NULL)  || (pos_paren ==NULL) ) {
 
 			            msSetError(MS_QUERYERR,
@@ -516,18 +519,18 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 
 			return(MS_FAILURE);
 		}
-		if (pos_paren < pos_space) { // closing parenthesis preceeds any space
+		if (pos_paren < pos_space) { /* closing parenthesis preceeds any space */
 			strncpy(f_table_name, pos_ftab, pos_paren - pos_ftab);
 		}
 		else {
 			strncpy(f_table_name, pos_ftab, pos_space - pos_ftab);
 		}
 	}
-//	columns_wanted[0] = 0; //len=0	
-//	printf(":%d:", layer->numitems);
+/* columns_wanted[0] = 0; //len=0	 */
+/* printf(":%d:", layer->numitems); */
 	for (t=0;t<layer->numitems; t++)
 	{
-//		printf("(%s, %d/%d)", layer->items[t],t,layer->numitems);
+/* printf("(%s, %d/%d)", layer->items[t],t,layer->numitems); */
 	  if (strchr(layer->items[t], '.') != NULL)
 			sprintf(temp,", %s ",layer->items[t]);
 		 else 
@@ -535,15 +538,15 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 		strcat(columns_wanted,temp);
 	}
 
-//	sprintf(box3d,"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy);
+/* sprintf(box3d,"'BOX3D(%.15g %.15g,%.15g %.15g)'::BOX3D",rect.minx, rect.miny, rect.maxx, rect.maxy); */
 	sprintf(box3d,"(feature.x2 > %.15g AND feature.y2 > %.15g AND feature.x1 < %.15g AND feature.y1 < %.15g)",rect.minx, rect.miny, rect.maxx, rect.maxy);
 
 
-	// substitute token '!BOX!' in geom_table with the box3d - do at most 1 substitution
+	/* substitute token '!BOX!' in geom_table with the box3d - do at most 1 substitution */
 
 		if (strstr(geom_table,"!BOX!"))
 		{
-				// need to do a substition
+				/* need to do a substition */
 				char	*start, *end;
 				char	*result;
 
@@ -560,19 +563,19 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 				geom_table= result;
 		}
 	if (layer->type == MS_LAYER_ANNOTATION){
-//		attribselect = strdup(", feature.txt, feature.angle, ''");
-//		if (layer->labelitem){
-//			strcat(attribselect,", feature.");
-//	       		strcat(attribselect, layer->labelitem);
-//		}
-//		if (layer->labelitem)
-//			sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelitem);
-//		if (layer->labelangleitem)
-//			sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelangleitem);
-//		if (layer->labelsizeitem)
-//			sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelsizeitem);
-//		if (layer->labelsizeitem)
-//			sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelsizeitem);
+/* attribselect = strdup(", feature.txt, feature.angle, ''"); */
+/* if (layer->labelitem){ */
+/* strcat(attribselect,", feature."); */
+/* strcat(attribselect, layer->labelitem); */
+/* } */
+/* if (layer->labelitem) */
+/* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelitem); */
+/* if (layer->labelangleitem) */
+/* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelangleitem); */
+/* if (layer->labelsizeitem) */
+/* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelsizeitem); */
+/* if (layer->labelsizeitem) */
+/* sprintf(attribselect,"%s, feature.%s", attribselect, layer->labelsizeitem); */
 	sprintf(attribselect,", %s%s, %s%s, %s%s", layer->labelitem ? "feature." : "", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? "feature." : "", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? "feature." : "", layer->labelsizeitem ? layer->labelsizeitem: "''");
 	}
 	if (wkbdata){
@@ -589,13 +592,13 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 						columns_wanted, geom_table,layer->filter.string,box3d);
 		}
 	}
-//    	query(layerinfo, "SELECT "); // attrib ?
+/* query(layerinfo, "SELECT "); // attrib ? */
 	else {
 		layerinfo->attriboffset = 7;
 	       	if (layer->filter.string == NULL)
 		{
-	//		sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE %s && %s",
-	//						columns_wanted,geom_table,geom_column,box3d);
+	/* sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE %s && %s", */
+	/* columns_wanted,geom_table,geom_column,box3d); */
 			sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE %s",
 							columns_wanted,geom_table,box3d);
 			sprintf(query_string_0_5_real,"SELECT feature.id, feature.vertices, geometry.ETYPE, geometry.X1, geometry.Y1, geometry.X2, geometry.Y2 %s from %s WHERE %s AND feature.GID = geometry.GID ORDER BY feature.id, geometry.ESEQ, geometry.SEQ",
@@ -605,7 +608,7 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 				sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, find_srid('','%s','%s') )",
 							columns_wanted,geom_table,geom_column,box3d,f_table_name,geom_column);
 			}
-			else	//use the user specified version
+			else	// use the user specified version
 			{
 				sprintf(query_string_0_6,"DECLARE mycursor BINARY CURSOR FOR SELECT %s from %s WHERE %s && setSRID(%s, %s )",
 							columns_wanted,geom_table,geom_column,box3d,user_srid);
@@ -613,8 +616,8 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 	*/	}
 		else
 		{
-	//		sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE (%s) and (%s && %s)",
-	//						columns_wanted,geom_table,layer->filter.string,geom_column,box3d);
+	/* sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE (%s) and (%s && %s)", */
+	/* columns_wanted,geom_table,layer->filter.string,geom_column,box3d); */
 			sprintf(query_string_0_5,"SELECT count(%s) from %s WHERE (%s) and (%s)",
 							columns_wanted,geom_table,layer->filter.string,box3d);
 			sprintf(query_string_0_5_real,"SELECT feature.id, feature.vertices, geometry.ETYPE, geometry.X1, geometry.Y1, geometry.X2, geometry.Y2 %s from %s WHERE (%s) AND feature.GID = geometry.GID AND (%s) ORDER BY feature.id, geometry.ESEQ, geometry.SEQ",
@@ -640,12 +643,12 @@ static int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, MYSQL_RE
 }
 
 
-// build the neccessary SQL
-// allocate a cursor for the SQL query
-// get ready to read from the cursor
-//
-// For queries, we need to also retreive the OID for each of the rows
-// So GetShape() can randomly access a row.
+/* build the neccessary SQL */
+/* allocate a cursor for the SQL query */
+/* get ready to read from the cursor */
+/*  */
+/* For queries, we need to also retreive the OID for each of the rows */
+/* So GetShape() can randomly access a row. */
 
 int msMYGISLayerWhichShapes(layerObj *layer, rectObj rect)
 {
@@ -664,7 +667,7 @@ if (MYDEBUG) printf("msMYGISLayerWhichShapes called<br>\n");
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	if (layerinfo == NULL)
 	{
-		//layer not opened yet
+		/* layer not opened yet */
 		msSetError(MS_QUERYERR, "msMYGISLayerWhichShapes called on unopened layer (layerinfo = NULL)",
                  "msMYGISLayerWhichShapes()");
 		return(MS_FAILURE);
@@ -678,8 +681,8 @@ if (MYDEBUG) printf("msMYGISLayerWhichShapes called<br>\n");
             return(MS_FAILURE);
         }
 
-	query_str = (char *) malloc(6000); //should be big enough
-	memset(query_str,0,6000);		//zero it out
+	query_str = (char *) malloc(6000); /* should be big enough */
+	memset(query_str,0,6000);		/* zero it out */
 
 if(MYDEBUG)	printf("%s/%s/%s/%s/%s<br>\n", layer->data, geom_column_name, table_name, urid_name,user_srid);
 	msMYGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
@@ -689,14 +692,14 @@ if(MYDEBUG)	printf("%s/%s/%s/%s/%s<br>\n", layer->data, geom_column_name, table_
 	set_up_result= prep_DB(table_name,geom_column_name, layer, &(layerinfo->query_result), rect,query_str, urid_name,user_srid);
 if (MYDEBUG) printf("...<br>");
 	if (set_up_result != MS_SUCCESS)
-		return set_up_result; //relay error
+		return set_up_result; /* relay error */
 	layerinfo->sql = query_str;
 	layerinfo->row_num =0;
 if (MYDEBUG) printf("prep_DB done<br>");
  	 return(MS_SUCCESS);
 }
 
-// Close the MYGIS record set and connection
+/* Close the MYGIS record set and connection */
 int msMYGISLayerClose(layerObj *layer)
 {
 	msMYGISLayerInfo	*layerinfo;
@@ -712,37 +715,37 @@ int msMYGISLayerClose(layerObj *layer)
 	if (setvbuf(stdout, NULL, _IONBF , 0)){
 		printf("Whoops...");
 	};
-//	fflush(NULL);
+/* fflush(NULL); */
 	return(MS_SUCCESS);
 }
 
-//*******************************************************
-// wkb is assumed to be 2d (force_2d)
-// and wkb is a GEOMETRYCOLLECTION (force_collection)
-// and wkb is in the endian of this computer (asbinary(...,'[XN]DR'))
-// each of the sub-geom inside the collection are point,linestring, or polygon
-//
-// also, int is 32bits long
-//       double is 64bits long
-//*******************************************************
+/* ******************************************************* */
+/* wkb is assumed to be 2d (force_2d) */
+/* and wkb is a GEOMETRYCOLLECTION (force_collection) */
+/* and wkb is in the endian of this computer (asbinary(...,'[XN]DR')) */
+/* each of the sub-geom inside the collection are point,linestring, or polygon */
+/*  */
+/* also, int is 32bits long */
+/* double is 64bits long */
+/* ******************************************************* */
 
 
-// convert the wkb into points
-//	points -> pass through
-//	lines->   constituent points
-//	polys->   treat ring like line and pull out the consituent points
+/* convert the wkb into points */
+/* points -> pass through */
+/* lines->   constituent points */
+/* polys->   treat ring like line and pull out the consituent points */
 
-//int	force_to_points(char	*wkb, shapeObj *shape)
+/* int	force_to_points(char	*wkb, shapeObj *shape) */
 static int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt)
 {
-	//we're going to make a 'line' for each entity (point, line or ring) in the geom collection
+	/* we're going to make a 'line' for each entity (point, line or ring) in the geom collection */
 
 	int ngeoms ;
 	int	t, points=0;
 	int type;
 	lineObj	line={0,NULL};
 
-	shape->type = MS_SHAPE_NULL;  //nothing in it
+	shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
 	ngeoms = atoi(row[1]);
 	type = atoi(row[2]);
@@ -753,7 +756,7 @@ static int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, l
 	line.point[0].x = atof(row[3]);
 	line.point[0].y = atof(row[4]);
 	line.point[0].m = 0;
-	if (type != ETYPE_POINT){		// if this geometry is not really a point
+	if (type != ETYPE_POINT){		/* if this geometry is not really a point */
 		points++;
 		line.point[1].x = atof(row[5]);
 		line.point[1].y = atof(row[6]);
@@ -770,7 +773,7 @@ static int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, l
 		line.point[points].x = atof(row[3]);
 		line.point[points].y = atof(row[4]);
 		line.point[points].m = 0;
-		if (type != ETYPE_POINT){		// if this geometry is not really a point
+		if (type != ETYPE_POINT){		/* if this geometry is not really a point */
 			points++;
 			line.point[points].x = atof(row[3]);
 			line.point[points].y = atof(row[4]);
@@ -785,26 +788,26 @@ static int	force_to_points(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, l
 	return(MS_SUCCESS);
 }
 
-//convert the wkb into lines
-//  points-> remove
-//  lines -> pass through
-//  polys -> treat rings as lines
+/* convert the wkb into lines */
+/* points-> remove */
+/* lines -> pass through */
+/* polys -> treat rings as lines */
 
-//int	force_to_lines(char	*wkb, shapeObj *shape)
+/* int	force_to_lines(char	*wkb, shapeObj *shape) */
 static int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cnt)
 {
 	int ngeoms ;
 	int	t, points=0;
-//	float x,y;
+/* float x,y; */
 	int type;
 	lineObj	line={0,NULL};
 
 
-	shape->type = MS_SHAPE_NULL;  //nothing in it
+	shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
 	ngeoms = atoi(row[1]);
-//	x = atof(row[3]);
-//	y = atof(row[4]);
+/* x = atof(row[3]); */
+/* y = atof(row[4]); */
 	type = atoi(row[2]);
 	line.point = (pointObj *) malloc (2 * ngeoms * sizeof(pointObj));
 	for (t=0; t<ngeoms; t++)
@@ -817,8 +820,8 @@ static int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, lo
 				return(MS_FAILURE);
 			}
 		}
-//if (MYDEBUG)	        printf("(%s/%s/%s/%s/%s/%s/%s/%i)<BR>\n",row[0],row[1],row[2],row[3],row[4],row[5],row[6],points);
-//			memcpy(&line.numpoints, wkb[offset+5],4); //num points
+/* if (MYDEBUG)	        printf("(%s/%s/%s/%s/%s/%s/%s/%i)<BR>\n",row[0],row[1],row[2],row[3],row[4],row[5],row[6],points); */
+/* memcpy(&line.numpoints, wkb[offset+5],4); //num points */
 			
 		line.point[points].x = atof(row[3]);
 		line.point[points].y = atof(row[4]);
@@ -827,7 +830,7 @@ static int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, lo
 		line.point[points+1].y = atof(row[6]);
 		line.point[points+1].m = 0;
 		shape->type = MS_SHAPE_LINE;
-//	        printf("(%f/%f/%f/%f)<BR>\n",line.point[points].x,line.point[points].y,line.point[points+1].x,line.point[points+1].y);
+/* printf("(%f/%f/%f/%f)<BR>\n",line.point[points].x,line.point[points].y,line.point[points+1].x,line.point[points+1].y); */
 		points += 2;
 	}
 	if (2*ngeoms != points)
@@ -835,41 +838,41 @@ static int	force_to_lines(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, lo
 	line.numpoints=points;
 	if (points > 1){
 		msAddLine(shape,&line);
-//		printf("points: %d<BR>\n",points);
+/* printf("points: %d<BR>\n",points); */
 	}	
 	free(line.point);
 	return(MS_SUCCESS);
 }
 
-// point   -> reject
-// line    -> reject
-// polygon -> lines of linear rings
+/* point   -> reject */
+/* line    -> reject */
+/* polygon -> lines of linear rings */
 static int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cntchar)
 {
 
 	int ngeoms ;
 	int	t,points=0;
-//	float x,y;
+/* float x,y; */
 	int type;
 	lineObj	line={0,NULL};
 
 
-	shape->type = MS_SHAPE_NULL;  //nothing in it
+	shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
 	ngeoms = atoi(row[1]);
-//	x = atof(row[3]);
-//	y = atof(row[4]);
+/* x = atof(row[3]); */
+/* y = atof(row[4]); */
 	type = atoi(row[2]);
 	
-	//we do one shape per call -> all geoms in this shape are the point of the poly
-	line.point = (pointObj *) malloc (2 * sizeof(pointObj)* ngeoms ); //point struct
-//	line.point[0].x = x;
-//	line.point[0].y = y;
-//	line.point[0].m = 0;
+	/* we do one shape per call -> all geoms in this shape are the point of the poly */
+	line.point = (pointObj *) malloc (2 * sizeof(pointObj)* ngeoms ); /* point struct */
+/* line.point[0].x = x; */
+/* line.point[0].y = y; */
+/* line.point[0].m = 0; */
 	line.numpoints = ngeoms;
 	for (t=0; t<ngeoms; t++)
 	{
-		//cannot do anything with a point
+		/* cannot do anything with a point */
 		if (t!=0){
 			row = mysql_fetch_row(qresult);
 			if (row==NULL){
@@ -877,8 +880,8 @@ static int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape,
 				return(MS_FAILURE);
 			}
 		}
-//		if (strcmp(type, "polygon") == 0) //polygon
-//		{
+/* if (strcmp(type, "polygon") == 0) //polygon */
+/* { */
 			shape->type = MS_SHAPE_POLYGON;
 			
 			line.point[points].x = atof(row[3]);
@@ -888,7 +891,7 @@ static int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape,
 			line.point[points+1].y = atof(row[6]);
 			line.point[points+1].m = 0;
 			points+=2;
-//		}
+/* } */
 	}
 	line.numpoints = points;
 	if (2*ngeoms != points)
@@ -896,25 +899,25 @@ static int	force_to_polygons(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape,
 	
 	if (points > 1){
 		msAddLine(shape,&line);
-//		printf("points: %d<BR>\n",points);
+/* printf("points: %d<BR>\n",points); */
 	}	
 	free(line.point);
 	return(MS_SUCCESS);
 }
 
-// if there is any polygon in wkb, return force_polygon
-// if there is any line in wkb, return force_line
-// otherwise return force_point
+/* if there is any polygon in wkb, return force_polygon */
+/* if there is any line in wkb, return force_line */
+/* otherwise return force_point */
 
 static int	dont_force(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *cntchar)
-//int	dont_force(char	*wkb, shapeObj *shape)
+/* int	dont_force(char	*wkb, shapeObj *shape) */
 {
 	int	best_type;
 	int type;
 
-//printf("dont force");
+/* printf("dont force"); */
 
-	best_type = MS_SHAPE_NULL;  //nothing in it
+	best_type = MS_SHAPE_NULL;  /* nothing in it */
 
 	type = atoi(row[2]);
 	if (type == ETYPE_POINT)
@@ -938,12 +941,12 @@ static int	dont_force(MYSQL_ROW row, MYSQL_RES* qresult, shapeObj *shape, long *
 
 	printf("unkntype %d, ", type);
 
-	return(MS_FAILURE); //unknown type
+	return(MS_FAILURE); /* unknown type */
 }
 
 int	wkb_force_to_points(char	*wkb, shapeObj *shape)
 {
-	//we're going to make a 'line' for each entity (point, line or ring) in the geom collection
+	/* we're going to make a 'line' for each entity (point, line or ring) in the geom collection */
 
 	int offset =0,pt_offset;
 	int ngeoms ;
@@ -952,15 +955,15 @@ int	wkb_force_to_points(char	*wkb, shapeObj *shape)
 	char byteorder = 0;
 	lineObj	line={0,NULL};
 
-	shape->type = MS_SHAPE_NULL;  //nothing in it
+	shape->type = MS_SHAPE_NULL;  /* nothing in it */
 	byteorder = wkb[0];
 	end_memcpy(byteorder,  &ngeoms, &wkb[5], 4);
-	offset = 9;  //were the first geometry is
+	offset = 9;  /* were the first geometry is */
 	for (t=0; t<ngeoms; t++)
 	{
-		end_memcpy(byteorder,  &type, &wkb[offset+1], 4);  // type of this geometry
+		end_memcpy(byteorder,  &type, &wkb[offset+1], 4);  /* type of this geometry */
 
-		if (type ==1)	//POINT
+		if (type ==1)	/* POINT */
 		{
 			shape->type = MS_SHAPE_POINT;
 			line.numpoints = 1;
@@ -973,38 +976,38 @@ int	wkb_force_to_points(char	*wkb, shapeObj *shape)
 			free(line.point);
 		}
 
-		if (type == 2) //linestring
+		if (type == 2) /* linestring */
 		{
 			shape->type = MS_SHAPE_POINT;
-			end_memcpy(byteorder, &line.numpoints, &wkb[offset+5],4); //num points
-			line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); //point struct
+			end_memcpy(byteorder, &line.numpoints, &wkb[offset+5],4); /* num points */
+			line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); /* point struct */
 			for(u=0;u<line.numpoints ; u++)
 			{
 				end_memcpy(byteorder,  &line.point[u].x , &wkb[offset+9 + (16 * u)], 8);
 				end_memcpy(byteorder,  &line.point[u].y , &wkb[offset+9 + (16 * u)+8], 8);
 			}
-			offset += 9 +(16)*line.numpoints;  //length of object
+			offset += 9 +(16)*line.numpoints;  /* length of object */
 			msAddLine(shape,&line);
 			free(line.point);
 		}
-		if (type == 3) //polygon
+		if (type == 3) /* polygon */
 		{
 			shape->type = MS_SHAPE_POINT;
-			end_memcpy(byteorder, &nrings, &wkb[offset+5],4); //num rings
-			//add a line for each polygon ring
+			end_memcpy(byteorder, &nrings, &wkb[offset+5],4); /* num rings */
+			/* add a line for each polygon ring */
 			pt_offset = 0;
-			offset += 9; //now points at 1st linear ring
-			for (u=0;u<nrings;u++)	//for each ring, make a line
+			offset += 9; /* now points at 1st linear ring */
+			for (u=0;u<nrings;u++)	/* for each ring, make a line */
 			{
-				end_memcpy(byteorder, &npoints, &wkb[offset],4); //num points
+				end_memcpy(byteorder, &npoints, &wkb[offset],4); /* num points */
 				line.numpoints = npoints;
-				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); //point struct
+				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
 				for(v=0;v<npoints;v++)
 				{
 					end_memcpy(byteorder,  &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
 					end_memcpy(byteorder,  &line.point[v].y , &wkb[offset+4 + (16 * v)+8], 8);
 				}
-				//make offset point to next linear ring
+				/* make offset point to next linear ring */
 				msAddLine(shape,&line);
 				free(line.point);
 				offset += 4+ (16)*npoints;
@@ -1015,10 +1018,10 @@ int	wkb_force_to_points(char	*wkb, shapeObj *shape)
 	return(MS_SUCCESS);
 }
 
-//convert the wkb into lines
-//  points-> remove
-//  lines -> pass through
-//  polys -> treat rings as lines
+/* convert the wkb into lines */
+/* points-> remove */
+/* lines -> pass through */
+/* polys -> treat rings as lines */
 
 int	wkb_force_to_lines(char	*wkb, shapeObj *shape)
 {
@@ -1030,49 +1033,49 @@ int	wkb_force_to_lines(char	*wkb, shapeObj *shape)
 	lineObj	line={0,NULL};
 
 
-	shape->type = MS_SHAPE_NULL;  //nothing in it
+	shape->type = MS_SHAPE_NULL;  /* nothing in it */
 
 	byteorder = wkb[0];
 	end_memcpy(byteorder,  &ngeoms, &wkb[5], 4);
-	offset = 9;  //were the first geometry is
+	offset = 9;  /* were the first geometry is */
 	for (t=0; t<ngeoms; t++)
 	{
 
-		end_memcpy(byteorder,  &type, &wkb[offset+1], 4);  // type of this geometry
-		//cannot do anything with a point
+		end_memcpy(byteorder,  &type, &wkb[offset+1], 4);  /* type of this geometry */
+		/* cannot do anything with a point */
 
-		if (type == 2) //linestring
+		if (type == 2) /* linestring */
 		{
 			shape->type = MS_SHAPE_LINE;
-			end_memcpy(byteorder, &line.numpoints, &wkb[offset+5],4); //num points
-			line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); //point struct
+			end_memcpy(byteorder, &line.numpoints, &wkb[offset+5],4); /* num points */
+			line.point = (pointObj *) malloc (sizeof(pointObj)* line.numpoints ); /* point struct */
 			for(u=0;u<line.numpoints ; u++)
 			{
 				end_memcpy(byteorder,  &line.point[u].x , &wkb[offset+9 + (16 * u)], 8);
 				end_memcpy(byteorder,  &line.point[u].y , &wkb[offset+9 + (16 * u)+8], 8);
 			}
-			offset += 9 +(16)*line.numpoints;  //length of object
+			offset += 9 +(16)*line.numpoints;  /* length of object */
 			msAddLine(shape,&line);
 			free(line.point);
 		}
-		if (type == 3) //polygon
+		if (type == 3) /* polygon */
 		{
 			shape->type = MS_SHAPE_LINE;
-			end_memcpy(byteorder, &nrings, &wkb[offset+5],4); //num rings
-			//add a line for each polygon ring
+			end_memcpy(byteorder, &nrings, &wkb[offset+5],4); /* num rings */
+			/* add a line for each polygon ring */
 			pt_offset = 0;
-			offset += 9; //now points at 1st linear ring
-			for (u=0;u<nrings;u++)	//for each ring, make a line
+			offset += 9; /* now points at 1st linear ring */
+			for (u=0;u<nrings;u++)	/* for each ring, make a line */
 			{
-				end_memcpy(byteorder, &npoints, &wkb[offset],4); //num points
+				end_memcpy(byteorder, &npoints, &wkb[offset],4); /* num points */
 				line.numpoints = npoints;
-				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); //point struct
+				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
 				for(v=0;v<npoints;v++)
 				{
 					end_memcpy(byteorder,  &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
 					end_memcpy(byteorder,  &line.point[v].y , &wkb[offset+4 + (16 * v)+8], 8);
 				}
-				//make offset point to next linear ring
+				/* make offset point to next linear ring */
 				msAddLine(shape,&line);
 				free(line.point);
 				offset += 4+ (16)*npoints;
@@ -1082,9 +1085,9 @@ int	wkb_force_to_lines(char	*wkb, shapeObj *shape)
 	return(MS_SUCCESS);
 }
 
-// point   -> reject
-// line    -> reject
-// polygon -> lines of linear rings
+/* point   -> reject */
+/* line    -> reject */
+/* polygon -> lines of linear rings */
 int	wkb_force_to_polygons(char	*wkb, shapeObj *shape)
 {
 
@@ -1096,33 +1099,33 @@ int	wkb_force_to_polygons(char	*wkb, shapeObj *shape)
 	lineObj	line={0,NULL};
 
 
-	shape->type = MS_SHAPE_NULL;  //nothing in it
+	shape->type = MS_SHAPE_NULL;  /* nothing in it */
 	byteorder = wkb[0];
 
 	end_memcpy(byteorder,  &ngeoms, &wkb[5], 4);
-	offset = 9;  //were the first geometry is
+	offset = 9;  /* were the first geometry is */
 	for (t=0; t<ngeoms; t++)
 	{
-		end_memcpy(byteorder,  &type, &wkb[offset+1], 4);  // type of this geometry
+		end_memcpy(byteorder,  &type, &wkb[offset+1], 4);  /* type of this geometry */
 
-		if (type == 3) //polygon
+		if (type == 3) /* polygon */
 		{
 			shape->type = MS_SHAPE_POLYGON;
-			end_memcpy(byteorder, &nrings, &wkb[offset+5],4); //num rings
-			//add a line for each polygon ring
+			end_memcpy(byteorder, &nrings, &wkb[offset+5],4); /* num rings */
+			/* add a line for each polygon ring */
 			pt_offset = 0;
-			offset += 9; //now points at 1st linear ring
-			for (u=0;u<nrings;u++)	//for each ring, make a line
+			offset += 9; /* now points at 1st linear ring */
+			for (u=0;u<nrings;u++)	/* for each ring, make a line */
 			{
-				end_memcpy(byteorder, &npoints, &wkb[offset],4); //num points
+				end_memcpy(byteorder, &npoints, &wkb[offset],4); /* num points */
 				line.numpoints = npoints;
-				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); //point struct
+				line.point = (pointObj *) malloc (sizeof(pointObj)* npoints); /* point struct */
 				for(v=0;v<npoints;v++)
 				{
 					end_memcpy(byteorder,  &line.point[v].x , &wkb[offset+4 + (16 * v)], 8);
 					end_memcpy(byteorder,  &line.point[v].y , &wkb[offset+4 + (16 * v)+8], 8);
 				}
-				//make offset point to next linear ring
+				/* make offset point to next linear ring */
 				msAddLine(shape,&line);
 				free(line.point);
 				offset += 4+ (16)*npoints;
@@ -1132,9 +1135,9 @@ int	wkb_force_to_polygons(char	*wkb, shapeObj *shape)
 	return(MS_SUCCESS);
 }
 
-// if there is any polygon in wkb, return force_polygon
-// if there is any line in wkb, return force_line
-// otherwise return force_point
+/* if there is any polygon in wkb, return force_polygon */
+/* if there is any line in wkb, return force_line */
+/* otherwise return force_point */
 
 static int	wkb_dont_force(char	*wkb, shapeObj *shape)
 {
@@ -1143,17 +1146,17 @@ static int	wkb_dont_force(char	*wkb, shapeObj *shape)
 	int	type,t;
 	int		best_type;
 
-//printf("dont force");
+/* printf("dont force"); */
 
-	best_type = MS_SHAPE_NULL;  //nothing in it
+	best_type = MS_SHAPE_NULL;  /* nothing in it */
 
 	memcpy( &ngeoms, &wkb[5], 4);
-	offset = 9;  //were the first geometry is
+	offset = 9;  /* were the first geometry is */
 	for (t=0; t<ngeoms; t++)
 	{
-		memcpy( &type, &wkb[offset+1], 4);  // type of this geometry
+		memcpy( &type, &wkb[offset+1], 4);  /* type of this geometry */
 
-		if (type == 3) //polygon
+		if (type == 3) /* polygon */
 		{
 			best_type = MS_SHAPE_POLYGON;
 		}
@@ -1181,9 +1184,9 @@ static int	wkb_dont_force(char	*wkb, shapeObj *shape)
 	}
 
 
-	return(MS_FAILURE); //unknown type
+	return(MS_FAILURE); /* unknown type */
 }
-//find the bounds of the shape
+/* find the bounds of the shape */
 static void find_bounds(shapeObj *shape)
 {
 	int t,u;
@@ -1220,9 +1223,9 @@ static void find_bounds(shapeObj *shape)
 }
 
 
-//find the next shape with the appropriate shape type (convert it if necessary)
-// also, load in the attribute data
-//MS_DONE => no more data
+/* find the next shape with the appropriate shape type (convert it if necessary) */
+/* also, load in the attribute data */
+/* MS_DONE => no more data */
 
 int msMYGISLayerNextShape(layerObj *layer, shapeObj *shape)
 {
@@ -1233,7 +1236,7 @@ int msMYGISLayerNextShape(layerObj *layer, shapeObj *shape)
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
 
-//if (MYDEBUG)printf("msMYGISLayerNextShape called<br>\n");
+/* if (MYDEBUG)printf("msMYGISLayerNextShape called<br>\n"); */
 
 	if (layerinfo == NULL)
 	{
@@ -1243,19 +1246,19 @@ int msMYGISLayerNextShape(layerObj *layer, shapeObj *shape)
 	}
 
 	result= msMYGISLayerGetShapeRandom(layer, shape, &(layerinfo->row_num)   );
-	// getshaperandom will increment the row_num
+	/* getshaperandom will increment the row_num */
 	if (result)
 		layerinfo->row_num   ++;
-//printf("RES%i\n",result);
+/* printf("RES%i\n",result); */
 	return result;
 }
 
 
 
-//Used by NextShape() to access a shape in the query set
-// TODO: only fetch 1000 rows at a time.  This should check to see if the
-//       requested feature is in the set.  If it is, return it, otherwise
-// 	   grab the next 1000 rows.
+/* Used by NextShape() to access a shape in the query set */
+/* TODO: only fetch 1000 rows at a time.  This should check to see if the */
+/* requested feature is in the set.  If it is, return it, otherwise */
+/* grab the next 1000 rows. */
 int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 {
 	msMYGISLayerInfo	*layerinfo;
@@ -1268,7 +1271,7 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 
-//if (MYDEBUG) printf("msMYGISLayerGetShapeRandom : called row %li<br>\n",*record);
+/* if (MYDEBUG) printf("msMYGISLayerGetShapeRandom : called row %li<br>\n",*record); */
 
 	if (layerinfo == NULL)
 	{
@@ -1292,21 +1295,21 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 	}
 	msInitShape(shape);
 	shape->type = MS_SHAPE_NULL;
-//return (MS_FAILURE); // a little cheating can't harm...
+/* return (MS_FAILURE); // a little cheating can't harm... */
 	while(shape->type == MS_SHAPE_NULL)
 	{
 		if (  (*record) < layerinfo->total_num )
 		{
-			//retreive an item
+			/* retreive an item */
 	            row = mysql_fetch_row(layerinfo->query_result);
 		if (row==NULL){
-//			printf("nullfetch<BR>\n");
+/* printf("nullfetch<BR>\n"); */
 			return(MS_DONE);
 		}
-//		    layerinfo->total_num = row[0];
-//if (MYDEBUG && !wkbdata)	            printf("HEAD (%s/%s/%s/%s/%s/%s/%s)<BR>\n",row[0],row[1],row[2],row[3],row[4],row[5],row[6]);
-//if (MYDEBUG && wkbdata)	            printf("HEAD (%s/%s/%s)<BR>\n",row[0],row[1],row[2]);
-			//wkb = (char *) PQgetvalue(layerinfo->query_result, (*record), layer->numitems);i
+/* layerinfo->total_num = row[0]; */
+/* if (MYDEBUG && !wkbdata)	            printf("HEAD (%s/%s/%s/%s/%s/%s/%s)<BR>\n",row[0],row[1],row[2],row[3],row[4],row[5],row[6]); */
+/* if (MYDEBUG && wkbdata)	            printf("HEAD (%s/%s/%s)<BR>\n",row[0],row[1],row[2]); */
+			/* wkb = (char *) PQgetvalue(layerinfo->query_result, (*record), layer->numitems);i */
 			wkb = row[2];
 			switch(layer->type)
 			{
@@ -1344,18 +1347,18 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 			}
 			if (shape->type != MS_SHAPE_NULL)
 			{
-//				if (MYDEBUG)printf("attrib<BR>\n");
-				//have to retreive the attributes
+/* if (MYDEBUG)printf("attrib<BR>\n"); */
+				/* have to retreive the attributes */
 			        shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
 				shape->index = atoi(row[0]);
 				shape->numvalues = layer->numitems;
 				if (layer->numitems > 0){
-//					if (MYDEBUG)printf("RETR attrib<BR>\n");
+/* if (MYDEBUG)printf("RETR attrib<BR>\n"); */
 					for (t=0;t<layer->numitems;t++){
 						sprintf(tmpstr, "%d", t);
-//						shape->values[t]=strdup("");
+/* shape->values[t]=strdup(""); */
 						shape->values[t]=strdup(row[layerinfo->attriboffset+t]);
-//						printf("%d/%s<BR>");
+/* printf("%d/%s<BR>"); */
 					}
 					if (1){
 					} else if (1) {
@@ -1373,11 +1376,11 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 
 
 
-//					sprintf(tmpstr,"select attribute, value from shape_attr where shape_attr.shape='%d'", shape->index);
+/* sprintf(tmpstr,"select attribute, value from shape_attr where shape_attr.shape='%d'", shape->index); */
 					sprintf(tmpstr,"SELECT %s, %s, %s FROM %s feature WHERE feature.id='%li'", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? layer->labelsizeitem: "''", layerinfo->feature ? layerinfo->feature : "feature", shape->index);
-//					sprintf(tmpstr,"SELECT %s, %s, %s FROM %s WHERE feature.id='%d' AND feature.GID=geometry.GID GROUP BY feature.id", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? layer->labelsizeitem: "''", layerinfo->table ? layerinfo->table : "feature", shape->index);
+/* sprintf(tmpstr,"SELECT %s, %s, %s FROM %s WHERE feature.id='%d' AND feature.GID=geometry.GID GROUP BY feature.id", layer->labelitem ? layer->labelitem: "''", layer->labelangleitem ? layer->labelangleitem: "''", layer->labelsizeitem ? layer->labelsizeitem: "''", layerinfo->table ? layerinfo->table : "feature", shape->index); */
 
-					   if (layerinfo->query2_result != NULL) // query leftover 
+					   if (layerinfo->query2_result != NULL) /* query leftover  */
 					   {
 						mysql_free_result(layerinfo->query2_result);
 					   }
@@ -1393,19 +1396,19 @@ if (MYDEBUG)					printf("%s<BR>\n", tmpstr);
 						return MS_FAILURE;
 					    }
 					   layerinfo->query2 = strdup(tmpstr);
-					   if (layerinfo->query2_result) //There were some rows found, write 'em out for debug
+					   if (layerinfo->query2_result) /* There were some rows found, write 'em out for debug */
 					   {
-//					       numrows2 = mysql_affected_rows(&(layerinfo->mysql));
-//					       printf("%d rows<br>\n", numrows2);
+/* numrows2 = mysql_affected_rows(&(layerinfo->mysql)); */
+/* printf("%d rows<br>\n", numrows2); */
 								 
-//						for(t=0;t<numrows2;t++)
+/* for(t=0;t<numrows2;t++) */
 						while ( (row_attr = mysql_fetch_row(layerinfo->query2_result)) )
 						{
 							if (row_attr==NULL){
 								printf("attr_nullfetch(%s-%d/%d)<BR>\n",tmpstr,t,numrows2);
-//								return(MS_DONE);
+/* return(MS_DONE); */
 							}
-//					            printf("%s,%s,%s/%s,%s<BR>\n", layer->labelitem, layer->labelsizeitem, layer->labelangleitem, row_attr[0], row_attr[1]);
+/* printf("%s,%s,%s/%s,%s<BR>\n", layer->labelitem, layer->labelsizeitem, layer->labelangleitem, row_attr[0], row_attr[1]); */
 						    if (layer->labelitem && strlen(row_attr[0]) > 0){
 						    	shape->values[layer->labelitemindex]=strdup(row_attr[0]);
 						    }
@@ -1424,12 +1427,12 @@ if (MYDEBUG)					printf("%s<BR>\n", tmpstr);
 				}
 
 				find_bounds(shape);
-				(*record)++; 		//move to next shape
+				(*record)++; 		/* move to next shape */
 				return (MS_SUCCESS);
 			}
 			else
 			{
-				(*record)++; //move to next shape
+				(*record)++; /* move to next shape */
 			}
 		}
 		else
@@ -1443,7 +1446,7 @@ if (MYDEBUG)					printf("%s<BR>\n", tmpstr);
 }
 
 
-// Execute a query on the DB based on record being an OID.
+/* Execute a query on the DB based on record being an OID. */
 
 int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 {
@@ -1453,7 +1456,7 @@ int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	char	geom_column_name[5000];
 	char	urid_name[5000];
 	char	user_srid[5000];
-	//int	nitems;
+	/* int	nitems; */
 	char	columns_wanted[5000];
 	char	temp[5000];
 
@@ -1462,34 +1465,34 @@ int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	int	t;
 
 if (MYDEBUG) printf("msMYGISLayerGetShape called for record = %li<br>\n",record);
-//return (MS_FAILURE);
+/* return (MS_FAILURE); */
 	layerinfo = (msMYGISLayerInfo *) layer->layerinfo;
 	if (layerinfo == NULL)
 	{
-		//layer not opened yet
+		/* layer not opened yet */
 		msSetError(MS_QUERYERR, "msMYGISLayerGetShape called on unopened layer (layerinfo = NULL)",
                  "msMYGISLayerGetShape()");
 		return(MS_FAILURE);
 	}
 
-	query_str = (char *) malloc(6000); //should be big enough
-	memset(query_str,0,6000);		//zero it out
+	query_str = (char *) malloc(6000); /* should be big enough */
+	memset(query_str,0,6000);		/* zero it out */
 
 	msMYGISLayerParseData(layer->data, geom_column_name, table_name, urid_name,user_srid);
 
-	if (layer->numitems ==0) //dont need the oid since its really record
+	if (layer->numitems ==0) /* dont need the oid since its really record */
 	{
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
 			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
-//			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name);
+/* sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR')", geom_column_name); */
 		else
 			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
-//			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name);
+/* sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR')", geom_column_name); */
 		 strcpy(columns_wanted, geom_column_name);
 	}
 	else
 	{
-		columns_wanted[0] = 0; //len=0
+		columns_wanted[0] = 0; /* len=0 */
 		for (t=0;t<layer->numitems; t++)
 		{
 			sprintf(temp,", feature.%s",layer->items[t]);
@@ -1567,14 +1570,14 @@ if (MYDEBUG) printf("msMYGISLayerGetShape: %s <br>\n",query_str);
 		return(MS_FAILURE);
     }
 
-			//query has been done, so we can retreive the results
+			// query has been done, so we can retreive the results
 
 
     	shape->type = MS_SHAPE_NULL;
 
-		if (  0 < PQntuples(query_result) )  //only need to get one shape
+		if (  0 < PQntuples(query_result) )  // only need to get one shape
 		{
-			//retreive an item
+			// retreive an item
 			wkb = (char *) PQgetvalue(query_result, 0, layer->numitems);  // layer->numitems is the wkt column
 			switch(layer->type)
 			{
@@ -1600,7 +1603,7 @@ if (MYDEBUG) printf("msMYGISLayerGetShape: %s <br>\n",query_str);
 			}
 			if (shape->type != MS_SHAPE_NULL)
 			{
-				//have to retreive the attributes
+				// have to retreive the attributes
 				shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
 				for (t=0;t<layer->numitems;t++)
 				{
@@ -1611,7 +1614,7 @@ printf("msMYGISLayerGetShape: finding attribute info for '%s'<br>\n",layer->item
 					 size = PQgetlength(query_result,0, t ) ;
 					 temp2 = (char *) malloc(size+1 );
 					 memcpy(temp2, temp1, size);
-					 temp2[size] = 0; //null terminate it
+					 temp2[size] = 0; // null terminate it
 
 					 shape->values[t] = temp2;
 printf("msMYGISLayerGetShape: shape->values[%i] has value '%s'<br>\n",t,shape->values[t]);
@@ -1642,13 +1645,13 @@ printf("msMYGISLayerGetShape: shape->values[%i] has value '%s'<br>\n",t,shape->v
 
 
 
-//query the DB for info about the requested table
-//
-// CHEAT: dont look in the system tables, get query optimization infomation
-//
-// get the table name, return a list of the possible columns (except GEOMETRY column)
-//
-// found out this is called during a query
+/* query the DB for info about the requested table */
+/*  */
+/* CHEAT: dont look in the system tables, get query optimization infomation */
+/*  */
+/* get the table name, return a list of the possible columns (except GEOMETRY column) */
+/*  */
+/* found out this is called during a query */
 
 int msMYGISLayerGetItems(layerObj *layer)
 {
@@ -1663,7 +1666,7 @@ int msMYGISLayerGetItems(layerObj *layer)
 	char *				sp;
 	
 	
-	//int				nitems;
+	/* int				nitems; */
 
 
 if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
@@ -1672,7 +1675,7 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 
 	if (layerinfo == NULL)
 	{
-		//layer not opened yet
+		/* layer not opened yet */
 		msSetError(MS_QUERYERR, "msMYGISLayerGetItems called on unopened layer",
                  "msMYGISLayerGetItems()");
 		return(MS_FAILURE);
@@ -1684,11 +1687,11 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
                  "msMYGISLayerGetItems()");
 		return(MS_FAILURE);
 	}
-	//get the table name and geometry column name
+	/* get the table name and geometry column name */
 
 	msMYGISLayerParseData(layer->data, geom_column_name, table_name, urid_name, user_srid);
 
-	// two cases here.  One, its a table (use select * from table) otherwise, just use the select clause
+	/* two cases here.  One, its a table (use select * from table) otherwise, just use the select clause */
 	if ((sp = strstr(table_name, " ")) != NULL)
 		*sp = '\0';
 	sprintf(sql,"describe %s",table_name);
@@ -1704,15 +1707,15 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 
 		}
 	}
-//	memset(layer->items[t],0, str2-str +1);
-//	strncpy(layer->items[t], str, str2-str);
-	layer->numitems =  t; // one less because dont want to do anything with geometry column
-	//layerinfo->fields is a string with a list of all the columns
+/* memset(layer->items[t],0, str2-str +1); */
+/* strncpy(layer->items[t], str, str2-str); */
+	layer->numitems =  t; /* one less because dont want to do anything with geometry column */
+	/* layerinfo->fields is a string with a list of all the columns */
 
-		// # of items is number of "," in string + 1
-		//layerinfo->fields looks like "geo_value,geo_id,desc"
-			//since we dont want to return the geometry column, we remove it.
-				// # columns is reduced by 1
+		/* # of items is number of "," in string + 1 */
+		/* layerinfo->fields looks like "geo_value,geo_id,desc" */
+			/* since we dont want to return the geometry column, we remove it. */
+				/* # columns is reduced by 1 */
 
 
 
@@ -1720,12 +1723,12 @@ if (MYDEBUG) printf( "in msMYGISLayerGetItems  (find column names)<br>\n");
 }
 
 
-//we return an infinite extent
-// we could call the SQL AGGREGATE extent(GEOMETRY), but that would take FOREVER
-// to return (it has to read the entire table).
-// So, we just tell it that we're everywhere and lets the spatial indexing figure things out for us
-//
-// Never seen this function actually called
+/* we return an infinite extent */
+/* we could call the SQL AGGREGATE extent(GEOMETRY), but that would take FOREVER */
+/* to return (it has to read the entire table). */
+/* So, we just tell it that we're everywhere and lets the spatial indexing figure things out for us */
+/*  */
+/* Never seen this function actually called */
 int msMYGISLayerGetExtent(layerObj *layer, rectObj *extent)
 {
 if (MYDEBUG) printf("msMYGISLayerGetExtent called<br>\n");
@@ -1763,15 +1766,15 @@ if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
 		strcpy(urid_name, "OID");
 	}
 	else {
-		// CHANGE - protect the trailing edge for thing like 'using unique ftab_id using srid=33'
+		/* CHANGE - protect the trailing edge for thing like 'using unique ftab_id using srid=33' */
 		tmp = strstr(pos_opt + 14," ");
-		if (tmp == NULL) //it lookes like 'using unique ftab_id'
+		if (tmp == NULL) /* it lookes like 'using unique ftab_id' */
 		{
 			strcpy(urid_name, pos_opt + 14);
 		}
 		else
 		{
-			//looks like ' using unique ftab_id ' (space at end)
+			/* looks like ' using unique ftab_id ' (space at end) */
 			strncpy(urid_name, pos_opt + 14, tmp-(pos_opt + 14  ) );
 		}
 	}
@@ -1779,11 +1782,11 @@ if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
 	pos_srid = strstr(data," using SRID=");
 	if (pos_srid == NULL)
 	{
-		user_srid[0] = 0; // = ""
+		user_srid[0] = 0; /* = "" */
 	}
 	else
 	{
-		//find the srid
+		/* find the srid */
 		slength=strspn(pos_srid+12,"-0123456789");
 		if (slength == 0)
 		{
@@ -1796,13 +1799,13 @@ if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
 		else
 		{
 			strncpy(user_srid,pos_srid+12,slength);
-			user_srid[slength] = 0; // null terminate it
+			user_srid[slength] = 0; /* null terminate it */
 		}
 	}
 
 
-	// this is a little hack so the rest of the code works.  If the ' using SRID=' comes before
-	// the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts!
+	/* this is a little hack so the rest of the code works.  If the ' using SRID=' comes before */
+	/* the ' using unique ', then make sure pos_opt points to where the ' using SRID' starts! */
 
 	if (pos_opt == NULL)
 	{
@@ -1825,21 +1828,21 @@ if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
 					DATAERRORMESSAGE(data,"Error parsing MYGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').  More help: <br><br>\n<br>\n"),
 					"msMYGISLayerParseData()");
 
-		//msSetError(MS_QUERYERR, "Error parsing MYGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", "msMYGISLayerParseData()");
+		/* msSetError(MS_QUERYERR, "Error parsing MYGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo' (couldnt find ' from ').", "msMYGISLayerParseData()"); */
 		return(MS_FAILURE);
 	}
 
 	/* Copy the geometry column name */
 	memcpy(geom_column_name, data, (pos_scn)-(data));
-	geom_column_name[(pos_scn)-(data)] = 0; //null terminate it
+	geom_column_name[(pos_scn)-(data)] = 0; /* null terminate it */
 
 	/* Copy out the table name or sub-select clause */
 	if (pos_opt == NULL) {
-		strcpy(table_name, pos_scn + 6);	//table name or sub-select clause
+		strcpy(table_name, pos_scn + 6);	/* table name or sub-select clause */
 	}
 	else {
 		strncpy(table_name, pos_scn + 6, (pos_opt) - (pos_scn + 6));
-		table_name[(pos_opt) - (pos_scn + 6)] = 0; //null terminate it
+		table_name[(pos_opt) - (pos_scn + 6)] = 0; /* null terminate it */
 	}
 
 	if ( (strlen(table_name) < 1 ) ||  (strlen(geom_column_name) < 1 ) ) {
@@ -1848,13 +1851,13 @@ if (MYDEBUG)printf("msMYGISLayerParseData called<BR>\n");
 					"msMYGISLayerParseData()");
 		return(MS_FAILURE);
 	}
-//printf("unique column = %s, srid='%s'<br>\n", urid_name,user_srid);
+/* printf("unique column = %s, srid='%s'<br>\n", urid_name,user_srid); */
 	return(MS_SUCCESS);
 }
 
 #else
 
-//prototypes if MYGIS isnt supposed to be compiled
+/* prototypes if MYGIS isnt supposed to be compiled */
 
 int msMYGISLayerOpen(layerObj *layer)
 {
@@ -1930,4 +1933,4 @@ int msMYGISLayerGetItems(layerObj *layer)
 		return(MS_FAILURE);
 }
 
-#endif	// use_mygis
+#endif	/* use_mygis */

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2005/02/18 03:06:45  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.27  2005/01/15 20:03:14  frank
  * Fixed byte swapping error for 24bit images on bigendian systems.
  *
@@ -549,8 +552,8 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
     format->imagemode = MS_IMAGEMODE_RGB;
     format->renderer = MS_RENDER_WITH_GD;
 
-    // Eventually we should have a way of deriving the mime type and extension
-    // from the driver.
+    /* Eventually we should have a way of deriving the mime type and extension */
+    /* from the driver. */
 
 #ifdef GDAL_DMD_MIMETYPE 
     if( GDALGetMetadataItem( hDriver, GDAL_DMD_MIMETYPE, NULL ) != NULL )

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.15  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -150,7 +153,7 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
 {
   int i;
 
-  if(cache->numresults == cache->cachesize) { // just add it to the end
+  if(cache->numresults == cache->cachesize) { /* just add it to the end */
     if(cache->cachesize == 0)
       cache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*MS_RESULTCACHEINCREMENT);
     else
@@ -236,9 +239,9 @@ static void msRasterLayerInfoInitialize( layerObj *layer )
     rlinfo->range_mode = -1; /* inactive */
     rlinfo->refcount = 0;
     
-    // We need to do this or the layer->layerinfo will be interpreted
-    // as shapefile access info because the default connectiontype is
-    // MS_SHAPEFILE.
+    /* We need to do this or the layer->layerinfo will be interpreted */
+    /* as shapefile access info because the default connectiontype is */
+    /* MS_SHAPEFILE. */
     layer->connectiontype = MS_RASTER;
 
     rlinfo->query_result_hard_max = 1000000;
@@ -488,13 +491,13 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
     InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
 
-    // top left
+    /* top left */
     dfXMin = dfXMax = GEO_TRANS(adfInvGeoTransform,
                                 searchrect.minx, searchrect.maxy);
     dfYMin = dfYMax = GEO_TRANS(adfInvGeoTransform+3,
                                 searchrect.minx, searchrect.maxy);
                                 
-    // top right
+    /* top right */
     dfX = GEO_TRANS(adfInvGeoTransform  , searchrect.maxx, searchrect.maxy);
     dfY = GEO_TRANS(adfInvGeoTransform+3, searchrect.maxx, searchrect.maxy);
     dfXMin = MIN(dfXMin,dfX);
@@ -502,7 +505,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     dfYMin = MIN(dfYMin,dfY);
     dfYMax = MAX(dfYMax,dfY);
     
-    // bottom left
+    /* bottom left */
     dfX = GEO_TRANS(adfInvGeoTransform  , searchrect.minx, searchrect.miny);
     dfY = GEO_TRANS(adfInvGeoTransform+3, searchrect.minx, searchrect.miny);
     dfXMin = MIN(dfXMin,dfX);
@@ -510,7 +513,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     dfYMin = MIN(dfYMin,dfY);
     dfYMax = MAX(dfYMax,dfY);
     
-    // bottom right
+    /* bottom right */
     dfX = GEO_TRANS(adfInvGeoTransform  , searchrect.maxx, searchrect.miny);
     dfY = GEO_TRANS(adfInvGeoTransform+3, searchrect.maxx, searchrect.miny);
     dfXMin = MIN(dfXMin,dfX);
@@ -634,9 +637,9 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
                 GEO_TRANS(adfGeoTransform+3, 
                           iPixel + nWinXOff + 0.5, iLine + nWinYOff + 0.5 );
 
-            // If projections differ, convert this back into the map 
-            // projection for distance testing, and comprison to the 
-            // search shape. 
+            /* If projections differ, convert this back into the map  */
+            /* projection for distance testing, and comprison to the  */
+            /* search shape.  */
             if( needReproject )
                 msProjectPoint( &(layer->projection), &(map->projection), 
                                 &sPixelLocation );
@@ -658,8 +661,8 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
                 if( dist >= dfAdjustedRange )
                     continue;
 
-                // If we can only have one feature, trim range and clear
-                // previous result. 
+                /* If we can only have one feature, trim range and clear */
+                /* previous result.  */
                 if( rlinfo->range_mode == MS_SINGLE )
                 {
                     rlinfo->range_dist = dist;
@@ -770,11 +773,11 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 
 #ifdef USE_PROJ
         if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-            msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
+            msProjectRect(&map->projection, &layer->projection, &searchrect); /* project the searchrect to source coords */
 #endif
         status = msSHPWhichShapes(&tilefile, searchrect, layer->debug);
         if(status != MS_SUCCESS) 
-            numtiles = 0; // could be MS_DONE or MS_FAILURE
+            numtiles = 0; /* could be MS_DONE or MS_FAILURE */
         else
             numtiles = tilefile.numshapes;
     }
@@ -879,7 +882,7 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
         GDALClose( hDS );
         msReleaseLock( TLOCK_GDAL );
 
-    } // next tile
+    } /* next tile */
 
     if(layer->tileindex) /* tiling clean-up */
         msSHPCloseFile(&tilefile);    
@@ -947,7 +950,7 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
 /*      clear that there is any way of requesting a buffer size in      */
 /*      underlying pixels.                                              */
 /* -------------------------------------------------------------------- */
-    if(buffer <= 0) { // use layer tolerance
+    if(buffer <= 0) { /* use layer tolerance */
         if(layer->toleranceunits == MS_PIXELS)
             buffer = layer->tolerance 
                 * msAdjustExtent(&(map->extent), map->width, map->height);

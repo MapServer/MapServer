@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2005/02/18 03:06:47  dan
+ * Turned all C++ (//) comments into C comments (bug 1238)
+ *
  * Revision 1.17  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -40,13 +43,13 @@
 
 enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE, MS_SYMBOL_HATCH};
 
-#define MS_MAXSYMBOLS 64            // maximum number of symbols in a symbol file
-#define MS_MAXVECTORPOINTS 100      // shade, marker and line symbol parameters
+#define MS_MAXSYMBOLS 64            /* maximum number of symbols in a symbol file */
+#define MS_MAXVECTORPOINTS 100      /* shade, marker and line symbol parameters */
 #define MS_MAXSTYLELENGTH 10
 
 #define MS_IMAGECACHESIZE 6
 
-// COLOR OBJECT
+/* COLOR OBJECT */
 typedef struct {
   int pen;
   int red;
@@ -67,20 +70,20 @@ struct imageCacheObj {
   gdImagePtr img;
   struct imageCacheObj *next;
 };
-#endif // SWIG
+#endif /* SWIG */
 
 
 typedef struct {
   char *name;
   int type;
 #ifndef SWIG
-  int inmapfile; //boolean value for writing
+  int inmapfile; /* boolean value for writing */
 
   /*
   ** Pointer to his map
   */
   struct map_obj *map;
-#endif // SWIG
+#endif /* SWIG */
   /*
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options
   */
@@ -92,14 +95,14 @@ typedef struct {
 
 #ifdef SWIG
   %immutable;
-#endif // SWIG
+#endif /* SWIG */
   int numpoints;
 #ifdef SWIG
   %mutable;
-#endif // SWIG
+#endif /* SWIG */
   int filled;
 
-  int stylelength;                      // Number of intervals (eg. dashes) in the style
+  int stylelength;                      /* Number of intervals (eg. dashes) in the style */
   int style[MS_MAXSTYLELENGTH];
 
   /*
@@ -107,7 +110,7 @@ typedef struct {
   */
 #ifndef SWIG
   gdImagePtr img;
-#endif // SWIG
+#endif /* SWIG */
   char *imagepath;
   int transparent;
   int transparentcolor;
