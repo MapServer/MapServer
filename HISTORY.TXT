@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- New and improved Java mapscript build provided by unicoletti@prometeo.it
+  (bug 876).
+
 - MapContext: Cleanup code to make future integration more easily and output 
   SRS and DataURL in the order required by the spec.
 
