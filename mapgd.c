@@ -704,7 +704,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   size = MS_MIN(size, style->maxsize);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
-  if(fc<0 && oc<0) return; // nothing to do
+  if(fc<0 && oc<0 && symbol->type != MS_SYMBOL_PIXMAP) return; // nothing to do (color not required for a pixmap symbol)
   if(size < 1) return; // size too small
 
   if(style->symbol == 0 && fc >= 0) { /* simply draw a single pixel of the specified color */
@@ -873,7 +873,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   //size = MS_MIN(size, style->maxsize);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
-  if(fc < 0) return; // nothing to do
+  if(fc < 0 && symbol->type != MS_SYMBOL_PIXMAP) return; // nothing to do (color not required for a pixmap symbol)
   if(size < 1) return; // size too small
   ox = MS_NINT(style->offsetx*scalefactor);
   oy = (style->offsety == -99) ? -99 : style->offsety*scalefactor;
@@ -1020,7 +1020,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     return;
   }
 
-  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
+  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK  
   if(fc < 0) return; // nothing to do
   if(size < 1) return; // size too small
       
