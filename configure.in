@@ -148,6 +148,7 @@ unset ac_cv_lib_c_gdImageJpeg
 unset ac_cv_lib_c_gdImageWBMP
 unset ac_cv_lib_c_gdImageStringFT
 unset ac_cv_lib_c_gdImageGifPtr
+unset ac_cv_lib_gd_gdImageCreateTrueColor
 
 AC_CHECKING(for GD 2.x...)
 AC_ARG_WITH(gd,
@@ -178,7 +179,7 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
 
   dnl make sure it is GD 2.x
-  AC_CHECK_LIB(gd, gdImageCreateTrueColor,IS_GD2="true")
+  AC_CHECK_LIB(gd, gdImageCreateTrueColor,IS_GD2="true",,-L$GD_LIBDIR)
 
   if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
       GD_INC=-I$GD_INCLUDE
