@@ -18,6 +18,9 @@ Version 4.2-beta2
 
 - Map cloning fixed.  However, users must now set the cloned map's fontset
   and symbolset explicitly (see bug 557).
+
+- Fixed problem with PHP's pasteImage() method when angle=0
+
   
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
