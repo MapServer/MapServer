@@ -184,6 +184,7 @@ static int matchdxfcolor(colorObj col)
 	return tcolor;
 }
 
+#ifdef notdef /* not currently used */
 static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, int size) {
 //  struct imageCacheObj *icp;
 DEBUG_IF printf("searchImageCache\n<BR>");
@@ -196,6 +197,7 @@ DEBUG_IF printf("searchImageCache\n<BR>");
 */
   return(NULL);
 }
+#endif /* def notdef */
 
 static char* lname;
 static int dxf;
@@ -217,6 +219,7 @@ DEBUG_IF printf("ImageStartLayerIM\n<BR>");
 	lastcolor = -1;
 }
 	
+#ifdef notdef /* not currently used */
 static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize, styleObj *style, int size, gdImagePtr img) {
   struct imageCacheObj *icp;
 DEBUG_IF printf("addImageCache\n<BR>");
@@ -242,7 +245,7 @@ DEBUG_IF printf("addImageCache\n<BR>");
  
   return(icp);
 }
-
+#endif /* def notdef */
 
 
 //*
@@ -482,6 +485,8 @@ imageObj *msImageLoadIM( const char *filename )
   return image;
 }
 
+#ifdef notdef /* not currently used */
+
 // TODO: might be a way to optimize this (halve the number of additions)
 static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
@@ -529,6 +534,7 @@ DEBUG_IF printf("imagePolyline\n<BR>");
   }
   */
 }
+#endif /* def notdef */
 
 // ---------------------------------------------------------------------------//
 //       Stroke an ellipse with a line symbol of the specified size and color //
@@ -1118,7 +1124,6 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
 //  gdPoint points[MS_MAXVECTORPOINTS];
   int fc, bc;
   int i,j,l;
-int bsize = 200;
 char first = 1;
 double size;
 DEBUG_IF printf("msDrawLineSymbolIM<BR>\n");
@@ -1326,7 +1331,6 @@ void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, st
   char *font=NULL;
   */
   int i,j,l;
-int bsize = 300;
 char first = 1;
 double size;
 
@@ -1571,6 +1575,7 @@ DEBUG_IF printf("msDrawShadeSymbolIM\n<BR>");
   return;
 }
 
+#ifdef notdef /* not currently used */
 static void billboardIM(imageObj* img, shapeObj *shape, labelObj *label)
 {
 //  int i;
@@ -1601,6 +1606,7 @@ DEBUG_IF printf("billboardIM<BR>\n");
 */
   
 }
+#endif /* def notdef */
 
 //
 //** Simply draws a label based on the label point and the supplied label object.
