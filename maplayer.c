@@ -1087,7 +1087,8 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
     //delimited using backtics (ex `[TIME]` eq `2004-01-01`)
     if (lp->connectiontype == MS_SHAPEFILE ||
         lp->connectiontype == MS_OGR ||
-        lp->connectiontype == MS_TILED_SHAPEFILE)
+        lp->connectiontype == MS_TILED_SHAPEFILE ||
+        lp->connectiontype == MS_INLINE)
       addtimebacktics = 1;
     else
       addtimebacktics = 0;
@@ -1109,18 +1110,28 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
         strcat(buffer, "(");
         if (addtimebacktics)
           strcat(buffer,  "`");
+        else
+          strcat(buffer,  "'");
         strcat(buffer, "[");
         strcat(buffer, timefield);
         strcat(buffer, "]");
         if (addtimebacktics)
           strcat(buffer,  "`");
+        else
+          strcat(buffer,  "'");
 
         strcat(buffer, " eq ");
         if (addtimebacktics)
           strcat(buffer,  "`");
+        else
+          strcat(buffer,  "'");
+
         strcat(buffer, timestring);
         if (addtimebacktics)
           strcat(buffer,  "`");
+        else
+          strcat(buffer,  "'");
+
         strcat(buffer, ")");
         
         //loadExpressionString(&lp->filter, (char *)timestring);
@@ -1157,37 +1168,54 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
                      strcat(buffer, "(");
                      if (addtimebacktics)
                        strcat(buffer,  "`");
+                     else
+                       strcat(buffer,  "'");
+
                      strcat(buffer, "[");
                      strcat(buffer, timefield);
                      strcat(buffer, "]");
                      
                      if (addtimebacktics)
                        strcat(buffer,  "`");
+                     else
+                       strcat(buffer,  "'");
 
                      strcat(buffer, " ge ");
                      if (addtimebacktics)
                        strcat(buffer,  "`");
+                     else
+                       strcat(buffer,  "'");
+
                      strcat(buffer, tokens[0]);
                      if (addtimebacktics)
                        strcat(buffer,  "`");
+                     else
+                       strcat(buffer,  "'");
                      strcat(buffer, " AND ");
 
                      if (addtimebacktics)
                        strcat(buffer,  "`");
+                     else
+                       strcat(buffer,  "'");
                       strcat(buffer, "[");
                      strcat(buffer, timefield);
                       strcat(buffer, "]");
                      if (addtimebacktics)
                        strcat(buffer,  "`");
+                     else
+                       strcat(buffer,  "'");
 
                      strcat(buffer, " le ");
                      
                      if (addtimebacktics)
                        strcat(buffer,  "`");
+                     else
+                       strcat(buffer,  "'");
                      strcat(buffer, tokens[1]);
                      if (addtimebacktics)
                        strcat(buffer,  "`");
-
+                     else
+                       strcat(buffer,  "'");
                      strcat(buffer, ")");
                  }
                  
@@ -1208,20 +1236,29 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
                   strcat(buffer, "(");
                   if (addtimebacktics)
                     strcat(buffer, "`");
+                  else
+                    strcat(buffer,  "'");
+
                   strcat(buffer, "[");
                   strcat(buffer, timefield);
                   strcat(buffer, "]");
 
                   if (addtimebacktics)
-                       strcat(buffer, "`");
+                    strcat(buffer, "`");
+                  else
+                    strcat(buffer,  "'");
 
                   strcat(buffer, " eq ");
                   
                   if (addtimebacktics)
                     strcat(buffer, "`");
+                  else
+                    strcat(buffer,  "'");
                   strcat(buffer, atimes[i]);
                   if (addtimebacktics)
-                       strcat(buffer,  "`");
+                    strcat(buffer,  "`");
+                  else
+                    strcat(buffer,  "'");
                   strcat(buffer, ")");
              } 
               strcat(buffer, ")");
