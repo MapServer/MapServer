@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.53  2004/11/10 22:49:23  assefa
+ * Send warning for "invalid" layers in the capabilities document (Bug 646).
+ *
  * Revision 1.52  2004/11/10 16:10:19  assefa
  * DescribeFeatureType returns now in the exception only the typename that is
  * invalid instead of the whole typename passed in the request (Bug 442).
@@ -370,6 +373,11 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    
    msIO_printf("    <FeatureType>\n");
 
+   if (lp->name && strlen(lp->name) > 0 &&
+       (msIsXMLTagValid(lp->name) == MS_FALSE || isdigit(lp->name[0])))
+     msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
+                        "invalid characters or may start with a number. This could lead to potential problems. -->\n",lp->name);
+   
    msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
                          "        <Name>%s</Name>\n", NULL);
 

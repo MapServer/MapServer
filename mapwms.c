@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.147  2004/11/10 22:49:23  assefa
+ * Send warning for "invalid" layers in the capabilities document (Bug 646).
+ *
  * Revision 1.146  2004/11/10 19:00:33  assefa
  * Output warning in capabilities document if layer,group,map names have
  * space in them. (Bug 486).
@@ -1125,9 +1128,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
               indent, msIsLayerQueryable(lp), opaque, cascaded);
    }
    
-   if (lp->name && (msIsXMLTagValid(lp->name) == MS_FALSE))
+   if (lp->name && strlen(lp->name) > 0 &&
+       (msIsXMLTagValid(lp->name) == MS_FALSE || isdigit(lp->name[0])))
      msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
-                        "invalid characters. This could lead to potential problems. -->\n", 
+                        "invalid characters or may start with a number. This could lead to potential problems. -->\n", 
                   lp->name);
    msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_WARN,
                          "        <Name>%s</Name>\n", NULL);
@@ -1803,9 +1807,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   msIO_printf("  <Layer>\n");
 
   // Layer Name is optional but title is mandatory.
-  if (map->name && (msIsXMLTagValid(map->name) == MS_FALSE))
+  if (map->name && strlen(map->name) > 0 &&
+      (msIsXMLTagValid(map->name) == MS_FALSE || isdigit(map->name[0])))
     msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
-                 "invalid characters. This could lead to potential problems. -->\n", 
+                 "invalid characters or may start with a number. This could lead to potential problems. -->\n", 
                  map->name);
   msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR,
                         "    <Name>%s</Name>\n", NULL);
@@ -1875,9 +1880,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
              msIO_printf("    <Layer>\n");
 
              // Layer Name is optional but title is mandatory.
-             if (lp->group && (msIsXMLTagValid(lp->group) == MS_FALSE))
+             if (lp->group &&  strlen(lp->group) > 0 &&
+                 (msIsXMLTagValid(lp->group) == MS_FALSE || isdigit(lp->group[0])))
                msIO_fprintf(stdout, "<!-- WARNING: The layer name '%s' might contain spaces or "
-                        "invalid characters. This could lead to potential problems. -->\n", 
+                        "invalid characters or may start with a number. This could lead to potential problems. -->\n", 
                             lp->group);
              msOWSPrintEncodeParam(stdout, "GROUP.NAME", lp->group,
                                    OWS_NOERR, "      <Name>%s</Name>\n", NULL);
