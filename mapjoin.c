@@ -257,7 +257,6 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   char szPath[MS_MAXPATHLEN];
   msCSVJoinInfo *joininfo;
   char buffer[MS_BUFFER_LENGTH];
-  int numRowsAllocated = 0;
 
   if(join->joininfo) return(MS_SUCCESS); // already open
     
@@ -293,7 +292,8 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
 
   // load the rows
   i = 0;
-  while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {    
+  while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {  
+    trimEOL(buffer);  
     joininfo->rows[i] = split(buffer, ',', &(join->numitems));
     i++;
   }
