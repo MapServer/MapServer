@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.20  2004/02/26 16:08:49  frank
+ * Added check for wcs_extent.
+ *
  * Revision 1.19  2004/02/24 06:20:37  sdlime
  * Added msOWSGetMetadata() function.
  *
@@ -665,6 +668,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
 
   if ((value = msLookupHashTable(lp->metadata, "wms_extent")) != NULL ||
       (value = msLookupHashTable(lp->metadata, "wfs_extent")) != NULL )
+      (value = msLookupHashTable(lp->metadata, "wcs_extent")) != NULL )
   {
     char **tokens;
     int n;
