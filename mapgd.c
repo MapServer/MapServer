@@ -297,7 +297,7 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
   if(style->color.pen >= 0)
     *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
   else // try outline color
-    *fgcolor = gdImageColorAllocate(brush, style->outcolor.red, style->outcolor.green, style->outcolor.blue);
+    *fgcolor = gdImageColorAllocate(brush, style->outlinecolor.red, style->outlinecolor.green, style->outlinecolor.blue);
 #endif
 
   return(brush);
