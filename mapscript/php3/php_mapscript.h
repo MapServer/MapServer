@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/11/02 21:03:36  assefa
+ * Add a 2nd optional argument to LoadMapContext function (Bug 1023).
+ *
  * Revision 1.46  2004/07/28 22:03:50  dan
  * Added layer->getFilter() to PHP MapScript (bug 787)
  *
@@ -144,7 +147,8 @@ int             mapObj_setSymbolSet(mapObj *self, char *szFileName);
 int             mapObj_getNumSymbols(mapObj *self);
 int             mapObj_setFontSet(mapObj *self, char *szFileName);
 int             mapObj_saveMapContext(mapObj *self, char *szFileName);
-int             mapObj_loadMapContext(mapObj *self, char *szFileName);
+int             mapObj_loadMapContext(mapObj *self, char *szFileName,
+                                      int bUniqueLayerName);
 int             mapObj_selectOutputFormat(mapObj *self,
                                           const char *imagetype);
 int             mapObj_applySLD(mapObj *self, char *sld);

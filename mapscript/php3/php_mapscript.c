@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.213  2004/11/02 21:03:36  assefa
+ * Add a 2nd optional argument to LoadMapContext function (Bug 1023).
+ *
  * Revision 1.212  2004/10/22 02:44:03  dan
  * Sync'd PHP outputFormatObj with the SWIG version to allow editing parameters
  * of output formats (still need ability to create new formats - bug 979)
@@ -5592,8 +5595,11 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pThis;
     pval        *pParamFileName;
+    pval        *pUniqueLayerName;
     mapObj      *self=NULL;
     int         retVal=0;
+    int         nArgs;
+    int         bUniqueLayerName = MS_FALSE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -5613,13 +5619,21 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_LONG(MS_FAILURE);
     }
 
-    if (getParameters(ht,1,&pParamFileName) == FAILURE)
+    nArgs = ARG_COUNT(ht);
+    if((nArgs != 1 && nArgs != 2) ||
+       getParameters(ht,nArgs,&pParamFileName, &pUniqueLayerName) == FAILURE)
     {
         WRONG_PARAM_COUNT;
     }
 
     convert_to_string(pParamFileName);
    
+    if (nArgs == 2)
+    {
+        convert_to_long(pUniqueLayerName);
+        bUniqueLayerName = pUniqueLayerName->value.lval;
+    }
+
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
                                          list TSRMLS_CC);
     if (self == NULL)
@@ -5630,8 +5644,8 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     if(pParamFileName->value.str.val != NULL && 
        strlen(pParamFileName->value.str.val) > 0)
     {
-        if ((retVal = mapObj_loadMapContext(self, 
-                                 pParamFileName->value.str.val)) != MS_SUCCESS)
+        if ((retVal = mapObj_loadMapContext(self, pParamFileName->value.str.val,
+                                            bUniqueLayerName)) != MS_SUCCESS)
         {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_WARNING, "Failed loading map context from %s",

@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.89  2004/11/02 21:03:36  assefa
+ * Add a 2nd optional argument to LoadMapContext function (Bug 1023).
+ *
  * Revision 1.88  2004/10/28 18:16:17  dan
  * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
  * when requested layer was out of scale (bug 1006)
@@ -340,10 +343,11 @@ int mapObj_saveMapContext(mapObj *self, char *szFilename)
     return msSaveMapContext(self, szFilename);
 }
 
-int mapObj_loadMapContext(mapObj *self, char *szFilename)
+int mapObj_loadMapContext(mapObj *self, char *szFilename, int bUniqueLayerName)
 {
-    return msLoadMapContext(self, szFilename);
+    return msLoadMapContext(self, szFilename, bUniqueLayerName);
 }
+
 
 
 int mapObj_selectOutputFormat(mapObj *self,

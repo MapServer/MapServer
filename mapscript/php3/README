@@ -471,11 +471,15 @@ and the MapServer Map File documentation at:
         Only WMS layers are saved in the WMS Map Context XML file.
         Returns MS_SUCCESS/MS_FAILURE.
 
-   int loadMapContext(string filename)
+   int loadMapContext(string filename, boolean unique_layer_name)
         Available only if WMS support is enabled.
         Load a WMS Map Context XML file into the current mapObj.
         If the map already contains some layers then the layers defined
         in the WMS Map context document are added to the current map.
+        The 2nd argument unique_layer_name is optional and if set to 
+        MS_TRUE layers created will have a unique name (unique prefix
+        added to the name). If set to MS_FALSE the layer name will be the 
+        the same name as in the context. The default value is MS_FALSE.
         Returns MS_SUCCESS/MS_FAILURE.
 
 
