@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "map.h"
 #include "mapresample.h"
 #include "mapthread.h"
@@ -134,7 +135,7 @@ static int add_color(mapObj *map, gdImagePtr img, int r, int g, int b)
   ** When perterbing greyscale images we try to keep them greyscale, otherwise
   ** we just perterb the red component.
   */
-  if( map->transparent 
+  if( map->outputformat && map->outputformat->transparent 
       && map->imagecolor.red == r 
       && map->imagecolor.green == g 
       && map->imagecolor.blue == b )
@@ -169,7 +170,7 @@ static int add_color(mapObj *map, gdImagePtr img, int r, int g, int b)
     }
     
     /* don't try to use the transparent color */
-    if (map->transparent 
+    if (map->outputformat && map->outputformat->transparent 
         && img->red  [c] == map->imagecolor.red
         && img->green[c] == map->imagecolor.green
         && img->blue [c] == map->imagecolor.blue )
@@ -277,7 +278,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
 
 {
   int i,j, k; /* loop counters */
-  int cmap[MAXCOLORS];
+  int cmap[MAXCOLORS], cmap_set = FALSE;
   double adfGeoTransform[6], adfInvGeoTransform[6];
   int	dst_xoff, dst_yoff, dst_xsize, dst_ysize;
   int	src_xoff, src_yoff, src_xsize, src_ysize;
@@ -285,10 +286,16 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   double llx, lly, urx, ury;
   rectObj copyRect, mapRect;
   unsigned char *pabyRaw1, *pabyRaw2, *pabyRaw3, *pabyRawAlpha;
+  int truecolor = FALSE;
 
   GDALColorTableH hColorMap;
   GDALRasterBandH hBand1, hBand2, hBand3, hBandAlpha;
 
+  memset( cmap, 0xff, MAXCOLORS * sizeof(int) );
+
+#if GD2_VERS > 1
+  truecolor = gdImageTrueColor( img );
+#endif
 
   /*
    * Compute the georeferenced window of overlap, and do nothing if there
@@ -384,7 +391,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   if( hColorMap != NULL )
       hColorMap = GDALCloneColorTable( hColorMap );
 
-  else if( hBand2 == NULL )
+  else if( hBand2 == NULL && !truecolor )
   {
       hColorMap = GDALCreateColorTable( GPI_RGB );
 
@@ -411,6 +418,8 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
     char tmpstr[3];
     int c;
 
+    cmap_set = TRUE;
+
     for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
       if(i != layer->offsite) {
         GDALColorEntry sEntry;
@@ -431,7 +440,9 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
       } else
 	cmap[i] = -1;
     }
-  } else if( hColorMap != NULL ) {
+  } else if( hColorMap != NULL && !truecolor ) {
+    cmap_set = TRUE;
+
     for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
         GDALColorEntry sEntry;
 
@@ -443,7 +454,39 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
             cmap[i] = -1;
     }
   }
-  else
+#if GD2_VERS > 1
+  else if( hBand2 == NULL && hColorMap != NULL )
+  {
+      cmap_set = TRUE;
+
+      for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
+          GDALColorEntry sEntry;
+          
+          GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
+          
+          if(i != layer->offsite ) 
+              cmap[i] = gdTrueColorAlpha(sEntry.c1, sEntry.c2, sEntry.c3, 
+                                         127 - (sEntry.c4 >> 1) );
+          else
+              cmap[i] = -1;
+      }
+  }
+  else if( hBand2 == NULL && hColorMap == NULL )
+  {
+      /* Create a cmap[] that maps input values to corresponding truecolor
+         greyscale values */
+      
+      cmap_set = TRUE;
+      for(i=0; i<256; i++ )
+      {
+          if( i == layer->offsite )
+              cmap[i] = -1;
+          else
+              cmap[i] = gdTrueColor(i,i,i);
+      }
+  }
+#endif
+  else if( !truecolor )
   {
       allocColorCube( map, img, anColorCube );
   }
@@ -462,8 +505,9 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   /*
   ** Process single band using the provided, or greyscale colormap
   */
-  if( hBand2 == NULL )
+  if( hBand2 == NULL && !truecolor )
   {
+      assert( cmap_set );
       k = 0;
       for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
       {
@@ -482,10 +526,30 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
       }
   }
 
+#if GD2_VERS > 1
+  else if( hBand2 == NULL && truecolor )
+  {
+      assert( cmap_set );
+
+      k = 0;
+      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+      {
+          int	result;
+          
+          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+          {
+              result = cmap[pabyRaw1[k++]];
+              if( result != -1 )
+                  img->tpixels[i][j] = result;
+          }
+      }
+  }
+#endif
+
   /*
   ** Otherwise read green and blue data, and process through the color cube.
   */
-  else
+  else if( hBand3 != NULL )
   {
       pabyRaw2 = (unsigned char *) malloc(dst_xsize * dst_ysize);
       if( pabyRaw2 == NULL )
@@ -514,26 +578,55 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
       else
           pabyRawAlpha = NULL;
 
-      k = 0;
-      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+      if( !truecolor )
       {
-          for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+          k = 0;
+          for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
           {
-              int	cc_index;
-
-              if( pabyRawAlpha == NULL || pabyRawAlpha[k] != 0 )
+              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
               {
-                  cc_index = RGB_INDEX(pabyRaw1[k], pabyRaw2[k], pabyRaw3[k]);
+                  int	cc_index;
+                  
+                  if( pabyRawAlpha == NULL || pabyRawAlpha[k] != 0 )
+                  {
+                      cc_index= RGB_INDEX(pabyRaw1[k],pabyRaw2[k],pabyRaw3[k]);
 #ifndef USE_GD_1_2
-                  img->pixels[i][j] = anColorCube[cc_index];
+                      img->pixels[i][j] = anColorCube[cc_index];
 #else
-                  img->pixels[j][i] = anColorCube[cc_index];
+                      img->pixels[j][i] = anColorCube[cc_index];
 #endif
+                  }
+                  k++;
               }
-
-              k++;
           }
       }
+#if GD2_VERS > 1
+      else if( truecolor )
+      {
+          k = 0;
+          for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+          {
+              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+              {
+                  if( pabyRawAlpha == NULL || pabyRawAlpha[k] == 255 )
+                  {
+                      img->tpixels[i][j] = 
+                          gdTrueColor(pabyRaw1[k], pabyRaw2[k], pabyRaw3[k]);
+                  }
+                  else
+                  {
+                      int gd_alpha = 127 - (pabyRawAlpha[k] >> 1);
+                      int gd_color = gdTrueColorAlpha(
+                          pabyRaw1[k], pabyRaw2[k], pabyRaw3[k], gd_alpha );
+                      
+                      img->tpixels[i][j] = 
+                          gdAlphaBlend( img->tpixels[i][j], gd_color );
+                  }
+                  k++;
+              }
+          }
+      }
+#endif
 
       free( pabyRaw2 );
       free( pabyRaw3 );
@@ -1225,6 +1318,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   erdhead hd;
 
   {union {long i;char c[4];} u; u.i=1; reverse=(u.c[0]==0);}
+
   erd=fopen(filename,"rb");
   if (erd==NULL) {  
     msSetError(MS_IMGERR, "Error loading ERDAS image.", "drawERD()");
@@ -1681,13 +1775,13 @@ int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
   shapefileObj tilefile;
   char tilename[MS_PATH_LENGTH];
   int numtiles=1; /* always at least one tile */
+  int force_gdal;
 
   rectObj searchrect;
 
 #ifdef USE_EGIS
   char *ext; // OV -egis- temp variable
 #endif
-
 
   if(!layer->data && !layer->tileindex)
     return(0);
@@ -1701,6 +1795,39 @@ int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
     if((layer->minscale > 0) && (map->scale <= layer->minscale))
       return(0);
   }
+
+  force_gdal = FALSE;
+
+  // Only GDAL supports 24bit GD output.
+#if GD2_VERS > 1
+  if( gdImageTrueColor( img ) )
+  {
+#ifndef USE_GDAL
+      msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
+      return -1;
+#else
+      force_gdal = TRUE;
+#endif
+  }
+#endif /* def GD2_VERS */
+
+  // Only GDAL support image warping.
+  if(layer->transform && 
+     msProjectionsDiffer(&(map->projection), &(layer->projection)))
+  {
+#ifndef USE_GDAL
+      msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
+      return -1;
+#else
+      force_gdal = TRUE;
+#endif
+  }
+
+  // This force use of GDAL if available.  This is usually but not always a
+  // good idea.  Remove this line for local builds if necessary.
+#ifdef USE_GDAL 
+  force_gdal = TRUE;
+#endif
 
   getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
   if(map->shapepath)
@@ -1757,170 +1884,46 @@ int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
         fclose(f);
     }
 
-#if !defined(USE_GDAL) || defined(USE_TIFF)
-    if (memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) {
-      if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
-        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( TIFF )");
-        return(-1);
-      }
-      status = drawTIFF(map, layer, img, filename);
-      if(status == -1) {
-	chdir(old_path); /* restore old cwd */
-	return(-1);
-      }
-      continue;
-    }
-#endif
-
-    if (memcmp(dd,"GIF8",4)==0) {
-      if(layer->transform && 
-         msProjectionsDiffer(&(map->projection), &(layer->projection))) {
-#ifdef USE_GDAL
-        /*
-        ** Image should be reprojected... We'll set the offsite to the GIF
-        ** transparent colour (since GDAL ignores it) and then let GDAL
-        ** render the layer (if it has GIF support included).
-        **
-        ** __TODO__ Yes, this is a hack and should be improved...
-        **          but hey!  It works for now.
-        */
-        if (layer->offsite == -1)
-        {
-#ifdef USE_GD_GIF
-            FILE *gifStream;
-            gdImagePtr gif;
-
-            gifStream = fopen(filename, "rb");
-            if(!gifStream) {
-                msSetError(MS_IOERR, "Error open image file.", "drawGIF()");
-                chdir(old_path); /* restore old cwd */
-                return(-1);
-            }
-            gif = gdImageCreateFromGif(gifStream);
-            fclose(gifStream);
-
-            if(!gif) {
-                msSetError(MS_IMGERR, "Error loading GIF file.", "drawGIF()");
-                chdir(old_path); /* restore old cwd */
-                return(-1);
-            }
-            layer->offsite = gdImageGetTransparent(gif);  // both default to -1
-            gdImageDestroy(gif);
-#else
-            msSetError(MS_MISCERR, "GIF Format not supported.", "msDrawRasterLayer( GIF )");
+    if ((memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) && !force_gdal) {
+        status = drawTIFF(map, layer, img, filename);
+        if(status == -1) {
+            chdir(old_path); /* restore old cwd */
             return(-1);
-#endif /* USE_GD_GIF */
         }
-#else
-        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( GIF )");
-        return(-1);
-#endif  /* USE_GDAL */
-      }
-      else
-      {
-        // No reprojection...
+        continue;
+    }
 
+    if (memcmp(dd,"GIF8",4)==0 && !force_gdal ) {
         status = drawGIF(map, layer, img, filename);
         if(status == -1) {
-          chdir(old_path); /* restore old cwd */
-          return(-1);
+            chdir(old_path); /* restore old cwd */
+            return(-1);
         }
         continue;
-      }
     }
 
-#if !defined(USE_GDAL) || defined(USE_GD_PNG)
-    if (memcmp(dd,PNGsig,8)==0) {
-      if(layer->transform && 
-         msProjectionsDiffer(&(map->projection), &(layer->projection))) {
-#ifdef USE_GDAL
-        /*
-        ** Image should be reprojected... We'll set the offsite to the PNG
-        ** transparent colour (since GDAL ignores it) and then let GDAL
-        ** render the layer (if it has PNG support included).
-        **
-        ** __TODO__ Yes, this is a hack and should be improved...
-        **          but hey!  It works for now.
-        */
-        if (layer->offsite == -1)
-        {
-#ifdef USE_GD_PNG
-            FILE *pngStream;
-            gdImagePtr png;
-
-            pngStream = fopen(filename, "rb");
-            if(!pngStream) {
-                msSetError(MS_IOERR, "Error open image file.", "drawPNG()");
-                chdir(old_path); /* restore old cwd */
-                return(-1);
-            }
-            png = gdImageCreateFromPng(pngStream);
-            fclose(pngStream);
-
-            if(!png) {
-                msSetError(MS_IMGERR, "Error loading PNG file.", "drawPNG()");
-                chdir(old_path); /* restore old cwd */
-                return(-1);
-            }
-            layer->offsite = gdImageGetTransparent(png);  // both default to -1
-            gdImageDestroy(png);
-#else
-            msSetError(MS_MISCERR, "PNG Format not supported.", "msDrawRasterLayer( PNG )");
-            return(-1);
-#endif /* USE_GD_PNG */
-        }
-#else
-        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( PNG )");
-        return(-1);
-#endif
-      }
-      else
-      {
-        // No reprojection...
-
+    if (memcmp(dd,PNGsig,8)==0 && !force_gdal) {
         status = drawPNG(map, layer, img, filename);
         if(status == -1) {
-	  chdir(old_path); /* restore old cwd */
-	  return(-1);
+            chdir(old_path); /* restore old cwd */
+            return(-1);
         }
         continue;
-      }
     }
-#endif /* !defined(USE_GDAL) || defined(USE_GD_PNG) */
 
-#if !defined(USE_GDAL) || defined(USE_JPEG)
-    if (memcmp(dd,JPEGsig,3)==0) 
+    if (memcmp(dd,JPEGsig,3)==0 && !force_gdal) 
     {
-      if((layer->transform && 
-          msProjectionsDiffer(&(map->projection), &(layer->projection))) ||
-          layer->connectiontype == MS_WMS )
-      {
-        // If reprojection requested, or layer is a WMS connection then we
-        // want to delegate JPEG drawing to GDAL because drawJPEG() supports
-        // only greyscale jpegs and doesn't support reprojections.
-#ifdef USE_GDAL
-        // Do nothing here... GDAL will pick the image later.
-#else
-        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( JPEG )");
-        return(-1);
-#endif
-      }
-      else
-      {
-        // No reprojection and not a WMS connection
         status = drawJPEG(map, layer, img, filename);
         if(status == -1) {
-	  chdir(old_path); /* restore old cwd */
-          return(-1);
+            chdir(old_path); /* restore old cwd */
+            return(-1);
         }
         continue;
-      }
     }
-#endif /* !defined(USE_GDAL) || defined(USE_JPEG) */
 
     if (memcmp(dd,"HEAD",4)==0) {
       if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
-        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( ERD )");
+        msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library, but it does not support Erdas 7.x files.", "msDrawRasterLayer( ERD )");
         return(-1);
       }
       status = drawERD(map, layer, img, filename);
@@ -2075,94 +2078,27 @@ int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
 
 //TODO : this will msDrawReferenceMapGD
 imageObj *msDrawReferenceMap(mapObj *map) {
-  FILE *stream;
-  gdImagePtr img=NULL;
   double cellsize;
   int c=-1, oc=-1;
   int x1,y1,x2,y2;
 
-  char bytes[8];
-  imageObj      *image = NULL;
+  imageObj   *image = NULL;
+  gdImagePtr img=NULL;
 
-  image = (imageObj *)malloc(sizeof(imageObj));
+  image = msImageLoadGD( map->reference.image );
+  if( image == NULL )
+      return NULL;
+
+  if (map->web.imagepath)
+      image->imagepath = strdup(map->web.imagepath);
+  if (map->web.imageurl)
+      image->imageurl = strdup(map->web.imageurl);
+
+  img = image->img.gd;
   
-  stream = fopen(map->reference.image,"rb"); // allocate input and output images (same size)
-  if(!stream) {
-    msSetError(MS_IOERR, "(%s)", "msDrawReferenceMap()",
-               map->reference.image);
-    return(NULL);
-  }
-
-  fread(bytes,8,1,stream); // read some bytes to try and identify the file
-  rewind(stream); // reset the image for the readers
-  if (memcmp(bytes,"GIF8",4)==0) {
-#ifdef USE_GD_GIF
-    img = gdImageCreateFromGif(stream);
-    map->reference.imagetype = MS_GIF;
-    image->imagetype = MS_GIF;
-    image->img.gd = img;
-    image->imagepath = NULL;
-    image->imageurl = NULL;
-    image->width = img->sx;
-    image->height = img->sy;
-        
-    if (map->web.imagepath)
-       image->imagepath = strdup(map->web.imagepath);
-    if (map->web.imageurl)
-       image->imageurl = strdup(map->web.imageurl);
-    
-#else
-    msSetError(MS_MISCERR, "Unable to load GIF reference image.", "msDrawReferenceMap()");
-    fclose(stream);
-    return(NULL);
-#endif
-  } else if (memcmp(bytes,PNGsig,8)==0) {
-#ifdef USE_GD_PNG
-    img = gdImageCreateFromPng(stream);
-    map->reference.imagetype = MS_PNG;
-    image->imagetype = MS_PNG;
-    image->img.gd = img;
-    image->imagepath = NULL;
-    image->imageurl = NULL;
-    image->width = img->sx;
-    image->height = img->sy;
-    if (map->web.imagepath)
-       image->imagepath = strdup(map->web.imagepath);
-    if (map->web.imageurl)
-       image->imageurl = strdup(map->web.imageurl);
-#else
-    msSetError(MS_MISCERR, "Unable to load PNG reference image.", "msDrawReferenceMap()");
-    fclose(stream);
-    return(NULL);
-#endif
-  } else if (memcmp(bytes,JPEGsig,3)==0) {
-#ifdef USE_GD_JPEG
-    img = gdImageCreateFromJpeg(stream);
-    map->reference.imagetype = MS_JPEG;
-    image->imagetype = MS_JPEG;
-    image->img.gd = img;
-    image->imagepath = NULL;
-    image->imageurl = NULL;
-    image->width = img->sx;
-    image->height = img->sy;
-    if (map->web.imagepath)
-       image->imagepath = strdup(map->web.imagepath);
-    if (map->web.imageurl)
-       image->imageurl = strdup(map->web.imageurl);
-#else
-    msSetError(MS_MISCERR, "Unable to load JPEG reference image.", "msDrawReferenceMap()");
-    fclose(stream);
-    return(NULL);
-#endif
-  }
-
-  if(!img) {
-    msSetError(MS_GDERR, "Unable to initialize image.", "msDrawReferenceMap()");
-    fclose(stream);
-    return(NULL);
-  }
-
-  cellsize = msAdjustExtent(&(map->reference.extent), img->sx, img->sy); // make sure the extent given in mapfile fits the image
+  // make sure the extent given in mapfile fits the image
+  cellsize = msAdjustExtent(&(map->reference.extent), 
+                            image->width, image->height);
 
   // allocate some colors
   if(map->reference.outlinecolor.red != -1 && map->reference.outlinecolor.green != -1 && map->reference.outlinecolor.blue != -1)
@@ -2249,6 +2185,5 @@ imageObj *msDrawReferenceMap(mapObj *map) {
       }
   }
 
-  fclose(stream);
   return(image);
 }
