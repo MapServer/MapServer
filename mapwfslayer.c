@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2002/12/19 07:35:53  dan
+ * Call msWFSLayerWhichShapes() inside open() to force downloading layer and
+ * enable msOGRLayerGetItems() to work for queries.  i.e.WFS queries work now.
+ *
  * Revision 1.9  2002/12/19 06:30:59  dan
  * Enable caching WMS/WFS request using tmp filename built from URL
  *
@@ -436,7 +440,21 @@ int msWFSLayerOpen(layerObj *lp,
         // invalidate current GML file in cache
         psInfo->rect = *defaultBBOX;
     }
+    else
+    {
+        // Use map bbox by default
+        psInfo->rect = lp->map->extent;
+    }
 
+    // We will call whichshapes() now and force downloading layer right
+    // away.  This saves from having to call DescribeFeatureType and
+    // parsing the response (being lazy I guess) and anyway given the
+    // way we work with layers right now the bbox is unlikely to change
+    // between now and the time whichshapes() would have been called by
+    // the MapServer core.
+    if (msWFSLayerWhichShapes(lp, psInfo->rect) == MS_FAILURE)
+        status = MS_FAILURE;
+    
     psInfo->bLayerOpened = MS_TRUE;
 
     return status;
@@ -472,14 +490,12 @@ int msWFSLayerInitItemInfo(layerObj *layer)
 
 int msWFSLayerGetItems(layerObj *layer)
 {
-    // __TODO__
-    // For now this method does nothing.  
-    // It should be implemented to call DescribeFeatureType for
-    // this layer, but we don't want to do that all the time so we should
-    // cache the information somehow.
-    // For now we can live without it, so we'll keep thinking about the
-    // best way to handle this and do it later.
-    return MS_SUCCESS;
+    // For now this method simply lets OGR parse the GML and figure the 
+    // schema itself.
+    // It could also be implemented to call DescribeFeatureType for
+    // this layer, but we don't need to do it so why waste resources?
+
+    return msOGRLayerGetItems(layer);
 }
 
 /**********************************************************************
