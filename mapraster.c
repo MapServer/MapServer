@@ -2,12 +2,12 @@
  * $Id$
  *
  * Project:  MapServer
- * Purpose:  Code for drawing GDAL raster layers.  Called from 
- *           msDrawRasterLayerLow() in mapraster.c.  
+ * Purpose:  msDrawRasterLayer(): generic raster layer drawing, including
+ *           implementation of non-GDAL raster layer renderers.
  * Author:   Steve Lime 
  *           Frank Warmerdam, warmerdam@pobox.com
  ******************************************************************************
- * Copyright (c) 1996-2001 Regents of the University of Minnesota.
+ * Copyright (c) 1996-2004 Regents of the University of Minnesota.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.119  2004/07/23 12:57:18  frank
+ * improved header purpose text
+ *
  * Revision 1.118  2004/06/15 16:08:52  dan
  * Fixed problem with tiled raster layers if there is no tile in the current
  * view (bug 729).
