@@ -406,7 +406,7 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, clas
   rectObj rect;
   char *font=NULL;
  
-  if(class->symbol > shadeset->numsymbols) /* no such symbol, 0 is OK */
+  if(class->symbol > shadeset->numsymbols || class->symbol < 0) /* no such symbol, 0 is OK */
     return;
 
   if(class->color >= gdImageColorsTotal(img)) /* invalid color, -1 is valid */
@@ -676,7 +676,7 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, cl
   rectObj rect;
   char *font=NULL;
 
-  if(class->symbol > markerset->numsymbols) /* no such symbol, 0 is OK */
+  if(class->symbol > markerset->numsymbols || class->symbol < 0) /* no such symbol, 0 is OK */
     return;
 
   if(class->color >= gdImageColorsTotal(img)) /* invalid color, -1 is valid */
@@ -693,7 +693,7 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, cl
   if(s == 0 && fc >= 0) { /* simply draw a single pixel of the specified color */
     gdImageSetPixel(img, p->x, p->y, fc);
     return;
-  }
+  }  
 
   switch(markerset->symbol[s].type) {  
   case(MS_SYMBOL_TRUETYPE):    
@@ -822,7 +822,7 @@ void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classO
   if(p->numlines <= 0)
     return;
 
-  if(class->symbol > lineset->numsymbols) /* no such symbol, 0 is OK */
+  if(class->symbol > lineset->numsymbols || class->symbol < 0) /* no such symbol, 0 is OK */
     return;
 
   if((class->color < 0) || (class->color >= gdImageColorsTotal(img))) /* invalid color */

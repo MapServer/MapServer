@@ -1799,8 +1799,10 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(layer->queryitem) fprintf(stream, "    QUERYITEM \"%s\"\n", layer->queryitem);
   fprintf(stream, "    STATUS %s\n", msStatus[layer->status]);
   if(layer->symbolscale > -1) fprintf(stream, "    SYMBOLSCALE %g\n", layer->symbolscale);
-  if(layer->tileindex) fprintf(stream, "    TILEINDEX \"%s\"\n", layer->tileindex);
-  if(layer->tileitem) fprintf(stream, "    TILEITEM \"%s\"\n", layer->tileitem);
+  if(layer->tileindex) {
+    fprintf(stream, "    TILEINDEX \"%s\"\n", layer->tileindex);
+    if(layer->tileitem) fprintf(stream, "    TILEITEM \"%s\"\n", layer->tileitem);
+  }
   fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
@@ -2142,7 +2144,7 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       msSetError(MS_EOFERR, NULL, "loadScalebar()");      
       return(-1);
     case(END):
-      if(scalebar->color == -1) querymap->color = msAddColor(map,0,0,0); /* default to black */
+      if(scalebar->color == -1) scalebar->color = msAddColor(map,0,0,0); /* default to black */
       return(0);
       break;
     case(IMAGECOLOR):      
@@ -2219,7 +2221,7 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     scalebar->color = msAddColor(map,red,green,blue);
-    if(scalebar->color == -1) querymap->color = msAddColor(map,0,0,0); /* default to black */
+    if(scalebar->color == -1) scalebar->color = msAddColor(map,0,0,0); /* default to black */
     break;
   case(IMAGECOLOR):
     msyystate = 2; msyystring = value;
@@ -2566,13 +2568,13 @@ int initMap(mapObj *map)
   map->labelcache.nummarkers = 0;
 
   map->markerset.filename = NULL;
-  map->markerset.numsymbols = 0;
+  map->markerset.numsymbols = 1; /* always 1 symbol */
 
   map->lineset.filename = NULL;
-  map->lineset.numsymbols = 0;
+  map->lineset.numsymbols = 1; /* always 1 symbol */
 
   map->shadeset.filename = NULL;
-  map->shadeset.numsymbols = 0;
+  map->shadeset.numsymbols = 1; /* always 1 symbol */
 
   map->fontset.filename = NULL;
   map->fontset.numfonts = 0;  
