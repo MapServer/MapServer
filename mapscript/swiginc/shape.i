@@ -114,6 +114,12 @@
         return(msCopyShape(self, dest));
     }
 
+    %newobject buffer;
+    shapeObj *buffer(int width)
+    {
+       return msGEOSBuffer(self, width);
+    }
+
     char *getValue(int i) 
     {
         if (i >= 0 && i < self->numvalues && self->values)
@@ -188,6 +194,5 @@
             return MS_FAILURE;
         }
     }
-
 }
 

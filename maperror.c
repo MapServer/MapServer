@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/02/22 07:40:27  sdlime
+ * A bunch of updates to GEOS integration. Can move many primatives between MapServer and GEOS, still need to do collections (e.g. multi-point/line/polygon). Added buffer method to mapscript (mapscript/shape.i).
+ *
  * Revision 1.63  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -506,6 +509,9 @@ char *msGetVersion() {
 #endif
 #ifdef USE_FASTCGI
   strcat(version, " SUPPORTS=FASTCGI");
+#endif
+#ifdef USE_GEOS
+  strcat(version, " SUPPORTS=GEOS");
 #endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");

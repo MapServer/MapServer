@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/02/22 07:40:27  sdlime
+ * A bunch of updates to GEOS integration. Can move many primatives between MapServer and GEOS, still need to do collections (e.g. multi-point/line/polygon). Added buffer method to mapscript (mapscript/shape.i).
+ *
  * Revision 1.45  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -84,6 +87,11 @@ void msInitShape(shapeObj *shape)
   /* attribute component */
   shape->values = NULL;
   shape->numvalues = 0;
+
+#ifdef USE_GEOS
+  /* GEOS geometry */
+  shape->geometry = NULL;
+#endif
 
   /* annotation component */
   shape->text = NULL;
