@@ -534,7 +534,7 @@ int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *h
    
 #ifdef USE_GD_FT
   case(MS_SYMBOL_TRUETYPE):
-    font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[style->symbol].font);
+    font = msLookupHashTable(&(symbolset->fontset->fonts), symbolset->symbol[style->symbol].font);
     if(!font) return(MS_FAILURE);
 
     if(msGetCharacterSize(symbolset->symbol[style->symbol].character, size, 

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.71  2004/06/22 20:55:20  sean
+ * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
+ *
  * Revision 1.70  2004/05/31 20:55:14  frank
  * now reports CPLGetLastErrorMsg() if OGR Open fails
  *
@@ -1975,13 +1978,13 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               const char *pszName;
               if ((pszName = poLabelStyle->FontName(bIsNull)) != NULL && 
                   !bIsNull && pszName[0] != '\0' &&
-                  msLookupHashTable(map->fontset.fonts, (char*)pszName) != NULL)
+                  msLookupHashTable(&(map->fontset.fonts), (char*)pszName) != NULL)
               {
                   c->label.type = MS_TRUETYPE;
                   c->label.font = strdup(pszName);
                   // msDebug("** Using '%s' TTF font **\n", pszName);
               }
-              else if (msLookupHashTable(map->fontset.fonts,"default") != NULL)
+              else if (msLookupHashTable(&(map->fontset.fonts),"default") != NULL)
               {
                   c->label.type = MS_TRUETYPE;
                   c->label.font = strdup("default");

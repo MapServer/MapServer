@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/06/22 20:55:20  sean
+ * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
+ *
  * Revision 1.4  2004/06/14 17:34:22  frank
  * added msTestConfigOption
  *
@@ -134,7 +137,7 @@ void msFreeMap(mapObj *map) {
 
   msFree(map->templatepattern);
   msFree(map->datapattern);
-  msFreeHashTable(map->configoptions);
+  msFreeHashItems(&(map->configoptions));
   msFree(map);
 }
 
@@ -145,7 +148,7 @@ void msFreeMap(mapObj *map) {
 const char *msGetConfigOption( mapObj *map, const char *key)
 
 {
-    return msLookupHashTable( map->configoptions, key );
+    return msLookupHashTable( &(map->configoptions), key );
 }
 
 /************************************************************************/
@@ -160,9 +163,9 @@ void msSetConfigOption( mapObj *map, const char *key, const char *value)
     if( strcasecmp(key,"PROJ_LIB") == 0 )
         msSetPROJ_LIB( value );
 
-    if( msLookupHashTable( map->configoptions, key ) != NULL )
-        msRemoveHashTable( map->configoptions, key );
-    msInsertHashTable( map->configoptions, key, value );
+    if( msLookupHashTable( &(map->configoptions), key ) != NULL )
+        msRemoveHashTable( &(map->configoptions), key );
+    msInsertHashTable( &(map->configoptions), key, value );
 }
 
 /************************************************************************/
@@ -194,11 +197,11 @@ void msApplyMapConfigOptions( mapObj *map )
 {
     const char *key;
 
-    for( key = msFirstKeyFromHashTable( map->configoptions );
+    for( key = msFirstKeyFromHashTable( &(map->configoptions) );
          key != NULL;
-         key = msNextKeyFromHashTable( map->configoptions, key ) )
+         key = msNextKeyFromHashTable( &(map->configoptions), key ) )
     {
-        const char *value = msLookupHashTable( map->configoptions, key );
+        const char *value = msLookupHashTable( &(map->configoptions), key );
         if( strcasecmp(key,"PROJ_LIB") == 0 )
         {
             msSetPROJ_LIB( value );

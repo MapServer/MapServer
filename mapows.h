@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.35  2004/06/22 20:55:20  sean
+ * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
+ *
  * Revision 1.34  2004/05/22 15:51:10  sean
  * Prototype msWMSLoadGetMapParams
  *
@@ -138,7 +141,7 @@ typedef  struct
 typedef  struct
 {
   char        *onlineresource;
-  hashTableObj params;
+  hashTableObj *params;
   int          numparams;
 } wmsParamsObj;
 
@@ -173,13 +176,13 @@ MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 #define OWS_WMS     1
 #define OWS_WFS     2
 
-MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj metadata, 
+MS_DLL_EXPORT const char * msOWSLookupMetadata(hashTableObj *metadata, 
                                     const char *namespaces, const char *name);
-MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, 
+MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata, 
                        const char *namespaces, const char *name, 
                        int action_if_not_found, const char *format, 
                        const char *default_value);
-int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata, 
+int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata, 
                              const char *namespaces, const char *name, 
                              int action_if_not_found, 
                              const char *format, const char *default_value) ;
@@ -190,7 +193,7 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
 int msOWSPrintParam(FILE *stream, const char *name, const char *value, 
                     int action_if_not_found, const char *format, 
                     const char *default_value);
-int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata, 
+int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata, 
                            const char *namespaces, const char *name, 
                            const char *startTag, 
                            const char *endTag, const char *itemFormat,
@@ -201,9 +204,9 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
 void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,
-                           hashTableObj metadata );
+                           hashTableObj *metadata );
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
-                           const char *wmtver, hashTableObj metadata );
+                           const char *wmtver, hashTableObj *metadata );
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                          mapObj *map, int bCheckLocalCache);
@@ -211,7 +214,7 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
                            int nErrorCode, const char *pszFuncName);
 char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL, 
                             const char *pszExt);
-const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj metadata, const char *namespaces, int bReturnOnlyFirstOne);
+const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne);
 #endif
 
 /*====================================================================

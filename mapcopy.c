@@ -134,7 +134,7 @@ int msCopyItem(itemObj *dst, itemObj *src) {
  * Copy a hashTableObj, using msInsertHashTable()                      *
  **********************************************************************/
 
-int msCopyHashTable(hashTableObj dst, hashTableObj src) {
+int msCopyHashTable(hashTableObj *dst, hashTableObj *src) {
     const char *key=NULL;
     while (1) {
         key = msNextKeyFromHashTable(src, key);
@@ -157,10 +157,10 @@ int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map)
 
     MS_COPYSTRING(dst->filename, src->filename);
     MS_COPYSTELEM(numfonts);
-    if (src->fonts) {
-        if (!dst->fonts)
-            dst->fonts = msCreateHashTable();
-        if (msCopyHashTable(dst->fonts, src->fonts) != MS_SUCCESS)
+    if (&(src->fonts)) {
+        //if (!dst->fonts)
+        //    dst->fonts = msCreateHashTable();
+        if (msCopyHashTable(&(dst->fonts), &(src->fonts)) != MS_SUCCESS)
             return MS_FAILURE;
     }
 
@@ -319,9 +319,9 @@ int msCopyWeb(webObj *dst, webObj *src, mapObj *map)
     MS_COPYSTRING(dst->mintemplate, src->mintemplate);
     MS_COPYSTRING(dst->maxtemplate, src->maxtemplate);
 
-    if (src->metadata) {
-        dst->metadata = msCreateHashTable();
-        if (msCopyHashTable((dst->metadata), (src->metadata)) != MS_SUCCESS)
+    if (&(src->metadata)) {
+        //dst->metadata = msCreateHashTable();
+        if (msCopyHashTable(&(dst->metadata), &(src->metadata)) != MS_SUCCESS)
             return MS_FAILURE;
     }
 
@@ -408,9 +408,9 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer)
 #endif
     MS_COPYSTELEM(type);
 
-    if (src->metadata != NULL) {
-        dst->metadata = msCreateHashTable();
-        msCopyHashTable(dst->metadata, src->metadata);
+    if (&(src->metadata) != NULL) {
+        //dst->metadata = msCreateHashTable();
+        msCopyHashTable(&(dst->metadata), &(src->metadata));
     }
 
     MS_COPYSTELEM(minscale);
@@ -780,9 +780,9 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     MS_COPYSTRING(dst->requires, src->requires); 
     MS_COPYSTRING(dst->labelrequires, src->labelrequires);
 
-    if (src->metadata) {
-        dst->metadata = msCreateHashTable();
-        msCopyHashTable((dst->metadata), (src->metadata));
+    if (&(src->metadata)) {
+        //dst->metadata = msCreateHashTable();
+        msCopyHashTable(&(dst->metadata), &(src->metadata));
     }
 
     MS_COPYSTELEM(transparency);
@@ -936,7 +936,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
     MS_COPYSTRING(dst->datapattern, src->datapattern);
     MS_COPYSTRING(dst->templatepattern, src->templatepattern);   
 
-    if( msCopyHashTable( dst->configoptions, src->configoptions ) != MS_SUCCESS )
+    if( msCopyHashTable( &(dst->configoptions), &(src->configoptions) ) != MS_SUCCESS )
         return MS_FAILURE;
 
     return MS_SUCCESS;

@@ -314,29 +314,29 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
   // charset encoding: lookup "gml_encoding" metadata first, then 
   // "wms_encoding", and if not found then use "ISO-8859-1" as default.
-  if(msLookupHashTable(map->web.metadata, "gml_encoding")) 
+  if(msLookupHashTable(&(map->web.metadata), "gml_encoding")) 
       fprintf(stream, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n",
-              msLookupHashTable(map->web.metadata, "gml_encoding"));
-  else if(msLookupHashTable(map->web.metadata, "wms_encoding")) 
+              msLookupHashTable(&(map->web.metadata), "gml_encoding"));
+  else if(msLookupHashTable(&(map->web.metadata), "wms_encoding")) 
       fprintf(stream, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n",
-              msLookupHashTable(map->web.metadata, "wms_encoding"));
+              msLookupHashTable(&(map->web.metadata), "wms_encoding"));
   else
       fprintf(stream, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n\n");
   
-  if(msLookupHashTable(map->web.metadata, "gml_rootname")) 
-    fprintf(stream, "<%s ", msLookupHashTable(map->web.metadata, "gml_rootname"));
+  if(msLookupHashTable(&(map->web.metadata), "gml_rootname")) 
+    fprintf(stream, "<%s ", msLookupHashTable(&(map->web.metadata), "gml_rootname"));
   else
     fprintf(stream, "<msGMLOutput "); // default root element name
   
-  if(msLookupHashTable(map->web.metadata, "gml_uri"))  fprintf(stream, "xmlns=\"%s\"", msLookupHashTable(map->web.metadata, "gml_uri"));
+  if(msLookupHashTable(&(map->web.metadata), "gml_uri"))  fprintf(stream, "xmlns=\"%s\"", msLookupHashTable(&(map->web.metadata), "gml_uri"));
   fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
   fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
   fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");  
-  if(msLookupHashTable(map->web.metadata, "gml_schema")) fprintf(stream, "\n\t xsi:schemaLocation=\"%s\"", msLookupHashTable(map->web.metadata, "gml_schema"));
+  if(msLookupHashTable(&(map->web.metadata), "gml_schema")) fprintf(stream, "\n\t xsi:schemaLocation=\"%s\"", msLookupHashTable(&(map->web.metadata), "gml_schema"));
   fprintf(stream, ">\n");
 
   // a schema *should* be required
-  if(msLookupHashTable(map->web.metadata, "gml_description")) fprintf(stream, "\t<gml:description>%s</gml:description>\n", msLookupHashTable(map->web.metadata, "gml_description"));
+  if(msLookupHashTable(&(map->web.metadata), "gml_description")) fprintf(stream, "\t<gml:description>%s</gml:description>\n", msLookupHashTable(&(map->web.metadata), "gml_description"));
 
   // step through the layers looking for query results
   for(i=0; i<map->numlayers; i++) {
@@ -345,8 +345,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { // found results
 
       // start this collection (layer)
-      if(msLookupHashTable(lp->metadata, "gml_layername")) // specify a collection name
-	fprintf(stream, "\t<%s>\n", msLookupHashTable(lp->metadata, "gml_layername"));
+      if(msLookupHashTable(&(lp->metadata), "gml_layername")) // specify a collection name
+	fprintf(stream, "\t<%s>\n", msLookupHashTable(&(lp->metadata), "gml_layername"));
       else
 	fprintf(stream, "\t<%s_layer>\n", lp->name); // fall back on the layer name + "Layer"
 
@@ -369,8 +369,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 #endif
 
 	// start this feature
-	if(msLookupHashTable(lp->metadata, "gml_featurename")) // specify a feature name
-	  fprintf(stream, "\t\t<%s>\n", msLookupHashTable(lp->metadata, "gml_featurename"));
+	if(msLookupHashTable(&(lp->metadata), "gml_featurename")) // specify a feature name
+	  fprintf(stream, "\t\t<%s>\n", msLookupHashTable(&(lp->metadata), "gml_featurename"));
         else
 	  fprintf(stream, "\t\t<%s_feature>\n", lp->name); // fall back on the layer name + "Feature"
 
@@ -385,27 +385,27 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
 	// write the bounding box
 #ifdef USE_PROJ
-	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "\t\t\t");
+	if(msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE)) // use the map projection first
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), "\t\t\t");
 	else // then use the layer projection and/or metadata
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "\t\t\t");	
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE), "\t\t\t");	
 #else
 	gmlWriteBounds(stream, &(shape.bounds), NULL, "\t\t\t"); // no projection information
 #endif
 
 	// write the feature geometry
 #ifdef USE_PROJ
-	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "\t\t\t");
+	if(msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE)) // use the map projection first
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), "\t\t\t");
         else // then use the layer projection and/or metadata
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "\t\t\t");      
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE), "\t\t\t");      
 #else
 	gmlWriteGeometry(stream, &(shape), NULL, "\t\t\t");
 #endif
 
 	// end this feature
-        if(msLookupHashTable(lp->metadata, "gml_featurename")) // specify a feature name
-	  fprintf(stream, "\t\t</%s>\n", msLookupHashTable(lp->metadata, "gml_featurename"));
+        if(msLookupHashTable(&(lp->metadata), "gml_featurename")) // specify a feature name
+	  fprintf(stream, "\t\t</%s>\n", msLookupHashTable(&(lp->metadata), "gml_featurename"));
         else
 	  fprintf(stream, "\t\t</%s_feature>\n", lp->name); // fall back on the layer name + "Feature"
 
@@ -413,8 +413,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
       }
 
       // end this collection (layer)
-      if(msLookupHashTable(lp->metadata, "gml_layername")) // specify a collection name
-        fprintf(stream, "\t</%s>\n", msLookupHashTable(lp->metadata, "gml_layername"));
+      if(msLookupHashTable(&(lp->metadata), "gml_layername")) // specify a collection name
+        fprintf(stream, "\t</%s>\n", msLookupHashTable(&(lp->metadata), "gml_layername"));
       else
         fprintf(stream, "\t</%s_layer>\n", lp->name); // fall back on the layer name + "Layer"
 
@@ -423,8 +423,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   } // next layer
 
   // end this document
-  if(msLookupHashTable(map->web.metadata, "gml_rootname")) 
-    fprintf(stream, "</%s>\n", msLookupHashTable(map->web.metadata, "gml_rootname"));
+  if(msLookupHashTable(&(map->web.metadata), "gml_rootname")) 
+    fprintf(stream, "</%s>\n", msLookupHashTable(&(map->web.metadata), "gml_rootname"));
   else
     fprintf(stream, "</msGMLOutput>\n"); // default
 
@@ -460,7 +460,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
   if (msGetQueryResultBounds(map, &resultBounds) > 0)
   {
       gmlWriteBounds(stream, &resultBounds, 
-                     msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), 
+                     msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), 
                      "      ");
   }
 
@@ -489,7 +489,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
       ** escaped.
       */
       item_is_xml = (int *) calloc(sizeof(int),lp->numitems);
-      xml_items = msLookupHashTable(lp->metadata, "wfs_gml_xml_items");
+      xml_items = msLookupHashTable(&(lp->metadata), "wfs_gml_xml_items");
       if( xml_items != NULL )
       {
           int xml_items_count = 0;
@@ -532,7 +532,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
 
         //write name and description attributs if specified in the map file
         
-        description_gml = msLookupHashTable(lp->metadata, "wfs_gml_description_item");
+        description_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_description_item");
         if (description_gml)
         {
             for(k=0; k<lp->numitems; k++)	
@@ -545,7 +545,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
                  }
              }
          }
-        name_gml = msLookupHashTable(lp->metadata, "wfs_gml_name_item");
+        name_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_name_item");
         if (name_gml)
          {
              for(k=0; k<lp->numitems; k++)	
@@ -560,11 +560,11 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
          }
          
 	// write the bounding box
-	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
+	if(msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE)) // use the map projection first
 #ifdef USE_PROJ
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "        ");
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), "        ");
 	else // then use the layer projection and/or metadata
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "        ");	
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE), "        ");	
 #else
 	gmlWriteBounds(stream, &(shape.bounds), NULL, "        "); // no projection information
 #endif
@@ -575,10 +575,10 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures,
                     
 	// write the feature geometry
 #ifdef USE_PROJ
-	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "          ");
+	if(msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE)) // use the map projection first
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), &(map->web.metadata), MS_TRUE), "          ");
         else // then use the layer projection and/or metadata
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "          ");      
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE), "          ");      
 #else
 	gmlWriteGeometry(stream, &(shape), NULL, "          ");
 #endif

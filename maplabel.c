@@ -119,7 +119,10 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 int msInitFontSet(fontSetObj *fontset)
 {
     fontset->filename = NULL;
-    fontset->fonts = NULL;
+    
+    //fontset->fonts = NULL;
+    initHashTable(&(fontset->fonts));
+    
     fontset->numfonts = 0;
     fontset->map = NULL;
     return( 0 );
@@ -130,9 +133,9 @@ int msFreeFontSet(fontSetObj *fontset)
     if (fontset->filename)
         free(fontset->filename);
     fontset->filename = NULL;
-    if (fontset->fonts)
-        msFreeHashTable(fontset->fonts);
-    fontset->fonts = NULL;
+    if (&(fontset->fonts))
+        msFreeHashItems(&(fontset->fonts));
+    //fontset->fonts = NULL;
     fontset->numfonts = 0;    
 
     return( 0 );
@@ -159,11 +162,11 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 
   path = getPath(fontset->filename);
 
-  fontset->fonts = msCreateHashTable(); /* create font hash */
-  if(!fontset->fonts) {
-    msSetError(MS_HASHERR, "Error initializing font hash.", "msLoadFontSet()");
-    return(-1);
-  }
+  //fontset->fonts = msCreateHashTable(); /* create font hash */
+  //if(!fontset->fonts) {
+  //  msSetError(MS_HASHERR, "Error initializing font hash.", "msLoadFontSet()");
+  //  return(-1);
+  //}
 
   stream = fopen( msBuildPath(szPath, fontset->map->mappath, fontset->filename), "r");
   if(!stream) {
@@ -193,7 +196,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 #endif
 
     if(bFullPath) { /* already full path */
-      msInsertHashTable(fontset->fonts, alias, file1);
+      msInsertHashTable(&(fontset->fonts), alias, file1);
     } else {
       sprintf(file2, "%s%s", path, file1);
       //msInsertHashTable(fontset->fonts, alias, file2);
@@ -203,7 +206,7 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
       ** the msBuildPath must be done everywhere the fonts are used and 
       ** removed here.
       */
-      msInsertHashTable(fontset->fonts, alias, 
+      msInsertHashTable(&(fontset->fonts), alias, 
                         msBuildPath(szPath, fontset->map->mappath, file2));
       
     }
@@ -241,7 +244,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     size = MS_MAX(size, label->minsize);
     size = MS_MIN(size, label->maxsize);
 
-    font = msLookupHashTable(fontset->fonts, label->font);
+    font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {
       if(label->font) 
         msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSize()", label->font);

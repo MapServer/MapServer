@@ -331,8 +331,8 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
    */
    for (i=0; i<map->numlayers-1; i++) {
       for (j=0; j<map->numlayers-1-i; j++) {
-         pszLegendOrder1 = msLookupHashTable(map->layers[map->layerorder[j+1]].metadata, pszMetadata);
-         pszLegendOrder2 = msLookupHashTable(map->layers[map->layerorder[j]].metadata, pszMetadata);
+         pszLegendOrder1 = msLookupHashTable(&(map->layers[map->layerorder[j+1]].metadata), pszMetadata);
+         pszLegendOrder2 = msLookupHashTable(&(map->layers[map->layerorder[j]].metadata), pszMetadata);
      
          if (!pszLegendOrder1 || !pszLegendOrder2)
            continue;
@@ -425,8 +425,8 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
             strncpy(pszArgs, pszStart, nLength);
             pszArgs[nLength] = '\0';
             
-            if (!*oHashTable)
-              *oHashTable = msCreateHashTable();
+            if (!oHashTable)
+              oHashTable = msCreateHashTable();
             
             // Enable the use of "" in args
             // To do so, extract all "" values 
@@ -473,13 +473,13 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
                {
                   papszVarVal = split(papszArgs[i], '=', &nDummy);
                
-                  msInsertHashTable(*oHashTable, papszVarVal[0], papszVarVal[1]);
+                  msInsertHashTable(oHashTable, papszVarVal[0], papszVarVal[1]);
                   free(papszVarVal[0]);
                   free(papszVarVal[1]);
                   free(papszVarVal);                  
                }
                else // no value specified. set it to 1
-                  msInsertHashTable(*oHashTable, papszArgs[i], "1");
+                  msInsertHashTable(oHashTable, papszArgs[i], "1");
                
                free(papszArgs[i]);
             }
@@ -587,7 +587,7 @@ int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
  * If bLastPass is true then all tests for 'null' values will be
  * considered true if the corresponding value is not set.
 */
-int processIf(char** pszInstr, hashTableObj ht, int bLastPass)
+int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
 {
 //   char *pszNextInstr = pszInstr;
    char *pszStart, *pszEnd=NULL;
@@ -598,7 +598,7 @@ int processIf(char** pszInstr, hashTableObj ht, int bLastPass)
    int bEmpty = 0;
    int nLength;
 
-   hashTableObj ifArgs=NULL;
+   hashTableObj *ifArgs=NULL;
 
    if (!*pszInstr) {
      msSetError(MS_WEBERR, "Invalid pointer.", "processIf()");
@@ -646,7 +646,7 @@ int processIf(char** pszInstr, hashTableObj ht, int bLastPass)
       }
       
       // retrieve if tag args
-      if (getTagArgs("if", pszStart, &ifArgs) != MS_SUCCESS)
+      if (getTagArgs("if", pszStart, ifArgs) != MS_SUCCESS)
       {
          msSetError(MS_WEBERR, "Malformed args if tag.", "processIf()");
          return MS_FAILURE;
@@ -766,7 +766,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
   int status;
   
   char *tag, *tagStart, *tagEnd;
-  hashTableObj tagArgs=NULL;
+  hashTableObj *tagArgs=NULL;
   int tagOffset, tagLength;
 
   char *argValue;
@@ -805,7 +805,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     tagOffset = tagStart - *line;
     
     // check for any tag arguments
-    if(getTagArgs("shpxy", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+    if(getTagArgs("shpxy", tagStart, tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
       argValue = msLookupHashTable(tagArgs, "xh");
       if(argValue) xh = argValue;
@@ -931,7 +931,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
  * 
  * this function return a modified pszInstr
 */
-int processMetadata(char** pszInstr, hashTableObj ht)
+int processMetadata(char** pszInstr, hashTableObj *ht)
 {
 //   char *pszNextInstr = pszInstr;
    char *pszEnd, *pszStart;
@@ -940,7 +940,7 @@ int processMetadata(char** pszInstr, hashTableObj ht)
    char *pszHashValue;
    int nLength, nOffset;
 
-   hashTableObj metadataArgs = NULL;
+   hashTableObj *metadataArgs = NULL;
 
    if (!*pszInstr) {
      msSetError(MS_WEBERR, "Invalid pointer.", "processMetadata()");
@@ -952,7 +952,7 @@ int processMetadata(char** pszInstr, hashTableObj ht)
 
    while (pszStart) {
       // get metadata args
-      if (getTagArgs("metadata", pszStart, &metadataArgs) != MS_SUCCESS)
+      if (getTagArgs("metadata", pszStart, metadataArgs) != MS_SUCCESS)
         return MS_FAILURE;
 
       pszHashName = msLookupHashTable(metadataArgs, "name");
@@ -1003,7 +1003,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
    int nWidth, nHeight, nLen;
    char szImgFname[1024], *pszFullImgFname=NULL, *pszImgTag;
    char szPath[MS_MAXPATHLEN];
-   hashTableObj myHashTable=NULL;
+   hashTableObj *myHashTable=NULL;
    FILE *fIcon;
    
    if (!map || 
@@ -1018,7 +1018,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
    
    while (pszImgTag) {
 
-      if (getTagArgs("leg_icon", pszImgTag, &myHashTable) != MS_SUCCESS)
+      if (getTagArgs("leg_icon", pszImgTag, myHashTable) != MS_SUCCESS)
         return MS_FAILURE;
 
       // if no specified width or height, set them to map default
@@ -1141,7 +1141,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
 */
 int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, char **pszTemp, char* pszPrefix)
 {
-   hashTableObj myHashTable;
+   hashTableObj *myHashTable;
    char pszStatus[3];   
    char *pszClassImg;
    int i, j;
@@ -1187,10 +1187,10 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
          if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
          
-         if (processIf(pszTemp, map->layers[map->layerorder[j]].metadata, MS_FALSE) != MS_SUCCESS)
+         if (processIf(pszTemp, &(map->layers[map->layerorder[j]].metadata), MS_FALSE) != MS_SUCCESS)
            return MS_FAILURE;
 
-         if (processMetadata(pszTemp, map->layers[map->layerorder[j]].metadata) != MS_SUCCESS)
+         if (processMetadata(pszTemp, &(map->layers[map->layerorder[j]].metadata)) != MS_SUCCESS)
            return MS_FAILURE;         
          
          break;
@@ -1203,13 +1203,13 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
     * Process all metadata tags
     * only web object is accessible
    */
-   if (processMetadata(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processMetadata(pszTemp, &(map->web.metadata)) != MS_SUCCESS)
      return MS_FAILURE;
    
    /*
     * check for if tag
    */
-   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
+   if (processIf(pszTemp, &(map->web.metadata), MS_TRUE) != MS_SUCCESS)
      return MS_FAILURE;
    
    /*
@@ -1236,9 +1236,9 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
  * 
  * buffer must be freed by caller.
 */
-int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, hashTableObj oLayerArgs, char **pszTemp, char* pszPrefix)
+int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, hashTableObj *oLayerArgs, char **pszTemp, char* pszPrefix)
 {
-   hashTableObj myHashTable;
+   hashTableObj *myHashTable;
    char szStatus[10];
    char szType[10];
    
@@ -1324,10 +1324,10 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->layers[nIdxLayer].metadata, MS_FALSE) != MS_SUCCESS)
+   if (processIf(pszTemp, &(map->layers[nIdxLayer].metadata), MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
+   if (processIf(pszTemp, &(map->web.metadata), MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
 
    msFreeHashTable(myHashTable);
@@ -1345,10 +1345,10 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
     * only current layer and web object
     * metaddata are accessible
    */
-   if (processMetadata(pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+   if (processMetadata(pszTemp, &(map->layers[nIdxLayer].metadata)) != MS_SUCCESS)
       return MS_FAILURE;
 
-   if (processMetadata(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processMetadata(pszTemp, &(map->web.metadata)) != MS_SUCCESS)
       return MS_FAILURE;      
    
    return MS_SUCCESS;
@@ -1363,9 +1363,9 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
  * 
  * buffer must be freed by caller.
 */
-int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, int nIdxClass, hashTableObj oClassArgs, char **pszTemp, char* pszPrefix)
+int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, int nIdxClass, hashTableObj *oClassArgs, char **pszTemp, char* pszPrefix)
 {
-   hashTableObj myHashTable;
+   hashTableObj *myHashTable;
    char szStatus[10];
    char szType[10];
    
@@ -1456,10 +1456,10 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    if (processIf(pszTemp, myHashTable, MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->layers[nIdxLayer].metadata, MS_FALSE) != MS_SUCCESS)
+   if (processIf(pszTemp, &(map->layers[nIdxLayer].metadata), MS_FALSE) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processIf(pszTemp, map->web.metadata, MS_TRUE) != MS_SUCCESS)
+   if (processIf(pszTemp, &(map->web.metadata), MS_TRUE) != MS_SUCCESS)
       return MS_FAILURE;
 
    msFreeHashTable(myHashTable);   
@@ -1476,10 +1476,10 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
     * only current layer and web object
     * metaddata are accessible
    */
-   if (processMetadata(pszTemp, map->layers[nIdxLayer].metadata) != MS_SUCCESS)
+   if (processMetadata(pszTemp, &(map->layers[nIdxLayer].metadata)) != MS_SUCCESS)
       return MS_FAILURE;
    
-   if (processMetadata(pszTemp, map->web.metadata) != MS_SUCCESS)
+   if (processMetadata(pszTemp, &(map->web.metadata)) != MS_SUCCESS)
       return MS_FAILURE;      
    
    return MS_SUCCESS;
@@ -1513,9 +1513,9 @@ char *generateLegendTemplate(mapservObj *msObj)
    int nLegendOrder = 0;
    char *pszOrderValue;
      
-   hashTableObj groupArgs = NULL;
-   hashTableObj layerArgs = NULL;
-   hashTableObj classArgs = NULL;     
+   hashTableObj *groupArgs = NULL;
+   hashTableObj *layerArgs = NULL;
+   hashTableObj *classArgs = NULL;     
 
    regex_t re; /* compiled regular expression to be matched */ 
 
@@ -1637,15 +1637,15 @@ char *generateLegendTemplate(mapservObj *msObj)
     * Retrieve arguments of all three parts
     */
    if (legGroupHtml) 
-     if (getTagArgs("leg_group_html", file, &groupArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_group_html", file, groupArgs) != MS_SUCCESS)
        return NULL;
    
    if (legLayerHtml) 
-     if (getTagArgs("leg_layer_html", file, &layerArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_layer_html", file, layerArgs) != MS_SUCCESS)
        return NULL;
    
    if (legClassHtml) 
-     if (getTagArgs("leg_class_html", file, &classArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_class_html", file, classArgs) != MS_SUCCESS)
        return NULL;
 
       
@@ -1722,7 +1722,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                */
               pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
               if (pszOrderMetadata) {
-                 pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
+                 pszOrderValue = msLookupHashTable(&(msObj->Map->layers[msObj->Map->layerorder[j]].metadata), pszOrderMetadata);
                  if (pszOrderValue) {
                     nLegendOrder = atoi(pszOrderValue);
                     if (nLegendOrder < 0)
@@ -1788,7 +1788,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                */
               pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
               if (pszOrderMetadata) {
-                 pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
+                 pszOrderValue = msLookupHashTable(&(msObj->Map->layers[msObj->Map->layerorder[j]].metadata), pszOrderMetadata);
                  if (pszOrderValue) {
                     nLegendOrder = atoi(pszOrderValue);
                     if (nLegendOrder < 0)
@@ -1837,7 +1837,7 @@ char *generateLegendTemplate(mapservObj *msObj)
              */
             pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
             if (pszOrderMetadata) {
-               pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
+               pszOrderValue = msLookupHashTable(&(msObj->Map->layers[msObj->Map->layerorder[j]].metadata), pszOrderMetadata);
                if (pszOrderValue) {
                   nLegendOrder = atoi(pszOrderValue);
                   if (nLegendOrder < 0)
@@ -1900,7 +1900,7 @@ char *generateLegendTemplate(mapservObj *msObj)
                 */
                pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
                if (pszOrderMetadata) {
-                  pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
+                  pszOrderValue = msLookupHashTable(&(msObj->Map->layers[msObj->Map->layerorder[j]].metadata), pszOrderMetadata);
                   if (pszOrderValue) {
                      nLegendOrder = atoi(pszOrderValue);
                      if (nLegendOrder < 0)
@@ -2196,28 +2196,33 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   }
 
   // allow web object metadata access in template
-  if(msObj->Map->web.metadata && strstr(outstr, "web_")) {
-    for(j=0; j<MS_HASHSIZE; j++) {
-      if (msObj->Map->web.metadata[j] != NULL) {
-	for(tp=msObj->Map->web.metadata[j]; tp!=NULL; tp=tp->next) {            
-	  sprintf(substr, "[web_%s]", tp->key);
-	  outstr = gsub(outstr, substr, tp->data);  
-	  sprintf(substr, "[web_%s_esc]", tp->key);
+  
+  /* 
+   * reworked by SG to use HashTable methods
+   */
+  
+  if (&(msObj->Map->web.metadata) && strstr(outstr, "web_")) {
+    for (j=0; j<MS_HASHSIZE; j++) {
+      if (msObj->Map->web.metadata.items[j] != NULL) {
+	    for(tp=msObj->Map->web.metadata.items[j]; tp!=NULL; tp=tp->next) {
+	      sprintf(substr, "[web_%s]", tp->key);
+	      outstr = gsub(outstr, substr, tp->data);  
+	      sprintf(substr, "[web_%s_esc]", tp->key);
        
-      encodedstr = msEncodeUrl(tp->data);
-	  outstr = gsub(outstr, substr, encodedstr);
-      free(encodedstr);
-	}
+          encodedstr = msEncodeUrl(tp->data);
+	      outstr = gsub(outstr, substr, encodedstr);
+          free(encodedstr);
+	    }
       }
     }
   }
 
   // allow layer metadata access in template
   for(i=0;i<msObj->Map->numlayers;i++) {
-    if(msObj->Map->layers[i].metadata && strstr(outstr, msObj->Map->layers[i].name)) {
+    if(&(msObj->Map->layers[i].metadata) && strstr(outstr, msObj->Map->layers[i].name)) {
       for(j=0; j<MS_HASHSIZE; j++) {
-	if (msObj->Map->layers[i].metadata[j] != NULL) {
-	  for(tp=msObj->Map->layers[i].metadata[j]; tp!=NULL; tp=tp->next) {
+	if (msObj->Map->layers[i].metadata.items[j] != NULL) {
+	  for(tp=msObj->Map->layers[i].metadata.items[j]; tp!=NULL; tp=tp->next) {
 	    sprintf(substr, "[%s_%s]", msObj->Map->layers[i].name, tp->key);
 	    if(msObj->Map->layers[i].status == MS_ON)
 	      outstr = gsub(outstr, substr, tp->data);  
@@ -2360,10 +2365,10 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   if(mode == QUERY) { // return shape and/or values	
 
     // allow layer metadata access in a query template, within the context of a query no layer name is necessary    
-    if(msObj->ResultLayer->metadata && strstr(outstr, "[metadata_")) {
+    if(&(msObj->ResultLayer->metadata) && strstr(outstr, "[metadata_")) {
       for(i=0; i<MS_HASHSIZE; i++) {
-	if (msObj->ResultLayer->metadata[i] != NULL) {
-	  for(tp=msObj->ResultLayer->metadata[i]; tp!=NULL; tp=tp->next) {
+	if (msObj->ResultLayer->metadata.items[i] != NULL) {
+	  for(tp=msObj->ResultLayer->metadata.items[i]; tp!=NULL; tp=tp->next) {
 	    sprintf(substr, "[metadata_%s]", tp->key);
             outstr = gsub(outstr, substr, tp->data);  
 	     

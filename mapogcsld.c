@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.33  2004/06/22 20:55:20  sean
+ * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
+ *
  * Revision 1.32  2004/06/18 21:08:55  assefa
  * Initialize symbol name in msSLDGetGraphicSymbol.
  *
@@ -258,7 +261,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
             }
 
             /* compare layer name to wms_name as well */
-            pszTmp = msLookupHashTable(map->layers[i].metadata, "wms_name");
+            pszTmp = msLookupHashTable(&(map->layers[i].metadata), "wms_name");
 
             for (j=0; j<nLayers; j++)
             {
@@ -316,7 +319,7 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
                     /* mark as auto-generate SLD */
                     if (map->layers[i].connectiontype == MS_WMS)
-                      msInsertHashTable(map->layers[i].metadata, "wms_sld_body", "auto" );
+                      msInsertHashTable(&(map->layers[i].metadata), "wms_sld_body", "auto" );
 
                     break;
                 }
@@ -2405,7 +2408,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer,
                         strcat(szFontName, pszFontStyle);
                     }
                         
-                    if ((msLookupHashTable(psLayer->map->fontset.fonts, szFontName) !=NULL))
+                    if ((msLookupHashTable(&(psLayer->map->fontset.fonts), szFontName) !=NULL))
                     {
                         bFontSet = 1;
                         psClass->label.font = strdup(szFontName);
@@ -2870,9 +2873,9 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
             {
                 if (psSymbol->name)
                 {
-                    pszURL = msLookupHashTable(psLayer->metadata, "WMS_SLD_SYMBOL_URL");
+                    pszURL = msLookupHashTable(&(psLayer->metadata), "WMS_SLD_SYMBOL_URL");
                     if (!pszURL)
-                      pszURL = msLookupHashTable(psLayer->map->web.metadata, "WMS_SLD_SYMBOL_URL");
+                      pszURL = msLookupHashTable(&(psLayer->map->web.metadata), "WMS_SLD_SYMBOL_URL");
 
                     if (pszURL)
                     {
@@ -3477,7 +3480,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         sprintf(szTmp, "%s\n",  "<NamedLayer>");
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
-        pszTmp = msLookupHashTable(psLayer->metadata, "wms_name");
+        pszTmp = msLookupHashTable(&(psLayer->metadata), "wms_name");
         if (pszTmp)
           sprintf(szTmp, "<Name>%s</Name>\n", pszTmp);
         else if (psLayer->name)

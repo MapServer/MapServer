@@ -475,7 +475,7 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
 ** then only the first one (which is assumed to be the layer's default
 ** projection) is returned.
 */
-const char *msGetEPSGProj(projectionObj *proj, hashTableObj metadata, int bReturnOnlyFirstOne)
+const char *msGetEPSGProj(projectionObj *proj, hashTableObj *metadata, int bReturnOnlyFirstOne)
 {
 #ifdef USE_PROJ
   static char epsgCode[20] ="";

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.66  2004/06/22 20:55:21  sean
+ * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
+ *
  * Revision 1.65  2004/04/17 06:33:24  dan
  * Increased precision of values written to .wld file for WMS layers (bug 446)
  *
@@ -246,17 +249,17 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
     /* If lp->connection is not set then use wms_onlineresource metadata */
     pszOnlineResource = lp->connection;
     if (pszOnlineResource == NULL) 
-      pszOnlineResource = msLookupHashTable(lp->metadata,"wms_onlineresource");
+      pszOnlineResource = msLookupHashTable(&(lp->metadata),"wms_onlineresource");
 
-    pszVersion =        msLookupHashTable(lp->metadata, "wms_server_version");
-    pszName =           msLookupHashTable(lp->metadata, "wms_name");
-    pszFormat =         msLookupHashTable(lp->metadata, "wms_format");
-    pszFormatList =     msLookupHashTable(lp->metadata, "wms_formatlist");
-    pszStyle =          msLookupHashTable(lp->metadata, "wms_style");
-    pszStyleList =      msLookupHashTable(lp->metadata, "wms_stylelist");
-    pszTime =           msLookupHashTable(lp->metadata, "wms_time");
-    pszSLDBody =        msLookupHashTable(lp->metadata, "wms_sld_body");
-    pszSLDURL =         msLookupHashTable(lp->metadata, "wms_sld_url");
+    pszVersion =        msLookupHashTable(&(lp->metadata), "wms_server_version");
+    pszName =           msLookupHashTable(&(lp->metadata), "wms_name");
+    pszFormat =         msLookupHashTable(&(lp->metadata), "wms_format");
+    pszFormatList =     msLookupHashTable(&(lp->metadata), "wms_formatlist");
+    pszStyle =          msLookupHashTable(&(lp->metadata), "wms_style");
+    pszStyleList =      msLookupHashTable(&(lp->metadata), "wms_stylelist");
+    pszTime =           msLookupHashTable(&(lp->metadata), "wms_time");
+    pszSLDBody =        msLookupHashTable(&(lp->metadata), "wms_sld_body");
+    pszSLDURL =         msLookupHashTable(&(lp->metadata), "wms_sld_url");
 
     if (pszOnlineResource==NULL || pszVersion==NULL || pszName==NULL)
     {
@@ -358,7 +361,7 @@ static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
         // Was a wms_style_..._sld URL provided?
         char szBuf[100];
         sprintf(szBuf, "wms_style_%.80s_sld", pszStyle);
-        pszSLD = msLookupHashTable(lp->metadata, szBuf);
+        pszSLD = msLookupHashTable(&(lp->metadata), szBuf);
 
         if (pszSLD)
         {
@@ -541,7 +544,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         nLen = strlen(pszEPSG);
 
-        pszLyrEPSG = msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE);
+        pszLyrEPSG = msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_FALSE);
 
         if (pszLyrEPSG == NULL ||
             (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
@@ -557,7 +560,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     if (pszEPSG == NULL &&
         ((pszEPSG = (char*)msGetEPSGProj(&(lp->projection), 
-                                            lp->metadata, MS_TRUE)) == NULL ||
+                                            &(lp->metadata), MS_TRUE)) == NULL ||
          (pszEPSG = strdup(pszEPSG)) == NULL ||
          (strncasecmp(pszEPSG, "EPSG:", 5) != 0 &&
           strncasecmp(pszEPSG, "AUTO:", 5) != 0 ) ) )
@@ -794,7 +797,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 /* ------------------------------------------------------------------
  * Check if layer overlaps current view window (using wms_latlonboundingbox)
  * ------------------------------------------------------------------ */
-    if ((pszTmp = msLookupHashTable(lp->metadata, 
+    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
                                     "wms_latlonboundingbox")) != NULL)
     {
         char **tokens;
@@ -835,12 +838,12 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * First check the metadata in the layer object and then in the map object.
  * ------------------------------------------------------------------ */
     nTimeout = 30;  // Default is 30 seconds 
-    if ((pszTmp = msLookupHashTable(lp->metadata, 
+    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
                                     "wms_connectiontimeout")) != NULL)
     {
         nTimeout = atoi(pszTmp); 
     }
-    else if ((pszTmp = msLookupHashTable(map->web.metadata, 
+    else if ((pszTmp = msLookupHashTable(&(map->web.metadata), 
                                          "wms_connectiontimeout")) != NULL)
     {
         nTimeout = atoi(pszTmp);
@@ -852,7 +855,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * this layer from being combined with any other layer.
  * ------------------------------------------------------------------ */
     bForceSeparateRequest = MS_FALSE;
-    if ((pszTmp = msLookupHashTable(lp->metadata, 
+    if ((pszTmp = msLookupHashTable(&(lp->metadata), 
                                     "wms_force_separate_request")) != NULL)
     {
         bForceSeparateRequest = atoi(pszTmp); 
@@ -1057,8 +1060,8 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     //set the classes to 0 so that It won't do client side
     //classification if an sld was set.
     numclasses = lp->numclasses;
-    if (msLookupHashTable(lp->metadata, "wms_sld_body") ||
-        msLookupHashTable(lp->metadata, "wms_sld_url"))        
+    if (msLookupHashTable(&(lp->metadata), "wms_sld_body") ||
+        msLookupHashTable(&(lp->metadata), "wms_sld_url"))        
       lp->numclasses = 0;
 
     if (lp->data) free(lp->data);

@@ -712,7 +712,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 /*      flash movie for query purpose.                                  */
 /* ==================================================================== */
   if(image && MS_RENDERER_SWF(image->format))
-    status = msLayerWhichItems(layer, MS_TRUE, annotate, msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES"));                                
+    status = msLayerWhichItems(layer, MS_TRUE, annotate, msLookupHashTable(&(layer->metadata), "SWFDUMPATTRIBUTES"));                                
   else        
     status = msLayerWhichItems(layer, MS_TRUE, annotate, NULL);
   if(status != MS_SUCCESS) return MS_FAILURE;

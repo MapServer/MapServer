@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.37  2004/06/22 20:55:21  sean
+ * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
+ *
  * Revision 1.36  2004/06/04 14:10:06  assefa
  * Changes schema location for DescribeFeature
  *
@@ -311,13 +314,13 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    msOWSPrintParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
               "        <Name>%s</Name>\n", NULL);
 
-   msOWSPrintMetadata(stdout, lp->metadata, NULL, "wfs_title", OWS_WARN,
+   msOWSPrintMetadata(stdout, &(lp->metadata), NULL, "wfs_title", OWS_WARN,
                  "        <Title>%s</Title>\n", lp->name);
 
-   msOWSPrintMetadata(stdout, lp->metadata, NULL, "wfs_abstract", OWS_NOERR,
+   msOWSPrintMetadata(stdout, &(lp->metadata), NULL, "wfs_abstract", OWS_NOERR,
                  "        <Abstract>%s</Abstract>\n", NULL);
 
-   msOWSPrintMetadataList(stdout, lp->metadata, NULL, "wfs_keywordlist", 
+   msOWSPrintMetadataList(stdout, &(lp->metadata), NULL, "wfs_keywordlist", 
                      "        <Keywords>\n", "        </Keywords>\n",
                      "          %s\n", NULL);
 
@@ -334,18 +337,18 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    //    each layer is advertized in its own projection as defined in the
    //    layer's projection object or wfs_srs metadata.
    //
-   if (msGetEPSGProj(&(map->projection),map->web.metadata, MS_TRUE) != NULL)
+   if (msGetEPSGProj(&(map->projection),&(map->web.metadata), MS_TRUE) != NULL)
    {
        // Map has a SRS.  Use it for all layers.
        msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
-                  msGetEPSGProj(&(map->projection),map->web.metadata,MS_TRUE),
+                  msGetEPSGProj(&(map->projection),&(map->web.metadata),MS_TRUE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
    else
    {
        // Map has no SRS.  Use layer SRS or produce a warning.
        msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
-                  msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE),
+                  msGetEPSGProj(&(lp->projection), &(lp->metadata), MS_TRUE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
 
@@ -396,7 +399,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
 
   printf("Content-type: text/xml%c%c",10,10); 
 
-  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_encoding", OWS_NOERR,
+  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
                 "ISO-8859-1");
 
@@ -420,20 +423,20 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
  printf("  <Name>MapServer WFS</Name>\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_title", OWS_WARN,
+  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_title", OWS_WARN,
                 "  <Title>%s</Title>\n", map->name);
-  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_abstract", OWS_NOERR,
+  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_abstract", OWS_NOERR,
                 "  <Abstract>%s</Abstract>\n", NULL);
 
-  msOWSPrintMetadataList(stdout, map->web.metadata, NULL, "wfs_keywordlist", 
+  msOWSPrintMetadataList(stdout, &(map->web.metadata), NULL, "wfs_keywordlist", 
                     "  <Keywords>\n", "  </Keywords>\n",
                     "    %s\n", NULL);
   printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
 
-  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_fees", OWS_NOERR,
+  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_fees", OWS_NOERR,
                 "  <Fees>%s</Fees>\n", NULL);
   
-  msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_accessconstraints", OWS_NOERR,
+  msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_accessconstraints", OWS_NOERR,
                 "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
 
   printf("</Service>\n\n");
@@ -591,15 +594,15 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     */
     printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_encoding", OWS_NOERR,
+    msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
 
     user_namespace_prefix =  
-      msLookupHashTable(map->web.metadata, "wfs_namespace_prefix");
+      msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix");
     user_namespace_uri =  
-      msLookupHashTable(map->web.metadata, "wfs_namespace_uri");
+      msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri");
     
     if (user_namespace_prefix && user_namespace_uri)
     {
@@ -689,8 +692,8 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                     int k;
                     char *name_gml = NULL;
                     char *description_gml = NULL;
-                    name_gml = msLookupHashTable(lp->metadata, "wfs_gml_name_item");
-                    description_gml = msLookupHashTable(lp->metadata, "wfs_gml_description_item");
+                    name_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_name_item");
+                    description_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_description_item");
                     for(k=0; k<lp->numitems; k++)
                     {
                          if (name_gml && strcmp(name_gml,  lp->items[k]) == 0)
@@ -807,7 +810,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
         }
 
         pszMapSRS = msGetEPSGProj(&(map->projection),
-                                  map->web.metadata, 
+                                  &(map->web.metadata), 
                                   MS_TRUE);
 
         for(j=0; j<map->numlayers; j++) 
@@ -838,7 +841,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                     if ((pszThisLayerSRS = pszMapSRS) == NULL)
                     {
                         pszThisLayerSRS = msGetEPSGProj(&(lp->projection),
-                                                        lp->metadata, 
+                                                        &(lp->metadata), 
                                                         MS_TRUE);
                     }
 
@@ -1070,15 +1073,15 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintMetadata(stdout, map->web.metadata, NULL, "wfs_encoding", OWS_NOERR,
+    msOWSPrintMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
     user_namespace_uri =  
-      msLookupHashTable(map->web.metadata, "wfs_namespace_uri");
+      msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri");
 
     user_namespace_prefix = 
-      msLookupHashTable(map->web.metadata, "wfs_namespace_prefix");
+      msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix");
     if (user_namespace_prefix && user_namespace_uri)
       pszNameSpace = strdup(user_namespace_prefix);
     //else

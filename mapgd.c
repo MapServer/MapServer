@@ -865,7 +865,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   case(MS_SYMBOL_TRUETYPE):    
     
 #ifdef USE_GD_FT
-    font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
+    font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
     if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
@@ -1030,7 +1030,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   case(MS_SYMBOL_TRUETYPE): // TODO: Need to leverage the image cache!
 
 #ifdef USE_GD_FT
-    font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
+    font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
     if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
@@ -1371,7 +1371,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   case(MS_SYMBOL_TRUETYPE):    
     
 #ifdef USE_GD_FT
-    font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
+    font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
     if(!font) return;
 
     if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
@@ -2146,7 +2146,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       return(-1);
     }
 
-    font = msLookupHashTable(fontset->fonts, label->font);
+    font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {
        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextGD()", label->font);
       return(-1);

@@ -1194,7 +1194,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     msFree(label->font);
     label->font = strdup(value);
     
-    if(!(msLookupHashTable(map->fontset.fonts, label->font))) {
+    if(!(msLookupHashTable(&(map->fontset.fonts), label->font))) {
       msSetError(MS_IDENTERR, "Unknown font alias. (%s)", "loadLabelString()",
                  msyytext);      
       return;
@@ -1409,7 +1409,7 @@ int loadHashTable(hashTableObj *ptable)
 {
   char *key=NULL, *data=NULL;
   
-  if (!(*ptable)) *ptable = msCreateHashTable();
+  if (!ptable) ptable = msCreateHashTable();
 
   for(;;) {
     switch(msyylex()) {
@@ -1421,7 +1421,7 @@ int loadHashTable(hashTableObj *ptable)
     case(MS_STRING):
       key = strdup(msyytext);
       if(getString(&data) == MS_FAILURE) return(MS_FAILURE);      
-      msInsertHashTable(*ptable, key, data);
+      msInsertHashTable(ptable, key, data);
       
       free(key);
       free(data); data=NULL;
@@ -1436,7 +1436,7 @@ int loadHashTable(hashTableObj *ptable)
   return(MS_SUCCESS);
 }
 
-static void writeHashTable(hashTableObj table, FILE *stream, char *tab, char *title) {
+static void writeHashTable(hashTableObj *table, FILE *stream, char *tab, char *title) {
   struct hashObj *tp;
   int i;
 
@@ -1445,8 +1445,8 @@ static void writeHashTable(hashTableObj table, FILE *stream, char *tab, char *ti
   fprintf(stream, "%s%s\n", tab, title);  
 
   for (i=0;i<MS_HASHSIZE; i++) {
-    if (table[i] != NULL) {
-      for (tp=table[i]; tp!=NULL; tp=tp->next)
+    if (table->items[i] != NULL) {
+      for (tp=table->items[i]; tp!=NULL; tp=tp->next)
 	fprintf(stream, "%s  \"%s\"\t\"%s\"\n", tab, tp->key, tp->data);
     }
   }
@@ -1587,7 +1587,10 @@ int initClass(classObj *class)
   class->template = NULL;
 
   class->type = -1;
-  class->metadata = NULL;
+  
+  //class->metadata = NULL;
+  initHashTable(&(class->metadata));
+  
   class->maxscale = class->minscale = -1.0;
 
   class->numstyles = 0;  
@@ -1613,7 +1616,10 @@ void freeClass(classObj *class)
   msFree(class->name);
   msFree(class->title);
   msFree(class->template);
-  if(class->metadata) msFreeHashTable(class->metadata);
+  
+  if (&(class->metadata)) msFreeHashItems(&(class->metadata));
+  
+  
   for(i=0;i<class->numstyles;i++) // each style    
     freeStyle(&(class->styles[i]));
   msFree(class->styles);
@@ -1949,7 +1955,7 @@ static void writeClass(classObj *class, FILE *stream)
   if(class->keyimage) fprintf(stream, "      KEYIMAGE \"%s\"\n", class->keyimage);
   writeLabel(&(class->label), stream, "      ");
   if(class->maxscale > -1) fprintf(stream, "      MAXSCALE %g\n", class->maxscale);
-  if(class->metadata) writeHashTable(class->metadata, stream, "      ", "METADATA");
+  if(&(class->metadata)) writeHashTable(&(class->metadata), stream, "      ", "METADATA");
   if(class->minscale > -1) fprintf(stream, "      MINSCALE %g\n", class->minscale);
   if(class->status == MS_OFF) fprintf(stream, "      STATUS OFF\n");
   for(i=0; i<class->numstyles; i++)
@@ -2051,7 +2057,9 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->requires = layer->labelrequires = NULL;
 
-  layer->metadata = NULL;
+  //layer->metadata = NULL;
+  initHashTable(&(layer->metadata));
+  
   layer->dump = MS_FALSE;
 
   layer->styleitem = NULL;
@@ -2110,7 +2118,7 @@ void freeLayer(layerObj *layer) {
   msFree(layer->requires);
   msFree(layer->labelrequires);
 
-  if(layer->metadata) msFreeHashTable(layer->metadata);
+  if(&(layer->metadata)) msFreeHashItems(&(layer->metadata));
 
   if( layer->numprocessing > 0 )
       msFreeCharArray( layer->processing, layer->numprocessing );
@@ -2650,7 +2658,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   if(layer->labelsizeitem) fprintf(stream, "    LABELSIZEITEM \"%s\"\n", layer->labelsizeitem);
   if(layer->maxfeatures > 0) fprintf(stream, "    MAXFEATURES %d\n", layer->maxfeatures);
   if(layer->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", layer->maxscale); 
-  if(layer->metadata) writeHashTable(layer->metadata, stream, "      ", "METADATA");
+  if(&(layer->metadata)) writeHashTable(&(layer->metadata), stream, "      ", "METADATA");
   if(layer->minscale > -1) fprintf(stream, "    MINSCALE %g\n", layer->minscale);
   fprintf(stream, "    NAME \"%s\"\n", layer->name);
   writeColor(&(layer->offsite), stream, "OFFSITE", "    ");
@@ -3553,7 +3561,10 @@ void initWeb(webObj *web)
   web->log = NULL;
   web->imagepath = strdup("");
   web->imageurl = strdup("");
-  web->metadata = NULL;
+  
+  //web->metadata = NULL;
+  initHashTable(&(web->metadata));
+  
   web->map = NULL;
   web->queryformat = strdup("text/html");
 }
@@ -3571,7 +3582,7 @@ void freeWeb(webObj *web)
   msFree(web->imagepath);
   msFree(web->imageurl);
   msFree(web->queryformat);
-  if(web->metadata) msFreeHashTable(web->metadata);
+  if(&(web->metadata)) msFreeHashItems(&(web->metadata));
 }
 
 static void writeWeb(webObj *web, FILE *stream)
@@ -3590,7 +3601,7 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->log) fprintf(stream, "    LOG \"%s\"\n", web->log);
   if(web->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", web->maxscale);
   if(web->maxtemplate) fprintf(stream, "    MAXTEMPLATE \"%s\"\n", web->maxtemplate);
-  if(web->metadata) writeHashTable(web->metadata, stream, "      ", "METADATA");
+  if(&(web->metadata)) writeHashTable(&(web->metadata), stream, "      ", "METADATA");
   if(web->minscale > -1) fprintf(stream, "    MINSCALE %g\n", web->minscale);
   if(web->mintemplate) fprintf(stream, "    MINTEMPLATE \"%s\"\n", web->mintemplate);
   if(web->queryformat != NULL) fprintf(stream, "    QUERYFORMAT %s\n", web->queryformat);
@@ -3777,8 +3788,9 @@ int initMap(mapObj *map)
   map->outputformatlist = NULL;
   map->outputformat = NULL;
 
-  map->configoptions = msCreateHashTable();;
-
+  //map->configoptions = msCreateHashTable();;
+  initHashTable(&(map->configoptions));
+          
   map->imagetype = NULL;
 
   map->palette.numcolors = 0;
@@ -3796,8 +3808,10 @@ int initMap(mapObj *map)
 
   map->fontset.filename = NULL;
   map->fontset.numfonts = 0;  
-  map->fontset.fonts = NULL;
-
+  
+  //map->fontset.fonts = NULL;
+  initHashTable(&(map->fontset.fonts));
+  
   msInitSymbolSet(&map->symbolset);
   map->symbolset.fontset =  &(map->fontset);
 
@@ -3926,12 +3940,12 @@ int msSaveMap(mapObj *map, char *filename)
       fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
 
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
-  for( key = msFirstKeyFromHashTable( map->configoptions );
+  for( key = msFirstKeyFromHashTable( &(map->configoptions) );
        key != NULL;
-       key = msNextKeyFromHashTable( map->configoptions, key ) )
+       key = msNextKeyFromHashTable( &(map->configoptions), key ) )
   {
       fprintf( stream, "  CONFIG %s \"%s\"\n", 
-               key, msLookupHashTable( map->configoptions, key ) );
+               key, msLookupHashTable( &(map->configoptions), key ) );
   }
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
   if(map->debug) fprintf(stream, "  DEBUG ON\n");

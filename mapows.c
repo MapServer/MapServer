@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.34  2004/06/22 20:55:20  sean
+ * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
+ *
  * Revision 1.33  2004/05/14 05:32:44  sdlime
  * An assert(FALSE) in mapows.c was failing at build, changed to MS_FALSE...
  *
@@ -237,7 +240,7 @@ char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name,
     // set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)?"
     // (+append the map=... param if it was explicitly passed in QUERY_STRING)
     //
-    if ((value = msLookupHashTable(map->web.metadata, (char*)metadata_name))) 
+    if ((value = msLookupHashTable(&(map->web.metadata), (char*)metadata_name))) 
     {
         online_resource = (char*) malloc(strlen(value)+2);
 
@@ -329,7 +332,7 @@ const char *msOWSGetSchemasLocation(mapObj *map)
 {
     const char *schemas_location;
 
-    schemas_location = msLookupHashTable(map->web.metadata, 
+    schemas_location = msLookupHashTable(&(map->web.metadata), 
                                          "ows_schemas_location");
     if (schemas_location == NULL)
         schemas_location = "..";
@@ -347,7 +350,7 @@ const char *msOWSGetSchemasLocation(mapObj *map)
 ** If namespaces is NULL then this function just does a regular metadata
 ** lookup.
 */
-const char *msOWSLookupMetadata(hashTableObj metadata, 
+const char *msOWSLookupMetadata(hashTableObj *metadata, 
                                 const char *namespaces, const char *name)
 {
     const char *value = NULL;
@@ -419,7 +422,7 @@ const char *msOWSLookupMetadata(hashTableObj metadata,
 ** default will be used.
 */
 
-int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, 
+int msOWSPrintMetadata(FILE *stream, hashTableObj *metadata, 
                        const char *namespaces, const char *name, 
                        int action_if_not_found, const char *format, 
                        const char *default_value) 
@@ -456,7 +459,7 @@ int msOWSPrintMetadata(FILE *stream, hashTableObj metadata,
 ** Also encode the value with msEncodeHTMLEntities.
 */
 
-int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata, 
+int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj *metadata, 
                              const char *namespaces, const char *name, 
                              int action_if_not_found, 
                              const char *format, const char *default_value) 
@@ -510,9 +513,9 @@ int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName,
 
     for (i=0; i<map->numlayers; i++)
     {
-       if (map->layers[i].group && (strcmp(map->layers[i].group, pszGroupName) == 0) && map->layers[i].metadata)
+       if (map->layers[i].group && (strcmp(map->layers[i].group, pszGroupName) == 0) && &(map->layers[i].metadata))
        {
-         if((value = msOWSLookupMetadata(map->layers[i].metadata, namespaces, name)))
+         if((value = msOWSLookupMetadata(&(map->layers[i].metadata), namespaces, name)))
          { 
             fprintf(stream, format, value);
             return status;
@@ -565,7 +568,7 @@ int msOWSPrintParam(FILE *stream, const char *name, const char *value,
 **
 ** Prints comma-separated lists metadata.  (e.g. keywordList)
 **/
-int msOWSPrintMetadataList(FILE *stream, hashTableObj metadata, 
+int msOWSPrintMetadataList(FILE *stream, hashTableObj *metadata, 
                            const char *namespaces, const char *name, 
                            const char *startTag, 
                            const char *endTag, const char *itemFormat,
@@ -625,7 +628,7 @@ void msOWSPrintLatLonBoundingBox(FILE *stream, const char *tabspace,
 void msOWSPrintBoundingBox(FILE *stream, const char *tabspace, 
                            rectObj *extent, 
                            projectionObj *srcproj,
-                           hashTableObj metadata ) 
+                           hashTableObj *metadata ) 
 {
     const char	*value, *resx, *resy;
 
@@ -657,7 +660,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 ** Print the contact information
 */
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
-                            const char *wmtver, hashTableObj metadata )
+                            const char *wmtver, hashTableObj *metadata )
 {
   int bEnableContact = 0;
 
@@ -798,7 +801,7 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
 {
   static const char *value;
 
-  if ((value = msOWSLookupMetadata(lp->metadata, "MFCO", "extent")) != NULL)
+  if ((value = msOWSLookupMetadata(&(lp->metadata), "MFCO", "extent")) != NULL)
   {
     char **tokens;
     int n;
@@ -1000,7 +1003,7 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
 ** then only the first one (which is assumed to be the layer's default
 ** projection) is returned.
 */
-const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj metadata, const char *namespaces, int bReturnOnlyFirstOne)
+const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const char *namespaces, int bReturnOnlyFirstOne)
 {
   static char epsgCode[20] ="";
   static char *value;
