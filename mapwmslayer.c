@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.70  2004/11/11 22:08:17  frank
+ * fix off-by-half-pixel error in wms worldfile - bug 1050
+ *
  * Revision 1.69  2004/08/03 23:43:31  dan
  * Cleanup OWS version tests in the code (bug 799)
  *
@@ -1106,16 +1109,21 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
             strcpy(wldfile+strlen(wldfile)-3, "wld");
         if (wldfile && (fp = fopen(wldfile, "wt")) != NULL)
         {
-            fprintf(fp, "%.12f\n", MS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
-                                               pasReqInfo[iReq].bbox.maxx, 
-                                               map->width));
+            double dfCellSizeX = MS_CELLSIZE(pasReqInfo[iReq].bbox.minx,
+                                             pasReqInfo[iReq].bbox.maxx, 
+                                             map->width);
+            double dfCellSizeY = MS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
+                                             pasReqInfo[iReq].bbox.miny, 
+                                             map->height);
+                
+            fprintf(fp, "%.12f\n", dfCellSizeX );
             fprintf(fp, "0\n");
             fprintf(fp, "0\n");
-            fprintf(fp, "%.12f\n", MS_CELLSIZE(pasReqInfo[iReq].bbox.maxy,
-                                               pasReqInfo[iReq].bbox.miny, 
-                                               map->height));
-            fprintf(fp, "%.12f\n", pasReqInfo[iReq].bbox.minx);
-            fprintf(fp, "%.12f\n", pasReqInfo[iReq].bbox.maxy);
+            fprintf(fp, "%.12f\n", dfCellSizeY );
+            fprintf(fp, "%.12f\n", 
+                    pasReqInfo[iReq].bbox.minx + dfCellSizeX * 0.5 );
+            fprintf(fp, "%.12f\n", 
+                    pasReqInfo[iReq].bbox.maxy + dfCellSizeY * 0.5 );
             fclose(fp);
 
             // GDAL should be called to reproject automatically.

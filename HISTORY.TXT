@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Write out proper world file with remote WMS result, it was off by half
+  a pixel. (Bug 1050).
+
 - Send a warning in the wms capabilities if the layer status is set 
   to default (Bug 638).
 
