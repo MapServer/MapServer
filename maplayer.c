@@ -64,12 +64,14 @@ int msLayerOpen(layerObj *layer, char *shapepath)
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, layer->data) == -1) return(MS_FAILURE);
+    return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPOpenFile(layer, shapepath));
     break;
   case(MS_INLINE):
     layer->currentfeature = layer->features; // point to the begining of the feature list
+    return(MS_SUCCESS);
     break;
   case(MS_OGR):
     return msOGRLayerOpen(layer);
@@ -83,7 +85,7 @@ int msLayerOpen(layerObj *layer, char *shapepath)
     break;
   }
 
-  return(MS_SUCCESS);
+  return(MS_FAILURE);
 }
 
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape) 
