@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2004/05/11 22:33:27  frank
+ * bug 493: fixed last fix, memory corruption in some cases
+ *
  * Revision 1.26  2004/05/05 04:14:39  frank
  * Fixed problem with computing dst_xsize and dst_ysize for rendering image.
  * In some subtle cases they would be one less than made sense.
@@ -333,6 +336,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
       dst_lrx = (int) ((copyRect.maxx - mapRect.minx) / map->cellsize + 0.5);
       dst_lry = (int) ((mapRect.maxy - copyRect.miny) / map->cellsize + 0.5);
+      dst_lrx = MAX(0,MIN(image->width,dst_lrx));
+      dst_lrx = MAX(0,MIN(image->height,dst_lry));
       
       dst_xsize = MAX(0,MIN(image->width,dst_lrx - dst_xoff));
       dst_ysize = MAX(0,MIN(image->height,dst_lry - dst_yoff));
