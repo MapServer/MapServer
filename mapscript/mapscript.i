@@ -1009,6 +1009,10 @@ memory.") const char * {
         return msMoveClassDown(self, index);
     }
 
+    void setProcessing(const char *directive) {
+	msLayerAddProcessing( self, directive );
+    }
+
 }
 
 // See Bugzilla issue 548 about work on styleObj and classObj
