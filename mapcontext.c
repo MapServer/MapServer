@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.41  2003/02/21 19:19:49  julien
+ * Do not put 'init=' before the srs to proj when it begin by 'AUTO:'
+ *
  * Revision 1.40  2003/02/04 14:33:18  julien
  * Fix the closing tag of View_Context
  *
@@ -442,14 +445,13 @@ int msCombineXMLValueInHash( CPLXMLNode *psRoot,
 int msLoadMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
-  char *pszWholeText, *pszMapProj=NULL;
+  char *pszWholeText, *pszMapProj=NULL, *pszProj=NULL;
   char *pszValue, *pszValue1, *pszValue2;
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild;
   CPLXMLNode *psLegendURL, *psSRS;
   char szPath[MS_MAXPATHLEN];
-  char szProj[20];
   int nStyle;
   layerObj *layer;
 
@@ -556,22 +558,32 @@ int msLoadMapContext(mapObj *map, char *filename)
                                    "General.BoundingBox.SRS", NULL);
   if(pszValue != NULL)
   {
-      sprintf(szProj, "init=epsg:%s", pszValue+5);
+      if(strncasecmp(pszValue, "AUTO:", 5) == 0)
+      {
+          pszProj = strdup(pszValue);
+      }
+      else
+      {
+          pszProj = (char*) malloc(sizeof(char)*(strlen(pszValue)+10));
+          sprintf(pszProj, "init=epsg:%s", pszValue+5);
+      }
       pszMapProj = strdup(pszValue);
 
       msInitProjection(&map->projection);
-      map->projection.args[map->projection.numargs] = strdup(szProj);
+      map->projection.args[map->projection.numargs] = strdup(pszProj);
       map->projection.numargs++;
       msProcessProjection(&map->projection);
 
-      if ((map->units = GetMapserverUnitUsingProj(&(map->projection))) == -1)
+      if( (map->units = GetMapserverUnitUsingProj(&(map->projection))) == -1)
       {
+          free(pszProj);
           msSetError( MS_MAPCONTEXTERR, 
                       "Unable to set units for projection '%s'",
-                      "msLoadMapContext()", szProj );
+                      "msLoadMapContext()", pszProj );
           CPLDestroyXMLNode(psRoot);
           return MS_FAILURE;
       }
+      free(pszProj);
   }
   else
   {
@@ -868,11 +880,22 @@ int msLoadMapContext(mapObj *map, char *filename)
                   if(pszMapProj != NULL)
                   {
                       msInsertHashTable(layer->metadata,"wms_srs", pszMapProj);
-                      sprintf(szProj, "init=epsg:%s", pszMapProj+5);
+                      if(strncasecmp(pszValue, "AUTO:", 5) == 0)
+                      {
+                          pszProj = strdup(pszValue);
+                      }
+                      else
+                      {
+                          pszProj = (char*) malloc(sizeof(char)*
+                                                   (strlen(pszValue)+10));
+                          sprintf(pszProj, "init=epsg:%s", pszMapProj+5);
+                      }
+
                       msInitProjection(&layer->projection);
-                      layer->projection.args[layer->projection.numargs] = strdup(szProj);
+                      layer->projection.args[layer->projection.numargs] = strdup(pszProj);
                       layer->projection.numargs++;
                       msProcessProjection(&layer->projection);
+                      free(pszProj);
                   }
               }
 
