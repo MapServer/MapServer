@@ -467,7 +467,7 @@ char *msSearchDiskTree(char *filename, rectObj aoi)
 
   disktree = msSHPDiskTreeOpen (filename);
   if(!disktree) {
-    msSetError(MS_IOERR, NULL, "msSearchDiskTree()");
+    msSetError(MS_IOERR, "Unable to open file %s.", "msSearchDiskTree()", filename);
     return(NULL);
   }
 
