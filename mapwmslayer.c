@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2001/10/29 16:45:47  dan
+ * Uncommented the unlink() call to delete the downloaded map image
+ *
  * Revision 1.9  2001/10/11 22:29:20  dan
  * Took out terminate_handler 2.  Tested, working fine on Linux.
  *
@@ -570,7 +573,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     } 
 
     // We're done with the remote server's response... delete it.
-    //unlink(lp->data);
+    unlink(lp->data);
 
     // free(lp->data);
     lp->data = NULL;
