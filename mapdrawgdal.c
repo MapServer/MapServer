@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/01/21 05:55:05  frank
+ * avoid core dumping when classifying 24bit image, fixes colors - bug 270
+ *
  * Revision 1.4  2003/01/10 15:10:58  frank
  * fixed a few bugs in support for classified rasters
  *
@@ -378,7 +381,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       hColorMap = GDALGetRasterColorTable( hBand1 );
       if( hColorMap != NULL )
           hColorMap = GDALCloneColorTable( hColorMap );
-      else if( hBand2 == NULL && !truecolor )
+      else if( hBand2 == NULL )
       {
           hColorMap = GDALCreateColorTable( GPI_RGB );
           
@@ -407,16 +410,24 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
     cmap_set = TRUE;
 
+    if( hColorMap == NULL )
+    {
+        msSetError(MS_IOERR, 
+                   "Attempt to classify 24bit image, this is unsupported.",
+                   "drawGDAL()");
+        return -1;
+    }
+
     for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
-        GDALColorEntry sEntry;
         colorObj pixel;
+        GDALColorEntry sEntry;
 
         GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
             
-	pixel.red = sEntry.c1;
-	pixel.green = sEntry.c2;
-	pixel.blue = sEntry.c3;
-	pixel.pen = i;
+        pixel.red = sEntry.c1;
+        pixel.green = sEntry.c2;
+        pixel.blue = sEntry.c3;
+        pixel.pen = i;
         
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
         {
@@ -430,14 +441,13 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                 if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
                     cmap[i] = -1;
                 else if( MS_VALID_COLOR(layer->class[c].styles[0].color))
+                {
                     /* use class color */
-                    cmap[i] = msAddColorGD(map, gdImg, 
-                                           layer->class[c].styles[0].color.red, 
-                                           layer->class[c].styles[0].color.green, 
-                                           layer->class[c].styles[0].color.blue); 
+                    cmap[i] = layer->class[c].styles[0].color.pen;
+                }
                 else /* Use raster color */
                     cmap[i] = msAddColorGD(map, gdImg, 
-                                           sEntry.c1, sEntry.c2, sEntry.c3 );
+                                           pixel.red, pixel.green, pixel.blue);
             }
         } else
             cmap[i] = -1;
