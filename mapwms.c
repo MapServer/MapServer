@@ -707,8 +707,8 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   // Perform the actual query
   cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); // note: don't adjust extent, WMS assumes incoming extent is correct
   celly = MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
-  point.x = MS_MAP2IMAGE_X(point.x, map->extent.minx, cellx);
-  point.y = MS_MAP2IMAGE_Y(point.y, map->extent.maxx, celly);
+  point.x = MS_IMAGE2MAP_X(point.x, map->extent.minx, cellx);
+  point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
 
   if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0) != MS_SUCCESS)
     if(ms_error.code != MS_NOTFOUND) return msWMSException(map, wmtver);
