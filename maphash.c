@@ -73,12 +73,13 @@ void msFreeHashTable(hashTableObj table)
 {
   int i;
   struct hashObj *tp=NULL;
+  struct hashObj *prev_tp=NULL;
 
   if(!table) return;
 
   for (i=0;i<MS_HASHSIZE; i++) {
     if (table[i] != NULL) {
-      for (tp=table[i]; tp!=NULL; tp=tp->next) {
+      for (tp=table[i]; tp!=NULL; prev_tp=tp,tp=tp->next,free(prev_tp)) {
 	free(tp->key);
 	free(tp->data);
       }
