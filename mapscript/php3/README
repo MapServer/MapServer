@@ -615,6 +615,10 @@ and the MapServer Map File documentation at:
    imageObj createLegendIcon(int width, int height)
         Draw the legend icon and return a new imageObj.
      
+   styleObj getStyle(int index)
+        Return the style object using an index. index >= 0 &&
+        index < class->numstyles.
+ 
  ImageObj Class:
  ---------------
 

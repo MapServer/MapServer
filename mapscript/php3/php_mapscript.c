@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.118  2002/10/28 17:03:33  assefa
+ * Add a getstyle function on the class object.
+ *
  * Revision 1.117  2002/10/28 15:27:30  dan
  * Added MS_LAYER_CIRCLE constant
  *
@@ -347,6 +350,7 @@ DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_label_setColor(INTERNAL_FUNCTION_PARAMETERS);
@@ -697,6 +701,7 @@ function_entry php_class_class_functions[] = {
     {"settext",          php3_ms_class_setText,          NULL},
     {"drawlegendicon",   php3_ms_class_drawLegendIcon,   NULL},
     {"createlegendicon", php3_ms_class_createLegendIcon, NULL},   
+    {"getstyle",        php3_ms_class_getStyle, NULL},   
     {NULL, NULL, NULL}
 };
 
@@ -7018,6 +7023,64 @@ DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_build_img_object(im, &(parent_map->web), list, return_value);
 }
 
+
+/************************************************************************/
+/*                      class->getstyle(index)                          */
+/*                                                                      */
+/*      return the style object referneced by the index. The index      */
+/*      should be from 0 to class->numstyles.                           */
+/*                                                                      */
+/*                                                                      */
+/*      Returns a style object.                                         */
+/************************************************************************/
+
+/* {{{ proto int class.getstyle(int index)
+   return the style object. */
+
+DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pIndex,  *pThis;
+    classObj *self;
+    int layer_id, map_id, class_id;
+    styleObj *psStyle;
+
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pIndex) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pIndex);
+
+    self = (classObj *)_phpms_fetch_handle(pThis,
+                                           PHPMS_GLOBAL(le_msclass),
+                                           list TSRMLS_CC);
+    if (self == NULL)
+       php3_error(E_ERROR, "Invalid class object.");
+
+    if (pIndex->value.lval < 0 || pIndex->value.lval >= self->numstyles)
+    {
+        php3_error(E_ERROR, "Invalid style index.");
+    }
+
+    psStyle = &(self->styles[ pIndex->value.lval]);
+    
+    class_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
+    layer_id = _phpms_fetch_property_resource(pThis, "_layer_handle_", 
+                                               E_ERROR);
+    map_id = _phpms_fetch_property_resource(pThis, "_map_handle_", E_ERROR);
+      
+    /* Return style object */
+    _phpms_build_style_object(psStyle, map_id, layer_id, class_id, list, 
+                              return_value TSRMLS_CC);
+}
+    
+
 /*=====================================================================
  *                 PHP function wrappers - colorObj class
  *====================================================================*/
@@ -7301,6 +7364,9 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *poLayer;
     imageObj    *im;
     int         nRetVal=MS_FAILURE;
+    int         nttt;
+    char        *sttt = NULL;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -7310,6 +7376,8 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
+
+    //nttt = strlen(sttt);
 
     if (pThis == NULL ||
         getParameters(ht, 5, &pMap, &pLayer, &pImg, &pClass, &pText) !=SUCCESS)
@@ -10262,7 +10330,7 @@ DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS)
      */
     map_id = _phpms_fetch_property_resource(pClassObj, "_map_handle_", E_ERROR);
    
-    /* Return class object */
+    /* Return style object */
     _phpms_build_style_object(pNewStyle, map_id, layer_id, class_id, list, 
                               return_value TSRMLS_CC);
 }
