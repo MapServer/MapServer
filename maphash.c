@@ -1,3 +1,5 @@
+#include <ctype.h>
+
 #include "map.h"
 #include "maphash.h"
 
@@ -6,7 +8,7 @@ static unsigned hash(char *key)
   unsigned hashval;
   
   for(hashval=0; *key!='\0'; key++)
-    hashval = *key + 31 * hashval;
+    hashval = tolower(*key) + 31 * hashval;
 
   return(hashval % MS_HASHSIZE);
 }
