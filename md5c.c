@@ -344,7 +344,7 @@ char *MDString (char *string)
     unsigned char digest[16];
     unsigned int len = 0;
     char szReturn[33];
-    char szTmp[2];
+    char szTmp[3];
     int i = 0;
 
 
