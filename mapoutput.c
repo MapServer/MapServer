@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2005/03/08 19:53:25  frank
+ * adjusted png24 mimetype per bug 1231
+ *
  * Revision 1.32  2005/02/08 21:36:23  frank
  * Return actual error code.
  *
@@ -273,7 +276,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     if( strcasecmp(driver,"GD/PNG24") == 0 )
     {
         format = msAllocOutputFormat( map, "png24", "GD/PNG" );
-        format->mimetype = strdup("image/png");
+        format->mimetype = strdup("image/png; mode=24bit");
         format->imagemode = MS_IMAGEMODE_RGB;
         format->extension = strdup("png");
         format->renderer = MS_RENDER_WITH_GD;

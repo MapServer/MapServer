@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1231: use mimetype "image/png; mode=24bits" for 24bit png format.
+  This makes it seperately selectable by WMS.
+
 - Bug 1206: Applied locking patch for expression parser for rasters.
 
 - Bug 1273: Fixed case in msProjectPoint() were in or out are NULL and
