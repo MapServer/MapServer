@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/04/30 19:13:16  dan
+ * Fixed problem compiling without GDAL (use of TRUE and CPLAssert)
+ *
  * Revision 1.46  2004/03/04 20:08:28  frank
  * added IMAGEMODE_BYTE (raw mode)
  *
@@ -407,7 +410,7 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
                 }
                 else
                 {
-                    CPLAssert( FALSE );
+                    assert( 0 );
                 }
             }
         }
@@ -768,7 +771,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 #define EDGE_STEPS    10
 #define MAX_SIZE      ((EDGE_STEPS+1)*(EDGE_STEPS+1))
 
-    int		i, nSamples = 0, bOutInit = FALSE;
+    int		i, nSamples = 0, bOutInit = 0;
     double      dfRatio;
     double	x[MAX_SIZE], y[MAX_SIZE], z[MAX_SIZE];
 
@@ -868,7 +871,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                                                adfDstGeoTransform, psDstProj,
                                                nSrcXSize, nSrcYSize, 
                                                adfInvSrcGeoTransform,psSrcProj,
-                                               psSrcExtent, TRUE );
+                                               psSrcExtent, 1 );
             }
         }
     }
@@ -897,7 +900,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
         {
             psSrcExtent->minx = psSrcExtent->maxx = x_out;
             psSrcExtent->miny = psSrcExtent->maxy = y_out;
-            bOutInit = TRUE;
+            bOutInit = 1;
         }
         else
         {
