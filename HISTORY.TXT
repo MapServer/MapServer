@@ -13,7 +13,7 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-Version 4.2.1 (CVS)
+Version 4.2.1 (2004-07-12)
 --------------------------
 
 - Disable drawERD() (ERDAS formats) when GDAL is available (bug 691)
