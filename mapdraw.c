@@ -448,7 +448,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   // Destroy the temp image for this layer tranparency
   if( MS_RENDERER_GD(image_draw->format) && layer->transparency > 0 ) {
-#ifdef GD2_VERS > 1 
+#if GD2_VERS > 1 
     msImageCopyMerge(image->img.gd, image_draw->img.gd, 
                      0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
                      layer->transparency);
