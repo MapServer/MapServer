@@ -95,7 +95,7 @@ extern "C" {
 #define MS_INDEX_EXTENSION ".qix"
 #define MS_QUERY_EXTENSION ".qy"
 
-#define MS_DEG_TO_RAD	.0174532925199432958
+#define MS_DEG_TO_RAD .0174532925199432958
 #define MS_RAD_TO_DEG   57.29577951
 
 #define MS_RED 0
@@ -144,13 +144,13 @@ extern "C" {
 
 // General macro definitions
 #define MS_MIN(a,b)     (((a)<(b))?(a):(b))
-#define MS_MAX(a,b)	(((a)>(b))?(a):(b))
-#define MS_ABS(a)	(((a)<0) ? -(a) : (a))
-#define MS_SGN(a)	(((a)<0) ? -1 : 1)
+#define MS_MAX(a,b) (((a)>(b))?(a):(b))
+#define MS_ABS(a) (((a)<0) ? -(a) : (a))
+#define MS_SGN(a) (((a)<0) ? -1 : 1)
 #define MS_NINT(x)      ((x) >= 0.0 ? ((long) ((x)+.5)) : ((long) ((x)-.5)))
 
 #define MS_PEN_TRANSPARENT -1
-#define MS_PEN_UNSET	   -4
+#define MS_PEN_UNSET     -4
 
 #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
 
@@ -162,20 +162,20 @@ extern "C" {
 #define MS_IMAGE_MIME_TYPE(format) (format->mimetype ? format->mimetype : "unknown")
 #define MS_IMAGE_EXTENSION(format)  (format->extension ? format->extension : "unknown")
 
-#define MS_DRIVER_GD(format)	(strncasecmp((format)->driver,"gd/",3)==0)
-#define MS_DRIVER_SWF(format)	(strncasecmp((format)->driver,"swf",3)==0)
-#define MS_DRIVER_GDAL(format)	(strncasecmp((format)->driver,"gdal/",5)==0)
-#define MS_DRIVER_PDF(format)	(strncasecmp((format)->driver,"pdf",3)==0)
-#define MS_DRIVER_IMAGEMAP(format)	(strncasecmp((format)->driver,"imagemap",8)==0)
+#define MS_DRIVER_GD(format)  (strncasecmp((format)->driver,"gd/",3)==0)
+#define MS_DRIVER_SWF(format) (strncasecmp((format)->driver,"swf",3)==0)
+#define MS_DRIVER_GDAL(format)  (strncasecmp((format)->driver,"gdal/",5)==0)
+#define MS_DRIVER_PDF(format) (strncasecmp((format)->driver,"pdf",3)==0)
+#define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
 
-#define MS_RENDER_WITH_GD	1
-#define MS_RENDER_WITH_SWF    	2
-#define MS_RENDER_WITH_RAWDATA 	3
-#define MS_RENDER_WITH_PDF 	4
+#define MS_RENDER_WITH_GD 1
+#define MS_RENDER_WITH_SWF      2
+#define MS_RENDER_WITH_RAWDATA  3
+#define MS_RENDER_WITH_PDF  4
 #define MS_RENDER_WITH_IMAGEMAP 5
 
-#define MS_RENDERER_GD(format)	((format)->renderer == MS_RENDER_WITH_GD)
-#define MS_RENDERER_SWF(format)	((format)->renderer == MS_RENDER_WITH_SWF)
+#define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
+#define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
 #define MS_RENDERER_RAWDATA(format) ((format)->renderer == MS_RENDER_WITH_RAWDATA)
 #define MS_RENDERER_PDF(format) ((format)->renderer == MS_RENDER_WITH_PDF)
 #define MS_RENDERER_IMAGEMAP(format) ((format)->renderer == MS_RENDER_WITH_IMAGEMAP)
@@ -612,28 +612,28 @@ typedef struct {
 
 typedef struct
 {
-	double		dwhichlatitude;
-	double		dwhichlongitude;
-	double		dstartlatitude;
-	double		dstartlongitude;
-	double		dendlatitude;
-	double		dendlongitude;
-	double		dincrementlatitude;
-	double		dincrementlongitude;
-	double		minarcs;
-	double		maxarcs;
-	double		minincrement;
-	double		maxincrement;
-	double		minsubdivides;
-	double		maxsubdivides;
-	int			bvertical;
-	int			blabelaxes;
-	int			ilabelstate;
-	int			ilabeltype;
-	rectObj		extent;
-	lineObj		*pboundinglines;
-	pointObj	*pboundingpoints;
-	char		*labelformat;
+  double    dwhichlatitude;
+  double    dwhichlongitude;
+  double    dstartlatitude;
+  double    dstartlongitude;
+  double    dendlatitude;
+  double    dendlongitude;
+  double    dincrementlatitude;
+  double    dincrementlongitude;
+  double    minarcs;
+  double    maxarcs;
+  double    minincrement;
+  double    maxincrement;
+  double    minsubdivides;
+  double    maxsubdivides;
+  int     bvertical;
+  int     blabelaxes;
+  int     ilabelstate;
+  int     ilabeltype;
+  rectObj   extent;
+  lineObj   *pboundinglines;
+  pointObj  *pboundingpoints;
+  char    *labelformat;
 } graticuleObj;
 
 // LAYER OBJECT - basic unit of a map
@@ -1160,6 +1160,7 @@ MS_DLL_EXPORT int msLayerGetItems(layerObj *layer);
 MS_DLL_EXPORT int msLayerSetItems(layerObj *layer, char **items, int numitems);
 MS_DLL_EXPORT int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 MS_DLL_EXPORT int msLayerGetExtent(layerObj *layer, rectObj *extent);
+MS_DLL_EXPORT int msLayerSetExtent( layerObj *layer, double minx, double miny, double maxx, double maxy);
 MS_DLL_EXPORT int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 MS_DLL_EXPORT void msLayerAddProcessing( layerObj *layer, const char *directive );
 MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key, 
