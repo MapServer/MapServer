@@ -454,14 +454,25 @@ typedef struct {
 %readwrite
 #endif
 
-#ifndef SWIG
+
 typedef struct {
+
+#ifndef SWIG
   resultCacheMemberObj *results;
-  int numresults;
   int cachesize;
-  rectObj bounds;
-} resultCacheObj;
 #endif
+
+#ifdef SWIG
+%readonly
+#endif
+  int numresults;
+  rectObj bounds;
+#ifdef SWIG
+%readwrite
+#endif
+
+} resultCacheObj;
+
 
 // SYMBOLSET OBJECT
 #ifndef SWIG
