@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.26  2004/03/15 07:36:15  frank
+ * removed unused variables
+ *
  * Revision 1.25  2004/03/11 20:42:42  assefa
  * Correct validation issues with the generated sld.
  *
@@ -628,8 +631,6 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
     CPLXMLNode *psTextSymbolizer = NULL;
     CPLXMLNode *psRasterSymbolizer = NULL;
 
-    CPLXMLNode *psMaxScale=NULL, *psMinScale=NULL;
-    int i = 0;
     int bSymbolizer = 0;
     int bNewClass=0, nSymbolizer=0;
 
