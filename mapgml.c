@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/03/16 17:19:30  sdlime
+ * Updated GML group reading code to explicitly initialize all structure members.
+ *
  * Revision 1.49  2005/02/18 19:15:23  sdlime
  * Added GML item-level transformation support for WFS. Includes inclusion/exclusion, column aliases and simple groups. (bug 950)
  *
@@ -637,8 +640,8 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
 
   /* allocate memory and iinitialize the item collection */
   itemList = (gmlItemListObj *) malloc(sizeof(gmlItemListObj));
-  itemList->numitems = 0;
   itemList->items = NULL;
+  itemList->numitems = 0;
 
   itemList->numitems = layer->numitems;
   itemList->items = (gmlItemObj *) malloc(sizeof(gmlItemObj)*itemList->numitems);
@@ -650,9 +653,8 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
   for(i=0; i<layer->numitems; i++) {
     item = &(itemList->items[i]);
 
-    item->name = strdup(layer->items[i]);
- 
-    item->alias = NULL; /* set defaults */
+    item->name = strdup(layer->items[i]);  /* initialize the item */
+    item->alias = NULL;
     item->type = NULL;
     item->encode = MS_TRUE;
     item->visible = MS_FALSE;
@@ -762,8 +764,8 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
 
   /* allocate the collection */
   groupList = (gmlGroupListObj *) malloc(sizeof(gmlGroupListObj)); 
-  groupList->numgroups = 0;
   groupList->groups = NULL;
+  groupList->numgroups = 0;
 
   /* list of groups (TODO: make this automatic by parsing metadata) */
   if((value = msLookupHashTable(&(layer->metadata), "gml_groups")) != NULL) {
@@ -776,7 +778,9 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
     for(i=0; i<groupList->numgroups; i++) {
       group = &(groupList->groups[i]);
 
-      group->name = strdup(names[i]);
+      group->name = strdup(names[i]); // initialize a few things
+      group->items = NULL;
+      group->numitems = 0;
       
       snprintf(tag, 64, "gml_%s_group", group->name);
       if((value = msLookupHashTable(&(layer->metadata), tag)) != NULL)
