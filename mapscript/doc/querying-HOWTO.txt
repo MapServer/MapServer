@@ -78,6 +78,15 @@ executing a spatial or attribute query, results are obtained like so::
 In the case of a failed query or query with zero results, 'getResults'
 returns NULL.
 
+Query Template
+--------------
+
+A query will not set results for a layer with a NULL 'template' attribute.
+This is an artifact of the querying functionality of the mapserv CGI program
+which, unfortunately, lingers in the scripting interface.  I don't like it
+either, and would have removed this requirement except for the fact that
+some users have scripts that are dependent on this artifact.
+
 Result Set Members
 ------------------
 
@@ -101,7 +110,9 @@ queried features::
 
     layer.query()
     results = layer.getResults()
+    
     if results:
+        
         # open layer in preparation of reading shapes
         layer.open()
 
@@ -130,31 +141,14 @@ but should adopt the new API for use in new work.
 Attribute Queries
 =================
 
-By Attributes
--------------
-
-queryByAttributes()
+Please see the API Reference (mapscript.txt) for details of 
+layerObj::queryByAttributes().
 
 Spatial Queries
 ===============
 
-By Rectangle
-------------
+Please see the API Reference (mapscript.txt) for details of layerObj's
+queryByPoint(), queryByRect(), queryByShape(), and queryByFeatures()
+methods.
 
-queryByRect()
-
-By Point
---------
-
-queryByRect()
-
-By Shape
---------
-
-queryByShape()
-
-By Selection
-------------
-
-queryByFeatures()
 
