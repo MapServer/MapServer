@@ -88,6 +88,7 @@ imageObj *msDrawScalebar(mapObj *map)
   pointObj p;
   gdFontPtr fontPtr;
   imageObj      *image = NULL;
+  outputFormatObj *format = NULL;
 
   if(map->units == -1) {
     msSetError(MS_MISCERR, "Map units not set.", "msDrawScalebar()");
@@ -115,11 +116,22 @@ imageObj *msDrawScalebar(mapObj *map)
   } while(1);
 
   sy = (2*VMARGIN) + MS_NINT(VSPACING*fontPtr->h) + fontPtr->h + map->scalebar.height - VSLOP;
-  
-  //TODO
-  
-  image = msImageCreateGD(map->scalebar.width, sy, map->outputformat,
+
+  /*Ensure we have an image format representing the options for the scalebar.*/
+  msApplyOutputFormat( &format, map->outputformat, 
+                       map->scalebar.transparent, 
+                       map->scalebar.interlace, 
+                       MS_NOOVERRIDE );
+
+  /* create image */
+  image = msImageCreateGD(map->scalebar.width, sy, format,
                           map->web.imagepath, map->web.imageurl);
+
+  /* drop this reference to output format */
+  msApplyOutputFormat( &format, NULL, 
+                       MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+
+  /* did we succeed in creating the image? */
   if(image)
     img = image->img.gd;
   else {
@@ -127,11 +139,6 @@ imageObj *msDrawScalebar(mapObj *map)
     return(NULL);
   }
 
-  //if((img = gdImageCreate(map->scalebar.width, sy)) == NULL) {
-  //  msSetError(MS_GDERR, "Unable to initialize image.", "msDrawScalebar()");
-  // return(NULL);
-  //}
-  
   msImageInitGD( image, &(map->scalebar.imagecolor));
 
   ox = MS_NINT((map->scalebar.width - sx)/2.0 + fontPtr->w/2.0); // center the computed scalebar
