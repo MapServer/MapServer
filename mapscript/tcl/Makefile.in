@@ -44,7 +44,7 @@ stublib: mapscript_wrap.c
 		-L$(MAPSERVERHOME) $(MAPSERVERLIBS)
 
 mapscript_wrap.c:
-	swig -tcl8 -dhtml -namespace $(MAPSERVERDEFS) $(MAPSERVERINCS) \
+	swig -tcl8 -dnone -namespace $(MAPSERVERDEFS) $(MAPSERVERINCS) \
 		mapscript.i
 
 nostublib: mapscript_wrap.c
@@ -67,8 +67,7 @@ install: $(DLTARGET)$(TCL_SHLIB_SUFFIX)
 	   $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)/$(DLTARGET)$(TCL_SHLIB_SUFFIX)
 	cp pkgIndex.tcl                   $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
 	cp mapscriptsupp.tcl              $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
-	cp mapscript_wrap.html            $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
-	cp mapscript_supp.html            $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
+	cp mapscriptsupp.html             $(TCL_EXEC_PREFIX)/lib/$(PACKAGEDIR)
 
 
 useprebuilt:
@@ -85,5 +84,5 @@ clean:
 	rm -f *.o core *.so
 
 distclean: clean
-	rm -f Makefile mapscript_wrap.c 
+	rm -f Makefile
 
