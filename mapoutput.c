@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/11/19 05:47:37  frank
+ * cleanup memory leak
+ *
  * Revision 1.6  2002/10/05 16:32:40  zak
  * updated e-mail address
  *
@@ -288,6 +291,7 @@ void msFreeOutputFormat( outputFormatObj *format )
     msFree( format->name );
     msFree( format->mimetype );
     msFree( format->driver );
+    msFree( format->extension );
     msFreeCharArray( format->formatoptions, format->numformatoptions );
 
     msFree( format );
