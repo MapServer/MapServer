@@ -939,7 +939,7 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
 
   switch(type) {
   case(MS_GIF):
-#ifdef MS_GD_GIF
+#ifdef USE_GD_GIF
     gdImageGif(img, stream);
 #else
     msSetError(MS_MISCERR, "GIF output is not available.", "msSaveImage()");
@@ -947,7 +947,7 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
 #endif
     break;
   case(MS_PNG):
-#ifdef MS_GD_PNG
+#ifdef USE_GD_PNG
     gdImagePng(img, stream);
 #else
     msSetError(MS_MISCERR, "PNG output is not available.", "msSaveImage()");
@@ -955,7 +955,7 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
 #endif
     break;
   case(MS_JPEG):
-#ifdef MS_GD_JPEG
+#ifdef USE_GD_JPEG
     gdImageJpeg(img, stream, quality);
 #else
      msSetError(MS_MISCERR, "JPEG output is not available.", "msSaveImage()");
@@ -963,7 +963,7 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
 #endif
      break;
   case(MS_WBMP):
-#ifdef MS_GD_WBMP
+#ifdef USE_GD_WBMP
     gdImageWBMP(img, 1, stream);
 #else
     msSetError(MS_MISCERR, "WBMP output is not available.", "msSaveImage()");
