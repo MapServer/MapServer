@@ -61,7 +61,7 @@ CFLAGS = 	$(BASE_CFLAGS) $(MS_CFLAGS) -I../.. $(PHP_INC)
 
 default: 	all
 
-all:		$(PHPMS_DLL) $(PHPPROJ_DLL)
+all:		$(PHPMS_DLL)
 
 mapscript:      $(PHPMS_DLL)
 
