@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/06/11 20:45:48  frank
+ * fixed handling of temp files a bit
+ *
  * Revision 1.2  2002/06/11 19:55:37  frank
  * added support for writing projection
  *
@@ -89,7 +92,7 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
 /* -------------------------------------------------------------------- */
     if( filename == NULL )
     {
-        filename = msTmpFile("/tmp", "img.tmp");
+        filename = msTmpFile("/tmp/", "img.tmp");
         bFileIsTemporary = MS_TRUE;
     }
     
@@ -269,7 +272,7 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
     if( bFileIsTemporary )
     {
         FILE *fp; 
-        unsigned char block[512];
+        unsigned char block[4000];
         int bytes_read;
 
         fp = fopen( filename, "rb" );
