@@ -34,7 +34,7 @@
 
 // General defines, wrapable
 
-#define MS_VERSION "3.3.010"
+#define MS_VERSION "3.3.011 (pre-release)"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0

@@ -96,7 +96,8 @@ gdImagePtr msDrawLegend(mapObj *map)
 
   pnt.y = VMARGIN;
     
-  for(i=0; i<map->numlayers; i++) { /* For each layer */
+  /* for(i=0; i<map->numlayers; i++) { */
+  for(i=map->numlayers-1; i>=0; i--) {
 
     lp = &(map->layers[i]); /* assign for brevity */
 
