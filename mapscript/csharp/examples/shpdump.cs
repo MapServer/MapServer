@@ -30,11 +30,11 @@ class ShapeDump {
 	  Console.WriteLine("bounds (" + s_obj.bounds.minx + ", " +  s_obj.bounds.miny + ") (" + s_obj.bounds.maxx + ", " + s_obj.bounds.maxy + ")" );
 	  for(int j=0; j<s_obj.numlines; j++) 
 	  {
-		lineObj l_obj = s_obj.getLine(i);
+		lineObj l_obj = s_obj.get(i);
 		Console.WriteLine("Part " + j + " has " + l_obj.numpoints + " points.");
                     
 		for(int k=0; k < l_obj.numpoints; k++) {
-		  pointObj p_obj = l_obj.getPoint(k);                     
+		  pointObj p_obj = l_obj.get(k);                     
           Console.WriteLine(k +": " + p_obj.x + ", " + p_obj.y);							
 		}
 	  }	  
