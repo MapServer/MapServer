@@ -142,14 +142,6 @@ class LayerOrderTestCase(MapTestCase):
     def testGetLayerOrder(self):
         order = self.mapobj1.getLayerOrder()
         assert order == tuple(range(4)), order
-    def testPromoteLayer1(self):
-        self.mapobj1.getLayer(1).promote()
-        order = self.mapobj1.getLayerOrder()
-        assert order == (0, 2, 1, 3), order
-    def testDemoteLayer1(self):
-        self.mapobj1.getLayer(1).demote()
-        order = self.mapobj1.getLayerOrder()
-        assert order == (1, 0, 2, 3), order
     def testSetLayerOrder(self):
         ord = (1, 0, 2, 3)
         self.mapobj1.setLayerOrder(ord)

@@ -865,19 +865,6 @@ memory.") const char * {
       return NULL;
   }
 
-  /* raise and lower extensions have the same sense as the underlying
-   * ms* functions.  'Raise' means to raise the layer within the virtual
-   * stack, and draw it later.
-   */
-
-  int promote() {
-    return msMoveLayerDown(self->map, self->index);
-  }
-
-  int demote() {
-    return msMoveLayerUp(self->map, self->index);
-  }
-  
   int draw(mapObj *map, imageObj *image) {
     return msDrawLayer(map, self, image);    
   }

@@ -788,8 +788,7 @@ clearProcessing() : int
 close() : void
     Close the underlying layer.
 
-demote() : void
-    Moves this layer below the following layer on the same map.
+.. note:: demote() is removed in MapServer 4.3
 
 draw( mapObj_ map, imageObj_ image ) : int
     Renders this layer into the target image, adding labels to the cache if
@@ -892,8 +891,7 @@ open() : void
     Opens the underlying layer.  This is required before operations like
     getShape() will work, but is not required before a draw or query call.
 
-promote() : void
-    Moves this layer over the preceeding layer on the same map. 
+.. note:: promote() is eliminated in MapServer 4.3.
 
 queryByAttributes( mapObj_ map, string qitem, string qstring, int mode ) : int
     Query layer for shapes that intersect current map extents.  qitem is the 
@@ -1321,7 +1319,7 @@ setParameter( string name, string value ) : void
     request.setParameter('REQUEST', 'GetMap')
     request.setParameter('BBOX', '-107.0,40.0,-106.0,41.0')
 
-.. note: MapServer's OWSRequest supports only single valued parameters.
+.. note:: MapServer's OWSRequest supports only single valued parameters.
 
 getName( int index ) : string
     Return the name of the parameter at *index* in the request's array
