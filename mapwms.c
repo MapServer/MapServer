@@ -7,6 +7,8 @@
 
 #include "maptemplate.h"
 
+#include "mapogcsld.h"
+
 #include <stdarg.h>
 #include <time.h>
 #include <string.h>
@@ -755,6 +757,8 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
 
   printf("  <VendorSpecificCapabilities />\n"); // nothing yet
 
+  //SLD support
+  printf("  <UserDefinedSymbolization SupportSLD=\"1\" UserLayer=\"0\" UserStyle=\"1\" RemoteWFS=\"0\"/>\n");
 
   // Top-level layer with map extents and SRS, encloses all map layers
   printf("  <Layer>\n");
@@ -939,14 +943,64 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
 /*
 ** msWMSGetMap()
 */
-int msWMSGetMap(mapObj *map, const char *wmtver) 
+int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, int numentries) 
 {
-    imageObj *img;
+  imageObj *img;
+  int i = 0;
+  char *sldbuf=NULL;
+  FILE *fp = NULL;               
+  int status = 0;
+  char *sldtmpfile = NULL;
+
 
   // __TODO__ msDrawMap() will try to adjust the extent of the map
   // to match the width/height image ratio.
   // The spec states that this should not happen so that we can deliver
   // maps to devices with non-square pixels.
+
+#ifdef USE_OGR
+/* -------------------------------------------------------------------- */
+/*      SLD support :                                                   */
+/*        - check if the SLD parameter is there. it is supposed to      */
+/*      refer a valid URL containing an SLD document.                   */
+/*        - check the SLD_BODY parameter that should contain the SLD    */
+/*      xml string.                                                     */
+/* -------------------------------------------------------------------- */
+  for (i=0; i<numentries; i++) 
+  {
+      if (strcasecmp(names[i], "SLD") == 0 && 
+          values[i] && strlen(values[i]) > 0) 
+      {
+          sldtmpfile = msTmpFile(map->web.imagepath, "sld.xml");
+          if (msHTTPGetFile(values[i], sldtmpfile, &status,-1, 0, 0) ==  MS_SUCCESS)
+          {
+              if ((fp = fopen(sldtmpfile, "r")) != NULL)
+              {
+                  int   bufsize=0;
+                  fseek(fp, 0, SEEK_END);
+                  bufsize = ftell(fp);
+                  rewind(fp);
+                  sldbuf = (char*)malloc((bufsize+1)*sizeof(char));
+                  fread(sldbuf, 1, bufsize, fp);
+                  sldbuf[bufsize] = '\0';
+              }
+          }
+      }
+      else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
+               values[i] && strlen(values[i]) > 0)
+      {
+          sldbuf = strdup(values[i]);
+      }
+        
+  }
+
+  if (sldbuf)
+  {
+      msSLDApplySLD(map, wmtver, sldbuf);
+      free(sldbuf);
+  }
+
+#endif
 
   img = msDrawMap(map);
   if (img == NULL)
@@ -1039,12 +1093,9 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
 	map->layers[j].status = MS_OFF;
 
         for(k=0; k<numlayers; k++) {
-          if ((map->layers[j].name && strcasecmp(map->layers[j].name, layers[k]) == 0) ||
-              (map->name && strcasecmp(map->name, layers[k]) == 0) ||
-              (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0))
-          {
-              map->layers[j].status = MS_ON;
-              numlayers_found++;
+	  if(strcasecmp(map->layers[j].name, layers[k]) == 0) {
+	    map->layers[j].status = MS_ON;
+            numlayers_found++;
           }
         }
       }
@@ -1157,79 +1208,73 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   return(MS_SUCCESS);
 }
 
-int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names, char **values, 
-                        int numentries)
+int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names, 
+                       char **values, int numentries)
 {
   int i = 0;
+  char **layers = NULL;
+  int numlayers = 0;
+  int j, k;
+  int alllayers = 0;
+  layerObj *lp = NULL;
+  char *pszTmp = NULL;
 
-  for(i=0; map && i<numentries; i++){
-      if (strcasecmp(names[i], "LAYERS") == 0)
-      break;
-  }
-
-  if (i== numentries){
-        msSetError(MS_WMSERR, "Required LAYERS parameter missing.", "msWMSDescribeLayer()");
-        return msWMSException(map, wmtver, NULL);
-      }
-    
    for(i=0; map && i<numentries; i++) {
      if(strcasecmp(names[i], "LAYERS") == 0) {
-      char **layers;
-      int numlayers, j, k, l;
-      layerObj *lp = NULL;
-      char *pszTmp = NULL;
 
       layers = split(values[i], ',', &numlayers);
-      if(layers==NULL || numlayers < 1) {
-        msSetError(MS_WMSERR, "At least one layer name required in LAYERS.", "msWMSDescribeLayer()");
-        return msWMSException(map, wmtver, NULL);
-      }
-      printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-      printf("<!DOCTYPE WMS_DescribeLayerResponse>\n");
-      printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
-      
-      //check if metadata wfs_onlineresource is available
-      pszTmp = msLookupHashTable(map->web.metadata, "wfs_onlineresource");
-      if (pszTmp && strlen(pszTmp) > 0) 
-      {
-          for(j=0; j<numlayers; j++) 
-          {
-              for(k=0; k<map->numlayers; k++) 
-              {
-                  if (strcasecmp(map->layers[k].name, layers[j]) == 0)
-                  {
-                      if (map->layers[k].type == MS_LAYER_POINT ||
-                          map->layers[k].type == MS_LAYER_LINE ||
-                          map->layers[k].type == MS_LAYER_POLYGON)
-                      { 
-                          printf("<LayerDescription name=\"%s\" wfs=\"%s\">\n",
-                                 map->layers[k].name, pszTmp);
-                          lp = &map->layers[k];
-                          if (msLayerOpen(lp) == MS_SUCCESS)
-                          {
-                              if (msLayerGetItems(lp) == MS_SUCCESS)
-                              {
-                                  for(l=0; l<lp->numitems; l++)
-                                    printf("<Query typeName=\"%s\" />\n",
-                                           lp->items[l]);
-                              }
-                          }
-                          printf("</LayerDescription>\n");
-                      }
-                      else
-                      {
-                          printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
-                                 map->layers[j].name);
-                      }
-                      break;
-                  }
-              }
-          }
-      }
-      printf("</WMS_DescribeLayerResponse>\n");
      }
    }
+
+   if (layers == NULL) {
+     alllayers = 1;
+     numlayers = map->numlayers;
+   }
+
+   printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+   printf("<!DOCTYPE WMS_DescribeLayerResponse>\n");
+   printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
+      
+   //check if metadata wfs_onlineresource is available
+   pszTmp = msLookupHashTable(map->web.metadata, "wfs_onlineresource");
+   if (pszTmp && strlen(pszTmp) > 0) 
+   {
+     for(j=0; j<numlayers; j++) 
+     {
+       for(k=0; k<map->numlayers; k++) 
+       {
+         if (alllayers || strcasecmp(map->layers[k].name, layers[j]) == 0)
+         {
+           if (map->layers[k].type == MS_LAYER_POINT ||
+               map->layers[k].type == MS_LAYER_LINE ||
+               map->layers[k].type == MS_LAYER_POLYGON)
+           { 
+             printf("<LayerDescription name=\"%s\" wfs=\"%s\">\n",
+                    map->layers[k].name, pszTmp);
+             lp = &map->layers[k];
+             printf("<Query typeName=\"%s\" />\n",
+                          lp->name);
+             printf("</LayerDescription>\n");
+           }
+           else
+           {
+             printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
+                    map->layers[j].name);
+           }
+           break;
+         }
+       }
+     }
+   }
+   printf("</WMS_DescribeLayerResponse>\n");
+
+   if (layers)
+     msFreeCharArray(layers, numlayers);
+
+   return(MS_SUCCESS);
 }
+
+
 #endif /* USE_WMS_SVR */
 
 
@@ -1335,7 +1380,7 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
   if (status != MS_SUCCESS) return status;
 
   if (strcasecmp(request, "map") == 0 || strcasecmp(request, "GetMap") == 0)
-    return msWMSGetMap(map, wmtver);
+    return msWMSGetMap(map, wmtver, names, values, numentries);
   else if (strcasecmp(request, "feature_info") == 0 || strcasecmp(request, "GetFeatureInfo") == 0)
     return msWMSFeatureInfo(map, wmtver, names, values, numentries);
   else if (strcasecmp(request, "DescribeLayer") == 0)
