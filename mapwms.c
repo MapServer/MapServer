@@ -249,6 +249,98 @@ void msWMSPrintRequesCap(const char *wmtver, const char *request,
   printf("    </%s>\n", request);
 }
 
+/*
+** msWMSGetEPSGProj()
+**
+** Extract projection code for this layer/map.  First look for an EPSG code
+** in projectionObj, if not found then look for "wms_proj" metadata... 
+** and if not found then return NULL.
+*/
+const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata)
+{
+  static char epsgCode[20] ="";
+  static char *value;
+
+  if (proj && proj->numargs > 0 && 
+      (value = strstr(proj->projargs[0], "init=epsg:")) != NULL &&
+      strlen(value) < 20)
+  {
+    sprintf(epsgCode, "EPSG:%s", value+10);
+    return epsgCode;
+  }
+  else if ((value = msLookupHashTable(metadata, "wms_proj")) != NULL)
+  {
+    return value;  // Value should be in format "EPSG:n" or "AUTO:..."
+  }
+
+  return NULL;
+}
+
+/*
+**
+*/
+void msWMSPrintLatLonBoundingBox(const char *tabspace, 
+                                 rectObj *extent, projectionObj *srcproj) 
+{
+  rectObj ll_ext;
+  ll_ext = *extent;
+
+  if (srcproj->proj && !pj_is_latlong(srcproj->proj)) {
+    msProjectRect(srcproj->proj, NULL, &ll_ext);
+  }
+
+  printf("%s<LatLonBoundingBox minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 
+         tabspace, ll_ext.minx, ll_ext.miny, ll_ext.maxx, ll_ext.maxy);
+}
+
+/*
+** msWMSGetLayerExtent()
+**
+** Try to establish layer extent, first looking for "extent" metadata, and
+** if not found then open layer to read extent.
+**
+** __TODO__ Replace metadata with EXTENT param in layerObj???
+*/
+int msWMSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
+{
+  static char *value;
+
+  if ((value = msLookupHashTable(lp->metadata, "extent")) != NULL)
+  {
+    char **tokens;
+    int n;
+
+    tokens = split(value, ' ', &n);
+    if (tokens==NULL || n != 4) {
+      msSetError(MS_MISCERR, "Wrong number of arguments for EXTENT metadata.",
+                 "msWMSGetLayerExtent()");
+      return MS_FAILURE;
+    }
+    ext->minx = atof(tokens[0]);
+    ext->miny = atof(tokens[1]);
+    ext->maxx = atof(tokens[2]);
+    ext->maxy = atof(tokens[3]);
+
+    msFreeCharArray(tokens, n);
+  }
+  else if (lp->type == MS_LAYER_RASTER)
+  {
+    // __TODO__ We need getExtent() for rasters... use metadata for now.
+    return MS_FAILURE; 
+  }
+  else
+  {
+    if (msLayerOpen(lp, map->shapepath) == MS_SUCCESS) {
+      int status;
+      status = msLayerGetExtent(lp, ext);
+      msLayerClose(lp);
+      return status;
+    }
+  }
+
+  return MS_FAILURE;
+}
+
 
 /*
 ** msWMSCapabilities()
@@ -256,9 +348,10 @@ void msWMSPrintRequesCap(const char *wmtver, const char *request,
 int msWMSCapabilities(mapObj *map, const char *wmtver) 
 {
   int i;
-  char *value=NULL;
+  const char *value=NULL;
   const char *dtd_url = NULL;
   char *script_url=NULL;
+  rectObj ext;
 
   layerObj *lp=NULL;
 
@@ -372,12 +465,11 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 
   // Top-level layer with map extents and SRS, encloses all map layers
   printf("  <Layer>\n"); 
-  if((value = msLookupHashTable(map->web.metadata, "title"))) printf("    <Title>%s</Title>\n", value);
+  if((value = msLookupHashTable(map->web.metadata, "title")) || (value == map->name)) printf("    <Title>%s</Title>\n", value);
   if((value = msLookupHashTable(map->web.metadata, "wms_all_proj"))) printf("    <SRS>%s</SRS>\n", value);
 
-// __TODO__ This version assumes that map extents are in lat/lon
-  printf("    <LatLonBoundingBox minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy); // hint look a Frank's changes to mapserv.c
-  if((value = msLookupHashTable(map->web.metadata, "wms_map_proj"))) printf("    <BoundingBox SRS=\"%s\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", value, map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
+  msWMSPrintLatLonBoundingBox("    ", &(map->extent), &(map->projection));
+  if((value = msWMSGetEPSGProj(&(map->projection), map->web.metadata))) printf("    <BoundingBox SRS=\"%s\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", value, map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
 
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
@@ -386,9 +478,9 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
     printf("      <Name>%s</Name>\n", lp->name);
 
     // the majority of this section is dependent on appropriately named metadata in the LAYER object
-    if(lp->metadata && (value = msLookupHashTable(lp->metadata, "title"))) printf("      <Title>%s</Title>\n", value);
-    if(lp->metadata && (value = msLookupHashTable(lp->metadata, "abstract"))) printf("      <Abstract>%s</Abstract>\n", value);
-    if(lp->metadata && (value = msLookupHashTable(lp->metadata, "keywordlist"))) {
+    if((value = msLookupHashTable(lp->metadata, "title")) || (value = lp->name)) printf("      <Title>%s</Title>\n", value);
+    if((value = msLookupHashTable(lp->metadata, "abstract"))) printf("      <Abstract>%s</Abstract>\n", value);
+    if((value = msLookupHashTable(lp->metadata, "keywordlist"))) {
       char **keywords;
       int numkeywords;
       
@@ -401,13 +493,12 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
       }    
     }
 
-#ifdef __TODO__  // For now all layers inherit the SRS and MBR of the map
-
-    printf("      <SRS>EPSG:4326</SRS>\n");  // __TODO__ for now, any layer can be served in lat/lon
-    printf("      <LatLonBoundingBox minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy); // hint look a Frank's changes to mapserv.c
-    printf("      <BoundingBox SRS=\"EPSG:4326\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy); // hint add a layer EXTENT field, if not there then open and extract an extent
-
-#endif
+    if((value = msLookupHashTable(lp->metadata, "wms_all_proj"))) printf("      <SRS>%s</SRS>\n", value);
+    if (msWMSGetLayerExtent(map, lp, &ext) == MS_SUCCESS)
+    {
+      msWMSPrintLatLonBoundingBox("      ", &(ext), &(lp->projection));
+      if((value = msWMSGetEPSGProj(&(lp->projection), lp->metadata))) printf("      <BoundingBox SRS=\"%s\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", value, ext.minx, ext.miny, ext.maxx, ext.maxy);
+    }
     
     printf("    </Layer>\n");
   }
@@ -530,11 +621,11 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
   point.x = map->extent.minx + map->cellsize*point.x;
   point.y = map->extent.maxy - map->cellsize*point.y;
 
-  // __TODO__ We should reproject 'point' from map to layer coordinates
-  
   if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), 
-                    point, 0) != MS_SUCCESS) {
-    return msWMSException(map, wmtver);
+                    point, 0) != MS_SUCCESS) 
+  {
+    if (ms_error.code != MS_NOTFOUND)
+      return msWMSException(map, wmtver);
   }
 
   // Generate response
@@ -583,6 +674,11 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
       }
 
       msLayerClose(lp);
+    }
+
+    if (numresults == 0)
+    {
+        printf("\n  Search returned no results.\n");
     }
   }
   else if (strcasecmp(info_format, "GML") == 0)
