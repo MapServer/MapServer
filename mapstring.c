@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "map.h"
 
 #include <ctype.h>
@@ -135,71 +137,61 @@ void trimEOL(char *string)
 
 /* ------------------------------------------------------------------------------- */
 /*       Replace all occurances of old with new in str.                            */
-/*       If new contains old then NO replacement is done.                          */
 /*       It is assumed that str was dynamically created using malloc.              */
 /* ------------------------------------------------------------------------------- */
 char *gsub(char *str, const char *old, const char *new)
 {
-      size_t str_len, old_len, new_len, tmp_len;
-      char *tmp;
-      int i,j,k;
+      size_t str_len, old_len, new_len, tmp_offset;
+      char *tmp_ptr;
 
       if(new == NULL)
-	return(str);
+          new = "";
 
       /*
       ** If old is not found then leave str alone
       */
-      if(strstr(str, old) == NULL)
-	return(str);
-
-      /*
-      ** To avoid an infinite loop, make sure new doesn't contain old
-      ** and if it does just leave str alone
-      */
-      if(strstr(new, old) != NULL)
+      if( (tmp_ptr = strstr(str, old)) == NULL)
 	return(str);
 
       /*
       ** Grab some info about incoming strings
       */
+      str_len = strlen(str);
       old_len = strlen(old);
       new_len = strlen(new);
 
       /*
       ** Now loop until old is NOT found in new
       */
-      while((tmp = strstr(str, old)) != NULL) {
-
-	/*
-	** Save length of tmp, tells us where to do the replacement
-        */
-	tmp_len = strlen(tmp);
+      while( tmp_ptr != NULL ) {
 
 	/*
 	** re-allocate memory for buf assuming 1 replacement of old with new
+        ** don't bother reallocating if old is larger than new)
 	*/
-	str_len = strlen(str);
-	
-	tmp = strdup(str);
-	str = (char *)realloc(str, (str_len - old_len + new_len + 1)); /* make new space for a copy */
+        if (old_len < new_len) {
+          tmp_offset = tmp_ptr - str;
+          str_len = str_len - old_len + new_len;
+          str = (char *)realloc(str, (str_len + 1)); /* make new space for a copy */
+          tmp_ptr = str + tmp_offset;
+        }
 
-	j=0;
-	k=0;
-	for(i=0; i<(str_len - tmp_len); i++, j++, k++)
-	  str[j] = tmp[k];
-	
-	k+=old_len; /* skip past the old string */
+        /*
+        ** Move the trailing part of str to make some room unless old_len == new_len
+        */
+        if (old_len != new_len) {
+            memmove(tmp_ptr+new_len, tmp_ptr+old_len, strlen(tmp_ptr)-old_len+1);
+        }
 
-	for(i=0; i<new_len; i++, j++)
-	  str[j] = new[i];
+        /*
+        ** Now copy new over old
+        */
+        memcpy(tmp_ptr, new, new_len);
 
-	for(i=0; i<(tmp_len-old_len); i++, j++, k++)
-	  str[j] = tmp[k];
-
-	str[j] = '\0'; /* terminate the string */
-
-	free(tmp);
+        /*
+        ** And look for more matches in the rest of the string
+        */
+        tmp_ptr = strstr(tmp_ptr + new_len, old);
       }
 
       return(str);
