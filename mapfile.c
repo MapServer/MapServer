@@ -1097,7 +1097,8 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
   fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
   if(label->outlinecolor > -1) fprintf(stream, "  %sOUTLINECOLOR %d %d %d\n", tab, map->palette.colors[label->outlinecolor-1].red, map->palette.colors[label->outlinecolor-1].green, map->palette.colors[label->outlinecolor-1].blue);
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
-  fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
+  if (label->position != MS_XY)   // MS_XY is an internal value used only for legend labels... never write it
+    fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
   if(label->shadowcolor > -1) {
     fprintf(stream, "  %sSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->shadowcolor-1].red, map->palette.colors[label->shadowcolor-1].green, map->palette.colors[label->shadowcolor-1].blue);
     fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
