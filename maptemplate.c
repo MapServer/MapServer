@@ -1071,7 +1071,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          }
          
          // save it with a unique file name
-         if(msSaveImage(map, img, pszFullImgFname) == -1) {
+         if(msSaveImage(map, img, pszFullImgFname) != MS_SUCCESS) {
             if (myHashTable)
               msFreeHashTable(myHashTable);
 
@@ -2916,7 +2916,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
                         msObj->Map->name, msObj->Id, 
                         MS_IMAGE_EXTENSION(msObj->Map->outputformat));	
 
-                if (msSaveImage(msObj->Map, image, buffer) == -1 &&
+                if (msSaveImage(msObj->Map, image, buffer) != MS_SUCCESS &&
                     bReturnOnError)
                 {
                     msFreeImage(image);
@@ -2941,7 +2941,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
                         msObj->Map->name, msObj->Id, 
                         MS_IMAGE_EXTENSION(msObj->Map->outputformat));
                 
-                if (msSaveImage(NULL, image, buffer) == -1 &&
+                if (msSaveImage(NULL, image, buffer) != MS_SUCCESS &&
                     bReturnOnError)
                 {
                     msFreeImage(image);
@@ -2965,7 +2965,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
                 sprintf(buffer, "%s%ssb%s.%s", msObj->Map->web.imagepath, 
                         msObj->Map->name, msObj->Id, 
                         MS_IMAGE_EXTENSION(msObj->Map->outputformat));
-                if (msSaveImage(NULL, image, buffer) == -1 &&
+                if (msSaveImage(NULL, image, buffer) != MS_SUCCESS &&
                     bReturnOnError)
                 {
                     msFreeImage(image);
@@ -2989,7 +2989,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
                 sprintf(buffer, "%s%sref%s.%s", msObj->Map->web.imagepath, 
                         msObj->Map->name, msObj->Id, 
                         MS_IMAGE_EXTENSION(msObj->Map->outputformat));
-                if (msSaveImage(NULL, image, buffer) == -1 &&
+                if (msSaveImage(NULL, image, buffer) != MS_SUCCESS &&
                     bReturnOnError)
                 {
                     msFreeImage(image);
