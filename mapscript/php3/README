@@ -529,7 +529,10 @@ and the MapServer Map File documentation at:
         WMS servers support only "MIME" (and should support "GML.1" soon).
         Returns "" and outputs a warning if layer is not a WMS layer 
         or if it is not queriable.
-
+        
+   char ** getItems()
+        return a list of items. Must call open function first.
+        
  ClassObj Class:
  ---------------
 
