@@ -1098,6 +1098,58 @@ static void writeExpression(expressionObj *exp, FILE *stream)
   }
 }
 
+int loadHashTable(hashTableObj table)
+{
+  char *key=NULL, *data=NULL;
+
+  if (!table) table = msCreateHashTable();
+
+  for(;;) {
+    switch(msyylex()) {
+    case(EOF):
+      msSetError(MS_EOFERR, NULL, "loadHashTable()");
+      return(MS_FAILURE);
+    case(END):
+      break;
+    case(MS_STRING):
+      key = strdup(msyytext);
+
+      data = getString();
+      if(!data) return(MS_FAILURE);
+      
+      msInsertHashTable(table, key, data);
+      
+      free(key);
+      free(data);
+      break;
+    default:
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadHashTable()");
+      return(MS_FAILURE);
+    }
+  }
+
+  return(MS_SUCCESS);
+}
+
+static void writeHashTable(hashTableObj table, FILE *stream, char *tab, char *title) {
+  struct hashObj *tp;
+  int i;
+
+  if(!table) return;
+
+  fprintf(stream, "%s%s\n", tab, title);  
+
+  for (i=0;i<MS_HASHSIZE; i++) {
+    if (table[i] != NULL) {
+      for (tp=table[i]; tp!=NULL; tp=tp->next)
+	fprintf(stream, "%s  \"%s\"\t\"%s\"\n", tab, tp->key, tp->data);
+    }
+  }
+
+  fprintf(stream, "%sEND\n", tab);
+}
+
 /*
 ** Initialize, load and free a single class
 */
@@ -1137,6 +1189,10 @@ int initClass(classObj *class)
   }
 
   class->type = -1;
+
+  class->metadata = NULL;
+  class->export = MS_FALSE;
+
   return(0);
 }
 
@@ -1154,6 +1210,7 @@ void freeClass(classObj *class)
   for(i=0;i<class->numjoins;i++) /* each join */    
     freeJoin(&(class->joins[i]));
   msFree(class->joins);
+  if(class->metadata) msFreeHashTable(class->metadata);
 }
 
 /*
@@ -1221,6 +1278,9 @@ int loadClass(classObj *class, mapObj *map)
     case(END):
       return(0);
       break;
+    case(EXPORT):
+      if((class->export = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
+      break;
     case(EXPRESSION):
       if(loadExpression(&(class->expression)) == -1) return(-1);
       break;
@@ -1234,6 +1294,9 @@ int loadClass(classObj *class, mapObj *map)
       break;
     case(MAXSIZE):
       if(getInteger(&(class->maxsize)) == -1) return(-1);
+      break;
+    case(METADATA):
+      if(loadHashTable(class->metadata) != MS_SUCCESS) return(-1);
       break;
     case(MINSIZE):      
       if(getInteger(&(class->minsize)) == -1) return(-1);
@@ -1408,6 +1471,7 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
   fprintf(stream, "    CLASS\n");
   if(class->backgroundcolor > -1) fprintf(stream, "      BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[class->backgroundcolor-1].red, map->palette.colors[class->backgroundcolor-1].green, map->palette.colors[class->backgroundcolor-1].blue);
   if(class->color > -1) fprintf(stream, "      COLOR %d %d %d\n", map->palette.colors[class->color-1].red, map->palette.colors[class->color-1].green, map->palette.colors[class->color-1].blue);
+  if(class->status == MS_TRUE) fprintf(stream, "      EXPORT TRUE\n");
   if(class->expression.string) {
     fprintf(stream, "      EXPRESSION ");
     writeExpression(&(class->expression), stream);
@@ -1417,6 +1481,7 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
     writeJoin(&(class->joins[i]), stream);  
   writeLabel(map, &(class->label), stream, "      ");
   if(class->maxsize > -1) fprintf(stream, "      MAXSIZE %d\n", class->maxsize);
+  if(class->metadata) writeHashTable(class->metadata, stream, "      ", "METADATA");
   if(class->minsize > -1) fprintf(stream, "      MINSIZE %d\n", class->minsize);
   if(class->outlinecolor > -1) fprintf(stream, "      OUTLINECOLOR %d %d %d\n", map->palette.colors[class->outlinecolor-1].red, map->palette.colors[class->outlinecolor-1].green, map->palette.colors[class->outlinecolor-1].blue);
   if(class->overlaycolor > -1) {
@@ -1517,7 +1582,7 @@ int initLayer(layerObj *layer)
 
   layer->requires = layer->labelrequires = NULL;
 
-  layer->metadata = msCreateHashTable();
+  layer->metadata = NULL;
 
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
@@ -1570,8 +1635,7 @@ void freeLayer(layerObj *layer) {
 int loadLayer(layerObj *layer, mapObj *map)
 {
   int c=0; // class counter
-  int type, metadata_end;
-  char *key=NULL, *data=NULL;
+  int type;
 
   if(initLayer(layer) == -1)
     return(-1);
@@ -1674,34 +1738,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getDouble(&(layer->maxscale)) == -1) return(-1);
       break;
     case(METADATA):
-      if (!layer->metadata)
-        layer->metadata = msCreateHashTable();
-      metadata_end = MS_FALSE;
-      for(;!metadata_end;) {
-      switch(msyylex()) {
-      case(EOF):
-        msSetError(MS_EOFERR, NULL, "loadLayer()");      
-        return(-1);
-      case(END):
-        metadata_end = MS_TRUE;
-        break;
-      case(MS_STRING):	  
-        key = strdup(msyytext);
-        data = getString();
-
-        if(!data) return(-1);
-
-        msInsertHashTable(layer->metadata, key, data);
-
-        free(key);
-        free(data);
-        break;
-      default:
-        sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-        msSetError(MS_IDENTERR, ms_error.message, "loadLayer()");
-        return(-1);      
-      }
-      }
+      if(loadHashTable(layer->metadata) != MS_SUCCESS) return(-1);
       break;
     case(MINSCALE):      
       if(getDouble(&(layer->minscale)) == -1) return(-1);
@@ -2016,6 +2053,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(layer->labelsizeitem) fprintf(stream, "    LABELSIZEITEM \"%s\"\n", layer->labelsizeitem);
   if(layer->maxfeatures > 0) fprintf(stream, "    MAXFEATURES %d\n", layer->maxfeatures);
   if(layer->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", layer->maxscale); 
+  if(layer->metadata) writeHashTable(layer->metadata, stream, "      ", "METADATA");
   if(layer->minscale > -1) fprintf(stream, "    MINSCALE %g\n", layer->minscale);
   fprintf(stream, "    NAME \"%s\"\n", layer->name);
   if(layer->offsite > -1) fprintf(stream, "    OFFSITE %d\n", layer->offsite);
@@ -2661,6 +2699,7 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->log) fprintf(stream, "    LOG \"%s\"\n", web->log);
   if(web->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", web->maxscale);
   if(web->maxtemplate) fprintf(stream, "    MAXTEMPLATE \"%s\"\n", web->maxtemplate);
+  if(web->metadata) writeHashTable(web->metadata, stream, "      ", "METADATA");
   if(web->minscale > -1) fprintf(stream, "    MINSCALE %g\n", web->minscale);
   if(web->mintemplate) fprintf(stream, "    MINTEMPLATE \"%s\"\n", web->mintemplate);
   if(web->template) fprintf(stream, "    TEMPLATE \"%s\"\n", web->template);
@@ -2669,9 +2708,6 @@ static void writeWeb(webObj *web, FILE *stream)
 
 int loadWeb(webObj *web)
 {
-  char *key=NULL, *data=NULL;
-  int metadata_end;
-
   for(;;) {
     switch(msyylex()) {
     case(EMPTY):
@@ -2714,34 +2750,7 @@ int loadWeb(webObj *web)
       if((web->maxtemplate = getString()) == NULL) return(-1);
       break;
     case(METADATA):
-      if (!web->metadata)
-        web->metadata = msCreateHashTable();
-      metadata_end = MS_FALSE;
-      for(;!metadata_end;) {
-	switch(msyylex()) {
-	case(EOF):
-	  msSetError(MS_EOFERR, NULL, "loadWeb()");      
-	  return(-1);
-	case(END):
-          metadata_end = MS_TRUE;
-	  break;
-	case(MS_STRING):
-	  key = strdup(msyytext);
-	  data = getString();
-
-	  if(!data) return(-1);
-
-	  msInsertHashTable(web->metadata, key, data);
-
-	  free(key);
-	  free(data);
-	  break;
-	default:
-	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-	  msSetError(MS_IDENTERR, ms_error.message, "loadWeb()");          
-	  return(-1);      
-	}
-      }      
+      if(loadHashTable(web->metadata) != MS_SUCCESS) return(-1);
       break;
     case(MINSCALE):
       if(getDouble(&web->minscale) == -1) return(-1);

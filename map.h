@@ -335,6 +335,9 @@ typedef struct {
   int numjoins;	
 
   int type;
+
+  hashTableObj metadata;
+  int export;
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc

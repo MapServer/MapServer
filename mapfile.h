@@ -143,4 +143,6 @@
 
 #define STYLEITEM 1124
 
+#define EXPORT 1125
+
 #endif /* MAPFILE_H */
