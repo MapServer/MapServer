@@ -240,11 +240,11 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 #ifdef USE_GD_TTF
     error = gdImageStringTTF(NULL, bbox, 0, 
                              msBuildPath(szPath, fontset->map->mappath, font),
-                             label->sizescaled, 0, 0, 0, string);
+                             label->size, 0, 0, 0, string);
 #else
     error = gdImageStringFT(NULL, bbox, 0, 
                              msBuildPath(szPath, fontset->map->mappath, font),
-                            label->sizescaled, 0, 0, 0, string);
+                            label->size, 0, 0, 0, string);
 #endif
     if(error) {
         msSetError(MS_TTFERR, error, "msGetLabelSize()");
