@@ -1456,6 +1456,9 @@ void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image,
 
 void msApplyDefaultOutputFormats( mapObj * );
 void msFreeOutputFormat( outputFormatObj * );
+int msGetOutputFormatIndex(mapObj *map, const char *imagetype);
+int msRemoveOutputFormat(mapObj *map, const char *imagetype);
+int msAppendOutputFormat(mapObj *map, outputFormatObj *format);
 outputFormatObj *msSelectOutputFormat( mapObj *map, const char *imagetype );
 void msApplyOutputFormat( outputFormatObj **target, outputFormatObj *format,
                           int transparent, int interlaced, int imagequality );

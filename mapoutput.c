@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/03/08 04:28:46  sean
+ * New functions to support mapscript interface to outputformatlist
+ *
  * Revision 1.21  2004/03/05 05:57:04  frank
  * support multi-band rawmode output
  *
@@ -434,6 +437,99 @@ static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name,
 }
 
 /************************************************************************/
+/* msAppendOutputFormat() and msRemoveOutputFormat(                     */
+/*                                                                      */
+/* Add/remove an output format  .                                       */
+/* http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=511                */
+/************************************************************************/
+
+int msAppendOutputFormat(mapObj *map, outputFormatObj *format) 
+{
+/* -------------------------------------------------------------------- */
+/*      Attach to map.                                                  */
+/* -------------------------------------------------------------------- */
+    if (map != NULL)
+    {
+        map->numoutputformats++;
+        if (map->outputformatlist == NULL)
+            map->outputformatlist = (outputFormatObj **) malloc(sizeof(void*));
+        else
+            map->outputformatlist = (outputFormatObj **)
+                realloc(map->outputformatlist,
+                        sizeof(void*) * map->numoutputformats );
+
+        map->outputformatlist[map->numoutputformats-1] = format;
+        format->refcount++;
+    }
+    
+    return map->numoutputformats;
+}
+
+int msRemoveOutputFormat(mapObj *map, const char *name)
+{
+    int i, j;
+/* -------------------------------------------------------------------- */
+/*      Detach from map.                                                */
+/* -------------------------------------------------------------------- */
+    if (map != NULL)
+    {
+        if (map->outputformatlist == NULL)
+        {
+            msSetError(MS_CHILDERR, "Can't remove format from empty outputformatlist", "msRemoveOutputFormat()");
+            return MS_FAILURE;
+        }
+        else
+        {
+            i = msGetOutputFormatIndex(map, name);
+            if (i >= 0) 
+            {
+                map->numoutputformats--;
+                map->outputformatlist[i]->refcount--;
+                for (j=i; j<map->numoutputformats-1; j++)
+                {
+                    map->outputformatlist[j] = map->outputformatlist[j+1];
+                }
+            }
+            map->outputformatlist = (outputFormatObj **)
+                realloc(map->outputformatlist,
+                    sizeof(void*) * (map->numoutputformats) );
+            return MS_SUCCESS;
+        }
+    }
+    return MS_FAILURE;
+}
+
+/* -------------------------------------------------------------------- */
+/* msGetOutputFormatIndex()                                             */
+/*                                                                      */
+/* Pulled this out of msSelectOutputFormat for use in other cases.      */
+/* -------------------------------------------------------------------- */
+
+int msGetOutputFormatIndex(mapObj *map, const char *imagetype)
+{
+    int i;
+/* -------------------------------------------------------------------- */
+/*      Try to find the format in the maps list of formats, first by    */
+/*      mime type, and then by output format name.                      */
+/* -------------------------------------------------------------------- */
+    for (i = 0; i < map->numoutputformats; i++)
+    {
+        if (map->outputformatlist[i]->mimetype != NULL
+            && strcasecmp(imagetype,
+                          map->outputformatlist[i]->mimetype) == 0 )
+            return i;
+    }
+    
+    for( i = 0; i < map->numoutputformats; i++ )
+    {
+        if( strcasecmp(imagetype,map->outputformatlist[i]->name) == 0 )
+            return i;
+    }
+
+    return -1;
+}
+
+/************************************************************************/
 /*                        msSelectOutputFormat()                        */
 /************************************************************************/
 
@@ -441,11 +537,15 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
                                        const char *imagetype )
 
 {
-    int   i;
+    int i, index;
     outputFormatObj *format = NULL;
 
     if( map == NULL || imagetype == NULL || strlen(imagetype) == 0 )
         return NULL;
+    
+    index = msGetOutputFormatIndex(map, imagetype);
+    if (index >= 0)
+        format = map->outputformatlist[index];
 
 /* -------------------------------------------------------------------- */
 /*      Try to find the format in the maps list of formats, first by    */
@@ -464,7 +564,7 @@ outputFormatObj *msSelectOutputFormat( mapObj *map,
         if( strcasecmp(imagetype,map->outputformatlist[i]->name) == 0 )
             format = map->outputformatlist[i];
     }
-
+    
     if (format)
     {
         if (map->imagetype)
