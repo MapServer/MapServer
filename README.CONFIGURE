@@ -122,7 +122,7 @@ EPPL7 Support:
   EPPL7 support is optional and does not require linking with any external 
   library.
 
-  It will be included by default, and can be disabledwith --without-eppl.
+  It will be included by default, and can be disabled with --without-eppl.
 
 
 Freetype Support:
@@ -171,13 +171,6 @@ PROJ.4 Support:
   You have to use the --with-proj=DIR option to enable PROJ.4 support and
   specify where PROJ.4 installed.  Make sure that this copy of PROJ.4 is 
   compiled before using this option.
-
-
-  --enable-ignore-missing-data   Ignore missing data file errors at runtime
-                                 (enabled by default).
-  --disable-ignore-missing-data  Report all missing data files.
-  --enable-debug   Include -g in CFLAGS for debugging.
-  --disable-debug  Do not include -g in CFLAGS (the default).
 
 
 Miscellaneous flags:
