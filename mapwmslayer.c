@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.35  2002/11/21 00:59:31  dan
+ * Added msBuildWMSLayerURLBase() to build WMS connection URL from metadata
+ *
  * Revision 1.34  2002/11/15 16:32:36  dan
  * Works more often with offiste=RGB:210,220,230 for bug 214 workaround
  *
@@ -101,6 +104,151 @@
 #define WMS_V_1_1_0  110
 
 
+
+#ifdef USE_WMS_LYR
+/**********************************************************************
+ *                          msBuildWMSLayerURLBase()
+ *
+ * Build the base of a GetMap or GetFeatureInfo URL using metadata.  
+ * The parameters to set are:
+ *   VERSION
+ *   LAYERS
+ *   FORMAT
+ *   TRANSPARENT
+ *   STYLES
+ *   QUERY_LAYERS (for queriable layers only)
+ *
+ * Returns a reference to a newly allocated string that should be freed 
+ * by the caller.
+ **********************************************************************/
+static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp) 
+{
+    char *pszURL = NULL, *pszFormat;
+    const char *pszOnlineResource, *pszVersion, *pszName;
+    const char *pszFormatList, *pszStyle, *pszStyleList;
+    int nLen;
+
+    pszOnlineResource = msLookupHashTable(lp->metadata, "wms_onlineresource");
+    pszVersion =        msLookupHashTable(lp->metadata, "wms_server_version");
+    pszName =           msLookupHashTable(lp->metadata, "wms_name");
+    pszFormat =         msLookupHashTable(lp->metadata, "wms_format");
+    pszFormatList =     msLookupHashTable(lp->metadata, "wms_formatlist");
+    pszStyle =          msLookupHashTable(lp->metadata, "wms_style");
+    pszStyleList =      msLookupHashTable(lp->metadata, "wms_stylelist");
+
+    if (pszOnlineResource==NULL || pszVersion==NULL || pszName==NULL)
+    {
+        msSetError(MS_WMSCONNERR, 
+                   "One of wms_onlineresource, wms_server_version, wms_name "
+                   "metadata is missing in layer %s.  "
+                   "Please either provide a valid CONNECTION URL, or provide "
+                   "those values in the layer's metadata.\n", 
+                   "msBuildWMSLayerURLBase()", lp->name);
+        return NULL;
+    }
+
+    if (pszStyle==NULL && pszStyleList==NULL)
+    {
+        // "" is a valid default for style.
+        pszStyle = "";
+    }
+
+    if (pszFormat==NULL && pszFormatList==NULL)
+    {
+        msSetError(MS_WMSCONNERR, 
+                   "At least wms_format or wms_formatlist is required for "
+                   "layer %s.  "
+                   "Please either provide a valid CONNECTION URL, or provide "
+                   "those values in the layer's metadata.\n", 
+                   "msBuildWMSLayerURLBase()", lp->name);
+        return NULL;
+    }
+
+    if (pszFormat != NULL)
+    {
+        pszFormat = strdup(pszFormat);
+    }
+    else
+    {
+        /* Look for the first format in list that matches */
+        char **papszTok;
+        int i, n;
+        papszTok = split(pszFormatList, ' ', &n);
+
+        for(i=0; pszFormat==NULL && i<n; i++)
+        {
+            if (0 
+#ifdef USE_GD_GIF
+                || strcasecmp(papszTok[i], "GIF")
+                || strcasecmp(papszTok[i], "image/gif")
+#endif
+#ifdef USE_GD_PNG
+                || strcasecmp(papszTok[i], "PNG")
+                || strcasecmp(papszTok[i], "image/png")
+#endif
+#ifdef USE_GD_JPEG
+                || strcasecmp(papszTok[i], "JPEG")
+                || strcasecmp(papszTok[i], "image/jpeg")
+#endif
+#ifdef USE_GD_WBMP
+                || strcasecmp(papszTok[i], "WBMP")
+                || strcasecmp(papszTok[i], "image/wbmp")
+#endif
+                )
+            {
+                pszFormat = strdup(papszTok[i]);
+            }
+        }
+        msFreeCharArray(papszTok, n);
+
+        if (pszFormat == NULL)
+        {
+            msSetError(MS_WMSCONNERR, 
+                       "Could not find a format that matches supported input "
+                       "formats in wms_formatlist metdata in layer %s.  "
+                       "Please either provide a valid CONNECTION URL, or "
+                       "provide the required layer metadata.\n", 
+                       "msBuildWMSLayerURLBase()", lp->name);
+            return NULL;
+        }
+    }
+
+    // Alloc a buffer large enough and build the URL
+    nLen = 200 + strlen(pszOnlineResource) + strlen(pszVersion) + 
+        strlen(pszName)*2 + strlen(pszFormat) + strlen(pszStyle);
+    pszURL = (char*)malloc((nLen+1)*sizeof(char*));
+
+    // Start with the onlineresource value and append trailing '?' or '&' 
+    // if missing.
+    strcpy(pszURL, pszOnlineResource);
+    if (strchr(pszURL, '?') == NULL)
+        strcat(pszURL, "?");
+    else
+    {
+        char *c;
+        c = pszURL+strlen(pszURL)-1;
+        if (*c != '?' && *c != '&')
+            strcpy(c+1, "&");
+    }
+
+    // TODO: We should urlencode all values.
+    sprintf(pszURL + strlen(pszURL),
+            "SERVICE=WMS&VERSION=%s&LAYERS=%s&FORMAT=%s&STYLES=%s&TRANSPARENT=TRUE",
+            pszVersion, pszName, pszFormat, pszStyle);
+    if (msIsLayerQueryable(lp))
+    {
+        sprintf(pszURL + strlen(pszURL),
+                "&QUERY_LAYERS=%s",pszName);
+    }
+
+    free(pszFormat);  // This one was alloc'd locally
+
+    return pszURL;
+}
+
+#endif /* USE_WMS_LYR */
+
+
 /**********************************************************************
  *                          msBuildWMSLayerURL()
  *
@@ -118,34 +266,48 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 {
 #ifdef USE_WMS_LYR
     char *pszURL = NULL, *pszEPSG = NULL;
-    const char *pszTmp, *pszRequestParam, *pszExceptionsParam;
+    const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam;
     rectObj bbox;
     int nVersion;
     
-    if (lp->connectiontype != MS_WMS || lp->connection == NULL)
+    if (lp->connectiontype != MS_WMS)
     {
         msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
                    "msBuildWMSLayerURL()");
         return NULL;
     }
 
+
 /* ------------------------------------------------------------------
  * Find out request version
  * ------------------------------------------------------------------ */
-    if ((pszTmp = strstr(lp->connection, "VERSION=")) == NULL &&
-        (pszTmp = strstr(lp->connection, "version=")) == NULL &&
-        (pszTmp = strstr(lp->connection, "WMTVER=")) == NULL &&
-        (pszTmp = strstr(lp->connection, "wmtver=")) == NULL )
+    if (lp->connection == NULL ||
+        ((pszVersion = strstr(lp->connection, "VERSION=")) == NULL &&
+         (pszVersion = strstr(lp->connection, "version=")) == NULL &&
+         (pszVersion = strstr(lp->connection, "WMTVER=")) == NULL &&
+         (pszVersion = strstr(lp->connection, "wmtver=")) == NULL ) )
+    {
+        // CONNECTION missing or seems incomplete... try to build from metadata
+        if (lp->connection) free(lp->connection);
+        lp->connection = msBuildWMSLayerURLBase(map, lp);
+        if (lp->connection == NULL)
+            return NULL;  // An error already produced.
+    }
+
+    if ((pszVersion = strstr(lp->connection, "VERSION=")) == NULL &&
+        (pszVersion = strstr(lp->connection, "version=")) == NULL &&
+        (pszVersion = strstr(lp->connection, "WMTVER=")) == NULL &&
+        (pszVersion = strstr(lp->connection, "wmtver=")) == NULL ) 
     {
         msSetError(MS_WMSCONNERR, "WMS Connection String must contain the VERSION or WMTVER parameter (with name in uppercase).", "msBuildWMSLayerURL()");
         return NULL;
     }
-    pszTmp = strchr(pszTmp, '=')+1;
-    if (strncmp(pszTmp, "1.0.8", 5) >= 0)    /* 1.0.8 == 1.1.0 */
+    pszVersion = strchr(pszVersion, '=')+1;
+    if (strncmp(pszVersion, "1.0.8", 5) >= 0)    /* 1.0.8 == 1.1.0 */
         nVersion = WMS_V_1_1_0;
-    else if (strncmp(pszTmp, "1.0.7", 5) >= 0)
+    else if (strncmp(pszVersion, "1.0.7", 5) >= 0)
         nVersion = WMS_V_1_0_7;
-    else if (strncmp(pszTmp, "1.0.0", 5) >= 0)
+    else if (strncmp(pszVersion, "1.0.0", 5) >= 0)
         nVersion = WMS_V_1_0_0;
     else
     {
@@ -363,7 +525,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     rectObj bbox;
     int nTimeout;
 
-    if (lp->connectiontype != MS_WMS || lp->connection == NULL)
+    if (lp->connectiontype != MS_WMS)
         return MS_FAILURE;
 
     if((lp->status != MS_ON) && (lp->status != MS_DEFAULT))
