@@ -630,18 +630,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     image->imagepath = image->imageurl = NULL;
    
     return image;
-  }
-  
-  int setSymbolByName(mapObj *map, char* pszSymbolName) {
-    self->symbol = msGetSymbolIdByName(map, pszSymbolName);
-    return self->symbol;
-  }
-  
-  int setOverlaySymbolByName(mapObj *map, char* pszOverlaySymbolName) {
-    self->overlaysymbol = msGetSymbolIdByName(map, pszOverlaySymbolName);
-    return self->overlaysymbol;
-  }
-   
+  }  
 }
 
 //

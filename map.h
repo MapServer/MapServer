@@ -859,8 +859,6 @@ gdImagePtr msDrawLegend(mapObj *map); // in maplegend.c
 int msEmbedLegend(mapObj *map, gdImagePtr img);
 int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, gdImagePtr img, int dstX, int dstY);
 gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
-int msGetSymbolIdByName(mapObj *map, char *pszSymbolName);
-   
    
 int msLoadFontSet(fontSetObj *fontSet); // in maplabel.c
 int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset);
