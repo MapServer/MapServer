@@ -642,7 +642,7 @@ void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c)
 void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
 {
   float *slope;
-  pointObj point1, point2, testpoint1, testpoint2;
+  pointObj *point1, *point2, *testpoint1, *testpoint2;
   int i, j, k, l, m, nfound, *xintersect, temp, sign;
   int x, y, ymin, ymax, *horiz, wrong_order;
   int n;
@@ -666,18 +666,18 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
   ymax = ymin;
   
   for(l=0,j=0; j<p->numlines; j++) {
-    point1 = p->line[j].point[p->line[j].numpoints-1];
+    point1 = &( p->line[j].point[p->line[j].numpoints-1] );
     for(i=0; i < p->line[j].numpoints; i++,l++) {
-      point2 = p->line[j].point[i];
-      if(point1.y == point2.y) {
+      point2 = &( p->line[j].point[i] );
+      if(point1->y == point2->y) {
 	horiz[l] = 1;
 	slope[l] = 0.0;
       } else {
 	horiz[l] = 0;
-	slope[l] = (float) (point2.x - point1.x) / (point2.y - point1.y);
+	slope[l] = (float) (point2->x - point1->x) / (point2->y - point1->y);
       }
-      ymin = MS_MIN(ymin, point1.y);
-      ymax = MS_MAX(ymax, point2.y);
+      ymin = MS_MIN(ymin, point1->y);
+      ymax = MS_MAX(ymax, point2->y);
       point1 = point2;
     }
   }  
@@ -688,16 +688,16 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
     for(j=0, l=0; j<p->numlines; j++) { /* for each line, l is overall point counter */
 
       m = l; /* m is offset from begining of all vertices */
-      point1 = p->line[j].point[p->line[j].numpoints-1];
+      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
       for(i=0; i < p->line[j].numpoints; i++, l++) {
-	point2 = p->line[j].point[i];
-	if(EDGE_CHECK(point1.y, y, point2.y) == CLIP_MIDDLE) {
+	point2 = &( p->line[j].point[i] );
+	if(EDGE_CHECK(point1->y, y, point2->y) == CLIP_MIDDLE) {
 	  
 	  if(horiz[l]) /* First, is this edge horizontal ? */
 	    continue;
 
 	  /* Did we intersect the first point point ? */
-	  if(y == point1.y) {
+	  if(y == point1->y) {
 	    /* Yes, must find first non-horizontal edge */
 	    k = i-1;
 	    if(k < 0) k = p->line[j].numpoints-1;
@@ -707,19 +707,19 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
 	    }
 	    /* Now perform sign test */
 	    if(k > 0)
-	      testpoint1 = p->line[j].point[k-1];
+	      testpoint1 = &( p->line[j].point[k-1] );
 	    else
-	      testpoint1 = p->line[j].point[p->line[j].numpoints-1];
-	    testpoint2 = p->line[j].point[k];
-	    sign = (testpoint2.y - testpoint1.y) *
-	      (point2.y - point1.y);
+	      testpoint1 = &( p->line[j].point[p->line[j].numpoints-1] );
+	    testpoint2 = &( p->line[j].point[k] );
+	    sign = (testpoint2->y - testpoint1->y) *
+	      (point2->y - point1->y);
 	    if(sign < 0)
-	      xintersect[nfound++] = point1.x;
+	      xintersect[nfound++] = point1->x;
 	    /* All done for point matching case */
 	  } else {  
 	    /* Not at the first point,
 	       find the intersection*/
-	    x = ROUND(point1.x + (y - point1.y)*slope[l]);
+	    x = ROUND(point1->x + (y - point1->y)*slope[l]);
 	    xintersect[nfound++] = x;
 	  }
 	}                 /* End of checking this edge */
@@ -746,11 +746,11 @@ void msImageFilledPolygon(gdImagePtr im, shapeObj *p, int c)
   
   /* Finally, draw all of the horizontal edges */
   for(j=0, l=0; j<p->numlines; j++) {
-    point1 = p->line[j].point[p->line[j].numpoints - 1];
+    point1 = &( p->line[j].point[p->line[j].numpoints - 1] );
     for(i=0; i<p->line[j].numpoints; i++, l++) {
-      point2 = p->line[j].point[i];
+      point2 = &( p->line[j].point[i] );
       if(horiz[l])
-	msImageScanline(im, point1.x, point2.x, point2.y, c);
+	msImageScanline(im, point1->x, point2->x, point2->y, c);
       point1 = point2;
     }
   }
@@ -823,7 +823,7 @@ static void get_bbox(shapeObj *poly, double *minx, double *miny, double *maxx, d
 int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
 {
   double slope;
-  pointObj point1, point2;
+  pointObj *point1=NULL, *point2=NULL;
   int i, j, k, nfound;
   double x, y, *xintersect, temp;
   double hi_y, lo_y;
@@ -889,18 +889,18 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
     nfound = 0;
     for(j=0; j<p->numlines; j++) { /* for each line */
       
-      point1 = p->line[j].point[p->line[j].numpoints-1];
+      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
       for(i=0; i < p->line[j].numpoints; i++) {
-	point2 = p->line[j].point[i];
+	point2 = &( p->line[j].point[i] );
 	
-	if(EDGE_CHECK(point1.y, y, point2.y) == CLIP_MIDDLE) {
+	if(EDGE_CHECK(point1->y, y, point2->y) == CLIP_MIDDLE) {
 	  
-	  if(point1.y == point2.y)
+	  if(point1->y == point2->y)
 	    continue; /* ignore horizontal edges */
 	  else	  
-	    slope = (point2.x - point1.x) / (point2.y - point1.y);
+	    slope = (point2->x - point1->x) / (point2->y - point1->y);
 	  
-	  x = point1.x + (y - point1.y)*slope;
+	  x = point1->x + (y - point1->y)*slope;
 	  xintersect[nfound++] = x;
 	} /* End of checking this edge */
 	
@@ -920,14 +920,14 @@ int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension)
     } while(wrong_order);
     
     /* Great, now find longest span */
-    point1.y = point2.y = y;
+    point1->y = point2->y = y;
     for(i=0; i < nfound; i += 2) {
-      point1.x = xintersect[i];
-      point2.x = xintersect[i+1];
-      len = length(point1, point2);
+      point1->x = xintersect[i];
+      point2->x = xintersect[i+1];
+      len = length(*point1, *point2);
       if(len > max_len) {
 	max_len = len;
-	lp->x = (point1.x + point2.x)/2;
+	lp->x = (point1->x + point2->x)/2;
 	lp->y = y;
       }
     }
