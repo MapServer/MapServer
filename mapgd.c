@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2005/02/02 02:18:15  sdlime
+ * Fixed but 1194. Should be reseting thinkness for main image not the brush.
+ *
  * Revision 1.95  2005/01/28 05:54:38  sdlime
  * Added WIDTH support to circle/polygon vector fills and vector markers. In both cases vector symbols must be unfilled.
  *
@@ -1721,7 +1724,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
   }
 
   // clean up
-  gdImageSetThickness(brush, 1);
+  gdImageSetThickness(img, 1);
 
   return;
 }
