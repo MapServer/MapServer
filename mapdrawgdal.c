@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/01/31 18:57:12  frank
+ * fixed offsite support from pseudocolored or greyscale input: bug 274
+ *
  * Revision 1.5  2003/01/21 05:55:05  frank
  * avoid core dumping when classifying 24bit image, fixes colors - bug 270
  *
@@ -460,7 +463,11 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
         GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
 
-        if(i != layer->offsite.red && sEntry.c4 != 0) 
+        if( sEntry.c4 != 0 
+            && (!MS_VALID_COLOR( layer->offsite )
+                || layer->offsite.red != sEntry.c1
+                || layer->offsite.green != sEntry.c2
+                || layer->offsite.blue != sEntry.c3 ) )
             cmap[i] = msAddColorGD(map, gdImg, sEntry.c1, sEntry.c2, sEntry.c3);
         else
             cmap[i] = -1;
@@ -476,25 +483,15 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           
           GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
 
-          if( sEntry.c4 == 0 || i == layer->offsite.red )
-              cmap[i] = -1;
-          else
+          if( sEntry.c4 != 0 
+              && (!MS_VALID_COLOR( layer->offsite )
+                  || layer->offsite.red != sEntry.c1
+                  || layer->offsite.green != sEntry.c2
+                  || layer->offsite.blue != sEntry.c3 ) )
               cmap[i] = gdTrueColorAlpha(sEntry.c1, sEntry.c2, sEntry.c3, 
                                          127 - (sEntry.c4 >> 1) );
-      }
-  }
-  else if( hBand2 == NULL && hColorMap == NULL )
-  {
-      /* Create a cmap[] that maps input values to corresponding truecolor
-         greyscale values */
-      
-      cmap_set = TRUE;
-      for(i=0; i<256; i++ )
-      {
-          if( i == layer->offsite.red )
-              cmap[i] = -1;
           else
-              cmap[i] = gdTrueColor(i,i,i);
+              cmap[i] = -1;
       }
   }
 #endif
