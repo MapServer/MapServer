@@ -17,7 +17,7 @@ static int layerInitItemInfo(layerObj *layer)
     shpfile = layer->layerinfo;
 
     if(!shpfile) {
-      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "msLayerWhichShapes()");
+      msSetError(MS_SDEERR, "Shapefile layer has not been opened.", "layerInitItemInfo()");
       return(MS_FAILURE);
     }
 
@@ -193,7 +193,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     status = msSHPWhichShapes(shpfile, rect, layer->debug);
     if(status != MS_SUCCESS) return(status);
 
-    // now apply the maxshapes criteria
+    // now apply the maxshapes criteria (NOTE: this ignores the filter so you could get less than maxfeatures)
     if(layer->maxfeatures > 0) {
       for(i=0; i<shpfile->numshapes; i++)
         n1 += msGetBit(shpfile->status,i);

@@ -5,8 +5,8 @@
 ** for licence details.
 */
 
-#include "map.h"
 #include <limits.h>
+#include "map.h"
 
 #if UINT_MAX == 65535
 typedef long          int32;
@@ -1346,22 +1346,50 @@ int msTiledSHPOpenFile(layerObj *layer)
     msSetError(MS_MEMERR, "Error allocating tiled shapefile structures.", "msTiledSHPOpenFile()");
     return(MS_FAILURE);
   }
-
+  tSHP->shpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
+  tSHP->tileshpfile = NULL; // may need this if not using a tile layer, look for malloc later
   layer->layerinfo = tSHP;
 
-  if(msSHPOpenFile(&(tSHP->tileshpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->tileindex)) == -1) 
-    if(msSHPOpenFile(&(tSHP->tileshpfile), "rb", msBuildPath(szPath, layer->map->mappath, layer->tileindex)) == -1)
-      return(MS_FAILURE);
+  tSHP->tilelayerindex = msGetLayerIndex(layer->map, layer->tileindex);
+  if(tSHP->tilelayerindex != -1) { // does the tileindex reference another layer
+    int status;
+    layerObj *tlp;
 
-  if((layer->tileitemindex = msDBFGetItemIndex(tSHP->tileshpfile.hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
+    tlp = &(layer->map->layers[tSHP->tilelayerindex]);
+
+    if(tlp->connectiontype != MS_SHAPEFILE) {
+	  msSetError(MS_SDEERR, "Tileindex layer must be a shapefile.", "msTiledSHPOpenFile()");
+      return(MS_FAILURE);
+    }
+
+    status = msLayerOpen(tlp);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+
+     // build item list (no annotation) since we do have to classify the shape
+     status = msLayerWhichItems(tlp, MS_TRUE, MS_FALSE, NULL);
+     if(status != MS_SUCCESS) return(MS_FAILURE);
+
+     tSHP->tileshpfile = (shapefileObj *) tlp->layerinfo; // shapefiles use layerinfo to point to a shapefileObj
+
+  } else { // or reference a shapefile directly
+
+    // we need tSHP->tileshpfile if we're not working with a layer
+    tSHP->tileshpfile = (shapefileObj *) malloc(sizeof(shapefileObj));
+
+    if(msSHPOpenFile(tSHP->tileshpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, layer->tileindex)) == -1) 
+      if(msSHPOpenFile(tSHP->tileshpfile, "rb", msBuildPath(szPath, layer->map->mappath, layer->tileindex)) == -1)
+        return(MS_FAILURE);
+  }
+
+  if((layer->tileitemindex = msDBFGetItemIndex(tSHP->tileshpfile->hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
  
   // position the source at the FIRST tile to use as a template, this is so the functions that fill the iteminfo array have something to work from
-  for(i=0; i<tSHP->tileshpfile.numshapes; i++) {
+  for(i=0; i<tSHP->tileshpfile->numshapes; i++) {
 
     if(!layer->data) // assume whole filename is in attribute field
-      filename = (char*)msDBFReadStringAttribute(tSHP->tileshpfile.hDBF, i, layer->tileitemindex);
+      filename = (char*) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex);
     else {  
-      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
+      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
       filename = tilename;
     }
       
@@ -1369,20 +1397,19 @@ int msTiledSHPOpenFile(layerObj *layer)
       
     // open the shapefile
 #ifndef IGNORE_MISSING_DATA
-    if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-      if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
         return(MS_FAILURE);
 #else
-    if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-      if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-        continue; // check again
+    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+	    continue; // check again
 #endif
 
     return(MS_SUCCESS); // found a template, ok to proceed
   }
 
   msSetError(MS_SHPERR, "Unable to open a single tile to use as a template in layer %s.", "msTiledSHPOpenFile()", layer->name?layer->name:"(null)");
-
   return(MS_FAILURE);
 }
 
@@ -1399,49 +1426,94 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
     return(MS_FAILURE);
   }
 
-  msSHPCloseFile(&(tSHP->shpfile)); // close previously opened files
+  msSHPCloseFile(tSHP->shpfile); // close previously opened files
 
-  status = msSHPWhichShapes(&(tSHP->tileshpfile), rect, layer->debug);
-  if(status != MS_SUCCESS) return(status); // could be MS_DONE or MS_FAILURE
+  if(tSHP->tilelayerindex != -1) {  // does the tileindex reference another layer
+    layerObj *tlp;
+    shapeObj tshape;
 
-  // position the source at the FIRST shapefile
-  for(i=0; i<tSHP->tileshpfile.numshapes; i++) {
-    if(msGetBit(tSHP->tileshpfile.status,i)) {
+    tlp = &(layer->map->layers[tSHP->tilelayerindex]);
+    status= msLayerWhichShapes(tlp, rect);
+    if(status != MS_SUCCESS) return(status); // could be MS_DONE or MS_FAILURE
+
+    msInitShape(&tshape);
+    while((status = msLayerNextShape(tlp, &tshape)) == MS_SUCCESS) {
+ 
+      // TODO: seems stupid to read the tileitem seperately from the shape, need to fix msTiledSHPOpenFile
       if(!layer->data) // assume whole filename is in attribute field
-	filename = (char*)msDBFReadStringAttribute(tSHP->tileshpfile.hDBF, i, layer->tileitemindex);
-      else {  
-	sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
-	filename = tilename;
+	    filename = (char *) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex);
+      else {
+	    sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex) , layer->data);
+	    filename = tilename;
       }
 
       if(strlen(filename) == 0) continue; // check again
-      
+
       // open the shapefile
 #ifndef IGNORE_MISSING_DATA
-      if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-        if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-          return(MS_FAILURE);
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1)
+	    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+	      return(MS_FAILURE);
 #else
-      if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-        if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-	  continue; // check again
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1)
+        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+          continue; // check again
 #endif
 
-      status = msSHPWhichShapes(&(tSHP->shpfile), rect, layer->debug);
-      if(status == MS_DONE)
-	continue;
-      else if(status != MS_SUCCESS)
-	return(MS_FAILURE);
-
-      tSHP->tileshpfile.lastshape = i;
+      status = msSHPWhichShapes(tSHP->shpfile, rect, layer->debug);
+      if(status == MS_DONE) continue; // next tile
+      else if(status != MS_SUCCESS) return(MS_FAILURE);
+       
+      // the layer functions keeps track of this
+      // tSHP->tileshpfile->lastshape = tshape.index;
       break;
     }
+    return(status); // if we reach here we either 1) ran out of tiles or 2) had an error reading a tile
+
+  } else { // or reference a shapefile directly
+
+    status = msSHPWhichShapes(tSHP->tileshpfile, rect, layer->debug);
+    if(status != MS_SUCCESS) return(status); // could be MS_DONE or MS_FAILURE
+
+    // position the source at the FIRST shapefile
+    for(i=0; i<tSHP->tileshpfile->numshapes; i++) {
+      if(msGetBit(tSHP->tileshpfile->status,i)) {
+        if(!layer->data) // assume whole filename is in attribute field
+	      filename = (char *) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex);
+        else {  
+	      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
+	      filename = tilename;
+        }
+
+        if(strlen(filename) == 0) continue; // check again
+      
+        // open the shapefile
+#ifndef IGNORE_MISSING_DATA
+        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+            return(MS_FAILURE);
+#else
+        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+            continue; // check again
+#endif
+
+        status = msSHPWhichShapes(tSHP->shpfile, rect, layer->debug);
+        if(status == MS_DONE) continue; // next tile
+        else if(status != MS_SUCCESS) return(MS_FAILURE);
+
+        tSHP->tileshpfile->lastshape = i;
+        break;
+      }
+    }
+
+    if(i == tSHP->tileshpfile->numshapes)
+      return(MS_DONE); // no more tiles
+    else
+      return(MS_SUCCESS);
   }
 
-  if(i == tSHP->tileshpfile.numshapes)
-    return(MS_DONE); // no more tiles
-  else
-    return(MS_SUCCESS);
+  return(MS_FAILURE); // should *never* get here
 }
 
 int msTiledSHPNextShape(layerObj *layer, shapeObj *shape) 
@@ -1459,68 +1531,112 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
   }
 
   do {
-    i = tSHP->shpfile.lastshape + 1;
-    while(i<tSHP->shpfile.numshapes && !msGetBit(tSHP->shpfile.status,i)) i++; // next "in" shape
+    i = tSHP->shpfile->lastshape + 1;
+    while(i<tSHP->shpfile->numshapes && !msGetBit(tSHP->shpfile->status,i)) i++; // next "in" shape
     
-    if(i == tSHP->shpfile.numshapes) { // next tile
-      msSHPCloseFile(&(tSHP->shpfile));
-      
-      // position the source to the NEXT shapefile
-      for(i=(tSHP->tileshpfile.lastshape + 1); i<tSHP->tileshpfile.numshapes; i++) {
-	if(msGetBit(tSHP->tileshpfile.status,i)) {
-	  if(!layer->data) // assume whole filename is in attribute field
-	    filename = (char*)msDBFReadStringAttribute(tSHP->tileshpfile.hDBF, i, layer->tileitemindex);
-	  else {  
-	    sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
-	    filename = tilename;
-	  }
-	  
-	  if(strlen(filename) == 0) continue; // check again
-	  
-	  // open the shapefile
+    if(i == tSHP->shpfile->numshapes) { // done with this tile, need a new one
+      msSHPCloseFile(tSHP->shpfile); // clean up
+       
+      // position the source to the NEXT shapefile based on the tileindex
+      if(tSHP->tilelayerindex != -1) { // does the tileindex reference another layer
+        layerObj *tlp;
+        shapeObj tshape;
+
+        tlp = &(layer->map->layers[tSHP->tilelayerindex]);
+
+        msInitShape(&tshape);
+        while((status = msLayerNextShape(tlp, &tshape)) == MS_SUCCESS) {
+ 
+          // TODO: seems stupid to read the tileitem seperately from the shape, need to fix msTiledSHPOpenFile
+          if(!layer->data) // assume whole filename is in attribute field
+            filename = (char *) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex);
+          else {
+	        sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tshape.index, layer->tileitemindex) , layer->data);
+	        filename = tilename;
+          }
+
+          if(strlen(filename) == 0) continue; // check again
+
+          // open the shapefile
 #ifndef IGNORE_MISSING_DATA
-	  if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-            if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-	      return(MS_FAILURE);
+          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1)
+	        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+	          return(MS_FAILURE);
 #else
-	  if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-            if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
-	      continue; // check again
+          if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1)
+            if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+              continue; // check again
 #endif
+
+          status = msSHPWhichShapes(tSHP->shpfile, tSHP->tileshpfile->statusbounds, layer->debug);
+          if(status == MS_DONE) continue; // next tile
+          else if(status != MS_SUCCESS) return(MS_FAILURE);
+
+          // the layer functions keeps track of this
+          // tSHP->tileshpfile->lastshape = tshape.index;
+          break;
+        }
+        
+        if(status == MS_DONE) return(MS_DONE); // no more tiles
+        else {
+          msFreeShape(&tshape); 
+          continue; // we've got shapes
+        }
+
+      } else { // or reference a shapefile directly  
+
+        for(i=(tSHP->tileshpfile->lastshape + 1); i<tSHP->tileshpfile->numshapes; i++) {
+	      if(msGetBit(tSHP->tileshpfile->status,i)) {
+	        if(!layer->data) // assume whole filename is in attribute field
+	          filename = (char*)msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex);
+	        else {  
+	          sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, i, layer->tileitemindex) , layer->data);
+	          filename = tilename;
+	        }
+
+  	        if(strlen(filename) == 0) continue; // check again
+
+  	        // open the shapefile
+#ifndef IGNORE_MISSING_DATA
+	        if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+              if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+	            return(MS_FAILURE);
+#else
+            if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+              if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+	            continue; // check again
+#endif
+
+  	        status = msSHPWhichShapes(tSHP->shpfile, tSHP->tileshpfile->statusbounds, layer->debug);
+	        if(status == MS_DONE) continue; // next tile
+	        else if(status != MS_SUCCESS) return(MS_FAILURE);
 	  
-	  status = msSHPWhichShapes(&(tSHP->shpfile), tSHP->tileshpfile.statusbounds, layer->debug);
-	  if(status == MS_DONE)
-	    continue;
-	  else if(status != MS_SUCCESS)
-	    return(MS_FAILURE);
-	  
-	  tSHP->tileshpfile.lastshape = i;
-	  break;
-	}
-      }
+	        tSHP->tileshpfile->lastshape = i;
+	        break;
+	      }
+        } // end for loop
       
-      if(i == tSHP->tileshpfile.numshapes) 
-	return(MS_DONE); // no more tiles
-      else
-	continue; // back to top of the do-while loop
+        if(i == tSHP->tileshpfile->numshapes) return(MS_DONE); // no more tiles
+        else continue; // we've got shapes
+      }
     }
     
-    tSHP->shpfile.lastshape = i;
-
+    tSHP->shpfile->lastshape = i;
+ 
     filter_passed = MS_TRUE;  // By default accept ANY shape
     if(layer->numitems > 0 && layer->iteminfo) {
-      values = msDBFGetValueList(tSHP->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
+      values = msDBFGetValueList(tSHP->shpfile->hDBF, i, layer->iteminfo, layer->numitems);
       if(!values) return(MS_FAILURE);      
-      if ((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
-	msFreeCharArray(values, layer->numitems);
-	values = NULL;
+      if((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
+	    msFreeCharArray(values, layer->numitems);
+	    values = NULL;
       }
     }
     
-    msSHPReadShape(tSHP->shpfile.hSHP, i, shape); // ok to read the data now
+    msSHPReadShape(tSHP->shpfile->hSHP, i, shape); // ok to read the data now
     if(shape->type == MS_SHAPE_NULL) continue; // skip NULL shapes
 
-    shape->tileindex = tSHP->tileshpfile.lastshape;
+    shape->tileindex = tSHP->tileshpfile->lastshape;
     shape->values = values;
     shape->numvalues = layer->numitems;
   } while(!filter_passed);  // Loop until both spatial and attribute filters match 
@@ -1540,33 +1656,33 @@ int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     return(MS_FAILURE);
   }
 
-  if((tile < 0) || (tile >= tSHP->tileshpfile.numshapes)) return(MS_FAILURE); // invalid tile id
+  if((tile < 0) || (tile >= tSHP->tileshpfile->numshapes)) return(MS_FAILURE); // invalid tile id
 
-  if(tile != tSHP->tileshpfile.lastshape) { // correct tile is not currenly open so open the correct tile
-    msSHPCloseFile(&(tSHP->shpfile)); // close current tile
+  if(tile != tSHP->tileshpfile->lastshape) { // correct tile is not currenly open so open the correct tile
+    msSHPCloseFile(tSHP->shpfile); // close current tile
 
     if(!layer->data) // assume whole filename is in attribute field
-      filename = (char*)msDBFReadStringAttribute(tSHP->tileshpfile.hDBF, tile, layer->tileitemindex);
+      filename = (char*) msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tile, layer->tileitemindex);
     else {  
-      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile.hDBF, tile, layer->tileitemindex) , layer->data);
+      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tSHP->tileshpfile->hDBF, tile, layer->tileitemindex) , layer->data);
       filename = tilename;
     }
       
     // open the shapefile, since a specific tile was request an error should be generated if that tile does not exist
     if(strlen(filename) == 0) return(MS_FAILURE);
-    if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
-      if(msSHPOpenFile(&(tSHP->shpfile), "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
+    if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, filename)) == -1) 
+      if(msSHPOpenFile(tSHP->shpfile, "rb", msBuildPath(szPath, layer->map->mappath, filename)) == -1)
         return(MS_FAILURE);
   }
 
-  if((record < 0) || (record >= tSHP->shpfile.numshapes)) return(MS_FAILURE);
+  if((record < 0) || (record >= tSHP->shpfile->numshapes)) return(MS_FAILURE);
 
-  msSHPReadShape(tSHP->shpfile.hSHP, record, shape);
-  tSHP->shpfile.lastshape = record;
+  msSHPReadShape(tSHP->shpfile->hSHP, record, shape);
+  tSHP->shpfile->lastshape = record;
 
   if(layer->numitems > 0 && layer->iteminfo) {
     shape->numvalues = layer->numitems;
-    shape->values = msDBFGetValueList(tSHP->shpfile.hDBF, record, layer->iteminfo, layer->numitems);
+    shape->values = msDBFGetValueList(tSHP->shpfile->hDBF, record, layer->iteminfo, layer->numitems);
     if(!shape->values) return(MS_FAILURE);
   }
 
@@ -1580,7 +1696,23 @@ void msTiledSHPClose(layerObj *layer)
   msTiledSHPLayerInfo *tSHP=NULL;
 
   tSHP = layer->layerinfo;
-  if(tSHP) msSHPCloseFile(&(tSHP->tileshpfile));
+  if(tSHP) {
+    // this causes malloc errors, should be investigated, could be a memory leak
+    //msSHPCloseFile(tSHP->shpfile);
+    //free(tSHP->shpfile);
+  
+    if(tSHP->tilelayerindex != -1) {
+      layerObj *tlp;
+      tlp = &(layer->map->layers[tSHP->tilelayerindex]);
+      msLayerClose(tlp);
+    } else { 
+      msSHPCloseFile(tSHP->tileshpfile);
+      free(tSHP->tileshpfile);
+	}
+			
+    free(tSHP);
+  }
+  layer->layerinfo = NULL;
 }
 
 int msTiledSHPLayerInitItemInfo(layerObj *layer)
@@ -1593,7 +1725,7 @@ int msTiledSHPLayerInitItemInfo(layerObj *layer)
     return(MS_FAILURE);
   }
 
-  layer->iteminfo = (int *) msDBFGetItemIndexes(tSHP->shpfile.hDBF, layer->items, layer->numitems);
+  layer->iteminfo = (int *) msDBFGetItemIndexes(tSHP->shpfile->hDBF, layer->items, layer->numitems);
   if(!layer->iteminfo) return(MS_FAILURE);
 
   return(MS_SUCCESS);
@@ -1609,8 +1741,8 @@ int msTiledSHPLayerGetItems(layerObj *layer)
     return(MS_FAILURE);
   }
 
-  layer->numitems = msDBFGetFieldCount(tSHP->shpfile.hDBF);
-  layer->items = msDBFGetItems(tSHP->shpfile.hDBF);    
+  layer->numitems = msDBFGetFieldCount(tSHP->shpfile->hDBF);
+  layer->items = msDBFGetItems(tSHP->shpfile->hDBF);    
   if(!layer->items) return(MS_FAILURE);
 
   return(msTiledSHPLayerInitItemInfo(layer));
@@ -1626,6 +1758,6 @@ int msTiledSHPLayerGetExtent(layerObj *layer, rectObj *extent)
     return(MS_FAILURE);
   }
 
-  *extent = tSHP->tileshpfile.bounds;
+  *extent = tSHP->tileshpfile->bounds;
   return(MS_SUCCESS);
 }

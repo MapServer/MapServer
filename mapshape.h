@@ -37,13 +37,13 @@ extern "C" {
 typedef unsigned char uchar;
 
 typedef	struct {
-    FILE        *fpSHP;
+    FILE	*fpSHP;
     FILE	*fpSHX;
 
     int		nShapeType;				/* SHPT_* */
     int		nFileSize;				/* SHP file */
 
-    int         nRecords;
+    int		nRecords;
     int		nMaxRecords;
     int		*panRecOffset;
     int		*panRecSize;
@@ -53,9 +53,9 @@ typedef	struct {
 
     int		bUpdated;
 
-    int         nBufSize; // these used static vars in shape readers, moved to be thread-safe
-    uchar       *pabyRec;
-    int         nPartMax;
+    int		nBufSize; // these used static vars in shape readers, moved to be thread-safe
+    uchar   *pabyRec;
+    int		nPartMax;
     int		*panParts;
 
 } SHPInfo;
@@ -69,7 +69,7 @@ typedef	struct
 #endif
     FILE	*fp;
 
-    int         nRecords;
+    int		nRecords;
 
     int		nRecordLength;
     int		nHeaderLength;
@@ -117,9 +117,6 @@ typedef struct {
   DBFHandle hDBF; // DBF file pointer 
 #endif
 
-  int *indexes; // what items do we need to retrieve from this shapefile
-  int numindexes;
-  
   int lastshape;
 
   char *status;
@@ -132,8 +129,9 @@ typedef struct {
 
 // layerInfo structure for tiled shapefiles
 typedef struct { 
-  shapefileObj shpfile;
-  shapefileObj tileshpfile;
+  shapefileObj *shpfile;
+  shapefileObj *tileshpfile;
+  int tilelayerindex;
 } msTiledSHPLayerInfo;
 
 #ifndef SWIG
