@@ -125,6 +125,9 @@ imageObj *msDrawMap(mapObj *map)
 
     if(map->width == -1 || map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
 
@@ -133,6 +136,9 @@ imageObj *msDrawMap(mapObj *map)
 
     if(!map->outputformat) {
         msSetError(MS_GDERR, "Map outputformat not set!", "msDrawMap()");
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
     else if( MS_RENDERER_GD(map->outputformat) )
@@ -176,6 +182,9 @@ imageObj *msDrawMap(mapObj *map)
   
     if(!image) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawMap()");
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
 
@@ -202,7 +211,13 @@ imageObj *msDrawMap(mapObj *map)
 
     status = msCalculateScale(map->extent, map->units, map->width, map->height,
                               map->resolution, &map->scale);
-    if(status != MS_SUCCESS) return(NULL);
+    if(status != MS_SUCCESS)
+    {
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
+        return(NULL);
+    }
     
     // update geotransform based on adjusted extent. 
     msMapComputeGeotransform( map );
@@ -240,6 +255,7 @@ imageObj *msDrawMap(mapObj *map)
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
+                msFreeWmsParamsObj(&sLastWMSParams);
                 return NULL;
             }
         }
@@ -251,6 +267,7 @@ imageObj *msDrawMap(mapObj *map)
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
+                msFreeWmsParamsObj(&sLastWMSParams);
                 return NULL;
             }
         }
