@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2002/11/14 04:06:48  dan
+ * Fixed test for !gdImageTrueColor() in msResampleGDALToMap() to copy
+ * palette of GD image after the call to drawGDAL()
+ *
  * Revision 1.27  2002/10/29 16:40:40  frank
  * Fixed bug in propagating colormap into 8bit gdImg'es.  Added some debug
  * calls ... all now controlled by layer debug flag.
@@ -931,7 +935,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     }
 
     if( MS_RENDERER_GD(srcImage->format)
-        && gdImageTrueColor( srcImage->img.gd ) )
+        && !gdImageTrueColor( srcImage->img.gd ) )
     {
 #ifndef TEST_PALETTE_COPY
         gdImagePaletteCopy( image->img.gd, srcImage->img.gd );
@@ -988,6 +992,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
+
     result = msSimpleRasterResampler( srcImage, layer->offsite.red, image, 
                                       msApproxTransformer, pACBData,
                                       layer->debug );
