@@ -216,9 +216,9 @@ int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
             {
                 int	red, green, blue;
                 
-                red = MIN(255,r * (255 / (RED_LEVELS-1)));
-                green = MIN(255,g * (255 / (GREEN_LEVELS-1)));
-                blue = MIN(255,b * (255 / (BLUE_LEVELS-1)));
+                red = MS_MIN(255,r * (255 / (RED_LEVELS-1)));
+                green = MS_MIN(255,g * (255 / (GREEN_LEVELS-1)));
+                blue = MS_MIN(255,b * (255 / (BLUE_LEVELS-1)));
 
                 panColorCube[RGB_LEVEL_INDEX(r,g,b)] = 
                     add_color(map, img, red, green, blue );
