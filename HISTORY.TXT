@@ -65,6 +65,13 @@ Version 4.3 (CVS)
 
 - Mapscript: fixes to tests of shape copying and new image symbols.
 
+- Mapscript: new OWSRequest class based on cgiRequestObj structure in 
+  cgiutil.h is a first step to allow programming with MapServer's OWS
+  dispatching (bug 670).
+
+- Mapscript: styles member of classObj structure is no longer exposed to
+  SWIG (bug 611).
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 

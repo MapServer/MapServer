@@ -429,7 +429,10 @@ typedef struct class_obj{
 
   int status;
 
+#ifndef SWIG
   styleObj *styles;
+#endif
+
   int numstyles;
 
   labelObj label;
