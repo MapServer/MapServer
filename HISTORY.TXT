@@ -16,6 +16,14 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- the loadmapcontext function has changed it behaviour : before the 4.4 relase
+  when loading layers from a map context, the layer name was built using
+  a unique prefix + the name found in the context (eg for the 2nd layer in 
+  map context named park, the layer name generated would possibly be l:2:park).
+  Now the loadmapcontext takes a 2nd optional argument to force the creation
+  of the unique names. The default behaviour is now to have the layer name
+  equals to the name found in the context file. (Bug 1023)   
+
 - Fixed problem with WMS GetCapabilities aborting when wms_layer_group is
   used for some layers but not for all. (bug 1024)
 
