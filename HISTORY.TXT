@@ -15,6 +15,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta4?
 --------------------
 
+- Fixed php mapscript problem with wfs_filter selection : Bug 1092.
+
 - Fixed encoding problem with WFS server when wfs_service_onlineresource 
   was not explicitly specified (bug 1082)
 
