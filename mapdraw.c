@@ -39,7 +39,7 @@ void msClearPenValues(mapObj *map) {
  * Generic function to render the map file.
  * The type of the image created is based on the
  * imagetype parameter in the map file.
- */
+*/
 
 imageObj *msDrawMap(mapObj *map)
 {
@@ -169,8 +169,8 @@ imageObj *msDrawMap(mapObj *map)
             {
 #ifdef USE_WMS_LYR 
                 if( MS_RENDERER_GD(image->format) || MS_RENDERER_RAWDATA(image->format))
-                  status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
-                                             map, lp, image);
+                status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
+                                           map, lp, image);
 
 #ifdef USE_MING_FLASH                
                  else if( MS_RENDERER_SWF(image->format) )
@@ -178,19 +178,19 @@ imageObj *msDrawMap(mapObj *map)
                                               map, lp, image);
 #endif
 #ifdef USE_PDF
-                else if( MS_RENDERER_PDF(image->format) )
-                {
+                 else if( MS_RENDERER_PDF(image->format) )
+                 {
                   status = msDrawWMSLayerPDF(i, asOWSReqInfo, numOWSRequests,
                                              map, lp, image);
-                }
+                 }
 #endif
                  else
                  {
                      msSetError(MS_WMSCONNERR, 
                                 "Output format '%s' doesn't support WMS layers.", 
                                 "msDrawMap()", image->format->name);
-                     status = MS_FAILURE;
-                 }
+	        status = MS_FAILURE;
+			}
 #else /* ndef USE_WMS_LYR */
                 status = MS_FAILURE;
 #endif
@@ -202,8 +202,8 @@ imageObj *msDrawMap(mapObj *map)
     }
 
     
-    if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
-      msEmbedScalebar(map, image->img.gd); //TODO  
+  if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
+    msEmbedScalebar(map, image->img.gd); //TODO  
 
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
     msEmbedLegend(map, image->img.gd); //TODO  
@@ -218,7 +218,7 @@ imageObj *msDrawMap(mapObj *map)
     if(!lp->postlabelcache)
       continue;
 
-    if (lp->connectiontype == MS_WMS) 
+    if (lp->connectiontype == MS_WMS)  
     { 
 #ifdef USE_WMS_LYR 
       if( MS_RENDERER_GD(image->format) ||  MS_RENDERER_RAWDATA(image->format))
@@ -238,7 +238,7 @@ imageObj *msDrawMap(mapObj *map)
 #endif
 
 #else
-      status = MS_FAILURE;
+	status = MS_FAILURE;
 #endif
     }
     else 
@@ -348,12 +348,12 @@ imageObj *msDrawQueryMap(mapObj *map)
  * Test whether a layer should be drawn or not in the current map view and
  * at the current scale.  
  * Returns TRUE if layer is visible, FALSE if not.
- */
+*/
 int msLayerIsVisible(mapObj *map, layerObj *layer)
 {
   int i;
 
-  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features)
+  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features && !layer->graticulelayerinfo)
   return(MS_FALSE); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
   if(layer->type == MS_LAYER_QUERY) return(MS_FALSE);
@@ -383,8 +383,6 @@ int msLayerIsVisible(mapObj *map, layerObj *layer)
 
   return MS_TRUE;  // All tests passed.  Layer is visible.
 }
-
-
 /*
  * Generic function to render a layer object.
 */
@@ -397,7 +395,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (!msLayerIsVisible(map, layer))
       return MS_SUCCESS;  // Nothing to do, layer is either turned off, out of
                           // scale, has no classes, etc.
- 
+
+
   // Inform the rendering device that layer draw is starting.
   msImageStartLayer(map, layer, image);
 
@@ -487,8 +486,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
         strcasecmp(msLookupHashTable(layer->metadata, "SWFOUTPUT"),"RASTER")==0) ||
         strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE", ""),  
                    "SINGLE") == 0)
-      return msDrawVectorLayerAsRasterSWF(map, layer, image);
-  }
+    return msDrawVectorLayerAsRasterSWF(map, layer, image);
 #endif
 
   annotate = msEvalContext(map, layer->labelrequires);
@@ -820,8 +818,8 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
         {
             nReturnVal = msDrawWMSLayerPDF(image, labelPnt, string, label, 
                                       fontset, scalefactor);
-            nStatus = MS_FAILURE;
-        }
+			nStatus = MS_FAILURE;
+		}
 */
 #endif
         else
@@ -831,7 +829,6 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
                        "msDrawWMSLayer()", image->format->name);
             nStatus = MS_SUCCESS; // Should we fail if output doesn't support WMS?
         }
-
         // Cleanup
         msHTTPFreeRequestObj(asReqInfo, numReq);
     }

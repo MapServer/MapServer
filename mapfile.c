@@ -529,16 +529,6 @@ static int loadFeature(layerObj	*player, int type)
     case(TEXT):
       if((shape.text = getString()) == NULL) return(-1);
       break;
-    case(GRID):
-		player->connectiontype				= MS_GRATICULE;
-		player->graticulelayerinfo			= (void *) malloc( sizeof( graticuleObj ) );
-
-		if( player->graticulelayerinfo == NULL )
-			return -1;
-
-		initGrid( (graticuleObj *) player->graticulelayerinfo );
-		loadGrid( player );
-		break;
     default:
       msSetError(MS_IDENTERR, "(%s):(%d)", "loadfeature()",
                  msyytext, msyylineno);
@@ -2161,6 +2151,16 @@ int loadLayer(layerObj *layer, mapObj *map)
     case(FOOTER):
       if((layer->footer = getString()) == NULL) return(-1);
       break;
+    case(GRID):
+		layer->connectiontype				= MS_GRATICULE;
+		layer->graticulelayerinfo			= (void *) malloc( sizeof( graticuleObj ) );
+
+		if( layer->graticulelayerinfo == NULL )
+			return -1;
+
+		initGrid( (graticuleObj *) layer->graticulelayerinfo );
+		loadGrid( layer );
+		break;
     case(GROUP):
       if((layer->group = getString()) == NULL) return(-1);
       break;
