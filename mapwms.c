@@ -147,12 +147,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   int invalidlayers = 0;
   char epsgbuf[32];
   char srsbuffer[32];
-#ifdef OGC_STRICT_MODE
   int epsgvalid = MS_FALSE;
   const char *projstring;
    char **tokens;
    int n,j = 0;
-#endif
+
    epsgbuf[0]='\0';
    srsbuffer[0]='\0';
 
@@ -366,7 +365,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
      server shall throw a Service Exception (code = "InvalidSRS"). 
      Validate first against epsg in the map and if no matching srs is found
      validate all layers requested.*/
-#ifdef OGC_STRICT_MODE
+
   if (epsgbuf && strlen(epsgbuf) > 1)
   {
       epsgvalid = MS_FALSE;
@@ -425,7 +424,6 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
       }
   }
 
-#endif
   
 
   //apply the srs to the map file. This is only done after validating
