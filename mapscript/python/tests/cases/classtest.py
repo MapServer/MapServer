@@ -36,7 +36,7 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript
+from testing import mapscript, MapTestCase
 
 # ===========================================================================
 # Test begins now
@@ -68,6 +68,48 @@ class ClassCloningTestCase(unittest.TestCase):
         assert clone.minscale == 5.0
 
 
+class ClassIconTestCase(MapTestCase):
+    
+    """testing for bug 1250"""
+
+    def testAlphaTransparentPixmap(self):
+        lo = self.map.getLayerByName('INLINE-PIXMAP-RGBA')
+        co = lo.getClass(0)
+        self.map.selectOutputFormat('PNG')
+        im = co.createLegendIcon(self.map, lo, 48, 48)
+        im.save('testAlphaTransparentPixmapIcon.png')
+
+    def testAlphaTransparentPixmapPNG24(self):
+        lo = self.map.getLayerByName('INLINE-PIXMAP-RGBA')
+        co = lo.getClass(0)
+        self.map.selectOutputFormat('PNG24')
+        im = co.createLegendIcon(self.map, lo, 48, 48)
+        im.save('testAlphaTransparentPixmapIcon24.png')
+
+    def testAlphaTransparentPixmapJPG(self):
+        lo = self.map.getLayerByName('INLINE-PIXMAP-RGBA')
+        co = lo.getClass(0)
+        self.map.selectOutputFormat('JPEG')
+        im = co.createLegendIcon(self.map, lo, 48, 48)
+        im.save('testAlphaTransparentPixmapIcon.jpg')
+
+    def testIndexedTransparentPixmap(self):
+        lo = self.map.getLayerByName('INLINE-PIXMAP-PCT')
+        lo.type = mapscript.MS_LAYER_POINT
+        co = lo.getClass(0)
+        self.map.selectOutputFormat('PNG')
+        im = co.createLegendIcon(self.map, lo, 32, 32)
+        im.save('testIndexedTransparentPixmapIcon.png')
+
+    def testIndexedTransparentPixmapJPG(self):
+        lo = self.map.getLayerByName('INLINE-PIXMAP-PCT')
+        lo.type = mapscript.MS_LAYER_POINT
+        co = lo.getClass(0)
+        self.map.selectOutputFormat('JPEG')
+        im = co.createLegendIcon(self.map, lo, 32, 32)
+        im.save('testIndexedTransparentPixmapIcon.jpg')
+
+        
 # ===========================================================================
 # Run the tests outside of the main suite
 
