@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/06/21 18:34:31  frank
+ * added support for INT16 and FLOAT imagemodes
+ *
  * Revision 1.5  2002/06/13 19:55:57  frank
  * improve temporary file handling
  *
@@ -47,6 +50,7 @@
 
 #include <assert.h>
 #include "map.h"
+#include "mapthread.h"
 
 #ifdef USE_GDAL
 
@@ -68,8 +72,12 @@ static void InitializeGDAL( void )
 
     if( !bGDALInitialized )
     {
+        msAcquireLock( TLOCK_GDAL );
+
         GDALAllRegister();
         CPLPushErrorHandler( CPLQuietErrorHandler );
+        msReleaseLock( TLOCK_GDAL );
+
         bGDALInitialized = 1;
     }
 }
@@ -78,8 +86,7 @@ static void InitializeGDAL( void )
 /*                          msSaveImageGDAL()                           */
 /************************************************************************/
 
-int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename, 
-                     outputFormatObj *format )
+int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 
 {
     int  bFileIsTemporary = MS_FALSE;
@@ -89,6 +96,8 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
     int          iLine;
     GByte       *pabyAlphaLine = NULL;
     char        **papszOptions = NULL;
+    outputFormatObj *format = image->format;
+    GDALDataType eDataType = GDT_Byte;
 
     InitializeGDAL();
 
@@ -113,9 +122,39 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
     }
     
 /* -------------------------------------------------------------------- */
+/*      Establish the characteristics of our memory, and final          */
+/*      dataset.                                                        */
+/* -------------------------------------------------------------------- */
+    if( format->imagemode == MS_IMAGEMODE_RGB )
+    {
+        nBands = 3;
+        assert( gdImageTrueColor( image->img.gd ) );
+    }
+    else if( format->imagemode == MS_IMAGEMODE_RGBA )
+    {
+        pabyAlphaLine = (GByte *) calloc(image->width,1);
+        nBands = 4;
+        assert( gdImageTrueColor( image->img.gd ) );
+    }
+    else if( format->imagemode == MS_IMAGEMODE_INT16 )
+    {
+        eDataType = GDT_Int16;
+    }
+    else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
+    {
+        eDataType = GDT_Float32;
+    }
+    else
+    {
+        assert( format->imagemode == MS_IMAGEMODE_PC256
+                && !gdImageTrueColor( image->img.gd ) );
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Create a memory dataset which we can use as a source for a      */
 /*      CreateCopy().                                                   */
 /* -------------------------------------------------------------------- */
+    msAcquireLock( TLOCK_GDAL );
     hMemDriver = GDALGetDriverByName( "MEM" );
     if( hMemDriver == NULL )
     {
@@ -124,19 +163,9 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
         return MS_FAILURE;
     }
    
-#if GD2_VERS > 1
-    if( gdImageTrueColor( img ) && format->imagemode == MS_IMAGEMODE_RGB )
-        nBands = 3;
-    else if( gdImageTrueColor( img ) 
-             && format->imagemode == MS_IMAGEMODE_RGBA )
-    {
-        pabyAlphaLine = (GByte *) calloc(img->sx,1);
-        nBands = 4;
-    }
-#endif
-
     hMemDS = GDALCreate( hMemDriver, "msSaveImageGDAL_temp", 
-                         img->sx, img->sy, nBands, GDT_Byte, NULL );
+                         image->width, image->height, nBands, 
+                         eDataType, NULL );
     if( hMemDS == NULL )
     {
         msSetError( MS_MISCERR, "Failed to create MEM dataset.",
@@ -147,7 +176,7 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
 /* -------------------------------------------------------------------- */
 /*      Copy the gd image into the memory dataset.                      */
 /* -------------------------------------------------------------------- */
-    for( iLine = 0; iLine < img->sy; iLine++ )
+    for( iLine = 0; iLine < image->height; iLine++ )
     {
         int iBand;
 
@@ -155,37 +184,51 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
         {
             GDALRasterBandH hBand = GDALGetRasterBand( hMemDS, iBand+1 );
 
+            if( format->imagemode == MS_IMAGEMODE_INT16 )
+            {
+                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                              image->img.raw_16bit + iLine * image->width,
+                              image->width, 1, GDT_Int16, 2, 0 );
+                
+            }
+            else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
+            {
+                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                              image->img.raw_float + iLine * image->width,
+                              image->width, 1, GDT_Float32, 4, 0 );
+            }
 #if GD2_VERS > 1
-            if( nBands > 1 && iBand < 3 )
+            else if( nBands > 1 && iBand < 3 )
             {
                 // note, we need to fix handling of alpha!
-                GDALRasterIO( hBand, GF_Write, 0, iLine, img->sx, 1, 
-                              ((GByte *) img->tpixels[iLine])+(2-iBand), 
-                              img->sx, 1, GDT_Byte, 4, 0 );
+                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                          ((GByte *) image->img.gd->tpixels[iLine])+(2-iBand), 
+                              image->width, 1, GDT_Byte, 4, 0 );
             }
             else if( nBands > 1 && iBand == 3 ) /* Alpha band */
             {
                 int x;
-                GByte *pabySrc = ((GByte *) img->tpixels[iLine])+3;
+                GByte *pabySrc = ((GByte *) image->img.gd->tpixels[iLine])+3;
 
-                for( x = 0; x < img->sx; x++ )
+                for( x = 0; x < image->width; x++ )
                 {
                     if( *pabySrc == 127 )
                         pabyAlphaLine[x] = 0;
                     else
-                        pabyAlphaLine[x] = 256 - 2 * *pabySrc;
+                        pabyAlphaLine[x] = 255 - 2 * *pabySrc;
 
                     pabySrc += 4;
                 }
 
-                GDALRasterIO( hBand, GF_Write, 0, iLine, img->sx, 1, 
-                              pabyAlphaLine, img->sx, 1, GDT_Byte, 1, 0 );
+                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                              pabyAlphaLine, image->width, 1, GDT_Byte, 1, 0 );
             }
-            else
 #endif
+            else
             {
-                GDALRasterIO( hBand, GF_Write, 0, iLine, img->sx, 1, 
-                              img->pixels[iLine], img->sx, 1, GDT_Byte, 0, 0 );
+                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                              image->img.gd->pixels[iLine], 
+                              image->width, 1, GDT_Byte, 0, 0 );
             }
         }
     }
@@ -196,7 +239,7 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
 /* -------------------------------------------------------------------- */
 /*      Attach the palette if appropriate.                              */
 /* -------------------------------------------------------------------- */
-    if( nBands == 1 )
+    if( format->imagemode == MS_IMAGEMODE_PC256 )
     {
         GDALColorEntry sEntry;
         int  iColor;
@@ -204,11 +247,11 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
 
         hCT = GDALCreateColorTable( GPI_RGB );
 
-        for( iColor = 0; iColor < img->colorsTotal; iColor++ )
+        for( iColor = 0; iColor < image->img.gd->colorsTotal; iColor++ )
         {
-            sEntry.c1 = img->red[iColor];
-            sEntry.c2 = img->green[iColor];
-            sEntry.c3 = img->blue[iColor];
+            sEntry.c1 = image->img.gd->red[iColor];
+            sEntry.c2 = image->img.gd->green[iColor];
+            sEntry.c3 = image->img.gd->blue[iColor];
             sEntry.c4 = 255;
 
             GDALSetColorEntry( hCT, iColor, &sEntry );
@@ -218,6 +261,29 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
 
         GDALDestroyColorTable( hCT );
     }
+
+#if GDAL_VERSION_NUM > 1170
+    else if( format->imagemode == MS_IMAGEMODE_RGB )
+    {
+        GDALSetRasterColorInterpretation( 
+            GDALGetRasterBand( hMemDS, 1 ), GCI_RedBand );
+        GDALSetRasterColorInterpretation( 
+            GDALGetRasterBand( hMemDS, 2 ), GCI_GreenBand );
+        GDALSetRasterColorInterpretation( 
+            GDALGetRasterBand( hMemDS, 3 ), GCI_BlueBand );
+    }
+    else if( format->imagemode == MS_IMAGEMODE_RGBA )
+    {
+        GDALSetRasterColorInterpretation( 
+            GDALGetRasterBand( hMemDS, 1 ), GCI_RedBand );
+        GDALSetRasterColorInterpretation( 
+            GDALGetRasterBand( hMemDS, 2 ), GCI_GreenBand );
+        GDALSetRasterColorInterpretation( 
+            GDALGetRasterBand( hMemDS, 3 ), GCI_BlueBand );
+        GDALSetRasterColorInterpretation( 
+            GDALGetRasterBand( hMemDS, 4 ), GCI_AlphaBand );
+    }
+#endif
 
 /* -------------------------------------------------------------------- */
 /*      Assign the projection and coordinate system to the memory       */
@@ -281,6 +347,8 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
 
     GDALClose( hOutputDS );
 
+    msReleaseLock( TLOCK_GDAL );
+
 /* -------------------------------------------------------------------- */
 /*      Is this supposed to be a temporary file?  If so, stream to      */
 /*      stdout and delete the file.                                     */
@@ -324,7 +392,9 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
     InitializeGDAL();
 
 /* -------------------------------------------------------------------- */
-/*      check that this driver exists.                                  */
+/*      check that this driver exists.  Note visiting drivers should    */
+/*      be pretty threadsafe so don't bother acquiring the GDAL         */
+/*      lock.                                                           */
 /* -------------------------------------------------------------------- */
     hDriver = GDALGetDriverByName( format->driver+5 );
     if( hDriver == NULL )
