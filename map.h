@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.383  2004/11/30 20:02:03  dan
+ * Set version to 4.5 (this is the new dev version)
+ *
  * Revision 1.382  2004/11/29 21:33:53  dan
  * Update for v4.4.0
  *
@@ -204,7 +207,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "4.4.0"
+#define MS_VERSION "4.5"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
