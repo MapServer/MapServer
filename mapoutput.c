@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2002/12/17 22:04:58  dan
+ * Added PNG24 to the list of default output formats with GD2
+ *
  * Revision 1.8  2002/11/19 14:38:39  frank
  * fixed bug in msApplyOutputFormat with transparent override
  *
@@ -193,8 +196,16 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = MS_IMAGEMODE_PC256;
         format->extension = strdup("png");
         format->renderer = MS_RENDER_WITH_GD;
+
+#if GD2_VERS > 1
+        format = msAllocOutputFormat( map, "png24", driver );
+        format->mimetype = strdup("image/png");
+        format->imagemode = MS_IMAGEMODE_RGB;
+        format->extension = strdup("png");
+        format->renderer = MS_RENDER_WITH_GD;
+#endif /* GD2_VERS */
     }
-#endif
+#endif /* USE_GD_PNG */
 
 #ifdef USE_GD_JPEG
     if( strcasecmp(driver,"GD/JPEG") == 0 )

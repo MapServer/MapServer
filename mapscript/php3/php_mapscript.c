@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.128  2002/12/17 22:04:58  dan
+ * Added PNG24 to the list of default output formats with GD2
+ *
  * Revision 1.127  2002/12/16 19:08:43  assefa
  * Remove unuses vraiables.
  *
@@ -1236,7 +1239,6 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value,  "height",    pNewObj->height);
     add_property_long(return_value,  "transparent", pNewObj->transparent);
     add_property_long(return_value,  "interlace", pNewObj->interlace);
-    //add_property_long(return_value,  "imagetype", pNewObj->imagetype);
     PHPMS_ADD_PROP_STR(return_value,  "imagetype", pNewObj->imagetype);
     add_property_long(return_value,  "imagequality", pNewObj->imagequality);
 
@@ -1342,7 +1344,6 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "height",      self->height)
     else IF_SET_LONG(  "transparent", self->transparent)
     else IF_SET_LONG(  "interlace",   self->interlace)
-    else IF_SET_STRING(  "imagetype",   self->imagetype)
     else IF_SET_LONG(  "imagequality",self->imagequality)
     else IF_SET_DOUBLE("cellsize",    self->cellsize)
     else IF_SET_LONG(  "units",       self->units)
@@ -1356,7 +1357,8 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else if (strcmp( "numlayers", pPropertyName->value.str.val) == 0 ||
              strcmp( "extent", pPropertyName->value.str.val) == 0 ||
              strcmp( "symbolsetfilename", pPropertyName->value.str.val) == 0 ||
-             strcmp( "fontsetfilename", pPropertyName->value.str.val) == 0)
+             strcmp( "fontsetfilename", pPropertyName->value.str.val) == 0 ||
+             strcmp( "imagetype", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
                             pPropertyName->value.str.val);
@@ -4835,7 +4837,6 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_long(pThis,  "height",    self->height, E_ERROR);
     _phpms_set_property_long(pThis,  "transparent", self->transparent, E_ERROR);
     _phpms_set_property_long(pThis,  "interlace", self->interlace, E_ERROR);
-    //_phpms_set_property_long(pThis,  "imagetype", self->imagetype, E_ERROR);
     if(self->imagetype)
         _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
     _phpms_set_property_long(pThis,"imagequality", self->imagequality, E_ERROR);
@@ -4900,12 +4901,20 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
                                          list TSRMLS_CC);
     if (self == NULL)
+    {
         RETURN_FALSE;
+    }
 
     if (mapObj_selectOutputFormat(self, pImageType->value.str.val))
-      RETURN_TRUE;
+    {
+        if(self->imagetype)
+            _phpms_set_property_string(pThis,"imagetype", 
+                                       self->imagetype,E_ERROR);
 
-     RETURN_FALSE;
+        RETURN_TRUE;
+    }
+
+    RETURN_FALSE;
 }
 /* }}} */
 
@@ -4914,12 +4923,6 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
 /*=====================================================================
  *                 PHP function wrappers - image class
  *====================================================================*/
-
-#define MS_IMAGE_FORMAT_EXT(type)  ((type)==MS_GIF?"gif": \
-                                    (type)==MS_PNG?"png": \
-                                    (type)==MS_JPEG?"jpg": \
-                                    (type)==MS_WBMP?"wbmp": \
-                                    (type)==MS_SWF?"swf":"???unsupported???")
 
 /**********************************************************************
  *                     _phpms_build_img_object()
@@ -4945,7 +4948,6 @@ static long _phpms_build_img_object(imageObj *im, webObj *pweb,
     PHPMS_ADD_PROP_STR(return_value, "imageurl", im->imageurl);
     
 
-    //add_property_long(return_value, "imagetype", im->imagetype);
     PHPMS_ADD_PROP_STR(return_value, "imagetype", im->format->name);
 
 /* php3_printf("Create image: id=%d, ptr=0x%x<P>\n", img_id, im);*/
@@ -5019,30 +5021,31 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
 
 #ifdef USE_GD_GIF
-        if(im->format->name && strcasecmp(im->format->name, "gif")==0)
+        if(im->format->name && strcasecmp(im->format->driver, "gd/gif")==0)
             iptr = gdImageGifPtr(im->img.gd, &size); //TODO
         else
 #endif
 #ifdef USE_GD_PNG
-        if(im->format->name && strcasecmp(im->format->name, "png")==0) 
+        if(im->format->name && strcasecmp(im->format->driver, "gd/png")==0) 
             iptr = gdImagePngPtr(im->img.gd, &size); //TODO
         else
 #endif
 #ifdef USE_GD_JPEG
-        if(im->format->name && strcasecmp(im->format->name, "jpeg")==0) 
+        if(im->format->name && strcasecmp(im->format->driver, "gd/jpeg")==0) 
             iptr = 
               gdImageJpegPtr(im->img.gd, &size, 
-                             atoi(msGetOutputFormatOption(im->format, "QUALITY", 
+                             atoi(msGetOutputFormatOption(im->format, "QUALITY",
                                                            "75" )));
         else
 #endif
 #ifdef USE_GD_WBMP
-          if(im->format->name && strcasecmp(im->format->name, "wbmp")==0)
+          if(im->format->name && strcasecmp(im->format->driver, "gd/wbmp")==0)
             iptr = gdImageWBMPPtr(im->img.gd, &size, 1); //TODO
         else
 #endif
         {
-            php3_error(E_ERROR, "Output to '%s' not available", 
+            php3_error(E_ERROR, 
+                       "Output to '%s' not available via this method.", 
                        im->format->name);
         }
         if (size == 0) {
@@ -5139,7 +5142,6 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     pImagepath = _phpms_fetch_property_string(pThis, "imagepath", E_ERROR);
     pImageurl = _phpms_fetch_property_string(pThis, "imageurl", E_ERROR);
 
-    //pszImageExt = MS_IMAGE_FORMAT_EXT(im->imagetype);
     pszImageExt = im->format->extension;
 
     /* Build a unique filename in the IMAGEPATH directory 
