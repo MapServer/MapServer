@@ -740,7 +740,7 @@ static int _msProcessAutoProjection(projectionObj *p)
     switch(nProjId)
     {
       case 42001: /** WGS 84 / Auto UTM **/
-        nZone = (double)floor( (dLon0 + 180.0) / 6.0 ) + 1;
+        nZone = (int) floor( (dLon0 + 180.0) / 6.0 ) + 1;
         sprintf( szProjBuf, 
                  "+proj=tmerc+lat_0=0+lon_0=%.16g+k=0.999600+x_0=500000"
                  "+y_0=%.16g+ellps=WGS84+datum=WGS84+units=%s", 
