@@ -1786,8 +1786,10 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
 
   if(type == MS_PNG)
     gdImagePng(img, stream);
-  else
+  else if(type == MS_JPEG)
     gdImageJpeg(img, stream, quality);
+  else
+    gdImageWBMP(img, 1, stream);
 
   if(filename != NULL && strlen(filename) > 0) fclose(stream);
 

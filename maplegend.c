@@ -38,15 +38,8 @@ gdImagePtr msDrawLegend(mapObj *map)
     if((map->layers[i].status == MS_OFF) || (map->layers[i].status == MS_QUERY)) /* skip it */
       continue;
 
-    if(map->scale > 0) {
-      if((map->layers[i].maxscale > 0) && (map->scale > map->layers[i].maxscale))
-	continue;
-      if((map->layers[i].minscale > 0) && (map->scale <= map->layers[i].minscale))
-	continue;
-    }
-    
     for(j=0;j<map->layers[i].numclasses;j++) {
-      if(map->layers[i].class[j].name == NULL)
+      if(!map->layers[i].class[j].name)
 	continue; /* skip it */
       n++;
     }
@@ -64,9 +57,16 @@ gdImagePtr msDrawLegend(mapObj *map)
   for(i=0; i<map->numlayers; i++) { /* Need to find the longest legend label string */
     if((map->layers[i].status == MS_OFF) || (map->layers[i].status == MS_QUERY)) /* skip it */
       continue;
-   
+
+   if(map->scale > 0) {
+      if((map->layers[i].maxscale > 0) && (map->scale > map->layers[i].maxscale))
+	continue;
+      if((map->layers[i].minscale > 0) && (map->scale <= map->layers[i].minscale))
+	continue;
+    }
+ 
     for(j=0;j<map->layers[i].numclasses;j++) {
-      if(map->layers[i].class[j].name == NULL)
+      if(!map->layers[i].class[j].name)
 	continue; /* skip it */
       if(msGetLabelSize(map->layers[i].class[j].name, &map->legend.label, &rect, &(map->fontset)) != 0)
 	return(NULL); /* something bad happened */
@@ -150,7 +150,7 @@ gdImagePtr msDrawLegend(mapObj *map)
 	break;
       case MS_RASTER:
       case MS_POLYGON:
-	p.line[0].point[0].x = HMARGIN;
+        p.line[0].point[0].x = HMARGIN;
 	p.line[0].point[0].y = pnt.y;
 	p.line[0].point[1].x = HMARGIN + map->legend.keysizex - 1;
 	p.line[0].point[1].y = pnt.y;

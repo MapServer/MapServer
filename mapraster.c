@@ -1406,7 +1406,9 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
   int c=-1, oc=-1;
   int x1,y1,x2,y2;
 
+#ifdef USE_GD_1_8
   char bytes[8];
+#endif
 
   /* Allocate input and output images (same size) */
   stream = fopen(map->reference.image,"rb");

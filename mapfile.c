@@ -2700,6 +2700,7 @@ int msSaveMap(mapObj *map, char *filename)
 
 #ifdef USE_GD_1_8
   if(map->imagetype == MS_JPEG) fprintf(stream, "  IMAGETYPE JPEG\n");
+  if(map->imagetype == MS_WBMP) fprintf(stream, "  IMAGETYPE WBMP\n");
   fprintf(stream, "  IMAGEQUALITY %d\n", map->imagequality);
 #endif
 
@@ -2843,7 +2844,7 @@ mapObj *msLoadMap(char *filename)
       if(getInteger(&(map->imagequality)) == -1) return(NULL);
       break;
     case(IMAGETYPE):
-      if((map->imagetype = getSymbol(2, MS_PNG,MS_JPEG)) == -1) return(NULL);
+      if((map->imagetype = getSymbol(3, MS_PNG,MS_JPEG,MS_WBMP)) == -1) return(NULL);
       break;
 #endif
     case(INTERLACE):
@@ -2955,7 +2956,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       break;
     case(IMAGETYPE):
       msyystate = 2; msyystring = value;
-      if((map->imagetype = getSymbol(2, MS_PNG,MS_JPEG)) == -1) break;
+      if((map->imagetype = getSymbol(3, MS_PNG,MS_JPEG,MS_WBMP)) == -1) break;
       break;
 #endif
     case(LAYER):
