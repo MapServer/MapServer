@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2004/02/05 19:19:20  assefa
+ * strip names spaces ogc and gml from the xml string.
+ *
  * Revision 1.18  2004/02/04 21:20:36  assefa
  * Add Intersect in the list of supported operators.
  *
@@ -802,7 +805,9 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
        return NULL;
 
     //strip namespaces
-    CPLStripXMLNamespace(psRoot, NULL, 1);
+    CPLStripXMLNamespace(psRoot, "ogc", 1); 
+    CPLStripXMLNamespace(psRoot, "gml", 1); 
+
 /* -------------------------------------------------------------------- */
 /*      get the root element (Filter).                                  */
 /* -------------------------------------------------------------------- */
