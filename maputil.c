@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.166  2004/12/07 21:33:28  sean
+ * protect against getting a shape value when values is NULL in msShapeGetAnnotation().  also implement setValue for mapscript::shapeObj so we can define labels for inline features (bug 1114)
+ *
+ * Revision 1.165.2.1  2004/12/07 21:10:20  sean
+ * protect against getting a shape value when values is NULL in msShapeGetAnnotation().  also implement setValue for mapscript::shapeObj so we can define labels for inline features (bug 1114)
+ *
  * Revision 1.165  2004/11/22 16:19:42  sdlime
  * Trivial formating change.
  *
@@ -354,7 +360,8 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
       break;
     }
   } else {
-    tmpstr = strdup(shape->values[layer->labelitemindex]);
+    if (shape->values)
+        tmpstr = strdup(shape->values[layer->labelitemindex]);
   }
 
   return(tmpstr);

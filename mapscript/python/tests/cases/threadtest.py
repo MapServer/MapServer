@@ -122,7 +122,7 @@ class MultipleThreadsTestCase(unittest.TestCase):
 
         import threading
         
-        for i in range(4):
+        for i in range(10):
             thread = threading.Thread(target=make_map)
             thread.start()
 

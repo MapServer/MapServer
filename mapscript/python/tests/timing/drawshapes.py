@@ -52,7 +52,7 @@ while i < numshapes:
 del shpfile # closes up the file
 
 # Prepare the testing fixture
-m = mapscript.mapObj('tests/timing/timing.map')
+m = mapscript.mapObj('timing.map')
 l = m.getLayerByName('POLYGON')
 l.data = os.path.join(os.getcwd(), 'timing')
 
