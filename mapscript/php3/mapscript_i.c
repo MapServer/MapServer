@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.43  2002/05/10 19:16:29  dan
+ * Added qitem,qstring args to PHP version of layer->queryByAttributes()
+ *
  * Revision 1.42  2002/05/08 19:09:49  dan
  * Attempt at fixing class.createLegendIcon()
  *
@@ -476,8 +479,8 @@ int layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img) {
     return msDrawLayer(map, self, img);    
   }
 
-int layerObj_queryByAttributes(layerObj *self, mapObj *map, int mode) {
-    return msQueryByAttributes(map, self->index, mode);
+int layerObj_queryByAttributes(layerObj *self, mapObj *map, char *qitem, char *qstring, int mode) {
+    return msQueryByAttributes(map, self->index, qitem, qstring, mode);
   }
 
 int layerObj_queryByPoint(layerObj *self, mapObj *map, 

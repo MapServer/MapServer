@@ -5,10 +5,10 @@
  * Project:  PHP/MapScript extension for MapServer.
  * Language: ANSI C
  * Purpose:  Header file - prototypes / module definitions
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group
+ * Copyright (c) 2000-2002, Daniel Morissette, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.23  2002/05/10 19:16:30  dan
+ * Added qitem,qstring args to PHP version of layer->queryByAttributes()
+ *
  * Revision 1.22  2002/05/02 15:55:51  assefa
  * Adapt code to support imageObj.
  *
@@ -187,6 +190,7 @@ classObj       *layerObj_getClass(layerObj *self, int i);
 int             layerObj_draw(layerObj *self, mapObj *map, imageObj *img);
 int             layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img);
 int             layerObj_queryByAttributes(layerObj *self, mapObj *map, 
+                                           char *qitem, char *qstring, 
                                            int mode);
 int             layerObj_queryByPoint(layerObj *self, mapObj *map, 
                           pointObj *point, int mode, double buffer);

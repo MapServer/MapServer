@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.107  2002/05/10 19:16:29  dan
+ * Added qitem,qstring args to PHP version of layer->queryByAttributes()
+ *
  * Revision 1.106  2002/05/06 13:06:16  dan
  * Added $layer->styleitem
  *
@@ -5383,7 +5386,7 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_lyr_queryByAttributes(INTERNAL_FUNCTION_PARAMETERS)
 { 
-    pval   *pThis, *pType;
+    pval   *pThis, *pType, *pQItem, *pQString;
     layerObj *self=NULL;
     mapObj   *parent_map;
     int      nStatus = MS_FAILURE;
@@ -5398,22 +5401,26 @@ DLEXPORT void php3_ms_lyr_queryByAttributes(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 1, &pType) == FAILURE) 
+        getParameters(ht, 3, &pQItem, &pQString, &pType) == FAILURE) 
     {
         WRONG_PARAM_COUNT;
     }
 
     convert_to_long(pType);
+    convert_to_string(pQItem);
+    convert_to_string(pQString);
 
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
                                            list TSRMLS_CC);
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
-                                                       list TSRMLS_CC, E_ERROR);
+                                                       list TSRMLS_CC,E_ERROR);
 
     if (self && parent_map &&
         (nStatus=layerObj_queryByAttributes(self, parent_map,
-                                       pType->value.lval)) != MS_SUCCESS)
+                                            pQItem->value.str.val,
+                                            pQString->value.str.val,
+                                            pType->value.lval)) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_WARNING);
     }

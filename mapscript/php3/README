@@ -469,11 +469,14 @@ and the MapServer Map File documentation at:
         message in case nothing was found can be avoided in PHP using 
         the '@' control operator).
 
-   int queryByAttributes(int mode)
+   int queryByAttributes(string qitem, string qstring, int mode)
         Query layer for shapes that intersect current map extents.
+        qitem is the item (attribute) on which the query is performed, 
+        and qstring is the expression to match.
         The query is performed on all the shapes that are part of a CLASS 
         that contains a TEMPLATE value or that match any class in a
-        layer that contains a LAYER TEMPLATE value.
+        layer that contains a LAYER TEMPLATE value.  
+        Note that the layer's FILTER/FILTERITEM are ignored by this function.
         Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
