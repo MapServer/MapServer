@@ -1233,6 +1233,8 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     double size;
 
     size = label->size*scalefactor;
+    size = MS_MAX(size, label->minsize);
+    size = MS_MIN(size, label->maxsize);
 
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
     if(!fontset) {
@@ -1574,7 +1576,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
     }
 
     if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardGD(img, cachePtr->poly, labelPtr);
-    msDrawTextGD(img, p, cachePtr->string, labelPtr, &(map->fontset), layerPtr->scalefactor); // actually draw the label, we scaled it in msAddLabel
+    msDrawTextGD(img, p, cachePtr->string, labelPtr, &(map->fontset), layerPtr->scalefactor); // actually draw the label
 
   } /* next label in cache */
 

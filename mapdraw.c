@@ -398,14 +398,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   if (!msLayerIsVisible(map, layer))
       return MS_SUCCESS;  // Nothing to do, layer is either turned off, out of
                           // scale, has no classes, etc.
-
-  if(map->scale > 0) {
-    //if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
-    // annotate = MS_FALSE;
-    //if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
-    // annotate = MS_FALSE;
-  }
-
+ 
   // Inform the rendering device that layer draw is starting.
   msImageStartLayer(map, layer, image);
 
