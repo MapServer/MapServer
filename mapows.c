@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.23  2004/03/30 00:04:49  dan
+ * Cleaned up changelog
+ *
  * Revision 1.22  2004/02/26 18:38:08  frank
  * fixed last change
  *
@@ -18,7 +21,8 @@
  * Added msOWSGetMetadata() function.
  *
  * Revision 1.18  2004/02/05 04:40:01  sdlime
- * Added WCS to the OWS request broker function. The WCS request handler just returns MS_DONE for now.
+ * Added WCS to the OWS request broker function. The WCS request handler 
+ * just returns MS_DONE for now.
  *
  * Revision 1.17  2003/09/19 21:54:19  assefa
  * Add support fot the Post request.
@@ -27,14 +31,14 @@
  * Fixed problem with invalid BoundingBox tag in WMS capabilities (bug 34)
  *
  * Revision 1.15  2003/02/05 04:40:10  sdlime
- * Removed shapepath as an argument from msLayerOpen and msSHPOpenFile. The shapefile
- * opening routine now expects just a filename. So, you must use msBuildPath or 
- * msBuildPath3 to create a full qualified filename. Relatively simple change, but
- * required lots of changes. Demo still works...
+ * Removed shapepath as an argument from msLayerOpen and msSHPOpenFile. The 
+ * shapefile opening routine now expects just a filename. So, you must use 
+ * msBuildPath or msBuildPath3 to create a full qualified filename. Relatively
+ * simple change, but required lots of changes. Demo still works...
  *
  * Revision 1.14  2003/01/10 06:39:06  sdlime
- * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c to mapstring.c
- * so they can be used a bit more freely.
+ * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c to
+ * mapstring.c so they can be used a bit more freely.
  *
  * Revision 1.13  2002/12/20 03:43:03  frank
  * ensure this builds without libcurl
