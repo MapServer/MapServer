@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/11/08 15:44:16  dan
+ * Correct compilation errors with php4.
+ *
  * Revision 1.1  2000/11/02 16:39:55  dan
  * PHP PROJ4 module.
  *
@@ -116,6 +119,10 @@
 #define ZEND_DEBUG 0
 #endif
 
+#ifndef DLEXPORT 
+#define DLEXPORT ZEND_DLEXPORT
+#endif
+
 #define PHP_PROJ_VERSION "1.0.000 (Nov. 1, 2000)"
 
 /*=====================================================================
@@ -129,7 +136,11 @@ DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php_info_proj(void);
 DLEXPORT int  php_init_proj(INIT_FUNC_ARGS);
-DLEXPORT int  php_end_proj(void);
+DLEXPORT int  php_end_proj(SHUTDOWN_FUNC_ARGS);
+
+
+#define PHPMS_GLOBAL(a) a
+static int le_projobj;
 
 function_entry php_proj_functions[] = {
     {"pj_fwd",  php_proj_pj_fwd,   NULL},
@@ -163,16 +174,17 @@ DLEXPORT void php_info_proj(void)
 
 DLEXPORT int php_init_proj(INIT_FUNC_ARGS)
 {
+    PHPMS_GLOBAL(le_projobj)  = 
+        register_list_destructors(php_proj_pj_free,
+                                  NULL);
     return SUCCESS;
 }
 
-DLEXPORT int php_end_proj(void)
+DLEXPORT int php_end_proj(SHUTDOWN_FUNC_ARGS)
 {
     return SUCCESS;
 }
 
-#define PHPMS_GLOBAL(a) a
-static int le_projobj;
 
 #if !defined  DEG_TO_RAD
 #define DEG_TO_RAD      0.0174532925199432958
@@ -229,8 +241,10 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 
 #ifdef PHP4
     pval        **pParam = NULL;
+    HashTable   *list=NULL;
 #else
     pval        *pParam = NULL;
+#endif
 
     int         nParamCount = 0;
     int         i = 0;
@@ -238,7 +252,6 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
     
     char        **papszBuf = NULL;
 
-#endif
 
 /* -------------------------------------------------------------------- */
 /*      extract parameters.                                             */
@@ -249,7 +262,7 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     if (pArrayOfParams->type == IS_ARRAY)
-      nParamCount = _php3_hash_num_elements(pArrayOfParams->value.ht);
+        nParamCount = _php3_hash_num_elements(pArrayOfParams->value.ht);
     else
       nParamCount = 0;
 
@@ -304,6 +317,9 @@ DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 {
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
     pval        *p1, *p2;
     pval        *pj = NULL;
     PJ          *popj = NULL;
@@ -371,6 +387,9 @@ DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 {
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
     pval        *p1, *p2;
     pval        *pj = NULL;
     PJ          *popj = NULL;
@@ -418,6 +437,10 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS)
 {
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
     pval        *pj = NULL;
     PJ          *popj = NULL;
 /* -------------------------------------------------------------------- */
