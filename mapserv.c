@@ -112,11 +112,10 @@ void writeError()
   }
 
   msFreeMap(Map);
-  for(i=0;i<NumEntries;i++) {
-    free(Entries[i].val);
-    free(Entries[i].name);
-  }
-    
+
+  msFreeCharArray(ParamNames, NumParams);
+  msFreeCharArray(ParamValues, NumParams);
+
   free(Item);
   free(Value);      
   free(QueryFile);
@@ -167,10 +166,10 @@ mapObj *loadMap()
   int i;
   mapObj *map = NULL;
 
-  for(i=0;i<NumEntries;i++) // find the mapfile parameter first
-    if(strcasecmp(Entries[i].name, "map") == 0) break;
+  for(i=0;i<NumParams;i++) // find the mapfile parameter first
+    if(strcasecmp(ParamNames[i], "map") == 0) break;
   
-  if(i == NumEntries) {
+  if(i == NumParams) {
     if(getenv("MS_MAPFILE")) // has a default mapfile has not been set
       map = msLoadMap(getenv("MS_MAPFILE"));      
     else {
@@ -178,7 +177,7 @@ mapObj *loadMap()
       writeError();
     }
   } else
-    map = msLoadMap(Entries[i].val);
+    map = msLoadMap(ParamValues[i]);
 
   if(!map) writeError();
 
@@ -199,28 +198,28 @@ void loadForm()
     writeError();
   }
 
-  for(i=0;i<NumEntries;i++) { // now process the rest of the form variables
+  for(i=0;i<NumParams;i++) { // now process the rest of the form variables
 
-    if(strlen(Entries[i].val) == 0)
+    if(strlen(ParamValues[i]) == 0)
       continue;
     
-    if(strcasecmp(Entries[i].name,"queryfile") == 0) {      
-      QueryFile = strdup(Entries[i].val);
+    if(strcasecmp(ParamNames[i],"queryfile") == 0) {      
+      QueryFile = strdup(ParamValues[i]);
       continue;
     }
     
-    if(strcasecmp(Entries[i].name,"savequery") == 0) {
+    if(strcasecmp(ParamNames[i],"savequery") == 0) {
       SaveQuery = MS_TRUE;
       continue;
     }
     
-    if(strcasecmp(Entries[i].name,"savemap") == 0) {      
+    if(strcasecmp(ParamNames[i],"savemap") == 0) {      
       SaveMap = MS_TRUE;
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"zoom") == 0) {
-      Zoom = getNumeric(re, Entries[i].val);      
+    if(strcasecmp(ParamNames[i],"zoom") == 0) {
+      Zoom = getNumeric(re, ParamValues[i]);      
       if((Zoom > MAXZOOM) || (Zoom < MINZOOM)) {
 	msSetError(MS_WEBERR, "Zoom value out of range.", "loadForm()");
 	writeError();
@@ -228,8 +227,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"zoomdir") == 0) {
-      ZoomDirection = getNumeric(re, Entries[i].val);
+    if(strcasecmp(ParamNames[i],"zoomdir") == 0) {
+      ZoomDirection = getNumeric(re, ParamValues[i]);
       if((ZoomDirection != -1) && (ZoomDirection != 1) && (ZoomDirection != 0)) {
 	msSetError(MS_WEBERR, "Zoom direction must be 1, 0 or -1.", "loadForm()");
 	writeError();
@@ -237,8 +236,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"zoomsize") == 0) { // absolute zoom magnitude
-      ZoomSize = getNumeric(re, Entries[i].val);      
+    if(strcasecmp(ParamNames[i],"zoomsize") == 0) { // absolute zoom magnitude
+      ZoomSize = getNumeric(re, ParamValues[i]);      
       if((ZoomSize > MAXZOOM) || (ZoomSize < 1)) {
 	msSetError(MS_WEBERR, "Invalid zoom size.", "loadForm()");
 	writeError();
@@ -246,8 +245,8 @@ void loadForm()
       continue;
     }
     
-    if(strcasecmp(Entries[i].name,"imgext") == 0) { // extent of an existing image in a web application
-      tokens = split(Entries[i].val, ' ', &n);
+    if(strcasecmp(ParamNames[i],"imgext") == 0) { // extent of an existing image in a web application
+      tokens = split(ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -268,22 +267,22 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"searchmap") == 0) {      
+    if(strcasecmp(ParamNames[i],"searchmap") == 0) {      
       SearchMap = MS_TRUE;
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"id") == 0) {      
-      strncpy(Id, Entries[i].val, IDSIZE);
+    if(strcasecmp(ParamNames[i],"id") == 0) {      
+      strncpy(Id, ParamValues[i], IDSIZE);
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"mapext") == 0) { // extent of the new map or query
+    if(strcasecmp(ParamNames[i],"mapext") == 0) { // extent of the new map or query
 
-      if(strncasecmp(Entries[i].val,"shape",5) == 0)
+      if(strncasecmp(ParamValues[i],"shape",5) == 0)
         UseShapes = MS_TRUE;
       else {
-	tokens = split(Entries[i].val, ' ', &n);
+	tokens = split(ParamValues[i], ' ', &n);
 	
 	if(!tokens) {
 	  msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -320,31 +319,31 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"minx") == 0) { // extent of the new map, in pieces
-      Map->extent.minx = getNumeric(re, Entries[i].val);      
+    if(strcasecmp(ParamNames[i],"minx") == 0) { // extent of the new map, in pieces
+      Map->extent.minx = getNumeric(re, ParamValues[i]);      
       continue;
     }
-    if(strcasecmp(Entries[i].name,"maxx") == 0) {      
-      Map->extent.maxx = getNumeric(re, Entries[i].val);
+    if(strcasecmp(ParamNames[i],"maxx") == 0) {      
+      Map->extent.maxx = getNumeric(re, ParamValues[i]);
       continue;
     }
-    if(strcasecmp(Entries[i].name,"miny") == 0) {
-      Map->extent.miny = getNumeric(re, Entries[i].val);
+    if(strcasecmp(ParamNames[i],"miny") == 0) {
+      Map->extent.miny = getNumeric(re, ParamValues[i]);
       continue;
     }
-    if(strcasecmp(Entries[i].name,"maxy") == 0) {
-      Map->extent.maxy = getNumeric(re, Entries[i].val);
+    if(strcasecmp(ParamNames[i],"maxy") == 0) {
+      Map->extent.maxy = getNumeric(re, ParamValues[i]);
       CoordSource = FROMUSERBOX;
       QueryCoordSource = FROMUSERBOX;
       continue;
     } 
 
-    if(strcasecmp(Entries[i].name,"mapxy") == 0) { // user map coordinate
+    if(strcasecmp(ParamNames[i],"mapxy") == 0) { // user map coordinate
       
-      if(strncasecmp(Entries[i].val,"shape",5) == 0) {
+      if(strncasecmp(ParamValues[i],"shape",5) == 0) {
         UseShapes = MS_TRUE;	
       } else {
-	tokens = split(Entries[i].val, ' ', &n);
+	tokens = split(ParamValues[i], ' ', &n);
 
 	if(!tokens) {
 	  msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -378,12 +377,12 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"mapshape") == 0) { // query shape
+    if(strcasecmp(ParamNames[i],"mapshape") == 0) { // query shape
       lineObj line={0,NULL};
       char **tmp=NULL;
       int n, j;
       
-      tmp = split(Entries[i].val, ' ', &n);
+      tmp = split(ParamValues[i], ' ', &n);
 
       if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -412,8 +411,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"img.x") == 0) { // mouse click, in pieces
-      ImgPnt.x = getNumeric(re, Entries[i].val);
+    if(strcasecmp(ParamNames[i],"img.x") == 0) { // mouse click, in pieces
+      ImgPnt.x = getNumeric(re, ParamValues[i]);
       if((ImgPnt.x > MAXCLICK) || (ImgPnt.x < MINCLICK)) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -422,8 +421,8 @@ void loadForm()
       QueryCoordSource = FROMIMGPNT;
       continue;
     }
-    if(strcasecmp(Entries[i].name,"img.y") == 0) {
-      ImgPnt.y = getNumeric(re, Entries[i].val);      
+    if(strcasecmp(ParamNames[i],"img.y") == 0) {
+      ImgPnt.y = getNumeric(re, ParamValues[i]);      
       if((ImgPnt.y > MAXCLICK) || (ImgPnt.y < MINCLICK)) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -433,11 +432,11 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"imgxy") == 0) { // mouse click, single variable
+    if(strcasecmp(ParamNames[i],"imgxy") == 0) { // mouse click, single variable
       if(CoordSource == FROMIMGPNT)
 	continue;
 
-      tokens = split(Entries[i].val, ' ', &n);
+      tokens = split(ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -466,8 +465,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"imgbox") == 0) { // selection box (eg. mouse drag)
-      tokens = split(Entries[i].val, ' ', &n);
+    if(strcasecmp(ParamNames[i],"imgbox") == 0) { // selection box (eg. mouse drag)
+      tokens = split(ParamValues[i], ' ', &n);
       
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -493,12 +492,12 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"imgshape") == 0) { // shape given in image coordinates
+    if(strcasecmp(ParamNames[i],"imgshape") == 0) { // shape given in image coordinates
       lineObj line={0,NULL};
       char **tmp=NULL;
       int n, j;
       
-      tmp = split(Entries[i].val, ' ', &n);
+      tmp = split(ParamValues[i], ' ', &n);
 
       if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -518,8 +517,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"ref.x") == 0) { // mouse click in reference image, in pieces
-      RefPnt.x = getNumeric(re, Entries[i].val);      
+    if(strcasecmp(ParamNames[i],"ref.x") == 0) { // mouse click in reference image, in pieces
+      RefPnt.x = getNumeric(re, ParamValues[i]);      
       if((RefPnt.x > MAXCLICK) || (RefPnt.x < MINCLICK)) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -527,8 +526,8 @@ void loadForm()
       CoordSource = FROMREFPNT;
       continue;
     }
-    if(strcasecmp(Entries[i].name,"ref.y") == 0) {
-      RefPnt.y = getNumeric(re, Entries[i].val); 
+    if(strcasecmp(ParamNames[i],"ref.y") == 0) {
+      RefPnt.y = getNumeric(re, ParamValues[i]); 
       if((RefPnt.y > MAXCLICK) || (RefPnt.y < MINCLICK)) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -537,8 +536,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"refxy") == 0) { /* mouse click in reference image, single variable */
-      tokens = split(Entries[i].val, ' ', &n);
+    if(strcasecmp(ParamNames[i],"refxy") == 0) { /* mouse click in reference image, single variable */
+      tokens = split(ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -564,15 +563,15 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"buffer") == 0) { // radius (map units), actually 1/2 square side
-      Buffer = getNumeric(re, Entries[i].val);      
+    if(strcasecmp(ParamNames[i],"buffer") == 0) { // radius (map units), actually 1/2 square side
+      Buffer = getNumeric(re, ParamValues[i]);      
       CoordSource = FROMBUF;
       QueryCoordSource = FROMUSERPNT;
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"scale") == 0) { // scale for new map
-      Map->scale = getNumeric(re, Entries[i].val);      
+    if(strcasecmp(ParamNames[i],"scale") == 0) { // scale for new map
+      Map->scale = getNumeric(re, ParamValues[i]);      
       if(Map->scale <= 0) {
 	msSetError(MS_WEBERR, "Scale out of range.", "loadForm()");
 	writeError();
@@ -582,8 +581,8 @@ void loadForm()
       continue;
     }
     
-    if(strcasecmp(Entries[i].name,"imgsize") == 0) { // size of existing image (pixels)
-      tokens = split(Entries[i].val, ' ', &n);
+    if(strcasecmp(ParamNames[i],"imgsize") == 0) { // size of existing image (pixels)
+      tokens = split(ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -608,8 +607,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"mapsize") == 0) { // size of new map (pixels)
-      tokens = split(Entries[i].val, ' ', &n);
+    if(strcasecmp(ParamNames[i],"mapsize") == 0) { // size of new map (pixels)
+      tokens = split(ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -633,11 +632,11 @@ void loadForm()
       continue;
     }
 
-    if(strncasecmp(Entries[i].name,"layers", 6) == 0) { // turn a set of layers, delimited by spaces, on
+    if(strncasecmp(ParamNames[i],"layers", 6) == 0) { // turn a set of layers, delimited by spaces, on
       int num_layers=0, l;
       char **layers=NULL;
 
-      layers = split(Entries[i].val, ' ', &(num_layers));
+      layers = split(ParamValues[i], ' ', &(num_layers));
       for(l=0; l<num_layers; l++)
 	Layers[NumLayers+l] = strdup(layers[l]);
       NumLayers += l;
@@ -647,43 +646,43 @@ void loadForm()
       continue;
     }
 
-    if(strncasecmp(Entries[i].name,"layer", 5) == 0) { // turn a single layer/group on
-      Layers[NumLayers] = strdup(Entries[i].val);
+    if(strncasecmp(ParamNames[i],"layer", 5) == 0) { // turn a single layer/group on
+      Layers[NumLayers] = strdup(ParamValues[i]);
       NumLayers++;
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"qlayer") == 0) { // layer to query (i.e search)
-      QueryLayer = strdup(Entries[i].val);
+    if(strcasecmp(ParamNames[i],"qlayer") == 0) { // layer to query (i.e search)
+      QueryLayer = strdup(ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"slayer") == 0) { // layer to select (for feature based search)
-      SelectLayer = strdup(Entries[i].val);
+    if(strcasecmp(ParamNames[i],"slayer") == 0) { // layer to select (for feature based search)
+      SelectLayer = strdup(ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"item") == 0) { // search item
-      Item = strdup(Entries[i].val);
+    if(strcasecmp(ParamNames[i],"item") == 0) { // search item
+      Item = strdup(ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"value") == 0) { // search expression
+    if(strcasecmp(ParamNames[i],"value") == 0) { // search expression
       if(!Value)
-	Value = strdup(Entries[i].val);
+	Value = strdup(ParamValues[i]);
       else { /* need to append */
 	tmpstr = strdup(Value);
 	free(Value);
-	Value = (char *)malloc(strlen(tmpstr)+strlen(Entries[i].val)+2);
-	sprintf(Value, "%s|%s", tmpstr, Entries[i].val);
+	Value = (char *)malloc(strlen(tmpstr)+strlen(ParamValues[i])+2);
+	sprintf(Value, "%s|%s", tmpstr, ParamValues[i]);
 	free(tmpstr);
       }
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"template") == 0) { // template file, common change hence the simple parameter
+    if(strcasecmp(ParamNames[i],"template") == 0) { // template file, common change hence the simple parameter
       free(Map->web.template);
-      Map->web.template = strdup(Entries[i].val);      
+      Map->web.template = strdup(ParamValues[i]);      
       continue;
     }
 
@@ -692,9 +691,9 @@ void loadForm()
     // OV - egis - additional token "none" is defined to create somewhat
     // mutual exculsiveness between mapserver and egis
  
-    if(strcasecmp(Entries[i].name,"egis") == 0)
+    if(strcasecmp(ParamNames[i],"egis") == 0)
     {
-        if(strcasecmp(Entries[i].val,"none") != 0)
+        if(strcasecmp(ParamValues[i],"none") != 0)
         {
                 Mode = PROCESSING;
         }
@@ -702,97 +701,97 @@ void loadForm()
     }
 #endif
 
-    if(strcasecmp(Entries[i].name,"shapeindex") == 0) { // used for index queries
-      ShapeIndex = getNumeric(re, Entries[i].val);
+    if(strcasecmp(ParamNames[i],"shapeindex") == 0) { // used for index queries
+      ShapeIndex = getNumeric(re, ParamValues[i]);
       continue;
     }
-    if(strcasecmp(Entries[i].name,"tileindex") == 0) {
-      TileIndex = getNumeric(re, Entries[i].val);
+    if(strcasecmp(ParamNames[i],"tileindex") == 0) {
+      TileIndex = getNumeric(re, ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"mode") == 0) { // set operation mode
-      if(strcasecmp(Entries[i].val,"browse") == 0) {
+    if(strcasecmp(ParamNames[i],"mode") == 0) { // set operation mode
+      if(strcasecmp(ParamValues[i],"browse") == 0) {
         Mode = BROWSE;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"zoomin") == 0) {
+      if(strcasecmp(ParamValues[i],"zoomin") == 0) {
 	ZoomDirection = 1;
         Mode = BROWSE;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"zoomout") == 0) {
+      if(strcasecmp(ParamValues[i],"zoomout") == 0) {
 	ZoomDirection = -1;
         Mode = BROWSE;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"featurequery") == 0) {
+      if(strcasecmp(ParamValues[i],"featurequery") == 0) {
         Mode = FEATUREQUERY;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"featurenquery") == 0) {
+      if(strcasecmp(ParamValues[i],"featurenquery") == 0) {
         Mode = FEATURENQUERY;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"itemquery") == 0) {
+      if(strcasecmp(ParamValues[i],"itemquery") == 0) {
         Mode = ITEMQUERY;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"query") == 0) {
+      if(strcasecmp(ParamValues[i],"query") == 0) {
         Mode = QUERY;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"nquery") == 0) {
+      if(strcasecmp(ParamValues[i],"nquery") == 0) {
         Mode = NQUERY;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"featurequerymap") == 0) {
+      if(strcasecmp(ParamValues[i],"featurequerymap") == 0) {
         Mode = FEATUREQUERYMAP;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"featurenquerymap") == 0) {
+      if(strcasecmp(ParamValues[i],"featurenquerymap") == 0) {
         Mode = FEATURENQUERYMAP;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"itemquerymap") == 0) {
+      if(strcasecmp(ParamValues[i],"itemquerymap") == 0) {
         Mode = ITEMQUERYMAP;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"querymap") == 0) {
+      if(strcasecmp(ParamValues[i],"querymap") == 0) {
         Mode = QUERYMAP;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"nquerymap") == 0) {
+      if(strcasecmp(ParamValues[i],"nquerymap") == 0) {
         Mode = NQUERYMAP;
         continue;
       }
 
-      if(strcasecmp(Entries[i].val,"indexquery") == 0) {
+      if(strcasecmp(ParamValues[i],"indexquery") == 0) {
         Mode = INDEXQUERY;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"indexquerymap") == 0) {
+      if(strcasecmp(ParamValues[i],"indexquerymap") == 0) {
         Mode = INDEXQUERYMAP;
         continue;
       }
 
-      if(strcasecmp(Entries[i].val,"map") == 0) {
+      if(strcasecmp(ParamValues[i],"map") == 0) {
         Mode = MAP;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"legend") == 0) {
+      if(strcasecmp(ParamValues[i],"legend") == 0) {
         Mode = LEGEND;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"scalebar") == 0) {
+      if(strcasecmp(ParamValues[i],"scalebar") == 0) {
         Mode = SCALEBAR;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"reference") == 0) {
+      if(strcasecmp(ParamValues[i],"reference") == 0) {
         Mode = REFERENCE;
         continue;
       }
-      if(strcasecmp(Entries[i].val,"coordinate") == 0) {
+      if(strcasecmp(ParamValues[i],"coordinate") == 0) {
         Mode = COORDINATE;
         continue;
       }
@@ -800,13 +799,13 @@ void loadForm()
 #ifdef USE_EGIS
       //OV -egis- may be unsafe - test it properly for side effects- raju
 
-      if(strcasecmp(Entries[i].val,"none") == 0) {
+      if(strcasecmp(ParamValues[i],"none") == 0) {
         continue;
       }
 
       // OV - Defined any new modes?
       errLogMsg[0] = '\0';
-      sprintf(errLogMsg, "Invalid mode :: %s", Entries[i].val);
+      sprintf(errLogMsg, "Invalid mode :: %s", ParamValues[i]);
 
 #endif
 
@@ -814,8 +813,8 @@ void loadForm()
       writeError();
     }
 
-    if(strncasecmp(Entries[i].name,"map_",4) == 0) { // check to see if there are any additions to the mapfile
-      if(msLoadMapString(Map, Entries[i].name, Entries[i].val) == -1)
+    if(strncasecmp(ParamNames[i],"map_",4) == 0) { // check to see if there are any additions to the mapfile
+      if(msLoadMapString(Map, ParamNames[i], ParamValues[i]) == -1)
 	writeError();
       continue;
     }
@@ -847,14 +846,14 @@ void loadForm()
   if(Map->height == -1) Map->height = ImgRows;
   if(Map->width == -1) Map->width = ImgCols;
 
-  for(i=0;i<NumEntries;i++) {
-    tmpstr = (char *)malloc(sizeof(char)*strlen(Entries[i].name) + 3);
-    sprintf(tmpstr,"%%%s%%", Entries[i].name);
+  for(i=0;i<NumParams;i++) {
+    tmpstr = (char *)malloc(sizeof(char)*strlen(ParamNames[i]) + 3);
+    sprintf(tmpstr,"%%%s%%", ParamNames[i]);
 
     for(j=0; j<Map->numlayers; j++) {
       for(k=0; k<Map->layers[j].numclasses; k++) {
 	expptr = Map->layers[j].class[k].expression.string;
-	if(expptr && (strstr(expptr, tmpstr) != NULL)) expptr = gsub(expptr, tmpstr, Entries[i].val);
+	if(expptr && (strstr(expptr, tmpstr) != NULL)) expptr = gsub(expptr, tmpstr, ParamValues[i]);
       }
     }
     
@@ -1249,11 +1248,11 @@ char *processLine(char *instr, int mode)
     // FIX: need to re-incorporate JOINS at some point
   }
   
-  for(i=0;i<NumEntries;i++) { 
-    sprintf(substr, "[%s]", Entries[i].name);
-    outstr = gsub(outstr, substr, Entries[i].val);
-    sprintf(substr, "[%s_esc]", Entries[i].name);
-    outstr = gsub(outstr, substr, (char *)encode_url(Entries[i].val));    
+  for(i=0;i<NumParams;i++) { 
+    sprintf(substr, "[%s]", ParamNames[i]);
+    outstr = gsub(outstr, substr, ParamValues[i]);
+    sprintf(substr, "[%s_esc]", ParamNames[i]);
+    outstr = gsub(outstr, substr, (char *)encode_url(ParamValues[i]));    
   }
 
   return(outstr);
@@ -1427,7 +1426,6 @@ void returnQuery()
 int main(int argc, char *argv[]) {
     int i,j;
     char buffer[1024];
-    char **entry_names, **entry_values;
     gdImagePtr img=NULL;
     int status;
 
@@ -1454,7 +1452,14 @@ int main(int argc, char *argv[]) {
 
     sprintf(Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
 
-    NumEntries = loadEntries(Entries);
+    ParamNames = (char **) malloc(MAX_PARAMS*sizeof(char*));
+    ParamValues = (char **) malloc(MAX_PARAMS*sizeof(char*));
+    if (ParamNames==NULL || ParamValues==NULL) {
+	msSetError(MS_MEMERR, NULL, "mapserv()");
+	writeError();
+    }
+
+    NumParams = loadParams(ParamNames, ParamValues);
     Map = loadMap();
 
     /*
@@ -1462,31 +1467,13 @@ int main(int argc, char *argv[]) {
     ** this as a regular MapServer request.
     */
 #ifdef USE_WMS
-    entry_names = (char**)malloc(NumEntries*sizeof(char*));
-    entry_values = (char**)malloc(NumEntries*sizeof(char*));
-    if (entry_names==NULL || entry_values==NULL) {
-	msSetError(MS_MEMERR, NULL, "mapserv()");
-	writeError();
-    }
-    for(i=0;i<NumEntries;i++) {
-        entry_names[i] = strdup(Entries[i].name);
-        entry_values[i] = strdup(Entries[i].val);
-        if (entry_names[i]==NULL || entry_values[i]==NULL) {
-            msSetError(MS_MEMERR, NULL, "mapserv()");
-            writeError();
-        }
-    }
-    if (msWMSDispatch(Map, entry_names, entry_values, NumEntries) != MS_DONE)
-    {
-        /* This was a WMS request... cleanup and exit */
-        msFreeMap(Map);
-        for(i=0;i<NumEntries;i++) {
-            free(Entries[i].val);
-            free(Entries[i].name);
-        }
-        msFreeCharArray(entry_names, NumEntries);
-        msFreeCharArray(entry_values, NumEntries);
-        exit(0);
+
+    if (msWMSDispatch(Map, ParamNames, ParamValues, NumParams) != MS_DONE) {
+      /* This was a WMS request... cleanup and exit */
+      msFreeMap(Map);
+      msFreeCharArray(ParamNames, NumParams);
+      msFreeCharArray(ParamValues, NumParams);
+      exit(0);
     }
 #endif
 
@@ -1889,7 +1876,7 @@ int main(int argc, char *argv[]) {
       sprintf(errLogMsg, "Map Coordinates: x %f, y %f\n", MapPnt.x, MapPnt.y);
       writeErrLog(errLogMsg);
       
-      status = egisl(Map, Entries, NumEntries, CoordSource);
+      status = egisl(Map, Entries, NumParams, CoordSource);
       // printf("Numerical Window - %f %f\n", ImgPnt.x, ImgPnt.y);
       fflush(stdout);
       
@@ -1934,10 +1921,8 @@ int main(int argc, char *argv[]) {
     */
     msFreeMap(Map);
 
-    for(i=0;i<NumEntries;i++) {
-      free(Entries[i].val);
-      free(Entries[i].name);
-    }
+    msFreeCharArray(ParamNames, NumParams);
+    msFreeCharArray(ParamValues, NumParams);
 
     free(Item);
     free(Value);      

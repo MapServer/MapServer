@@ -4,20 +4,12 @@
 /*
 ** Misc. defines
 */
-#define MAX_ENTRIES 10000
-
-/*
-** Structure definitions
-*/ 
-typedef struct {
-    char *name;
-    char *val;
-} entry;
+#define MAX_PARAMS 10000
 
 /*
 ** Function prototypes
 */ 
-int loadEntries(entry *);
+int loadParams(char **, char **);
 void getword(char *, char *, char);
 char *makeword(char *, char);
 char *fmakeword(FILE *, char, int *);

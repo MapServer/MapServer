@@ -44,8 +44,9 @@ int UseShapes=MS_FALSE; // are results of a query to be used in calculating an e
 int SearchMap=MS_FALSE; // apply pan/zoom BEFORE doing the query (e.g. query the output image rather than the input image)
 int SaveMap=MS_FALSE, SaveQuery=MS_FALSE; // should the query and/or map be saved 
 
-entry Entries[MAX_ENTRIES];
-int NumEntries=0;
+char **ParamNames=NULL;
+char **ParamValues=NULL;
+int NumParams=0;
 
 mapObj *Map=NULL;
 

@@ -7,7 +7,7 @@
 #define LF 10
 #define CR 13
 
-int loadEntries(entry *entries) {
+int loadParams(char **names, char **values) {
   register int x,m=0;
   int cl;
   char *s;
@@ -28,10 +28,10 @@ int loadEntries(entry *entries) {
  
     for(x=0;cl && (!feof(stdin));x++) {
       m=x;
-      entries[x].val = fmakeword(stdin,'&',&cl);
-      plustospace(entries[x].val);
-      unescape_url(entries[x].val);
-      entries[x].name = makeword(entries[x].val,'=');
+      values[x] = fmakeword(stdin,'&',&cl);
+      plustospace(values[x]);
+      unescape_url(values[x]);
+      names[x] = makeword(values[x],'=');
     }
   } else { 
     if(strcmp(getenv("REQUEST_METHOD"),"GET") == 0) { /* we've got a get request */
@@ -50,10 +50,10 @@ int loadEntries(entry *entries) {
 
       for(x=0;s[0] != '\0';x++) {
         m=x;
-        entries[x].val = makeword(s,'&');
-        plustospace(entries[x].val);
-        unescape_url(entries[x].val);
-        entries[x].name = makeword(entries[x].val,'=');
+        values[x] = makeword(s,'&');
+        plustospace(values[x]);
+        unescape_url(values[x]);
+        names[x] = makeword(values[x],'=');
       }
     } else {
       printf("Content-type: text/html%c%c",10,10);
