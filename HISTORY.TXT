@@ -18,6 +18,11 @@ Version 3.6.2 (CVS)
 
 - Added msTokenizeMap() in MapScript (and via 'mapserv -t test.map')
 
+- Added map->setFontSet()
+
+- Fixed Windows-specific problem with PHP MapScript ms_newMapObj("")
+  called with empty filename.
+
 
 Version 3.6.1 (2002-06-20)
 --------------------------
