@@ -9,11 +9,11 @@
 #include <time.h>
 #ifndef _WIN32
 #include <sys/time.h>
+#include <unistd.h>
 #endif
 #include <stdarg.h>
 
 #ifdef NEED_NONBLOCKING_STDERR
-#include <unistd.h>
 #include <fcntl.h>
 #endif
 
