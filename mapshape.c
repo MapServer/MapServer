@@ -1110,6 +1110,7 @@ int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
     return(MS_SUCCESS);
 }
 
+// FIX: need to remove recursion (see msLayerNextShape)
 int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape) 
 {
   int i, status;
