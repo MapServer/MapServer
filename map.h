@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.386  2005/01/03 03:01:56  sdlime
+ * Changed my mind, thickness becomes width in a style object.
+ *
  * Revision 1.385  2004/12/22 03:57:42  sdlime
  * Added thickness related parameters to the styleObj in map.h.
  *
@@ -551,8 +554,8 @@ typedef struct {
   int size;
   int minsize, maxsize;
 
-  int thickness;
-  int minthickness, maxthickness;
+  int width;
+  int minwidth, maxwidth;
 
   int offsetx, offsety; // for shadows, hollow symbols, etc...
 
