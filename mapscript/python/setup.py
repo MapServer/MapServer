@@ -70,7 +70,3 @@ setup(name = "mapscript",
       py_modules = ["mapscript"]
      )
 
-
-setup(name = "dbfreader",
-      py_modules = ["dbfreader"]
-     )
