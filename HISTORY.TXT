@@ -16,6 +16,19 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Protect users from 3 potential sources of threading problems: parsing
+  expression strings outside of msLoadMap, evaluating mapserver logical
+  expressions, and loading symbol set files outside of msLoadMap (bug 339).
+
+- Various fixes allowing unit tests to run leak free under valgrind on 
+  i686.  Memory is now properly freed when exiting from common error
+  states (bug 927).
+
+- Restored ability to render transparent (indexed or alpha) pixmap symbols
+  on RGB map images, including annotation layers and embedded scalebars.
+  This feature remains OFF by default for map layers and is enabled by
+  specifying TRANSPARENCY ALPHA (bugs 926, 490).
+
 - mapserv_fcgi.c removed.  Committed new comprehensive FastCGI support. 
 
 - New mapserver exceptions for Java mapscript thanks to Umberto Nicoletti
