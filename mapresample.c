@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.10  2001/05/02 19:46:32  frank
+ * Fixed bug 7, dealing with map extents that fail to reproject
+ *
  * Revision 1.9  2001/04/26 15:08:21  dan
  * Return MS_FALSE instead of FALSE (undefined if gdal.h not included).
  *
@@ -88,6 +91,8 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
     int		nDstYSize = gdImageSY(psDstImage);
     int		nSrcXSize = gdImageSX(psSrcImage);
     int		nSrcYSize = gdImageSY(psSrcImage);
+    int		nFailedPoints = 0, nSetPoints = 0;
+
     x = (double *) malloc( sizeof(double) * nDstXSize );
     y = (double *) malloc( sizeof(double) * nDstXSize );
     panSuccess = (int *) malloc( sizeof(int) * nDstXSize );
@@ -108,7 +113,10 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
             int		nValue;
 
             if( !panSuccess[nDstX] )
+            {
+                nFailedPoints++;
                 continue;
+            }
 
             nSrcX = (int) x[nDstX];
             nSrcY = (int) y[nDstX];
@@ -122,6 +130,7 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
             if( nValue == nOffsite )
                 continue;
 
+            nSetPoints++;
             psDstImage->pixels[nDstY][nDstX] = nValue; 
         }
     }
@@ -129,6 +138,22 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
     free( panSuccess );
     free( x );
     free( y );
+
+/* -------------------------------------------------------------------- */
+/*      Some debugging output.                                          */
+/* -------------------------------------------------------------------- */
+#ifdef notdef
+    if( nFailedPoints > 0 )
+    {
+        char	szMsg[256];
+
+        sprintf( szMsg, 
+                 "msSimpleRasterResampler: "
+                 "%d failed to transform, %d actually set.\n", 
+                 nFailedPoints, nSetPoints );
+        msDebug( szMsg );
+    }
+#endif
 
     return 0;
 }
@@ -317,6 +342,113 @@ int msProjTransformer( void *pCBData, int nPoints,
 }
 #endif /* def USE_PROJ */
 
+/************************************************************************/
+/*                       msTransformMapToSource()                       */
+/*                                                                      */
+/*      Compute the extents of the current map view if transformed      */
+/*      onto the source raster.                                         */
+/************************************************************************/
+
+static int msTransformMapToSource( int nDstXSize, int nDstYSize, 
+                                   double * adfDstGeoTransform,
+                                   projectionObj *psDstProj,
+                                   int nSrcXSize, int nSrcYSize, 
+                                   double * adfInvSrcGeoTransform,
+                                   projectionObj *psSrcProj,
+                                   rectObj *psSrcExtent )
+
+{
+#define EDGE_STEPS    10
+
+    int		i, nSamples = 0;
+    double      dfRatio;
+    double	x[EDGE_STEPS*4+4], y[EDGE_STEPS*4+4], z[EDGE_STEPS*4+4];
+
+    /* Collect edges in map image pixel/line coordinates */
+    for( dfRatio = 0.0; dfRatio <= 0.999; dfRatio += (1.0/EDGE_STEPS) )
+    {
+        assert( nSamples <= EDGE_STEPS*4 );
+        x[nSamples  ] = dfRatio * nDstXSize;
+        y[nSamples++] = 0.0;
+        x[nSamples  ] = dfRatio * nDstXSize;
+        y[nSamples++] = nDstYSize;
+        x[nSamples  ] = 0.0;
+        y[nSamples++] = dfRatio * nDstYSize;
+        x[nSamples  ] = nDstXSize;
+        y[nSamples++] = dfRatio * nDstYSize;
+    }
+
+    /* transform to map georeferenced units */
+    for( i = 0; i < nSamples; i++ )
+    {
+        double		x_out, y_out; 
+
+        x_out = adfDstGeoTransform[0] + x[i] * adfDstGeoTransform[1];
+        y_out = adfDstGeoTransform[3] + y[i] * adfDstGeoTransform[5];
+
+        x[i] = x_out;
+        y[i] = y_out;
+        z[i] = 0.0;
+    }
+
+    if( pj_is_latlong(psDstProj->proj) )
+    {
+        for( i = 0; i < nSamples; i++ )
+        {
+            x[i] = x[i] * DEG_TO_RAD;
+            y[i] = y[i] * DEG_TO_RAD;
+        }
+    }
+
+    /* transform to layer georeferenced coordinates. */
+    if( pj_transform( psDstProj->proj, psSrcProj->proj,
+                      nSamples, 1, x, y, z ) != 0 )
+    {
+        msDebug( "msTransformMapToSource(): "
+                 "pj_transform() failed.  Out of bounds?\n" );
+
+        return MS_FALSE;
+    }
+
+    if( pj_is_latlong(psSrcProj->proj) )
+    {
+        for( i = 0; i < nSamples; i++ )
+        {
+            x[i] = x[i] * RAD_TO_DEG;
+            y[i] = y[i] * RAD_TO_DEG;
+        }
+    }
+
+    /* transform to layer raster coordinates, and collect bounds. */
+    for( i = 0; i < nSamples; i++ )
+    {
+        double		x_out, y_out; 
+
+        x_out =      adfInvSrcGeoTransform[0]
+            +   x[i]*adfInvSrcGeoTransform[1]
+            +   y[i]*adfInvSrcGeoTransform[2];
+        y_out =      adfInvSrcGeoTransform[3]
+            +   x[i]*adfInvSrcGeoTransform[4]
+            +   y[i]*adfInvSrcGeoTransform[5];
+
+        if( i == 0 )
+        {
+            psSrcExtent->minx = psSrcExtent->maxx = x_out;
+            psSrcExtent->miny = psSrcExtent->maxy = y_out;
+        }
+        else
+        {
+            psSrcExtent->minx = MIN(psSrcExtent->minx, x_out);
+            psSrcExtent->maxx = MAX(psSrcExtent->maxx, x_out);
+            psSrcExtent->miny = MIN(psSrcExtent->miny, y_out);
+            psSrcExtent->maxy = MAX(psSrcExtent->maxy, y_out);
+        }
+    }
+
+    return MS_TRUE;
+}
+
+
 #ifdef USE_GDAL
 /************************************************************************/
 /*                        msResampleGDALToMap()                         */
@@ -330,14 +462,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 /*      We require PROJ.4 4.4.2 or later.  Earlier versions don't       */
 /*      have PJD_GRIDSHIFT.                                             */
 /* -------------------------------------------------------------------- */
-#ifndef PJD_GRIDSHIFT 
+#if !defined(PJD_GRIDSHIFT) && !defined(PJ_VERSION)
     return 0;
 #else
-#define EDGE_STEPS    10
-    int		i, nSamples=0, nSrcXSize, nSrcYSize, nDstXSize, nDstYSize;
-    int		result;
-    double      dfRatio;
-    double	x[EDGE_STEPS*4+4], y[EDGE_STEPS*4+4], z[EDGE_STEPS*4+4];
+    int		nSrcXSize, nSrcYSize, nDstXSize, nDstYSize;
+    int		result, bSuccess;
     double	adfSrcGeoTransform[6], adfDstGeoTransform[6];
     double      adfInvSrcGeoTransform[6];
     rectObj	sSrcExtent;
@@ -378,90 +507,27 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 /*      collecting the extents of a region around the edge of the       */
 /*      destination chunk.                                              */
 /* -------------------------------------------------------------------- */
+    bSuccess = 
+        msTransformMapToSource( nDstXSize, nDstYSize, adfDstGeoTransform,
+                                &(map->projection),
+                                nSrcXSize, nSrcYSize, adfInvSrcGeoTransform,
+                                &(layer->projection),
+                                &sSrcExtent );
 
-    /* Collect edges in map image pixel/line coordinates */
-    for( dfRatio = 0.0; dfRatio <= 0.999; dfRatio += (1.0/EDGE_STEPS) )
+/* -------------------------------------------------------------------- */
+/*      If the transformation failed, it is likely that we have such    */
+/*      broad extents that the projection transformation failed at      */
+/*      points around the extents.  If so, we will assume we need       */
+/*      the whole raster.  This and later assumptions are likely to     */
+/*      result in the raster being loaded at a higher resolution        */
+/*      than really needed but should give decent results.              */
+/* -------------------------------------------------------------------- */
+    if( !bSuccess )
     {
-        assert( nSamples <= EDGE_STEPS*4 );
-        x[nSamples  ] = dfRatio * nDstXSize;
-        y[nSamples++] = 0.0;
-        x[nSamples  ] = dfRatio * nDstXSize;
-        y[nSamples++] = nDstYSize;
-        x[nSamples  ] = 0.0;
-        y[nSamples++] = dfRatio * nDstYSize;
-        x[nSamples  ] = nDstXSize;
-        y[nSamples++] = dfRatio * nDstYSize;
-    }
-
-    /* transform to map georeferenced units */
-    for( i = 0; i < nSamples; i++ )
-    {
-        double		x_out, y_out; 
-
-        x_out = map->extent.minx + x[i] * map->cellsize;
-        y_out = map->extent.maxy - y[i] * map->cellsize;
-
-        x[i] = x_out;
-        y[i] = y_out;
-        z[i] = 0.0;
-    }
-
-    if( pj_is_latlong(map->projection.proj) )
-    {
-        for( i = 0; i < nSamples; i++ )
-        {
-            x[i] = x[i] * DEG_TO_RAD;
-            y[i] = y[i] * DEG_TO_RAD;
-        }
-    }
-
-    /* transform to layer georeferenced coordinates. */
-    if( pj_transform( map->projection.proj, layer->projection.proj, 
-                      nSamples, 1, x, y, z ) != 0 )
-    {
-        char	szErrorMsg[2048];
-
-        sprintf( szErrorMsg, 
-                 "%spj_transform() failed for edge point(s).",
-                 pj_strerrno(pj_errno));
-
-        msSetError(MS_PROJERR, szErrorMsg, "msResampleGDALToMap()" );
-        return MS_PROJERR;
-    }
-
-    if( pj_is_latlong(layer->projection.proj) )
-    {
-        for( i = 0; i < nSamples; i++ )
-        {
-            x[i] = x[i] * RAD_TO_DEG;
-            y[i] = y[i] * RAD_TO_DEG;
-        }
-    }
-
-    /* transform to layer raster coordinates, and collect bounds. */
-    for( i = 0; i < nSamples; i++ )
-    {
-        double		x_out, y_out; 
-
-        x_out =      adfInvSrcGeoTransform[0]
-            +   x[i]*adfInvSrcGeoTransform[1]
-            +   y[i]*adfInvSrcGeoTransform[2];
-        y_out =      adfInvSrcGeoTransform[3]
-            +   x[i]*adfInvSrcGeoTransform[4]
-            +   y[i]*adfInvSrcGeoTransform[5];
-
-        if( i == 0 )
-        {
-            sSrcExtent.minx = sSrcExtent.maxx = x_out;
-            sSrcExtent.miny = sSrcExtent.maxy = y_out;
-        }
-        else
-        {
-            sSrcExtent.minx = MIN(sSrcExtent.minx, x_out);
-            sSrcExtent.maxx = MAX(sSrcExtent.maxx, x_out);
-            sSrcExtent.miny = MIN(sSrcExtent.miny, y_out);
-            sSrcExtent.maxy = MAX(sSrcExtent.maxy, y_out);
-        }
+        sSrcExtent.minx = 0;
+        sSrcExtent.maxx = nSrcXSize-1;
+        sSrcExtent.miny = 0;
+        sSrcExtent.maxy = nSrcYSize-1;
     }
 
 /* -------------------------------------------------------------------- */
@@ -472,12 +538,12 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     sSrcExtent.maxx = ceil (sSrcExtent.maxx+1.0);
     sSrcExtent.miny = floor(sSrcExtent.miny-1.0);
     sSrcExtent.maxy = ceil (sSrcExtent.maxy+1.0);
-
+        
     sSrcExtent.minx = MAX(0,sSrcExtent.minx);
     sSrcExtent.maxx = MIN(sSrcExtent.maxx, nSrcXSize );
     sSrcExtent.miny = MAX(sSrcExtent.miny, 0 );
     sSrcExtent.maxy = MIN(sSrcExtent.maxy, nSrcYSize );
-
+        
     if( sSrcExtent.maxx <= sSrcExtent.minx 
         || sSrcExtent.maxy <= sSrcExtent.miny )
         return 0;
