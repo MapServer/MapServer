@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.52  2005/04/01 23:02:45  frank
+ * Avoid emitting extra whitespace in the gml:coordinates for the gml:Box.
+ * Related to bug 1304.
+ *
  * Revision 1.51  2005/03/25 20:39:24  sdlime
  * Fixed problem in WFS GML writer. Memory was being free'd in the wrong place. Should've been inside the if-then statement that tests if a layer is valid for WFS output.
  *
@@ -92,9 +96,9 @@ static int gmlWriteBounds_GML2(FILE *stream, rectObj *rect, const char *srsname,
   } else
     msIO_fprintf(stream, "%s\t<gml:Box>\n", tab);
 
-  msIO_fprintf(stream, "%s\t\t<gml:coordinates>\n", tab);  
-  msIO_fprintf(stream, "%s\t\t\t%.6f,%.6f %.6f,%.6f\n", tab, rect->minx, rect->miny, rect->maxx, rect->maxy );   
-  msIO_fprintf(stream, "%s\t\t</gml:coordinates>\n", tab);
+  msIO_fprintf(stream, "%s\t\t<gml:coordinates>", tab);  
+  msIO_fprintf(stream, "%.6f,%.6f %.6f,%.6f", rect->minx, rect->miny, rect->maxx, rect->maxy );   
+  msIO_fprintf(stream, "</gml:coordinates>\n", tab);
   msIO_fprintf(stream, "%s\t</gml:Box>\n", tab);
   msIO_fprintf(stream, "%s</gml:boundedBy>\n", tab);
 
