@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2002/12/19 06:30:59  dan
+ * Enable caching WMS/WFS request using tmp filename built from URL
+ *
  * Revision 1.8  2002/12/19 05:17:09  dan
  * Report WFS exceptions, and do not fail on WFS requests returning 0 features
  *
@@ -304,8 +307,9 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
     pszURL = NULL;
     // We'll store the remote server's response to a tmp file.
-    pasReqInfo[(*numRequests)].pszOutputFile = msTmpFile(map->web.imagepath, 
-                                                         "gml.tmp");
+    pasReqInfo[(*numRequests)].pszOutputFile =  
+        msOWSBuildURLFilename(map->web.imagepath, 
+                              pasReqInfo[(*numRequests)].pszGetUrl,".tmp.gml");
     pasReqInfo[(*numRequests)].nStatus = 0;
     pasReqInfo[(*numRequests)].nTimeout = nTimeout;
     pasReqInfo[(*numRequests)].bbox = bbox;
@@ -424,7 +428,7 @@ int msWFSLayerOpen(layerObj *lp,
         psInfo->pszGMLFilename = strdup(pszGMLFilename);
     else
         psInfo->pszGMLFilename = msTmpFile(lp->map->web.imagepath, 
-                                           "gml.tmp");
+                                           "tmp.gml");
 
     if (defaultBBOX)
     {
@@ -555,8 +559,11 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
 
         if ( msPrepareWFSLayerRequest(-1, lp->map, lp,
                                       asReqInfo, &numReq) == MS_FAILURE  ||
-             msOWSExecuteRequests(asReqInfo, numReq, lp->map) == MS_FAILURE )
+             msOWSExecuteRequests(asReqInfo, numReq, 
+                                  lp->map, MS_TRUE) == MS_FAILURE )
         {
+            // Delete tmp file... we don't want it to stick around.
+            unlink(asReqInfo[0].pszOutputFile);
             return MS_FAILURE;
         }
 
@@ -567,6 +574,9 @@ int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
 
     if ( !MS_HTTP_SUCCESS( psInfo->nStatus ) )
     {
+        // Delete tmp file... we don't want it to stick around.
+        unlink(psInfo->pszGMLFilename);
+
         msSetError(MS_WFSCONNERR, 
                    "Got HTTP status %d downloading WFS layer %s", 
                    "msWFSLayerWhichShapes()",

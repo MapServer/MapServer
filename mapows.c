@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.12  2002/12/19 06:30:59  dan
+ * Enable caching WMS/WFS request using tmp filename built from URL
+ *
  * Revision 1.11  2002/12/19 05:17:09  dan
  * Report WFS exceptions, and do not fail on WFS requests returning 0 features
  *
@@ -46,6 +49,8 @@
  **********************************************************************/
 
 #include "map.h"
+
+#include <ctype.h> /* isalnum() */
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
 
@@ -789,12 +794,12 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
  * update layerObj information with the result of the requests.
  **********************************************************************/
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
-                         mapObj *map)
+                         mapObj *map, int bCheckLocalCache)
 {
     int nStatus, iReq;
 
     // Execute requests
-    nStatus = msHTTPExecuteRequests(pasReqInfo, numRequests);
+    nStatus = msHTTPExecuteRequests(pasReqInfo, numRequests, bCheckLocalCache);
 
     // Scan list of layers and call the handler for each layer type to
     // pass them the request results.
@@ -876,6 +881,57 @@ void msOWSProcessException(layerObj *lp, const char *pszFname,
     }
 }
 
+/**********************************************************************
+ *                          msOWSBuildURLFilename()
+ *
+ * Build a unique filename for this URL to use in caching remote server 
+ * requests.  Slashes and illegal characters will be turned into '_'
+ *
+ * Returns a newly allocated buffer that should be freed by the caller or
+ * NULL in case of error.
+ **********************************************************************/
+char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL, 
+                            const char *pszExt)
+{
+    char *pszBuf, *pszPtr;
+    int  i, nBufLen;
+
+    nBufLen = strlen(pszURL) + strlen(pszExt) +1;
+    if (pszPath)
+        nBufLen += (strlen(pszPath)+1);
+
+    pszBuf = (char*)malloc((nBufLen+1)*sizeof(char));
+    if (pszBuf == NULL)
+    {
+        msSetError(MS_MEMERR, NULL, "msOWSBuildURLFilename()");
+        return NULL;
+    }
+    pszBuf[0] = '\0';
+
+    if (pszPath)
+    {
+#ifdef _WIN32
+        sprintf(pszBuf, "%s\\", pszPath);
+#else
+        sprintf(pszBuf, "%s/", pszPath);
+#endif
+    }
+
+    pszPtr = pszBuf + strlen(pszBuf);
+
+    for(i=0; pszURL[i] != '\0'; i++)
+    {
+        if (isalnum(pszURL[i]))
+            *pszPtr = pszURL[i];
+        else
+            *pszPtr = '_';
+        pszPtr++;
+    }
+    
+    strcpy(pszPtr, pszExt);
+
+    return pszBuf;
+}
 
 
 #endif /* USE_WMS_SVR || USE_WFS_SVR */

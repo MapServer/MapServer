@@ -149,7 +149,7 @@ imageObj *msDrawMap(mapObj *map)
 #endif
     }
     if (numOWSRequests && 
-        msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map) == MS_FAILURE)
+        msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE)
     {
         return NULL;
     }
@@ -786,7 +786,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 
         if ( msPrepareWMSLayerRequest(1, map, layer,
                                       asReqInfo, &numReq) == MS_FAILURE  ||
-             msOWSExecuteRequests(asReqInfo, numReq, map) == MS_FAILURE )
+             msOWSExecuteRequests(asReqInfo, numReq, map, MS_TRUE) == MS_FAILURE )
         {
             return MS_FAILURE;
         }

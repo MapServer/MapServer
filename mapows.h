@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.13  2002/12/19 06:30:59  dan
+ * Enable caching WMS/WFS request using tmp filename built from URL
+ *
  * Revision 1.12  2002/12/19 05:17:09  dan
  * Report WFS exceptions, and do not fail on WFS requests returning 0 features
  *
@@ -55,7 +58,7 @@
  *   maphttp.c
  *====================================================================*/
 
-#define MS_HTTP_SUCCESS(status)  (status == 200)
+#define MS_HTTP_SUCCESS(status)  (status == 200 || status == 242)
 
 typedef struct http_request_info
 {
@@ -78,9 +81,10 @@ void msHTTPCleanup();
 
 void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
 void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests);
+int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
+                           int bCheckLocalCache);
 int  msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
-                   int nTimeout);
+                   int nTimeout, int bCheckLocalCache);
 
 
 /*====================================================================
@@ -130,9 +134,11 @@ char *msEncodeHTMLEntities(const char *string);
 void msDecodeHTMLEntities(const char *string);
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
 int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
-                         mapObj *map);
+                         mapObj *map, int bCheckLocalCache);
 void msOWSProcessException(layerObj *lp, const char *pszFname, 
                            int nErrorCode, const char *pszFuncName);
+char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL, 
+                            const char *pszExt);
 
 #endif
 

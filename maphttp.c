@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2002/12/19 06:30:59  dan
+ * Enable caching WMS/WFS request using tmp filename built from URL
+ *
  * Revision 1.4  2002/12/17 21:33:54  dan
  * Enable following redirections with libcurl (requires libcurl 7.10.1+)
  *
@@ -202,8 +205,11 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
  *
  * Fetch a map slide via HTTP request and save to specified temp file.
  *
+ * If bCheckLocalCache==MS_TRUE then if the pszOutputfile already exists 
+ * then is is not downloaded again, and status 242 is returned.
  **********************************************************************/
-int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests)
+int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
+                          int bCheckLocalCache)
 {
     int     i, nStatus = MS_SUCCESS, nTimeout, still_running=0, num_msgs=0;
     CURLM   *multi_handle;
@@ -258,6 +264,22 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests)
         if (pasReqInfo[i].pszContentType)
             free(pasReqInfo[i].pszContentType);
         pasReqInfo[i].pszContentType = NULL;
+
+        /* Check local cache if requested */
+        if (bCheckLocalCache)
+        {
+            fp = fopen(pasReqInfo[i].pszOutputFile, "r");
+            if (fp)
+            {
+                // File already there, don't download again.
+                msDebug("HTTP request: id=%d, found in cache, skipping.\n", 
+                        pasReqInfo[i].nLayerId);
+                fclose(fp);
+                pasReqInfo[i].nStatus = 242;
+                pasReqInfo[i].pszContentType = strdup("unknown/cached");
+                continue;
+            }
+        }
 
         /* Alloc curl handle */
         http_handle = curl_easy_init();
@@ -421,6 +443,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests)
         CURL *http_handle;
         long lVal=0;
 
+        if (pasReqInfo[i].nStatus == 242)
+            continue;  // Nothing to do here, this file was in cache already
+
         if (pasReqInfo[i].fp)
             fclose(pasReqInfo[i].fp);
         pasReqInfo[i].fp = NULL;
@@ -477,7 +502,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests)
  * Wrapper to call msHTTPExecuteRequests() for a single file.
  **********************************************************************/
 int msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
-                  int nTimeout)
+                  int nTimeout, int bCheckLocalCache)
 {
     httpRequestObj *pasReqInfo;
 
@@ -492,7 +517,7 @@ int msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
     pasReqInfo[0].pszGetUrl = strdup(pszGetUrl);
     pasReqInfo[0].pszOutputFile = strdup(pszOutputFile);
     
-    if (msHTTPExecuteRequests(pasReqInfo, 1) != MS_SUCCESS)
+    if (msHTTPExecuteRequests(pasReqInfo, 1, bCheckLocalCache) != MS_SUCCESS)
     {
         *pnHTTPStatus = pasReqInfo[0].nStatus;
         msDebug("HTTP request failed.\n", pszGetUrl);
