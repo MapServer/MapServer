@@ -59,7 +59,7 @@ extern "C" {
 // General defines, not wrapable
 #ifndef SWIG
 #define MS_MAPFILE_EXPR "\\.map$"
-#define MS_TEMPLATE_EXPR "\\.(wm|htm)l?$"
+#define MS_TEMPLATE_EXPR "\\.(jsp|asp|cfm|xml|wml|html|htm|shtml|phtml)$"
 
 #define MS_INDEX_EXTENSION ".qix"
 #define MS_QUERY_EXTENSION ".qy"
