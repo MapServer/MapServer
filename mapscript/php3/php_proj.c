@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2002/01/22 19:18:54  dan
+ * Fixed a typo in pj_transform() docs
+ *
  * Revision 1.6  2002/01/22 19:18:17  dan
  * Took pj_datum_transform() out of docs to discourage its use.
  *
@@ -116,7 +119,7 @@
  *              $ingeox = 1537490.335842;
  *              $ingeoy = -181633.471555;
  *
- *              $ret = pj_datum_transform($pjlcc, $pjlat, $ingeox, $ingeoy);
+ *              $ret = pj_transform($pjlcc, $pjlat, $ingeox, $ingeoy);
  *
  * 5) pj_free : frees PJ structure
  *     
