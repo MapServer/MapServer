@@ -526,7 +526,7 @@ int msSHPWritePoint(SHPHandle psSHP, pointObj *point )
   /* -------------------------------------------------------------------- */
   psSHP->nRecords++;
   if( psSHP->nRecords > psSHP->nMaxRecords ) {
-    psSHP->nMaxRecords = psSHP->nMaxRecords * 1.3 + 100;
+    psSHP->nMaxRecords = (int) (psSHP->nMaxRecords * 1.3 + 100);
     
     psSHP->panRecOffset = (int *) 
       SfRealloc(psSHP->panRecOffset,sizeof(int) * psSHP->nMaxRecords );
@@ -615,7 +615,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   psSHP->nRecords++;
   if( psSHP->nRecords > psSHP->nMaxRecords ) {
-    psSHP->nMaxRecords = psSHP->nMaxRecords * 1.3 + 100;
+    psSHP->nMaxRecords = (int) (psSHP->nMaxRecords * 1.3 + 100);
     
     psSHP->panRecOffset = (int *) 
       SfRealloc(psSHP->panRecOffset,sizeof(int) * psSHP->nMaxRecords );

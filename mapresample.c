@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2004/09/28 20:29:18  frank
+ * avoid double to int casting warnings
+ *
  * Revision 1.50  2004/09/03 15:35:02  frank
  * pass correct map into msImageCreate()
  *
@@ -936,9 +939,9 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 /* -------------------------------------------------------------------- */
     if( nFailures > 0 )
     {
-        int nGrowAmountX = 
+        int nGrowAmountX = (int) 
             (psSrcExtent->maxx - psSrcExtent->minx)/EDGE_STEPS + 1;
-        int nGrowAmountY = 
+        int nGrowAmountY = (int) 
             (psSrcExtent->maxy - psSrcExtent->miny)/EDGE_STEPS + 1;
 
         psSrcExtent->minx = MAX(psSrcExtent->minx - nGrowAmountX,0);
@@ -1085,10 +1088,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     else
         sDummyMap.cellsize = dfNominalCellSize;
 
-    nLoadImgXSize = MAX(1,(sSrcExtent.maxx - sSrcExtent.minx) 
-                        * (dfNominalCellSize / sDummyMap.cellsize));
-    nLoadImgYSize = MAX(1,(sSrcExtent.maxy - sSrcExtent.miny) 
-                        * (dfNominalCellSize / sDummyMap.cellsize));
+    nLoadImgXSize = (int) MAX(1,(sSrcExtent.maxx - sSrcExtent.minx) 
+                              * (dfNominalCellSize / sDummyMap.cellsize));
+    nLoadImgYSize = (int) MAX(1,(sSrcExtent.maxy - sSrcExtent.miny) 
+                              * (dfNominalCellSize / sDummyMap.cellsize));
         
     if( layer->debug )
         msDebug( "msResampleGDALToMap in effect: cellsize = %f\n", 
