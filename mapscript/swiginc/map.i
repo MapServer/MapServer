@@ -90,32 +90,6 @@
         return msMapSetRotation( self, rotation_angle );
     }
  
-  /* removeLayer() adjusts the layers array, the indices of
-   * the remaining layers, the layersdrawing order, and numlayers
-   */
-  /*int removeLayer(int index) {
-    int i, drawindex = MS_MAXLAYERS + 1;
-    if ((index < 0) || (index >= self->numlayers)) {
-      return MS_FAILURE;
-    }
-    for (i = index + 1; i < self->numlayers; i++) {
-      self->layers[i].index--;
-      self->layers[i-1] = self->layers[i];
-    }
-    for (i = 0; i < self->numlayers; i++) {
-      if (self->layerorder[i] == index) {
-        drawindex = i;
-        break;
-      }
-      if (i > drawindex) {
-        self->layerorder[i-1] = self->layerorder[i];
-      }
-    }
-    self->numlayers--;
-    self->layerorder[self->numlayers] = 0;
-    return MS_SUCCESS;
-  }*/
-
   layerObj *getLayer(int i) {
     if(i >= 0 && i < self->numlayers)	
       return &(self->layers[i]); /* returns an EXISTING layer */
