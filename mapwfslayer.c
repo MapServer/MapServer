@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2004/03/15 07:43:42  frank
+ * avoid warnings about usused variables when building without USE_WFS_LYR
+ *
  * Revision 1.19  2004/03/11 22:45:39  dan
  * Added pszPostContentType in httpRequestObj instead of using hardcoded
  * text/html mime type for all post requests.
@@ -270,10 +273,9 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
 char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp, 
                                  rectObj *bbox, wfsParamsObj *psParams) 
 {
+#ifdef USE_WFS_LYR
     char *pszPostReq = NULL;
     char *pszFilter = NULL;
-
-#ifdef USE_WFS_LYR
 
     if (psParams->pszVersion == NULL || 
         (strncmp(psParams->pszVersion, "0.0.14", 6) != 0 &&
@@ -1123,10 +1125,10 @@ int msWFSLayerClose(layerObj *lp)
  **********************************************************************/
 char *msWFSExecuteGetFeature(layerObj *lp)
 {
+#ifdef USE_WFS_LYR
   char *gmltmpfile = NULL;
   msWFSLayerInfo *psInfo = NULL;
 
-#ifdef USE_WFS_LYR
   if (lp == NULL || lp->connectiontype != MS_WFS)
     return NULL;
 
