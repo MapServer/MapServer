@@ -1636,8 +1636,10 @@ memory.") const char * {
     msFreeImage(self);    
   }
 
+  // Deprecated in 4.2 - users should delete or undef instances instead
+  // of calling the free method.
   void free() {
-    msFreeImage(self);    
+    //msFreeImage(self);    
   }
 
     /* saveGeo - see Bugzilla issue 549 */ 
