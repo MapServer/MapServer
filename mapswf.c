@@ -895,7 +895,7 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
 /*      Start the Element array that will contain the values of the     */
 /*      attributes.                                                     */
 /* -------------------------------------------------------------------- */
-        if (metadata=msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES"))
+        if (metadata=(msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES")))
         {
             tokens = split(metadata, ',', &n);
             if (tokens && n > 0)
@@ -940,10 +940,6 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
     SWFAction   oAction;
     int nTmp = 0;
     
-    int nttt;
-    int sttt = NULL;
-
-    //nttt = strlen(sttt);
     if (image &&  MS_DRIVER_SWF(image->format))
     {
         image->img.swf->nCurrentShapeIdx = shape->index;
@@ -954,7 +950,7 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
 /*      get an array of indexes corresponding to the attributes. We     */
 /*      will use this array to retreive the values.                     */
 /* -------------------------------------------------------------------- */
-        if (metadata=msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES"))
+        if (metadata=(msLookupHashTable(layer->metadata, "SWFDUMPATTRIBUTES")))
         {
             char **tokens;
             int n = 0;
@@ -987,13 +983,13 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
         if (panIndex)
         {
-            sprintf(gszAction, "Element[%d]=new Array();", shape->index);
+            sprintf(gszAction, "Element[%l]=new Array();", (int)shape->index);
             oAction = compileSWFActionCode(gszAction);
             SWFMovie_add(image->img.swf->pasMovies[nTmp], oAction);
 
             for (i=0; i<iIndex; i++)
             {
-                sprintf(gszAction, "Element[%d][%d]=\"%s\";", shape->index,
+                sprintf(gszAction, "Element[%d][%d]=\"%s\";", (int)shape->index,
                         i, shape->values[panIndex[i]]);
                 oAction = compileSWFActionCode(gszAction);
                 SWFMovie_add(image->img.swf->pasMovies[nTmp], oAction);
@@ -1095,8 +1091,6 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 
     int nTmp = 0;
     
-    FILE *out;
-
 
     int nLayerIndex = -1;
     int nShapeIndex = -1;
@@ -1140,7 +1134,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     psLayerTmp = 
       &(image->img.swf->map->layers[image->img.swf->nCurrentLayerIdx]);
 
-    if (psLayerTmp->metadata, "SWFDUMPATTRIBUTES")
+    if (msLookupHashTable(psLayerTmp->metadata, "SWFDUMPATTRIBUTES"))
     {
         nLayerIndex = image->img.swf->nCurrentLayerIdx;
         nShapeIndex = image->img.swf->nCurrentShapeIdx;
@@ -1278,7 +1272,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                                      MS_NINT(scale*symbol->points[0].y),
                                      psFillColor, psOutlineColor,
                                      &sColorHighlightObj,
-                                       nLayerIndex, nShapeIndex);
+                                     nLayerIndex, nShapeIndex);
                 SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
             } 
             else 
@@ -1591,12 +1585,15 @@ void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
         {
             oShape = DrawShapePolyline(p, &sFc);
             SWFMovie_add(image->img.swf->pasMovies[nTmp], oShape);
+            //destroySWFShape(oShape);
         }
         else
         {
             oButton = DrawButtonPolyline(p, &sFc, &sColorHighlightObj, nLayerIndex, 
                                          nShapeIndex);
             SWFMovie_add(image->img.swf->pasMovies[nTmp], oButton);
+            //destroySWFButton(oButton);
+            
         }
         return;
     }
@@ -1626,7 +1623,6 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     int         nTmp = 0;
     colorObj    *psFillColor = NULL;
     colorObj    *psOutlineColor = NULL;
-   colorObj    *psBackgroungColor = NULL;
 
     colorObj    sColorHighlightObj;
 
@@ -1639,8 +1635,6 @@ void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image,
     int         nLayerIndex = -1;
     int         nShapeIndex = -1;
 
-
-    FILE        *out;
 
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
@@ -1897,6 +1891,9 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
         
         if (dfWidth <=0)
             return -1;
+
+        //destroySWFText(oText);
+        //destroySWFFont(oFont);
     }
 
     rect->minx = 0;
