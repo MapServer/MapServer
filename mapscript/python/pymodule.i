@@ -18,16 +18,22 @@
  * Simple Typemaps
  *****************************************************************************/
 
-// Translates Python None to C NULL for strings
+/* Translates Python None to C NULL for strings */
 %typemap(in,parse="z") char * "";
 
-// Translate Python's built-in file object to FILE *
-%typemap(python,in) FILE * {
+/* Translate Python's built-in file object to FILE * */
+%typemap(in) FILE * {
     if (!PyFile_Check($input)) {
         PyErr_SetString(PyExc_TypeError, "Input is not file");
         return NULL;
     }
     $1 = PyFile_AsFile($input);
+}
+
+/* To support imageObj::getBytes */
+%typemap(out) gdBuffer {
+    $result = PyString_FromStringAndSize($1.data, $1.size); 
+    gdFree($1.data);
 }
 
 /**************************************************************************

@@ -46,7 +46,7 @@ class LabelCacheMemberTestCase(MapTestCase):
     def testCacheMemberText(self):
         """string attribute has been renamed to 'text' (bug 852)"""
         img = self.map.draw()
-        assert self.map.labelcache.numlabels == 2
+        assert self.map.labelcache.numlabels == 2, self.map.labelcache.numlabels
         label = self.map.nextLabel()
         assert label.text == 'A Point', label.text
         

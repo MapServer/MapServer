@@ -173,6 +173,25 @@ class ImageWriteTestCase(MapTestCase):
         else:
             assert 1
 
+    def testImageGetBytes(self):
+        """image returns bytes"""
+        image = self.map.draw()
+        assert image.thisown == 1
+         
+        s = cStringIO.StringIO(image.getBytes())
+        
+        filename = 'testImageGetBytes.png'
+        fh = open(filename, 'wb')
+        fh.write(s.getvalue())
+        fh.close()
+        if have_image:
+            pyimg = Image.open(filename)
+            assert pyimg.format == 'PNG'
+            assert pyimg.size == (200, 200)
+            assert pyimg.mode == 'P'
+        else:
+            assert 1
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -199,5 +199,33 @@
     }
 #endif
 
+    /*
+    -------------------------------------------------------------------------
+    getBytes returns a gdBuffer structure (defined in mapscript.i) which must
+    be typemapped to an object appropriate to the target language.  This
+    typemap must also gdFree the data member of the gdBuffer.  See the type-
+    maps in java/javamodule.i and python/pymodule.i for examples.
+
+    contributed by Jerry Pisk, jerry.pisk@gmail.com
+    -------------------------------------------------------------------------
+    */
+    
+    gdBuffer getBytes() 
+    {
+        gdBuffer buffer;
+        
+        buffer.data = msSaveImageBufferGD(self->img.gd, &buffer.size,
+                                          self->format);
+        if( buffer.size == 0 )
+        {
+            buffer.data = NULL;
+            msSetError(MS_MISCERR, "Failed to get image buffer", "getBytes");
+            return buffer;
+        }
+
+        return buffer;
+    }
+    
+
 }
 
