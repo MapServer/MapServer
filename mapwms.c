@@ -948,7 +948,6 @@ int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, in
   imageObj *img;
   int i = 0;
 
-
   // __TODO__ msDrawMap() will try to adjust the extent of the map
   // to match the width/height image ratio.
   // The spec states that this should not happen so that we can deliver
@@ -967,12 +966,12 @@ int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, in
       if (strcasecmp(names[i], "SLD") == 0 && 
           values[i] && strlen(values[i]) > 0) 
       {
-          msSLDApplySLDURL(map, values[i]);
+          msSLDApplySLDURL(map, values[i], -1);
       }
       else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
                values[i] && strlen(values[i]) > 0)
       {
-          msSLDApplySLD(map, values[i]);
+          msSLDApplySLD(map, values[i], -1);
       }
         
   }

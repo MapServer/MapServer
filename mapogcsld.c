@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2003/12/03 18:52:21  assefa
+ * Add partly support for SLD generation.
+ *
  * Revision 1.7  2003/12/01 16:10:13  assefa
  * Add #ifdef USE_OGR for sld functions available to mapserver.
  *
@@ -85,7 +88,7 @@
 /*      on the map. Layer name and Named Layer's name parameter are     */
 /*      used to do the match.                                           */
 /************************************************************************/
-int msSLDApplySLDURL(mapObj *map, char *szURL)
+int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer)
 {
 #ifdef USE_OGR
 
@@ -112,7 +115,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL)
         }
 
         if (pszSLDbuf)
-          msSLDApplySLD(map, pszSLDbuf);
+          msSLDApplySLD(map, pszSLDbuf, iLayer);
     }
 
     return MS_SUCCESS;
@@ -137,7 +140,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL)
 /*      they have the same name, copy the classes asscoaited with       */
 /*      the SLD layers onto the map layers.                             */
 /************************************************************************/
-int msSLDApplySLD(mapObj *map, char *psSLDXML)
+int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer)
 {
 #ifdef USE_OGR
 
@@ -150,9 +153,11 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML)
 
     if (pasLayers && nLayers > 0)
     {
-
         for (i=0; i<map->numlayers; i++)
         {
+            if (iLayer >=0 && iLayer< map->numlayers)
+              i = iLayer;
+
             for (j=0; j<nLayers; j++)
             {
                     
@@ -191,6 +196,9 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML)
                     break;
                 }
             }
+            if (iLayer >=0 && iLayer< map->numlayers)
+              break;
+            
         }
 
     }
@@ -343,7 +351,6 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     double dfMinScale=0, dfMaxScale=0;
     char *pszName=NULL, *pszTitle=NULL;
     
-
     if (psRoot && psLayer)
     {
         psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
@@ -2119,32 +2126,49 @@ void msSLDSetColorObject(char *psHexColor, colorObj *psColor)
 
 #endif
 
+/* -------------------------------------------------------------------- */
+/*      client sld support functions                                    */
+/* -------------------------------------------------------------------- */
 
-char *msSLDGenerateSLD(mapObj *map)
+char *msSLDGenerateSLD(mapObj *map, int iLayer)
 {
 #ifdef USE_OGR
-    char szBuffer[5000];
+    char szTmp[100];
     int i = 0;
     char *pszTmp = NULL;
-    szBuffer[0] = '\0';
+    char *pszSLD = NULL;
+
 
     if (map)
     {
-        sprintf(szBuffer, "%s\n", "<StyledLayerDescriptor version=\"1.0.0\">");
-        for (i=0; i<map->numlayers; i++)
+        sprintf(szTmp, "%s\n", "<StyledLayerDescriptor version=\"1.0.0\">");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+        if (iLayer < 0 || iLayer > map->numlayers -1)
         {
-            pszTmp = msSLDGenerateSLDLayer(&map->layers[i]);
-            if (pszTmp)
+            for (i=0; i<map->numlayers; i++)
             {
-                strcat(szBuffer, pszTmp);
-                free(pszTmp);
+                pszTmp = msSLDGenerateSLDLayer(&map->layers[i]);
+                if (pszTmp)
+                {
+                    pszSLD= strcatalloc(pszSLD, pszTmp);
+                    free(pszTmp);
+                }
             }
         }
-        strcat(szBuffer, "</StyledLayerDescriptor>\n");
-        
+        else
+        {
+             pszTmp = msSLDGenerateSLDLayer(&map->layers[iLayer]);
+             if (pszTmp)
+             {
+                 pszSLD = strcatalloc(pszSLD, pszTmp);
+                 free(pszTmp);
+             }
+        }
+        sprintf(szTmp, "%s", "</StyledLayerDescriptor>\n");
+        pszSLD = strcatalloc(pszSLD, szTmp);
     }
 
-    return strdup(szBuffer);
+    return pszSLD;
 
 #else
 /* ------------------------------------------------------------------
@@ -2159,6 +2183,136 @@ char *msSLDGenerateSLD(mapObj *map)
 }
 
 
+char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer)
+{
+    char szTmp[100];
+    char *pszSLD = NULL;
+    char szHexColor[7];
+
+    sprintf(szTmp, "%s\n",  "<PolygonSymbolizer>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+    //fill
+    if (psStyle->color.red != -1 && psStyle->color.green != -1 &&
+        psStyle->color.blue != -1)
+    {
+
+        sprintf(szTmp, "%s\n",  "<Fill>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+        
+        sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
+                psStyle->color.green,psStyle->color.blue);
+                             
+        sprintf(szTmp, 
+                "<CssParameter name=\"fill\">#%s</CssParameter>\n", 
+                szHexColor);
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        sprintf(szTmp, "%s\n",  "<Fill>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+    }
+    //stroke
+    if (psStyle->outlinecolor.red != -1 && 
+        psStyle->outlinecolor.green != -1 &&
+        psStyle->outlinecolor.blue != -1)
+    {
+        sprintf(szTmp, "%s\n",  "<Stroke>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        sprintf(szHexColor,"%02x%02x%02x",psStyle->outlinecolor.red,
+                psStyle->outlinecolor.green,
+                psStyle->outlinecolor.blue);
+        
+        sprintf(szTmp, 
+                "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
+                szHexColor);
+        pszSLD = strcatalloc(pszSLD, szTmp);
+
+        sprintf(szTmp, "%s\n",  "<Stroke>");
+        pszSLD = strcatalloc(pszSLD, szTmp);
+    }
+
+    return pszSLD;
+}
+
+
+
+char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer)
+{
+    char *pszSLD = NULL;
+    char szTmp[100];
+    char szHexColor[7];
+    int nSymbol = -1;
+    symbolObj *psSymbol = NULL;
+    int i = 0;
+    int nSize = 1;
+    char szDashArray[100];
+  
+    sprintf(szTmp, "%s\n",  "<LineSymbolizer>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+
+    sprintf(szTmp, "%s\n",  "<Stroke>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+
+    sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
+            psStyle->color.green,psStyle->color.blue);
+                            
+    sprintf(szTmp, 
+            "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
+            szHexColor);
+    pszSLD = strcatalloc(pszSLD, szTmp);
+                            
+    nSymbol = -1;
+
+    if (psStyle->symbol > 0)
+      nSymbol = psStyle->symbol;
+    else if (psStyle->symbolname)
+      nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
+                                 psStyle->symbolname);
+                            
+    //if no symbol or symbol 0 is used, size is set to 1
+    //which is the way mapserver works
+    if (nSymbol <=0)
+      nSize = 1;
+    else
+      nSize = psStyle->size;
+
+    sprintf(szTmp, 
+            "<CssParameter name=\"stroke-width\">%d</CssParameter>\n",
+            nSize);
+    pszSLD = strcatalloc(pszSLD, szTmp);
+                            
+/* -------------------------------------------------------------------- */
+/*      dash array                                                      */
+/* -------------------------------------------------------------------- */
+                            
+                            
+    if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
+    {
+        psSymbol =  &psLayer->map->symbolset.symbol[nSymbol];
+        if (psSymbol->stylelength > 0)
+        {
+            for (i=0; i<psSymbol->stylelength; i++)
+            {
+                szTmp[0] = '\0';
+                sprintf(szTmp, "%d ", psSymbol->style[i]);
+                strcat(szDashArray, szTmp);
+            }
+            sprintf(szTmp, 
+                    "<CssParameter name=\"stroke-dasharray\">%s</CssParameter>\n", 
+                    szDashArray);
+            pszSLD = strcatalloc(pszSLD, szTmp);
+        }  
+                                           
+    }
+    sprintf(szTmp, "%s\n",  "</Stroke>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+
+    sprintf(szTmp, "%s\n",  "</LineSymbolizer>");
+    pszSLD = strcatalloc(pszSLD, szTmp);
+
+    return pszSLD;
+
+}
 
 /************************************************************************/
 /*                          msSLDGenerateSLDLayer                       */
@@ -2170,26 +2324,27 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 #ifdef USE_OGR
     char szBuffer[5000];
     char szTmp[100];
-    char szHexColor[6];
     int i, j;
     styleObj *psStyle = NULL;
-    int nSymbol = -1;
-    symbolObj *psSymbol = NULL;
-    char szDashArray[100];
+    char *pszFilter = NULL;
+    char *pszFinalSLD = NULL;
+    char *pszSLD = NULL;
 
     szBuffer[0] = '\0';
     if (psLayer)
     {
-        sprintf(szBuffer, "%s\n",  "<NamedLayer>");
+        sprintf(szTmp, "%s\n",  "<NamedLayer>");
+        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+
         sprintf(szTmp, "<NAME>%s</NAME>\n",  psLayer->name);
-        strcat(szBuffer, szTmp);
-        szTmp[0]='\0';
+        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+
         sprintf(szTmp, "%s\n",  "<UserStyle>");
-        strcat(szBuffer, szTmp);
-        szTmp[0]='\0';
+        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+
         sprintf(szTmp, "%s\n",  "<FeatureTypeStyle>");
-        strcat(szBuffer, szTmp);
-        szTmp[0]='\0';
+        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+
         if (psLayer->numclasses > 0)
         {
             for (i=psLayer->numclasses-1; i>=0; i--)
@@ -2197,93 +2352,69 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 if (psLayer->class[i].numstyles > 0)
                 {
                     sprintf(szTmp, "%s\n",  "<Rule>");
-                    strcat(szBuffer, szTmp);
-                    szTmp[0]='\0';
+                    pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+
+/* -------------------------------------------------------------------- */
+/*      get the Filter if there is a class expression.                  */
+/* -------------------------------------------------------------------- */
+                    pszFilter = msSLDGetFilter(&psLayer->class[i]);
+                    
+                    if (pszFilter)
+                    {
+                        pszFinalSLD = strcatalloc(pszFinalSLD, pszFilter);
+                        free(pszFilter);
+                    }
 /* -------------------------------------------------------------------- */
 /*      Line symbolizer.                                                */
+/*                                                                      */
+/*      Right now only generates a stoke element containing css         */
+/*      parameters.                                                     */
+/*      Lines using symbols TODO (specially for dash lines)             */
 /* -------------------------------------------------------------------- */
                     if (psLayer->type == MS_LAYER_LINE)
                     {
                         for (j=0; j<psLayer->class[i].numstyles; j++)
                         {
                             psStyle = &psLayer->class[i].styles[j];
-                            sprintf(szTmp, "%s\n",  "<LineSymbolizer>");
-                            strcat(szBuffer, szTmp);
-                            szTmp[0]='\0';
-                            sprintf(szTmp, "%s\n",  "<Stroke>");
-                            strcat(szBuffer, szTmp);
-                            szTmp[0]='\0';
-                            sprintf(szHexColor,"%02x%02x%02x",psStyle->color.red,
-                                    psStyle->color.green,psStyle->color.blue);
-                            
-                            
-                            sprintf(szTmp, 
-                                    "<CssParameter name=\"stroke\">#%s</CssParameter>\n", 
-                                    szHexColor);
-                            strcat(szBuffer, szTmp);
-                            szTmp[0]='\0';
-                            sprintf(szTmp, 
-                                    "<CssParameter name=\"stroke-width\">%d</CssParameter>\n",
-                                    psStyle->size);
-                             strcat(szBuffer, szTmp);
-                            szTmp[0]='\0';
-                            
-/* -------------------------------------------------------------------- */
-/*      dash array                                                      */
-/* -------------------------------------------------------------------- */
-                            nSymbol = -1;
-                            if (psStyle->symbol > 0)
-                              nSymbol = psStyle->symbol;
-                            else if (psStyle->symbolname)
-                              nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
-                                                         psStyle->symbolname);
-                            
-                            if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
+                            pszSLD = msSLDGenerateLineSLD(psStyle, psLayer);
+                            if (pszSLD)
                             {
-                                psSymbol =  &psLayer->map->symbolset.symbol[nSymbol];
-                                if (psSymbol->stylelength > 0)
-                                {
-                                    for (i=0; i<psSymbol->stylelength; i++)
-                                    {
-                                        szTmp[0] = '\0';
-                                        sprintf(szTmp, "%d ", psSymbol->style[i]);
-                                        strcat(szDashArray, szTmp);
-                                    }
-                                    sprintf(szTmp, 
-                                    "<CssParameter name=\"stroke-dasharray\">%s</CssParameter>\n", 
-                                            szDashArray);
-                                    strcat(szBuffer, szTmp);
-                                    szTmp[0]='\0';
-                                }  
-                                           
+                                pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                                free(pszSLD);
                             }
-                            sprintf(szTmp, "%s\n",  "</Stroke>");
-                            strcat(szBuffer, szTmp);
-                            szTmp[0]='\0';
-                            sprintf(szTmp, "%s\n",  "</LineSymbolizer>");
-                            strcat(szBuffer, szTmp);
-                            szTmp[0]='\0';
                         }
                     }
-                            
+                    else if (psLayer->type == MS_LAYER_POLYGON)
+                    {
+                        for (j=0; j<psLayer->class[i].numstyles; j++)
+                        {
+                            psStyle = &psLayer->class[i].styles[j];
+                            pszSLD = msSLDGeneratePolygonSLD(psStyle, psLayer);
+                            if (pszSLD)
+                            {
+                                pszFinalSLD = strcatalloc(pszFinalSLD, pszSLD);
+                                free(pszSLD);
+                            }
+                        } 
+                    }
+                
                     sprintf(szTmp, "%s\n",  "</Rule>");
-                    strcat(szBuffer, szTmp);
-                    szTmp[0]='\0';
+                    pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
                 }
+            
             }
         }
         sprintf(szTmp, "%s\n",  "</FeatureTypeStyle>");
-        strcat(szBuffer, szTmp);
-        szTmp[0]='\0';
+        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+
         sprintf(szTmp, "%s\n",  "</UserStyle>");
-        strcat(szBuffer, szTmp);
-        szTmp[0]='\0';
+        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+
         sprintf(szTmp, "%s\n",  "</NamedLayer>");
-        strcat(szBuffer, szTmp);
-        szTmp[0]='\0';
+        pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
         
     }
-    return strdup(szBuffer);
+    return pszFinalSLD;
 
 
 #else
@@ -2295,5 +2426,121 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     return NULL;
 
 #endif /* USE_OGR */
-
 }
+
+#ifdef USE_OGR
+
+char *msSLDParseExpression(char *pszExpression)
+{
+    int nElements = 0;
+    char **aszElements = NULL;
+    char szBuffer[500];
+    char szFinalAtt[40];
+    char szFinalValue[40];
+    char szAttribute[40];
+    char szValue[40];
+    int i=0, nLength=0, iAtt=0, iVal=0; 
+    int bStartCopy=0, bSinglequote=0, bDoublequote=0;
+    char *pszFilter = NULL;
+
+    if (!pszExpression)
+      return NULL;
+
+    nLength = strlen(pszExpression);
+
+    aszElements = split(pszExpression, ' ', &nElements);
+
+    szFinalAtt[0] = '\0';
+    szFinalValue[0] = '\0';
+    for (i=0; i<nElements; i++)
+    {
+        if (strcasecmp(aszElements[i], "=") == 0 ||
+            strcasecmp(aszElements[i], "eq") == 0)
+        {
+            if (i > 0 && i < nElements-1)
+            {
+                sprintf(szAttribute, aszElements[i-1]);
+                sprintf(szValue, aszElements[i+1]);
+
+                //parse attribute
+                nLength = strlen(szAttribute);
+                if (nLength > 0)
+                {
+                    iAtt = 0;
+                    for (i=0; i<nLength; i++)
+                    {
+                        if (szAttribute[i] == '[')
+                        {
+                            bStartCopy = 1;
+                            continue;
+                        }
+                        if (szAttribute[i] == ']')
+                          break;
+                        if (bStartCopy)
+                        {
+                            szFinalAtt[iAtt] = szAttribute[i];
+                            iAtt++;
+                        }
+                    }
+                }
+
+                //parse value
+                nLength = strlen(szValue);
+                if (nLength > 0)
+                {
+                    if (szValue[0] == '\'')
+                      bSinglequote = 1;
+                    else if (szValue[0] == '\"')
+                       bDoublequote = 1;
+                    else
+                      sprintf(szFinalValue,szValue);
+                    
+                    iVal = 0;
+                    if (bSinglequote || bDoublequote)
+                    {
+                         for (i=1; i<nLength-1; i++)
+                           szFinalValue[iVal++] = szValue[i];
+                    }
+                }
+            }
+            if (strlen(szFinalAtt) > 0 && strlen(szFinalValue) >0)
+            {
+                sprintf(szBuffer, "<Filter><PropertyIsEqualTo><PropertyName>%s</PropertyName><Literal>%s</Literal></PropertyIsEqualTo></Filter>", 
+                        szFinalAtt, szFinalValue);
+                pszFilter = strdup(szBuffer);
+            }
+        }
+    }
+
+    return pszFilter;
+}               
+               
+    
+    
+char *msSLDGetFilter(classObj *psClass)
+{
+    char *pszFilter = NULL;
+    char szBuffer[500];
+
+    if (psClass && psClass->expression.string)
+    {   
+        //string expression
+        if (psClass->expression.type == MS_STRING)
+        {
+            if (psClass->layer && psClass->layer->classitem)
+            {
+                sprintf(szBuffer, "<Filter><PropertyIsEqualTo><PropertyName>%s</PropertyName><Literal>%s</Literal></PropertyIsEqualTo></Filter>", 
+                        psClass->layer->classitem, psClass->expression.string);
+                pszFilter = strdup(szBuffer);
+            }
+        }
+        else if (psClass->expression.type == MS_EXPRESSION)
+        {
+            pszFilter = msSLDParseExpression(psClass->expression.string);
+        }
+    }
+
+    return pszFilter;
+}            
+
+#endif

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2003/12/03 18:52:21  assefa
+ * Add partly support for SLD generation.
+ *
  * Revision 1.5  2003/12/01 16:10:13  assefa
  * Add #ifdef USE_OGR for sld functions available to mapserver.
  *
@@ -59,8 +62,8 @@
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-int msSLDApplySLDURL(mapObj *map, char *szURL);
-int msSLDApplySLD(mapObj *map, char *psSLDXML);
+int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer);
+int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer);
 
 layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers);
 void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *layer);
@@ -97,6 +100,12 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psCla
 void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass);
 void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
 
-char *msSLDGenerateSLD(mapObj *map);
+char *msSLDGenerateSLD(mapObj *map, int iLayer);
 char *msSLDGenerateSLDLayer(layerObj *psLayer);
+
+char *msSLDGetFilter(classObj *psClass);
+char *msSLDGenerateLineSLD(styleObj *psStyle, layerObj *psLayer);
+char *msSLDGeneratePolygonSLD(styleObj *psStyle, layerObj *psLayer);
+
+
 #endif
