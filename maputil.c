@@ -93,7 +93,7 @@ int msEvalContext(mapObj *map, char *context)
  *
  * Evaluates a mapserver expression for a given set of attribute values and
  * returns the result of the expression (MS_TRUE or MS_FALSE)
- * May also return true in case of parsing errors or invalid expressions
+ * May also return MS_FALSE in case of parsing errors or invalid expressions
  * (check the error stack if you care)
  *
  * Parser mutex added for type MS_EXPRESSION -- SG
