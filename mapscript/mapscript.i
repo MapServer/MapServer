@@ -214,8 +214,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include "../swiginc/dbfinfo.i"
 %include "../swiginc/labelcache.i"
 %include "../swiginc/color.i"
-%include "../swiginc/owsrequest.i"
 %include "../swiginc/hashtable.i"
+%include "../swiginc/resultcache.i"
+%include "../swiginc/owsrequest.i"
 
 /* =========================================================================
    Language-specific extensions to mapserver classes are included here 

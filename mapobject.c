@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/09/24 16:28:01  sean
+ * mapscript can be again compiled without requiring WMS support, mapObj::loadOWSParameters will set an error in that case (bug 894).
+ *
  * Revision 1.14  2004/09/10 13:47:46  sean
  * msMapSetSize returns value returned from msMapComputeGeotransform, just as msMapSetRotation
  *
@@ -257,9 +260,9 @@ int msMapSetExtent( mapObj *map,
     map->extent.maxy = maxy;
     
     if (!MS_VALID_EXTENT(map->extent)) {
-      msSetError(MS_MISCERR, "Given map extent is invalid.", "setExtent()"); 
-      return(NULL);
-      }
+        msSetError(MS_MISCERR, "Given map extent is invalid.", "setExtent()"); 
+        return MS_FAILURE;
+    }
       
     map->cellsize = msAdjustExtent(&(map->extent), map->width, 
                                    map->height);
@@ -658,5 +661,27 @@ int msSetLayersdrawingOrder(mapObj *self, int *panIndexes)
         return 1;
     }
     return 0;
+}
+
+
+/* =========================================================================
+   msMapLoadOWSParameters
+   
+   Function to support mapscript mapObj::loadOWSParameters
+   ========================================================================= */
+
+int msMapLoadOWSParameters(mapObj *map, cgiRequestObj *request,
+                           const char *wmtver)
+{
+    int version;
+#ifdef USE_WMS_SVR
+    version = msOWSParseVersionString(wmtver);
+    return msWMSLoadGetMapParams(map, version, request->ParamNames,
+                                 request->ParamValues, request->NumParams);
+#else
+    msSetError(MS_WMSERR, "WMS server support is not available.",
+               "msMapLoadOWSParameters()");
+    return MS_FAILURE;
+#endif
 }
 

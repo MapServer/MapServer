@@ -473,12 +473,9 @@
         return msRemoveOutputFormat(self, name);
     }
 
-    // wrapper for msOWSDispatch
     int loadOWSParameters(cgiRequestObj *request, char *wmtver_string="1.1.1") 
     {
-        int wmtver;
-        wmtver = msOWSParseVersionString(wmtver_string);
-        return msWMSLoadGetMapParams(self, wmtver, request->ParamNames,
-                                     request->ParamValues, request->NumParams);
+        return msMapLoadOWSParameters(self, request, wmtver_string);
     }
+
 }
