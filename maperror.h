@@ -63,6 +63,10 @@ void msWriteError(FILE *stream);
 char *msGetVersion(void);
 char *msGetErrorString(int code);
 
+struct map_obj;
+void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
+
+
 #ifndef SWIG
 void msDebug( const char * pszFormat, ... );
 void msWebDebug( const char * pszFormat, ... );
