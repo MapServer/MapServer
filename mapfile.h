@@ -164,4 +164,6 @@
 #define IMAGEMODE 1138
 #define FORMATOPTION 1139
 
+#define GRATICULE 1140
+
 #endif /* MAPFILE_H */

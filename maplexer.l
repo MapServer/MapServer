@@ -126,6 +126,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>formatoption	       { return(FORMATOPTION); }
 <INITIAL,OBJECT_STRING>from                    { return(FROM); }
 <INITIAL>gap                                   { return(GAP); }
+<INITIAL,OBJECT_STRING>graticule               { return(GRATICULE); }
 <INITIAL,OBJECT_STRING>group                   { return(GROUP); }
 <INITIAL,OBJECT_STRING>header		       { return(HEADER); }
 <INITIAL>image			               { return(IMAGE); }
