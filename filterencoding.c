@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2003/08/26 02:18:09  assefa
+ * Add PropertyIsBetween and PropertyIsLike.
+ *
  * Revision 1.1  2003/08/13 21:54:32  assefa
  * Initial revision.
  *
@@ -130,6 +133,7 @@ FilterEncodingNode *CreateFilerEncodingNode()
       (FilterEncodingNode *)malloc(sizeof (FilterEncodingNode));
     psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
     psFilterNode->pszValue = NULL;
+    psFilterNode->pOther = NULL;
     psFilterNode->psLeftNode = NULL;
     psFilterNode->psRightNode = NULL;
 
@@ -147,6 +151,7 @@ void InsertElementInNode(FilterEncodingNode *psFilterNode,
                          CPLXMLNode *psXMLNode)
 {
     int nStrLength = 0;
+    char *pszTmp = NULL;
 
     if (psFilterNode && psXMLNode)
     {
@@ -222,6 +227,7 @@ void InsertElementInNode(FilterEncodingNode *psFilterNode,
                 psFilterNode->psLeftNode->pszValue = 
                   psXMLNode->psChild->pszValue;
 
+                //TODO extract SRS value
                 if (psXMLNode->psChild->psNext->psChild)
                 {
                     psFilterNode->psRightNode = CreateFilerEncodingNode();
@@ -326,10 +332,53 @@ void InsertElementInNode(FilterEncodingNode *psFilterNode,
             }//end of PropertyIsBetween 
 /* -------------------------------------------------------------------- */
 /*      PropertyIsLike                                                  */
+/*                                                                      */
+/*      <Filter>                                                        */
+/*      <PropertyIsLike wildCard="*" singleChar="#" escapeChar="!">     */
+/*      <PropertyName>LAST_NAME</PropertyName>                          */
+/*      <Literal>JOHN*</Literal>                                        */
+/*      </PropertyIsLike>                                               */
+/*      </Filter>                                                       */
 /* -------------------------------------------------------------------- */
             else if (strcasecmp(psXMLNode->pszValue, "PropertyIsLike") == 0)
             {
-                //TODO
+                if (psXMLNode->psChild && psXMLNode->psChild->psNext &&
+                    strcasecmp(psXMLNode->psChild->pszValue, "PropertyName") == 0 &&
+                    strcasecmp(psXMLNode->psChild->psNext->pszValue,"Literal") == 0)
+                {
+/* -------------------------------------------------------------------- */
+/*      Get the wildCard, the singleChar and the escapeChar used.       */
+/* -------------------------------------------------------------------- */
+                    psFilterNode->pOther = (FEPropertyIsLike *)malloc(sizeof(FEPropertyIsLike));
+                    pszTmp = (char *)CPLGetXMLValue(psXMLNode, "wildCard", "");
+                    if (pszTmp)
+                      ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard = 
+                        strdup(pszTmp);
+                    pszTmp = (char *)CPLGetXMLValue(psXMLNode, "singleChar", "");
+                    if (pszTmp)
+                      ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar = 
+                        strdup(pszTmp);
+                    pszTmp = (char *)CPLGetXMLValue(psXMLNode, "escapeChar", "");
+                    if (pszTmp)
+                      ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar = 
+                        strdup(pszTmp);
+/* -------------------------------------------------------------------- */
+/*      Create left and right node for the attribute and the value.     */
+/* -------------------------------------------------------------------- */
+                    psFilterNode->psLeftNode = CreateFilerEncodingNode();
+
+                    psFilterNode->psLeftNode->eType = FILTER_NODE_TYPE_PROPERTYNAME;
+                    if ( psXMLNode->psChild->psChild)
+                      psFilterNode->psLeftNode->pszValue = 
+                        strdup(psXMLNode->psChild->psChild->pszValue);
+
+                    psFilterNode->psRightNode = CreateFilerEncodingNode();
+
+                    psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
+                    if (psXMLNode->psChild->psNext->psChild)
+                      psFilterNode->psRightNode->pszValue = 
+                        strdup(psXMLNode->psChild->psNext->psChild->pszValue);
+                }
             }
         }
             
@@ -455,6 +504,16 @@ char *GetMapserverExpression(FilterEncodingNode *psFilterNode)
             {
                 pszExpression = GetBinaryComparisonExpresssion(psFilterNode);
             }
+            else if (strcasecmp(psFilterNode->pszValue, 
+                                "PropertyIsBetween") == 0)
+            {
+                 pszExpression = GetIsBetweenComparisonExpresssion(psFilterNode);
+            }
+            else if (strcasecmp(psFilterNode->pszValue, 
+                                "PropertyIsLike") == 0)
+            {
+                 pszExpression = GetIsLikeComparisonExpresssion(psFilterNode);
+            }
         }
     }
     else if (psFilterNode->eType == FILTER_NODE_TYPE_LOGICAL)
@@ -464,6 +523,14 @@ char *GetMapserverExpression(FilterEncodingNode *psFilterNode)
         {
             pszExpression = GetLogicalComparisonExpresssion(psFilterNode);
         }
+        else if (strcasecmp(psFilterNode->pszValue, "NOT") == 0)
+        {       
+            pszExpression = GetLogicalComparisonExpresssion(psFilterNode);
+        }
+    }
+    else if (psFilterNode->eType == FILTER_NODE_TYPE_SPATIAL)
+    {
+        //TODO
     }
             
     return pszExpression;
@@ -476,15 +543,23 @@ char *GetMapserverExpression(FilterEncodingNode *psFilterNode)
 /************************************************************************/
 char *GetNodeExpression(FilterEncodingNode *psFilterNode)
 {
+    char *pszExpression = NULL;
     if (!psFilterNode)
       return NULL;
 
     if (IsLogicalFilterType(psFilterNode->pszValue))
-      return GetLogicalComparisonExpresssion(psFilterNode);
-    else if (IsBinaryComparisonFilterType(psFilterNode->pszValue))
-      return GetBinaryComparisonExpresssion(psFilterNode);
-    else
-      return NULL;
+      pszExpression = GetLogicalComparisonExpresssion(psFilterNode);
+    else if (IsComparisonFilterType(psFilterNode->pszValue))
+    {
+        if (IsBinaryComparisonFilterType(psFilterNode->pszValue))
+          pszExpression = GetBinaryComparisonExpresssion(psFilterNode);
+        else if (strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0)
+          pszExpression = GetIsBetweenComparisonExpresssion(psFilterNode);
+        else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
+          pszExpression = GetIsLikeComparisonExpresssion(psFilterNode);
+    }
+
+    return pszExpression;
 }
 
 
@@ -502,6 +577,10 @@ char *GetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
     if (!psFilterNode || !IsLogicalFilterType(psFilterNode->pszValue))
       return NULL;
 
+    
+/* -------------------------------------------------------------------- */
+/*      OR and AND                                                      */
+/* -------------------------------------------------------------------- */
     if (psFilterNode->psLeftNode && psFilterNode->psRightNode)
     {
         strcat(szBuffer, " (");
@@ -519,11 +598,28 @@ char *GetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode)
         strcat(szBuffer, pszTmp);
         strcat(szBuffer, ") ");
     }
-
+/* -------------------------------------------------------------------- */
+/*      NOT                                                             */
+/* -------------------------------------------------------------------- */
+    else if (psFilterNode->psLeftNode && 
+             strcasecmp(psFilterNode->pszValue, "NOT") == 0)
+    {
+        strcat(szBuffer, " (NOT ");
+        pszTmp = GetNodeExpression(psFilterNode->psLeftNode);
+        if (!pszTmp)
+          return NULL;
+        strcat(szBuffer, pszTmp);
+        strcat(szBuffer, ") ");
+    }
+    else
+      return NULL;
+    
     return strdup(szBuffer);
     
 }
 
+    
+    
 /************************************************************************/
 /*                      GetBinaryComparisonExpresssion                  */
 /*                                                                      */
@@ -537,10 +633,10 @@ char *GetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
     if (!psFilterNode || !IsBinaryComparisonFilterType(psFilterNode->pszValue))
       return NULL;
 
-    strcat(szBuffer, " (");
+    strcat(szBuffer, " ('[");
     //attribute
     strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
-    strcat(szBuffer, " ");
+    strcat(szBuffer, "]' ");
     
     //logical operator
     if (strcasecmp(psFilterNode->pszValue, 
@@ -548,7 +644,7 @@ char *GetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
       strcat(szBuffer, "=");
     else if (strcasecmp(psFilterNode->pszValue, 
                         "PropertyIsNotEqualTo") == 0)
-      strcat(szBuffer, "!="); //TODO verify that != is supported
+      strcat(szBuffer, "!="); 
     else if (strcasecmp(psFilterNode->pszValue, 
                         "PropertyIsLessThan") == 0)
       strcat(szBuffer, "<");
@@ -565,8 +661,123 @@ char *GetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
     strcat(szBuffer, " ");
     
     //value
+    strcat(szBuffer, "'");
     strcat(szBuffer, psFilterNode->psRightNode->pszValue);
+    strcat(szBuffer, "'");
     strcat(szBuffer, ") ");
     
+    return strdup(szBuffer);
+}
+
+
+/************************************************************************/
+/*                    GetIsBetweenComparisonExpresssion                 */
+/*                                                                      */
+/*      Build expresssion for IsBteween Filter.                         */
+/************************************************************************/
+char *GetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
+{
+    char szBuffer[512];
+    char **aszBounds = NULL;
+    int nBounds = 0;
+
+    szBuffer[0] = '\0';
+    if (!psFilterNode ||
+        !(strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0))
+      return NULL;
+
+    if (!psFilterNode->psLeftNode || !psFilterNode->psRightNode )
+      return NULL;
+
+    
+/* -------------------------------------------------------------------- */
+/*      Get the boumds value whihc are stored like boundmin;boundmax    */
+/* -------------------------------------------------------------------- */
+    aszBounds = split(psFilterNode->psRightNode->pszValue, ';', &nBounds);
+    if (nBounds != 2)
+      return NULL;
+
+    strcat(szBuffer, " ('[");
+    //attribute
+    strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
+    strcat(szBuffer, "]' ");
+    
+    strcat(szBuffer, " >= ");
+    strcat(szBuffer, aszBounds[0]);
+    strcat(szBuffer, " AND ");
+
+     strcat(szBuffer, " '[");
+    //attribute
+    strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
+    strcat(szBuffer, "]') ");
+    
+    strcat(szBuffer, " <= ");
+    strcat(szBuffer, aszBounds[0]);
+     
+    
+    return strdup(szBuffer);
+}
+    
+char *GetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode)
+{
+    char szBuffer[512];
+    char *pszValue = NULL;
+    
+    char *pszWild = NULL;
+    char *pszSingle = NULL;
+    char *pszEscape = NULL;
+    
+    int nLength, i, iBuffer = 0;
+    if (!psFilterNode || !psFilterNode->pOther || !psFilterNode->psLeftNode ||
+        !psFilterNode->psRightNode || !psFilterNode->psRightNode->pszValue)
+      return NULL;
+
+    pszWild = ((FEPropertyIsLike *)psFilterNode->pOther)->pszWildCard;
+    pszSingle = ((FEPropertyIsLike *)psFilterNode->pOther)->pszSingleChar;
+    pszEscape = ((FEPropertyIsLike *)psFilterNode->pOther)->pszEscapeChar;
+
+    if (!pszWild || !pszSingle || !pszEscape)
+      return NULL;
+
+ 
+/* -------------------------------------------------------------------- */
+/*      Use only the right node (whoch is the value), to build the      */
+/*      regular expresssion. The left node will be used to build the    */
+/*      classitem.                                                      */
+/* -------------------------------------------------------------------- */
+    szBuffer[0] = '\0';
+    strcat(szBuffer, "/");
+    pszValue = psFilterNode->psRightNode->pszValue;
+    nLength = strlen(pszValue);
+    iBuffer = 1;
+    for (i=0; i<nLength; i++)
+    {
+        if (strcmp(pszValue[i], pszWild) != 0 && 
+            strcmp(pszValue[i], pszSingle) !=0 &&
+            strcmp(pszValue[i], pszEscape) !=0 )
+        {
+            szBuffer[iBuffer] = pszValue[i];
+            iBuffer++;
+        }
+        else if  (strcmp(pszValue[i], pszSingle) !=0)
+        {
+             szBuffer[iBuffer] = '.';
+             iBuffer++;
+        }
+        else if  (strcmp(pszValue[i], pszEscape) != 0)
+        {
+            if (i<nLength-1)
+            {
+                szBuffer[iBuffer] = pszValue[i+1];
+                iBuffer++;
+            }
+        }
+        else if (strcmp(pszValue[i], pszWild) != 0)
+        {
+            strcat(szBuffer, "[a-z,A-Z]*");
+            iBuffer+=10;
+        }
+    }
+        
     return strdup(szBuffer);
 }

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2003/08/26 02:18:09  assefa
+ * Add PropertyIsBetween and PropertyIsLike.
+ *
  * Revision 1.1  2003/08/13 21:54:32  assefa
  * Initial revision.
  *
@@ -56,13 +59,22 @@ typedef enum
 typedef struct _FilterNode
 {
     FilterNodeType      eType;
-    
     char                *pszValue;
+    void                *pOther;
 
     struct _FilterNode  *psLeftNode;
     struct _FilterNode  *psRightNode;
+
+      
 }FilterEncodingNode;
 
+
+typedef struct
+{
+    char *pszWildCard;
+    char *pszSingleChar;
+    char *pszEscapeChar;
+}FEPropertyIsLike;
 
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
@@ -83,3 +95,5 @@ char *GetMapserverExpression(FilterEncodingNode *psFilterNode);
 char *GetNodeExpression(FilterEncodingNode *psFilterNode);
 char *GetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *GetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
+char *GetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
+char *GetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode);
