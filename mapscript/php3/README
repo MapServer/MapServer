@@ -237,7 +237,7 @@ and the MapServer Map File documentation at:
          If provided then it will be impossible to zoom/pan outside of
          those extents.
 
-   void zoomrectange(rectObj oPixelExt, int nImageWidth, int nImageHeight,
+   void zoomrectangle(rectObj oPixelExt, int nImageWidth, int nImageHeight,
 		     rectObj oGeorefExt)
 	Set the map extents to a given extents.
 	
@@ -614,7 +614,7 @@ and the MapServer Map File documentation at:
         Same as setProjection(), but takes an OGC WKT projection 
         definition string as input.
 
-   int getNumResult()
+   int getNumResults()
         Returns the number of results from this layer in the last query.
 
    resultCacheMemberObj getResult(int index)
