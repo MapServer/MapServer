@@ -228,8 +228,8 @@ class SymbolTestCase(MapPrimitivesTestCase):
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
     def testConstructorImage(self):
-        symbol = mapscript.symbolObj('test', '../../tests/home.png')
-        assert symbol.name == 'test'
+        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        assert symbol.name == 'xmarks'
         assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
     def testGetPoints(self):
         symbol = self.mapobj1.symbolset.getSymbol(1)
@@ -255,18 +255,26 @@ class SymbolTestCase(MapPrimitivesTestCase):
 
 # symbolset tests
 class SymbolSetTestCase(MapTestCase):
+    
     def testGetNumSymbols(self):
         num = self.mapobj1.getNumSymbols()
         assert num == 2, num
+    
     def testSymbolSetNumsymbols(self):
         num = self.mapobj1.symbolset.numsymbols
         assert num == 2, num
+    
     def testSymbolSetSymbolNames(self):
         set = self.mapobj1.symbolset
         names = [None, 'line', 'tie']
         for i in range(set.numsymbols):
             symbol = set.getSymbol(i)
             assert symbol.name == names[i], symbol.name
+    
+    def testSymbolIndex(self):
+        i = self.mapobj1.symbolset.index('line')
+        assert i == 1, i
+
     def testConstructorNoArgs(self):
         symbolset = mapscript.symbolSetObj()
         num = symbolset.numsymbols
@@ -299,7 +307,24 @@ class SymbolSetTestCase(MapTestCase):
         symbolset.appendSymbol(symbola) 
         symbolset.appendSymbol(symbolb)
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
-                
+    def testDrawNewSymbol(self):
+        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol_index = self.mapobj1.symbolset.appendSymbol(symbol)
+        assert symbol_index == 2, symbol_index
+        num = self.mapobj1.symbolset.numsymbols
+        assert num == 3, num
+        inline_layer = self.mapobj1.getLayerByName('INLINE')
+        s = inline_layer.getClass(0).getStyle(0)
+        s.symbol = symbol_index
+        s.size = 24
+        msimg = self.mapobj1.draw()
+        assert msimg.thisown == 1
+        data = msimg.saveToString()
+        filename = 'testDrawNewSymbol.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
+
 # fontset tests
 class FontSetTestCase(MapTestCase):
     def testGetFontSetFile(self):

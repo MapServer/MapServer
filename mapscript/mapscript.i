@@ -725,16 +725,20 @@ memory.") const char * {
             return NULL;
     }
 
-    symbolObj *getSymbolByName(char *name) {
+    symbolObj *getSymbolByName(char *symbolname) {
         int i;
 
-        if (!name) return NULL;
+        if (!symbolname) return NULL;
 
-        i = msGetSymbolIndex(self, name);
+        i = msGetSymbolIndex(self, symbolname);
         if (i == -1)
             return NULL; // no such symbol
         else
             return (symbolObj *) &(self->symbol[i]);
+    }
+
+    int index(char *symbolname) {
+        return msGetSymbolIndex(self, symbolname);
     }
 
     int appendSymbol(symbolObj *symbol) {

@@ -610,7 +610,7 @@ int msAppendSymbol(symbolSetObj *symbolset, symbolObj *symbol) {
     }
     symbolset->numsymbols++;
     msCopySymbol(&(symbolset->symbol[symbolset->numsymbols-1]), symbol, NULL);
-    return symbolset->numsymbols;
+    return symbolset->numsymbols-1;
 }
 
 
