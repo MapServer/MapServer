@@ -335,6 +335,20 @@ typedef struct {
 
 } webObj;
 
+// STYLE OBJECT - holds parameters for symbolization, multiple styles may be applied within a classObj
+typedef struct {
+  int color;
+  int backgroundcolor;
+  int outlinecolor;
+
+  int symbol;
+  char *symbolname;
+
+  int size;
+  int sizescaled; // may not need this
+  int minsize, maxsize;
+} styleObj;
+
 // CLASS OBJECT - basic symbolization and classification information
 typedef struct {
 #ifndef SWIG
