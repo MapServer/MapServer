@@ -1038,6 +1038,7 @@ extern void lexer_cleanup();
 
 void msCleanup()
 {
+    msConnPoolFinalCleanup();
     lexer_cleanup();
 #ifdef USE_OGR
     msOGRCleanup();
@@ -1054,4 +1055,3 @@ void msCleanup()
 #endif
     msResetErrorList();
 }
-
