@@ -30,8 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.216  2004/11/11 02:55:51  dan
+ * layer->getExtent() uses value of layer->extent if set (bug 826)
+ *
  * Revision 1.215  2004/11/11 02:42:05  dan
- * Ported ->getExtent() to PHP MapScript (bug 826)
+ * Ported layer->getExtent() to PHP MapScript (bug 826)
  *
  * Revision 1.214  2004/11/10 15:55:02  assefa
  * Correct transparency problem when doing $oImage->saveImage (Bug 425).
@@ -7529,18 +7532,26 @@ DLEXPORT void php3_ms_lyr_getExtent(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    /* Open/close layer before/after the call to msGetExtent().
-     * This means the method should not be used
-     * on a layer already opened using $layer->open().
-     */
-    msLayerOpen(self);
-    if (msLayerGetExtent(self, poRect) != MS_SUCCESS)
+    if (&(self->extent) && MS_VALID_EXTENT(self->extent))
     {
-        _phpms_report_mapserver_error(E_WARNING);
-        msLayerClose(self);
-        RETURN_FALSE;
+        /* Extent set in layer, use that value */
+        *poRect = self->extent;
     }
-    msLayerClose(self);
+    else
+    {
+        /* Open/close layer before/after the call to msGetExtent().
+         * This means the method should not be used
+         * on a layer already opened using $layer->open().
+         */
+        msLayerOpen(self);
+        if (msLayerGetExtent(self, poRect) != MS_SUCCESS)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            msLayerClose(self);
+            RETURN_FALSE;
+        }
+        msLayerClose(self);
+    }
 
     /* Return rectObj */
     _phpms_build_rect_object(poRect, PHPMS_GLOBAL(le_msrect_new), 

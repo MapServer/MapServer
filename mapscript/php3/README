@@ -669,10 +669,12 @@ and the MapServer Map File documentation at:
         Simply pass tileindex = -1 for other data sources.
 
    rectObj getExtent()
-        Returns the layer's data extents. This is quick on shapefiles, but
-        can be an expensive operation on some file formats or data sources.
-        This call opens and closes the layer, so it should not be used
-        on a layer already opened using $layer->open().
+        Returns the layer's data extents. 
+        If the layer's EXTENT member is set then this value is used, 
+        otherwise this call opens and closes the layer to read the 
+        extents, so it should not be used on a layer already opened 
+        using $layer->open(). This is quick on shapefiles, but can be
+        an expensive operation on some file formats or data sources.
 
    int addFeature(shapeObj shape)
         Add a new feature in a layer.  Returns -1 on error.
