@@ -3,9 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "cgiutil.h"
-#include "cpl_minixml.h"
-#include "cpl_conv.h"
-#include "cpl_string.h"
+
 
 #define LF 10
 #define CR 13
@@ -275,7 +273,7 @@ void escape_shell_cmd(char *cmd) {
 /*
   Allocate a new request holder structure
 */
-cgiRequestObj *msAlloccgiObj()
+cgiRequestObj *msAllocCgiObj()
 {
     cgiRequestObj *request = (cgiRequestObj *)malloc(sizeof(cgiRequestObj));
 

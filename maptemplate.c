@@ -2546,7 +2546,7 @@ mapservObj*  msAllocMapServObj()
    msObj->SaveMap=MS_FALSE;
    msObj->SaveQuery=MS_FALSE; // should the query and/or map be saved 
 
-   msObj->request = msAlloccgiObj();
+   msObj->request = msAllocCgiObj();
 
    msObj->Map=NULL;
 
