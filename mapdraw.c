@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.87  2005/03/25 01:24:37  jerryp
+ * Removed unit transformation for circle layers (bug 1294).
+ *
  * Revision 1.86  2005/03/02 04:24:11  assefa
  * Add #ifdef USE_SVG.
  *
@@ -1321,7 +1324,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     if(layer->transform) {
       center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
       center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
-      r *= (msInchesPerUnit(layer->units,0)/msInchesPerUnit(map->units,0))/map->cellsize;      
+      r /= map->cellsize;      
     }
 
     /* shade symbol drawing will call outline function if color not set */
