@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/11/05 19:22:19  frank
+ * ensure state is initialized in msDrawScalebar() (all cases)
+ *
  * Revision 1.44  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -259,6 +262,7 @@ imageObj *msDrawScalebar(mapObj *map)
 
     gdImageLine(img, ox, oy, ox + isx*map->scalebar.intervals, oy, map->scalebar.color.pen); /* top line */
 
+    state = 1; /* 1 means filled */
     for(j=0; j<map->scalebar.intervals; j++) {
 
       gdImageLine(img, ox + j*isx, oy, ox + j*isx, oy + map->scalebar.height, map->scalebar.color.pen); /* tick */
