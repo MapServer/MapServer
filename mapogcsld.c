@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.46  2004/11/17 15:59:57  assefa
+ * replace lookup for wms_name to wms/ows_name (Bug  568).
+ *
  * Revision 1.45  2004/11/01 17:28:42  assefa
  * HTML encode names and filter when generating SLD (Bug 892).
  *
@@ -305,7 +308,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
             }
 
             /* compare layer name to wms_name as well */
-            pszTmp = msLookupHashTable(&(map->layers[i].metadata), "wms_name");
+            //pszTmp = msLookupHashTable(&(map->layers[i].metadata), "wms_name");
+            pszTmp = msOWSLookupMetadata(&(map->layers[i].metadata), "MO", "name");
 
             for (j=0; j<nLayers; j++)
             {
@@ -3612,7 +3616,8 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         sprintf(szTmp, "%s\n",  "<NamedLayer>");
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
-        pszTmp = msLookupHashTable(&(psLayer->metadata), "wms_name");
+        //pszTmp = msLookupHashTable(&(psLayer->metadata), "wms_name");
+        pszTmp = msOWSLookupMetadata(&(psLayer->metadata), "MO", "name");
         if (pszTmp)
         {
             pszEncoded = msEncodeHTMLEntities(pszTmp);
