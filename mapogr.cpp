@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.56  2002/09/23 13:33:26  julien
+ * Swapped map_path for mappath for consistency.
+ *
  * Revision 1.55  2002/09/17 13:08:28  julien
  * Remove all chdir() function and replace them with the new msBuildPath function.
  * This have been done to make MapServer thread safe. (Bug 152)
@@ -899,7 +902,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   msDebug("msOGRFileOpen(%s)...\n", connection);
 
   poDS = OGRSFDriverRegistrar::Open( 
-      msBuildPath(szPath, layer->map->map_path, papszTokens[0]) );
+      msBuildPath(szPath, layer->map->mappath, papszTokens[0]) );
   if( poDS == NULL )
   {
       msSetError(MS_OGRERR, 
