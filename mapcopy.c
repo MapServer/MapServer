@@ -630,104 +630,6 @@ int msCopyResultCache(resultCacheObj *dst, resultCacheObj *src) {
 }
 
 /***********************************************************************
- * msCopySymbol()                                                      *
- *                                                                     *
- * Copy a symbolObj, using mapfile.c:initSymbol(), msCopyPoint()       *
- * gdImageCreate(), gdImageCopy()                                      *
- **********************************************************************/
-
-int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map) {
-  int i;
-  initSymbol(dst);
-  copyStringProperty(&(dst->name), src->name);
-  copyProperty(&(dst->type), &(src->type), sizeof(int));
-  copyProperty(&(dst->inmapfile), &(src->inmapfile), sizeof(int));
-  copyProperty(&(dst->map), &map, sizeof(mapObj *));
-  copyProperty(&(dst->sizex), &(src->sizex), sizeof(double)),
-  copyProperty(&(dst->sizey), &(src->sizey), sizeof(double));
-  for (i=0; i < MS_MAXVECTORPOINTS; i++) {
-    if (msCopyPoint(&(dst->points[i]), &(src->points[i])) != MS_SUCCESS)
-    {
-      msSetError(MS_MEMERR, "Failed to copy point.", "msCopySymbol()");
-      return(MS_FAILURE);
-    }
-  }
-  copyProperty(&(dst->numpoints), &(src->numpoints), sizeof(int));
-  copyProperty(&(dst->filled), &(src->filled), sizeof(int));
-  copyProperty(&(dst->stylelength), &(src->stylelength), sizeof(int));
-  
-  copyProperty(&(dst->style), &(src->style),
-               sizeof(int)*MS_MAXSTYLELENGTH);
-  
-  //gdImagePtr img;
-  if (src->img) {
-     if (dst->img) {
-       gdFree(dst->img);
-     }
-     dst->img = gdImageCreate(src->img->sx, src->img->sy);
-     gdImageCopy(dst->img, src->img, 0, 0, 0, 0,
-                 src->img->sx, src->img->sy);
-  }
-
-  copyStringProperty(&(dst->imagepath), src->imagepath);
-  copyProperty(&(dst->transparent), &(src->transparent),sizeof(int));
-  
-  copyProperty(&(dst->transparentcolor), &(src->transparentcolor),
-               sizeof(int));
-  
-  copyStringProperty(&(dst->character), src->character);
-  copyProperty(&(dst->antialias), &(src->antialias), sizeof(int));
-  copyStringProperty(&(dst->font), src->font);
-  copyProperty(&(dst->gap), &(src->gap), sizeof(int));
-  copyProperty(&(dst->position), &(src->position), sizeof(int));
-  copyProperty(&(dst->linecap), &(src->linecap), sizeof(int));
-  copyProperty(&(dst->linejoin), &(src->linejoin), sizeof(int));
-  
-  copyProperty(&(dst->linejoinmaxsize), &(src->linejoinmaxsize),
-               sizeof(double));
-
-  return(MS_SUCCESS);
-} 
-
-/***********************************************************************
- * msCopySymbolSet()                                                   *
- *                                                                     *
- * Copy a symbolSetObj using msCopyFontSet(), msCopySymbol()           *
- **********************************************************************/
-
-int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
-{
-  int i, return_value;
-  
-  copyStringProperty(&(dst->filename), src->filename);
-  copyProperty(&(dst->map), &map, sizeof(mapObj *));
-
-  if (msCopyFontSet(dst->fontset, src->fontset, map) != MS_SUCCESS) {
-    msSetError(MS_MEMERR,"Failed to copy fontset.","msCopySymbolSet()");
-    return(MS_FAILURE);
-  }
-  
-  copyProperty(&(dst->numsymbols), &(src->numsymbols), sizeof(int));
-  
-  for (i = 0; i < dst->numsymbols; i++) {
-    return_value = msCopySymbol(&(dst->symbol[i]), &(src->symbol[i]), map);
-    if (return_value != MS_SUCCESS) {
-      msSetError(MS_MEMERR,"Failed to copy symbol.","msCopySymbolSet()");
-      return(MS_FAILURE);
-    }
-  }
-
-  copyProperty(&(dst->imagecachesize),
-               &(src->imagecachesize), sizeof(int));
-  
-  // I have a feeling that the code below is not quite right - Sean
-  copyProperty(&(dst->imagecache), &(src->imagecache),
-               sizeof(struct imageCacheObj));
-
-  return(MS_SUCCESS);
-}
-
-/***********************************************************************
  * msCopyReferenceMap()                                                *
  *                                                                     *
  * Copy a referenceMapObj using mapfile.c:initReferenceMap(),          *
@@ -1236,6 +1138,9 @@ int msCopyMap(mapObj *dst, mapObj *src)
   copyProperty(&(dst->debug), &(src->debug), sizeof(int));
   copyStringProperty(&(dst->datapattern), src->datapattern);
   copyStringProperty(&(dst->templatepattern), src->templatepattern);   
+
+  if( msCopyHashTable( dst->configoptions, src->configoptions ) != MS_SUCCESS )
+      return(MS_FAILURE);
 
   return(MS_SUCCESS);
 }
