@@ -127,7 +127,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   imageObj *prepareImage() {
-    int status;
+    int i, status;
     imageObj *image=NULL;
 
     if(self->width == -1 || self->height == -1) {
@@ -155,12 +155,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if(status != MS_SUCCESS) return NULL;
 
     // compute layer scale factors now
-    for(i=0;i<map->numlayers; i++) {
-      if(map->layers[i].symbolscale > 0 && map->scale > 0) {
-    	if(map->layers[i].sizeunits != MS_PIXELS)
-      	  map->layers[i].scalefactor = (inchesPerUnit[map->layers[i].sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
+    for(i=0;i<self->numlayers; i++) {
+      if(self->layers[i].symbolscale > 0 && self->scale > 0) {
+    	if(self->layers[i].sizeunits != MS_PIXELS)
+      	  self->layers[i].scalefactor = (inchesPerUnit[self->layers[i].sizeunits]/inchesPerUnit[self->units]) / self->cellsize; 
     	else
-      	  map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+      	  self->layers[i].scalefactor = self->layers[i].symbolscale/self->scale;
       }
     }
 
@@ -446,7 +446,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   int setWKTProjection(char *string) {
-    this->project = MS_TRUE;
+    self->project = MS_TRUE;
     return msLoadWKTProjectionString(string, &(self->projection));
   }
 
@@ -455,7 +455,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   int setProjection(char *string) {
-    this->project = MS_TRUE;
+    self->project = MS_TRUE;
     return msLoadProjectionString(&(self->projection), string);
   }
 
