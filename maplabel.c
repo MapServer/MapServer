@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.74  2005/01/11 00:24:28  frank
+ * added labelObj arg to msAddLabel()
+ *
  * Revision 1.73  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -47,7 +50,7 @@ MS_CVSID("$Id$")
 
 //#define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
-int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize)
+int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, labelObj *label )
 {
   int i;
   char wrap[2];
@@ -71,6 +74,9 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   layerPtr = &(map->layers[layerindex]);
   classPtr = &(map->layers[layerindex].class[classindex]);
 
+  if( label == NULL )
+      label = &(classPtr->label);
+
   cachePtr->layerindex = layerindex; // so we can get back to this *raw* data if necessary
   cachePtr->classindex = classindex;
   cachePtr->tileindex = tileindex;
@@ -83,8 +89,8 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   cachePtr->text = strdup(string); // the actual text
 
   // GD/Freetype recognizes \r\n as a true line wrap so we must turn the wrap character into that pattern
-  if(classPtr->label.type != MS_BITMAP && classPtr->label.wrap != '\0') {
-    wrap[0] = classPtr->label.wrap;
+  if(label->type != MS_BITMAP && label->wrap != '\0') {
+    wrap[0] = label->wrap;
     wrap[1] = '\0';
     cachePtr->text = gsub(cachePtr->text, wrap, "\r\n");
   }
@@ -105,8 +111,8 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   }
 
   // copy the label
-  cachePtr->label = classPtr->label; // this copies all non-pointers
-  if(classPtr->label.font) cachePtr->label.font = strdup(classPtr->label.font);
+  cachePtr->label = *label; // this copies all non-pointers
+  if(label->font) cachePtr->label.font = strdup(label->font);
 
   cachePtr->featuresize = featuresize;
 

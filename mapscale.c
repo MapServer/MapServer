@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2005/01/11 00:24:07  frank
+ * added labelObj arg to msAddLabel()
+ *
  * Revision 1.45  2004/11/05 19:22:19  frank
  * ensure state is initialized in msDrawScalebar() (all cases)
  *
@@ -387,7 +390,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   }
   else
-    msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0);
+    msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0, NULL);
 
   // Mark layer as deleted so that it doesn't interfere with html legends or
   // with saving maps

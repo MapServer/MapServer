@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/01/11 00:24:07  frank
+ * added labelObj arg to msAddLabel()
+ *
  * Revision 1.50  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -447,7 +450,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   if(map->legend.postlabelcache) // add it directly to the image
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   else
-    msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0);
+    msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0, NULL);
 
   // Mark layer as deleted so that it doesn't interfere with html legends or
   // with saving maps

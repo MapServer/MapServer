@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.387  2005/01/11 00:24:07  frank
+ * added labelObj arg to msAddLabel()
+ *
  * Revision 1.386  2005/01/03 03:01:56  sdlime
  * Changed my mind, thickness becomes width in a style object.
  *
@@ -1295,7 +1298,7 @@ MS_DLL_EXPORT int msInitFontSet(fontSetObj *fontset);
 MS_DLL_EXPORT int msFreeFontSet(fontSetObj *fontset);
 
 MS_DLL_EXPORT int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor);
-MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize);
+MS_DLL_EXPORT int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize, labelObj *);
 
 MS_DLL_EXPORT gdFontPtr msGetBitmapFont(int size);
 MS_DLL_EXPORT int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
@@ -1346,6 +1349,7 @@ MS_DLL_EXPORT char *msLayerGetProcessing( layerObj *layer, int proc_index);
 MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
 MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
 MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
+MS_DLL_EXPORT int msLayerLabelsRotateWithMap( layerObj *layer );
 
 MS_DLL_EXPORT int msLayerSetTimeFilter(layerObj *lp, const char *timestring, 
                                        const char *timefield);
