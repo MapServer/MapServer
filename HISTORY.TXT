@@ -134,6 +134,9 @@ Version 4.1 (CVS)
   some layers have a template set at the layer level instead of inside
   classes (bug 569).
 
+- New CONFIG keyword in the MAP object in a .map file to be used
+  to set external configuration parameters such as PROJ_LIB and control
+  of some GDAL and OGR driver behaviours (bug 619)
 
 Version 4.0 (2003-08-01)
 ------------------------
