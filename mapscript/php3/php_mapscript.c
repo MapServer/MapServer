@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.158  2003/04/23 13:47:18  dan
+ * Modified error handling to record multiple errors in a chained list, with
+ * the first error being the most recent.
+ *
  * Revision 1.157  2003/04/22 23:38:58  assefa
  * Use MIN/MAXINTERVAL instead of MIN/MAXINCREMENT for the grid.
  *
@@ -418,6 +422,10 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_grid_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_grid_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_get_error_obj(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_error_next(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_reset_error_list(INTERNAL_FUNCTION_PARAMETERS);
+
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
@@ -508,6 +516,7 @@ static int le_mslegend;
 static int le_msstyle;
 static int le_msoutputformat;
 static int le_msgrid;
+static int le_mserror_ref;
 
 static char tmpId[128] = "ttt"; /* big enough for time + pid */
 static int  tmpCount = 0;
@@ -535,6 +544,7 @@ static zend_class_entry *legend_class_entry_ptr;
 static zend_class_entry *style_class_entry_ptr;
 static zend_class_entry *outputformat_class_entry_ptr;
 static zend_class_entry *grid_class_entry_ptr;
+static zend_class_entry *error_class_entry_ptr;
 
 #endif
 
@@ -554,10 +564,11 @@ function_entry php3_ms_functions[] = {
     {"ms_newprojectionobj", php3_ms_projection_new, NULL},
     {"ms_tokenizemap",  php3_ms_tokenizeMap,    NULL},
     {"ms_newstyleobj",  php3_ms_style_new,      NULL},
-    {"ms_newgridobj",  php3_ms_grid_new,      NULL},
+    {"ms_newgridobj",   php3_ms_grid_new,       NULL},
+    {"ms_geterrorobj",  php3_ms_get_error_obj,  NULL},
+    {"ms_reseterrorlist", php3_ms_reset_error_list, NULL},
     {NULL, NULL, NULL}
 };
-
 
 php3_module_entry php3_ms_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
@@ -788,6 +799,12 @@ function_entry php_grid_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
+function_entry php_error_class_functions[] = {
+    {"next",            php3_ms_error_next,             NULL},
+    {NULL, NULL, NULL}
+};
+
+
 PHP_MINFO_FUNCTION(mapscript)
 {
   php_info_print_table_start();
@@ -867,6 +884,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
     PHPMS_GLOBAL(le_msgrid)= register_list_destructors(php3_ms_free_stub,
                                                        NULL);
+
+    PHPMS_GLOBAL(le_mserror_ref)= register_list_destructors(php3_ms_free_stub,
+                                                            NULL);
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
@@ -1052,6 +1072,10 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
      INIT_CLASS_ENTRY(tmp_class_entry, "grid", php_grid_class_functions);
      grid_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
+     INIT_CLASS_ENTRY(tmp_class_entry, "error", php_error_class_functions);
+     error_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
 #endif
 
     return SUCCESS;
@@ -11195,6 +11219,129 @@ DLEXPORT void php3_ms_grid_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(0);
 }
 /* }}} */
+
+
+/*=====================================================================
+ *                 PHP function wrappers - errorObj class
+ *====================================================================*/
+/**********************************************************************
+ *                     _phpms_build_error_object()
+ **********************************************************************/
+static long _phpms_build_error_object(errorObj *perror, 
+                                     HashTable *list, pval *return_value)
+{
+    int error_id;
+
+    if (perror == NULL)
+      return 0;
+
+    error_id = php3_list_insert(perror, PHPMS_GLOBAL(le_mserror_ref) );
+
+    _phpms_object_init(return_value, error_id, php_error_class_functions,
+                       PHP4_CLASS_ENTRY(error_class_entry_ptr));
+
+    add_property_long(return_value,     "code",         perror->code);
+    PHPMS_ADD_PROP_STR(return_value,    "routine",      perror->routine);
+    PHPMS_ADD_PROP_STR(return_value,    "message",      perror->message);
+
+    return error_id;
+}
+
+
+/**********************************************************************
+ *                        ms_GetErrorObj()
+ **********************************************************************/
+
+/* {{{ proto errorObj ms_GetErrorObj()
+   Return the head of the MapServer errorObj list. */
+
+DLEXPORT void php3_ms_get_error_obj(INTERNAL_FUNCTION_PARAMETERS)
+{
+    errorObj *pError;
+    HashTable   *list=NULL;
+
+    if (ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if ((pError = msGetErrorObj()) == NULL)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+        RETURN_FALSE;
+    }
+
+    /* Return error object */
+    _phpms_build_error_object(pError, list, return_value);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        error->next()
+ **********************************************************************/
+
+/* {{{ proto int error.next()
+   Returns a ref to the next errorObj in the list, or NULL if we reached the last one */
+
+DLEXPORT void php3_ms_error_next(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    errorObj    *self, *error_ptr;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) > 0)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (errorObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mserror_ref),
+                                           list TSRMLS_CC);
+
+    if (self == NULL || self->next == NULL)
+    {
+        RETURN_NULL();
+    }
+
+    /* Make sure 'self' is still valid.  It may have been deleted by 
+     * msResetErrorList() 
+     */
+    error_ptr = msGetErrorObj();
+    while(error_ptr != self)
+    {
+        if (error_ptr->next == NULL)
+        {
+            /* We reached end of list of active errorObj and didn't find the
+             * errorObj... thisis bad!
+             */
+            php_error(E_WARNING, 
+                      "ERROR: Trying to access an errorObj that has expired.");
+            RETURN_NULL();
+        }
+        error_ptr = error_ptr->next;
+    }
+
+    /* Return error object */
+    _phpms_build_error_object(self->next, list, return_value);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        ms_ResetErrorList()
+ **********************************************************************/
+
+/* {{{ proto errorObj ms_ResetErrorList()
+   Clear the MapServer errorObj list. */
+
+DLEXPORT void php3_ms_reset_error_list(INTERNAL_FUNCTION_PARAMETERS)
+{
+    msResetErrorList();
+}
+/* }}} */
+
 
 /* ==================================================================== */
 /*      utility functions                                               */

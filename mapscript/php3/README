@@ -1220,12 +1220,12 @@ gridObj
 
  Constructor :
 
-  The grid is always embedded inside a layer object defined as
-  a grid (layer->connectiontype = MS_GRATICULE)
- (for more docs : http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?MapServerGrid)
+   The grid is always embedded inside a layer object defined as
+   a grid (layer->connectiontype = MS_GRATICULE)
+   (for more docs : http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?MapServerGrid)
 
-  A layer can become a grid layer by adding a gid object to it using :
-     ms_newGridObj(layerObj layer)
+   A layer can become a grid layer by adding a grid object to it using :
+      ms_newGridObj(layerObj layer)
 
   Example :   $oLayer = ms_newlayerobj($oMap);
               $oLayer->set("name", "GRID");
@@ -1250,5 +1250,47 @@ gridObj
         Set object property to a new value.
 
 
-                     --------------------------
+errorObj
+--------
 
+   Instances of errorObj are created internally by MapServer as errors
+   happen.  Errors are managed as a chained list with the first item being
+   the most recent error.  The head of the list can be fetched using 
+   ms_GetErrorObj(), and the list can be cleared using ms_ResetErrorList()
+
+ Functions:
+
+   errorObj ms_GetErrorObj()
+        Returns a reference to the head of the list of errorObj.
+
+   void ms_ResetErrorList()
+        Clear the current error list.  
+        Note that clearing the list invalidates any errorObj handles obtained 
+        via the $error->next() method.
+
+ Members:
+
+   int      code
+   string   routine
+   string   message
+
+ Method:
+
+   errorObj next()
+        Returns the next errorObj in the list, or NULL if we reached the end
+        of the list.
+
+ Example:
+   This example draws a map and reports all errors generated during
+   the draw() call, errors can potentially come from multiple layers.
+
+       ms_ResetErrorList();
+       $img = $map->draw();
+       $error = ms_GetErrorObj();
+       while($error && $error->code > 0)
+       {
+           printf("Error in %s: %s<br>\n", $error->routine, $error->message);
+           $error = $error->next();
+       }
+
+                     --------------------------

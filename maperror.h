@@ -42,10 +42,11 @@ extern "C" {
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
 
-typedef struct {
+typedef struct error_obj {
   int code;
   char routine[ROUTINELENGTH];
   char message[MESSAGELENGTH];
+  struct error_obj *next;
 } errorObj;
 
 /*
@@ -58,6 +59,7 @@ typedef struct {
 */
 
 errorObj *msGetErrorObj(void);
+void msResetErrorList();
 void msSetError(int code, const char *message, const char *routine, ...);
 void msWriteError(FILE *stream);
 char *msGetVersion(void);

@@ -47,7 +47,7 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 
 errorObj *msGetErrorObj()
 {
-    static errorObj ms_error = {-1, "", ""};
+    static errorObj ms_error = {MS_NOERR, "", "", NULL};
 
     return &ms_error;
 }
@@ -89,7 +89,7 @@ errorObj *msGetErrorObj()
     else if( link == NULL || link->next == NULL )
     {
         te_info_t *new_link;
-        errorObj   error_obj = { -1, "", "" };
+        errorObj   error_obj = { MS_NOERR, "", "", NULL };
 
         new_link = (te_info_t *) malloc(sizeof(te_info_t));
         new_link->next = error_list;
@@ -117,6 +117,82 @@ errorObj *msGetErrorObj()
 }
 #endif
 
+/* msInsertErrorObj()
+**
+** We maintain a chained list of errorObj in which the first errorObj is
+** the most recent (i.e. a stack).  msErrorReset() should be used to clear
+** the list.
+**
+** Note that since some code in MapServer will fetch the head of the list and
+** keep a handle on it for a while, the head of the chained list is static
+** and never changes.
+** A new errorObj is always inserted after the head, and only if the
+** head of the list already contains some information.  i.e. If the static
+** errorObj at the head of the list is empty then it is returned directly, 
+** otherwise a new object is inserted after the head and the data that was in
+** the head is moved to the new errorObj, freeing the head errorObj to receive
+** the new error information.
+*/
+static errorObj *msInsertErrorObj()
+{
+  errorObj *ms_error;
+  ms_error = msGetErrorObj();
+
+  if (ms_error->code != MS_NOERR)
+  {
+      /* Head of the list already in use, insert a new errorObj after the head
+       * and move head contents to this new errorObj, freeing the errorObj
+       * for reuse.
+       */
+      errorObj *new_error;
+      new_error = (errorObj *)malloc(sizeof(errorObj));
+
+      /* Note: if malloc() failed then we simply do nothing and the head will
+       * be overwritten by the caller... we cannot produce an error here 
+       * since we are already inside a msSetError() call.
+       */
+      if (new_error)
+      {
+          new_error->next = ms_error->next;
+          new_error->code = ms_error->code;
+          strcpy(new_error->routine, ms_error->routine);
+          strcpy(new_error->message, ms_error->message);
+
+          ms_error->next = new_error;
+          ms_error->code = MS_NOERR;
+          ms_error->routine[0] = '\0';
+          ms_error->message[0] = '\0';
+      }
+  }
+
+  return ms_error;
+}
+
+/* msResetErrorList()
+**
+** Clear the list of error objects.
+*/
+void msResetErrorList()
+{
+  errorObj *ms_error, *this_error;
+  ms_error = msGetErrorObj();
+
+  this_error = ms_error->next;
+  while( this_error != NULL)
+  {
+      errorObj *next_error;
+
+      next_error = this_error->next;
+      msFree(this_error);
+      this_error = next_error;
+  }
+
+  ms_error->next = NULL;
+  ms_error->code = MS_NOERR;
+  ms_error->routine[0] = '\0';
+  ms_error->message[0] = '\0';
+}
+
 char *msGetErrorString(int code) {
   
   if(code<0 || code>MS_NUMERRORCODES-1)
@@ -130,7 +206,7 @@ void msSetError(int code, const char *message_fmt, const char *routine, ...)
   char *errfile=NULL;
   FILE *errstream;
   time_t errtime;
-  errorObj *ms_error = msGetErrorObj();
+  errorObj *ms_error = msInsertErrorObj();
   va_list args;
 
   ms_error->code = code;
