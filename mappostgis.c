@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/11/05 19:26:05  frank
+ * avoid type casting warnings
+ *
  * Revision 1.41  2004/10/28 18:26:54  frank
  * comment out the super-noisy debug message in msPOSTGISLayerNextShape().
  *
@@ -199,7 +202,8 @@ static char *DATAERRORMESSAGE(char *dString, char *preamble)
 
 
 int msPOSTGISLayerParseData(char *data, char *geom_column_name,
-                    char *table_name, char *urid_name,char *user_srid,char debug);
+                            char *table_name, char *urid_name,char *user_srid,
+                            int debug);
 
 
 static void msPOSTGISCloseConnection( void *conn_handle )
@@ -1556,7 +1560,7 @@ PGresult   *query_result;
 
   layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
 
-   msPOSTGISLayerParseData(layer->data, geom_column_name,table_name, urid_name,user_srid);
+   msPOSTGISLayerParseData(layer->data, geom_column_name,table_name, urid_name,user_srid,layer->debug);
 
    sprintf(sql,"select extent(%s) from %s", geom_column_name,table_name);
 
@@ -1612,7 +1616,7 @@ PGresult   *query_result;
  */
 
 int msPOSTGISLayerParseData(char *data, char *geom_column_name,
-    char *table_name, char *urid_name,char *user_srid, char debug)
+    char *table_name, char *urid_name,char *user_srid, int debug)
 {
     char *pos_opt, *pos_scn, *tmp, *pos_srid;
     int     slength;
