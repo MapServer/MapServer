@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2001/11/02 22:41:57  dan
+ * Test for nSrcX or nSrcY < 0 in msSimpleRasterResampler() to prevent crash
+ * when accessing pixels buffer.
+ *
  * Revision 1.20  2001/11/02 16:13:00  frank
  * fixed degree/radian conversion bug in msProjTransformer
  *
@@ -158,7 +162,7 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
             nSrcX = (int) x[nDstX];
             nSrcY = (int) y[nDstX];
 
-            if( x[nDstX] < 0.0 || y[nDstX] < 0.0
+            if( nSrcX < 0.0 || nSrcY < 0.0
                 || nSrcX >= nSrcXSize || nSrcY >= nSrcYSize )
                 continue;
 
