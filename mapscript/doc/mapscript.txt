@@ -1,71 +1,167 @@
-.. _mapObj:
+..  $Id$
+    
+    This is the new unified mapscript documentation prepared using
+    ReStructured Text.
 
-============
-class mapObj
-============
+    ReStructured Text is part of the Python docutils module
+    
+        http://docutils.sourceforge.net/
+    
+    Documentation on ReStructured Text is found at
 
-.. _layerObj:
+        http://docutils.sourceforge.net/rst.html
 
-==============
-class layerObj
-==============
+    First RST note is about comments: a double period begins a comment
+    block (like a /* in C) and a double period on a line all by itself
+    closes the comment block.
+..
 
-.. _imageObj:
+..  Below is our main heading (becomes H1).  Note that we require empty
+    lines between every different RST element such as the empty line
+    between the end of this comment and the begining of the heading.
+..
 
-==============
-class imageObj
-==============
+=============================================================================
+Grand Unified Mapscript Documentation :)
+=============================================================================
 
-.. _shapeObj:
+-----------------------------------------------------------------------------
+ Introduction
+-----------------------------------------------------------------------------
 
-==============
-class shapeObj
-==============
+This is language agnostic documentation for the mapscript interface to 
+MapServer.
 
-.. _rectObj:
+..  Following is an anchor, named 'colorObj'.  We link to this anchor by
+    typing 'colorObj_'.
+..
 
-=============
-class rectObj
-=============
+.. _colorObj:
 
-Map extents and shape bounds are instances of rectObj_.
+..  Subheading for colorObj
+..
+
+-----------------------------------------------------------------------------
+ class colorObj
+-----------------------------------------------------------------------------
+
+Since the 4.0 release, MapServer colors are instances of colorObj.
    
-----------
 Attributes
 ----------
 
-- minx_
+- red
+- green
+- blue
+
+Methods
+-------
+
+- `new colorObj`_
+- setRGB_
+- setHex_
+- toHex_
+   
+Attribute Details
+-----------------
+
+int **red**, int **green**, int **blue**
+
+Red, green, and blue can be any value between 0 and 255.
+
+Method Details
+--------------
+
+.. _`new colorObj`:
+
+colorObj_ **new** **colorObj** ([int red=0, int green=0, int blue=0])
+
+    Create a new instance.  The color arguments are optional.
+    
+.. _setRGB:
+
+int **setRGB** (int red, int green, int blue)
+
+    Set all three RGB components.
+    
+.. _setHex:
+
+int **setHex** (string hexcolor)
+    
+    Set the color to values specified in case-independent hexadecimal
+    notation.  Calling setHex('#ffffff') assigns values of 255 to each
+    color component.
+    
+.. _toHex:
+
+string **toHex** ()
+
+    Compliments setHex, returning a hexadecimal representation of the
+    color components.
+    
+.. _mapObj:
+
+------------
+class mapObj
+------------
+
+.. _layerObj:
+
+--------------
+class layerObj
+--------------
+
+.. _imageObj:
+
+--------------
+class imageObj
+--------------
+
+.. _shapeObj:
+
+--------------
+class shapeObj
+--------------
+
+.. _rectObj:
+
+-------------
+class rectObj
+-------------
+
+Map extents and shape bounds are instances of rectObj_.
+   
+Attributes
+----------
+
+- minx
 - miny
 - maxx
 - maxy
 
--------
 Methods
 -------
 
-- constructor_
+- `new rectObj`_
 - draw_
 - toPolygon_
    
------------------
 Attribute Details
 -----------------
 
-.. _minx:
+float **minx**, float **miny**, float **maxx**, float **maxy**
 
-float **minx**
+    Minimum easting, minimum northing, maximum easting, and
+    maximum northing of rectangle region.
 
-    Minimum easting of rectangle region.
-
---------------
 Method Details
 --------------
 
-.. _constructor:
+.. _`new rectObj`:
 
-rectObj_ **rectObj** ([float minx, float miny, float maxx, float maxy])
+rectObj_  **new** **rectObj** ([float minx, float miny, float maxx, float maxy])
 
-    Create new instance of rectObj_.  The four easting and northing arguments
+    Create new instance.  The four easting and northing arguments
     are optional.
 
 
