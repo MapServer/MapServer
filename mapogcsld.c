@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.43  2004/10/29 19:56:19  assefa
+ * Use a class name as the RULE name when generating an SLD.
+ *
  * Revision 1.42  2004/10/25 20:57:18  assefa
  * Comments between NamedLayers was causing the rest of NamedLayers to
  * be ignored (Bug 741)
@@ -280,7 +283,6 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     char *pszTmp = NULL;
     int bFreeTemplate = 0;
     int nLayerStatus = 0;
-
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
@@ -3623,6 +3625,12 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
                 sprintf(szTmp, "%s\n",  "<Rule>");
                 pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
+                //if class has a name, use it as the RULE name
+                if (psLayer->class[i].name)
+                {
+                    sprintf(szTmp, "<Name>%s</Name>\n",  psLayer->class[i].name);
+                    pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
+                }
 /* -------------------------------------------------------------------- */
 /*      get the Filter if there is a class expression.                  */
 /* -------------------------------------------------------------------- */
