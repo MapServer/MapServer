@@ -336,13 +336,14 @@ void lexer_cleanup() {
                                                                                                                                                return(NUMBER); 
                                                                                                                                              }
 
-<EXPRESSION_STRING>\'[0-9]{4}-[0-9]{2}-[0-9]{2}\'    {
-                                                       msyytext++;
-			                               msyytext[strlen(msyytext)-1] = '\0'; 
-                                                       msTimeInit(&msyylval.tmval);
-                                                       msStrptime(msyytext, "%Y-%m-%d", &msyylval.tmval);
-                                                       return(TIME);
-                                                     }
+<EXPRESSION_STRING>\`[^\`]*\`                  {
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-1] = '\0';
+                                                 msTimeInit(&msyylval.tmval);
+                                                 msParseTime(msyytext, &msyylval.tmval);
+                                                 // TODO: need to trap bad date formats somehow, should return a parse error (need an error token in mapparser.y)
+                                                 return(TIME);
+                                               }
 
 <INITIAL,VALUE_STRING>\/[^\/]*\/               {
                                                  msyytext++;

@@ -1,12 +1,25 @@
 /*
-** Date/time utility functions.
+** Date/Time utility functions.
 */
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
+#include "map.h"
 #include "maptime.h"
 #include "maperror.h"
+
+typedef struct {
+  char pattern[32];
+  regex_t *regex;
+  char  format[32];  
+} timeFormatObj;
+
+#define MS_NUMTIMEFORMATS 2
+
+timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {{"[0-9]{4}-[0-9]{2}-[0-9]{2}", NULL, "%Y-%m-%d"},
+						   {"[0-9]{8}", NULL, "%Y%m%d"}
+};
 
 void msTimeInit(struct tm *time)
 {
@@ -64,8 +77,6 @@ int msTimeCompare(struct tm *time1, struct tm *time2)
   return(0); // must be equal
 }
 
-
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <sys/timeb.h>
 void msGettimeofday(struct mstimeval* tp, void* tzp)
@@ -77,8 +88,6 @@ void msGettimeofday(struct mstimeval* tp, void* tzp)
     tp->tv_usec = theTime.millitm * 1000;
 }
 #endif
-
-
 
 char *msStrptime(const char *s, const char *format, struct tm *tm)
 {
@@ -96,4 +105,27 @@ char *msStrptime(const char *s, const char *format, struct tm *tm)
     /* Use system strptime() on non-windows systems */
     return strptime(s, format, tm);
 #endif
+}
+
+int msParseTime(const char *string, struct tm *tm) {
+  int i;
+
+  for(i=0; i<MS_NUMTIMEFORMATS; i++) {
+    if(!ms_timeFormats[i].regex) { // compile the expression
+      ms_timeFormats[i].regex = (regex_t *) malloc(sizeof(regex_t)); 
+      if(regcomp(ms_timeFormats[i].regex, ms_timeFormats[i].pattern, REG_EXTENDED|REG_NOSUB) != 0) {
+	msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msParseTime()", ms_timeFormats[i].pattern);
+	return(MS_FALSE);
+      }
+    }  
+
+    // test the expression against the string
+    if(regexec(ms_timeFormats[i].regex, string, 0, NULL, 0) == 0) { // match   
+      msStrptime(string, ms_timeFormats[i].format, tm);
+      return(MS_TRUE);
+    }
+  }
+
+  msSetError(MS_REGEXERR, "Unrecognized date or time format (%s).", "msParseTime()", string);
+  return(MS_FALSE);
 }
