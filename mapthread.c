@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/01/09 19:15:17  frank
+ * added untested windows mutex implementation
+ *
  * Revision 1.2  2002/01/09 17:46:08  frank
  * added documentation
  *
@@ -146,6 +149,12 @@ files instead.
 #include "map.h"
 #include "mapthread.h"
 
+/************************************************************************/
+/* ==================================================================== */
+/*                               PTHREADS                               */
+/* ==================================================================== */
+/************************************************************************/
+
 #if defined(USE_THREAD) && defined(unix)
 
 #include "pthread.h"
@@ -206,6 +215,83 @@ void msReleaseLock( int nLockId )
     assert( nLockId >= 0 && nLockId < mutexes_initialized );
 
     pthread_mutex_unlock( mutex_locks + nLockId );
+}
+
+#endif /* defined(USE_THREAD) && defined(unix) */
+
+/************************************************************************/
+/* ==================================================================== */
+/*                          WIN32 THREADS                               */
+/* ==================================================================== */
+/************************************************************************/
+
+#if defined(USE_THREAD) && defined(_WIN32)
+
+#include <windows.h>
+
+static int mutexes_initialized = 0;
+static HANDLE mutex_locks[TLOCK_MAX];
+
+/************************************************************************/
+/*                            msThreadInit()                            */
+/************************************************************************/
+
+void msThreadInit()
+
+{
+    static pthread_mutex_t core_lock = PTHREAD_MUTEX_INITIALIZER;
+    static HANDLE core_lock = NULL;
+
+    if( mutexes_initialized >= TLOCK_STATIC_MAX )
+        return;
+
+    if( core_lock == NULL )
+        core_lock = CreateMutex( NULL, TRUE, NULL );
+    
+    WaitForSingleObject( core_lock, INFINITE );
+
+    for( ; mutexes_initialized < TLOCK_STATIC_MAX; mutexes_initialized++ )
+        mutex_locks[mutexes_initialized] = CreateMutex( NULL, TRUE, NULL );
+
+    ReleaseMutex( core_lock );
+}
+
+/************************************************************************/
+/*                           msGetThreadId()                            */
+/************************************************************************/
+
+int msGetThreadId()
+
+{
+    return (int) GetCurrentThreadId();
+}
+
+/************************************************************************/
+/*                           msAcquireLock()                            */
+/************************************************************************/
+
+void msAcquireLock( int nLockId )
+
+{
+    if( mutexes_initialized == 0 )
+        msThreadInit();
+
+    assert( nLockId >= 0 && nLockId < mutexes_initialized );
+
+    WaitForSingleObject( mutex_locks[nLockId], INFINITE );
+}
+
+/************************************************************************/
+/*                           msReleaseLock()                            */
+/************************************************************************/
+
+void msReleaseLock( int nLockId )
+
+{
+    assert( mutexes_initialized > 0 );
+    assert( nLockId >= 0 && nLockId < mutexes_initialized );
+
+    ReleaseMutex( mutex_locks[nLockId] );
 }
 
 #endif /* defined(USE_THREAD) && defined(unix) */
