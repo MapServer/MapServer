@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2004/11/15 21:10:38  dan
+ * No need to call msLayerOpen/Close before/after msLayerGetExtent() any more
+ * (bug 1051)
+ *
  * Revision 1.50  2004/11/09 17:59:05  julien
  * Allow use of msOWSPrintURLType with no metadata. (For bug 1011)
  *
@@ -1280,10 +1284,10 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 /*
 ** msOWSGetLayerExtent()
 **
-** Try to establish layer extent, first looking for "extent" metadata, and
-** if not found then open layer to read extent.
+** Try to establish layer extent, first looking for "ows_extent" metadata, and
+** if not found then call msLayerGetExtent() which will lookup the 
+** layer->extent member, and if not found will open layer to read extent.
 **
-** __TODO__ Replace metadata with EXTENT param in layerObj???
 ** __TODO__ Need to be able to pass in a namespace.
 */
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
@@ -1309,19 +1313,9 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
     msFreeCharArray(tokens, n);
     return MS_SUCCESS;
   }
-  else if (lp->type == MS_LAYER_RASTER)
-  {
-    // __TODO__ We need getExtent() for rasters... use metadata for now.
-    return MS_FAILURE; 
-  }
   else
   {
-    if (msLayerOpen(lp) == MS_SUCCESS) {
-      int status;
-      status = msLayerGetExtent(lp, ext);
-      msLayerClose(lp);
-      return status;
-    }
+      return msLayerGetExtent(lp, ext);
   }
 
   return MS_FAILURE;
