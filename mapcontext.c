@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.61  2004/09/30 13:29:56  julien
+ * Fix a typo in Format encoding that print all formats in each tags.
+ *
  * Revision 1.60  2004/09/23 19:18:10  julien
  * Encode all metadata and parameter printed in an XML document (Bug 802)
  *
@@ -1861,7 +1864,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                   fprintf( stream, "      <FormatList>\n");
                   for(nForm=0; nForm<numFormats; nForm++)
                   {
-                      pszEncodedVal = msEncodeHTMLEntities(pszValue);
+                      pszEncodedVal =msEncodeHTMLEntities(papszFormats[nForm]);
                       if(pszCurrent && (strcasecmp(papszFormats[nForm], 
                                                    pszCurrent) == 0))
                           fprintf( stream,
