@@ -5,6 +5,11 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.7  2002/11/20 17:17:21  julien
+ * Support version 0.1.2 of MapContext
+ * Remove warning from tags
+ * Encode and decode all url
+ *
  * Revision 1.6  2002/11/19 02:27:04  dan
  * Fixed unterminated buffer in msEncodeHTMLEntities()
  *
@@ -214,6 +219,49 @@ int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name,
 
         if (default_value)
             fprintf(stream, format, default_value);
+    }
+
+    return status;
+}
+
+/*
+** msOWSPrintEncodeMetadata()
+**
+** Attempt to output a capability item.  If corresponding metadata is not 
+** found then one of a number of predefined actions will be taken. 
+** If a default value is provided and metadata is absent then the 
+** default will be used.
+** Also encode the value with msEncodeHTMLEntities.
+*/
+
+int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata, 
+                             const char *name, int action_if_not_found, 
+                             const char *format, const char *default_value) 
+{
+    const char *value;
+    char * pszEncodedValue=NULL;
+    int status = MS_NOERR;
+
+    if((value = msLookupHashTable(metadata, (char*)name)))
+    {
+        pszEncodedValue = msEncodeHTMLEntities(value);
+        fprintf(stream, format, pszEncodedValue);
+        free(pszEncodedValue);
+    }
+    else
+    {
+        if (action_if_not_found == OWS_WARN)
+        {
+            fprintf(stream, "<!-- WARNING: Mandatory metadata '%s' was missing in this context. -->\n", name);
+            status = action_if_not_found;
+        }
+
+        if (default_value)
+        {
+            pszEncodedValue = msEncodeHTMLEntities(default_value);
+            fprintf(stream, format, default_value);
+            free(pszEncodedValue);
+        }
     }
 
     return status;
@@ -565,6 +613,76 @@ char *msEncodeHTMLEntities(const char *string)
     newstring[i++] = '\0';
 
     return newstring;
+}
+
+
+/* msDecodeHTMLEntities()
+**
+** Modify the string to replace encoded characters by their true value
+**
+** The replacements performed are:
+**  "&amp;" -> '&', "&quot;" -> '"', "&lt;" -> '<' and "&gt;" -> '>'
+**/
+void msDecodeHTMLEntities(const char *string) 
+{
+    char *pszAmp=NULL, *pszSemiColon=NULL, *pszReplace=NULL, *pszEnd=NULL;
+    char *pszBuffer=NULL;
+
+    if(string == NULL)
+        return;
+    else
+        pszBuffer = (char*)string;
+
+    pszReplace = (char*) malloc(sizeof(char) * strlen(pszBuffer));
+    pszEnd = (char*) malloc(sizeof(char) * strlen(pszBuffer));
+
+    while((pszAmp = strchr(pszBuffer, '&')) != NULL)
+    {
+        // Get the &...;
+        strcpy(pszReplace, pszAmp);
+        pszSemiColon = strchr(pszReplace, ';');
+        if(pszSemiColon == NULL)
+            break;
+        else
+            pszSemiColon++;
+        pszReplace[pszSemiColon-pszReplace] = '\0';
+
+        // Get everything after the &...;
+        strcpy(pszEnd, pszSemiColon+1);
+
+        // Replace the &...;
+        if(strcasecmp(pszReplace, "&amp;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '&';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+        else if(strcasecmp(pszReplace, "&quot;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '"';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+        else if(strcasecmp(pszReplace, "&lt;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '<';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+        else if(strcasecmp(pszReplace, "&gt;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '>';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+
+        pszBuffer = pszAmp + 1;
+    }
+
+    free(pszReplace);
+    free(pszEnd);
+
+    return;
 }
 
 

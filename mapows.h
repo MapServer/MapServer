@@ -5,6 +5,11 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.6  2002/11/20 17:17:21  julien
+ * Support version 0.1.2 of MapContext
+ * Remove warning from tags
+ * Encode and decode all url
+ *
  * Revision 1.5  2002/10/28 20:31:20  dan
  * New support for WMS Map Context (from Julien)
  *
@@ -44,6 +49,9 @@ char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
 int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name, 
                        int action_if_not_found, const char *format, 
                        const char *default_value);
+int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata, 
+                             const char *name, int action_if_not_found, 
+                             const char *format, const char *default_value) ;
 int msOWSPrintGroupMetadata(FILE *stream, mapObj *map, char* pszGroupName, 
                             const char *name, int action_if_not_found, 
                             const char *format, const char *default_value);
@@ -62,6 +70,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
                            const char *wmtver, hashTableObj metadata );
 char *msEncodeHTMLEntities(const char *string);
+void msDecodeHTMLEntities(const char *string);
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
 
 #endif
