@@ -20,6 +20,7 @@ dnl ---------------------------------------------------------------------
 dnl Checks for libraries.
 dnl ---------------------------------------------------------------------
 AC_CHECK_LIB(m,exp, XTRALIBS="$XTRALIBS -lm",,)
+AC_CHECK_LIB(stdc++,exp, XTRALIBS="$XTRALIBS -lstdc++",,)
 AC_SUBST(XTRALIBS, $XTRALIBS)
 
 LIBS="$XTRALIBS $LIBS"
