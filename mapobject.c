@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/07/28 14:24:03  hobu
+ * Updated msMapSetExtent in mapobject.c to use msRectIsValid
+ *
  * Revision 1.10  2004/07/27 19:03:37  sean
  * moved layer ordering functions from maputil.c to mapobject.c
  *
@@ -239,10 +242,10 @@ int msMapSetExtent( mapObj *map,
                     double minx, double miny, double maxx, double maxy) 
 {	
     // Check bounds
-    if (minx > maxx || miny > maxy) {
-        msSetError(MS_MISCERR, "Invalid bounds.", "setExtent()");
-        return MS_FAILURE;
-    }
+    if (!msRectIsValid(&(map->extent))) {
+			msSetError(MS_MISCERR, "Given map extent is invalid.", "setExtent()"); 
+  		return(NULL);
+			}
 
     map->extent.minx = minx;
     map->extent.miny = miny;
