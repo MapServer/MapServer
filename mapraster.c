@@ -1477,8 +1477,11 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
       msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
-    tilefile.status = msSHPWhichShapes(&tilefile, searchrect);
-    numtiles = tilefile.numshapes;
+    status = msSHPWhichShapes(&tilefile, searchrect);
+    if(status != MS_SUCCESS) 
+      numtiles = 0; // could be MS_DONE or MS_FAILURE
+    else
+      numtiles = tilefile.numshapes;
   }
 
   for(t=0;t<numtiles;t++) { /* for each tile, always at least 1 tile */

@@ -512,8 +512,6 @@ int msProcessProjection(projectionObj *p)
 
 {
 #ifdef USE_PROJ    
-    int		i;
-
     assert( p->proj == NULL );
     
     if( strcasecmp(p->projargs[0],"GEOGRAPHIC") == 0 ) {
