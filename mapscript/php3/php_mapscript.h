@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.44  2004/05/31 15:35:39  dan
+ * Added setRotation() (bug 702)
+ *
  * Revision 1.43  2004/01/30 17:01:12  assefa
  * Add function deletestyle on a class object.
  *
@@ -207,6 +210,7 @@
 mapObj         *mapObj_new(char *filename, char *new_path);
 void            mapObj_destroy(mapObj* self);
 mapObj         *mapObj_clone(mapObj* self);
+int             mapObj_setRotation(mapObj* self, double rotation_angle );
 layerObj       *mapObj_getLayer(mapObj* self, int i);
 layerObj       *mapObj_getLayerByName(mapObj* self, char *name);
 int             *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname, 

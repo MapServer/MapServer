@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.199  2004/05/31 15:34:31  dan
+ * Added setRotation() (bug 702)
+ *
  * Revision 1.198  2004/05/31 14:52:24  assefa
  * Add MS_WCSERR.
  *
@@ -352,6 +355,7 @@ DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setRotation(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS);
@@ -775,6 +779,7 @@ function_entry php_map_class_functions[] = {
     {"getallgroupnames",php3_ms_map_getAllGroupNames,   NULL},
     {"getcolorbyindex", php3_ms_map_getColorByIndex,    NULL},
     {"setextent",       php3_ms_map_setExtent,          NULL},
+    {"setrotation",     php3_ms_map_setRotation,        NULL},
     {"zoompoint",       php3_ms_map_zoomPoint,          NULL},
     {"zoomrectangle",   php3_ms_map_zoomRectangle,      NULL},
     {"zoomscale",       php3_ms_map_zoomScale,          NULL},
@@ -1830,6 +1835,45 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     }
 #endif
 
+}
+
+/**********************************************************************
+ *                        map->setRotation()
+ **********************************************************************/
+
+/* {{{ proto int map.setrotation(double rotation_angle)
+   Set map rotation angle. The map view rectangle (specified in EXTENTS) will be rotated by the indicated angle in the counter-clockwise direction. Note that this implies the rendered map will be rotated by the angle in the clockwise direction. */
+
+DLEXPORT void php3_ms_map_setRotation(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj *self;
+    pval   *pAngle;
+    pval   *pThis;
+    HashTable   *list=NULL;
+    int nStatus;
+
+    pThis = getThis();
+    
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pAngle) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FALSE);
+    }
+
+    convert_to_double(pAngle);
+
+    if ((nStatus = mapObj_setRotation(self, pAngle->value.dval)) != MS_TRUE)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
 }
 
 /**********************************************************************
