@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.48  2004/12/29 22:49:57  sdlime
+ * Added GML3 writing capabilities to mapgml.c. Not hooked up to anything yet.
+ *
  * Revision 1.47  2004/11/25 06:19:05  dan
  * Add trailing "?" or "&" to connection string when required in WFS
  * client layers using GET method (bug 1082)
@@ -303,6 +306,9 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 /*====================================================================
  *   mapgml.c
  *====================================================================*/
+#define OWS_GML2 0 // Supported GML formats
+#define OWS_GML3 1
+
 #ifdef USE_WMS_SVR
 // export to fix bug 851
 MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename, const char *namespaces);
