@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.147  2003/02/21 16:55:12  assefa
+ * Add function querybyindex and freequery.
+ *
  * Revision 1.146  2003/02/19 19:37:12  assefa
  * Add an additional argument to function  ms_newLayerObj to be
  * able to create a new layer based on an existing layer.
@@ -238,12 +241,16 @@ DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_nextLabel(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_map_queryByPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_queryByIndex(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_savequery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_loadquery(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_freequery(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
@@ -555,8 +562,10 @@ function_entry php_map_class_functions[] = {
     {"querybyrect",     php3_ms_map_queryByRect,        NULL},
     {"querybyfeatures", php3_ms_map_queryByFeatures,    NULL},
     {"querybyshape",    php3_ms_map_queryByShape,       NULL},
-    {"savequery",       php3_ms_map_savequery,       NULL},
-    {"loadquery",       php3_ms_map_loadquery,       NULL},
+    {"querybyindex",    php3_ms_map_queryByIndex,       NULL},
+    {"savequery",       php3_ms_map_savequery,          NULL},
+    {"loadquery",       php3_ms_map_loadquery,          NULL},
+    {"freequery",       php3_ms_map_freequery,           NULL},
     {"save",            php3_ms_map_save,               NULL},
     {"getlatlongextent", php3_ms_map_getLatLongExtent,  NULL},
     {"getmetadata",     php3_ms_map_getMetaData,        NULL},
@@ -3757,6 +3766,74 @@ DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
 }
 
  
+/**********************************************************************
+ *     map->queryByIndex(qlayer, tileindex, shapeindex, bAddtoQuery)
+ *
+ *
+ * Add a shape into the query result on a specific layer.
+ * if bAddtoQuery (not mandatory) isset to true, the sahpe will be added to 
+ * the existing query result. Else the query result is cleared before adding 
+ * the sahpe (which is the default behavior).
+ **********************************************************************/
+DLEXPORT void php3_ms_map_queryByIndex(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis, *pQlayer, *pTileIndex, *pShapeIndex, *pAddToQuery;
+    mapObj      *self=NULL;
+    int         nStatus = MS_FAILURE;
+    int         bAddToQuery = -1;
+    int         nArgs = ARG_COUNT(ht);
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        (nArgs != 3 && nArgs != 4))
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (pThis == NULL ||
+        getParameters(ht, nArgs, &pQlayer, &pTileIndex, &pShapeIndex,
+                      &pAddToQuery) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pQlayer);
+    convert_to_long(pTileIndex);
+    convert_to_long(pShapeIndex);
+    
+    if (nArgs == 4)
+    {
+      convert_to_long(pAddToQuery);
+      bAddToQuery = pAddToQuery->value.lval;
+    }
+
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    
+    if (self && 
+        (nStatus = mapObj_queryByIndex(self, pQlayer->value.lval,
+                                       pTileIndex->value.lval, 
+                                       pShapeIndex->value.lval,
+                                       bAddToQuery))!= MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    RETURN_LONG(nStatus);
+}
+
+ 
 
 /**********************************************************************
  *                    map->savequery(filename)
@@ -3839,6 +3916,49 @@ DLEXPORT void php3_ms_map_loadquery(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(nStatus);
 }
 
+
+/**********************************************************************
+ *                    map->freequery(qlayer)
+ *
+ * Free the query on a specified layer. If qlayer is set to -1
+ * all queries on all layers will be freed.
+ **********************************************************************/
+
+/* {{{ proto int map->freequery(qlayer) */
+DLEXPORT void php3_ms_map_freequery(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis, *pQlayer;
+    mapObj      *self=NULL;
+    int         nStatus = MS_SUCCESS;
+
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pQlayer) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pQlayer);
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    
+    mapObj_freeQuery(self, pQlayer->value.lval);
+
+    RETURN_LONG(nStatus);
+}
+
+  
   
    
 /**********************************************************************

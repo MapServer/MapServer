@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.32  2003/02/21 16:55:12  assefa
+ * Add function querybyindex and freequery.
+ *
  * Revision 1.31  2003/02/14 20:17:27  assefa
  * Add savequery and loadquery functions.
  *
@@ -183,8 +186,11 @@ int             mapObj_queryByPoint(mapObj* self, pointObj *point,
 int             mapObj_queryByRect(mapObj* self, rectObj rect);
 int             mapObj_queryByFeatures(mapObj* self, int slayer);
 int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
+int              mapObj_queryByIndex(mapObj *self, int qlayer, 
+                                     int tileindex, int shapeindex,
+                                     int bAddToQuery);
 int             mapObj_saveQuery(mapObj *self, char *filename);
-int              mapObj_loadQuery(mapObj *self, char *filename);
+int             mapObj_loadQuery(mapObj *self, char *filename);
 
 int             mapObj_setWKTProjection(mapObj *self, char *string);
 char*           mapObj_getProjection(mapObj* self);
@@ -192,7 +198,7 @@ int             mapObj_setProjection(mapObj* self, char *string);
 int             mapObj_save(mapObj* self, char *filename);
 char            *mapObj_getMetaData(mapObj *self, char *name);
 int             mapObj_setMetaData(mapObj *self, char *name, char *value);
-
+void            mapObj_freeQuery(mapObj *self, int qlayer);
 int             mapObj_moveLayerup(mapObj *self, int layerindex);
 int             mapObj_moveLayerdown(mapObj *self, int layerindex);
 int             *mapObj_getLayersdrawingOrder(mapObj *self);

@@ -298,6 +298,12 @@ and the MapServer Map File documentation at:
         message in case nothing was found can be avoided in PHP using 
         the '@' control operator).
 
+   int queryByIndex(layerindex, tileindex, shapeindex, addtoquery)
+        Add a specific shape on a given layer to the query result.
+        If addtoquery (which is a non mandatory argument) is set to MS_TRUE,
+        the shape will be added to the existing query list. Default behavaior
+        is to free the existing query list and add only the new shape.
+
    int savequery(filename)
         Save the current query in a file. Returns MS_SUCESS or MS_FAILURE.
         Can be used with loadquery
@@ -305,6 +311,10 @@ and the MapServer Map File documentation at:
    int loadquery(filename)
         Loads a query from a file. Returns MS_SUCESS or MS_FAILURE.
         To be used with savequery.
+
+   void freequery(layerindex)
+        Frees the query result on a specified layer. If the layerindex is -1,
+        all queries on layers will be freed.
 
    int save(string filename)
         Save current map object state to a file. Returns -1 on error.

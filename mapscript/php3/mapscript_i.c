@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.59  2003/02/21 16:55:12  assefa
+ * Add function querybyindex and freequery.
+ *
  * Revision 1.58  2003/02/14 20:17:27  assefa
  * Add savequery and loadquery functions.
  *
@@ -390,11 +393,22 @@ int mapObj_queryByShape(mapObj *self, shapeObj *shape) {
     return msQueryByShape(self, -1, shape);
   }
 
+int mapObj_queryByIndex(mapObj *self, int qlayer, int tileindex, int shapeindex,
+                        int bAddToQuery) {
+    if (bAddToQuery)
+      return msQueryByIndexAdd(self, qlayer, tileindex, shapeindex);
+    else
+      return msQueryByIndex(self, qlayer, tileindex, shapeindex);
+}
+
 int mapObj_saveQuery(mapObj *self, char *filename) {
   return msSaveQuery(self, filename);
 }
 int mapObj_loadQuery(mapObj *self, char *filename) {
   return msLoadQuery(self, filename);
+}
+void mapObj_freeQuery(mapObj *self, int qlayer) {
+  msQueryFree(self, qlayer);
 }
 
 int mapObj_setWKTProjection(mapObj *self, char *string) {
