@@ -15,6 +15,8 @@
 
 #include "map.h"
 
+#define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
+
 int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj point, char *string, double featuresize)
 {
   int i;
@@ -555,14 +557,21 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
     if(label.position == MS_AUTO) {
 
       if(layerPtr->type == MS_LINE) {
+	int position = MS_UC;
 
-	for(j=0; j<2; j++) { /* two angles, 1 position - UC */
+	for(j=0; j<2; j++) { /* Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. */
 
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  label.angle += j*MS_DEG_TO_RAD*180.0;
-	  p = get_metrics(&(cachePtr->point), MS_UC, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+	  if(j == 1) {	   
+	    if(fabs(cos(label.angle)) < LINE_VERT_THRESHOLD)	      
+	      label.angle += MS_DEG_TO_RAD*180.0;
+	    else
+	      position = MS_LC;
+	  }
+
+	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
 	  
 	  if(draw_marker) 
 	    msRect2Polygon(marker_rect, cachePtr->poly); // save marker bounding polygon
