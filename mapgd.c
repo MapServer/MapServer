@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "map.h"
 #include "mapparser.h"
 
@@ -71,15 +73,11 @@ imageObj *msImageCreateGD(int width, int height, int imagetype,
             
             if (imagepath)
             {
-                image->imagepath = 
-                    (char *)malloc(sizeof(char)*(strlen(imagepath)+1));
-                strcpy(image->imagepath, (const char*)imagepath);
+                image->imagepath = strdup(imagepath);
             }
             if (imageurl)
             {
-                image->imageurl = 
-                    (char *)malloc(sizeof(char)*(strlen(imageurl)+1));
-                strcpy(image->imageurl, (const char*)imageurl);
+                image->imageurl = strdup(imageurl);
             }
             
             return image;
