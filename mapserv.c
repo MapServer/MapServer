@@ -68,7 +68,6 @@ int writeLog(int show_error)
 
 void writeError()
 {
-  int i;
   errorObj *ms_error = msGetErrorObj();
 
   writeLog(MS_TRUE);
@@ -157,16 +156,16 @@ mapObj *loadMap()
   
   if(i == msObj->NumParams) {
     if(getenv("MS_MAPFILE")) // has a default file has not been set
-      map = msLoadMap(getenv("MS_MAPFILE"));
+      map = msLoadMap(getenv("MS_MAPFILE"), NULL);
     else {
       msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "loadMap()"); // no default, outta here
       writeError();
     }
   } else {
     if(getenv(msObj->ParamValues[i])) // an environment references the actual file to use
-      map = msLoadMap(getenv(msObj->ParamValues[i]));
+      map = msLoadMap(getenv(msObj->ParamValues[i]), NULL);
     else
-      map = msLoadMap(msObj->ParamValues[i]);
+      map = msLoadMap(msObj->ParamValues[i], NULL);
   }
 
   if(!map) writeError();

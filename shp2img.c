@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
   for(i=1;i<argc;i++) { /* Step though the user arguments, 1st to find map file */
  
     if(strncmp(argv[i],"-m",2) == 0) {
-      map = msLoadMap(argv[i+1]);
+      map = msLoadMap(argv[i+1], NULL);
       if(!map) {
 	msWriteError(stderr);
 	exit(0);

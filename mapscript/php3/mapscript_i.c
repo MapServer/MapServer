@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.38  2002/04/22 19:31:57  dan
+ * Added optional new_map_path arg to msLoadMap()
+ *
  * Revision 1.37  2002/04/12 15:44:30  sacha
  * Change msGetSymbolIdByName by msGetSymbolIndex.
  *
@@ -155,11 +158,11 @@
 /**********************************************************************
  * class extensions for mapObj
  **********************************************************************/
-mapObj *mapObj_new(char *filename) {
+mapObj *mapObj_new(char *filename, char *new_path) {
     mapObj *map=NULL;
 
     if(filename && strlen(filename))
-      return msLoadMap(filename);
+      return msLoadMap(filename, new_path);
     else { /* create an empty map, no layers etc... */
         map = (mapObj *)malloc(sizeof(mapObj));
         if(!map) {

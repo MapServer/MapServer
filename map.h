@@ -774,7 +774,7 @@ int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); // maputil.c
 int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
 int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
 int msGetSymbolIndex(symbolSetObj *set, char *name);
-mapObj *msLoadMap(char *filename);
+mapObj *msLoadMap(char *filename, char *new_map_path);
 int msSaveMap(mapObj *map, char *filename);
 void msFreeMap(mapObj *map);
 void msFreeCharArray(char **array, int num_items);

@@ -103,9 +103,13 @@ and the MapServer Map File documentation at:
 
  Constructor:
 
-   mapObj ms_newMapObj(string map_file_name)
+   mapObj ms_newMapObj(string map_file_name [, string new_map_path])
         Returns a new object to deal with a MapServer map file.
 
+        By default, the SYMBOLSET, FONTSET, and other paths in the mapfile
+        are relative to the mapfile location.  If new_map_path is provided
+        then this directory will be used as the base path for all the 
+        relative paths inside the mapfile.
 
  Members:
 

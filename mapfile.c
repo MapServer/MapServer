@@ -3107,7 +3107,7 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
-static mapObj *loadMapInternal(char *filename)
+static mapObj *loadMapInternal(char *filename, char *new_map_path)
 {
   regex_t re;
   mapObj *map=NULL;
@@ -3147,10 +3147,21 @@ static mapObj *loadMapInternal(char *filename)
     return(NULL);
   }
 
-  map_path = getPath(filename);
-  chdir(map_path); /* switch so all filenames are relative to the location of the map file */
+  // If new_map_path is provided then use it, otherwise use the location
+  // of the mapfile as the default path
+  if (new_map_path)
+      map_path = strdup(new_map_path);
+  else
+      map_path = getPath(filename);
+  /* switch so all filenames are relative to the location of the map file */
+  if (chdir(map_path) != 0)
+  {
+    msSetError(MS_IOERR, "chdir(%s) failed.", "msLoadMap()", map_path);
+    free(map_path);
+    free(map);
+    return(NULL);
+  } 
   free(map_path);
-     
 
   msyystate = 5; // restore lexer state to INITIAL
   msyylex();
@@ -3313,12 +3324,12 @@ static mapObj *loadMapInternal(char *filename)
 //
 // Wraps loadMapInternal
 //
-mapObj *msLoadMap(char *filename)
+mapObj *msLoadMap(char *filename, char *new_map_path)
 {
     mapObj *map;
 
     msAcquireLock( TLOCK_PARSER );
-    map = loadMapInternal( filename );
+    map = loadMapInternal( filename, new_map_path );
     msReleaseLock( TLOCK_PARSER );
 
     return map;

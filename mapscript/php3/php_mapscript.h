@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21  2002/04/22 19:31:57  dan
+ * Added optional new_map_path arg to msLoadMap()
+ *
  * Revision 1.20  2002/03/14 21:36:12  sacha
  * Add two mapscript function (in PHP and perl)
  * setSymbolSet(filename) that load a symbol file dynanictly
@@ -122,7 +125,7 @@
  *                   Internal functions from mapscript_i.c
  *====================================================================*/
 
-mapObj         *mapObj_new(char *filename);
+mapObj         *mapObj_new(char *filename, char *new_path);
 void            mapObj_destroy(mapObj* self);
 layerObj       *mapObj_getLayer(mapObj* self, int i);
 layerObj       *mapObj_getLayerByName(mapObj* self, char *name);

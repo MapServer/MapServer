@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
       exit(0);
   }
 
-  map = msLoadMap(argv[1]);
+  map = msLoadMap(argv[1], NULL);
   if(!map) { 
     msWriteError(stderr);
     exit(0);

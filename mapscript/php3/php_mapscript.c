@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.103  2002/04/22 19:31:57  dan
+ * Added optional new_map_path arg to msLoadMap()
+ *
  * Revision 1.102  2002/04/09 14:49:53  assefa
  * Add minscale/maxscale in the class object.
  *
@@ -1011,9 +1014,11 @@ DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval        *pFname;
+    pval        *pFname, *pNewPath;
     mapObj      *pNewObj = NULL;
     int         map_id;
+    int         nArgs;
+    char        *pszNewPath = NULL;
 #ifdef PHP4
     pval        *new_obj_ptr;
     HashTable   *list=NULL;
@@ -1022,11 +1027,6 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     pval        *new_obj_ptr;
     new_obj_ptr = &new_obj_param;
 #endif
-
-    if (getParameters(ht, 1, &pFname) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
-    }
 
 #if defined(PHP4)
     /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
@@ -1048,9 +1048,24 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     }
 #endif
 
+    nArgs = ARG_COUNT(ht);
+    if ((nArgs != 1 && nArgs != 2) ||
+        getParameters(ht, nArgs, &pFname, &pNewPath) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pFname);
+
+    if (nArgs >= 2)
+    {
+        convert_to_string(pNewPath);
+        pszNewPath = pNewPath->value.str.val;
+    }
+
     /* Attempt to open the MAP file 
      */
-    convert_to_string(pFname);
+
 #if defined(PHP4) && defined(WIN32)
     /* With PHP4 on WINNT, we have to use the virtual_cwd API... for now we'll
      * just make sure that the .map file path is absolute, but what we
@@ -1058,19 +1073,19 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * avoid calling setcwd() from anywhere.
      */
     if (IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
-        pNewObj = mapObj_new(pFname->value.str.val);
+        pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
     else
     {
         char    szFname[MAXPATHLEN];
         if (virtual_getcwd(szFname, MAXPATHLEN TSRMLS_CC) != NULL)
         {
             strcat(szFname, "\\");
-            strcat(szFname, pFname->value.str.val);
+            strcat(szFname, pFname->value.str.val, pszNewPath);
             pNewObj = mapObj_new(szFname);
         }
     }
 #else
-    pNewObj = mapObj_new(pFname->value.str.val);
+    pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
 #endif
     if (pNewObj == NULL)
     {
