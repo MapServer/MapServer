@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.8  2000/08/22 05:56:28  dan
+ * Fixed rectObj->set() to treat minx, miny, etc. as doubles instead of ints
+ *
  * Revision 1.7  2000/08/16 21:43:18  dan
  * Removed obsolete symbol type consts (MS_MARKERSET, etc) + added MS_QUERY
  *
@@ -4041,10 +4044,10 @@ DLEXPORT void php3_ms_rect_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     convert_to_string(pPropertyName);
 
-    IF_SET_LONG(        "minx",   self->minx)
-    else IF_SET_LONG(   "miny",   self->miny)  
-    else IF_SET_LONG(   "maxx",   self->maxx) 
-    else IF_SET_LONG(   "maxy",   self->maxy)           
+    IF_SET_DOUBLE(        "minx",   self->minx)
+    else IF_SET_DOUBLE(   "miny",   self->miny)  
+    else IF_SET_DOUBLE(   "maxx",   self->maxx) 
+    else IF_SET_DOUBLE(   "maxy",   self->maxy)           
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
