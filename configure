@@ -3931,7 +3931,7 @@ if test "$PG_CONFIG" = "no" ; then
   POSTGIS_LIB=
 else
   POSTGIS_ENABLED=-DUSE_POSTGIS
-  POSTGIS_LIB="-L`$PG_CONFIG --libdir`"
+  POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
 fi
 
