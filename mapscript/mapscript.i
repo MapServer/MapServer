@@ -521,7 +521,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
   
   gdImagePtr createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
-    return msDrawLegendIcon(map, layer, self, width, height);
+    return msCreateLegendIcon(map, layer, self, width, height);
   }
    
 }
