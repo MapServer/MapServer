@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2002/06/13 19:56:15  frank
+ * don't automatically emit Imagine format support
+ *
  * Revision 1.2  2002/06/11 20:45:22  frank
  * add renderer copy to output format clone function
  *
@@ -235,7 +238,6 @@ void msApplyDefaultOutputFormats( mapObj *map )
 
 #ifdef USE_GDAL
     msCreateDefaultOutputFormat( map, "GDAL/GTiff" );
-    msCreateDefaultOutputFormat( map, "GDAL/HFA" );
 #endif
 
     assert( map->numoutputformats > 0 );
