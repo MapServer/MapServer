@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.150  2004/11/16 18:49:44  dan
+ * Added ows_service_onlineresource metadata for WMS/WFS to distinguish between
+ * service onlineresource and GetMap/Capabilities onlineresource (bug 375)
+ *
  * Revision 1.149  2004/11/11 14:41:27  assefa
  * Send a warning if the layer ststus is set to default (Bug 638).
  *
@@ -1427,13 +1431,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                        fprintf(stdout, "        <Style>\n");
                        fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
                        fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
-                       /*
-                       fprintf(stdout, "          <LegendURL width=\"%s\" height=\"%s\">\n",width, height);
-                       fprintf(stdout, "             <Format>%s</Format>\n", mimetype);
-                       fprintf(stdout, "             <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\" />\n", legendurl);
-                       fprintf(stdout, "          </LegendURL>\n");
-                       */
-                       
+                      
                        msOWSPrintURLType(stdout, NULL, 
                                          "O", "ttt",
                                          OWS_NOERR, NULL, 
@@ -1703,10 +1701,19 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                                    "          <Keyword>%s</Keyword>\n", NULL);
   }
 
+  // Service/onlineresource
+  // Defaults to same as request onlineresource if wms_service_onlineresource 
+  // is not set.
   if (nVersion== OWS_1_0_0)
-    msIO_printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
+                             "MO", "service_onlineresource", OWS_NOERR,
+                             "  <OnlineResource>%s</OnlineResource>\n", 
+                             script_url);
   else
-    msIO_printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url_encoded);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
+                             "MO", "service_onlineresource", OWS_NOERR,
+                             "  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", 
+                             script_url);
 
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!

@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Added ows_service_onlineresource metadata for WMS/WFS to distinguish
+  between service and GetMap/Capabilities onlineresources (bug 375)
+
 - Added map->setSize() to PHP MapScript (bug 1066)
 
 - Re-enabled building PHP MapScript using PHP's bundled regex/*.o. This is

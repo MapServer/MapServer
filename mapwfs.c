@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.54  2004/11/16 18:49:44  dan
+ * Added ows_service_onlineresource metadata for WMS/WFS to distinguish between
+ * service onlineresource and GetMap/Capabilities onlineresource (bug 375)
+ *
  * Revision 1.53  2004/11/10 22:49:23  assefa
  * Send warning for "invalid" layers in the capabilities document (Bug 646).
  *
@@ -507,7 +511,14 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
                                "wfs_keywordlist", 
                                "  <Keywords>\n", "  </Keywords>\n",
                                "    %s\n", NULL);
-  msIO_printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+
+  // Service/onlineresource
+  // Defaults to same as request onlineresource if wfs_service_onlineresource 
+  // is not set.
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), 
+                           "FO", "service_onlineresource", OWS_NOERR,
+                           "  <OnlineResource>%s</OnlineResource>\n", 
+                           script_url);
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_fees", 
                            OWS_NOERR, "  <Fees>%s</Fees>\n", NULL);
