@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2001/11/01 02:46:29  dan
+ * Added msWMSGetFeatureInfoURL()
+ *
  * Revision 1.10  2001/10/29 16:45:47  dan
  * Uncommented the unlink() call to delete the downloaded map image
  *
@@ -334,23 +337,32 @@ const char *msTmpFile(const char *path, const char *ext)
 
 
 /**********************************************************************
- *                          msDrawWMSLayer()
+ *                          msBuildWMSLayerURL()
  *
+ * Build a GetMap or GetFeatureInfo URL.  
+ *
+ * Returns a reference to a newly allocated string that should be freed 
+ * by the caller.
  **********************************************************************/
+#define WMS_GETMAP         1
+#define WMS_GETFEATUREINFO 2
 
-int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img) 
+char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
+                         int nClickX, int nClickY, int nFeatureCount,
+                         const char *pszInfoFormat) 
 {
 #ifdef USE_WMS_LYR
     char *pszURL = NULL, *pszEPSG = NULL;
     const char *pszTmp, *pszRequestParam, *pszExceptionsParam;
     rectObj bbox;
-    int status = MS_SUCCESS, nVersion;
+    int nVersion;
     
     if (lp->connectiontype != MS_WMS || lp->connection == NULL)
-        return MS_FAILURE;
-
-    if((lp->status != MS_ON) && (lp->status != MS_DEFAULT))
-        return MS_SUCCESS;
+    {
+        msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
+                   "msBuildWMSLayerURL()");
+        return NULL;
+    }
 
 /* ------------------------------------------------------------------
  * Find out request version
@@ -360,8 +372,8 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
         (pszTmp = strstr(lp->connection, "WMTVER=")) == NULL &&
         (pszTmp = strstr(lp->connection, "wmtver=")) == NULL )
     {
-        msSetError(MS_WMSCONNERR, "WMS Connection String must contain the VERSION or WMTVER parameter (with name in uppercase).", "msDrawWMSLayer()");
-        return MS_FAILURE;
+        msSetError(MS_WMSCONNERR, "WMS Connection String must contain the VERSION or WMTVER parameter (with name in uppercase).", "msBuildWMSLayerURL()");
+        return NULL;
     }
     pszTmp = strchr(pszTmp, '=')+1;
     if (strncmp(pszTmp, "1.0.8", 5) >= 0)    /* 1.0.8 == 1.1.0 */
@@ -372,9 +384,23 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
         nVersion = WMS_V_1_0_0;
     else
     {
-        msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.1.0 (please verify the VERSION parameter in the connection string).", "msDrawWMSLayer()");
-        return MS_FAILURE;
+        msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.1.0 (please verify the VERSION parameter in the connection string).", "msBuildWMSLayerURL()");
+        return NULL;
     }
+
+
+/* ------------------------------------------------------------------
+ * For GetFeatureInfo requests, make sure QUERY_LAYERS is included
+ * ------------------------------------------------------------------ */
+    if  (nRequestType == WMS_GETFEATUREINFO &&
+         strstr(lp->connection, "QUERY_LAYERS=") == NULL &&
+         strstr(lp->connection, "query_layers=") == NULL )
+    {
+        msSetError(MS_WMSCONNERR, "WMS Connection String must contain the QUERY_LAYERS parameter to support GetFeatureInfo requests (with name in uppercase).", "msBuildWMSLayerURL()");
+        return NULL;
+    }
+
+
 
 /* ------------------------------------------------------------------
  * Figure the SRS we'll use for the request.
@@ -411,9 +437,9 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
          (pszEPSG = strdup(pszEPSG)) == NULL ||
          strncasecmp(pszEPSG, "EPSG:", 5) != 0) )
     {
-        msSetError(MS_WMSCONNERR, "Layer must have an EPSG projection code (in its PROJECTION object or wms_srs metadata)", "msDrawWMSLayer()");
+        msSetError(MS_WMSCONNERR, "Layer must have an EPSG projection code (in its PROJECTION object or wms_srs metadata)", "msBuildWMSLayerURL()");
         if (pszEPSG) free(pszEPSG);
-        return MS_FAILURE;
+        return NULL;
     }
 
     // We'll store the remote server's response to a tmp file.
@@ -430,7 +456,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
         char szProj[20];
         sprintf(szProj, "init=epsg:%s", pszEPSG+5);
         if (msLoadProjectionString(&(lp->projection), szProj) != 0)
-            return MS_FAILURE;
+            return NULL;
     }
 
     bbox = map->extent;
@@ -438,6 +464,135 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     {
         msProjectRect(&(map->projection), &(lp->projection), &bbox);
     }
+
+/* ------------------------------------------------------------------
+ * Build the request URL.
+ * At this point we set only the following parameters for GetMap:
+ *   REQUEST
+ *   SRS
+ *   BBOX
+ *
+ * And for GetFeatureInfo:
+ *   X
+ *   Y
+ *   FEATURE_COUNT
+ *   INFO_FORMAT
+ *
+ * The connection string should contain all other required params, 
+ * including:
+ *   VERSION
+ *   LAYERS
+ *   FORMAT
+ *   TRANSPARENT
+ *   STYLES
+ *   QUERY_LAYERS (for queriable layers only)
+ * ------------------------------------------------------------------ */
+    // Make sure we have a big enough buffer for the URL
+    if(!(pszURL = (char *)malloc((strlen(lp->connection)+256)*sizeof(char)))) 
+    {
+        msSetError(MS_MEMERR, NULL, "msBuildWMSLayerURL()");
+        return NULL;
+    }
+
+    // __TODO__ We have to urlencode each value... especially the BBOX values
+    // because if they end up in exponent format (123e+06) the + will be seen
+    // as a space by the remote server.
+
+    if (nRequestType == WMS_GETFEATUREINFO)
+    {
+        if (nVersion >= WMS_V_1_0_7)
+            pszRequestParam = "GetFeatureInfo";
+        else
+            pszRequestParam = "feature_info";
+
+        if (nVersion >= WMS_V_1_1_0)
+            pszExceptionsParam = "application/vnd.odc.se_xml";
+        else if (nVersion > WMS_V_1_1_0)  /* 1.0.1 to 1.0.7 */
+            pszExceptionsParam = "SE_XML";
+        else
+            pszExceptionsParam = "WMS_XML";
+
+        sprintf(pszURL, 
+                "%s&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
+                "&EXCEPTIONS=%s&X=%d&Y=%d&FEATURE_COUNT=%d&INFO_FORMAT=%s",
+                lp->connection, pszRequestParam, map->width, map->height, 
+                pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
+                pszExceptionsParam,
+                nClickX, nClickY, nFeatureCount, pszInfoFormat);
+    }
+    else /* if (nRequestType == WMS_GETMAP) */
+    {
+        if (nVersion >= WMS_V_1_0_7)
+            pszRequestParam = "GetMap";
+        else
+            pszRequestParam = "Map";
+
+        if (nVersion >= WMS_V_1_1_0)
+            pszExceptionsParam = "application/vnd.odc.se_inimage";
+        else
+            pszExceptionsParam = "INIMAGE";
+
+        sprintf(pszURL, 
+                "%s&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
+                "&EXCEPTIONS=%s",
+                lp->connection, pszRequestParam, map->width, map->height, 
+                pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
+                pszExceptionsParam);
+    }
+
+    free(pszEPSG);
+
+    return pszURL;
+
+#else
+/* ------------------------------------------------------------------
+ * WMS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WMSCONNERR, "WMS CLIENT CONNECTION support is not available.", 
+             "msBuildWMSLayerURL()");
+  return NULL;
+
+#endif /* USE_WMS_LYR */
+
+}
+
+
+/**********************************************************************
+ *                          msWMSGetFeatureInfoURL()
+ *
+ * Build a GetFeatureInfo URL for this layer.
+ *
+ * Returns a reference to a newly allocated string that should be freed 
+ * by the caller.
+ **********************************************************************/
+char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
+                             int nClickX, int nClickY, int nFeatureCount,
+                             const char *pszInfoFormat) 
+{
+    return msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
+                              nClickX, nClickY, nFeatureCount,
+                              pszInfoFormat);
+}
+
+
+/**********************************************************************
+ *                          msDrawWMSLayer()
+ *
+ **********************************************************************/
+
+int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img) 
+{
+#ifdef USE_WMS_LYR
+    char *pszURL = NULL;
+    const char *pszTmp;
+    rectObj bbox;
+    int status = MS_SUCCESS;
+    
+    if (lp->connectiontype != MS_WMS || lp->connection == NULL)
+        return MS_FAILURE;
+
+    if((lp->status != MS_ON) && (lp->status != MS_DEFAULT))
+        return MS_SUCCESS;
 
 /* ------------------------------------------------------------------
  * Check if layer overlaps current view window (using wms_latlonboundingbox)
@@ -472,45 +627,14 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     }
 
 /* ------------------------------------------------------------------
- * Build the request URL.
- * At this point we set only the following parameters:
- *   REQUEST
- *   SRS
- *   BBOX
- *
- * The connection string should contain all other required params, 
- * including:
- *   VERSION
- *   LAYERS
- *   FORMAT
- *   TRANSPARENT
- *   STYLES
+ * Build the request URL and download image
  * ------------------------------------------------------------------ */
-    // Make sure we have a big enough buffer for the URL
-    if(!(pszURL = (char *)malloc((strlen(lp->connection)+256)*sizeof(char)))) 
+    if ((pszURL = msBuildWMSLayerURL(map, lp, WMS_GETMAP, 
+                                     0, 0, 0, NULL)) == NULL)
     {
-        msSetError(MS_MEMERR, NULL, "msDrawWMSLayer()");
+        /* an error was already reported. */
         return MS_FAILURE;
     }
-
-    // __TODO__ We have to urlencode each value... especially the BBOX values
-    // because if they end up in exponent format (123e+06) the + will be seen
-    // as a space by the remote server.
-    if (nVersion >= WMS_V_1_0_7)
-        pszRequestParam = "GetMap";
-    else
-        pszRequestParam = "Map";
-
-    if (nVersion >= WMS_V_1_1_0)
-        pszExceptionsParam = "application/vnd.odc.se_inimage";
-    else
-        pszExceptionsParam = "INIMAGE";
-
-    sprintf(pszURL, 
-            "%s&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f&EXCEPTIONS=%s",
-            lp->connection, pszRequestParam, map->width, map->height, 
-            pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
-            pszExceptionsParam);
 
     msDebug("WMS GET %s\n", pszURL);
     if (msWMSGetImage(pszURL, lp->data) != MS_SUCCESS)
@@ -519,6 +643,8 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
         return MS_FAILURE;
     }
     msDebug("WMS GET completed OK.\n");
+
+    free(pszURL);
 
 /* ------------------------------------------------------------------
  * Prepare layer for drawing, reprojecting the image received from the
@@ -577,9 +703,6 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
 
     // free(lp->data);
     lp->data = NULL;
-
-    free(pszEPSG);
-    free(pszURL);
 
     return status;
 

@@ -873,6 +873,9 @@ const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
                              int bReturnOnlyFirstOne);
 
 int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img); // mapwmslayer.c
+char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
+                             int nClickX, int nClickY, int nFeatureCount,
+                             const char *pszInfoFormat); 
 
 int msGMLWriteQuery(mapObj *map, char *filename); // mapgml.c
 int msGMLStart(FILE *stream, const char *prjElement, const char *prjURI, const char *schemaLocation, const char *prjDescription);
