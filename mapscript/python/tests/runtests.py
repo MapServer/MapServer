@@ -73,6 +73,7 @@ from cases.shapetest import InlineFeatureTestCase
 
 from cases.styletest import DrawProgrammedStylesTestCase
 from cases.styletest import NewStylesTestCase
+from cases.styletest import BrushCachingTestCase
 from cases.colortest import ColorObjTestCase
 
 from cases.symboltest import SymbolTestCase
@@ -120,7 +121,7 @@ suite.addTests([LineObjTestCase,
 
 
 suite.addTests([DrawProgrammedStylesTestCase,
-                NewStylesTestCase,
+                NewStylesTestCase, BrushCachingTestCase,
                 ColorObjTestCase])
                 
 suite.addTests([SymbolTestCase,
