@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.37  2001/07/04 19:06:39  dan
+ * Styleitem AUTO: properly handle ogr-pen-1, the invisible pen.
+ *
  * Revision 1.36  2001/07/03 04:55:40  dan
  * Fixed scale problem with text size, line width, etc, reading OGR Styles.
  *
@@ -1394,27 +1397,44 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               OGRStylePen *poPenStyle = (OGRStylePen*)poStylePart;
               bIsPen = TRUE;
 
-              if (poPenStyle->GetRGBFromString(poPenStyle->
-                                               Color(bIsNull),r,g,b,t))
+              // Check for Pen Pattern "ogr-pen-1": the invisible pen
+              // If that's what we have then set pen color to -1
+              const char *pszName;
+              char  **params;
+              int   numparams;
+              if ((pszName = poPenStyle->Id(bIsNull)) != NULL && 
+                  !bIsNull && strstr(pszName, "ogr-pen-1") != NULL)
               {
-                  // With multipart symbology, a pen color defines the 
-                  // outline color of a polygon
                   if (bIsBrush)
-                      c->outlinecolor = msAddColor(map, r,g,b);
+                      c->outlinecolor = -1;
                   else
-                      c->outlinecolor = c->color = msAddColor(map, r,g,b);
-                  // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, c->outlinecolor);
+                      c->outlinecolor = c->color = -1;
+              }
+              else
+              {
+                  if (poPenStyle->GetRGBFromString(poPenStyle->
+                                               Color(bIsNull),r,g,b,t))
+                  {
+                      // With multipart symbology, a pen color defines the 
+                      // outline color of a polygon
+                      if (bIsBrush)
+                          c->outlinecolor = msAddColor(map, r,g,b);
+                      else
+                          c->outlinecolor = c->color = msAddColor(map, r,g,b);
+                      // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, c->outlinecolor);
+                  }
+
+                  c->size = (int)poPenStyle->Width(bIsNull);
+                  if (c->size > 1 && !bIsNull)
+                  {
+                      // If user provided a "default-circle" symbol then we'll
+                      // use it for producing thick lines.  Otherwise symbol 
+                      // will be set to -1 and line will be 1 pixel wide.
+                      c->symbol = msGetSymbolIndex(&(map->symbolset), 
+                                                   "default-circle");
+                  }
               }
 
-              c->size = (int)poPenStyle->Width(bIsNull);
-              if (c->size > 1 && !bIsNull)
-              {
-                  // If user provided a "default-circle" symbol then we'll use
-                  // it for producing thick lines.  Otherwise symbol will be
-                  // set to -1 and line will be 1 pixel wide.
-                  c->symbol = msGetSymbolIndex(&(map->symbolset), 
-                                               "default-circle");
-              }
           }
           else if (poStylePart->GetType() == OGRSTCBrush)
           {
