@@ -1128,6 +1128,30 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
           return msWMSException(map, wmtver);
       return msWMSGetCapabilities(map, wmtver);
   }
+  else if (request && (strcasecmp(request, "context") == 0 ||
+                       strcasecmp(request, "GetContext") == 0) ) 
+  {
+      /* Return a context document with all layers in this mapfile
+       * This is not a standard WMS request.
+       * __TODO__ The real implementation should actually return only context
+       * info for selected layers in the LAYERS parameter.
+       */
+      if (wmtver)
+      {
+          // VERSION, if specified, is Map Context version, not WMS version
+          // Pass it via wms_context_version metadata
+          msInsertHashTable(map->web.metadata, "wms_context_version", wmtver);
+      }
+      // Now set wmtver to 1.1.0 for error handling purposes
+      wmtver = "1.1.0";
+      if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
+          return msWMSException(map, wmtver);
+      printf("Content-type: text/xml\n\n");
+      if ( msWriteMapContext(map, stdout) != MS_SUCCESS )
+          return msWMSException(map, wmtver);
+      // Request completed
+      return MS_SUCCESS;
+  }
 
   /* If SERVICE, VERSION and REQUEST not included than this isn't a WMS req*/
   if (service == NULL && wmtver==NULL && request==NULL)

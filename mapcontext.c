@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.43  2003/04/09 07:13:49  dan
+ * Added GetContext (custom) request in WMS interface.
+ * Added missing gml: namespace in 0.1.7 context output.
+ *
  * Revision 1.42  2003/03/07 21:22:50  julien
  * Fix a typo in ContactFacsimileTelephone
  *
@@ -1147,13 +1151,9 @@ int msLoadMapContext(mapObj *map, char *filename)
 int msSaveMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
-  const char * version, *value;
-  char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
-  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL, *pszLogoURL;
-  char *pszLegendItem, *pszEncodedVal, *pszLogoItem;
   FILE *stream;
-  int i, nValue;
   char szPath[MS_MAXPATHLEN];
+  int nStatus;
 
   // open file
   if(filename != NULL && strlen(filename) > 0) {
@@ -1168,6 +1168,30 @@ int msSaveMapContext(mapObj *map, char *filename)
       msSetError(MS_IOERR, "Filename is undefined.", "msSaveMapContext()");
       return MS_FAILURE;
   }
+
+  nStatus = msWriteMapContext(map, stream);
+
+  fclose(stream);
+
+  return nStatus;
+#else
+  msSetError(MS_MAPCONTEXTERR, 
+             "Not implemented since Map Context is not enabled.",
+             "msSaveMapContext()");
+  return MS_FAILURE;
+#endif
+}
+
+
+
+int msWriteMapContext(mapObj *map, FILE *stream)
+{
+#if defined(USE_WMS_LYR)
+  const char * version, *value;
+  char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
+  char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL, *pszLogoURL;
+  char *pszLegendItem, *pszEncodedVal, *pszLogoItem;
+  int i, nValue;
 
   // Decide which version we're going to return...
   version = msLookupHashTable(map->web.metadata, "wms_context_version");
@@ -1193,9 +1217,13 @@ int msSaveMapContext(mapObj *map, char *filename)
   {
       fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
   }
-  fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"" );
-  fprintf( stream, 
-           " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+  fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"" 
+                   " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+
+  if(strcasecmp(version, "0.1.7") >= 0)
+  {
+      fprintf( stream, " xmlns:gml=\"http://www.opengis.net/gml\"");
+  }
   fprintf( stream, 
          " xsi:noNamespaceSchemaLocation=\"%s/contexts/%s/context.xsd\">\n",
            msOWSGetSchemasLocation(map), version );
@@ -1623,13 +1651,11 @@ int msSaveMapContext(mapObj *map, char *filename)
       fprintf(stream, "</WMS_Viewer_Context>\n");
   }
 
-  fclose(stream);
-
   return MS_SUCCESS;
 #else
   msSetError(MS_MAPCONTEXTERR, 
              "Not implemented since Map Context is not enabled.",
-             "msSaveMapContext()");
+             "msWriteMapContext()");
   return MS_FAILURE;
 #endif
 }

@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.16  2003/04/09 07:13:49  dan
+ * Added GetContext (custom) request in WMS interface.
+ * Added missing gml: namespace in 0.1.7 context output.
+ *
  * Revision 1.15  2003/03/26 20:24:38  dan
  * Do not call msDebug() unless debug flag is turned on
  *
@@ -209,6 +213,7 @@ int msWFSLayerClose(layerObj *lp);
  *   mapcontext.c
  *====================================================================*/
 
+int msWriteMapContext(mapObj *map, FILE *stream);
 int msSaveMapContext(mapObj *map, char *filename);
 int msLoadMapContext(mapObj *map, char *filename);
 
