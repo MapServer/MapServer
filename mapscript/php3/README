@@ -154,7 +154,9 @@ and the MapServer Map File documentation at:
    string       symbolsetfilename (read-only, set by setSymbolSet())
    string       fontsetfilename (read-only, set by setFontSet())
    outputformatObj outputformat (read only)   
-     
+   labelcacheObj labelcache (no memebers. Used only to be able to free the
+                             the label cache (ex : map->labelcache->free())
+          
  Methods:
 
    mapObj clone()
@@ -1309,5 +1311,23 @@ errorObj
            printf("Error in %s: %s<br>\n", $error->routine, $error->message);
            $error = $error->next();
        }
+
+
+
+labelcacheObj
+------------
+
+Accessible only through the map object (map->labelcache). This object
+is only used to give the possiblity to free the label cache 
+(map->labelcache->free())
+
+
+Method:
+
+   boolean free()
+        Free the label cache. Returns true on success or false if an error
+        occurs.
+        Ex : (map->labelcache->free();
+
 
                      --------------------------

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.165  2003/05/27 19:36:31  assefa
+ * Add labelcaheObj.
+ *
  * Revision 1.164  2003/05/27 12:57:17  assefa
  * Set label size to default value (Bug245).
  *
@@ -500,6 +503,12 @@ static long _phpms_build_grid_object(graticuleObj *pgrid,
                                      HashTable *list, 
                                      pval *return_value TSRMLS_DC);
 
+static long _phpms_build_labelcache_object(labelCacheObj *plabelcache,
+                                           HashTable *list, 
+                                           pval *return_value);
+
+DLEXPORT void php_ms_labelcache_free(INTERNAL_FUNCTION_PARAMETERS);
+
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
 /* ==================================================================== */
@@ -542,6 +551,7 @@ static int le_msstyle;
 static int le_msoutputformat;
 static int le_msgrid;
 static int le_mserror_ref;
+static int le_mslabelcache;
 
 static char tmpId[128] = "ttt"; /* big enough for time + pid */
 static int  tmpCount = 0;
@@ -570,6 +580,7 @@ static zend_class_entry *style_class_entry_ptr;
 static zend_class_entry *outputformat_class_entry_ptr;
 static zend_class_entry *grid_class_entry_ptr;
 static zend_class_entry *error_class_entry_ptr;
+static zend_class_entry *labelcache_class_entry_ptr;
 
 #endif
 
@@ -832,6 +843,11 @@ function_entry php_error_class_functions[] = {
 };
 
 
+function_entry php_labelcache_class_functions[] = {
+    {"free",    php_ms_labelcache_free,      NULL},    
+    {NULL, NULL, NULL}
+};
+
 PHP_MINFO_FUNCTION(mapscript)
 {
   php_info_print_table_start();
@@ -914,6 +930,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
     PHPMS_GLOBAL(le_mserror_ref)= register_list_destructors(php3_ms_free_stub,
                                                             NULL);
+
+    PHPMS_GLOBAL(le_mslabelcache)= 
+      register_list_destructors(php3_ms_free_stub, NULL);
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
@@ -1150,6 +1169,10 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
                       php_error_class_functions);
      error_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_labelcache_obj", 
+                      php_labelcache_class_functions);
+     labelcache_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
 #endif
 
     return SUCCESS;
@@ -1330,6 +1353,11 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
     _phpms_build_outputformat_object(pMap->outputformat, list, new_obj_ptr);
     _phpms_add_property_object(return_value, "outputformat", new_obj_ptr, E_ERROR);
+
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+    _phpms_build_labelcache_object(&(pMap->labelcache), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "labelcache", new_obj_ptr, E_ERROR);
+
     return map_id;
 }
 
@@ -11507,6 +11535,64 @@ DLEXPORT void php3_ms_reset_error_list(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+
+/*=====================================================================
+ *                 PHP function wrappers - labelcache class
+ *====================================================================*/
+/**********************************************************************
+ *                     _phpms_build_labelcache_object()
+ **********************************************************************/
+static long _phpms_build_labelcache_object(labelCacheObj *plabelcache, 
+                                           HashTable *list, 
+                                           pval *return_value)
+{
+    int         labelcache_id;
+
+    if (plabelcache == NULL)
+        return 0;
+
+    labelcache_id = 
+      php3_list_insert(plabelcache, PHPMS_GLOBAL(le_mslabelcache));
+
+    _phpms_object_init(return_value, labelcache_id, 
+                       php_labelcache_class_functions,
+                       PHP4_CLASS_ENTRY(labelcache_class_entry_ptr));
+
+    return labelcache_id;
+}
+
+/**********************************************************************
+ *                        labelcache->free()
+ **********************************************************************/
+
+/* {{{ proto int labelcache->free(()
+   Free the labelcache object in the map. Returns true on success or false if
+   an error occurs. */
+
+DLEXPORT void php_ms_labelcache_free(INTERNAL_FUNCTION_PARAMETERS)
+{
+    labelCacheObj *self;
+    HashTable   *list=NULL;
+    pval  *pThis;
+
+    pThis = getThis();
+
+
+    if (pThis == NULL)
+      RETURN_FALSE;
+
+     
+    self = (labelCacheObj *)
+      _phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslabelcache),
+                          list TSRMLS_CC);
+
+    if (self == NULL)
+      RETURN_FALSE;
+
+    labelCacheObj_freeCache(self);
+
+     RETURN_TRUE;
+}
 
 /* ==================================================================== */
 /*      utility functions                                               */
