@@ -293,7 +293,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   status = msLayerWhichShapes(lp, searchrect);
   if(status == MS_DONE) { // no overlap
     msLayerClose(lp);
-    msDebug("%s: No matching record(s) found, layer and area of interest do not overlap.", "msQueryByAttributes()");
+    msSetError(MS_NOTFOUND, "No matching record(s) found, layer and area of interest do not overlap.", "msQueryByAttributes()");
     return(MS_FAILURE);
   } else if(status != MS_SUCCESS) {
     msLayerClose(lp);
@@ -367,7 +367,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   if(lp->resultcache && lp->resultcache->numresults > 0)
     return(MS_SUCCESS);
  
-  msDebug("%s: No matching record(s) found.", "msQueryByAttributes()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByAttributes()"); 
   return(MS_FAILURE);
 }
 
@@ -512,7 +512,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
       return(MS_SUCCESS);
   }
  
-  msDebug("%s: No matching record(s) found.", "msQueryByRect()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByRect()"); 
   return(MS_FAILURE);
 }
 
@@ -741,7 +741,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       return(MS_SUCCESS);
   }
 
-  msDebug("%s: No matching record(s) found.", "msQueryByFeatures()"); 
+  msSetError("No matching record(s) found.", "msQueryByFeatures()"); 
   return(MS_FAILURE);
 }
 
@@ -888,7 +888,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
       return(MS_SUCCESS);
   }
  
-  msDebug("%s: No matching record(s) found.", "msQueryByPoint()"); 
+  msSetError("No matching record(s) found.", "msQueryByPoint()"); 
   return(MS_FAILURE);
 }
 
@@ -1055,7 +1055,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
       return(MS_SUCCESS);
   }
  
-  msDebug("%s: No matching record(s) found.", "msQueryByShape()"); 
+  msSetError("No matching record(s) found.", "msQueryByShape()"); 
   return(MS_FAILURE);
 }
 
