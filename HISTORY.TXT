@@ -23,6 +23,9 @@ Version 4.2 ???
 
 - Mapscript: replaced bad PNG file in tests with one that reads on win32.
 
+- mapresample.c: Ensure background value is properly initialized in 
+  case of rgb or rgba resampled rasters.
+
 Version 4.2-beta3 (2004-05-14)
 ------------------------------
 
