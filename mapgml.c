@@ -428,13 +428,14 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 ** Similar to msGMLWriteQuery() but tuned for use with WFS 1.0.0
 */
 
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures)
 {
   int status;
   int i,j,k;
   layerObj *lp=NULL;
   shapeObj shape;
   rectObj  resultBounds = {-1.0,-1.0,-1.0,-1.0};
+  int features = 0;
 
   msInitShape(&shape);
 
@@ -477,7 +478,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
         if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
           msProjectShape(&lp->projection, &map->projection, &shape);
 #endif
-
+        
 	// start this feature
 	fprintf(stream, "    <gml:featureMember>\n");
 	fprintf(stream, "      <%s>\n", lp->name);
@@ -490,6 +491,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
 	  fprintf(stream, "        <%s>%s</%s>\n", 
                   lp->items[k], encoded_val, lp->items[k]);
           free(encoded_val);
+
+         
         }
 
         fprintf(stream, "        <%s>\n", geom_name); 
@@ -521,12 +524,19 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
 	fprintf(stream, "    </gml:featureMember>\n");
 
 	msFreeShape(&shape); // init too
+
+         features++;
+         if (maxfeatures > 0 && features == maxfeatures)
+           break;
       }
 
       // end this layer
 
       msLayerClose(lp);
     }
+
+    if (maxfeatures > 0 && features == maxfeatures)
+      break;
 
   } // next layer
 
