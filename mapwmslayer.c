@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.64  2004/04/05 21:57:06  assefa
+ * Fix bug in msWMSGetFeatureInfoURL not passing a wmsparams structure to the
+ * msBuildWMSLayerURL.
+ *
  * Revision 1.63  2004/03/30 15:44:20  dan
  * Fixed leak of pszURL when merging multiple WMS layers
  *
@@ -737,7 +741,7 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
 
     if (msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
                            nClickX, nClickY, nFeatureCount,
-                           pszInfoFormat, NULL, NULL)!= MS_SUCCESS)
+                           pszInfoFormat, NULL, &sThisWMSParams)!= MS_SUCCESS)
     {
         return NULL;
     }
