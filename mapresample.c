@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/05/03 16:25:18  frank
+ * map->extents are for center of pixel
+ *
  * Revision 1.10  2001/05/02 19:46:32  frank
  * Fixed bug 7, dealing with map extents that fail to reproject
  *
@@ -488,10 +491,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     nDstXSize = gdImageSX(img);
     nDstYSize = gdImageSY(img);
 
-    adfDstGeoTransform[0] = map->extent.minx;
+    adfDstGeoTransform[0] = map->extent.minx - map->cellsize*0.5;
     adfDstGeoTransform[1] = map->cellsize;
     adfDstGeoTransform[2] = 0.0;
-    adfDstGeoTransform[3] = map->extent.maxy;
+    adfDstGeoTransform[3] = map->extent.maxy + map->cellsize*0.5;
     adfDstGeoTransform[4] = 0.0;
     adfDstGeoTransform[5] = - map->cellsize;
 
