@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.76  2004/01/30 17:01:12  assefa
+ * Add function deletestyle on a class object.
+ *
  * Revision 1.75  2004/01/13 23:52:39  assefa
  * Add functions to move styles up and down.
  * Add function to clone style.
@@ -890,6 +893,11 @@ int classObj_moveStyleUp(classObj *self, int index)
 int classObj_moveStyleDown(classObj *self, int index)
 {
     return msMoveStyleDown(self, index);
+}
+
+int classObj_deleteStyle(classObj *self, int index)
+{
+    return msDeleteStyle(self, index);
 }
 
 /**********************************************************************

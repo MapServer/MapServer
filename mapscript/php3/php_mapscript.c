@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.190  2004/01/30 17:01:12  assefa
+ * Add function deletestyle on a class object.
+ *
  * Revision 1.189  2004/01/13 23:52:38  assefa
  * Add functions to move styles up and down.
  * Add function to clone style.
@@ -403,6 +406,7 @@ DLEXPORT void php3_ms_class_getStyle(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_clone(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_moveStyleUp(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_moveStyleDown(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_class_deleteStyle(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -861,6 +865,7 @@ function_entry php_class_class_functions[] = {
     {"clone",           php3_ms_class_clone, NULL},   
     {"movestyleup",     php3_ms_class_moveStyleUp, NULL},   
     {"movestyledown",   php3_ms_class_moveStyleDown, NULL},   
+    {"deletestyle",     php3_ms_class_deleteStyle, NULL},   
     {NULL, NULL, NULL}
 };
 
@@ -8616,6 +8621,38 @@ DLEXPORT void  php3_ms_class_moveStyleDown(INTERNAL_FUNCTION_PARAMETERS)
       RETURN_LONG(nStatus);
 }
 
+DLEXPORT void  php3_ms_class_deleteStyle(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis, *pIdx;
+     classObj      *self=NULL;
+     HashTable   *list=NULL;
+     int         nStatus = MS_FAILURE;
+
+     pThis = getThis();
+
+     if (pThis == NULL ||
+        getParameters(ht, 1, &pIdx) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+     convert_to_long(pIdx);
+
+     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass), 
+                                            list TSRMLS_CC);
+
+     if (self != NULL)
+     {
+         nStatus = classObj_deleteStyle(self, pIdx->value.lval);
+
+         if (nStatus == MS_TRUE)
+           _phpms_set_property_long(pThis,"numstyles", self->numstyles, E_ERROR); 
+     }
+
+     RETURN_LONG(nStatus);
+}
+
+
 /* }}} */
 
 
@@ -8845,6 +8882,7 @@ DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
     int                 status=MS_FAILURE;
+
 
 #ifdef PHP4
     HashTable   *list=NULL;

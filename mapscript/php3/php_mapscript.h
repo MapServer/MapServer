@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/01/30 17:01:12  assefa
+ * Add function deletestyle on a class object.
+ *
  * Revision 1.42  2004/01/13 23:52:38  assefa
  * Add functions to move styles up and down.
  * Add function to clone style.
@@ -329,6 +332,7 @@ int             classObj_setOverlaySymbolByName(classObj *self,
 classObj        *classObj_clone(classObj *class, layerObj *layer);
 int             classObj_moveStyleUp(classObj *self, int index);
 int             classObj_moveStyleDown(classObj *self, int index);
+int             classObj_deleteStyle(classObj *self, int index);
 
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);

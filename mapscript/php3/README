@@ -783,6 +783,23 @@ and the MapServer Map File documentation at:
           up to postion 1, and the style at position 1 will be moved
           to position 0.
 
+   int deletestyle(int index)
+       Delete the style specified by the style index. If there are any
+       style that follow the deleted style, their index will decrease by 1.
+
+       NOTE : if you are using the numstyles parameter while using the deletestyle
+              function on the class object you need to refetch a new class
+              object. Example :
+              
+                 //class has 2 styles
+                $class = $oLayer->getclass(0);
+                $class->deletestyle(1);
+                echo $class->numstyles; : will echo 2
+
+                $class = $oLayer->getclass(0);
+                echo $class->numstyles; : will echo 1 
+
+
  ImageObj Class:
  ---------------
 
