@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.171  2005/02/06 19:31:32  sean
+ * msSetup() function calls gdFontCacheSetup().  msSetup should be called immediately on mapscript module import to avoid race condition with font cache (bug 1203).
+ *
  * Revision 1.170  2005/02/03 00:06:57  assefa
  * Add SVG function prototypes and related calls.
  *
@@ -1165,7 +1168,28 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 
     msTransformShapeToPixel(shape, extent, cellsize);
 }
- 
+
+/*
+-------------------------------------------------------------------------------
+ msSetup()
+
+ Contributed by Jerry Pisk in bug 1203.  Heads off potential race condition
+ in initializing GD font cache with multiple threads.  Should be called from
+ mapscript module initialization code.
+-------------------------------------------------------------------------------
+*/
+
+int msSetup()
+{
+#ifdef USE_GD_FT
+    if (gdFontCacheSetup() != 0) 
+    {
+        return MS_FAILURE;
+    }
+#endif
+    return MS_SUCCESS;
+}
+  
 /* This is intended to be a function to cleanup anything that "hangs around"
    when all maps are destroyed, like Registered GDAL drivers, and so forth. */
 extern void lexer_cleanup(void);

@@ -148,7 +148,7 @@ memory.") const char * {
      $1 = 0;
   }
 }
-#endif // __cplusplus
+#endif /* __cplusplus */
 
 /* GD Buffer Mapping for use with imageObj::getBytes */
 %{
@@ -203,7 +203,7 @@ typedef struct {
 /* Python */
 #ifdef SWIGPYTHON
 %include "pymodule.i"
-#endif //SWIGPYTHON
+#endif /* SWIGPYTHON */
 
 /* Ruby */
 #ifdef SWIGRUBY
@@ -226,9 +226,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
   /* save Tcl interp pointer to be used in getImageToVar() */
   SWIG_TCL_INTERP = interp;
-#endif //USE_TCL_STUBS
+#endif /* USE_TCL_STUBS */
 %}
-#endif // SWIGTCL8
+#endif /* SWIGTCL8 */
 
 /* 
 =============================================================================
@@ -288,7 +288,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 /* Python */
 #ifdef SWIGPYTHON
 %include "pyextend.i"
-#endif //SWIGPYTHON
+#endif /* SWIGPYTHON */
 
 /* Ruby */
 #ifdef SWIGRUBY

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.393  2005/02/06 19:31:32  sean
+ * msSetup() function calls gdFontCacheSetup().  msSetup should be called immediately on mapscript module import to avoid race condition with font cache (bug 1203).
+ *
  * Revision 1.392  2005/02/03 00:06:57  assefa
  * Add SVG function prototypes and related calls.
  *
@@ -1107,6 +1110,7 @@ typedef struct {
 // Function prototypes, wrapable
 MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
+MS_DLL_EXPORT int msSetup(void);
 MS_DLL_EXPORT void msCleanup(void);
 
 // Function prototypes, not wrapable
