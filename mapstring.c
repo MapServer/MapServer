@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/10/21 19:19:44  assefa
+ * Add utility function trimLeft.
+ *
  * Revision 1.27  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -190,6 +193,43 @@ char *chop(char *string) {
   return(string);
 }
 
+/**
+ * remove leading white spaces and shif evey thing to the left
+ */
+
+char *trimLeft(char *string)
+{
+    char *read, *write;
+    int i, length;
+
+    if (string && strlen(string) > 0)
+    {
+        length = strlen(string);
+        read = string;
+        write = string;
+
+        for (i=0; i<length; i++)
+        {
+            if (isspace(string[i]))
+              read++;
+            else
+              break;
+        }
+
+        if (read > write)
+        {
+            while (*read)
+            {
+                *write = *read;
+                read++;
+                write++;
+            }
+            *write = '\0';
+        }
+    }
+    return string;
+}
+    
 /* ------------------------------------------------------------------------------- */
 /*       Trims leading blanks from a string                                        */
 /* ------------------------------------------------------------------------------- */

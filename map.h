@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.360  2004/10/21 19:19:44  assefa
+ * Add utility function trimLeft.
+ *
  * Revision 1.359  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -1115,6 +1118,7 @@ MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode,
 
 
 MS_DLL_EXPORT void trimBlanks(char *string); // in mapstring.c
+MS_DLL_EXPORT char *trimLeft(char *string);
 MS_DLL_EXPORT char *chop(char *string);
 MS_DLL_EXPORT void trimEOL(char *string);
 MS_DLL_EXPORT char *gsub(char *str, const char *old, const char *sznew);
