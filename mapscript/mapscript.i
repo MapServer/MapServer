@@ -910,6 +910,7 @@ memory.") const char * {
     return NULL;
   }
 
+  // Should be deprecated!  Completely bogus layer argument.  SG.
   int setText(layerObj *layer, char *string) {
     return loadExpressionString(&self->text, string);
   }
@@ -1316,7 +1317,8 @@ memory.") const char * {
      * If the target language is Python, we ignore this constructor and
      * instead use the one in python/pymodule.i. */
 #ifndef SWIGPYTHON
-    imageObj(int width, int height, const char *driver, const char *file=NULL)
+    imageObj(int width, int height, const char *driver=NULL,
+             const char *file=NULL)
     {
         imageObj *image=NULL;
         outputFormatObj *format;

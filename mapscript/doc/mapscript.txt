@@ -288,25 +288,60 @@ toHex() : string
     Compliments setHex, returning a hexadecimal representation of the
     color components.
     
-------------
- mapObj
-------------
-
-Attributes
-----------
-
-x
-
-Methods
--------
-
-x
-
 -----------------------------------------------------------------------------
  imageObj
 -----------------------------------------------------------------------------
 
-x 
+An image object is a decorated GD image.
+
+Attributes
+----------
+
+format : outputFormatObj_
+    An object attribute
+
+height : int immutable
+    Image height in pixels
+    
+imagepath : string immutable
+    If image is drawn by mapObj.draw(), this is the mapObj's web.imagepath.
+
+imageurl : string immutable
+    If image is drawn by mapObj.draw(), this is the mapObj's web.imageurl.
+
+renderer : int 
+    MS_RENDER_WITH_GD, MS_RENDER_WITH_SWF, MS_RENDER_WITH_RAWDATA,
+    MS_RENDER_WITH_PDF, or MS_RENDER_WITH_IMAGEMAP
+
+size : int
+    I don't see where this is used.  Anyone?
+
+width : int immutable
+    Image width in pixels
+
+
+Methods
+-------
+
+.. _new imageObj:
+
+new imageObj(int width, int height, string driver [, string filename]) : imageObj_
+    Create new instance of imageObj.  If *filename* is specified, an imageObj
+    is created from the file and any specified *width*, *height*, and
+    *driver* parameters will be overridden by values of the image in 
+    *filename*.  Otherwise, if *driver* specified an imageObj is created using
+    that driver.  For GD the possible driver names are "GD/Gif", "GD/PNG",
+    "GD/WBMP" and "GD/JPEG".  For flash the driver is just called "SWF".  For
+    output through GDAL the GDAL shortname for the format is appended, such 
+    as "GDAL/GTiff".  If *filename* is not specified, then *width* and *height*
+    should be specified.
+
+.. _imageObj.save:
+
+save(string filename [, mapObj parent_map=NULL]) : int
+    Save image to *filename*.  The optional *parent_map* parameter must be
+    specified if saving GeoTIFF images.
+
 
 -----------------------------------------------------------------------------
  labelObj
@@ -429,7 +464,15 @@ A layerObj is associated with one mapObj and has no other existence [1]_.
     +----------+ 0..1     1 +--------+
     | layerObj | <--------> | mapObj |
     +----------+            +--------+
-    
+   
+The other important association for layerObj is with classObj
+
+::
+
+    +----------+ 1     0..1 +----------+
+    | layerObj | <--------> | classObj |
+    +----------+            +----------+
+
 -----------------------------------------------------------------------------
  lineObj
 -----------------------------------------------------------------------------
@@ -441,7 +484,32 @@ A lineObj is composed of one or more pointObj_ instances.
     +---------+ 0..1  1..* +----------+
     | lineObj | ---------> | pointObj |
     +---------+            +----------+
-    
+
+
+-----------------------------------------------------------------------------
+ mapObj
+-----------------------------------------------------------------------------
+
+A mapObj is primarily associated with instances of layerObj.
+
+::
+
+     +--------+ 1     0..1 +----------+
+     | mapObj | <--------> | layerObj |
+     +--------+            +----------+
+
+Secondary associations are with legendObj, scalebarObj, and referenceMapObj.
+
+::
+
+     +--------+ 1     0..1 +-----------------+
+     | mapObj | ---------> | legendObj       |
+     +--------+            + --------------- +
+                           | scalebarObj     |
+                           | --------------- |
+                           | legendObj       |
+                           +---------------- + 
+
 -----------------------------------------------------------------------------
  pointObj
 -----------------------------------------------------------------------------
