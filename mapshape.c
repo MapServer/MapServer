@@ -32,6 +32,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.64  2005/03/02 17:00:06  sdlime
+ * Fixed shapefile boundary initialization error. (bug 1265).
+ *
  * Revision 1.63  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -941,7 +944,7 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   if( psSHP->nRecords == 1 ) {
     psSHP->adBoundsMin[0] = psSHP->adBoundsMax[0] = shape->line[0].point[0].x;
     psSHP->adBoundsMin[1] = psSHP->adBoundsMax[1] = shape->line[0].point[0].y;
-    psSHP->adBoundsMin[2] = psSHP->adBoundsMax[1] = shape->line[0].point[0].z;
+    psSHP->adBoundsMin[2] = psSHP->adBoundsMax[2] = shape->line[0].point[0].z;
     psSHP->adBoundsMin[3] = psSHP->adBoundsMax[3] = shape->line[0].point[0].m;
   }
   
