@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/12/14 21:30:43  sdlime
+ * Moved functions to build lists of inner and outer rings to mapprimitive.c from mapgml.c. They are needed to covert between MapServer polygons and GEOS gemometries (bug 771).
+ *
  * Revision 1.42  2004/11/12 20:23:16  frank
  * include z and m in formatted pointObj, fmt is const!
  *
@@ -147,6 +150,65 @@ void msComputeBounds(shapeObj *shape)
       shape->bounds.maxy = MS_MAX(shape->bounds.maxy, shape->line[i].point[j].y);
     }
   }
+}
+
+// checks to see if ring r is an outer ring of shape
+static int isOuterRing(shapeObj *shape, int r) 
+{
+  pointObj point; // a point in the ring
+  shapeObj ring;
+
+  if(shape->numlines == 1) return(MS_TRUE);
+
+  msInitShape(&ring); // convert the ring of interest into its own shape
+  msAddLine(&ring, &(shape->line[r]));
+
+  msPolygonLabelPoint(&ring, &point, -1); // generate a point in that ring
+  msFreeShape(&ring); // done with it
+
+  return(msIntersectPointPolygon(&point, shape)); // test the point against the main shape
+}
+
+/*
+** Returns a list of outer rings for shape (the list has one entry for each ring, 
+** MS_TRUE for outer rings).
+*/
+int *msGetOuterList(shapeObj *shape) 
+{
+  int i;
+  int *list;
+
+  list = (int *)malloc(sizeof(int)*shape->numlines);
+  if(!list) return(NULL);
+
+  for(i=0; i<shape->numlines; i++)
+    list[i] = isOuterRing(shape, i);
+
+  return(list);
+}
+
+/*
+** Returns a list of inner rings for ring r in shape (given a list of outer rings).
+*/
+int *msGetInnerList(shapeObj *shape, int r, int *outerlist) 
+{
+  int i;
+  int *list;
+
+  list = (int *)malloc(sizeof(int)*shape->numlines);
+  if(!list) return(NULL);
+
+  for(i=0; i<shape->numlines; i++) { // test all rings against the ring
+
+    if(outerlist[i] == MS_TRUE) { // ring is an outer and can't be an inner
+      list[i] = MS_FALSE;
+      continue;
+    }
+
+    list[i] = msPointInPolygon(&(shape->line[i].point[0]), &(shape->line[r]));
+  }
+
+  return(list);
 }
 
 int msAddLine(shapeObj *p, lineObj *new_line)

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.384  2004/12/14 21:30:43  sdlime
+ * Moved functions to build lists of inner and outer rings to mapprimitive.c from mapgml.c. They are needed to covert between MapServer polygons and GEOS gemometries (bug 771).
+ *
  * Revision 1.383  2004/11/30 20:02:03  dan
  * Set version to 4.5 (this is the new dev version)
  *
@@ -253,7 +256,7 @@ extern "C" {
 #define MS_MAXSTYLES 5
 #define MS_MAXPROJARGS 20
 #define MS_MAXLAYERS 200 /* maximum number of layers in a map file */
-#define MS_MAXJOINS 5
+#define MS_MAXJOINS 20
 #define MS_ITEMNAMELEN 32
 #define MS_NAMELEN 20
 
@@ -1292,6 +1295,8 @@ MS_DLL_EXPORT int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, 
 MS_DLL_EXPORT void msFreeShape(shapeObj *shape); // in mapprimative.c
 MS_DLL_EXPORT void msInitShape(shapeObj *shape);
 MS_DLL_EXPORT int msCopyShape(shapeObj *from, shapeObj *to);
+MS_DLL_EXPORT int *msGetOuterList(shapeObj *shape);
+MS_DLL_EXPORT int *msGetInnerList(shapeObj *shape, int r, int *outerlist);
 MS_DLL_EXPORT void msComputeBounds(shapeObj *shape);
 MS_DLL_EXPORT void msRectToPolygon(rectObj rect, shapeObj *poly);
 MS_DLL_EXPORT void msClipPolylineRect(shapeObj *shape, rectObj rect);

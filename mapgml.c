@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/12/14 21:30:43  sdlime
+ * Moved functions to build lists of inner and outer rings to mapprimitive.c from mapgml.c. They are needed to covert between MapServer polygons and GEOS gemometries (bug 771).
+ *
  * Revision 1.45  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -52,57 +55,6 @@ MS_CVSID("$Id$")
 // Use only mapgml.c if WMS or WFS is available
 
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR)
-
-// checks to see if ring r is an outer ring of shape
-static int isOuterRing(shapeObj *shape, int r) {
-  pointObj point; // a point in the ring
-  shapeObj ring;
-
-  if(shape->numlines == 1) return(MS_TRUE);
-
-  msInitShape(&ring); // convert the ring of interest into its own shape
-  msAddLine(&ring, &(shape->line[r]));
-
-  msPolygonLabelPoint(&ring, &point, -1); // generate a point in that ring
-  msFreeShape(&ring); // done with it
-
-  return(msIntersectPointPolygon(&point, shape)); // test the point against the main shape
-}
-
-// returns a list of outer rings for shape (the list has one entry for each ring, MS_TRUE for outer rings)
-static int *getOuterList(shapeObj *shape) {
-  int i;
-  int *list;
-
-  list = (int *)malloc(sizeof(int)*shape->numlines);
-  if(!list) return(NULL);
-
-  for(i=0; i<shape->numlines; i++)
-    list[i] = isOuterRing(shape, i);
-
-  return(list);
-}
-
-// returns a list of inner rings for ring r in shape (given a list of outer rings)
-static int *getInnerList(shapeObj *shape, int r, int *outerlist) {
-  int i;
-  int *list;
-
-  list = (int *)malloc(sizeof(int)*shape->numlines);
-  if(!list) return(NULL);
-
-  for(i=0; i<shape->numlines; i++) { // test all rings against the ring
-
-    if(outerlist[i] == MS_TRUE) { // ring is an outer and can't be an inner
-      list[i] = MS_FALSE;
-      continue;
-    }
-
-    list[i] = msPointInPolygon(&(shape->line[i].point[0]), &(shape->line[r]));
-  }
-
-  return(list);
-}
 
 // function that writes the feature boundary geometry (i.e. a rectObj)
 static int gmlWriteBounds(FILE *stream, rectObj *rect, const char *srsname, char *tab)
@@ -238,7 +190,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
 
       msIO_fprintf(stream, "%s</gml:Polygon>\n", tab);
     } else { // need to test for inner and outer rings
-      outerlist = getOuterList(shape);
+      outerlist = msGetOuterList(shape);
 
       numouters = 0;
       for(i=0; i<shape->numlines; i++)
@@ -248,7 +200,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
 	for(i=0; i<shape->numlines; i++) // find the outer ring
           if(outerlist[i] == MS_TRUE) break;
 
-	innerlist = getInnerList(shape, i, outerlist);
+	innerlist = msGetInnerList(shape, i, outerlist);
 
 	if(srsname_encoded)
           msIO_fprintf(stream, "%s<gml:Polygon srsName=\"%s\">\n", tab, 
@@ -299,11 +251,9 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
         else
           msIO_fprintf(stream, "%s<gml:MultiPolygon>\n", tab);
         
- 
-
 	for(i=0; i<shape->numlines; i++) { // step through the outer rings
           if(outerlist[i] == MS_TRUE) {
-  	    innerlist = getInnerList(shape, i, outerlist);
+  	    innerlist = msGetInnerList(shape, i, outerlist);
 
             msIO_fprintf(stream, "%s<gml:polygonMember>\n", tab);
 
