@@ -859,6 +859,12 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 				case MS_LAYER_QUERY:
 					result = dont_force(wkb,shape);
 					break;
+                                case MS_LAYER_RASTER:
+                                        msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
+                                        break;
+                                case MS_LAYER_CIRCLE:
+                                        msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
+                                        break;
 			/*	default:*/		
 
 			}
@@ -1052,6 +1058,11 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 				case MS_LAYER_QUERY:
 					result = dont_force(wkb,shape);
 					break;
+                                case MS_LAYER_RASTER:
+                                        msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
+                                        break;
+                                case MS_LAYER_CIRCLE:
+                                        msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
 			/*	default:*/		
 
 			}
