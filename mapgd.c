@@ -2714,6 +2714,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
 {
   FILE *stream;
+  gdIOCtx *gd_ctx = NULL;
 
   if( format->imagemode == MS_IMAGEMODE_RGBA )
     gdImageSaveAlpha( img, 1 );
@@ -2728,9 +2729,18 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
     }
   } else { /* use stdout */
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(USE_FASTCGI)
     /*
     ** Change stdout mode to binary on win32 platforms
+    **
+    ** --
+    ** 
+    ** But don't do it we are using FastCGI.  We will take care of doing
+    ** it in the libfcgi library in that case for the normal cgi case, and
+    ** for the fastcgi case the _setmode() call causes a crash. 
+    **
+    ** In general I think we should move this out so we don't have to 
+    ** replicate it everwhere we produce binary output. FrankWarmerdam/2004
     */
     if(_setmode( _fileno(stdout), _O_BINARY) == -1) {
       msSetError(MS_IOERR, "Unable to change stdout to binary mode.", "msSaveImage()");
@@ -2738,6 +2748,9 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
     }
 #endif
     stream = stdout;
+#ifdef USE_MAPIO
+    gd_ctx = msIO_getGDIOCtx( stream );
+#endif
   }
 
   if( strcasecmp("ON",msGetOutputFormatOption( format, "INTERLACE", "ON" ))
@@ -2750,7 +2763,10 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
   if( strcasecmp(format->driver,"gd/gif") == 0 )
   {
 #ifdef USE_GD_GIF
-    gdImageGif(img, stream);
+      if( gd_ctx != NULL )
+          gdImageGifCtx( img, gd_ctx );
+      else
+          gdImageGif(img, stream);
 #else
     msSetError(MS_MISCERR, "GIF output is not available.", "msSaveImage()");
     return(MS_FAILURE);
@@ -2759,7 +2775,10 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
   else if( strcasecmp(format->driver,"gd/png") == 0 )
   {
 #ifdef USE_GD_PNG
-      gdImagePng(img, stream);
+      if( gd_ctx != NULL )
+          gdImagePngCtx( img, gd_ctx );
+      else
+          gdImagePng(img, stream);
 #else
       msSetError(MS_MISCERR, "PNG output is not available.", "msSaveImage()");
       return(MS_FAILURE);
@@ -2768,8 +2787,12 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
   else if( strcasecmp(format->driver,"gd/jpeg") == 0 )
   {
 #ifdef USE_GD_JPEG
-    gdImageJpeg(img, stream, 
-                atoi(msGetOutputFormatOption( format, "QUALITY", "75" )) );
+      if( gd_ctx != NULL )
+          gdImageJpegCtx(img, gd_ctx, 
+                      atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
+      else
+          gdImageJpeg(img, stream, 
+                      atoi(msGetOutputFormatOption( format, "QUALITY", "75")));
 #else
      msSetError(MS_MISCERR, "JPEG output is not available.", "msSaveImage()");
      return(MS_FAILURE);
@@ -2778,7 +2801,10 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
   else if( strcasecmp(format->driver,"gd/wbmp") == 0 )
   {
 #ifdef USE_GD_WBMP
-      gdImageWBMP(img, 1, stream);
+      if( gd_ctx != NULL )
+          gdImageWBMPCtx(img, 1, gd_ctx);
+      else
+          gdImageWBMP(img, 1, stream);
 #else
       msSetError(MS_MISCERR, "WBMP output is not available.", "msSaveImage()");
       return(MS_FAILURE);
@@ -2792,6 +2818,8 @@ int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
   }
 
   if(filename != NULL && strlen(filename) > 0) fclose(stream);
+  if( gd_ctx != NULL )
+      free( gd_ctx );
 
   return(MS_SUCCESS);
 }
