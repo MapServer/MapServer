@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
   shapefileObj shapefile;
 
   treeObj *tree;
-  int byte_order;
+  int byte_order = MS_NATIVE_ORDER;
   int depth=0;
 
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
@@ -71,8 +71,6 @@ int main(int argc, char *argv[])
     if( !strcasecmp(argv[3],"NM" ))
       byte_order = MS_NEW_MSB_ORDER; 
   }
-  else
-  { byte_order = MS_NATIVE_ORDER; }
     
   if(msSHPOpenFile(&shapefile, "rb", NULL, argv[1]) == -1) {
     fprintf(stdout, "Error opening shapefile %s.\n", argv[1]);
