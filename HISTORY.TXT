@@ -34,6 +34,9 @@ Version 4.5
 - Added support for passing OGR layer FILTER queries down to OGR via the
   SetAttributeFilter() method if prefixed with WHERE keyword.  Bug 1126.
 
+- Fixed support for SIZEUNITS based scaling of text when map is rotated.
+  Bug 1127.
+
 
 Version 4.4.0 (2004-11-29)
 --------------------------

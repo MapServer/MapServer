@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2004/12/13 17:34:29  frank
+ * fixed layer text scalefactor computation for rotated maps - bug 1127
+ *
  * Revision 1.79  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -147,6 +150,7 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
 {
     int i, status;
     imageObj *image=NULL;
+    double geo_cellsize;
 
     if(map->width == -1 || map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msPrepareImage()");
@@ -246,10 +250,27 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
     if( map->gt.need_geotransform )
         msMapSetFakedExtent( map );
 
+    // We will need a cellsize that represents a real georeferenced
+    // coordinate cellsize here, so compute it from saved extents.  
+
+    geo_cellsize = map->cellsize;
+    if( map->gt.need_geotransform == MS_TRUE ) {
+        double cellsize_x = (map->saved_extent.maxx - map->saved_extent.minx)
+            / map->width;
+        double cellsize_y = (map->saved_extent.maxy - map->saved_extent.miny)
+            / map->height;
+
+        geo_cellsize = sqrt(cellsize_x*cellsize_x + cellsize_y*cellsize_y)
+            / sqrt(2.0);
+    } 
+
     // compute layer scale factors now
     for(i=0;i<map->numlayers; i++) {
       if(map->layers[i].sizeunits != MS_PIXELS)
-        map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
+      {
+        map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / geo_cellsize;
+        msDebug( "scalefactor = %g\n", map->layers[i].scalefactor );
+      }
       else if(map->layers[i].symbolscale > 0 && map->scale > 0)
         map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
       else
