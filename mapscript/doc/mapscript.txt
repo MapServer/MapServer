@@ -706,9 +706,11 @@ type : int
 classObj Methods
 ----------------
 
-new classObj( layerObj_ parent_layer ) : classObj
+new classObj( [ layerObj_ parent_layer=NULL ] ) : classObj
     Create a new child classObj instance at the tail (highest index) of 
-    the class array of the *parent_layer*.
+    the class array of the *parent_layer*.  A class can be created outside
+    the context of a parent layer by omitting the single constructor
+    argument.
 
 createLegendIcon( mapObj_ map, layerObj_ layer, int width, int height ) : imageObj_
     Draw and return a new legend icon.
@@ -921,6 +923,13 @@ new imageObj( int width, int height [, string driver=NULL [, string filename=NUL
 save( string filename [, mapObj parent_map=NULL ] ) : int
     Save image to *filename*.  The optional *parent_map* parameter must be
     specified if saving GeoTIFF images.
+
+write( [ FILE file=NULL ] ) : int
+    Write image data to an open file descriptor or, by default, to *stdout*.
+    Returns MS_SUCCESS or MS_FAILURE.
+    
+.. note:: This method is current enabled for Python only.  User-contributed
+   typemaps are needed for Perl, Ruby, C#, and Java.
 
 .. note:: The free() method of imageObj has been deprecated.  In MapServer
    revisions 4+ all instances of imageObj will be properly disposed of by
@@ -1352,19 +1361,24 @@ getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, 
 getShape( shapeObj_ shape, int tileindex, int shapeindex ) : int
     Get a shape from layer data.
 
+insertClass( classObj_ class [, int index=-1 ] ) : int
+    Insert a *copy* of the class into the layer at the requested *index*.
+    Default index of -1 means insertion at the end of the array of classes.
+    Returns the index at which the class was inserted.
+    
 moveClassDown( int class ) : int 
-       The class specified by the class index will be moved up into
-       the array of layers. Returns MS_SUCCESS or MS_FAILURE.
-       ex. moveClassDown(1) will have the effect of moving class 1
-       down to postion 2, and the class at position 2 will be moved
-       to position 1.
+    The class specified by the class index will be moved up into
+    the array of layers. Returns MS_SUCCESS or MS_FAILURE.
+    ex. moveClassDown(1) will have the effect of moving class 1
+    down to postion 2, and the class at position 2 will be moved
+    to position 1.
 
 moveClassUp( int class ) : int 
-       The class specified by the class index will be moved up into
-       the array of layers. Returns MS_SUCCESS or MS_FAILURE.
-       ex. moveClassUp(1) will have the effect of moving class 1
-       up to postion 0, and the class at position 0 will be moved
-       to position 1.
+    The class specified by the class index will be moved up into
+    the array of layers. Returns MS_SUCCESS or MS_FAILURE.
+    ex. moveClassUp(1) will have the effect of moving class 1
+    up to postion 0, and the class at position 0 will be moved
+    to position 1.
 
 open() : void
     Opens the underlying layer.  This is required before operations like
