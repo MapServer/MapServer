@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.21  2004/02/10 23:44:00  assefa
+ * Set layer template before doing a query for the NOT operator.
+ * Correct a bug when doing an OR on 2 arrays.
+ *
  * Revision 1.20  2004/02/05 20:01:58  assefa
  * Set layer tolernace when using query by shape.
  *
@@ -302,6 +306,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 #endif
     }
 
+
     if (szExpression || bIsBBoxFilter)
       msQueryByRect(map, lp->index, sQueryRect);
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
@@ -504,7 +509,13 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
       return NULL;
 
      psLayer = &(map->layers[iLayerIndex]);
+     if (psLayer->template == NULL)
+       psLayer->template = strdup("ttt.html");
+
      msQueryByRect(map, psLayer->index, map->extent);
+
+     free(psLayer->template);
+     psLayer->template = NULL;
 
      if (psLayer->resultcache->numresults <= 0)
        return NULL;
@@ -547,6 +558,33 @@ int *FLTArraysOr(int *aFirstArray, int nSizeFirst,
     int iResult = 0;
     int i, j;
 
+    if (aFirstArray == NULL && aSecondArray == NULL)
+      return NULL;
+
+    if (aFirstArray == NULL || aSecondArray == NULL)
+    {
+        if (aFirstArray && nSizeFirst > 0)
+        {
+            panResults = (int *)malloc(sizeof(int)*nSizeFirst);
+            for (i=0; i<nSizeFirst; i++)
+              panResults[i] = aFirstArray[i];
+            if (pnResult)
+              *pnResult = nSizeFirst;
+
+            return panResults;
+        }
+        else if (aSecondArray && nSizeSecond)
+        {
+            panResults = (int *)malloc(sizeof(int)*nSizeSecond);
+            for (i=0; i<nSizeSecond; i++)
+              panResults[i] = aSecondArray[i];
+            if (pnResult)
+              *pnResult = nSizeFirst;
+
+            return nSizeSecond;
+        }
+    }
+            
     if (aFirstArray && aSecondArray && nSizeFirst > 0 && 
         nSizeSecond > 0)
     {
