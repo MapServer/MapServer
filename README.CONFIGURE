@@ -401,7 +401,7 @@ OGC WMS Client Support:
 
   This option enables MapServer's 'CONNECTIONTYPE WMS' to include layers
   from remote WMS servers in MapServer applications.
-  It requires PROJ4 and libcurl (see  --with-curl-config option below).
+  It requires PROJ4, libcurl (see  --with-curl-config option below) and OGR.
   GDAL is optional but highly recommended in order to support 
   reprojection of layers obtained from remote WMS servers.
 
