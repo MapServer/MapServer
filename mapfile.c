@@ -1098,11 +1098,11 @@ static void writeExpression(expressionObj *exp, FILE *stream)
   }
 }
 
-int loadHashTable(hashTableObj table)
+int loadHashTable(hashTableObj *ptable)
 {
   char *key=NULL, *data=NULL;
-
-  if (!table) table = msCreateHashTable();
+  
+  if (!(*ptable)) *ptable = msCreateHashTable();
 
   for(;;) {
     switch(msyylex()) {
@@ -1110,14 +1110,14 @@ int loadHashTable(hashTableObj table)
       msSetError(MS_EOFERR, NULL, "loadHashTable()");
       return(MS_FAILURE);
     case(END):
-      break;
+      return(MS_SUCCESS);
     case(MS_STRING):
       key = strdup(msyytext);
 
       data = getString();
       if(!data) return(MS_FAILURE);
       
-      msInsertHashTable(table, key, data);
+      msInsertHashTable(*ptable, key, data);
       
       free(key);
       free(data);
@@ -1296,7 +1296,7 @@ int loadClass(classObj *class, mapObj *map)
       if(getInteger(&(class->maxsize)) == -1) return(-1);
       break;
     case(METADATA):
-      if(loadHashTable(class->metadata) != MS_SUCCESS) return(-1);
+      if(loadHashTable(&(class->metadata)) != MS_SUCCESS) return(-1);
       break;
     case(MINSIZE):      
       if(getInteger(&(class->minsize)) == -1) return(-1);
@@ -1738,7 +1738,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if(getDouble(&(layer->maxscale)) == -1) return(-1);
       break;
     case(METADATA):
-      if(loadHashTable(layer->metadata) != MS_SUCCESS) return(-1);
+      if(loadHashTable(&(layer->metadata)) != MS_SUCCESS) return(-1);
       break;
     case(MINSCALE):      
       if(getDouble(&(layer->minscale)) == -1) return(-1);
@@ -2750,7 +2750,7 @@ int loadWeb(webObj *web)
       if((web->maxtemplate = getString()) == NULL) return(-1);
       break;
     case(METADATA):
-      if(loadHashTable(web->metadata) != MS_SUCCESS) return(-1);
+      if(loadHashTable(&(web->metadata)) != MS_SUCCESS) return(-1);
       break;
     case(MINSCALE):
       if(getDouble(&web->minscale) == -1) return(-1);
