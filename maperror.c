@@ -3,6 +3,7 @@
 #include "map.h"
 #include "maperror.h"
 #include "mapthread.h"
+#include "maptime.h"
 
 #include "gdfonts.h"
 
@@ -479,7 +480,7 @@ void msWebDebug( const char * pszFormat, ... )
 
     fprintf(stdout, "Content-type: text/html%c%c",10,10);
 
-    gettimeofday(&tv, NULL);
+    msGettimeofday(&tv, NULL);
     fprintf(stdout, "[%s].%ld ", chop(ctime(&(tv.tv_sec))), tv.tv_usec);
 
     va_start(args, pszFormat);
@@ -505,7 +506,7 @@ void msDebug( const char * pszFormat, ... )
     }
 #endif
 
-    gettimeofday(&tv, NULL);
+    msGettimeofday(&tv, NULL);
     fprintf(stderr, "[%s].%ld ", chop(ctime(&(tv.tv_sec))), tv.tv_usec);
 
     va_start(args, pszFormat);

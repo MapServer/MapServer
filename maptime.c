@@ -68,7 +68,7 @@ int msTimeCompare(struct tm *time1, struct tm *time2)
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <sys/timeb.h>
-void gettimeofday(struct mstimeval* tp, void* tzp)
+void msGettimeofday(struct mstimeval* tp, void* tzp)
 {
     struct _timeb theTime;
  
