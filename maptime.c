@@ -164,7 +164,7 @@ void msUnsetLimitedPatternToUse()
 void msSetLimitedPattersToUse(char *patternstring)
 {
     int *limitedpatternindice = NULL;
-    int numpatterns, i, j, ntmp = 0;
+    int numpatterns=0, i=0, j=0, ntmp=0;
     char **patterns = NULL;
 
     limitedpatternindice = (int *)malloc(sizeof(int)*MS_NUMTIMEFORMATS);
