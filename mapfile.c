@@ -3599,7 +3599,7 @@ int initMap(mapObj *map)
   map->extent.minx = map->extent.miny = map->extent.maxx = map->extent.maxy = -1.0;
 
   map->scale = -1.0;
-  map->resolution = 72; // pixels per inch
+  map->resolution = 72.0; // pixels per inch
  
   map->height = map->width = -1;
 
@@ -3811,7 +3811,7 @@ int msSaveMap(mapObj *map, char *filename)
   if( map->imagetype != NULL )
       fprintf(stream, "  IMAGETYPE %s\n", map->imagetype );
 
-  if(map->resolution != 72) fprintf(stream, "  RESOLUTION %d\n", map->resolution);
+  if(map->resolution != 72.0) fprintf(stream, "  RESOLUTION %f\n", map->resolution);
 
   if(map->interlace != MS_NOOVERRIDE)
       fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
@@ -4035,7 +4035,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if(loadReferenceMap(&(map->reference), map) == -1) return(NULL);
       break;
     case(RESOLUTION):
-      if(getInteger(&(map->resolution)) == -1) return(NULL);
+      if(getDouble(&(map->resolution)) == -1) return(NULL);
       break;
     case(SCALE):
       if(getDouble(&(map->scale)) == -1) return(NULL);
@@ -4161,7 +4161,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       break;
     case(RESOLUTION):
       msyystate = 2; msyystring = value;
-      if(getInteger(&(map->resolution)) == -1) break;      
+      if(getDouble(&(map->resolution)) == -1) break;      
       break;
     case(SCALEBAR):
       loadScalebarString(map, &(map->scalebar), value);

@@ -764,7 +764,7 @@ typedef struct map_obj{ /* structure for a map */
 
   enum MS_UNITS units; /* units of the projection */
   double scale; /* scale of the output image */
-  int resolution;
+  double resolution;
 
   char *shapepath; /* where are the shape files located */
   char *mappath; /* path of the mapfile, all path are relative to this path */
@@ -931,7 +931,7 @@ void msGDALCleanup();
 void msGDALInitialize();
    
 imageObj *msDrawScalebar(mapObj *map); // in mapscale.c
-int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale);
+int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scale);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
 
 

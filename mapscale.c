@@ -40,7 +40,7 @@ static double roundInterval(double d)
 ** Calculate the approximate scale based on a few parameters. Note that this assumes the scale is
 ** the same in the x direction as in the y direction, so run msAdjustExtent(...) first.
 */
-int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale)
+int msCalculateScale(rectObj extent, int units, int width, int height, double resolution, double *scale)
 {
   double md, gd;
 

@@ -128,7 +128,7 @@ and the MapServer Map File documentation at:
    int          interlace
    int          imagetype  (read-only, use selectOutputformat())
    int          imagequality
-   int          resolution   (pixels per inch, defaults to 72)
+   double       resolution   (pixels per inch, defaults to 72)
    rectObj      extent; 
    double       cellsize
    int          units (map units type)
