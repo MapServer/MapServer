@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.54  2003/11/03 15:45:29  assefa
+ * Do not delete the temporary file comming from the server if we are in debug mode.
+ * (DEBUG ON on the layer)
+ *
  * Revision 1.53  2003/04/23 19:49:41  dan
  * Use ',' as delimiter for wms_formatlist.  Use lp->connection in priority
  * over wms_onlineresource metadata in msBuildWMSLayerURLBase()
@@ -812,7 +816,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     int status = MS_SUCCESS;
     int iReq = -1;
     char szPath[MS_MAXPATHLEN];
-
+    
 /* ------------------------------------------------------------------
  * Find the request info for this layer in the array, based on nLayerId
  * ------------------------------------------------------------------ */
@@ -900,7 +904,8 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     } 
 
     // We're done with the remote server's response... delete it.
-    unlink(lp->data);
+    if (!lp->debug)
+      unlink(lp->data);
 
     free(lp->data);
     lp->data = NULL;
