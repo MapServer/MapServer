@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46.2.2  2004/05/21 17:50:17  frank
+ * Ensure the dummy map background color is set in RGB or RGBA cases.
+ *
  * Revision 1.46.2.1  2004/04/30 19:12:46  dan
  * Fixed problem compiling without GDAL (use of TRUE and CPLAssert)
  *
@@ -1145,6 +1148,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 
         sDummyMap.outputformat->transparent = MS_TRUE;
         sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
+
+        sDummyMap.imagecolor.red = map->imagecolor.red;
+        sDummyMap.imagecolor.green = map->imagecolor.green;
+        sDummyMap.imagecolor.blue = map->imagecolor.blue;
     }
 
 /* -------------------------------------------------------------------- */
