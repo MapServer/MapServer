@@ -502,20 +502,24 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
    * color table.
    */
   if(layer->numclasses > 0 && gdImg ) {
-    char tmpstr[3];
     int c;
 
     cmap_set = TRUE;
 
     for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
-	if( layer->offsite.red != i )
-        {
-            GDALColorEntry sEntry;
+        GDALColorEntry sEntry;
+        colorObj pixel;
 
-            sprintf(tmpstr,"%d", i);
-            c = getClass(layer, tmpstr);
+        GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
             
-            GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
+	pixel.red = CVT(sEntry.c1);
+	pixel.green = CVT(sEntry.c2);
+	pixel.blue = CVT(sEntry.c3);
+	pixel.pen = i;
+        
+	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
+        {
+            c = getClass(layer, &pixel);
             
             if(c == -1)/* doesn't belong to any class, so handle like offsite*/
                 cmap[i] = -1;
