@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45.2.1  2005/04/01 22:57:30  frank
+ * Bug 1304: avoid extra whitespace in <gml:coordinates>
+ *
  * Revision 1.45  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -122,9 +125,9 @@ static int gmlWriteBounds(FILE *stream, rectObj *rect, const char *srsname, char
   }
   else
     msIO_fprintf(stream, "%s\t<gml:Box>\n", tab);
-  msIO_fprintf(stream, "%s\t\t<gml:coordinates>\n", tab);  
-  msIO_fprintf(stream, "%s\t\t\t%.6f,%.6f %.6f,%.6f\n", tab, rect->minx, rect->miny, rect->maxx, rect->maxy );   
-  msIO_fprintf(stream, "%s\t\t</gml:coordinates>\n", tab);
+  msIO_fprintf(stream, "%s\t\t<gml:coordinates>", tab);  
+  msIO_fprintf(stream, "%.6f,%.6f %.6f,%.6f", rect->minx, rect->miny, rect->maxx, rect->maxy );   
+  msIO_fprintf(stream, "</gml:coordinates>\n");
   msIO_fprintf(stream, "%s\t</gml:Box>\n", tab);
   msIO_fprintf(stream, "%s</gml:boundedBy>\n", tab);
   return MS_SUCCESS;
@@ -225,8 +228,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
       msIO_fprintf(stream, "%s\t<gml:outerBoundaryIs>\n", tab);
       msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-      msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
-      msIO_fprintf(stream, "%s\t\t\t\t", tab);
+      msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>", tab);
       for(j=0; j<shape->line[0].numpoints; j++)
 	msIO_fprintf(stream, "%f,%f ", shape->line[0].point[j].x, shape->line[0].point[j].y);
       //msIO_fprintf(stream, "\n");
@@ -259,12 +261,9 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
         msIO_fprintf(stream, "%s\t<gml:outerBoundaryIs>\n", tab);
         msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-        msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
-        msIO_fprintf(stream, "%s\t\t\t\t", tab);
+        msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>");
         for(j=0; j<shape->line[i].numpoints; j++)
 	  msIO_fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
-        //msIO_fprintf(stream, "\n");
-        //msIO_fprintf(stream, "%s\t\t\t</gml:coordinates>\n", tab);
         msIO_fprintf(stream, "</gml:coordinates>\n");
 
         msIO_fprintf(stream, "%s\t\t</gml:LinearRing>\n", tab);
@@ -275,8 +274,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
 	    msIO_fprintf(stream, "%s\t<gml:innerBoundaryIs>\n", tab);
             msIO_fprintf(stream, "%s\t\t<gml:LinearRing>\n", tab);
 
-            msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>\n", tab);
-            msIO_fprintf(stream, "%s\t\t\t\t", tab);
+            msIO_fprintf(stream, "%s\t\t\t<gml:coordinates>", tab);
             for(j=0; j<shape->line[k].numpoints; j++)
 	      msIO_fprintf(stream, "%f,%f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
             //msIO_fprintf(stream, "\n");
@@ -312,12 +310,9 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
             msIO_fprintf(stream, "%s\t\t<gml:outerBoundaryIs>\n", tab);
             msIO_fprintf(stream, "%s\t\t\t<gml:LinearRing>\n", tab);
 
-            msIO_fprintf(stream, "%s\t\t\t\t<gml:coordinates>\n", tab);
-            msIO_fprintf(stream, "%s\t\t\t\t\t", tab);
+            msIO_fprintf(stream, "%s\t\t\t\t<gml:coordinates>", tab);
             for(j=0; j<shape->line[i].numpoints; j++)
 	      msIO_fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
-            //msIO_fprintf(stream, "\n");
-            //msIO_fprintf(stream, "%s\t\t\t\t</gml:coordinates>\n", tab);
             msIO_fprintf(stream, "</gml:coordinates>\n");
 
             msIO_fprintf(stream, "%s\t\t\t</gml:LinearRing>\n", tab);
@@ -328,8 +323,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
 	        msIO_fprintf(stream, "%s\t\t<gml:innerBoundaryIs>\n", tab);
                 msIO_fprintf(stream, "%s\t\t\t<gml:LinearRing>\n", tab);
 
-                msIO_fprintf(stream, "%s\t\t\t\t<gml:coordinates>\n", tab);
-                msIO_fprintf(stream, "%s\t\t\t\t\t", tab);
+                msIO_fprintf(stream, "%s\t\t\t\t<gml:coordinates>", tab);
                 for(j=0; j<shape->line[k].numpoints; j++)
 	          msIO_fprintf(stream, "%f,%f ", shape->line[k].point[j].x, shape->line[k].point[j].y);
                 //msIO_fprintf(stream, "\n");
