@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.40  2002/04/23 15:40:21  dan
+ * Call msGetSymbolIndex() directly in mapObj_getSymbolByName()
+ *
  * Revision 1.39  2002/04/22 20:23:56  dan
  * Fixed map->setSymbolSet(): reference to map->fontset was left NULL and
  * TTF symbols were causing a crash.
@@ -210,13 +213,7 @@ int mapObj_addColor(mapObj* self, int r, int g, int b) {
   }
 
 int mapObj_getSymbolByName(mapObj* self, char *name) {
-    int symbol;
-
-    if((symbol = msGetSymbolIndex(&self->symbolset, name)) == -1)
-      if((symbol = msAddImageSymbol(&self->symbolset, name)) == -1)
-        return -1;
-
-    return symbol;
+    return msGetSymbolIndex(&self->symbolset, name);
   }
 
 void mapObj_prepareQuery(mapObj* self) {
