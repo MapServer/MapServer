@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.18  2003/07/10 21:11:40  dan
+ * Return the whole MapServer error stack in _phpms_report_mapserver_error()
+ *
  * Revision 1.17  2003/06/26 22:18:34  dan
  * Fixed bug 323: when setting class properties, class member variables on
  * which the script had a reference needed to be destroyed before we set them.
@@ -111,11 +114,12 @@ void _phpms_report_mapserver_error(int php_err_type)
 
     ms_error = msGetErrorObj();
 
-    if (ms_error->code != MS_NOERR)
+    while (ms_error && ms_error->code != MS_NOERR)
     {
         php3_error(php_err_type, 
-                   "MapServer Error in %s: %s\n", 
+                   "[MapServer Error]: %s: %s\n", 
                    ms_error->routine, ms_error->message);
+        ms_error = ms_error->next;
     }
 }
 
