@@ -16,15 +16,37 @@ sys.path.insert(0, 'build/lib.' + platformdir)
 # Our testing mapfile
 testMapfile = '../../tests/test.map'
 testNoFontSetMapfile = '../../tests/test_nofontset.map'
-test_image = '../../tests/test.png'
+test_image = '/../../tests/test.png'
 
 # Import all from mapscript
-from mapscript import *
+from mapscript import mapObj
 
 # Layer ordering tests
 class LayerOrderTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testGetLayerOrder(self):
+        order = self.mapobj1.getLayerOrder()
+        assert order == tuple(range(3)), order
+    def testPromoteLayer1(self):
+        self.mapobj1.getLayer(1).promote()
+        order = self.mapobj1.getLayerOrder()
+        assert order == (0, 2, 1), order
+    def testDemoteLayer1(self):
+        self.mapobj1.getLayer(1).demote()
+        order = self.mapobj1.getLayerOrder()
+        assert order == (1, 0, 2), order
+    def testSetLayerOrder(self):
+        ord = (1, 0, 2)
+        self.mapobj1.setLayerOrder(ord)
+        order = self.mapobj1.getLayerOrder()
+        assert order == ord, order
+
+class ClonedLayerOrderTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
     def tearDown(self):
         self.mapobj1 = None
     def testGetLayerOrder(self):
@@ -65,10 +87,50 @@ class RemoveLayerTestCase(unittest.TestCase):
         self.mapobj1.removeLayer(1)
         assert self.mapobj1.getLayer(0).name == l1name
 
+class ClonedRemoveLayerTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testRemoveLayer1NumLayers(self):
+        self.mapobj1.removeLayer(0)
+        assert self.mapobj1.numlayers == 2
+    def testRemoveLayer1LayerName(self):
+        l2name = self.mapobj1.getLayer(1).name
+        self.mapobj1.removeLayer(0)
+        assert self.mapobj1.getLayer(0).name == l2name
+    def testRemoveLayer2NumLayers(self):
+        self.mapobj1.removeLayer(1)
+        assert self.mapobj1.numlayers == 2
+    def testRemoveLayer2LayerName(self):
+        l1name = self.mapobj1.getLayer(0).name
+        self.mapobj1.removeLayer(1)
+        assert self.mapobj1.getLayer(0).name == l1name
+
 # class removal tests
 class RemoveClassTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testRemoveClass1NumClasses(self):
+        self.mapobj1.getLayer(0).removeClass(0)
+        assert self.mapobj1.getLayer(0).numclasses == 1
+    def testRemoveClass1ClassName(self):
+        c2name = self.mapobj1.getLayer(0).getClass(1).name
+        self.mapobj1.getLayer(0).removeClass(0)
+        assert self.mapobj1.getLayer(0).getClass(0).name == c2name
+    def testRemoveClass2NumClasses(self):
+        self.mapobj1.getLayer(0).removeClass(1)
+        assert self.mapobj1.getLayer(0).numclasses == 1
+    def testRemoveClass2ClassName(self):
+        c1name = self.mapobj1.getLayer(0).getClass(0).name
+        self.mapobj1.getLayer(0).removeClass(1)
+        assert self.mapobj1.getLayer(0).getClass(0).name == c1name
+
+class ClonedRemoveClassTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
     def tearDown(self):
         self.mapobj1 = None
     def testRemoveClass1NumClasses(self):
@@ -105,6 +167,24 @@ class SymbolSetTestCase(unittest.TestCase):
             symbol = set.getSymbol(i)
             assert symbol.name == names[i], symbol.name
 
+class ClonedSymbolSetTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testGetNumSymbols(self):
+        num = self.mapobj1.getNumSymbols()
+        assert num == 2, num
+    def testSymbolsetNumsymbols(self):
+        num = self.mapobj1.symbolset.numsymbols
+        assert num == 2, num
+    def testSymbolsetSymbolNames(self):
+        set = self.mapobj1.symbolset
+        names = [None, 'line', 'tie']
+        for i in range(set.numsymbols):
+            symbol = set.getSymbol(i)
+            assert symbol.name == names[i], symbol.name
+
 # fontset tests
 class FontSetTestCase(unittest.TestCase):
     def setUp(self):
@@ -114,6 +194,31 @@ class FontSetTestCase(unittest.TestCase):
     def testGetFontSetFile(self):
         file = self.mapobj1.fontset.filename
         assert file == 'fonts.txt', file
+
+class ClonedFontSetTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testGetFontSetFile(self):
+        file = self.mapobj1.fontset.filename
+        assert file == 'fonts.txt', file
+
+class ClonedNoFontSetTestCase(unittest.TestCase):
+    """ Test whether a mapObj with no fontset can be cloned.  Added in
+    response to MapServer bug 470.
+    
+    http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=470
+    """
+
+    def setUp(self):
+        mapobj = mapObj(testNoFontSetMapfile)
+        self.mapobj1 = mapobj.clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testGetFontSetFile(self):
+        file = self.mapobj1.fontset.filename
+        assert file == None, file
 
 class EmptyMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -181,6 +286,27 @@ class SaveToStringTestCase(unittest.TestCase):
         else:
             assert 1
 
+class ClonedSaveToStringTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testSaveToString(self):
+        msimg = self.mapobj1.draw()
+        assert msimg.thisown == 1
+        data = msimg.saveToString()
+        filename = 'testSaveToStringClone.png'
+        fh = open(filename, 'wb')
+        fh.write(data)
+        fh.close()
+        if have_image:
+            pyimg = Image.open(filename)
+            assert pyimg.format == 'PNG'
+            assert pyimg.size == (200, 200)
+            assert pyimg.mode == 'P'
+        else:
+            assert 1
+
 class NoFontSetTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj('')
@@ -192,6 +318,33 @@ class NoFontSetTestCase(unittest.TestCase):
 class ExpressionTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testClearExpression(self):
+        self.mapobj1.getLayer(0).setFilter('')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '"(null)"', fs
+    def testSetStringExpression(self):
+        self.mapobj1.getLayer(0).setFilter('foo')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '"foo"', fs
+    def testSetQuotedStringExpression(self):
+        self.mapobj1.getLayer(0).setFilter('"foo"')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '"foo"', fs
+    def testSetRegularExpression(self):
+        self.mapobj1.getLayer(0).setFilter('/foo/')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '/foo/', fs
+    def testSetLogicalExpression(self):
+        self.mapobj1.getLayer(0).setFilter('([foo] >= 2)')
+        #self.mapobj1.getLayer(0).setFilter('foo')
+        fs = self.mapobj1.getLayer(0).getFilterString()
+        assert fs == '([foo] >= 2)', fs
+
+class ClonedExpressionTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
     def tearDown(self):
         self.mapobj1 = None
     def testClearExpression(self):
@@ -418,6 +571,21 @@ class SetExtentTestCase(unittest.TestCase):
         self.assertRaises(MapServerError, self.mapobj1.setExtent,
                           1.0, -2.0, -3.0, 4.0)
 
+
+class ClonedSetExtentTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile).clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testSetExtent(self):
+        e = self.mapobj1.extent
+        result = self.mapobj1.setExtent(e.minx, e.miny, e.maxx, e.maxy)
+        assert self.mapobj1.scale == 14.173235999999999, self.mapobj1.scale
+        assert result == MS_SUCCESS
+    def testSetExtentBadly(self):
+        self.assertRaises(MapServerError, self.mapobj1.setExtent,
+                          1.0, -2.0, -3.0, 4.0)
+
 # rectObj tests
 
 class RectObjTestCase(unittest.TestCase):
@@ -484,6 +652,30 @@ class ColorObjTestCase(unittest.TestCase):
     def testColorObjSetHexBadly(self):
         c = colorObj()
         self.assertRaises(MapServerError, c.setHex, '#fffffg')
+
+class ClonedMapOutputFormatTestCase(unittest.TestCase):
+    """This test case is developed to address MapServer bug 510"""
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testClonedMapKeepsOutputFormat(self):
+        self.mapobj1.setImageType('image/jpeg')
+        assert self.mapobj1.outputformat.mimetype == 'image/jpeg'
+        mapobj_clone = self.mapobj1.clone()
+        assert mapobj_clone.thisown == 1
+        mime = mapobj_clone.outputformat.mimetype
+        assert mime == 'image/jpeg', mime
+    def testClonedMapKeepsModifiedOutputFormat(self):
+        self.mapobj1.setImageType('image/jpeg')
+        self.mapobj1.outputformat.setOption('QUALITY','90');
+        assert self.mapobj1.outputformat.mimetype == 'image/jpeg'
+        iquality = self.mapobj1.outputformat.getOption('QUALITY')
+        assert iquality == '90'
+        mapobj_clone = self.mapobj1.clone()
+        assert mapobj_clone.thisown == 1
+        quality = mapobj_clone.outputformat.getOption('QUALITY')
+        assert quality == iquality, quality
 
 import cStringIO
 import urllib

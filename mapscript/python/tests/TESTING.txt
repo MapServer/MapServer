@@ -4,7 +4,7 @@ Python MapScript Unit Tests
 
 To run the tests, execute 
 
-   python tests/testMapScript.py
+   python tests/testMapScript.py -v
 
 from the mapscript/python directory of the mapserver distribution.  The
 tests cannot be run properly from another path.  By default, the unit
@@ -17,4 +17,7 @@ data located in the 'tests' directory of the mapserver distribution.  If
 you are using TrueType fonts, make the necessary edits to the fontset
 file.  If you are not using TrueType fonts, simply ignore the several
 resulting test failures.
+
+The testMapScriptCloning.py script is used only to test the clone
+method of mapObj and is not needed for normal testing or use.
 
