@@ -329,8 +329,7 @@ unset ac_cv_lib_proj_pj_init
 
 AC_CHECKING(whether we should include PROJ.4 support...)
 AC_ARG_WITH(proj,
-[  --without-proj          Disable PROJ.4 support.
-  --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).],,)
+[  --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).],,)
 
 if test "$with_proj" = "yes" ; then
 
@@ -397,8 +396,8 @@ dnl Check --enable-debug option for "-g" compile flag. (OFF by default)
 dnl ---------------------------------------------------------------------
 
 AC_ARG_ENABLE(debug,
-[  --enable-debug   Include "-g" in CFLAGS for debugging.
-  --disable-debug  Do not include "-g" in CFLAGS (the default).],,)
+[  --enable-debug          Include "-g" in CFLAGS for debugging.
+  --disable-debug         Do not include "-g" in CFLAGS (the default).],,)
 
 if test "$enable_debug" = "yes" ; then
   AC_COMPILER_WFLAGS_DEBUG
@@ -414,8 +413,9 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(for PHP3/MapScript module options...)
 AC_ARG_WITH(php3,
-[  --with-php3=DIR   Specify directory where PHP3 source tree is installed.  
-                    Required in order to compile the PHP3/MapScript module.],,)
+[  --with-php3=DIR         Specify directory where PHP3 source tree is 
+                          installed. Required in order to compile the 
+                          PHP3/MapScript module.],,)
 
 if test -n "$with_php3" -a -d "$with_php3" ; then
   AC_EXPAND_PATH($with_php3, PHP_SRC_DIR)
