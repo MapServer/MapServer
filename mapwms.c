@@ -981,6 +981,8 @@ int msTranslateWMS2Mapserv(char **names, char **values, int *numentries)
 int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, int numentries) 
 {
   imageObj *img;
+  int i = 0;
+  int sldrequested = MS_FALSE,  sldspatialfilter = MS_FALSE;
 
   // __TODO__ msDrawMap() will try to adjust the extent of the map
   // to match the width/height image ratio.
@@ -988,7 +990,71 @@ int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, in
   // maps to devices with non-square pixels.
 
 
-  img = msDrawMap(map);
+//      If there was an SLD in the request, we need to treat it         
+//      diffrently : some SLD may contain spatial filters requiring     
+//      to do a query. While parsing the SLD and applying it to the     
+//      layer, we added a temporary metadata on the layer               
+//      (tmp_wms_sld_query) for layers with a spatial filter.           
+  
+  for (i=0; i<numentries; i++)
+  {
+    if ((strcasecmp(names[i], "SLD") == 0 && values[i] && strlen(values[i]) > 0) ||
+        (strcasecmp(names[i], "SLD_BODY") == 0 && values[i] && strlen(values[i]) > 0))
+    {
+        sldrequested = MS_TRUE;
+        break;
+    }
+  }
+  if (sldrequested)
+  {
+      for (i=0; i<map->numlayers; i++)
+      {
+          if (msLookupHashTable(&(map->layers[i].metadata), "tmp_wms_sld_query"))
+          {
+              sldspatialfilter = MS_TRUE;
+              break;
+          }
+      }
+  }
+
+  if (sldrequested && sldspatialfilter)
+  {
+      //set the quermap style so that only selected features will be retruned
+      map->querymap.status = MS_ON;
+      map->querymap.style = MS_SELECTED;
+      
+      img = msImageCreate(map->width, map->height, map->outputformat,
+                          map->web.imagepath, map->web.imageurl,
+                          map);
+      map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+      msCalculateScale(map->extent, map->units, map->width, 
+                       map->height, map->resolution, &map->scale);
+      // compute layer scale factors now
+      for(i=0;i<map->numlayers; i++) {
+          if(map->layers[i].sizeunits != MS_PIXELS)
+            map->layers[i].scalefactor = (msInchesPerUnit(map->layers[i].sizeunits,0)/msInchesPerUnit(map->units,0)) / map->cellsize; 
+          else if(map->layers[i].symbolscale > 0 && map->scale > 0)
+            map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+          else
+            map->layers[i].scalefactor = 1;
+      }
+      for (i=0; i<map->numlayers; i++)
+      {
+          if (msLookupHashTable(&(map->layers[i].metadata), "tmp_wms_sld_query"))
+          {
+              //make sure that there is a resultcache. If not just ignore 
+              //the layer
+              if (map->layers[i].resultcache)
+                msDrawQueryLayer(map, &map->layers[i], img);
+          }
+              
+          else
+            msDrawLayer(map, &map->layers[i], img);
+      }
+      
+  }
+  else
+    img = msDrawMap(map);
   if (img == NULL)
       return msWMSException(map, wmtver, NULL);
 

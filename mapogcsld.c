@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.36  2004/07/28 22:16:17  assefa
+ * Add support for spatial filters inside an SLD. (Bug 782).
+ *
  * Revision 1.35  2004/07/13 20:39:36  dan
  * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
  *
@@ -252,6 +255,8 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
     int bUseSpecificLayer = 0;
     int bSuccess =0;
     char *pszTmp = NULL;
+    int bFreeTemplate = 0;
+    int nLayerStatus = 0;
 
     pasLayers = msSLDParseSLD(map, psSLDXML, &nLayers);
 
@@ -325,8 +330,53 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
                     /* mark as auto-generate SLD */
                     if (map->layers[i].connectiontype == MS_WMS)
-                      msInsertHashTable(&(map->layers[i].metadata), "wms_sld_body", "auto" );
+                      msInsertHashTable(&(map->layers[i].metadata), 
+                                        "wms_sld_body", "auto" );
+/* ==================================================================== */
+/*      if the SLD contained a spatial feature, the layerinfo           */
+/*      parameter contains the node. Extract it and do a query on       */
+/*      the layer. Insert also a metadata that will be used when        */
+/*      rendering the final image.                                      */
+/* ==================================================================== */
+                    if (pasLayers[j].layerinfo)
+                    {  
+                        FilterEncodingNode *psNode = NULL;
 
+                        msInsertHashTable(&(map->layers[i].metadata), 
+                                          "tmp_wms_sld_query", "true" );
+                        psNode = (FilterEncodingNode *)pasLayers[j].layerinfo;
+
+/* -------------------------------------------------------------------- */
+/*      set the template on the classes so that the query works         */
+/*      using classes. If there are no classes, set it at the layer level.*/
+/* -------------------------------------------------------------------- */
+                        if (map->layers[i].numclasses > 0)
+                        {
+                            for (k=0; k<map->layers[i].numclasses; k++)
+                            {
+                                if (!map->layers[i].class[k].template)
+                                  map->layers[i].class[k].template = strdup("ttt.html");
+                            }
+                        }
+                        else if (!map->layers[i].template)
+                        {
+                            bFreeTemplate = 1;
+                            map->layers[i].template = strdup("ttt.html");
+                        }
+
+                        nLayerStatus =  map->layers[i].status;
+                        map->layers[i].status = MS_ON;
+                        FLTApplySpatialFilterToLayer(psNode, map,  
+                                                     map->layers[i].index);
+                        map->layers[i].status = nLayerStatus;
+                        FLTFreeFilterEncodingNode(psNode);
+
+                        if ( bFreeTemplate)
+                        {
+                            free(map->layers[i].template);
+                            map->layers[i].template = NULL;
+                        }
+                    }
                     break;
                 }
             }
@@ -376,6 +426,7 @@ layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers)
     layerObj *pasLayers = NULL;
     int iLayer = 0;
     int nLayers = 0;
+
 
     if (map == NULL || psSLDXML == NULL || strlen(psSLDXML) <= 0 ||
         (strstr(psSLDXML, "StyledLayerDescriptor") == NULL))
@@ -565,6 +616,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     int nClassAfterRule=0, nClassBeforeRule=0;
     char *pszTmpFilter = NULL;
 
+
     if (psRoot && psLayer)
     {
         psUserStyle = CPLGetXMLNode(psRoot, "UserStyle");
@@ -640,6 +692,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                         if (psFilter && psFilter->psChild && 
                             psFilter->psChild->pszValue)
                         {
+                            
                             //clone the tree and set the next node to null
                             //so we only have the Filter node
                             psTmpNode = CPLCloneXMLTree(psFilter);
@@ -661,7 +714,16 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
 
                             if (psNode)
                             {
+/* ==================================================================== */
+/*      If the filter has a spatial filter, we keep the node. This      */
+/*      node will be parsed when applying the SLD and be used to do     */
+/*      queries on the layer.                                           */
+/* ==================================================================== */
+                                if (FTLHasSpatialFilter(psNode))
+                                  psLayer->layerinfo = (void *)psNode;
+
                                 szExpression = FLTGetMapserverExpression(psNode);
+
                                 if (szExpression)
                                 {
                                     szClassItem = 

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.28  2004/07/28 22:16:16  assefa
+ * Add support for spatial filters inside an SLD. (Bug 782).
+ *
  * Revision 1.27  2004/05/11 12:57:29  assefa
  * Correct bug when testing if an attribute value is a string.
  *
@@ -182,7 +185,8 @@ int FLTShapeFromGMLTree(CPLXMLNode *psTree, shapeObj *psShape)
 /*      spatial or comparaison.                                         */
 /************************************************************************/
 int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map, 
-                               int iLayerIndex, int *pnResults)
+                               int iLayerIndex, int *pnResults,
+                               int bOnlySpatialFilter)
 {
     char *szExpression = NULL;
     int bIsBBoxFilter =0, nEpsgTmp = 0, i=0;
@@ -202,8 +206,10 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     if (!psNode || !map || iLayerIndex < 0 ||
         iLayerIndex > map->numlayers-1)
       return NULL;
-      
-    szExpression = FLTGetMapserverExpression(psNode);
+    
+    if (!bOnlySpatialFilter)
+      szExpression = FLTGetMapserverExpression(psNode);
+
     bIsBBoxFilter = FLTIsBBoxFilter(psNode);
     if (bIsBBoxFilter)
       szEPSG = FLTGetBBOX(psNode, &sQueryRect);
@@ -217,7 +223,8 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         psQueryShape = FLTGetShape(psNode, NULL);
     }
 
-    if (!szExpression && !szEPSG && !bIsBBoxFilter && !bPointQuery && !bShapeQuery)
+    if (!szExpression && !szEPSG && !bIsBBoxFilter 
+        && !bPointQuery && !bShapeQuery && (bOnlySpatialFilter == MS_FALSE))
       return NULL;
 
     lp = &(map->layers[iLayerIndex]);
@@ -278,10 +285,10 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
             lp->template = NULL;
         }
     }
-    else
+    else if (!bOnlySpatialFilter)
     {
         //if there are no expression (so no template set in the classes,
-        //make sure that the layer is queryable bu setting the template 
+        //make sure that the layer is queryable by setting the template 
         //parameter
         if (!lp->template)
           lp->template = strdup("ttt.html");
@@ -345,7 +352,8 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
     }
 
 
-    if (szExpression || bIsBBoxFilter)
+    if (szExpression || bIsBBoxFilter || 
+        (bOnlySpatialFilter && !bIsBBoxFilter && !bPointQuery && !bShapeQuery))
       msQueryByRect(map, lp->index, sQueryRect);
     else if (bPointQuery && psQueryShape && psQueryShape->numlines > 0
              && psQueryShape->line[0].numpoints > 0 && dfDistance >=0)
@@ -773,7 +781,8 @@ int *FLTArraysAnd(int *aFirstArray, int nSizeFirst,
 /*      on a layer.                                                     */
 /************************************************************************/
 int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map, 
-                        int iLayerIndex, int *pnResults)
+                        int iLayerIndex, int *pnResults,
+                        int bOnlySpatialFilter)
 {
     int *panResults = NULL, *panLeftResults=NULL, *panRightResults=NULL;
     int nLeftResult=0, nRightResult=0, nResults = 0;
@@ -782,11 +791,13 @@ int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
     {
         if (psNode->psLeftNode)
           panLeftResults =  FLTGetQueryResults(psNode->psLeftNode, map, 
-                                             iLayerIndex, &nLeftResult);
+                                               iLayerIndex, &nLeftResult,
+                                               bOnlySpatialFilter);
 
        if (psNode->psRightNode)
           panRightResults =  FLTGetQueryResults(psNode->psRightNode, map,
-                                               iLayerIndex, &nRightResult);
+                                               iLayerIndex, &nRightResult,
+                                                bOnlySpatialFilter);
 
         if (psNode->pszValue && strcasecmp(psNode->pszValue, "AND") == 0)
           panResults = FLTArraysAnd(panLeftResults, nLeftResult, 
@@ -802,7 +813,7 @@ int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
     else
     {
         panResults = FLTGetQueryResultsForNode(psNode, map, iLayerIndex, 
-                                             &nResults);
+                                               &nResults, bOnlySpatialFilter);
     }
 
     if (pnResults)
@@ -811,6 +822,11 @@ int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
     return panResults;
 }
 
+int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                 int iLayerIndex)
+{
+    return FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_TRUE);
+}
 
 /************************************************************************/
 /*                          FLTApplyFilterToLayer                       */
@@ -819,7 +835,7 @@ int *FLTGetQueryResults(FilterEncodingNode *psNode, mapObj *map,
 /*      and apply it to the layer.                                      */
 /************************************************************************/
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                          int iLayerIndex)
+                          int iLayerIndex, int bOnlySpatialFilter)
 {
     int *panResults = NULL;
     int nResults = 0;
@@ -846,7 +862,7 @@ int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map,
     {
     */
     panResults = FLTGetQueryResults(psNode, map, iLayerIndex,
-                                    &nResults);
+                                    &nResults, bOnlySpatialFilter);
     if (panResults)
       FLTAddToLayerResultCache(panResults, nResults, map, iLayerIndex);
     //clear the cache if the results is NULL to make sure there aren't
@@ -2494,5 +2510,42 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
         
     return strdup(szBuffer);
 }
+
+
+/************************************************************************/
+/*                           FTLHasSpatialFilter                        */
+/*                                                                      */
+/*      Utility function to see if a spatial filter is included in      */
+/*      the node.                                                       */
+/************************************************************************/
+int FTLHasSpatialFilter(FilterEncodingNode *psNode)
+{
+    int bResult = MS_FALSE;
+
+    if (!psNode)
+      return MS_FALSE;
+
+    if (psNode->eType == FILTER_NODE_TYPE_LOGICAL)
+    {
+        if (psNode->psLeftNode)
+          bResult = FTLHasSpatialFilter(psNode->psLeftNode);
+
+        if (bResult)
+          return MS_TRUE;
+
+        if (psNode->psRightNode)
+           bResult = FTLHasSpatialFilter(psNode->psRightNode);
+
+        if (bResult)
+          return MS_TRUE;
+    }
+    else if (FLTIsBBoxFilter(psNode) || FLTIsPointFilter(psNode) ||
+             FLTIsLineFilter(psNode))
+      return MS_TRUE;
+
+
+    return MS_FALSE;
+}
+
 
 #endif

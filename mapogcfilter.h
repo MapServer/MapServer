@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2004/07/28 22:16:17  assefa
+ * Add support for spatial filters inside an SLD. (Bug 782).
+ *
  * Revision 1.6  2004/02/04 19:46:24  assefa
  * Add support for multiple spatial opertaors inside one filter.
  * Add support for opeartors DWithin and Intersect.
@@ -113,7 +116,9 @@ typedef struct
 FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
 FilterEncodingNode *FLTCreateFilterEncodingNode();
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
-                         int iLayerIndex);
+                         int iLayerIndex, int bOnlySpatialFilter);
+int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
+                                 int iLayerIndex);
 
 void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode);
 
@@ -149,4 +154,5 @@ char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode);
+int FTLHasSpatialFilter(FilterEncodingNode *psFilterNode);
 #endif

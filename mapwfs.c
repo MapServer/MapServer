@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.39  2004/07/28 22:16:17  assefa
+ * Add support for spatial filters inside an SLD. (Bug 782).
+ *
  * Revision 1.38  2004/07/07 18:36:38  assefa
  * Correct memeory leak in msWFSDispatch (Bug 758)
  *
@@ -1017,7 +1020,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                    "msWFSGetFeature()", pszFilter);
                 return msWFSException(map, paramsObj->pszVersion);
             }
-            FLTApplyFilterToLayer(psNode, map, iLayerIndex);
+            FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE);
             
         }
         if (paszFilter)
