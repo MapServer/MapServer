@@ -15,6 +15,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.2
 --------------------------
 
+- Fixed problem with map image filenames not always unique in MapScript's
+  processTemplate() methods, causing random map image collisions (bug 1299)
+
 - Bug 1231: use mimetype "image/png; mode=24bits" for 24bit png format.
   This makes it seperately selectable by WMS.
 
