@@ -3,6 +3,7 @@
 #include "map.h"
 #include "dxfcolor.h"
 
+#include <stdarg.h>
 #include <time.h>
 
 #ifdef _WIN32
@@ -13,18 +14,146 @@
 #define MYDEBUG 0
 #define DEBUG if (MYDEBUG > 2) 
 
-//static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
-//static unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
+/*
+ * Client-side imagemap support was originally written by
+ * Attila Csipa (http://prometheus.org.yu/me.php).  C. Scott Ananian
+ * (http://cscott.net) cleaned up the code somewhat and made it more flexible:
+ * you can now customize the generated HREFs and create mouseover and
+ * mouseout attributes.
+ *
+ * Use
+ *   IMAGETYPE imagemap
+ * to select this driver.
+ *
+ * The following FORMATOPTIONs are available. If any are set to the empty
+ * string the associated attribute will be suppressed.
+ *   POLYHREF   the href string to use for the <area> elements.
+ *              use a %s to interpolate the area title.
+ *              default:   "javascript:Clicked('%s');"
+ *   POLYMOUSEOVER the onMouseOver string to use for the <area> elements.
+ *              use a %s to interpolate the area title.
+ *              default:   "" (ie the attribute is suppressed)
+ *   POLYMOUSEOUT the onMouseOut string to use for the <area> elements.
+ *              use a %s to interpolate the area title.
+ *              default:   "" (ie the attribute is suppressed)
+ *   SYMBOLMOUSEOVER and SYMBOLMOUSEOUT are equivalent properties for
+ *              <area> tags representing symbols, with the same defaults.
+ *   MAPNAME    the string which will be used in the name attribute
+ *              of the <map> tag.  There is no %s interpolation.
+ *              default: "map1"
+ *   SUPPRESS   if "yes", then we will suppress area declarations with
+ *              no title.
+ *              default: "NO"
+ * 
+ * For example, http://vevo.verifiedvoting.org/verifier contains this
+ * .map file fragment:
+ *         OUTPUTFORMAT
+ *              NAME imagemap
+ *              DRIVER imagemap
+ *              FORMATOPTION "POLYHREF=/verifier/map.php?state=%s"
+ *              FORMATOPTION "SYMBOLHREF=#"
+ *              FORMATOPTION "SUPPRESS=YES"
+ *              FORMATOPTION "MAPNAME=map-48"
+ *              FORMATOPTION "POLYMOUSEOUT=return nd();"
+ *              FORMATOPTION "POLYMOUSEOVER=return overlib('%s');"
+ *         END
+ */
 
-static int imgsize;
+/*-------------------------------------------------------------------------*/
 
-static void mystrcat(char *dst, char *src)
-{
-	int len;
-	len = strlen(src);
-	memcpy(dst + imgsize, src, len+1);
-	imgsize += len;
+/* A pString is a variable-length (appendable) string, stored as a triple:
+ * character pointer, allocated length, and used length.  The one wrinkle
+ * is that we use pointers to the allocated size and character pointer,
+ * in order to support refering to fields declared elsewhere (ie in the
+ * 'image' data structure) for these.  The 'iprintf' function appends
+ * to a pString. */
+typedef struct pString {
+	/* these two fields are somewhere else */
+	char **string;
+	int *alloc_size;
+	/* this field is stored locally. */
+	int string_len;
+} pString;
+/* These are the pStrings we declare statically.  One is the 'output'
+ * imagemap/dxf file; parts of this live in another data structure and
+ * are only referenced indirectly here.  The other contains layer-specific
+ * information for the dxf output. */
+static char *layerlist=NULL;
+static int layersize=0;
+static pString imgStr, layerStr={ &layerlist, &layersize, 0 };
+
+/* Format strings for the various bits of a client-side imagemap. */
+static char *polyHrefFmt, *polyMOverFmt, *polyMOutFmt;
+static char *symbolHrefFmt, *symbolMOverFmt, *symbolMOutFmt;
+static char *mapName;
+/* Should we suppress AREA declarations in imagemaps with no title? */
+static int suppressEmpty=0;
+
+/* Prevent buffer-overrun and format-string attacks by "sanitizing" any
+ * provided format string to fit the number of expected string arguments
+ * (MAX) exactly. */
+static const char *makeFmtSafe(const char *fmt, int MAX) {
+  /* format string should have exactly 'MAX' %s */
+
+  char *result = malloc(strlen(fmt)+1+3*MAX), *cp;
+  int numstr=0, saw_percent=0;
+
+  strcpy(result, fmt);
+  for (cp=result; *cp; cp++) {
+    if (saw_percent) {
+      if (*cp=='%') {
+	/* safe */
+      } else if (*cp=='s' && numstr<MAX) {
+	numstr++; /* still safe */
+      } else {
+	/* disable this unsafe format string! */
+	*(cp-1)=' ';
+      }
+      saw_percent=0;
+    } else if (*cp=='%')
+      saw_percent=1;
+  }
+  /* fixup format strings without enough %s in them */
+  while (numstr<MAX) {
+    strcpy(cp, "%.s"); /* print using zero-length precision */
+    cp+=3;
+    numstr++;
+  }
+  return result;
 }
+
+/* Append the given printf-style formatted string to the pString 'ps'.
+ * This is much cleaner (and faster) than the technique this file
+ * used to use! */
+static void iprintf(pString *ps, char *fmt, ...) {
+	int n, remaining;
+	va_list ap;
+	do {
+		remaining = *(ps->alloc_size) - ps->string_len;
+		va_start(ap, fmt);
+		n = vsnprintf((*(ps->string)) + ps->string_len, 
+			      remaining, fmt, ap);
+		va_end(ap);
+		/* if that worked, we're done! */
+		if (-1<n && n<remaining) {
+			ps->string_len += n;
+			return;
+		} else { /* double allocated string size */
+			*(ps->alloc_size) *= 2;/* these keeps realloc linear.*/
+			if (*(ps->alloc_size) < 1024)
+				/* careful: initial size can be 0 */
+				*(ps->alloc_size)=1024;
+			if (n>-1 && *(ps->alloc_size) <= (n + ps->string_len))
+				/* ensure at least as much as what is needed */
+				*(ps->alloc_size) = n+ps->string_len+1;
+			*(ps->string) = (char *) realloc
+				(*(ps->string), *(ps->alloc_size));
+			/* if realloc doesn't work, we're screwed! */
+		}
+	} while (1); /* go back and try again. */
+}
+
+
 
 static int lastcolor=-1;
 static int matchdxfcolor(colorObj col)
@@ -70,7 +199,6 @@ DEBUG printf("searchImageCache\n<BR>");
 
 static char* lname;
 static int dxf;
-static char layerlist[MS_MAXLAYERS*80];
 
 void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image){
 DEBUG printf("ImageStartLayerIM\n<BR>");
@@ -80,13 +208,11 @@ DEBUG printf("ImageStartLayerIM\n<BR>");
 	else
 		lname = strdup("NONE");
 	if (dxf == 2){
-		strcat(layerlist, "LAYER\n");
-		strcat(layerlist, lname);
-		strcat(layerlist, "\n");
+		iprintf(&layerStr, "LAYER\n%s\n", lname);
 	} else {
-		strcat(layerlist, "  0\nLAYER\n  2\n");
-		strcat(layerlist, lname);
-		strcat(layerlist, "\n 70\n  64\n 6\nCONTINUOUS\n");
+		iprintf(&layerStr,
+			"  0\nLAYER\n  2\n%s\n"
+			" 70\n  64\n 6\nCONTINUOUS\n", lname);
 	}
 	lastcolor = -1;
 }
@@ -151,8 +277,9 @@ DEBUG printf("msImageCreateIM<BR>\n");
  */   
         if (image)
         {
-	    char head[500] = "";
-		
+	    imgStr.string = &(image->img.imagemap);
+	    imgStr.alloc_size = &(image->size);
+
             image->format = format;
             format->refcount++;
 
@@ -162,31 +289,44 @@ DEBUG printf("msImageCreateIM<BR>\n");
             image->imageurl = NULL;
 	    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0){
 		    dxf = 1;
-		    strcpy(layerlist, "  2\nLAYER\n 70\n  10\n");
+		    iprintf(&layerStr, "  2\nLAYER\n 70\n  10\n");
 	    } else
 		    dxf = 0;
 
 	    if( strcasecmp("ON",msGetOutputFormatOption( format, "SCRIPT", "OFF" )) == 0){
 		    dxf = 2;
-		    strcpy(layerlist,"");
+		    iprintf(&layerStr, "");
 	    }
-		    
 
-	    if (dxf == 2){
-		    sprintf(head, "ENTITIES");
-	    } else if (dxf){
-		    sprintf(head, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\nAC1009\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n");		    
-	    } else
-		    sprintf(head, "<MAP name='map1' width=%d height=%d>", image->width, image->height);
+	    /* get href formation string options */
+	    polyHrefFmt = makeFmtSafe(msGetOutputFormatOption
+	      ( format, "POLYHREF", "javascript:Clicked('%s');"), 1);
+	    polyMOverFmt = makeFmtSafe(msGetOutputFormatOption
+	      ( format, "POLYMOUSEOVER", ""), 1);
+	    polyMOutFmt = makeFmtSafe(msGetOutputFormatOption
+	      ( format, "POLYMOUSEOUT", ""), 1);
+	    symbolHrefFmt = makeFmtSafe(msGetOutputFormatOption
+	      ( format, "SYMBOLHREF", "javascript:SymbolClicked();"), 1);
+	    symbolMOverFmt = makeFmtSafe(msGetOutputFormatOption
+	      ( format, "SYMBOLMOUSEOVER", ""), 1);
+	    symbolMOutFmt = makeFmtSafe(msGetOutputFormatOption
+	      ( format, "SYMBOLMOUSEOUT", ""), 1);
+	    /* get name of client-side image map */
+	    mapName = msGetOutputFormatOption
+	      ( format, "MAPNAME", "map1" );
+	    /* should we suppress area declarations with no title? */
+	    if( strcasecmp("YES",msGetOutputFormatOption( format, "SUPPRESS", "NO" )) == 0){
+	      suppressEmpty=1;
+	    }
+
 	    lname = strdup("NONE");
-//	    image->img.imagemap = strdup(head);
-	    image->img.imagemap = strdup("");
-	    if (image->img.imagemap){
-		    imgsize = strlen(image->img.imagemap);
-	            image->size = strlen(image->img.imagemap);
+	    *(imgStr.string) = strdup("");
+	    if (*(imgStr.string)){
+		    *(imgStr.alloc_size) =
+			    imgStr.string_len = strlen(*(imgStr.string));
 	    } else {
-		    image->size = 0;
-		    imgsize = 0;
+		    *(imgStr.alloc_size) =
+			    imgStr.string_len = 0;
 	    }
             if (imagepath)
             {
@@ -806,21 +946,36 @@ DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
 //DEBUG printf(".%d.%d.%d.", symbol->type, style->symbol, fc);
   if(style->symbol == 0) { // simply draw a single pixel of the specified color //
 //    gdImageSetPixel(img, p->x + ox, p->y + oy, fc);
-		int slen = 0;
-		int nchars = 0;
-		char buffer[300] = "";
 		
-		nchars = sprintf (buffer, dxf ? (dxf == 2 ? "POINT\n%.0f %.0f\n%d\n" : "  0\nPOINT\n 10\n%f\n 20\n%f\n 30\n0.0\n 62\n%6d\n  8\n%s\n") : "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy, dxf ? matchdxfcolor(style->color) : 0, lname);
-
-//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
-// DEBUG printf("nchars %d<BR>\n", nchars);
-		slen = nchars + imgsize + 8; // add 8 to accomodate </A> tag
-		if (slen > img->size){
-			img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
-			if (img->img.imagemap)
-				img->size = slen*2;
-		}
-		mystrcat(img->img.imagemap, buffer);
+    if (dxf) {
+      if (dxf==2)
+	iprintf (&imgStr, "POINT\n%.0f %.0f\n%d\n",
+		 p->x + ox, p->y + oy, matchdxfcolor(style->color));
+      else
+	iprintf (&imgStr, 
+		 "  0\nPOINT\n 10\n%f\n 20\n%f\n 30\n0.0\n"
+		 " 62\n%6d\n  8\n%s\n",
+		 p->x + ox, p->y + oy, matchdxfcolor(style->color), lname);
+    } else {
+      iprintf (&imgStr, "<area ");
+      if (strcmp(symbolHrefFmt,"%.s")!=0) {
+	      iprintf (&imgStr, "href=\"");
+	      iprintf (&imgStr, symbolHrefFmt, lname);
+	      iprintf (&imgStr, "\" ");
+      }
+      if (strcmp(symbolMOverFmt,"%.s")!=0) {
+	      iprintf (&imgStr, "onMouseOver=\"");
+	      iprintf (&imgStr, symbolMOverFmt, lname);
+	      iprintf (&imgStr, "\" ");
+      }
+      if (strcmp(symbolMOutFmt,"%.s")!=0) {
+	      iprintf (&imgStr, "onMouseOut=\"");
+	      iprintf (&imgStr, symbolMOutFmt, lname);
+	      iprintf (&imgStr, "\" ");
+      }
+      iprintf (&imgStr, "shape=\"circle\" coords=\"%.0f,%.0f, 3\" />\n",
+	       p->x + ox, p->y + oy);
+    }
 		      
 	//        point2 = &( p->line[j].point[i] );
 	//        if(point1->y == point2->y) {}
@@ -965,9 +1120,6 @@ void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, sty
   int i,j,l;
 int bsize = 200;
 char first = 1;
-char *buffer = (char *) malloc (bsize);
-char *fbuffer = (char *) malloc (bsize);
-int nchars = 0;
 double size;
 DEBUG printf("msDrawLineSymbolIM<BR>\n");
 
@@ -988,47 +1140,53 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
   size = MS_MIN(size, style->maxsize);
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
+  if (suppressEmpty && p->numvalues==0) return;//suppress area with empty title
 //  if(fc < 0) return; // nothing to do
 //  if(size < 1) return; // size too small
-  if (dxf == 2){
-	nchars = sprintf (fbuffer, "LINE\n%d\n", matchdxfcolor(style->color));
-  } else if (dxf){
-	nchars = sprintf (fbuffer, "  0\nPOLYLINE\n 70\n     0\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
-  } else {
-	nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
-  }
   if(style->symbol == 0) { // just draw a single width line
 //    imagePolyline(img, p, fc, style->offsetx, style->offsety);
 		  for(l=0,j=0; j<p->numlines; j++) {
+		    if (dxf == 2){
+		      iprintf (&imgStr, "LINE\n%d\n", matchdxfcolor(style->color));
+		    } else if (dxf){
+		      iprintf (&imgStr, "  0\nPOLYLINE\n 70\n     0\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
+		    } else {
+		      char *title=(p->numvalues) ? p->values[0] : "";
+		      iprintf (&imgStr, "<area ");
+		      if (strcmp(polyHrefFmt,"%.s")!=0) {
+			iprintf (&imgStr, "href=\"");
+			iprintf (&imgStr, polyHrefFmt, title);
+			iprintf (&imgStr, "\" ");
+		      }
+		      if (strcmp(polyMOverFmt,"%.s")!=0) {
+			iprintf (&imgStr, "onMouseOver=\"");
+			iprintf (&imgStr, polyMOverFmt, title);
+			iprintf (&imgStr, "\" ");
+		      }
+		      if (strcmp(polyMOutFmt,"%.s")!=0) {
+			iprintf (&imgStr, "onMouseOut=\"");
+			iprintf (&imgStr, polyMOutFmt, title);
+			iprintf (&imgStr, "\" ");
+		      }
+		      iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
+		    }
 		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
-				int slen = 0;
 				if (dxf == 2){
-					nchars = sprintf (buffer, "%s%.0f %.0f\n", first ? fbuffer: "", p->line[j].point[i].x, p->line[j].point[i].y);
+					iprintf (&imgStr, "%.0f %.0f\n", p->line[j].point[i].x, p->line[j].point[i].y);
 				} else if (dxf){
-					nchars = sprintf (buffer, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
+					iprintf (&imgStr, "  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
 				} else {
-					nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+					iprintf (&imgStr, "%s %.0f,%.0f", first ? "": ",", p->line[j].point[i].x, p->line[j].point[i].y);
 				}
-
-//	DEBUG printf ("%d, ",strlen(img->img.imagemap) );
-//	 DEBUG printf(" %d, ", img->size);
-				slen = nchars + imgsize; // add 25 to accomodate </A> tag / SEQEND
-//	 DEBUG printf(" %d, ", slen);
-//	 DEBUG printf("nchars %d<BR>\n", nchars);
-				if (slen >= img->size){
-					img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2 + 25); // double allocated string size if needed
-					if (img->img.imagemap)
-						img->size = slen*2;
-				}
-				mystrcat(img->img.imagemap, buffer);
 				first = 0;
 			      
 		//        point2 = &( p->line[j].point[i] );
 		//        if(point1->y == point2->y) {}
 		      }
+		      iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
-	    mystrcat(img->img.imagemap, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "'></A>\n");
+
 //	DEBUG printf ("%d, ",strlen(img->img.imagemap) );
     return;
   }
@@ -1170,9 +1328,6 @@ void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, st
   int i,j,l;
 int bsize = 300;
 char first = 1;
-char *buffer = (char *) malloc (bsize);
-char *fbuffer = (char *) malloc (bsize);
-int nchars = 0;
 double size;
 
 DEBUG printf("msDrawShadeSymbolIM\n<BR>");
@@ -1198,6 +1353,7 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
 //DEBUG printf ("b");
 
 //  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
+  if (suppressEmpty && p->numvalues==0) return;//suppress area with empty title
 //DEBUG printf ("1");
 //  if(fc < 0) return; // nothing to do
 //DEBUG printf ("2");
@@ -1205,44 +1361,49 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
 //DEBUG printf ("3");
       
 //DEBUG printf("BEF%s", img->img.imagemap);
-  if (dxf == 2){
-	nchars = sprintf (fbuffer, "POLY\n%d\n", matchdxfcolor(style->color));
-  } else if (dxf){
-	nchars = sprintf (fbuffer, "  0\nPOLYLINE\n 73\n     1\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
-  } else {
-	nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
-  }
-
 	  if(style->symbol == 0) { // simply draw a single pixel of the specified color //    
 		  for(l=0,j=0; j<p->numlines; j++) {
+		    if (dxf == 2){
+		      iprintf (&imgStr, "POLY\n%d\n", matchdxfcolor(style->color));
+		    } else if (dxf){
+		      iprintf (&imgStr, "  0\nPOLYLINE\n 73\n     1\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
+		    } else {
+		      char *title=(p->numvalues) ? p->values[0] : "";
+		      iprintf (&imgStr, "<area ");
+		      if (strcmp(polyHrefFmt,"%.s")!=0) {
+			iprintf (&imgStr, "href=\"");
+			iprintf (&imgStr, polyHrefFmt, title);
+			iprintf (&imgStr, "\" ");
+		      }
+		      if (strcmp(polyMOverFmt,"%.s")!=0) {
+			iprintf (&imgStr, "onMouseOver=\"");
+			iprintf (&imgStr, polyMOverFmt, title);
+			iprintf (&imgStr, "\" ");
+		      }
+		      if (strcmp(polyMOutFmt,"%.s")!=0) {
+			iprintf (&imgStr, "onMouseOut=\"");
+			iprintf (&imgStr, polyMOutFmt, title);
+			iprintf (&imgStr, "\" ");
+		      }
+		      iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
+		    }
+
 		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
-				int slen = 0;
 				if (dxf == 2){
-					nchars = sprintf (buffer, "%s%.0f %.0f\n", first ? fbuffer:"", p->line[j].point[i].x, p->line[j].point[i].y);
+					iprintf (&imgStr, "%.0f %.0f\n", p->line[j].point[i].x, p->line[j].point[i].y);
 				} else if (dxf){
-					nchars = sprintf (buffer, "%s  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", first ? fbuffer : "", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
+					iprintf (&imgStr, "  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
 				} else {
-					nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+					iprintf (&imgStr, "%s %.0f,%.0f", first ? "": ",", p->line[j].point[i].x, p->line[j].point[i].y);
 				}
-
-	//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
-	// DEBUG printf("nchars %d<BR>\n", nchars);
-				slen = nchars + imgsize + 8; // add 8 to accomodate </A> tag
-//				slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
-				if (slen > img->size){
-					img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
-					if (img->img.imagemap)
-						img->size = slen*2;
-				}
-				mystrcat(img->img.imagemap, buffer);
 				first = 0;
 			      
 		//        point2 = &( p->line[j].point[i] );
 		//        if(point1->y == point2->y) {}
 		      }
+		      iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
-	    mystrcat(img->img.imagemap, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "'></A>\n");
   
 //DEBUG printf("AFT%s", img->img.imagemap);
 // STOOPID. GD draws polygons pixel by pixel ?!
@@ -1447,9 +1608,6 @@ DEBUG printf("billboardIM<BR>\n");
 int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
 {
   int x, y;
-	int slen = 0;
-	int nchars = 0;
-	char buffer[300] = "";
 		
 
   DEBUG printf("msDrawText<BR>\n");
@@ -1460,20 +1618,10 @@ int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label
   y = MS_NINT(labelPnt.y);
 
 	if (dxf == 2) {
-		nchars = sprintf (buffer, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
+		iprintf (&imgStr, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
 	} else {
-		nchars = sprintf (buffer, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
+		iprintf (&imgStr, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
 	}
-//DEBUG printf("%s<BR>", buffer);
-//DEBUG printf ("%d, ",strlen(img->img.imagemap) );
-//DEBUG printf("nchars %d<BR>\n", nchars);
-	slen = nchars + imgsize + 8; // add 8 to accomodate </A> tag
-	if (slen > img->size){
-		img->img.imagemap = (char *) realloc (img->img.imagemap, slen*2); // double allocated string size if needed
-		if (img->img.imagemap)
-			img->size = slen*2;
-	}
-	mystrcat(img->img.imagemap, buffer);
 /*
   if(label->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->color));
   if(label->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->outlinecolor));
@@ -1885,7 +2033,7 @@ DEBUG printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
 	  } else if (dxf){
 	    fprintf(stream, "  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\n  1\nAC1009\n0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n  0\nTABLE\n%s0\nENDTAB\n0\nENDSEC\n  0\nSECTION\n  2\nBLOCKS\n0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n", layerlist); 
 	  } else {
-	    fprintf(stream, "<MAP name='map1' width=%d height=%d>", img->width, img->height);
+	    fprintf(stream, "<map name=\"%s\" width=\"%d\" height=\"%d\">\n", mapName, img->width, img->height);
     	  }
 	  fprintf(stream, img->img.imagemap);
 	  if( strcasecmp("OFF",msGetOutputFormatOption( format, "SKIPENDTAG", "OFF" )) == 0){
@@ -1894,7 +2042,7 @@ DEBUG printf("FLEN %d<BR>\n", strlen(img->img.imagemap));
 		  else if (dxf)
 			  fprintf(stream, "0\nENDSEC\n0\nEOF\n");
 		  else 
-			  fprintf(stream, "</MAP>");
+			  fprintf(stream, "</map>");
 /*#ifdef USE_GD_GIF
     gdImageGif(img, stream);
 #else
