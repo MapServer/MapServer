@@ -2642,7 +2642,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
   // write potentially multiply occuring features last
   for(i=0; i<layer->numclasses; i++) writeClass(&(layer->class[i]), stream);
 
-  if( layer->layerinfo )
+  if( layer->layerinfo &&  layer->connectiontype == MS_GRATICULE)
     writeGrid( (graticuleObj *) layer->layerinfo, stream );
   else {
     current = layer->features;
