@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23  2003/09/30 15:56:40  assefa
+ * Typenames may have namespaces.
+ *
  * Revision 1.22  2003/09/30 03:15:31  assefa
  * Add namespace ogc in Filter capabilities.
  *
@@ -635,21 +638,43 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
     {
         int j, k;
         const char *pszMapSRS = NULL;
-
+        char **tokens;
+        int n=0, i=0;
         // keep a ref for layer use.
         typename = paramsObj->pszTypeName;
-
+        
         // Parse comma-delimited list of type names (layers)
         //
         // __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4"
         //
         layers = split(typename, ',', &numlayers);
+/* ==================================================================== */
+/*      check if the typename contains name spaces (ex cdf:Other),      */
+/*      If that is the case extarct only the layer name.                */
+/* ==================================================================== */
+         
         if (layers==NULL || numlayers < 1) 
         {
             msSetError(MS_WFSERR, 
                        "At least one type name required in TYPENAME parameter.",
                      "msWFSGetFeature()");
             return msWFSException(map, paramsObj->pszVersion);
+        }
+        tokens = split(layers[0], ':', &n);
+        if (tokens && n==2)
+        {
+            msFreeCharArray(tokens, n);
+            for (i=0; i<numlayers; i++)
+            {
+                tokens = split(layers[i], ':', &n);
+                 if (tokens && n==2)
+                 {
+                     free(layers[i]);
+                     layers[i] = strdup(tokens[1]);
+                 }
+                 if (tokens)
+                    msFreeCharArray(tokens, n);
+            }
         }
 
         pszMapSRS = msGetEPSGProj(&(map->projection),
@@ -773,10 +798,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
         char **paszFilter = NULL;
         int bIsBBoxFilter =0;
         int nEpsgTmp = 0;
-        int nttt = 0;
-        char *sttt = NULL;
 
-        //nttt = strlen(sttt);
 /* -------------------------------------------------------------------- */
 /*      Validate the parameters. When a FILTER parameter is given,      */
 /*      It needs the TYPENAME parameter for the layers. Also Filter     */
@@ -823,6 +845,9 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
             paszFilter = (char **)malloc(sizeof(char *)*nFilters);
             for (i=0; i<nFilters; i++)
               paszFilter[i] = strdup(tokens[i]);
+
+            if (tokens)
+              msFreeCharArray(tokens, nFilters);
         }
         else
         {
@@ -854,7 +879,14 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
             }
 
             iLayerIndex = msGetLayerIndex(map, layers[i]);
-            if (iLayerIndex > 0)
+            if (iLayerIndex < 0)
+            {
+                msSetError(MS_WFSERR, 
+                   "Invalid Typename in GetFeature : %s", 
+                   "msWFSGetFeature()", layers[i]);
+                return msWFSException(map, paramsObj->pszVersion);
+            }
+            if (iLayerIndex >= 0)
             {
                 lp = &(map->layers[iLayerIndex]);
                 if (szExpression)
@@ -931,6 +963,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
                               msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
                         }
                     }
+                    if (tokens)
+                      msFreeCharArray(tokens, nTokens);
 #endif
                 }
 
