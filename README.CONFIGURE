@@ -20,7 +20,7 @@ For the impatient:
 To build the "mapserv" CGI program with the default options, go to the
 directory where you extracted the MapServer source code package and...
 
- $ cd ms_3.5.x
+ $ cd mapserver-3.6.x
  $ ./configure
  $ make
 
@@ -65,17 +65,9 @@ Here is the list of available options as returned by "./configure --help":
   --disable-ignore-missing-data  Report all missing data files.
   --enable-debug          Include -g in CFLAGS for debugging.
   --disable-debug         Do not include -g in CFLAGS (the default).
-  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is
+  --with-php=DIR          Specify directory where PHP4 source tree is
                           installed. Required in order to compile the
                           PHP/MapScript module.
-  --with-apxs[=FILE]      Use this option only if building the PHP MapScript
-                          on a system where PHP was built as a shared Apache
-                          module.  FILE is the optional pathname to the
-                          Apache apxs tool; defaults to apxs.
-  --with-apache=DIR       Use this option only if building the PHP MapScript
-                          on a system where PHP was built as an Apache
-                          module statically linked into the httpd executable.
-                          DIR is the path to the apache include files.
   --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
                           Required on *BSD systems.
   --disable-runpath       Do not link with runtime lib path (the default).
@@ -425,25 +417,16 @@ Miscellaneous flags:
 PHP/MapScript module:
 ----------------------
 
-  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is
+  --with-php=DIR          Specify directory where PHP4 source tree is
                           installed. Required in order to compile the
                           PHP/MapScript module.
-  --with-apxs[=FILE]      Use this option only if building the PHP MapScript
-                          on a system where PHP was built as a shared Apache
-                          module.  FILE is the optional pathname to the
-                          Apache apxs tool; defaults to apxs.
-  --with-apache=DIR       Use this option only if building the PHP MapScript
-                          on a system where PHP was built as an Apache
-                          module statically linked into the httpd executable.
-                          DIR is the path to the apache include files.
 
   The --with-php option will trigger the compilation of the PHP MapScript
-  module in the ./mapscript/php3/ directory.
+  module in the ./mapscript/php3/ directory.  
 
-  DIR should be the location of the PHP3 or PHP4 source distribution.  The 
-  module was originally developped using php-3.0.14 and works with more 
-  recent versions of PHP3.  It has also been ported to PHP4, and the 
-  configure script should automatically detect which version of PHP you 
+  DIR should be the location of the PHP4 source distribution.  The 
+  module currently requires PHP 4.1.2 or more recent. The configure 
+  script should automatically detect which version of PHP you 
   are attempting to build with and take the necessary actions.
 
     e.g.  $ ./configure --with-php=../php-3.0.14
@@ -452,25 +435,9 @@ PHP/MapScript module:
   be loaded as a Dynamic Module by the PHP interpreter using the dl()
   PHP command.  See the file ./mapscript/php3/README for more details.
 
-  You may have to start by recompiling Apache and PHP to include PHP as
-  a module, there are step by step instructions for that on the PHP web
-  site:
-	http://www.php.net/manual/install-unix.php
-
-  If PHP is compiled as a shared library Apache module, then you have to
-  pass to the MapServer configure script the same value for the 
-  --with-apxs option that was passed to the PHP configure script.
-  You can find the configure options that were used to build PHP on your
-  system by looking at the "Configuration" section of the output of the
-  PHP phpinfo() command.
-
-  If PHP was compiled as an Apache module statically linked into the httpd
-  executable then you have to use --with-apache=DIR to specify the location
-  of the apache include files, likely /usr/local/apache/include.
-
-  If you get errors at compile time about missing headers (ap_*.h, httpd.h,
-  http*.h) then you need to use --with-apxs or --with-apache to help
-  configure to find the location of the header files.
+  Note that PHP MapScript currently works only with PHP installed as a CGI
+  and will not work with PHP as an Apache module.  For more details, see
+    http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI
 
   Some libraries are used by both PHP and MapServer, and using different 
   versions of these libs will lead to potential crashes at runtime.  In most

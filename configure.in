@@ -503,8 +503,8 @@ unset ac_cv_lib_pdf_PDF_curveto
 
 AC_CHECKING(whether we should include PDF support...)
 AC_ARG_WITH(pdf,
-[  --without-pdf          Disable PDF support.
-  --with-pdf[=DIR]       Include PDF support (DIR is PDFlib's install dir).],,)
+[  --without-pdf           Disable PDF support.
+  --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).],,)
 if test "$with_pdf" = "no" ; then
   AC_MSG_RESULT([        disabled by --without-pdf])
 elif test -n "$with_pdf" -a "$with_pdf" != "yes" ; then
@@ -1040,7 +1040,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if PostGIS support requested)
 
-AC_ARG_WITH(postgis,[  --with-postgis[=ARG]         Include PostGIS Support (ARG=yes/path to pg_config)],,)
+AC_ARG_WITH(postgis,[  --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)],,)
 
 if test "$with_postgis" = "no" -o "$with_postgis" = "" ; then
   AC_MSG_RESULT(no)
@@ -1115,7 +1115,8 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if MING/Flash support requested)
 AC_ARG_WITH(ming,
-[  --with-ming[=ARG] Include MING/Flash Support (ARG=yes/path to Ming directory)],,)
+[  --with-ming[=DIR]       Include MING/Flash Support (DIR=path to Ming
+                          directory)],,)
 
 if test "$with_ming" = "no" -o "$with_ming" = ""; then
   AC_MSG_RESULT([no])
@@ -1301,12 +1302,12 @@ ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
-dnl PHP3/MapScript module options
+dnl PHP/MapScript module options
 dnl ---------------------------------------------------------------------
 
 AC_CHECKING(for PHP/MapScript module options...)
 AC_ARG_WITH(php,
-[  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is
+[  --with-php=DIR          Specify directory where PHP4 source tree is
                           installed. Required in order to compile the
                           PHP/MapScript module.],,)
 
@@ -1360,6 +1361,9 @@ if test -n "$with_php" -a -d "$with_php" ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
     PHP_VERSION_FLAG="-DPHP3"
+    AC_MSG_ERROR([
+!!! PHP MapScript now requires PHP 4.1.2 or more recent.              !!!
+!!! Support for PHP3 has been dropped after MapServer version 3.5.    !!!])
   fi
   AC_MSG_RESULT([$PHP_VERSION_FLAG])
 
@@ -1427,12 +1431,20 @@ dnl The APXS variable also affects the way AC_ADD_RUNPATH() works
 dnl ---------------------------------------------------------------------
 
 AC_ARG_WITH(apxs,
-[  --with-apxs[=FILE]      Use this option only if building the PHP MapScript
+[  --with-apxs[=FILE]      (CURRENTLY DISABLED) 
+                          Use this option only if building the PHP MapScript
                           on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the
                           Apache apxs tool; defaults to apxs.],,)
 
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
+
+  AC_MSG_ERROR([
+!!! The current version of PHP MapScript requires PHP4 configured as  !!!
+!!! a CGI and cannot be used with PHP4 configured as an Apache module,!!!
+!!! so you cannot use the --with-apxs option.                         !!!
+!!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!])
+
 
   AC_MSG_CHECKING([for location of Apache headers using apxs])
   if test -z "$MAKE_PHPMS" ; then
@@ -1459,12 +1471,19 @@ dnl location of the apache include files.
 dnl ---------------------------------------------------------------------
 
 AC_ARG_WITH(apache,
-[  --with-apache=DIR       Use this option only if building the PHP MapScript
+[  --with-apache=DIR       (CURRENTLY DISABLED) 
+                          Use this option only if building the PHP MapScript
                           on a system where PHP was built as an Apache
                           module statically linked into the httpd executable.
                           DIR is the path to the apache include files.],,)
 
 if test -n "$with_apache" -a "$with_apache" != "no" ; then
+
+  AC_MSG_ERROR([
+!!! The current version of PHP MapScript requires PHP4 configured as  !!!
+!!! a CGI and cannot be used with PHP4 configured as an Apache module,!!!
+!!! so you cannot use the --with-apache option.                       !!!
+!!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!])
 
   AC_MSG_CHECKING([for location of Apache headers])
   if test -z "$MAKE_PHPMS" ; then

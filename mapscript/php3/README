@@ -7,25 +7,25 @@ $Id$
 This is a PHP module to make MapServer's MapScript functionalities 
 available in a PHP Dynamically Loadable Library.  
 
-PHP MapScript was originally developed for PHP-3.0.14 and works with more 
-recent versions of PHP3.  It has also been ported to PHP4, the MapServer
-configure script should automatically detect which version of PHP you are 
-attempting to build with and take the necessary actions.
+PHP MapScript was originally developed for PHP-3.0.14 but after MapServer
+3.5 support for PHP3 has been dropped and as of the last update of this
+document, PHP 4.1.2 or more recent was required.
 
 The module has been tested and used on Linux, Solaris, *BSD, and WinNT.
 
-This module is constantly under development, the main resource for help
-is the PHP/MapScript web page at:
-  http://www2.dmsolutions.on.ca/mapserver/php_mapscript/
-and especially the FAQ at:
-  http://www2.dmsolutions.on.ca/mapserver/php_mapscript/php_mapscript_faq.html
+There are documentation and examples for PHP MapScript available via
+the MapServer documentation webpage at:
+  http://mapserver.gis.umn.edu/doc.html
+
+See also the MapServer Wiki for links to more informations on this module:
+  http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScript
 
                       --------------------------
 
 Currently supported classes, properties and methods:
 ====================================================
 
-For more complete information, see the MapScript documentation at:
+For more information on each class, see also the MapScript documentation at:
 	http://mapserver.gis.umn.edu/mapscript.html
 and the MapServer Map File documentation at:
 	http://mapserver.gis.umn.edu/mapfile.html
@@ -1088,35 +1088,5 @@ Constructor:
       int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
 
-
-To compile/install the module on Linux:
-=======================================
-
-- You may have to start by recompiling Apache and PHP to include PHP as
-  a module, there are step by step instructions for that on the PHP web
-  site:
-	http://www.php.net/manual/install-unix.php
-
-- The main MapServer configure script will automatically setup the main
-  makefile to compile php_mapscript.so if you pass the --with-php=DIR
-  argument to the configure script.
-
-- Copy the 'php_mapscript.so' library to your PHP extensions directory
-  and then use the dl() function to load the module at the beginning of
-  your PHP scripts.   See also the PHP function extension_loaded() to
-  check whether an extension is already loaded.
-
-- The file mapscript/php3/examples/phpinfo_mapscript.phtml will test 
-  that the php_mapscript module is properly installed and can be loaded.
-
-- If you get an error from PHP complaining that it cannot load the 
-  library, then make sure that you recompiled and reinstalled PHP with
-  support for dynamic libraries.  On RedHat 5.x and 6.x, this means
-  adding "-rdynamic" to the CLDFLAGS in the main PHP3 Makefile after
-  running ./configure
-  Also make sure all directories in the path to the location of 
-  php_mapscript.so are at least r-x for the HTTPd user (usually 'nobody'),
-  otherwise dl() may complain that it cannot find the file even if it's 
-  there.
 
                       --------------------------
