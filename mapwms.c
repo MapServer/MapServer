@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.142  2004/11/05 16:27:01  assefa
+ * GetLenendGraphic only advertize GD formats.
+ *
  * Revision 1.141  2004/11/04 19:26:42  assefa
  * MapServer now provids one default style named (default), title and LegendURL
  * when possible.
@@ -1083,7 +1086,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    const char *projstring;
    const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL, *pszStyle=NULL;
    const char *pszLegendURL=NULL;
-   char *pszMetadataName;
+   char *pszMetadataName=NULL, *mimetype=NULL;
        
    if (nVersion <= OWS_1_0_7)
    {
@@ -1267,8 +1270,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        pszMetadataName = (char*)malloc(strlen(pszStyle)+205);
        sprintf(pszMetadataName, "style_%s_legendurl_href", pszStyle);
        pszLegendURL = msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName);
-       msFree(pszMetadataName);
-       
    }
    else
      pszStyle = "default";
@@ -1291,6 +1292,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
 
        // close the style block
        fprintf(stdout, "        </Style>\n");
+       msFree(pszMetadataName);       
+
    }
    else if(nVersion >= OWS_1_1_0)
    {
@@ -1303,6 +1306,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
 
            
            // Inside, print the legend url block
+           msFree(pszMetadataName);       
            sprintf(pszMetadataName, "style_%s_legendurl", pszStyle);
            msOWSPrintURLType(stdout, &(lp->metadata), "MO",pszMetadataName,
                              OWS_NOERR, NULL, "LegendURL", NULL, 
@@ -1332,7 +1336,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                    lp->connectiontype != MS_UNUSED_1 &&
                    lp->numclasses > 0)
                {
-                   int width=20, height=20;
+                   char width[10], height[10];
                    char *legendurl = NULL;
                    int classnameset = 0, i=0;
                    for (i=0; i<lp->numclasses; i++)
@@ -1347,28 +1351,69 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                    if (classnameset)
                    {
                        if (map->legend.keysizex > 0)
-                         width= map->legend.keysizex ;
+                         sprintf(width, "%d", map->legend.keysizex);
+                       else
+                         sprintf(width, "%d", 20);//default;
+
                        if (map->legend.keysizey > 0)
-                         height= map->legend.keysizey;
+                          sprintf(height, "%d", map->legend.keysizey);
+                       else
+                         sprintf(height, "%d", 20);//default;
                    
                        script_url_encoded = msEncodeHTMLEntities(script_url);
                        legendurl = (char*)malloc(strlen(script_url_encoded)+200);
-                       sprintf(legendurl, "%sVERSION=%s&service=WMS&request=GetLegendGraphic&layer=%s&=FORMAT=%s",  
-                       script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
-                       msEncodeHTMLEntities(MS_IMAGE_MIME_TYPE(map->outputformat)));
-                   
+
+#ifdef USE_GD_PNG
+                       mimetype = strdup("image/png");
+#endif
+#ifdef USE_GD_GIF
+                       if (!mimetype)
+                         mimetype = strdup("image/gif");
+#endif
+
+#ifdef USE_GD_JPEG
+                       if (!mimetype)
+                         mimetype = strdup("image/jpeg");
+#endif
+#ifdef USE_GD_WBMP
+                       if (!mimetype)
+                         mimetype = strdup("image/wbmp");
+#endif
+                       if (!mimetype)
+                         mimetype = MS_IMAGE_MIME_TYPE(map->outputformat);         
+                       mimetype = msEncodeHTMLEntities(mimetype);
+
+                       sprintf(legendurl, "%sversion=%s&amp;service=WMS&amp;request=GetLegendGraphic&amp;layer=%s&amp;format=%s",  
+                               script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
+                               mimetype);
                            
                        fprintf(stdout, "        <Style>\n");
                        fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
                        fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
-                       fprintf(stdout, "          <LegendURL width=\"%d\" height=\"%d\">\n", 
-                               width, height);
-                       fprintf(stdout, "             <Format>%s</Format>\n", MS_IMAGE_MIME_TYPE(map->outputformat));
+                       
+                       fprintf(stdout, "          <LegendURL width=\"%s\" height=\"%s\">\n",width, height);
+                       fprintf(stdout, "             <Format>%s</Format>\n", mimetype);
                        fprintf(stdout, "             <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\" />\n", legendurl);
                        fprintf(stdout, "          </LegendURL>\n");
+                       
+                       /*
+                       msOWSPrintURLType(stdout, NULL, "O", "ttt",
+                             OWS_NOERR, NULL, "LegendURL", NULL, 
+                             " width=\"%s\"", " height=\"%s\"", 
+                             ">\n             <Format>%s</Format", 
+                             "\n             <OnlineResource "
+                             "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                             " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                             "          ",
+                             MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
+                             NULL, width, height, mimetype, legendurl, "          ");
+                       */
+
                        fprintf(stdout, "        </Style>\n");
-                       free(legendurl);
-                       free(script_url_encoded);
+                       msFree(legendurl);
+                       msFree(script_url_encoded);
+                       msFree(mimetype);
+
                    }
                }       
            }
@@ -1699,6 +1744,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                          "text/xml",
                          NULL);
 
+    msGetOutputFormatMimeListGD(map,mime_list,sizeof(mime_list)/sizeof(char*));
     msWMSPrintRequestCap(nVersion, "GetLegendGraphic", script_url_encoded,
                     mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                     mime_list[4], mime_list[5], mime_list[6], mime_list[7],
@@ -2023,11 +2069,9 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
   if (img == NULL)
       return msWMSException(map, nVersion, NULL);
 
-  if (MS_DRIVER_SWF(map->outputformat))
-      msIO_printf("Content-type: text/html%c%c", 10,10);
-  else
-      msIO_printf("Content-type: %s%c%c",
-                  MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
+  
+  msIO_printf("Content-type: %s%c%c",
+              MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
   if (msSaveImage(map, img, NULL) != MS_SUCCESS)
       return msWMSException(map, nVersion, NULL);
 
