@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.154  2003/04/17 13:21:02  assefa
+ * Register destructor for outputformat object.
+ *
  * Revision 1.153  2003/04/16 15:04:55  assefa
  * the outputformat is now available through the map object.
  *
@@ -833,6 +836,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
     PHPMS_GLOBAL(le_msstyle)= register_list_destructors(php3_ms_free_stub,
                                                         NULL);
+
+    PHPMS_GLOBAL(le_msoutputformat)= register_list_destructors(php3_ms_free_stub,
+                                                               NULL);
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
