@@ -239,9 +239,6 @@ USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 # http://www.opengis.org/
 WMS=-DUSE_WMS_SVR
 
-#Use this flag to build mapserver wms support with a "strict" mode. 
-#Right now the strict mode enables the SRS validation (See Bug 823)
-#OGC_STRICT_MODE=-DOGC_STRICT_MODE
 
 # Use this flag to compile with WMS Client support. WMS Client support
 # allows you to pull layers from other OGIS WMS servers on the interent and
@@ -523,8 +520,7 @@ MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(NEED_NONBLOCKING_STDERR) $(ENABLE_STDERR_DEBUG) \
           $(GDAL)  \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
-        $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) $(SDE_OPT) \
-        $(OGC_STRICT_MODE)
+        $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) $(SDE_OPT)
 
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS)
 
