@@ -29,6 +29,9 @@ int main(int argc, char *argv[])
     fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
     fprintf(stdout,"  -e minx miny maxx maxy: extents to render - optional\n");
     fprintf(stdout,"  -l layers: layers to enable - optional\n" );
+    fprintf(stdout,"  -all_debug n: Set debug level for map and all layers.\n" );
+    fprintf(stdout,"  -map_debug n: Set map debug level.\n" );
+    fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level.\n" );
     exit(0);
   }
   
@@ -89,6 +92,39 @@ int main(int argc, char *argv[])
 
     if(strncmp(argv[i], "-t", 2) == 0) /* transparency */
       map->transparent = MS_ON;
+    
+    if(strncmp(argv[i], "-all_debug", 10) == 0) /* debug */
+    {
+        int debug_level = atoi(argv[++i]);
+
+        map->debug = debug_level;
+        for(j=0; j<map->numlayers; j++) {
+            map->layers[j].debug = debug_level;
+        }
+    }
+    
+    if(strncmp(argv[i], "-map_debug", 10) == 0) /* debug */
+    {
+        map->debug = atoi(argv[++i]);
+    }
+    
+    if(strncmp(argv[i], "-layer_debug", 12) == 0) /* debug */
+    {
+        const char *layer_name = argv[++i];
+        int debug_level = atoi(argv[++i]);
+        int got_layer = 0;
+
+        for(j=0; j<map->numlayers; j++) {
+            if(strcmp(map->layers[j].name,layer_name) == 0 ) {
+                map->layers[j].debug = debug_level;
+                got_layer = 1;
+            }
+        }
+        if( !got_layer )
+            fprintf( stderr, 
+                     " Did not find layer '%s' from -layer_debug switch.\n", 
+                     layer_name );
+    }
     
     if(strncmp(argv[i],"-e",2) == 0) { /* change extent */
       map->extent.minx = atof(argv[i+1]);
