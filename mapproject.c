@@ -16,7 +16,6 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   if( in && in->proj && out && out->proj )
   {
       double	z = 0.0;
-      double x_orig = point->x, y_orig = point->y;
 
       if( pj_is_latlong(in->proj) )
       {
