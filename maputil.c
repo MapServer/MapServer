@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.170  2005/02/03 00:06:57  assefa
+ * Add SVG function prototypes and related calls.
+ *
  * Revision 1.169  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -514,6 +517,18 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
             else
               nReturnVal = msSaveImagePDF(img, filename);
         }
+#endif
+#ifdef USE_SVG
+        else if(MS_DRIVER_SVG(img->format) )
+        {
+            if (map != NULL && filename != NULL )
+              nReturnVal = msSaveImageSVG(img, 
+                                          msBuildPath(szPath, map->mappath, 
+                                                      filename));
+            else
+              nReturnVal = msSaveImageSVG(img, filename);
+        }
+
 #endif
         else
             msSetError(MS_MISCERR, "Unknown image type", 
@@ -1134,6 +1149,15 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
           msTransformShapeToPixel(shape, extent, cellsize);
         else
           msTransformShapePDF(shape, extent, cellsize);
+
+        return;
+    }
+#endif
+#ifdef USE_SVG
+    if (image != NULL && MS_RENDERER_SVG(image->format) )
+    {
+        
+        msTransformShapeSVG(shape, extent, cellsize, image);
 
         return;
     }

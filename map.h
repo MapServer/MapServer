@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.392  2005/02/03 00:06:57  assefa
+ * Add SVG function prototypes and related calls.
+ *
  * Revision 1.391  2005/01/28 06:16:53  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -335,18 +338,22 @@ extern "C" {
 #define MS_DRIVER_GDAL(format)  (strncasecmp((format)->driver,"gdal/",5)==0)
 #define MS_DRIVER_PDF(format) (strncasecmp((format)->driver,"pdf",3)==0)
 #define MS_DRIVER_IMAGEMAP(format)  (strncasecmp((format)->driver,"imagemap",8)==0)
+#define MS_DRIVER_SVG(format) (strncasecmp((format)->driver,"svg",3)==0)
+
 
 #define MS_RENDER_WITH_GD 1
 #define MS_RENDER_WITH_SWF      2
 #define MS_RENDER_WITH_RAWDATA  3
 #define MS_RENDER_WITH_PDF  4
 #define MS_RENDER_WITH_IMAGEMAP 5
+#define MS_RENDER_WITH_SVG      6
 
 #define MS_RENDERER_GD(format)  ((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format) ((format)->renderer == MS_RENDER_WITH_SWF)
 #define MS_RENDERER_RAWDATA(format) ((format)->renderer == MS_RENDER_WITH_RAWDATA)
 #define MS_RENDERER_PDF(format) ((format)->renderer == MS_RENDER_WITH_PDF)
 #define MS_RENDERER_IMAGEMAP(format) ((format)->renderer == MS_RENDER_WITH_IMAGEMAP)
+#define MS_RENDERER_SVG(format) ((format)->renderer == MS_RENDER_WITH_SVG)
 
 // ok, we'll switch to an UL cell model to make this work with WMS
 #define MS_CELLSIZE(min,max,d)    ((max - min)/d)
@@ -1042,6 +1049,7 @@ typedef struct  {
 } SWFObj;
 #endif
 
+
 //PDF Object structure
 #ifdef USE_PDF
 typedef struct {
@@ -1049,6 +1057,14 @@ typedef struct {
   PDF *pdf;
   void    *imagetmp;  //used when the FORMATOPTION "OUTPUT_TYPE=RASTER"
 } PDFObj; 
+#endif
+
+#ifdef USE_SVG
+typedef struct  {
+  mapObj *map;
+  FILE *stream;
+  char *filename;
+} SVGObj;
 #endif
 
 // IMAGE OBJECT - a wrapper for GD images
@@ -1075,6 +1091,10 @@ typedef struct {
 #ifdef USE_PDF
     PDFObj *pdf;
 #endif
+#ifdef USE_SVG
+    SVGObj *svg;
+#endif
+
     char *imagemap;
     short *raw_16bit;
     float *raw_float;
@@ -1698,6 +1718,44 @@ MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *i
 /* ==================================================================== */
 /*      End of prototypes for functions in mappdf.c                     */
 /* ==================================================================== */
+
+/* ==================================================================== */
+/*      prototypes for functions in mapsvg.c                            */
+/* ==================================================================== */
+#ifdef USE_SVG
+
+MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height, 
+                                         outputFormatObj *format, char *imagepath, 
+                                         char *imageurl, mapObj *map);
+
+MS_DLL_EXPORT void msImageStartLayerSVG(mapObj *map, layerObj *layer, 
+                                          imageObj *image);
+
+MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset, imageObj *image, 
+                                       shapeObj *p, styleObj *style, 
+                                       double scalefactor);
+MS_DLL_EXPORT void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
+                                       imageObj *image);
+MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename);
+MS_DLL_EXPORT void msFreeImageSVG(imageObj *image);
+
+MS_DLL_EXPORT void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, 
+                                         imageObj *image, 
+                                         pointObj *p, styleObj *style, 
+                                         double scalefactor);
+
+MS_DLL_EXPORT int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string, 
+                                labelObj *label, fontSetObj *fontset, 
+                                double scalefactor);
+MS_DLL_EXPORT int msDrawLabelCacheSVG(imageObj *image, mapObj *map);
+
+MS_DLL_EXPORT int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, 
+                                       imageObj *image);
+MS_DLL_EXPORT void msDrawShadeSymbolSVG(symbolSetObj *symbolset, 
+                                        imageObj *image, shapeObj *p, 
+                                        styleObj *style, double scalefactor);
+
+#endif
 
 /* ==================================================================== */
 /*      prototypes for functions in mapoutput.c                         */

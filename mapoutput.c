@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.31  2005/02/03 00:06:57  assefa
+ * Add SVG function prototypes and related calls.
+ *
  * Revision 1.30  2004/11/18 20:55:38  frank
  * In msOutputFormatValidate() we now ensure that GD/JPEG does not have
  * alpha enabled, or transparent turned on.   Bug 1073.
@@ -343,7 +346,16 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->imagemode = 0;
         format->renderer = MS_RENDER_WITH_IMAGEMAP;
     }
-
+#ifdef USE_SVG
+    if( strcasecmp(driver,"svg") == 0 )
+    {
+        format = msAllocOutputFormat( map, "svg", driver );
+        format->mimetype = strdup("image/svg+xml");
+        format->imagemode = 0;
+        format->extension = strdup("svg");
+        format->renderer = MS_RENDER_WITH_SVG;
+    }
+#endif
     if( format != NULL )
         format->inmapfile = MS_FALSE;
 
@@ -390,6 +402,9 @@ void msApplyDefaultOutputFormats( mapObj *map )
 
     if( msSelectOutputFormat( map, "GTiff" ) == NULL )
         msCreateDefaultOutputFormat( map, "GDAL/GTiff" );
+
+    if( msSelectOutputFormat( map, "svg" ) == NULL )
+        msCreateDefaultOutputFormat( map, "svg" );
 
     if( map->imagetype != NULL )
         free( map->imagetype );

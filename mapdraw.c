@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2005/02/03 00:06:57  assefa
+ * Add SVG function prototypes and related calls.
+ *
  * Revision 1.82  2005/01/12 21:11:21  frank
  * removed LABELS_ROTATE_WITH_MAP, rotate labels if angle!=0 or labelangleitem
  *
@@ -206,6 +209,14 @@ imageObj *msPrepareImage(mapObj *map, int allow_nonsquare)
                                  map);
 	}
 #endif
+#ifdef USE_SVG
+    else if( MS_RENDERER_SVG(map->outputformat) )
+    {
+        image = msImageCreateSVG(map->width, map->height, map->outputformat,
+                                 map->web.imagepath, map->web.imageurl,
+                                 map);
+    }
+#endif
     else
     {
         image = NULL;
@@ -303,7 +314,7 @@ imageObj *msDrawMap(mapObj *map)
     struct mstimeval mapstarttime, mapendtime;
     struct mstimeval starttime, endtime;
     int oldAlphaBlending;  // allows toggling of gd alpha blending (bug 490)
-    
+
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
     int numOWSRequests=0;
@@ -1157,6 +1168,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
         else if( MS_RENDERER_PDF(image->format) )
             return  msDrawRasterLayerPDF(map, layer, image);
 #endif
+#ifdef USE_SVG
+        else if( MS_RENDERER_SVG(image->format) )
+            return  msDrawRasterLayerSVG(map, layer, image);
+#endif
     }
 
     return MS_FAILURE;
@@ -1250,7 +1265,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   pointObj center; // circle origin
   double r; // circle radius
   int csz; // clip over size
-  
+
+
 /* Steve's original code
   cliprect.minx = map->extent.minx - 2*map->cellsize; // set clipping rectangle just a bit larger than the map extent
   cliprect.miny = map->extent.miny - 2*map->cellsize;
@@ -1694,6 +1710,11 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
        else if( MS_RENDERER_PDF(image->format) )
            msDrawMarkerSymbolPDF(symbolset, image, p, style, scalefactor);
 #endif
+#ifdef SVG            
+       else if( MS_RENDERER_SVG(image->format) )
+           msDrawMarkerSymbolSVG(symbolset, image, p, style, scalefactor);
+#endif
+
     }
 }
 
@@ -1714,6 +1735,11 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         else if( MS_RENDERER_PDF(image->format) )
             msDrawLineSymbolPDF(symbolset, image, p,  style, scalefactor);
 #endif
+#ifdef USE_SVG
+        else if( MS_RENDERER_SVG(image->format) )
+            msDrawLineSymbolSVG(symbolset, image, p,  style, scalefactor);
+#endif
+
     }
 }
 
@@ -1733,6 +1759,10 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
 #ifdef USE_PDF
         else if( MS_RENDERER_PDF(image->format) )
             msDrawShadeSymbolPDF(symbolset, image, p, style, scalefactor);
+#endif
+#ifdef USE_SVG
+        else if( MS_RENDERER_SVG(image->format) )
+            msDrawShadeSymbolSVG(symbolset, image, p, style, scalefactor);
 #endif
     }
 }
@@ -1798,6 +1828,11 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label
             nReturnVal = msDrawTextPDF(image, labelPnt, string, label, 
                                       fontset, scalefactor); 
 #endif
+#ifdef USE_SVG
+        else if( MS_RENDERER_SVG(image->format) )
+            nReturnVal = msDrawTextSVG(image, labelPnt, string, label, 
+                                      fontset, scalefactor); 
+#endif
     }
 
     return nReturnVal;
@@ -1820,6 +1855,10 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 #ifdef USE_PDF
         else if( MS_RENDERER_PDF(image->format) )
             nReturnVal = msDrawLabelCachePDF(image, map);
+#endif
+#ifdef USE_SVG
+        else if( MS_RENDERER_SVG(image->format) )
+            nReturnVal = msDrawLabelCacheSVG(image, map);
 #endif
     }
 
@@ -1844,6 +1883,10 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 #ifdef USE_PDF
         if( MS_RENDERER_PDF(image->format) )
             msImageStartLayerPDF(map, layer, image); 
+#endif
+#ifdef USE_SVG
+        if( MS_RENDERER_SVG(image->format) )
+            msImageStartLayerSVG(map, layer, image);
 #endif
     }
 }
