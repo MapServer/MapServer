@@ -1021,11 +1021,14 @@ int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 					result = dont_force(wkb,shape);
 					break;
 
+                case MS_LAYER_TILEINDEX:
+                                        msDebug( "Ignoring MS_LAYER_TILEINDEX in mappostgis.c\n" );
+                                        break;
                 case MS_LAYER_RASTER:
                                         msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
                                         break;
                 case MS_LAYER_CIRCLE:
-                                        msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
+                                        msDebug( "Ignoring MS_LAYER_CIRCLE in mappostgis.c\n" );
                                         break;
 
 			}
@@ -1218,11 +1221,14 @@ if (layer->debug)
 				case MS_LAYER_QUERY:
 					result = dont_force(wkb,shape);
 					break;
+                case MS_LAYER_TILEINDEX:
+                                        msDebug( "Ignoring MS_LAYER_TILEINDEX in mappostgis.c\n" );
+                                        break;
                 case MS_LAYER_RASTER:
                                         msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
                                         break;
                 case MS_LAYER_CIRCLE:
-                                        msDebug( "Ignoring MS_LAYER_RASTER in mappostgis.c\n" );
+                                        msDebug( "Ignoring MS_LAYER_CIRCLE in mappostgis.c\n" );
 
 			}
 			if (shape->type != MS_SHAPE_NULL)
