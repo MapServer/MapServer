@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- Changed raster queries to return the list of all pixel values as an 
+  attribute named "value_list" rather than "values" to avoid conflict with
+  special [values] substitution rule in maptemplate.c.
+
 - Fixed raster queries to reproject results back to map projection, and to
   do point queries distance checking against the correct projection. (bug 1021)
 
