@@ -3329,7 +3329,8 @@ void msFreeMap(mapObj *map) {
       msFreeOutputFormat( map->outputformat );
 
   for(i=0; i < map->numoutputformats; i++ ) {
-      msFreeOutputFormat( map->outputformatlist[i] );
+      if( --map->outputformatlist[i]->refcount < 1 )
+          msFreeOutputFormat( map->outputformatlist[i] );
   }
   if( map->outputformatlist != NULL )
       msFree( map->outputformatlist );
