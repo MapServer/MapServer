@@ -1,4 +1,4 @@
-dnl
+Mdnl
 dnl MapServer configure.in
 dnl
 dnl Process this file with autoconf to produce a configure script.
@@ -421,12 +421,20 @@ AC_CHECKING(whether we should include ESRI SDE support...)
 AC_ARG_WITH(sde,
 [  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).],,)
 
+AC_ARG_WITH(sde-version,
+[  --with-sde-version[=VERSION NUMBER]        Set ESRI SDE verion number (Default is 80).],SDE_VERSION=$with_sde_version,SDE_VERSION=80)
+
+AC_MSG_RESULT([SDE Version is $SDE_VERSION.])
+
 if test "$with_sde" = "yes" ; then
 
-  AC_CHECK_LIB(sde80,SE_connection_create,SDE_ENABLED=-DUSE_SDE,,,)
+  AC_CHECK_LIB(sde$SDE_VERSION,SE_connection_create,SDE_ENABLED=-DUSE_SDE,,,)
 
   if test -n "$SDE_ENABLED" ; then
-      SDE_LIB="-lsde80 -lpe -lsg -lpthread -lsocket"
+      SDE_LIB="-lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
+      AC_CHECK_LIB(pthread, main, SDE_LIB="$SDE_LIB -lpthread",,)
+      AC_CHECK_LIB(socket, main, SDE_LIB="$SDE_LIB -lsocket",,)
+      AC_CHECK_LIB(dl, main, SDE_LIB="$SDE_LIB -ldl",,)
       AC_MSG_RESULT([        using ESRI SDE from system libs.])
   else
       AC_MSG_WARN([        ESRI SDE not found in system libs... use --with-sde=DIR.])
@@ -439,15 +447,18 @@ elif test -n "$with_sde" -a "$with_sde" != "no" ; then
   test -f $SDE_DIR/arcsde/coverages/include/sdetype.h && SDE_INCDIR="$SDE_DIR/arcsde/coverages/include"
   test -f $SDE_DIR/include/sdetype.h && SDE_INCDIR="$SDE_DIR/include"
   test -f $SDE_DIR/sdetype.h && SDE_INCDIR="$SDE_DIR"
-  test -f $SDE_DIR/lib/libsde80.a && SDE_LIBDIR="$SDE_DIR/lib"
-  test -f $SDE_DIR/libsde80.a && SDE_LIBDIR="$SDE_DIR"
+  test -f $SDE_DIR/lib/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR/lib"
+  test -f $SDE_DIR/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR"
 
   if test -n "$SDE_INCDIR" -a -n "$SDE_LIBDIR" ; then 
       SDE_INC=-I$SDE_INCDIR
-      SDE_LIB="-L$SDE_LIBDIR -lsde80 -lpe80 -lsg80 -lpthread -lsocket"
+      SDE_LIB="-L$SDE_LIBDIR -lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
+      AC_CHECK_LIB(pthread, main, SDE_LIB="$SDE_LIB -lpthread",,)
+      AC_CHECK_LIB(socket, main, SDE_LIB="$SDE_LIB -lsocket",,)
+      AC_CHECK_LIB(dl, main, SDE_LIB="$SDE_LIB -ldl",,)
       AC_ADD_RUNPATH("$SDE_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find sdetype.h or libsde80.a in $SDE_DIR.")
+      AC_MSG_ERROR("Could not find sdetype.h or libsde$SDE_VERSION.a in $SDE_DIR.")
   fi
 
   SDE_ENABLED=-DUSE_SDE
