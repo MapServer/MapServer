@@ -954,11 +954,8 @@ Constructor:
         Returns a reference to line number i.  Reference is valid only
         during the life of the shapeObj that contains the point.
 
-   int draw(mapObj map, layerObj layer, imageObj img, 
-            int class_index, string text)
-        Draws the individual shape using layer.  The class_index is used
-        to classify the shape based on the classes defined for the layer.
-        The text string is used to annotate the shape.
+   int draw(mapObj map, layerObj layer, imageObj img)
+        Draws the individual shape using layer.
         Returns MS_SUCCESS/MS_FAILURE.
 
    boolean contains(pointObj point)
