@@ -826,9 +826,7 @@ typedef struct map_obj{ /* structure for a map */
 
   char *datapattern, *templatepattern;   
 
-  int numconfigoptions;
-  char **configoptionkeys;
-  char **configoptionvalues;
+  hashTableObj configoptions;
 } mapObj;
 
 //SWF Object structure
@@ -1051,6 +1049,8 @@ int strcasecmp(char *s1, char *s2);
 #endif
 
 int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map); // in mapsymbol.c
+int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map);
+int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map);
 void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
@@ -1501,6 +1501,8 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 /* ==================================================================== */
 int msCopyMap(mapObj *dst, mapObj *src);
 int msCopyLayer(layerObj *dst, layerObj *src);
+int msCopyPoint(pointObj *dst, pointObj *src);
+int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map);
 
 /* ==================================================================== */
 /*      end prototypes for functions in mapcopy                         */
