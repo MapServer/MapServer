@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2004/02/09 22:02:33  assefa
+ * Forgot to remove debug statements.
+ *
  * Revision 1.19  2004/02/09 21:42:02  assefa
  * Add RasterSymbolizer support.
  *
@@ -163,7 +166,6 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
           nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName);
     }
 
-    msSaveMap(map, "c:/msapps/world_testdata/map/raster_sld.map");
     return nStatus;
 
 #else
