@@ -112,12 +112,13 @@ double msDistanceFromPointToLine(pointObj *p, pointObj *a, pointObj *b)
     return( msDistanceBetweenPoints(a,p));
 
   r = ((a->y - p->y)*(a->y - b->y) - (a->x - p->x)*(b->x - a->x))/(l*l);
-  s = ((a->y - p->y)*(b->x - a->x) - (a->x - p->x)*(b->y - a->y))/(l*l);
 
   if(r > 1) /* perpendicular projection of P is on the forward extention of AB */
     return(MS_MIN(msDistanceBetweenPoints(p, b),msDistanceBetweenPoints(p, a)));
   if(r < 0) /* perpendicular projection of P is on the backward extention of AB */
     return(MS_MIN(msDistanceBetweenPoints(p, b),msDistanceBetweenPoints(p, a)));
+
+  s = ((a->y - p->y)*(b->x - a->x) - (a->x - p->x)*(b->y - a->y))/(l*l);
 
   return(fabs(s*l));
 }
