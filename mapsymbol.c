@@ -79,6 +79,10 @@ void initSymbol(symbolObj *s)
   s->antialias = MS_FALSE;
   s->font = NULL;
   s->character = '\0';
+
+  s->linecap = MS_CJC_BUTT;
+  s->linejoin = MS_CJC_ROUND;
+  s->linejoinmaxsize = 3;
 }
 
 static void freeSymbol(symbolObj *s) {
@@ -101,7 +105,7 @@ int loadSymbol(symbolObj *s)
     case(ANTIALIAS):
       if((s->antialias = getSymbol(2,MS_TRUE,MS_FALSE)) == -1)
 	return(-1);
-      break;
+      break;    
     case(CHARACTER):
       if((s->character = getString()) == NULL) return(-1);
       break;
@@ -176,6 +180,17 @@ int loadSymbol(symbolObj *s)
 	return(-1);
       }
       break;
+    case(LINECAP):
+      if((s->linecap = getSymbol(4,MS_CJC_BUTT, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE)) == -1)
+        return(-1);
+      break;
+    case(LINEJOIN):
+      if((s->linejoin = getSymbol(4,MS_CJC_NONE, MS_CJC_ROUND, MS_CJC_MITER, MS_CJC_BEVEL)) == -1)
+        return(-1);
+      break;
+    case(LINEJOINMAXSIZE):
+      if((getDouble(&s->linejoinmaxsize)) == -1) return(-1);
+      break;
     case(NAME):
       if((s->name = getString()) == NULL) return(-1);
       break;
@@ -239,10 +254,10 @@ int loadSymbol(symbolObj *s)
       break;
     case(TYPE):
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_TRUETYPE)) == -1)
+      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE)) == -1)
 	return(-1);	
 #else
-      if((s->type = getSymbol(4,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE)) == -1)
+      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE, MS_SYMBOL_CARTOLINE)) == -1)
 	return(-1);
 #endif
       break;
@@ -910,6 +925,16 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int 
     msImageTruetypePolyline(img, p, symbol, fc, sz, symbolset->fontset);
     return;
     break;
+  case(MS_SYMBOL_CARTOLINE):
+    /* Single line */
+    if (sz == 1) {
+      bc = gdTransparent;
+      break;
+    } else {
+      msImageCartographicPolyline(img, p, fc, sz, symbol->linecap, symbol->linejoin, symbol->linejoinmaxsize);
+    }
+    return;
+    break;
   case(MS_SYMBOL_ELLIPSE):
     bc = gdTransparent;
 
@@ -1246,6 +1271,9 @@ void msCircleDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p
     break;
   case(MS_SYMBOL_TRUETYPE):
     // msImageTruetypePolyline(img, p, symbol, fc, sz, symbolset->fontset);
+    return;
+    break;
+  case(MS_SYMBOL_CARTOLINE):
     return;
     break;
   case(MS_SYMBOL_ELLIPSE):

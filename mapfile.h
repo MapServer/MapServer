@@ -147,7 +147,8 @@
 
 #define TITLE 1126
 
-#define CAP 1127
-#define JOINMAXSIZE 1128 // JOIN already defined
+#define LINECAP 1127
+#define LINEJOIN 1128
+#define LINEJOINMAXSIZE 1129
 
 #endif /* MAPFILE_H */

@@ -3,7 +3,7 @@
 
 #include <gd.h>
 
-enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTO};
+enum MS_SYMBOL_TYPE {MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE};
 
 #define MS_MAXSYMBOLS 64            // maximum number of symbols in a symbol file
 #define MS_MAXVECTORPOINTS 100      // shade, marker and line symbol parameters
@@ -50,10 +50,10 @@ typedef struct {
   int gap;
 
   /*
-  ** MS_SYMBOL_CARTO options
+  ** MS_SYMBOL_CARTOLINE options
   */
-  int cap, join;
-  double joinmaxsize;
+  int linecap, linejoin;
+  double linejoinmaxsize;
 
 } symbolObj;
 

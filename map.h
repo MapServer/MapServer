@@ -144,6 +144,12 @@ extern "C" {
 // For maplabel and mappdf
 #define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
+// For CARTO symbols
+#define MS_PI    3.14159265358979323846
+#define MS_PI2   1.57079632679489661923  // (MS_PI / 2)
+#define MS_3PI2  4.71238898038468985769  // (3 * MS_PI2)
+#define MS_2PI   6.28318530717958647693  // (2 * MS_PI)
+
 #endif
 
 // General enumerated types - needed by scripts
@@ -158,7 +164,7 @@ enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
 enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_TILED_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL};
 enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG, MS_WBMP, MS_GML};
 
-enum MS_CAPS_JOINS_AND_CORNERS {MS_BEVEL, MS_BUTT, MS_MITER, MS_ROUND, MS_SQUARE, MS_TRIANGLE}; 
+enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
 
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
@@ -814,6 +820,7 @@ void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
 void msImagePolyline(gdImagePtr img, shapeObj *p, int c);
 void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c);
 void msImageFilledPolygon(gdImagePtr img, shapeObj *p, int c);
+void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, int c, double sz, int captype, int jointype, double joinmaxsize);
 int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
 int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 int msAddLine(shapeObj *p, lineObj *new_line);

@@ -1005,3 +1005,348 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
 
   return(MS_SUCCESS);
 }
+
+static gdPoint genarateGDLineIntersection(gdPoint a, gdPoint b, gdPoint c, gdPoint d) 
+{
+  gdPoint p;
+  double r;
+  double denominator, numerator;
+
+  if(b.x == c.x && b.y == c.y) return(b);
+
+  numerator = ((a.y-c.y)*(d.x-c.x) - (a.x-c.x)*(d.y-c.y));  
+  denominator = ((b.x-a.x)*(d.y-c.y) - (b.y-a.y)*(d.x-c.x));  
+
+  r = numerator/denominator;
+
+  p.x = MS_NINT(a.x + r*(b.x-a.x));
+  p.y = MS_NINT(a.y + r*(b.y-a.y));
+
+  return(p);
+}
+
+static double getAngleFromDxDy(double dx, double dy) 
+{
+  double angle;
+  if (!dx) {
+    if (dy > 0) 
+      angle = MS_PI2;
+    else
+      angle = MS_3PI2;
+  } else { 
+    angle = atan(dy/dx);
+    if (dx < 0) 
+      angle += MS_PI;
+    else if (dx > 0 && dy < 0) 
+      angle += MS_2PI;
+  }
+  return(angle);
+}
+
+static void imageFilledSegment(gdImagePtr im, double x, double y, double sz, double angle_from, double angle_to, int c) 
+{
+  int j=0;
+  double angle, dx, dy;
+  static gdPoint points[38];
+  double angle_dif;
+
+  sz -= 0.1;
+  if      (sz < 4)  angle_dif = MS_PI2;
+  else if (sz < 12) angle_dif = MS_PI/5;
+  else if (sz < 20) angle_dif = MS_PI2/7;
+  else              angle_dif = MS_PI2/10;
+  
+  angle = angle_from;
+  while(angle < angle_to) {
+    dx = cos(angle)*sz;
+    dy = sin(angle)*sz;
+    points[j].x = MS_NINT(x + dx);
+    points[j].y = MS_NINT(y + dy);
+    angle += angle_dif;
+    j++;
+  }
+  
+  if (j) {
+    dx = cos(angle_to)*sz;
+    dy = sin(angle_to)*sz;
+    points[j].x = MS_NINT(x + dx);
+    points[j].y = MS_NINT(y + dy);
+    j++;
+    points[j].x = MS_NINT(x);
+    points[j].y = MS_NINT(y);
+    j++;
+    points[j].x = points[0].x;
+    points[j].y = points[0].y;
+    j++;
+  
+    gdImagePolygon(im, points, j, c);
+    gdImageFilledPolygon(im, points, j, c);
+  }
+}
+
+/* ------------------------------------------------------------------------------- */
+/*    Draw a cartographic line symbol of the specified size, color, join and cap   */
+/* ------------------------------------------------------------------------------- */
+void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, int c, double sz, int captype, int jointype, double joinmaxsize)
+{
+  int i, j, k;
+  int odd;
+  double dx_n, dy_n, dx_n2, dy_n2; 
+  double dx_odd = 0;
+  double dy_odd = 0;
+  double sz_half;
+  double dx, dy, s, coef;
+  double angle, angle_n, last_angle, angle_left_limit, angle_from, angle_to;
+  gdPoint points[4], last_points[4];
+  gdPoint cap_join_points[6];
+  pointObj intersect_points[5];
+
+  /* Get odd size */
+  odd = ((int)sz % 2)?1:0;
+
+  sz_half = sz / 2;
+
+  /* Draw lines */
+  for (i = 0; i < p->numlines; i++) {
+    for(j=1; j<p->line[i].numpoints; j++) {
+    
+      dx = p->line[i].point[j].x - p->line[i].point[j-1].x;
+      dy = p->line[i].point[j].y - p->line[i].point[j-1].y;
+      if (!dx && !dy) continue;
+
+      /* A line angle */
+      angle = getAngleFromDxDy(dx, dy);
+      
+      /* Normal */
+      angle_n = angle + MS_PI2;
+
+      /* Get dx and dy of normal */ 
+      dx_n = cos(angle_n) * (sz_half-1);
+      dy_n = sin(angle_n) * (sz_half-1);
+      dx_n2 = cos(angle_n) * (sz-1);
+      dy_n2 = sin(angle_n) * (sz-1);
+
+      /* Corrections for odd size */
+      if (odd) {
+        if (!dx) {
+          dx_odd = 0;
+          if (dy < 0) dx_n += 1;
+        } else if (!dy) {
+          dy_odd = 0;
+          if (dx > 0) dy_n += 1;
+        } else {
+          dx_odd = cos(angle_n);
+          dy_odd = sin(angle_n);
+        }
+      }
+//sprintf(ms_error.message, "c=%d", c);
+//msSetError(MS_TYPEERR, ms_error.message, "msImageCartographicPolyline");	
+
+      /* Create a polygon */
+      points[0].x = MS_NINT(p->line[i].point[j].x   - dx_n - dx_odd); 
+      points[0].y = MS_NINT(p->line[i].point[j].y   - dy_n - dy_odd); 
+      points[1].x = MS_NINT(p->line[i].point[j-1].x - dx_n - dx_odd); 
+      points[1].y = MS_NINT(p->line[i].point[j-1].y - dy_n - dy_odd);
+      points[2].x = MS_NINT(p->line[i].point[j-1].x - dx_n + dx_n2); 
+      points[2].y = MS_NINT(p->line[i].point[j-1].y - dy_n + dy_n2);
+      points[3].x = MS_NINT(p->line[i].point[j].x   - dx_n + dx_n2); 
+      points[3].y = MS_NINT(p->line[i].point[j].y   - dy_n + dy_n2);
+ 
+      /* Draw the polygon */
+      gdImageFilledPolygon(im, points, 4, c);
+      gdImagePolygon(im, points, 4, c);  // ??? Outline for gdImageFilledPolygon is not the same as for gdImagePolygon  
+
+      /* Optimize: do not draw joins and caps for sz=2 */
+      if (sz == 2) continue; 
+      
+      /* Captype */
+      if ((j == 1) || (j == (p->line[i].numpoints-1))) { 
+        switch (captype) {
+          /* Round */
+          case MS_CJC_ROUND:
+            /* First point */            
+            if (j == 1) { 
+              dx = points[2].x - points[1].x;
+              dy = points[2].y - points[1].y;
+              angle_from = angle + MS_PI2;
+              angle_from -= angle_from > MS_2PI?MS_2PI:0;
+              angle_to   = angle_from + MS_PI;
+              s = sqrt(pow(dx,2) + pow(dy,2))/2;
+              imageFilledSegment(im, points[1].x + dx/2.0, points[1].y + dy/2.0, s, angle_from, angle_to, c);
+            } 
+            /* Last point */            
+            if (j == (p->line[i].numpoints-1)) {
+              dx = points[3].x - points[0].x;
+              dy = points[3].y - points[0].y;
+              angle_from = angle - MS_PI2;
+              angle_from += angle_from < 0?MS_2PI:0;
+              angle_to   = angle_from + MS_PI;
+              s = sqrt(pow(dx,2) + pow(dy,2))/2;
+              imageFilledSegment(im, points[0].x + dx/2.0, points[0].y + dy/2.0, s, angle_from, angle_to, c);
+            }
+          break;
+          /* Square */
+          case MS_CJC_SQUARE:
+            dx = MS_NINT(cos(angle) * sz_half);            
+            dy = MS_NINT(sin(angle) * sz_half);
+            /* First point */            
+            if (j == 1) { 
+              /* Create a polygon */
+              cap_join_points[0].x = points[1].x + dx; 
+              cap_join_points[0].y = points[1].y + dy; 
+              cap_join_points[1].x = points[2].x + dx; 
+              cap_join_points[1].y = points[2].y + dy;
+              cap_join_points[2].x = points[2].x - dx; 
+              cap_join_points[2].y = points[2].y - dy; 
+              cap_join_points[3].x = points[1].x - dx; 
+              cap_join_points[3].y = points[1].y - dy;
+            } 
+            /* Last point */            
+            if (j == (p->line[i].numpoints-1)) {
+              /* Create a polygon */
+              cap_join_points[0].x = points[0].x + dx; 
+              cap_join_points[0].y = points[0].y + dy; 
+              cap_join_points[1].x = points[3].x + dx; 
+              cap_join_points[1].y = points[3].y + dy;
+              cap_join_points[2].x = points[3].x - dx; 
+              cap_join_points[2].y = points[3].y - dy; 
+              cap_join_points[3].x = points[0].x - dx; 
+              cap_join_points[3].y = points[0].y - dy;
+            }
+            gdImageFilledPolygon(im, cap_join_points, 4, c);
+            gdImagePolygon(im, cap_join_points, 4, c);
+            
+          break;
+          /* Triangle */
+          case MS_CJC_TRIANGLE:
+            dx = MS_NINT(cos(angle) * sz_half);            
+            dy = MS_NINT(sin(angle) * sz_half);
+            /* First point */            
+            if (j == 1) { 
+              /* Create a polygon */
+              cap_join_points[0].x = MS_NINT(p->line[i].point[j-1].x) + dx; 
+              cap_join_points[0].y = MS_NINT(p->line[i].point[j-1].y) + dy; 
+              cap_join_points[1].x = points[1].x; 
+              cap_join_points[1].y = points[1].y;
+              cap_join_points[2].x = MS_NINT(p->line[i].point[j-1].x) - dx; 
+              cap_join_points[2].y = MS_NINT(p->line[i].point[j-1].y) - dy; 
+              cap_join_points[3].x = points[2].x; 
+              cap_join_points[3].y = points[2].y; 
+            } 
+            /* Last point */            
+            if (j == (p->line[i].numpoints-1)) {
+              /* Create a polygon */
+              cap_join_points[0].x = MS_NINT(p->line[i].point[j].x) + dx; 
+              cap_join_points[0].y = MS_NINT(p->line[i].point[j].y) + dy; 
+              cap_join_points[1].x = points[0].x; 
+              cap_join_points[1].y = points[0].y;
+              cap_join_points[2].x = MS_NINT(p->line[i].point[j].x) - dx; 
+              cap_join_points[2].y = MS_NINT(p->line[i].point[j].y) - dy; 
+              cap_join_points[3].x = points[3].x; 
+              cap_join_points[3].y = points[3].y; 
+            }
+            gdImageFilledPolygon(im, cap_join_points, 4, c);
+            gdImagePolygon(im, cap_join_points, 4, c);
+          break;
+        }
+      }
+      
+      /* Jointype */
+      if ((j > 1) && (angle != last_angle)) {
+        switch (jointype) {
+          /* Round */
+          case MS_CJC_ROUND:
+            angle_left_limit = last_angle - MS_PI;
+            /* The current line is on the left site of the last line */ 
+            if ((angle_left_limit > 0 && angle_left_limit < angle && angle < last_angle) ||
+                (angle_left_limit < 0 && ((0 <= angle && angle < last_angle) || (angle_left_limit+MS_2PI < angle)))) {
+              dx = points[2].x - p->line[i].point[j-1].x;
+              dy = points[2].y - p->line[i].point[j-1].y;
+              angle_from = getAngleFromDxDy(dx, dy);
+              dx = last_points[3].x - p->line[i].point[j-1].x;
+              dy = last_points[3].y - p->line[i].point[j-1].y;
+              angle_to = getAngleFromDxDy(dx, dy);
+            /* The current line is on the right site of the last line */ 
+            } else {
+              dx = last_points[0].x - p->line[i].point[j-1].x;
+              dy = last_points[0].y - p->line[i].point[j-1].y;
+              angle_from = getAngleFromDxDy(dx, dy);
+              dx = points[1].x - p->line[i].point[j-1].x;
+              dy = points[1].y - p->line[i].point[j-1].y;
+              angle_to = getAngleFromDxDy(dx, dy);
+            }
+            /* Size is a little bit different on different lines */ 
+            s = sqrt(pow(dx,2) + pow(dy,2));
+            if (angle_from > angle_to) angle_from -= MS_2PI;  
+            angle_from -= MS_DEG_TO_RAD*10;
+            angle_to   += MS_DEG_TO_RAD*10;
+            imageFilledSegment(im, p->line[i].point[j-1].x, p->line[i].point[j-1].y, s, angle_from, angle_to, c);
+          break;
+          /* Miter */
+          case MS_CJC_MITER:
+            /* Return back */ 
+            if (angle == last_angle + MS_PI || angle == last_angle - MS_PI) {
+              dx_n = joinmaxsize*sz*cos(angle);
+              dy_n = joinmaxsize*sz*sin(angle);
+              cap_join_points[1].x = p->line[i].point[j-1].x + dx_n;
+              cap_join_points[1].y = p->line[i].point[j-1].y + dy_n;
+              cap_join_points[4].x = p->line[i].point[j-1].x - dx_n;
+              cap_join_points[4].y = p->line[i].point[j-1].y - dy_n;
+            /* Check a miter join size */
+            } else {
+              cap_join_points[1] = genarateGDLineIntersection(last_points[0], last_points[1], points[0], points[1]);
+              dx_n = cap_join_points[1].x - p->line[i].point[j-1].x;
+              dy_n = cap_join_points[1].y - p->line[i].point[j-1].y;
+              s = sqrt(pow(dx_n,2) + pow(dy_n,2));
+              if (s > joinmaxsize*sz) {
+                coef = (s-joinmaxsize*sz)/s;
+                dx_n = dx_n*coef; 
+                dy_n = dy_n*coef; 
+                cap_join_points[1].x -= MS_NINT(dx_n);
+                cap_join_points[1].y -= MS_NINT(dy_n);
+              } else {
+                dx_n = 0; 
+                dy_n = 0; 
+              }  
+              cap_join_points[4] = genarateGDLineIntersection(last_points[2], last_points[3], points[2], points[3]);
+              cap_join_points[4].x += MS_NINT(dx_n);
+              cap_join_points[4].y += MS_NINT(dy_n);
+            } 
+            cap_join_points[0].x = last_points[0].x; 
+            cap_join_points[0].y = last_points[0].y; 
+            cap_join_points[2].x = points[1].x; 
+            cap_join_points[2].y = points[1].y; 
+            cap_join_points[3].x = last_points[3].x; 
+            cap_join_points[3].y = last_points[3].y; 
+            cap_join_points[5].x = points[2].x; 
+            cap_join_points[5].y = points[2].y;
+            gdImageFilledPolygon(im, cap_join_points, 6, c);
+            gdImagePolygon(im, cap_join_points, 6, c);
+          break;
+          /* Bevel */
+          case MS_CJC_BEVEL:
+            cap_join_points[0].x = last_points[0].x; 
+            cap_join_points[0].y = last_points[0].y; 
+            cap_join_points[1].x = points[1].x; 
+            cap_join_points[1].y = points[1].y; 
+            cap_join_points[2].x = last_points[3].x; 
+            cap_join_points[2].y = last_points[3].y; 
+            cap_join_points[3].x = points[2].x; 
+            cap_join_points[3].y = points[2].y;
+             
+            gdImageFilledPolygon(im, cap_join_points, 4, c);
+            gdImagePolygon(im, cap_join_points, 4, c);
+          break;
+        }
+      }
+
+      /* Copy the last point and angle */
+      for (k=0; k<4; k++)
+        last_points[k] = points[k];
+      last_angle = angle;
+      
+//      gdImageLine(im, p->line[i].point[j-1].x, p->line[i].point[j-1].y, p->line[i].point[j].x, p->line[i].point[j].y, 1);  
+
+    }
+  }
+}
