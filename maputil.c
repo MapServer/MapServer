@@ -89,7 +89,15 @@ int msEvalContext(mapObj *map, char *context)
   return expresult;
 }
 
-/* Parser mutex added for type MS_EXPRESSION -- SG */
+/* msEvalExpression()
+ *
+ * Evaluates a mapserver expression for a given set of attribute values and
+ * returns the result of the expression (MS_TRUE or MS_FALSE)
+ * May also return true in case of parsing errors or invalid expressions
+ * (check the error stack if you care)
+ *
+ * Parser mutex added for type MS_EXPRESSION -- SG
+ */
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
 {
   int i;
