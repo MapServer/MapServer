@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1304: Avoid extra white space in gml:coordinates for gml:Box.
+
 - mapogr.c: Insure that tile index reading is restarted in 
   msOGRLayerInitItemInfo() or else fastcgi repeat requests for a layer may 
   fail on subsequent renders.
