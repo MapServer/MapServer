@@ -1490,6 +1490,8 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
     }
     
     msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
+    if(shape->type == MS_SHAPE_NULL) continue; // skip NULL shapes
+
     shape->tileindex = layer->tileshpfile.lastshape;
     shape->values = values;
     shape->numvalues = layer->numitems;

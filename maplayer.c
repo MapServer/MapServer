@@ -196,7 +196,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
 */
 int msLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
-
+  int status;
   int i, filter_passed;
   char **values=NULL;
 
