@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.220.2.3  2005/02/28 14:27:19  dan
+ * Use gdFree() instead of free() in php3_ms_img_saveImage() (bug 1257)
+ *
  * Revision 1.220.2.2  2004/12/19 22:17:59  assefa
  * numpoints and stylelength memebers of the symbol object needs to be in sync
  * with the low level values after calles to setpoints ans setstyle (Bug 1137).
@@ -5972,7 +5975,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
             php3_write(iptr, size);
 #endif
             retVal = size;
-            free(iptr);
+            gdFree(iptr);
         }
 
 #else  /* No gdImageGifPtr(): GD 1.2/1.3 */
