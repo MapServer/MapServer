@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/03/30 01:13:53  dan
+ * Take cellsize into account when calculating temporary buffer size in
+ * msResampleGDALToMap().
+ *
  * Revision 1.4  2001/03/21 04:02:56  frank
  * use pj_is_latlong
  *
@@ -433,8 +437,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 /*      Setup a dummy map object we can use to read from the source     */
 /*      raster, with the newly established extents, and resolution.     */
 /* -------------------------------------------------------------------- */
-    srcImg = gdImageCreate( (int) ((sSrcExtent.maxx - sSrcExtent.minx)+0.01), 
-                            (int) ((sSrcExtent.maxy - sSrcExtent.miny)+0.01) );
+    srcImg = gdImageCreate( (int) ((sSrcExtent.maxx - 
+                                    sSrcExtent.minx)/sDummyMap.cellsize+0.01), 
+                            (int) ((sSrcExtent.maxy - 
+                                    sSrcExtent.miny)/sDummyMap.cellsize+0.01));
     gdImagePaletteCopy( srcImg, img );
 
 /* -------------------------------------------------------------------- */
