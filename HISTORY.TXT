@@ -13,7 +13,7 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-Version 3.6.4-dev
+Version 3.6.4 (2003-01-08)
 --------------------------
 
 - Use LD instead of CC to refer to linker program name in the Makefile to
