@@ -818,10 +818,10 @@ void loadForm() /* set variables as input from the user form */
     }
   }
 
-  if(ImgRows == -1)
-    ImgRows = Map->height;
-  if(ImgCols == -1)
-    ImgCols = Map->width;  
+  if(ImgRows == -1) ImgRows = Map->height;
+  if(ImgCols == -1) ImgCols = Map->width;  
+  if(Map->height == -1) Map->height = ImgRows;
+  if(Map->width == -1) Map->width = ImgCols;
 }
 
 /*
@@ -1790,14 +1790,14 @@ int main(int argc, char *argv[]) {
 	  case FROMIMGBOX:
 	    break;
 	  case FROMUSERPNT: /* only a buffer makes sense */
-	    if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_MULTIPLE, MapPnt, Buffer)) == NULL) writeError();
+	    if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_MULTIPLE, MapPnt, Buffer)) == NULL) writeError();
 	  default:
 	    setExtent();
 	    if((QueryResults = msQueryUsingRect(Map, SelectLayer, &Map->extent)) == NULL) writeError();
 	    break;
 	  }
 	} /* end switch */
-      }
+      } 
          
       if(msQueryUsingFeatures(Map, QueryLayer, QueryResults) == -1) /* now feature query */
 	writeError();
@@ -1897,8 +1897,10 @@ int main(int argc, char *argv[]) {
       switch(QueryCoordSource) {
       case FROMIMGPNT:	
 	setCoordinate();
-	Map->extent = ImgExt; // use the existing extent
-	Map->scale = msCalculateScale(ImgExt, Map->units, ImgCols, ImgRows);	 
+	Map->extent = ImgExt; // use the existing image parameters
+	Map->width = ImgCols;
+	Map->height = ImgRows;
+	Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	 
 	msApplyScale(Map);
 	if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_SINGLE, MapPnt, 0)) == NULL) writeError();
 	break;
@@ -1985,9 +1987,11 @@ int main(int argc, char *argv[]) {
 	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
 	  if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
 	} else {
-	  Map->scale = msCalculateScale(ImgExt, Map->units, ImgCols, ImgRows);
+	  Map->extent = ImgExt; // use the existing image parameters
+	  Map->width = ImgCols;
+	  Map->height = ImgRows;
+	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	 
 	  msApplyScale(Map);
-	  Map->extent = ImgExt; // use existing extent	  
 	  if((QueryResults = msQueryUsingPoint(Map, QueryLayer, MS_MULTIPLE, MapPnt, 0)) == NULL) writeError();
 	}
 	break;
@@ -2001,16 +2005,29 @@ int main(int argc, char *argv[]) {
 	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
 	  if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
 	} else {
-	  Map->scale = msCalculateScale(ImgExt, Map->units, ImgCols, ImgRows); /* based on image the box was drawn on */
+	  double cellx, celly;
+
+	  Map->extent = ImgExt; // use the existing image parameters
+	  Map->width = ImgCols;
+	  Map->height = ImgRows;
+	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	  
 	  msApplyScale(Map);
-	  setExtent();
-	  if((QueryResults = msQueryUsingRect(Map, QueryLayer, &Map->extent)) == NULL) writeError();
+
+	  cellx = (ImgExt.maxx-ImgExt.minx)/(ImgCols-1); // calculate the new search extent
+	  celly = (ImgExt.maxy-ImgExt.miny)/(ImgRows-1);
+	  RawExt.minx = ImgExt.minx + cellx*ImgBox.minx;
+	  RawExt.maxx = ImgExt.minx + cellx*ImgBox.maxx;
+	  RawExt.miny = ImgExt.maxy - celly*ImgBox.maxy;
+	  RawExt.maxy = ImgExt.maxy - celly*ImgBox.miny;
+
+	  if((QueryResults = msQueryUsingRect(Map, QueryLayer, &RawExt)) == NULL) writeError();
 	}
 	break;
 
       case FROMIMGSHAPE:
-
-	Map->extent = ImgExt; // use existing extent
+	Map->extent = ImgExt; // use the existing image parameters
+        Map->width = ImgCols;
+	Map->height = ImgRows;
 	Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
 	Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
 	msApplyScale(Map);

@@ -88,13 +88,20 @@
   gdImagePtr prepareImage() {
     gdImagePtr img;
 
+    if(map->width == -1 && map->height == -1) {
+      msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
+      return NULL;
+    }
+
     if(self->width == -1 ||  self->height == -1)
       if(msAdjustImage(self->extent, &self->width, &self->height) == -1)
         return NULL;
 
     img = gdImageCreate(self->width, self->height);
-    if(!img)
+    if(!img) {
+      msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
+    }
   
     if(msLoadPalette(img, &(self->palette), self->imagecolor) == -1)
       return NULL;

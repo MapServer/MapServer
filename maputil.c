@@ -367,6 +367,11 @@ gdImagePtr msDrawMap(mapObj *map)
   gdImagePtr img=NULL;
   layerObj *lp=NULL;
 
+  if(map->width == -1 && map->height == -1) {
+    msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
+    return(NULL);
+  }
+
   if(map->width == -1 ||  map->height == -1)
     if(msAdjustImage(map->extent, &map->width, &map->height) == -1)
       return(NULL);
@@ -458,6 +463,11 @@ gdImagePtr msDrawQueryMap(mapObj *map, queryResultObj *results)
   gdImagePtr img=NULL;
   layerObj *lp=NULL;
   char color_buffer[MS_MAXCLASSES];
+
+  if(map->width == -1 && map->height == -1) {
+    msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawQueryMap()");
+    return(NULL);
+  }
 
   if(map->width == -1 ||  map->height == -1)
     if(msAdjustImage(map->extent, &map->width, &map->height) == -1)

@@ -2209,7 +2209,7 @@ int initMap(mapObj *map)
   map->scale = -1.0;
   map->scaled = MS_FALSE;
 
-  map->height = map->width = 300;
+  map->height = map->width = -1;
 
   map->units = MS_METERS;
   map->cellsize = 0;
@@ -2218,7 +2218,6 @@ int initMap(mapObj *map)
   map->imagecolor.red = 255;
   map->imagecolor.green = 255;
   map->imagecolor.blue = 255;
-  map->height = map->width = 0;
 
   map->palette.numcolors = 0;
 
