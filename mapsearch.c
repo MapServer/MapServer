@@ -290,12 +290,12 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
   double tc, tN, tD;
 
   // check for strictly parallel segments first
-  if(((pa->x == pb->x) && (pc->x == pd->x)) || (slope(pa,pb) == slope(pc,pd))) { // vertical (infinite slope) || otherwise parallel
-    D = msDistancePointToSegment(pa, pc, pd);
-    D = MS_MIN(D, msDistancePointToSegment(pb, pc, pd));
-    D = MS_MIN(D, msDistancePointToSegment(pc, pa, pb));
-    return(MS_MIN(D, msDistancePointToSegment(pd, pa, pb)));
-  }
+  // if(((pa->x == pb->x) && (pc->x == pd->x)) || (slope(pa,pb) == slope(pc,pd))) { // vertical (infinite slope) || otherwise parallel
+  //   D = msDistancePointToSegment(pa, pc, pd);
+  //   D = MS_MIN(D, msDistancePointToSegment(pb, pc, pd));
+  //   D = MS_MIN(D, msDistancePointToSegment(pc, pa, pb));
+  //   return(MS_MIN(D, msDistancePointToSegment(pd, pa, pb)));
+  // }
 
   u.x = pb->x - pa->x; // u = pb - pa
   u.y = pb->y - pa->y;
@@ -315,8 +315,9 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
   tc = tN = tD = D;
   
   // compute the line parameters of the two closest points
-  if(D < SMALL_NUMBER) { // lines are almost parallel
+  if(D < SMALL_NUMBER) { // lines are parallel or almost parallel
     sN = 0.0;
+    sD = 1.0;
     tN = e;
     tD = c;
   } else { // get the closest points on the infinite lines
