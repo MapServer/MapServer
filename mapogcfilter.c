@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23  2004/02/11 00:06:51  assefa
+ * Correct Bug in FLTArraysNot when passed array was empty.
+ *
  * Revision 1.22  2004/02/10 23:46:39  assefa
  * Coorect typo error.
  *
@@ -507,8 +510,7 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
     int *panTmp = NULL;
     int i = 0, iResult = 0;
     
-    if (!panArray || nSize <= 0 || !map || 
-        iLayerIndex < 0 || iLayerIndex > map->numlayers-1)
+    if (!map || iLayerIndex < 0 || iLayerIndex > map->numlayers-1)
       return NULL;
 
      psLayer = &(map->layers[iLayerIndex]);
@@ -524,19 +526,24 @@ int *FLTArraysNot(int *panArray, int nSize, mapObj *map,
        return NULL;
 
      panResults = (int *)malloc(sizeof(int)*psLayer->resultcache->numresults);
+     
      panTmp = (int *)malloc(sizeof(int)*psLayer->resultcache->numresults);
      for (i=0; i<psLayer->resultcache->numresults; i++)
        panTmp[i] = psLayer->resultcache->results[i].shapeindex;
      qsort(panTmp, psLayer->resultcache->numresults, 
            sizeof(int), compare_ints);
      
+     
      iResult = 0;
       for (i=0; i<psLayer->resultcache->numresults; i++)
       {
-          if (!FTLIsInArray(panArray, nSize, panTmp[i]))
+          if (!FTLIsInArray(panArray, nSize, panTmp[i]) || 
+              panArray == NULL)
             panResults[iResult++] = 
               psLayer->resultcache->results[i].shapeindex;
       }
+
+      free(panTmp);
 
       if (iResult > 0)
       {
