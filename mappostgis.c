@@ -197,6 +197,8 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	layerinfo->row_num=0;
 	layerinfo->query_result= NULL;
 
+        layerinfo->urid_name= NULL; 
+        layerinfo->user_srid= NULL;
 
 	layerinfo->conn = PQconnectdb( layer->connection );
 
@@ -604,6 +606,9 @@ int msPOSTGISLayerClose(layerObj *layer)
 			if (layerinfo->urid_name != NULL)
 				free(layerinfo->urid_name );
 
+ 			if (layerinfo->user_srid != NULL)
+ 				free(layerinfo->user_srid );
+ 
 			if (layerinfo->sql != NULL)
 				free (layerinfo->sql);
 			
