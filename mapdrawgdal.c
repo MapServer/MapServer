@@ -29,6 +29,17 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25.2.3  2004/05/12 19:42:51  frank
+ * Fixed last fix of the cracking fix.
+ *
+ * Revision 1.25.2.2  2004/05/11 22:36:37  frank
+ * fix the Bug493 raster cracking fix
+ *
+ * Revision 1.25.2.1  2004/05/06 03:33:18  frank
+ * Fixed problem with computing dst_xsize and dst_ysize for rendering image.
+ * In some subtle cases they would be one less than made sense.
+ * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=493
+ *
  * Revision 1.25  2004/04/09 03:03:58  frank
  * improvement for msGetGDALBandList()
  *
@@ -274,6 +285,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    */
   else if( layer->transform )
   {
+      int dst_lrx, dst_lry;
+
       msGetGDALGeoTransform( hDS, map, layer, adfGeoTransform );
       InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
       
@@ -323,17 +336,28 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
       dst_xoff = (int) ((copyRect.minx - mapRect.minx) / map->cellsize);
       dst_yoff = (int) ((mapRect.maxy - copyRect.maxy) / map->cellsize);
-      dst_xsize = (int) ((copyRect.maxx - copyRect.minx) / map->cellsize + 0.5);
-      dst_xsize = MIN(MAX(1,dst_xsize),image->width - dst_xoff);
-      dst_ysize = (int) ((copyRect.maxy - copyRect.miny) / map->cellsize + 0.5);
-      dst_ysize = MIN(MAX(1,dst_ysize),image->height - dst_yoff);
+
+      dst_lrx = (int) ((copyRect.maxx - mapRect.minx) / map->cellsize + 0.5);
+      dst_lry = (int) ((mapRect.maxy - copyRect.miny) / map->cellsize + 0.5);
+      dst_lrx = MAX(0,MIN(image->width,dst_lrx));
+      dst_lry = MAX(0,MIN(image->height,dst_lry));
       
+      dst_xsize = MAX(0,MIN(image->width,dst_lrx - dst_xoff));
+      dst_ysize = MAX(0,MIN(image->height,dst_lry - dst_yoff));
+
       if( dst_xsize == 0 || dst_ysize == 0 )
       {
           if( layer->debug )
               msDebug( "msDrawGDAL(): no apparent overlap between map view and this window(2).\n" );
           return 0;
       }
+
+#ifdef notdef
+      if( layer->debug )
+          msDebug( "msDrawGDAL(): src=%d,%d,%d,%d, dst=%d,%d,%d,%d\n", 
+                   src_xoff, src_yoff, src_xsize, src_ysize, 
+                   dst_xoff, dst_yoff, dst_xsize, dst_ysize );
+#endif
   }
 
   /*
@@ -1447,7 +1471,7 @@ msDrawRasterLayerGDAL_16BitClassification(
     double dfScaleMin=0.0, dfScaleMax=0.0, dfScaleRatio;
     int   nPixelCount = dst_xsize * dst_ysize, i, nBucketCount=0;
     GDALDataType eDataType;
-    float fDataMin, fDataMax, fNoDataValue;
+    float fDataMin=0.0, fDataMax=255.0, fNoDataValue;
     const char *pszScaleInfo;
     int  bUseIntegers = FALSE;
     int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
