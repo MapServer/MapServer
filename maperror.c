@@ -210,11 +210,7 @@ char *msGetErrorCodeString(int code) {
 
 char *msGetErrorString(char *delimiter) 
 {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-  char  errbuf[512];
-#else
   char errbuf[256];
-#endif
   char *errstr=NULL;
 
   errorObj *error = msGetErrorObj();
@@ -224,15 +220,9 @@ char *msGetErrorString(char *delimiter)
   if((errstr = strdup("")) == NULL) return(NULL); // empty at first
   while(error && error->code != MS_NOERR) {
     if(error->next && error->next->code != MS_NOERR) // (peek ahead) more errors, use delimiter
-#if defined(_WIN32) && !defined(__CYGWIN__)
-      sprintf(errbuf,  "%s: %s %s%s", error->routine, ms_errorCodes[error->code], error->message, delimiter);
-    else
-      sprintf(errbuf, "%s: %s %s", error->routine, ms_errorCodes[error->code], error->message);
-#else
       snprintf(errbuf, 255, "%s: %s %s%s", error->routine, ms_errorCodes[error->code], error->message, delimiter);
     else
-      snprintf(errbuf, 255, "%s: %s %s", error->routine, ms_errorCodes[error->code], error->message);
-#endif    
+      snprintf(errbuf, 255, "%s: %s %s", error->routine, ms_errorCodes[error->code], error->message);   
 
     if((errstr = (char *) realloc(errstr, sizeof(char)*(strlen(errstr)+strlen(errbuf)+1))) == NULL) return(NULL);
     strcat(errstr, errbuf);

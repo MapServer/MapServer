@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.55  2004/01/08 20:44:21  assefa
+ * Add #ifdef for windows to be able to use snprintf.
+ *
  * Revision 1.54  2003/11/03 15:45:29  assefa
  * Do not delete the temporary file comming from the server if we are in debug mode.
  * (DEBUG ON on the layer)
@@ -529,13 +532,9 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msProjectPoint(&(map->projection), &(map->latlon), &oPoint);
 
         pszNewEPSG = (char*)malloc(101*sizeof(char));
-#if defined(_WIN32) && !defined(__CYGWIN__)
-        sprintf(pszNewEPSG, "%s,9001,%.16g,%.16g", 
-                pszEPSG, oPoint.x, oPoint.y);
-#else
+
         snprintf(pszNewEPSG, 100, "%s,9001,%.16g,%.16g", 
                  pszEPSG, oPoint.x, oPoint.y);
-#endif        
         pszNewEPSG[100]='\0';
         free(pszEPSG);
         pszEPSG=pszNewEPSG;

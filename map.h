@@ -50,6 +50,10 @@
 #include "ming.h"
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#define snprintf _snprintf
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
