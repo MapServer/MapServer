@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.34  2002/11/15 16:32:36  dan
+ * Works more often with offiste=RGB:210,220,230 for bug 214 workaround
+ *
  * Revision 1.33  2002/11/15 06:15:29  dan
  * Temporary patch for bug 214 (WMS transparency issue)
  *
@@ -518,7 +521,7 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 // an offsite color value.  We should remove this once bug 214 is fixed.
     if( !MS_VALID_COLOR(lp->offsite) )
     {
-        MS_INIT_COLOR(lp->offsite, 1, 2, 3);// Any not too common RGB would do
+        MS_INIT_COLOR(lp->offsite, 210, 220, 230);// Any not too common RGB would do
     }
 
     if (!msProjectionsDiffer(&(map->projection), &(lp->projection)))
