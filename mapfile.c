@@ -1599,6 +1599,7 @@ int initLayer(layerObj *layer)
   layer->tolerance = 3; /* perhaps this should have a different value based on type */
 
   layer->symbolscale = -1.0; /* -1 means nothing is set */
+  layer->scalefactor = 1.0;
   layer->maxscale = -1.0;
   layer->minscale = -1.0;
 
@@ -2847,7 +2848,7 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map)
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadQueryMap()");
       return(-1);
-    case(END):     
+    case(END):
       return(0);
       break;
     case(SIZE):
