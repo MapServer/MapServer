@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.65  2003/06/26 13:54:23  assefa
+ * Use calloc instead of malloc in shapefileObj_new (Bug 344).
+ *
  * Revision 1.64  2003/06/03 23:49:16  assefa
  * Set layer->prject to true when setting the projection.
  *
@@ -993,7 +996,7 @@ shapefileObj *shapefileObj_new(char *filename, int type) {
     shapefileObj *shapefile;
     int status;
 
-    shapefile = (shapefileObj *)malloc(sizeof(shapefileObj));
+    shapefile = (shapefileObj *)calloc(1,sizeof(shapefileObj));
     if(!shapefile)
       return NULL;
 
