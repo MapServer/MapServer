@@ -57,10 +57,6 @@ Version 4.3 (CVS)
   and added 'void' to prototypes of no-arg functions, eliminating all
   but two SWIG-Mapscript build warnings (bug 658).
 
-- Map cloning fixed.  However, users must now set the cloned map's fontset
-  and symbolset explicitly (see bug 557).  A new testcopy program has
-  been added as a target for make.
-
 - Mapscript: resolved issue with pens and dynamic drawing of points (bug 663).
 
 - Mapscript: fixes to tests of shape copying and new image symbols.
