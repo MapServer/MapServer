@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2003/09/10 19:58:24  assefa
+ * Rename filterencoding.h file.
+ *
  * Revision 1.15  2003/09/10 03:51:25  assefa
  * Add Filters in the Capabilities.
  *
@@ -86,7 +89,7 @@
 /* There is a dependency to GDAL/OGR for the GML driver and MiniXML parser */
 #include "cpl_minixml.h"
 
-#include "filterencoding.h"
+#include "mapogcfilter.h"
 
 /*
 ** msWFSException()
