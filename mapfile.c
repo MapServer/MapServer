@@ -2416,7 +2416,6 @@ void freeWeb(webObj *web)
   free(web->log);
   free(web->imagepath);
   free(web->imageurl);
-  free(web->empty);
 }
 
 static void writeWeb(webObj *web, FILE *stream)
