@@ -29,6 +29,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.12  2003/10/29 21:23:03  frank
+ * Added special logic to flip coordinate system y axis if the input raster image
+ * is ungeoreferenced (transform is 0,1,0,0,0,1) to (0,1,0,ysize,0,-1) effectively
+ * making the lower left corner the origin instead of the upper left.
+ *
  * Revision 1.11  2003/10/07 14:34:56  frank
  * added (untested) nodata support for greyscale/colormapped images
  *
@@ -221,7 +226,13 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
           GDALReadWorldFile((char *)GDALGetDescription(hDS),
                             "wld", adfGeoTransform);
-  
+
+      if( adfGeoTransform[5] == 1.0 && adfGeoTransform[3] == 0.0 )
+      {
+          adfGeoTransform[5] = -1.0;
+          adfGeoTransform[3] = GDALGetRasterYSize(hDS);
+      }
+
       InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
       
       mapRect = map->extent;
@@ -237,7 +248,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           copyRect.minx = GEO_TRANS(adfGeoTransform,0,src_ysize);
       if( copyRect.maxx > GEO_TRANS(adfGeoTransform,src_xsize,0) )
           copyRect.maxx = GEO_TRANS(adfGeoTransform,src_xsize,0);
-      
+
       if( copyRect.miny < GEO_TRANS(adfGeoTransform+3,0,src_ysize) )
           copyRect.miny = GEO_TRANS(adfGeoTransform+3,0,src_ysize);
       if( copyRect.maxy > GEO_TRANS(adfGeoTransform+3,src_xsize,0) )
