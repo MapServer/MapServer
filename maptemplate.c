@@ -2322,11 +2322,11 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   sprintf(repstr, "%f", msObj->Map->cellsize);
   outstr = gsub(outstr, "[cellsize]", repstr);
   
-  sprintf(repstr, "%.1f %.1f", (msObj->Map->width-1)/2.0, (msObj->Map->height-1)/2.0);
+  sprintf(repstr, "%.1f %.1f", (msObj->Map->width)/2.0, (msObj->Map->height)/2.0); // not subtracting 1 from image dimensions (see bug 633)
   outstr = gsub(outstr, "[center]", repstr);
-  sprintf(repstr, "%.1f", (msObj->Map->width-1)/2.0);
+  sprintf(repstr, "%.1f", (msObj->Map->width)/2.0);
   outstr = gsub(outstr, "[center_x]", repstr);
-  sprintf(repstr, "%.1f", (msObj->Map->height-1)/2.0);
+  sprintf(repstr, "%.1f", (msObj->Map->height)/2.0);
   outstr = gsub(outstr, "[center_y]", repstr);      
 
   // These are really for situations with multiple result sets only, but often used in header/footer  
