@@ -13,10 +13,13 @@ platformdir = '-'.join((distutils.util.get_platform(),
                        '.'.join(map(str, sys.version_info[0:2]))))
 sys.path.insert(0, 'build/lib.' + platformdir)
 
-# Our testing mapfile
-testMapfile = '../../tests/test.map'
-testNoFontSetMapfile = '../../tests/test_nofontset.map'
-test_image = '../../tests/test.png'
+# Paths
+TESTS_PATH = '../../tests'
+
+testMapfile = os.path.join(TESTS_PATH, 'test.map')
+testNoFontSetMapfile = os.path.join(TESTS_PATH, 'test_nofontset.map')
+test_image = os.path.join(TESTS_PATH, 'test.png')
+xmarks_image = os.path.join(TESTS_PATH, 'xmarks.png')
 
 # Import all from mapscript
 import mapscript
@@ -242,7 +245,7 @@ class SymbolTestCase(MapPrimitivesTestCase):
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
     def testConstructorImage(self):
-        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol = mapscript.symbolObj('xmarks', xmarks_image)
         assert symbol.name == 'xmarks'
         assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
     def testGetPoints(self):
@@ -322,7 +325,7 @@ class SymbolSetTestCase(MapTestCase):
         symbolset.appendSymbol(symbolb)
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
     def testDrawNewSymbol(self):
-        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol = mapscript.symbolObj('xmarks', xmarks_image)
         symbol_index = self.mapobj1.symbolset.appendSymbol(symbol)
         assert symbol_index == 2, symbol_index
         num = self.mapobj1.symbolset.numsymbols
@@ -345,6 +348,7 @@ class FontSetTestCase(MapTestCase):
         file = self.mapobj1.fontset.filename
         assert file == 'fonts.txt', file
     def testFontSetFonts(self):
+        """testFontSetFonts may fail if fontset is improperly configured"""
         fonts = []
         font = None
         while 1:
@@ -680,9 +684,10 @@ class ShapeObjTestCase(MapPrimitivesTestCase):
     def copyShape(self, shape):
         try:
             return shape.copy()
-        except AttributeError:
+        except TypeError:
             s = mapscript.shapeObj(shape.type)
-            return shape.copy(s)
+            shape.copy(s)
+            return s
         except:
             raise
 
@@ -962,6 +967,7 @@ class NewOutputFormatTestCase(unittest.TestCase):
         filename = 'testAppendNewOutputFormat.tif'
         imgobj.save(filename)
     def testRemoveOutputFormat(self):
+        """testRemoveOutputFormat may fail depending on GD options"""
         num = self.mapobj1.numoutputformats
         assert num == 6, num
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')

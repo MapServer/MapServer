@@ -1,2 +1,2 @@
-LucidaSansRegular /Library/Fonts/LucidaSansRegular.ttf
-LucidaSansDemiBold /Library/Fonts/LucidaSansDemiBold.ttf
+Verdana c:\WINNT\Fonts\Verdana.TTF
+Verdana c:\WINNT\Fonts\Verdana.TTF

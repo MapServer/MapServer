@@ -16,10 +16,17 @@ MAP
       "key4" "value4"
     END
   END
+ 
+  PROJECTION
+    "init=EPSG:4326"
+  END
   
   LAYER
     NAME "POLYGON"
     TYPE POLYGON
+    PROJECTION
+      "init=EPSG:4326"
+    END
     STATUS DEFAULT
     DATA "polygon"
     METADATA
@@ -59,6 +66,9 @@ MAP
   LAYER
     NAME "LINE"
     TYPE LINE
+    PROJECTION
+      "init=EPSG:4326"
+    END
     STATUS DEFAULT
     DATA "line"
     CLASSITEM "FNAME"
@@ -84,9 +94,13 @@ MAP
   LAYER
     NAME "POINT"
     TYPE POINT
+    PROJECTION
+      "init=EPSG:4326"
+    END
     STATUS DEFAULT
     DATA "point"
     CLASSITEM "FNAME"
+    LABELITEM "FNAME"
     CLASS
       NAME "0"
       STYLE
@@ -98,6 +112,12 @@ MAP
         COLOR 204 204 204
         SYMBOL 1
         SIZE 7
+      END
+      LABEL
+        TYPE TRUETYPE
+        FONT "Verdana"
+        SIZE 10
+        COLOR 0 0 0
       END
     END
     CLASS
@@ -114,6 +134,9 @@ MAP
   LAYER
     NAME "INLINE"
     TYPE POINT
+    PROJECTION
+      "init=EPSG:4326"
+    END
     STATUS DEFAULT
     FEATURE
       POINTS -0.2 51.5 END

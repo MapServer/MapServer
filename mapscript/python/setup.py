@@ -71,7 +71,7 @@ for item in ms_includes:
 # Had to specify 'extra_link_args = ["-static", "-lgd"]' because
 # mapscript requires the gd library, which on my system is static.
 setup(name = "mapscript",
-      version = "4.1",
+      version = "4.3",
       description = "Python interface to MapServer objects.",
       author = "Mapserver project - SWIGged MapScript library.",
       url = "http://mapserver.gis.umn.edu/",
@@ -82,7 +82,7 @@ setup(name = "mapscript",
                                libraries = libs,
                                define_macros =  macros,
                                # Uncomment line below if using static gd
-                               #extra_link_args = ["-static", "-lgd"],
+                               extra_link_args = ["/NODEFAULTLIB:libc"],
                               )
                     ],
       py_modules = ["mapscript"]
