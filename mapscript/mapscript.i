@@ -1338,6 +1338,14 @@ memory.") const char * {
   void setOption( const char *key, const char *value ) {
     msSetOutputFormatOption( self, key, value );
   }
+
+    %newobject getOption;
+    char *getOption(const char *key, const char *value="") {
+        const char *retval;
+        retval = msGetOutputFormatOption(self, key, value);
+        return strdup(retval);
+    }
+
 }
 
 //

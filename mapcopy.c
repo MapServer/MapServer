@@ -1103,7 +1103,8 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 int msCopyMap(mapObj *dst, mapObj *src)
 {
   int i, return_value;
-  
+  outputFormatObj *format;
+ 
   copyStringProperty(&(dst->name), src->name); 
   copyProperty(&(dst->status), &(src->status), sizeof(int)); 
   copyProperty(&(dst->height), &(src->height), sizeof(int));
@@ -1175,9 +1176,17 @@ int msCopyMap(mapObj *dst, mapObj *src)
       return(MS_FAILURE);
     }
   }
+  // set the active output format
+  format = msCloneOutputFormat(src->outputformat);
+  if (format == NULL)
+    msSetError(MS_MISCERR, "Unable to find IMAGETYPE '%s'.", 
+               "msCopyMap()", src->imagetype );
+  else {  
+    copyStringProperty(&(dst->imagetype), src->imagetype); 
+    msApplyOutputFormat(&(dst->outputformat), format, MS_NOOVERRIDE, 
+                        MS_NOOVERRIDE, MS_NOOVERRIDE );
+  }
 
-  copyStringProperty(&(dst->imagetype), src->imagetype); 
-  
   return_value = msCopyProjection(&(dst->projection),&(src->projection));
   if (return_value != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy projection.", "msCopyMap()");
