@@ -1,5 +1,5 @@
 /*****************************************************************************
- *                   -- MapServer link to OracleSpatial --                   *
+ *             -- Oracle Spatial (SDO) support for MapServer --              *
  *                                                                           *
  *  Author: Rodrigo Becke Cabral (cabral@cttmar.univali.br)                  *
  *  Collaborator: Adriana Gomes Alves                                        *
@@ -14,8 +14,12 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.7   $Date$
- * Fixed bug in SQL statement when using "FILTER" in mapfile
+ * Revision 1.8   $Date$
+ * Updated mapfile DATA statement to include SRID number.
+ * SRID fix in r1.6 proved to be inefficient and time-consuming.
+ *
+ * Revision 1.7   2002/01/19 18:29:25 [CVS-TIME]
+ * Fixed bug in SQL statement when using "FILTER" in mapfile.
  *
  * Revision 1.6   2001/12/22 18:32:02 [CVS-TIME]
  * Fixed SRID mismatch error.
@@ -48,7 +52,7 @@
  * Using OracleSpatial:
  * - CONNECTIONTYPE oraclespatial
  * - CONNECTION 'username/password@database'
- * - DATA 'geometry_column FROM table_name'
+ * - DATA 'geometry_column FROM table_name [USING SRID srid#]'
  *   or
  *   DATA 'geometry_column FROM (SELECT stmt)'
  *
@@ -139,7 +143,7 @@ msOracleSpatialLayerInfo;
 static int TRY( msOracleSpatialLayerInfo *layerinfo, sword status );
 static int ERROR( char *routine, msOracleSpatialLayerInfo *layerinfo );
 static void msSplitLogin( char *connection, char *username, char *password, char *dblink );
-static int msSplitData( char *data, char *geometry_column_name, char *table_name );
+static int msSplitData( char *data, char *geometry_column_name, char *table_name, char *srid );
 static msOracleSpatialLayerInfo *msOCIConnect( char *username, char *password, char *dblink );
 static void msOCIDisconnect( msOracleSpatialLayerInfo *layerinfo );
 static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt );
@@ -216,28 +220,54 @@ static void msSplitLogin( char *connection, char *username, char *password, char
     strcpy( dblink, ++src );
 }
 
-/* break layer->data into geometry_column_name and table_name (geometry_column from table_name) */
-static int msSplitData( char *data, char *geometry_column_name, char *table_name )
+/* break layer->data into geometry_column_name, table_name and srid */
+static int msSplitData( char *data, char *geometry_column_name, char *table_name, char *srid )
 {
-  char *from = "from";
-  char *src, *tgt;
+  char *tok_from = "from";
+  char *tok_srid = "using srid";
+  int parenthesis;
+  char *src = data, *tgt;
   // clearup
   *geometry_column_name = *table_name = 0;
   // bad 'data'
-  if (data == NULL) return 0;
-  // ok, split data
-  for( tgt=geometry_column_name, src=data; *src; src++, tgt++ )
+  if (data == NULL) return 0; 
+  // parsing 'geometry_column_name'
+  for( ;*src && isspace( *src ); src++ ) ; /* skip blanks */
+  for( tgt=geometry_column_name; *src; src++, tgt++ )
     if (isspace( *src )) break;
     else *tgt = *src;
   *tgt = 0;
+  // parsing 'from'
   for( ;*src && isspace( *src ); src++ ) ; /* skip blanks */
-  for( ;*src && *from && tolower(*src)==*from; src++, from++ ) ; /* parse 'from' */
-  if (!*from) {
-    for( ;*src && isspace( *src ); src++ ); /* skip blanks */
-    strcpy( table_name, src ); /* copy whatever it is after from */
-    return *src!=0; /* src should point to non-empty string */
+  for( ;*src && *tok_from && tolower(*src)==*tok_from; src++, tok_from++ ) ;
+  if (*tok_from != '\0') return 0;
+  // parsing 'table_name' or '(SELECT stmt)'
+  for( ;*src && isspace( *src ); src++ ); /* skip blanks */
+  for( tgt=table_name, parenthesis=0; *src; src++, tgt++ ) {
+    if (*src == '(') parenthesis++;
+    else if (*src == ')') parenthesis--;
+    else if (parenthesis==0 && isspace( *src )) break; /* stop on spaces */
+    *tgt = *src;
   }
-  return 0;
+  *tgt = 0;
+  // parsing 'srid'
+  for( ;*src && isspace( *src ); src++ ) ; /* skip blanks */
+  if (*src != '\0' && table_name[0]!='(') { // srid is defined
+    // parse token
+    for( ;*src && *tok_srid && tolower(*src)==*tok_srid; src++, tok_srid++ ) ;
+    for( ;*src && isspace( *src ); src++ ) ; /* skip blanks */
+    // do the parsing
+    if (*tok_srid != '\0') return 0;
+    for( tgt=srid; *src; src++, tgt++ )
+      if (isspace( *src )) break;
+      else *tgt = *src;
+    *tgt = 0;
+  }
+  else
+    strcpy( srid, "NULL" );
+  // finish parsing
+  for( ;*src && isspace( *src ); src++ ); /* skip blanks */
+  return (*src == '\0');
 }
 
 /* connect to database */
@@ -403,7 +433,9 @@ int msOracleSpatialLayerOpen( layerObj *layer )
 
   if (layer->data == NULL) {
     msSetError( MS_ORACLESPATIALERR, 
-      "Missing DATA clause in OracleSpatial layer definition. DATA statement must contain 'geometry_column from table_name|(SELECT stmt)'.", 
+      "Missing DATA clause in OracleSpatial layer definition. DATA statement must be "
+      "'geometry_column FROM table_name [USING SRID srid#]' or "
+      "'geometry_column FROM (SELECT stmt)'.", 
       "msOracleSpatialLayerOpen()" );
     return MS_FAILURE;
   }
@@ -433,7 +465,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
 {
   int success, apply_window, i;
   char query_str[6000];
-  char table_name[2000], geom_column_name[100];
+  char table_name[2000], geom_column_name[100], srid[100];
   OCIDefine *adtp = NULL, *items[ARRAY_SIZE] = { NULL };
 
   /* get layerinfo */
@@ -457,9 +489,11 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   }
 
   /* parse geom_column_name and table_name */
-  if (!msSplitData( layer->data, geom_column_name, table_name )) {
+  if (!msSplitData( layer->data, geom_column_name, table_name, srid )) {
     msSetError( MS_ORACLESPATIALERR,
-      "Error parsing OracleSpatial DATA variable. Must contain 'geometry_column from table_name|(SELECT stmt)'.", 
+      "Error parsing OracleSpatial DATA variable. Must be "
+      "'geometry_column FROM table_name [USING SRID srid#]' or "
+      "'geometry_column FROM (SELECT stmt)'.", 
       "msOracleSpatialLayerWhichShapes()" );
     return MS_FAILURE;
   }
@@ -470,21 +504,20 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   for( i=0; i<layer->numitems; ++i )
     sprintf( query_str + strlen(query_str), ", %s", layer->items[i] );
   sprintf( query_str + strlen(query_str), ", %s FROM %s", geom_column_name, table_name );
-  if (apply_window)
-    sprintf( query_str + strlen(query_str), " %s_alias WHERE ", table_name );
+  if (apply_window || layer->filter.string != NULL)
+    strcat( query_str, " WHERE " );
   if (layer->filter.string != NULL) {
-    if (!apply_window) strcat( query_str, " WHERE " );
     strcat( query_str, layer->filter.string );
     if (apply_window) strcat( query_str, " AND " );
   }
   if (apply_window)
     sprintf( query_str + strlen(query_str),
-        "SDO_FILTER( %s, MDSYS.SDO_GEOMETRY("
-          "2003, %s_alias.%s.sdo_srid, NULL,"
+        "SDO_FILTER( %s.%s, MDSYS.SDO_GEOMETRY("
+          "2003, %s, NULL,"
           "MDSYS.SDO_ELEM_INFO_ARRAY(1,1003,3),"
           "MDSYS.SDO_ORDINATE_ARRAY(%.9g,%.9g,%.9g,%.9g) ),"
         "'querytype=window') = 'TRUE'",
-        geom_column_name, table_name, geom_column_name,
+        table_name, geom_column_name, srid,
         rect.minx, rect.miny, rect.maxx, rect.maxy );
 
   /* parse and execute SQL query */
