@@ -301,8 +301,9 @@ minscale : float
 name : string
     Unique within a layer
 
-numstyles : int immutable
-    Number of styles for class
+numstyles : int
+    Number of styles for class.  In the future, probably the 4.4 release,
+    this attribute will be made *immutable*.
     
 status : int
     MS_ON or MS_OFF.  Draw features of this class or do not.
@@ -321,9 +322,9 @@ Methods
 
 .. _new classObj:
 
-new classObj( layerObj_ layer ) : classObj_
+new classObj( layerObj_ parent_layer ) : classObj
     Create a new child classObj instance at the tail (highest index) of 
-    the class array of the parent *layer*.
+    the class array of the *parent_layer*.
 
 .. _createLegendIcon:
  
@@ -800,9 +801,9 @@ Methods
 
 **TODO**
 
-new layerObj( mapObj_ map) : layerObj_
-    Create a new layerObj in *map*.  The layer index of the new layerObj
-    will be equal to the *map* numlayers - 1.
+new layerObj( mapObj_ parent_map ) : layerObj
+    Create a new layerObj in *parent_map*.  The layer index of the new layerObj
+    will be equal to the *parent_map* numlayers - 1.
     
 addFeature( shapeObj_ shape ) : int 
     Add a new inline feature on a layer.  Returns -1 on error. 
