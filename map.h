@@ -346,7 +346,7 @@ typedef struct {
 } labelCacheObj;
 
 typedef struct {
-  int shapeindex;
+  long shapeindex;
   int tileindex;
   char classindex;
 } resultCacheMemberObj;
@@ -721,26 +721,25 @@ void msLayerClose(layerObj *layer);
 int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msLayerWhichItems(layerObj *layer, int classify, int annotate);
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
-int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems);
+int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
 int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
-int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems);
+int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
 void msTiledSHPClose(layerObj *layer);
 
 int msOGRLayerOpen(layerObj *layer, char *shapepath);   // in mapogr.cpp 
 int msOGRLayerClose(layerObj *layer);
 int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
-int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
-                       int tile, int record, int allitems);
+int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
 
 int msSDELayerOpen(layerObj *layer); // in mapsde.c
 void msSDELayerClose(layerObj *layer);
 int msSDELayerWhichShapes(layerObj *layer, rectObj rect);
 int msSDELayerNextShape(layerObj *layer, shapeObj *shape);
-int msSDELayerGetShape(layerObj *layer, shapeObj *shape, int record, int allitems);
+int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record, int allitems);
 
 #endif
 

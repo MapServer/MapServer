@@ -1005,52 +1005,52 @@ void msSHPCloseFile(shapefileObj *shpfile)
 }
 
 // status array lives in the shpfile, can return MS_SUCCESS/MS_FAILURE/MS_DONE
-char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
+int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
 {
   int i;
   rectObj shaperect;
-  char *status=NULL;
   char *filename;
 
   // rect and shapefile DON"T overlap...
-  // if(msRectContained(&shpfile->bounds, &rect) != MS_TRUE) return(MS_DONE);
+  if(msRectContained(&shpfile->bounds, &rect) != MS_TRUE) 
+    return(MS_DONE);
 
   if(msRectContained(&shpfile->bounds, &rect) == MS_TRUE) {
-    status = msAllocBitArray(shpfile->numshapes);
-    if(!status) {
+    shpfile->status = msAllocBitArray(shpfile->numshapes);
+    if(!shpfile->status) {
       msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");
-      return(NULL);
+      return(MS_FAILURE);
     }
     for(i=0;i<shpfile->numshapes;i++) 
-      msSetBit(status, i, 1);
+      msSetBit(shpfile->status, i, 1);
   } else {
     if((filename = (char *)malloc(strlen(shpfile->source)+strlen(MS_INDEX_EXTENSION)+1)) == NULL) {
       msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");    
-      return(NULL);
+      return(MS_FAILURE);
     }
     sprintf(filename, "%s%s", shpfile->source, MS_INDEX_EXTENSION);
     
-    status = msSearchDiskTree(filename, rect);
+    shpfile->status = msSearchDiskTree(filename, rect);
     free(filename);
 
-    if(status) // index 
-      msFilterTreeSearch(shpfile, status, rect);
+    if(shpfile->status) // index 
+      msFilterTreeSearch(shpfile, shpfile->status, rect);
     else { // no index 
-      status = msAllocBitArray(shpfile->numshapes);
-      if(!status) {
+      shpfile->status = msAllocBitArray(shpfile->numshapes);
+      if(!shpfile->status) {
 	msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");       
-	return(NULL);
+	return(MS_FAILURE);
       }
       
       for(i=0;i<shpfile->numshapes;i++) {
 	if(!msSHPReadBounds(shpfile->hSHP, i, &shaperect))
 	  if(msRectOverlap(&shaperect, &rect) == MS_TRUE)
-	    msSetBit(status, i, 1);
+	    msSetBit(shpfile->status, i, 1);
       }
     }   
   }
  
-  return(status); /* success */
+  return(MS_SUCCESS); /* success */
 }
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
@@ -1063,11 +1063,11 @@ int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
 
 int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
 {
-  int i;
+  int i, status;
   char *filename, tilename[MS_PATH_LENGTH];
 
-  layer->tileshpfile.status = msSHPWhichShapes(&(layer->tileshpfile), rect);
-  if(!(layer->tileshpfile.status)) return(MS_FAILURE);
+  status = msSHPWhichShapes(&(layer->tileshpfile), rect);
+  if(status != MS_SUCCESS) return(status); // could be MS_DONE or MS_FAILURE
 
   // position the source at the FIRST shapefile
   for(i=0; i<layer->tileshpfile.numshapes; i++) {
@@ -1093,8 +1093,8 @@ int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
     }
   }
 
-  layer->shpfile.status = msSHPWhichShapes(&(layer->shpfile), rect);
-  if(!(layer->shpfile.status)) return(MS_FAILURE);
+  status = msSHPWhichShapes(&(layer->shpfile), rect);
+  if(status != MS_SUCCESS) return(status);
 
   return(MS_SUCCESS);
 }
@@ -1138,7 +1138,7 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
   return(MS_SUCCESS);
 }
 
-int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems) 
+int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems) 
 {
   char *filename, tilename[MS_PATH_LENGTH];
 

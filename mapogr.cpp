@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.22  2001/03/05 23:15:46  sdlime
+ * Many fixes in mapsde.c, now compiles. Switched shape index to long from int. Layer ...WhichShapes() functions now return MS_DONE if there is no overlap.
+ *
  * Revision 1.21  2001/03/03 01:01:55  dan
  * Set shape->index in GetNextShape() for queries to work.
  *
@@ -997,7 +1000,7 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
 int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
-                       int tile, int record, int allitems) 
+                       int tile, long record, int allitems) 
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;

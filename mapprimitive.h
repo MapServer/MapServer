@@ -23,7 +23,7 @@ typedef struct {
 
   int type;
 
-  int index;
+  long index;
   int tileindex;
 
   int classindex;

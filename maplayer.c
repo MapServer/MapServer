@@ -76,7 +76,7 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
   return(MS_SUCCESS);
 }
 
-int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int allitems)
+int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems)
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
@@ -151,10 +151,10 @@ int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    layer->shpfile.status = msSHPWhichShapes(&(layer->shpfile), rect);
+    return(msSHPWhichShapes(&(layer->shpfile), rect));
     break;
   case(MS_TILED_SHAPEFILE):
-    msTiledSHPWhichShapes(layer, shapepath, rect);
+    return(msTiledSHPWhichShapes(layer, shapepath, rect));
     break;
   case(MS_INLINE):
     break;
@@ -169,7 +169,7 @@ int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
     break;
   }
 
-  return(0);
+  return(MS_SUCCESS);
 }
 
 static int string2list(char **list, int *listsize, char *string)

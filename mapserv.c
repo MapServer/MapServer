@@ -1179,7 +1179,7 @@ char *processLine(char *instr, int mode)
     sprintf(repstr, "%f", ResultShape.bounds.maxy);
     outstr = gsub(outstr, "[shpmaxy]", repstr);
     
-    sprintf(repstr, "%d", ResultShape.index);
+    sprintf(repstr, "%ld", ResultShape.index);
     outstr = gsub(outstr, "[shpidx]", repstr);
     sprintf(repstr, "%d", ResultShape.tileindex);
     outstr = gsub(outstr, "[tileidx]", repstr);  

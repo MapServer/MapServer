@@ -96,7 +96,7 @@ typedef struct {
 int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *filename);
 int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type);
 void msSHPCloseFile(shapefileObj *shpfile);
-char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect);
+int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect);
 
 // SHP/SHX function prototypes
 SHPHandle msSHPOpen( const char * pszShapeFile, const char * pszAccess );

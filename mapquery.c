@@ -249,7 +249,6 @@ int msLoadQuery(mapObj *map, char *filename) {
   return(MS_SUCCESS);
 }
 
-
 int msQueryByAttributes(mapObj *map, int qlayer)
 {
   layerObj *lp;
@@ -282,7 +281,11 @@ int msQueryByAttributes(mapObj *map, int qlayer)
     msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
   status = msLayerWhichShapes(lp, map->shapepath, searchrect);
-  if(status != MS_SUCCESS) {
+  if(status == MS_DONE) { // no overlap
+    msLayerClose(lp);
+     msSetError(MS_NOTFOUND, "No matching record(s) found, layer and area of interest do not overlap.", "msQueryByRect()"); 
+    return(MS_FAILURE);
+  } else if(status != MS_SUCCESS) {
     msLayerClose(lp);
     return(MS_FAILURE);
   }
@@ -315,7 +318,12 @@ int msQueryByAttributes(mapObj *map, int qlayer)
     msFreeShape(&shape);
   }
 
-  return(MS_SUCCESS);
+  // was anything found? 
+  if(lp->resultcache && lp->resultcache->numresults > 0)
+    return(MS_SUCCESS);
+ 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByRect()"); 
+  return(MS_FAILURE);
 }
 
 int msQueryByRect(mapObj *map, int qlayer, rectObj rect) 
@@ -373,7 +381,10 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
       msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
     status = msLayerWhichShapes(lp, map->shapepath, searchrect);
-    if(status != MS_SUCCESS) {
+    if(status == MS_DONE) { // no overlap
+      msLayerClose(lp);
+      continue;
+    } else if(status != MS_SUCCESS) {
       msLayerClose(lp);
       return(MS_FAILURE);
     }
@@ -521,7 +532,10 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
       msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
     status = msLayerWhichShapes(lp, map->shapepath, rect);
-    if(status != MS_SUCCESS) { 
+    if(status == MS_DONE) { // no overlap
+      msLayerClose(lp);
+      continue;
+    } else if(status != MS_SUCCESS) {
       msLayerClose(lp);
       return(MS_FAILURE);
     }
@@ -653,7 +667,10 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
       msProjectRect(map->projection.proj, lp->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
     status = msLayerWhichShapes(lp, map->shapepath, searchrect);
-    if(status != MS_SUCCESS) {
+    if(status == MS_DONE) { // no overlap
+      msLayerClose(lp);
+      continue;
+    } else if(status != MS_SUCCESS) {
       msLayerClose(lp);
       return(MS_FAILURE);
     }

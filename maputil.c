@@ -851,7 +851,11 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
 #endif
   status = msLayerWhichShapes(layer, map->shapepath, searchrect);
-  if(status != MS_SUCCESS) return(MS_FAILURE);
+  if(status == MS_DONE) { // no overlap
+    msLayerClose(layer);
+    return(MS_SUCCESS);
+  } else if(status != MS_SUCCESS)
+    return(MS_FAILURE);
 
   // step through the target shapes
   msInitShape(&shape);
@@ -870,7 +874,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       shape.text = msShapeGetAnnotation(layer, &shape);
 
     status = msDrawShape(map, layer, &shape, img, !cache); // if caching we DON'T want to do overlays at this time
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    if(status != MS_SUCCESS) {
+      msLayerClose(layer);
+      return(MS_FAILURE);
+    }
 
     if(shape.numlines == 0) { // once clipped the shape didn't need to be drawn
       msFreeShape(&shape);
