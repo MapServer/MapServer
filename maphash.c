@@ -74,8 +74,7 @@ void msFreeHashTable(hashTableObj table)
   int i;
   struct hashObj *tp=NULL;
 
-  if(table == NULL)
-    return;
+  if(!table) return;
 
   for (i=0;i<MS_HASHSIZE; i++) {
     if (table[i] != NULL) {
@@ -84,7 +83,8 @@ void msFreeHashTable(hashTableObj table)
 	free(tp->data);
       }
     }
-    free(tp);
+    if(tp) free(tp);
   }
   free(table);
+  table = NULL;
 }

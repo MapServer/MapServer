@@ -1166,7 +1166,10 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
   rectObj shaperect;
   char *filename;
 
-  if(shpfile->status) free(shpfile->status);
+  if(shpfile->status) {
+    free(shpfile->status);
+    shpfile->status = NULL;
+  }
 
   shpfile->statusbounds = rect; // save the search extent
 

@@ -168,7 +168,10 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
   int i;
 
   if(cache->numresults == cache->cachesize) { // just add it to the end
-    cache->results = (resultCacheMemberObj *) realloc(cache->results, sizeof(resultCacheMemberObj)*(cache->cachesize+MS_RESULTCACHEINCREMENT));
+    if(cache->cachesize == 0)
+      cache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*MS_RESULTCACHEINCREMENT);
+    else
+      cache->results = (resultCacheMemberObj *) realloc(cache->results, sizeof(resultCacheMemberObj)*(cache->cachesize+MS_RESULTCACHEINCREMENT));
     if(!cache->results) {
       msSetError(MS_MEMERR, "Realloc() error.", "addResult()");
       return(MS_FAILURE);
@@ -617,16 +620,11 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
   status = msLayerOpen(slp, map->shapepath);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  // printf("Content-type: text/html%c%c",10,10);
-  // printf("Ok, I'm in, selection layer %d opened<br>", slayer);
- 
   for(l=start; l>=stop; l--) {
     if(l == slayer) continue; // skip the selection layer
     
     lp = &(map->layers[l]);
     if(!msIsLayerQueryable(lp)) continue;
-
-    // printf("working on %s<br>", lp->name);
 
     // free any previous search results, do it now in case one of the next few tests fail
     if(lp->resultcache) {
@@ -650,8 +648,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
     status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
     if(status != MS_SUCCESS) return(MS_FAILURE);
     
-    // printf("selection layer has %d results<br>", slp->resultcache->numresults);
-
+    // for each selection shape
     for(i=0; i<slp->resultcache->numresults; i++) {
 
       status = msLayerGetShape(slp, &selectshape, slp->resultcache->results[i].tileindex, slp->resultcache->results[i].shapeindex);
@@ -661,8 +658,6 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	return(MS_FAILURE);
       }
 
-      // printf("processing selection shape %d<br>", i);
- 
       if(selectshape.type != MS_SHAPE_POLYGON) {
 	msLayerClose(lp);
 	msLayerClose(slp);
@@ -751,8 +746,6 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	  break;
 	}
 
-	// printf("Done with search on this shape<br>");    
-
 	msFreeShape(&shape);
       } // next shape
 
@@ -760,9 +753,6 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
       msFreeShape(&selectshape);
     } // next selection shape
-
-    // printf("Done with search on this layer<br>");    
-    // exit(0);
 
     msLayerClose(lp);
   } // next layer

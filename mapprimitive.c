@@ -85,8 +85,7 @@ void msFreeShape(shapeObj *shape)
   free(shape->line);
 
   if(shape->values) msFreeCharArray(shape->values, shape->numvalues);
-
-  free(shape->text);
+  if(shape->text) free(shape->text);
   
   msInitShape(shape); // now reset
 }
@@ -138,7 +137,7 @@ int msAddLine(shapeObj *p, lineObj *new_line)
     extended_line[c].point[v]= new_line->point[v];
 
   /* Dispose of the old line */
-  free(p->line);
+  if(p->line) free(p->line);
 
   /* Update the polygon information */
   p->numlines++;

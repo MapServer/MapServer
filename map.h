@@ -642,6 +642,7 @@ int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color);
 int msUpdatePalette(gdImagePtr img, paletteObj *palette);
 int msAddColor(mapObj *map, int red, int green, int blue);
 int msLoadMapString(mapObj *map, char *object, char *value);
+void msFree(void *p);
 
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems); // in maputil.c
 int msEvalContext(mapObj *map, char *context);

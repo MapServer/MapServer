@@ -33,6 +33,13 @@ static char *msTrueFalse[2]={"FALSE", "TRUE"};
 // static char *msYesNo[2]={"NO", "YES"};
 static char *msJoinType[2]={"SINGLE", "MULTIPLE"};
 
+void msFree(void *p) {  
+  if(p) {
+    free(p);
+    p = NULL;
+  }
+}
+
 /*
 ** Palette maniputation routines. Temporary until a good 24-bit
 ** graphics package for PNG shows up... Function returns a palette
@@ -128,7 +135,7 @@ void msFreeCharArray(char **array, int num_items)
 
   for(i=0;i<num_items;i++)
     free(array[i]);
-  free(array);
+  msFree(array);
 
   return;
 }
@@ -279,23 +286,21 @@ void freeJoin(joinObj *join)
 {
   int i;
 
-  free(join->name);
+  msFree(join->name);
+  msFree(join->table);
+  msFree(join->from);
+  msFree(join->to);
 
-  free(join->table);
+  msFree(join->match);
 
-  free(join->from);
-  free(join->to);
-
-  free(join->match);
-
-  free(join->header);
-  free(join->template);
-  free(join->footer);
+  msFree(join->header);
+  msFree(join->template);
+  msFree(join->footer);
 
   msFreeCharArray(join->items, join->numitems); /* these may have been free'd elsewhere */
   for(i=0; i<join->numrecords; i++)
     msFreeCharArray(join->data[i], join->numitems);
-  free(join->data);
+  msFree(join->data);
 }
 
 int loadJoin(joinObj *join)
@@ -399,7 +404,7 @@ void freeFeatureList(featureListNodeObjPtr list)
   if(list) {
     freeFeatureList(list->next); /* free any children */
     msFreeShape(&(list->shape));
-    free(list);
+    msFree(list);
   }
   return;
 }
@@ -466,7 +471,7 @@ static int loadFeature(featureListNodeObjPtr *list, int type)
     case(POINTS):
       if(loadFeaturePoints(&points) == -1) return(-1);
       if(msAddLine(&shape, &points) == -1) return(-1);
-      free(points.point); /* reset */
+      msFree(points.point); /* reset */
       points.numpoints = 0;
       break;
     case(TEXT):
@@ -529,7 +534,6 @@ void msFreeProjection(projectionObj *p) {
 }
 
 int msProcessProjection(projectionObj *p)
-
 {
 #ifdef USE_PROJ    
     assert( p->proj == NULL );
@@ -693,7 +697,7 @@ void initLabel(labelObj *label)
 
 static void freeLabel(labelObj *label)
 {
-  free(label->font);
+  msFree(label->font);
 }
 
 static int loadLabel(labelObj *label, mapObj *map)
@@ -879,11 +883,8 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     label->color = msAddColor(map,red,green,blue);     
     break;    
   case(FONT):
-    free(label->font);
-    label->font = strdup(value);
-
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
-    free(label->font);
+    msFree(label->font);
     label->font = strdup(value);
     
     if(!(msLookupHashTable(map->fontset.fonts, label->font))) {
@@ -895,7 +896,6 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     msSetError(MS_IDENTERR, "Keyword FONT is not valid without TrueType font support.", "loadLabelString()");    
     return;
 #endif
-
     break;
   case(FORCE):
       msyystate = 2; msyystring = value;
@@ -1032,14 +1032,15 @@ void freeExpression(expressionObj *exp)
 {
   if(!exp) return;
 
-  if(exp->string) free(exp->string);
+  msFree(exp->string);
   if(exp->type == MS_REGEX && exp->compiled) {
     regfree(&(exp->regex));
     exp->compiled = MS_FALSE;
   }
   if(exp->type == MS_EXPRESSION) {
-    if(exp->numitems) msFreeCharArray(exp->items, exp->numitems);
-    if(exp->indexes) free(exp->indexes);
+    if(exp->numitems > 0) msFreeCharArray(exp->items, exp->numitems);
+    msFree(exp->indexes);
+    exp->numitems = 0;
   }
 
   initExpression(exp); // re-initialize
@@ -1146,13 +1147,13 @@ void freeClass(classObj *class)
   freeLabel(&(class->label));
   freeExpression(&(class->expression));
   freeExpression(&(class->text));
-  free(class->name);
-  free(class->symbolname);
-  free(class->overlaysymbolname);
-  free(class->template);
+  msFree(class->name);
+  msFree(class->symbolname);
+  msFree(class->overlaysymbolname);
+  msFree(class->template);
   for(i=0;i<class->numjoins;i++) /* each join */    
     freeJoin(&(class->joins[i]));
-  free(class->joins);
+  msFree(class->joins);
 }
 
 /*
@@ -1164,8 +1165,8 @@ void resetClassStyle(classObj *class)
 {
   freeLabel(&(class->label));
   freeExpression(&(class->text));
-  free(class->symbolname);
-  free(class->overlaysymbolname);
+  msFree(class->symbolname);
+  msFree(class->overlaysymbolname);
 
   initExpression(&(class->text));
   class->color = -1; /* must explictly set a color */
@@ -1383,7 +1384,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     }
     break;
   case(TEMPLATE):
-    free(class->template);
+    msFree(class->template);
     class->template = strdup(value);
     break;
   case(TEXT):
@@ -1527,43 +1528,43 @@ int initLayer(layerObj *layer)
 void freeLayer(layerObj *layer) {
   int i;
 
-  free(layer->name);
-  free(layer->group);
-  free(layer->data);
-  free(layer->classitem);
-  free(layer->labelitem);
-  free(layer->labelsizeitem);
-  free(layer->labelangleitem);
-  free(layer->header);
-  free(layer->footer);
-  free(layer->template);
-  free(layer->tileindex);
-  free(layer->tileitem);
-  free(layer->connection);
+  msFree(layer->name);
+  msFree(layer->group);
+  msFree(layer->data);
+  msFree(layer->classitem);
+  msFree(layer->labelitem);
+  msFree(layer->labelsizeitem);
+  msFree(layer->labelangleitem);
+  msFree(layer->header);
+  msFree(layer->footer);
+  msFree(layer->template);
+  msFree(layer->tileindex);
+  msFree(layer->tileitem);
+  msFree(layer->connection);
 
   msFreeProjection(&(layer->projection));
 
   for(i=0;i<layer->numclasses;i++)
     freeClass(&(layer->class[i]));
-  free(layer->class);
+  msFree(layer->class);
 
   if(layer->features)
     freeFeatureList(layer->features);
 
   if(layer->resultcache) {    
     if(layer->resultcache->results) free(layer->resultcache->results);
-    free(layer->resultcache);
+    msFree(layer->resultcache);
   }
 
-  free(layer->filteritem);
+  msFree(layer->filteritem);
   freeExpression(&(layer->filter));
 
-  if(layer->requires) free(layer->requires);
-  if(layer->labelrequires) free(layer->labelrequires);
+  msFree(layer->requires);
+  msFree(layer->labelrequires);
 
   if(layer->metadata) msFreeHashTable(layer->metadata);
 
-  free(layer->styleitem);
+  msFree(layer->styleitem);
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -1741,7 +1742,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->tileindex = getString()) == NULL) return(-1);
       break;
     case(TILEITEM):
-      free(layer->tileitem); /* free initialization */
       if((layer->tileitem = getString()) == NULL) return(-1);
       break;
     case(TOLERANCE):
@@ -1783,11 +1783,11 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     loadClassString(map, &(layer->class[i]), value, layer->type);
     break;
   case(CLASSITEM):
-    free(layer->classitem);
+    msFree(layer->classitem);
     layer->classitem = strdup(value);
     break;
   case(DATA):
-    free(layer->data);
+    msFree(layer->data);
     layer->data = strdup(value);
     break;
   case(FEATURE):    
@@ -1857,19 +1857,19 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     loadExpressionString(&(layer->filter), value);
     break;
   case(FILTERITEM):
-    free(layer->filteritem);
+    msFree(layer->filteritem);
     layer->filteritem = strdup(value);
     break; 
   case(FOOTER):
-    free(layer->footer);
+    msFree(layer->footer);
     layer->footer = strdup(value);
     break;
   case(HEADER):      
-    free(layer->header);
+    msFree(layer->header);
     layer->header = strdup(value);
     break;
   case(LABELANGLEITEM):
-    free(layer->labelangleitem);
+    msFree(layer->labelangleitem);
     layer->labelangleitem = strdup(value);
     break;
   case(LABELCACHE):
@@ -1877,7 +1877,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     if((layer->labelcache = getSymbol(2, MS_ON, MS_OFF)) == -1) return;
     break;
   case(LABELITEM):
-    free(layer->labelitem);
+    msFree(layer->labelitem);
     layer->labelitem = strdup(value);
     break;
   case(LABELMAXSCALE):
@@ -1889,11 +1889,11 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     if(getDouble(&(layer->labelminscale)) == -1) return;
     break;    
   case(LABELREQUIRES):
-    free(layer->labelrequires);
+    msFree(layer->labelrequires);
     layer->labelrequires = strdup(value);
     break;
   case(LABELSIZEITEM):
-    free(layer->labelsizeitem);
+    msFree(layer->labelsizeitem);
     layer->labelsizeitem = strdup(value);
     break;
   case(MAXFEATURES):
@@ -1922,7 +1922,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msLoadProjectionString(&(layer->projection), value);
     break;
   case(REQUIRES):
-    free(layer->requires);
+    msFree(layer->requires);
     layer->requires = strdup(value);
     break;
   case(SIZEUNITS):
@@ -1939,12 +1939,16 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       }
     }
     break;
+  case(STYLEITEM):
+    msFree(layer->styleitem);
+    layer->styleitem = strdup(value);
+    break;
   case(SYMBOLSCALE):
     msyystate = 2; msyystring = value;
     if(getDouble(&(layer->symbolscale)) == -1) return;
     break;
   case(TEMPLATE):
-    free(layer->template);
+    msFree(layer->template);
     layer->template = strdup(value);
     break;
   case(TOLERANCE):
@@ -2018,6 +2022,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(layer->requires) fprintf(stream, "    REQUIRES \"%s\"\n", layer->requires);
   fprintf(stream, "    SIZEUNITS %s\n", msUnits[layer->sizeunits]);
   fprintf(stream, "    STATUS %s\n", msStatus[layer->status]);
+  if(layer->styleitem) fprintf(stream, "    STYLEITEM \"%s\"\n", layer->styleitem);
   if(layer->symbolscale > -1) fprintf(stream, "    SYMBOLSCALE %g\n", layer->symbolscale);
   if(layer->template) fprintf(stream, "    TEMPLATE \"%s\"\n", layer->template);
   if(layer->tileindex) {
@@ -2050,7 +2055,7 @@ void initReferenceMap(referenceMapObj *ref)
 
 void freeReferenceMap(referenceMapObj *ref)
 {
-  free(ref->image);
+  msFree(ref->image);
 }
 
 int loadReferenceMap(referenceMapObj *ref)
@@ -2122,6 +2127,7 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
     if(getDouble(&(ref->extent.maxy)) == -1) return;
     break;  
   case(IMAGE):
+    msFree(ref->image);
     msyystate = 2; msyystring = value;
     if((ref->image = getString()) == NULL) return;
     break;
@@ -2628,16 +2634,16 @@ void initWeb(webObj *web)
 
 void freeWeb(webObj *web)
 {
-  free(web->template);
-  free(web->header);
-  free(web->footer);
-  free(web->error);
-  free(web->empty);
-  free(web->maxtemplate);
-  free(web->mintemplate);
-  free(web->log);
-  free(web->imagepath);
-  free(web->imageurl);
+  msFree(web->template);
+  msFree(web->header);
+  msFree(web->footer);
+  msFree(web->error);
+  msFree(web->empty);
+  msFree(web->maxtemplate);
+  msFree(web->mintemplate);
+  msFree(web->log);
+  msFree(web->imagepath);
+  msFree(web->imageurl);
   if(web->metadata) msFreeHashTable(web->metadata);
 }
 
@@ -2691,11 +2697,9 @@ int loadWeb(webObj *web)
       if((web->header = getString()) == NULL) return(-1);
       break;
     case(IMAGEPATH):
-      free(web->imagepath);
       if((web->imagepath = getString()) == NULL) return(-1);
       break;
     case(IMAGEURL):
-      free(web->imageurl);
       if((web->imageurl = getString()) == NULL) return(-1);
       break;
     case(LOG):
@@ -2743,7 +2747,7 @@ int loadWeb(webObj *web)
     case(MINTEMPLATE):
       if((web->mintemplate = getString()) == NULL) return(-1);
       break;    
-    case(TEMPLATE):      
+    case(TEMPLATE):
       if((web->template = getString()) == NULL) return(-1);
       break;
     default:
@@ -2758,11 +2762,11 @@ static void loadWebString(webObj *web, char *value)
 {
   switch(msyylex()) {
   case(EMPTY):
-    if(web->empty) free(web->empty);
+    msFree(web->empty);
     web->empty = strdup(value);
     break;
   case(ERROR):
-    if(web->error) free(web->error);
+    msFree(web->error);
     web->error = strdup(value);
     break;
   case(EXTENT):
@@ -2773,19 +2777,19 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&(web->extent.maxy)) == -1) return;
     break;
   case(FOOTER):
-    if(web->footer) free(web->footer);
+    msFree(web->footer);
     web->footer = strdup(value);	
     break;
   case(HEADER):
-    if (web->header) free(web->header);
+    msFree(web->header);
     web->header = strdup(value);
     break;
   case(IMAGEPATH):
-    if (web->imagepath) free(web->imagepath);
+    msFree(web->imagepath);
     web->imagepath = strdup(value);
     break;
   case(IMAGEURL):
-    if (web->imageurl) free(web->imageurl);
+    msFree(web->imageurl);
     web->imageurl = strdup(value);
     break;
   case(MAXSCALE):
@@ -2793,7 +2797,7 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&web->maxscale) == -1) return;
     break;
   case(MAXTEMPLATE):
-    if(web->maxtemplate) free(web->maxtemplate);
+    msFree(web->maxtemplate);
     web->maxtemplate = strdup(value);
     break;
   case(MINSCALE):
@@ -2801,11 +2805,11 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&web->minscale) == -1) return;
     break;
   case(MINTEMPLATE):
-    if (web->mintemplate) free(web->mintemplate);
+    msFree(web->mintemplate);
     web->mintemplate = strdup(value);
     break;
   case(TEMPLATE):
-    if(web->template) free(web->template);
+    msFree(web->template);
     web->template = strdup(value);	
     break;
   default:
@@ -2910,32 +2914,30 @@ void msFreeMap(mapObj *map) {
 
   if(!map) return;
 
-  free(map->name);
-  free(map->shapepath);
+  msFree(map->name);
+  msFree(map->shapepath);
 
   msFreeSymbolSet(&map->symbolset); // free symbols
-  free(map->symbolset.filename);
+  msFree(map->symbolset.filename);
 
   msFreeProjection(&(map->projection));
   msFreeProjection(&(map->latlon));
 
   for(i=0; i<map->labelcache.numlabels; i++) {
-    free(map->labelcache.labels[i].string);
+    msFree(map->labelcache.labels[i].string);
     msFreeShape(map->labelcache.labels[i].poly);
-    free(map->labelcache.labels[i].poly);
+    msFree(map->labelcache.labels[i].poly);
   }
-  free(map->labelcache.labels);
+  msFree(map->labelcache.labels);
 
   for(i=0; i<map->labelcache.nummarkers; i++) {
     msFreeShape(map->labelcache.markers[i].poly);
-    free(map->labelcache.markers[i].poly);
+    msFree(map->labelcache.markers[i].poly);
   }
-  free(map->labelcache.markers);
+  msFree(map->labelcache.markers);
 
-  if(map->fontset.filename) {
-    free(map->fontset.filename);
-    msFreeHashTable(map->fontset.fonts);
-  }
+  if(map->fontset.fonts) msFreeHashTable(map->fontset.fonts);
+  msFree(map->fontset.filename);
 
   freeWeb(&(map->web));
 
@@ -2945,9 +2947,9 @@ void msFreeMap(mapObj *map) {
 
   for(i=0; i<map->numlayers; i++)
     freeLayer(&(map->layers[i]));
-  free(map->layers);
+  msFree(map->layers);
 
-  free(map);
+  msFree(map);
 }
 
 int msSaveMap(mapObj *map, char *filename)
@@ -3144,7 +3146,7 @@ mapObj *msLoadMap(char *filename)
     case(MAP):
       break;   
     case(NAME):
-      free(map->name); /* erase default */
+      msFree(map->name); /* erase default */
       if((map->name = getString()) == NULL) return(NULL);
       break;
     case(PROJECTION):
@@ -3273,7 +3275,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if(getInteger(&(map->height)) == -1) break;
       break;
     case(SHAPEPATH):
-      free(map->shapepath);
+      msFree(map->shapepath);
       map->shapepath = strdup(value);
       break;
     case(STATUS):
