@@ -178,14 +178,6 @@ int msGetLayerIndex(mapObj *map, char *name)
   return(-1);
 }
 
-// Initialize and load a single color object
-void initColor(colorObj *color, int red, int green, int blue) {
-  color->red = red;
-  color->green = green;
-  color->blue = blue;
-  color->pen = MS_PEN_UNSET;
-}
-
 // converts a 2 character hexidecimal string to an integer
 static int hex2int(char *hex) {
   int number;
@@ -223,7 +215,7 @@ int loadColor(colorObj *color) {
 }
 
 static void writeColor(colorObj *color, FILE *stream, char *name, char *tab) {
-  if(MS_VALID_COLOR(color))
+  if(MS_VALID_COLOR(*color))
     fprintf(stream, "  %s%s %d %d %d\n", tab, name, color->red, color->green, color->blue);
 }
 
@@ -638,14 +630,14 @@ void initLabel(labelObj *label)
 {
   label->antialias = -1; // off 
 
-  initColor(&(label->color), 0,0,0);  
-  initColor(&(label->outlinecolor), -1,-1,-1); // don't use it
+  MS_INIT_COLOR(label->color, 0,0,0);  
+  MS_INIT_COLOR(label->outlinecolor, -1,-1,-1); // don't use it
 
-  initColor(&(label->shadowcolor), -1,-1,-1); // don't use it
+  MS_INIT_COLOR(label->shadowcolor, -1,-1,-1); // don't use it
   label->shadowsizex = label->shadowsizey = 1;
   
-  initColor(&(label->backgroundcolor), -1,-1,-1); // don't use it
-  initColor(&(label->backgroundshadowcolor), -1,-1,-1); // don't use it  
+  MS_INIT_COLOR(label->backgroundcolor, -1,-1,-1); // don't use it
+  MS_INIT_COLOR(label->backgroundshadowcolor, -1,-1,-1); // don't use it  
   label->backgroundshadowsizex = label->backgroundshadowsizey = 1;
 
   label->font = NULL;
@@ -1092,9 +1084,9 @@ static void writeHashTable(hashTableObj table, FILE *stream, char *tab, char *ti
 ** Initialize, load and free a single style
 */
 int initStyle(styleObj *style) {
-  initColor(&(style->color), -1,-1,-1); // must explictly set colors
-  initColor(&(style->backgroundcolor), -1,-1,-1);
-  initColor(&(style->outlinecolor), -1,-1,-1);
+  MS_INIT_COLOR(style->color, -1,-1,-1); // must explictly set colors
+  MS_INIT_COLOR(style->backgroundcolor, -1,-1,-1);
+  MS_INIT_COLOR(style->outlinecolor, -1,-1,-1);
   style->symbol = 0; // there is always a default symbol
   style->symbolname = NULL;
   style->sizescaled = style->size = 1; // in SIZEUNITS (layerObj)
@@ -1619,7 +1611,7 @@ int initLayer(layerObj *layer)
   if(msInitProjection(&(layer->projection)) == -1)
     return(-1);
 
-  initColor(&(layer->offsite), -1,-1,-1);
+  MS_INIT_COLOR(layer->offsite, -1,-1,-1);
 
   layer->labelcache = MS_ON;
   layer->postlabelcache = MS_FALSE;
@@ -2197,8 +2189,8 @@ void initReferenceMap(referenceMapObj *ref)
   ref->height = ref->width = 0;
   ref->extent.minx = ref->extent.miny = ref->extent.maxx = ref->extent.maxy = -1.0;
   ref->image = NULL;
-  initColor(&(ref->color), 255, 0, 0);
-  initColor(&(ref->outlinecolor), 0, 0, 0);  
+  MS_INIT_COLOR(ref->color, 255, 0, 0);
+  MS_INIT_COLOR(ref->outlinecolor, 0, 0, 0);  
   ref->status = MS_OFF;
   ref->marker = 0;
   ref->markername = NULL;
@@ -2503,8 +2495,8 @@ static int loadOutputFormat(mapObj *map)
 void initLegend(legendObj *legend)
 {
   legend->height = legend->width = 0; 
-  initColor(&(legend->imagecolor), 255,255,255); // white
-  initColor(&(legend->outlinecolor), -1,-1,-1);
+  MS_INIT_COLOR(legend->imagecolor, 255,255,255); // white
+  MS_INIT_COLOR(legend->outlinecolor, -1,-1,-1);
   initLabel(&legend->label);
   legend->keysizex = 20;
   legend->keysizey = 10;
@@ -2651,16 +2643,16 @@ static void writeLegend(legendObj *legend, FILE *stream)
 */
 void initScalebar(scalebarObj *scalebar)
 {
-  initColor(&(scalebar->imagecolor), 255,255,255);
+  MS_INIT_COLOR(scalebar->imagecolor, 255,255,255);
   scalebar->width = 200; 
   scalebar->height = 3;
   scalebar->style = 0; // only 2 styles at this point
   scalebar->intervals = 4;
   initLabel(&scalebar->label);
   scalebar->label.position = MS_XY; // override
-  initColor(&(scalebar->backgroundcolor), -1,-1,-1);  // if not set, scalebar creation needs to set this to match the background color
-  initColor(&(scalebar->color), 0,0,0); // default to black
-  initColor(&(scalebar->outlinecolor), -1,-1,-1);
+  MS_INIT_COLOR(scalebar->backgroundcolor, -1,-1,-1);  // if not set, scalebar creation needs to set this to match the background color
+  MS_INIT_COLOR(scalebar->color, 0,0,0); // default to black
+  MS_INIT_COLOR(scalebar->outlinecolor, -1,-1,-1);
   scalebar->units = MS_MILES;
   scalebar->status = MS_OFF;
   scalebar->position = MS_LL;
@@ -2835,7 +2827,7 @@ void initQueryMap(queryMapObj *querymap)
   querymap->width = querymap->height = -1;
   querymap->style = MS_HILITE;
   querymap->status = MS_OFF;
-  initColor(&(querymap->color), 255,255,0); // yellow
+  MS_INIT_COLOR(querymap->color, 255,255,0); // yellow
 }
 
 int loadQueryMap(queryMapObj *querymap, mapObj *map)

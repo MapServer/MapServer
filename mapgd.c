@@ -14,7 +14,7 @@ static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 
 static unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
 
 int msImageSetPenGD(gdImagePtr img, colorObj *color) {
-  if(MS_VALID_COLOR(color))
+  if(MS_VALID_COLOR(*color))
     color->pen = gdImageColorResolve(img, color->red, color->green, color->blue);
   else
     color->pen = -1;
@@ -1508,7 +1508,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
         msDrawMarkerSymbolGD(&map->symbolset, img, &(cachePtr->point), &(cachePtr->styles[i]), layerPtr->scalefactor);
     }
 
-    if(MS_VALID_COLOR(&(labelPtr->backgroundcolor))) billboardGD(img, cachePtr->poly, labelPtr);
+    if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardGD(img, cachePtr->poly, labelPtr);
     msDrawTextGD(img, p, cachePtr->string, labelPtr, &(map->fontset), layerPtr->scalefactor); // actually draw the label, we scaled it in msAddLabel
 
   } /* next label in cache */

@@ -55,7 +55,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   // copy the styles (only if there is an accompanying marker)
   map->labelcache.labels[i].styles = NULL;
   map->labelcache.labels[i].numstyles = 0;
-  if(lp->type == MS_LAYER_ANNOTATION && MS_VALID_COLOR(&(cp->styles[0].color))) {
+  if(lp->type == MS_LAYER_ANNOTATION && MS_VALID_COLOR(cp->styles[0].color)) {
     map->labelcache.labels[i].styles = (styleObj *) malloc(sizeof(styleObj)*cp->numstyles);
     memcpy(map->labelcache.labels[i].styles, cp->styles, sizeof(styleObj)*cp->numstyles);
     map->labelcache.labels[i].numstyles = cp->numstyles;

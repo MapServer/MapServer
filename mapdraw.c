@@ -537,10 +537,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   // if MS_HILITE, alter the first class (always at least 1 class)
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
-      if(MS_VALID_COLOR(&(layer->class[i].styles[layer->class[i].numstyles-1].color))) {
+      if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color)) {
         colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].color; // save the color from the TOP style
         layer->class[i].styles[layer->class[i].numstyles-1].color = map->querymap.color;
-      } else if(MS_VALID_COLOR(&(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor))) {
+      } else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor)) {
 	colorbuffer[i] = layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor; // if no color, save the outlinecolor from the TOP style
         layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = map->querymap.color;
       }
@@ -613,9 +613,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
   // if MS_HILITE, restore values
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
-      if(MS_VALID_COLOR(&(layer->class[i].styles[layer->class[i].numstyles-1].color)))
+      if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].color))
         layer->class[i].styles[layer->class[i].numstyles-1].color = colorbuffer[i];        
-      else if(MS_VALID_COLOR(&(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor)))
+      else if(MS_VALID_COLOR(layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor))
 	layer->class[i].styles[layer->class[i].numstyles-1].outlinecolor = colorbuffer[i]; // if no color, restore outlinecolor for the TOP style
     }
   }
@@ -788,7 +788,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(layer->labelcache) {
 	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
-	  if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
+	  if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
             for(s=0; s<layer->class[c].numstyles; s++)
 	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
 	  }
@@ -813,7 +813,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	if(layer->labelcache) {
 	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
-	  if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
+	  if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
             for(s=0; s<layer->class[c].numstyles; s++)
 	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
 	  }
@@ -840,7 +840,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
 	    if(layer->labelcache) {
 	      if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, point, shape->text, -1) != MS_SUCCESS) return(MS_FAILURE);
 	    } else {
-	      if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
+	      if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
                 for(s=0; s<layer->class[c].numstyles; s++)
 	          msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
 	      }
@@ -993,7 +993,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
       if(layer->labelcache) {
 	if(msAddLabel(map, layer->index, c, -1, -1, point, labeltext, -1) != MS_SUCCESS) return(MS_FAILURE);
       } else {
-	if(MS_VALID_COLOR(&(layer->class[c].styles[0].color))) {
+	if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
           for(s=0; s<layer->class[c].numstyles; s++)
   	    msDrawMarkerSymbol(&map->symbolset, image, point, &(layer->class[c].styles[s]), layer->scalefactor);
 	}

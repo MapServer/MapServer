@@ -990,7 +990,6 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   // only at this time.  Questions and comments to Sean Gillies <sgillies@i3.com>
 
 #ifdef SWIGPYTHON
-
   PyObject *getImageString(int type, int transparent, int interlace, int quality) {
     unsigned char *imgbytes;
     int size;

@@ -22,7 +22,6 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   zigzag.line[0].point = (pointObj *)malloc(sizeof(pointObj)*4);
   zigzag.line[0].numpoints = 4;
 
-
   // compute shapes used to render individual legend pieces
   marker.x = dstX + MS_NINT(width / 2.0);
   marker.y = dstY + MS_NINT(height / 2.0);
@@ -66,10 +65,10 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   case MS_LAYER_RASTER:
   case MS_LAYER_POLYGON:
     for(i=0; i<class->numstyles; i++) { // TO DO: it may not be this easy
-      if(MS_VALID_COLOR(&(class->styles[0].color)))
+      if(MS_VALID_COLOR(class->styles[0].color))
         msDrawShadeSymbolGD(&map->symbolset, img, &box, &(class->styles[i]), 1.0);
       else
-	msDrawLineSymbolGD(&map->symbolset, img, &zigzag, &(class->styles[i]), 1.0);
+	msDrawLineSymbolGD(&map->symbolset, img, &box, &(class->styles[i]), 1.0);
     }   
     break;
   default:
@@ -173,6 +172,7 @@ imageObj *msDrawLegend(mapObj *map)
       maxheight = MS_MAX(maxheight, MS_NINT(rect.maxy - rect.miny));
       maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));
       heights[n] = MS_NINT(rect.maxy - rect.miny);
+
       n++;
     }
   }
@@ -184,11 +184,13 @@ imageObj *msDrawLegend(mapObj *map)
     size_y += MS_MAX(heights[i], map->legend.keysizey);
   }
 
+  // printf("size: %d,%d\n", size_x, size_y);
+
   /*
   ** Initialize the legend image
   */
-  image = msImageCreateGD(size_x, size_y, map->outputformat,
-                          map->web.imagepath, map->web.imageurl);
+  image = msImageCreateGD(size_x, size_y, map->outputformat, map->web.imagepath, map->web.imageurl);
+
   if (image)
     img = image->img.gd;
   else {
@@ -221,7 +223,6 @@ imageObj *msDrawLegend(mapObj *map)
 
       if(!lp->class[j].name)
 	continue; /* skip it */
-
       
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
