@@ -396,12 +396,9 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
-      brush = gdImageCreate(x, y);
-      brush_bc = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));    
-      gdImageColorTransparent(brush,0);
-      brush_fc = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
-      
+    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { 
+      brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create
+
       x = MS_NINT(brush->sx/2); // center the ellipse
       y = MS_NINT(brush->sy/2);
       
@@ -430,16 +427,9 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     if((x < 2) && (y < 2)) break;
 
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
-      brush = gdImageCreate(x, y);
-      if(style->backgroundcolor.pen >= 0)
-	brush_bc = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-      else {
-	brush_bc = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-	gdImageColorTransparent(brush,0);
-      }
-      brush_fc = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
-      
+    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) {
+      brush = createBrush(img, x, y, style, &brush_fc, &brush_bc);  // not in cache, create
+
       // draw in the brush image 
       for(i=0;i < symbol->numpoints;i++) {
 	points[i].x = MS_NINT(d*symbol->points[i].x);
@@ -547,16 +537,9 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     x = rect.maxx - rect.minx;
     y = rect.maxy - rect.miny;
 
-    tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }    
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue);
-    
-    x = -rect.minx;
+    tile = createBrush(img, x, y, style, &tile_fc, &tile_bc); // create the tile image
+
+    x = -rect.minx; // center the glyph
     y = -rect.miny;
 
 #ifdef USE_GD_TTF
@@ -586,28 +569,16 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
       return;
     }
 
-    tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }    
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue);
+    tile = createBrush(img, x, y, style, &tile_fc, &tile_bc); // create tile image
     
-    x = MS_NINT(tile->sx/2);
+    x = MS_NINT(tile->sx/2); // center the ellipse
     y = MS_NINT(tile->sy/2);
-
-    /*
-    ** draw in the tile image
-    */
+    
+    // draw in the tile image
     gdImageArc(tile, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tile_fc);
     if(symbol->filled)
       gdImageFillToBorder(tile, x, y, tile_fc, tile_fc);
 
-    /*
-    ** Fill the polygon in the main image
-    */
     gdImageSetTile(img, tile);
  
     break;
@@ -626,21 +597,9 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
       return;
     }
 
-    /*
-    ** create tile image
-    */
-    tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue);
-   
-    /*
-    ** draw in the tile image
-    */
+    tile = createBrush(img, x, y, style, &tile_fc, &tile_bc); // create tile image
+
+    // draw in the tile image
     if(symbol->filled) {
 
       for(i=0;i < symbol->numpoints;i++) {
@@ -673,9 +632,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
       } /* end for loop */
     }
 
-    /*
-    ** Fill the polygon in the main image
-    */
     gdImageSetTile(img, tile);
  
     break;
@@ -683,9 +639,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     break;
   }
 
-  /*
-  ** Fill the polygon in the main image
-  */
+  // fill the circle in the main image
   msImageFilledCircle(img, p, r, gdTiled);
   if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
   if(tile) gdImageDestroy(tile);
@@ -926,27 +880,8 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
-      if( !gdImageTrueColor(img) )
-      {
-          brush = gdImageCreate(x, y);
-          brush_bc = gdImageColorAllocate(brush,gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));    
-          
-          gdImageColorTransparent(brush,0);
-          brush_fc = gdImageColorAllocate(brush, style->color.red, 
-                                        style->color.green, style->color.blue);
-      }
-#if GD2_VERS > 1
-      else
-      {
-          brush = gdImageCreateTrueColor(x,y);
-          gdImageAlphaBlending( brush, 0 );
-          gdImageFilledRectangle( brush, 0, 0, x, y, -1 );
-          brush_bc = -1;
-          brush_fc = gdTrueColor( style->color.red, style->color.green, 
-                                  style->color.blue );
-      }
-#endif
+    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { 
+      brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
 
       x = MS_NINT(brush->sx/2); // center the ellipse
       y = MS_NINT(brush->sy/2);
@@ -976,16 +911,9 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     if((x < 2) && (y < 2)) break;
 
     // create the brush image
-    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
-      brush = gdImageCreate(x, y);
-      if(bc >= 0)
-	brush_bc = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-      else {
-	brush_bc = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-	gdImageColorTransparent(brush,0);
-      }
-      brush_fc = gdImageColorAllocate(brush,style->color.red, style->color.green, style->color.blue);
-      
+    if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { 
+      brush = createBrush(img, x, y, style, &brush_fc, &brush_bc); // not in cache, create it
+
       // draw in the brush image 
       for(i=0;i < symbol->numpoints;i++) {
 	points[i].x = MS_NINT(d*symbol->points[i].x);
@@ -1088,16 +1016,11 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     if(getCharacterSize(symbol->character, size, font, &rect) == -1) return;
     x = rect.maxx - rect.minx;
     y = rect.maxy - rect.miny;
-
-    tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }    
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue);
     
+    // create tile image
+    tile = createBrush(img, x, y, style, &tile_fc, &tile_bc);
+
+    // center the glyph
     x = -rect.minx;
     y = -rect.miny;
 
@@ -1131,31 +1054,20 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
       return;
     }
-
-    /* tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }    
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue); */
     
+    // create tile image
     tile = createBrush(img, x, y, style, &tile_fc, &tile_bc);
 
+    // center ellipse
     x = MS_NINT(tile->sx/2);
     y = MS_NINT(tile->sy/2);
 
-    /*
-    ** draw in the tile image
-    */
+    // draw in tile image
     gdImageArc(tile, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tile_fc);
     if(symbol->filled)
       gdImageFillToBorder(tile, x, y, tile_fc, tile_fc);
 
-    /*
-    ** Fill the polygon in the main image
-    */
+    // fill the polygon in the main image
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img,p,gdTiled);
     if(oc>-1) imagePolyline(img, p, oc, style->offsetx, style->offsety);
@@ -1173,23 +1085,10 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       return;
     }
 
-    /*
-    ** create tile image
-    */
-    /* tile = gdImageCreate(x, y);
-    if(bc >= 0)
-      tile_bc = gdImageColorAllocate(tile, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-    else {
-      tile_bc = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
-      gdImageColorTransparent(tile,0);
-    }
-    tile_fc = gdImageColorAllocate(tile, style->color.red, style->color.green, style->color.blue); */
-    
+    // create tile image
     tile = createBrush(img, x, y, style, &tile_fc, &tile_bc);
    
-    /*
-    ** draw in the tile image
-    */
+    // draw in the tile image    
     if(symbol->filled) {
 
       for(i=0;i < symbol->numpoints;i++) {
@@ -1222,9 +1121,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
       } /* end for loop */
     }
 
-    /*
-    ** Fill the polygon in the main image
-    */
+    // Fill the polygon in the main image
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img, p, gdTiled);
     if(oc>-1)
