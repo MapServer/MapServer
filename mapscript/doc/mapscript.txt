@@ -110,21 +110,21 @@ An instance of classObj is associated with with one instance of layerObj_.
 
 ::
 
-    +----------+          +----------+
-    | classObj | <------> | layerObj |
-    +----------+ 0..*     +----------+
+    +----------+ 0..*     1 +----------+
+    | classObj | <--------> | layerObj |
+    +----------+            +----------+
 
 The other important associations for classObj are with styleObj_ and labelObj_.
 
 ::
 
-    +----------+          +----------+
-    | classObj | <------> | styleObj |
-    +----------+     0..* +----------+
+    +----------+ 1     0..* +----------+
+    | classObj | ---------> | styleObj |
+    +----------+            +----------+
 
-    +----------+          +----------+
-    | classObj | <------> | labelObj |
-    +----------+     0..1 +----------+
+    +----------+ 1     0..1 +----------+
+    | classObj | ---------> | labelObj |
+    +----------+            +----------+
 
 Multiple class styles are now supported in 4.1.  See the styleObj_ section
 for details on use of multiple class styles.
@@ -245,10 +245,9 @@ setMetaData(string key, string value) : int
  colorObj
 -----------------------------------------------------------------------------
 
-Since the 4.0 release, MapServer colors are instances of colorObj.
-
-..  The next heading becomes our H3
-..
+Since the 4.0 release, MapServer colors are instances of colorObj.  A colorObj
+may be a lone object or an attribute of other objects and have no other
+associations.
 
 Attributes
 ----------
@@ -312,25 +311,54 @@ x
  labelObj
 -----------------------------------------------------------------------------
 
-x
+A labelObj is a associated with a classObj, a scalebarObj, or a legendObj
+and has no other existence.
 
+::
+
+    +----------+ 0..1     1 +-------------+
+    | labelObj | <--------- | classObj    |
+    +----------+            | ----------- |
+                            | scalebarObj |
+                            | ----------- |
+                            | legendObj   |
+                            +-------------+ 
+                            
 -----------------------------------------------------------------------------
  layerObj
 -----------------------------------------------------------------------------
 
-x
+A layerObj is associated with one mapObj and has no other existence [1]_.
 
+::
+
+    +----------+ 0..1     1 +--------+
+    | layerObj | <--------> | mapObj |
+    +----------+            +--------+
+    
 -----------------------------------------------------------------------------
  lineObj
 -----------------------------------------------------------------------------
 
-x
+A lineObj is composed of one or more pointObj_ instances.
 
+::
+
+    +---------+ 0..1  1..* +----------+
+    | lineObj | ---------> | pointObj |
+    +---------+            +----------+
+    
 -----------------------------------------------------------------------------
  pointObj
 -----------------------------------------------------------------------------
 
-Primitive class for points.
+A pointObj instance may be associated with a lineObj_.
+
+::
+
+    +----------+ 1..*  0..1 +---------+
+    | pointObj | <--------- | lineObj |
+    +----------+            +---------+
 
 Attributes
 ----------
@@ -390,7 +418,8 @@ x
  rectObj
 ------------------------------------------------------------------------------
 
-Map extents and shape bounds are instances of rectObj_.
+A rectObj may be a lone object or an attribute of another object and has no
+other associations.
    
 Attributes
 ----------
@@ -438,8 +467,14 @@ toPolygon() : shapeObj_
  shapeObj
 -----------------------------------------------------------------------------
 
-The shapeObj class implements a multipart polygon.  Each part is a closed
-lineObj_.  Each feature of a layer's data is a shapeObj.
+Each feature of a layer's data is a shapeObj.  Each part of the shape is a
+closed lineObj_.
+
+::
+
+    +----------+ 1    1..* +---------+
+    | shapeObj | --------> | lineObj |
+    +----------+           +---------+
 
 Attributes
 ----------
@@ -541,13 +576,13 @@ distanceToShape(shapeObj_ shape) : float
  styleObj
 -----------------------------------------------------------------------------
 
-An instance of styleObj is associated with one instance of classObj [1]_.
+An instance of styleObj is associated with one instance of classObj [2]_.
 
 ::
 
-    +----------+          +----------+
-    | styleObj | <------> | classObj |
-    +----------+ 0..*     +----------+
+    +----------+ 0..*    1 +----------+
+    | styleObj | <-------- | classObj |
+    +----------+           +----------+
 
 Support for multiple class styles is a new feature in the current unstable
 (4.1) Mapscript and in the next stable (4.2) release.  The initial feature
@@ -613,6 +648,12 @@ new styleObj() : styleObj_
 x
 
 
-..  [1] At some point this needs to be fixed so that styleObj instances are 
-    *reference* objects that can be shared by multiple classObjs.
+..  [1] This **really** needs to be changed in the future.  In fact a layer
+    is much more re-useable than a map.  We don't keep redundant street
+    data around for every map we draw.  We should likewise be able to attach
+    the same layerObj to multiple mapObjs.
+
+..  [2] See the comment about layerObj and mapObj above.  A styleObj is also
+    a very reuseable thing.
+
 
