@@ -252,7 +252,7 @@ tile4ms: tile4ms.o
 testexpr: testexpr.o mapparser.o maplexer.o
 	$(LD) $(CFLAGS) testexpr.o $(EXE_LDFLAGS) -o testexpr
 
-testcopy: testcopy.o mapcopy.o map.h
+testcopy: libmap.a testcopy.o mapcopy.o map.h
 	$(LD) $(CFLAGS) testcopy.o $(EXE_LDFLAGS) -o testcopy
 
 mapscriptvars:	Makefile

@@ -1022,17 +1022,17 @@ int msCopyMap(mapObj *dst, mapObj *src)
     }
   }
 
-  if (msCopyFontSet(&(dst->fontset), &(src->fontset), dst) != MS_SUCCESS) {
-    msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopyMap()");
-    return(MS_FAILURE);
-  }
-  
-  return_value = msCopySymbolSet(&(dst->symbolset), &(src->symbolset),
-                                 dst);
-  if(return_value != MS_SUCCESS) {
-    msSetError(MS_MEMERR, "Failed to copy symbolset.", "msCopyMap()");
-    return(MS_FAILURE);
-  }
+  //if (msCopyFontSet(&(dst->fontset), &(src->fontset), dst) != MS_SUCCESS) {
+  //  msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopyMap()");
+  //  return(MS_FAILURE);
+  //}
+  //
+  //return_value = msCopySymbolSet(&(dst->symbolset), &(src->symbolset),
+  //                               dst);
+  //if(return_value != MS_SUCCESS) {
+  //  msSetError(MS_MEMERR, "Failed to copy symbolset.", "msCopyMap()");
+  //  return(MS_FAILURE);
+  //}
   
   //msCopyLabelCache(&(dst->labelcache), &(src->labelcache));
   copyProperty(&(dst->transparent), &(src->transparent), sizeof(int)); 
