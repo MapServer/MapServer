@@ -1113,17 +1113,17 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
         strcat(buffer, "(");
         if (addtimebacktics)
           strcat(buffer,  "`");
-        else
-          strcat(buffer,  "'");
-        strcat(buffer, "[");
+
+         if (addtimebacktics)
+           strcat(buffer, "[");
         strcat(buffer, timefield);
-        strcat(buffer, "]");
+        if (addtimebacktics)
+          strcat(buffer, "]");
         if (addtimebacktics)
           strcat(buffer,  "`");
-        else
-          strcat(buffer,  "'");
 
-        strcat(buffer, " eq ");
+         
+        strcat(buffer, " = ");
         if (addtimebacktics)
           strcat(buffer,  "`");
         else
@@ -1171,19 +1171,17 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
                      strcat(buffer, "(");
                      if (addtimebacktics)
                        strcat(buffer,  "`");
-                     else
-                       strcat(buffer,  "'");
 
-                     strcat(buffer, "[");
+                     if (addtimebacktics)
+                       strcat(buffer, "[");
                      strcat(buffer, timefield);
-                     strcat(buffer, "]");
+                     if (addtimebacktics)
+                       strcat(buffer, "]");
                      
                      if (addtimebacktics)
                        strcat(buffer,  "`");
-                     else
-                       strcat(buffer,  "'");
 
-                     strcat(buffer, " ge ");
+                     strcat(buffer, " >= ");
                      if (addtimebacktics)
                        strcat(buffer,  "`");
                      else
@@ -1198,17 +1196,16 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
 
                      if (addtimebacktics)
                        strcat(buffer,  "`");
-                     else
-                       strcat(buffer,  "'");
-                      strcat(buffer, "[");
+
+                     if (addtimebacktics)
+                       strcat(buffer, "[");
                      strcat(buffer, timefield);
-                      strcat(buffer, "]");
+                     if (addtimebacktics)
+                       strcat(buffer, "]");
                      if (addtimebacktics)
                        strcat(buffer,  "`");
-                     else
-                       strcat(buffer,  "'");
 
-                     strcat(buffer, " le ");
+                     strcat(buffer, " <= ");
                      
                      if (addtimebacktics)
                        strcat(buffer,  "`");
@@ -1239,19 +1236,17 @@ int msLayerSetTimeFilter(layerObj *lp, const char *timestring,
                   strcat(buffer, "(");
                   if (addtimebacktics)
                     strcat(buffer, "`");
-                  else
-                    strcat(buffer,  "'");
-
-                  strcat(buffer, "[");
+                  
+                  if (addtimebacktics)
+                    strcat(buffer, "[");
                   strcat(buffer, timefield);
-                  strcat(buffer, "]");
+                  if (addtimebacktics)
+                    strcat(buffer, "]");
 
                   if (addtimebacktics)
                     strcat(buffer, "`");
-                  else
-                    strcat(buffer,  "'");
 
-                  strcat(buffer, " eq ");
+                  strcat(buffer, " = ");
                   
                   if (addtimebacktics)
                     strcat(buffer, "`");
