@@ -167,9 +167,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     image = (imageObj *)malloc(sizeof(imageObj));
     if(!image) return NULL;
 
+    image->bytes = msDrawMap(self);
     image->width = gdImageSX(image->bytes);
     image->height = gdImageSY(image->bytes);
-    image->bytes = msDrawMap(self);
     image->imagepath = image->imageurl = NULL;
    
     return image;
