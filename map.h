@@ -156,7 +156,7 @@ extern "C" {
 #define MS_RENDER_WITH_SWF    	2
 #define MS_RENDER_WITH_RAWDATA 	3
 #define MS_RENDER_WITH_PDF 	4
-#define MS_RENDER_WITH_IMAGEMAP 	5
+#define MS_RENDER_WITH_IMAGEMAP 5
 
 #define MS_RENDERER_GD(format)	((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format)	((format)->renderer == MS_RENDER_WITH_SWF)
@@ -199,7 +199,7 @@ enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_M
 
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
-enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32 };
+enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_NULL };
 
 
 #define MS_FILE_DEFAULT MS_FILE_MAP   
@@ -379,6 +379,8 @@ typedef struct {
   rectObj extent; /* clipping extent */
   double minscale, maxscale;
   char *mintemplate, *maxtemplate;
+
+  char *queryformat; // what format is the query to be returned (e.g. HTML, SVG, ...), given as the name of an output format
 
 #ifndef SWIG
   hashTableObj metadata;

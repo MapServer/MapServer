@@ -3532,6 +3532,7 @@ void initWeb(webObj *web)
   web->imageurl = strdup("");
   web->metadata = NULL;
   web->map = NULL;
+  web->queryformat = NULL;
 }
 
 void freeWeb(webObj *web)
@@ -3546,6 +3547,7 @@ void freeWeb(webObj *web)
   msFree(web->log);
   msFree(web->imagepath);
   msFree(web->imageurl);
+  msFree(web->queryformat);
   if(web->metadata) msFreeHashTable(web->metadata);
 }
 
@@ -3568,6 +3570,7 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->metadata) writeHashTable(web->metadata, stream, "      ", "METADATA");
   if(web->minscale > -1) fprintf(stream, "    MINSCALE %g\n", web->minscale);
   if(web->mintemplate) fprintf(stream, "    MINTEMPLATE \"%s\"\n", web->mintemplate);
+  if(web->queryformat != NULL) fprintf(stream, "    QUERYFORMAT %s\n", web->queryformat);
   if(web->template) fprintf(stream, "    TEMPLATE \"%s\"\n", web->template);
   fprintf(stream, "  END\n\n");
 }
@@ -3627,7 +3630,10 @@ int loadWeb(webObj *web, mapObj *map)
       break;
     case(MINTEMPLATE):
       if((web->mintemplate = getString()) == NULL) return(-1);
-      break;    
+      break; 
+    case(QUERYFORMAT):
+      if((web->queryformat = getString()) == NULL) return(-1);
+      break;   
     case(TEMPLATE):
       if((web->template = getString()) == NULL) return(-1);
       break;
@@ -3691,6 +3697,10 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
     if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(web->mintemplate);
     web->mintemplate = strdup(value);
+    break;
+  case(QUERYFORMAT):
+    msFree(web->queryformat);
+    web->queryformat = strdup(value);
     break;
   case(TEMPLATE):
     if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;

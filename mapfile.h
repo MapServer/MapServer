@@ -187,5 +187,6 @@
 #define EXTENSION 1155
 
 #define KEYIMAGE 1156
+#define QUERYFORMAT 1157
 
 #endif /* MAPFILE_H */
