@@ -162,6 +162,14 @@ class NewStylesTestCase(MapTestCase):
         new_style = mapscript.styleObj()
         self.assertRaises(mapscript.MapServerChildError, class0.insertStyle, new_style, 6)
 
+    def testInsertNULLStyle(self):
+        """attempt to insert a NULL style should raise error"""
+        p_layer = self.map.getLayerByName('POINT')
+        class0 = p_layer.getClass(0)
+        self.assertRaises(mapscript.MapServerChildError, 
+                          class0.insertStyle, None)
+
+
 class BrushCachingTestCase(MapTestCase):
     
     def testDrawMapWithSecondPolygon(self):

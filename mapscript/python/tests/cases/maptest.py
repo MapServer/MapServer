@@ -139,7 +139,12 @@ class MapLayersTestCase(MapTestCase):
         layer = mapscript.layerObj()
         self.assertRaises(mapscript.MapServerChildError, self.map.insertLayer, 
                           layer, 1000)
-         
+       
+    def testMapInsertNULLLayer(self):
+        """expect an exception on attempt to insert a NULL Layer"""
+        self.assertRaises(mapscript.MapServerChildError, self.map.insertLayer, 
+                          None)
+
     def testMapRemoveLayerAtTail(self):
         """removal of highest index (tail) layer"""
         n = self.map.numlayers
