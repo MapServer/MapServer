@@ -1010,7 +1010,7 @@ Constructor:
 
  Constructor:
   
-    shapefileObj ms_newprojectionobj(string projectionstring)
+    ProjectionObjObj ms_newprojectionobj(string projectionstring)
         
    Creates a projection object based on the projection string passed
    as argument.
