@@ -276,6 +276,10 @@
     return msDrawLayer(map, self, img);    
   }
 
+  int queryByAttributes(mapObj *map) {
+    return msQueryByAttributes(map, self->index);
+  }
+
   int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) {
     return msQueryByPoint(map, self->index, mode, *point, buffer);
   }
