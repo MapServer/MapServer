@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "cgiutil.h"
+#include "map.h"
 
 
 #define LF 10
@@ -29,7 +30,7 @@ static char *readPostBody( cgiRequestObj *request )
             exit( 1 );
         }
 
-        if (fread(data, 1, data_max, stdin) < data_max ) {
+        if ( (int) fread(data, 1, data_max, stdin) < data_max ) {
             printf("Content-type: text/html%c%c",10,10);
             printf("POST body is short\n");
             exit(1);
