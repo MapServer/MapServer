@@ -191,9 +191,10 @@ Very important note: Constant names and class member variable names are
          If provided then it will be impossible to zoom/pan outside of
          those extents.
 
-   queryUsingPoint queryUsingPoint(pointObj point, int type, double buffer)
+   queryResultObj queryUsingPoint(pointObj point, int type, double buffer)
         Query all selected layers in map at point location specified in 
-        georeferenced map coordinates (i.e. not pixels).
+        georeferenced map coordinates (i.e. not pixels).  
+        Returns a queryResultObj on success, or 0 if nothing was found.
         Type is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
@@ -202,9 +203,10 @@ Very important note: Constant names and class member variable names are
         Note that to be queryable a layer must have a QUERYITEM and at least
         one QUERY object.
 
-   queryUsingPoint queryUsingRect(rectObj rect)
+   queryresultObj queryUsingRect(rectObj rect)
         Query all selected layers in map using a rectangle specified in 
         georeferenced map coordinates (i.e. not pixels).
+        Returns a queryResultObj on success, or 0 if nothing was found.
         Note that to be queryable a layer must have a QUERYITEM and at least
         one QUERY object.
 
@@ -270,9 +272,10 @@ Very important note: Constant names and class member variable names are
         Draw a single layer, add labels to cache if required. 
         Returns -1 on error.
 
-   queryUsingPoint queryUsingPoint(pointObj point, int type, double buffer)
+   queryResultObj queryUsingPoint(pointObj point, int type, double buffer)
         Query layer at point location specified in georeferenced map 
         coordinates (i.e. not pixels).
+        Returns a queryResultObj on success, or 0 if nothing was found.
         Type is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
@@ -281,9 +284,10 @@ Very important note: Constant names and class member variable names are
         Note that to be queryable a layer must have a QUERYITEM and at least
         one QUERY object.
 
-   queryUsingPoint queryUsingRect(rectObj rect)
+   queryResultObj queryUsingRect(rectObj rect)
         Query layer using a rectangle specified in georeferenced map 
         coordinates (i.e. not pixels).
+        Returns a queryResultObj on success, or 0 if nothing was found.
         Note that to be queryable a layer must have a QUERYITEM and at least
         one QUERY object.
 
