@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "maptime.h"
+#include "maperror.h"
 
 void msTimeInit(struct tm *time)
 {
@@ -62,6 +63,20 @@ int msTimeCompare(struct tm *time1, struct tm *time2)
 
   return(0); // must be equal
 }
+
+
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <sys/timeb.h>
+void gettimeofday(struct mstimeval* tp, void* tzp)
+{
+    struct _timeb theTime;
+ 
+    _ftime(&theTime);
+    tp->tv_sec = theTime.time;
+    tp->tv_usec = theTime.millitm * 1000;
+}
+#endif
 
 
 

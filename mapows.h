@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.25  2004/03/29 18:34:25  assefa
+ * Windows compilation problem : gettimeofday and timval struct (Bug 602)
+ *
  * Revision 1.24  2004/03/29 14:41:55  dan
  * Use CURL's internal timer instead of custom gettimeofday() calls for
  * timing WMS/WFS requests
@@ -53,7 +56,6 @@
 #define MAPOWS_H
 
 #include <time.h>
-#include <sys/time.h>
 
 /*====================================================================
  *   maphttp.c

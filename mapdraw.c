@@ -5,7 +5,7 @@
 
 #include <assert.h>
 #include "map.h"
-
+#include "maptime.h"
 
 /*
  * Functions to reset any pen (color index) values previously set. Used primarily to reset things when
@@ -105,8 +105,8 @@ imageObj *msDrawMap(mapObj *map)
     layerObj *lp=NULL;
     int status;
     imageObj *image = NULL;
-    struct timeval mapstarttime, mapendtime;
-    struct timeval starttime, endtime;
+    struct mstimeval mapstarttime, mapendtime;
+    struct mstimeval starttime, endtime;
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
