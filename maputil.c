@@ -9,6 +9,10 @@
 #include <io.h>
 #endif
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <process.h>
+#endif
+
 extern int msyyparse();
 extern int msyylex();
 extern char *msyytext;
