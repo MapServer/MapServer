@@ -8,7 +8,7 @@
  * Author:   Assefa Yewondwossen (assefa@dmsolutions.on.ca)
  *
  **********************************************************************
- * Copyright (c) 2000, DM Solutions Group inc.
+ * Copyright (c) 2000-2002, DM Solutions Group inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/01/22 19:18:17  dan
+ * Took pj_datum_transform() out of docs to discourage its use.
+ *
  * Revision 1.5  2001/09/25 14:52:54  assefa
  * Add pj_transform function.
  *
@@ -115,10 +118,7 @@
  *
  *              $ret = pj_datum_transform($pjlcc, $pjlat, $ingeox, $ingeoy);
  *
- * 5) pj_datum_transform : pj_datum_transform(PJ pjsrc, PJ pjdst, double x, double y)
- *        
- *
- * 6) pj_free : frees PJ structure
+ * 5) pj_free : frees PJ structure
  *     
  *  void pj_free(PJ pj); 
  *
