@@ -1742,7 +1742,7 @@ msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
                   int pct)
 
 {
-    int x, y, pct_alpha;
+    int x, y;
 
     /* for most cases the GD copy is fine */
     if( !gdImageTrueColor(dst) || !gdImageTrueColor(src) )
@@ -1771,7 +1771,7 @@ msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
             dst_alpha = dst_alpha * ((100-pct)*src_alpha/127) / 100;
 
             /* adjust source according to transparency percentage */
-            src_alpha = src_alpha * (pc-100) / 100;
+            src_alpha = src_alpha * (pct) / 100;
 
             /* Use simple additive model for resulting transparency */
             res_alpha = src_alpha + dst_alpha;
