@@ -467,6 +467,25 @@ class RectObjTestCase(unittest.TestCase):
         assert int(s.get(0).get(0).x) == -1
         assert int(s.get(0).get(0).y) == -2
 
+# shapeObj tests
+
+class ShapeObjTestCase(unittest.TestCase):
+    def testShapeCopy(self):
+        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
+        s_original = r.toPolygon()
+
+        s = None
+        try: # Try next generation api
+            s = s_original.copy()
+        except: # Fall back on standard
+            s = mapscript.shapeObj(mapscript.MS_SHAPE_POLYGON)
+            s_original.copy(s)
+            
+        assert s.numlines == 1, s.numlines
+        assert s.get(0).numpoints == 5
+        assert int(s.get(0).get(0).x) == -1
+        assert int(s.get(0).get(0).y) == -2
+
 # pointObj constructor tests
 
 class PointObjTestCase(unittest.TestCase):
@@ -672,6 +691,44 @@ class InlineFeatureTestCase(unittest.TestCase):
         inline_layer = self.mapobj1.getLayerByName('INLINE')
         assert inline_layer.getNumFeatures() == 1
 
+class NewOutputFormatTestCase(unittest.TestCase):
+    """http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=511"""
+    def setUp(self):
+        self.mapobj1 = mapscript.mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testOutputFormatConstructor(self):
+        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiff')
+        assert new_format.refcount == 1, new_format.refcount
+        assert new_format.name == 'gtiff'
+        assert new_format.mimetype == 'image/tiff'
+    def testAppendNewOutputFormat(self):
+        num = self.mapobj1.numoutputformats
+        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
+        assert new_format.refcount == 1, new_format.refcount
+        self.mapobj1.appendOutputFormat(new_format)
+        assert self.mapobj1.numoutputformats == num + 1
+        assert new_format.refcount == 2, new_format.refcount
+        self.mapobj1.setImageType('gtiffx')
+        self.mapobj1.save('testAppendNewOutputFormat.map')
+        imgobj = self.mapobj1.draw()
+        filename = 'testAppendNewOutputFormat.tif'
+        imgobj.save(filename)
+    def testRemoveOutputFormat(self):
+        num = self.mapobj1.numoutputformats
+        assert num == 6, num
+        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
+        self.mapobj1.appendOutputFormat(new_format)
+        assert self.mapobj1.numoutputformats == num + 1
+        assert new_format.refcount == 2, new_format.refcount
+        assert self.mapobj1.removeOutputFormat('gtiffx') == mapscript.MS_SUCCESS
+        assert new_format.refcount == 1, new_format.refcount
+        assert self.mapobj1.numoutputformats == num
+        self.assertRaises(mapscript.MapServerError,
+                          self.mapobj1.setImageType, 'gtiffx')
+        self.mapobj1.setImageType('GTiff')
+        assert self.mapobj1.outputformat.mimetype == 'image/tiff'
+  
 if __name__ == '__main__':
     unittest.main()
 

@@ -566,7 +566,7 @@ A lineObj is composed of one or more pointObj_ instances.
  mapObj
 -----------------------------------------------------------------------------
 
-A mapObj is primarily associated with instances of layerObj.
+A mapObj is primarily associated with instances of layerObj_.
 
 ::
 
@@ -574,22 +574,72 @@ A mapObj is primarily associated with instances of layerObj.
      | mapObj | <--------> | layerObj |
      +--------+            +----------+
 
-Secondary associations are with legendObj, scalebarObj, and referenceMapObj.
+Secondary associations are with legendObj_, scalebarObj_, referenceMapObj_,
 
 ::
 
      +--------+ 1     0..1 +-----------------+
      | mapObj | ---------> | legendObj       |
-     +--------+            + --------------- +
+     +--------+            | --------------- |
                            | scalebarObj     |
                            | --------------- |
                            | legendObj       |
                            +---------------- + 
 
+and outputFormatObj_.
+
+::
+
+     +--------+ 1     1..* +-----------------+
+     | mapObj | ---------> | outputFormatObj |
+     +--------+            +---------------- + 
+                           
+
+Attributes
+----------
+
+**TODO**
+
+numoutputformats : int
+    Number of output formats.
+
+outputformat : outputFormatObj_
+    The currently selected output format.
+
+Methods
+-------
+
+**TODO**
+
+appendOutputFormat(outputFormatObj_ format) : int
+    Attach *format* to the map's output format list.  Returns the updated
+    number of output formats.
+
+getOutputFormat(string imagetype) : outputFormatObj_
+    Return the output format corresponding to driver name *imagetype* or
+    to format name *imagetype*.  This works exactly the same as the
+    IMAGETYPE directive in a mapfile, is case insensitive and allows 
+    an output format to be found either by driver (like 'GD/PNG') or
+    name (like 'PNG24').
+
+removeOutputFormat(string name) : int
+    Removes the format named *name* from the map's output format list.
+    Returns MS_SUCCESS or MS_FAILURE.
+
 
 -----------------------------------------------------------------------------
  outputFormatObj
 -----------------------------------------------------------------------------
+
+An outputFormatObj is associated with a mapObj_ 
+
+::
+
+     +-----------------+ 1..*     1 +--------+
+     | outputFormatObj | <--------- | mapObj |
+     +-----------------+            +--------+ 
+
+and can also be an attribute of an imageObj_.
 
 Attributes
 ----------
@@ -599,9 +649,35 @@ Attributes
 driver : string
     A string such as 'GD/PNG' or 'GDAL/GTiff'.
 
+extension : string
+    Format file extension such as 'png'.
+
+imagemode : int
+    MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, 
+    MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32, MS_IMAGEMODE_BYTE, or 
+    MS_IMAGEMODE_NULL.
+    
+mimetype : string
+    Format mimetype such as 'image/png'.
+    
+name : string
+    A unique identifier.
+
+renderer : int
+    **TODO** what is renderer for?
+   
+transparent : int
+    MS_ON or MS_OFF.
+
 Methods
 -------
 
+.. _new outputFormatObj:
+
+new outputFormatObj(string driver [, string name=driver]) : outputFormatObj_
+    Create new instance.  If *name* is not provided, the value of *driver*
+    is used as a name.
+    
 .. _getOption:
 
 getOption(string key [, string value=""]) : string
@@ -611,10 +687,13 @@ getOption(string key [, string value=""]) : string
 .. _setExtension:
 
 setExtension(string extension) : void
-    Set file extension for output format such as 'png' or 'jpg'.
+    Set file extension for output format such as 'png' or 'jpg'.  Method 
+    could probably be deprecated since the extension attribute is mutable.
 
 setMimetype(string mimetype) : void
     Set mimetype for output format such as 'image/png' or 'image/jpeg'.
+    Method could probably be deprecated since the mimetype attribute is
+    mutable.
     
 setOption(string key, string value) : void
     Set the option at *key* to *value*.
@@ -801,7 +880,8 @@ contains(pointObj_ point) : int
 copy(shapeObj_ shape_copy) : int
     Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
 
-    **TODO**: this method should return shapeObj not int!
+**NEXT_GENERATION_API** copy() : shapeObj_
+    Return a copy of the shape.
 
 distanceToPoint(pointObj_ point) : float
     Return distance to *point*.

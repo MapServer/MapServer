@@ -604,6 +604,17 @@ memory.") const char * {
         return msProcessQueryTemplate(self, 1, names, values, numentries);
     }
 
+    outputFormatObj *getOutputFormatByName(char *name) {
+        return msSelectOutputFormat(self, name); 
+    }
+    
+    int appendOutputFormat(outputFormatObj *format) {
+        return msAppendOutputFormat(self, format);
+    }
+
+    int removeOutputFormat(char *name) {
+        return msRemoveOutputFormat(self, name);
+    }
 }
 
 %extend symbolSetObj {
@@ -1147,9 +1158,23 @@ memory.") const char * {
     return;
   }
 
-  int copy(shapeObj *dest) {
-    return(msCopyShape(self, dest));
-  }
+#ifdef NEXT_GENERATION_API
+    %newobject copy;
+    shapeObj *copy() {
+        shapeObj *shape;
+        shape = (shapeObj *)malloc(sizeof(shapeObj));
+        if (!shape)
+            return NULL;
+        msInitShape(shape);
+        shape->type = self->type;
+        msCopyShape(self, shape);
+        return shape;
+    }
+#else
+    int copy(shapeObj *dest) {
+        return(msCopyShape(self, dest));
+    }
+#endif
 
   char *getValue(int i) { // returns an EXISTING value
     if(i >= 0 && i < self->numvalues)
@@ -1483,13 +1508,15 @@ memory.") const char * {
 // class extensions for outputFormatObj
 //
 %extend outputFormatObj {
-  outputFormatObj( const char *driver ) {
+    outputFormatObj(const char *driver, char *name=NULL) {
     outputFormatObj *format;
 
-    format = msCreateDefaultOutputFormat( NULL, driver );
+    format = msCreateDefaultOutputFormat(NULL, driver);
     if( format != NULL ) 
         format->refcount++;
-
+    if (name != NULL)
+        format->name = strdup(name);
+    
     return format;
   }
 
@@ -1518,7 +1545,6 @@ memory.") const char * {
         retval = msGetOutputFormatOption(self, key, value);
         return strdup(retval);
     }
-
 }
 
 //
