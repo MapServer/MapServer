@@ -660,4 +660,53 @@ int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
     return MS_SUCCESS;
 }
 
+int msLoadImageSymbol(symbolObj *symbol, const char *filename) {
+    FILE *stream;
+    int i;
+    char bytes[8], szPath[MS_MAXPATHLEN];
+
+    if (!filename || strlen(filename) == 0) {
+        msSetError(MS_SYMERR, "Invalid filename.", "msLoadImageSymbol()");
+        return MS_FAILURE;
+    }
+
+    if ((stream = fopen(filename, "rb")) == NULL) {
+          msSetError(MS_IOERR, "Error opening image file %s.", "msLoadImageSymbol()");
+          return MS_FAILURE;
+    }
+
+    fread(bytes,8,1,stream); // read some bytes to try and identify the file
+    rewind(stream); // reset the image for the readers
+    if (memcmp(bytes,"GIF8",4)==0) {
+#ifdef USE_GD_GIF
+        symbol->img = gdImageCreateFromGif(stream);
+#else
+        msSetError(MS_MISCERR, "Unable to load GIF symbol.",
+                   "msLoadImageSymbol()");
+        fclose(stream);
+        return MS_FAILURE;
+#endif
+    } else if (memcmp(bytes,PNGsig,8)==0) {
+#ifdef USE_GD_PNG
+        symbol->img = gdImageCreateFromPng(stream);
+#else
+        msSetError(MS_MISCERR, "Unable to load PNG symbol.",
+                   "msAddImageSymbol()");
+        fclose(stream);
+        return MS_FAILURE;
+#endif
+    }
+
+    fclose(stream);
+  
+    if (!symbol->img) {
+        msSetError(MS_GDERR, NULL, "msAddImageSymbol()");
+        return MS_FAILURE;
+    }
+
+    symbol->type = MS_SYMBOL_PIXMAP;
+
+    return MS_SUCCESS;
+}
+
 

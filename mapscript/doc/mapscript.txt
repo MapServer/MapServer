@@ -1034,16 +1034,69 @@ not really an object association, is it?
 Attributes
 ----------
 
-numpoints : int
+antialias : int
+    MS_TRUE or MS_FALSE.
+
+character : string
+    For TrueType symbols.
+
+filled : int
+    MS_TRUE or MS_FALSE.
+
+font : string
+    For TrueType symbols.
+
+gap : int
+    **TODO** what is this?
+    
+imagepath : string
+    Path to pixmap file.
+
+linecap : int
+    **TODO** unsure about the cartoline attributes.
+    
+linejoin : int
+    **TODO**
+    
+linejoinmaxsize : float
+    **TODO**
+
+name : string
+    Symbol name
+
+numpoints : int immutable
     Number of points of a vector symbol.
+  
+position : int
+    **TODO** ?
+    
+sizex : float
+    **TODO** what is this?
+
+sizey : float
+    **TODO** what is this?
+
+stylelength : int
+    Number of intervals
+
+transparent : int
+    **TODO** what is this?
+    
+transparentcolor : int
+    **TODO** is this a derelict attribute?
+    
+type : int
+    MS_SYMBOL_SIMPLE, MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP,
+    MS_SYMBOL_TRUETYPE, or MS_SYMBOL_CARTOLINE.
     
 Methods
 -------
 
 **TODO**
 
-new symbolObj(string name) : symbolObj_
-    Create new default symbol named *name*.
+new symbolObj(string symbolname [, string imagefile]) : symbolObj_
+    Create new default symbol named *name*.  If *imagefile* is specified,
+    then the symbol will be of type MS_SYMBOL_PIXMAP.
 
 getPoints() : lineObj_
     Returns the symbol points as a lineObj.
@@ -1052,6 +1105,8 @@ setPoints(lineObj_ line) : int
     Sets the symbol points from the points of *line*.  Returns the updated
     number of points.
 
+setStyle(int index, int value) : int
+    Set the style at *index* to *value*.  Returns MS_SUCCESS or MS_FAILURE.
 
 -----------------------------------------------------------------------------
  symbolSetObj

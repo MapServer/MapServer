@@ -622,11 +622,14 @@ memory.") const char * {
  * http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=579 */
 
 %extend symbolObj {
-    symbolObj(char *name) {
+    symbolObj(char *symbolname, const char *imagefile=NULL) {
         symbolObj *symbol;
         symbol = (symbolObj *) malloc(sizeof(symbolObj));
         initSymbol(symbol);
-        symbol->name = strdup(name);
+        symbol->name = strdup(symbolname);
+        if (imagefile) {
+            msLoadImageSymbol(symbol, imagefile);
+        }
         return symbol;
     }
 
@@ -659,6 +662,16 @@ memory.") const char * {
         line->numpoints = self->numpoints;
         return line;
     }
+
+    int setStyle(int index, int value) {
+        if (index < 0 || index > MS_MAXSTYLELENGTH) {
+            msSetError(MS_SYMERR, "Can't set style at index %d.", "setStyle()", index);
+            return MS_FAILURE;
+        }
+        self->style[index] = value;
+        return MS_SUCCESS;
+    }
+
 }
 
 %extend symbolSetObj {

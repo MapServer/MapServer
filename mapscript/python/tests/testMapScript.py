@@ -143,6 +143,10 @@ class SymbolTestCase(unittest.TestCase):
     def testConstructor(self):
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
+    def testConstructorImage(self):
+        symbol = mapscript.symbolObj('test', '../../tests/home.png')
+        assert symbol.name == 'test'
+        assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
     def testGetPoints(self):
         symbol = self.mapobj1.symbolset.getSymbol(1)
         assert symbol.name == 'line'
@@ -163,6 +167,9 @@ class SymbolTestCase(unittest.TestCase):
         pt = line.get(1)
         assert pt.x == 3.0, pt.x
         assert pt.y == 3.0, pt.y
+    def testSetStyle(self):
+        symbol = self.mapobj1.symbolset.getSymbol(1)
+        assert symbol.setStyle(0, 1) == mapscript.MS_SUCCESS
 
 # symbolset tests
 class SymbolSetTestCase(unittest.TestCase):
