@@ -36,9 +36,7 @@ typedef struct
    /// should the query and/or map be saved
    int SaveMap, SaveQuery;
 
-   char **ParamNames;
-   char **ParamValues;
-   int NumParams;
+  cgiRequestObj *request;
 
    mapObj *Map;
 

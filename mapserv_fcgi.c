@@ -9,6 +9,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2003/09/19 21:48:46  assefa
+ * Modify of the request handling to add support for post requests.
+ *
  * Revision 1.3  2003/07/15 03:51:13  sdlime
  * Changed the name of the function msGetErrorString to msGetErrorCodeString which is more descriptive. That function was used a few places so I changed references in a few places. maperror.h has been edited to expose a few functions to SWIG. mapscript.i has been updated to mimic the PHP error handling (not sure that I like it, too clunky.
  *
@@ -171,10 +174,10 @@ mapObj *loadMap()
   mapObj *map = NULL;
   char *tmpstr;
 
-  for(i=0;i<msObj->NumParams;i++) // find the mapfile parameter first
-    if(strcasecmp(msObj->ParamNames[i], "map") == 0) break;
+  for(i=0;i<msObj->request->NumParams;i++) // find the mapfile parameter first
+    if(strcasecmp(msObj->request->ParamNames[i], "map") == 0) break;
   
-  if(i == msObj->NumParams) {
+  if(i == msObj->request->NumParams) {
     if(getenv("MS_MAPFILE")) // has a default file has not been set
       map = msLoadMap(getenv("MS_MAPFILE"), NULL);
     else {
@@ -192,22 +195,22 @@ mapObj *loadMap()
 
   // check for any %variable% substitutions here, also do any map_ changes, we do this here so WMS/WFS 
   // services can take advantage of these "vendor specific" extensions
-  for(i=0;i<msObj->NumParams;i++) {
-    if(strncasecmp(msObj->ParamNames[i],"map_",4) == 0) { // check to see if there are any additions to the mapfile
-      if(msLoadMapString(msObj->Map, msObj->ParamNames[i], msObj->ParamValues[i]) == -1)
+  for(i=0;i<msObj->request->NumParams;i++) {
+    if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0) { // check to see if there are any additions to the mapfile
+      if(msLoadMapString(msObj->Map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) == -1)
 	writeError();
       continue;
     }
 
-    tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->ParamNames[i]) + 3);
-    sprintf(tmpstr,"%%%s%%", msObj->ParamNames[i]);
+    tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->request->ParamNames[i]) + 3);
+    sprintf(tmpstr,"%%%s%%", msObj->request->ParamNames[i]);
     
     for(j=0; j<map->numlayers; j++) {
-      if(map->layers[j].data && (strstr(map->layers[j].data, tmpstr) != NULL)) map->layers[j].data = gsub(map->layers[j].data, tmpstr, msObj->ParamValues[i]);
-      if(map->layers[j].connection && (strstr(map->layers[j].connection, tmpstr) != NULL)) map->layers[j].connection = gsub(map->layers[j].connection, tmpstr, msObj->ParamValues[i]);
-      if(map->layers[j].filter.string && (strstr(map->layers[j].filter.string, tmpstr) != NULL)) map->layers[j].filter.string = gsub(map->layers[j].filter.string, tmpstr, msObj->ParamValues[i]);
+      if(map->layers[j].data && (strstr(map->layers[j].data, tmpstr) != NULL)) map->layers[j].data = gsub(map->layers[j].data, tmpstr, msObj->request->ParamValues[i]);
+      if(map->layers[j].connection && (strstr(map->layers[j].connection, tmpstr) != NULL)) map->layers[j].connection = gsub(map->layers[j].connection, tmpstr, msObj->request->ParamValues[i]);
+      if(map->layers[j].filter.string && (strstr(map->layers[j].filter.string, tmpstr) != NULL)) map->layers[j].filter.string = gsub(map->layers[j].filter.string, tmpstr, msObj->request->ParamValues[i]);
       for(k=0; k<map->layers[j].numclasses; k++)
-	if(map->layers[j].class[k].expression.string && (strstr(map->layers[j].class[k].expression.string, tmpstr) != NULL)) map->layers[j].class[k].expression.string = gsub(map->layers[j].class[k].expression.string, tmpstr, msObj->ParamValues[i]);
+	if(map->layers[j].class[k].expression.string && (strstr(map->layers[j].class[k].expression.string, tmpstr) != NULL)) map->layers[j].class[k].expression.string = gsub(map->layers[j].class[k].expression.string, tmpstr, msObj->request->ParamValues[i]);
     }
     
     free(tmpstr);
@@ -231,17 +234,17 @@ void loadForm()
     writeError();
   }
 
-  for(i=0;i<msObj->NumParams;i++) { // now process the rest of the form variables
-    if(strlen(msObj->ParamValues[i]) == 0)
+  for(i=0;i<;i++) { // now process the rest of the form variables
+    if(strlen(msObj->request->ParamValues[i]) == 0)
       continue;
     
-    if(strcasecmp(msObj->ParamNames[i],"queryfile") == 0) {      
-      QueryFile = strdup(msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"queryfile") == 0) {      
+      QueryFile = strdup(msObj->request->ParamValues[i]);
       continue;
     }
     
-    if(strcasecmp(msObj->ParamNames[i],"savequery") == 0) {
-      msObj->SaveQuery = MS_TRUE;
+    if(strcasecmp(msObj->request->ParamNames[i],"savequery") == 0) {
+      msObj->SaveQuery = MS_TRUE; 
       continue;
     }
     
@@ -252,8 +255,8 @@ void loadForm()
         }
     */
 
-    if(strcasecmp(msObj->ParamNames[i],"zoom") == 0) {
-      msObj->Zoom = getNumeric(re, msObj->ParamValues[i]);      
+    if(strcasecmp(msObj->request->ParamNames[i],"zoom") == 0) {
+      msObj->Zoom = getNumeric(re, msObj->request->ParamValues[i]);      
       if((msObj->Zoom > MAXZOOM) || (msObj->Zoom < MINZOOM)) {
 	msSetError(MS_WEBERR, "Zoom value out of range.", "loadForm()");
 	writeError();
@@ -261,8 +264,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"zoomdir") == 0) {
-      msObj->ZoomDirection = getNumeric(re, msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"zoomdir") == 0) {
+      msObj->ZoomDirection = getNumeric(re, msObj->request->ParamValues[i]);
       if((msObj->ZoomDirection != -1) && (msObj->ZoomDirection != 1) && (msObj->ZoomDirection != 0)) {
 	msSetError(MS_WEBERR, "Zoom direction must be 1, 0 or -1.", "loadForm()");
 	writeError();
@@ -270,8 +273,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"zoomsize") == 0) { // absolute zoom magnitude
-      ZoomSize = getNumeric(re, msObj->ParamValues[i]);      
+    if(strcasecmp(msObj->request->ParamNames[i],"zoomsize") == 0) { // absolute zoom magnitude
+      ZoomSize = getNumeric(re, msObj->request->ParamValues[i]);      
       if((ZoomSize > MAXZOOM) || (ZoomSize < 1)) {
 	msSetError(MS_WEBERR, "Invalid zoom size.", "loadForm()");
 	writeError();
@@ -279,8 +282,8 @@ void loadForm()
       continue;
     }
     
-    if(strcasecmp(msObj->ParamNames[i],"imgext") == 0) { // extent of an existing image in a web application
-      tokens = split(msObj->ParamValues[i], ' ', &n);
+    if(strcasecmp(msObj->request->ParamNames[i],"imgext") == 0) { // extent of an existing image in a web application
+      tokens = split(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -301,22 +304,22 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"searchmap") == 0) {      
+    if(strcasecmp(msObj->request->ParamNames[i],"searchmap") == 0) {      
       SearchMap = MS_TRUE;
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"id") == 0) {
-      strncpy(msObj->Id, msObj->ParamValues[i], IDSIZE);
+    if(strcasecmp(msObj->request->ParamNames[i],"id") == 0) {
+      strncpy(msObj->Id, msObj->request->ParamValues[i], IDSIZE);
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"mapext") == 0) { // extent of the new map or query
+    if(strcasecmp(msObj->request->ParamNames[i],"mapext") == 0) { // extent of the new map or query
 
-      if(strncasecmp(msObj->ParamValues[i],"shape",5) == 0)
+      if(strncasecmp(msObj->request->ParamValues[i],"shape",5) == 0)
         msObj->UseShapes = MS_TRUE;
       else {
-	tokens = split(msObj->ParamValues[i], ' ', &n);
+	tokens = split(msObj->request->ParamValues[i], ' ', &n);
 	
 	if(!tokens) {
 	  msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -353,31 +356,31 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"minx") == 0) { // extent of the new map, in pieces
-      msObj->Map->extent.minx = getNumeric(re, msObj->ParamValues[i]);      
+    if(strcasecmp(msObj->request->ParamNames[i],"minx") == 0) { // extent of the new map, in pieces
+      msObj->Map->extent.minx = getNumeric(re, msObj->request->ParamValues[i]);      
       continue;
     }
-    if(strcasecmp(msObj->ParamNames[i],"maxx") == 0) {      
-      msObj->Map->extent.maxx = getNumeric(re, msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"maxx") == 0) {      
+      msObj->Map->extent.maxx = getNumeric(re, msObj->request->ParamValues[i]);
       continue;
     }
-    if(strcasecmp(msObj->ParamNames[i],"miny") == 0) {
-      msObj->Map->extent.miny = getNumeric(re, msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"miny") == 0) {
+      msObj->Map->extent.miny = getNumeric(re, msObj->request->ParamValues[i]);
       continue;
     }
-    if(strcasecmp(msObj->ParamNames[i],"maxy") == 0) {
-      msObj->Map->extent.maxy = getNumeric(re, msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"maxy") == 0) {
+      msObj->Map->extent.maxy = getNumeric(re, msObj->request->ParamValues[i]);
       msObj->CoordSource = FROMUSERBOX;
       QueryCoordSource = FROMUSERBOX;
       continue;
     } 
 
-    if(strcasecmp(msObj->ParamNames[i],"mapxy") == 0) { // user map coordinate
+    if(strcasecmp(msObj->request->ParamNames[i],"mapxy") == 0) { // user map coordinate
       
-      if(strncasecmp(msObj->ParamValues[i],"shape",5) == 0) {
+      if(strncasecmp(msObj->request->ParamValues[i],"shape",5) == 0) {
         msObj->UseShapes = MS_TRUE;	
       } else {
-	tokens = split(msObj->ParamValues[i], ' ', &n);
+	tokens = split(msObj->request->ParamValues[i], ' ', &n);
 
 	if(!tokens) {
 	  msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -411,12 +414,12 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"mapshape") == 0) { // query shape
+    if(strcasecmp(msObj->request->ParamNames[i],"mapshape") == 0) { // query shape
       lineObj line={0,NULL};
       char **tmp=NULL;
       int n, j;
       
-      tmp = split(msObj->ParamValues[i], ' ', &n);
+      tmp = split(msObj->request->ParamValues[i], ' ', &n);
 
       if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -450,8 +453,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"img.x") == 0) { // mouse click, in pieces
-      msObj->ImgPnt.x = getNumeric(re, msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"img.x") == 0) { // mouse click, in pieces
+      msObj->ImgPnt.x = getNumeric(re, msObj->request->ParamValues[i]);
       if((msObj->ImgPnt.x > (2*MS_MAXIMGSIZE)) || (msObj->ImgPnt.x < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -460,8 +463,8 @@ void loadForm()
       QueryCoordSource = FROMIMGPNT;
       continue;
     }
-    if(strcasecmp(msObj->ParamNames[i],"img.y") == 0) {
-      msObj->ImgPnt.y = getNumeric(re, msObj->ParamValues[i]);      
+    if(strcasecmp(msObj->request->ParamNames[i],"img.y") == 0) {
+      msObj->ImgPnt.y = getNumeric(re, msObj->request->ParamValues[i]);      
       if((msObj->ImgPnt.y > (2*MS_MAXIMGSIZE)) || (msObj->ImgPnt.y < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -471,11 +474,11 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"imgxy") == 0) { // mouse click, single variable
+    if(strcasecmp(msObj->request->ParamNames[i],"imgxy") == 0) { // mouse click, single variable
       if(msObj->CoordSource == FROMIMGPNT)
 	continue;
 
-      tokens = split(msObj->ParamValues[i], ' ', &n);
+      tokens = split(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -504,8 +507,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"imgbox") == 0) { // selection box (eg. mouse drag)
-      tokens = split(msObj->ParamValues[i], ' ', &n);
+    if(strcasecmp(msObj->request->ParamNames[i],"imgbox") == 0) { // selection box (eg. mouse drag)
+      tokens = split(msObj->request->ParamValues[i], ' ', &n);
       
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -531,12 +534,12 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"imgshape") == 0) { // shape given in image coordinates
+    if(strcasecmp(msObj->request->ParamNames[i],"imgshape") == 0) { // shape given in image coordinates
       lineObj line={0,NULL};
       char **tmp=NULL;
       int n, j;
       
-      tmp = split(msObj->ParamValues[i], ' ', &n);
+      tmp = split(msObj->request->ParamValues[i], ' ', &n);
 
       if((line.point = (pointObj *)malloc(sizeof(pointObj)*(n/2))) == NULL) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -561,8 +564,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"ref.x") == 0) { // mouse click in reference image, in pieces
-      msObj->RefPnt.x = getNumeric(re, msObj->ParamValues[i]);      
+    if(strcasecmp(msObj->request->ParamNames[i],"ref.x") == 0) { // mouse click in reference image, in pieces
+      msObj->RefPnt.x = getNumeric(re, msObj->request->ParamValues[i]);      
       if((msObj->RefPnt.x > (2*MS_MAXIMGSIZE)) || (msObj->RefPnt.x < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -570,8 +573,8 @@ void loadForm()
       msObj->CoordSource = FROMREFPNT;
       continue;
     }
-    if(strcasecmp(msObj->ParamNames[i],"ref.y") == 0) {
-      msObj->RefPnt.y = getNumeric(re, msObj->ParamValues[i]); 
+    if(strcasecmp(msObj->request->ParamNames[i],"ref.y") == 0) {
+      msObj->RefPnt.y = getNumeric(re, msObj->request->ParamValues[i]); 
       if((msObj->RefPnt.y > (2*MS_MAXIMGSIZE)) || (msObj->RefPnt.y < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
@@ -580,8 +583,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"refxy") == 0) { /* mouse click in reference image, single variable */
-      tokens = split(msObj->ParamValues[i], ' ', &n);
+    if(strcasecmp(msObj->request->ParamNames[i],"refxy") == 0) { /* mouse click in reference image, single variable */
+      tokens = split(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -607,15 +610,15 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"buffer") == 0) { // radius (map units), actually 1/2 square side
-      msObj->Buffer = getNumeric(re, msObj->ParamValues[i]);      
+    if(strcasecmp(msObj->request->ParamNames[i],"buffer") == 0) { // radius (map units), actually 1/2 square side
+      msObj->Buffer = getNumeric(re, msObj->request->ParamValues[i]);      
       msObj->CoordSource = FROMBUF;
       QueryCoordSource = FROMUSERPNT;
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"scale") == 0) { // scale for new map
-      msObj->Scale = getNumeric(re, msObj->ParamValues[i]);      
+    if(strcasecmp(msObj->request->ParamNames[i],"scale") == 0) { // scale for new map
+      msObj->Scale = getNumeric(re, msObj->request->ParamValues[i]);      
       if(msObj->Scale <= 0) {
 	msSetError(MS_WEBERR, "Scale out of range.", "loadForm()");
 	writeError();
@@ -625,8 +628,8 @@ void loadForm()
       continue;
     }
     
-    if(strcasecmp(msObj->ParamNames[i],"imgsize") == 0) { // size of existing image (pixels)
-      tokens = split(msObj->ParamValues[i], ' ', &n);
+    if(strcasecmp(msObj->request->ParamNames[i],"imgsize") == 0) { // size of existing image (pixels)
+      tokens = split(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -651,8 +654,8 @@ void loadForm()
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"mapsize") == 0) { // size of new map (pixels)
-      tokens = split(msObj->ParamValues[i], ' ', &n);
+    if(strcasecmp(msObj->request->ParamNames[i],"mapsize") == 0) { // size of new map (pixels)
+      tokens = split(msObj->request->ParamValues[i], ' ', &n);
 
       if(!tokens) {
 	msSetError(MS_MEMERR, NULL, "loadForm()");
@@ -676,11 +679,11 @@ void loadForm()
       continue;
     }
 
-    if(strncasecmp(msObj->ParamNames[i],"layers", 6) == 0) { // turn a set of layers, delimited by spaces, on
+    if(strncasecmp(msObj->request->ParamNames[i],"layers", 6) == 0) { // turn a set of layers, delimited by spaces, on
       int num_layers=0, l;
       char **layers=NULL;
 
-      layers = split(msObj->ParamValues[i], ' ', &(num_layers));
+      layers = split(msObj->request->ParamValues[i], ' ', &(num_layers));
       for(l=0; l<num_layers; l++)
 	msObj->Layers[msObj->NumLayers+l] = strdup(layers[l]);
       msObj->NumLayers += l;
@@ -690,62 +693,62 @@ void loadForm()
       continue;
     }
 
-    if(strncasecmp(msObj->ParamNames[i],"layer", 5) == 0) { // turn a single layer/group on
-      msObj->Layers[msObj->NumLayers] = strdup(msObj->ParamValues[i]);
+    if(strncasecmp(msObj->request->ParamNames[i],"layer", 5) == 0) { // turn a single layer/group on
+      msObj->Layers[msObj->NumLayers] = strdup(msObj->request->ParamValues[i]);
       msObj->NumLayers++;
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"qlayer") == 0) { // layer to query (i.e search)
-      QueryLayer = strdup(msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"qlayer") == 0) { // layer to query (i.e search)
+      QueryLayer = strdup(msObj->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"qitem") == 0) { // attribute to query on (optional)
-      QueryItem = strdup(msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"qitem") == 0) { // attribute to query on (optional)
+      QueryItem = strdup(msObj->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"qstring") == 0) { // attribute query string
-      QueryString = strdup(msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"qstring") == 0) { // attribute query string
+      QueryString = strdup(msObj->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"slayer") == 0) { // layer to select (for feature based search)
-      SelectLayer = strdup(msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"slayer") == 0) { // layer to select (for feature based search)
+      SelectLayer = strdup(msObj->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"item") == 0) { // search item
-      Item = strdup(msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"item") == 0) { // search item
+      Item = strdup(msObj->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"value") == 0) { // search expression
+    if(strcasecmp(msObj->request->ParamNames[i],"value") == 0) { // search expression
       if(!Value)
-	Value = strdup(msObj->ParamValues[i]);
+	Value = strdup(msObj->request->ParamValues[i]);
       else { /* need to append */
 	tmpstr = strdup(Value);
 	free(Value);
-	Value = (char *)malloc(strlen(tmpstr)+strlen(msObj->ParamValues[i])+2);
-	sprintf(Value, "%s|%s", tmpstr, msObj->ParamValues[i]);
+	Value = (char *)malloc(strlen(tmpstr)+strlen(msObj->request->ParamValues[i])+2);
+	sprintf(Value, "%s|%s", tmpstr, msObj->request->ParamValues[i]);
 	free(tmpstr);
       }
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"shapeindex") == 0) { // used for index queries
-      ShapeIndex = getNumeric(re, msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"shapeindex") == 0) { // used for index queries
+      ShapeIndex = getNumeric(re, msObj->request->ParamValues[i]);
       continue;
     }
-    if(strcasecmp(msObj->ParamNames[i],"tileindex") == 0) {
-      TileIndex = getNumeric(re, msObj->ParamValues[i]);
+    if(strcasecmp(msObj->request->ParamNames[i],"tileindex") == 0) {
+      TileIndex = getNumeric(re, msObj->request->ParamValues[i]);
       continue;
     }
 
-    if(strcasecmp(msObj->ParamNames[i],"mode") == 0) { // set operation mode
+    if(strcasecmp(msObj->request->ParamNames[i],"mode") == 0) { // set operation mode
       for(j=0; j<numModes; j++) {
-	if(strcasecmp(msObj->ParamValues[i], modeStrings[j]) == 0) {
+	if(strcasecmp(msObj->request->ParamValues[i], modeStrings[j]) == 0) {
 	  msObj->Mode = j;
 
 	  if(msObj->Mode == ZOOMIN) {
@@ -770,8 +773,8 @@ void loadForm()
     }
 
     // check to see if there are any additions to the mapfile, this has been moved to loadMap()
-    //  if(strncasecmp(msObj->ParamNames[i],"map_",4) == 0) { 
-    //   if(msLoadMapString(msObj->Map, msObj->ParamNames[i], msObj->ParamValues[i]) == -1)
+    //  if(strncasecmp(msObj->request->ParamNames[i],"map_",4) == 0) { 
+    //   if(msLoadMapString(msObj->Map, msObj->request->ParamNames[i], msObj->request->ParamValues[i]) == -1)
     //	 writeError();
     //   continue;
     // }
@@ -788,27 +791,27 @@ void loadForm()
 /*                                                                      */
 /* -------------------------------------------------------------------- */
 
-    if(strcasecmp(msObj->ParamNames[i],"INPUT_TYPE") == 0)
+    if(strcasecmp(msObj->request->ParamNames[i],"INPUT_TYPE") == 0)
     { /* Rosa input type */
-        if(strcasecmp(msObj->ParamValues[i],"auto_rect") == 0) 
+        if(strcasecmp(msObj->request->ParamValues[i],"auto_rect") == 0) 
         {
             rosa_type=1; /* rectangle */
             continue;
         }
             
-        if(strcasecmp(msObj->ParamValues[i],"auto_point") == 0) 
+        if(strcasecmp(msObj->request->ParamValues[i],"auto_point") == 0) 
         {
             rosa_type=2; /* point */
             continue;
         }
     }
-    if(strcasecmp(msObj->ParamNames[i],"INPUT_COORD") == 0) 
+    if(strcasecmp(msObj->request->ParamNames[i],"INPUT_COORD") == 0) 
     { /* Rosa coordinates */
  
        switch(rosa_type)
        {
          case 1:
-             sscanf(msObj->ParamValues[i],"%lf,%lf;%lf,%lf",
+             sscanf(msObj->request->ParamValues[i],"%lf,%lf;%lf,%lf",
                     &msObj->ImgBox.minx,&msObj->ImgBox.miny,&msObj->ImgBox.maxx,
                     &msObj->ImgBox.maxy);
              if((msObj->ImgBox.minx != msObj->ImgBox.maxx) && 
@@ -826,7 +829,7 @@ void loadForm()
 	   }
            break;
          case 2:
-           sscanf(msObj->ParamValues[i],"%lf,%lf",&msObj->ImgPnt.x,
+           sscanf(msObj->request->ParamValues[i],"%lf,%lf",&msObj->ImgPnt.x,
                    &msObj->ImgPnt.y);
            msObj->CoordSource = FROMIMGPNT;
            QueryCoordSource = FROMIMGPNT;
@@ -1009,14 +1012,14 @@ int main(int argc, char *argv[]) {
 
     sprintf(msObj->Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
 
-    msObj->ParamNames = (char **) malloc(MAX_PARAMS*sizeof(char*));
-    msObj->ParamValues = (char **) malloc(MAX_PARAMS*sizeof(char*));
-    if (msObj->ParamNames==NULL || msObj->ParamValues==NULL) {
+    msObj->request->ParamNames = (char **) malloc(MAX_PARAMS*sizeof(char*));
+    msObj->request->ParamValues = (char **) malloc(MAX_PARAMS*sizeof(char*));
+    if (msObj->request->ParamNames==NULL || msObj->request->ParamValues==NULL) {
 	msSetError(MS_MEMERR, NULL, "mapserv()");
 	writeError();
     }
 
-    msObj->NumParams = loadParams(msObj->ParamNames, msObj->ParamValues);
+     = loadParams(msObj->request->ParamNames, msObj->request->ParamValues);
     msObj->Map = loadMap();
 
     /*
@@ -1024,17 +1027,17 @@ int main(int argc, char *argv[]) {
     ** process this as a regular MapServer request.
     */
 #if defined(USE_WMS_SVR) || defined(USE_WFS_SVR)
-    if ((status = msOWSDispatch(msObj->Map, msObj->ParamNames, 
-                                msObj->ParamValues, 
-                                msObj->NumParams)) != MS_DONE  ) 
+    if ((status = msOWSDispatch(msObj->Map, msObj->request->ParamNames, 
+                                msObj->request->ParamValues, 
+                                )) != MS_DONE  ) 
     {
       /* This was a WMS/WFS request... cleanup and exit 
        * At this point any error has already been handled
        * as an XML exception by the OGC service.
        */
       msFreeMap(msObj->Map);
-      msFreeCharArray(msObj->ParamNames, msObj->NumParams);
-      msFreeCharArray(msObj->ParamValues, msObj->NumParams);
+      msFreeCharArray(msObj->request->ParamNames, );
+      msFreeCharArray(msObj->request->ParamValues, msObj->NumParams);
        
       exit(0);
     }

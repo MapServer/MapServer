@@ -31,6 +31,7 @@
 #include "maphash.h"
 
 #include "mapproject.h"
+#include "cgiutil.h"
 
 #include <gd.h>
 
@@ -199,6 +200,7 @@ enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_M
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
 enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32 };
+
 
 #define MS_FILE_DEFAULT MS_FILE_MAP   
    
@@ -866,6 +868,7 @@ typedef struct {
   } img;
 #endif
 } imageObj;
+
 
 // Function prototypes, wrapable
 int msSaveImage(mapObj *map, imageObj *img, char *filename);

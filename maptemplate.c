@@ -1324,20 +1324,20 @@ char *generateLegendTemplate(mapservObj *msObj)
     * build prefix filename
     * for legend icon creation
    */
-   for(i=0;i<msObj->NumParams;i++) // find the mapfile parameter first
-     if(strcasecmp(msObj->ParamNames[i], "map") == 0) break;
+   for(i=0;i<msObj->request->NumParams;i++) // find the mapfile parameter first
+     if(strcasecmp(msObj->request->ParamNames[i], "map") == 0) break;
   
-   if(i == msObj->NumParams)
+   if(i == msObj->request->NumParams)
    {
        if ( getenv("MS_MAPFILE"))
            pszMapFname = strcatalloc(pszMapFname, getenv("MS_MAPFILE"));
    }
    else 
    {
-      if(getenv(msObj->ParamValues[i])) // an environment references the actual file to use
-        pszMapFname = strcatalloc(pszMapFname, getenv(msObj->ParamValues[i]));
+      if(getenv(msObj->request->ParamValues[i])) // an environment references the actual file to use
+        pszMapFname = strcatalloc(pszMapFname, getenv(msObj->request->ParamValues[i]));
       else
-        pszMapFname = strcatalloc(pszMapFname, msObj->ParamValues[i]);
+        pszMapFname = strcatalloc(pszMapFname, msObj->request->ParamValues[i]);
    }
    
    if (pszMapFname)
@@ -2214,12 +2214,12 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     } // next join
   } // end query mode specific substitutions
 
-  for(i=0;i<msObj->NumParams;i++) {
-    sprintf(substr, "[%s]", msObj->ParamNames[i]);
-    outstr = gsub(outstr, substr, msObj->ParamValues[i]);
-    sprintf(substr, "[%s_esc]", msObj->ParamNames[i]);
+  for(i=0;i<msObj->request->NumParams;i++) {
+    sprintf(substr, "[%s]", msObj->request->ParamNames[i]);
+    outstr = gsub(outstr, substr, msObj->request->ParamValues[i]);
+    sprintf(substr, "[%s_esc]", msObj->request->ParamNames[i]);
 
-    encodedstr = msEncodeUrl(msObj->ParamValues[i]);
+    encodedstr = msEncodeUrl(msObj->request->ParamValues[i]);
     outstr = gsub(outstr, substr, encodedstr);
     free(encodedstr);
   }
@@ -2538,6 +2538,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
   return MS_SUCCESS;
 }
 
+
 mapservObj*  msAllocMapServObj()
 {
    mapservObj* msObj = malloc(sizeof(mapservObj));
@@ -2545,9 +2546,7 @@ mapservObj*  msAllocMapServObj()
    msObj->SaveMap=MS_FALSE;
    msObj->SaveQuery=MS_FALSE; // should the query and/or map be saved 
 
-   msObj->ParamNames=NULL;
-   msObj->ParamValues=NULL;
-   msObj->NumParams=0;
+   msObj->request = msAlloccgiObj();
 
    msObj->Map=NULL;
 
@@ -2615,8 +2614,8 @@ void msFreeMapServObj(mapservObj* msObj)
   if(msObj) {
     msFreeMap(msObj->Map);
 
-    msFreeCharArray(msObj->ParamNames, msObj->NumParams);
-    msFreeCharArray(msObj->ParamValues, msObj->NumParams);
+    msFreeCharArray(msObj->request->ParamNames, msObj->request->NumParams);
+    msFreeCharArray(msObj->request->ParamValues, msObj->request->NumParams);
 
     for(i=0;i<msObj->NumLayers;i++) free(msObj->Layers[i]);
 
@@ -2776,9 +2775,9 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
 
         if (names && values && numentries > 0)
         {
-            msObj->ParamNames = names;
-            msObj->ParamValues = values;
-            msObj->NumParams = numentries;    
+            msObj->request->ParamNames = names;
+            msObj->request->ParamValues = values;
+            msObj->request->NumParams = numentries;    
         }
 /* -------------------------------------------------------------------- */
 /*      ISSUE/TODO : some of the name/values should be extracted and    */
@@ -2803,8 +2802,8 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
         // Don't free the map and names and values arrays since they were
         // passed by ref
         msObj->Map = NULL;
-        msObj->ParamNames = msObj->ParamValues = NULL;
-        msObj->NumParams = 0;
+        msObj->request->ParamNames = msObj->request->ParamValues = NULL;
+        msObj->request->NumParams = 0;
         msFreeMapServObj(msObj);
     }
 
@@ -2840,9 +2839,9 @@ char *msProcessLegendTemplate(mapObj *map,
 
         if (names && values && numentries > 0)
         {
-            msObj->ParamNames = names;
-            msObj->ParamValues = values;
-            msObj->NumParams = numentries;    
+            msObj->request->ParamNames = names;
+            msObj->request->ParamValues = values;
+            msObj->request->NumParams = numentries;    
         }
 
         pszOutBuf = generateLegendTemplate(msObj);
@@ -2850,8 +2849,8 @@ char *msProcessLegendTemplate(mapObj *map,
         // Don't free the map and names and values arrays since they were
         // passed by ref
         msObj->Map = NULL;
-        msObj->ParamNames = msObj->ParamValues = NULL;
-        msObj->NumParams = 0;
+        msObj->request->ParamNames = msObj->request->ParamValues = NULL;
+        msObj->request->NumParams = 0;
         msFreeMapServObj(msObj);
     }
 
@@ -2887,9 +2886,9 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages,
 
         if (names && values && numentries > 0)
         {
-            msObj->ParamNames = names;
-            msObj->ParamValues = values;
-            msObj->NumParams = numentries;    
+            msObj->request->ParamNames = names;
+            msObj->request->ParamValues = values;
+            msObj->request->NumParams = numentries;    
         }
         if (bGenerateImages)
           msGenerateImages(msObj, NULL, MS_FALSE);
@@ -2899,8 +2898,8 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages,
         // Don't free the map and names and values arrays since they were
         // passed by ref
         msObj->Map = NULL;
-        msObj->ParamNames = msObj->ParamValues = NULL;
-        msObj->NumParams = 0;
+        msObj->request->ParamNames = msObj->request->ParamValues = NULL;
+        msObj->request->NumParams = 0;
         msFreeMapServObj(msObj);
     }
 
