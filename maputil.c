@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.162  2004/10/28 02:12:48  frank
+ * Don't try and use msBuildPath() if filename is NULL (stdout) in msSaveImage().
+ * This prevents "noise" calls to msSetError() by msBuildPath().
+ *
  * Revision 1.161  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -371,7 +375,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
     {
         if( MS_DRIVER_GD(img->format) )
         {
-            if(map != NULL)
+            if(map != NULL && filename != NULL )
                 nReturnVal = msSaveImageGD(img->img.gd, 
                                            msBuildPath(szPath, map->mappath, 
                                                        filename), 
@@ -384,7 +388,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 #ifdef USE_GDAL
         else if( MS_DRIVER_GDAL(img->format) )
         {
-           if (map != NULL)
+           if (map != NULL && filename != NULL )
              nReturnVal = msSaveImageGDAL(map, img,
                                           msBuildPath(szPath, map->mappath, 
                                                       filename));
@@ -395,7 +399,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 #ifdef USE_MING_FLASH
         else if(MS_DRIVER_SWF(img->format) )
         {
-            if (map != NULL)
+            if (map != NULL && filename != NULL )
               nReturnVal = msSaveImageSWF(img, 
                                           msBuildPath(szPath, map->mappath, 
                                                       filename));
@@ -407,7 +411,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
 #ifdef USE_PDF
         else if( MS_RENDERER_PDF(img->format) )
         {
-            if (map != NULL)
+            if (map != NULL && filename != NULL )
               nReturnVal = msSaveImagePDF(img, 
                                           msBuildPath(szPath, map->mappath, 
                                                       filename));
