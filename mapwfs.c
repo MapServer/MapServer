@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.31  2004/02/23 21:24:44  assefa
+ * Name sapce missing for DescribeFeatureType request.
+ *
  * Revision 1.30  2004/02/12 23:29:12  assefa
  * Ordrer was incorrect for element Keyword and Fees.
  *
@@ -508,7 +511,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     int n=0;
     char *user_namespace_prefix = NULL;
     char *user_namespace_uri = NULL;
-    
+
     if(paramsObj->pszTypeName && numlayers == 0) 
     {
         // Parse comma-delimited list of type names (layers)
@@ -645,7 +648,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             else
               printf("\n"
                      "  <element name=\"%s\" \n"
-                     "           type=\"%s_Type\" \n"
+                     "           type=\"myns:%s_Type\" \n"
                      "           substitutionGroup=\"gml:_Feature\" />\n\n",
                      lp->name, lp->name);
 
