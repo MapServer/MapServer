@@ -78,11 +78,6 @@ MAP
         SYMBOL 1
         SIZE 7
       END
-      #STYLE
-      #  COLOR 0 0 0
-      #  SYMBOL 1
-      #  SIZE 3
-      #END
     END
     CLASS
       NAME "1"
