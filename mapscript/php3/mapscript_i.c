@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.22  2001/08/01 13:52:59  dan
+ * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
+ * to getSymbolByName().
+ *
  * Revision 1.21  2001/07/26 19:50:08  assefa
  * Add projection class and related functions.
  *
@@ -94,6 +98,7 @@
 #include "../../mapprimitive.h"
 #include "../../mapsymbol.h"
 #include "../../mapshape.h"
+#include "../../mapproject.h"
 
 /**********************************************************************
  * class extensions for mapObj
@@ -140,7 +145,7 @@ int mapObj_addColor(mapObj* self, int r, int g, int b) {
     return msAddColor(self, r, g, b);
   }
 
-int mapObj_getSymbolByName(mapObj* self, int type, char *name) {
+int mapObj_getSymbolByName(mapObj* self, char *name) {
     int symbol;
 
     if((symbol = msGetSymbolIndex(&self->symbolset, name)) == -1)
@@ -316,6 +321,10 @@ int layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img) {
 
 int layerObj_drawQuery(layerObj *self, mapObj *map, gdImagePtr img) {
     return msDrawLayer(map, self, img);    
+  }
+
+int layerObj_queryByAttributes(layerObj *self, mapObj *map, int mode) {
+    return msQueryByAttributes(map, self->index, mode);
   }
 
 int layerObj_queryByPoint(layerObj *self, mapObj *map, 

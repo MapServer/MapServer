@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.47  2001/08/01 13:52:59  dan
+ * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
+ * to getSymbolByName().
+ *
  * Revision 1.46  2001/07/26 19:50:08  assefa
  * Add projection class and related functions.
  *
@@ -125,7 +129,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Jul 23, 2001)"
+#define PHP3_MS_VERSION "(Aug 1, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -204,6 +208,7 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_drawQuery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByPoint(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_queryByAttributes(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
@@ -473,6 +478,7 @@ function_entry php_layer_class_functions[] = {
     {"draw",            php3_ms_lyr_draw,               NULL},    
     {"drawquery",       php3_ms_lyr_drawQuery,          NULL},    
     {"getclass",        php3_ms_lyr_getClass,           NULL},    
+    {"querybyattributes",php3_ms_lyr_queryByAttributes, NULL},    
     {"querybypoint",    php3_ms_lyr_queryByPoint,       NULL},    
     {"querybyrect",     php3_ms_lyr_queryByRect,        NULL},    
     {"querybyfeatures", php3_ms_lyr_queryByFeatures,    NULL},    
@@ -2111,12 +2117,11 @@ DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS)
 /*       Get the symbol id using it's name. Parameters are :            */
 /*                                                                      */
 /*        - symbol name                                                 */
-/*        - symbol type (not used for now : set it to -1)               */
 /************************************************************************/
 DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval        *pThis;
-    pval        *pSymName, *pType;
+    pval        *pSymName;
     mapObj      *self=NULL;
     int         nSymbolId = -1;
 
@@ -2131,20 +2136,19 @@ DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 2, &pSymName, &pType) == FAILURE) 
+        getParameters(ht, 1, &pSymName) == FAILURE) 
     {
         WRONG_PARAM_COUNT;
     }
 
     convert_to_string(pSymName);
-    convert_to_long(pType);
 
 
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
     if (self != NULL)
     {
         nSymbolId = 
-            mapObj_getSymbolByName(self, pType->value.lval, pSymName->value.str.val);
+            mapObj_getSymbolByName(self, pSymName->value.str.val);
     }
 
     RETURN_LONG(nSymbolId);
@@ -3770,6 +3774,57 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /**********************************************************************
+ *                        layer->queryByAttributes()
+ *
+ * Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
+ * you want. 
+ **********************************************************************/
+
+/* {{{ proto int layer.queryAttributes(int mode)
+   Query at point location. */
+
+DLEXPORT void php3_ms_lyr_queryByAttributes(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval   *pThis, *pType;
+    layerObj *self=NULL;
+    mapObj   *parent_map;
+    int      nStatus = MS_FAILURE;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pType) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pType);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list, E_ERROR);
+
+    if (self && parent_map &&
+        (nStatus=layerObj_queryByAttributes(self, parent_map,
+                                       pType->value.lval)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
+
+/**********************************************************************
  *                        layer->queryByPoint()
  *
  * Type is MS_SINGLE or MS_MULTIPLE depending on number of results
@@ -3778,7 +3833,7 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
  * ground units) instead.
  **********************************************************************/
 
-/* {{{ proto queryResultObj layer.queryByPoint(pointObj point, int type, double buffer)
+/* {{{ proto int layer.queryByPoint(pointObj point, int type, double buffer)
    Query at point location. */
 
 DLEXPORT void php3_ms_lyr_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)

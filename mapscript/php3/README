@@ -222,12 +222,12 @@ Very important note: Constant names and class member variable names are
          If provided then it will be impossible to zoom/pan outside of
          those extents.
 
-   int queryByPoint(pointObj point, int type, double buffer)
+   int queryByPoint(pointObj point, int mode, double buffer)
         Query all selected layers in map at point location specified in 
         georeferenced map coordinates (i.e. not pixels).  
         The query is performed on all the shapes that are part of a CLASS 
         that contains a TEMPLATE parameter.
-        Type is MS_SINGLE or MS_MULTIPLE depending on number of results
+        Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
         (in pixels) but you can use a constant buffer (specified in 
@@ -336,12 +336,12 @@ Very important note: Constant names and class member variable names are
    classObj getClass(int classIndex)
         Returns a classObj from the layer given an index value (0=first class)
 
-   int queryByPoint(pointObj point, int type, double buffer)
+   int queryByPoint(pointObj point, int mode, double buffer)
         Query layer at point location specified in georeferenced map 
         coordinates (i.e. not pixels).  
         The query is performed on all the shapes that are part of a CLASS 
         that contains a TEMPLATE parameter.
-        Type is MS_SINGLE or MS_MULTIPLE depending on number of results
+        Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
         (in pixels) but you can use a constant buffer (specified in 
@@ -373,6 +373,17 @@ Very important note: Constant names and class member variable names are
         Perform a query set based on a previous set of results from
         another layer. At present the results MUST be based on a polygon
         layer.
+        Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
+        was found or if some other error happened (note that the error 
+        message in case nothing was found can be avoided in PHP using 
+        the '@' control operator).
+
+   int queryByAttributes(int mode)
+        Query layer for shapes that intersect current map extents.
+        The query is performed on all the shapes that intersect the current
+        map extent and are part of a CLASS that contains a TEMPLATE parameter.
+        Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
+        you want. 
         Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
         was found or if some other error happened (note that the error 
         message in case nothing was found can be avoided in PHP using 

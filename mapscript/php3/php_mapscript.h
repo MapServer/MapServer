@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, danmo@videotron.ca
  *
  **********************************************************************
- * Copyright (c) 2000, Daniel Morissette
+ * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2001/08/01 13:52:59  dan
+ * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
+ * to getSymbolByName().
+ *
  * Revision 1.10  2001/07/26 19:50:08  assefa
  * Add projection class and related functions.
  *
@@ -88,7 +92,7 @@ void            mapObj_destroy(mapObj* self);
 layerObj       *mapObj_getLayer(mapObj* self, int i);
 layerObj       *mapObj_getLayerByName(mapObj* self, char *name);
 int             mapObj_addColor(mapObj* self, int r, int g, int b);
-int             mapObj_getSymbolByName(mapObj* self, int type, char *name);
+int             mapObj_getSymbolByName(mapObj* self, char *name);
 void            mapObj_prepareQuery(mapObj* self);
 gdImagePtr      mapObj_prepareImage(mapObj* self);
 gdImagePtr      mapObj_draw(mapObj* self);
@@ -121,6 +125,8 @@ resultCacheMemberObj *layerObj_getResult(layerObj *self, int i);
 classObj       *layerObj_getClass(layerObj *self, int i);
 int             layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img);
 int             layerObj_drawQuery(layerObj *self, mapObj *map,gdImagePtr img);
+int             layerObj_queryByAttributes(layerObj *self, mapObj *map, 
+                                           int mode);
 int             layerObj_queryByPoint(layerObj *self, mapObj *map, 
                           pointObj *point, int mode, double buffer);
 int             layerObj_queryByRect(layerObj *self, mapObj *map,rectObj rect);
