@@ -673,9 +673,11 @@ Constructor:
    shapefileObj ms_newShapefileObj(string filename, int type)
         Opens a shapefile and returns a new object to deal with it. 
         Filename should be passed with no extension.
-        Pass type as -1 when opening an existing file.  
-        To create a new file, type should be one of MS_SHP_POINT, 
-        MS_SHP_ARC, MS_SHP_POLYGON or MS_SHP_MULTIPOINT.
+        To create a new file (or overwrite an existing one), type should 
+        be one of MS_SHP_POINT, MS_SHP_ARC, MS_SHP_POLYGON or 
+        MS_SHP_MULTIPOINT.
+        Pass type as -1 to open an existing file for read-only access,
+	and type=-2 to open an existing file for update (append).
 
  Members:
 
