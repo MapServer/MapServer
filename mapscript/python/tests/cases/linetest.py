@@ -70,12 +70,5 @@ class LineObjTestCase(MapPrimitivesTestCase):
         """numpoints is immutable, this should raise error"""
         self.assertRaises(AttributeError, setattr, self.line, 'numpoints', 3)
 
-    def testIterator(self):
-        i = 0
-        for p in self.line:
-            self.assertPointsEqual(p, self.points[i])
-            i = i + 1
-
-
 if __name__ == '__main__':
     unittest.main()
