@@ -57,24 +57,19 @@ import mapscript
 
 # normalize names, allows testing of module that uses the experimental
 # next generation names
-if 'mapObj' not in dir(mapscript):
-    mapscript.mapObj = mapscript.Map
-    mapscript.layerObj = mapscript.Layer
-    mapscript.classObj = mapscript.Class
-    mapscript.styleObj = mapscript.Style
-    mapscript.shapeObj = mapscript.Shape
-    mapscript.lineObj = mapscript.Line
-    mapscript.pointObj = mapscript.Point
-    mapscript.rectObj = mapscript.Rect
-    mapscript.outputFormatObj = mapscript.OutputFormat
-    mapscript.symbolObj = mapscript.Symbol
-    mapscript.symbolSetObj = mapscript.SymbolSet
-    mapscript.colorObj = mapscript.Color
-    mapscript.imageObj = mapscript.Image
-    mapscript.shapefileObj = mapscript.Shapefile
-    mapscript.projectionObj = mapscript.Projection
-    mapscript.fontSetObj = mapscript.FontSet
-    mapscript.hashTableObj = mapscript.HashTable
+classnames = [ 'mapObj', 'layerObj', 'classObj', 'styleObj', 'shapeObj',
+            'lineObj', 'pointObj', 'rectObj', 'outputFormatObj', 'symbolObj',
+            'symbolSetObj', 'colorObj', 'imageObj', 'shapefileObj',
+            'projectionObj', 'fontSetObj', 'hashTableObj' ]
+
+for name in classnames:
+    try:
+        new_name = name.replace('Obj', '')
+        new_name = new_name.capitalize()
+        new_object = getattr(mapscript, new_name)
+        setattr(mapscript, name, new_object)
+    except AttributeError:
+        pass
 
 # ==========================================================================
 # Base testing classes
