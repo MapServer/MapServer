@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.36  2002/11/25 18:41:26  dan
+ * Do not overwrite lp->connection in msBuildWMSLayerURL()
+ *
  * Revision 1.35  2002/11/21 00:59:31  dan
  * Added msBuildWMSLayerURLBase() to build WMS connection URL from metadata
  *
@@ -126,6 +129,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     char *pszURL = NULL, *pszFormat;
     const char *pszOnlineResource, *pszVersion, *pszName;
     const char *pszFormatList, *pszStyle, *pszStyleList;
+    const char *pszVersionKeyword=NULL;
     int nLen;
 
     pszOnlineResource = msLookupHashTable(lp->metadata, "wms_onlineresource");
@@ -231,10 +235,15 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
             strcpy(c+1, "&");
     }
 
+    if (strncmp(pszVersion, "1.0.7", 5) < 0)
+        pszVersionKeyword = "WMTVER";
+    else
+        pszVersionKeyword = "VERSION";
+
     // TODO: We should urlencode all values.
     sprintf(pszURL + strlen(pszURL),
-            "SERVICE=WMS&VERSION=%s&LAYERS=%s&FORMAT=%s&STYLES=%s&TRANSPARENT=TRUE",
-            pszVersion, pszName, pszFormat, pszStyle);
+            "SERVICE=WMS&%s=%s&LAYERS=%s&FORMAT=%s&STYLES=%s&TRANSPARENT=TRUE",
+            pszVersionKeyword, pszVersion, pszName, pszFormat, pszStyle);
     if (msIsLayerQueryable(lp))
     {
         sprintf(pszURL + strlen(pszURL),
@@ -288,16 +297,20 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
          (pszVersion = strstr(lp->connection, "wmtver=")) == NULL ) )
     {
         // CONNECTION missing or seems incomplete... try to build from metadata
-        if (lp->connection) free(lp->connection);
-        lp->connection = msBuildWMSLayerURLBase(map, lp);
-        if (lp->connection == NULL)
+        pszURL = msBuildWMSLayerURLBase(map, lp);
+        if (pszURL == NULL)
             return NULL;  // An error already produced.
     }
+    else
+    {
+        // CONNECTION string seems complete, start with that.
+        pszURL = strdup(lp->connection);
+    }
 
-    if ((pszVersion = strstr(lp->connection, "VERSION=")) == NULL &&
-        (pszVersion = strstr(lp->connection, "version=")) == NULL &&
-        (pszVersion = strstr(lp->connection, "WMTVER=")) == NULL &&
-        (pszVersion = strstr(lp->connection, "wmtver=")) == NULL ) 
+    if ((pszVersion = strstr(pszURL, "VERSION=")) == NULL &&
+        (pszVersion = strstr(pszURL, "version=")) == NULL &&
+        (pszVersion = strstr(pszURL, "WMTVER=")) == NULL &&
+        (pszVersion = strstr(pszURL, "wmtver=")) == NULL ) 
     {
         msSetError(MS_WMSCONNERR, "WMS Connection String must contain the VERSION or WMTVER parameter (with name in uppercase).", "msBuildWMSLayerURL()");
         return NULL;
@@ -320,8 +333,8 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * For GetFeatureInfo requests, make sure QUERY_LAYERS is included
  * ------------------------------------------------------------------ */
     if  (nRequestType == WMS_GETFEATUREINFO &&
-         strstr(lp->connection, "QUERY_LAYERS=") == NULL &&
-         strstr(lp->connection, "query_layers=") == NULL )
+         strstr(pszURL, "QUERY_LAYERS=") == NULL &&
+         strstr(pszURL, "query_layers=") == NULL )
     {
         msSetError(MS_WMSCONNERR, "WMS Connection String must contain the QUERY_LAYERS parameter to support GetFeatureInfo requests (with name in uppercase).", "msBuildWMSLayerURL()");
         return NULL;
@@ -414,7 +427,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  *   QUERY_LAYERS (for queriable layers only)
  * ------------------------------------------------------------------ */
     // Make sure we have a big enough buffer for the URL
-    if(!(pszURL = (char *)malloc((strlen(lp->connection)+256)*sizeof(char)))) 
+    if(!(pszURL = (char *)realloc(pszURL, (strlen(pszURL)+256)*sizeof(char)))) 
     {
         msSetError(MS_MEMERR, NULL, "msBuildWMSLayerURL()");
         return NULL;
@@ -448,10 +461,10 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             sprintf(szFeatureCount, "&FEATURE_COUNT=%d", nFeatureCount);
         }
 
-        sprintf(pszURL, 
-                "%s&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
+        sprintf(pszURL + strlen(pszURL), 
+                "&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
                 "&EXCEPTIONS=%s&X=%d&Y=%d&INFO_FORMAT=%s%s",
-                lp->connection, pszRequestParam, map->width, map->height, 
+                pszRequestParam, map->width, map->height, 
                 pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
                 pszExceptionsParam,
                 nClickX, nClickY, pszInfoFormat, szFeatureCount);
@@ -468,10 +481,10 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         else
             pszExceptionsParam = "INIMAGE";
 
-        sprintf(pszURL, 
-                "%s&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
+        sprintf(pszURL + strlen(pszURL), 
+                "&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
                 "&EXCEPTIONS=%s",
-                lp->connection, pszRequestParam, map->width, map->height, 
+                pszRequestParam, map->width, map->height, 
                 pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
                 pszExceptionsParam);
     }
