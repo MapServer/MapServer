@@ -1,6 +1,11 @@
 #include "map.h"
 
+#ifndef FLT_MAX
+#define FLT_MAX 25000000.0
+#endif
+
 #ifdef USE_POSTGIS
+
 
 #include "libpq-fe.h"
 
@@ -69,9 +74,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
         msSetError(MS_QUERYERR, "Error parsing POSTGIS connection information.", 
                  "msPOSTGISLayerOpen()");
       
-        PQfinish(layerinfo->conn);
 	  free(layerinfo);
-	  layerinfo->conn = NULL;
 	  return(MS_FAILURE);
     }
 
@@ -137,7 +140,7 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 	char	table_name[100];
 	char	geom_column_name[100];
 	int	nitems;
-	char	columns_wanted[500];
+	char	columns_wanted[5000];
 	char	temp[200];
 	char	box3d[200];
 	int	t;
@@ -155,8 +158,8 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
 		return(MS_FAILURE);
 	}
 
-	query_str = (char *) malloc(3000); //should be big enough
-	memset(query_str,0,2000);		//zero it out
+	query_str = (char *) malloc(6000); //should be big enough
+	memset(query_str,0,6000);		//zero it out
 
 	//get the table name and geometry column name
 	nitems = sscanf(layer->data,"%99s from %99s",geom_column_name,table_name);
@@ -727,7 +730,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	char	table_name[100];
 	char	geom_column_name[100];
 	int	nitems;
-	char	columns_wanted[500];
+	char	columns_wanted[5000];
 	char	temp[200];
 	
 
@@ -748,8 +751,8 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 		return(MS_FAILURE);
 	}
 
-	query_str = (char *) malloc(3000); //should be big enough
-	memset(query_str,0,2000);		//zero it out
+	query_str = (char *) malloc(6000); //should be big enough
+	memset(query_str,0,6000);		//zero it out
 
 	//get the table name and geometry column name
 	nitems = sscanf(layer->data,"%99s from %99s",geom_column_name,table_name);
@@ -790,8 +793,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 						columns_wanted,table_name,record);
 
 
-//fprintf(stderr,query_str);
-//fprintf(stderr,"\n");
+//fprintf(stderr,query_str); fprintf(stderr,"\n");
 
     query_result = PQexec(layerinfo->conn, "BEGIN");
     if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
@@ -1019,8 +1021,8 @@ int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
 //fprintf(stderr,"msPOSTGISLayerGetExtent called\n");
 
 
-	extent->minx = extent->miny =  -25000000.0;
-	extent->maxx = extent->maxy =  25000000.0;
+	extent->minx = extent->miny =  -1.0*FLT_MAX ;
+	extent->maxx = extent->maxy =  FLT_MAX;
 
 	return(MS_SUCCESS); 
 }
