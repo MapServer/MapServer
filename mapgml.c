@@ -414,6 +414,8 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 }
 
 
+#ifdef USE_WFS_SVR
+
 /*
 ** msGMLWriteWFSQuery()
 **
@@ -438,6 +440,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
     if(lp->dump == MS_TRUE && 
        lp->resultcache && lp->resultcache->numresults > 0) 
     { // found results
+      const char *geom_name;
+      geom_name = msWFSGetGeomElementName(map, lp);
 
       // actually open the layer
       status = msLayerOpen(lp, map->shapepath);
@@ -469,25 +473,29 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
 	  fprintf(stream, "        <%s>%s</%s>\n", 
                   lp->items[k], shape.values[k], lp->items[k]);
 
+        fprintf(stream, "        <%s>\n", geom_name); 
+
 	// write the bounding box
 #ifdef USE_PROJ
 	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "        ");
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "          ");
 	else // then use the layer projection and/or metadata
-	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "        ");	
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "          ");	
 #else
-	gmlWriteBounds(stream, &(shape.bounds), NULL, "        "); // no projection information
+	gmlWriteBounds(stream, &(shape.bounds), NULL, "          "); // no projection information
 #endif
 
 	// write the feature geometry
 #ifdef USE_PROJ
 	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "        ");
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "          ");
         else // then use the layer projection and/or metadata
-	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "        ");      
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "          ");      
 #else
-	gmlWriteGeometry(stream, &(shape), NULL, "        ");
+	gmlWriteGeometry(stream, &(shape), NULL, "          ");
 #endif
+
+        fprintf(stream, "        </%s>\n", geom_name); 
 
 	// end this feature
 	fprintf(stream, "      </%s>\n", lp->name);
@@ -506,3 +514,5 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream)
 
   return(MS_SUCCESS);
 }
+
+#endif /* USE_WFS_SVR */

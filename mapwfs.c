@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2002/10/08 02:40:08  dan
+ * Added WFS DescribeFeatureType
+ *
  * Revision 1.2  2002/10/04 21:29:41  dan
  * WFS: Added GetCapabilities and basic GetFeature (still some work to do)
  *
@@ -116,6 +119,95 @@ static void msWFSPrintRequestCap(const char *wmtver, const char *request,
   printf("    </%s>\n", request);
 }
 
+/* msWFSIsLayerSupported()
+**
+** Returns true (1) is this layer meets the requirements to be served as
+** a WFS feature type.
+*/
+static int msWFSIsLayerSupported(layerObj *lp)
+{
+    /* In order to be supported, lp->type must be specified, even for 
+    ** layers that are OGR, SDE, SDO, etc connections.
+    ** lp->dump must be explicitly set to TRUE in mapfile.
+    */
+    if (lp->dump && 
+        (lp->type == MS_LAYER_POINT ||
+         lp->type == MS_LAYER_LINE ||
+         lp->type == MS_LAYER_POLYGON ) &&
+        lp->connectiontype != MS_WMS )
+    {
+        return 1; /* true */
+    }
+
+    return 0; /* false */
+}
+
+
+/* msWFSGetSchemasLocation()
+**
+** schemas location is the root of the web tree where all WFS-related 
+** schemas can be found on this server.  These URLs must exist in order 
+** to validate xml.
+**
+** Use value of "wfs_schemas_location", otherwise return ".."
+*/
+static const char *msWFSGetSchemasLocation(mapObj *map)
+{
+    const char *schemas_location;
+
+    schemas_location = msLookupHashTable(map->web.metadata, 
+                                         "wfs_schemas_location");
+    if (schemas_location == NULL)
+        schemas_location = "..";
+
+    return schemas_location;
+}
+
+/* msWFSGetGeomElementName()
+**
+** Return the Element name for the geometry in this layer, look for
+** "wfs_geometry_element_name" metadata in layer or in map, or default 
+** to "MS_GEOMETRY"
+*/
+const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp)
+{
+    const char *name;
+
+    if ((name = msLookupHashTable(lp->metadata, 
+                                  "wfs_geometry_element_name")) == NULL &&
+        (name = msLookupHashTable(map->web.metadata, 
+                                  "wfs_geometry_element_name")) == NULL )
+    {
+        name = "MS_GEOMETRY";
+    }
+
+    return name;
+
+}
+
+/* msWFSGetGeomType()
+**
+** Return GML name for geometry type in this layer
+** This is based on MapServer geometry type and layers with mixed geometries
+** may not return the right feature type.
+*/
+static const char *msWFSGetGeomType(layerObj *lp)
+{
+
+    switch(lp->type)
+    {
+      case MS_LAYER_POINT:
+        return "PointPropertyType";
+      case MS_LAYER_LINE:
+        return "LineStringPropertyType";
+      case MS_LAYER_POLYGON:
+        return "PolygonPropertyType";
+      default:
+        break;
+    }
+
+    return "???unknown???";
+}
 
 /*
 ** msWFSDumpLayer()
@@ -275,8 +367,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
       lp = &(map->layers[i]);
 
       // List only vector layers in which DUMP=TRUE
-      if (lp->dump && lp->type != MS_LAYER_RASTER &&
-          lp->connectiontype != MS_WMS)
+      if (msWFSIsLayerSupported(lp))
       {
           msWFSDumpLayer(map, lp);
       }
@@ -316,29 +407,137 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
 int msWFSDescribeFeatureType(mapObj *map, const char *wmtver, 
                              char **names, char **values, int numentries)
 {
-    int i;
-    const char *pszTypename = NULL;
+    int i, numlayers=0;
+    char **layers = NULL;
+    const char *myns_uri = NULL;
 
     for(i=0; map && i<numentries; i++) 
     {
-        if(strcasecmp(names[i], "TYPENAME") == 0) 
+        if(strcasecmp(names[i], "TYPENAME") == 0 && numlayers == 0) 
         {
-            pszTypename = values[i];
+            // Parse comma-delimited list of type names (layers)
+            //
+            // __TODO__ Need to handle type grouping, e.g. "(l1,l2),l3,l4"
+            //
+            layers = split(values[i], ',', &numlayers);
         } 
+        else if (strcasecmp(names[i], "OUTPUTFORMAT") == 0)
+        {
+            /* We support only XMLSCHEMA for now.
+             */
+            if (strcasecmp(values[i], "XMLSCHEMA") != 0)
+            {
+                msSetError(MS_WFSERR, 
+                        "Unsupported DescribeFeatureType outputFormat (%s).", 
+                           "msWFSDescribeFeatureType()", values[i]);
+                return msWFSException(map, wmtver);
+            }
+        }
 
     }
 
-    if(pszTypename == NULL) 
-    {
-        msSetError(MS_WFSERR, 
-              "Required TYPENAME parameter missing for DescribeFeatureType.", 
-                   "msWFSDescribeFeatureType()");
-        return msWFSException(map, wmtver);
-    }
-
-
+    /*
+    ** DescribeFeatureType response
+    */
     printf("Content-type: text/plain%c%c",10,10);
-    printf("msWFSDescribeFeatureType() not implemented yet.\n\n");
+
+    msOWSPrintMetadata(map->web.metadata, "wfs_encoding", OWS_NOERR,
+                       "<?xml version='1.0' encoding=\"%s\" ?>\n",
+                       "ISO-8859-1");
+
+    myns_uri = msLookupHashTable(map->web.metadata, "gml_uri");
+    if (myns_uri == NULL)
+        myns_uri = "http://www.ttt.org/myns";
+
+    printf("<schema\n"
+           "   targetNamespace=\"%s\" \n"
+           "   xmlns:myns=\"%s\" \n"
+           "   xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\n"
+           "   xmlns=\"http://www.w3.org/2001/XMLSchema\"\n"
+           "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
+           "   elementFormDefault=\"qualified\" version=\"0.1\" >\n", 
+           myns_uri, myns_uri );
+
+    printf("\n"
+           "  <import namespace=\"http://www.opengis.net/gml\" \n"
+           "          schemaLocation\"%s/gml/2.1/feature.xsd\" />\n",
+           msWFSGetSchemasLocation(map));
+
+    /*
+    ** loop through layers 
+    */
+    for(i=0; i<map->numlayers; i++) 
+    {
+        layerObj *lp;
+        int j, bFound = 0;
+
+        lp = &(map->layers[i]);
+
+        for (j=0; j<numlayers && !bFound; j++)
+        {
+            if (msWFSIsLayerSupported(lp) && lp->name && 
+                strcasecmp(lp->name, layers[j]) == 0)
+            {
+                bFound = 1;
+            }
+        }
+
+        if (numlayers == 0 || bFound)
+        {
+            /*
+            ** OK, describe this layer
+            */
+
+            printf("\n"
+                   "  <element name=\"%s\" \n"
+                   "           type=\"%s_Type\" \n"
+                   "           substitutionGroup=\"gml:_Feature\" />\n\n",
+                   lp->name, lp->name);
+
+            printf("  <complexType name=\"%s_Type\">\n", lp->name);
+            printf("    <complexContent>\n");
+            printf("      <extension base=\"gml:AbstractFeatureType\">\n");
+            printf("        <sequence>\n");
+
+            printf("          <element name=\"%s\" \n"
+                   "                   type=\"gml:%s\" \n"
+                   "                   nillable=\"false\" />\n",
+                   msWFSGetGeomElementName(map, lp),
+                   msWFSGetGeomType(lp) );
+
+            if (msLayerOpen(lp, map->shapepath) == MS_SUCCESS)
+            {
+                if (msLayerGetItems(lp) == MS_SUCCESS)
+                {
+                    int k;
+                    for(k=0; k<lp->numitems; k++)
+                        printf("          <element name=\"%s\" type=\"string\" />\n",
+                               lp->items[k] );
+                }
+
+                msLayerClose(lp);
+            }
+            else
+            {
+                printf("\n\n<!-- ERROR: Failed openinig layer %s -->\n\n", 
+                       lp->name);
+            }
+
+            printf("        </sequence>\n");
+            printf("      </extension>\n");
+            printf("    </complexContent>\n");
+            printf("  </complexType>\n");
+
+        }
+    }
+
+    /*
+    ** Done!
+    */
+    printf("\n</schema>\n");
+
+    if (layers)
+        msFreeCharArray(layers, numlayers);
 
     return MS_SUCCESS;
 }
@@ -351,7 +550,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
                     char **names, char **values, int numentries)
 {
     int         i, maxfeatures=-1;
-    const char *typenames="", *myns_uri;
+    const char *typename="", *myns_uri;
     char       *script_url=NULL;
     rectObj     bbox;
 
@@ -370,7 +569,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
             int numlayers, j, k;
 
             // keep a ref for layer use.
-            typenames = values[i];
+            typename = values[i];
 
             // Parse comma-delimited list of type names (layers)
             //
@@ -396,7 +595,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
 
                 for (k=0; k<numlayers; k++)
                 {
-                    if (lp->dump && lp->name && 
+                    if (msWFSIsLayerSupported(lp) && lp->name && 
                         strcasecmp(lp->name, layers[k]) == 0)
                     {
                         lp->status = MS_ON;
@@ -451,10 +650,10 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
 
     }
 
-    if(0) 
+    if(typename == NULL) 
     {
         msSetError(MS_WFSERR, 
-                   "Required ... parameter missing for GetFeature.", 
+                   "Required TYPENAME parameter missing for GetFeature.", 
                    "msWFSGetFeature()");
         return msWFSException(map, wmtver);
     }
@@ -498,12 +697,16 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
            "   xmlns:wfs=\"http://www.opengis.net/wfs\"\n"
            "   xmlns:gml=\"http://www.opengis.net/gml\"\n"
            "   xmlns:xsi=\"http://www.opengis.net/xsi\"\n"
-           "   xsi:schemaLocation=\"http://www.opengis.net/wfs ../wfs/%s/WFS-basic.xsd \n"
+           "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
            "                       %s %sSERVICE=WFS&VERSION=%s&REQUEST=DescribeFeatureType&TYPENAME=%s\">\n", 
-           myns_uri, wmtver, myns_uri, script_url, wmtver, typenames);
+           myns_uri, 
+           msWFSGetSchemasLocation(map), wmtver, 
+           myns_uri, script_url, wmtver, typename);
 
 
-
+    /* __TODO__ WFS expects homogenous geometry types, but our layers can
+    **          contain mixed geometry types... how to deal with that???
+    */
     msGMLWriteWFSQuery(map, stdout);
 
     /*
@@ -555,8 +758,7 @@ int msWFSDispatch(mapObj *map, char **names, char **values, int numentries)
       return MS_DONE;  /* Not a WFS request */
 
   /* VERSION *and* REQUEST required by all WFS requests including 
-   * GetCapabilities ... we should probably do some validation on VERSION here
-   * vs the versions we actually support.
+   * GetCapabilities.
    */
   if (wmtver==NULL)
   {
@@ -578,11 +780,26 @@ int msWFSDispatch(mapObj *map, char **names, char **values, int numentries)
       return msWFSException(map, wmtver);
 
   /*
-  ** Dispatch request
+  ** Start dispatching requests
   */
   if (strcasecmp(request, "GetCapabilities") == 0 ) 
       return msWFSGetCapabilities(map, wmtver);
-  else if (strcasecmp(request, "DescribeFeatureType") == 0)
+
+  /*
+  ** Validate VERSION against the versions that we support... we don't do this
+  ** for GetCapabilities in order to allow version negociation.
+  */
+  if (strcmp(wmtver, "1.0.0") != 0)
+  {
+      msSetError(MS_WFSERR, 
+                 "WFS Server does not support VERSION %s.", 
+                 "msWFSDispatch()", wmtver);
+      return msWFSException(map, wmtver);
+  }
+
+  /* Continue dispatching... 
+   */
+  if (strcasecmp(request, "DescribeFeatureType") == 0)
       return msWFSDescribeFeatureType(map, wmtver, names, values, numentries);
   else if (strcasecmp(request, "GetFeature") == 0)
       return msWFSGetFeature(map, wmtver, names, values, numentries);

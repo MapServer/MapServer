@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.3  2002/10/08 02:40:08  dan
+ * Added WFS DescribeFeatureType
+ *
  * Revision 1.2  2002/10/04 21:29:41  dan
  * WFS: Added GetCapabilities and basic GetFeature (still some work to do)
  *
@@ -56,8 +59,10 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
  *   mapgml.c
  *====================================================================*/
 int msGMLWriteQuery(mapObj *map, char *filename);
-int msGMLWriteWFSQuery(mapObj *map, FILE *stream);
 
+#ifdef USE_WFS_SVR
+int msGMLWriteWFSQuery(mapObj *map, FILE *stream);
+#endif
 
 /*====================================================================
  *   mapwms.c
@@ -99,6 +104,9 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
  *====================================================================*/
 int msWFSDispatch(mapObj *map, char **names, char **values, int numentries); 
 
+#ifdef USE_WFS_SVR
+const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp);
+#endif
 
 
 /*====================================================================
