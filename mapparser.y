@@ -236,7 +236,26 @@ logical_exp:
 					   bufferp=delim+1;
 					 }
 
-					 if(strcmp($1,bufferp) == 0)
+					 if(strcmp($1,bufferp) == 0) // is this test necessary?
+					   $$ = MS_TRUE;
+				       }
+       | math_exp IN string_exp        {
+					 char *delim,*bufferp;
+
+					 $$ = MS_FALSE;
+					 bufferp=$3;
+
+					 while((delim=strchr(bufferp,',')) != NULL) {
+					   *delim='\0';
+					   if($1 == atof(bufferp)) {
+					     $$ = MS_TRUE;
+					     break;
+					   } 
+					   *delim=',';
+					   bufferp=delim+1;
+					 }
+
+					 if($1 == atof(bufferp)) // is this test necessary?
 					   $$ = MS_TRUE;
 				       }
 ;
