@@ -273,7 +273,7 @@ int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
 
 #define GEO_TRANS(tr,x,y)  ((tr)[0]+(tr)[1]*(x)+(tr)[2]*(y))
 
-int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img, 
+int drawGDAL(mapObj *map, layerObj *layer, imageObj *image, 
              GDALDatasetH hDS )
 
 {
@@ -287,15 +287,21 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   rectObj copyRect, mapRect;
   unsigned char *pabyRaw1, *pabyRaw2, *pabyRaw3, *pabyRawAlpha;
   int truecolor = FALSE;
+  gdImagePtr gdImg = NULL;
 
   GDALColorTableH hColorMap;
   GDALRasterBandH hBand1, hBand2, hBand3, hBandAlpha;
 
   memset( cmap, 0xff, MAXCOLORS * sizeof(int) );
 
+  if( MS_RENDERER_GD(map->outputformat) )
+  {
+      gdImg = image->img.gd;
+
 #if GD2_VERS > 1
-  truecolor = gdImageTrueColor( img );
+      truecolor = gdImageTrueColor( gdImg );
 #endif
+  }
 
   /*
    * Compute the georeferenced window of overlap, and do nothing if there
@@ -304,66 +310,134 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   src_xsize = GDALGetRasterXSize( hDS );
   src_ysize = GDALGetRasterYSize( hDS );
 
-  if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
+  if( layer->transform )
   {
-      GDALReadWorldFile(GDALGetDescription(hDS), "wld", adfGeoTransform);
+      if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
+          GDALReadWorldFile(GDALGetDescription(hDS), "wld", adfGeoTransform);
+  
+      InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
+      
+      mapRect = map->extent;
+      
+      mapRect.minx -= map->cellsize*0.5;
+      mapRect.maxx += map->cellsize*0.5;
+      mapRect.miny -= map->cellsize*0.5;
+      mapRect.maxy += map->cellsize*0.5;
+      
+      copyRect = mapRect;
+      
+      if( copyRect.minx < GEO_TRANS(adfGeoTransform,0,src_ysize) )
+          copyRect.minx = GEO_TRANS(adfGeoTransform,0,src_ysize);
+      if( copyRect.maxx > GEO_TRANS(adfGeoTransform,src_xsize,0) )
+          copyRect.maxx = GEO_TRANS(adfGeoTransform,src_xsize,0);
+      
+      if( copyRect.miny < GEO_TRANS(adfGeoTransform+3,0,src_ysize) )
+          copyRect.miny = GEO_TRANS(adfGeoTransform+3,0,src_ysize);
+      if( copyRect.maxy > GEO_TRANS(adfGeoTransform+3,src_xsize,0) )
+          copyRect.maxy = GEO_TRANS(adfGeoTransform+3,src_xsize,0);
+      
+      if( copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy )
+          return 0;
+
+      /*
+       * Copy the source and destination raster coordinates.
+       */
+      llx = GEO_TRANS(adfInvGeoTransform+0,copyRect.minx,copyRect.miny);
+      lly = GEO_TRANS(adfInvGeoTransform+3,copyRect.minx,copyRect.miny);
+      urx = GEO_TRANS(adfInvGeoTransform+0,copyRect.maxx,copyRect.maxy);
+      ury = GEO_TRANS(adfInvGeoTransform+3,copyRect.maxx,copyRect.maxy);
+      
+      src_xoff = MAX(0,(int) llx);
+      src_yoff = MAX(0,(int) ury);
+      src_xsize = MIN(MAX(0,(int) (urx - llx + 0.5)),
+                      GDALGetRasterXSize(hDS) - src_xoff);
+      src_ysize = MIN(MAX(0,(int) (lly - ury + 0.5)),
+                      GDALGetRasterYSize(hDS) - src_yoff);
+
+      if( src_xsize == 0 || src_ysize == 0 )
+          return 0;
+
+      dst_xoff = (int) ((copyRect.minx - mapRect.minx) / map->cellsize);
+      dst_yoff = (int) ((mapRect.maxy - copyRect.maxy) / map->cellsize);
+      dst_xsize = (int) ((copyRect.maxx - copyRect.minx) / map->cellsize + 0.5);
+      dst_xsize = MIN(MAX(1,dst_xsize),image->width - dst_xoff);
+      dst_ysize = (int) ((copyRect.maxy - copyRect.miny) / map->cellsize + 0.5);
+      dst_ysize = MIN(MAX(1,dst_ysize),image->height - dst_yoff);
+      
+      if( dst_xsize == 0 || dst_ysize == 0 )
+          return 0;
   }
-  InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
-
-  mapRect = map->extent;
-
-  mapRect.minx -= map->cellsize*0.5;
-  mapRect.maxx += map->cellsize*0.5;
-  mapRect.miny -= map->cellsize*0.5;
-  mapRect.maxy += map->cellsize*0.5;
-
-  copyRect = mapRect;
-
-  if( copyRect.minx < GEO_TRANS(adfGeoTransform,0,src_ysize) )
-      copyRect.minx = GEO_TRANS(adfGeoTransform,0,src_ysize);
-  if( copyRect.maxx > GEO_TRANS(adfGeoTransform,src_xsize,0) )
-      copyRect.maxx = GEO_TRANS(adfGeoTransform,src_xsize,0);
-
-  if( copyRect.miny < GEO_TRANS(adfGeoTransform+3,0,src_ysize) )
-      copyRect.miny = GEO_TRANS(adfGeoTransform+3,0,src_ysize);
-  if( copyRect.maxy > GEO_TRANS(adfGeoTransform+3,src_xsize,0) )
-      copyRect.maxy = GEO_TRANS(adfGeoTransform+3,src_xsize,0);
-
-  if( copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy )
-      return 0;
 
   /*
-   * Copy the source and destination raster coordinates.
+   * If layer transforms are turned off, just map 1:1.
    */
-  llx = GEO_TRANS(adfInvGeoTransform+0,copyRect.minx,copyRect.miny);
-  lly = GEO_TRANS(adfInvGeoTransform+3,copyRect.minx,copyRect.miny);
-  urx = GEO_TRANS(adfInvGeoTransform+0,copyRect.maxx,copyRect.maxy);
-  ury = GEO_TRANS(adfInvGeoTransform+3,copyRect.maxx,copyRect.maxy);
+  else
+  {
+      dst_xoff = src_xoff = 0;
+      dst_yoff = src_yoff = 0;
+      dst_xsize = src_xsize = MIN(image->width,src_xsize);
+      dst_ysize = src_ysize = MIN(image->height,src_ysize);
+  }
 
-  src_xoff = MAX(0,(int) llx);
-  src_yoff = MAX(0,(int) ury);
-  src_xsize = MIN(MAX(0,(int) (urx - llx + 0.5)),
-                  GDALGetRasterXSize(hDS) - src_xoff);
-  src_ysize = MIN(MAX(0,(int) (lly - ury + 0.5)),
-                  GDALGetRasterYSize(hDS) - src_yoff);
+  /*
+   * In RAWDATA mode we don't fool with colors.  Do the raw processing, 
+   * and return from the function early.
+   */
+  hBand1 = GDALGetRasterBand( hDS, 1 );
+  if( hBand1 == NULL )
+      return -1;
 
-  if( src_xsize == 0 || src_ysize == 0 )
+  if( !gdImg )
+  {
+      void *pBuffer;
+      GDALDataType eDataType;
+
+      assert( MS_RENDERER_RAWDATA( image->format ) );
+
+      if( image->format->imagemode == MS_IMAGEMODE_INT16 )
+          eDataType = GDT_Int16;
+      else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
+          eDataType = GDT_Float32;
+      else
+          return -1;
+
+      pBuffer = malloc(dst_xsize * dst_ysize 
+                       * (GDALGetDataTypeSize(eDataType)/8) );
+      if( pBuffer == NULL )
+          return -1;
+
+      GDALRasterIO( hBand1, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
+                    pBuffer, dst_xsize, dst_ysize, eDataType, 0, 0 );
+
+      k = 0;
+      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+      {
+          if( image->format->imagemode == MS_IMAGEMODE_INT16 )
+          {
+              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+              {
+                  image->img.raw_16bit[j + i * image->width] = 
+                      ((GInt16 *) pBuffer)[k++];
+              }
+          }
+          else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
+          {
+              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+              {
+                  image->img.raw_float[j + i * image->width] = 
+                      ((float *) pBuffer)[k++];
+              }
+          }
+      }
+
+      free( pBuffer );
+
       return 0;
-
-  dst_xoff = (int) ((copyRect.minx - mapRect.minx) / map->cellsize);
-  dst_yoff = (int) ((mapRect.maxy - copyRect.maxy) / map->cellsize);
-  dst_xsize = (int) ((copyRect.maxx - copyRect.minx) / map->cellsize + 0.5);
-  dst_xsize = MIN(MAX(1,dst_xsize),gdImageSX(img) - dst_xoff);
-  dst_ysize = (int) ((copyRect.maxy - copyRect.miny) / map->cellsize + 0.5);
-  dst_ysize = MIN(MAX(1,dst_ysize),gdImageSY(img) - dst_yoff);
-
-  if( dst_xsize == 0 || dst_ysize == 0 )
-      return 0;
+  }
 
   /*
    * Are we in a one band, RGB or RGBA situation?
    */
-  hBand1 = GDALGetRasterBand( hDS, 1 );
   hBand2 = hBand3 = hBandAlpha = NULL;
 
   if( GDALGetRasterCount( hDS ) >= 3
@@ -414,7 +488,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
    * class colors are provided by the MAP file, or where we use the native
    * color table.
    */
-  if(layer->numclasses > 0) {
+  if(layer->numclasses > 0 && gdImg ) {
     char tmpstr[3];
     int c;
 
@@ -433,14 +507,14 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
 	  cmap[i] = -1;
 	else {
 	  if(layer->class[c].color == -1) /* use raster color */
-	    cmap[i] = add_color(map, img, sEntry.c1, sEntry.c2, sEntry.c3);
+	    cmap[i] = add_color(map, gdImg, sEntry.c1, sEntry.c2, sEntry.c3);
 	  else
 	    cmap[i] = layer->class[c].color; /* use class color */
 	}
       } else
 	cmap[i] = -1;
     }
-  } else if( hColorMap != NULL && !truecolor ) {
+  } else if( hColorMap != NULL && !truecolor && gdImg ) {
     cmap_set = TRUE;
 
     for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
@@ -449,7 +523,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
         GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
 
         if(i != layer->offsite && sEntry.c4 != 0) 
-            cmap[i] = add_color(map,img, sEntry.c1, sEntry.c2, sEntry.c3);
+            cmap[i] = add_color(map, gdImg, sEntry.c1, sEntry.c2, sEntry.c3);
         else
             cmap[i] = -1;
     }
@@ -463,12 +537,12 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
           GDALColorEntry sEntry;
           
           GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
-          
-          if(i != layer->offsite ) 
+
+          if( sEntry.c4 == 0 || i == layer->offsite )
+              cmap[i] = -1;
+          else
               cmap[i] = gdTrueColorAlpha(sEntry.c1, sEntry.c2, sEntry.c3, 
                                          127 - (sEntry.c4 >> 1) );
-          else
-              cmap[i] = -1;
       }
   }
   else if( hBand2 == NULL && hColorMap == NULL )
@@ -486,9 +560,16 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
       }
   }
 #endif
-  else if( !truecolor )
+  else if( !truecolor && gdImg )
   {
-      allocColorCube( map, img, anColorCube );
+      allocColorCube( map, gdImg, anColorCube );
+  }
+  else
+  {
+      msSetError(MS_IOERR, 
+                 "Unsupported configuration for raster layer read via GDAL.",
+                 "drawGDAL()");
+      return -1;
   }
 
   /*
@@ -505,7 +586,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   /*
   ** Process single band using the provided, or greyscale colormap
   */
-  if( hBand2 == NULL && !truecolor )
+  if( hBand2 == NULL && !truecolor && gdImg )
   {
       assert( cmap_set );
       k = 0;
@@ -517,17 +598,19 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
           {
               result = cmap[pabyRaw1[k++]];
               if( result != -1 )
+              {
 #ifndef USE_GD_1_2
-                  img->pixels[i][j] = result;
+                  gdImg->pixels[i][j] = result;
 #else
-                  img->pixels[j][i] = result;
+                  gdImg->pixels[j][i] = result;
 #endif
+              }
           }
       }
   }
 
 #if GD2_VERS > 1
-  else if( hBand2 == NULL && truecolor )
+  else if( hBand2 == NULL && truecolor && gdImg )
   {
       assert( cmap_set );
 
@@ -540,7 +623,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
           {
               result = cmap[pabyRaw1[k++]];
               if( result != -1 )
-                  img->tpixels[i][j] = result;
+                  gdImg->tpixels[i][j] = result;
           }
       }
   }
@@ -549,7 +632,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   /*
   ** Otherwise read green and blue data, and process through the color cube.
   */
-  else if( hBand3 != NULL )
+  else if( hBand3 != NULL && gdImg )
   {
       pabyRaw2 = (unsigned char *) malloc(dst_xsize * dst_ysize);
       if( pabyRaw2 == NULL )
@@ -591,9 +674,9 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
                   {
                       cc_index= RGB_INDEX(pabyRaw1[k],pabyRaw2[k],pabyRaw3[k]);
 #ifndef USE_GD_1_2
-                      img->pixels[i][j] = anColorCube[cc_index];
+                      gdImg->pixels[i][j] = anColorCube[cc_index];
 #else
-                      img->pixels[j][i] = anColorCube[cc_index];
+                      gdImg->pixels[j][i] = anColorCube[cc_index];
 #endif
                   }
                   k++;
@@ -610,7 +693,7 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
               {
                   if( pabyRawAlpha == NULL || pabyRawAlpha[k] == 255 )
                   {
-                      img->tpixels[i][j] = 
+                      gdImg->tpixels[i][j] = 
                           gdTrueColor(pabyRaw1[k], pabyRaw2[k], pabyRaw3[k]);
                   }
                   else
@@ -619,8 +702,8 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
                       int gd_color = gdTrueColorAlpha(
                           pabyRaw1[k], pabyRaw2[k], pabyRaw3[k], gd_alpha );
                       
-                      img->tpixels[i][j] = 
-                          gdAlphaBlend( img->tpixels[i][j], gd_color );
+                      gdImg->tpixels[i][j] = 
+                          gdAlphaBlend( gdImg->tpixels[i][j], gd_color );
                   }
                   k++;
               }
@@ -1758,7 +1841,7 @@ static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 }
 #endif
 
-int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
+int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
   /*
   ** Check for various file types and act appropriately.
@@ -1778,6 +1861,7 @@ int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
   int force_gdal;
 
   rectObj searchrect;
+  gdImagePtr img;
 
 #ifdef USE_EGIS
   char *ext; // OV -egis- temp variable
@@ -1797,6 +1881,10 @@ int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
   }
 
   force_gdal = FALSE;
+  if( MS_RENDERER_GD(image->format) )
+      img = image->img.gd;
+  else
+      img = NULL;
 
   // Only GDAL supports 24bit GD output.
 #if GD2_VERS > 1
@@ -2003,10 +2091,15 @@ int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
                 }
             }
 
+            adfGeoTransform[0] = 0.0;
+            adfGeoTransform[1] = 1.0;
+            adfGeoTransform[2] = 0.0;
+            adfGeoTransform[3] = 0.0;
+            adfGeoTransform[4] = 0.0;
+            adfGeoTransform[5] = 1.0;
+
             if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
-            {
                 GDALReadWorldFile(filename, "wld", adfGeoTransform);
-            }
 
             /* 
             ** We want to resample if the source image is rotated, or if
@@ -2016,17 +2109,18 @@ int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img) {
             */
 #ifdef USE_PROJ
             if( ((adfGeoTransform[2] != 0.0 || adfGeoTransform[4] != 0.0)
+                 && layer->transform
                  && map->projection.proj != NULL 
                  && layer->projection.proj != NULL)
                 || msProjectionsDiffer( &(map->projection), 
                                         &(layer->projection) ) )
             {
-                status = msResampleGDALToMap( map, layer, img, hDS );
+                status = msResampleGDALToMap( map, layer, image, hDS );
             }
             else
 #endif
             {
-                status = drawGDAL(map, layer, img, hDS );
+                status = drawGDAL(map, layer, image, hDS );
             }
             msReleaseLock( TLOCK_GDAL );
 
