@@ -117,7 +117,7 @@ char* findTag(char* pszInstr, char* pszTag)
  * return a hashtableobj from instr of all
  * arguments. hashtable must be freed by caller.
  */
-int getTagArgs(char* pszTag, char* pszInstr, char** pszNextInstr, hashTableObj *oHashTable)
+int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
 {
    char *pszStart, *pszEnd, *pszArgs;
    int nLength;
@@ -132,7 +132,7 @@ int getTagArgs(char* pszTag, char* pszInstr, char** pszNextInstr, hashTableObj *
    
    // set position to the begining of tag
    pszStart = findTag(pszInstr, pszTag);
-   
+
    if (pszStart) {
       // find ending position
       pszEnd = strchr(pszStart, ']');
@@ -141,9 +141,6 @@ int getTagArgs(char* pszTag, char* pszInstr, char** pszNextInstr, hashTableObj *
          // skit the tag name
          pszStart = pszStart + strlen(pszTag) + 1;
 
-         if (pszNextInstr)
-           *pszNextInstr = pszEnd + 1;
-         
          // get lenght of all args
          nLength = pszEnd - pszStart;
    
@@ -188,7 +185,7 @@ int getTagArgs(char* pszTag, char* pszInstr, char** pszNextInstr, hashTableObj *
  * pszNextInstr will be a pointer at the end of the 
  * first occurence founded.
  */
-int getInlineTag(char* pszTag, char* pszInstr, char** pszNextInstr, char **pszResult)
+int getInlineTag(char* pszTag, char* pszInstr, char **pszResult)
 {
    char *pszStart, *pszEnd,  *pszEndTag;
    int nLength;
@@ -228,8 +225,8 @@ int getInlineTag(char* pszTag, char* pszInstr, char** pszNextInstr, char **pszRe
 
                (*pszResult)[nLength] = '\0';
                
-               if (pszNextInstr)
-                 *pszNextInstr = pszStart + nLength + strlen(pszTag) + 2;
+//               if (pszNextInstr)
+//                 *pszNextInstr = pszStart + nLength + strlen(pszTag) + 2;
             }
          }
       }
@@ -246,7 +243,7 @@ int getInlineTag(char* pszTag, char* pszInstr, char** pszNextInstr, char **pszRe
 */
 int processIf(char* pszInstr, hashTableObj ht)
 {
-   char *pszNextInstr = pszInstr;
+//   char *pszNextInstr = pszInstr;
    char *pszStart, *pszEnd;
    char *pszName, *pszValue, *pszOperator, *pszThen=NULL;
    char *pszIfTag;
@@ -259,67 +256,67 @@ int processIf(char* pszInstr, hashTableObj ht)
      return MS_FAILURE;
    }
    
-   do
+   // find the if start tag
+   pszStart = findTag(pszInstr, "if");
+   
+   while (pszStart)
    {
-      // find the if start tag
-      pszStart = findTag(pszNextInstr, "if");
-      
-      if (pszStart)
-      {
-         // get the then string (if expression is true)
-         if (getInlineTag("if", pszStart, NULL, &pszThen) != MS_SUCCESS)
-           return MS_FAILURE;
+      // get the then string (if expression is true)
+      if (getInlineTag("if", pszStart, &pszThen) != MS_SUCCESS)
+        return MS_FAILURE;
          
-         // retrieve if tag args
-         if (getTagArgs("if", pszStart, &pszNextInstr, &ifArgs) != MS_SUCCESS)
-           return MS_FAILURE;
+      // retrieve if tag args
+      if (getTagArgs("if", pszStart, &ifArgs) != MS_SUCCESS)
+        return MS_FAILURE;
          
-         pszName = msLookupHashTable(ifArgs, "name");
-         pszValue = msLookupHashTable(ifArgs, "value");
-         pszOperator = msLookupHashTable(ifArgs, "operator"); // ignored for the momment
+      pszName = msLookupHashTable(ifArgs, "name");
+      pszValue = msLookupHashTable(ifArgs, "value");
+      pszOperator = msLookupHashTable(ifArgs, "operator"); // ignored for the momment
          
-         if (pszName && pszValue && msLookupHashTable(ht, pszName)) {
-            // set position at end of if start tag
-            pszEnd = strchr(pszStart, ']');
-            pszEnd++;
-
-            // build the complete if tag ([if all_args]then string[/if])
-            // to replace if by then string if expression is true
-            // or by a white space if not.
-            nLength = pszEnd - pszStart;
-            pszIfTag = (char*)malloc(nLength + strlen(pszThen) + 6);
-            strncpy(pszIfTag, pszStart, nLength);
-            pszIfTag[nLength] = '\0';
+      if (pszName && pszValue && msLookupHashTable(ht, pszName)) {
+         // set position at end of if start tag
+         pszEnd = strchr(pszStart, ']');
+         pszEnd++;
             
-            strcat(pszIfTag, pszThen);
-            strcat(pszIfTag, "[/if]");
-
-
-            if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
-              pszInstr = gsub(pszInstr, pszIfTag, pszThen);
-            else
-              pszInstr = gsub(pszInstr, pszIfTag, "");
-
-            free(pszIfTag);
-         }
-         else {
-            if (pszThen)
-              free(pszThen);
-            if (ifArgs)
-              msFreeHashTable(ifArgs);
+         // build the complete if tag ([if all_args]then string[/if])
+         // to replace if by then string if expression is true
+         // or by a white space if not.
+         nLength = pszEnd - pszStart;
+         pszIfTag = (char*)malloc(nLength + strlen(pszThen) + 6);
+         strncpy(pszIfTag, pszStart, nLength);
+         pszIfTag[nLength] = '\0';
             
-            msSetError(MS_WEBERR, "Malformed if tag.", "processIf()");
-            return MS_FAILURE;
-         }    
+         strcat(pszIfTag, pszThen);
+         strcat(pszIfTag, "[/if]");
 
-         free (pszThen);
-         msFreeHashTable(ifArgs);
-         
-         pszStart = pszNextInstr;
+
+         if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
+           pszInstr = gsub(pszInstr, pszIfTag, pszThen);
+         else
+           pszInstr = gsub(pszInstr, pszIfTag, "");
+
+         free(pszIfTag);
+         pszIfTag = NULL;
       }
+      else {
+         if (pszThen)
+           free(pszThen);
+         if (ifArgs)
+           msFreeHashTable(ifArgs);
+         
+         msSetError(MS_WEBERR, "Malformed if tag.", "processIf()");
+         return MS_FAILURE;
+      }    
       
+      free (pszThen);
+      pszThen=NULL;
+      
+      msFreeHashTable(ifArgs);
+      ifArgs=NULL;
+      
+      // find the if start tag
+      pszStart = findTag(pszInstr, "if");
    }
-   while (pszStart);
    
    return MS_SUCCESS;
 }
@@ -333,7 +330,7 @@ int processIf(char* pszInstr, hashTableObj ht)
 */
 int processMetadata(char* pszInstr, hashTableObj ht)
 {
-   char *pszNextInstr = pszInstr;
+//   char *pszNextInstr = pszInstr;
    char *pszEnd, *pszStart;
    char *pszMetadataTag;
    char *pszHashName;
@@ -347,50 +344,48 @@ int processMetadata(char* pszInstr, hashTableObj ht)
      return MS_FAILURE;
    }
    
-   // for all metadata in pszInstr
-   do {
-      // set position to the begining of metadata tag
-      pszStart = findTag(pszNextInstr, "metadata");
-      
-      if (pszStart)
-      {
-         // get metadata args
-         if (getTagArgs("metadata", pszStart, &pszNextInstr, &metadataArgs) != MS_SUCCESS)
-           return MS_FAILURE;
-
-         pszHashName = msLookupHashTable(metadataArgs, "name");
-         pszHashValue = msLookupHashTable(ht, pszHashName);
-         
-         if (pszHashName && pszHashValue) {
-            // set position to the end of metadata start tag
-            pszEnd = strchr(pszStart, ']');
-            pszEnd++;
-
-            // build the complete metadata tag ([metadata all_args])
-            // to replace it by the corresponding value from ht
-            nLength = pszEnd - pszStart;
-            pszMetadataTag = (char*)malloc(nLength + 1);
-            strncpy(pszMetadataTag, pszStart, nLength);
-            pszMetadataTag[nLength] = '\0';
-
-            pszStart = gsub(pszInstr, pszMetadataTag, pszHashValue);
-
-            free(pszMetadataTag);
-         }
-         else {
-            if (metadataArgs)
-              msFreeHashTable(metadataArgs);              
-            msSetError(MS_WEBERR, "Malformed metadata tag.", "processMetadataL()");
-            return MS_FAILURE;
-         }
-
-         msFreeHashTable(metadataArgs);
-
-         pszStart = pszNextInstr;
-      }
-      
-   } while(pszStart);
+   // set position to the begining of metadata tag
+   pszStart = findTag(pszInstr, "metadata");
    
+   while (pszStart) {
+      // get metadata args
+      if (getTagArgs("metadata", pszStart, &metadataArgs) != MS_SUCCESS)
+        return MS_FAILURE;
+
+      pszHashName = msLookupHashTable(metadataArgs, "name");
+      pszHashValue = msLookupHashTable(ht, pszHashName);
+
+      if (pszHashName && pszHashValue) {
+         // set position to the end of metadata start tag
+         pszEnd = strchr(pszStart, ']');
+         pszEnd++;
+
+         // build the complete metadata tag ([metadata all_args])
+         // to replace it by the corresponding value from ht
+         nLength = pszEnd - pszStart;
+         pszMetadataTag = (char*)malloc(nLength + 1);
+         strncpy(pszMetadataTag, pszStart, nLength);
+         pszMetadataTag[nLength] = '\0';
+
+         pszStart = gsub(pszInstr, pszMetadataTag, pszHashValue);
+
+         free(pszMetadataTag);
+         pszMetadataTag=NULL;
+      }
+      else {
+         if (metadataArgs)
+           msFreeHashTable(metadataArgs);              
+         msSetError(MS_WEBERR, "Malformed metadata tag.", "processMetadataL()");
+         return MS_FAILURE;
+      }
+
+      msFreeHashTable(metadataArgs);
+      metadataArgs=NULL;
+      
+      // set position to the begining of metadata tag
+      pszStart = findTag(pszInstr, "metadata");
+   }
+
    return MS_SUCCESS;
 }
 
@@ -416,55 +411,57 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr)
      return MS_FAILURE;
    }
 
-   if (getTagArgs("leg_icon", *pszInstr, NULL, &myHashTable) != MS_SUCCESS)
-     return MS_FAILURE;
-
-   // if no specified width or height, set them to map default
-   if (!msLookupHashTable(myHashTable, "width") || !msLookupHashTable(myHashTable, "height")) {
-     nWidth = map->legend.keysizex;
-     nHeight= map->legend.keysizey;
-   }
-   else {
-      nWidth  = atoi(msLookupHashTable(myHashTable, "width"));
-      nHeight = atoi(msLookupHashTable(myHashTable, "height"));
-   }
-   
-   // Create an image corresponding to the current class
-   img = msCreateLegendIcon(map, &(map->layers[nIdxLayer]), &(map->layers[nIdxLayer].class[nIdxClass]), nWidth, nHeight);
-
-   if(!img) {
-     if (myHashTable)
-        msFreeHashTable(myHashTable);
-      
-     msSetError(MS_GDERR, "Error while creating GD image.", "processIcon()");
-     return MS_FAILURE;
-   }
-
-   // save it with a unique file name
-   pszImgFname = msTmpFile("", MS_IMAGE_EXTENSION(map->imagetype));
-   pszFullImgFname = (char*)malloc(strlen(map->web.imagepath) + strlen(pszImgFname) + 1);
-   strcpy(pszFullImgFname, map->web.imagepath);
-   strcat(pszFullImgFname, pszImgFname);
-
-   if(msSaveImage(img, pszFullImgFname, map->imagetype, map->legend.transparent, map->legend.interlace, map->imagequality) == -1) {
-     if (myHashTable)
-        msFreeHashTable(myHashTable);
-     if (pszImgFname)
-        free(pszImgFname);
-     if (pszFullImgFname)
-        free(pszFullImgFname);
-      
-     msSetError(MS_IOERR, "Error while save GD image to disk.", "processIcon()");
-     return MS_FAILURE;
-   }
-         
-   free(pszFullImgFname);
-         
-   gdImageDestroy(img);
-
    // find the begining of tag
    pszImgTag = strstr(*pszInstr, "[leg_icon");
+   
    if (pszImgTag) {
+
+      if (getTagArgs("leg_icon", pszImgTag, &myHashTable) != MS_SUCCESS)
+        return MS_FAILURE;
+
+      // if no specified width or height, set them to map default
+      if (!msLookupHashTable(myHashTable, "width") || !msLookupHashTable(myHashTable, "height")) {
+         nWidth = map->legend.keysizex;
+         nHeight= map->legend.keysizey;
+      }
+      else {
+         nWidth  = atoi(msLookupHashTable(myHashTable, "width"));
+         nHeight = atoi(msLookupHashTable(myHashTable, "height"));
+      }
+   
+      // Create an image corresponding to the current class
+      img = msCreateLegendIcon(map, &(map->layers[nIdxLayer]), &(map->layers[nIdxLayer].class[nIdxClass]), nWidth, nHeight);
+
+      if(!img) {
+         if (myHashTable)
+           msFreeHashTable(myHashTable);
+      
+         msSetError(MS_GDERR, "Error while creating GD image.", "processIcon()");
+         return MS_FAILURE;
+      }
+
+      // save it with a unique file name
+      pszImgFname = msTmpFile("", MS_IMAGE_EXTENSION(map->imagetype));
+      pszFullImgFname = (char*)malloc(strlen(map->web.imagepath) + strlen(pszImgFname) + 1);
+      strcpy(pszFullImgFname, map->web.imagepath);
+      strcat(pszFullImgFname, pszImgFname);
+
+      if(msSaveImage(img, pszFullImgFname, map->imagetype, map->legend.transparent, map->legend.interlace, map->imagequality) == -1) {
+         if (myHashTable)
+           msFreeHashTable(myHashTable);
+         if (pszImgFname)
+           free(pszImgFname);
+         if (pszFullImgFname)
+           free(pszFullImgFname);
+      
+         msSetError(MS_IOERR, "Error while save GD image to disk.", "processIcon()");
+         return MS_FAILURE;
+      }
+         
+      free(pszFullImgFname);
+      
+      gdImageDestroy(img);
+
       nLen = (strchr(pszImgTag, ']') + 1) - pszImgTag;
    
       if (nLen > 0) {
@@ -485,13 +482,11 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr)
             
          free(pszFullImgFname);
          free(pszImgFname);
-      
-         return MS_SUCCESS;
       }
+      else
+        free(pszImgFname);
    }
 
-   free(pszImgFname);
-   
    return MS_SUCCESS;
 }
 
@@ -548,6 +543,7 @@ char *strcatalloc(char* pszDest, char* pszSrc)
 int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupName, char **legGroupHtmlCopy)
 {
    char *pszClassImg;
+   int i;
    
    if (!pszGroupName || !pszGroupTemplate) {
      msSetError(MS_WEBERR, "Invalid pointer.", "generateGroupTemplate()");
@@ -571,7 +567,10 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
     */
    pszClassImg = strstr(*legGroupHtmlCopy, "[leg_icon");
    if (pszClassImg) {
-      processIcon(map, 0, 0, legGroupHtmlCopy);
+      // find first layer of this group
+      for (i=0; i<map->numlayers; i++)
+        if (map->layers[map->layerorder[i]].group && strcmp(map->layers[map->layerorder[i]].group, pszGroupName) == 0)
+          processIcon(map, map->layerorder[i], 0, legGroupHtmlCopy);
    }      
       
    return MS_SUCCESS;
@@ -822,28 +821,28 @@ char *generateLegendTemplate(mapObj *map)
    /*
     * Seperate groups, layers and class
     */
-   if (getInlineTag("leg_group_html", file, NULL, &legGroupHtml) != MS_SUCCESS)
+   if (getInlineTag("leg_group_html", file, &legGroupHtml) != MS_SUCCESS)
      return NULL;
    
-   if (getInlineTag("leg_layer_html", file, NULL, &legLayerHtml) != MS_SUCCESS)
+   if (getInlineTag("leg_layer_html", file, &legLayerHtml) != MS_SUCCESS)
      return NULL;
    
-   if (getInlineTag("leg_class_html", file, NULL, &legClassHtml) != MS_SUCCESS)
+   if (getInlineTag("leg_class_html", file, &legClassHtml) != MS_SUCCESS)
      return NULL;
 
    /*
     * Retrieve arguments of all three parts
     */
    if (legGroupHtml) 
-     if (getTagArgs("leg_group_html", file, NULL, &groupArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_group_html", file, &groupArgs) != MS_SUCCESS)
        return NULL;
    
    if (legLayerHtml) 
-     if (getTagArgs("leg_layer_html", file, NULL, &layerArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_layer_html", file, &layerArgs) != MS_SUCCESS)
        return NULL;
    
    if (legClassHtml) 
-     if (getTagArgs("leg_class_html", file, NULL, &classArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_class_html", file, &classArgs) != MS_SUCCESS)
        return NULL;
 
       
