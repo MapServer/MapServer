@@ -111,7 +111,7 @@ OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o mapindex.
 # --- You shouldn't have to edit anything else. ---
 #
 .c.o: 
-	$(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) $< -o $@
 
 all: $(MAKE_GD) $(MAKE_EGIS) $(MAKE_GDFT) libmap.a shp2img sym2img legend \
 	mapserv shpindex shptree scalebar sortshp perlvars @MAKE_PHPMS@
