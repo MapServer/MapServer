@@ -16,6 +16,19 @@ the CVS logs is updated daily at the following URL:
 Version 3.7-dev (CVS)
 ---------------------
 
+- Added support for DATA and TEMPLATE (header/footer/etc...) filtering using an
+  regex declared in the mapfile (DATAPATTERN and TEMPLATEPATTERN). Certain parameters
+  in a mapfile cannot be changed via a URL without first being filtered.
+
+- Added support for enviroment variable MS_MAPFILE_PATTERN. This allows you to
+  override the default regex in favor of one more restrictive (I would hope) of
+  your own.
+
+- Disabled CGI SAVEMAP option.
+
+- Removed CGI TEMPLATE option since you can use the  map_web_template syntax. Simplifies 
+  security maintenance by only having to deal with this option in a single place.
+
 - Added offset support (styleObj) for raster based output (GD for sure, not quite 
   sure how OGR output is created although I believe is uses GD anyway). This allows
   for feature drop shadows and support for cool linear symbols like used to be

@@ -120,7 +120,6 @@ int msyyreturncomments = 0;
 <INITIAL>extent		                       { return(EXTENT); }
 <INITIAL,OBJECT_STRING>feature                 { return(FEATURE); }
 <INITIAL>filled                                { return(FILLED); }
-<INITIAL,OBJECT_STRING>filepattern	       { return(FILEPATTERN); }
 <INITIAL,OBJECT_STRING>filter                  { return(FILTER); }
 <INITIAL,OBJECT_STRING>filteritem              { return(FILTERITEM); }
 <INITIAL,OBJECT_STRING>footer		       { return(FOOTER); }
@@ -214,6 +213,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>symbolset               { return(SYMBOLSET); }
 <INITIAL,OBJECT_STRING>table                   { return(TABLE); }
 <INITIAL,OBJECT_STRING>template		       { return(TEMPLATE); }
+<INITIAL,OBJECT_STRING>templatepattern	       { return(TEMPLATEPATTERN); }
 <INITIAL,OBJECT_STRING>text		       { return(TEXT); }
 <INITIAL,OBJECT_STRING>tileindex	       { return(TILEINDEX); }
 <INITIAL,OBJECT_STRING>tileitem		       { return(TILEITEM); }

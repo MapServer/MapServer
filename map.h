@@ -72,7 +72,7 @@ extern "C" {
 
 // General defines, not wrapable
 #ifndef SWIG
-#define MS_MAPFILE_EXPR "\\.map$"
+#define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"
 #define MS_TEMPLATE_EXPR "\\.(jsp|asp|cfm|xml|wml|html|htm|shtml|phtml)$"
 
 #define MS_INDEX_EXTENSION ".qix"
@@ -785,7 +785,7 @@ typedef struct map_obj{ /* structure for a map */
 
   int debug;
 
-  char *datapattern, *filepattern;   
+  char *datapattern, *templatepattern;   
 } mapObj;
 
 //SWF Object structure
@@ -883,7 +883,6 @@ int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
 pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly);
 double dist(pointObj a, pointObj b);
 
-
    
 /*
 ** Main API Functions
@@ -896,6 +895,7 @@ int msSaveMap(mapObj *map, char *filename);
 void msFreeMap(mapObj *map);
 void msFreeCharArray(char **array, int num_items);
 int msLoadMapString(mapObj *map, char *object, char *value);
+int msEvalRegex(char *e, char *s);
 void msFree(void *p);
 char **msTokenizeMap(char *filename, int *numtokens);
 int msInitLabelCache(labelCacheObj *cache);
@@ -912,7 +912,6 @@ void msGDALInitialize();
 imageObj *msDrawScalebar(mapObj *map); // in mapscale.c
 int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
-
 
 int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 int msRectOverlap(rectObj *a, rectObj *b);

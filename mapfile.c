@@ -35,6 +35,26 @@ static char *msTrueFalse[2]={"FALSE", "TRUE"};
 // static char *msYesNo[2]={"NO", "YES"};
 static char *msJoinType[2]={"SINGLE", "MULTIPLE"};
 
+int msEvalRegex(char *e, char *s) {
+  regex_t re;
+
+  if(!e || !s) return(MS_FALSE);
+
+  if(regcomp(&re, e, REG_EXTENDED|REG_NOSUB) != 0) {
+    msSetError(MS_REGEXERR, "Failed to compile expression (%s).", "msEvalRegex()", e);   
+    return(MS_FALSE);
+  }
+  
+  if(regexec(&re, s, 0, NULL, 0) != 0) { // no match
+    regfree(&re);
+    msSetError(MS_REGEXERR, "String (%s) failed expression test.", "msEvalRegex()", s);
+    return(MS_FALSE);
+  }
+  regfree(&re);
+
+  return(MS_TRUE);
+}
+
 void msFree(void *p) {
   if(p) free(p);
 }
@@ -1446,6 +1466,7 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;      
     break;  
   case(TEMPLATE):
+    if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(class->template);
     class->template = strdup(value);
     break;
@@ -1943,6 +1964,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->classitem = strdup(value);
     break;
   case(DATA):
+    if(msEvalRegex(map->datapattern, value) != MS_TRUE) return;
     msFree(layer->data);
     layer->data = strdup(value);
     break;
@@ -2017,10 +2039,12 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->filteritem = strdup(value);
     break; 
   case(FOOTER):
+    if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(layer->footer);
     layer->footer = strdup(value);
     break;
-  case(HEADER):      
+  case(HEADER):
+    if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(layer->header);
     layer->header = strdup(value);
     break;
@@ -3071,8 +3095,8 @@ int loadWeb(webObj *web, mapObj *map)
   }
 }
 
-static void loadWebString(webObj *web, char *value)
-{
+static void loadWebString(mapObj *map, webObj *web, char *value)
+{  
   switch(msyylex()) {
   case(EMPTY):
     msFree(web->empty);
@@ -3089,11 +3113,13 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&(web->extent.maxx)) == -1) return;
     if(getDouble(&(web->extent.maxy)) == -1) return;
     break;
-  case(FOOTER):
+  case(FOOTER):    
+    if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(web->footer);
     web->footer = strdup(value);	
     break;
   case(HEADER):
+    if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(web->header);
     web->header = strdup(value);
     break;
@@ -3110,6 +3136,7 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&web->maxscale) == -1) return;
     break;
   case(MAXTEMPLATE):
+    if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(web->maxtemplate);
     web->maxtemplate = strdup(value);
     break;
@@ -3118,10 +3145,12 @@ static void loadWebString(webObj *web, char *value)
     if(getDouble(&web->minscale) == -1) return;
     break;
   case(MINTEMPLATE):
+    if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(web->mintemplate);
     web->mintemplate = strdup(value);
     break;
   case(TEMPLATE):
+    if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
     msFree(web->template);
     web->template = strdup(value);	
     break;
@@ -3208,6 +3237,7 @@ int initMap(mapObj *map)
   // Initialize the layer order list (used to modify the order in which the layers are drawn).
   map->layerorder = (int *)malloc(sizeof(int)*MS_MAXLAYERS);
 
+  map->templatepattern = map->datapattern = NULL;
 
   return(0);
 }
@@ -3316,7 +3346,10 @@ void msFreeMap(mapObj *map) {
   msFree(map->layers);
 
   if (map->layerorder)
-      free(map->layerorder);
+    free(map->layerorder);
+
+  msFree(map->templatepattern);
+  msFree(map->datapattern);
 
   msFree(map);
 }
@@ -3344,8 +3377,10 @@ int msSaveMap(mapObj *map, char *filename)
   }
 
   fprintf(stream, "MAP\n");
+  if(map->datapattern) fprintf(stream, "  DATAPATTERN \"%s\"\n", map->datapattern);
   fprintf(stream, "  EXTENT %g %g %g %g\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
   if(map->fontset.filename) fprintf(stream, "  FONTSET \"%s\"\n", map->fontset.filename);
+  if(map->templatepattern) fprintf(stream, "  TEMPLATEPATTERN \"%s\"\n", map->templatepattern);
   fprintf(stream, "  IMAGECOLOR %d %d %d\n", map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
 
   if( map->imagetype != NULL )
@@ -3353,7 +3388,7 @@ int msSaveMap(mapObj *map, char *filename)
 
   if(map->resolution != 72) fprintf(stream, "  RESOLUTION %d\n", map->resolution);
 
-  if( map->interlace != MS_NOOVERRIDE )
+  if(map->interlace != MS_NOOVERRIDE)
       fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
   if(map->symbolset.filename) fprintf(stream, "  SYMBOLSET \"%s\"\n", map->symbolset.filename);
   if(map->shapepath) fprintf(stream, "  SHAPEPATH \"%s\"\n", map->shapepath);
@@ -3401,7 +3436,6 @@ int msSaveMap(mapObj *map, char *filename)
 
 static mapObj *loadMapInternal(char *filename, char *new_mappath)
 {
-  regex_t re;
   mapObj *map=NULL;
   int i,j,k;
 
@@ -3410,20 +3444,12 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
     return(NULL);
   }
   
-  /*
-  ** Check map filename to make sure it's legal
-  */
-  if(regcomp(&re, MS_MAPFILE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
-   msSetError(MS_REGEXERR, "(%s)", "msLoadMap()", MS_MAPFILE_EXPR);   
-   return(NULL);
+  if(getenv("MS_MAPFILE_PATTERN")) { // user override
+    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) return(NULL);
+  } else { // check the default
+    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) return(NULL);
   }
-  if(regexec(&re, filename, 0, NULL, 0) != 0) { /* no match */
-    regfree(&re);
-    msSetError(MS_IOERR, "Illegal mapfile name.", "msLoadMap()");
-    return(NULL);
-  }
-  regfree(&re);
-  
+
   if((msyyin = fopen(filename,"r")) == NULL) {
     msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
     return(NULL);
@@ -3457,6 +3483,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 
     switch(msyylex()) {   
     case(DATAPATTERN):
+      if((map->datapattern = getString()) == NULL) return(NULL);
       break;
     case(DEBUG):
       if((map->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
@@ -3499,7 +3526,8 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
       if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
       break;
-    case(FILEPATTERN):
+    case(TEMPLATEPATTERN):
+      if((map->templatepattern = getString()) == NULL) return(NULL);
       break;
     case(FONTSET):
       if((map->fontset.filename = getString()) == NULL) return(NULL);
@@ -3692,7 +3720,6 @@ int msLoadMapString(mapObj *map, char *object, char *value)
 	msSetError(MS_WEBERR, "Image size out of range.", "msLoadMapString()");
 	break;
       }
-
       break;
     case(SHAPEPATH):
       msFree(map->shapepath);
@@ -3716,7 +3743,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) break;
       break;
     case(WEB):
-      loadWebString(&(map->web), value);
+      loadWebString(map, &(map->web), value);
       break;      
     default:
       break; /* malformed string */
@@ -3743,7 +3770,6 @@ int msLoadMapString(mapObj *map, char *object, char *value)
 */
 static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
 {
-  regex_t re;
   char   **tokens = NULL;
   int    numtokens=0, numtokens_allocated=0;
 
@@ -3753,20 +3779,15 @@ static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
     msSetError(MS_MISCERR, "Filename is undefined.", "msTokenizeMap()");
     return NULL;
   }
-  
+
   /*
   ** Check map filename to make sure it's legal
   */
-  if(regcomp(&re, MS_MAPFILE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
-   msSetError(MS_REGEXERR, "(%s)", "msTokenizeMap()", MS_MAPFILE_EXPR);   
-   return NULL;
+  if(getenv("MS_MAPFILE_PATTERN")) { // user override
+    if(msEvalRegex(getenv("MS_MAPFILE_PATTERN"), filename) != MS_TRUE) return(NULL);
+  } else { // check the default
+    if(msEvalRegex(MS_DEFAULT_MAPFILE_PATTERN, filename) != MS_TRUE) return(NULL);
   }
-  if(regexec(&re, filename, 0, NULL, 0) != 0) { /* no match */
-    regfree(&re);
-    msSetError(MS_IOERR, "Illegal mapfile name.", "msTokenizeMap()");
-    return NULL;
-  }
-  regfree(&re);
   
   if((msyyin = fopen(filename,"r")) == NULL) {
     msSetError(MS_IOERR, "(%s)", "msTokenizeMap()", filename);

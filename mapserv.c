@@ -205,10 +205,12 @@ void loadForm()
       continue;
     }
     
-    if(strcasecmp(msObj->ParamNames[i],"savemap") == 0) {      
-      msObj->SaveMap = MS_TRUE;
-      continue;
-    }
+    /* Insecure as implemented, need to save someplace non accessible by everyone in the universe
+        if(strcasecmp(msObj->ParamNames[i],"savemap") == 0) {      
+         msObj->SaveMap = MS_TRUE;
+         continue;
+        }
+    */
 
     if(strcasecmp(msObj->ParamNames[i],"zoom") == 0) {
       msObj->Zoom = getNumeric(re, msObj->ParamValues[i]);      
@@ -689,12 +691,6 @@ void loadForm()
 	sprintf(Value, "%s|%s", tmpstr, msObj->ParamValues[i]);
 	free(tmpstr);
       }
-      continue;
-    }
-
-    if(strcasecmp(msObj->ParamNames[i],"template") == 0) { // template file, common change hence the simple parameter
-      free(msObj->Map->web.template);
-      msObj->Map->web.template = strdup(msObj->ParamValues[i]);      
       continue;
     }
 
