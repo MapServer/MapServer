@@ -46,7 +46,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "3.6 (development)"
+#define MS_VERSION "3.6.4"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
@@ -113,6 +113,7 @@ extern "C" {
 #define MS_REGEX 2001
 #define MS_STRING 2002
 #define MS_NUMBER 2003
+#define MS_COMMENT 2004
 
 // General macro definitions
 #define MS_MIN(a,b)     (((a)<(b))?(a):(b))
@@ -788,6 +789,7 @@ int msUpdatePalette(gdImagePtr img, paletteObj *palette);
 int msAddColor(mapObj *map, int red, int green, int blue);
 int msLoadMapString(mapObj *map, char *object, char *value);
 void msFree(void *p);
+char **msTokenizeMap(char *filename, int *numtokens);
 
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems); // in maputil.c
 char **msGetAllGroupNames(mapObj* map, int *numTok);
@@ -891,6 +893,8 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, in
 gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
    
 int msLoadFontSet(fontSetObj *fontSet); // in maplabel.c
+int msInitFontSet(fontSetObj *fontset);
+int msFreeFontSet(fontSetObj *fontset);
 int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset);
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
 int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize);

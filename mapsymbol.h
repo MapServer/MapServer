@@ -22,6 +22,7 @@ struct imageCacheObj {
 typedef struct {
   char *name;
   int type;
+  int inmapfile; //boolean value for writing
  
   /*
   ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options
@@ -38,6 +39,7 @@ typedef struct {
   ** MS_SYMBOL_PIXMAP options
   */
   gdImagePtr img;
+  char *imagepath;
   int transparent;
   int transparentcolor;
 

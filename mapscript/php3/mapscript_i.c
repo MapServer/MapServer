@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.40.2.1  2002/07/08 17:28:16  dan
+ * Added map->setFontSet() to MapScript
+ *
  * Revision 1.40  2002/04/23 15:40:21  dan
  * Call msGetSymbolIndex() directly in mapObj_getSymbolByName()
  *
@@ -393,6 +396,17 @@ int mapObj_setSymbolSet(mapObj *self,
 int mapObj_getNumSymbols(mapObj *self)
 {
     return self->symbolset.numsymbols;
+}
+
+int mapObj_setFontSet(mapObj *self, char *szFileName)
+{
+    msFreeFontSet(&(self->fontset));
+    msInitFontSet(&(self->fontset));
+   
+    // Set fontset filename
+    self->fontset.filename = strdup(szFileName);
+
+    return msLoadFontSet(&(self->fontset));
 }
 
 

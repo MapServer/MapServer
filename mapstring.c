@@ -22,21 +22,30 @@ char	*strdup(char *s)
 int strncasecmp(char *s1, char *s2, int len)
 {
   register char *cp1, *cp2;
+  int cmp = 0;
 
   cp1 = s1;
   cp2 = s2;
-  while(*cp1 && *cp2 && len) {
-    if(toupper(*cp1) != toupper(*cp2))
-      return(-1);
-    cp1++;
-    cp2++;
-    len--;
+  
+  while(*cp1 && *cp2 && len) 
+  {
+      if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
+        return(cmp);
+      cp1++;
+      cp2++;
+      len--;
   }
+  
   if(len == 0) {
     return(0);
   }
   if(*cp1 || *cp2)
-    return(-1);
+  {
+      if (*cp1)
+        return(1);
+      else
+        return (-1);
+  }
   return(0);
 }
 #endif
@@ -45,17 +54,25 @@ int strncasecmp(char *s1, char *s2, int len)
 int strcasecmp(char *s1, char *s2)
 {
   register char *cp1, *cp2;
+  int cmp = 0;
 
   cp1 = s1;
   cp2 = s2;
-  while(*cp1 && *cp2) {
-    if(toupper(*cp1) != toupper(*cp2))
-      return(-1);
+  while(*cp1 && *cp2) 
+  {
+     if((cmp = (toupper(*cp1) - toupper(*cp2))) != 0)
+        return(cmp);
     cp1++;
     cp2++;
   }
   if(*cp1 || *cp2)
-    return(-1);
+  {
+      if (*cp1)
+        return(1);
+      else
+        return (-1);
+  }
+
   return(0);
 }
 #endif

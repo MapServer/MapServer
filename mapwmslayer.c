@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23.2.1  2002/11/26 01:29:05  dan
+ * Fixed parsing of spaced-delimited wms_srs metadata
+ *
  * Revision 1.23  2002/03/13 23:45:22  sdlime
  * Added projection support to the GML output code. Re-shuffled the code to extract the EPSG values for a layer or map into mapproject.c.
  *
@@ -334,7 +337,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         if (pszLyrEPSG == NULL ||
             (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
-            ! isspace(*(pszFound+nLen)) )
+            ! ((*(pszFound+nLen) == '\0') || isspace(*(pszFound+nLen))) )
         {
             // Not found in Layer's list of SRS (including projection object)
             free(pszEPSG);
