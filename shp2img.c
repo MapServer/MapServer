@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/11/05 02:28:39  frank
+ * Reorganize error cases a bit to cleanup properly so we can test error
+ * logic leak issues, such as in bug 139.
+ *
  * Revision 1.14  2004/11/04 21:08:45  frank
  * added -p flag
  *
@@ -113,7 +117,7 @@ int main(int argc, char *argv[])
     }
 
     if(strncmp(argv[i],"-o",2) == 0) { /* load the output image filename */
-      outfile = strdup(argv[i+1]);
+      outfile = argv[i+1];
       i+=1;
     }
 
@@ -217,19 +221,18 @@ int main(int argc, char *argv[])
 
   if(!image) {
     msWriteError(stderr);
+
+    msFreeMap(map);
+    msCleanup();
     exit(0);
   }
 
   if( msSaveImage(map, image, outfile) != MS_SUCCESS ) {
     msWriteError(stderr);
-    exit(0);
   }
+
   msFreeImage(image);
-
   msFreeMap(map);
-  free(outfile);
-
-
   msCleanup();
 
   return(0);
