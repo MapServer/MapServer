@@ -16,7 +16,7 @@
 
 #include "libpq-fe.h"
 #include <string.h>
-
+#include <ctype.h> /* tolower() */
 
 typedef struct ms_POSTGIS_layer_info_t
 {
@@ -29,15 +29,6 @@ typedef struct ms_POSTGIS_layer_info_t
 
 } msPOSTGISLayerInfo;
 
-#if !defined(_WIN32)
-char tolower(char c)
-{
-	if ((c <'A') || (c>'Z'))
-		return c;
-	return c-'A'+'a';
-
-}
-#endif
 
 void postresql_NOTICE_HANDLER(void *arg, const char *message)
 {
