@@ -1226,6 +1226,16 @@ void returnHTML(char *html)
 	}
       }
  
+      if(SaveQuery) {
+        sprintf(substr, "%s%s%s.qf", Map->web.imageurl, Map->name, Id);
+        outstr = gsub(outstr, "[queryfile]", substr);
+      }
+
+      if(SaveMap) {
+        sprintf(substr, "%s%s%s.map", Map->web.imageurl, Map->name, Id);
+        outstr = gsub(outstr, "[map]", substr);
+      }
+
       sprintf(substr, "%s%s%s.%s", Map->web.imageurl, Map->name, Id, outputImageType[Map->imagetype]);
       outstr = gsub(outstr, "[img]", substr);
       sprintf(substr, "%s%sref%s.%s", Map->web.imageurl, Map->name, Id, outputImageType[Map->imagetype]);
