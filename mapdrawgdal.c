@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2004/04/09 03:03:58  frank
+ * improvement for msGetGDALBandList()
+ *
  * Revision 1.24  2004/04/08 17:25:25  frank
  * added msGetGDALBandList()
  *
@@ -1755,7 +1758,11 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
 /* -------------------------------------------------------------------- */
     if( CSLFetchNameValue( layer->processing, "BANDS" ) == NULL )
     {
-        *band_count = MIN(file_bands,max_bands);
+        if( max_bands > 0 )
+            *band_count = MIN(file_bands,max_bands);
+        else
+            *band_count = file_bands;
+
         band_list = (int *) malloc(sizeof(int) * *band_count );
         for( i = 0; i < *band_count; i++ )
             band_list[i] = i+1;
@@ -1777,7 +1784,7 @@ int *msGetGDALBandList( layerObj *layer, void *hDS,
                         "msGetGDALBandList()" );
             return NULL;
         }
-        else if( CSLCount(papszItems) > max_bands )
+        else if( max_bands != 0 && CSLCount(papszItems) > max_bands )
         {
             msSetError( MS_IMGERR, "BANDS PROCESSING directive has wrong number of bands, expected at most %d, got %d.",
                         "msGetGDALBandList()",
