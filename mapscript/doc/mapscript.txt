@@ -25,6 +25,9 @@
 Grand Unified Mapscript Documentation :)
 =============================================================================
 
+..  The next heading encountered becomes our H2
+..
+
 -----------------------------------------------------------------------------
  Introduction
 -----------------------------------------------------------------------------
@@ -46,7 +49,10 @@ MapServer.
 -----------------------------------------------------------------------------
 
 Since the 4.0 release, MapServer colors are instances of colorObj.
-   
+
+..  The next heading becomes our H3
+..
+
 Attributes
 ----------
 
@@ -105,6 +111,26 @@ string **toHex** ()
 class mapObj
 ------------
 
+Attributes
+----------
+
+x
+
+Methods
+-------
+
+x
+
+Attribute Details
+-----------------
+
+x
+
+Method Details
+--------------
+
+x
+
 .. _layerObj:
 
 --------------
@@ -116,6 +142,83 @@ class layerObj
 --------------
 class imageObj
 --------------
+
+.. _pointObj:
+
+--------------
+class pointObj
+--------------
+
+Attributes
+----------
+
+- x
+- y
+
+Methods
+-------
+
+- `new pointObj`_
+- distanceToPoint_
+- distanceToSegment_
+- distanceToShape_
+- draw [pointObj.draw_]
+- project [pointObj.project_]
+
+Attribute Details
+-----------------
+
+float **x**, float **y**
+
+Easting and northing values.
+
+Method Details
+--------------
+
+.. _new pointObj:
+
+pointObj_ **new** **pointObj** ([float x, float y])
+
+    Create new instance.  Easting and northing arguments are optional.
+
+.. _pointObj.draw:
+
+int **draw** (mapObj_ map, layerObj_ layer, imageObj_ image, int classindex, string text)
+
+    Draw the point using the styles defined by the *classindex* class of
+    *layer* and labeled with string *text*.
+
+.. _distanceToPoint:
+
+float **distanceToPoint** (pointObj_ point)
+
+    Returns the distance to *point*.
+   
+.. _distanceToSegment:
+
+float **distanceToSegment** (pointObj_ point1, pointObj_ point2)
+
+    Returns the minimum distance to the line segment connecting
+    *point1* and *point2*.
+   
+.. _distanceToShape:
+
+float **distanceToShape** (shapeObj_ shape)
+
+    Returns the minimum distance to *shape*.
+
+.. _pointObj.project:
+
+int **project** (projectionObj_ *proj_in*, projectionObj_ *proj_out*)
+
+    Reproject point from *proj_in* to *proj_out*.  Transformation
+    is done in place.
+
+.. _projectionObj:
+
+-------------------
+class ProjectionObj
+-------------------
 
 .. _shapeObj:
 
@@ -143,7 +246,8 @@ Methods
 -------
 
 - `new rectObj`_
-- draw_
+- draw [rectObj.draw_]
+- project [rectObj.project_]
 - toPolygon_
    
 Attribute Details
@@ -157,7 +261,7 @@ float **minx**, float **miny**, float **maxx**, float **maxy**
 Method Details
 --------------
 
-.. _`new rectObj`:
+.. _new rectObj:
 
 rectObj_  **new** **rectObj** ([float minx, float miny, float maxx, float maxy])
 
@@ -165,13 +269,19 @@ rectObj_  **new** **rectObj** ([float minx, float miny, float maxx, float maxy])
     are optional.
 
 
-.. _draw:
+.. _rectObj.draw:
 
 int **draw** (mapObj_ map, layerObj_ layer, imageObj_ img, int classindex, string text)
 
     Draw rectangle into *img* using style defined by the *classindex* class
     of *layer*.  The rectangle is labeled with the string *text*.
 
+.. _rectObj.project:
+
+int **project** (projectionObj_ *proj_in*, projectionObj_ *proj_out*)
+
+    Reproject rectangle from *proj_in* to *proj_out*.  Transformation
+    is done in place.
 
 .. _toPolygon:
 

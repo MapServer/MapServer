@@ -31,6 +31,8 @@ closes the comment block. -->
 lines between every different RST element such as the empty line
 between the end of this comment and the begining of the heading. -->
 <!--  -->
+<!-- The next heading encountered becomes our H2 -->
+<!--  -->
 <div class="section" id="introduction">
 <h1><a name="introduction">Introduction</a></h1>
 <p>This is language agnostic documentation for the mapscript interface to 
@@ -44,6 +46,8 @@ typing 'colorObj_'. -->
 <div class="section" id="class-colorobj">
 <h1><a name="class-colorobj">class colorObj</a></h1>
 <p>Since the 4.0 release, MapServer colors are instances of colorObj.</p>
+<!-- The next heading becomes our H3 -->
+<!--  -->
 <div class="section" id="attributes">
 <h2><a name="attributes">Attributes</a></h2>
 <ul class="simple">
@@ -87,12 +91,81 @@ color components.</blockquote>
 </div>
 <div class="section" id="class-mapobj">
 <h1><a name="class-mapobj">class mapObj</a></h1>
+<div class="section" id="id1">
+<h2><a name="id1">Attributes</a></h2>
+<p>x</p>
+</div>
+<div class="section" id="id2">
+<h2><a name="id2">Methods</a></h2>
+<p>x</p>
+</div>
+<div class="section" id="id3">
+<h2><a name="id3">Attribute Details</a></h2>
+<p>x</p>
+</div>
+<div class="section" id="id4">
+<h2><a name="id4">Method Details</a></h2>
+<p>x</p>
 <a class="target" id="layerobj" name="layerobj"></a></div>
+</div>
 <div class="section" id="class-layerobj">
 <h1><a name="class-layerobj">class layerObj</a></h1>
 <a class="target" id="imageobj" name="imageobj"></a></div>
 <div class="section" id="class-imageobj">
 <h1><a name="class-imageobj">class imageObj</a></h1>
+<a class="target" id="pointobj" name="pointobj"></a></div>
+<div class="section" id="class-pointobj">
+<h1><a name="class-pointobj">class pointObj</a></h1>
+<div class="section" id="id5">
+<h2><a name="id5">Attributes</a></h2>
+<ul class="simple">
+<li>x</li>
+<li>y</li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h2><a name="id6">Methods</a></h2>
+<ul class="simple">
+<li><a class="reference" href="#new-pointobj">new pointObj</a></li>
+<li><a class="reference" href="#distancetopoint">distanceToPoint</a></li>
+<li><a class="reference" href="#distancetosegment">distanceToSegment</a></li>
+<li><a class="reference" href="#distancetoshape">distanceToShape</a></li>
+<li>draw [<a class="reference" href="#pointobj-draw">pointObj.draw</a>]</li>
+<li>project [<a class="reference" href="#pointobj-project">pointObj.project</a>]</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h2><a name="id7">Attribute Details</a></h2>
+<p>float <strong>x</strong>, float <strong>y</strong></p>
+<p>Easting and northing values.</p>
+</div>
+<div class="section" id="id8">
+<h2><a name="id8">Method Details</a></h2>
+<a class="target" id="new-pointobj" name="new-pointobj"></a><p><a class="reference" href="#pointobj">pointObj</a> <strong>new</strong> <strong>pointObj</strong> ([float x, float y])</p>
+<blockquote>
+Create new instance.  Easting and northing arguments are optional.</blockquote>
+<a class="target" id="pointobj-draw" name="pointobj-draw"></a><p>int <strong>draw</strong> (<a class="reference" href="#mapobj">mapObj</a> map, <a class="reference" href="#layerobj">layerObj</a> layer, <a class="reference" href="#imageobj">imageObj</a> image, int classindex, string text)</p>
+<blockquote>
+Draw the point using the styles defined by the <em>classindex</em> class of
+<em>layer</em> and labeled with string <em>text</em>.</blockquote>
+<a class="target" id="distancetopoint" name="distancetopoint"></a><p>float <strong>distanceToPoint</strong> (<a class="reference" href="#pointobj">pointObj</a> point)</p>
+<blockquote>
+Returns the distance to <em>point</em>.</blockquote>
+<a class="target" id="distancetosegment" name="distancetosegment"></a><p>float <strong>distanceToSegment</strong> (<a class="reference" href="#pointobj">pointObj</a> point1, <a class="reference" href="#pointobj">pointObj</a> point2)</p>
+<blockquote>
+Returns the minimum distance to the line segment connecting
+<em>point1</em> and <em>point2</em>.</blockquote>
+<a class="target" id="distancetoshape" name="distancetoshape"></a><p>float <strong>distanceToShape</strong> (<a class="reference" href="#shapeobj">shapeObj</a> shape)</p>
+<blockquote>
+Returns the minimum distance to <em>shape</em>.</blockquote>
+<a class="target" id="pointobj-project" name="pointobj-project"></a><p>int <strong>project</strong> (<a class="reference" href="#projectionobj">projectionObj</a> <em>proj_in</em>, <a class="reference" href="#projectionobj">projectionObj</a> <em>proj_out</em>)</p>
+<blockquote>
+Reproject point from <em>proj_in</em> to <em>proj_out</em>.  Transformation
+is done in place.</blockquote>
+<a class="target" id="projectionobj" name="projectionobj"></a></div>
+</div>
+<div class="section" id="class-projectionobj">
+<h1><a name="class-projectionobj">class ProjectionObj</a></h1>
 <a class="target" id="shapeobj" name="shapeobj"></a></div>
 <div class="section" id="class-shapeobj">
 <h1><a name="class-shapeobj">class shapeObj</a></h1>
@@ -100,8 +173,8 @@ color components.</blockquote>
 <div class="section" id="class-rectobj">
 <h1><a name="class-rectobj">class rectObj</a></h1>
 <p>Map extents and shape bounds are instances of <a class="reference" href="#rectobj">rectObj</a>.</p>
-<div class="section" id="id1">
-<h2><a name="id1">Attributes</a></h2>
+<div class="section" id="id9">
+<h2><a name="id9">Attributes</a></h2>
 <ul class="simple">
 <li>minx</li>
 <li>miny</li>
@@ -109,31 +182,36 @@ color components.</blockquote>
 <li>maxy</li>
 </ul>
 </div>
-<div class="section" id="id2">
-<h2><a name="id2">Methods</a></h2>
+<div class="section" id="id10">
+<h2><a name="id10">Methods</a></h2>
 <ul class="simple">
 <li><a class="reference" href="#new-rectobj">new rectObj</a></li>
-<li><a class="reference" href="#draw">draw</a></li>
+<li>draw [<a class="reference" href="#rectobj-draw">rectObj.draw</a>]</li>
+<li>project [<a class="reference" href="#rectobj-project">rectObj.project</a>]</li>
 <li><a class="reference" href="#topolygon">toPolygon</a></li>
 </ul>
 </div>
-<div class="section" id="id3">
-<h2><a name="id3">Attribute Details</a></h2>
+<div class="section" id="id11">
+<h2><a name="id11">Attribute Details</a></h2>
 <p>float <strong>minx</strong>, float <strong>miny</strong>, float <strong>maxx</strong>, float <strong>maxy</strong></p>
 <blockquote>
 Minimum easting, minimum northing, maximum easting, and
 maximum northing of rectangle region.</blockquote>
 </div>
-<div class="section" id="id4">
-<h2><a name="id4">Method Details</a></h2>
+<div class="section" id="id12">
+<h2><a name="id12">Method Details</a></h2>
 <a class="target" id="new-rectobj" name="new-rectobj"></a><p><a class="reference" href="#rectobj">rectObj</a>  <strong>new</strong> <strong>rectObj</strong> ([float minx, float miny, float maxx, float maxy])</p>
 <blockquote>
 Create new instance.  The four easting and northing arguments
 are optional.</blockquote>
-<a class="target" id="draw" name="draw"></a><p>int <strong>draw</strong> (<a class="reference" href="#mapobj">mapObj</a> map, <a class="reference" href="#layerobj">layerObj</a> layer, <a class="reference" href="#imageobj">imageObj</a> img, int classindex, string text)</p>
+<a class="target" id="rectobj-draw" name="rectobj-draw"></a><p>int <strong>draw</strong> (<a class="reference" href="#mapobj">mapObj</a> map, <a class="reference" href="#layerobj">layerObj</a> layer, <a class="reference" href="#imageobj">imageObj</a> img, int classindex, string text)</p>
 <blockquote>
 Draw rectangle into <em>img</em> using style defined by the <em>classindex</em> class
 of <em>layer</em>.  The rectangle is labeled with the string <em>text</em>.</blockquote>
+<a class="target" id="rectobj-project" name="rectobj-project"></a><p>int <strong>project</strong> (<a class="reference" href="#projectionobj">projectionObj</a> <em>proj_in</em>, <a class="reference" href="#projectionobj">projectionObj</a> <em>proj_out</em>)</p>
+<blockquote>
+Reproject rectangle from <em>proj_in</em> to <em>proj_out</em>.  Transformation
+is done in place.</blockquote>
 <a class="target" id="topolygon" name="topolygon"></a><p><a class="reference" href="#shapeobj">shapeObj</a> <strong>toPolygon</strong> ()</p>
 <blockquote>
 Convert to a polygon of five vertices.</blockquote>
@@ -143,7 +221,7 @@ Convert to a polygon of five vertices.</blockquote>
 <hr class="footer"/>
 <div class="footer">
 <a class="reference" href="mapscript.txt">View document source</a>.
-Generated on: 2004-02-19 03:24 UTC.
+Generated on: 2004-02-19 15:44 UTC.
 Generated by <a class="reference" href="http://docutils.sourceforge.net/">Docutils</a> from <a class="reference" href="http://docutils.sourceforge.net/rst.html">reStructuredText</a> source.
 </div>
 </body>
