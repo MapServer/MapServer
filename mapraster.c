@@ -2102,6 +2102,11 @@ imageObj *msDrawReferenceMap(mapObj *map) {
     image->img.gd = img;
     image->imagepath = NULL;
     image->imageurl = NULL;
+    if (map->web.imagepath)
+       image->imagepath = strdup(map->web.imagepath);
+    if (map->web.imageurl)
+       image->imageurl = strdup(map->web.imageurl);
+    
 #else
     msSetError(MS_MISCERR, "Unable to load GIF reference image.", "msDrawReferenceMap()");
     fclose(stream);
@@ -2115,6 +2120,10 @@ imageObj *msDrawReferenceMap(mapObj *map) {
     image->img.gd = img;
     image->imagepath = NULL;
     image->imageurl = NULL;
+    if (map->web.imagepath)
+       image->imagepath = strdup(map->web.imagepath);
+    if (map->web.imageurl)
+       image->imageurl = strdup(map->web.imageurl);
 #else
     msSetError(MS_MISCERR, "Unable to load PNG reference image.", "msDrawReferenceMap()");
     fclose(stream);
@@ -2128,6 +2137,10 @@ imageObj *msDrawReferenceMap(mapObj *map) {
     image->img.gd = img;
     image->imagepath = NULL;
     image->imageurl = NULL;
+    if (map->web.imagepath)
+       image->imagepath = strdup(map->web.imagepath);
+    if (map->web.imageurl)
+       image->imageurl = strdup(map->web.imageurl);
 #else
     msSetError(MS_MISCERR, "Unable to load JPEG reference image.", "msDrawReferenceMap()");
     fclose(stream);
