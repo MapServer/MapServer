@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.19  2003/10/30 22:37:01  assefa
+ * Add function msWFSExecuteGetFeature on a wfs layer.
+ *
  * Revision 1.18  2003/10/06 13:03:19  assefa
  * Use of namespace. Correct execption return.
  *
@@ -231,7 +234,7 @@ int msWFSLayerInitItemInfo(layerObj *layer);
 int msWFSLayerGetItems(layerObj *layer);
 int msWFSLayerWhichShapes(layerObj *layer, rectObj rect);
 int msWFSLayerClose(layerObj *lp);
-
+char *msWFSExecuteGetFeature(layerObj *lp);
 
 /*====================================================================
  *   mapcontext.c

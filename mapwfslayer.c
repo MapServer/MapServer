@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.18  2003/10/30 22:37:01  assefa
+ * Add function msWFSExecuteGetFeature on a wfs layer.
+ *
  * Revision 1.17  2003/10/22 20:20:09  assefa
  * Test if wfs_filter metada is empty.
  *
@@ -1103,6 +1106,39 @@ int msWFSLayerClose(layerObj *lp)
   return(MS_FAILURE);
 
 #endif /* USE_WFS_LYR */
+
 }
 
+/**********************************************************************
+ *                          msWFSExecuteGetFeature()
+ * Returns the temporary gml file name. User shpuld free the return string.
+ **********************************************************************/
+char *msWFSExecuteGetFeature(layerObj *lp)
+{
+  char *gmltmpfile = NULL;
+  msWFSLayerInfo *psInfo = NULL;
+
+#ifdef USE_WFS_LYR
+  if (lp == NULL || lp->connectiontype != MS_WFS)
+    return NULL;
+
+  msWFSLayerOpen(lp, NULL, NULL);
+  psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
+  if (psInfo &&  psInfo->pszGMLFilename)
+    gmltmpfile = strdup(psInfo->pszGMLFilename);
+  msWFSLayerClose(lp);
+
+  return gmltmpfile;
+
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msExecuteWFSGetFeature()");
+  return NULL;
+
+#endif /* USE_WFS_LYR */
+
+}
 
