@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2004/11/11 20:25:52  sdlime
+ * Addressed bug 1057 by removing the [get_layers] template tag.
+ *
  * Revision 1.98  2004/11/11 19:55:24  sdlime
  * Fixed enhancement request 1004, plus a bit more. ERROR and EMPTY properties are now treated as URL templates so for example you could pass the map xy value for a bombed query (perhaps to another service). Also added [errmsg] and [errmsg_esc] tags to the templating code so that the current error stack can be output. Various error messages are delimited by semi-colons.
  *
@@ -2208,7 +2211,6 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   encodedstr = msEncodeUrl(repstr);
   outstr = gsub(outstr, "[layers_esc]", encodedstr);
-  outstr = gsub(outstr, "[get_layers]", repstr); // obsolete
   free(encodedstr);
 
   strcpy(repstr, ""); // list of ALL layers that can be toggled
