@@ -945,6 +945,7 @@ MS_DLL_EXPORT int initMap(mapObj *map);
 MS_DLL_EXPORT int initLayer(layerObj *layer, mapObj *map);
 MS_DLL_EXPORT void freeLayer( layerObj * );
 MS_DLL_EXPORT int initClass(classObj *_class);
+MS_DLL_EXPORT void freeClass( classObj * );
 MS_DLL_EXPORT void initLabel(labelObj *label);
 MS_DLL_EXPORT void resetClassStyle(classObj *_class);
 MS_DLL_EXPORT int initStyle(styleObj *style);
