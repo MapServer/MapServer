@@ -241,7 +241,7 @@ static queryResultObj *newResults(int numlayers)
   results->numlayers = numlayers;
   results->numresults = 0;
   results->numquerylayers = 0;
-  results->currentlayer = results->currenttile =  results->currentshape;
+  results->currentlayer = results->currenttile =  results->currentshape = -1;
   
   for(i=0; i<numlayers; i++) { /* initialize a few things */
     results->layers[i].status = NULL;
