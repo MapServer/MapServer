@@ -868,9 +868,10 @@ Optional Packages:
                           OGR required).
   --with-curl-config=PATH Specify path to curl-config.
   --with-httpd            Specify path to 'httpd' executable.
-  --with-php=DIR          Specify directory where PHP4 source tree is
-                          installed. Required in order to compile the
-                          PHP/MapScript module.
+  --with-php=DIR          Specify directory where PHP4's include files are
+                          installed (or a pointer to the full source tree)
+                          Required in order to compile the PHP/MapScript
+                          module.
   --with-apxs=FILE      (CURRENTLY DISABLED)
                           Use this option only if building the PHP MapScript
                           on a system where PHP was built as a shared Apache
@@ -8892,8 +8893,13 @@ echo "$as_me: error: ERROR: Cannot use --enable-perlv-ld-detect since Perl -V do
           echo "$as_me:$LINENO: checking for location of config.h or php_config.h" >&5
 echo $ECHO_N "checking for location of config.h or php_config.h... $ECHO_C" >&6
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
+
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
+
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
+
+    test -f "$PHP_SRC_DIR/include/php/main/php_config.h" && PHP_SRC_DIR="$PHP_SRC_DIR/include/php/" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
+
   if test -n "$PHP_CONFIG_H" ; then
     echo "$as_me:$LINENO: result: $PHP_CONFIG_H" >&5
 echo "${ECHO_T}$PHP_CONFIG_H" >&6
