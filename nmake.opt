@@ -1,0 +1,472 @@
+#
+# nmake.opt - MapServer 4.x configuration for MSVC++
+#
+# This VC++ configuration is used in building MAPSERVER.LIB, MAPSERV.EXE,
+# and the other MapServer command-line programs.
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+# Contents:
+#   Section I:   Mapserver Options (you may want to edit)
+#   Section II:  Support Libraries (you must edit)
+#   Section III: Debug Flags (no need to edit)
+#   Section IV:  Variable Setup (should not need to edit)
+#   Section V:   UMN GIS System Setup (should not need to edit)
+#   Section VI:  Collect compiler flags
+#
+########################################################################
+# Section I: Mapserver Options
+########################################################################
+
+# Input raster format options:
+#
+# The lite version of mapserver 4.x supports only PNG and JPEG data for input.
+#
+# If you wish to support any of the following raster formats you will need
+# the GDAL support library from http://www.remotesensing.org/gdal.
+# Once you have the library, set the flag below to compile with GDAL and
+# provide the full path to GDAL project directory
+#
+# Format Name
+#   Arc/Info ASCII Grid AAIGrid
+#   Arc/Info Binary Grid (.adf) AIG
+#   Microsoft Windows Device Independent Bitmap (.bmp) BMP
+#   BSB Nautical Chart Format (.kap) BSB
+#   CEOS (Spot for instance) CEOS
+#   First Generation USGS DOQ (.doq) DOQ1
+#   New Labelled USGS DOQ (.doq) DOQ2
+#   Military Elevation Data (.dt0, .dt1) DTED
+#   ERMapper Compressed Wavelets (.ecw) ECW
+#   ESRI .hdr Labelled EHdr
+#   ENVI .hdr Labelled Raster ENVI
+#   Envisat Image Product (.n1) Envisat
+#   EOSAT FAST Format FAST
+#   FITS (.fits) FITS
+#   Graphics Interchange Format (.gif) GIF
+#   Arc/Info Binary Grid (.adf) GIO
+#   GRASS Rasters GRASS
+#   TIFF / GeoTIFF (.tif) GTiff
+#   Hierarchical Data Format Release 4 (HDF4) HDF4
+#   Erdas Imagine (.img) HFA
+#   Atlantis MFF2e HKV
+#   Japanese DEM (.mem) JDEM
+#   JPEG2000 (.jp2, .j2k) JPEG2000
+#   JPEG2000 (.jp2, .j2k) JP2KAK
+#   NOAA Polar Orbiter Level 1b Data Set (AVHRR) L1B
+#   Atlantis MFF MFF
+#   NITF NITF
+#   OGDI Bridge OGDI
+#   PCI .aux Labelled PAux Yes
+#   Netpbm (.ppm,.pgm) PNM Yes
+#   USGS SDTS DEM (*CATD.DDF) SDTS
+#   SAR CEOS SAR_CEOS
+#   USGS ASCII DEM (.dem) USGSDEM
+#   X11 Pixmap (.xpm) XPM
+GDAL=-DUSE_GDAL
+GDAL_DIR=c:\projects\gdal
+
+#
+# Input vector format options
+#
+# The lite version of Mapserver 4.x only suports ESRI shapefiles for input.
+#
+# If you wish to support any of the following vector formats you will need
+# the GDAL support library with OGR from http://www.remotesensing.org/gdal.
+# Once you have the library, set the flag below to compile with OGR and
+# provide the full path to GDAL project directory
+#
+# Format Name
+#   Arc/Info Binary Coverage
+#   FMEObjects Gateway
+#   IHO S-57 (ENC)
+#   Mapinfo File
+#   Microstation DGN
+#   OGDI Vectors
+#   Oracle Spatial
+#   PostgreSQL
+#   SDTS
+#   UK .NTF
+#   U.S. Census TIGER/Line
+#
+OGR=-DUSE_OGR
+GDAL_DIR=c:\projects\gdal
+
+#ECW support
+#
+#ECW is one of the formats supported through GDAL. If you have built
+#gdal with ECW support, you need to link it with the ECW librarires.
+#uncommnet the following lines to have the ECW support.
+ECW_DIR= C:\projects\ECW_SDK
+
+#Xerces support
+#
+#If GDAL was compoiled with the Xerces support, you need to use the 
+#xerces library. #uncommnet the following line to have the Xerces support
+XERCES_DIR = c:\projects\xerces-c1_6_0-win32
+
+# Tiff Input
+# 
+# Tiff input is also available through GDAL. If you wish to build to support
+# TIFF input without GDAL you will need to unccomment the following flag 
+# and set the full path to the project directory containing libtiff.
+# See http://www.libtiff.org/ for support library
+#TIFF=-DUSE_TIFF
+#TIFFDIR=c:/my_path_to/tiff-v3.5.4
+
+# JPEG Input:
+# JPEG input for raster layers is also available through GDAL, If you wish 
+# to build support for JPEG without GDAL, uncomment the following flag
+# and provide the full path to the jpeg support library project directory.
+# See http://www.ijg.org/ for support library.
+#JPEG=-DUSE_JPEG
+#JPEG_DIR=c:/projects/gdal/frmts/jpeg/libjpeg
+
+# Output format options:
+# If you wish to allow JPEG output maps, uncomment the following flag
+# and provide the full path to the jpeg support library project directory.
+# See http://www.ijg.org/ for support library.
+OUTPUT_JPEG=-DUSE_GD_JPEG
+JPEG_DIR=c:/projects/gdal/frmts/jpeg/libjpeg
+
+# If you wish to allow PNG output maps, uncomment the following flag
+# and provide the full path to the png and zlib support library project
+# directories.
+# See http://www.libpng.org/pub/png/libpng.html for support library.
+# See http://www.gzip.org/zlib/ for support library.
+OUTPUT_PNG=-DUSE_GD_PNG
+PNG_DIR=c:/projects/libpng-1.0.8
+
+ZLIB_DIR=c:/projects/zlib-1.1.3
+
+# If you wish to allow Windows BMP output maps, uncomment the following flag.
+OUTPUT_WBMP=-DUSE_GD_WBMP
+
+# If you wish to have FLASH output, uncomment the following flag and provide
+# the full path to the MING support library project directory.
+# See http://ming.sourceforge.net/ for support library.
+MING=-DUSE_MING_FLASH
+MING_DIR=c:/projects/ming-0.2a
+
+# If you wish to have PDF output, uncomment the following flag and provide the
+# full path to the PDF support library project directory.
+# See http://www.pdflib.com/ for support library.
+PDF=-DUSE_PDF
+PDF_DIR=c:/projects/pdflib-4.0.3
+
+
+# Annotation fonts.
+#
+# If you wish to annotate your maps with true type fonts unccomment the
+# following flag. Provide the full path to the FreeType 2.x external
+# supprt library.  See http://www.freetype.org for support library.
+ANNOTATION_FT=-DUSE_GD_FT
+FT_DIR=c:/projects/freetype-2.1.3
+
+
+# Direct connectivity to Postgresql PostGIS.
+# 
+# To turn on direct connectivity to Postgresql PostGIS uncomment the following
+# flag and set the full path name to the project directory for the 
+# Postgresql native Win32 client library.
+# See http://www.postgresql.org for support library.
+POSTGIS =-DUSE_POSTGIS
+POSTGIS_DIR =c:/projects/libpq
+
+# Direct connectivity to ArcSDE.
+# 
+# To turn on direct connectivity to ArcSDE uncomment the following
+# flag and set the full path name to the project directory for ArcSDE.
+# Since ESRI includes the version number in the name of their libraries
+# you may need to change that number in Section III of this configuration
+# file.
+# See http://www.esri.com/software/arcgis/arcinfo/arcsde/index.html for
+# support library
+#SDE_OPT=-DUSE_SDE -DWIN32
+#SDE_DIR=c:/my_path_to/arcsde
+
+# EPPL7 Support
+#
+# This activates ERDAS as well. It is included in the distribution. 
+# Probably the best raster alternative if
+# you've got EPPL7 laying around. See http://www.lmic.state.mn.us/ for 
+# more information.
+# Uncomment out the following flag and set the full path name to the
+# epplib.obj file.
+#EPPL=-DUSE_EPPL
+#EPPL_OBJ=c:/my_path/epplib.obj
+
+# If you want to ignore missing datafile errors uncomment the following
+# line. This is especially useful with large tiled datasets that may not
+# have complete data for each tile.
+IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
+
+# Use this flag to compile with WMS Server support.
+# To find out more about the OpenGIS Web Map Server Specification go to
+# http://www.opengis.org/
+WMS=-DUSE_WMS_SVR
+
+# Use this flag to compile with WMS Client support. WMS Client support
+# allows you to pull layers from other OGIS WMS servers on the interent and
+# incorporate them into your map.
+# To find out more about the OpenGIS Web Map Server Specification go to
+# http://www.opengis.org/
+# you need the libcurl library from http://curl.haxx.se/library/c/
+# Set the full path to the curl project directory.
+# You will also need to set the full path to the Microsoft Visual C++ windows
+# socket library.
+WMSCLIENT= -DUSE_WMS_LYR
+CURL_DIR=c:/projects/curl-7.10.2
+WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
+
+# Use -DUSE_WFS_SVR to compile with WFS server support, requires OGR and PROJ4
+# Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
+WFS=-DUSE_WFS_SVR
+WFSCLIENT= -DUSE_WFS_LYR
+
+
+# Reprojecting.
+# If you would like mapserver to be able to reproject data from one
+# geographic projection to another, uncomment the following flag
+# Proj.4 distribution (cartographic projection routines). 
+# Not required for normal use. (EXPERIMENTAL)
+# For PROJ_DIR use full path to Proj.4 distribution
+PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
+PROJ_DIR=c:\projects\proj
+
+# PHP Mapscript.
+# If you plan to build PHP mapscript uncomment the following flag and
+# set the full path to the PHP project directory
+PHP=1
+PHP_DIR=c:\projects\php-4.3.2
+
+# Apparently these aren't as commonplace. Edit the
+# following line to reflect the missing functions on your platform.
+#
+#STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
+STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP
+
+
+########################################################################
+# Section II: External Support Libraries
+########################################################################
+# You will need to set the paths to various support library projects
+# that you have compiled.
+########################################################################
+
+# GD Library.  
+#
+# Mapserver 4.x only supports GD 2.x and greater.
+# Sorry no more GIF support.  If you need GIF support you will
+# need to run Mapserver 3.6.x with GD 1.2.
+# GD is a required support library for MapServer 4.x.
+# Enter the full path to your GD 2.x project directory
+
+# Note : A patched version of GD that supports GIF, JPEG, PNG and WBMP can be 
+# downloaded from http://www.rime.com.au/gd/. If you are using this library,
+#you should uncomment the following line
+OUTPUT_GIF=-DUSE_GD_GIF -DGD_HAS_GDIMAGEGIFPTR
+
+GD_DIR=c:/projects/gd-2.0.12
+
+# REGEX Libary
+# 
+# VC++ does not include the REGEX library... so we must provide our one.
+# The following definitions will try to build GNU regex-0.12 located in the
+# regex-0.12 sub-directory.
+# If it was not included in the source distribution, then you can get it from:
+#    ftp://ftp.gnu.org/pub/gnu/regex/regex-0.12.tar.gz
+# Provide the full path to the REGEX project directory
+# You do not need this library if you are compiling for PHP mapscript.
+# In that case the PHP regex library will be used instead
+!IFNDEF PHP
+REGEX_DIR=c:/my_path_to/regex-0.12
+!ENDIF
+
+
+########################################################################
+# Section III: Debug flags
+########################################################################
+# Should not need to be updated.
+########################################################################
+# DEBUG Build flags
+# Set the DEBUG flag if you wish to make a debug build
+DEBUG=/DDEBUG
+# Set the Warning level for the compiler (defaults to W1)
+WARNING_LEVEL=/W3
+# Set the linker debug option
+LDEBUG=/debug
+
+
+########################################################################
+# Section IV: Variable Setup
+########################################################################
+# Should not need to be updated.
+########################################################################
+
+# Proj.4 include and library
+!IFDEF PROJ_DIR
+PROJ_INC=-I$(PROJ_DIR)/src
+PROJ_LIB=$(PROJ_DIR)/src/proj.lib
+!ENDIF
+
+# CURL include and library
+!IFDEF WMSCLIENT
+CURL_INC = -I$(CURL_DIR)/include
+CURL_LIB = $(CURL_DIR)/lib/libcurl.lib
+!ENDIF
+
+# Set the jpeg library
+!IFDEF OUTPUT_JPEG
+JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
+!ENDIF
+
+# Set the png support libaries
+!IFDEF OUTPUT_PNG
+PNG_LIB=$(PNG_DIR)/libpng.lib $(ZLIB_DIR)/zlib.lib
+!ENDIF
+
+# Set the FreeType library
+!IFDEF ANNOTATION_FT
+#FT_LIB=$(FT_DIR)/objs/freetype211.lib
+FT_LIB=$(FT_DIR)/objs/freetype211ST_D.lib
+!ENDIF
+
+# GD include and library
+GD_INC=	-I$(GD_DIR)
+GD_LIB=	$(GD_DIR)/gd.lib  \
+	$(JPEG_LIB) $(PNG_LIB) $(FT_LIB)
+GD= $(OUTPUT_PNG) $(OUTPUT_JPEG) $(OUTPUT_WBMP) $(OUTPUT_GIF) $(ANNOTATION_FT)
+
+# Tiff library on input
+!IFDEF TIFF
+TIFF_INC=-I$(TIFF_DIR)/tiff-v3.5.4/libtiff
+TIFF_LIB=$(TIFF_DIR)/tiff-v3.5.4/libtiff/libtiff.lib
+!ENDIF
+
+# JPEG library on input
+!IFDEF JPEG
+JPEG_LIB=$(JPEG_DIR)/libjpeg.lib
+!ENDIF
+
+# Setup GDAL includes and libraries
+!IFDEF GDAL
+GDAL_INC = -I$(GDAL_DIR)/core -I$(GDAL_DIR)/alg
+GDAL_LIB = $(GDAL_DIR)/gdal_i.lib
+!ENDIF
+
+# Setup OGR includes and libraries
+!IFDEF OGR
+OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port
+OGR_LIB = $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib $(GDAL_DIR)/ogr/ogr.lib $(GDAL_DIR)/ogr/../port/cpl.lib
+!ENDIF
+
+# Setup ESRI SDE support.
+!IFDEF SDE_OPT
+SDE_INC=-I$(SDE_DIR)/include
+SDE_LIB=$(SDE_DIR)/lib/sde80.lib $(SDE_DIR)/lib/sg80.lib $(SDE_DIR)/lib/pe80.lib
+!ENDIF
+
+#ECW support
+!IFDEF ECW_DIR
+ECW_LIB=$(ECW_DIR)\lib\NCSEcw.lib $(ECW_DIR)\lib\NCSEcwC.lib \
+        $(ECW_DIR)\lib\NCSUtil.lib
+!ENDIF
+
+#Xerces support
+!IFDEF XERCES_DIR
+XERCES_LIB=$(XERCES_DIR)/lib/xerces-c_1.lib
+!ENDIF
+
+# Setup REGEX object and includes
+!IFNDEF PHP
+REGEX_OBJ=$(REGEX_DIR)\regex.obj
+REGEX_INC=-I$(REGEX_DIR)
+!ELSE
+REGEX_OBJ=$(PHP_DIR)\regex\regcomp.obj $(PHP_DIR)\regex\regerror.obj \
+          $(PHP_DIR)\regex\regexec.obj $(PHP_DIR)\regex\regfree.obj
+REGEX_INC=-I$(PHP_DIR)/regex -DPHP_NO_ALIASES
+!ENDIF
+#
+# REGEX needs some special flags... here they are for VC++ 6.0
+#
+REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
+
+# Setup Postgesql PostGIS includes and libs
+# Note that the Postgresql includes are not used in the compilation of 
+# PHP/MapScript.  The reason is that there is a name conflict between the 
+# regex/regex.h files used in PHP and Postgresql.  This is not a real issue
+# since they are two completely different interfaces.  The issue arrises when
+# the php_regex.h trys to include regex/regex.h and gets the wrong one from
+# postgresql.  Therefore we do not give it that opertunity by not providing the
+# include path.
+!IFDEF POSTGIS
+!IFNDEF PHP_BUILD_CALL
+#POSTGIS_INC=-I$(POSTGIS_DIR)/src/interfaces/libpq -I$(POSTGIS_DIR)/src/include
+POSTGIS_INC=-I$(POSTGIS_DIR)/interfaces/libpq -I$(POSTGIS_DIR)/include
+!ENDIF
+#POSTGIS_LIB=$(POSTGIS_DIR)/src/interfaces/libpq/release/libpqdll.lib
+POSTGIS_LIB=$(POSTGIS_DIR)/interfaces/libpq/libpqdll.lib
+POSTGIS_OBJ=mappostgis.obj
+!ENDIF
+
+# Setup FLASH includes and libs
+!IFDEF MING
+MING_INC=-I$(MING_DIR)/src -I$(MING_DIR)
+MING_LIB= $(MING_DIR)/src/libming.lib
+!ENDIF
+
+# Setup PDF includes and libs
+!IFDEF PDF
+PDF_LIB=$(PDF_DIR)/pdflib/pdflib.lib
+PDF_INC=-I$(PDF_DIR)/pdflib
+!ENDIF
+
+########################################################################
+# Section V: UMN GIS System Support
+########################################################################
+# Should not need to be updated.
+########################################################################
+#
+# UofMN GIS/Image Processing Extension (very experimental)
+#
+#EGIS=-DUSE_EGIS
+
+!IFDEF EGIS
+ERR_DIR=c:/my_path_to/errLog
+ERR_OBJ=$(ERR_DIR)/errLog.o
+ERR_INC=-I$(ERR_DIR)
+ERR_LIB=-L$(ERR_DIR) -lerrLog
+
+IMGGEN_DIR=c:/my_path_to/imgSrc
+IMGGEN_OBJ=$(IMGGEN_DIR)/imgLib.o
+IMGGEN_INC=-I$(IMGGEN_DIR)
+IMGGEN_LIB=-L$(IMGGEN_DIR) -limgGEN
+!ENDIF
+
+########################################################################
+# Section VI: Collect compiler flags
+########################################################################
+# Should not need to be updated.
+########################################################################
+LIBS=$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
+     $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
+     $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
+     $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
+     $(XERCES_LIB) $(ECW_LIB)
+
+INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
+         $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
+         $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
+		 $(IMGGEN_INC) $(ERR_INC)
+
+MS_CFLAGS=$(INCLUDES) $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
+          $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) \
+          $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) \
+          -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(PDF) $(EGIS)
+
+

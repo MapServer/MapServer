@@ -11,153 +11,18 @@
 #
 # $Id$
 #
+MAPSERVER_ROOT = .
 
-OPTFLAGS =	/nologo /Zi /W3 /DDEBUG /DWIN32
-#OPTFLAGS =	/nologo /Zi 
-BASE_CFLAGS = 	$(OPTFLAGS) 
-LDFLAGS =	/NODEFAULTLIB:libcd /DEBUG
+!INCLUDE nmake.opt
 
+OPTFLAGS =	/nologo /Zi $(WARNING_LEVEL) $(DEBUG)
+BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32
+LDFLAGS =	/NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd
+#LDFLAGS =	/NODEFAULTLIB:libcd /DEBUG
+
+CFLAGS=$(BASE_CFLAGS) $(MS_CFLAGS)
 CC=     cl
-LINK=   link /debug
-
-#
-# If you want to ignore missing datafile errors uncomment the following
-# line. This is especially useful with large tiled datasets that may not
-# have complete data for each tile.
-#
-IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
-
-#
-# Apparently these aren't as commonplace as I'd hoped. Edit the
-# following line to reflect the missing functions on your platform.
-#
-#STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
-STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP
-
-# Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
-PROJ_LIB=../proj/src/proj.lib
-PROJ_INC=-I../proj/src
-PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
-
-#Use this flag to compile with WMS support
-WMS=-DUSE_WMS_SVR
-
-#Use this flag to compile with WMS Client support
-#you need the libcurl library from http://curl.haxx.se/library/c/
-#WMSCLIENT= -DUSE_WMS_LYR
-
-#Use thses flags to compile with libcurl
-#CURL_INC = -I../curl-7.10.2/include
-#CURL_LIB = ../curl-7.10.2/lib/Release/libcurl.lib
-#WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
-
-
-# Use -DUSE_WFS_SVR to compile with WFS server support, requires OGR and PROJ4
-# Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
-WFS=-DUSE_WFS_SVR
-
-#WFSCLIENT= -DUSE_WFS_LYR
-
-
-# GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
-#
-#   - Version 1.2 is included and writes LZW GIF (-DUSE_GD_GIF -DUSE_GD_SWAP_XY).
-#   - Versions 1.3 to 1.5 write non-LZW GIF (-DUSE_GD_GIF).
-#   - Versions 1.6 and greater write PNG (-DUSE_GD_PNG). Add -lpng -lz to GD_LIB line.
-#   - Versions 1.8 (or was it 1.7?) also supports JPEG and WBMP (-DUSE_GD_JPEG -DUSE_GD_WBMP)
-#
-# The following lines will compile GD 1.2:
-#GDFONT_OBJ=	gd-1.2/gdfontt.obj gd-1.2/gdfonts.obj gd-1.2/gdfontmb.obj \
-#		gd-1.2/gdfontl.obj gd-1.2/gdfontg.obj
-#GD_INC=	-I./gd-1.2
-#GD_LIB=	gd-1.2/gd.lib
-#GD= -DUSE_GD_GIF -DUSE_GD_SWAP_XY
-#MAKE_GD=gd
-
-# A patched version of GD that supports GIF, JPEG, PNG and WBMP can be 
-# downloaded from http://www.rime.com.au/gd/.
-# The following defns will include the patched GD 1.8.4 with TTF:
-GDFONT_OBJ=
-GD_INC=	-I../gd-1.8.4
-GD_LIB=	../gd-1.8.4/gd.lib ../jpeg-6b/libjpeg.lib ../libpng-1.0.8/libpng.lib \
-	../zlib-1.1.3/zlibstat.lib ../freetype/lib/freetype.lib
-GD=     -DUSE_GD_GIF -DUSE_GD_PNG -DUSE_GD_JPEG -DUSE_GD_WBMP -DUSE_GD_TTF \
-	-DUSE_GD_TTF -DGD_HAS_GDIMAGEGIFPTR
-MAKE_GD=gd
-
-# TIFF distribution (raster support for TIFF and GEOTIFF imagery).(RECOMMENDED)
-TIFF_INC=-I../tiff-v3.5.4/libtiff
-TIFF_LIB=../tiff-v3.5.4/libtiff/libtiff.lib
-TIFF=-DUSE_TIFF
-
-# JPEG distribution (raster support for grayscale JPEG images, INPUT ONLY).
-#JPEG_INC=
-#JPEG_LIB=-ljpeg
-#JPEG=-DUSE_JPEG
-
-# EPPL7 Support (this activates ERDAS as well) Included in the distribution. Probably the best raster alternative if
-# you've got EPPL7 laying around. See http://www.lmic.state.mn.us/ for more information. (RECOMMENDED)
-EPPL=-DUSE_EPPL
-EPPL_OBJ=epplib.obj
-
-# OGR Support OGC Simple Feature inspired interface for vector
-# formats.  See http://gdal.velocet.ca/projects/opengis/
-GDAL_DIR= ..\gdal
-OGR=-DUSE_OGR
-OGR_LIB = $(GDAL_DIR)/gdal.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib $(GDAL_DIR)/ogr/ogr.lib $(GDAL_DIR)/ogr/../port/cpl.lib
-OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port -I$(GDAL_DIR)/core
-GDAL=-DUSE_GDAL
-
-# ESRI SDE support.
-#SDE_OPT=-DUSE_SDE -DWIN32
-#SDE_INC=-I../arcsde/include
-#SDE_LIB=../arcsde/lib/sde80.lib ../arcsde/lib/sg80.lib ../arcsde/lib/pe80.lib
-
-#ECWDIR= C:\ProgFile\ECW_SDK
-#ECW_LIB=$(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
-#        $(ECWDIR)\lib\NCSUtil.lib
-#
-# VC++ does not include the REGEX library... so we must provide our one.
-# The following definitions will try to build GNU regex-0.12 located in the
-# regex-0.12 sub-directory.
-# If it was not included in the source distribution, then you can get it from:
-#    ftp://ftp.gnu.org/pub/gnu/regex/regex-0.12.tar.gz
-#
-REGEX_OBJ=.\regex-0.12\regex.obj
-REGEX_INC=-I./regex-0.12
-
-#
-# IMPORTANT NOTE ABOUT REGEX FOR PHP_MAPSCRIPT USERS:
-#
-# If you want to compile the PHP_MAPSCRIPT module, then you have to make
-# MapServer uses the same version of the REGEX library that PHP was 
-# compiled with:
-#
-#PHP_REGEX=..\php-3.0.14\regex
-#PHP_REGEX=..\php-4.1.2\regex
-PHP_REGEX=..\php-4.2.1\regex
-#PHP_REGEX=..\php-4.2.2\regex
-REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
-          $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
-REGEX_INC=-I$(PHP_REGEX) -DPHP_NO_ALIASES
-
-#
-# REGEX needs some special flags... here they are for VC++ 6.0
-#
-REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
-
-# Ming distribution 
-#MING_LIB=../ming-0.2a/src/libming.lib
-#MING_INC=-I../ming-0.2a/src -I../ming-0.2a
-#MING=-DUSE_MING_FLASH
-
-#PDF Suuport
-#PDF_LIB=../pdflib-4.0.3/pdflib/pdflib.lib
-#PDF_INC=-I../pdflib-4.0.3/pdflib
-#PDF=-DUSE_PDF
-#
-# --- You shouldn't have to edit anything else. ---
-#
+LINK=   link
 
 #
 # Main MapServer library.
@@ -174,7 +39,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj \
 		mapgdal.obj mapwfs.obj mapwfslayer.obj mapows.obj maphttp.obj \
 		mappdf.obj mapcontext.obj mapdrawgdal.obj mapjoin.obj mapgraticule.obj \
-		$(EPPL_OBJ) $(REGEX_OBJ)
+		mapmygis.obj mapimagemap.obj mapcopy.obj $(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
 
@@ -184,18 +49,6 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 #
 #
 #
-LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
-		$(PROJ_LIB) $(OGR_LIB) \
-                $(CURL_LIB) $(ECW_LIB) $(MING_LIB) $(PDF_LIB) \
-                $(WINSOCK_LIB)
-
-INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
-		$(PROJ_INC) $(REGEX_INC) $(OGR_INC) \
-                $(CURL_INC) $(MING_INC) $(PDF_INC)
-
-CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(PDF)
-
 default: 	all
 
 all:		$(MS_LIB) $(MS_EXE)
@@ -208,6 +61,10 @@ $(MS_LIB):	$(MS_OBJS)
 
 $(MS_EXE):	$(LIBS)
 
+gd::
+	cd gd-1.2
+	nmake /f makefile.nt OPTFLAGS="$(OPTFLAGS)"
+	cd ..
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj

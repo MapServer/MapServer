@@ -14,118 +14,31 @@
 # To use PHP4 (instead of PHP3) uncomment the following line
 # The default when PHP4=1 is not set is to build for PHP3
 PHP4 = 1
+# Flag indicating to the option files that this is the build of PHP/MapScript
+PHP_BUILD_CALL=TRUE
+!INCLUDE ../../nmake.opt
+!INCLUDE nmake.opt
 
-!ifdef PHP4
-OPTFLAGS =	/nologo /Zi /W3 /Fdphpms.pdb
-BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DPHP4 /DZTS
+!IFDEF PHP4
+PDB_FILE=/Fdphpms.pdb
+PHP4_FLAGS=/DZEND_WIN32 /DPHP_WIN32 /DPHP4 /DZTS
+!ENDIF
+
+OPTFLAGS =	/nologo /Zi $(WARNING_LEVEL) $(DEBUG) $(PDB_FILE)
+BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32 $(PHP4_FLAGS)
+#LDFLAGS =	/NODEFAULTLIB:msvcrt /dll $(LDEBUG)
+LDFLAGS =	/NODEFAULTLIB:libcd /dll $(LDEBUG)
+
+#
+# Set PHP_DIR to point to the root of the PHP source tree
+#
+!IFDEF PHP4
+PHP_INC = -I$(PHP_DIR) -I$(PHP_DIR)/main -I$(PHP_DIR)/zend -I$(PHP_DIR)/include -I$(PHP_DIR)/tsrm
 !else
-OPTFLAGS =	/nologo /Zi /W3
-BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32
+PHP_INC = -I$(PHP_DIR) -I$(PHP_DIR)/dl
 !endif
 
-#LINK_OPT =	/dll /debug
-LINK_OPT =	/dll /debug
-
-#
-# Set PHP_SOURCE_DIR to point to the root of the PHP source tree
-#
-
-!ifdef PHP4
-#PHP_SOURCE_DIR = ../../../php-4.0.6
-PHP_SOURCE_DIR = ../../../php-4.2.1
-PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/main -I$(PHP_SOURCE_DIR)/zend -I$(PHP_SOURCE_DIR)/include -I$(PHP_SOURCE_DIR)/tsrm
-!else
-PHP_SOURCE_DIR = ../../../php-3.0.14
-PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/dl
-!endif
-
-
-#
-# Where do you want php3_mapscript.dll to be installed?
-#
-!ifdef PHP4
-PHP_INSTALL_DIR =  \Apache\php4\extensions
-!else
-PHP_INSTALL_DIR =  \Apache\php3
-!endif
-
-#using ming flash library
-#MING=-DUSE_MING_FLASH
-#MING_INC=-I../../../ming-0.2a/src -I../../../ming-0.2a
-#MING_LIB= ../../../ming-0.2a/src/libming.lib
-
-#PDF Suuport
-#PDF_LIB=../../../pdflib-4.0.3/pdflib/pdflib.lib
-#PDF_INC=-I../../../pdflib-4.0.3/pdflib
-#PDF=-DUSE_PDF
-
-
-#
-# Set MapServer extensions parameters.  See main MapServer Makefile for 
-# more details... 
-# Common defaults are:
-# MS_DEFINE = -DUSE_TTF -DUSE_TIFF -DUSE_EPPL -DUSE_GD_1_2
-# MS_INCLUDE = -I../.. -I../../gd-1.2 -I../../gdft
-# MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
-#
-MS_DEFINE = -DUSE_EPPL -DUSE_GD_GIF  -DUSE_GD_PNG -DUSE_GD_JPEG -DUSE_GD_WBMP -DUSE_GD_TTF -DUSE_PROJ -DUSE_TIFF -DUSE_TTF -DUSE_OGR -DUSE_GDAL -DIGNORE_MISSING_DATA  -DGD_HAS_GDIMAGEGIFPTR
-!ifdef PHP4
-MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -DPHP_NO_ALIASES -I../../../gd-1.8.4 -I../../../proj/src $(MING_INC) $(PDF_INC)
-!else
-MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../../gd-1.8.4 -I../../../proj/src
-!endif
-GDAL_DIR= ../../../gdal
-
-#LIBWWW libararies : incomment the following to build with libwww support
-#LIBWWW_LIB=../../../Libwww/bin/wwwcore.lib ../../../Libwww/bin/wwwapp.lib \
-#           ../../../Libwww/bin/wwwinit.lib  ../../../Libwww/bin/wwwutils.lib
-
-#ECW support
-#ECWDIR= C:\ProgFile\ECW_SDK
-#ECW_LIB=$(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
-#        $(ECWDIR)\lib\NCSUtil.lib
-
-
-#xerces
-#XERCES_DIR =	C:\projects\xerces-c1_6_0-win32
-#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_1.lib
-
-
-#Use thses flags to compile with libcurl
-#CURL_INC = -I../curl-7.10.2/include
-#CURL_LIB = ../../../curl-7.10.2/lib/Release/libcurl.lib
-#WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
-
-#
-# If you want to ignore missing datafile errors uncomment the following
-# line. This is especially useful with large tiled datasets that may not
-# have complete data for each tile.
-#
-IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
-
-
-MS_LIBS = ../../mapserver.lib \
-        ../../../gd-1.8.4/gd.lib \
-        ../../../jpeg-6b/libjpeg.lib \
-        ../../../libpng-1.0.8/libpng.lib \
-	../../../zlib-1.1.3/zlibstat.lib \
-        ../../../freetype/lib/freetype.lib \
-	../../../tiff-v3.5.4/libtiff/libtiff.lib \
-        ../../../proj/src/proj.lib \
-        $(GDAL_DIR)/gdal.lib \
-        $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib \
-        $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib \
-        $(GDAL_DIR)/ogr/ogr.lib \
-        $(GDAL_DIR)/ogr/../port/cpl.lib \
-        $(LIBWWW_LIB) \
-        $(ECW_LIB) \
-        $(MING_LIB) \
-        $(PDF_LIB) \
-        $(XERCES_LIB) \
-        $(CURL_LIB) \
-        $(WINSOCK_LIB)
-                
-
+MS_LIBS= $(LIBS) ../../mapserver.lib
 
 #
 # The rest of the file should not have to be edited...
@@ -143,7 +56,7 @@ PHPMS_DLL =	php3_mapscript.dll
 
 PHPPROJ_DLL =	php_proj.dll
 
-CFLAGS = 	$(BASE_CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC) $(MING) $(PDF)
+CFLAGS = 	$(BASE_CFLAGS) $(MS_CFLAGS) -I../.. $(PHP_INC)
 
 default: 	all
 
@@ -154,24 +67,24 @@ mapscript:      $(PHPMS_DLL)
 proj:	        $(PHPPROJ_DLL)
 
 install:	all
-	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)
+	copy $(PHPMS_DLL) "c:\php\php4\extensions\php_mapscript_40.dll"
 
 !ifdef PHP4
 $(PHPMS_DLL):	$(PHPMS_OBJS)
-	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
-		$(PHP_SOURCE_DIR)\lib\php4ts.lib
+	link $(LDFLAGS) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
+		$(PHP_DIR)\lib\php4ts.lib
 
 $(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
-	link $(LINK_OPT) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
-		$(PHP_SOURCE_DIR)\lib\php4ts.lib
+	link $(LDFLAGS) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
+		$(PHP_DIR)\lib\php4ts.lib
 !else
 $(PHPMS_DLL):	$(PHPMS_OBJS)
-	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
-		$(PHP_SOURCE_DIR)\win32\cgi_debug\php.lib
+	link $(LDFLAGS) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
+		$(PHP_DIR)\win32\cgi_debug\php.lib
 
 $(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
-	link $(LINK_OPT) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
-		$(PHP_SOURCE_DIR)\win32\cgi_debug\php.lib
+	link $(LDFLAGS) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
+		$(PHP_DIR)\win32\cgi_debug\php.lib
 !endif
 
 $(PHPMS_OBJS):	php_mapscript_util.h php_mapscript.h $(MS_LIBS)
