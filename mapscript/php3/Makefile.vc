@@ -38,7 +38,11 @@ PHP_INC = -I$(PHP_DIR) -I$(PHP_DIR)/main -I$(PHP_DIR)/zend -I$(PHP_DIR)/include 
 PHP_INC = -I$(PHP_DIR) -I$(PHP_DIR)/dl
 !endif
 
-MS_LIBS= $(LIBS) ../../mapserver.lib
+!IFDEF DLLBUILD
+MS_LIBS = ../../mapserver_i.lib $(EXTERNAL_LIBS)
+!ELSE
+MS_LIBS = $(EXTERNAL_LIBS) ../../mapserver.lib
+!ENDIF
 
 #
 # The rest of the file should not have to be edited...
@@ -67,7 +71,7 @@ mapscript:      $(PHPMS_DLL)
 proj:	        $(PHPPROJ_DLL)
 
 install:	all
-	copy $(PHPMS_DLL) "c:\php\php4\extensions\php_mapscript_40.dll"
+	copy $(PHPMS_DLL) "c:\php\php4\extensions\php_mapscript_41.dll"
 
 !ifdef PHP4
 $(PHPMS_DLL):	$(PHPMS_OBJS)
