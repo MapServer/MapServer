@@ -434,7 +434,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   char szPath[MS_MAXPATHLEN], *pszSymbolPath=NULL;
 
   if(!symbolset) {
-    msSetError(MS_SYMERR, "Symbol structure unallocated.", "msLoadSymbolFile()");
+    msSetError(MS_SYMERR, "Symbol structure unallocated.", "msLoadSymbolSet()");
     return(-1);
   }
 
@@ -446,7 +446,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
   ** Open the file
   */
   if((msyyin = fopen(msBuildPath(szPath, symbolset->map->mappath, symbolset->filename), "r")) == NULL) {
-    msSetError(MS_IOERR, "(%s)", "msLoadSymbolFile()", symbolset->filename);
+    msSetError(MS_IOERR, "(%s)", "msLoadSymbolSet()", symbolset->filename);
     return(-1);
   }
 
@@ -476,7 +476,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
     case(SYMBOLSET):
       break;
     default:
-      msSetError(MS_IDENTERR, "(%s):(%d)", "msLoadSymbolFile()",
+      msSetError(MS_IDENTERR, "(%s):(%d)", "msLoadSymbolSet()",
                  msyytext, msyylineno);      
       status = -1;
     } /* end switch */
