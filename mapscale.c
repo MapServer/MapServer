@@ -77,7 +77,7 @@ int msCalculateScale(rectObj extent, int units, int width, int height, double re
 
 double msInchesPerUnit(int units, double center_lat)
 {
-  double lat_adj, ipu = 1.0;
+  double lat_adj = 1.0, ipu = 1.0;
 
   switch (units) {
   case(MS_METERS):    
@@ -92,14 +92,14 @@ double msInchesPerUnit(int units, double center_lat)
      * based on the latitude of the center of the view. For this we assume
      * we have a perfect sphere and just use cos(lat) in our calculation.
      */
+#ifdef ENABLE_VARIABLE_INCHES_PER_DEGREE
     if (center_lat != 0.0)
     {
         double cos_lat;
         cos_lat = cos(MS_PI*center_lat/180.0);
         lat_adj = sqrt(1+cos_lat*cos_lat)/sqrt(2.0);
     }
-    else 
-        lat_adj = 1.0;
+#endif
     ipu = inchesPerUnit[units]*lat_adj;
     break;
   default:
