@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.52  2002/07/11 18:38:57  frank
+ * allow layer names as well as layer indexes in connection string.
+ *
  * Revision 1.51  2002/04/26 18:00:35  julien
  * Enabled OGRMultiPoint in ogrGeomLine and ogrGeomPoint
  *
@@ -861,28 +864,31 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   bDriversRegistered = MS_TRUE;
 
 /* ------------------------------------------------------------------
- * Attempt to open OGR dataset
+ * Parse connection string into dataset name, and layer name. 
  * ------------------------------------------------------------------ */
-  int   nLayerIndex = 0;
-  char  **params;
-  int   numparams;
-  OGRDataSource *poDS;
-  OGRLayer    *poLayer;
+  char **papszTokens = NULL;
 
-  if(connection==NULL || 
-     (params = split(connection, ',', &numparams))==NULL || 
-     numparams < 1) 
+  if( connection != NULL )
+      papszTokens = CSLTokenizeStringComplex( connection, ",", TRUE, FALSE );
+
+  if(connection==NULL || CSLCount( papszTokens ) < 1 )
   {
       msSetError(MS_OGRERR, 
                  "Error parsing OGR connection information:%s", 
                  "msOGRFileOpen()",
                  connection );
+      CSLDestroy( papszTokens );
       return NULL;
   }
 
+/* ------------------------------------------------------------------
+ * Attempt to open OGR dataset
+ * ------------------------------------------------------------------ */
+  OGRDataSource *poDS;
+
   msDebug("msOGRFileOpen(%s)...\n", connection);
 
-  poDS = OGRSFDriverRegistrar::Open( params[0] );
+  poDS = OGRSFDriverRegistrar::Open( papszTokens[0] );
   if( poDS == NULL )
   {
       msSetError(MS_OGRERR, 
@@ -890,18 +896,52 @@ msOGRFileOpen(layerObj *layer, const char *connection )
                                    "File not found or unsupported format.", 
                                    connection),
                  "msOGRFileOpen()");
+      CSLDestroy( papszTokens );
       return NULL;
   }
 
-  if(numparams > 1) 
-      nLayerIndex = atoi(params[1]);
+/* ------------------------------------------------------------------
+ * Find the layer selected.
+ * ------------------------------------------------------------------ */
+  int   nLayerIndex = 0;
+  OGRLayer    *poLayer = NULL;
 
-  poLayer = poDS->GetLayer(nLayerIndex);
+  if( CSLCount(papszTokens) == 1 )
+  {
+      poLayer = poDS->GetLayer( 0 );
+      nLayerIndex = 0;
+  }
+  else
+  {
+      int  iLayer;
+
+      for( iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
+      {
+          poLayer = poDS->GetLayer( iLayer );
+          if( poLayer != NULL 
+              && EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[1]) )
+          {
+              nLayerIndex = iLayer;
+              break;
+          }
+          else
+              poLayer = NULL;
+      }
+
+      if( poLayer == NULL 
+          && (atoi(papszTokens[1]) > 0 || EQUAL(papszTokens[1],"0")) )
+      {
+          nLayerIndex = atoi(papszTokens[1]);
+          poLayer = poDS->GetLayer( nLayerIndex );
+      }
+  }
+
   if (poLayer == NULL)
   {
-      msSetError(MS_OGRERR, "GetLayer(%d) failed for OGR connection `%s'.",
+      msSetError(MS_OGRERR, "GetLayer(%s) failed for OGR connection `%s'.",
                  "msOGRFileOpen()", 
-                 nLayerIndex, connection );
+                 papszTokens[1], connection );
+      CSLDestroy( papszTokens );
       delete poDS;
       return NULL;
   }
@@ -911,7 +951,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
  * ------------------------------------------------------------------ */
   msOGRFileInfo *psInfo =(msOGRFileInfo*)CPLCalloc(1,sizeof(msOGRFileInfo));
 
-  psInfo->pszFname = CPLStrdup(params[0]);
+  psInfo->pszFname = CPLStrdup(papszTokens[0]);
   psInfo->nLayerIndex = nLayerIndex;
   psInfo->poDS = poDS;
   psInfo->poLayer = poLayer;
@@ -922,7 +962,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   psInfo->rect.miny = psInfo->rect.maxy = 0;
 
   // Cleanup and exit;
-  msFreeCharArray(params, numparams);
+  CSLDestroy( papszTokens );
 
   return psInfo;
 }
