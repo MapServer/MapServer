@@ -402,7 +402,7 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
 }
 
 char *msGetVersion() {
-  static char version[384];
+  static char version[512];
 
   sprintf(version, "MapServer version %s", MS_VERSION);
 
@@ -470,6 +470,9 @@ char *msGetVersion() {
   strcat(version, " INPUT=GDAL");
 #endif
   strcat(version, " INPUT=SHAPEFILE");
+#ifdef ENABLE_STDERR_DEBUG
+  strcat(version, " DEBUG=MSDEBUG");
+#endif
 
   return(version);
 }
