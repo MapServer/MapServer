@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.88  2004/11/19 19:52:56  sean
+ * Set an error and exit if driver is NULL before calling msImageLoadGDCtx
+ *
  * Revision 1.87  2004/11/19 19:45:08  sean
  * Catch undetected images in msImageLoadGD, set an error and return NULL.  Moved
  * conditional compilation #ifdefs around the driver recognition in
@@ -508,7 +511,8 @@ imageObj *msImageLoadGD(const char *filename)
         return(NULL);
 #endif
     }
-    else
+    
+    if (!driver)
     {
         msSetError(MS_MISCERR, "Unable to load %s in any format.",
                    "msImageLoadGD()", filename);
