@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2005/03/24 17:50:04  frank
+ * optimized msClipPoly{gon/line}Rect for all-inside case
+ *
  * Revision 1.46  2005/02/22 07:40:27  sdlime
  * A bunch of updates to GEOS integration. Can move many primatives between MapServer and GEOS, still need to do collections (e.g. multi-point/line/polygon). Added buffer method to mapscript (mapscript/shape.i).
  *
@@ -387,6 +390,21 @@ void msClipPolylineRect(shapeObj *shape, rectObj rect)
   if(shape->numlines == 0) /* nothing to clip */
     return;
 
+  /*
+  ** Don't do any clip processing of shapes completely within the
+  ** clip rectangle based on a comparison of bounds.   We could do 
+  ** something similar for completely outside, but that rarely occurs
+  ** since the spatial query at the layer read level has generally already
+  ** discarded all shapes completely outside the rect.
+  */
+  if( shape->bounds.maxx <= rect.maxx
+      && shape->bounds.minx >= rect.minx
+      && shape->bounds.maxy <= rect.maxy
+      && shape->bounds.miny >= rect.miny )
+  {
+      return;
+  }
+
   for(i=0; i<shape->numlines; i++) {
 
     line.point = (pointObj *)malloc(sizeof(pointObj)*shape->line[i].numpoints);
@@ -451,7 +469,22 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
   
   if(shape->numlines == 0) /* nothing to clip */
     return;
-   
+
+  /*
+  ** Don't do any clip processing of shapes completely within the
+  ** clip rectangle based on a comparison of bounds.   We could do 
+  ** something similar for completely outside, but that rarely occurs
+  ** since the spatial query at the layer read level has generally already
+  ** discarded all shapes completely outside the rect.
+  */
+  if( shape->bounds.maxx <= rect.maxx
+      && shape->bounds.minx >= rect.minx
+      && shape->bounds.maxy <= rect.maxy
+      && shape->bounds.miny >= rect.miny )
+  {
+      return;
+  }
+
   for(j=0; j<shape->numlines; j++) {
 
     line.point = (pointObj *)malloc(sizeof(pointObj)*2*shape->line[j].numpoints+1); /* worst case scenario, +1 allows us to duplicate the 1st and last point */
