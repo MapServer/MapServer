@@ -1182,3 +1182,58 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
     }
     return -1;
 }
+
+/*
+** Return the projection string. 
+*/
+char *msGetProjectionString(projectionObj *proj)
+{
+    char        *pszPojString = NULL;
+    char        *pszTmp = NULL;
+    int         i = 0;
+
+    if (proj)
+    {
+        for (i=0; i<proj->numargs; i++)
+        {
+            if (!proj->args[i] || strlen(proj->args[i]) <=0)
+                continue;
+
+            pszTmp = proj->args[i];
+/* -------------------------------------------------------------------- */
+/*      if narguments = 1 do not add a +.                               */
+/* -------------------------------------------------------------------- */
+            if (proj->numargs == 1)
+            {
+                pszPojString = 
+                    malloc(sizeof(char) * strlen(pszTmp)+1);
+                pszPojString[0] = '\0';
+                strcat(pszPojString, pszTmp);
+            }
+            else
+            {
+/* -------------------------------------------------------------------- */
+/*      Copy chaque argument and add a + between them.                  */
+/* -------------------------------------------------------------------- */
+                if (pszPojString == NULL)
+                {
+                    pszPojString = 
+                        malloc(sizeof(char) * strlen(pszTmp)+2);
+                    pszPojString[0] = '\0';
+                    strcat(pszPojString, "+");
+                    strcat(pszPojString, pszTmp);
+                }
+                else
+                {
+                    pszPojString =  
+                        realloc(pszPojString,
+                                sizeof(char) * (strlen(pszTmp)+ 
+                                                strlen(pszPojString) + 2));
+                    strcat(pszPojString, "+");
+                    strcat(pszPojString, pszTmp);
+                }
+            }
+        }
+    }
+    return pszPojString;
+}

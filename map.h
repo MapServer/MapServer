@@ -705,6 +705,8 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img);
 int msMoveLayerUp(mapObj *map, int nLayerIndex);
 int msMoveLayerDown(mapObj *map, int nLayerIndex);
 
+char *msGetProjectionString(projectionObj *proj);
+
 int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 int msRectOverlap(rectObj *a, rectObj *b);
 int msRectContained(rectObj *a, rectObj *b);
