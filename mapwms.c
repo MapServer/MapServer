@@ -183,7 +183,7 @@ int msWMSException(mapObj *map, const char *wmtversion)
     //gdImageString(img, font, 5, height/2, errormsg, color);
     }
 
-    printf("Content-type: image/%s%c%c", MS_IMAGE_MIME_TYPE(imagetype), 10,10);
+    printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(imagetype), 10,10);
     msSaveImage(img, NULL, imagetype, transparent, 0, -1);
     gdImageDestroy(img);
 

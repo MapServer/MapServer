@@ -202,6 +202,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>feet		       { return(MS_FEET); }
 <INITIAL,VALUE_STRING>giant		       { return(MS_GIANT); }
 <INITIAL,VALUE_STRING>gif		       { return(MS_GIF); }
+<INITIAL,VALUE_STRING>gml		       { return(MS_GML); }
 <INITIAL,VALUE_STRING>hilite		       { return(MS_HILITE); }
 <INITIAL,VALUE_STRING>inches		       { return(MS_INCHES); }
 <INITIAL,VALUE_STRING>jpg|jpeg		       { return(MS_JPEG); }

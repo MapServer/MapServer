@@ -120,10 +120,11 @@ extern "C" {
 
 #define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
 
-#define MS_IMAGE_MIME_TYPE(type)  ((type)==MS_GIF?"gif": \
-                                   (type)==MS_PNG?"png": \
-                                   (type)==MS_JPEG?"jpeg": \
-                                   (type)==MS_WBMP?"wbmp":"unknown")
+#define MS_IMAGE_MIME_TYPE(type)  ((type)==MS_GIF?"image/gif": \
+                                   (type)==MS_PNG?"image/png": \
+                                   (type)==MS_JPEG?"image/jpeg": \
+                                   (type)==MS_GML?"application/xml": \
+                                   (type)==MS_WBMP?"image/wbmp":"unknown")
 
 #define MS_IMAGE_EXTENSION(type)  ((type)==MS_GIF?"gif": \
                                    (type)==MS_PNG?"png": \
@@ -152,7 +153,7 @@ enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
 enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_TILED_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL};
-enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG, MS_WBMP};
+enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG, MS_WBMP, MS_GML};
 
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
@@ -854,6 +855,13 @@ const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
                              int bReturnOnlyFirstOne);
 
 int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img); // mapwmslayer.c
+
+int msGMLWriteQuery(mapObj *map, char *filename); // mapgml.c
+int msGMLStart(FILE *stream, const char *prjElement, const char *prjURI, const char *schemaLocation, const char *prjDescription);
+int msGMLCollectionStart(FILE *stream, const char *colName,  const char *colFID);
+int msGMLWriteShape(FILE *stream, shapeObj *shape, char *name, char *srsName, char **items, char *tab);
+int msGMLCollectionFinish(FILE *stream, const char *colName);
+int msGMLFinish(FILE *stream, const char *prjElement);
 
 #endif
 
