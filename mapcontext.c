@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2002/10/31 21:25:55  julien
+ * transform EPSG:*** to init=epsg:***
+ *
  * Revision 1.4  2002/10/31 20:00:07  julien
  * transform EPSG:*** to init=epsg:***
  *
@@ -124,6 +127,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle;
   char szPath[MS_MAXPATHLEN];
+  char szProj[20];
   int nStyle;
   layerObj *layer;
 
@@ -185,7 +189,6 @@ int msLoadMapContext(mapObj *map, char *filename)
                                    "General.BoundingBox.SRS", NULL);
   if(pszValue != NULL)
   {
-      char szProj[20];
       sprintf(szProj, "init=epsg:%s", pszValue+5);
 
       msInitProjection(&map->projection);
@@ -449,9 +452,11 @@ int msLoadMapContext(mapObj *map, char *filename)
               pszValue = (char*)CPLGetXMLValue(psLayer, "SRS", NULL);
               if(pszValue != NULL)
               {
+                  sprintf(szProj, "init=epsg:%s", pszValue+5);
+
                   msInitProjection(&layer->projection);
                   layer->projection.args[layer->projection.numargs] = 
-                      strdup(pszValue);
+                      strdup(szProj);
                   layer->projection.numargs++;
                   msProcessProjection(&layer->projection);
               }
