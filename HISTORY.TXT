@@ -83,6 +83,8 @@ Version 4.3 (CVS)
   of container's moveLayerUp/moveLayerDown is better, and this brings
   the module nearer to PHP-Mapscript (bug 692).
 
+- mapogr.cpp: Now echos CPLGetLastErrorMsg() results if OGR open fails. 
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.70  2004/05/31 20:55:14  frank
+ * now reports CPLGetLastErrorMsg() if OGR Open fails
+ *
  * Revision 1.69  2004/04/16 20:19:39  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -823,6 +826,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   if( layer->debug )
       msDebug("msOGRFileOpen(%s)...\n", connection);
 
+  CPLErrorReset();
   if (msTryBuildPath3(szPath, layer->map->mappath, 
                       layer->map->shapepath, pszDSName) != NULL ||
       msTryBuildPath(szPath, layer->map->mappath, pszDSName) != NULL)
@@ -842,11 +846,16 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 
   if( poDS == NULL )
   {
-      msSetError(MS_OGRERR, 
-                 (char*)CPLSPrintf("Open failed for OGR connection `%s'.  "
-                                   "File not found or unsupported format.", 
-                                   pszDSName),
-                 "msOGRFileOpen()");
+      if( strlen(CPLGetLastErrorMsg()) == 0 )
+          msSetError(MS_OGRERR, 
+                     (char*)CPLSPrintf("Open failed for OGR connection `%s'.  "
+                                       "File not found or unsupported format.", 
+                                       pszDSName),
+                     "msOGRFileOpen()");
+      else
+          msSetError(MS_OGRERR, 
+                     "Open failed for OGR connection `%s'.\n%s\n",
+                     "msOGRFileOpen()", pszDSName, CPLGetLastErrorMsg() );
       CPLFree( pszDSName );
       CPLFree( pszLayerDef );
       return NULL;
