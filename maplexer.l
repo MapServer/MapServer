@@ -140,11 +140,15 @@ char *msyystring=NULL;
 <INITIAL>linejoinmaxsize                       { return(LINEJOINMAXSIZE); }
 <INITIAL>log		                       { return(LOG); }
 <INITIAL,OBJECT_STRING>map	               { return(MAP); }
+<INITIAL,OBJECT_STRING>marker	               { return(MARKER); }
+<INITIAL,OBJECT_STRING>markersize              { return(MARKERSIZE); }
+<INITIAL,OBJECT_STRING>maxboxsize              { return(MAXBOXSIZE); }
 <INITIAL,OBJECT_STRING>maxfeatures             { return(MAXFEATURES); }
 <INITIAL,OBJECT_STRING>maxscale		       { return(MAXSCALE); }
 <INITIAL,OBJECT_STRING>maxsize	               { return(MAXSIZE); }
 <INITIAL,OBJECT_STRING>maxtemplate	       { return(MAXTEMPLATE); }
 <INITIAL,OBJECT_STRING>metadata	               { return(METADATA); }
+<INITIAL,OBJECT_STRING>minboxsize              { return(MINBOXSIZE); }
 <INITIAL,OBJECT_STRING>mindistance             { return(MINDISTANCE); }
 <INITIAL,OBJECT_STRING>minfeaturesize          { return(MINFEATURESIZE); }
 <INITIAL,OBJECT_STRING>minscale		       { return(MINSCALE); }

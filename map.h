@@ -500,6 +500,11 @@ typedef struct {
   int imagetype;
 #endif
   int status;
+  int marker;
+  char *markername;
+  int markersize;
+  int minboxsize;
+  int maxboxsize;
 } referenceMapObj;
 
 // SCALEBAR OBJECT

@@ -153,4 +153,9 @@
 
 #define TRANSPARENCY 1130
 
+#define MARKER 1131
+#define MARKERSIZE 1132
+#define MINBOXSIZE 1133
+#define MAXBOXSIZE 1134
+
 #endif /* MAPFILE_H */

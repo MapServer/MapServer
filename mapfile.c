@@ -2148,15 +2148,23 @@ void initReferenceMap(referenceMapObj *ref)
   ref->outlinecolor.green = 0;
   ref->outlinecolor.blue = 0;  
   ref->status = MS_OFF;
+  ref->marker = 0;
+  ref->markername = NULL;
+  ref->markersize = 0;
+  ref->minboxsize = 3;
+  ref->maxboxsize = 0;
 }
 
 void freeReferenceMap(referenceMapObj *ref)
 {
   msFree(ref->image);
+  msFree(ref->markername);
 }
 
 int loadReferenceMap(referenceMapObj *ref)
 {
+  int state;
+
   for(;;) {
     switch(msyylex()) {
     case(EOF):
@@ -2198,7 +2206,24 @@ int loadReferenceMap(referenceMapObj *ref)
       break;          
     case(STATUS):
       if((ref->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
-      break;   
+      break;
+    case(MARKER):
+      if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
+
+      if(state == MS_NUMBER)
+	ref->marker = (int) msyynumber;
+      else
+	ref->markername = strdup(msyytext);
+      break;
+    case(MARKERSIZE):
+      if(getInteger(&(ref->markersize)) == -1) return(-1);
+      break;
+    case(MINBOXSIZE):
+      if(getInteger(&(ref->minboxsize)) == -1) return(-1);
+      break;
+    case(MAXBOXSIZE):
+      if(getInteger(&(ref->maxboxsize)) == -1) return(-1);
+      break;
     default:
       msSetError(MS_IDENTERR, "(%s):(%d)", "loadReferenceMap()", 
                  msyytext, msyylineno);
@@ -2209,6 +2234,8 @@ int loadReferenceMap(referenceMapObj *ref)
 
 static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *value)
 {
+  int state;
+
   switch(msyylex()) {
   case(COLOR):
     msyystate = 2; msyystring = value;
@@ -2242,7 +2269,30 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
   case(STATUS):
     msyystate = 2; msyystring = value;
     if((ref->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;
-    break;   
+    break;
+  case(MARKER):
+    msyystate = 2; msyystring = value;
+    if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
+
+    if(state == MS_NUMBER)
+      ref->marker = (int) msyynumber;
+    else {
+      if((ref->marker = msGetSymbolIndex(&(map->symbolset), msyytext)) == -1)
+	msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+    }
+    break;
+  case(MARKERSIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(ref->markersize));
+    break;
+  case(MAXBOXSIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(ref->maxboxsize));
+    break;
+  case(MINBOXSIZE):
+    msyystate = 2; msyystring = value;
+    getInteger(&(ref->minboxsize));
+    break;
   default:
     break;
   }
@@ -2261,6 +2311,13 @@ static void writeReferenceMap(referenceMapObj *ref, FILE *stream)
   fprintf(stream, "    OUTLINECOLOR %d %d %d\n", ref->outlinecolor.red, ref->outlinecolor.green, ref->outlinecolor.blue);
   fprintf(stream, "    SIZE %d %d\n", ref->width, ref->height);
   fprintf(stream, "    STATUS %s\n", msStatus[ref->status]);
+  if(ref->markername)
+    fprintf(stream, "      MARKER \"%s\"\n", ref->markername);
+  else
+    fprintf(stream, "      MARKER %d\n", ref->marker);
+  fprintf(stream, "      MARKERSIZE %d\n", ref->markersize);
+  fprintf(stream, "      MINBOXSIZE %d\n", ref->minboxsize);
+  fprintf(stream, "      MAXBOXSIZE %d\n", ref->maxboxsize);
   fprintf(stream, "  END\n\n");
 }
 
