@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.21  2001/03/03 01:01:55  dan
+ * Set shape->index in GetNextShape() for queries to work.
+ *
  * Revision 1.20  2001/03/02 05:42:43  sdlime
  * Checking in Dan's new configure stuff. Updated code to essentially be GD versionless. Needs lot's of testing.
  *
@@ -968,6 +971,8 @@ int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
       shape->type = MS_NULL;
   }
 
+  shape->index = poFeature->GetFID();
+
   delete poFeature;
 
   return MS_SUCCESS;
@@ -1055,6 +1060,8 @@ int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape,
                                             layer->numitems);
       if(!shape->attributes) return(MS_FAILURE);
   }   
+
+  shape->index = poFeature->GetFID();
 
   delete poFeature;
 
