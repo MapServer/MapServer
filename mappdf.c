@@ -1110,7 +1110,7 @@ void msFreeImagePDF(imageObj *image)
     if (image && MS_DRIVER_PDF(image->format) )
     {
         PDF_delete(image->img.pdf->pdf);
-        image->img.swf->map = NULL;
+        image->img.pdf->pdf = NULL;
     }
 }
 
