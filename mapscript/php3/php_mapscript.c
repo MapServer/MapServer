@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.38  2001/03/18 17:23:03  dan
+ * Default to selecting all fields in layer->open()
+ *
  * Revision 1.37  2001/03/15 04:48:35  dan
  * Fixed maplayer.c - had been committed with conflicts in it
  *
@@ -4027,7 +4030,15 @@ DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS)
     if (self == NULL || 
         (nStatus = layerObj_open(self, 
                                  pShapePath->value.str.val)) != MS_SUCCESS)
+    {
         _phpms_report_mapserver_error(E_ERROR);
+    }
+    else
+    {
+        // Until we implement selection of fields, default to selecting
+        // all fields
+        msLayerGetItems(self, &(self->items), &(self->numitems));
+    }
 
     RETURN_LONG(nStatus);
 }
