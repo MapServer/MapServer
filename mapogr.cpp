@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.82  2005/03/25 05:43:43  frank
+ * use msAddLineDirectly() to avoid extra alloc/copy of points
+ *
  * Revision 1.81  2004/12/13 07:57:58  frank
  * bug 1126: support passing FILTER to OGR if prefixed with WHERE
  *
@@ -516,8 +519,7 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
           line.numpoints++;
       }
 
-      msAddLine(outshp, &line);
-      free(line.point);
+      msAddLineDirectly(outshp, &line);
   }
   else
   {
