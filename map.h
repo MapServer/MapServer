@@ -821,6 +821,7 @@ typedef struct  {
 typedef struct {
   mapObj *map;
   PDF *pdf;
+  void    *imagetmp;  //used when the FORMATOPTION "OUTPUT_TYPE=RASTER"
 } PDFObj; 
 #endif
 
