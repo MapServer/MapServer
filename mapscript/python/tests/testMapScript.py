@@ -985,6 +985,17 @@ class NewOutputFormatTestCase(unittest.TestCase):
         assert new_format.refcount == 1, new_format.refcount
         assert new_format.name == 'gtiff'
         assert new_format.mimetype == 'image/tiff'
+    
+    def testOutputFormatMembers(self):
+        """test set/get of mimetype and extension"""
+        new_format = mapscript.outputFormatObj('GD/JPEG', 'foo')
+        assert new_format.refcount == 1, new_format.refcount
+        assert new_format.name == 'foo'
+        new_format.extension = 'jpig'
+        new_format.mimetype = 'image/jpig'
+        assert new_format.extension == 'jpig'
+        assert new_format.mimetype == 'image/jpig'
+
     def testAppendNewOutputFormat(self):
         """testAppendNewOutputFormat may error without GDAL"""
         num = self.mapobj1.numoutputformats

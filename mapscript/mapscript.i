@@ -249,8 +249,15 @@ memory.") const char * {
     msFreeMap(self);
   }
 
+  /* Avoid conflicts with Java's clone (bug 848). */
+
+#ifdef SWIGJAVA  
+  %newobject clone_;
+  mapObj *clone_() {
+#else
   %newobject clone;
   mapObj *clone() {
+#endif
     mapObj *dstMap;
     dstMap = msNewMapObj();
     if (msCopyMap(dstMap, self) != MS_SUCCESS)
@@ -1809,6 +1816,12 @@ memory.") const char * {
       msFreeOutputFormat( self );
   }
 
+/* SWIG for Java automatically emits getFoo/setFoo functions for each
+   attribute.  Since outputFormatObj.extension and mimetype are 
+   directly accessible, there's no need for these extension methods
+   (bug 848).*/
+   
+#ifndef SWIGJAVA
   void setExtension( const char *extension ) {
     msFree( self->extension );
     self->extension = strdup(extension);
@@ -1818,6 +1831,7 @@ memory.") const char * {
     msFree( self->mimetype );
     self->mimetype = strdup(mimetype);
   }
+#endif
 
   void setOption( const char *key, const char *value ) {
     msSetOutputFormatOption( self, key, value );
