@@ -33,7 +33,9 @@
 
 #include <gd.h>
 
+#if defined USE_PDF
 #include <pdflib.h>
+#endif
 
 #include <sys/types.h> /* regular expression support */
 #include <regex.h>
@@ -674,7 +676,9 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 double msAdjustExtent(rectObj *rect, int width, int height);
 int msAdjustImage(rectObj rect, int *width, int *height);
 gdImagePtr msDrawMap(mapObj *map);
+#if defined USE_PDF
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf); // mappdf.c
+#endif
 gdImagePtr msDrawQueryMap(mapObj *map);
 int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, int overlay);
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, int classindex, char *text);
