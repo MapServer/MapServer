@@ -1225,9 +1225,9 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 #endif  
 }
 
+#ifdef USE_EGIS
 static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
-#ifdef USE_EGIS
   	int i,j; 		/* loop counters */
   	double x,y;
   	int cmap[MAXCOLORS];
@@ -1426,11 +1426,8 @@ static int drawGEN(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   	writeErrLog(errLogMsg);
 
 	return (0);
-#else
-  msSetError(MS_IMGERR, "Generic BIP support is not available.", "drawGEN()");
-  return(-1);
-#endif
 }
+#endif
 
 int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
@@ -1514,6 +1511,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     fread(dd,8,1,f); // read some bytes to try and identify the file
     fclose(f);
 
+#if !defined(USE_GDAL) || defined(USE_TIFF)
     if (memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) {
       status = drawTIFF(map, layer, img, filename);
       if(status == -1) {
@@ -1522,6 +1520,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       }
       continue;
     }
+#endif
 
     if (memcmp(dd,"GIF8",4)==0) {
       status = drawGIF(map, layer, img, filename);
@@ -1590,6 +1589,34 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         hDS = GDALOpen( filename, GA_ReadOnly );
         if( hDS != NULL )
         {
+            if (layer->projection.numargs > 0 && 
+                EQUAL(layer->projection.projargs[0], "auto"))
+            {
+                const char *pszWKT;
+
+                pszWKT = GDALGetProjectionRef( hDS );
+
+                if( pszWKT != NULL && strlen(pszWKT) > 0 )
+                {
+                    if (msOGCWKT2ProjectionObj(pszWKT,
+                                     &(layer->projection)) != MS_SUCCESS)
+                    {
+                        char	szLongMsg[2048];
+
+                        sprintf( szLongMsg, 
+                                 "%s\n"
+                                 "PROJECTION AUTO cannot be used for this "
+                                 "GDAL raster (`%s').",
+                                 ms_error.message, filename);
+
+                        msSetError(MS_OGRERR, szLongMsg, 
+                                   "msDrawRasterLayer()");
+
+                        return(MS_FAILURE);
+                    }
+                }
+            }
+
             if( map->projection.numargs > 0 && layer->projection.numargs > 0 )
                 status = msResampleGDALToMap( map, layer, img, hDS );
             else
