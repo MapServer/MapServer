@@ -1195,13 +1195,15 @@ elif test "$with_wmsclient" = "yes" ; then
   fi
 
   WWW_VER=`$LIBWWW_CONFIG --version`
-
+  
+  AC_MSG_RESULT([        found libwww version $WWW_VER])
+  
   dnl Need libwww 5.3.2 or more because of an infinite loop in older versions
   dnl __TODO__ How can we do a '-lt' (lower than) test on strings???
-  if test -z "$WWW_VER" -o "$WWW_VER" != "5.3.2" ; then
+  if test -z "$WWW_VER" -o `expr "$WWW_VER" \< "5.3.2"` = 1; then
     AC_MSG_ERROR([libwww version 5.3.2 or more recent is required.])
   fi
-  AC_MSG_RESULT([        found libwww version $WWW_VER])
+
 
   WMS_LYR_ENABLED="-DUSE_WMS_LYR"
 
