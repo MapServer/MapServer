@@ -1355,7 +1355,7 @@ void returnQuery()
       LRN++;
     }
 
-    if(lp->footer) returnPage(lp->header, BROWSE);
+    if(lp->footer) returnPage(lp->footer, BROWSE);
 
     msLayerClose(lp);
     ResultLayer = NULL;
