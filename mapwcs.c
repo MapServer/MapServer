@@ -86,7 +86,7 @@ static int msWCSException(const char *version)
   // printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
   printf("Content-type: text/xml%c%c",10,10);
 
-  // TODO: see WCS specific exception schema (Appendix 6)
+  // TODO: see WCS specific exception schema (Appendix 6), this is a copy of Dan's for WFS
 
   printf("<ServiceExceptionReport\n");
   printf("xmlns=\"http://www.opengis.net/ogc\" ");
@@ -106,12 +106,12 @@ static void msWCSPrintRequestCapability(const char *version, const char *request
 
   printf("      <DCPType>\n");
   printf("        <HTTP>\n");
-  printf("          <Get onlineResource=\"%s\" />\n", script_url);
+  printf("          <Get><OnlineResource xlink:type=\"simple\" xlink:href=\"%s\" /></Get>\n", script_url);
   printf("        </HTTP>\n");
   printf("      </DCPType>\n");
   printf("      <DCPType>\n");
   printf("        <HTTP>\n");
-  printf("          <Post onlineResource=\"%s\" />\n", script_url);
+  printf("          <Post><OnlineResource xlink:type=\"simple\" xlink:href=\"%s\" /></Post>\n", script_url);
   printf("        </HTTP>\n");
   printf("      </DCPType>\n");
 
@@ -238,6 +238,7 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
            "   version=\"%s\" \n"
            "   updateSequence=\"0\" \n"
            "   xmlns=\"http://www.opengis.net/wcs\" \n"
+           "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n"
            "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
@@ -249,7 +250,7 @@ static int msWCSGetCapabilities_Service(mapObj *map, wcsParamsObj *params)
   msOWSPrintMetadata(stdout, map->web.metadata, "CO", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
 
   // we are not supporting the optional keyword type, at least not yet
-  msOWSPrintMetadataList(stdout, map->web.metadata, "CO", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <Keyword>%s</Keyword>\n", NULL);
+  msOWSPrintMetadataList(stdout, map->web.metadata, "CO", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
 
   // TODO: add responsibleParty (optional)
 
@@ -279,6 +280,7 @@ static int msWCSGetCapabilities_Capability(mapObj *map, wcsParamsObj *params)
            "   version=\"%s\" \n"
            "   updateSequence=\"0\" \n"
            "   xmlns=\"http://www.opengis.net/wcs\" \n"
+           "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n"
            "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
@@ -326,11 +328,11 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 
   msOWSPrintMetadata(stdout, layer->metadata, "CO", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
 
-  // TODO: add elevation and temporal ranges to LatLonEnvelope (optional)
-  printf("    <latLonEnvelope srsName=\"WGS84 (DD)\">\n");
+  // TODO: add elevation and temporal ranges to lonLatEnvelope (optional)
+  printf("    <lonLatEnvelope srsName=\"WGS84(DD)\">\n");
   printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny); // TODO: don't know if this is right
   printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
-  printf("    </latLonEnvelope>\n");
+  printf("    </lonLatEnvelope>\n");
 
   // we are not supporting the optional keyword type, at least not yet
   msOWSPrintMetadataList(stdout, layer->metadata, "CO", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
@@ -354,6 +356,7 @@ static int msWCSGetCapabilities_ContentMetadata(mapObj *map, wcsParamsObj *param
            "   version=\"%s\" \n"
            "   updateSequence=\"0\" \n"
            "   xmlns=\"http://www.opengis.net/wcs\" \n"
+           "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n"
            "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
            "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
            "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
@@ -381,6 +384,7 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
                               "   version=\"%s\" \n"
                               "   updateSequence=\"0\" \n"
                               "   xmlns=\"http://www.opengis.net/wcs\" \n"
+                              "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n"
                               "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
                               "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
                               "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/%s/wcsCapabilities.xsd\">\n", params->version, params->version);
@@ -489,11 +493,11 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
   msOWSPrintMetadata(stdout, layer->metadata, "CO", "label", OWS_WARN, "  <label>%s</label>\n", NULL);
 
-  // TODO: add elevation and temporal ranges to LatLonEnvelope (optional)
-  printf("    <latLonEnvelope srsName=\"WGS84 (DD)\">\n");
+  // TODO: add elevation and temporal ranges to lonLatEnvelope (optional)
+  printf("    <lonLatEnvelope srsName=\"WGS84(DD)\">\n");
   printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny);
   printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
-  printf("    </latLonEnvelope>\n");
+  printf("    </lonLatEnvelope>\n");
 
   // we are not supporting the optional keyword type, at least not yet
   msOWSPrintMetadataList(stdout, layer->metadata, "CO", "keywordlist", "  <keywords>\n", "  </keywords>\n", "    <keyword>%s</keyword>\n", NULL);
@@ -505,7 +509,7 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   printf("      <spatialDomain>\n");
   
   // envelope in lat/lon
-  printf("        <gml:Envelope srsName=\"WGS84 (DD)\">\n");
+  printf("        <gml:Envelope srsName=\"WGS84(DD)\">\n");
   printf("          <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny);
   printf("          <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
   printf("        </gml:Envelope>\n");
@@ -636,6 +640,7 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
          "   version=\"%s\" \n"
          "   updateSequence=\"0\" \n"
          "   xmlns=\"http://www.opengis.net/wcs\" \n"
+         "   xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n"
          "   xmlns:gml=\"http://www.opengis.net/gml\" \n"
          "   xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
          "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/%s/describeCoverage.xsd\">\n", params->version, params->version);
@@ -833,14 +838,8 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
         return msWCSException(params->version);
     }
            
-    if(bandlist) {
-      char *tmpstr;
-      
-      tmpstr = (char *) malloc(strlen(bandlist)+7);
-      sprintf(tmpstr, "BANDS=%s", bandlist);
-      msLayerAddProcessing( lp, tmpstr );
-      free(tmpstr);
-    }
+    if(bandlist)
+      msLayerSetProcessingKey( lp, "BANDS", bandlist );
                        
     // Create a temporary outputformat (we like will need to tweak parts)
     format = msCloneOutputFormat(msSelectOutputFormat(map,params->format));
