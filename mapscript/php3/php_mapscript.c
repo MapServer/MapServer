@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.218  2004/11/11 05:21:00  dan
+ * Fixed compile warnings: 'dereferencing type-punned pointer will break
+ * strict-aliasing rules' using (void*) cast instead of (void**) (bug 1053)
+ *
  * Revision 1.217  2004/11/11 03:27:57  dan
  * Added $layer->isVisible() to PHP MapScript (bug 539)
  *
@@ -1888,7 +1892,7 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"),
-                       (void **)&pExtent) == SUCCESS)
+                       (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
                                    E_ERROR);
@@ -2018,7 +2022,7 @@ static int _php3_ms_map_setProjection(int bWKTProj, mapObj *self, pval *pThis,
             _phpms_set_property_long(pThis,"units", self->units, E_ERROR); 
 
             if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
-                               sizeof("extent"),  (void **)&pExtent) == SUCCESS)
+                               sizeof("extent"), (void *)&pExtent) == SUCCESS)
             {
                 _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
                                            E_ERROR);
@@ -2272,15 +2276,9 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     int         bMaxExtSet = 0;
     int         nArgs = ARG_COUNT(ht);
     double      dfDeltaExt = -1.0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||   
         (nArgs != 5 && nArgs != 6))
@@ -2535,9 +2533,8 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
-#ifdef PHP4
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
-                       (void **)&pExtent) == SUCCESS)
+                       (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
                                    E_ERROR);
@@ -2548,20 +2545,6 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
                                    E_ERROR);
     }
-#else
-    if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
-                        (void **)&pExtent) == SUCCESS)
-    {
-        _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
-                                   E_ERROR);
-    }
-#endif
 
      RETURN_TRUE;
 
@@ -2607,15 +2590,9 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     double      dfDeltaX = 0;
     double      dfDeltaY = 0;
 
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
-    
-#ifdef PHP4
+
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         (nArgs != 4 && nArgs != 5))
@@ -2832,9 +2809,8 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
-#ifdef PHP4
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
-                        (void **)&pExtent) == SUCCESS)
+                        (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
                                    E_ERROR);
@@ -2845,20 +2821,6 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
                                    E_ERROR);
     }
-#else
-    if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
-                        (void **)&pExtent) == SUCCESS)
-    {
-        _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
-                                   E_ERROR);
-    }
-#endif
 
     RETURN_TRUE;
 }
@@ -2882,11 +2844,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 {
     mapObj      *self;
     pval        *pThis;
-#ifdef PHP4
-    pval   **pExtent;
-#else
-    pval   *pExtent;
-#endif
+    pval       **pExtent;
     pval        *pScale;
     pval        *pPixelPos;
     pval        *pWidth, *pHeight;
@@ -2904,15 +2862,9 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     double      dfDeltaExt = -1.0;
     double      dfCurrentScale = 0.0;
     int         nTmp = 0;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||   
         (nArgs != 5 && nArgs != 6))
@@ -3174,9 +3126,8 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
-#ifdef PHP4
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
-                       (void **)&pExtent) == SUCCESS)
+                       (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
                                    E_ERROR);
@@ -3187,20 +3138,6 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
                                    E_ERROR);
     }
-#else
-    if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
-                        (void **)&pExtent) == SUCCESS)
-    {
-        _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
-                                   E_ERROR);
-        _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
-                                   E_ERROR);
-    }
-#endif
 
      RETURN_TRUE;
 
@@ -3387,26 +3324,13 @@ DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval *pThis;
-    mapObj *self;
-    imageObj *im = NULL;
-
-
-#ifdef PHP4
-    pval   **pExtent;
-#else
-    pval   *pExtent;
-#endif
-
-#ifdef PHP4
+    pval        *pThis;
+    mapObj      *self;
+    imageObj    *im = NULL;
+    pval        **pExtent;
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -3431,9 +3355,8 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
                                     E_ERROR); 
          _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
-#ifdef PHP4
          if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
-                            sizeof("extent"), (void **)&pExtent) == SUCCESS)
+                            sizeof("extent"), (void *)&pExtent) == SUCCESS)
          {
              _phpms_set_property_double((*pExtent),"minx", 
                                         self->extent.minx, 
@@ -3448,20 +3371,6 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
                                         self->extent.maxy, 
                                         E_ERROR);
          }
-#else
-         if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
-                             (void **)&pExtent) == SUCCESS)
-         {
-             _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
-                                        E_ERROR);
-             _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
-                                        E_ERROR);
-             _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
-                                        E_ERROR);
-             _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
-                                        E_ERROR);
-         }
-#endif
          
          _phpms_build_img_object(im, &(self->web), list, return_value);
     }
@@ -3480,24 +3389,11 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pThis;
     mapObj      *self;
-    imageObj *im = NULL;
-
-
-#ifdef PHP4
-    pval   **pExtent;
-#else
-    pval   *pExtent;
-#endif
-
-#ifdef PHP4
+    imageObj    *im = NULL;
+    pval        **pExtent;
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL || ARG_COUNT(ht) > 0)
     {
@@ -3520,9 +3416,8 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
                                     E_ERROR); 
          _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
 
-#ifdef PHP4
          if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", 
-                            sizeof("extent"), (void **)&pExtent) == SUCCESS)
+                            sizeof("extent"), (void *)&pExtent) == SUCCESS)
          {
              _phpms_set_property_double((*pExtent),"minx", 
                                         self->extent.minx, 
@@ -3537,20 +3432,6 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
                                         self->extent.maxy, 
                                         E_ERROR);
          }
-#else
-         if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
-                             (void **)&pExtent) == SUCCESS)
-         {
-             _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
-                                        E_ERROR);
-             _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
-                                        E_ERROR);
-             _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
-                                        E_ERROR);
-             _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
-                                        E_ERROR);
-         }
-#endif
 
         /* Return an image object */
          _phpms_build_img_object(im, &(self->web), list, return_value);
@@ -4947,7 +4828,6 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
    Note : the first element in the array is the one drawn first.*/
 DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
 {
-#ifdef PHP4
     pval        *pThis, *pArrayIndexes;
     mapObj      *self=NULL;
     int         nElements = 0;
@@ -4955,18 +4835,10 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
 
     int         *panIndexes = NULL;
 
-#ifdef PHP4
     HashTable   *list=NULL;
     pval        **pValue = NULL;
-#else
-    pval        *pValue = NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -5005,7 +4877,7 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
     for (i=0; i<nElements; i++)
     {
         if (zend_hash_index_find(pArrayIndexes->value.ht, i, 
-                                 (void **)&pValue) == FAILURE)
+                                 (void *)&pValue) == FAILURE)
         {
             RETURN_FALSE;
         }
@@ -5019,7 +4891,7 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
     free(panIndexes);
-#endif
+
     RETURN_TRUE;
 }       
 
@@ -5617,18 +5489,10 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     int         nArgs;
     int         bUniqueLayerName = MS_FALSE;
 
-#ifdef PHP4
     HashTable   *list=NULL;
     pval        **pExtent;
-#else
-    pval        *pValue = NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -5685,9 +5549,8 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
     _phpms_set_property_long(pThis,"imagequality", self->imagequality, E_ERROR);
 
-#ifdef PHP4
     if (zend_hash_find(Z_OBJPROP_P(pThis), "extent", sizeof("extent"), 
-                       (void **)&pExtent) == SUCCESS)
+                       (void *)&pExtent) == SUCCESS)
     {
         _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
                                    E_ERROR);
@@ -5698,9 +5561,6 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
         _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
                                    E_ERROR);
     }
-#else
-    /* Not supported for php3 */
-#endif
 
     _phpms_set_property_double(pThis,"cellsize",  self->cellsize, E_ERROR);
     _phpms_set_property_long(pThis,  "units",     self->units, E_ERROR);
@@ -5765,7 +5625,7 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
         
         if (zend_hash_find(Z_OBJPROP_P(pThis), "outputformat", 
                            sizeof("outputformat"), 
-                           (void **)&pOutputformat) == SUCCESS)
+                           (void *)&pOutputformat) == SUCCESS)
         {
             _phpms_set_property_string((*pOutputformat),"name", 
                                        self->outputformat->name,
@@ -6273,15 +6133,9 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     imageObj *self;
 
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
 
     if (pThis == NULL ||
@@ -6297,23 +6151,13 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS)
          * removing the object from the resource list using php3_list_delete()
          * will also call the object destructor through the list destructor.
          */
-#ifdef PHP4
         pval **phandle;
         if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
-                           (void **)&phandle) == SUCCESS)
+                           (void *)&phandle) == SUCCESS)
         {
             php3_list_delete((*phandle)->value.lval);
         }
-#else
-        pval *phandle;
-        if (_php3_hash_find(pThis->value.ht, "_handle_", sizeof("_handle_"), 
-                            (void **)&phandle) == SUCCESS)
-
-        {
-            php3_list_delete(phandle->value.lval);
-        }
-#endif
     }
 
 }
@@ -9584,16 +9428,9 @@ DLEXPORT void php3_ms_point_free(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     pointObj *self;
 
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
 
     if (pThis == NULL ||
@@ -9610,23 +9447,13 @@ DLEXPORT void php3_ms_point_free(INTERNAL_FUNCTION_PARAMETERS)
          * removing the object from the resource list using php3_list_delete()
          * will also call the object destructor through the list destructor.
          */
-#ifdef PHP4
         pval **phandle;
         if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
-                           (void **)&phandle) == SUCCESS)
+                           (void *)&phandle) == SUCCESS)
         {
             php3_list_delete((*phandle)->value.lval);
         }
-#else
-        pval *phandle;
-        if (_php3_hash_find(pThis->value.ht, "_handle_", sizeof("_handle_"), 
-                            (void **)&phandle) == SUCCESS)
-
-        {
-            php3_list_delete(phandle->value.lval);
-        }
-#endif
     }
 
 }
@@ -10004,16 +9831,9 @@ DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     lineObj *self;
 
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
 
     if (pThis == NULL ||
@@ -10030,23 +9850,13 @@ DLEXPORT void php3_ms_line_free(INTERNAL_FUNCTION_PARAMETERS)
          * removing the object from the resource list using php3_list_delete()
          * will also call the object destructor through the list destructor.
          */
-#ifdef PHP4
         pval **phandle;
         if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
-                           (void **)&phandle) == SUCCESS)
+                           (void *)&phandle) == SUCCESS)
         {
             php3_list_delete((*phandle)->value.lval);
         }
-#else
-        pval *phandle;
-        if (_php3_hash_find(pThis->value.ht, "_handle_", sizeof("_handle_"), 
-                            (void **)&phandle) == SUCCESS)
-
-        {
-            php3_list_delete(phandle->value.lval);
-        }
-#endif
     }
 
 }
@@ -10243,19 +10053,11 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
     projectionObj       *poOutProj;
     int                 status=MS_FAILURE;
 
-#ifdef PHP4
     HashTable   *list=NULL;
     pval   **pBounds;
-#else
-    pval   *pBounds;
-#endif
 
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         getParameters(ht, 2, &pIn, &pOut) !=SUCCESS)
@@ -10283,9 +10085,8 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
     }
     else
     {
-#ifdef PHP4
          if (zend_hash_find(Z_OBJPROP_P(pThis), "bounds", 
-                            sizeof("bounds"), (void **)&pBounds) == SUCCESS)
+                            sizeof("bounds"), (void *)&pBounds) == SUCCESS)
          {
              _phpms_set_property_double((*pBounds),"minx", self->bounds.minx, 
                                         E_ERROR);
@@ -10296,20 +10097,6 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
              _phpms_set_property_double((*pBounds),"maxy", self->bounds.maxy, 
                                         E_ERROR);
          }
-#else
-         if (_php3_hash_find(pThis->value.ht, "bounds", sizeof("bounds"), 
-                             (void **)&pBounds) == SUCCESS)
-         {
-             _phpms_set_property_double(pBounds,"minx", self->bounds.minx, 
-                                        E_ERROR);
-             _phpms_set_property_double(pBounds,"miny", self->bounds.miny, 
-                                        E_ERROR);
-             _phpms_set_property_double(pBounds,"maxx", self->bounds.maxx, 
-                                        E_ERROR);
-             _phpms_set_property_double(pBounds,"maxy", self->bounds.maxy, 
-                                        E_ERROR);
-         }
-#endif
     }
 
     RETURN_LONG(status);
@@ -10717,17 +10504,9 @@ DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     shapeObj *self;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
 
     if (pThis == NULL ||
@@ -10744,23 +10523,13 @@ DLEXPORT void php3_ms_shape_free(INTERNAL_FUNCTION_PARAMETERS)
          * removing the object from the resource list using php3_list_delete()
          * will also call the object destructor through the list destructor.
          */
-#ifdef PHP4
         pval **phandle;
         if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
-                           (void **)&phandle) == SUCCESS)
+                           (void *)&phandle) == SUCCESS)
         {
             php3_list_delete((*phandle)->value.lval);
         }
-#else
-        pval *phandle;
-        if (_php3_hash_find(pThis->value.ht, "_handle_", sizeof("_handle_"), 
-                            (void **)&phandle) == SUCCESS)
-
-        {
-            php3_list_delete(phandle->value.lval);
-        }
-#endif
     }
 
 }
@@ -11242,17 +11011,9 @@ DLEXPORT void php3_ms_rect_free(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     rectObj *self;
-
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
 
     if (pThis == NULL ||
@@ -11269,23 +11030,13 @@ DLEXPORT void php3_ms_rect_free(INTERNAL_FUNCTION_PARAMETERS)
          * removing the object from the resource list using php3_list_delete()
          * will also call the object destructor through the list destructor.
          */
-#ifdef PHP4
         pval **phandle;
         if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
-                           (void **)&phandle) == SUCCESS)
+                           (void *)&phandle) == SUCCESS)
         {
             php3_list_delete((*phandle)->value.lval);
         }
-#else
-        pval *phandle;
-        if (_php3_hash_find(pThis->value.ht, "_handle_", sizeof("_handle_"), 
-                            (void **)&phandle) == SUCCESS)
-
-        {
-            php3_list_delete(phandle->value.lval);
-        }
-#endif
     }
 
 }
@@ -11641,7 +11392,7 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
     {
         shapeObj_destroy(poShape);
         _phpms_report_mapserver_error(E_WARNING);
-        php3_error(E_ERROR, "Failed reading shape %d.", pIndex->value.lval);
+        php3_error(E_ERROR, "Failed reading shape %ld.", pIndex->value.lval);
         RETURN_FALSE;
     }
 
@@ -11700,7 +11451,7 @@ DLEXPORT void php3_ms_shapefile_getpoint(INTERNAL_FUNCTION_PARAMETERS)
     {
         pointObj_destroy(poPoint);
         _phpms_report_mapserver_error(E_WARNING);
-        php3_error(E_ERROR, "Failed reading point %d.", pIndex->value.lval);
+        php3_error(E_ERROR, "Failed reading point %ld.", pIndex->value.lval);
         RETURN_FALSE;
     }
 
@@ -11765,7 +11516,7 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS)
     {
         shapeObj_destroy(poShape);
         _phpms_report_mapserver_error(E_WARNING);
-        php3_error(E_ERROR, "Failed reading shape %d.", pIndex->value.lval);
+        php3_error(E_ERROR, "Failed reading shape %ld.", pIndex->value.lval);
         RETURN_FALSE;
     }
 
@@ -11844,15 +11595,9 @@ DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     shapefileObj *self;
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -11867,23 +11612,15 @@ DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS)
          * removing the object from the resource list using php3_list_delete()
          * will also call the object destructor through the list destructor.
          */
-#ifdef PHP4
         pval **phandle;
+
         if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
-                           (void **)&phandle) == SUCCESS)
+                           (void *)&phandle) == SUCCESS)
         {
             php3_list_delete((*phandle)->value.lval);
         }
-#else
-        pval *phandle;
-        if (_php3_hash_find(pThis->value.ht, "_handle_", sizeof("_handle_"), 
-                            (void **)&phandle) == SUCCESS)
 
-        {
-            php3_list_delete(phandle->value.lval);
-        }
-#endif
     }
 }
 /* }}} */
@@ -11989,16 +11726,9 @@ DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     projectionObj *self;
 
-
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
 
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
 
     if (pThis == NULL ||
@@ -12016,23 +11746,13 @@ DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS)
          * removing the object from the resource list using php3_list_delete()
          * will also call the object destructor through the list destructor.
          */
-#ifdef PHP4
         pval **phandle;
         if (zend_hash_find(Z_OBJPROP_P(pThis), "_handle_", 
                            sizeof("_handle_"), 
-                           (void **)&phandle) == SUCCESS)
+                           (void *)&phandle) == SUCCESS)
         {
             php3_list_delete((*phandle)->value.lval);
         }
-#else
-        pval *phandle;
-        if (_php3_hash_find(pThis->value.ht, "_handle_", sizeof("_handle_"), 
-                            (void **)&phandle) == SUCCESS)
-
-        {
-            php3_list_delete(phandle->value.lval);
-        }
-#endif
     }
 
 }
@@ -12643,7 +12363,6 @@ static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
 DLEXPORT void php_ms_outputformat_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     outputFormatObj *self;
-    mapObj *parent_map;
     pval   *pPropertyName, *pNewValue, *pThis;
     HashTable   *list=NULL;
 
@@ -12659,7 +12378,7 @@ DLEXPORT void php_ms_outputformat_setProperty(INTERNAL_FUNCTION_PARAMETERS)
                                                   PHPMS_GLOBAL(le_msoutputformat),
                                                   list TSRMLS_CC);
    
-    if (self == NULL || parent_map == NULL)
+    if (self == NULL)
     {
         RETURN_LONG(-1);
     }
@@ -13241,7 +12960,7 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
     symbolObj *self;
     pval   *pPoints, *pThis;
     HashTable   *list=NULL;
-     pval        **pValue = NULL;
+    pval        **pValue = NULL;
     int i=0, nElements = 0, iSymbol=0;
 
     pThis = getThis();
@@ -13279,7 +12998,7 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
     while (i<nElements)
     {
         if (zend_hash_index_find(pPoints->value.ht, i, 
-                                 (void **)&pValue) == FAILURE)
+                                 (void *)&pValue) == FAILURE)
         {
             RETURN_FALSE;
         }
@@ -13288,7 +13007,7 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
         i++;
 
          if (zend_hash_index_find(pPoints->value.ht, i, 
-                                 (void **)&pValue) == FAILURE)
+                                 (void *)&pValue) == FAILURE)
         {
             RETURN_FALSE;
         }
@@ -13394,7 +13113,7 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
     symbolObj *self;
     pval   *pPoints, *pThis;
     HashTable   *list=NULL;
-     pval        **pValue = NULL;
+    pval        **pValue = NULL;
     int i=0, nElements = 0;
  
 
@@ -13432,7 +13151,7 @@ DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
     while (i<nElements)
     {
         if (zend_hash_index_find(pPoints->value.ht, i, 
-                                 (void **)&pValue) == FAILURE)
+                                 (void *)&pValue) == FAILURE)
         {
             RETURN_FALSE;
         }

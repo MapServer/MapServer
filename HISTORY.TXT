@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Fixed PHP MapScript compile warnings: dereferencing type-punned pointer
+  will break strict-aliasing rules (bug 1053)
+
 - Added $layer->isVisible() to PHP MapScript (bug 539)
 
 - Ported $layer->getExtent() to PHP MapScript (bug 826)

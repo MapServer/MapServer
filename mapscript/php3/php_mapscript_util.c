@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/11/11 05:21:00  dan
+ * Fixed compile warnings: 'dereferencing type-punned pointer will break
+ * strict-aliasing rules' using (void*) cast instead of (void**) (bug 1053)
+ *
  * Revision 1.20  2004/07/26 14:45:52  dan
  * Fixed php_mapscript to work with PHP5 (bug 718, patch from Sylvain Pasche)
  *
@@ -150,7 +154,7 @@ void *_phpms_fetch_handle2(pval *pObj,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), "_handle_", 
                             sizeof("_handle_"), 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         php3_error(E_ERROR, 
                    "Unable to find _handle_ property");
@@ -202,7 +206,7 @@ char *_phpms_fetch_property_handle2(pval *pObj, char *property_name,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -249,7 +253,7 @@ char *_phpms_fetch_property_string(pval *pObj, char *property_name,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), 
                             property_name, strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -275,7 +279,7 @@ long _phpms_fetch_property_long(pval *pObj, char *property_name,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -308,7 +312,7 @@ double _phpms_fetch_property_double(pval *pObj, char *property_name,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
    {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -334,7 +338,7 @@ long _phpms_fetch_property_resource(pval *pObj, char *property_name,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -370,7 +374,7 @@ int _phpms_set_property_string(pval *pObj, char *property_name,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -398,7 +402,7 @@ int _phpms_set_property_null(pval *pObj, char *property_name, int err_type)
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -427,7 +431,7 @@ int _phpms_set_property_long(pval *pObj, char *property_name,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -456,7 +460,7 @@ int _phpms_set_property_double(pval *pObj, char *property_name,
     }
     else if (zend_hash_find(Z_OBJPROP_P(pObj), property_name, 
                             strlen(property_name)+1, 
-                            (void **)&phandle) == FAILURE)
+                            (void *)&phandle) == FAILURE)
     {
         if (err_type != 0)
             php3_error(err_type, "Unable to find %s property", property_name);
@@ -542,7 +546,7 @@ int _php_extract_associative_array(HashTable *php, char **array)
     int i = 0;
     
     for (zend_hash_internal_pointer_reset(php);
-         zend_hash_get_current_data(php, (void **)&value) == SUCCESS;
+         zend_hash_get_current_data(php, (void *)&value) == SUCCESS;
          zend_hash_move_forward(php)) 
     {
         SEPARATE_ZVAL(value);
