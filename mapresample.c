@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2003/01/21 04:15:13  frank
+ * shift USE_PROJ ifdefs to avoid build warnings without PROJ.4
+ *
  * Revision 1.35  2002/11/27 00:07:25  dan
  * Return -1 if srcImage cannot be created in msResampleGDALToMap()
  *
@@ -159,6 +162,8 @@
 #  define MIN(a,b)      ((a<b) ? a : b)
 #  define MAX(a,b)      ((a>b) ? a : b)
 #endif
+
+#ifdef USE_PROJ
 
 /************************************************************************/
 /*                       msSimpleRasterResample()                       */
@@ -378,7 +383,6 @@ int InvGeoTransform( double *gt_in, double *gt_out )
 /* ==================================================================== */
 /************************************************************************/
 
-#ifdef USE_PROJ
 typedef struct 
 {
     projPJ psSrcProj;
@@ -528,7 +532,6 @@ int msProjTransformer( void *pCBData, int nPoints,
 
     return 1;
 }
-#endif /* def USE_PROJ */
 
 /************************************************************************/
 /* ==================================================================== */
@@ -685,7 +688,6 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
                                    rectObj *psSrcExtent )
 
 {
-#ifdef USE_PROJ
 #define EDGE_STEPS    10
 
     int		i, nSamples = 0;
@@ -771,11 +773,9 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     }
 
     return MS_TRUE;
-#else
-    return MS_FALSE;
-#endif
 }
 
+#endif /* def USE_PROJ */
 
 #ifdef USE_GDAL
 /************************************************************************/
