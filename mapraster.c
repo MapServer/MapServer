@@ -2198,16 +2198,16 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
               y21 = y1 + y2 - y1;
 
               //get the color
-              if(c != -1)
+              if(oc == -1)
                   oc = c;
 
               //draw a cross
-              if(c != -1)
+              if(oc != -1)
               {
                   gdImageLine(img, x21-8, y21, x21-3, y21, oc);
-                  gdImageLine(img, x21, y21-8, x21, y21-3, c);
-                  gdImageLine(img, x21, y21+3, x21, y21+8, c);
-                  gdImageLine(img, x21+3, y21, x21+8, y21, c);
+                  gdImageLine(img, x21, y21-8, x21, y21-3, oc);
+                  gdImageLine(img, x21, y21+3, x21, y21+8, oc);
+                  gdImageLine(img, x21+3, y21, x21+8, y21, oc);
               }
           }
       }

@@ -18,6 +18,7 @@ extern int msyystate;
 extern char *msyystring;
 
 extern int loadSymbol(symbolObj *s); // in mapsymbol.c
+extern int writeSymbol(symbolObj *s, FILE *stream); // in mapsymbol.c
 
 /*
 ** Symbol to string static arrays needed for writing map files.
@@ -26,7 +27,7 @@ extern int loadSymbol(symbolObj *s); // in mapsymbol.c
 static char *msOutputImageType[5]={"GIF", "PNG", "JPEG", "WBMP", "GML"};
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
 static char *msLayerTypes[7]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE"};
-static char *msLabelPositions[10]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO"};
+static char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
 static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
 static char *msStatus[5]={"OFF", "ON", "DEFAULT", "QUERYONLY", "EMBED"};
@@ -1011,7 +1012,8 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
   fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
   if(label->outlinecolor > -1) fprintf(stream, "  %sOUTLINECOLOR %d %d %d\n", tab, map->palette.colors[label->outlinecolor-1].red, map->palette.colors[label->outlinecolor-1].green, map->palette.colors[label->outlinecolor-1].blue);
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
-  fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
+  if (label->position != MS_XY)   // MS_XY is an internal value used only for legend labels... never write it
+    fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
   if(label->shadowcolor > -1) {
     fprintf(stream, "  %sSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->shadowcolor-1].red, map->palette.colors[label->shadowcolor-1].green, map->palette.colors[label->shadowcolor-1].blue);
     fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
@@ -2481,7 +2483,7 @@ static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
   if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
   fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[legend->transparent]);
-  if (legend->template) fprintf(stream, "    TEMPLATE %s\n", legend->template);
+  if (legend->template) fprintf(stream, "    TEMPLATE \"%s\"\n", legend->template);
   fprintf(stream, "  END\n\n");
 }
 
@@ -3136,6 +3138,12 @@ int msSaveMap(mapObj *map, char *filename)
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
 
+  // write symbol with INLINE tag in mapfile
+  for(i=0; i<map->symbolset.numsymbols; i++)
+  {
+      writeSymbol(&(map->symbolset.symbol[i]), stream);
+  }
+
   writeProjection(&(map->projection), stream, "  ");
   
   writeLegend(map, &(map->legend), stream);
@@ -3356,6 +3364,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
 	return(NULL);
       }
       if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols])) == -1)) return(NULL);
+      map->symbolset.symbol[map->symbolset.numsymbols].inmapfile = MS_TRUE;
       map->symbolset.numsymbols++;
       break;
     case(SYMBOLSET):
