@@ -1,6 +1,10 @@
 #ifndef MAPTREE_H
 #define MAPTREE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* this can be 2 or 4 for binary or quad tree */
 #define MAX_SUBNODES 4
 
@@ -32,5 +36,9 @@ char *msSearchDiskTree(char *filename, rectObj aoi);
 
 treeObj *msReadTree(char *filename);
 int msWriteTree(treeObj *tree, char *filename);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MAPTREE_H */

@@ -5,6 +5,10 @@
 #include "mapprimitive.h"
 #include "mapproject.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef SWIG
 #define MS_PATH_LENGTH 1024
 
@@ -149,6 +153,10 @@ int DBFWriteDoubleAttribute( DBFHandle hDBF, int iShape, int iField, double dFie
 int DBFWriteStringAttribute( DBFHandle hDBF, int iShape, int iField, const char * pszFieldValue );
 
 void DBFClose( DBFHandle hDBF );
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* MAPSHAPE_H */

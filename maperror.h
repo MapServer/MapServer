@@ -1,6 +1,10 @@
 #ifndef MAPERROR_H
 #define MAPERROR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MS_NOERR 0 /* general error codes */
 #define MS_IOERR 1 
 #define MS_MEMERR 2
@@ -46,5 +50,9 @@ extern errorObj ms_error;
 */
 void msSetError(int code, char *message, char *routine);
 void msWriteError(FILE *stream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MAPERROR_H */

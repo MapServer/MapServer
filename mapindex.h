@@ -1,6 +1,10 @@
 #ifndef MAPINDEX_H
 #define MAPINDEX_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
 ** Structure definitions
 */
@@ -36,5 +40,9 @@ void msWriteIndex(indexObj *idx, char *filename);
 void msCloseIndex(indexObj *idx);
 int msInsertRect(indexObj *idx, int id, rectObj rect);
 char *msSearchIndex(indexObj *idx, rectObj rect);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MAPINDEX_H */

@@ -32,6 +32,10 @@
 #include <sys/types.h> /* regular expression support */
 #include <regex.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // General defines, wrapable
 
 #define MS_VERSION "3.3.012 (pre-release)"
@@ -708,6 +712,10 @@ char *msAllocBitArray(int numbits);
 int msGetBit(char *array, int index);
 void msSetBit(char *array, int index, int value);
 void msFlipBit(char *array, int index);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* MAP_H */

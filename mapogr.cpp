@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/09/11 14:28:29  dan
+ * Added extern "C" in MS headers with external functions (was in mapogr.cpp)
+ *
  * Revision 1.3  2000/09/06 18:40:45  dan
  * getClassIndex() changed name to msGetClassIndex()
  *
@@ -42,16 +45,7 @@
  *
  **********************************************************************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "map.h"
-#include "maperror.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 #ifdef USE_OGR
 
