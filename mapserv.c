@@ -1144,11 +1144,23 @@ void returnHTML(char *html)
       
       for(i=0;i<Map->numlayers;i++) { /* Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here */ 
         if(isOn(Map->layers[i].name, Map->layers[i].group) == MS_TRUE) {
+	  if(Map->layers[i].group) {
+	    sprintf(substr, "[%s_select]", Map->layers[i].group);
+	    outstr = gsub(outstr, substr, "selected");
+	    sprintf(substr, "[%s_check]", Map->layers[i].group);
+	    outstr = gsub(outstr, substr, "checked");
+          }
 	  sprintf(substr, "[%s_select]", Map->layers[i].name);
 	  outstr = gsub(outstr, substr, "selected");
 	  sprintf(substr, "[%s_check]", Map->layers[i].name);
 	  outstr = gsub(outstr, substr, "checked");
         } else {
+          if(Map->layers[i].group) {
+	    sprintf(substr, "[%s_select]", Map->layers[i].group);
+	    outstr = gsub(outstr, substr, "");
+	    sprintf(substr, "[%s_check]", Map->layers[i].group);
+	    outstr = gsub(outstr, substr, "");
+          }
 	  sprintf(substr, "[%s_select]", Map->layers[i].name);
 	  outstr = gsub(outstr, substr, "");
 	  sprintf(substr, "[%s_check]", Map->layers[i].name);
