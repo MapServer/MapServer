@@ -70,6 +70,8 @@ char *msyystring=NULL;
 <EXPRESSION_STRING>ge|>=                       { return(GE); }
 <EXPRESSION_STRING>le|<=                       { return(LE); }
 
+<EXPRESSION_STRING>length                      { return(LENGTH); }
+
 <INITIAL,OBJECT_STRING>angle                   { return(ANGLE); }
 <INITIAL,OBJECT_STRING>antialias               { return(ANTIALIAS); }
 <INITIAL,OBJECT_STRING>backgroundcolor	       { return(BACKGROUNDCOLOR); }

@@ -32,6 +32,7 @@ int msyyresult;
 %left OR
 %left AND
 %left EQ NE LT GT LE GE
+%left LENGTH
 %left '+' '-'
 %left '*' '/'
 %left NEG
@@ -133,6 +134,7 @@ math_exp: NUMBER
        | '-' math_exp %prec NEG  { $$ = $2; }
        | math_exp '^' math_exp   { $$ = pow($1, $3); }
        | '(' math_exp ')'        { $$ = $2; }
+       | LENGTH '(' string_exp ')' { $$ = strlen($3) }
 ;
 
 string_exp: STRING
