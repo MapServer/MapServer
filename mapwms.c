@@ -1182,6 +1182,9 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   return(MS_SUCCESS);
 }
 
+/*
+** msWMSDescribeLayer()
+*/
 int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names, 
                        char **values, int numentries)
 {
@@ -1250,6 +1253,9 @@ int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names,
 }
 
 
+/*
+** msWMSGetLegendGraphic()
+*/
 int msWMSGetLegendGraphic(mapObj *map, const char *wmtver, char **names, 
                        char **values, int numentries)
 {
@@ -1363,7 +1369,72 @@ int msWMSGetLegendGraphic(mapObj *map, const char *wmtver, char **names,
      return(MS_SUCCESS);
 }
 
+
+/*
+** msWMSGetStyles() : return an SLD document for all layers that 
+** have a status set to on or default.
+*/
+int msWMSGetStyles(mapObj *map, const char *wmtver, char **names, 
+                       char **values, int numentries)
      
+{
+    int i,j,k;
+    int validlayer = 0;
+    int numlayers = 0;
+    char **layers = NULL;
+    char  *sld = NULL;
+
+    for(i=0; map && i<numentries; i++)
+    {
+        // getMap parameters
+        if (strcasecmp(names[i], "LAYERS") == 0) 
+        {
+            layers = split(values[i], ',', &numlayers);
+            if (layers==NULL || numlayers < 1) {
+                msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
+                   "msWMSGetStyles()");
+                return msWMSException(map, wmtver, NULL);
+            } 
+            for(j=0; j<map->numlayers; j++) 
+               map->layers[j].status = MS_OFF;
+
+            for (k=0; k<numlayers; k++)
+            {
+                for (j=0; j<map->numlayers; j++)
+                {
+                    if (map->layers[j].name && 
+                        strcasecmp(map->layers[j].name, layers[k]) == 0)
+                    {
+                        map->layers[j].status = MS_ON;
+                        validlayer =1;
+                    }
+                }
+            }
+
+            msFreeCharArray(layers, numlayers);
+        }
+
+    }
+
+    //validate all layers given. If an invalid layer is sent, return an exception. 
+    if (validlayer == 0)
+    {
+        msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
+                   "msWMSGetStyles()");
+        return msWMSException(map, wmtver, "LayerNotDefined");
+    }
+
+    printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
+    sld = msSLDGenerateSLD(map, -1);
+    if (sld)
+    {
+        printf("%s\n", sld);
+        free(sld);
+    }
+
+    return(MS_SUCCESS);
+}
+
 
 #endif /* USE_WMS_SVR */
 
@@ -1494,6 +1565,9 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
 
   if (strcasecmp(request, "GetLegendGraphic") == 0)
     return msWMSGetLegendGraphic(map, wmtver, names, values, numentries);
+
+  if (strcasecmp(request, "GetStyles") == 0)
+    return msWMSGetStyles(map, wmtver, names, values, numentries);
 
   // getMap parameters are used by both getMap and getFeatureInfo
   status = msWMSLoadGetMapParams(map, wmtver, names, values, numentries);
