@@ -977,7 +977,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   }
   strcpy(tname,filename);
   strcpy(strrchr(tname,'.'),".trl");
-  trl=fopen(msBuildPath(szPath, map->mappath, tname),"rb");
+  trl=fopen(msBuildPath3(szPath, map->mappath, map->shapepath, tname),"rb");
   if (trl!=NULL) {  /**** check for trailer file*/
     fread(trec,128,1,trl);
     if (!strncmp(trec,"TRAILER",7)) memcpy(trec,"TRAIL74",7);
@@ -1529,7 +1529,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       msBuildPath(cwd, map->mappath, "");
 
   if(layer->tileindex) { /* we have in index file */
-    if(msSHPOpenFile(&tilefile, "rb", msBuildPath(szPath, cwd, map->shapepath), layer->tileindex) == -1) return(-1);    
+    if(msSHPOpenFile(&tilefile, "rb", cwd, layer->tileindex) == -1) return(-1);    
     if((tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
     searchrect = map->extent;
 #ifdef USE_PROJ

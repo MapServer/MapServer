@@ -17,7 +17,7 @@ extern FILE *msyyin;
 extern int msyystate;
 extern char *msyystring;
 
-extern int loadSymbol(symbolObj *s, mapObj *map); // in mapsymbol.c
+extern int loadSymbol(symbolObj *s, char *symbolpath); // in mapsymbol.c
 extern void writeSymbol(symbolObj *s, FILE *stream); // in mapsymbol.c
 
 /*
@@ -3599,7 +3599,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
 	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadMap()");
 	return(NULL);
       }
-      if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols]), map) == -1)) return(NULL);
+      if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols]), map->mappath) == -1)) return(NULL);
       map->symbolset.symbol[map->symbolset.numsymbols].inmapfile = MS_TRUE;
       map->symbolset.numsymbols++;
       break;

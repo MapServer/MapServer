@@ -85,7 +85,7 @@ int msLayerOpen(layerObj *layer, char *shapepath)
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
     if(msSHPOpenFile(&(layer->shpfile), "rb", 
-                     msBuildPath(szPath, ((layer->map)?(layer->map->mappath):(NULL)), shapepath), layer->data) == -1) return(MS_FAILURE);
+                     msBuildPath(szPath, ((layer->map)?(layer->map->mappath):(NULL)), ((shapepath)?(shapepath):(""))), layer->data) == -1) return(MS_FAILURE);
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
