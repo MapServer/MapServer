@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2005/03/07 15:58:10  assefa
+ * Use gzip function to output svgz.
+ *
  * Revision 1.10  2005/03/02 04:23:36  assefa
  * Partial support of symbols (vector and ellipse).
  *
@@ -67,10 +70,50 @@
 #ifdef USE_SVG
 
 #include <assert.h>
+#ifdef USE_ZLIB
+#include "zlib.h"
+/*
+#if !defined(_WIN32)
+#include <zlib.h>
+*/
+#endif
 #include "map.h"
 
 MS_CVSID("$Id$")
 
+
+static int msIO_fprintfgz(FILE *fp, int bCompressed, const char *format, ... )
+
+{
+    va_list args;
+    int     return_val;
+    char workBuf[8000];
+
+    va_start( args, format );
+#if defined(HAVE_VSNPRINTF)
+    return_val = vsnprintf( workBuf, sizeof(workBuf), format, args );
+#else
+    return_val = vsprintf( workBuf, format, args);
+#endif
+
+    va_end( args );
+
+    if( return_val < 0 || return_val >= sizeof(workBuf) )
+        return -1;
+
+    if (bCompressed)
+    {
+
+#ifdef USE_ZLIB
+        return gzwrite( fp, workBuf, return_val);
+#else
+        return fwrite( workBuf, 1, return_val, fp );
+#endif
+    }
+    else
+      return fwrite( workBuf, 1, return_val, fp );
+    
+}
 
 /************************************************************************/
 /*                             msImageCreateSVG                         */
@@ -120,8 +163,25 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
         return NULL;
     }
 
+#ifdef USE_ZLIB
+    if (strcasecmp(msGetOutputFormatOption(image->format, 
+                                           "COMPRESSED_OUTPUT",""),
+                   "TRUE") == 0)
+    {
+        if( map != NULL && map->web.imagepath != NULL )
+          image->img.svg->filename = msTmpFile(map->mappath,
+                                                 map->web.imagepath,"svgz");
+    }
+    else
+      if( map != NULL && map->web.imagepath != NULL )
+          image->img.svg->filename = msTmpFile(map->mappath,
+                                               map->web.imagepath,"svg"); 
+#else
     if( map != NULL && map->web.imagepath != NULL )
-      image->img.svg->filename = msTmpFile(map->mappath,map->web.imagepath,"svg");
+          image->img.svg->filename = msTmpFile(map->mappath,
+                                               map->web.imagepath,"svg"); 
+#endif
+    
     
     if (!image->img.svg->filename)
     {
@@ -129,8 +189,24 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
                     "msImageCreateSVG()" );
         return NULL;
     }
+
+    if (strcasecmp(msGetOutputFormatOption(image->format, "COMPRESSED_OUTPUT",""),
+                   "TRUE") == 0)
+    {
+#ifdef USE_ZLIB
+        image->img.svg->stream = gzopen(image->img.svg->filename, "wb" );
+        image->img.svg->compressed = 1;
+#else
+        image->img.svg->stream = fopen(image->img.svg->filename, "w" );
+        image->img.svg->compressed = 0;
+#endif
+    }
+    else
+    {
+        image->img.svg->stream = fopen(image->img.svg->filename, "w" );
+        image->img.svg->compressed = 0;
+    }
     
-    image->img.svg->stream = fopen(image->img.svg->filename, "w" );
 
     if (!image->img.svg->stream)
     {
@@ -141,10 +217,11 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
     
     /* initialize it with the svg header */
 
-    msIO_fprintf(image->img.svg->stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,
+                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     /* TODO : seems to have a problem of dtd validation using IE (http://www.24help.info/printthread.php?t=52147) */
-    /* msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"); */
-    msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-flat.dtd\">\n"); 
+    /* msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"); */
+    msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-flat.dtd\">\n"); 
 
 
 /* -------------------------------------------------------------------- */
@@ -161,12 +238,12 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
         e = -width/(map->extent.maxx-map->extent.minx) *map->extent.minx;
         f = height/(map->extent.maxy-map->extent.miny)*map->extent.maxy;
 
-        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:au=\"http://www.svgmovile.jp/2004/kddip\"  au:boundingBox=\"0 0 %d %d\">\n",  width, height, width, height);
-        msIO_fprintf(image->img.svg->stream, "<title>%s</title>\n", map->name);
-        msIO_fprintf(image->img.svg->stream, "<metadata> \n");
-        msIO_fprintf(image->img.svg->stream,"<rdf:RDF xmlns:rdf = \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \n");
-        msIO_fprintf(image->img.svg->stream, "xmlns:crs = \"http://www.ogc.org/crs\" xmlns:svg=\"http://wwww.w3.org/2000/svg\"> \n");
-        msIO_fprintf(image->img.svg->stream, "<rdf:Description> \n");
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:au=\"http://www.svgmovile.jp/2004/kddip\"  au:boundingBox=\"0 0 %d %d\">\n",  width, height, width, height);
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<title>%s</title>\n", map->name);
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<metadata> \n");
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed, "<rdf:RDF xmlns:rdf = \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \n");
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "xmlns:crs = \"http://www.ogc.org/crs\" xmlns:svg=\"http://wwww.w3.org/2000/svg\"> \n");
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<rdf:Description> \n");
 
         if (map->units == MS_DD && 
             (strcasecmp(msGetOutputFormatOption(image->format, 
@@ -178,11 +255,11 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
             double plon =(( map->extent.maxx-map->extent.minx)/2) + map->extent.minx;
             double wp = width;
             double hp = height;
-            double r = ((map->extent.maxy-map->extent.miny)/2)*111320;//1degree of long in meteres at latitude 0
+            double r = ((map->extent.maxy-map->extent.miny)/2)*111320;/*1degree of long in meteres at latitude 0 */
 
             double circle=40000000;
             double res=hp;
-            double aspect=width/height;//hp/wp;
+            double aspect=width/height;/*hp/wp;*/
             double aspect_d;
             double wd;
             double hd;
@@ -220,13 +297,13 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
 	    a1=cos(((y1+y2)/2)*(M_PI/180.0))*(res/dy);
 	    e1= -a1*x1;
 
-            msIO_fprintf(image->img.svg->stream, "\n<!-- transform parameters using catersian transformation : svg:transform=\"matrix(%f, %f, %f, %f, %f, %f)\"  -->\n", a, b, c, d, e, f);
-            msIO_fprintf(image->img.svg->stream, "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f, %f, %f, %f, %f, %f)\" \n", a1, b, c, d1, e1, f1);
+            msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "\n<!-- transform parameters using catersian transformation : svg:transform=\"matrix(%f, %f, %f, %f, %f, %f)\"  -->\n", a, b, c, d, e, f);
+            msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f, %f, %f, %f, %f, %f)\" \n", a1, b, c, d1, e1, f1);
             
 
         }
         else
-          msIO_fprintf(image->img.svg->stream, "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f,%f,%f,%f,%f,%f)\" \n", a, b, c, d, e, f);
+          msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f,%f,%f,%f,%f,%f)\" \n", a, b, c, d, e, f);
 
         
         /* get epsg code: TODO : test what if espg code is not set ? */
@@ -235,10 +312,10 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
             strlen(value) < 20) 
         {
             sprintf(epsgCode, "%s", value+10);
-            msIO_fprintf(image->img.svg->stream, "rdf:resource=\"http://www.opengis.net/gml/srs/epsg.xml#%s\"/> \n",epsgCode);
+            msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "rdf:resource=\"http://www.opengis.net/gml/srs/epsg.xml#%s\"/> \n",epsgCode);
         }
             
-        msIO_fprintf(image->img.svg->stream, "</rdf:Description> \n </rdf:RDF> \n"); 
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "</rdf:Description> \n </rdf:RDF> \n"); 
         
         nZoomInTH = 70;
         nZoomOutTH = 100;
@@ -248,20 +325,20 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
         nZoomOutTH = atoi(msGetOutputFormatOption(image->format, "GOSVG_ZoomOutTH","100"));
         nScrollTH = atoi(msGetOutputFormatOption(image->format, "GOSVG_ScrollTH","10"));
 
-        msIO_fprintf(image->img.svg->stream, "<au:lbs protocol=\"maprequest\">\n");
-        msIO_fprintf(image->img.svg->stream, 
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<au:lbs protocol=\"maprequest\">\n");
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  
                      "<au:zoomin th=\"%d\" xlink:href=\".\"/>\n", nZoomInTH);
-        msIO_fprintf(image->img.svg->stream, 
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  
                      "<au:zoomout th=\"%d\" xlink:href=\".\"/>\n", nZoomOutTH);
-        msIO_fprintf(image->img.svg->stream, 
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  
                      "<au:scroll th=\"%d\" xlink:href=\".\"/>\n", nScrollTH);
-        msIO_fprintf(image->img.svg->stream, "</au:lbs>\n");
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "</au:lbs>\n");
 
-        msIO_fprintf(image->img.svg->stream,"</metadata>\n");
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed, "</metadata>\n");
     }
     else
     {
-        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n",  width, height);
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n",  width, height);
     }
     
     return image;
@@ -276,7 +353,8 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
 /*                                                                      */
 /*      Draws an svg line element.                                      */
 /************************************************************************/
-static void imagePolyline(FILE *fp, shapeObj *p, colorObj *color, int size,
+static void imagePolyline(FILE *fp, int bCompressed, shapeObj *p, 
+                          colorObj *color, int size,
                           int symbolstylelength, int *symbolstyle)
 {
     int i, j, k;
@@ -307,20 +385,20 @@ static void imagePolyline(FILE *fp, shapeObj *p, colorObj *color, int size,
                     pszDashArray = strcatalloc(pszDashArray, szTmp);
                 }
             
-            msIO_fprintf(fp, "<polyline fill=\"none\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" stroke-dasharray=\"%s\" points=\"",color->red, color->green, 
+            msIO_fprintfgz(fp, bCompressed, "<polyline fill=\"none\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" stroke-dasharray=\"%s\" points=\"",color->red, color->green, 
                          color->blue,size, pszDashArray);
             }
             else
-              msIO_fprintf(fp, "<polyline fill=\"none\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" points=\"",color->red, color->green, color->blue,size);
+              msIO_fprintfgz(fp, bCompressed,"<polyline fill=\"none\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" points=\"",color->red, color->green, color->blue,size);
         
         }
         for(j=0; j<p->line[i].numpoints; j++)
         {
-             msIO_fprintf(fp, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
+             msIO_fprintfgz(fp, bCompressed, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
         }
         
          if (i == (p->numlines -1))
-            msIO_fprintf(fp, "\"/>\n");
+            msIO_fprintfgz(fp, bCompressed,"\"/>\n");
     }
     
 }
@@ -356,10 +434,10 @@ void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
 
 
 
-    bFullRes = 1;
+    bFullRes = 0;
     if (strcasecmp(msGetOutputFormatOption(image->format, "FULL_RESOLUTION",""), 
-                   "FALSE") == 0)
-      bFullRes = 0;
+                   "TRUE") == 0)
+      bFullRes = 1;
 
     bUseGeoCoord= 0;
     
@@ -520,10 +598,12 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
     /* else use the symbol size. */
     /* TODO : size needs to be double ? */
     if(style->symbol == 0) 
-      imagePolyline(image->img.svg->stream, p, &style->color, width,
+      imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
+                    p, &style->color, width,
                     symbol->stylelength,  symbol->style);
     else
-      imagePolyline(image->img.svg->stream, p, &style->color, (int)size,
+      imagePolyline(image->img.svg->stream, image->img.svg->compressed, 
+                    p, &style->color, (int)size,
                     symbol->stylelength,  symbol->style);
         return;
     
@@ -536,12 +616,13 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset,
 void msImageStartLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
 {
     if (image && MS_DRIVER_SVG(image->format) && layer && map)/* && filename) */
-        msIO_fprintf(image->img.svg->stream, "\n<!-- START LAYER %s -->\n", layer->name); 
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "\n<!-- START LAYER %s -->\n", layer->name); 
 }
 
 
 
-static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor, 
+static void imageFillPolygon(FILE *fp, int bCompressed, 
+                             shapeObj *p, colorObj *psFillColor, 
                              colorObj *psOutlineColor, int size,
                              int symbolstylelength, int *symbolstyle)
 {
@@ -577,7 +658,7 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
                 }
             }
             if (psOutlineColor && psFillColor)
-              msIO_fprintf(fp, "<polygon fill=\"#%02x%02x%02x\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" %s points=\"",
+              msIO_fprintfgz(fp, bCompressed, "<polygon fill=\"#%02x%02x%02x\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" %s points=\"",
                            psFillColor->red, psFillColor->green, 
                            psFillColor->blue,
                            psOutlineColor->red, psOutlineColor->green, 
@@ -586,14 +667,14 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
             
             else if (psOutlineColor)
             {
-                msIO_fprintf(fp, "<polygon  stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" %s points=\"",
+                msIO_fprintfgz(fp,  bCompressed, "<polygon  stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" %s points=\"",
                            psOutlineColor->red, psOutlineColor->green, 
                            psOutlineColor->blue,
                            size, pszDashArray);
             }
             else /* fill color valid  */
             {
-                msIO_fprintf(fp, "<polygon fill=\"#%02x%02x%02x\" points=\"",
+                msIO_fprintfgz(fp,  bCompressed, "<polygon fill=\"#%02x%02x%02x\" points=\"",
                              psFillColor->red, psFillColor->green, 
                              psFillColor->blue);
                            
@@ -603,11 +684,11 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
         }
         for(j=0; j<p->line[i].numpoints; j++)
         {
-            msIO_fprintf(fp, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
+            msIO_fprintfgz(fp,  bCompressed, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
         }
         
         if (i == (p->numlines -1))
-          msIO_fprintf(fp, "\"/>\n");
+          msIO_fprintfgz(fp,  bCompressed,"\"/>\n");
     }
     
 }
@@ -669,14 +750,14 @@ void msDrawShadeSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     if (MS_VALID_COLOR(sOc))
       psOutlineColor = &sOc;
 
-    imageFillPolygon(image->img.svg->stream, p, psFillColor, psOutlineColor, size,
+    imageFillPolygon(image->img.svg->stream, image->img.svg->compressed ,p, psFillColor, psOutlineColor, size,
                      symbol->stylelength,  symbol->style);
 
 }
 
 #define Tcl_UniChar int
 #define TCL_UTF_MAX 3
-//comes from gd source code.
+/*comes from gd source code (ggdft.c).*/
 static int gdTcl_UtfToUniChar (char *str, Tcl_UniChar * chPtr)
 {
   int byte;
@@ -773,7 +854,8 @@ static int gdTcl_UtfToUniChar (char *str, Tcl_UniChar * chPtr)
   return 1;
 }
 
-static void drawSVGText(FILE *fp, int x, int y, char *string, double size, 
+static void drawSVGText(FILE *fp, int bCompressed, int x, int y, 
+                        char *string, double size, 
                         colorObj *psColor, colorObj *psOutlineColor,
                         char *pszFontFamilily,  char *pszFontStyle,
                         char *pszFontWeight, int nAnchorPosition,
@@ -874,7 +956,7 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
       pszFinalString = string;
 
     /* TODO : font size set to unit pt */
-    msIO_fprintf(fp, "<text  x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%dpt\" %s %s %s %s %s %s>%s</text>\n",
+    msIO_fprintfgz(fp, bCompressed,"<text  x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%dpt\" %s %s %s %s %s %s>%s</text>\n",
                  x, y, pszFontFamilily, (int)size, 
                  pszFontStyleString, pszFontWeightString, 
                  pszFillString, pszStrokeString, pszAngleString, 
@@ -1023,7 +1105,8 @@ int msDrawTextSVG(imageObj *image, pointObj labelPnt, char *string,
               pszFontWeight = aszFontsParts[1];
         }
 
-        drawSVGText(image->img.svg->stream, x, y, string, size, 
+        drawSVGText(image->img.svg->stream, image->img.svg->compressed, x, y, 
+                    string, size, 
                     &sColor, &sOutlineColor,
                     pszFontFamily,  pszFontStyle, pszFontWeight,
                     label->position, label->angle, bEncoding);
@@ -1297,6 +1380,11 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
     pointObj mPoints[MS_MAXVECTORPOINTS];
     pointObj oldpnt,newpnt;
     int offset_x, offset_y;
+    char *pszFontFamily = NULL, *pszFontStyle=NULL, *pszFontWeight=NULL;
+    char **aszFontsParts = NULL;
+    int nFontParts= 0;
+    char *font=NULL;
+    rectObj rect;
 
 /* -------------------------------------------------------------------- */
 /*      if not svg or invaid inputs, return.                            */
@@ -1329,16 +1417,61 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 
      if(size < 1) return; /* size too small */
 
-     if(style->symbol == 0 )//&& fc >= 0) { /* simply draw a single pixel of the specified color */
+     if(style->symbol == 0 )/*&& fc >= 0) {*/ /* simply draw a single pixel of the specified color */
      {
-         //gdImageSetPixel(img, (int)(p->x + ox), (int)(p->y + oy), fc);
+         /*gdImageSetPixel(img, (int)(p->x + ox), (int)(p->y + oy), fc);*/
          return;
      }
 
       switch(symbol->type) 
       { 
           case(MS_SYMBOL_TRUETYPE): 
-            
+#ifdef USE_GD_FT
+            font = msLookupHashTable(&(symbolset->fontset->fonts), symbol->font);
+            if(!font) return;
+
+            if(msGetCharacterSize(symbol->character, (int)size, font, &rect) 
+               != MS_SUCCESS) 
+              return;
+
+            x = (int)(p->x +  style->offsetx - (rect.maxx - rect.minx)/2 - rect.minx);
+            y = (int)(p->y + style->offsety - rect.maxy + (rect.maxy - rect.miny)/2);
+
+/* -------------------------------------------------------------------- */
+/*      parse font string :                                             */
+/*      There are 3 parts to the name separated with - (example         */
+/*      arial-italic-bold):                                             */
+/*        - font-family,                                                */
+/*        - font-style (italic, oblique, nomal)                         */
+/*        - font-weight (normal | bold | bolder | lighter | 100 | 200 ..*/
+/* -------------------------------------------------------------------- */
+            /* parse font string :  */
+            aszFontsParts = split(symbol->font, '_', &nFontParts);
+ 
+            pszFontFamily = aszFontsParts[0];
+            if (nFontParts == 3)
+            {
+                pszFontStyle = aszFontsParts[1];
+                pszFontWeight = aszFontsParts[2];
+            }
+            else if (nFontParts == 2)
+            {
+                if (strcasecmp(aszFontsParts[1], "italic") == 0 ||
+                    strcasecmp(aszFontsParts[1], "oblique") == 0 ||
+                    strcasecmp(aszFontsParts[1], "normal") == 0)
+                  pszFontStyle = aszFontsParts[1];
+                else
+                  pszFontWeight = aszFontsParts[1];
+            }
+
+            drawSVGText(image->img.svg->stream, image->img.svg->compressed, 
+                        x, y, symbol->character, size, 
+                        &style->color, &style->outlinecolor,
+                        pszFontFamily,  pszFontStyle, pszFontWeight,
+                        -1, -1,0);
+            /* msFreeCharArray(aszFontsParts, nFontParts); */
+           
+#endif            
             break;
 
           case(MS_SYMBOL_PIXMAP):
@@ -1352,7 +1485,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
             x = MS_NINT(p->x  + style->offsetx);
             y = MS_NINT(p->y  + style->offsety);
 
-            //TODO : style->angle
+            /*TODO : style->angle */
             pszFill = strcatalloc(pszFill,"");
             if (MS_VALID_COLOR(style->color) && symbol->filled)
             {
@@ -1376,15 +1509,16 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
             } 
             else if (bFillSetToNone)
             {
-                //if the fill color is not setc (or the symbol is not filled) and 
-                //the outline color is not set, set the stroke to black. 
-                //This is the way the gd outputs reacts to this case
+                /*if the fill color is not setc (or the symbol is not filled) and 
+                the outline color is not set, set the stroke to black. 
+                This is the way the gd outputs reacts to this case */
                 sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",0,0,0);
                 pszStroke = strcatalloc(pszStroke, szTmp);
             }
             
 
-            msIO_fprintf(image->img.svg->stream, "<ellipse cx=\"%d\" cy=\"%d\" rx=\"%d\" ry=\"%d\" %s %s />\n", x, y, rx, ry, pszFill, pszStroke);
+            msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,
+                           "<ellipse cx=\"%d\" cy=\"%d\" rx=\"%d\" ry=\"%d\" %s %s />\n", x, y, rx, ry, pszFill, pszStroke);
             msFree(pszFill);
             msFree(pszStroke);
             
@@ -1420,9 +1554,9 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
             }
             else if (bFillSetToNone)
             {
-                //if the fill color is not setc (or the symbol is not filled) and 
-                //the outline color is not set, set the stroke to black. 
-                //This is the way the gd outputs reacts to this case
+                /*if the fill color is not setc (or the symbol is not filled) and 
+                the outline color is not set, set the stroke to black. 
+                This is the way the gd outputs reacts to this case */
                 sprintf(szTmp, "stroke=\"#%02x%02x%02x\"",0,0,0);
                 pszStroke = strcatalloc(pszStroke, szTmp);
             }
@@ -1439,16 +1573,22 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                         if(k>2) 
                         {
                             
-                            msIO_fprintf(image->img.svg->stream, 
+                            msIO_fprintfgz(image->img.svg->stream, 
+                                           image->img.svg->compressed,  
                                          "<polygon %s %s  stroke-width=\"%d\" %s points=\"", 
                                          pszFill, pszStroke, width);
                             
                             for (i=0; i<k;i++)
                             {
-                                 msIO_fprintf(image->img.svg->stream, " %d,%d", 
-                                              (int)mPoints[i].x, (int)mPoints[i].y);
+                                 msIO_fprintfgz(image->img.svg->stream, 
+                                                image->img.svg->compressed,  
+                                                " %d,%d", 
+                                                (int)mPoints[i].x, 
+                                                (int)mPoints[i].y);
                             }
-                            msIO_fprintf(image->img.svg->stream, "\"/>\n");
+                            msIO_fprintfgz(image->img.svg->stream, 
+                                           image->img.svg->compressed,  
+                                           "\"/>\n");
                         }
                         k = 0; /* reset point counter */
                     } 
@@ -1460,16 +1600,19 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                     }
                 }
 
-                msIO_fprintf(image->img.svg->stream, 
+                msIO_fprintfgz(image->img.svg->stream, 
+                               image->img.svg->compressed,  
                              "<polygon %s %s  stroke-width=\"%d\" %s points=\"", 
                              pszFill, pszStroke, width);
                             
                 for (i=0; i<k;i++)
                 {
-                    msIO_fprintf(image->img.svg->stream, " %d,%d", 
+                    msIO_fprintfgz(image->img.svg->stream, 
+                                   image->img.svg->compressed, " %d,%d", 
                                  (int)mPoints[i].x, (int)mPoints[i].y);
                 }
-                msIO_fprintf(image->img.svg->stream, "\"/>\n");
+                msIO_fprintfgz(image->img.svg->stream, 
+                               image->img.svg->compressed,  "\"/>\n");
                 
             }
             else
@@ -1491,7 +1634,8 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
                         } else {
                             newpnt.x = MS_NINT(d*symbol->points[j].x + offset_x);
                             newpnt.y = MS_NINT(d*symbol->points[j].y + offset_y);
-                            msIO_fprintf(image->img.svg->stream, 
+                            msIO_fprintfgz(image->img.svg->stream, 
+                                           image->img.svg->compressed,  
                               "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" %s %s stroke-width=\"%d\" stroke-linecap=\"round\" />\n",
                                          (int)oldpnt.x, (int)oldpnt.y, (int)newpnt.x, (int)newpnt.y,
                                          pszFill, pszStroke, width);
@@ -1526,8 +1670,18 @@ MS_DLL_EXPORT int msSaveImagetoFpSVG(imageObj *image, FILE *stream)
     {
         if (!image->img.svg->streamclosed)
         {
-            msIO_fprintf(image->img.svg->stream, "</svg>\n"); 
-            fclose(image->img.svg->stream);
+            msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "</svg>\n"); 
+            if (image->img.svg->compressed)
+            {
+#ifdef USE_ZLIB
+                gzclose(image->img.svg->stream);
+#else
+                fclose(image->img.svg->stream);
+#endif
+            }
+            else
+              fclose(image->img.svg->stream);
+           
             image->img.svg->streamclosed = 1;
         }
         fp = fopen(image->img.svg->filename, "rb" );
@@ -1567,15 +1721,27 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
     {
         if (!image->img.svg->streamclosed)
         {
-            msIO_fprintf(image->img.svg->stream, "</svg>\n"); 
-            fclose(image->img.svg->stream);
+            msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "</svg>\n"); 
+            if (image->img.svg->compressed)
+            {
+#ifdef USE_ZLIB
+                gzclose(image->img.svg->stream);
+#else
+                fclose(image->img.svg->stream);
+#endif
+            }
+            else
+              fclose(image->img.svg->stream);
             image->img.svg->streamclosed = 1;
         }
         
         if (!filename)
         {
-            /* if( msIO_needBinaryStdout() == MS_FAILURE ) */
-            /* return MS_FAILURE; */
+            if (image->img.svg->compressed)
+            {
+                if( msIO_needBinaryStdout() == MS_FAILURE ) 
+                  return MS_FAILURE; 
+            }
 
             fp = fopen(image->img.svg->filename, "rb" );
             if( fp == NULL )
@@ -1679,7 +1845,7 @@ int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
                                               strlen(format->extension)+2));
         sprintf(pszURL, "%s%s.%s", map->web.imageurl, msGetBasename(pszTmpfile), 
                 format->extension);
-        msIO_fprintf(image->img.svg->stream, "\n<image xlink:href=\"%s\" x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" />\n", pszURL, map->width, map->height);
+        msIO_fprintfgz(image->img.svg->stream, image->img.svg->compressed,  "\n<image xlink:href=\"%s\" x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" />\n", pszURL, map->width, map->height);
 
          msFreeImage(imagetmp);
          msFree(tmpfile);
