@@ -322,7 +322,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
     if (strcasecmp(names[i], "LAYERS") == 0) 
     {
       char **layers;
-      int numlayers, j, k;
+      int numlayers, j, k, iLayer;
 
       layers = split(values[i], ',', &numlayers);
       if (layers==NULL || numlayers < 1) {
@@ -335,6 +335,8 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
          free(map->layerorder);
 
       map->layerorder = (int*)malloc(sizeof(int) * map->numlayers);
+      for (iLayer=0; iLayer < map->numlayers; iLayer++)
+          map->layerorder[iLayer] = iLayer;   
 
       papszGroups = msGetAllGroupNames(map, &nGroupNames);
        
