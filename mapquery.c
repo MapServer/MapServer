@@ -296,7 +296,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     if(status != MS_SUCCESS) continue;
 
     // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_FALSE);
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // open this layer
@@ -329,34 +329,31 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
       }
 
       if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
+	status = MS_TRUE;
+      } else {
+	switch(shape.type) { // make sure shape actually intersects the rect (ADD FUNCTIONS SPECIFIC TO RECTOBJ)
+	case MS_POINT:
+	  status = msIntersectMultipointPolygon(&shape.line[0], &search_shape);
+	  break;
+	case MS_LINE:
+	  status = msIntersectPolylinePolygon(&shape, &search_shape);
+	  break;
+	case MS_POLYGON:
+	  status = msIntersectPolygons(&shape, &search_shape);
+	  break;
+	default:
+	  break;
+	}
+      }	
+
+      if(status == MS_TRUE) {
 	addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	msFreeShape(&shape);
-	continue; /* next shape */
+	
+	if(lp->resultcache->numresults == 1)
+	  lp->resultcache->bounds = shape.bounds;
+	else
+	  msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
       }
-
-      // FIX: WRITE INTERSECTION FUNCTIONS FOR JUST A RECTOBJ!
-
-      switch(shape.type) { /* make sure shape actually intersects the rect */
-      case MS_POINT:	
-	if(msIntersectMultipointPolygon(&shape.line[0], &search_shape) == MS_TRUE)
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	break;
-      case MS_LINE:
-	if(msIntersectPolylinePolygon(&shape, &search_shape) == MS_TRUE)
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	break;
-      case MS_POLYGON:
-	if(msIntersectPolygons(&shape, &search_shape) == MS_TRUE)
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	break;
-      default:
-	break;
-      }
-
-      if(lp->resultcache->numresults == 1)
-	lp->resultcache->bounds = shape.bounds;
-      else
-	msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
 
       msFreeShape(&shape);
     } // next shape
@@ -437,7 +434,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     rect.maxy = p.y + t;
 
     // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_FALSE);
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // open this layer
@@ -483,7 +480,10 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 	  t = d; // next one must be closer
 	} else {
 	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	  msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+	  if(lp->resultcache->numresults == 1)
+	    lp->resultcache->bounds = shape.bounds;
+	  else
+	    msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
 	}
       }
  
@@ -523,6 +523,10 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
   char status;
 
   // FIX: do some checking on search_shape here...
+  if(search_shape->type != MS_POLYGON) {
+    msSetError(MS_MISCERR, "Search shape MUST be a polygon.", "msQueryByShape()"); 
+    return(MS_FAILURE);
+  }
 
   if(qlayer < 0 || qlayer >= map->numlayers)
     start = map->numlayers-1;
@@ -551,7 +555,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
     if(status != MS_SUCCESS) continue;
 
     // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_FALSE);
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // open this layer
@@ -583,27 +587,28 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
 	continue;
       }
 
-      switch(shape.type) { /* make sure shape actually intersects the rect */
+      switch(shape.type) { // make sure shape actually intersects the shape
       case MS_POINT:
-	if(msIntersectMultipointPolygon(&shape.line[0], search_shape) == MS_TRUE)
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+	status = msIntersectMultipointPolygon(&shape.line[0], search_shape);	
 	break;
       case MS_LINE:
-	if(msIntersectPolylinePolygon(&shape, search_shape) == MS_TRUE)
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+	status = msIntersectPolylinePolygon(&shape, search_shape);
 	break;
       case MS_POLYGON:
-	if(msIntersectPolygons(&shape, search_shape) == MS_TRUE)
-	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+	status = msIntersectPolygons(&shape, search_shape);
 	break;
       default:
 	break;
       }
 
-      if(lp->resultcache->numresults == 1)
-	lp->resultcache->bounds = shape.bounds;
-      else
-	msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+      if(status == MS_TRUE) {
+	addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+	
+	if(lp->resultcache->numresults == 1)
+	  lp->resultcache->bounds = shape.bounds;
+	else
+	  msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+      }
 
       msFreeShape(&shape);
     } // next shape

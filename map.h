@@ -127,7 +127,7 @@ enum MS_FEATURE_TYPE {MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER, MS_
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
-enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED};
+enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
 enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_TILED_OGR};
 enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG, MS_WBMP};
 
@@ -711,7 +711,7 @@ void msFlipBit(char *array, int index);
 int msLayerOpen(layerObj *layer, char *shapepath); // in maplayer.c
 void msLayerClose(layerObj *layer);
 int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *out);
-int msLayerWhichItems(layerObj *layer, int annotate);
+int msLayerWhichItems(layerObj *layer, int classify, int annotate);
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attributes);
 int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int attributes);
 

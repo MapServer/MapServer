@@ -158,7 +158,7 @@ gdImagePtr msDrawMap(mapObj *map)
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
 
-  for(i=0; i<map->numlayers; i++) { /* for each layer */
+  for(i=0; i<map->numlayers; i++) {
 
     lp = &(map->layers[i]);
     
@@ -178,7 +178,7 @@ gdImagePtr msDrawMap(mapObj *map)
   if(msDrawLabelCache(img, map) == -1) 
     return(NULL);
 
-  for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
+  for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
 
     lp = &(map->layers[i]);
     
@@ -200,9 +200,11 @@ gdImagePtr msDrawMap(mapObj *map)
 
 gdImagePtr msDrawQueryMap(mapObj *map)
 {
-  int i;
+  int i, status;
   gdImagePtr img=NULL;
   layerObj *lp=NULL;
+
+  if(map->querymap.style == MS_NORMAL) return(msDrawMap(map)); // no need to do anything fancy
 
   if(map->width == -1 && map->height == -1) {
     msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawQueryMap()");
@@ -228,14 +230,14 @@ gdImagePtr msDrawQueryMap(mapObj *map)
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
 
-  for(i=0; i<map->numlayers; i++) { /* for each layer */
-
+  for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
 
     if(lp->postlabelcache) // wait to draw
       continue;
 
-    msDrawQueryLayer(map, lp, img);
+    status = msDrawQueryLayer(map, lp, img);
+    if(status != MS_SUCCESS) return(NULL);
   }
 
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
@@ -244,17 +246,17 @@ gdImagePtr msDrawQueryMap(mapObj *map)
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
     msEmbedLegend(map, img);
 
-  if(msDrawLabelCache(img, map) == -1)
+  if(msDrawLabelCache(img, map) == -1) 
     return(NULL);
   
-  for(i=0; i<map->numlayers; i++) { /* for each layer, check for postlabelcache layers */
+  for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
+    lp = &(map->layers[i]);    
 
-    lp = &(map->layers[i]);
-    
     if(!lp->postlabelcache) 
       continue;
 
-    msDrawQueryLayer(map, lp, img);
+    status = msDrawQueryLayer(map, lp, img);
+    if(status != MS_SUCCESS) return(NULL);
   }
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
@@ -267,7 +269,7 @@ gdImagePtr msDrawQueryMap(mapObj *map)
 }
 
 /*
-** function to render an individual point
+** function to render an individual point, used as a helper function for mapscript only
 */
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, int classindex, char *labeltext)
 {
@@ -654,10 +656,123 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   return(MS_SUCCESS);
 }
 
+/*
+** Function to draw a layer IF it already has a result cache associated with it. Called by msDrawQuery and via MapScript.
+*/
 int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 {
-  // use query results to guide drawing instead of *next* (i.e. use *get*)
-  return(0);
+  int i;
+  char status;
+  char annotate=MS_TRUE, cache=MS_FALSE;
+  shapeObj shape;
+  double scalefactor=1;
+
+  featureListNodeObjPtr shpcache=NULL, current=NULL;
+
+  int colorbuffer[MS_MAXCLASSES];
+
+  if(!layer->resultcache || map->querymap.style == MS_NORMAL) // done
+    return(msDrawLayer(map, layer, img));
+
+  if(layer->type == MS_QUERY) return(MS_SUCCESS); // query only layers simply can't be drawn, not an error
+
+  if(map->querymap.style == MS_HILITE) { // first, draw normally, but don't return
+    status = msDrawLayer(map, layer, img);
+    if(status != MS_SUCCESS) return(MS_FAILURE); // oops
+  }
+
+  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
+
+  if(map->scale > 0) {
+    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
+      return(MS_SUCCESS);
+    if((layer->minscale > 0) && (map->scale <= layer->minscale))
+      return(MS_SUCCESS);
+    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
+      annotate = MS_FALSE;
+    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
+      annotate = MS_FALSE;
+  }
+
+  if(layer->symbolscale > 0) scalefactor = layer->symbolscale/map->scale;
+  
+  for(i=0; i<layer->numclasses; i++) {
+    layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
+    layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
+    layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
+    layer->class[i].overlaysizescaled = layer->class[i].sizescaled - (layer->class[i].size - layer->class[i].overlaysize);
+    // layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
+    layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
+    layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
+#ifdef USE_TTF
+    if(layer->class[i].label.type == MS_TRUETYPE) { 
+      layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
+      layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
+      layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
+    }
+#endif
+  }
+
+  // if MS_HILITE, alter the first class (always at least 1 class)
+  if(map->querymap.style == MS_HILITE) {
+    for(i=0; i<layer->numclasses; i++) {
+      colorbuffer[i] = layer->class[i].color; // save the color
+      layer->class[i].color = map->querymap.color;
+    }
+  }
+
+  // open this layer
+  status = msLayerOpen(layer, map->shapepath);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
+  // build item list
+  status = msLayerWhichItems(layer, MS_FALSE, annotate); // results have already been classified (this may change)
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
+  msInitShape(&shape);
+
+  if(layer->type == MS_LINE || layer->type == MS_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
+
+  for(i=0; i<layer->resultcache->numresults; i++) {    
+    status = msLayerGetShape(layer, map->shapepath, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex, MS_TRUE);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+
+    shape.classindex = layer->resultcache->results[i].classindex;
+
+    if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
+      shape.text = msShapeGetAnnotation(layer, &shape);
+
+    status = msDrawShape(map, layer, &shape, img, !cache); // if caching we DON'T want to do overlays at this time
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+
+    if(shape.numlines == 0) { // once clipped the shape didn't need to be drawn
+      msFreeShape(&shape);
+      continue;
+    }
+
+    if(cache && layer->class[shape.classindex].overlaysymbol >= 0)
+      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); // problem adding to the cache    
+
+    msFreeShape(&shape);      
+  }
+
+  if(shpcache) {
+    int c;
+
+    for(current=shpcache; current; current=current->next) {
+      c = current->shape.classindex;
+      msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+    }
+
+    freeFeatureList(shpcache);
+    shpcache = NULL;
+  }
+
+  // if MS_HILITE, restore values
+  if(map->querymap.style == MS_HILITE)    
+    for(i=0; i<layer->numclasses; i++) layer->class[i].color = colorbuffer[i]; // restore the color
+
+  return(MS_SUCCESS);
 }
 
 int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
@@ -674,8 +789,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(layer->type == MS_QUERY) return(MS_SUCCESS);
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
-
-  // FIX: MUCH OF THIS SCALE SHIT NEEDS TO BE MOVED
 
   if(map->scale > 0) {
     if((layer->maxscale > 0) && (map->scale > layer->maxscale))
@@ -707,36 +820,24 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 #endif
   }
   
-  fprintf(stderr, "Drawing layer %s...\n", layer->name); 
-
   // open this layer
   status = msLayerOpen(layer, map->shapepath);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  fprintf(stderr, "opened layer...\n"); 
-
   // build item list
-  status = msLayerWhichItems(layer, annotate);
+  status = msLayerWhichItems(layer, MS_TRUE, annotate);
   if(status != MS_SUCCESS) return(MS_FAILURE);
-
-  fprintf(stderr, "built item list...\n");
 
   // identify target shapes
   status = msLayerWhichShapes(layer, map->shapepath, map->extent, &(map->projection));
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  fprintf(stderr, "run msWhichShapes()...\n");
-
   // step through the target shapes
   msInitShape(&shape);
-
-  fprintf(stderr, "shape initialized...\n");
 
   if(layer->type == MS_LINE || layer->type == MS_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
   while((status = msLayerNextShape(layer, map->shapepath, &shape, MS_TRUE)) == MS_SUCCESS) {
-
-    fprintf(stderr, "processing shape...\n");
 
     shape.classindex = msShapeGetClass(layer, &shape);    
     if(shape.classindex == -1) {
@@ -744,12 +845,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       continue;
     }
 
-    fprintf(stderr, "got class...\n");
-
     if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
-
-    if(shape.text) fprintf(stderr, "got annotation (%s)...\n", shape.text);
 
     status = msDrawShape(map, layer, &shape, img, !cache); // if caching we DON'T want to do overlays at this time
     if(status != MS_SUCCESS) return(MS_FAILURE);

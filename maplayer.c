@@ -220,21 +220,18 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
   }
 }
 
-/*
-** FIX: NEED TO ADD CODE FOR EACH LOGICAL/TEXT EXPRESSION ISOLATING THE INDEX LIST FOR EACH EXPRESSION!
-*/
-int msLayerWhichItems(layerObj *layer, int annotate) 
+int msLayerWhichItems(layerObj *layer, int classify, int annotate) 
 {
   int i, j, nt=0, ne=0;
 
-  if(layer->classitem) nt++;
+  if(classify && layer->classitem) nt++;
   if(annotate && layer->labelitem) nt++;
   if(annotate && layer->labelsizeitem) nt++;
   if(annotate && layer->labelangleitem) nt++;
 
   for(i=0; i<layer->numclasses; i++) {
     ne = 0;
-    if(layer->class[i].expression.type == MS_EXPRESSION) { 
+    if(classify && layer->class[i].expression.type == MS_EXPRESSION) { 
       ne = countChars(layer->class[i].expression.string, '[');
       if(ne > 0) {
 	layer->class[i].expression.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
@@ -284,31 +281,15 @@ int msLayerWhichItems(layerObj *layer, int annotate)
 
   layer->numitems = 0;
 
-  if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
+  if(classify && layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
   if(annotate && layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
   if(annotate && layer->labelsizeitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelsizeitem);
   if(annotate && layer->labelangleitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
  
   for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
+    if(classify && layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
     if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].text));
   }
-
-  fprintf(stderr, "itemlist: ");
-  for(i=0; i<layer->numitems; i++)
-    fprintf(stderr, "%s ", layer->items[i]);
-  fprintf(stderr, "end\n");
-
-  for(i=0; i<layer->numclasses; i++) {
-    if(layer->class[i].expression.type == MS_EXPRESSION) {
-      fprintf(stderr, "expression: (%s) - ", layer->class[i].expression.string);
-      for(j=0; j<layer->class[i].expression.numitems; j++)
-        fprintf(stderr, "%s (%d)", layer->class[i].expression.items[j], layer->class[i].expression.indexes[j]);
-      fprintf(stderr, "\n");
-    }
-  }
-
-  //exit(0);
 
   return(MS_SUCCESS);
 }
