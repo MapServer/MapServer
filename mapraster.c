@@ -2211,8 +2211,8 @@ imageObj *msDrawReferenceMap(mapObj *map) {
               pointObj *point = NULL;
 
               point = malloc(sizeof(pointObj));
-              point->x = (double)x1 + x2 - x1;
-              point->y = (double)y1 + y2 - y1;
+              point->x = (double)x1 + ((x2 - x1) / 2);
+              point->y = (double)y1 + ((y2 - y1) / 2);
 
               msDrawMarkerSymbol(&map->symbolset,image,point, marker, c, -1, oc, 
                                  map->reference.markersize);
@@ -2222,8 +2222,8 @@ imageObj *msDrawReferenceMap(mapObj *map) {
           {
               int x21, y21;
               //determine the center point
-              x21 = x1 + x2 - x1;
-              y21 = y1 + y2 - y1;
+              x21 = x1 + ((x2 - x1) / 2);
+              y21 = y1 + ((y2 - y1) / 2);
 
               //get the color
               if(c != -1)
