@@ -273,11 +273,17 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   shapeObj shape;
 
   if(qlayer < 0 || qlayer >= map->numlayers) {
-    msSetError(MS_MISCERR, "No query layer defined.", "msQueryByIndex()"); 
+    msSetError(MS_QUERYERR, "No query layer defined.", "msQueryByIndex()"); 
     return(MS_FAILURE);
   }
 
   lp = &(map->layers[qlayer]);
+
+  if(!msIsLayerQueryable(lp)) {
+    msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByIndex()"); 
+    return(MS_FAILURE);
+  }
+
   msInitShape(&shape);
 
   // free any previous search results, do it now in case one of the next few tests fail
@@ -339,6 +345,12 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   }
 
   lp = &(map->layers[qlayer]);
+
+  if(!msIsLayerQueryable(lp)) {
+    msSetError(MS_QUERYERR, "Requested layer has no templates defined.", "msQueryByAttribtes()"); 
+    return(MS_FAILURE);
+  }
+
   msInitShape(&shape);
 
   // free any previous search results, do it now in case one of the next few tests fail
@@ -365,7 +377,7 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   status = msLayerWhichShapes(lp, searchrect);
   if(status == MS_DONE) { // no overlap
     msLayerClose(lp);
-     msSetError(MS_NOTFOUND, "No matching record(s) found, layer and area of interest do not overlap.", "msQueryByRect()"); 
+     msSetError(MS_NOTFOUND, "No matching record(s) found, layer and area of interest do not overlap.", "msQueryByAttributes()"); 
     return(MS_FAILURE);
   } else if(status != MS_SUCCESS) {
     msLayerClose(lp);
@@ -414,7 +426,7 @@ int msQueryByAttributes(mapObj *map, int qlayer)
 
 int msQueryByRect(mapObj *map, int qlayer, rectObj rect) 
 {
-  int i,l; /* counters */
+  int l; /* counters */
   int start, stop=0;
 
   layerObj *lp;
@@ -435,6 +447,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
+    if(!msIsLayerQueryable(lp)) continue;
 
     // free any previous search results, do it now in case one of the next few tests fail
     if(lp->resultcache) {
@@ -448,16 +461,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     if(map->scale > 0) {
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
-    }
-
-    status = MS_FAILURE;
-    for(i=0; i<lp->numclasses; i++) {
-      if(lp->class[i].template) {
-	status = MS_SUCCESS;
-	break;
-      }
-    }
-    if(status != MS_SUCCESS) continue;
+    }    
 
     // open this layer
     status = msLayerOpen(lp, map->shapepath);
@@ -615,6 +619,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
     for(l=start; l>=stop; l--) {
       lp = &(map->layers[l]);
+      if(!msIsLayerQueryable(lp)) continue;
 
       // free any previous search results, do it now in case one of the next few tests fail
       if(lp->resultcache) {
@@ -729,7 +734,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
 int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 {
-  int i, l;
+  int l;
   int start, stop=0;
 
   double d, t;
@@ -748,7 +753,8 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     start = stop = qlayer;
 
   for(l=start; l>=stop; l--) {
-    lp = &(map->layers[l]);
+    lp = &(map->layers[l]);    
+    if(!msIsLayerQueryable(lp)) continue;
 
     // free any previous search results, do it now in case one of the next few tests fail
     if(lp->resultcache) {
@@ -763,15 +769,6 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
-
-    status = MS_FAILURE;
-    for(i=0; i<lp->numclasses; i++) {
-      if(lp->class[i].template) {
-	status = MS_SUCCESS;
-	break;
-      }
-    }
-    if(status != MS_SUCCESS) continue;
 
     if(buffer <= 0) { // use layer tolerance
       if(lp->toleranceunits == MS_PIXELS)
@@ -876,7 +873,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 
 int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
 {
-  int start, stop=0, i, l;
+  int start, stop=0, l;
   shapeObj shape;
   layerObj *lp;
   char status;
@@ -897,6 +894,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
  
   for(l=start; l>=stop; l--) { /* each layer */
     lp = &(map->layers[l]);
+    if(!msIsLayerQueryable(lp)) continue;
 
     // free any previous search results, do it now in case one of the next few tests fail
     if(lp->resultcache) {
@@ -912,15 +910,6 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
    
-    status = MS_FAILURE;
-    for(i=0; i<lp->numclasses; i++) {
-      if(lp->class[i].template) {
-	status = MS_SUCCESS;
-	break;
-      }
-    }
-    if(status != MS_SUCCESS) continue;
-
     // open this layer
     status = msLayerOpen(lp, map->shapepath);
     if(status != MS_SUCCESS) return(MS_FAILURE);
