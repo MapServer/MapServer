@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.293  2005/02/11 22:02:37  frank
+ * fixed leak of font names in label cache
+ *
  * Revision 1.292  2005/01/28 06:16:54  sdlime
  * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
  *
@@ -4076,6 +4079,8 @@ int msFreeLabelCache(labelCacheObj *cache) {
   // free the labels
   for(i=0; i<cache->numlabels; i++) {
     msFree(cache->labels[i].text);
+    if( cache->labels[i].label.font != NULL )
+        msFree( cache->labels[i].label.font );
     msFreeShape(cache->labels[i].poly); // empties the shape
     msFree(cache->labels[i].poly); // free's the pointer
     for(j=0;j<cache->labels[i].numstyles; j++) freeStyle(&(cache->labels[i].styles[j]));

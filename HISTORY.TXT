@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 839: Fix memory leak of font name in label cache (in mapfile.c). 
+
 - Added msForceTmpFileBase() and mapserv -tmpbase switch to allow overriding
   temporary file naming conventions.  Mainly intended to make writing 
   testscripts using mapserv easier. FrankW. 
