@@ -12,20 +12,20 @@
 # $Id$
 #
 
-#OPTFLAGS =	/nologo /Zi /W3 /DDEBUG
-OPTFLAGS =	/nologo /Zi 
+OPTFLAGS =	/nologo /Zi /W3 /DDEBUG /DWIN32
+#OPTFLAGS =	/nologo /Zi 
 BASE_CFLAGS = 	$(OPTFLAGS) 
-LDFLAGS =	/NODEFAULTLIB:libcd
+LDFLAGS =	/NODEFAULTLIB:libcd /DEBUG
 
 CC=     cl
-LINK=   link
+LINK=   link /debug
 
 #
 # If you want to ignore missing datafile errors uncomment the following
 # line. This is especially useful with large tiled datasets that may not
 # have complete data for each tile.
 #
-#IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
+IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
 
 #
 # Apparently these aren't as commonplace as I'd hoped. Edit the
@@ -50,7 +50,7 @@ WMS=-DUSE_WMS_SVR
 #WWWLIB_LIB=../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
 
 #Use this flag to compile with WFS support, requires OGR and PROJ4
-#WFS=-DUSE_WFS_SVR
+WFS=-DUSE_WFS_SVR
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
@@ -97,8 +97,9 @@ EPPL_OBJ=epplib.obj
 # formats.  See http://gdal.velocet.ca/projects/opengis/
 GDAL_DIR= ..\gdal
 OGR=-DUSE_OGR
-OGR_LIB = $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib $(GDAL_DIR)/ogr/ogr.lib $(GDAL_DIR)/ogr/../port/cpl.lib
-OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port
+OGR_LIB = $(GDAL_DIR)/gdal.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib $(GDAL_DIR)/ogr/ogr.lib $(GDAL_DIR)/ogr/../port/cpl.lib
+OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../port -I$(GDAL_DIR)/core
+GDAL=-DUSE_GDAL
 
 # ESRI SDE support.
 #SDE_OPT=-DUSE_SDE -DWIN32
@@ -118,7 +119,9 @@ OGR_INC = -I$(GDAL_DIR)/ogr/ogrsf_frmts -I$(GDAL_DIR)/ogr -I$(GDAL_DIR)/ogr/../p
 #IMGGEN_INC=-I./imgSrc
 #IMGGEN_LIB=-L./imgSrc -limgGEN
 
-
+#ECWDIR= C:\ProgFile\ECW_SDK
+#ECW_LIB=$(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
+#        $(ECWDIR)\lib\NCSUtil.lib
 #
 # VC++ does not include the REGEX library... so we must provide our one.
 # The following definitions will try to build GNU regex-0.12 located in the
@@ -137,8 +140,9 @@ REGEX_INC=-I./regex-0.12
 # compiled with:
 #
 #PHP_REGEX=..\php-3.0.14\regex
-#PHP_REGEX=..\php-4.0.6\regex
-PHP_REGEX=..\php-4.1.2\regex
+#PHP_REGEX=..\php-4.1.2\regex
+PHP_REGEX=..\php-4.2.1\regex
+#PHP_REGEX=..\php-4.2.2\regex
 REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
           $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
 REGEX_INC=-I$(PHP_REGEX) -DPHP_NO_ALIASES
@@ -148,6 +152,10 @@ REGEX_INC=-I$(PHP_REGEX) -DPHP_NO_ALIASES
 #
 REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
 
+# Ming distribution 
+#MING_LIB=../ming-0.2a/src/libming.lib
+#MING_INC=-I../ming-0.2a/src -I../ming-0.2a
+#MING=-DUSE_MING_FLASH
 
 
 #
@@ -166,7 +174,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj \
         maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
         mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
-        mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapgdal.obj \
+        mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj mapgdal.obj \
         mapwfs.obj mapows.obj \
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
@@ -180,15 +188,14 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
 		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB) \
-                $(WWWLIB_LIB)
+                $(WWWLIB_LIB) $(ECW_LIB) $(MING_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC) \
-                $(WWWLIB_INC)
+                $(WWWLIB_INC) $(MING_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(WFS) \
-                $(PRIOLIST)
+		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) -DFEATURE_INFO_HTML $(WFS)
 
 default: 	all
 
@@ -202,10 +209,6 @@ $(MS_LIB):	$(MS_OBJS)
 
 $(MS_EXE):	$(LIBS)
 
-gd::
-	cd gd-1.2
-	nmake /f makefile.nt OPTFLAGS="$(OPTFLAGS)"
-	cd ..
 
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
