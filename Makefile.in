@@ -141,7 +141,7 @@ egis::
 	cd egis; make; cd ..
 
 php3_mapscript:: libmap.a
-	cd mapscript/php3; make; cd ../..
+	cd mapscript/php3; $(MAKE); cd ../..
 
 maplexer.o: maplexer.c map.h mapfile.h
 
@@ -201,12 +201,12 @@ perlvars:
 	echo $(STATIC_LIBS) >> perlvars
 
 egis_clean:
-	cd egis/errLog; make clean; cd ..
-	cd egis/imgSrc; make clean; cd ..
-	cd egis; make clean; cd ..
+	cd egis/errLog; $(MAKE) clean; cd ..
+	cd egis/imgSrc; $(MAKE) clean; cd ..
+	cd egis; $(MAKE) clean; cd ..
 
 php3_mapscript_clean::
-	cd mapscript/php3; make clean; cd ../..
+	cd mapscript/php3; $(MAKE) clean; cd ../..
 
 clean:	$(MAKE_EGIS_CLEAN) @MAKE_PHPMS_CLEAN@
 	rm -f libmap.a *.o shp2img mapserv legend shptree shptreevis shptreetst scalebar sortshp perlvars
