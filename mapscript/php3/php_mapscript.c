@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.110  2002/06/19 14:01:53  assefa
+ * Correct compilation error in function saveimage.
+ *
  * Revision 1.109  2002/06/11 23:47:11  assefa
  * Upgrade code to support new outputformat support.
  *
@@ -4622,7 +4625,6 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     imageObj *im = NULL;
     mapObj      *map = NULL;
     int retVal = 0;
-    int bCompatible = 0;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -4686,7 +4688,10 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 #ifdef USE_GD_JPEG
         if(im->format->name && strcasecmp(im->format->name, "jpeg")==0) 
-            iptr = gdImageJpegPtr(im->img.gd, &size, pQuality->value.lval);//TODO
+            iptr = 
+              gdImageJpegPtr(im->img.gd, &size, 
+                             atoi(msGetOutputFormatOption(im->format, "QUALITY", 
+                                                           "75" )));
         else
 #endif
 #ifdef USE_GD_WBMP
@@ -4774,7 +4779,6 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     char *pImagepath, *pImageurl, *pBuf;
     int nBufSize, nLen1, nLen2;
     const char *pszImageExt;
-    int bCompatible = 0;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
