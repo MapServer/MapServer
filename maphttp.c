@@ -6,7 +6,7 @@
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2001-2002, Daniel Morissette, DM Solutions Group Inc
+ * Copyright (c) 2001-2003, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2003/04/23 15:06:56  dan
+ * Added better error reporting for timeout situations
+ *
  * Revision 1.9  2003/03/26 20:24:38  dan
  * Do not call msDebug() unless debug flag is turned on
  *
@@ -454,9 +457,21 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                 {
                   case CURLE_OPERATION_TIMEOUTED:
                     if (psReq->debug)
-                      msDebug("HTTP: TIMEOUT of %d seconds execeeded for %s\n",
-                              nTimeout, psReq->pszGetUrl );
+                      msDebug("HTTP: TIMEOUT of %d seconds exceeded for %s\n",
+                                nTimeout, psReq->pszGetUrl );
+
+                    msSetError(MS_HTTPERR, 
+                               "HTTP: TIMEOUT of %d seconds exceeded for %s\n",
+                               "msHTTPExecuteRequests()", 
+                               nTimeout, psReq->pszGetUrl);
+
+                    /* Rewrite error message, the curl timeout message isn't
+                     * of much use to our users.
+                     */
+                    sprintf(psReq->pszErrBuf, 
+                            "TIMEOUT of %d seconds exceeded.", nTimeout);
                     break;
+
                   default:
                     if (psReq->debug)
                         msDebug("HTTP: request failed with curl error "
