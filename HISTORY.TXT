@@ -22,6 +22,9 @@ Version 3.6.6-dev
 
 - Raster layers are set to be not queryable.
 
+- Better looking phpinfo() output for php_mapscript (backported from v3.7)
+
+
 Version 3.6.5 (2003--3-18)
 --------------------------
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.9  2003/04/16 20:31:59  dan
+ * Better looking phpinfo() output for php_mapscript (backported from v3.7)
+ *
  * Revision 1.104.2.8  2003/03/05 03:36:53  dan
  * Backport fix for bug 186 from version 3.7 (point->project() etc. problems)
  *
@@ -188,6 +191,8 @@
 #include "php.h"
 #include "php_globals.h"
 #include "SAPI.h"
+#include "ext/standard/info.h"
+#include "ext/standard/head.h"
 #else
 #include "phpdl.h"
 #include "php3_list.h"
@@ -719,14 +724,12 @@ function_entry php_projection_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
-#ifdef ZEND_VERSION 
 PHP_MINFO_FUNCTION(mapscript)
-#else
-DLEXPORT void php3_info_mapscript(void) 
-#endif
 {
-    php3_printf("MapScript Version %s<br>\n", PHP3_MS_VERSION);
-    php3_printf("%s<br>\n", msGetVersion());
+  php_info_print_table_start();
+  php_info_print_table_row(2, "MapServer Version", msGetVersion());
+  php_info_print_table_row(2, "PHP MapScript Version", PHP3_MS_VERSION);
+  php_info_print_table_end();
 }
 
 DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
