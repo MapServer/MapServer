@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.40  2004/12/07 15:31:51  assefa
+ * Change the output of the expression when using a wild card for
+ * PropertyIsLike (Bug 1107).
+ *
  * Revision 1.39  2004/11/22 14:56:53  dan
  * Added missing argument to msEvalContext()
  *
@@ -2588,8 +2592,10 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
         }
         else if (pszValue[i] == pszWild[0])
         {
-            strcat(szBuffer, "[0-9,a-z,A-Z,\\s]*");
-            iBuffer+=17;
+            //strcat(szBuffer, "[0-9,a-z,A-Z,\\s]*");
+            //iBuffer+=17;
+            strcat(szBuffer, ".*");
+            iBuffer+=2;
             szBuffer[iBuffer] = '\0';
         }
     }   
