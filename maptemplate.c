@@ -392,7 +392,7 @@ char* findTag(char* pszInstr, char* pszTag)
  * return a hashtableobj from instr of all
  * arguments. hashtable must be freed by caller.
  */
-int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
+int getTagArgs(char* pszTag, char* pszInstr, hashTableObj **ppoHashTable)
 {
    char *pszStart, *pszEnd, *pszArgs;
    int nLength;
@@ -425,8 +425,8 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
             strncpy(pszArgs, pszStart, nLength);
             pszArgs[nLength] = '\0';
             
-            if (!oHashTable)
-              oHashTable = msCreateHashTable();
+            if (!(*ppoHashTable))
+              *ppoHashTable = msCreateHashTable();
             
             // Enable the use of "" in args
             // To do so, extract all "" values 
@@ -473,13 +473,13 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
                {
                   papszVarVal = split(papszArgs[i], '=', &nDummy);
                
-                  msInsertHashTable(oHashTable, papszVarVal[0], papszVarVal[1]);
+                  msInsertHashTable(*ppoHashTable, papszVarVal[0], papszVarVal[1]);
                   free(papszVarVal[0]);
                   free(papszVarVal[1]);
                   free(papszVarVal);                  
                }
                else // no value specified. set it to 1
-                  msInsertHashTable(oHashTable, papszArgs[i], "1");
+                  msInsertHashTable(*ppoHashTable, papszArgs[i], "1");
                
                free(papszArgs[i]);
             }
@@ -646,7 +646,7 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
       }
       
       // retrieve if tag args
-      if (getTagArgs("if", pszStart, ifArgs) != MS_SUCCESS)
+      if (getTagArgs("if", pszStart, &ifArgs) != MS_SUCCESS)
       {
          msSetError(MS_WEBERR, "Malformed args if tag.", "processIf()");
          return MS_FAILURE;
@@ -805,7 +805,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
     tagOffset = tagStart - *line;
     
     // check for any tag arguments
-    if(getTagArgs("shpxy", tagStart, tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+    if(getTagArgs("shpxy", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
       argValue = msLookupHashTable(tagArgs, "xh");
       if(argValue) xh = argValue;
@@ -952,7 +952,7 @@ int processMetadata(char** pszInstr, hashTableObj *ht)
 
    while (pszStart) {
       // get metadata args
-      if (getTagArgs("metadata", pszStart, metadataArgs) != MS_SUCCESS)
+      if (getTagArgs("metadata", pszStart, &metadataArgs) != MS_SUCCESS)
         return MS_FAILURE;
 
       pszHashName = msLookupHashTable(metadataArgs, "name");
@@ -1018,7 +1018,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
    
    while (pszImgTag) {
 
-      if (getTagArgs("leg_icon", pszImgTag, myHashTable) != MS_SUCCESS)
+      if (getTagArgs("leg_icon", pszImgTag, &myHashTable) != MS_SUCCESS)
         return MS_FAILURE;
 
       // if no specified width or height, set them to map default
@@ -1637,15 +1637,15 @@ char *generateLegendTemplate(mapservObj *msObj)
     * Retrieve arguments of all three parts
     */
    if (legGroupHtml) 
-     if (getTagArgs("leg_group_html", file, groupArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_group_html", file, &groupArgs) != MS_SUCCESS)
        return NULL;
    
    if (legLayerHtml) 
-     if (getTagArgs("leg_layer_html", file, layerArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_layer_html", file, &layerArgs) != MS_SUCCESS)
        return NULL;
    
    if (legClassHtml) 
-     if (getTagArgs("leg_class_html", file, classArgs) != MS_SUCCESS)
+     if (getTagArgs("leg_class_html", file, &classArgs) != MS_SUCCESS)
        return NULL;
 
       
