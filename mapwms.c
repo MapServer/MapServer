@@ -28,17 +28,17 @@
 */
 static char *wms_exception_format=NULL;
 
-int msWMSException(mapObj *map, const char *wmtversion) 
+int msWMSException(mapObj *map, const char *wmtversion, const char *exception_code) 
 {
   // Establish default exception format depending on VERSION
   if (wms_exception_format == NULL) 
   {
       if (wmtversion && strcasecmp(wmtversion, "1.0.0") <= 0)
-          wms_exception_format = "INIMAGE";  // WMS 1.0.0
+        wms_exception_format = "INIMAGE";  // WMS 1.0.0
       else if (wmtversion && strcasecmp(wmtversion, "1.0.7") <= 0)
-          wms_exception_format = "SE_XML";   // WMS 1.0.1 to 1.0.7
+        wms_exception_format = "SE_XML";   // WMS 1.0.1 to 1.0.7
       else
-          wms_exception_format = "application/vnd.ogc.se_xml"; // WMS 1.0.8, 1.1.0 and later
+        wms_exception_format = "application/vnd.ogc.se_xml"; // WMS 1.0.8, 1.1.0 and later
   }
 
   if (strcasecmp(wms_exception_format, "INIMAGE") == 0 ||
@@ -93,7 +93,10 @@ int msWMSException(mapObj *map, const char *wmtversion)
       printf("<ServiceExceptionReport version=\"1.1.0\">\n");        
     }
 
-    printf("<ServiceException>\n");
+    if (exception_code)
+      printf("<ServiceException code=\"%s\">\n", exception_code);
+    else
+      printf("<ServiceException>\n");
     msWriteErrorXML(stdout);
     printf("</ServiceException>\n");
     printf("</ServiceExceptionReport>\n");
@@ -114,24 +117,27 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
   int nLayerOrder = 0;
   int transparent = MS_NOOVERRIDE;
   outputFormatObj *format = NULL;
-   
+  int validlayer = 0;
+  char *styles = NULL;
+  int numlayers = 0;
+  char **layers = NULL;
+      
   // Some of the getMap parameters are actually required depending on the 
   // request, but for now we assume all are optional and the map file 
   // defaults will apply.
+  
   for(i=0; map && i<numentries; i++)
   {
     // getMap parameters
     if (strcasecmp(names[i], "LAYERS") == 0) 
     {
-      char **layers;
-      int numlayers, j, k, iLayer;
-      int validlayer = 0;
-
+      int  j, k, iLayer;
+ 
       layers = split(values[i], ',', &numlayers);
       if (layers==NULL || numlayers < 1) {
         msSetError(MS_WMSERR, "At least one layer name required in LAYERS.",
                    "msWMSLoadGetMapParams()");
-        return msWMSException(map, wmtver);
+        return msWMSException(map, wmtver, NULL);
       }
 
          
@@ -150,7 +156,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
        
       for (k=0; k<numlayers; k++)
       {
-          validlayer = 0;
+          
           for (j=0; j<map->numlayers; j++)
           {   
               // Turn on selected layers only.
@@ -164,13 +170,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
               }
             
           }
-          //validate all layers given. If an invalid layer is sent, return an exception. 
-          if (validlayer == 0)
-          {
-              msSetError(MS_WMSERR, "Invalid layer (%s).",
-                         "msWMSLoadGetMapParams()", layers[k]);
-              return msWMSException(map, wmtver);
-          }
+          
       }
        
       // set all layers with status off at end of array
@@ -183,7 +183,8 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       msFreeCharArray(layers, numlayers);
     }
     else if (strcasecmp(names[i], "STYLES") == 0) {
-      // __TODO__
+        styles = values[i];
+        
     }
     else if (strcasecmp(names[i], "SRS") == 0) {
       // SRS is in format "EPSG:epsg_id" or "AUTO:proj_id,unit_id,lon0,lat0"
@@ -195,7 +196,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
         sprintf(buffer, "init=epsg:%.20s", values[i]+5);
 
         if (msLoadProjectionString(&(map->projection), buffer) != 0)
-          return msWMSException(map, wmtver);
+          return msWMSException(map, wmtver, NULL);
         
         iUnits = GetMapserverUnitUsingProj(&(map->projection));
         if (iUnits != -1)
@@ -206,7 +207,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
         // SRS=AUTO:proj_id,unit_id,lon0,lat0
 
         if (msLoadProjectionString(&(map->projection), values[i]) != 0)
-          return msWMSException(map, wmtver);
+          return msWMSException(map, wmtver, NULL);
         
         iUnits = GetMapserverUnitUsingProj(&(map->projection));
         if (iUnits != -1)
@@ -217,7 +218,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
         msSetError(MS_WMSERR, 
                    "Unsupported SRS namespace (only EPSG and AUTO currently supported).",
                    "msWMSLoadGetMapParams()");
-        return msWMSException(map, wmtver);
+        return msWMSException(map, wmtver, "InvalidSRS");
       }
     }
     else if (strcasecmp(names[i], "BBOX") == 0) {
@@ -227,13 +228,24 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       if (tokens==NULL || n != 4) {
         msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.",
                    "msWMSLoadGetMapParams()");
-        return msWMSException(map, wmtver);
+        return msWMSException(map, wmtver, NULL);
       }
       map->extent.minx = atof(tokens[0]);
       map->extent.miny = atof(tokens[1]);
       map->extent.maxx = atof(tokens[2]);
       map->extent.maxy = atof(tokens[3]);
+
       msFreeCharArray(tokens, n);
+      
+      //validate bbox values
+      if ( map->extent.minx >= map->extent.maxx ||
+           map->extent.miny >=  map->extent.maxy)
+      {
+          msSetError(MS_WMSERR, 
+                   "Invalid values for BBOX.",
+                   "msWMSLoadGetMapParams()");
+          return msWMSException(map, wmtver, NULL);
+      }
       adjust_extent = MS_TRUE;
     }
     else if (strcasecmp(names[i], "WIDTH") == 0) {
@@ -251,7 +263,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
                    "Unsupported output format (%s).", 
                    "msWMSLoadGetMapParams()",
                    values[i] );
-        return msWMSException(map, wmtver);
+        return msWMSException(map, wmtver, "InvalidFormat");
       }
 
       msFree( map->imagetype );
@@ -269,17 +281,6 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
     }
   }
 
-  /* Validate requested image size. */
-  if(map->width > map->maxsize || map->height > map->maxsize || 
-     map->width < 1 || map->height < 1) 
-  {
-      msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
-
-      // Restore valid default values in case errors INIMAGE are used
-      map->width = 400;
-      map->height= 300;
-      return msWMSException(map, wmtver);
-  }
 
   /*
   ** Apply the selected output format (if one was selected), and override
@@ -289,6 +290,45 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
   if( format != NULL )
       msApplyOutputFormat( &(map->outputformat), format, transparent, 
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
+
+  //validate all layers given. If an invalid layer is sent, return an exception. 
+  if (validlayer == 0)
+  {
+      msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
+                 "msWMSLoadGetMapParams()");
+      return msWMSException(map, wmtver, "LayerNotDefined");
+  }
+  /* Validate requested image size. */
+  if(map->width > map->maxsize || map->height > map->maxsize || 
+     map->width < 1 || map->height < 1) 
+  {
+      msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", map->maxsize);
+
+      // Restore valid default values in case errors INIMAGE are used
+      map->width = 400;
+      map->height= 300;
+      return msWMSException(map, wmtver, NULL);
+  }
+
+  /* Validate Styles :
+  ** mapserv does not advertize any styles (the default styles are the
+  ** one that are used. So we are expecting here to have empty values
+  ** for the styles parameter (...&STYLES=&...) Or for multiple Styles/Layers,
+  ** we could have ...&STYLES=,,,. If that is not the
+  ** case, we generate an exception.
+  */
+  if(styles && strlen(styles) > 0)
+  {
+    int length = strlen(styles);
+    int ilength = 0;
+    for (ilength = 0; ilength < length; ilength++)
+      if (styles[ilength] != ',')
+      {
+          msSetError(MS_WMSERR, "Invalid style (%s). Mapserver supports only default styles and is expecting an empty string for the STYLES : STYLES= or STYLES=,,,",
+               "msWMSLoadGetMapParams()", values[i]);
+          return msWMSException(map, wmtver, "StyleNotDefined");
+      }
+  }
 
   /*
   ** WMS extents are edge to edge while MapServer extents are center of
@@ -396,7 +436,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
 {
    rectObj ext;
    const char *value;
-   
+   char **tokens;
+   int n, i; 
+   char *projstring;
+
    if (strcasecmp(wmtver, "1.0.7") <= 0)
    {
        printf("%s    <Layer queryable=\"%d\">\n", 
@@ -442,17 +485,54 @@ int msDumpLayer(mapObj *map, layerObj *lp, const char* wmtver,
 
    if (msGetEPSGProj(&(map->projection),map->web.metadata,MS_FALSE) == NULL)
    {
-       // If map has no proj then every layer MUST have one or produce a warning
-       msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata", 
-                  msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
-                  OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
+       if (strcasecmp(wmtver, "1.1.0") > 0)
+       {
+           projstring = msGetEPSGProj(&(lp->projection), lp->metadata, 
+                                      MS_FALSE);
+           if (!projstring)
+             fprintf(stdout, "<!-- WARNING: Mandatory mapfile parameter '%s' was missing in this context. -->\n", "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata");
+           else
+           {
+               tokens = split(projstring, ' ', &n);
+               if (tokens && n > 0)
+               {
+                   for(i=0; i<n; i++)
+                       fprintf(stdout, "        <SRS>%s</SRS>\n", tokens[i]);
+
+                    msFreeCharArray(tokens, n);
+               }
+           }
+       }
+       else
+         // If map has no proj then every layer MUST have one or produce a warning
+         msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata", 
+                         msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
+                         OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
    else
    {
+       //starting 1.1.1 SRS are given in individual tags
+       if (strcasecmp(wmtver, "1.1.0") > 0)
+       {
+           projstring = msGetEPSGProj(&(lp->projection), lp->metadata, 
+                                      MS_FALSE);
+           if (projstring)
+           {
+               tokens = split(projstring, ' ', &n);
+               if (tokens && n > 0)
+               {
+                   for(i=0; i<n; i++)
+                       fprintf(stdout, "        <SRS>%s</SRS>\n", tokens[i]);
+
+                    msFreeCharArray(tokens, n);
+               }
+           }
+       }
+       else
        // No warning required in this case since there's at least a map proj.
-       msOWSPrintParam(stdout, " LAYER.PROJECTION (or wms_srs metadata)", 
-                  msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
-                  OWS_NOERR, "        <SRS>%s</SRS>\n", NULL);
+         msOWSPrintParam(stdout, " LAYER.PROJECTION (or wms_srs metadata)", 
+                         msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
+                         OWS_NOERR, "        <SRS>%s</SRS>\n", NULL);
    }
 
    // If layer has no proj set then use map->proj for bounding box.
@@ -505,10 +585,14 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
     wmtver = "1.0.8";
     dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_0_8.dtd";
   }
-  else {
+  else if (wmtver && strcasecmp(wmtver, "1.1.0") == 0) {
     wmtver = "1.1.0";
     dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_1_0.dtd";
   }
+  else {
+    wmtver = "1.1.1";
+    dtd_url = "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd";
+  }  
 
   // We need this server's onlineresource.
   // Default to use the value of the "onlineresource" metadata, and if not
@@ -517,7 +601,7 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
   if ((script_url=msOWSGetOnlineResource(map, "wms_onlineresource")) == NULL ||
       (script_url_encoded = msEncodeHTMLEntities(script_url)) == NULL)
   {
-      return msWMSException(map, wmtver);
+      return msWMSException(map, wmtver, NULL);
   }
 
   if (strcasecmp(wmtver, "1.0.7") <= 0) 
@@ -536,7 +620,7 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
 
   printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
 
-  printf("<WMT_MS_Capabilities version=\"%s\" updateSequence=\"0\">\n",wmtver);
+  printf("<WMT_MS_Capabilities version=\"%s\">\n",wmtver);
 
   // Report MapServer Version Information
   printf("\n<!-- %s -->\n\n", msGetVersion());
@@ -866,11 +950,11 @@ int msWMSGetMap(mapObj *map, const char *wmtver)
 
   img = msDrawMap(map);
   if (img == NULL)
-      return msWMSException(map, wmtver);
+      return msWMSException(map, wmtver, NULL);
 
   printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(map->outputformat), 10,10);
   if (msSaveImage(map, img, NULL) != MS_SUCCESS)
-      return msWMSException(map, wmtver);
+      return msWMSException(map, wmtver, NULL);
 
   msFreeImage(img);
 
@@ -892,7 +976,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, const char* wmtver, int feature_c
         continue;
 
       if(msLayerOpen(lp) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
-        return msWMSException(map, wmtver);
+        return msWMSException(map, wmtver, NULL);
 
       printf("\nLayer '%s'\n", lp->name);
 
@@ -901,7 +985,7 @@ int msDumpResult(mapObj *map, int bFormatHtml, const char* wmtver, int feature_c
 
         msInitShape(&shape);
         if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
-          return msWMSException(map, wmtver);
+          return msWMSException(map, wmtver, NULL);
 
         printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
         
@@ -947,7 +1031,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
       layers = split(values[i], ',', &numlayers);
       if(layers==NULL || numlayers < 1) {
         msSetError(MS_WMSERR, "At least one layer name required in QUERY_LAYERS.", "msWMSFeatureInfo()");
-        return msWMSException(map, wmtver);
+        return msWMSException(map, wmtver, NULL);
       }
 
       for(j=0; j<map->numlayers; j++) {
@@ -989,12 +1073,12 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
 
   if(numlayers_found == 0) {
     msSetError(MS_WMSERR, "Required QUERY_LAYERS parameter missing for getFeatureInfo.", "msWMSFeatureInfo()");
-    return msWMSException(map, wmtver);
+    return msWMSException(map, wmtver, "LayerNotQueryable");
   }
 
   if(point.x == -1.0 || point.y == -1.0) {
     msSetError(MS_WMSERR, "Required X/Y parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
-    return msWMSException(map, wmtver);
+    return msWMSException(map, wmtver, NULL);
   }
 
   // Perform the actual query
@@ -1004,7 +1088,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
 
   if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0) != MS_SUCCESS)
-    if(ms_error->code != MS_NOTFOUND) return msWMSException(map, wmtver);
+    if(ms_error->code != MS_NOTFOUND) return msWMSException(map, wmtver, NULL);
 
   // Generate response
   if (strcasecmp(info_format, "MIME") == 0 ||
@@ -1050,7 +1134,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
      msObj->MapPnt.y = point.y;
      
      if ((status = msReturnTemplateQuery(msObj, (char*)pszMimeType,NULL)) != MS_SUCCESS)
-         return msWMSException(map, wmtver);
+         return msWMSException(map, wmtver, NULL);
 
      // We don't want to free the map, and param names/values since they
      // belong to the caller, set them to NULL before freeing the mapservObj
@@ -1064,7 +1148,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   else 
   {
      msSetError(MS_WMSERR, "Unsupported INFO_FORMAT value (%s).", "msWMSFeatureInfo()", info_format);
-     return msWMSException(map, wmtver);
+     return msWMSException(map, wmtver, NULL);
   }
 
   return(MS_SUCCESS);
@@ -1092,14 +1176,16 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
   */
   // VERSION (WMTVER in 1.0.0) and REQUEST must be present in a valid request
   for(i=0; i<numentries; i++) {
-    if (strcasecmp(names[i], "WMTVER") == 0 || strcasecmp(names[i], "VERSION") == 0)
-      wmtver = values[i];
-    else if (strcasecmp(names[i], "REQUEST") == 0)
-      request = values[i];
-    else if (strcasecmp(names[i], "EXCEPTIONS") == 0)
-      wms_exception_format = values[i];
-    else if (strcasecmp(names[i], "SERVICE") == 0)
-      service = values[i];
+      if(strcasecmp(names[i], "VERSION") == 0)
+        wmtver = values[i];
+      if (strcasecmp(names[i], "WMTVER") == 0 && wmtver == NULL)
+        wmtver = values[i];
+      else if (strcasecmp(names[i], "REQUEST") == 0)
+        request = values[i];
+      else if (strcasecmp(names[i], "EXCEPTIONS") == 0)
+        wms_exception_format = values[i];
+      else if (strcasecmp(names[i], "SERVICE") == 0)
+        service = values[i];
   }
 
   /* If SERVICE is specified then it MUST be "WMS" */
@@ -1114,9 +1200,9 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
                   strcasecmp(request, "GetCapabilities") == 0) ) 
   {
       if (!wmtver)
-          wmtver = "1.1.0";  // VERSION is optional with getCapabilities only
+          wmtver = "1.1.1";  // VERSION is optional with getCapabilities only
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
-          return msWMSException(map, wmtver);
+          return msWMSException(map, wmtver, NULL);
       return msWMSGetCapabilities(map, wmtver);
   }
   else if (request && (strcasecmp(request, "context") == 0 ||
@@ -1136,10 +1222,10 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
       // Now set wmtver to 1.1.0 for error handling purposes
       wmtver = "1.1.0";
       if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
-          return msWMSException(map, wmtver);
+          return msWMSException(map, wmtver, NULL);
       printf("Content-type: text/xml\n\n");
       if ( msWriteMapContext(map, stdout) != MS_SUCCESS )
-          return msWMSException(map, wmtver);
+          return msWMSException(map, wmtver, NULL);
       // Request completed
       return MS_SUCCESS;
   }
@@ -1154,7 +1240,7 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
       msSetError(MS_WMSERR, 
                  "Incomplete WMS request: VERSION parameter missing", 
                  "msWMSDispatch()");
-      return msWMSException(map, wmtver);
+      return msWMSException(map, wmtver, NULL);
   }
 
   if (request==NULL)
@@ -1162,11 +1248,11 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
       msSetError(MS_WMSERR, 
                  "Incomplete WMS request: REQUEST parameter missing", 
                  "msWMSDispatch()");
-      return msWMSException(map, wmtver);
+      return msWMSException(map, wmtver, NULL);
   }
 
   if ((status = msOWSMakeAllLayersUnique(map)) != MS_SUCCESS)
-      return msWMSException(map, wmtver);
+      return msWMSException(map, wmtver, NULL);
 
   // getMap parameters are used by both getMap and getFeatureInfo
   status = msWMSLoadGetMapParams(map, wmtver, names, values, numentries);
@@ -1179,7 +1265,7 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
 
   // Hummmm... incomplete or unsupported WMS request
   msSetError(MS_WMSERR, "Incomplete or unsupported WMS request", "msWMSDispatch()");
-  return msWMSException(map, wmtver);
+  return msWMSException(map, wmtver, NULL);
 #else
   msSetError(MS_WMSERR, "WMS server support is not available.", "msWMSDispatch()");
   return(MS_FAILURE);
