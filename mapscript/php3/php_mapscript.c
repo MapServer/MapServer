@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.32  2001/03/07 22:13:13  assefa
+ * Make sure to call msAdjustExtent in the zoom functions.
+ *
  * Revision 1.31  2001/03/07 19:01:34  assefa
  * Add an argument to zoomrectangle to handle maxextents.
  *
@@ -1245,6 +1248,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 /*      if the min and max scale are set in the map file, we will       */
 /*      use them to test before zooming.                                */
 /* -------------------------------------------------------------------- */
+    msAdjustExtent(&oNewGeorefExt, self->width, self->height);
     dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
                                    self->width, self->height);
 
@@ -1299,7 +1303,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxx > poMaxGeorefExt->maxx)
         {
             oNewGeorefExt.maxx = poMaxGeorefExt->maxx;
-            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
         }
         if (oNewGeorefExt.miny < poMaxGeorefExt->miny)
         {
@@ -1309,7 +1313,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxy > poMaxGeorefExt->maxy)
         {
             oNewGeorefExt.maxy = poMaxGeorefExt->maxy;
-            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
     
@@ -1323,6 +1327,33 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     
     self->cellsize = msAdjustExtent(&(self->extent), self->width, 
                                     self->height);      
+    dfDeltaX = self->extent.maxx - self->extent.minx;
+    dfDeltaY = self->extent.maxy - self->extent.miny; 
+
+    if (bMaxExtSet)
+    {
+        if (self->extent.minx < poMaxGeorefExt->minx)
+        {
+            self->extent.minx = poMaxGeorefExt->minx;
+            self->extent.maxx = self->extent.minx + dfDeltaX;
+        }
+        if (self->extent.maxx > poMaxGeorefExt->maxx)
+        {
+            self->extent.maxx = poMaxGeorefExt->maxx;
+            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+        }
+        if (self->extent.miny < poMaxGeorefExt->miny)
+        {
+            self->extent.miny = poMaxGeorefExt->miny;
+            self->extent.maxy =  self->extent.miny + dfDeltaY;
+        }
+        if (self->extent.maxy > poMaxGeorefExt->maxy)
+        {
+            self->extent.miny = poMaxGeorefExt->maxy;
+            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+        }
+    }
+    
     self->scale = msCalculateScale(*(&(self->extent)), self->units, 
                                    self->width, self->height);
 
@@ -1360,8 +1391,6 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
      RETURN_TRUE;
 
 }
-
-
 
 /************************************************************************/
 /*                           map->zoomRectange()                        */
@@ -1402,7 +1431,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     int         nArgs = ARG_COUNT(ht);
     double      dfDeltaX = 0;
     double      dfDeltaY = 0;
-    
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -1479,7 +1508,8 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
                                     (int)pHeight->value.lval, 
                                     poGeorefExt->miny, poGeorefExt->maxy, 1); 
     
- 
+
+    msAdjustExtent(&oNewGeorefExt, self->width, self->height);
     dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
                                    self->width, self->height);
 
@@ -1559,7 +1589,33 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     self->extent.maxy = oNewGeorefExt.maxy;
     
     self->cellsize = msAdjustExtent(&(self->extent), self->width, 
-                                    self->height);      
+                                    self->height);    
+    dfDeltaX = self->extent.maxx - self->extent.minx;
+    dfDeltaY = self->extent.maxy - self->extent.miny; 
+
+    if (bMaxExtSet)
+    {
+        if (self->extent.minx < poMaxGeorefExt->minx)
+        {
+            self->extent.minx = poMaxGeorefExt->minx;
+            self->extent.maxx = self->extent.minx + dfDeltaX;
+        }
+        if (self->extent.maxx > poMaxGeorefExt->maxx)
+        {
+            self->extent.maxx = poMaxGeorefExt->maxx;
+            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+        }
+        if (self->extent.miny < poMaxGeorefExt->miny)
+        {
+            self->extent.miny = poMaxGeorefExt->miny;
+            self->extent.maxy =  self->extent.miny + dfDeltaY;
+        }
+        if (self->extent.maxy > poMaxGeorefExt->maxy)
+        {
+            self->extent.miny = poMaxGeorefExt->maxy;
+            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+        }
+    }
     self->scale = msCalculateScale(*(&(self->extent)), self->units, 
                                    self->width, self->height);
 
@@ -1754,6 +1810,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 /*      the current scale is > newscale we zoom in; else it is a        */
 /*      zoom out.                                                       */
 /* -------------------------------------------------------------------- */
+    msAdjustExtent(&oNewGeorefExt, self->width, self->height);
     dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
                                    self->width, self->height);
 
@@ -1808,7 +1865,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxx > poMaxGeorefExt->maxx)
         {
             oNewGeorefExt.maxx = poMaxGeorefExt->maxx;
-            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
         }
         if (oNewGeorefExt.miny < poMaxGeorefExt->miny)
         {
@@ -1818,7 +1875,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxy > poMaxGeorefExt->maxy)
         {
             oNewGeorefExt.maxy = poMaxGeorefExt->maxy;
-            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
     
@@ -1833,6 +1890,33 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 
     self->cellsize = msAdjustExtent(&(self->extent), self->width, 
                                     self->height);      
+    dfDeltaX = self->extent.maxx - self->extent.minx;
+    dfDeltaY = self->extent.maxy - self->extent.miny; 
+    
+    if (bMaxExtSet)
+    {
+        if (self->extent.minx < poMaxGeorefExt->minx)
+        {
+            self->extent.minx = poMaxGeorefExt->minx;
+            self->extent.maxx = self->extent.minx + dfDeltaX;
+        }
+        if (self->extent.maxx > poMaxGeorefExt->maxx)
+        {
+            self->extent.maxx = poMaxGeorefExt->maxx;
+            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+        }
+        if (self->extent.miny < poMaxGeorefExt->miny)
+        {
+            self->extent.miny = poMaxGeorefExt->miny;
+            self->extent.maxy =  self->extent.miny + dfDeltaY;
+        }
+        if (self->extent.maxy > poMaxGeorefExt->maxy)
+        {
+            self->extent.miny = poMaxGeorefExt->maxy;
+            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+        }
+    }
+    
     self->scale = msCalculateScale(*(&(self->extent)), self->units, 
                                    self->width, self->height);
 
