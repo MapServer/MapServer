@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.50  2003/12/22 17:00:21  julien
+ * Implement DataURL, MetadataURL and DescriptionURL (Bug 523)
+ *
  * Revision 1.49  2003/07/31 16:10:34  dan
  * Enable map context stuff only if USE_OGR is set (cpl_minixml dependency)
  *
@@ -752,6 +755,20 @@ int msLoadMapContext(mapObj *map, char *filename)
                               &(map->web.metadata), "wms_logourl");
   }
 
+  // DescriptionURL
+  // The descriptionurl have a width, height, format and an URL
+  // The metadata will be structured like this: "width height format logourl"
+  if(strcasecmp(pszVersion, "1.0.0") >= 0)
+  {
+      psChild = CPLGetXMLNode(psMapContext, "General.DescriptionURL");
+      if(psChild != NULL)
+      {
+          msCombineXMLValueInHash(psChild, "width", "height", "format", 
+                                  "OnlineResource.xlink:href", 
+                                  &(map->web.metadata), "wms_descriptionurl");
+      }
+  }
+
   // Contact Info
   psContactInfo = CPLGetXMLNode(psMapContext, "General.ContactInformation");
 
@@ -852,8 +869,54 @@ int msLoadMapContext(mapObj *map, char *filename)
                   }
               }
 
+              // Abstract
               msGetMapContextXMLHashValue(psLayer, "Abstract", 
                                           &(layer->metadata), "wms_abstract");
+
+              // DataURL
+              if(strcasecmp(pszVersion, "0.1.4") <= 0)
+              {
+                  msGetMapContextXMLHashValueDecode(psLayer, 
+                                                    "DataURL.OnlineResource.xlink:href",
+                                                    &(layer->metadata), 
+                                                    "wms_dataurl");
+              }
+              else
+              {
+                  // The DataURL have a width, height, format and an URL
+                  // The metadata will be structured like this: 
+                  // "width height format url"
+                  // Note: version 0.1.7 does not contains height and width, 
+                  // but they are include in the metadata for consistency with
+                  // the URLType.
+                  psChild = CPLGetXMLNode(psLayer, "DataURL");
+                  if(psChild != NULL)
+                  {
+                      msCombineXMLValueInHash(psChild, 
+                                              "width", "height", "format", 
+                                              "OnlineResource.xlink:href", 
+                                              &(layer->metadata), 
+                                              "wms_dataurl");
+                  }
+              }
+
+              // MetadataURL
+              if(strcasecmp(pszVersion, "1.0.0") >= 0)
+              {
+                  // The MetadataURL have a width, height, format and an URL
+                  // The metadata will be structured like this: 
+                  // "width height format url"
+                  psChild = CPLGetXMLNode(psLayer, "MetadataURL");
+                  if(psChild != NULL)
+                  {
+                      msCombineXMLValueInHash(psChild, 
+                                              "width", "height", "format", 
+                                              "OnlineResource.xlink:href", 
+                                              &(layer->metadata), 
+                                              "wms_metadataurl");
+                  }
+              }
+
 
               // Server
               if(strcasecmp(pszVersion, "0.1.4") >= 0)
@@ -1317,7 +1380,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
   char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL, *pszLogoURL;
-  char *pszLegendItem, *pszEncodedVal, *pszLogoItem;
+  char *pszLegendItem, *pszEncodedVal, *pszLogoItem, *pszDataURL, *pszDataItem;
+  char *pszDescriptionURL, *pszDescriptionItem;
   int i, nValue;
 
   // Decide which version we're going to return...
@@ -1466,6 +1530,8 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                 "    <DataURL>\n      <OnlineResource xlink:type=\"simple\" xlink:href=\"%s\"/>\n    </DataURL>\n", NULL);
 
   // LogoURL
+  // The LogoURL have a width, height, format and an URL
+  // The metadata is structured like this: "width height format url"
   pszLogoURL = msLookupHashTable(map->web.metadata, "wms_logourl");
   if(pszLogoURL != NULL)
   {
@@ -1505,6 +1571,50 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               pszEncodedVal);
 
       free(pszLogoItem);
+  }
+
+  // DescriptionURL
+  // The DescriptionURL have a width, height, format and an URL
+  // The metadata is structured like this: "width height format url"
+  pszDescriptionURL=msLookupHashTable(map->web.metadata, "wms_descriptionurl");
+  if(pszDescriptionURL != NULL && strcasecmp(version, "1.0.0") >= 0)
+  {
+      pszDescriptionItem = strdup(pszDescriptionURL);
+
+      // descriptionurl width
+      pszChar = strchr(pszDescriptionItem, ' ');
+      if(pszChar != NULL)
+          pszDescriptionItem[pszChar - pszDescriptionItem] = '\0';
+      fprintf(stream, "    <DescriptionURL width=\"%s\"", pszDescriptionItem);
+
+      // descriptionurl height
+      pszDescriptionURL += strlen(pszDescriptionItem) + 1;
+      strcpy(pszDescriptionItem, pszDescriptionURL);
+      pszChar = strchr(pszDescriptionItem, ' ');
+      if(pszChar != NULL)
+          pszDescriptionItem[pszChar - pszDescriptionItem] = '\0';
+      fprintf(stream, " height=\"%s\"", pszDescriptionItem);
+
+      // descriptionurl format
+      pszDescriptionURL += strlen(pszDescriptionItem) + 1;
+      strcpy(pszDescriptionItem, pszDescriptionURL);
+      pszChar = strchr(pszDescriptionItem, ' ');
+      if(pszChar != NULL)
+          pszDescriptionItem[pszChar - pszDescriptionItem] = '\0';
+      fprintf(stream, " format=\"%s\">\n", pszDescriptionItem);
+
+      // descriptionurl url
+      pszDescriptionURL += strlen(pszDescriptionItem) + 1;
+      strcpy(pszDescriptionItem, pszDescriptionURL);
+      pszChar = strchr(pszDescriptionItem, ' ');
+      if(pszChar != NULL)
+          pszDescriptionItem[pszChar - pszDescriptionItem] = '\0';
+      pszEncodedVal = msEncodeHTMLEntities(pszDescriptionItem);
+      fprintf(stream, "      <OnlineResource xlink:type=\"simple\" ");
+      fprintf(stream, "xlink:href=\"%s\"/>\n    </DescriptionURL>\n",
+              pszEncodedVal);
+
+      free(pszDescriptionItem);
   }
 
   // Contact Info
@@ -1586,6 +1696,120 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                                           map->layers[i].metadata, MS_FALSE);
           if(pszValue && (strcasecmp(pszValue, "(null)") != 0))
               fprintf(stream, "      <SRS>%s</SRS>\n", pszValue);
+
+          // DataURL
+          if(strcasecmp(version, "0.1.4") <= 0)
+          {
+              msOWSPrintMetadata(stream, map->layers[i].metadata, 
+                                 "wms_dataurl", OWS_NOERR, 
+                                 "      <DataURL>%s</DataURL>\n", 
+                                 NULL);
+          }
+          else
+          {
+              // The DataURL have a width, height, format and an URL
+              // The metadata will be structured like this: 
+              // "width height format url"
+              // Note: in version 0.1.7 the width and height are not included 
+              // in the Context file, but they are included in the metadata for
+              // for consistency with the URLType.
+              pszDataURL = msLookupHashTable( map->layers[i].metadata,
+                                              "wms_dataurl");
+              if(pszDataURL != NULL)
+              {
+                  pszDataItem = strdup(pszDataURL);
+
+                  // dataurl width
+                  pszChar = strchr(pszDataItem, ' ');
+                  if(pszChar != NULL)
+                      pszDataItem[pszChar - pszDataItem] = '\0';
+                  if(strcasecmp(version, "0.1.7") <= 0)
+                      fprintf(stream, "      <DataURL");
+                  else
+                      fprintf(stream, "      <DataURL width=\"%s\"", 
+                              pszDataItem);
+
+                  // dataurl height
+                  pszDataURL += strlen(pszDataItem) + 1;
+                  strcpy(pszDataItem, pszDataURL);
+                  pszChar = strchr(pszDataItem, ' ');
+                  if(pszChar != NULL)
+                      pszDataItem[pszChar - pszDataItem] = '\0';
+                  if(strcasecmp(version, "0.1.7") > 0)
+                      fprintf(stream, " height=\"%s\"", pszDataItem);
+
+                  // dataurl format
+                  pszDataURL += strlen(pszDataItem) + 1;
+                  strcpy(pszDataItem, pszDataURL);
+                  pszChar = strchr(pszDataItem, ' ');
+                  if(pszChar != NULL)
+                      pszDataItem[pszChar - pszDataItem] = '\0';
+                  fprintf(stream, " format=\"%s\">\n", pszDataItem);
+
+                  // dataurl url
+                  pszDataURL += strlen(pszDataItem) + 1;
+                  strcpy(pszDataItem, pszDataURL);
+                  pszChar = strchr(pszDataItem, ' ');
+                  if(pszChar != NULL)
+                      pszDataItem[pszChar - pszDataItem] = '\0';
+                  pszEncodedVal = msEncodeHTMLEntities(pszDataItem);
+                  fprintf(stream, "        <OnlineResource xlink:type=\"simple\" ");
+                  fprintf(stream, "xlink:href=\"%s\"/>\n      </DataURL>\n",
+                          pszEncodedVal);
+
+                  free(pszDataItem);
+              }
+          }
+
+          // MetadataURL
+          // The MetadataURL have a width, height, format and an URL
+          // The metadata will be structured like this: 
+          // "width height format url"
+          if(strcasecmp(version, "1.0.0") >= 0)
+          {
+              pszDataURL = msLookupHashTable( map->layers[i].metadata,
+                                              "wms_metadataurl");
+              if(pszDataURL != NULL)
+              {
+                  pszDataItem = strdup(pszDataURL);
+
+                  // metadataurl width
+                  pszChar = strchr(pszDataItem, ' ');
+                  if(pszChar != NULL)
+                      pszDataItem[pszChar - pszDataItem] = '\0';
+                  fprintf(stream, "      <MetadataURL width=\"%s\"",pszDataItem);
+
+                  // metadataurl height
+                  pszDataURL += strlen(pszDataItem) + 1;
+                  strcpy(pszDataItem, pszDataURL);
+                  pszChar = strchr(pszDataItem, ' ');
+                  if(pszChar != NULL)
+                      pszDataItem[pszChar - pszDataItem] = '\0';
+                  fprintf(stream, " height=\"%s\"", pszDataItem);
+
+                  // metadataurl format
+                  pszDataURL += strlen(pszDataItem) + 1;
+                  strcpy(pszDataItem, pszDataURL);
+                  pszChar = strchr(pszDataItem, ' ');
+                  if(pszChar != NULL)
+                      pszDataItem[pszChar - pszDataItem] = '\0';
+                  fprintf(stream, " format=\"%s\">\n", pszDataItem);
+
+                  // metadataurl url
+                  pszDataURL += strlen(pszDataItem) + 1;
+                  strcpy(pszDataItem, pszDataURL);
+                  pszChar = strchr(pszDataItem, ' ');
+                  if(pszChar != NULL)
+                      pszDataItem[pszChar - pszDataItem] = '\0';
+                  pszEncodedVal = msEncodeHTMLEntities(pszDataItem);
+                  fprintf(stream, 
+                          "        <OnlineResource xlink:type=\"simple\" ");
+                  fprintf(stream,"xlink:href=\"%s\"/>\n      </MetadataURL>\n",
+                          pszEncodedVal);
+
+                  free(pszDataItem);
+              }
+          }
 
           // Format
           if(msLookupHashTable(map->layers[i].metadata,"wms_formatlist")==NULL)
