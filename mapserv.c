@@ -1281,8 +1281,6 @@ void returnPage(char *html, int mode)
 
   regex_t re; /* compiled regular expression to be matched */ 
 
-  fprintf(stderr, "processing %s\n", html);
-
   if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {   
     msSetError(MS_REGEXERR, NULL, "returnPage()");
     writeError();
