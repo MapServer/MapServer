@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2003/12/18 18:58:55  assefa
+ * Use the symol name instead of the id for newly created symbols.
+ *
  * Revision 1.13  2003/12/17 04:16:15  frank
  * added ifdef USE_OGR around include of cpl_string.h
  *
@@ -818,8 +821,14 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                                 
                         //use an ellipse symbol for the width
                         if (psStyle->symbol <=0)
-                          psStyle->symbol = 
-                            msSLDGetLineSymbol(map);
+                        {
+                            psStyle->symbol = 
+                              msSLDGetLineSymbol(map);
+                            if (psStyle->symbol > 0 &&
+                                psStyle->symbol < map->symbolset.numsymbols)
+                              psStyle->symbolname = 
+                                strdup(map->symbolset.symbol[psStyle->symbol].name);
+                        }
                     }
                 }
                 else if (strcasecmp(psStrkName, "stroke-dasharray") == 0)
@@ -827,11 +836,16 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
                     if(psCssParam->psChild && psCssParam->psChild->psNext &&
                        psCssParam->psChild->psNext->pszValue)
                     {
-                        pszDashValue = strdup(psCssParam->psChild->psNext->pszValue);
+                        pszDashValue = 
+                          strdup(psCssParam->psChild->psNext->pszValue);
                         //use an ellipse symbol with dash arrays
                         psStyle->symbol = 
                           msSLDGetDashLineSymbol(map, 
                                                  psCssParam->psChild->psNext->pszValue);
+                        if ( psStyle->symbol > 0 && 
+                             psStyle->symbol < map->symbolset.numsymbols)
+                          psStyle->symbolname = 
+                            strdup(map->symbolset.symbol[psStyle->symbol].name);
                     }
                 }
             }
@@ -1223,6 +1237,10 @@ void msSLDParseGraphicFillOrStroke(CPLXMLNode *psRoot,
                 //Get the corresponding symbol id 
                 psStyle->symbol = msSLDGetMarkSymbol(map, pszSymbolName, 
                                                      bFilled, pszDashValue);
+                if (psStyle->symbol > 0 &&
+                    psStyle->symbol < map->symbolset.numsymbols)
+                  psStyle->symbolname = 
+                    strdup(map->symbolset.symbol[psStyle->symbol].name);
                     
             }
             else
@@ -1768,6 +1786,10 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                     MS_SUCCESS)
                 {
                     psStyle->symbol = msSLDGetGraphicSymbol(map, pszTmpSymbolName);
+                    if (psStyle->symbol > 0 &&
+                        psStyle->symbol < map->symbolset.numsymbols)
+                      psStyle->symbolname = 
+                        strdup(map->symbolset.symbol[psStyle->symbol].name);
 
                     //set the color parameter if not set. Does not make sense
                     //for pixmap but mapserver needs it.
