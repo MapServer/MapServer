@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.26  2001/10/23 19:17:38  assefa
+ * Use layerorder instead of panPrioList.
+ *
  * Revision 1.25  2001/10/23 01:32:46  assefa
  * Add Drawing Priority support.
  *
@@ -296,10 +299,8 @@ layerObj *layerObj_new(mapObj *map) {
       return(NULL);
 
     map->layers[map->numlayers].index = map->numlayers;
-#ifdef USE_PRIOLIST
-      //Update the priority list with the layer's index.
-      map->panPrioList[map->numlayers] = map->numlayers;
-#endif
+      //Update the layer order list with the layer's index.
+    map->layerorder[map->numlayers] = map->numlayers;
 
     map->numlayers++;
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.62  2001/10/23 19:17:38  assefa
+ * Use layerorder instead of panPrioList.
+ *
  * Revision 1.61  2001/10/23 01:32:46  assefa
  * Add Drawing Priority support.
  *
@@ -3708,9 +3711,9 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
         for (i=0; i<nCount; i++)
         {
-            if (self->panPrioList)
+            if (self->layerorder)
             {
-                add_next_index_long(return_value,  self->panPrioList[i]);
+                add_next_index_long(return_value,  self->layerorder[i]);
             }
             else
                 add_next_index_long(return_value, i);

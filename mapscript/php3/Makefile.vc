@@ -78,9 +78,7 @@ MS_LIBS = ../../mapserver.lib \
         $(GDAL_DIR)/ogr/../port/cpl.lib
                 
 
-#Use this flag to have the Propomote/Demote layers functionnalities
-#PRIOLIST=-DUSE_PRIOLIST
-#
+
 #
 # The rest of the file should not have to be edited...
 #
