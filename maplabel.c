@@ -281,7 +281,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 	return(0);
 
       for(t=0; t<num_tokens; t++) /* what's the longest token */
-	max_token_length = MS_MAX(max_token_length, strlen(token[t]));
+	max_token_length = MS_MAX(max_token_length, (int) strlen(token[t]));
 
       rect->minx = 0;
       rect->miny = -(fontPtr->h * num_tokens);
