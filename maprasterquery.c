@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/05/18 16:52:48  frank
+ * ensure things build clean without USE_GDAL
+ *
  * Revision 1.6  2004/05/13 03:27:07  frank
  * fixed bug in query rect, return point geometries
  *
@@ -52,6 +55,8 @@
 #include "map.h"
 #include "mapresample.h"
 #include "mapthread.h"
+
+#ifdef USE_GDAL
 
 /* ==================================================================== */
 /*      For now the rasterLayerInfo lives here since it is just used    */
@@ -207,6 +212,7 @@ static void msRasterLayerInfoInitialize( layerObj *layer )
     layer->connectiontype = MS_RASTER;
 
     rlinfo->query_result_hard_max = 1000000;
+
     if( CSLFetchNameValue( layer->processing, "RASTER_QUERY_MAX_RESULT" ) 
         != NULL )
     {
@@ -627,6 +633,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 
     return MS_SUCCESS;
 }
+#endif /* def USE_GDAL */
 
 /************************************************************************/
 /*                        msRasterQueryByRect()                         */
@@ -635,6 +642,12 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect) 
 
 {
+#ifndef USE_GDAL
+    msSetError( MS_IMGERR, 
+                "Rasters queries only supported with GDAL support enabled.",
+                "msRasterQueryByRect()" );
+    return MS_FAILURE;
+#else
     int status = MS_SUCCESS;
     char *filename=NULL;
 
@@ -692,12 +705,6 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
         return MS_SUCCESS;
     }
 
-#ifndef USE_GDAL
-    msSetError( MS_IMGERR, 
-                "Rasters queries only supported with GDAL support enabled.",
-                "msRasterQueryByRect()" );
-    return MS_FAILURE;
-#else
 /* -------------------------------------------------------------------- */
 /*      Open tile index if we have one.                                 */
 /* -------------------------------------------------------------------- */
@@ -841,6 +848,12 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
 int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 
 {
+#ifndef USE_GDAL
+    msSetError( MS_IMGERR, 
+                "Rasters queries only supported with GDAL support enabled.",
+                "msRasterQueryByRect()" );
+    return MS_FAILURE;
+#else
     rasterLayerInfo *rlinfo = NULL;
     int status;
 
@@ -855,6 +868,7 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
     rlinfo->searchshape = NULL;
 
     return status;
+#endif /* USE_GDAL  */
 }
 
 /************************************************************************/
@@ -864,6 +878,12 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p, 
                          double buffer)
 {
+#ifndef USE_GDAL
+    msSetError( MS_IMGERR, 
+                "Rasters queries only supported with GDAL support enabled.",
+                "msRasterQueryByRect()" );
+    return MS_FAILURE;
+#else
     int result;
     rectObj bufferRect;
     rasterLayerInfo *rlinfo = NULL;
@@ -930,6 +950,7 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
     result = msRasterQueryByRect( map, layer, bufferRect );
 
     return result;
+#endif /* USE_GDAL  */
 }
 
 /************************************************************************/
@@ -947,6 +968,12 @@ int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p,
 
 int msRASTERLayerOpen(layerObj *layer) 
 {
+#ifndef USE_GDAL
+    msSetError( MS_IMGERR, 
+                "Rasters queries only supported with GDAL support enabled.",
+                "msRasterQueryByRect()" );
+    return MS_FAILURE;
+#else
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
     if( rlinfo != NULL )
@@ -956,6 +983,7 @@ int msRASTERLayerOpen(layerObj *layer)
         return MS_FAILURE;
     else 
         return MS_SUCCESS;
+#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -979,12 +1007,16 @@ int msRASTERLayerInitItemInfo(layerObj *layer)
 int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect) 
 
 {
+#ifndef USE_GDAL
+    return MS_FAILURE;
+#else
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
     rlinfo->which_rect = rect;
     rlinfo->next_shape = 0;
 
     return MS_SUCCESS;
+#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -993,6 +1025,9 @@ int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect)
 
 int msRASTERLayerClose(layerObj *layer) 
 {
+#ifndef USE_GDAL
+    return MS_FAILURE;
+#else
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
     if( rlinfo != NULL )
@@ -1003,6 +1038,7 @@ int msRASTERLayerClose(layerObj *layer)
             msRasterLayerInfoFree( layer );
     }
     return MS_SUCCESS;
+#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1011,6 +1047,9 @@ int msRASTERLayerClose(layerObj *layer)
 
 int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
 {
+#ifndef USE_GDAL
+    return MS_FAILURE;
+#else
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
     if( rlinfo->next_shape < 0 
@@ -1022,6 +1061,7 @@ int msRASTERLayerNextShape(layerObj *layer, shapeObj *shape)
     }
     else 
         return msRASTERLayerGetShape( layer, shape, 0, rlinfo->next_shape++ );
+#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1032,6 +1072,9 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
                           long record)
 
 {
+#ifndef USE_GDAL
+    return MS_FAILURE;
+#else
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
     int i;
 
@@ -1136,6 +1179,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
 /* -------------------------------------------------------------------- */
 
     return MS_SUCCESS;
+#endif /* def USE_GDAL */
 }
 
 /************************************************************************/
@@ -1151,6 +1195,9 @@ int msRASTERLayerGetExtent(layerObj *layer, rectObj *extent)
 
 int msRASTERLayerGetItems(layerObj *layer)
 {
+#ifndef USE_GDAL
+    return MS_FAILURE;
+#else
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
     layer->items = (char **) calloc(sizeof(char *),10);
@@ -1183,4 +1230,5 @@ int msRASTERLayerGetItems(layerObj *layer)
         layer->items[layer->numitems++] = strdup("count");
 
     return msRASTERLayerInitItemInfo(layer);
+#endif /* def USE_GDAL */
 }
