@@ -328,6 +328,35 @@ and the MapServer Map File documentation at:
         array with all the layer's index. 
         Return TRUE on success or else FALSE.
 
+   char *processtemplate(array params, boolean generateimages)
+        Process the template file specified in the web object and return 
+        the resut in a buffer. 
+        The processing consists of opening the template file and replace
+        all the tags found in it.
+        Only tags that have an equivalent element in the map object are
+        replaced (ex [scale]). 
+        The are two expetions to the previous statement :
+          - [img], [scalebar], [ref], [legend] would be replaced with the 
+            appropriate url if the parameter generateimages is set to 
+            MS_TRUE. (Note :  the images corresponding to the diffrent objects 
+            are geneterated if the object is set to MS_ON in the map file)
+         - the user can use the params parameter to specify tags and 
+           their values. For example if the user have a specific tag call [my_tag] and
+           would like it to be replaced by "value_of_my_tag" he would do :
+              $tmparray["my_tag"] = "value_of_my_tag";
+              $map->processtemplate($tmparray, MS_FASLE);
+         
+   char *processquerytemplate(array params)     
+       Process query template files and return the resut in a buffer.
+
+       See also : processtemplate function.
+   
+   char *processlegendtemplate(array params)     
+       Process legend template files and return the resut in a buffer.
+
+     See also : processtemplate function.
+
+
  LayerObj Class:
  ---------------
 

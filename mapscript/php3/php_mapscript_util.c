@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.12  2002/03/07 22:31:01  assefa
+ * Add template processing functions.
+ *
  * Revision 1.11  2002/01/22 21:19:02  sacha
  * Add two functions in maplegend.c
  * - msDrawLegendIcon that draw an class legend icon over an existing image.
@@ -692,4 +695,58 @@ int _phpms_object_init(pval *return_value, int  handle_id,
 
     return 0;
 }
+
+ 
+
+/************************************************************************/
+/*          int _php_extract_associate_array(HashTable *php, char       */
+/*      **array)                                                        */
+/*                                                                      */
+/*      Translate a PHP associate array (HashTable *) into an array.    */
+/*      Ex if php array :  tttarray["first"] = "1st";                   */
+/*                         tttarray["second"] = "2nd";                  */
+/*                                                                      */
+/*        the resultiong array will be :                                */
+/*          array[0] = "first";                                         */
+/*          array[1] = "1st"                                            */
+/*          array[2] = "second";                                        */
+/*          array[3] = "2nd"                                            */
+/*                                                                      */
+/************************************************************************/
+int _php_extract_associative_array(HashTable *php, char **array)
+{
+/* -------------------------------------------------------------------- */
+/*      Note : code extacted from sablot.c (functions related to        */
+/*      xslt)                                                           */
+/* -------------------------------------------------------------------- */
+#ifdef PHP4
+    zval **value;
+    char *string_key = NULL;
+    ulong num_key;
+    int i = 0;
+    
+    for (zend_hash_internal_pointer_reset(php);
+         zend_hash_get_current_data(php, (void **)&value) == SUCCESS;
+         zend_hash_move_forward(php)) 
+    {
+        SEPARATE_ZVAL(value);
+        convert_to_string_ex(value);
+        
+        switch (zend_hash_get_current_key(php, &string_key, &num_key, 1)) 
+        {
+            case HASH_KEY_IS_STRING:
+                array[i++] = string_key;
+                array[i++] = Z_STRVAL_PP(value);
+                break;
+        }
+    }
+    array[i++] = NULL;
+
+#endif
+    return 1;
+}
+
+
+
+
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/03/07 22:31:01  assefa
+ * Add template processing functions.
+ *
  * Revision 1.4  2001/09/13 20:56:27  dan
  * Added _phpms_fetch_property_resource().
  *
@@ -142,4 +145,6 @@ int _phpms_set_property_double(pval *pObj, char *property_name,
 int _phpms_add_property_object(pval *pObj,      
                                char *property_name, pval *pObjToAdd,
                                int err_type);
+int _php_extract_associative_array(HashTable *php, char **array);
+
 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.19  2002/03/07 22:31:01  assefa
+ * Add template processing functions.
+ *
  * Revision 1.18  2002/02/08 18:51:11  dan
  * Remove class and layer args to setSymbolByName()
  *
@@ -107,7 +110,8 @@
 #ifndef _PHP_MAPSCRIPT_H_INCLUDED_
 #define _PHP_MAPSCRIPT_H_INCLUDED_
 
-#include "map.h"
+//#include "map.h"
+#include "maptemplate.h"
 
 /*=====================================================================
  *                   Internal functions from mapscript_i.c
@@ -143,7 +147,20 @@ int             mapObj_save(mapObj* self, char *filename);
 char            *mapObj_getMetaData(mapObj *self, char *name);
 int             mapObj_setMetaData(mapObj *self, char *name, char *value);
 
+int             mapObj_moveLayerup(mapObj *self, int layerindex);
+int             mapObj_moveLayerdown(mapObj *self, int layerindex);
+int             *mapObj_getLayersdrawingOrder(mapObj *self);
+int             mapObj_setLayersdrawingOrder(mapObj *self, int *panIndexes);
 
+char            *mapObj_processTemplate(mapObj *self, int bGenerateImages, 
+                                        char **names, char **values, 
+                                        int numentries);
+char            *mapObj_processLegendTemplate(mapObj *self,
+                                              char **names, char **values, 
+                                              int numentries);
+char            *mapObj_processQueryTemplate(mapObj *self,
+                                             char **names, char **values, 
+                                             int numentries);
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 int             layerObj_open(layerObj *self, char *path);

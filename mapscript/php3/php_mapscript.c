@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.91  2002/03/07 22:31:01  assefa
+ * Add template processing functions.
+ *
  * Revision 1.90  2002/03/04 12:58:56  tomas
  * Added layerObj->transparency
  * - type: integer value between 1-100
@@ -206,16 +209,20 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_moveLayerDown(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS);
 
-DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_moveLayerDown(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -308,6 +315,7 @@ DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+
 
 static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
                                     HashTable *list, pval *return_value);
@@ -483,6 +491,9 @@ function_entry php_map_class_functions[] = {
     {"movelayerdown",   php3_ms_map_moveLayerDown,      NULL},
     {"getlayersdrawingorder",   php3_ms_map_getLayersDrawingOrder,  NULL},
     {"setlayersdrawingorder",   php3_ms_map_setLayersDrawingOrder,  NULL},
+    {"processtemplate",   php3_ms_map_processTemplate,  NULL},
+    {"processlegendtemplate",   php3_ms_map_processLegendTemplate,  NULL},
+    {"processquerytemplate",   php3_ms_map_processQueryTemplate,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -3771,7 +3782,7 @@ DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS)
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
     if (self != NULL)
     {
-        if (msMoveLayerUp(self, pLyrIdx->value.lval) == 0)
+        if (mapObj_moveLayerup(self, pLyrIdx->value.lval) == 0)
             RETURN_TRUE;       
     }
 
@@ -3815,7 +3826,7 @@ DLEXPORT void php3_ms_map_moveLayerDown(INTERNAL_FUNCTION_PARAMETERS)
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
     if (self != NULL)
     {
-        if (msMoveLayerDown(self, pLyrIdx->value.lval) == 0)
+        if (mapObj_moveLayerdown(self, pLyrIdx->value.lval) == 0)
             RETURN_TRUE;       
     }
 
@@ -3839,6 +3850,7 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *self=NULL;
     int         nCount = 0;
     int         i = 0;
+    int         *panLayers = NULL;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -3861,6 +3873,7 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    panLayers = mapObj_getLayersdrawingOrder(self);
     if (self != NULL)
     {
         nCount = self->numlayers;
@@ -3872,9 +3885,9 @@ DLEXPORT void php3_ms_map_getLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
         for (i=0; i<nCount; i++)
         {
-            if (self->layerorder)
+            if (panLayers)
             {
-                add_next_index_long(return_value,  self->layerorder[i]);
+                add_next_index_long(return_value,  panLayers[i]);
             }
             else
                 add_next_index_long(return_value, i);
@@ -3970,31 +3983,342 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
         panIndexes[i] = (*pValue)->value.lval;
     }
     
-    for (i=0; i<nElements; i++)
+    if (!mapObj_setLayersdrawingOrder(self, panIndexes))
     {
-        bFound = 0;
-        for (j=0; j<nElements; j++)
-        {
-            if (panIndexes[j] == i)
-            {
-                bFound = 1;
-                break;
-            }
-        }
-        if (!bFound)
-          RETURN_FALSE;
+        free(panIndexes);
+        RETURN_FALSE;
     }
-/* -------------------------------------------------------------------- */
-/*    At this point the array is valid so update the layers order array.*/
-/* -------------------------------------------------------------------- */
-    for (i=0; i<nElements; i++)
-    {
-         self->layerorder[i] = panIndexes[i];
-    }
+    free(panIndexes);
 #endif
     RETURN_TRUE;
 }       
 
+
+
+/**********************************************************************
+ *                        map->processTemplate()
+ *
+ * Process a template  
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_processTemplate(array_layer_index)*/
+
+DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamValue, *pGenerateImage;
+    mapObj      *self=NULL;
+    char        *pszBuffer = NULL;
+    int         i, iIndice = 0;
+    HashTable   *ar;
+    int         numelems,  size;
+    char        **papszNameValue = NULL;
+    char        **papszName = NULL;
+    char        **papszValue = NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+    pval        **pValue = NULL;    
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (ZEND_NUM_ARGS() != 2 || 
+        getParameters(ht,2,&pParamValue, &pGenerateImage)==FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+    
+    convert_to_long(pGenerateImage);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self == NULL)
+        RETURN_FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      build the parm and value arrays.                                */
+/*      Note : code extacted from sablot.c (functions related to        */
+/*      xslt)                                                           */
+/* -------------------------------------------------------------------- */
+    ar = HASH_OF(pParamValue);
+    if (ar)
+    {
+        /**
+         * Allocate 2 times the number of elements in
+         * the array, since with associative arrays in PHP
+         * keys are not counted.
+         */
+
+        numelems = zend_hash_num_elements(ar);
+        size = (numelems * 2 + 1) * sizeof(char *);
+            
+        papszNameValue = (char **)emalloc(size+1);
+        memset((char *)papszNameValue, 0, size);
+        
+        /**
+         * Translate a PHP array (HashTable *) into a 
+         * Sablotron array (char **).
+         */
+        if (_php_extract_associative_array(ar, papszNameValue))
+        {
+            papszName = (char **)malloc(sizeof(char *)*numelems);
+            papszValue = (char **)malloc(sizeof(char *)*numelems);
+            
+            
+            for (i=0; i<numelems; i++)
+            {
+                iIndice = i*2;
+                papszName[i] = papszNameValue[iIndice];
+                papszValue[i] = papszNameValue[iIndice+1];
+            }
+
+            pszBuffer = mapObj_processTemplate(self, pGenerateImage->value.lval,
+                                               papszName, papszValue, numelems);
+            
+            if (pszBuffer)
+            {
+                RETVAL_STRING(pszBuffer, 1);
+                free(pszBuffer);
+            }
+            else
+                RETURN_STRING("", 0);
+        }
+        else
+          RETURN_STRING("", 0);  
+    }
+    else
+        RETURN_STRING("", 0);
+#endif
+}
+
+/**********************************************************************
+ *                        map->processLegendTemplate()
+ *
+ * Process the legend template.
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_processLegendTemplate(array_layer_index)*/
+
+DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamValue;
+    mapObj      *self=NULL;
+    char        *pszBuffer = NULL;
+    int         i, iIndice = 0;
+    HashTable   *ar;
+    int         numelems,  size;
+    char        **papszNameValue = NULL;
+    char        **papszName = NULL;
+    char        **papszValue = NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+    pval        **pValue = NULL;    
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (ZEND_NUM_ARGS() != 1 || 
+        getParameters(ht,1,&pParamValue)==FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+    
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self == NULL)
+        RETURN_FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      build the parm and value arrays.                                */
+/*      Note : code extacted from sablot.c (functions related to        */
+/*      xslt)                                                           */
+/* -------------------------------------------------------------------- */
+    ar = HASH_OF(pParamValue);
+    if (ar)
+    {
+        /**
+         * Allocate 2 times the number of elements in
+         * the array, since with associative arrays in PHP
+         * keys are not counted.
+         */
+
+        numelems = zend_hash_num_elements(ar);
+        size = (numelems * 2 + 1) * sizeof(char *);
+            
+        papszNameValue = (char **)emalloc(size+1);
+        memset((char *)papszNameValue, 0, size);
+        
+        /**
+         * Translate a PHP array (HashTable *) into a 
+         * Sablotron array (char **).
+         */
+        if (_php_extract_associative_array(ar, papszNameValue))
+        {
+            papszName = (char **)malloc(sizeof(char *)*numelems);
+            papszValue = (char **)malloc(sizeof(char *)*numelems);
+            
+            
+            for (i=0; i<numelems; i++)
+            {
+                iIndice = i*2;
+                papszName[i] = papszNameValue[iIndice];
+                papszValue[i] = papszNameValue[iIndice+1];
+            }
+
+            pszBuffer = 
+                mapObj_processLegendTemplate(self, papszName, 
+                                             papszValue, numelems);
+            
+            if (pszBuffer)
+            {
+                RETVAL_STRING(pszBuffer, 1);
+                free(pszBuffer);
+            }
+            else
+                RETURN_STRING("", 0);
+        }
+        else
+          RETURN_STRING("", 0);  
+    }
+    else
+        RETURN_STRING("", 0);
+#endif
+}
+
+
+/**********************************************************************
+ *                        map->processQueryTemplate()
+ *
+ * Process a template  
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_processQueryTemplate(array_layer_index)*/
+
+DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamValue;
+    mapObj      *self=NULL;
+    char        *pszBuffer = NULL;
+    int         i, iIndice = 0;
+    HashTable   *ar;
+    int         numelems,  size;
+    char        **papszNameValue = NULL;
+    char        **papszName = NULL;
+    char        **papszValue = NULL;
+
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+    pval        **pValue = NULL;    
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+
+    if (ZEND_NUM_ARGS() != 1 || 
+        getParameters(ht,1,&pParamValue)==FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+    
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
+    if (self == NULL)
+        RETURN_FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      build the parm and value arrays.                                */
+/*      Note : code extacted from sablot.c (functions related to        */
+/*      xslt)                                                           */
+/* -------------------------------------------------------------------- */
+    ar = HASH_OF(pParamValue);
+    if (ar)
+    {
+        /**
+         * Allocate 2 times the number of elements in
+         * the array, since with associative arrays in PHP
+         * keys are not counted.
+         */
+
+        numelems = zend_hash_num_elements(ar);
+        size = (numelems * 2 + 1) * sizeof(char *);
+            
+        papszNameValue = (char **)emalloc(size+1);
+        memset((char *)papszNameValue, 0, size);
+        
+        /**
+         * Translate a PHP array (HashTable *) into a 
+         * Sablotron array (char **).
+         */
+        if (_php_extract_associative_array(ar, papszNameValue))
+        {
+            papszName = (char **)malloc(sizeof(char *)*numelems);
+            papszValue = (char **)malloc(sizeof(char *)*numelems);
+            
+            
+            for (i=0; i<numelems; i++)
+            {
+                iIndice = i*2;
+                papszName[i] = papszNameValue[iIndice];
+                papszValue[i] = papszNameValue[iIndice+1];
+            }
+
+            pszBuffer = mapObj_processQueryTemplate(self, papszName, 
+                                                    papszValue, numelems);
+            
+            if (pszBuffer)
+            {
+                RETVAL_STRING(pszBuffer, 1);
+                free(pszBuffer);
+            }
+            else
+                RETURN_STRING("", 0);
+        }
+        else
+          RETURN_STRING("", 0);  
+    }
+    else
+        RETURN_STRING("", 0);
+#endif
+}
 
 /* }}} */
 
@@ -9321,6 +9645,8 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 }           
 
 
+
+
 /* ==================================================================== */
 /*      utility functions                                               */
 /* ==================================================================== */
@@ -9437,7 +9763,7 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
 /*                                                                      */
 /*      Base on the function msCalculateScale (mapscale.c)              */
 /************************************************************************/
-static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
+//static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
 static double GetDeltaExtentsUsingScale(double dfScale, int nUnits, 
                                         int nWidth, int resolution)
 {
