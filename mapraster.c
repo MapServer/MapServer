@@ -256,7 +256,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
       for(i=0; i<MAXCOLORS; i++) {
 	if(i != layer->offsite) {
 	  sprintf(tmpstr,"%d", i);
-	  c = getClassIndex(layer, tmpstr);
+	  c = msGetClassIndex(layer, tmpstr);
 	  
 	  if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	    cmap[i] = -1;
@@ -473,7 +473,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     for(i=0; i<gdImageColorsTotal(png); i++) {
       if(i != layer->offsite) {
 	sprintf(tmpstr,"%d", i);
-	c = getClassIndex(layer, tmpstr);
+	c = msGetClassIndex(layer, tmpstr);
 
 	if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
@@ -576,7 +576,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     for(i=0; i<gdImageColorsTotal(gif); i++) {
       if(i != layer->offsite) {
 	sprintf(tmpstr,"%d", i);
-	c = getClassIndex(layer, tmpstr);
+	c = msGetClassIndex(layer, tmpstr);
 
 	if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
@@ -828,7 +828,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	for(i=0; i<hd.nclass; i++) {
 	  if(i != layer->offsite) {
 	    sprintf(tmpstr,"%d", i);
-	    c = getClassIndex(layer, tmpstr);
+	    c = msGetClassIndex(layer, tmpstr);
 	    
 	    if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	      cmap[i] = -1;
@@ -962,7 +962,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       for (i=epp.minval; i<=epp.maxval; i++) {
 	if(i != layer->offsite) {
 	  sprintf(tmpstr,"%d", i);
-	  c = getClassIndex(layer, tmpstr);
+	  c = msGetClassIndex(layer, tmpstr);
 	  
 	  if(c != -1) {
 	    if(layer->class[c].color == -1) { /* use raster color */

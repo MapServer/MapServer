@@ -562,7 +562,6 @@ void msFreeImage(gdImagePtr img);
 int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapsde.c */
 int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapogr.cpp */
 
-
 /*
 ** helper functions not part of the general API but needed in
 ** a few other places (like mapscript)... found in mapfile.c
@@ -586,6 +585,9 @@ int loadExpressionString(expressionObj *exp, char *value);
 
 int getClassIndex(layerObj *layer, char *str);
 
+/*
+** Main API Functions
+*/
 int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
 int msGetSymbolIndex(symbolSetObj *set, char *name);
 mapObj *msLoadMap(char *filename);
@@ -605,6 +607,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, char *class_string, char *label_string);
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, char *class_string, char *label_string);
 int msGetItemIndex(DBFHandle dbffile, char *name);
+int msGetClassIndex(layerObj *layer, char *str);
 gdImagePtr msDrawReferenceMap(mapObj *map);
 char **msGetDBFItems(DBFHandle dbffile);
 char **msGetDBFValues(DBFHandle dbffile, int record);

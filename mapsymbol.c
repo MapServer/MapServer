@@ -92,7 +92,7 @@ static void freeSymbol(symbolObj *s) {
   free(s->font);
 }
 
-static int loadSymbol(symbolObj *s)
+int loadSymbol(symbolObj *s)
 {
   int i=0;
   int done=MS_FALSE;
@@ -308,7 +308,6 @@ void msFreeSymbolSet(symbolSetObj *symbolset)
 */
 int msLoadSymbolSet(symbolSetObj *symbolset)
 {
-  int n=1;
   char old_path[MS_PATH_LENGTH];
   char *symbol_path;
   int status=1;
@@ -349,14 +348,11 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
   */
   for(;;) {
     switch(msyylex()) {
-    case(EOF):
-      symbolset->numsymbols = n;
+    case(EOF):      
       status = 0;
-
 #ifdef USE_TTF
       if(msLoadFontSet(&(symbolset->fontset)) == -1) return(-1);
 #endif
-
       break;
     case(FONTSET):
 #ifdef USE_TTF
@@ -364,9 +360,13 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
 #endif
       break;    
     case(SYMBOL):
-      if((loadSymbol(&(symbolset->symbol[n])) == -1)) 
+      if(symbolset->numsymbols == MS_MAXSYMBOLS) { 
+	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadSymbolSet()");
+	status = -1;      
+      }
+      if((loadSymbol(&(symbolset->symbol[symbolset->numsymbols])) == -1)) 
 	status = -1;
-      n++;
+      symbolset->numsymbols++;
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "msLoadSymbolFile()");

@@ -96,7 +96,7 @@ extern int msyyparse();
 /* 
 ** Returns class index for a given layer and record, non-shapefile data. Used in mapraster.c as well.
 */
-int getClassIndex(layerObj *layer, char *str)
+int msGetClassIndex(layerObj *layer, char *str)
 {
   int i;
   char *tmpstr=NULL;
@@ -533,7 +533,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
   char *text=NULL;
   double scalefactor=1;
   
-  if((c = getClassIndex(layer, class_string)) == -1) return(0);
+  if((c = msGetClassIndex(layer, class_string)) == -1) return(0);
 
   // apply scaling to symbols and fonts
   if(layer->symbolscale > 0 && map->scale > 0) {
@@ -628,7 +628,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
   cliprect.maxx = map->extent.maxx + 2*map->cellsize;
   cliprect.maxy = map->extent.maxy + 2*map->cellsize;
 
-  if((c = getClassIndex(layer, class_string)) == -1) return(0);  
+  if((c = msGetClassIndex(layer, class_string)) == -1) return(0);  
 
   // apply scaling to symbols and fonts
   if(layer->symbolscale > 0 && map->scale > 0) {
@@ -721,7 +721,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 
     // no way to cache here
     msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-    if(layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+    if(layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
     
     if(label_string) text = label_string;
     else text = layer->class[c].text.string;
@@ -748,7 +748,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     
     // no way to cache here
     msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-    if(layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+    if(layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	
     if(label_string) text = label_string; 
     else text = layer->class[c].text.string;

@@ -13,6 +13,8 @@ extern FILE *msyyin;
 extern int msyystate;
 extern char *msyystring;
 
+extern int loadSymbol(symbolObj *s); // in mapsymbol.c
+
 /*
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in map.h.
@@ -2720,7 +2722,6 @@ int msSaveMap(mapObj *map, char *filename)
 
 mapObj *msLoadMap(char *filename)
 {
-  int n=0;
   regex_t re;
   mapObj *map=NULL;
   char *map_path=NULL;
@@ -2774,7 +2775,6 @@ mapObj *msLoadMap(char *filename)
 
     switch(msyylex()) {   
     case(END):
-      map->numlayers = n;
       fclose(msyyin);
 
       if(msLoadSymbolSet(&(map->symbolset)) == -1) return(NULL);
@@ -2830,9 +2830,13 @@ mapObj *msLoadMap(char *filename)
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
       break;
     case(LAYER):
-      if(loadLayer(&(map->layers[n]), map) == -1) return(NULL);
-      map->layers[n].index = n; /* save the index */
-      n++;
+      if(map->numlayers == MS_MAXLAYERS) { 
+	msSetError(MS_IDENTERR, "Too many layerss defined.", "msLoadMap()");
+	return(NULL);
+      }
+      if(loadLayer(&(map->layers[map->numlayers]), map) == -1) return(NULL);
+      map->layers[map->numlayers].index = map->numlayers; /* save the index */
+      map->numlayers++;
       break;
     case(LEGEND):
       if(loadLegend(&(map->legend), map) == -1) return(NULL);
@@ -2867,6 +2871,14 @@ mapObj *msLoadMap(char *filename)
       break;
     case(STATUS):
       if((map->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
+      break;
+    case(SYMBOL):
+      if(map->symbolset.numsymbols == MS_MAXSYMBOLS) { 
+	msSetError(MS_SYMERR, "Too many symbols defined.", "msLoadMap()");
+	return(NULL);
+      }
+      if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols])) == -1)) return(NULL);
+      map->symbolset.numsymbols++;
       break;
     case(SYMBOLSET):
       if((map->symbolset.filename = getString()) == NULL) return(NULL);

@@ -216,7 +216,7 @@
       }
     }
 
-    result.layer = -1; /* no more results */
+    result.layer = -1; // no more results
     result.shape = -1;
     result.query = -1;
 
@@ -229,7 +229,7 @@
 //
 %addmethods layerObj {
   layerObj(mapObj *map) {
-    if(map->numlayers == MS_MAXLAYERS) /* no room */
+    if(map->numlayers == MS_MAXLAYERS) // no room
       return(NULL);
 
     if(initLayer(&(map->layers[map->numlayers])) == -1)
@@ -242,10 +242,10 @@
   }
 
   ~layerObj() {
-    return; /* do nothing, map deconstrutor takes care of it all */
+    return; // map deconstructor takes care of it
   }
 
-  classObj *getClass(int i) { /* returns an EXISTING class */
+  classObj *getClass(int i) { // returns an EXISTING class
     if(i >= 0 && i < self->numclasses)
       return &(self->class[i]); 
     else
@@ -285,11 +285,14 @@
   }
 
   int addFeature(shapeObj *shape) {
-    // need code here	
+    if(insertFeatureList(&(self->features), *shape) == NULL) 
+      return -1;
+    else
+      return 0;
   }
 
   int classify(char *string) {
-    // use string to return matching class
+    return msGetClassIndex(self, string);
   }
 
 }
@@ -299,7 +302,7 @@
 //
 %addmethods classObj {
   classObj(layerObj *layer) {
-    if(layer->numclasses == MS_MAXCLASSES) /* no room */
+    if(layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
 
     if(initClass(&(layer->class[layer->numclasses])) == -1)
@@ -311,7 +314,7 @@
   }
 
   ~classObj() {
-    return; /* do nothing, map deconstrutor takes care of it all */
+    return; // do nothing, map deconstrutor takes care of it all
   }
 
   int setExpression(char *string) {    
