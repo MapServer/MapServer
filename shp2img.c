@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/11/04 21:08:45  frank
+ * added -p flag
+ *
  * Revision 1.13  2004/10/28 02:14:16  frank
  * Also enable MS_ERRORFILE if -all_debug selected.
  *
@@ -71,6 +74,8 @@ int main(int argc, char *argv[])
     fprintf(stdout,"  -all_debug n: Set debug level for map and all layers.\n" );
     fprintf(stdout,"  -map_debug n: Set map debug level.\n" );
     fprintf(stdout,"  -layer_debug layer_name n: Set layer debug level.\n" );
+    fprintf(stdout,"  -p n: pause for n seconds after reading the map\n" );
+
     exit(0);
   }
   
@@ -94,6 +99,17 @@ int main(int argc, char *argv[])
 
     if(strncmp(argv[i],"-m",2) == 0) { /* skip it */
       i+=1;
+    }
+
+    if(strncmp(argv[i],"-p",2) == 0) {
+        int pause_length = atoi(argv[i+1]);
+        time_t start_time = time(NULL);
+
+        printf( "Start pause of %d seconds.\n", pause_length );
+        while( time(NULL) < start_time + pause_length ) {}
+        printf( "Done pause.\n" );
+            
+        i+=1;
     }
 
     if(strncmp(argv[i],"-o",2) == 0) { /* load the output image filename */
