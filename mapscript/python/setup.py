@@ -1,90 +1,74 @@
-#! /usr/bin/env python
-# Distutils setup for UMN Mapserver mapscript v.3.5
-# Norman Vine 11/10/2001
+# setup.py file for MapScript
+# version 1.0
 
-# On cygwin this will require my Distutils mods available @
-# http://www.vso.cape.com/~nhv/files/python/mydistutils.txt
-# Should work as is on 'Unix' like systems
-# needs testing on Windows compilers other then Cygwin
-
-# To Install
-# build mapserver
-# Copy this file to $MAPSERVER_SRC / mapscript / python
-# invoke as ./setup.py install
-
-# should work on any python version with Distutils
-
-__revision__ = "$Id$"
+# BUILD
+#   python setup.py build
+#
+# INSTALL (usually as root)
+#   python setup.py install
 
 from distutils.core import setup, Extension
-from distutils.spawn import spawn
-from distutils.dir_util import mkpath
-from distutils.file_util import copy_file
-from distutils.sysconfig import parse_makefile
+from distutils import sysconfig
 
-import os
-from os import path
+import string
 
-noisy=1
-swig_cmd = ["swig",
-            "-python",
-            "-shadow",
-            "-opt",
-            "-DPYTHON",
-            "-DUSE_GD_PNG",
-            "-DUSE_GD_JPEG",
-            "-module",
-            "mapscript",
-            "-o",
-            "./mapscript_wrap.c",
-            "../mapscript.i" ]
-            
-spawn(swig_cmd, verbose=noisy)
+# Function needed to make unique lists.
+def unique(list):
+  dict = {}
+  for item in list:
+    dict[item] = ''
+  return dict.keys()
 
-# make package directory and package __init__ script
-mkpath("mapscript")
-init_file=open(path.join("mapscript","__init__.py"),"w")
-init_file.write("from mapscript import *\n")
-init_file.close()
+# Should be created by the mapserver build process.
+perlvars = "../../perlvars"
 
-copy_file("mapscript.py", path.join("mapscript","mapscript.py"), verbose=noisy)
+# Open and read lines from perlvars.
+fp = open(perlvars, "r")
 
-# change to reflect the gd version you are using
-gd_dir="gd-1.8.4"
-ms_dir=path.join("..","..")
-local_dir="/usr/local"
+ms_install_dir = fp.readline()
+ms_macros = fp.readline()
+ms_includes = fp.readline()
+ms_libraries_pre = fp.readline()
+ms_extra_libraries = fp.readline()
 
-setup (# Distribution meta-data
-       name = "pymapscript",
-       version = "3.5",
-       description = "pre release",
-       author = "Steve Lime",
-       author_email = "steve.lime@dnr.state.mn.us",
-       url = "http://mapserver.gis.umn.edu/",
+# Distutils wants a list of library directories and
+# a seperate list of libraries.  Create both lists from
+# lib_opts list.
+lib_opts = string.split(ms_libraries_pre)
 
-       # Description of the modules and packages in the distribution
-       packages = ['mapscript'],
-       ext_modules = 
-           [Extension('mapscriptc', ['mapscript_wrap.c'],
-                      define_macros=[('TIFF_STATIC',None),('JPEG_STATIC',None),('ZLIB_STATIC',None),
-                          ('IGNORE_MISSING_DATA',None),('USE_EPPL',None),('USE_PROJ',None),('USE_PROJ_API_H',None),
-                          ('USE_WMS',None),('USE_TIFF',None),('USE_JPEG',None),('USE_GD_PNG',None),('USE_GD_JPEG',None),
-                          ('USE_GD_WBMP',None),('USE_GDAL',None),('USE_POSTGIS',None)],
-                      include_dirs=[ms_dir,
-#                          path.join(ms_dir,gd_dir),
-#                          path.join(ms_dir,"gdft"),
-#                          path.join(local_dir,'include/freetype'),
-                          path.join(local_dir,'include')
-                                    ],
-                      library_dirs=[ms_dir,
-#                          path.join(ms_dir,gd_dir),
-#                          path.join(ms_dir,"gdft"),
-                          '/lib',
-                          path.join(local_dir,'lib')],
-                      extra_objects=[path.join(ms_dir,'libmap.a')],
-#                      libraries=['gd','gdft','freetype','ttf','proj','pq','png','z'],),
-                      libraries=['gdal.1.1', 'gd','freetype','ttf','png','proj','z',
-                                 'wwwxml','xmltok','xmlparse','wwwinit','wwwapp','wwwhtml','wwwtelnet','wwwnews','wwwhttp','wwwmime','wwwgopher','wwwftp','wwwfile','wwwdir','wwwcache','wwwstream','wwwmux','wwwtrans','wwwcore','wwwutils','md5','ming'
-                                 ],),                          
-           ]
-      )
+lib_dirs = [x[2:] for x in lib_opts if x[:2] == "-L"]
+lib_dirs = unique(lib_dirs)
+lib_dirs = lib_dirs + string.split(ms_install_dir)
+lib_dirs.sort()
+
+libs = [x[2:] for x in lib_opts if x[:2] == "-l"]
+libs = unique(libs)
+libs.sort() 
+
+# Create list of macros used to create mapserver.
+ms_macros = string.split(ms_macros)
+macros = [(x[2:], None) for x in ms_macros]
+
+# Here is the distutils setup function that does all the magic.
+# Had to specify 'extra_link_args = ["-static", "-lgd"]' because
+# mapscript requires the gd library, which on my system is static.
+setup(name = "mapscript",
+      version = "3.6.3",
+      description = "Enables Python to manipulate shapefiles.",
+      author = "Mapserver project - SWIGged MapScript library.",
+      url = "http://mapserver.gis.umn.edu",
+      ext_modules = [Extension("_mapscript", ["mapscript.c"],
+                               include_dirs = [sysconfig.get_python_inc()],
+                               library_dirs = lib_dirs,
+                               libraries = libs,
+                               define_macros =  macros,
+                               extra_link_args = ["-static", "-lgd"],
+                              )
+                    ],
+      py_modules = ["mapscript"]
+     )
+
+
+setup(name = "dbfreader",
+      py_modules = ["dbfreader"]
+     )

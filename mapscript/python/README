@@ -1,22 +1,25 @@
-	Python MapScript
-	================
 
-To build Python mapscript support on Unix:
+PYTHON 2.0 OR NEWER
+
+Should be easy.
+
+The setup.py script requires Python 2.0 or newer.  Apologies to the
+die-hard 1.5.2 folks.  This hopefully won't impact too many people since
+distutils is an add-on to 1.5.2 anyway.
+
+BUILD IT
+  python setup.py build
+
+INSTALL IT (usually as root)
+  python setup.py install
+
+That's it!
 
 
-Setup.py Changes:
+PYTHON VERSIONS LESS THAN 2.0
 
- o Set entries in 'define_macros' to match the overall build options in
-   the Mapserver makefile.  
- o Add any necessary directories to 'include_dirs'
- o Add *all* libraries that mapserver has to link against to 'libraries'.
+Need to compile mapscript.c into a shared library called _mapscript.so
+on UNICES/Linux and _mapscript.dll (I think) for MS Windows.  Copy
+_mapscript.(so|dll), mapscript.py, and dbfreader.py to your Python's
+site-packages directory.  That should to it!
 
-Then run 'python setup.py build' to build Python MapScript.  The command
-'python setup.py install' may properly install Python mapscript if run as
-root, but if not try adding the [mapserverroot]/mapscript/python/lib.* 
-directory to your PYTHONPATH. 
- 
-Good luck!
-
-Frank Warmerdam (warmerdam@pobox.com)
-June 2002
