@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.103  2004/12/02 18:40:32  sdlime
+ * Added template tags to expose the reference map extent (bug 1102).
+ *
  * Revision 1.102  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -2424,6 +2427,24 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     free(encodedstr);
   }
 #endif
+
+  // submitted by J.F (bug 1102)
+  if (msObj->Map->reference.status == MS_ON) {
+    sprintf(repstr, "%f", msObj->Map->reference.extent.minx); // Individual reference map extent elements for spatial query building
+    outstr = gsub(outstr, "[refminx]", repstr);
+    sprintf(repstr, "%f", msObj->Map->reference.extent.maxx);
+    outstr = gsub(outstr, "[refmaxx]", repstr);
+    sprintf(repstr, "%f", msObj->Map->reference.extent.miny);
+    outstr = gsub(outstr, "[refminy]", repstr);
+    sprintf(repstr, "%f", msObj->Map->reference.extent.maxy);
+    outstr = gsub(outstr, "[refmaxy]", repstr);
+    sprintf(repstr, "%f %f %f %f", msObj->Map->reference.extent.minx, msObj->Map->reference.extent.miny, msObj->Map->reference.extent.maxx, msObj->Map->reference.extent.maxy);
+    outstr = gsub(outstr, "[refext]", repstr);
+
+    encodedstr =  msEncodeUrl(repstr);
+    outstr = gsub(outstr, "[refext_esc]", encodedstr);
+    free(encodedstr); 
+  }
 
   sprintf(repstr, "%d %d", msObj->Map->width, msObj->Map->height);
   outstr = gsub(outstr, "[mapsize]", repstr);
