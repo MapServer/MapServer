@@ -229,11 +229,9 @@ gdImagePtr msDrawMap(mapObj *map)
 
   for(i=0; i<map->numlayers; i++) {
 
-#ifdef USE_PRIOLIST
-    lp = &(map->layers[ map->panPrioList[i]]);
-#else
-    lp = &(map->layers[i]);
-#endif
+    lp = &(map->layers[ map->layerorder[i]]);
+    //lp = &(map->layers[i]);
+
     if(lp->postlabelcache) // wait to draw
       continue;
 
@@ -1095,14 +1093,13 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
 */
 int msMoveLayerUp(mapObj *map, int nLayerIndex)
 {
-#ifdef USE_PRIOLIST
     int iCurrentIndex = -1;
     int i = 0;
     if (map && nLayerIndex < map->numlayers-1 && nLayerIndex >=0)
     {
         for (i=0; i<map->numlayers; i++)
         {
-            if ( map->panPrioList[i] == nLayerIndex)
+            if ( map->layerorder[i] == nLayerIndex)
             {
                 iCurrentIndex = i;
                 break;
@@ -1114,13 +1111,13 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex)
             if (iCurrentIndex == 0)
                 return 0;
 
-            map->panPrioList[iCurrentIndex] =  map->panPrioList[iCurrentIndex-1];
-            map->panPrioList[iCurrentIndex-1] = nLayerIndex;
+            map->layerorder[iCurrentIndex] =  
+                map->layerorder[iCurrentIndex-1];
+            map->layerorder[iCurrentIndex-1] = nLayerIndex;
 
             return 0;
         }
     }
-#endif
     return -1;
 }
 
@@ -1130,14 +1127,13 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex)
 */
 int msMoveLayerDown(mapObj *map, int nLayerIndex)
 {
-#ifdef USE_PRIOLIST
     int iCurrentIndex = -1;
     int i = 0;
     if (map && nLayerIndex < map->numlayers-1 && nLayerIndex >=0)
     {
         for (i=0; i<map->numlayers; i++)
         {
-            if ( map->panPrioList[i] == nLayerIndex)
+            if ( map->layerorder[i] == nLayerIndex)
             {
                 iCurrentIndex = i;
                 break;
@@ -1149,13 +1145,13 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
             if (iCurrentIndex == map->numlayers-1)
                 return 0;
 
-            map->panPrioList[iCurrentIndex] =  map->panPrioList[iCurrentIndex+1];
-            map->panPrioList[iCurrentIndex+1] = nLayerIndex;
+            map->layerorder[iCurrentIndex] =  
+                map->layerorder[iCurrentIndex+1];
+            map->layerorder[iCurrentIndex+1] = nLayerIndex;
 
             return 0;
         }
     }
-#endif
     return -1;
 }
 

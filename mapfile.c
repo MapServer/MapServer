@@ -2934,12 +2934,10 @@ int initMap(mapObj *map)
   if(msProcessProjection(&(map->latlon)) == -1) return(-1);
 #endif
 
-  //Initialize the priority list (used to modify the order in which the layers
-  //are drawn).
-  map->panPrioList = NULL;
-#ifdef USE_PRIOLIST
-  map->panPrioList = (int *)malloc(sizeof(int)*MS_MAXLAYERS);
-#endif
+  //Initialize the layer order list (used to modify the order in 
+  //which the layers are drawn).
+  map->layerorder = (int *)malloc(sizeof(int)*MS_MAXLAYERS);
+
 
   return(0);
 }
@@ -2985,8 +2983,8 @@ void msFreeMap(mapObj *map) {
     freeLayer(&(map->layers[i]));
   msFree(map->layers);
 
-  if (map->panPrioList)
-      free(map->panPrioList);
+  if (map->layerorder)
+      free(map->layerorder);
   msFree(map);
 }
 
@@ -3041,11 +3039,8 @@ int msSaveMap(mapObj *map, char *filename)
 
   for(i=0; i<map->numlayers; i++)
   {
-#ifdef USE_PRIOLIST
-      writeLayer(map, &(map->layers[map->panPrioList[i]]), stream);
-#else
-      writeLayer(map, &(map->layers[i]), stream);
-#endif
+      writeLayer(map, &(map->layers[map->layerorder[i]]), stream);
+      //writeLayer(map, &(map->layers[i]), stream);
   }
 
   fprintf(stream, "END\n");
@@ -3183,10 +3178,8 @@ mapObj *msLoadMap(char *filename)
       }
       if(loadLayer(&(map->layers[map->numlayers]), map) == -1) return(NULL);
       map->layers[map->numlayers].index = map->numlayers; /* save the index */
-#ifdef USE_PRIOLIST
-      //Update the priority list with the layer's index.
-      map->panPrioList[map->numlayers] = map->numlayers;
-#endif
+      //Update the layer order list with the layer's index.
+      map->layerorder[map->numlayers] = map->numlayers;
       map->numlayers++;
       break;
     case(LEGEND):

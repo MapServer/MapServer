@@ -614,7 +614,7 @@ typedef struct { /* structure for a map */
 
   webObj web;
 
-  int *panPrioList;
+  int *layerorder;
    
 } mapObj;
 
