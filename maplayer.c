@@ -701,7 +701,8 @@ int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *meta
 */
 int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadata) 
 {
-  int i, nt=0, ne=0;
+  int i, j;
+  int nt=0, ne=0;
   
   //
   // TO DO! I have a better algorithm.
@@ -714,7 +715,6 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   // embeded in logical expressions. It also opens up to using dynamic joins anywhere...
   //
 
-
   // Cleanup any previous item selection
   layerFreeItemInfo(layer);
   if(layer->items) {
@@ -723,29 +723,41 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     layer->numitems = 0;
   }
 
-  if(classify && layer->classitem) nt++;
-  if(classify && layer->filteritem) nt++;
-  if(annotate && layer->labelitem) nt++;
-  if(annotate && layer->labelsizeitem) nt++;
-  if(annotate && layer->labelangleitem) nt++;
-  ne = 0;
-  
-  if(classify && layer->filter.type == MS_EXPRESSION) { 
-    ne = countChars(layer->filter.string, '[');
-    if(ne > 0) {
-      layer->filter.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
-      if(!(layer->filter.items)) {
-	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	return(MS_FAILURE);
+  if(classify) {
+    if(layer->classitem) nt++;
+    if(layer->filteritem) nt++;
+
+    for(i=0; i<layer->numclasses; i++) {
+      for(j=0; j<layer->class[i].numstyles; j++) {
+        if(layer->class[i].styles[j].angleitem) nt++;
+	if(layer->class[i].styles[j].sizeitem) nt++;
       }
-      layer->filter.indexes = (int *)malloc(ne*sizeof(int));
-      if(!(layer->filter.indexes)) {
-	msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-	return(MS_FAILURE);
-      }
-      layer->filter.numitems = 0;
-      nt += ne;
     }
+
+    ne = 0;
+    if(layer->filter.type == MS_EXPRESSION) {
+      ne = countChars(layer->filter.string, '[');
+      if(ne > 0) {
+	layer->filter.items = (char **)calloc(ne, sizeof(char *)); // should be more than enough space
+	if(!(layer->filter.items)) {
+	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	  return(MS_FAILURE);
+	}
+	layer->filter.indexes = (int *)malloc(ne*sizeof(int));
+	if(!(layer->filter.indexes)) {
+	  msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+	  return(MS_FAILURE);
+	}
+	layer->filter.numitems = 0;
+	nt += ne;
+      }
+    }
+  }
+
+  if(annotate) {
+    if(layer->labelitem) nt++;
+    if(layer->labelsizeitem) nt++;
+    if(layer->labelangleitem) nt++;
   }
 
   for(i=0; i<layer->numclasses; i++) {
@@ -788,6 +800,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
     }
   }
 
+  // TODO: it would be nice to move this into the SDE code itself, feels wrong here...
   if(layer->connectiontype == MS_SDE) {
     layer->items = (char **)calloc(nt+2, sizeof(char *)); // should be more than enough space, SDE always needs a couple of additional items
     if(!layer->items) {
@@ -810,13 +823,24 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   }
 
   if(nt > 0) {
-    if(classify && layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
-    if(classify && layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
-    if(annotate && layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
-    if(annotate && layer->labelsizeitem) layer->labelsizeitemindex = string2list(layer->items, &(layer->numitems), layer->labelsizeitem);
-    if(annotate && layer->labelangleitem) layer->labelangleitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
-  
-    if(classify && layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));
+    if(classify) {
+      if(layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
+      if(layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
+
+      for(i=0; i<layer->numclasses; i++) {
+	for(j=0; j<layer->class[i].numstyles; j++) {
+	  if(layer->class[i].styles[j].angleitem) layer->class[i].styles[j].angleitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].angleitem);
+	  if(layer->class[i].styles[j].sizeitem) layer->class[i].styles[j].sizeitemindex = string2list(layer->items, &(layer->numitems), layer->class[i].styles[j].sizeitem); 
+	}
+      }
+
+      if(layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));      
+    }
+    if(annotate) {
+      if(layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
+      if(layer->labelsizeitem) layer->labelsizeitemindex = string2list(layer->items, &(layer->numitems), layer->labelsizeitem);
+      if(layer->labelangleitem) layer->labelangleitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
+    }  
 
     for(i=0; i<layer->numclasses; i++) {
       if(classify && layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
@@ -852,8 +876,8 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
   }
 
   // populate the iteminfo array
-  if (layer->numitems == 0)
-       return(MS_SUCCESS);
+  if(layer->numitems == 0)
+    return(MS_SUCCESS);
 
   return(layerInitItemInfo(layer));
 }

@@ -79,7 +79,7 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
   return(icp);
 }
 
-/**
+/*
  * Utility function to create a GD image. Returns
  * a pointer to an imageObj structure.
  */  
@@ -295,7 +295,6 @@ imageObj *msImageLoadGD(const char *filename) {
     else return(image);
 }
 
-
 static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *style, int *fgcolor, int *bgcolor)
 {
   gdImagePtr brush;
@@ -327,6 +326,86 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
   }
 
   return(brush);
+}
+
+// Function to create a custom hatch symbol.
+static gdImagePtr createHatch(gdImagePtr img, int width, int height, styleObj *style)
+{
+  gdImagePtr hatch;
+  int x1, x2, y1, y2;
+  int size;
+  double angle;
+  int fg, bg;
+
+  // int green;
+
+  hatch = createBrush(img, width, height, style, &fg, &bg);
+
+  if(style->antialias == MS_TRUE) {
+    gdImageSetAntiAliased(hatch, fg);
+    fg = gdAntiAliased;
+  }
+
+  size = style->size;
+
+  // normalize the angle (180 to 0, 0 is east, 90 is north 180 is west)
+  angle = fmod(style->angle, 360.0);
+  if(angle < 0) angle += 360;
+  if(angle >= 180) angle -= 180;
+
+  if(angle >= 45 && angle <= 90) {
+    x2 = 0;
+    y2 = 0;
+    y1 = height-1;
+    x1 = x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle);
+
+    while(x1 < width) {
+      gdImageLine(hatch, x1, y1, x2, y2, fg);
+      x1+=size;
+      x2+=size; 
+    }
+  } else if(angle <= 135 && angle > 90) {
+    x2 = 0;
+    y2 = height-1;
+    y1 = 0;
+    x1 = x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle);
+
+    while(x1 < width) {
+      gdImageLine(hatch, x1, y1, x2, y2, fg);
+      x1+=size;
+      x2+=size;
+    }
+  } else if(angle >= 0 && angle < 45) {    
+    x1 = 0;
+    y1 = 0;
+    x2 = width-1;
+    y2 = y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle);
+
+    while(y2 < height) {
+      gdImageLine(hatch, x1, y1, x2, y2, fg);
+      y1+=size;
+      y2+=size;
+    }
+  } else if(angle < 180 && angle > 135) {
+    x2 = width-1;
+    y2 = 0;
+    x1 = 0;
+    y1 = y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle);
+
+    while(y1 < height) {
+      gdImageLine(hatch, x1, y1, x2, y2, fg);
+      y1+=size;
+      y2+=size;
+    }
+  }
+
+  // green = gdImageColorAllocate(hatch, 0, 255, 0);
+  // gdImageLine(hatch, 0, 0, width, 0, green);
+  // gdImageLine(hatch, width, 0, width, height, green);
+  // gdImageLine(hatch, width, height, 0, height, green);
+  // gdImageLine(hatch, 0, height, 0, 0, green);
+
+  return(hatch);
 }
 
 /*
@@ -1381,6 +1460,24 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   }
   
   switch(symbol->type) {
+  case(MS_SYMBOL_HATCH):
+
+    // msComputeBounds(p); // we need to know how big to make the tile
+    // tile = createHatch(img, (p->bounds.maxx-p->bounds.minx), (p->bounds.maxy-p->bounds.miny), style);
+    tile = createHatch(img, img->sx, img->sy, style);
+
+    gdImageSetTile(img, tile);
+    imageFilledPolygon(img, p, gdTiled, ox, oy);
+
+    if(style->antialias==MS_TRUE && oc>-1) {
+      gdImageSetAntiAliased(img, oc);
+      imagePolyline(img, p, gdAntiAliased, ox, oy);
+    } else
+      if(oc>-1) imagePolyline(img, p, oc, ox, oy);
+
+    gdImageDestroy(tile);
+
+    break;
   case(MS_SYMBOL_TRUETYPE):    
     
 #ifdef USE_GD_FT

@@ -274,6 +274,7 @@ void lexer_cleanup() {
 <INITIAL,VALUE_STRING>false                    { return(MS_FALSE); }
 <INITIAL,VALUE_STRING>feet		       { return(MS_FEET); }
 <INITIAL,VALUE_STRING>giant		       { return(MS_GIANT); }
+<INITIAL>hatch                                 { return(MS_SYMBOL_HATCH); }
 <INITIAL,VALUE_STRING>hilite		       { return(MS_HILITE); }
 <INITIAL,VALUE_STRING>inches		       { return(MS_INCHES); }
 <INITIAL,VALUE_STRING>kilometers	       { return(MS_KILOMETERS); }

@@ -346,6 +346,7 @@ int msCopyStyle(styleObj *dst, styleObj *src)
         MS_COPYSTRING(dst->symbolname, src->symbolname);
     }
 
+
     MS_COPYSTELEM(symbol);
     MS_COPYSTELEM(size);
     MS_COPYSTELEM(sizescaled);
@@ -356,6 +357,9 @@ int msCopyStyle(styleObj *dst, styleObj *src)
     MS_COPYSTELEM(antialias);
     MS_COPYSTELEM(isachild);
     MS_COPYSTELEM(angle);
+
+    if (src->angleitem) MS_COPYSTRING(dst->angleitem, src->angleitem);
+    if (src->sizeitem) MS_COPYSTRING(dst->sizeitem, src->sizeitem);
 
     return MS_SUCCESS;
 }

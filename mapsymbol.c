@@ -256,10 +256,10 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       break;
     case(TYPE):
 #ifdef USE_GD_FT
-      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_TRUETYPE,MS_SYMBOL_CARTOLINE)) == -1)
+      if((s->type = getSymbol(7,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_TRUETYPE,MS_SYMBOL_CARTOLINE,MS_SYMBOL_HATCH)) == -1)
 	return(-1);	
 #else
-      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_CARTOLINE)) == -1)
+      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_CARTOLINE,MS_SYMBOL_HATCH)) == -1)
 	return(-1);
 #endif
       if(s->type == MS_TRUETYPE) // TrueType keyword is valid several place in map files and symbol files, this simplifies the lexer
@@ -284,54 +284,57 @@ void writeSymbol(symbolObj *s, FILE *stream)
   if(s->name != NULL) fprintf(stream, "    NAME \"%s\"\n", s->name);
   
   switch (s->type) {
-    case(MS_SYMBOL_PIXMAP):
-      fprintf(stream, "    TYPE PIXMAP\n");
-      if(s->imagepath != NULL) fprintf(stream, "    IMAGE %s\n", s->imagepath);
-      fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
-      break;
-    case(MS_SYMBOL_TRUETYPE):
-      fprintf(stream, "    TYPE TRUETYPE\n");
-      if(s->antialias == MS_TRUE) fprintf(stream, "    ANTIALIAS TRUE\n");
-      fprintf(stream, "    CHARACTER %s\n", s->character);
-      fprintf(stream, "    GAP %d\n", s->gap);
-      fprintf(stream, "    FONT %s\n", s->font);
-      fprintf(stream, "    POSITION %d\n", s->position);
-      break;
-    case(MS_SYMBOL_CARTOLINE):
-      fprintf(stream, "    TYPE CARTOLINE\n");
-      fprintf(stream, "    LINECAP %d\n", s->linecap);
-      fprintf(stream, "    LINEJOIN %d\n", s->linejoin);
-      fprintf(stream, "    LINEJOINMAXSIZE %g\n", s->linejoinmaxsize);
-      break;
-    case(MS_SYMBOL_SIMPLE):
-      break;
-    case(MS_SYMBOL_ELLIPSE):
+  case(MS_SYMBOL_HATCH):
+    // todo!
+    break;
+  case(MS_SYMBOL_PIXMAP):
+    fprintf(stream, "    TYPE PIXMAP\n");
+    if(s->imagepath != NULL) fprintf(stream, "    IMAGE %s\n", s->imagepath);
+    fprintf(stream, "    TRANSPARENT %d\n", s->transparentcolor);
+    break;
+  case(MS_SYMBOL_TRUETYPE):
+    fprintf(stream, "    TYPE TRUETYPE\n");
+    if(s->antialias == MS_TRUE) fprintf(stream, "    ANTIALIAS TRUE\n");
+    fprintf(stream, "    CHARACTER %s\n", s->character);
+    fprintf(stream, "    GAP %d\n", s->gap);
+    fprintf(stream, "    FONT %s\n", s->font);
+    fprintf(stream, "    POSITION %d\n", s->position);
+    break;
+  case(MS_SYMBOL_CARTOLINE):
+    fprintf(stream, "    TYPE CARTOLINE\n");
+    fprintf(stream, "    LINECAP %d\n", s->linecap);
+    fprintf(stream, "    LINEJOIN %d\n", s->linejoin);
+    fprintf(stream, "    LINEJOINMAXSIZE %g\n", s->linejoinmaxsize);
+    break;
+  case(MS_SYMBOL_SIMPLE):
+    break;
+  case(MS_SYMBOL_ELLIPSE):
     //default = MS_SYMBOL_VECTOR
-    default:
-      if(s->type == MS_SYMBOL_ELLIPSE)
-          fprintf(stream, "    TYPE ELLIPSE\n");
-      else
-          fprintf(stream, "    TYPE VECTOR\n");
-
-      if(s->filled == MS_TRUE) fprintf(stream, "    FILLED TRUE\n");
-
-      // POINT
-      if(s->numpoints != 0) {
-          fprintf(stream, "    POINTS\n");
-          for(i=0; i<s->numpoints; i++) {
-              fprintf(stream, "      %g %g\n", s->points[i].x, s->points[i].y);
-          }
-          fprintf(stream, "    END\n");
+  default:
+    if(s->type == MS_SYMBOL_ELLIPSE)
+      fprintf(stream, "    TYPE ELLIPSE\n");
+    else
+      fprintf(stream, "    TYPE VECTOR\n");
+    
+    if(s->filled == MS_TRUE) fprintf(stream, "    FILLED TRUE\n");
+    
+    // POINT
+    if(s->numpoints != 0) {
+      fprintf(stream, "    POINTS\n");
+      for(i=0; i<s->numpoints; i++) {
+	fprintf(stream, "      %g %g\n", s->points[i].x, s->points[i].y);
       }
-      // STYLE
-      if(s->stylelength != 0) {
-          fprintf(stream, "    STYLE\n     ");
-          for(i=0; i<s->stylelength; i++) {
-              fprintf(stream, " %d", s->style[i]);
-          }
-          fprintf(stream, "\n    END\n");
+      fprintf(stream, "    END\n");
+    }
+    // STYLE
+    if(s->stylelength != 0) {
+      fprintf(stream, "    STYLE\n     ");
+      for(i=0; i<s->stylelength; i++) {
+	fprintf(stream, " %d", s->style[i]);
       }
-      break;
+      fprintf(stream, "\n    END\n");
+    }
+    break;
   }
       
   fprintf(stream, "  END\n\n");

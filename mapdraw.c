@@ -16,20 +16,19 @@ void msClearLayerPenValues(layerObj *layer) {
   int i, j;  
 
   for(i=0; i<layer->numclasses; i++) {
-      layer->class[i].label.backgroundcolor.pen = MS_PEN_UNSET; // set in billboardXX function
-      layer->class[i].label.backgroundshadowcolor.pen = MS_PEN_UNSET;
-      layer->class[i].label.color.pen = MS_PEN_UNSET; // set in MSXXDrawText function
-      layer->class[i].label.outlinecolor.pen = MS_PEN_UNSET;
-      layer->class[i].label.shadowcolor.pen = MS_PEN_UNSET;      
+    layer->class[i].label.backgroundcolor.pen = MS_PEN_UNSET; // set in billboardXX function
+    layer->class[i].label.backgroundshadowcolor.pen = MS_PEN_UNSET;
+    layer->class[i].label.color.pen = MS_PEN_UNSET; // set in MSXXDrawText function
+    layer->class[i].label.outlinecolor.pen = MS_PEN_UNSET;
+    layer->class[i].label.shadowcolor.pen = MS_PEN_UNSET;      
 
-      for(j=0; j<layer->class[i].numstyles; j++) {
-        layer->class[i].styles[j].backgroundcolor.pen = MS_PEN_UNSET; // set in various symbol drawing functions
-	layer->class[i].styles[j].color.pen = MS_PEN_UNSET;
-        layer->class[i].styles[j].outlinecolor.pen = MS_PEN_UNSET; 
-      }
+    for(j=0; j<layer->class[i].numstyles; j++) {
+      layer->class[i].styles[j].backgroundcolor.pen = MS_PEN_UNSET; // set in various symbol drawing functions
+	  layer->class[i].styles[j].color.pen = MS_PEN_UNSET;
+      layer->class[i].styles[j].outlinecolor.pen = MS_PEN_UNSET; 
     }
+  }
 }
-
 
 void msClearScalebarPenValues(scalebarObj *scalebar)
 {
@@ -1136,52 +1135,51 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     switch(shape->type) {
     case(MS_SHAPE_LINE):
       if(layer->transform) {
-	msClipPolylineRect(shape, cliprect);
-	if(shape->numlines == 0) return(MS_SUCCESS);
-	msTransformShape(shape, map->extent, map->cellsize, image);
+        msClipPolylineRect(shape, cliprect);
+        if(shape->numlines == 0) return(MS_SUCCESS);
+        msTransformShape(shape, map->extent, map->cellsize, image);
       }
 
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
-
-	if(layer->labelangleitemindex != -1) layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);
+        if(layer->labelangleitemindex != -1) layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
+        if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
 	if(layer->class[c].label.autoangle) layer->class[c].label.angle = angle;
 
-	if(layer->labelcache) {
+        if(layer->labelcache) {
 	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length) != MS_SUCCESS) return(MS_FAILURE);
 	} else {
-	  if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
+          if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
             for(s=0; s<layer->class[c].numstyles; s++)
-	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
+              msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
 	  }
 	  msDrawLabel(image, annopnt, shape->text, &(layer->class[c].label), &map->fontset, layer->scalefactor);
-	}
+        }
       }
 
       break;
     case(MS_SHAPE_POLYGON):
 
       if(layer->transform) {
-	msClipPolygonRect(shape, cliprect);
-	if(shape->numlines == 0) return(MS_SUCCESS);
-	msTransformShape(shape, map->extent, map->cellsize, image);
+        msClipPolygonRect(shape, cliprect);
+        if(shape->numlines == 0) return(MS_SUCCESS);
+        msTransformShape(shape, map->extent, map->cellsize, image);
       }
 
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 
-	if(layer->labelangleitemindex != -1) layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);
+        if(layer->labelangleitemindex != -1) layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
+        if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) layer->class[c].label.size = atoi(shape->values[layer->labelsizeitemindex]);
 
-	if(layer->labelcache) {
+        if(layer->labelcache) {
 	  if(msAddLabel(map, layer->index, c, shape->tileindex, shape->index, &annopnt, shape->text, length) != MS_SUCCESS) return(MS_FAILURE);
-	} else {
+        } else {
 	  if(MS_VALID_COLOR(layer->class[c].styles[0].color)) {
             for(s=0; s<layer->class[c].numstyles; s++)
 	      msDrawMarkerSymbol(&map->symbolset, image, &annopnt, &(layer->class[c].styles[s]), layer->scalefactor);
 	  }
 	  msDrawLabel(image, annopnt, shape->text, &(layer->class[c].label), &map->fontset, layer->scalefactor);
-	}
+        }
       }
       break;
     default: // points and anything with out a proper type
@@ -1218,10 +1216,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   case MS_LAYER_POINT:
 
 #ifdef USE_PROJ
-      if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
-        msProjectShape(&layer->projection, &map->projection, shape);
-      else
-        layer->project = MS_FALSE;
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+      msProjectShape(&layer->projection, &map->projection, shape);
+    else
+      layer->project = MS_FALSE;
 #endif
 
     for(j=0; j<shape->numlines;j++) {
@@ -1270,11 +1268,17 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msTransformShape(shape, map->extent, map->cellsize, image);
     }
  
-    if(style != -1)
+    if(style != -1) {
+      if(layer->class[c].styles[style].angleitemindex != -1) layer->class[c].styles[style].angle = atof(shape->values[layer->class[c].styles[style].angleitemindex]);
+      if(layer->class[c].styles[style].sizeitemindex != -1) layer->class[c].styles[style].size = atoi(shape->values[layer->class[c].styles[style].sizeitemindex]);
       msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[style]), layer->scalefactor);
-    else
-      for(s=0; s<layer->class[c].numstyles; s++)
+    } else {
+      for(s=0; s<layer->class[c].numstyles; s++) {
+        if(layer->class[c].styles[s].angleitemindex != -1) layer->class[c].styles[s].angle = atof(shape->values[layer->class[c].styles[s].angleitemindex]);
+        if(layer->class[c].styles[s].sizeitemindex != -1) layer->class[c].styles[s].size = atoi(shape->values[layer->class[c].styles[s].sizeitemindex]);
         msDrawLineSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[s]), layer->scalefactor);
+      }
+    }
 
     if(shape->text) {
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
@@ -1298,21 +1302,16 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
 
 #ifdef USE_PROJ
-    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) 
-    {
-        if( msProjectShape(&layer->projection, &map->projection, shape)
-            == MS_FAILURE )
-        {
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) {
+      if(msProjectShape(&layer->projection, &map->projection, shape) == MS_FAILURE ) {
 #ifdef notdef 
-            msSetError(MS_PROJERR, 
-                       "Reprojecting a shape failed.", "msDrawShape()" );
-            return MS_FAILURE;
+        msSetError(MS_PROJERR, "Reprojecting a shape failed.", "msDrawShape()" );
+        return MS_FAILURE;
 #else
-            return MS_SUCCESS;
+        return MS_SUCCESS;
 #endif
-        }
-    }
-    else
+      }
+    } else
       layer->project = MS_FALSE;
 #endif
 
@@ -1322,9 +1321,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
       msTransformShape(shape, map->extent, map->cellsize, image);
     }
  
-    for(s=0; s<layer->class[c].numstyles; s++)
+    for(s=0; s<layer->class[c].numstyles; s++) {
+      if(layer->class[c].styles[s].angleitemindex != -1) layer->class[c].styles[s].angle = atof(shape->values[layer->class[c].styles[s].angleitemindex]);
+      if(layer->class[c].styles[s].sizeitemindex != -1) layer->class[c].styles[s].size = atoi(shape->values[layer->class[c].styles[s].sizeitemindex]);
       msDrawShadeSymbol(&map->symbolset, image, shape, &(layer->class[c].styles[s]), layer->scalefactor);
-    
+    }    
+
     if(shape->text) {
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {	
 	if(layer->labelangleitemindex != -1) layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);

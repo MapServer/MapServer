@@ -1471,6 +1471,10 @@ int initStyle(styleObj *style) {
   style->antialias = MS_FALSE;
   style->isachild = MS_TRUE;
   style->angle = 0;
+
+  style->angleitem = style->sizeitem = NULL;
+  style->angleitemindex = style->sizeitemindex = -1;
+
   return MS_SUCCESS;
 }
 
@@ -1481,6 +1485,9 @@ int loadStyle(styleObj *style) {
     switch(msyylex()) {
     case(ANGLE):
       if(getDouble(&(style->angle)) == -1) return(-1);
+      break;
+    case(ANGLEITEM):
+      if(getString(&style->angleitem) == MS_FAILURE) return(-1);
       break;
     case(ANTIALIAS):
       if((style->antialias = getSymbol(2, MS_TRUE,MS_FALSE)) == -1)
@@ -1519,10 +1526,12 @@ int loadStyle(styleObj *style) {
     case(SIZE):
       if(getInteger(&(style->size)) == -1) return(MS_FAILURE);
       style->sizescaled = style->size;
-      break;    
+      break;
+    case(SIZEITEM):
+      if(getString(&style->sizeitem) == MS_FAILURE) return(-1);
+      break;
     case(SYMBOL):
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(MS_FAILURE);
-
       if(state == MS_NUMBER)
 	style->symbol = (int) msyynumber;
       else
@@ -1542,11 +1551,14 @@ int loadStyleString(styleObj *style) {
 
 void freeStyle(styleObj *style) {
   msFree(style->symbolname);
+  msFree(style->angleitem);
+  msFree(style->sizeitem);
 }
 
 void writeStyle(styleObj *style, FILE *stream) {
   fprintf(stream, "      STYLE\n");
   if(style->angle != 0) fprintf(stream, "        ANGLE %g\n", style->angle);
+  if(style->angleitem) fprintf(stream, "        ANGLEITEM %s\n", style->angleitem);
   if(style->antialias) fprintf(stream, "        ANTIALIAS TRUE\n");
   writeColor(&(style->backgroundcolor), stream, "BACKGROUNDCOLOR", "        ");
 
@@ -1560,6 +1572,7 @@ void writeStyle(styleObj *style, FILE *stream) {
   if(style->minsize > -1) fprintf(stream, "        MINSIZE %d\n", style->minsize);
   writeColor(&(style->outlinecolor), stream, "OUTLINECOLOR", "        "); 
   fprintf(stream, "        SIZE %d\n", style->size);
+  if(style->sizeitem) fprintf(stream, "        SIZEITEM %s\n", style->sizeitem);
   if(style->symbolname)
     fprintf(stream, "        SYMBOL \"%s\"\n", style->symbolname);
   else
