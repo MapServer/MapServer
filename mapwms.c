@@ -27,6 +27,14 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.157.2.1  2004/12/07 18:31:13  assefa
+ * Fixed wms 1.1.1 capabilities issue : It points now to WMS_MS_Capabilities.dtd
+ * instead of capabilities_1_1_1.dtd (Bug 1097)
+ *
+ * Revision 1.157  2004/11/29 21:31:56  dan
+ * Fixed WMS GetCapabilities 1.1.0 crash when wms_style_<...>_legendurl_*
+ * metadata were used (bug 1096)
+ *
  * Revision 1.156  2004/11/26 17:24:55  assefa
  * Url encode Service online resource (Bug 1093).
  *
@@ -1352,7 +1360,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
        // close the style block
        fprintf(stdout, "        </Style>\n");
-       msFree(pszMetadataName);       
 
    }
    else if(nVersion >= OWS_1_1_0)
@@ -1366,7 +1373,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
 
            
            // Inside, print the legend url block
-           msFree(pszMetadataName);       
            sprintf(pszMetadataName, "style_%s_legendurl", pszStyle);
            msOWSPrintURLType(stdout, &(lp->metadata), "MO",pszMetadataName,
                              OWS_NOERR, NULL, "LegendURL", NULL, 
@@ -1379,7 +1385,6 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
                              MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
                              NULL, NULL, NULL, NULL, NULL, "          ");
            fprintf(stdout, "        </Style>\n");
-           msFree(pszMetadataName);
                
        }
        else
@@ -1469,6 +1474,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *script_url_
        }
    }
    
+   msFree(pszMetadataName);
 
    msWMSPrintScaleHint("        ", lp->minscale, lp->maxscale, map->resolution);
 
@@ -1644,7 +1650,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   else {
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
+    dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
   }
 
   // We need this server's onlineresource.

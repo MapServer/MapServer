@@ -18,7 +18,14 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.13  $Date$
+ * Revision 1.15  $Date$
+ * Fixed problem with LayerClose function.
+ * Added token NONE for DATA statement. 
+ *
+ * Revision 1.14  2004/11/15 20:35:02 [CVS-TIME] dan
+ * Added msLayerIsOpen() to all vector layer types (bug 1051)
+ *
+ * Revision 1.13  2004/11/15 20:35:02 [CVS-TIME]
  * Fixed declarations problems - Bug #1044
  *
  * Revision 1.12  2004/11/05 20:33:14 [CVS-TIME]
@@ -113,10 +120,10 @@ MS_CVSID("$Id$")
 #define TYPE_OWNER                 "MDSYS"
 #define SDO_GEOMETRY               TYPE_OWNER".SDO_GEOMETRY"
 #define SDO_GEOMETRY_LEN           strlen( SDO_GEOMETRY )
-#define FUNCTION_NONE              0
 #define FUNCTION_FILTER            1
 #define FUNCTION_RELATE            2
 #define FUNCTION_GEOMRELATE        3
+#define FUNCTION_NONE              4
 #define TOLERANCE                  0.000005
 #define NULLERRCODE                1405
 
@@ -180,11 +187,6 @@ typedef struct {
 typedef struct {
   /* oracle handlers */
   msOracleSpatialHandler *orahandlers;
-#if 0
-  OCIEnv           *envhp;
-  OCIError         *errhp;
-  OCISvcCtx        *svchp;
-#endif
   /* query data */
   OCIStmt          *stmthp;
   OCIDescribe      *dschp;
@@ -209,6 +211,7 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
 static void msOCISetLayerInfo( msOracleSpatialLayerInfo *layerinfo );
 static void msOCIDisconnect( msOracleSpatialLayerInfo *layerinfo );
 static void msOCICloseHandlers( msOracleSpatialHandler *hand );
+static void msOCICloseLayerInfo( msOracleSpatialLayerInfo *layerinfo );
 static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo );
 static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt );
 static int msOCIConvertCircle( pointObj *pt );
@@ -378,19 +381,6 @@ static int msSplitData( char *data, char *geometry_column_name, char *table_name
        *tgt = 0;
     }
     
-#if 0
-    mempcy(tok_function, inicio, len);
-    tok_function[len] = '\0';
-     
-    flk[1] = '\0';   
-    for( ;*src && isspace( *src ); src++ ) ; /* skip blanks */
-    for( ;*src && !isspace( *src ) && strlen(tok_function) < 11 ; src++ )
-    {
-        flk[0] = *src;
-        strcat (tok_function, flk);
-    }
-#endif
-    
     /*parsing function*/
     for( ;*src && isspace( *src ); src++ );
     flk = src;
@@ -402,11 +392,13 @@ static int msSplitData( char *data, char *geometry_column_name, char *table_name
         strncpy(tok_function, flk, len);      
        
     if (!strcmp(tok_function, "FILTER") || !strcmp(tok_function, ""))
-        *function = FUNCTION_FILTER;
+      *function = FUNCTION_FILTER;
     else if(!strcmp(tok_function, "RELATE"))
       *function = FUNCTION_RELATE;
     else if (!strcmp(tok_function,"GEOMRELATE"))
       *function = FUNCTION_GEOMRELATE;
+    else if (!strcmp(tok_function,"NONE"))
+      *function = FUNCTION_NONE;
     else
       *function = -1;      
 
@@ -424,7 +416,7 @@ static void msOCISetLayerInfo(msOracleSpatialLayerInfo *layerinfo)
   OCIParam *paramp = NULL;
   OCIRef *type_ref = NULL;
   
-  msOracleSpatialHandler *hand = layerinfo->orahandlers;
+  msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
   
   success = TRY( hand,
     /* allocate stmthp */
@@ -472,7 +464,7 @@ static msOracleSpatialHandler *msOCISetHandlers( char *username, char *password,
 
   if ( !success ) {
       msOCICloseHandlers(hand);
-      free( hand );
+      /*free( hand );*/
       return NULL;
   }
   
@@ -488,7 +480,16 @@ static void msOCICloseHandlers( msOracleSpatialHandler *hand )
     OCIHandleFree( (dvoid *)hand->errhp, (ub4)OCI_HTYPE_ERROR );
   if (hand->envhp != NULL)
     OCIHandleFree( (dvoid *)hand->envhp, (ub4)OCI_HTYPE_ENV );
-  memset( hand, 0, sizeof (msOracleSpatialHandler));
+  if (hand != NULL)    
+    memset( hand, 0, sizeof (msOracleSpatialHandler));  
+  free(hand);
+}
+
+static void msOCICloseLayerInfo( msOracleSpatialLayerInfo *layerinfo )
+{  
+  if (layerinfo != NULL)
+    memset( layerinfo, 0, sizeof( msOracleSpatialLayerInfo ) );
+  free(layerinfo);
 }
 
 static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo )
@@ -500,14 +501,13 @@ static void msOCIClearLayerInfo( msOracleSpatialLayerInfo *layerinfo )
   if (layerinfo->items != NULL)
     free( layerinfo->items );
   if (layerinfo->items_query != NULL)
-    free( layerinfo->items_query );
-  memset( layerinfo, 0, sizeof( msOracleSpatialLayerInfo ) ); 
+    free( layerinfo->items_query );  
 }
 
 /* disconnect from database */
 static void msOCIDisconnect( msOracleSpatialLayerInfo *layerinfo )
 {  
-  msOracleSpatialHandler *hand = layerinfo->orahandlers;
+  msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
   
   if (layerinfo->dschp != NULL)
     OCIHandleFree( (dvoid *)layerinfo->dschp, (ub4)OCI_HTYPE_DESCRIBE );
@@ -537,7 +537,7 @@ static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryOb
   boolean exists;
   OCINumber *oci_number;
 
-  msOracleSpatialHandler *hand = layerinfo->orahandlers;
+  msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
   
   for( i=s, n=0; i < e && success; i+=2, n++ ) {
     success = TRY( hand,
@@ -728,7 +728,7 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
   lineObj points = {0, NULL};
   pointObj point5[5]; /* for quick access */
 
-  msOracleSpatialHandler *hand = layerinfo->orahandlers;
+  msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
   
   if (ind->_atomic != OCI_IND_NULL)  /* not a null object */
   {
@@ -821,14 +821,15 @@ static void msOCICloseConnection( void *hand )
 int msOracleSpatialLayerOpen( layerObj *layer )
 {
   char username[1024], password[1024], dblink[1024];  
-  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)malloc( sizeof(msOracleSpatialLayerInfo) );    
+  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)malloc(sizeof(msOracleSpatialLayerInfo));
+  msOracleSpatialHandler *hand = (msOracleSpatialHandler *)malloc(sizeof(msOracleSpatialHandler));
   
+  memset( hand, 0, sizeof(msOracleSpatialHandler) );  
   memset( layerinfo, 0, sizeof(msOracleSpatialLayerInfo) );  
   
   if (layer->debug)
     msDebug("msOracleSpatialLayerOpen called with: %s\n",layer->data);
-  
-  
+    
   if (layer->layerinfo != NULL)
     return MS_SUCCESS;
 
@@ -837,7 +838,7 @@ int msOracleSpatialLayerOpen( layerObj *layer )
            "Error parsing OracleSpatial DATA variable. Must be:"
            "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
            "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'."
-           "If want to set the FUNCTION statement you can use: FILTER, RELATE or GEOMRELATE.",
+           "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE.",
            "msOracleSpatialLayerOpen()");
     return MS_FAILURE;
   }
@@ -848,14 +849,18 @@ int msOracleSpatialLayerOpen( layerObj *layer )
   layerinfo->orahandlers = (msOracleSpatialHandler *) msConnPoolRequest( layer );
     
   if( layerinfo->orahandlers == NULL ){
-    layerinfo->orahandlers = msOCISetHandlers( username, password, dblink );    
-    if (layerinfo->orahandlers == NULL){      
+    layerinfo->orahandlers = msOCISetHandlers( username, password, dblink );
+    if (layerinfo->orahandlers == NULL){ 
+      
       msSetError( MS_ORACLESPATIALERR, 
-           "Cannot create OCI Handlers. "
-           "Connection failure.",
-           "msOracleSpatialLayerOpen()");
+          "Cannot create OCI Handlers. "
+          "Connection failure. Check the connection string. "
+          "Error: %s.", 
+          "msOracleSpatialLayerOpen()", last_oci_call_ms_error);
+      
       msOCIClearLayerInfo( layerinfo );
-      free(layerinfo);
+      msOCICloseLayerInfo( layerinfo );
+      
       return MS_FAILURE;
     }
     
@@ -871,10 +876,11 @@ int msOracleSpatialLayerOpen( layerObj *layer )
       msSetError( MS_ORACLESPATIALERR, 
            "Cannot create OCI LayerInfo. "
            "Connection failure.",
-           "msOracleSpatialLayerOpen()");
+           "msOracleSpatialLayerOpen()");      
+      msOCIClearLayerInfo( layerinfo );      
       msOCICloseHandlers( layerinfo->orahandlers );
-      msOCIClearLayerInfo( layerinfo );
-      free(layerinfo);
+      msOCICloseLayerInfo( layerinfo );
+      
       return MS_FAILURE;
   } 
   layer->layerinfo = layerinfo;
@@ -882,7 +888,7 @@ int msOracleSpatialLayerOpen( layerObj *layer )
   return layer->layerinfo != NULL ? MS_SUCCESS : MS_FAILURE;
 }
 
-// Return MS_TRUE if layer is open, MS_FALSE otherwise.
+/* return MS_TRUE if layer is open, MS_FALSE otherwise.*/
 int msOracleSpatialLayerIsOpen(layerObj *layer)
 {
     if (layer->layerinfo != NULL)
@@ -894,7 +900,7 @@ int msOracleSpatialLayerIsOpen(layerObj *layer)
 /* closes the layer, disconnecting from db if connected. layer->layerinfo is freed */
 int msOracleSpatialLayerClose( layerObj *layer )
 { 
-  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;
+  msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;  
   
   if (layer->debug)
     msDebug("msOracleSpatialLayerClose was called. Layer connection: %s\n",layer->connection);
@@ -902,17 +908,15 @@ int msOracleSpatialLayerClose( layerObj *layer )
   if (layerinfo != NULL){
     
     if (layer->debug)
-      msDebug("msOracleSpatialLayerClose. Cleaning Oracle handlers.\n");
+      msDebug("msOracleSpatialLayerClose. Cleaning layerinfo handlers.\n");    
+    msOCIClearLayerInfo( layerinfo );
     
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerClose. Cleaning Oracle handlers.\n");    
     msConnPoolRelease( layer, layerinfo->orahandlers );    
     layerinfo->orahandlers = NULL;
     
-    if (layer->debug)
-      msDebug("msOracleSpatialLayerClose. Cleaning layerinfo handlers.\n");
-    
-    msOCIClearLayerInfo( layerinfo );
-    /*msOCIDisconnect( layerinfo );*/
-    free( layerinfo );
+    msOCICloseLayerInfo( layerinfo );    
     layer->layerinfo = NULL;
   }
 
@@ -930,7 +934,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   
   /* get layerinfo */
   msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;      
-  msOracleSpatialHandler *hand = layerinfo->orahandlers;
+  msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
 
   if (layer->debug)
     msDebug("msOracleSpatialLayerWhichShapes was called.\n");  
@@ -948,7 +952,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
       "Error parsing OracleSpatial DATA variable. Must be:"
       "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
       "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'."
-      "If want to set the FUNCTION statement you can use: FILTER, RELATE or GEOMRELATE."
+      "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE."
       "Your data statement: %s", 
       "msOracleSpatialLayerWhichShapes()", layer->data );
     return MS_FAILURE;
@@ -978,12 +982,19 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
     sprintf( query_str + strlen(query_str), ", %s", layer->items[i] );
   sprintf( query_str + strlen(query_str), ", %s FROM %s", geom_column_name, table_name );
   
-  strcat( query_str, " WHERE " );  
-  if (layer->filter.string != NULL) 
+  if (layer->filter.string != NULL)
   {
-    sprintf (query_str + strlen(query_str), "%s AND ", layer->filter.string);   
+    if (function == FUNCTION_NONE)
+      sprintf (query_str + strlen(query_str), " WHERE %s ", layer->filter.string);
+    else
+      sprintf (query_str + strlen(query_str), " WHERE %s AND ", layer->filter.string);
+  }
+  else
+  {
+    if (function != FUNCTION_NONE)
+      strcat( query_str, " WHERE " );
   } 
-
+  
   switch (function)
   {
       case FUNCTION_FILTER:
@@ -1018,6 +1029,10 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
              "%f) = 'TRUE' AND %s IS NOT NULL",
           geom_column_name, srid, rect.minx, rect.miny, rect.maxx, rect.maxy, TOLERANCE, geom_column_name );
           break;
+      }      
+      case FUNCTION_NONE:
+      {
+          break;
       }
       default:
       {
@@ -1029,8 +1044,8 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
              "'querytype=window') = 'TRUE'",
           geom_column_name, srid, rect.minx, rect.miny, rect.maxx, rect.maxy );
       }
-  }
-     
+  }  
+  
   /* prepare */
   success = TRY( hand, OCIStmtPrepare( layerinfo->stmthp, hand->errhp, (text *)query_str, (ub4)strlen(query_str), (ub4)OCI_NTV_SYNTAX, (ub4)OCI_DEFAULT) );
    
@@ -1063,7 +1078,6 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
       "Check your data statement.", 
       "msOracleSpatialLayerWhichShapes()", last_oci_call_ms_error, query_str );
     return MS_FAILURE;
-
   }
   /* should begin processing first row */
   layerinfo->row_num = layerinfo->row = 0;  
@@ -1080,7 +1094,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
   
   /* get layerinfo */
   msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;      
-  msOracleSpatialHandler *hand = layerinfo->orahandlers;
+  msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
   
   if (layerinfo == NULL) {
     msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerWhichShapes called on unopened layer", "msOracleSpatialLayerWhichShapes()" );
@@ -1132,8 +1146,9 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
     success = osGetOrdinates(layerinfo, shape, obj, ind);
     if (success != MS_SUCCESS)
       return MS_FAILURE;
+    osShapeBounds(shape);
   }while(shape->type == MS_SHAPE_NULL);
-    
+   
   return MS_SUCCESS;
 }
 
@@ -1148,7 +1163,7 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     OCIParam *pard = (OCIParam *) 0;
     
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *) layer->layerinfo;         
-    msOracleSpatialHandler *hand = layerinfo->orahandlers;
+    msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
 
     if (layer->debug)
       msDebug("msOracleSpatialLayerGetItems was called.\n");
@@ -1163,7 +1178,7 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
           "Error parsing OracleSpatial DATA variable. Must be: "
           "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
           "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
-          "If want to set the FUNCTION statement you can use: FILTER, RELATE or GEOMRELATE. "
+          "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
           "Your data statement: %s", 
           "msOracleSpatialLayerWhichShapes()", layer->data );  
       return MS_FAILURE;
@@ -1240,7 +1255,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
     SDOGeometryInd *ind = NULL;    
 
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;    
-    msOracleSpatialHandler *hand = layerinfo->orahandlers;
+    msOracleSpatialHandler *hand = (msOracleSpatialHandler *)layerinfo->orahandlers;
     
     if (layer->debug)
       msDebug("msOracleSpatialLayerGetShape was called. Using the record = %ld.\n", record);
@@ -1265,7 +1280,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
            "Error parsing OracleSpatial DATA variable. Must be: "
            "'geometry_column FROM table_name [USING UNIQUE <column> SRID srid# FUNCTION]' or "
            "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
-           "If want to set the FUNCTION statement you can use: FILTER, RELATE or GEOMRELATE. "
+           "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
            "Your data statement: %s", 
            "msOracleSpatialLayerWhichShapes()", layer->data );
        return MS_FAILURE;

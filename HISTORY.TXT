@@ -12,8 +12,46 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
-Version 4.4.0-beta4?
---------------------
+
+Version 4.4.1 (2004-12-22)
+--------------------------
+
+- Spacing between hatch lines (new HATCH symbol type) is now consistent 
+  regardless of angle.
+
+- Oracle Spatial:
+  Fixed problem with LayerClose function.
+  Added token NONE for DATA statement.
+  Thanks Valik with the hints about the LayerClose problem and Francois
+  with the hints about NONE token.  
+
+- numpoints and stylelength members of the symbol object need to be in sync
+  with the low level values after calls to setpoints and setstyle (Bug 1137).
+
+- Use doubles instead of integers in function php3_ms_symbol_setPoints 
+  (Bug 1137).
+
+- Fixed msFreeFileCtx() to call free() instead of gdFree() as per bug 1125. 
+  Also renamed gdFreeFileCtx() to msFreeFileCtx(). 
+
+- Fixed MyGIS build error introduced when adding msLayerIsOpen() (bug 1116)
+
+- Fixed segmentation fault when generating PDF output (bug 1105)
+
+- Fixed wms 1.1.1 capabilities issue: Point to WMS_MS_Capabilities.dtd
+  instead of capabilities_1_1_1.dtd (Bug 1097)
+
+- Fixed problem with accumlated error stacks in fastcgi mode.  Bug 1122
+
+- Fixed support for SIZEUNITS based scaling of text when map is rotated.
+  Bug 1127.
+
+
+Version 4.4.0 (2004-11-29)
+--------------------------
+
+- Fixed WMS GetCapabilities 1.1.0 crash when wms_style_<...>_legendurl_*
+  metadata were used (bug 1096)
 
 - WCS GetCapabilities : Added ResponsibleParty support.
 
@@ -32,6 +70,7 @@ Version 4.4.0-beta4?
 - Fixed mapwfslayer.c build error when WFS was not enabled (bug 1083)
 
 - Check that we have vsnprintf in mapimagemap.c before using it. 
+
 
 Version 4.4.0-beta3 (2004-11-22)
 --------------------------------
