@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.151  2004/11/16 20:19:39  dan
+ * First pass at supporting "ows_*" metadata names in WMS/WFS (bug 568)
+ *
  * Revision 1.150  2004/11/16 18:49:44  dan
  * Added ows_service_onlineresource metadata for WMS/WFS to distinguish between
  * service onlineresource and GetMap/Capabilities onlineresource (bug 375)
@@ -224,7 +227,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
       msIO_printf("Content-type: text/xml%c%c",10,10);
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
-                         NULL, "wms_encoding", OWS_NOERR,
+                               "MO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                     "ISO-8859-1");
       msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"http://www.digitalearth.gov/wmt/xml/exception_1_0_1.dtd\">\n");
@@ -238,7 +241,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
       msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
       msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
-                         NULL, "wms_encoding", OWS_NOERR,
+                               "MO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                          "ISO-8859-1");
 
@@ -252,7 +255,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
         msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
         msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
-                           NULL, "wms_encoding", OWS_NOERR,
+                                 "MO", "encoding", OWS_NOERR,
                   "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                            "ISO-8859-1");
         msIO_printf("<!DOCTYPE ServiceExceptionReport SYSTEM \"%s/wms/1.1.1/exception_1_1_1.dtd\">\n", schemalocation);
@@ -1133,7 +1136,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    {
        // 1.1.0 and later: opaque and cascaded are new.
        int cascaded=0, opaque=0;
-       if ((value = msLookupHashTable(&(lp->metadata), "wms_opaque")) != NULL)
+       if ((value = msOWSLookupMetadata(&(lp->metadata), "MO", "opaque")) != NULL)
            opaque = atoi(value);
        if (lp->connectiontype == MS_WMS)
            cascaded = 1;
@@ -1151,18 +1154,18 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
                          "        <Name>%s</Name>\n", NULL);
 
    // the majority of this section is dependent on appropriately named metadata in the LAYER object
-   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), NULL, "wms_title",
+   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "title",
                             OWS_WARN, "        <Title>%s</Title>\n", lp->name);
 
-   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), NULL, "wms_abstract",
+   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", "abstract",
                          OWS_NOERR, "        <Abstract>%s</Abstract>\n", NULL);
 
    if (nVersion == OWS_1_0_0)
    {
        // <Keywords> in V 1.0.0
        // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
-       msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), NULL,
-                                    "wms_keywordlist",
+       msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), "MO",
+                                    "keywordlist",
                                     "        <Keywords>",
                                     "        </Keywords>\n",
                                     "%s ", NULL);
@@ -1170,8 +1173,8 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    else
    {
        // <KeywordList><Keyword> ... in V1.0.6+
-       msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), NULL,
-                                    "wms_keywordlist",
+       msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), "MO",
+                                    "keywordlist",
                                     "        <KeywordList>\n",
                                     "        </KeywordList>\n",
                                     "          <Keyword>%s</Keyword>\n", NULL);
@@ -1471,7 +1474,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
 void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, int* numNestedGroups)
 {
   int i;
-  char* groups;
+  const char* groups;
   char* errorMsg;
 
   for (i = 0; i < map->numlayers; i++)
@@ -1479,7 +1482,7 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
     nestedGroups[i] = NULL; //default
     numNestedGroups[i] = 0; //default
     
-    groups = msLookupHashTable(&(map->layers[i].metadata), "WMS_LAYER_GROUP");
+    groups = msOWSLookupMetadata(&(map->layers[i].metadata), "MO", "layer_group");
     if ((groups != NULL) && (strlen(groups) != 0))
     {
       if (map->layers[i].group != NULL && strlen(map->layers[i].group) != 0)
@@ -1600,7 +1603,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
 {
   char *dtd_url = NULL;
   char *script_url=NULL, *script_url_encoded=NULL;
-  char *pszMimeType=NULL;
+  const char *pszMimeType=NULL;
   char szVersionBuf[OWS_VERSION_MAXLEN];
   char *schemalocation = NULL;
 
@@ -1649,7 +1652,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
       msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.1.0 and later
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
-                     NULL, "wms_encoding", OWS_NOERR,
+                           "MO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
                 "ISO-8859-1");
   msIO_printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
@@ -1676,9 +1679,9 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
       msIO_printf("  <Name>OGC:WMS</Name>\n"); // v 1.1.0+
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wms_title",
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title",
                            OWS_WARN, "  <Title>%s</Title>\n", map->name);
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wms_abstract",
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "abstract",
                            OWS_NOERR, "  <Abstract>%s</Abstract>\n", NULL);
 
   if (nVersion == OWS_1_0_0)
@@ -1686,7 +1689,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
       // <Keywords> in V 1.0.0
       // The 1.0.0 spec doesn't specify which delimiter to use so let's use spaces
       msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata),
-                                   NULL, "wms_keywordlist",
+                                   "MO", "keywordlist",
                                    "        <Keywords>",
                                    "        </Keywords>\n",
                                    "%s ", NULL);
@@ -1695,7 +1698,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   {
       // <KeywordList><Keyword> ... in V1.0.6+
       msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata),
-                                   NULL, "wms_keywordlist",
+                                   "MO", "keywordlist",
                                    "        <KeywordList>\n",
                                    "        </KeywordList>\n",
                                    "          <Keyword>%s</Keyword>\n", NULL);
@@ -1720,11 +1723,11 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   // In 1.1.0, ContactInformation becomes optional.
   msOWSPrintContactInfo(stdout, "  ", nVersion, &(map->web.metadata));
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wms_fees",
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "fees",
                            OWS_NOERR, "  <Fees>%s</Fees>\n", NULL);
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL,
-                           "wms_accessconstraints", OWS_NOERR,
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO",
+                           "accessconstraints", OWS_NOERR,
                         "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
 
   msIO_printf("</Service>\n\n");
@@ -1772,7 +1775,8 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                     mime_list[16], mime_list[17], mime_list[18], mime_list[19],
                     NULL );
 
-    pszMimeType = msLookupHashTable(&(map->web.metadata), "WMS_FEATURE_INFO_MIME_TYPE");
+    pszMimeType = msOWSLookupMetadata(&(map->web.metadata), "MO", 
+                                      "feature_info_mime_type");
 
     if (pszMimeType)
       msWMSPrintRequestCap(nVersion, "GetFeatureInfo", script_url_encoded,
@@ -1831,7 +1835,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                  map->name);
   msOWSPrintEncodeParam(stdout, "MAP.NAME", map->name, OWS_NOERR,
                         "    <Name>%s</Name>\n", NULL);
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wms_title",
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "MO", "title",
                            OWS_WARN, "    <Title>%s</Title>\n", map->name);
 
   // According to normative comments in the 1.0.7 DTD, the root layer's SRS tag
@@ -1905,10 +1909,10 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
              msOWSPrintEncodeParam(stdout, "GROUP.NAME", lp->group,
                                    OWS_NOERR, "      <Name>%s</Name>\n", NULL);
              msOWSPrintGroupMetadata(stdout, map, lp->group,
-                                     NULL, "WMS_GROUP_TITLE", OWS_WARN,
+                                     "MO", "GROUP_TITLE", OWS_WARN,
                                      "      <Title>%s</Title>\n", lp->group);
              msOWSPrintGroupMetadata(stdout, map, lp->group,
-                                     NULL, "WMS_GROUP_ABSTRACT", OWS_NOERR,
+                                     "MO", "GROUP_ABSTRACT", OWS_NOERR,
                                      "      <Abstract>%s</Abstract>\n", lp->group);
 
              // Dump all layers for this group
@@ -2196,7 +2200,7 @@ int msWMSFeatureInfo(mapObj *map, int nVersion, char **names, char **values, int
   int query_layer = 0;
 
 
-  pszMimeType = msLookupHashTable(&(map->web.metadata), "WMS_FEATURE_INFO_MIME_TYPE");
+  pszMimeType = msOWSLookupMetadata(&(map->web.metadata), "MO", "FEATURE_INFO_MIME_TYPE");
 
   for(i=0; map && i<numentries; i++) {
     if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
@@ -2379,9 +2383,9 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
    }
 
    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
-                      NULL, "wms_encoding", OWS_NOERR,
-                      "<?xml version='1.0' encoding=\"%s\"?>\n",
-                      "ISO-8859-1");
+                            "MO", "encoding", OWS_NOERR,
+                            "<?xml version='1.0' encoding=\"%s\"?>\n",
+                            "ISO-8859-1");
    schemalocation = msEncodeHTMLEntities(msOWSGetSchemasLocation(map));
    msIO_printf("<!DOCTYPE WMS_DescribeLayerResponse SYSTEM \"%s/wms/1.1.1/WMS_DescribeLayerResponse.dtd\">\n", schemalocation);
    free(schemalocation);
@@ -2389,11 +2393,11 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
    msIO_printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
 
    //check if map-level metadata wfs(wcs)_onlineresource is available
-   pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata),"OF", "onlineresource");
+   pszOnlineResMapWFS = msOWSLookupMetadata(&(map->web.metadata), "FO", "onlineresource");
    if (pszOnlineResMapWFS && strlen(pszOnlineResMapWFS) == 0)
        pszOnlineResMapWFS = NULL;
 
-   pszOnlineResMapWCS = msOWSLookupMetadata(&(map->web.metadata),"OC", "onlineresource");
+   pszOnlineResMapWCS = msOWSLookupMetadata(&(map->web.metadata), "CO", "onlineresource");
    if (pszOnlineResMapWCS && strlen(pszOnlineResMapWCS) == 0)
      pszOnlineResMapWCS = NULL;
 
@@ -2407,9 +2411,9 @@ int msWMSDescribeLayer(mapObj *map, int nVersion, char **names,
              /* Look for a WFS onlineresouce at the layer level and then at
               * the map level.
               */
-           pszOnlineResLyrWFS = msOWSLookupMetadata(&(lp->metadata), "OF",
+           pszOnlineResLyrWFS = msOWSLookupMetadata(&(lp->metadata), "FO",
                                                     "onlineresource");
-           pszOnlineResLyrWCS = msOWSLookupMetadata(&(lp->metadata), "OC",
+           pszOnlineResLyrWCS = msOWSLookupMetadata(&(lp->metadata), "CO",
                                                     "onlineresource");
            if (pszOnlineResLyrWFS == NULL || strlen(pszOnlineResLyrWFS) == 0)
                pszOnlineResLyrWFS = pszOnlineResMapWFS;
@@ -2798,8 +2802,8 @@ int msWMSDispatch(mapObj *map, cgiRequestObj *req)
        * info for selected layers in the LAYERS parameter.
        */
       const char *getcontext_enabled;
-      getcontext_enabled = msLookupHashTable(&(map->web.metadata),
-                                             "wms_getcontext_enabled");
+      getcontext_enabled = msOWSLookupMetadata(&(map->web.metadata),
+                                               "MO", "getcontext_enabled");
 
       if (nVersion != -1)
       {

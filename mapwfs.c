@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.55  2004/11/16 20:19:39  dan
+ * First pass at supporting "ows_*" metadata names in WMS/WFS (bug 568)
+ *
  * Revision 1.54  2004/11/16 18:49:44  dan
  * Added ows_service_onlineresource metadata for WMS/WFS to distinguish between
  * service onlineresource and GetMap/Capabilities onlineresource (bug 375)
@@ -89,7 +92,11 @@
  * Correct memeory leak in msWFSDispatch (Bug 758)
  *
  * Revision 1.37  2004/06/22 20:55:21  sean
- * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
+ * Towards resolving issue 737 changed hashTableObj to a structure which 
+ * contains a hashObj **items.  Changed all hash table access functions to
+ * operate on the target table by reference.  msFreeHashTable should not be
+ * used on the hashTableObj type members of mapserver structures, use
+ * msFreeHashItems instead.
  *
  * Revision 1.36  2004/06/04 14:10:06  assefa
  * Changes schema location for DescribeFeature
@@ -385,19 +392,17 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    msOWSPrintEncodeParam(stdout, "LAYER.NAME", lp->name, OWS_WARN, 
                          "        <Name>%s</Name>\n", NULL);
 
-   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), NULL, "wfs_title", 
+   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "FO", "title", 
                             OWS_WARN, "        <Title>%s</Title>\n", lp->name);
 
-   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), NULL, "wfs_abstract", 
+   msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "FO", "abstract", 
                          OWS_NOERR, "        <Abstract>%s</Abstract>\n", NULL);
 
-   msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), NULL, 
-                                "wfs_keywordlist", 
+   msOWSPrintEncodeMetadataList(stdout, &(lp->metadata), "FO", 
+                                "keywordlist", 
                                 "        <Keywords>\n", 
                                 "        </Keywords>\n",
                                 "          %s\n", NULL);
-
-   // __TODO__ Add optional metadataURL with type, format, etc.
 
    // In WFS, every layer must have exactly one SRS and there is none at
    // the top level contrary to WMS
@@ -441,7 +446,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    }
    else
    {
-       msIO_printf("<!-- WARNING: Mandatory LatLongBoundingBox could not be established for this layer.  Consider setting wfs_extent metadata. -->\n");
+       msIO_printf("<!-- WARNING: Mandatory LatLongBoundingBox could not be established for this layer.  Consider setting LAYER.EXTENT or wfs_extent metadata. -->\n");
    }
 
    msOWSPrintURLType(stdout, &(lp->metadata), "FO", "metadataurl", 
@@ -478,7 +483,7 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
 
   msIO_printf("Content-type: text/xml%c%c",10,10); 
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
                 "<?xml version='1.0' encoding=\"%s\" ?>\n",
                 "ISO-8859-1");
 
@@ -502,13 +507,13 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
  msIO_printf("  <Name>MapServer WFS</Name>\n");
 
   // the majority of this section is dependent on appropriately named metadata in the WEB object
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_title", 
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "title", 
                            OWS_WARN, "  <Title>%s</Title>\n", map->name);
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_abstract", 
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "abstract", 
                            OWS_NOERR, "  <Abstract>%s</Abstract>\n", NULL);
 
-  msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), NULL, 
-                               "wfs_keywordlist", 
+  msOWSPrintEncodeMetadataList(stdout, &(map->web.metadata), "FO", 
+                               "keywordlist", 
                                "  <Keywords>\n", "  </Keywords>\n",
                                "    %s\n", NULL);
 
@@ -520,11 +525,11 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver, cgiRequestObj *req)
                            "  <OnlineResource>%s</OnlineResource>\n", 
                            script_url);
 
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_fees", 
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "fees", 
                            OWS_NOERR, "  <Fees>%s</Fees>\n", NULL);
   
-  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, 
-                           "wfs_accessconstraints", OWS_NOERR,
+  msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", 
+                           "accessconstraints", OWS_NOERR,
                            "  <AccessConstraints>%s</AccessConstraints>\n", 
                            NULL);
 
@@ -619,7 +624,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     char **layers = NULL;
     char **tokens;
     int n=0;
-    char *user_namespace_prefix = NULL;
+    const char *user_namespace_prefix = NULL;
     char *user_namespace_uri = NULL;
     char *encoded_name = NULL, *encoded;
 
@@ -684,17 +689,17 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
     */
     msIO_printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, "wfs_encoding", OWS_NOERR,
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", "encoding", OWS_NOERR,
                        "<?xml version='1.0' encoding=\"%s\" ?>\n",
                        "ISO-8859-1");
 
-    user_namespace_prefix = msLookupHashTable(&(map->web.metadata), "wfs_namespace_prefix");
+    user_namespace_prefix = msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_prefix");
     if(user_namespace_prefix && 
        msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
         msIO_printf("<!-- WARNING: The value '%s' is not valid XML "
                     "namespace. -->\n", user_namespace_prefix);
     user_namespace_uri = msEncodeHTMLEntities( 
-      msLookupHashTable(&(map->web.metadata), "wfs_namespace_uri") );
+      msOWSLookupMetadata(&(map->web.metadata), "FO", "namespace_uri") );
     
     if (user_namespace_prefix && user_namespace_uri)
     {
@@ -785,10 +790,10 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
                 if (msLayerGetItems(lp) == MS_SUCCESS)
                 {
                     int k;
-                    char *name_gml = NULL;
-                    char *description_gml = NULL;
-                    name_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_name_item");
-                    description_gml = msLookupHashTable(&(lp->metadata), "wfs_gml_description_item");
+                    const char *name_gml = NULL;
+                    const char *description_gml = NULL;
+                    name_gml = msOWSLookupMetadata(&(lp->metadata), "FO", "gml_name_item");
+                    description_gml = msOWSLookupMetadata(&(lp->metadata), "FO", "gml_description_item");
                     for(k=0; k<lp->numitems; k++)
                     {
                          if (name_gml && strcmp(name_gml,  lp->items[k]) == 0)
@@ -853,10 +858,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     int bFilterSet = 0;
     int bBBOXSet = 0;
     char *pszNameSpace = NULL;
-    char *user_namespace_prefix = NULL;
-    char *user_namespace_uri = NULL;
+    const char *user_namespace_prefix = NULL;
+    const char *user_namespace_uri = NULL;
+    char *user_namespace_uri_encoded = NULL;
     char *encoded, *encoded_typename, *encoded_schema;
-    char *tmpmaxfeatures = NULL;
+    const char *tmpmaxfeatures = NULL;
 
     // Default filter is map extents
     bbox = map->extent;
@@ -1015,7 +1021,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     //{
     //        
     //}
-    tmpmaxfeatures = msLookupHashTable(&(map->web.metadata), "wfs_maxfeatures");
+    tmpmaxfeatures = msOWSLookupMetadata(&(map->web.metadata), "FO", "maxfeatures");
     if (tmpmaxfeatures)
       maxfeatures = atoi(tmpmaxfeatures);
     if (paramsObj->nMaxFeatures > 0) 
@@ -1205,24 +1211,24 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
     msIO_printf("Content-type: text/xml%c%c",10,10);
 
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), NULL, 
-                             "wfs_encoding", OWS_NOERR,
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "FO", 
+                             "encoding", OWS_NOERR,
                              "<?xml version='1.0' encoding=\"%s\" ?>\n",
                              "ISO-8859-1");
 
-    user_namespace_uri = msLookupHashTable(&(map->web.metadata), 
-                                           "wfs_namespace_uri");
+    user_namespace_uri = msOWSLookupMetadata(&(map->web.metadata), 
+                                             "FO", "namespace_uri");
     if(user_namespace_uri != NULL)
-        user_namespace_uri = msEncodeHTMLEntities( user_namespace_uri );
+        user_namespace_uri_encoded = msEncodeHTMLEntities(user_namespace_uri);
 
-    user_namespace_prefix = msLookupHashTable(&(map->web.metadata), 
-                                              "wfs_namespace_prefix");
+    user_namespace_prefix = msOWSLookupMetadata(&(map->web.metadata), 
+                                                "FO", "namespace_prefix");
     if(user_namespace_prefix != NULL &&
        msIsXMLTagValid(user_namespace_prefix) == MS_FALSE)
         msIO_printf("<!-- WARNING: The value '%s' is not valid XML "
                      "namespace. -->\n", user_namespace_prefix);
 
-    if (user_namespace_prefix && user_namespace_uri)
+    if (user_namespace_prefix && user_namespace_uri_encoded)
       pszNameSpace = strdup(user_namespace_prefix);
     //else
     //  pszNameSpace = strdup("myns");
@@ -1231,7 +1237,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
     encoded = msEncodeHTMLEntities( paramsObj->pszVersion );
     encoded_typename = msEncodeHTMLEntities( typename );
     encoded_schema = msEncodeHTMLEntities( msOWSGetSchemasLocation(map) );
-    if (user_namespace_prefix && user_namespace_uri)
+    if (user_namespace_prefix && user_namespace_uri_encoded)
     {
         msIO_printf("<wfs:FeatureCollection\n"
                "   xmlns:%s=\"%s\"\n"  
@@ -1242,8 +1248,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
                "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYP\
 ENAME=%s\">\n",
-              user_namespace_prefix, user_namespace_uri,
-              encoded_schema, encoded, user_namespace_uri, 
+              user_namespace_prefix, user_namespace_uri_encoded,
+              encoded_schema, encoded, user_namespace_uri_encoded, 
               script_url_encoded, encoded, encoded_typename);
     }
     else
@@ -1295,7 +1301,7 @@ ENAME=%s\">\n",
     free(script_url_encoded);
     if (pszNameSpace)
       free(pszNameSpace);
-    msFree(user_namespace_uri);
+    msFree(user_namespace_uri_encoded);
 
 
     return MS_SUCCESS;
