@@ -16,6 +16,16 @@ int msRectOverlap(rectObj *a, rectObj *b)
 }
 
 /*
+** Returns MS_TRUE if rectangle is valid
+*/
+int msRectIsValid(rectObj *rect)
+{
+	if(rect->minx < rect->maxx && rect->miny < rect->maxy)
+	 	return (MS_TRUE);
+	return(MS_FALSE);
+}
+
+/*
 ** Returns MS_TRUE if rectangle a is contained in rectangle b
 */
 int msRectContained(rectObj *a, rectObj *b)
