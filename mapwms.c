@@ -961,7 +961,23 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
 
-    printf("    <Layer queryable=\"%d\">\n", msIsLayerQueryable(lp));
+    if (strcasecmp(wmtver, "1.0.7") <= 0) 
+    {
+        printf("    <Layer queryable=\"%d\">\n", msIsLayerQueryable(lp));
+    }
+    else
+    {
+        // 1.0.8, 1.1.0 and later: opaque and cascaded are new.
+        int cascaded=0, opaque=0;
+        if ((value = msLookupHashTable(lp->metadata, "wms_opaque")) != NULL)
+            opaque = atoi(value);
+        if (lp->connectiontype == MS_WMS) 
+            cascaded = 1;
+
+        printf("    <Layer queryable=\"%d\" opaque=\"%d\" cascaded=\"%d\">\n",
+               msIsLayerQueryable(lp), opaque, cascaded);
+    }
+
     printParam("LAYER.NAME", lp->name, WMS_WARN, 
                "      <Name>%s</Name>\n", NULL);
     // the majority of this section is dependent on appropriately named metadata in the LAYER object
