@@ -650,7 +650,7 @@ static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
   if(p->numargs > 0) {
     fprintf(stream, "%sPROJECTION\n", tab);
     for(i=0; i<p->numargs; i++)
-      fprintf(stream, "  %s%s\n", tab, p->args[i]);
+      fprintf(stream, "  %s\"%s\"\n", tab, p->args[i]);
     fprintf(stream, "%sEND\n", tab);
   }
 #endif
