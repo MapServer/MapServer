@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.79  2002/01/23 16:43:09  dan
+ * Ooopps.  Removed unused variable.
+ *
  * Revision 1.78  2002/01/23 16:41:58  dan
  * Fixed crash problem in getAllGroupNames()
  *
@@ -3199,7 +3202,6 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
     int         i, j = 0;
     char        **papszGroups = NULL;
     int         nGroups = 0;
-    int         nLength = 0;
     int         bFound = 0;
 
 #ifdef PHP4
