@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.67  2004/11/02 21:01:00  assefa
+ * Add a 2nd optional argument to msLoadMapContext function (Bug 1023).
+ *
  * Revision 1.66  2004/10/29 22:48:03  assefa
  * Use of metadata ows_schema_location (Bug 1013).
  *
@@ -990,7 +993,7 @@ int msLoadMapContextGeneral(mapObj *map, CPLXMLNode *psGeneral,
 ** Load a Layer block from a MapContext document
 */
 int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
-                          char *filename)
+                          char *filename, int unique_layer_names)
 {
   char *pszProj=NULL;
   char *pszValue;
@@ -1028,10 +1031,15 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
   {
       msInsertHashTable( &(layer->metadata), "wms_name", pszValue );
 
-      pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+10));
-      sprintf(pszName, "l%d:%s", layer->index, pszValue);
-      layer->name = strdup(pszName);
-      free(pszName);
+      if (unique_layer_names)
+      {
+          pszName = (char*)malloc(sizeof(char)*(strlen(pszValue)+10));
+          sprintf(pszName, "l%d:%s", layer->index, pszValue);
+          layer->name = strdup(pszName);
+          free(pszName);
+      }
+      else
+        layer->name  = strdup(pszValue);
   }
   else
   {
@@ -1238,7 +1246,7 @@ int msLoadMapContextLayer(mapObj *map, CPLXMLNode *psLayer, int nVersion,
 ** Take a map object and a URL to a conect file in arguments
 */
 
-int msLoadMapContextURL(mapObj *map, char *urlfilename)
+int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique_layer_names)
 {
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
     char *pszTmpFile = NULL;
@@ -1255,7 +1263,7 @@ int msLoadMapContextURL(mapObj *map, char *urlfilename)
     pszTmpFile = msTmpFile(map->mappath, map->web.imagepath, "context.xml");
     if (msHTTPGetFile(urlfilename, pszTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS)
     {
-        return msLoadMapContext(map, pszTmpFile);
+        return msLoadMapContext(map, pszTmpFile, unique_layer_names);
     }
     else
     {
@@ -1276,9 +1284,13 @@ int msLoadMapContextURL(mapObj *map, char *urlfilename)
 **
 ** Get a mapfile from a OGC Web Map Context format
 **
-** Take a map object and a file in arguments
+** Take as first map object and a file in arguments
+** If The 2nd aregument unique_layer_names is set to MS_TRUE, the layer
+** name created would be unique and be prefixed with an l plus the layers's index
+** (eg l:1:park. l:2:road ...). If It is set to MS_FALSE, the layer name 
+** would be the same name as the layer name in the context
 */
-int msLoadMapContext(mapObj *map, char *filename)
+int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names)
 {
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
   char *pszWholeText, *pszValue;
@@ -1434,7 +1446,7 @@ int msLoadMapContext(mapObj *map, char *filename)
           if(EQUAL(psLayer->pszValue, "Layer"))
           {
               if( msLoadMapContextLayer(map, psLayer, nVersion, 
-                                        filename) == MS_FAILURE )
+                                        filename, unique_layer_names) == MS_FAILURE )
               {
                   CPLDestroyXMLNode(psRoot);
                   return MS_FAILURE;

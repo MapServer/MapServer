@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.136  2004/11/02 21:01:00  assefa
+ * Add a 2nd optional argument to msLoadMapContext function (Bug 1023).
+ *
  * Revision 1.135  2004/11/01 23:24:57  assefa
  * Work on Bug 1023 : only layers coming from a mapcontext use the
  * wms_name to set status on/off.
@@ -245,10 +248,10 @@ mapObj *loadMap()
               if (strncasecmp(msObj->request->ParamValues[i],"http",4) == 0)
               {
                   if (msGetConfigOption(map, "CGI_CONTEXT_URL"))
-                    msLoadMapContextURL(map, msObj->request->ParamValues[i]);
+                    msLoadMapContextURL(map, msObj->request->ParamValues[i], MS_FALSE);
               }
               else
-                msLoadMapContext(map, msObj->request->ParamValues[i]); 
+                msLoadMapContext(map, msObj->request->ParamValues[i], MS_FALSE); 
           }
       }
   } 
@@ -1042,7 +1045,6 @@ int main(int argc, char *argv[]) {
     imageObj *img=NULL;
     int status;
     char *sname = NULL;
-    int mapcontext_used = 0;
 
 
     if(argc > 1 && strcmp(argv[1], "-v") == 0) {
@@ -1159,36 +1161,10 @@ int main(int argc, char *argv[]) {
     /*
     ** For each layer lets set layer status
     */
-    /*
-    ** Patch to control layers status for layers coming from a context
-    ** Please see bug 1023 for more info on this bug
-    */
-    mapcontext_used = 0;
-    for(i=0;i<msObj->request->NumParams;i++) 
-    {
-        if (strcasecmp(msObj->request->ParamNames[i],"context") == 0 &&
-            msObj->request->ParamValues[i] && 
-            strlen(msObj->request->ParamValues[i]) > 0)
-          mapcontext_used =1;
-    }
-            
         
     for(i=0;i<msObj->Map->numlayers;i++) {
       if((msObj->Map->layers[i].status != MS_DEFAULT)) {
-          //for wms layers, use the wms_name metadata if available
-          //if it comes from a mapcontext (see Bug 1023 fo more
-          //details
-          if (msObj->Map->layers[i].connectiontype == MS_WMS &&
-              mapcontext_used)
-          {
-              sname = msLookupHashTable(&(msObj->Map->layers[i].metadata), 
-                                       "wms_name");
-              if (!sname)
-                sname = msObj->Map->layers[i].name;
-          }
-          else
-            sname = msObj->Map->layers[i].name;
-	if(isOn(msObj, sname, msObj->Map->layers[i].group) == MS_TRUE) /* Set layer status */
+	if(isOn(msObj,  msObj->Map->layers[i].name, msObj->Map->layers[i].group) == MS_TRUE) /* Set layer status */
 	  msObj->Map->layers[i].status = MS_ON;
 	else
 	  msObj->Map->layers[i].status = MS_OFF;

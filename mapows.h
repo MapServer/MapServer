@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.44  2004/11/02 21:01:00  assefa
+ * Add a 2nd optional argument to msLoadMapContext function (Bug 1023).
+ *
  * Revision 1.43  2004/10/25 17:30:38  julien
  * Print function for OGC URLs components. msOWSPrintURLType() (Bug 944)
  *
@@ -357,8 +360,8 @@ MS_DLL_EXPORT char *msWFSExecuteGetFeature(layerObj *lp);
 
 MS_DLL_EXPORT int msWriteMapContext(mapObj *map, FILE *stream);
 MS_DLL_EXPORT int msSaveMapContext(mapObj *map, char *filename);
-MS_DLL_EXPORT int msLoadMapContext(mapObj *map, char *filename);
-MS_DLL_EXPORT int msLoadMapContextURL(mapObj *map, char *urlfilename);
+MS_DLL_EXPORT int msLoadMapContext(mapObj *map, char *filename, int unique_layer_names);
+MS_DLL_EXPORT int msLoadMapContextURL(mapObj *map, char *urlfilename, int unique_layer_names);
 
 
 /*====================================================================
