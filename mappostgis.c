@@ -25,13 +25,14 @@ void postresql_NOTICE_HANDLER(void *arg, const char *message);
 char *DATAERRORMESSAGE(char *dataString, char *preamble)
 {
 	char	*message;
-	char	tmp[1000];
+	char	tmp[5000];
 
 	message = malloc(7000);
 
 	sprintf(message,"%s",preamble);
 
-		sprintf(tmp,"Error parsing POSTGIS data variable. You specified '%s'.<br>\nStandard ways of specifiying are : <br>\n(1) 'geometry_column from geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' <br><br>\n\n",dataString);
+		sprintf(tmp,"Error parsing POSTGIS data variable. You specified '%s'.<br>\nStandard ways of specifiying are : <br>\n(1) 'geometry_column from geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' <br><br>\n\n",
+																		  dataString);
 		strcat(message,tmp);
 
 		sprintf(tmp,"NOTE: for (2) 'using unique' and 'SRID=' are optional, but its highly recommended that you use them!!! <br><br>\n\n");
@@ -43,7 +44,7 @@ char *DATAERRORMESSAGE(char *dataString, char *preamble)
 		sprintf(tmp,"If you are using the (2) method, you've probably made a typo.<br>\nExample:  'the_geom from (select the_geom,oid from mytable) as foo using unique oid using SRID=76'<br>\nThis is very much like the (1) example.  The subquery ('select the_geom,oid from mytable') will be executed, and mapserver will use 'oid' (a postgresql system column) for uniquely specifying a geometry (for mapserver queries).  The geometry (the_geom) must have a SRID of 76. <br><br>\n\n");
 		strcat(message,tmp);
 
-		sprintf(tmp,"Example:  'roads from (select table1.roads,table1.rd_segment_id,table2.rd_name,table2.rd_type from table1,table2 where table1.rd_segment_id=table2.rd_segment_id) as foo using using rd_segment_id using SRID=89' <br><Br>\n\n");
+		sprintf(tmp,"Example:  'roads from (select table1.roads,table1.rd_segment_id,table2.rd_name,table2.rd_type from table1,table2 where table1.rd_segment_id=table2.rd_segment_id) as foo using unique rd_segment_id using SRID=89' <br><Br>\n\n");
 		strcat(message,tmp);
 
 		sprintf(tmp,"This is a more complex sub-query involving joining two tables.  The resulting geometry (column 'roads') has SRID=89, and mapserver will use rd_segment_id to uniquely identify a geometry.  The attributes rd_type and rd_name are useable by other parts of mapserver.<br><br>\n\n");
@@ -252,7 +253,9 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 {
 	PGresult	*result;
 	char	columns_wanted[5000];
-	char	temp[200];
+	char	temp[5000];
+	char	tmp[5000];
+	char	tmp2[5000];
 	char	query_string_0_5[6000];
 	char	query_string_0_6[6000];
 	int	t;
@@ -410,8 +413,10 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 
     if (!(result) || PQresultStatus(result) != PGRES_COMMAND_OK)
     {
-	      msSetError(MS_QUERYERR, "Error executing POSTGIS  BEGIN   statement (0.6 failed - retried using 0.5 and it failed). \n%s\n",
-                 "msPOSTGISLayerWhichShapes()",query_string_0_6);
+	      msSetError(MS_QUERYERR, "Couldnt recover from a bad query: \n'%s'\n",
+                 "prep_DB()",query_string_0_6);
+
+
 
         	PQclear(result);
 	  	layerinfo->query_result = NULL;
@@ -432,11 +437,31 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 		strcpy(query_string, query_string_0_5 );
  		return (MS_SUCCESS);
     }
+		//sprintf(tmp,"Error executing POSTGIS  DECLARE (the actual query) statement: '%s' <br><br>\n\nPostgresql reports the error '%s'<br><br>\n\nMore Help:<br><br>\n\n",
+		//			query_string_0_6,
+		//			PQerrorMessage(layerinfo->conn)
+		//	   );
 
-	      msSetError(MS_QUERYERR, "prep_DB:Error executing POSTGIS  DECLARE statement (0.6 failed - retried 0.5 and it failed too). \n%s\n",
-                 "msPOSTGISLayerWhichShapes()",query_string_0_6);
 
-        	PQclear(result);
+		//for some reason it crashes if you have big strings as arguments:
+
+		sprintf(tmp2, "Error executing POSTGIS  DECLARE (the actual query) statement: '%s' <br><br>\n\nPostgresql reports the error '%s'<br><br>\n\nMore Help:<br><br>\n\n",
+				query_string_0_6,
+					PQerrorMessage(layerinfo->conn)
+			 	);
+
+
+		sprintf(tmp, "%s%s",
+					tmp2,
+					DATAERRORMESSAGE("&lt;check your .map file&gt;" ,"")
+			 	);
+
+
+
+        msSetError(MS_QUERYERR,tmp,"prep_DB()");
+
+
+        PQclear(result);
 	  	layerinfo->query_result = NULL;
 		return(MS_FAILURE);		// totally screwed
 
@@ -1088,7 +1113,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     {
 		char tmp[4000];
 
-		sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s", query_str);
+		sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s <br><br>\n\nMore Help:", query_str);
         	msSetError(MS_QUERYERR, tmp,
                  "msPOSTGISLayerWhichShapes()");
 
