@@ -1710,7 +1710,8 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       error = chdir(map->shapepath);
       if( error != 0 )
       {
-          msSetError( MS_IOERR, "chdir(%s)", map->shapepath );
+          msSetError( MS_IOERR, "chdir(%s)", "msDrawRasterLayer()", 
+                      map->shapepath );
           return -1;
       }
   }
