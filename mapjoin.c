@@ -262,8 +262,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   if(join->joininfo) return(MS_SUCCESS); // already open
     
   // allocate a msCSVJoinInfo struct
-  joininfo = (msCSVJoinInfo *) malloc(sizeof(msCSVJoinInfo));
-  if(!joininfo) {
+  if((joininfo = (msCSVJoinInfo *) malloc(sizeof(msCSVJoinInfo))) == NULL) {
     msSetError(MS_MEMERR, "Error allocating CSV table info structure.", "msCSVJoinConnect()");
     return(MS_FAILURE);
   }
@@ -282,9 +281,8 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
     }
   }
 
-  // allocate base storage for the array of rows
-  joininfo->rows = (char ***) malloc(ROW_ALLOCATION_SIZE*sizeof(char **));  
-  if(!joininfo->rows) {
+  // allocate base storage for the array of rows  
+  if((joininfo->rows = (char ***) malloc(ROW_ALLOCATION_SIZE*sizeof(char **))) == NULL) {
     msSetError(MS_MEMERR, "Error allocating rows.", "msCSVJoinConnect()");
     return(MS_FAILURE);
   }
@@ -295,8 +293,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) {
     // make sure there is enough space for the next row
     if(joininfo->numrows == numRowsAllocated) {
-      joininfo->rows = (char ***) realloc(joininfo->rows, ROW_ALLOCATION_SIZE*sizeof(char **));  
-      if(!joininfo->rows) {
+      if((joininfo->rows = (char ***) realloc(joininfo->rows, ROW_ALLOCATION_SIZE*sizeof(char **))) == NULL) {
         msSetError(MS_MEMERR, "Error making space for more rows.", "msCSVJoinConnect()");
         return(MS_FAILURE);
       }
@@ -331,8 +328,8 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
     return(MS_FAILURE);
   }
   for(i=0; i<joininfo->numcols; i++) {
-    join->items[i] = (char *) malloc(16); // plenty of space
-    snprintf(join->items[i], 16, "%d", i+1);
+    join->items[i] = (char *) malloc(8); // plenty of space
+    snprintf(join->items[i], 8, "%d", i+1);
   }
 
   return(MS_SUCCESS);
