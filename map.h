@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.378  2004/11/18 16:12:02  sean
+ * exposed MS_GD_ALPHA to swig
+ *
  * Revision 1.377  2004/11/17 23:53:07  assefa
  * Advertize only gd and gdal formats for wms capabilities (Bug 455).
  *
@@ -202,6 +205,10 @@ extern "C" {
 #define MS_SINGLE 0 /* modes for searching (spatial/database) */
 #define MS_MULTIPLE 1
 
+// For layer transparency, allows alpha transparent pixmaps to be used
+// with RGB map images
+#define MS_GD_ALPHA 1000
+
 // General defines, not wrapable
 #ifndef SWIG
 #define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"
@@ -266,7 +273,6 @@ extern "C" {
 
 #define MS_PEN_TRANSPARENT -1
 #define MS_PEN_UNSET     -4
-#define MS_GD_ALPHA 1000
 
 //#define MS_VALID_EXTENT(minx, miny, maxx, maxy)  (((minx<maxx) && (miny<maxy))?MS_TRUE:MS_FALSE)
 #define MS_VALID_EXTENT(rect)  (((rect.minx < rect.maxx && rect.miny < rect.maxy))?MS_TRUE:MS_FALSE)
