@@ -13,6 +13,20 @@
 #include "map.h"
 #include "mapsymbol.h"
 
+void copyProperty(void *dst, void *src, int size) {
+  if (src == NULL) dst = NULL;
+  else memcpy(dst, src, size);
+}
+
+char *copyStringProperty(char **dst, char *src) {
+  if (src == NULL || strlen(src) <= 0) *dst = NULL; 
+  else {
+    if (*dst == NULL) *dst = strdup(src);
+    else strcpy(*dst, src);
+  }
+  return *dst;
+}
+
 int msCopyProjection(projectionObj *dst, projectionObj *src) {
   int i;
   msInitProjection(dst);
@@ -22,7 +36,8 @@ int msCopyProjection(projectionObj *dst, projectionObj *src) {
     //copyStringProperty(&(dst->args[i]), src->args[i]);
   }
   //memcpy(&(dst->proj), &(src->proj), sizeof(projPJ));
-  msProcessProjection(dst);
+  if (dst->numargs != 0)
+    msProcessProjection(dst);
 
   return(0);
 }
@@ -86,15 +101,18 @@ int msCopyItem(itemObj *dst, itemObj *src) {
   return(0);
 }
 
-/*
-int msCopyHashTable(hashTableObj *dst, hashTableObj *src) {
-  copyProperty(&(dst->next), &(src->next), sizeof(hashTableObj *));
-  copyStringProperty(&(dst->key), src->key);
-  copyStringProperty(&(dst->data), src->data);
-
+int msCopyHashTable(hashTableObj dst, hashTableObj src){
+  struct hashObj *tp;
+  int i;
+  for (i=0;i<MS_HASHSIZE; i++) {
+    if (src[i] != NULL) {
+      for (tp=src[i]; tp!=NULL; tp=tp->next)
+        msInsertHashTable(dst, tp->key, tp->data);
+    }
+  }
   return(0);
 }
-*/
+
 
 int msCopyFontSet(fontSetObj *dst, fontSetObj *src) {
   copyStringProperty(&(dst->filename), src->filename);
@@ -261,8 +279,13 @@ int msCopyWeb(webObj *dst, webObj *src) {
   copyProperty(&(dst->maxscale), &(src->maxscale), sizeof(double));
   copyStringProperty(&(dst->mintemplate), src->mintemplate);
   copyStringProperty(&(dst->maxtemplate), src->maxtemplate);
-  //msCopyHashTable(&(dst->metadata), &(src->metadata));
-  memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
+  
+  if (src->metadata)
+  {
+    dst->metadata = msCreateHashTable();
+    msCopyHashTable((dst->metadata), (src->metadata));
+  }
+  //memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
 
   return(0);
 }
@@ -288,20 +311,7 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer) {
   msCopyExpression(&(dst->expression), &(src->expression));
   copyProperty(&(dst->status), &(src->status), sizeof(int));
   memcpy(&(dst->status), &(src->status), sizeof(int));
-  copyProperty(&(dst->color), &(src->color), sizeof(int));
-  copyProperty(&(dst->backgroundcolor), &(src->backgroundcolor), sizeof(int));
-  copyProperty(&(dst->outlinecolor), &(src->outlinecolor), sizeof(int));
-  copyProperty(&(dst->overlaycolor), &(src->overlaycolor), sizeof(int));
-  copyProperty(&(dst->overlaybackgroundcolor), &(src->overlaybackgroundcolor), sizeof(int));
-  copyProperty(&(dst->overlayoutlinecolor), &(src->overlayoutlinecolor), sizeof(int));
-  copyProperty(&(dst->symbol), &(src->symbol), sizeof(int));
-  copyStringProperty(&(dst->symbolname), src->symbolname);
-  copyProperty(&(dst->overlaysymbol), &(src->overlaysymbol), sizeof(int));
-  copyStringProperty(&(dst->overlaysymbolname), src->overlaysymbolname);
-  copyProperty(&(dst->size), &(src->size), sizeof(int));
-  copyProperty(&(dst->sizescaled), &(src->sizescaled), sizeof(int));
-  copyProperty(&(dst->minsize), &(src->minsize), sizeof(int));
-  copyProperty(&(dst->maxsize), &(src->maxsize), sizeof(int));
+
   copyProperty(&(dst->numstyles), &(src->numstyles), sizeof(int));
   for (i = 0; i < dst->numstyles; i++) {
     msCopyStyle(&(dst->styles[i]), &(src->styles[i]));
@@ -316,8 +326,14 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer) {
   copyStringProperty(&(dst->_template), src->_template);
 #endif
   copyProperty(&(dst->type), &(src->type), sizeof(int));
-  //msCopyHashTable(&(dst->metadata), &(src->metadata));
-  memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
+
+  if (src->metadata)
+  {
+    dst->metadata = msCreateHashTable();
+    msCopyHashTable((dst->metadata), (src->metadata));
+  }
+  //memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
+
   copyProperty(&(dst->minscale), &(src->minscale), sizeof(double));
   copyProperty(&(dst->maxscale), &(src->maxscale), sizeof(double));
   copyProperty(&(dst->layer), &layer, sizeof(layerObj *));
@@ -564,8 +580,14 @@ int msCopyLayer(layerObj *dst, layerObj *src) {
   copyProperty(&(dst->styleitemindex), &(src->styleitemindex), sizeof(int));
   copyStringProperty(&(dst->requires), src->requires); 
   copyStringProperty(&(dst->labelrequires), src->labelrequires);
-  //msCopyHashTable(&(dst->metadata), &(src->metadata));
-  memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
+
+  if (src->metadata)
+  {
+    dst->metadata = msCreateHashTable();
+    msCopyHashTable((dst->metadata), (src->metadata));
+  }
+  //memcpy(&(dst->metadata), &(src->metadata), sizeof(hashTableObj));
+
   copyProperty(&(dst->transparency), &(src->transparency), sizeof(int)); 
   copyProperty(&(dst->dump), &(src->dump), sizeof(int));
   copyProperty(&(dst->debug), &(src->debug), sizeof(int));
@@ -635,7 +657,7 @@ int msCopyMap(mapObj *dst, mapObj *src) {
 int msCopySWF(SWFObj *dst, SWFObj *src) {
   int i;
   //copyProperty(&(dst->map), &map, sizeof(mapObj *));
-  msCopySWFMovie(&(dst->sMainMovie), &(src->sMainMovie), sizeof(SWFMovie));
+  //msCopySWFMovie(&(dst->sMainMovie), &(src->sMainMovie), sizeof(SWFMovie));
   copyProperty(&(dst->nLayerMovies), &(src->nLayerMovies), sizeof(int));
   for (i = 0; i < dst->nLayerMovies; i++) {
     memcpy(&(dst->pasMovies[i]), &(src->pasMovies[i]), sizeof(SWFMovie));
@@ -649,7 +671,7 @@ int msCopySWF(SWFObj *dst, SWFObj *src) {
 }
 #endif
 
-#ifdef USE_PDF
+#ifdef notdefUSE_PDF
 int msCopyPDF(PDFObj *dst, PDFObj *src) {
   //copyProperty(&(dst->map), &map, sizeof(mapObj *));
   copyProperty(&(dst->pdf), &(src->pdf), sizeof(PDF));
@@ -680,17 +702,4 @@ int msCopyImage(imageObj *dst, imageObj *src) {
 }
 
 
-void copyProperty(void *dst, void *src, int size) {
-  if (src == NULL) dst = NULL;
-  else memcpy(dst, src, size);
-}
-
-char *copyStringProperty(char **dst, char *src) {
-  if (src == NULL) *dst = NULL;
-  else {
-    if (*dst == NULL) *dst = strdup(src);
-    else strcpy(*dst, src);
-  }
-  return *dst;
-}
 
