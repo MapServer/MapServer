@@ -60,8 +60,13 @@ Version 4.1 (CVS)
 
 - MapScript outputFormatObj: extended with a getOption method (bug 510). 
 
-- MapScript imageObj: added optional filename argument to the constructor
-  which allows imageObj instances to be created from a file on disk (bug 530).
+- MapScript imageObj: added optional mapObj argument to the save method
+  resolving bug 549 without breaking current API.  Also added optional
+  driver and filename arguments to constructor which allows imageObj
+  instances to be created with a specified driver or from files on disk
+  (bug 530).  Added new code to Python MapScript which extends the 
+  filename option to Python file-like objects (bug 550). This means
+  StringIO and urllib's network objects!
 
 - MapScript classObj and styleObj: added a new styleObj shadow class and
   extended classObj with getStyle, insertStyle, and removeStyle methods.
