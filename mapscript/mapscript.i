@@ -281,8 +281,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return MS_SUCCESS;
   }
   
-  int setSymbolSet(char *szFileName)
-  {
+  int setSymbolSet(char *szFileName) {
     msFreeSymbolSet(&self->symbolset);
     msInitSymbolSet(&self->symbolset);
    
@@ -295,13 +294,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msLoadSymbolSet(&self->symbolset, self);
   }
 
-  int getNumSymbols()
-  {
+  int getNumSymbols() {
     return self->symbolset.numsymbols;
   }
 
-  int setFontSet(char *szFileName)
-  {
+  int setFontSet(char *szFileName) {
     msFreeFontSet(&(self->fontset));
     msInitFontSet(&(self->fontset));
    
@@ -311,41 +308,38 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msLoadFontSet(&(self->fontset), self);
   }
 
-  int saveMapContext(char *szFileName)
-  {
+  int saveMapContext(char *szFileName) {
     return msSaveMapContext(self, szFileName);
   }
 
-  int loadMapContext(char *szFileName)
-  {
+  int loadMapContext(char *szFileName) {
     return msLoadMapContext(self, szFileName);
   }
 
-  int  moveLayerup(int layerindex) {
-        return msMoveLayerUp(self, layerindex);
+  int  moveLayerUp(int layerindex) {
+    return msMoveLayerUp(self, layerindex);
   }
 
-  int  moveLayerdown(int layerindex) {
-        return msMoveLayerDown(self, layerindex);
+  int  moveLayerDown(int layerindex) {
+    return msMoveLayerDown(self, layerindex);
   }
 
-  int  *getLayersdrawingOrder() {
-        return  self->layerorder;
+  int *getLayersDrawingOrder() {
+    return  self->layerorder;
   }
   
-  int   setLayersdrawingOrder(int *panIndexes) {
-        return  msSetLayersdrawingOrder(self, panIndexes); 
+  int setLayersDrawingOrder(int *panIndexes) {
+    return  msSetLayersdrawingOrder(self, panIndexes); 
   }
 
   char *processTemplate(int bGenerateImages, char **names, char **values, int numentries) {
-      return msProcessTemplate(self, bGenerateImages, names, values, numentries);
+    return msProcessTemplate(self, bGenerateImages, names, values, numentries);
   }
   
   char *processLegendTemplate(char **names, char **values, int numentries) {
     return msProcessLegendTemplate(self, names, values, numentries);
   }
   
-
   char *processQueryTemplate(char **names, char **values, int numentries) {
     return msProcessQueryTemplate(self, names, values, numentries);
   }
@@ -459,13 +453,13 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msLoadProjectionString(&(self->projection), string);
   }
 
-  int addFeature(shapeObj *shape) {
+  int addFeature(shapeObj *shape) {    
     self->connectiontype = MS_INLINE; // set explicitly
-
+    
     if(insertFeatureList(&(self->features), shape) == NULL) 
-      return -1;
-    else
-      return 0;
+      return MS_FAILURE;
+
+    return MS_SUCCESS;
   }
 
   char *getMetaData(char *name) {
@@ -802,7 +796,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
     msFreeShape(&shape);
     
-    return 0;
+    return MS_SUCCESS;
   }
 }
 
@@ -841,31 +835,31 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   int get(int i, shapeObj *shape) {
     if(i<0 || i>=self->numshapes)
-      return -1;
+      return MS_FAILURE;
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
     msSHPReadShape(self->hSHP, i, shape);
 
-    return 0;
+    return MS_SUCCESS;
   }
 
   int getPoint(int i, pointObj *point) {
     if(i<0 || i>=self->numshapes)
-      return -1;
+      return MS_FAILURE;
 
     msSHPReadPoint(self->hSHP, i, point);
-    return 0;
+    return MS_SUCCESS;
   }
 
   int getTransformed(mapObj *map, int i, shapeObj *shape) {
     if(i<0 || i>=self->numshapes)
-      return -1;
+      return MS_FAILURE;
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
     msSHPReadShape(self->hSHP, i, shape);
     msTransformShapeToPixel(shape, map->extent, map->cellsize);
 
-    return 0;
+    return MS_SUCCESS;
   }
 
   void getExtent(int i, rectObj *rect) {
