@@ -428,7 +428,7 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
 {
     int	       	nRecordOffset, i;
     uchar	*pabyRec;
-/*    char	*pReturnField = NULL;*/
+    char	*pReturnField = NULL;
 
     /* -------------------------------------------------------------------- */
     /*	Is the request valid?                  				    */
@@ -482,16 +482,22 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     }
 
     /*
-    ** Trim/skip leading blanks (SDL Modification)
+    ** Trim/skip leading blanks (SDL/DM Modification - only on numeric types)
     */ 
-    /* for(i=0;i<strlen(psDBF->pszStringField);i++) {
-	if(psDBF->pszStringField[i] != ' ')
-	  break;	
+    if( psDBF->pachFieldType[iField] == 'N' 
+        || psDBF->pachFieldType[iField] == 'F'
+        || psDBF->pachFieldType[iField] == 'D' )
+    {
+        for(i=0;i<strlen(psDBF->pszStringField);i++) {
+            if(psDBF->pszStringField[i] != ' ')
+                break;	
+        }
+        pReturnField = psDBF->pszStringField+i;
     }
-    pReturnField = psDBF->pszStringField+i;
-    return( pReturnField ); */
+    else
+        pReturnField = psDBF->pszStringField;
 
-    return (psDBF->pszStringField);
+    return( pReturnField );
 }
 
 /************************************************************************/
