@@ -23,6 +23,16 @@ static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
 void returnPage(char *);
 void returnURL(char *);
 
+static void redirect(char *url)
+{
+  printf("Status: 302 Found\n");
+  printf("Uri: %s\n", url);
+  printf("Location: %s\n", url);
+  printf("Content-type: text/html%c%c",10,10);
+  fflush(stdout);
+  return;
+}
+
 int writeLog(int show_error)
 {
   FILE *stream;
@@ -86,7 +96,7 @@ void writeError()
   }
 
   if((ms_error.code == MS_NOTFOUND) && (Map->web.empty)) {
-    returnURL(Map->web.empty);
+    redirect(Map->web.empty);
   } else {
     if(Map->web.error) {      
       redirect(Map->web.error);
@@ -880,39 +890,22 @@ void setExtent()
 }
 
 void setExtentFromShapes() {
-  int i,j;
-  shapefileObj shp;
-  shapeObj shape = {0,NULL};
+  int i;
   int found=0;
   double dx, dy;
+  layerObj *lp;
 
-  for(i=0; i<Map->numlayers; i++) {    
-    if(QueryResults->layers[i].numresults <= 0) /* next query */
-      continue;
+  for(i=0; i<Map->numlayers; i++) {
+    lp = &(Map->layers[i]);
 
-    if(msOpenSHPFile(&shp, "rb", Map->shapepath, Map->tile, Map->layers[i].data) == -1)
-      writeError();
+    if(!lp->resultcache) continue;
+    if(lp->resultcache->numresults <= 0) continue;
 
-    for(j=0; j<shp.numshapes; j++) {
-
-      if(!msGetBit(QueryResults->layers[i].status,j))
-	continue; /* next shape */
-
-#ifdef USE_PROJ
-      SHPReadShapeProj(shp.hSHP, j, &shape, &(Map->layers[i].projection), &(Map->projection));
-#else
-      SHPReadShape(shp.hSHP, j, &shape);
-#endif
-
-      if(!found) {
-	Map->extent = shape.bounds;
-	found = 1;
-      } else {
-	msMergeRect(&Map->extent, &shape.bounds);
-      }
-
-      msFreeShape(&shape);
-    }
+    if(!found) {
+      Map->extent = lp->resultcache->bounds;
+      found = 1;
+    } else
+      msMergeRect(&(Map->extent), &(lp->resultcache->bounds));
   }
 
   dx = Map->extent.maxx - Map->extent.minx;
@@ -925,9 +918,9 @@ void setExtentFromShapes() {
   Map->extent.miny -= dy*EXTENT_PADDING/2.0;
   Map->extent.maxy += dy*EXTENT_PADDING/2.0;
 
-  RawExt = Map->extent; /* save unaltered extent */
+  RawExt = Map->extent; // save unadjusted extent
 
-  /* FIX: NEED TO ADD A COUPLE OF POINT BASED METHODS */
+  /* FIX: NEED TO ADD A COUPLE OF POINT BASED METHODS BASED ON SCALE or BUFFER*/
 
   return;
 }
@@ -962,67 +955,9 @@ void returnCoordinate()
   writeError();
 }
 
-void returnOneToManyJoin(int j)
-{
-  int k,l;
-  FILE *stream;
-  char buffer[MS_BUFFER_LENGTH], substr[MS_BUFFER_LENGTH], *outstr;
-
-  if(Query->joins[j].numrecords == 0) return; // nothing to do
-
-  if(Query->joins[j].header != NULL) {
-    if((stream = fopen(Query->joins[j].header, "r")) == NULL) {
-      msSetError(MS_IOERR, Query->joins[j].header, "returnOneToManyJoin()");
-      writeError();
-    }
-
-    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) /* echo file, no substitutions */
-    printf("%s", buffer);
-
-    fclose(stream);
-  }
-
-  if((stream = fopen(Query->joins[j].template, "r")) == NULL) { /* open main template file */
-    msSetError(MS_IOERR, Query->joins[j].template, "returnOneToManyJoin()");
-    writeError();
-  }
-
-  for(k=0; k<Query->joins[j].numrecords; k++) {
-    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) { /* now on to the end of the file */
-      outstr = strdup(buffer);
-      
-      for(l=0; l<Query->joins[j].numitems; l++) {	  
-	sprintf(substr, "[%s]", Query->joins[j].items[l]);
-	if(strstr(outstr, substr) != NULL) { /* do substitution */
-	  outstr = gsub(outstr, substr, Query->joins[j].data[k][l]);
-	}
-      } /* next item */
-      
-      printf("%s", outstr);
-      fflush(stdout);	
-      free(outstr);
-    }
-      
-    rewind(stream);
-  }
-
-  if(Query->joins[j].footer != NULL) {
-    if((stream = fopen(Query->joins[j].footer, "r")) == NULL) {
-      msSetError(MS_IOERR, Query->joins[j].footer, "returnOneToManyJoin()");
-      writeError();
-    }
-
-    while(fgets(buffer, MS_BUFFER_LENGTH, stream) != NULL) /* echo file, no substitutions */
-      printf("%s", buffer);
-
-    fclose(stream);
-  }
-
-}
-
 char *processLine(char *instr, int mode) 
 {
-  int i,j;
+  int i;
   char repstr[1024], substr[1024], *outstr; // repstr = replace string, substr = sub string
 
 #ifdef USE_PROJ
@@ -1217,17 +1152,20 @@ char *processLine(char *instr, int mode)
 
   // These are really for situations with multiple result sets only, but often used in header/footer  
   sprintf(repstr, "%d", NR); // total number of results
-  outstr = gsub(outstr, "[nr]", repstr);
-  sprintf(repstr, "%d", NLR); // total number of results within a layer
-  outstr = gsub(outstr, "[nlr]", repstr);
+  outstr = gsub(outstr, "[nr]", repstr);  
   sprintf(repstr, "%d", NL); // total number of layers with results
   outstr = gsub(outstr, "[nl]", repstr);
-  sprintf(repstr, "%d", RN); // result number within all layers
-  outstr = gsub(outstr, "[rn]", repstr);
-  sprintf(repstr, "%d", LRN); // result number within a layer
-  outstr = gsub(outstr, "[lrn]", repstr);      
-  if(CL) outstr = gsub(outstr, "[cl]", CL); // current layer name    
-  if(CD) outstr = gsub(outstr, "[cd]", CD); // current layer description
+
+  if(ResultLayer) {
+    sprintf(repstr, "%d", NLR); // total number of results within this layer
+    outstr = gsub(outstr, "[nlr]", repstr);
+    sprintf(repstr, "%d", RN); // sequential (eg. 1..n) result number within all layers
+    outstr = gsub(outstr, "[rn]", repstr);
+    sprintf(repstr, "%d", LRN); // sequential (eg. 1..n) result number within this layer
+    outstr = gsub(outstr, "[lrn]", repstr);
+    outstr = gsub(outstr, "[cl]", ResultLayer->name); // current layer name    
+    if(ResultLayer->description) outstr = gsub(outstr, "[cd]", ResultLayer->description); // current layer description
+  }
 
   if(mode == QUERY) { // return shape and/or attributes	
     
@@ -1254,45 +1192,23 @@ char *processLine(char *instr, int mode)
     sprintf(repstr, "%d", ResultShape.tileindex);
     outstr = gsub(outstr, "[tileidx]", repstr);  
 
-    // FIX: the query section
-
-    for(i=0;i<Query->numitems;i++) {	 
-      sprintf(substr, "[%s]", Query->items[i]);
+    for(i=0;i<ResultLayer->numitems;i++) {	 
+      sprintf(substr, "[%s]", ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL)
-	outstr = gsub(outstr, substr, Query->data[i]);
-      sprintf(substr, "[%s_esc]", Query->items[i]);
+	outstr = gsub(outstr, substr, ResultShape.attributes[i]);
+      sprintf(substr, "[%s_esc]", ResultLayer->items[i]);
       if(strstr(outstr, substr) != NULL)
-	outstr = gsub(outstr, substr, (char *)encode_url(Query->data[i]));
-    } /* next item */
+	outstr = gsub(outstr, substr, (char *)encode_url(ResultShape.attributes[i]));
+    }
     
-    for(i=0; i<Query->numjoins; i++) {
-      if(Query->joins[i].type == MS_MULTIPLE) {	   
-	sprintf(substr, "[%s]", Query->joins[i].name);
-	if(strstr(outstr, substr)) {
-	  outstr = gsub(outstr, substr, "");
-	  returnOneToManyJoin(i);
-	}
-	
-	if(Query->joins[i].numrecords == 0) continue;
-      }          
-      
-      // some common data may exist for all matches so multiples are allowed here
-      for(j=0;j<Query->joins[i].numitems; j++) { 
-	sprintf(substr, "[%s_%s]", Query->joins[i].name, Query->joins[i].items[j]);
-	if(strstr(outstr, substr))
-	  outstr = gsub(outstr, substr, Query->joins[i].data[0][j]);
-	sprintf(substr, "[%s]", Query->joins[i].items[j]);
-	if(strstr(outstr, substr))
-	  outstr = gsub(outstr, substr, Query->joins[i].data[0][j]);
-      }
-    } /* next join */
+    // FIX: need to re-incorporate JOINS at some point
   }
   
   for(i=0;i<NumEntries;i++) { 
     sprintf(substr, "[%s]", Entries[i].name);
     outstr = gsub(outstr, substr, Entries[i].val);
     sprintf(substr, "[%s_esc]", Entries[i].name);
-    outstr = gsub(outstr, substr, (char *)encode_url(Entries[i].val);    
+    outstr = gsub(outstr, substr, (char *)encode_url(Entries[i].val));    
   }
 
   return(outstr);
@@ -1347,13 +1263,7 @@ void returnURL(char *url, int mode)
   }
 
   tmpurl = processLine(url, mode);
-
-  printf("Status: 302 Found\n");
-  printf("Uri: %s\n", tmpurl);
-  printf("Location: %s\n", tmpurl);
-  printf("Content-type: text/html%c%c",10,10);
-  fflush(stdout);
-
+  redirect(tmpurl);
   free(tmpurl);
 }
 
@@ -1380,17 +1290,20 @@ void returnQuery()
       if(!lp->resultcache->numresults == 0) continue;
     }
 
-    if(TEMPLATE_TYPE(lp->class[lp->resultcache->results[0].classindex].template) == MS_URL) {
+    ResultLayer = lp;
+
+    if(TEMPLATE_TYPE(lp->class[(int)(lp->resultcache->results[0].classindex)].template) == MS_URL) {
       status = msLayerOpen(lp, Map->shapepath);
       if(status != MS_SUCCESS) writeError();
 
       status = msLayerGetShape(lp, Map->shapepath, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex, MS_ALLITEMS);
       if(status != MS_SUCCESS) writeError();
 
-      returnURL(lp->class[lp->resultcache->results[0].classindex].template, QUERY);      
+      returnURL(lp->class[(int)(lp->resultcache->results[0].classindex)].template, QUERY);      
       
       msFreeShape(&ReturnShape);
       msLayerClose(lp);
+      ResultLayer = NULL;
 
       return;
     }
@@ -1420,8 +1333,7 @@ void returnQuery()
     if(!lp->resultcache->numresults == 0) continue;
 
     NLR = lp->resultcache->numresults; 
-    CL = lp->name;
-    CD = lp->description;
+    ResultLayer = lp;
 
     if(lp->header) returnPage(lp->header, BROWSE);
 
@@ -1442,9 +1354,10 @@ void returnQuery()
       LRN++;
     }
 
-    msLayerClose(lp);
-
     if(lp->footer) returnPage(lp->header, BROWSE);
+
+    msLayerClose(lp);
+    ResultLayer = NULL;
   }
 
   if(Map->web.footer) returnPage(Map->web.footer, BROWSE);
@@ -1464,8 +1377,6 @@ int main(int argc, char *argv[]) {
     int status;
 
 #ifdef USE_EGIS
-    int status;		//OV -egis-
-
     // OV -egis- Initialize egis error log file here...
     initErrLog("/export/home/tmp/msError.log");
     writeErrLog("ErrorLogfile is initialized\n");
@@ -1478,12 +1389,11 @@ int main(int argc, char *argv[]) {
       exit(0);
     }
 
+    sprintf(Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
+
     NumEntries = loadEntries(Entries);
-
     loadForm();
-
-    sprintf(Id, "%ld%d",(long)time(NULL),(int)getpid());
-
+ 
     if(SaveMap) {
       sprintf(buffer, "%s%s%s.map", Map->web.imagepath, Map->name, Id);
       if(msSaveMap(Map, buffer) == -1) writeError();
@@ -1508,6 +1418,123 @@ int main(int argc, char *argv[]) {
       Mode = BROWSE;
 
     if(Mode == BROWSE) {
+
+      if(!Map->web.template) {
+	msSetError(MS_WEBERR, "No template provided.", "mapserv()");
+	writeError();
+      }
+
+      if(QueryFile) {
+	status = msLoadQuery(Map, QueryFile);
+	if(status != MS_SUCCESS) writeError();
+      }
+      
+      setExtent();      
+      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
+      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
+
+      // FIX: need to consider QueryFiles here
+      if((Map->scale < Map->web.minscale) && (Map->web.minscale > 0)) {
+	if(Map->web.mintemplate) { // use the template provided
+	  if(TEMPLATE_TYPE(Map->web.mintemplate) == MS_FILE)
+	    returnPage(Map->web.mintemplate, BROWSE);
+	  else
+	    returnURL(Map->web.mintemplate, BROWSE);
+	  break;
+	} else { /* force zoom = 1 (i.e. pan) */
+	  fZoom = Zoom = 1;
+	  ZoomDirection = 0;
+	  CoordSource = FROMSCALE;
+	  Map->scale = Map->web.minscale;
+	  MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
+	  MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
+	  setExtent();
+	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
+	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
+	}
+      }
+      if((Map->scale > Map->web.maxscale) && (Map->web.maxscale > 0)) {
+	if(Map->web.maxtemplate) { // use the template provided
+	  if(TEMPLATE_TYPE(Map->web.maxtemplate) == MS_FILE)
+	    returnPage(Map->web.maxtemplate);
+	  else
+	    returnURL(Map->web.maxtemplate);
+	} else { /* force zoom = 1 (i.e. pan) */
+	  fZoom = Zoom = 1;
+	  ZoomDirection = 0;
+	  CoordSource = FROMSCALE;
+	  Map->scale = Map->web.maxscale;
+	  MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
+	  MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
+	  setExtent();
+	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
+	}
+      }
+   
+      if(Map->status == MS_ON) {
+	if(QueryResults)
+	  img = msDrawQueryMap(Map, QueryResults);
+	else
+	  img = msDrawMap(Map);
+	if(!img) writeError();
+	sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);	
+#ifndef USE_GD_1_8
+	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
+#else
+	if(msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality) == -1) writeError();
+#endif
+	gdImageDestroy(img);
+      }
+      
+      if(Map->legend.status == MS_ON) {
+	img = msDrawLegend(Map);
+	if(!img) writeError();
+	sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+#ifndef USE_GD_1_8
+	if(msSaveImage(img, buffer, Map->legend.transparent, Map->legend.interlace) == -1) writeError();
+#else
+	if(msSaveImage(img, buffer, Map->imagetype, Map->legend.transparent, Map->legend.interlace, Map->imagequality) == -1) writeError();
+#endif
+	gdImageDestroy(img);
+      }
+      
+      if(Map->scalebar.status == MS_ON) {
+	img = msDrawScalebar(Map);
+	if(!img) writeError();
+	sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+#ifndef USE_GD_1_8
+	if(msSaveImage(img, buffer, Map->scalebar.transparent, Map->scalebar.interlace) == -1) writeError();
+#else
+	if(msSaveImage(img, buffer, Map->imagetype, Map->scalebar.transparent, Map->scalebar.interlace, Map->imagequality) == -1) writeError();
+#endif
+	gdImageDestroy(img);
+      }
+
+      if(Map->reference.status == MS_ON) {
+	img = msDrawReferenceMap(Map);
+	if(!img) writeError();
+	sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
+#ifndef USE_GD_1_8
+	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
+#else
+	if(msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality) == -1) writeError();
+#endif
+	gdImageDestroy(img);
+      }
+
+      if(QueryFile) {
+	returnQuery();
+      } else {
+	if(TEMPLATE_TYPE(Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
+	  printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
+	  printf("<!-- %s -->\n", msGetVersion());
+	  fflush(stdout);
+	  returnPage(Map->web.template);
+	} else {	
+	  returnURL(Map->web.template);
+	} 
+      }
 
     } else if(Mode == MAP || Mode == SCALEBAR || Mode == LEGEND || Mode = REFERENCE) { // "image" only modes
       setExtent();
@@ -1871,82 +1898,6 @@ int main(int argc, char *argv[]) {
     case FEATUREQUERY:
     case FEATURENQUERY:
 
-      if((i = msGetLayerIndex(Map, SelectLayer)) == -1) { /* force the selection layer on */
-	msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
-	writeError();
-      } else {
-	Map->layers[i].status = MS_ON;
-      }
- 
-      if((i = msGetLayerIndex(Map, QueryLayer)) != -1) /* force the query layer on */
-	Map->layers[i].status = MS_ON;
-
-      if(QueryCoordSource == NONE) { /* use item/value */
-
-        if((Item == NULL) || (Value == NULL)) {
-	  msSetError(MS_WEBERR, "Missing \"item\"\\\"value\" pairing.", "mapserv()");
-	  writeError();
-	}
-
-        if(Mode == FEATUREQUERY) {
-          if((QueryResults = msQueryUsingItem(Map, SelectLayer, MS_SINGLE, Item, Value)) == NULL) writeError();
-        } else {
-          if((QueryResults = msQueryUsingItem(Map, SelectLayer, MS_MULTIPLE, Item, Value)) == NULL) writeError();
-	}
-
-      } else { /* use coordinates */
-
-	if(Mode == FEATUREQUERY) {
-	  switch(QueryCoordSource) {
-	  case FROMIMGPNT:
-	    Map->extent = ImgExt; /* use the existing map extent */	
-	    setCoordinate();
-	    if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_SINGLE, MapPnt, 0)) == NULL) writeError();
-	    break;
-	  case FROMUSERPNT: /* only a buffer makes sense */
-	    if(Buffer == -1) {
-	      msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
-	      writeError();
-	    }
-	    if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_SINGLE, MapPnt, Buffer)) == NULL) writeError();
-	    break;
-	  default:
-	    msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
-	    writeError();
-	    break;
-	  }	  
-	} else { /* FEATURENQUERY */
-	  switch(QueryCoordSource) {
-	  case FROMIMGPNT:
-	    Map->extent = ImgExt; /* use the existing map extent */	
-	    setCoordinate();
-	    if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_MULTIPLE, MapPnt, 0)) == NULL) writeError();
-	    break;	 
-	  case FROMIMGBOX:
-	    break;
-	  case FROMUSERPNT: /* only a buffer makes sense */
-	    if((QueryResults = msQueryUsingPoint(Map, SelectLayer, MS_MULTIPLE, MapPnt, Buffer)) == NULL) writeError();
-	  default:
-	    setExtent();
-	    if((QueryResults = msQueryUsingRect(Map, SelectLayer, &Map->extent)) == NULL) writeError();
-	    break;
-	  }
-	} /* end switch */
-      } 
-         
-      if(msQueryUsingFeatures(Map, QueryLayer, QueryResults) == -1) /* now feature query */
-	writeError();
-      
-      returnQuery();
-
-      if(SaveQuery) {
-	sprintf(buffer, "%s%s%s%s", Map->web.imagepath, Map->name, Id, MS_QUERY_EXTENSION);
-	if(msSaveQuery(QueryResults, buffer) == -1) 
-	  writeError();
-      }
-
-      break; 
-
     case ITEMQUERY:
     case ITEMNQUERY:
     case ITEMQUERYMAP:
@@ -1960,128 +1911,8 @@ int main(int argc, char *argv[]) {
                 
     case BROWSE:
 
-      if(!Map->web.template) {
-	msSetError(MS_WEBERR, "No template provided.", "mapserv()");
-	writeError();
-      }
-
-      if(QueryFile) {
-	QueryResults = msLoadQuery(QueryFile);
-	if(!QueryResults)
-	  writeError();
-      }
- 
-      setExtent();
-      
-      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
-      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
-
-      if((Map->scale < Map->web.minscale) && (Map->web.minscale > 0)) {
-	if(Map->web.mintemplate != NULL) { /* use the template provided */
-	  if(TEMPLATE_TYPE(Map->web.mintemplate) == MS_FILE)
-	    returnPage(Map->web.mintemplate);
-	  else
-	    returnURL(Map->web.mintemplate);
-	  break;
-	} else { /* force zoom = 1 (i.e. pan) */
-	  fZoom = Zoom = 1;
-	  ZoomDirection = 0;
-	  CoordSource = FROMSCALE;
-	  Map->scale = Map->web.minscale;
-	  MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
-	  MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
-	  setExtent();
-	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
-	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
-	}
-      }
-      if((Map->scale > Map->web.maxscale) && (Map->web.maxscale > 0)) {
-	if(Map->web.maxtemplate != NULL) { /* use the template provided */
-	  if(TEMPLATE_TYPE(Map->web.maxtemplate) == MS_FILE)
-	    returnPage(Map->web.maxtemplate);
-	  else
-	    returnURL(Map->web.maxtemplate);
-	} else { /* force zoom = 1 (i.e. pan) */
-	  fZoom = Zoom = 1;
-	  ZoomDirection = 0;
-	  CoordSource = FROMSCALE;
-	  Map->scale = Map->web.maxscale;
-	  MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
-	  MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
-	  setExtent();
-	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
-	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);
-	}
-      }
-   
-      if(Map->status == MS_ON) {
-	if(QueryResults)
-	  img = msDrawQueryMap(Map, QueryResults);
-	else
-	  img = msDrawMap(Map);
-	if(!img) writeError();
-	sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);	
-#ifndef USE_GD_1_8
-	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
-#else
-	if(msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality) == -1) writeError();
-#endif
-	gdImageDestroy(img);
-      }
-      
-      if(Map->legend.status == MS_ON) {
-	img = msDrawLegend(Map);
-	if(!img) writeError();
-	sprintf(buffer, "%s%sleg%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	if(msSaveImage(img, buffer, Map->legend.transparent, Map->legend.interlace) == -1) writeError();
-#else
-	if(msSaveImage(img, buffer, Map->imagetype, Map->legend.transparent, Map->legend.interlace, Map->imagequality) == -1) writeError();
-#endif
-	gdImageDestroy(img);
-      }
-      
-      if(Map->scalebar.status == MS_ON) {
-	img = msDrawScalebar(Map);
-	if(!img) writeError();
-	sprintf(buffer, "%s%ssb%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	if(msSaveImage(img, buffer, Map->scalebar.transparent, Map->scalebar.interlace) == -1) writeError();
-#else
-	if(msSaveImage(img, buffer, Map->imagetype, Map->scalebar.transparent, Map->scalebar.interlace, Map->imagequality) == -1) writeError();
-#endif
-	gdImageDestroy(img);
-      }
-
-      if(Map->reference.status == MS_ON) {
-	img = msDrawReferenceMap(Map);
-	if(!img) writeError();
-	sprintf(buffer, "%s%sref%s.%s", Map->web.imagepath, Map->name, Id, outputImageType[Map->imagetype]);
-#ifndef USE_GD_1_8
-	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
-#else
-	if(msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality) == -1) writeError();
-#endif
-	gdImageDestroy(img);
-      }
-
-      if(QueryFile) {
-	returnQuery();
-      } else {
-	if(TEMPLATE_TYPE(Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
-	  printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
-	  printf("<!-- %s -->\n", msGetVersion());
-	  fflush(stdout);
-	  returnPage(Map->web.template);
-	} else {	
-	  returnURL(Map->web.template);
-	} 
-      }
-     
-      break;
-      
     default:
-      break;
+
     } /* end switch mode */
 
     writeLog(MS_FALSE);
@@ -2089,7 +1920,6 @@ int main(int argc, char *argv[]) {
     /*
     ** Clean-up
     */
-    msFreeQueryResults(QueryResults);
     msFreeMap(Map);
 
     for(i=0;i<NumEntries;i++) {
@@ -2102,8 +1932,7 @@ int main(int argc, char *argv[]) {
     free(QueryLayer);
     free(QueryFile);
 
-    for(i=0;i<NumLayers;i++)
-      free(Layers[i]);
+    for(i=0;i<NumLayers;i++) free(Layers[i]);
 
-    exit(0);
-} /* End main routine */
+    exit(0); // end MapServer
+} 

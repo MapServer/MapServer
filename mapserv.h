@@ -55,13 +55,11 @@ mapObj *Map=NULL;
 char *Layers[MS_MAXLAYERS];
 int NumLayers=0; /* number of layers specfied by a user */
 
-rectObj ShpExt; /* these 3 vars hold everything that can be returned to the client for a query */
-queryObj *Query=NULL;
-int ShpIdx;
-
 char *QueryFile=NULL;
 char *QueryLayer=NULL, *SelectLayer=NULL;
 char *Item=NULL, *Value=NULL;
+
+layerObj *ResultLayer=NULL;
 
 shapeObj SelectShape, ResultShape;
 
@@ -89,8 +87,6 @@ char Id[IDSIZE]="\0"; /* big enough for time + pid */
 */
 int RN=0; /* overall result number */
 int LRN=0; /* result number within a layer */
-char *CL=NULL; /* current layer */
-char *CD=NULL; /* current layer description */
 int NL=0; /* total number of layers with results */
 int NR=0; /* total number or results */
 int NLR=0; /* number of results in a layer */
