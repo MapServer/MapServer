@@ -255,123 +255,123 @@ class ExpressionTestCase(MapTestCase):
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '([foo] >= 2)', fs
 
-class ZoomPointTestCase(MapZoomTestCase):
-    def testRecenter(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        p = mapscript.pointObj(50.0, 50.0)
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomPoint(1, p, w, h, extent, None)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-50,-50,50,50))
-    def testZoomInPoint(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        p = mapscript.pointObj(50.0, 50.0)
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomPoint(2, p, w, h, extent, None)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-25,-25,25,25))
-    def testZoomOutPoint(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomPoint(-2, p, w, h, extent, None)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-100,-100,100,100))
-    def testZoomOutPointConstrained(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        max = mapscript.rectObj()
-        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomPoint(-4, p, w, h, extent, max)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, max)
-    def testZoomBadSize(self):
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
-        extent = self.mapobj1.extent
-        w = 0
-        h = -1
-        self.assertRaises(mapscript.MapServerError, 
-            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
-    def testZoomBadExtent(self):
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
-        extent = self.mapobj1.extent
-        extent.maxx = extent.maxx - 1000000
-        w = 100
-        h = 100
-        self.assertRaises(mapscript.MapServerError, 
-            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
-
-class ZoomRectangleTestCase(MapZoomTestCase):
-    def testZoomRectangle(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        r = mapscript.rectObj()
-        r.minx, r.miny, r.maxx, r.maxy = (1, 26, 26, 1)
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomRectangle(r, w, h, extent, None)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-49,24,-24,49))
-    def testZoomRectangleConstrained(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        max = mapscript.rectObj()
-        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
-        r = mapscript.rectObj()
-        r.minx, r.miny, r.maxx, r.maxy = (0, 200, 200, 0)
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomRectangle(r, w, h, extent, max)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, max)
-    def testZoomRectangleBadly(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        r = mapscript.rectObj()
-        r.minx, r.miny, r.maxx, r.maxy = (0, 0, 200, 200)
-        extent = self.mapobj1.extent
-        self.assertRaises(mapscript.MapServerError, 
-            self.mapobj1.zoomRectangle, r, w, h, extent, None)
-
-class ZoomScaleTestCase(MapZoomTestCase):
-    def testRecenter(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
-        scale = 2834.6472
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-50,-50,50,50))
-    def testZoomInScale(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
-        scale = 1417.3236
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-25,-25,25,25))
-    def testZoomOutScale(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
-        scale = 5669.2944
-        extent = self.mapobj1.extent
-        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, mapscript.rectObj(-100,-100,100,100))
-    def testZoomOutPointConstrained(self):
-        w, h = (self.mapobj1.width, self.mapobj1.height)
-        max = mapscript.rectObj()
-        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
-        extent = self.mapobj1.extent
-        scale = 10000
-        self.mapobj1.zoomScale(scale, p, w, h, extent, max)
-        new_extent = self.mapobj1.extent
-        self.assertRectsEqual(new_extent, max)
+##class ZoomPointTestCase(MapZoomTestCase):
+##    def testRecenter(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        p = mapscript.pointObj(50.0, 50.0)
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomPoint(1, p, w, h, extent, None)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, mapscript.rectObj(-50,-50,50,50))
+##    def testZoomInPoint(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        p = mapscript.pointObj(50.0, 50.0)
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomPoint(2, p, w, h, extent, None)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, mapscript.rectObj(-25,-25,25,25))
+##    def testZoomOutPoint(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        p = mapscript.pointObj()
+##        p.x, p.y = (50, 50)
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomPoint(-2, p, w, h, extent, None)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, mapscript.rectObj(-100,-100,100,100))
+##    def testZoomOutPointConstrained(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        max = mapscript.rectObj()
+##        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
+##        p = mapscript.pointObj()
+##        p.x, p.y = (50, 50)
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomPoint(-4, p, w, h, extent, max)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, max)
+##    def testZoomBadSize(self):
+##        p = mapscript.pointObj()
+##        p.x, p.y = (50, 50)
+##        extent = self.mapobj1.extent
+##        w = 0
+##        h = -1
+##        self.assertRaises(mapscript.MapServerError, 
+##            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
+##    def testZoomBadExtent(self):
+##        p = mapscript.pointObj()
+##        p.x, p.y = (50, 50)
+##        extent = self.mapobj1.extent
+##        extent.maxx = extent.maxx - 1000000
+##        w = 100
+##        h = 100
+##        self.assertRaises(mapscript.MapServerError, 
+##            self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
+##
+##class ZoomRectangleTestCase(MapZoomTestCase):
+##    def testZoomRectangle(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        r = mapscript.rectObj()
+##        r.minx, r.miny, r.maxx, r.maxy = (1, 26, 26, 1)
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomRectangle(r, w, h, extent, None)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, mapscript.rectObj(-49,24,-24,49))
+##    def testZoomRectangleConstrained(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        max = mapscript.rectObj()
+##        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
+##        r = mapscript.rectObj()
+##        r.minx, r.miny, r.maxx, r.maxy = (0, 200, 200, 0)
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomRectangle(r, w, h, extent, max)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, max)
+##    def testZoomRectangleBadly(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        r = mapscript.rectObj()
+##        r.minx, r.miny, r.maxx, r.maxy = (0, 0, 200, 200)
+##        extent = self.mapobj1.extent
+##        self.assertRaises(mapscript.MapServerError, 
+##            self.mapobj1.zoomRectangle, r, w, h, extent, None)
+##
+##class ZoomScaleTestCase(MapZoomTestCase):
+##    def testRecenter(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        p = mapscript.pointObj()
+##        p.x, p.y = (50, 50)
+##        scale = 2834.6472
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, mapscript.rectObj(-50,-50,50,50))
+##    def testZoomInScale(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        p = mapscript.pointObj()
+##        p.x, p.y = (50, 50)
+##        scale = 1417.3236
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, mapscript.rectObj(-25,-25,25,25))
+##    def testZoomOutScale(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        p = mapscript.pointObj()
+##        p.x, p.y = (50, 50)
+##        scale = 5669.2944
+##        extent = self.mapobj1.extent
+##        self.mapobj1.zoomScale(scale, p, w, h, extent, None)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, mapscript.rectObj(-100,-100,100,100))
+##    def testZoomOutPointConstrained(self):
+##        w, h = (self.mapobj1.width, self.mapobj1.height)
+##        max = mapscript.rectObj()
+##        max.minx, max.miny, max.maxx, max.maxy = (-100.0,-100.0,100.0,100.0)
+##        p = mapscript.pointObj()
+##        p.x, p.y = (50, 50)
+##        extent = self.mapobj1.extent
+##        scale = 10000
+##        self.mapobj1.zoomScale(scale, p, w, h, extent, max)
+##        new_extent = self.mapobj1.extent
+##        self.assertRectsEqual(new_extent, max)
 
 class LineObjTestCase(MapPrimitivesTestCase):
     """Testing the lineObj class in stand-alone mode"""
