@@ -208,6 +208,10 @@ FT_DIR=c:/projects/freetype-2.1.3
 # file.
 # See http://www.esri.com/software/arcgis/arcinfo/arcsde/index.html for
 # support library
+#
+# To include experimental SDE_RASTER support, include "-DUSE_SDERASTER" in the
+# SDE_OPT.
+#
 #SDE_OPT=-DUSE_SDE -DWIN32
 #SDE_DIR=c:/my_path_to/arcsde
 
