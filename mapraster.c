@@ -54,8 +54,10 @@ double diffTime;
 
 #define RED_LEVELS 5
 #define RED_DIV 52
-#define GREEN_LEVELS 7
-#define GREEN_DIV 37
+//#define GREEN_LEVELS 7
+#define GREEN_LEVELS 5
+//#define GREEN_DIV 37
+#define GREEN_DIV 52
 #define BLUE_LEVELS 5
 #define BLUE_DIV 52
 
@@ -175,7 +177,19 @@ static int add_color(mapObj *map, gdImagePtr img, int r, int g, int b)
     rd = (long)(img->red  [c] - r);
     gd = (long)(img->green[c] - g);
     bd = (long)(img->blue [c] - b);
-    dist = rd * rd + gd * gd + bd * bd;
+/* -------------------------------------------------------------------- */
+/*      special case for grey colors (r=g=b). we will try to find       */
+/*      either the nearest grey or a color that is almost grey.         */
+/* -------------------------------------------------------------------- */
+    if (r == g && r == b)
+    {
+        if (img->red == img->green && img->red ==  img->blue)
+          dist = rd;
+        else
+          dist = rd * rd + gd * gd + bd * bd;
+    }
+    else
+      dist = rd * rd + gd * gd + bd * bd;
     if (dist < mindist) {
       if (dist == 0) {
 	return c; /* Return exact match color */
@@ -1632,6 +1646,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 #ifdef USE_EGIS
   char *ext; // OV -egis- temp variable
 #endif
+
 
   if(!layer->data && !layer->tileindex)
     return(0);
