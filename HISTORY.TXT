@@ -33,6 +33,9 @@ Version 4.2-beta2 (2004-05-03)
 - Fixed an issue with annotation label overlap. There was an issue with
   the way msRectToPolygon was computing it's bounding box. (bug 618)
 
+- Fixed "raster cracking" problem (bug 493)
+
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 
