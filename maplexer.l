@@ -31,7 +31,7 @@ char *msyystring=NULL;
 
 int msyyreturncomments = 0;
 
-void lexer_cleanup() {
+void lexer_cleanup(void) {
 #ifndef YY_CURRENT_BUFFER_LVALUE
     /* yy_current_buffer was there only in older versions (e.g. 2.5.4)
      * but is gone in newer versions (e.g. 2.5.31)

@@ -244,7 +244,7 @@ int     tilesProcessed = 0;
 }
 
 /***********************************************************************/
-void print_usage_and_exit() {
+void print_usage_and_exit(void) {
 
     printf("\nusage: tile4ms <meta-file> <tile-file> [-tile-path-only]\n");
     printf("<meta-file>\tINPUT  file containing list of shapefile names\n\t\t(complete paths 255 chars max, no extension)\n");

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.124  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.123  2004/11/15 18:55:49  frank
  * added "experimental" drawSDE support.
  *
@@ -78,8 +81,8 @@
 
 MS_CVSID("$Id$")
 
-extern int msyyparse();
-extern int msyylex();
+extern int msyyparse(void);
+extern int msyylex(void);
 extern char *msyytext;
 
 extern int msyyresult; // result of parsing, true/false

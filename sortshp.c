@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.3  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -47,21 +50,21 @@ typedef struct {
   int index;
 } sortStruct;
 
-static int compare_string_descending(i,j)
-sortStruct *i, *j; 
+static int compare_string_descending(const void *a, const void *b)
 {
+  const sortStruct *i = a, *j = b;
   return(strcmp(j->string, i->string));
 }
 
-static int compare_string_ascending(i,j) 
-sortStruct *i, *j;
+static int compare_string_ascending(const void *a, const void *b) 
 {
+  const sortStruct *i = a, *j = b;
   return(strcmp(i->string, j->string));
 }
 
-static int compare_number_descending(i,j)
-sortStruct *i, *j; 
+static int compare_number_descending(const void *a, const void *b)
 {
+  const sortStruct *i = a, *j = b;
   if(i->number > j->number)
     return(-1);  
   if(i->number < j->number)  
@@ -69,9 +72,9 @@ sortStruct *i, *j;
   return(0);
 }
 
-static int compare_number_ascending(i,j) 
-sortStruct *i, *j;
+static int compare_number_ascending(const void *a, const void *b) 
 {
+  const sortStruct *i = a, *j = b;
   if(i->number > j->number)
     return(1);  
   if(i->number < j->number)  
@@ -79,9 +82,7 @@ sortStruct *i, *j;
   return(0);
 }
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 {
   SHPHandle    inSHP,outSHP; /* ---- Shapefile file pointers ---- */
   DBFHandle    inDBF,outDBF; /* ---- DBF file pointers ---- */  

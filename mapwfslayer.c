@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.30  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.29  2004/11/25 06:19:05  dan
  * Add trailing "?" or "&" to connection string when required in WFS
  * client layers using GET method (bug 1082)
@@ -570,7 +573,7 @@ typedef struct ms_wfs_layer_info_t
  *                          msAllocWFSLayerInfo()
  *
  **********************************************************************/
-static msWFSLayerInfo *msAllocWFSLayerInfo()
+static msWFSLayerInfo *msAllocWFSLayerInfo(void)
 {
     msWFSLayerInfo *psInfo;
 

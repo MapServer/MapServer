@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.391  2005/01/28 06:16:53  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.390  2005/01/26 15:30:52  hobu
  * Add drawSDE prototype for experimental
  * SDE raster support
@@ -163,7 +166,7 @@
 
 #ifndef DISABLE_CVSID
 #  define MS_CVSID(string)     static char ms_cvsid[] = string; \
-static char *cvsid_aw() { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid ); }
+static char *cvsid_aw(void) { return( cvsid_aw() ? ((char *) NULL) : ms_cvsid ); }
 #else
 #  define MS_CVSID(string)
 #endif

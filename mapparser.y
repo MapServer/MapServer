@@ -13,8 +13,8 @@
 #include "map.h" /* for TRUE/FALSE and REGEX includes */
 #include "maptime.h" /* for time comparison routines */
 
-extern int msyylex(); /* lexer globals */
-extern int msyyerror();
+extern int msyylex(void); /* lexer globals */
+extern int msyyerror(const char *);
 
 int msyyresult;
 %}

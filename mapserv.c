@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.143  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.142  2004/12/09 21:20:19  frank
  * clear error list before processing new request in fastcgi mode
  *
@@ -140,7 +143,7 @@ int writeLog(int show_error)
   return(0);
 }
 
-void writeError()
+void writeError(void)
 {
   errorObj *ms_error = msGetErrorObj();
 
@@ -226,7 +229,7 @@ static double getNumeric(char *s)
 ** Extract Map File name from params and load it.  
 ** Returns map object or NULL on error.
 */
-mapObj *loadMap()
+mapObj *loadMap(void)
 {
   int i,j,k;
   mapObj *map = NULL;
@@ -300,7 +303,7 @@ mapObj *loadMap()
 /*
 ** Process CGI parameters.
 */
-void loadForm()
+void loadForm(void)
 {
   int i,j,n;
   char **tokens=NULL;
@@ -953,7 +956,7 @@ void loadForm()
   if(msObj->Map->width == -1) msObj->Map->width = msObj->ImgCols;  
 }
 
-void setExtentFromShapes() {
+void setExtentFromShapes(void) {
   int found=0;
   double dx, dy, cellsize;
 
@@ -1007,7 +1010,7 @@ void setExtentFromShapes() {
 
 
 /* FIX: NEED ERROR CHECKING HERE FOR IMGPNT or MAPPNT */
-void setCoordinate()
+void setCoordinate(void)
 {
   double cellx,celly;
 
@@ -1020,7 +1023,7 @@ void setCoordinate()
   return;
 }
 
-void returnCoordinate()
+void returnCoordinate(pointObj pnt)
 {
   msSetError(MS_NOERR, 
              "Your \"<i>click</i>\" corresponds to (approximately): (%g, %g).",

@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.4  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -40,8 +43,8 @@ extern "C" {
 #endif
 
 #ifdef USE_THREAD
-void msThreadInit();
-int msGetThreadId();
+void msThreadInit(void);
+int msGetThreadId(void);
 void msAcquireLock(int);
 void msReleaseLock(int);
 #else

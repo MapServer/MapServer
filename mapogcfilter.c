@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.42  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.41  2005/01/06 00:33:49  assefa
  * bug 1143 : missing call to msInitShape.
  *
@@ -1127,7 +1130,7 @@ void FLTFreeFilterEncodingNode(FilterEncodingNode *psFilterNode)
 /*                                                                      */
 /*      return a FilerEncoding node.                                    */
 /************************************************************************/
-FilterEncodingNode *FLTCreateFilterEncodingNode()
+FilterEncodingNode *FLTCreateFilterEncodingNode(void)
 {
     FilterEncodingNode *psFilterNode = NULL;
 

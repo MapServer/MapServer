@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.80  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.79  2004/11/19 17:38:41  sean
  * final fix to bug 1074, image transparency preserved through msSymbolSetImageGD
  * and symbolObj::setImage.
@@ -64,8 +67,8 @@
 
 MS_CVSID("$Id$")
 
-extern int msyylex(); /* lexer globals */
-extern void msyyrestart();
+extern int msyylex(void); /* lexer globals */
+extern void msyyrestart(FILE *);
 extern double msyynumber;
 extern char *msyytext;
 extern int msyylineno;

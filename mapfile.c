@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.292  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.291  2005/01/26 06:14:53  sdlime
  * Added style maxwidth/minwidth read/write/copy.
  *
@@ -68,8 +71,8 @@
 
 MS_CVSID("$Id$")
 
-extern int msyylex();
-extern void msyyrestart();
+extern int msyylex(void);
+extern void msyyrestart(FILE *);
 extern double msyynumber;
 extern char *msyytext;
 extern int msyylineno;
@@ -167,7 +170,7 @@ int getSymbol(int n, ...) {
 ** Get a string or symbol as a string.   Operates like getString(), but also
 ** supports symbols. 
 */
-static char *getToken() {
+static char *getToken(void) {
 
     msyylex();
 

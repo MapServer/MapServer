@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.7  2004/07/28 22:16:17  assefa
  * Add support for spatial filters inside an SLD. (Bug 782).
  *
@@ -114,7 +117,7 @@ typedef struct
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
 FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString);
-FilterEncodingNode *FLTCreateFilterEncodingNode();
+FilterEncodingNode *FLTCreateFilterEncodingNode(void);
 int FLTApplyFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 
                          int iLayerIndex, int bOnlySpatialFilter);
 int FLTApplySpatialFilterToLayer(FilterEncodingNode *psNode, mapObj *map, 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.8  2004/10/21 10:54:17  assefa
  * Add postgis date_trunc support.
  *
@@ -76,7 +79,7 @@ char *msStrptime(const char *s, const char *format, struct tm *tm);
 int msParseTime(const char *string, struct tm *tm);
 int msTimeMatchPattern(char *timestring, char *pattern);
 void msSetLimitedPattersToUse(char *patternstring);
-void msUnsetLimitedPatternToUse();
+void msUnsetLimitedPatternToUse(void);
 int msTimeGetResolution(const char *timestring);
 
 #endif /* MAPTIME_H */

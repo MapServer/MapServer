@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2005/01/28 06:16:53  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.60  2005/01/26 14:42:13  frank
  * Removed msWebDebug() ... really this time!
  *
@@ -187,7 +190,7 @@ errorObj *msGetErrorObj()
 ** the head is moved to the new errorObj, freeing the head errorObj to receive
 ** the new error information.
 */
-static errorObj *msInsertErrorObj()
+static errorObj *msInsertErrorObj(void)
 {
   errorObj *ms_error;
   ms_error = msGetErrorObj();

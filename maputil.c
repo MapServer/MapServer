@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.169  2005/01/28 06:16:54  sdlime
+ * Applied patch to make function prototypes ANSI C compliant. Thanks to Petter Reinholdtsen. This fixes but 1181.
+ *
  * Revision 1.168  2005/01/20 01:59:19  sean
  * protect against labelitemindex < 0 take 2, > 0 changed to >= 0
  *
@@ -74,8 +77,8 @@
 
 MS_CVSID("$Id$")
 
-extern int msyyparse();
-extern int msyylex();
+extern int msyyparse(void);
+extern int msyylex(void);
 extern char *msyytext;
 
 extern int msyyresult; // result of parsing, true/false
@@ -1141,7 +1144,7 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
  
 /* This is intended to be a function to cleanup anything that "hangs around"
    when all maps are destroyed, like Registered GDAL drivers, and so forth. */
-extern void lexer_cleanup();
+extern void lexer_cleanup(void);
 
 void msCleanup()
 {
