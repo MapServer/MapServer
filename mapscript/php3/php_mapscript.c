@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.129  2002/12/17 22:52:53  dan
+ * Fixed return value of map->selectOutputFormat()
+ *
  * Revision 1.128  2002/12/17 22:04:58  dan
  * Added PNG24 to the list of default output formats with GD2
  *
@@ -4883,12 +4886,13 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pImageType;
     mapObj      *self=NULL;
     HashTable   *list=NULL;
+    int         nStatus = MS_SUCCESS;
 
     pThis = getThis();
 
     if (pThis == NULL)
     {
-        RETURN_FALSE;
+        RETURN_LONG(MS_FAILURE);
     }
 
     if (getParameters(ht,1,&pImageType) == FAILURE)
@@ -4902,19 +4906,15 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
                                          list TSRMLS_CC);
     if (self == NULL)
     {
-        RETURN_FALSE;
+        RETURN_LONG(MS_FAILURE);
     }
 
-    if (mapObj_selectOutputFormat(self, pImageType->value.str.val))
-    {
-        if(self->imagetype)
-            _phpms_set_property_string(pThis,"imagetype", 
-                                       self->imagetype,E_ERROR);
+    nStatus = mapObj_selectOutputFormat(self, pImageType->value.str.val);
 
-        RETURN_TRUE;
-    }
+    if(self->imagetype)
+        _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
 
-    RETURN_FALSE;
+    RETURN_LONG(nStatus);
 }
 /* }}} */
 

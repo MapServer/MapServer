@@ -391,8 +391,8 @@ and the MapServer Map File documentation at:
        
 
    int selectOutputFormat(string type)
-        Selects the output format to be used in the map. Returns TRUE
-        on success or FALSE.
+        Selects the output format to be used in the map. 
+        Returns MS_SUCCESS/MS_FAILURE.
        
         Note : the type used should correspond to one of the output
                formats declared in the map file.
