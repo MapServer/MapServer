@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.22  2004/02/10 23:46:39  assefa
+ * Coorect typo error.
+ *
  * Revision 1.21  2004/02/10 23:44:00  assefa
  * Set layer template before doing a query for the NOT operator.
  * Correct a bug when doing an OR on 2 arrays.
@@ -579,9 +582,9 @@ int *FLTArraysOr(int *aFirstArray, int nSizeFirst,
             for (i=0; i<nSizeSecond; i++)
               panResults[i] = aSecondArray[i];
             if (pnResult)
-              *pnResult = nSizeFirst;
+              *pnResult = nSizeSecond;
 
-            return nSizeSecond;
+            return panResults;
         }
     }
             
