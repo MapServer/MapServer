@@ -610,6 +610,7 @@ int getInteger(int *i);
 int getSymbol(int n, ...); 
 int getCharacter(char *c);
 
+void initSymbol(symbolObj *s);
 int initMap(mapObj *map);
 int initLayer(layerObj *layer);
 int initClass(classObj *_class);
@@ -620,7 +621,9 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *s
 void freeFeatureList(featureListNodeObjPtr list);
 
 int msLoadProjectionString(projectionObj *p, char *value);
+
 int loadExpressionString(expressionObj *exp, char *value);
+void freeExpression(expressionObj *exp);
 
 int getClassIndex(layerObj *layer, char *str);
 

@@ -61,7 +61,7 @@ static struct imageCacheObj *addImageCache(struct imageCacheObj *ic, int *icsize
   return(icp);
 }
 
-static void initSymbol(symbolObj *s)
+void initSymbol(symbolObj *s)
 {
   s->type = MS_SYMBOL_VECTOR;
   s->transparent = MS_FALSE;
@@ -82,9 +82,9 @@ static void initSymbol(symbolObj *s)
 
 static void freeSymbol(symbolObj *s) {
   if(!s) return;
-  free(s->name);
+  if(s->name) free(s->name);
   if(s->img) gdImageDestroy(s->img);
-  free(s->font);
+  if(s->font) free(s->font);
 }
 
 int loadSymbol(symbolObj *s)

@@ -192,6 +192,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   if(s == -1) {
     s = map->symbolset.numsymbols;
     map->symbolset.numsymbols++;
+    initSymbol(&(map->symbolset.symbol[s]));
   } else {
     if(map->symbolset.symbol[s].img) 
       gdImageDestroy(map->symbolset.symbol[s].img);
@@ -200,8 +201,9 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->symbolset.symbol[s].img = msDrawScalebar(map);
   if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
 
-  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP;
+  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
   map->symbolset.symbol[s].name = strdup("scalebar");  
+  map->symbolset.symbol[s].font = NULL;
 
   if(map->scalebar.transparent)
     gdImageColorTransparent(map->symbolset.symbol[s].img, 0);

@@ -207,6 +207,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   if(s == -1) {
     s = map->symbolset.numsymbols;
     map->symbolset.numsymbols++;
+    initSymbol(&(map->symbolset.symbol[s]));
   } else {
     if(map->symbolset.symbol[s].img) 
       gdImageDestroy(map->symbolset.symbol[s].img);
@@ -215,7 +216,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   map->symbolset.symbol[s].img = msDrawLegend(map);
   if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
 
-  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP;
+  map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
   map->symbolset.symbol[s].name = strdup("legend");  
 
   if(map->legend.transparent)
