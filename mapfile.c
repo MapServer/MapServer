@@ -2228,7 +2228,7 @@ static void writeReferenceMap(referenceMapObj *ref, FILE *stream)
   fprintf(stream, "  REFERENCE\n");
   fprintf(stream, "    COLOR %d %d %d\n", ref->color.red, ref->color.green, ref->color.blue);
   fprintf(stream, "    EXTENT %g %g %g %g\n", ref->extent.minx, ref->extent.miny, ref->extent.maxx, ref->extent.maxy);
-  fprintf(stream, "    IMAGE %s\n", ref->image);
+  fprintf(stream, "    IMAGE \"%s\"\n", ref->image);
   fprintf(stream, "    OUTLINECOLOR %d %d %d\n", ref->outlinecolor.red, ref->outlinecolor.green, ref->outlinecolor.blue);
   fprintf(stream, "    SIZE %d %d\n", ref->width, ref->height);
   fprintf(stream, "    STATUS %s\n", msStatus[ref->status]);
