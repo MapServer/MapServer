@@ -941,7 +941,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer);
 int msQueryByRect(mapObj *map, int qlayer, rectObj rect);
 int msQueryByFeatures(mapObj *map, int qlayer, int slayer);
-int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape);
+int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape);
 int msGetQueryResultBounds(mapObj *map, rectObj *bounds);
 int msIsLayerQueryable(layerObj *lp);
 

@@ -1765,7 +1765,7 @@ int initLayer(layerObj *layer, mapObj *map)
   layer->annotate = MS_FALSE;
 
   layer->toleranceunits = MS_PIXELS;
-  layer->tolerance = 3; /* perhaps this should have a different value based on type */
+  layer->tolerance = 0; /* perhaps this should have a different value based on type */
 
   layer->symbolscale = -1.0; /* -1 means nothing is set */
   layer->scalefactor = 1.0;

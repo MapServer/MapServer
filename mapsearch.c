@@ -267,7 +267,19 @@ double msDistancePointToSegment(pointObj *p, pointObj *a, pointObj *b)
 #define dot(u,v) ((u).x *(v).x + (u).y *(v).y) // vector dot product
 #define norm(v) sqrt(dot(v,v))
 
-// distance from segment AB to segement BC
+#define slope(a,b) (((a)->y - (b)->y)/((a)->x - (b)->x))
+
+// Segment to segment distance code is a modified version of that found at: 
+//
+//   http://www.geometryalgorithms.com/Archive/algorithm_0106/algorithm_0106.htm
+//
+// Copyright 2001, softSurfer (www.softsurfer.com)
+// This code may be freely used and modified for any purpose
+// providing that this copyright notice is included with it.
+// SoftSurfer makes no warranty for this code, and cannot be held
+// liable for any real or imagined damage resulting from its use.
+// Users of this code must verify correctness for their application.
+
 double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, pointObj *pd) 
 {
   vectorObj dP;
@@ -277,9 +289,20 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
   double sc, sN, sD; // N=numerator, D=demoninator
   double tc, tN, tD;
 
-  u.x = pb->x - pa->x; u.y = pb->y - pa->y; // u = b - a
-  v.x = pd->x - pc->x; v.y = pd->y - pc->y; // v = d - c
-  w.x = pa->x - pc->x; w.y = pa->y - pc->y; // w = a - c
+  // check for strictly parallel segments first
+  if(((pa->x == pb->x) && (pc->x == pd->x)) || (slope(pa,pb) == slope(pc,pd))) { // vertical (infinite slope) || otherwise parallel
+    D = msDistancePointToSegment(pa, pc, pd);
+    D = MS_MIN(D, msDistancePointToSegment(pb, pc, pd));
+    D = MS_MIN(D, msDistancePointToSegment(pc, pa, pb));
+    return(MS_MIN(D, msDistancePointToSegment(pd, pa, pb)));
+  }
+
+  u.x = pb->x - pa->x; // u = pb - pa
+  u.y = pb->y - pa->y;
+  v.x = pd->x - pc->x; // v = pd - pc 
+  v.y = pd->y - pc->y; 
+  w.x = pa->x - pc->x; // w = pa - pc
+  w.y = pa->y - pc->y; 
 
   a = dot(u,u);
   b = dot(u,v);
@@ -291,6 +314,7 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
   sc = sN = sD = D;
   tc = tN = tD = D;
   
+  // compute the line parameters of the two closest points
   if(D < SMALL_NUMBER) { // lines are almost parallel
     sN = 0.0;
     tN = e;
@@ -306,7 +330,7 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
       sN = sD;
       tN = e + b;
       tD = c;
-    } 
+    }
   }
 
   if(tN < 0) {
@@ -337,7 +361,7 @@ double msDistanceSegmentToSegment(pointObj *pa, pointObj *pb, pointObj *pc, poin
 
   dP.x = w.x + (sc*u.x) - (tc*v.x);
   dP.y = w.y + (sc*u.y) - (tc*v.y);
-  
+
   return(norm(dP));
 }
 
@@ -388,21 +412,23 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
   double dist, minDist=-1;
 
   switch(shape1->type) {
-  case(MS_SHAPE_POINT):
+  case(MS_SHAPE_POINT): // shape1
     for(i=0;i<shape1->numlines;i++) {
       for(j=0; j<shape1->line[i].numpoints; j++) {
         dist = msDistancePointToShape(&(shape1->line[i].point[j]), shape2);
-        if((dist < minDist) || (minDist < 0)) minDist = dist;
+        if((dist < minDist) || (minDist < 0)) 
+	  minDist = dist;
       }
     }
     break;
-  case(MS_SHAPE_LINE):
+  case(MS_SHAPE_LINE): // shape1
     switch(shape2->type) {
     case(MS_SHAPE_POINT):
       for(i=0;i<shape2->numlines;i++) {
         for(j=0; j<shape2->line[i].numpoints; j++) {
           dist = msDistancePointToShape(&(shape2->line[i].point[j]), shape1);
-          if((dist < minDist) || (minDist < 0)) minDist = dist;
+          if((dist < minDist) || (minDist < 0)) 
+	    minDist = dist;
         }
       }
       break;
@@ -410,7 +436,7 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
       for(i=0;i<shape1->numlines;i++) {
         for(j=1; j<shape1->line[i].numpoints; j++) {
           for(k=0;k<shape2->numlines;k++) {
-            for(l=1; l<shape2->line[i].numpoints; l++) {
+            for(l=1; l<shape2->line[k].numpoints; l++) {
               // check intersection (i.e. dist=0)
 	      if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
                 return(0);
@@ -435,7 +461,7 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
       for(i=0;i<shape1->numlines;i++) {
         for(j=1; j<shape1->line[i].numpoints; j++) {
           for(k=0;k<shape2->numlines;k++) {
-            for(l=1; l<shape2->line[i].numpoints; l++) {
+            for(l=1; l<shape2->line[k].numpoints; l++) {
 	      // check intersection (i.e. dist=0)
 	      if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
                 return(0);
@@ -451,13 +477,14 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
       break;
     }
     break;
-  case(MS_SHAPE_POLYGON):  
+  case(MS_SHAPE_POLYGON): // shape1
     switch(shape2->type) {
     case(MS_SHAPE_POINT):
       for(i=0;i<shape2->numlines;i++) {
         for(j=0; j<shape2->line[i].numpoints; j++) {
           dist = msDistancePointToShape(&(shape2->line[i].point[j]), shape1);
-          if((dist < minDist) || (minDist < 0)) minDist = dist;
+          if((dist < minDist) || (minDist < 0)) 
+	    minDist = dist;
         }
       }
       break;
@@ -469,10 +496,10 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
       }
       
       // check segment intersection and, if necessary, distance between segments
-      for(i=0;i<shape1->numlines;i++) {
+      for(i=0;i<shape1->numlines;i++) {      
         for(j=1; j<shape1->line[i].numpoints; j++) {
           for(k=0;k<shape2->numlines;k++) {
-            for(l=1; l<shape2->line[i].numpoints; l++) {
+            for(l=1; l<shape2->line[k].numpoints; l++) {
 	      // check intersection (i.e. dist=0)
 	      if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
                 return(0);
@@ -486,7 +513,7 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
  	}
       }
       break; 
-    case(MS_SHAPE_POLYGON):  
+    case(MS_SHAPE_POLYGON): 
       // shape1 completely contains shape2 (only need to check one point from each part)
       for(i=0; i<shape2->numlines; i++) {
         if(msIntersectPointPolygon(&(shape2->line[i].point[0]), shape1) == MS_TRUE) // this considers holes and multiple parts
@@ -500,13 +527,13 @@ double msDistanceShapeToShape(shapeObj *shape1, shapeObj *shape2)
       }
 
       // check segment intersection and, if necessary, distance between segments
-      for(i=0;i<shape1->numlines;i++) {
+      for(i=0;i<shape1->numlines;i++) {        
         for(j=1; j<shape1->line[i].numpoints; j++) {
           for(k=0;k<shape2->numlines;k++) {
-            for(l=1; l<shape2->line[i].numpoints; l++) {
+            for(l=1; l<shape2->line[k].numpoints; l++) {
 	      // check intersection (i.e. dist=0)
 	      if(msIntersectSegments(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l])) == MS_TRUE) 
-                return(0);
+                return(0);	      
 
 	      // no intersection, compute distance
 	      dist = msDistanceSegmentToSegment(&(shape1->line[i].point[j-1]), &(shape1->line[i].point[j]), &(shape2->line[k].point[l-1]), &(shape2->line[k].point[l]));

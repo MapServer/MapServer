@@ -853,16 +853,17 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   return(MS_FAILURE);
 }
 
-int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
+int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
 {
   int start, stop=0, l;
   shapeObj shape;
   layerObj *lp;
   char status;
+  double distance, tolerance;
   rectObj searchrect;
 
-  // FIX: do some checking on searchshape here...
-  if(searchshape->type != MS_SHAPE_POLYGON) {
+  // FIX: do some checking on selectshape here...
+  if(selectshape->type != MS_SHAPE_POLYGON) {
     msSetError(MS_QUERYERR, "Search shape MUST be a polygon.", "msQueryByShape()"); 
     return(MS_FAILURE);
   }
@@ -872,7 +873,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
   else
     start = stop = qlayer;
 
-  msComputeBounds(searchshape); // make sure an accurate extent exists
+  msComputeBounds(selectshape); // make sure an accurate extent exists
  
   for(l=start; l>=stop; l--) { /* each layer */
     lp = &(map->layers[l]);
@@ -891,6 +892,11 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
+
+    if(lp->toleranceunits == MS_PIXELS)
+      tolerance = lp->tolerance * msAdjustExtent(&(map->extent), map->width, map->height);
+    else
+      tolerance = lp->tolerance * (inchesPerUnit[lp->toleranceunits]/inchesPerUnit[map->units]);
    
     // open this layer
     status = msLayerOpen(lp);
@@ -901,13 +907,19 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
-    searchrect = searchshape->bounds;
+    searchrect = selectshape->bounds;
 #ifdef USE_PROJ
     if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
     else
       lp->project = MS_FALSE;
 #endif
+
+    searchrect.minx -= tolerance; // expand the search box to account for layer tolerances (e.g. buffered searches)
+    searchrect.maxx += tolerance;
+    searchrect.miny -= tolerance;
+    searchrect.maxy += tolerance;
+
     status = msLayerWhichShapes(lp, searchrect);
     if(status == MS_DONE) { // no overlap
       msLayerClose(lp);
@@ -944,14 +956,29 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
 
       switch(shape.type) { // make sure shape actually intersects the shape
       case MS_SHAPE_POINT:
-	status = msIntersectMultipointPolygon(&shape.line[0], searchshape);	
+        if(tolerance == 0) // just test for intersection
+	  status = msIntersectMultipointPolygon(&shape.line[0], selectshape);
+	else { // check distance, distance=0 means they intersect
+	  distance = msDistanceShapeToShape(selectshape, &shape);
+	  if(distance < tolerance) status = MS_TRUE;
+        }
 	break;
       case MS_SHAPE_LINE:
-	status = msIntersectPolylinePolygon(&shape, searchshape);
+        if(tolerance == 0) { // just test for intersection
+	  status = msIntersectPolylinePolygon(&shape, selectshape);
+	} else { // check distance, distance=0 means they intersect
+	  distance = msDistanceShapeToShape(selectshape, &shape);
+	  if(distance < tolerance) status = MS_TRUE;
+        }
 	break;
-      case MS_SHAPE_POLYGON:
-	status = msIntersectPolygons(&shape, searchshape);
-	break;
+      case MS_SHAPE_POLYGON:	
+	if(tolerance == 0) // just test for intersection
+	  status = msIntersectPolygons(&shape, selectshape);
+	else { // check distance, distance=0 means they intersect
+	  distance = msDistanceShapeToShape(selectshape, &shape);
+	  if(distance < tolerance) status = MS_TRUE;
+        }
+        break;
       default:
 	break;
       }
