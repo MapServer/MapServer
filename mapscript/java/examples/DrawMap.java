@@ -28,7 +28,7 @@ public class DrawMap {
    
     mapObj map = new mapObj(args[0]);
     map.getImagecolor().setRGB(153, 153, 204);
-    styleObj st = map.getLayer(0).getClass(0).getStyle(0);
+    styleObj st = map.getLayer(1).getClass(0).getStyle(0);
     st.getColor().setHex("#000000");
     imageObj img = map.draw();
     System.out.println("The map will be drawn to:"+args[1]);
