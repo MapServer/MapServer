@@ -2320,11 +2320,8 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->tileindex = getString()) == NULL) return(-1);
       break;
     case(TILEITEM):
-      if (layer->tileitem)
-      {
-        free(layer->tileitem);
-        layer->tileitem = NULL;
-      }
+      free(layer->tileitem);
+      layer->tileitem = NULL;
       if((layer->tileitem = getString()) == NULL) return(-1);
       break;
     case(TOLERANCE):

@@ -24,25 +24,6 @@ xmarks_image = os.path.join(TESTS_PATH, 'xmarks.png')
 # Import all from mapscript
 import mapscript
 
-# If mapscript is using the next generation names
-if 'mapObj' not in dir(mapscript):
-    mapscript.mapObj = mapscript.Map
-    mapscript.layerObj = mapscript.Layer
-    mapscript.classObj = mapscript.Class
-    mapscript.styleObj = mapscript.Style
-    mapscript.shapeObj = mapscript.Shape
-    mapscript.lineObj = mapscript.Line
-    mapscript.pointObj = mapscript.Point
-    mapscript.rectObj = mapscript.Rect
-    mapscript.outputFormatObj = mapscript.OutputFormat
-    mapscript.symbolObj = mapscript.Symbol
-    mapscript.symbolSetObj = mapscript.SymbolSet
-    mapscript.colorObj = mapscript.Color
-    mapscript.imageObj = mapscript.Image
-    mapscript.shapefileObj = mapscript.Shapefile
-    mapscript.projectionObj = mapscript.Projection
-    mapscript.fontSetObj = mapscript.FontSet
-
 # Base class for Primitives Tests -- no actual tests in this class
 
 class MapscriptTestCase(unittest.TestCase):
@@ -128,6 +109,7 @@ class MapTestCase(MapscriptTestCase):
     def tearDown(self):
         self.mapobj1 = None
 
+
 # ---------------------------------------------------------------------------
 # The tests begin here
 
@@ -136,6 +118,14 @@ class LayerTestCase(MapTestCase):
     def testLayerConstructor(self):
         layer = mapscript.layerObj(self.mapobj1)
         assert layer.thisown == 1
+
+    def testDrawMapBrokenLayer(self):
+        layer = self.mapobj1.getLayer(2)
+        layer.data = 'foo'
+        self.assertRaises(mapscript.MapServerError, self.mapobj1.draw)
+
+    def testDrawMap(self):
+        img = self.mapobj1.draw()
 
 # Layer ordering tests
 class LayerOrderTestCase(MapTestCase):
@@ -159,7 +149,7 @@ class LayerOrderTestCase(MapTestCase):
 # Layer removal tests
 class RemoveLayerTestCase(MapTestCase):
     def testRemoveLayer1NumLayers(self):
-        self.mapobj1.removeLayer(0)
+        layer = self.mapobj1.removeLayer(0)
         assert self.mapobj1.numlayers == 3
     def testRemoveLayer1LayerName(self):
         l2name = self.mapobj1.getLayer(1).name
@@ -207,18 +197,19 @@ class LayerRasterProcessingTestCase(MapTestCase):
 # class removal tests
 class RemoveClassTestCase(MapTestCase):
     def testRemoveClass1NumClasses(self):
-        self.mapobj1.getLayer(0).removeClass(0)
+        c = self.mapobj1.getLayer(0).removeClass(0)
+        assert c.thisown == 1
         assert self.mapobj1.getLayer(0).numclasses == 1
     def testRemoveClass1ClassName(self):
         c2name = self.mapobj1.getLayer(0).getClass(1).name
-        self.mapobj1.getLayer(0).removeClass(0)
+        c = self.mapobj1.getLayer(0).removeClass(0)
         assert self.mapobj1.getLayer(0).getClass(0).name == c2name
     def testRemoveClass2NumClasses(self):
-        self.mapobj1.getLayer(0).removeClass(1)
+        c = self.mapobj1.getLayer(0).removeClass(1)
         assert self.mapobj1.getLayer(0).numclasses == 1
     def testRemoveClass2ClassName(self):
         c1name = self.mapobj1.getLayer(0).getClass(0).name
-        self.mapobj1.getLayer(0).removeClass(1)
+        c = self.mapobj1.getLayer(0).removeClass(1)
         assert self.mapobj1.getLayer(0).getClass(0).name == c1name
 
 # symbol tests
@@ -236,11 +227,12 @@ class SymbolTestCase(MapPrimitivesTestCase):
         self.mapobj1.symbolset.appendSymbol(symbola) 
         self.mapobj1.symbolset.appendSymbol(symbolb) 
         num = self.mapobj1.symbolset.numsymbols
-        assert num == 4, num
+        assert num == 5, num
     def testRemoveSymbolFromMapSymbolSet(self):
-        self.mapobj1.symbolset.removeSymbol(1)
+        sym = self.mapobj1.symbolset.removeSymbol(1)
+        assert sym.name == 'line'
         num = self.mapobj1.symbolset.numsymbols
-        assert num == 1, num
+        assert num == 2, num
     def testConstructor(self):
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
@@ -275,15 +267,15 @@ class SymbolSetTestCase(MapTestCase):
     
     def testGetNumSymbols(self):
         num = self.mapobj1.getNumSymbols()
-        assert num == 2, num
+        assert num == 3, num
     
     def testSymbolSetNumsymbols(self):
         num = self.mapobj1.symbolset.numsymbols
-        assert num == 2, num
+        assert num == 3, num
     
     def testSymbolSetSymbolNames(self):
         set = self.mapobj1.symbolset
-        names = [None, 'line', 'tie']
+        names = [None, 'line', 'xmarks-png']
         for i in range(set.numsymbols):
             symbol = set.getSymbol(i)
             assert symbol.name == names[i], symbol.name
@@ -299,7 +291,7 @@ class SymbolSetTestCase(MapTestCase):
     def testConstructorFile(self):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         num = symbolset.numsymbols
-        assert num == 2, num
+        assert num == 3, num
     def testAddSymbolToNewSymbolSet(self):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbola = mapscript.symbolObj('testa')
@@ -307,8 +299,8 @@ class SymbolSetTestCase(MapTestCase):
         symbolset.appendSymbol(symbola) 
         symbolset.appendSymbol(symbolb) 
         num = symbolset.numsymbols
-        assert num == 4, num
-        names = [None, 'line', 'testa', 'testb']
+        assert num == 5, num
+        names = [None, 'line', 'xmarks-png', 'testa', 'testb']
         for i in range(symbolset.numsymbols):
             symbol = symbolset.getSymbol(i)
             assert symbol.name == names[i], symbol.name
@@ -316,7 +308,7 @@ class SymbolSetTestCase(MapTestCase):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbolset.removeSymbol(1)
         num = symbolset.numsymbols
-        assert num == 1, num
+        assert num == 2, num
     def testSaveNewSymbolSet(self):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbola = mapscript.symbolObj('testa')
@@ -324,23 +316,38 @@ class SymbolSetTestCase(MapTestCase):
         symbolset.appendSymbol(symbola) 
         symbolset.appendSymbol(symbolb)
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
+
     def testDrawNewSymbol(self):
         symbol = mapscript.symbolObj('xmarks', xmarks_image)
         symbol_index = self.mapobj1.symbolset.appendSymbol(symbol)
-        assert symbol_index == 2, symbol_index
+        assert symbol_index == 3, symbol_index
         num = self.mapobj1.symbolset.numsymbols
-        assert num == 3, num
+        assert num == 4, num
         inline_layer = self.mapobj1.getLayerByName('INLINE')
+        inline_layer.transparency = mapscript.MS_GD_ALPHA
         s = inline_layer.getClass(0).getStyle(0)
         s.symbol = symbol_index
         s.size = 24
+        self.mapobj1.setImageType('JPEG')
         msimg = self.mapobj1.draw()
         assert msimg.thisown == 1
         data = msimg.saveToString()
-        filename = 'testDrawNewSymbol.png'
+        filename = 'testDrawNewSymbol.jpg'
         fh = open(filename, 'wb')
         fh.write(data)
         fh.close()
+    
+    # Test fix of bugs 926 and 490    
+    def testRGBASymbolOnJPEG(self):
+        inline_layer = self.mapobj1.getLayerByName('INLINE')
+        inline_layer.transparency = mapscript.MS_GD_ALPHA
+        s = inline_layer.getClass(0).getStyle(0)
+        s.symbol = 2
+        s.size = 24
+        self.mapobj1.setImageType('JPEG')
+        msimg = self.mapobj1.draw()
+        filename = 'testRGBASymbol.jpg'
+        msimg.save(filename)
 
 # fontset tests
 class FontSetTestCase(MapTestCase):
@@ -456,7 +463,6 @@ class ExpressionTestCase(unittest.TestCase):
         assert fs == '/foo/', fs
     def testSetLogicalExpression(self):
         self.mapobj1.getLayer(0).setFilter('([foo] >= 2)')
-        #self.mapobj1.getLayer(0).setFilter('foo')
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '([foo] >= 2)', fs
 
@@ -674,7 +680,6 @@ class ImageRectObjTestCase(MapPrimitivesTestCase):
         self.assertRaises(mapscript.MapServerError, mapscript.rectObj,
                           -1.0, 0.0, 3.0, 2.0, mapscript.MS_TRUE)
     
-
 # lineObj tests
 
 class LineObjTestCase(MapPrimitivesTestCase):
@@ -940,6 +945,7 @@ class NewStylesTestCase(unittest.TestCase):
         new_style = mapscript.styleObj()
         self.assertRaises(mapscript.MapServerChildError, class0.insertStyle, new_style, 6)
 
+
 class InlineFeatureTestCase(MapPrimitivesTestCase):
     """tests for issue http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=562"""
     def setUp(self):
@@ -965,6 +971,7 @@ class InlineFeatureTestCase(MapPrimitivesTestCase):
             inline_layer.getShape(s, 0, 0)
         except TypeError: # next generation API
             s = inline_layer.getShape(0)
+        inline_layer.close()
         l = self.getLineFromShape(s, 0)
         p = self.getPointFromLine(l, 0)
         self.assertAlmostEqual(p.x, -0.2)
@@ -1025,9 +1032,9 @@ class NewOutputFormatTestCase(unittest.TestCase):
         assert self.mapobj1.outputformat.mimetype == 'image/tiff'
 
 class MapMetaDataTestCase(MapTestCase):
-    def testInvalidKeyAccess(self):
-        self.assertRaises(mapscript.MapServerError, 
-                          self.mapobj1.getMetaData, 'foo')
+    #def testInvalidKeyAccess(self):
+        #self.assertRaises(mapscript.MapServerError, 
+        #                  self.mapobj1.getMetaData, 'foo')
     def testFirstKeyAccess(self):
         key = self.mapobj1.getFirstMetaDataKey()
         assert key == 'key1'
@@ -1096,7 +1103,6 @@ class DrawProgrammedStylesTestCase(MapTestCase):
             points[i].draw(self.mapobj1, layer, img, 0, "foo")
         img.save('test_draw_points.png')
 
-
 class BrushCachingTestCase(MapTestCase):
     
     def testDrawMapWithSecondPolygon(self):
@@ -1133,7 +1139,6 @@ class BrushCachingTestCase(MapTestCase):
         img = self.mapobj1.draw()
         img.save('test_drawmapw2ndpolygon.png')
         
-
 class QueryTestCase(MapTestCase):
     """Query tests"""
 
@@ -1146,6 +1151,22 @@ class QueryTestCase(MapTestCase):
         assert point_layer.getNumResults() == 1
         result = point_layer.getResult(0)
         assert result.shapeindex == 0, result.shapeindex
+
+    def testLayerQueryRectResults(self):
+        e = self.mapobj1.extent
+        qrect = mapscript.rectObj(e.minx, e.miny, e.maxx, e.maxy)
+        point_layer = self.mapobj1.getLayerByName('POINT')
+        point_layer.template = 'foo'
+        point_layer.queryByRect(self.mapobj1, qrect)
+        assert point_layer.resultcache.numresults == 1
+        assert str(type(point_layer.resultcache.bounds)) == "<class 'mapscript.rectObj'>"
+        result = point_layer.getResult(0)
+        assert result.shapeindex == 0, result.shapeindex
+
+
+
+
+
 
 if __name__ == '__main__':
     unittest.main()

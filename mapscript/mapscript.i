@@ -295,27 +295,46 @@ memory.") const char * {
   /* removeLayer() adjusts the layers array, the indices of
    * the remaining layers, the layersdrawing order, and numlayers
    */
-  int removeLayer(int index) {
-    int i, drawindex = MS_MAXLAYERS + 1;
-    if ((index < 0) || (index >= self->numlayers)) {
-      return MS_FAILURE;
-    }
-    for (i = index + 1; i < self->numlayers; i++) {
-      self->layers[i].index--;
-      self->layers[i-1] = self->layers[i];
-    }
-    for (i = 0; i < self->numlayers; i++) {
-      if (self->layerorder[i] == index) {
-        drawindex = i;
-        break;
+
+  int removeLayer(int nIndex) 
+  {
+      int i;
+      int order_index;
+      
+      if (nIndex < 0 || nIndex >= self->numlayers) {
+          msSetError(MS_CHILDERR, "Cannot remove Layer, invalid index %d",
+                     "msRemoveLayer()", nIndex);
+          return MS_FAILURE;
       }
-      if (i > drawindex) {
-        self->layerorder[i-1] = self->layerorder[i];
+      else {
+          /* Iteratively copy the higher index layers down one index */
+          for (i=nIndex; i<self->numlayers-1; i++) {
+              freeLayer(&(self->layers[i]));
+              initLayer(&(self->layers[i]), self);
+              msCopyLayer(&self->layers[i], &self->layers[i+1]);
+              self->layers[i].index = i;
+          }
+          /* Free the extra layer at the end */
+          freeLayer(&(self->layers[self->numlayers-1]));
+          
+          /* Adjust drawing order */
+          order_index = 0;
+          for (i=0; i<self->numlayers; i++) {
+              if (self->layerorder[i] > nIndex) self->layerorder[i]--;
+              if (self->layerorder[i] == nIndex) {
+                  order_index = i;
+                  break;
+              }
+          }
+          for (i=order_index; i<self->numlayers-1; i++) {
+              self->layerorder[i] = self->layerorder[i+1];
+              if (self->layerorder[i] > nIndex) self->layerorder[i]--;
+          }
+          
+          /* decrement number of layers and return copy of removed layer */
+          self->numlayers--;
+          return MS_SUCCESS;
       }
-    }
-    self->numlayers--;
-    self->layerorder[self->numlayers] = 0;
-    return MS_SUCCESS;
   }
 
   layerObj *getLayer(int i) {
@@ -692,10 +711,14 @@ memory.") const char * {
     }
 
     ~symbolObj() {
-        if (self->name) free(self->name);
-        if (self->img) gdImageDestroy(self->img);
-        if (self->font) free(self->font);
-        if (self->imagepath) free(self->imagepath);
+        if (self)
+        {
+            msFree(self->name);
+            msFree(self->font);
+            msFree(self->imagepath);
+            if (self->img) gdImageDestroy(self->img);
+            free(self);
+        }
     }
 
     int setPoints(lineObj *line) {
@@ -750,7 +773,12 @@ memory.") const char * {
     }
    
     ~symbolSetObj() {
-        msFreeSymbolSet(self);
+        if (self)
+        {
+            msFreeSymbolSet(self);
+            msFree(self->filename);
+            free(self);
+        }
     }
 
     symbolObj *getSymbol(int i) {
@@ -782,7 +810,7 @@ memory.") const char * {
  
     %newobject removeSymbol;
     symbolObj *removeSymbol(int index) {
-        return (symbolObj *) msRemoveSymbol(self, index);
+        return msRemoveSymbol(self, index);
     }
 
     int save(const char *filename) {
@@ -809,22 +837,68 @@ memory.") const char * {
     return &(map->layers[map->numlayers-1]);
   }
 
-  ~layerObj() {
-    return; // map deconstructor takes care of it
-  }
-
-  /* removeClass()
-   */
-  void removeClass(int index) {
-    int i;
-    for (i = index + 1; i < self->numclasses; i++) {
-#ifndef __cplusplus
-      self->class[i-1] = self->class[i];
-#else
-      self->_class[i-1] = self->_class[i];
-#endif
+    ~layerObj()
+    {
+        if (!self->map)
+        {
+            freeLayer(self);
+            free(self);
+        }
     }
-    self->numclasses--;
+
+    %newobject removeClass;
+    classObj *removeClass(int nIndex) 
+    {
+        int i;
+        classObj *classobj;
+      
+        if (nIndex < 0 || nIndex >= self->numclasses)
+        {
+            msSetError(MS_CHILDERR, "Cannot remove class, invalid index %d",
+                       "removeClass()", nIndex);
+            return NULL;
+        }
+        else 
+        {
+            classobj = (classObj *) malloc(sizeof(classObj));
+            if (!classobj) {
+                msSetError(MS_MEMERR, 
+                    "Failed to allocate classObj to return as removed Class",
+                    "msRemoveClass");
+                return NULL;
+            }
+        
+            initClass(classobj);
+#ifndef __cplusplus
+            msCopyClass(classobj, &(self->class[nIndex]), NULL);
+#else
+            msCopyClass(classobj, &(self->_class[nIndex]), NULL);
+#endif
+            classobj->layer = NULL;
+
+          /* Iteratively copy the higher index classes down one index */
+          for (i=nIndex; i<self->numclasses-1; i++) {
+#ifndef __cplusplus
+              freeClass(&(self->class[i]));
+              initClass(&(self->class[i]));
+              msCopyClass(&self->class[i], &self->class[i+1], self);
+#else
+              freeClass(&(self->_class[i]));
+              initClass(&(self->_class[i]));
+              msCopyClass(&self->_class[i], &self->_class[i+1], self);
+#endif
+          }
+          /* Free the extra class at the end */
+#ifndef __cplusplus
+          freeClass(&(self->class[self->numclasses-1]));
+#else  
+          freeClass(&(self->_class[self->numclasses-1]));
+#endif
+          
+          /* decrement number of layers and return copy of removed layer */
+          self->numclasses--;
+          return classobj;
+      }
   }
 
   int open() {
@@ -1123,22 +1197,30 @@ memory.") const char * {
 //
 %extend classObj {
 
-  classObj(layerObj *layer) {
-    if(layer->numclasses == MS_MAXCLASSES) // no room
+  classObj(layerObj *layer) 
+  {
+    if (!layer) return NULL;
+    if (layer->numclasses == MS_MAXCLASSES) // no room
       return NULL;
 
     if(initClass(&(layer->class[layer->numclasses])) == -1)
       return NULL;
+    
     layer->class[layer->numclasses].type = layer->type;
-
+    layer->class[layer->numclasses].layer = layer;
     layer->numclasses++;
 
     return &(layer->class[layer->numclasses-1]);
   }
 
-  ~classObj() {
-    return; // do nothing, map deconstrutor takes care of it all
-  }
+    ~classObj()
+    {
+        if (!self->layer)
+        {
+            freeClass(self);
+            free(self);
+        }
+    }
 
   int setExpression(char *expression) {
       if (!expression || strlen(expression) == 0) {
@@ -1805,9 +1887,10 @@ memory.") const char * {
     format = msCreateDefaultOutputFormat(NULL, driver);
     if( format != NULL ) 
         format->refcount++;
-    if (name != NULL)
+    if (name != NULL) {
+        free(format->name);
         format->name = strdup(name);
-    
+    }
     return format;
   }
 

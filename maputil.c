@@ -661,6 +661,7 @@ int msMoveStyleDown(classObj *class, int nStyleIndex)
  * Returns the index at which the style was inserted
  *
  */
+
 int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
     int i;
     // Possible to add another style?
@@ -712,6 +713,7 @@ styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
             return NULL;
         }
         msCopyStyle(style, &(class->styles[nStyleIndex]));
+        style->isachild = MS_FALSE;
         for (i=nStyleIndex; i<class->numstyles-1; i++) {
              msCopyStyle(&class->styles[i], &class->styles[i+1]);
         }

@@ -641,7 +641,6 @@ typedef struct layer_obj {
 
 #ifndef SWIG
   int classitemindex;
-  resultCacheObj *resultcache; // holds the results of a query against this layer
   int annotate; // boolean flag for annotation
   double scalefactor; // computed, not set
 #ifndef __cplusplus
@@ -654,6 +653,7 @@ typedef struct layer_obj {
 #ifdef SWIG
 %immutable;
 #endif
+  resultCacheObj *resultcache; // holds the results of a query
   int numclasses;
   int index;
   struct map_obj *map;

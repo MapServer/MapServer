@@ -621,19 +621,37 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
     int i;
     symbolObj *symbol;
     if (symbolset->numsymbols == 1) {
-        msSetError(MS_CHILDERR, "Cannot remove a symbolset's sole symbol", "removeSymbol()");
+        msSetError(MS_CHILDERR, "Cannot remove a symbolset's sole symbol",
+                   "removeSymbol()");
         return NULL;
     }
     else if (nSymbolIndex < 0 || nSymbolIndex >= symbolset->numsymbols) {
-        msSetError(MS_CHILDERR, "Cannot remove symbol, invalid nSymbolIndex %d", "removeSymbol()", nSymbolIndex);
+        msSetError(MS_CHILDERR, "Cannot remove symbol, invalid index %d",
+                   "removeSymbol()", nSymbolIndex);
         return NULL;
     }
     else {
-        symbol = (symbolObj *)malloc(sizeof(symbolObj));
-        msCopySymbol(symbol, &(symbolset->symbol[nSymbolIndex]), NULL);
-        for (i=nSymbolIndex+1; i<symbolset->numsymbols; i++) {
-            symbolset->symbol[i-1] = symbolset->symbol[i];
+        /* allocate a copy of the removed layer */
+        symbol = (symbolObj *) malloc(sizeof(symbolObj));
+        if (!symbol) {
+            msSetError(MS_MEMERR, 
+                       "Failed to allocate layerObj to return as removed Layer",
+                       "msRemoveLayer");
+            return NULL;
         }
+        initSymbol(symbol);
+        msCopySymbol(symbol, &(symbolset->symbol[nSymbolIndex]), NULL);
+        
+        /* Iteratively copy the higher index symbols down one index */
+        for (i=nSymbolIndex; i<symbolset->numsymbols-1; i++) {
+            freeSymbol(&(symbolset->symbol[i]));
+            initSymbol(&(symbolset->symbol[i]));
+            msCopySymbol(&(symbolset->symbol[i]), &(symbolset->symbol[i+1]),
+                         symbolset->map);
+        }
+        /* Free the extra layer at the end */
+        freeSymbol(&(symbolset->symbol[symbolset->numsymbols-1]));
+        
         symbolset->numsymbols--;
         return symbol;
     }
@@ -642,7 +660,8 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
 int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
     int i;
     if (!symbolset || !stream) {
-        msSetError(MS_SYMERR, "Cannot save symbolset.", "msSaveSymbolSetStream()");
+        msSetError(MS_SYMERR, "Cannot save symbolset.",
+                   "msSaveSymbolSetStream()");
         return MS_FAILURE;
     }
     // Don't ever write out the default symbol at index 0

@@ -192,7 +192,15 @@ CC=gcc
 #
 all: mapscript_so mapscript_java mapscript_jar
 
+# This target is for users who are generating their own interface
+# with SWIG versions lower than 1.3.19 (no -outdir)
 interface: ../mapscript.i
+	mkdir -p edu/umn/gis/mapscript 
+	$(SWIG) -java -package edu.umn.gis.mapscript -o mapscript_wrap.c ../mapscript.i
+	mv *.java edu/umn/gis/mapscript/
+	
+# This target will be used in the release script
+interface_release: ../mapscript.i
 	mkdir -p edu/umn/gis/mapscript 
 	$(SWIG) -java -package edu.umn.gis.mapscript -outdir edu/umn/gis/mapscript -o mapscript_wrap.c ../mapscript.i
 
