@@ -765,7 +765,11 @@ typedef struct layer_obj {
 #ifdef SWIG
 %immutable;
 #endif
+  
+#ifndef SWIGJAVA  
   rectObj extent;
+#endif
+
   int numprocessing;
   int numjoins;
 #ifdef SWIG

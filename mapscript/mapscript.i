@@ -182,10 +182,6 @@ static Tcl_Interp *SWIG_TCL_INTERP;
    Wrap MapServer structs into mapscript classes
    =========================================================================*/
 
-#ifdef SWIGJAVA
-%ignore layerObj::extent;
-#endif
-
 %include "../../map.h"
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
