@@ -13,14 +13,23 @@
 #include "mapsymbol.h"
 #include "mapparser.h"
 
-/* msyylineno and other globals declared extern and defined in mapfile.c to 
- * avoid redefinition by flex 2.5.31 (bug 975)
+/* msyylineno is required for flex 2.5.4 and older, but is already defined by
+ * flex 2.5.31 (bug 975).
+ * Unfortunately there is no clean way to differenciate the two versions,
+ * so we use the symbol YY_CURRENT_BUFFER_LVALUE to base our test since it
+ * was not present in 2.5.4 and is present in 2.5.31. Hopefully that won't
+ * put us in trouble with other versions. If that happens then we can
+ * switch to using autoconf to detect the version.
  */
-extern int    msyylineno;
-extern double msyynumber;
-extern int    msyystate;
-extern char  *msyystring;
-extern int    msyyreturncomments;
+#ifndef YY_CURRENT_BUFFER_LVALUE
+int msyylineno = 1;
+#endif
+
+double msyynumber;
+int msyystate=0;
+char *msyystring=NULL;
+
+int msyyreturncomments = 0;
 
 void lexer_cleanup() {
 #ifndef YY_CURRENT_BUFFER_LVALUE
