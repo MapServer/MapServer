@@ -677,11 +677,54 @@ class ClonedMapOutputFormatTestCase(unittest.TestCase):
         quality = mapobj_clone.outputformat.getOption('QUALITY')
         assert quality == iquality, quality
 
+import cStringIO
+import urllib
+
 class ImageObjTestCase(unittest.TestCase):
+    def testConstructor(self):
+        imgobj = imageObj(10, 10)
+        assert imgobj.thisown == 1
+        assert imgobj.height == 10
+        assert imgobj.width == 10
+    def testConstructorWithDriver(self):
+        driver = 'GD/PNG'
+        imgobj = imageObj(10, 10, driver)
+        assert imgobj.thisown == 1
+        assert imgobj.format.driver == driver
+        assert imgobj.height == 10
+        assert imgobj.width == 10
     def testConstructorFilename(self):
-        imgobj = imageObj(0, 0, test_image)
+        imgobj = imageObj(0, 0, None, test_image)
+        assert imgobj.thisown == 1
         assert imgobj.height == 200
         assert imgobj.width == 200
+    def testConstructorFilenameDriver(self):
+        imgobj = imageObj(0, 0, 'GD/PNG', test_image)
+        assert imgobj.thisown == 1
+        assert imgobj.height == 200
+        assert imgobj.width == 200
+    def testConstructorStream(self):
+        f = open(test_image, 'rb')
+        imgobj = imageObj(0, 0, 'GD/PNG', f)
+        f.close()
+        assert imgobj.thisown == 1
+        assert imgobj.height == 200
+        assert imgobj.width == 200
+    def testConstructorStringIO(self):
+        f = open(test_image, 'rb')
+        data = f.read()
+        f.close()
+        s = cStringIO.StringIO(data)
+        imgobj = imageObj(0, 0, 'GD/PNG', s)
+        assert imgobj.thisown == 1
+        assert imgobj.height == 200
+        assert imgobj.width == 200
+    def testConstructorUrlStream(self):
+        url = urllib.urlopen('http://mapserver.gis.umn.edu/bugs/ant.jpg')
+        imgobj = imageObj(0, 0, 'GD/JPEG', url)
+        assert imgobj.thisown == 1
+        assert imgobj.height == 220
+        assert imgobj.width == 329
 
 class NewStylesTestCase(unittest.TestCase):
     def setUp(self):
