@@ -226,7 +226,17 @@ and the MapServer Map File documentation at:
 	Set the map extents to a given extents.
 	
 	Parmeters are :
-	- Pixel Extents, with (0,0) at the top-left
+	- oPixelExt (rect object) : Pixel Extents, with (0,0) at the top-left
+          The rectangle contains the coordinates of the LL and UR coordinates in pixel.
+          (the maxy in the rect object should be < to miny value)
+          
+          ------- UR (values in the rect object : maxx, maxy)
+          |     | 
+          |     |
+          |     |
+          ------
+        LL (values in the rectobject minx, miny)                      
+         
         - Width : width in pixel of the current image.
         - Height : Height in pixel of the current image. 
         - Georef extent (rectObj) : current georef extents.
