@@ -13,8 +13,8 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-Version 4.0-dev (CVS)
-------------------------------
+Version 4.0 (2003-08-01)
+------------------------
 
 - Fixed problem with truncated expressions (bugs 242 and 340)
 
