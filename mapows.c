@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2004/10/27 19:18:25  julien
+ * msOWSPrintURLType: Encode string before asssigning end buffer. (Bug 944)
+ *
  * Revision 1.47  2004/10/26 21:54:00  dan
  * Poor attempt at clarifying the function header docs for msOWSPrintURLType()
  *
@@ -771,8 +774,8 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
-            type = (char*)malloc(strlen(type_format)+strlen(value));
             encoded = msEncodeHTMLEntities(value);
+            type = (char*)malloc(strlen(type_format)+strlen(encoded));
             sprintf(type, type_format, encoded);
             msFree(encoded);
         }
@@ -785,8 +788,8 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
-            width = (char*)malloc(strlen(width_format)+strlen(value));
             encoded = msEncodeHTMLEntities(value);
+            width = (char*)malloc(strlen(width_format)+strlen(encoded));
             sprintf(width, width_format, encoded);
             msFree(encoded);
         }
@@ -799,8 +802,8 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
-            height = (char*)malloc(strlen(height_format)+strlen(value));
             encoded = msEncodeHTMLEntities(value);
+            height = (char*)malloc(strlen(height_format)+strlen(encoded));
             sprintf(height, height_format, encoded);
             msFree(encoded);
         }
@@ -813,8 +816,8 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
-            urlfrmt = (char*)malloc(strlen(urlfrmt_format)+strlen(value));
             encoded = msEncodeHTMLEntities(value);
+            urlfrmt = (char*)malloc(strlen(urlfrmt_format)+strlen(encoded));
             sprintf(urlfrmt, urlfrmt_format, encoded);
             msFree(encoded);
         }
@@ -827,8 +830,8 @@ int msOWSPrintURLType(FILE *stream, hashTableObj *metadata,
         value = msOWSLookupMetadata(metadata, namespaces, metadata_name);
         if(value != NULL)
         {
-            href = (char*)malloc(strlen(href_format)+strlen(value));
             encoded = msEncodeHTMLEntities(value);
+            href = (char*)malloc(strlen(href_format)+strlen(encoded));
             sprintf(href, href_format, encoded);
             msFree(encoded);
         }
