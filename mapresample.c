@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2001/03/14 17:55:36  frank
+ * fixed bug in non-GDAL case
+ *
  * Revision 1.1  2001/03/14 17:39:16  frank
  * New
  *
@@ -39,8 +42,10 @@
 /* The amount of "extra" resolution we will load for our resampling source */
 #define RES_RATIO	2.0
 
+#ifdef USE_GDAL
 int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img, 
              GDALDatasetH hDS );
+#endif
 
 /************************************************************************/
 /*                       msSimpleRasterResample()                       */
