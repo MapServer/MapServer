@@ -28,36 +28,8 @@ static void class_cache(classObj *from, classObj *to)
   to->overlaysizescaled = to->overlaysize = from->overlaysizescaled;
   to->overlaysymbol = from->overlaysymbol;
 
-  to->label.antialias = from->label.antialias;
-
-  to->label.color = from->label.color;
-  to->label.outlinecolor = from->label.outlinecolor;
-
-  to->label.shadowcolor = from->label.shadowcolor;
-  to->label.shadowsizex = from->label.shadowsizex;
-  to->label.shadowsizey = from->label.shadowsizey;
-
-  to->label.backgroundcolor = from->label.backgroundcolor;
-  to->label.backgroundshadowcolor = from->label.backgroundshadowcolor;
-  to->label.backgroundshadowsizex = from->label.backgroundshadowsizex;
-  to->label.backgroundshadowsizey = from->label.backgroundshadowsizey;
-
-  to->label.font = from->label.font;
-  to->label.type = from->label.type;
-  to->label.sizescaled = from->label.sizescaled;
-  to->label.size = from->label.size;
-
-  to->label.position = from->label.position;
-  to->label.angle = from->label.angle;
-  to->label.buffer = from->label.buffer;
-  to->label.offsetx = from->label.offsetx;
-  to->label.offsety = from->label.offsety;
-
-  to->label.minfeaturesize = from->label.minfeaturesize;
-  to->label.autominfeaturesize = from->label.autominfeaturesize;
-  to->label.mindistance = from->label.mindistance;
-  to->label.partials = from->label.partials;
-  to->label.force = from->label.force;
+  to->label = from->label; // this copies all non-pointers
+  if(from->label.font) to->label.font = strdup(from->label.font);  
 }
 
 int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize)
