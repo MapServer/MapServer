@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.27  2004/04/12 18:38:24  assefa
+ * Add dll export support for windows.
+ *
  * Revision 1.26  2004/03/30 00:12:28  dan
  * Added ability to combine multiple WMS connections to the same server
  * into a single request when the layers are adjacent and compatible.(bug 116)
@@ -131,11 +134,11 @@ int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile,
  *====================================================================*/
 #if defined(USE_WMS_SVR) || defined (USE_WFS_SVR) || defined (USE_WCS_SVR)
 
-int msOWSDispatch(mapObj *map, cgiRequestObj *request);
-const char *msOWSGetMetadata(hashTableObj metadata, ...);
-int msOWSMakeAllLayersUnique(mapObj *map);
-char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
-const char *msOWSGetSchemasLocation(mapObj *map);
+MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
+MS_DLL_EXPORT const char *msOWSGetMetadata(hashTableObj metadata, ...);
+MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
+MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
+MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
 
 // OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata()
 #define OWS_NOERR   0
@@ -146,7 +149,7 @@ const char *msOWSGetSchemasLocation(mapObj *map);
 #define OWS_WMS     1
 #define OWS_WFS     2
 
-int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name, 
+MS_DLL_EXPORT int msOWSPrintMetadata(FILE *stream, hashTableObj metadata, const char *name, 
                        int action_if_not_found, const char *format, 
                        const char *default_value);
 int msOWSPrintEncodeMetadata(FILE *stream, hashTableObj metadata, 
@@ -210,7 +213,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, mapObj *map, layerObj *lp, 
                       imageObj *img);
-char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
+MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              int nClickX, int nClickY, int nFeatureCount,
                              const char *pszInfoFormat); 
 
@@ -241,15 +244,15 @@ int msWFSLayerInitItemInfo(layerObj *layer);
 int msWFSLayerGetItems(layerObj *layer);
 int msWFSLayerWhichShapes(layerObj *layer, rectObj rect);
 int msWFSLayerClose(layerObj *lp);
-char *msWFSExecuteGetFeature(layerObj *lp);
+MS_DLL_EXPORT char *msWFSExecuteGetFeature(layerObj *lp);
 
 /*====================================================================
  *   mapcontext.c
  *====================================================================*/
 
-int msWriteMapContext(mapObj *map, FILE *stream);
-int msSaveMapContext(mapObj *map, char *filename);
-int msLoadMapContext(mapObj *map, char *filename);
+MS_DLL_EXPORT int msWriteMapContext(mapObj *map, FILE *stream);
+MS_DLL_EXPORT int msSaveMapContext(mapObj *map, char *filename);
+MS_DLL_EXPORT int msLoadMapContext(mapObj *map, char *filename);
 
 
 /*====================================================================

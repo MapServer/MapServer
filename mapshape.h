@@ -138,49 +138,49 @@ typedef struct {
 #ifndef SWIG
 
 // shapefileObj function prototypes 
-int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename);
-int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type);
-void msSHPCloseFile(shapefileObj *shpfile);
-int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug);
+MS_DLL_EXPORT int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *filename);
+MS_DLL_EXPORT int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type);
+MS_DLL_EXPORT void msSHPCloseFile(shapefileObj *shpfile);
+MS_DLL_EXPORT int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug);
 
 // SHP/SHX function prototypes
-SHPHandle msSHPOpen( const char * pszShapeFile, const char * pszAccess );
-SHPHandle msSHPCreate( const char * pszShapeFile, int nShapeType );
-void msSHPClose( SHPHandle hSHP );
-void msSHPGetInfo( SHPHandle hSHP, int * pnEntities, int * pnShapeType );
-int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds );
-void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape );
-int msSHPReadPoint(SHPHandle psSHP, int hEntity, pointObj *point );
-int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
-int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
+MS_DLL_EXPORT SHPHandle msSHPOpen( const char * pszShapeFile, const char * pszAccess );
+MS_DLL_EXPORT SHPHandle msSHPCreate( const char * pszShapeFile, int nShapeType );
+MS_DLL_EXPORT void msSHPClose( SHPHandle hSHP );
+MS_DLL_EXPORT void msSHPGetInfo( SHPHandle hSHP, int * pnEntities, int * pnShapeType );
+MS_DLL_EXPORT int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds );
+MS_DLL_EXPORT void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape );
+MS_DLL_EXPORT int msSHPReadPoint(SHPHandle psSHP, int hEntity, pointObj *point );
+MS_DLL_EXPORT int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
+MS_DLL_EXPORT int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
 
 // tiledShapefileObj function prototypes are in map.h
 #endif
 
 // XBase function prototypes
-DBFHandle msDBFOpen( const char * pszDBFFile, const char * pszAccess );
-void msDBFClose( DBFHandle hDBF );
-DBFHandle msDBFCreate( const char * pszDBFFile );
+MS_DLL_EXPORT DBFHandle msDBFOpen( const char * pszDBFFile, const char * pszAccess );
+MS_DLL_EXPORT void msDBFClose( DBFHandle hDBF );
+MS_DLL_EXPORT DBFHandle msDBFCreate( const char * pszDBFFile );
 
-int msDBFGetFieldCount( DBFHandle psDBF );
-int msDBFGetRecordCount( DBFHandle psDBF );
-int msDBFAddField( DBFHandle hDBF, const char * pszFieldName, DBFFieldType eType, int nWidth, int nDecimals );
+MS_DLL_EXPORT int msDBFGetFieldCount( DBFHandle psDBF );
+MS_DLL_EXPORT int msDBFGetRecordCount( DBFHandle psDBF );
+MS_DLL_EXPORT int msDBFAddField( DBFHandle hDBF, const char * pszFieldName, DBFFieldType eType, int nWidth, int nDecimals );
 
-DBFFieldType msDBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName, int * pnWidth, int * pnDecimals );
+MS_DLL_EXPORT DBFFieldType msDBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName, int * pnWidth, int * pnDecimals );
 
-int msDBFReadIntegerAttribute( DBFHandle hDBF, int iShape, int iField );
-double msDBFReadDoubleAttribute( DBFHandle hDBF, int iShape, int iField );
-const char *msDBFReadStringAttribute( DBFHandle hDBF, int iShape, int iField );
+MS_DLL_EXPORT int msDBFReadIntegerAttribute( DBFHandle hDBF, int iShape, int iField );
+MS_DLL_EXPORT double msDBFReadDoubleAttribute( DBFHandle hDBF, int iShape, int iField );
+MS_DLL_EXPORT const char *msDBFReadStringAttribute( DBFHandle hDBF, int iShape, int iField );
 
-int msDBFWriteIntegerAttribute( DBFHandle hDBF, int iShape, int iField, int nFieldValue );
-int msDBFWriteDoubleAttribute( DBFHandle hDBF, int iShape, int iField, double dFieldValue );
-int msDBFWriteStringAttribute( DBFHandle hDBF, int iShape, int iField, const char * pszFieldValue );
+MS_DLL_EXPORT int msDBFWriteIntegerAttribute( DBFHandle hDBF, int iShape, int iField, int nFieldValue );
+MS_DLL_EXPORT int msDBFWriteDoubleAttribute( DBFHandle hDBF, int iShape, int iField, double dFieldValue );
+MS_DLL_EXPORT int msDBFWriteStringAttribute( DBFHandle hDBF, int iShape, int iField, const char * pszFieldValue );
 
-char **msDBFGetItems(DBFHandle dbffile);
-char **msDBFGetValues(DBFHandle dbffile, int record);
-char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int numitems);
-int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems);
-int msDBFGetItemIndex(DBFHandle dbffile, char *name);
+MS_DLL_EXPORT char **msDBFGetItems(DBFHandle dbffile);
+MS_DLL_EXPORT char **msDBFGetValues(DBFHandle dbffile, int record);
+MS_DLL_EXPORT char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int numitems);
+MS_DLL_EXPORT int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems);
+MS_DLL_EXPORT int msDBFGetItemIndex(DBFHandle dbffile, char *name);
 
 #ifdef __cplusplus
 }

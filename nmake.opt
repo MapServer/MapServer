@@ -23,6 +23,13 @@
 # Section I: Mapserver Options
 ########################################################################
 
+MS_LIB = 	mapserver.lib
+MS_LIB_DLL  =	mapserver_i.lib
+
+# Uncomment the following to link mapserv.exe withh dll
+DLLBUILD=1
+
+
 # Input raster format options:
 #
 # The lite version of mapserver 4.x supports only PNG and JPEG data for input.
@@ -109,6 +116,9 @@ ECW_DIR= C:\projects\ECW_SDK
 #xerces library. #uncommnet the following line to have the Xerces support
 XERCES_DIR = c:\projects\xerces-c1_6_0-win32
 
+# Comment out the following to disable ODBC support.
+#ODBC_SUPPORTED = 1
+
 # Tiff Input
 # 
 # Tiff input is also available through GDAL. If you wish to build to support
@@ -151,6 +161,8 @@ OUTPUT_WBMP=-DUSE_GD_WBMP
 # See http://ming.sourceforge.net/ for support library.
 MING=-DUSE_MING_FLASH
 MING_DIR=c:/projects/ming-0.2a
+#MING_DIR=c:/projects/ming-0.3beta1
+
 
 # If you wish to have PDF output, uncomment the following flag and provide the
 # full path to the PDF support library project directory.
@@ -174,8 +186,16 @@ FT_DIR=c:/projects/freetype-2.1.3
 # flag and set the full path name to the project directory for the 
 # Postgresql native Win32 client library.
 # See http://www.postgresql.org for support library.
-POSTGIS =-DUSE_POSTGIS
-POSTGIS_DIR =c:/projects/libpq
+#POSTGIS =-DUSE_POSTGIS
+#POSTGIS_DIR =c:/projects/libpq
+
+#Orcale
+#ORACLE_DIR = c:\Oracle\Ora81
+#ORACLE=-DUSE_ORACLESPATIAL
+
+#OGDI
+#OGDI_DIR = c:\projects\ogdi-3.1.0
+#OGDI_LIB = $(OGDI_DIR)\lib\ogdi31.lib
 
 # Direct connectivity to ArcSDE.
 # 
@@ -205,6 +225,10 @@ POSTGIS_DIR =c:/projects/libpq
 # have complete data for each tile.
 IGNORE_MISSING_DATA=-DIGNORE_MISSING_DATA
 
+NEED_NONBLOCKING_STDERR=-DNEED_NONBLOCKING_STDERR
+
+ENABLE_STDERR_DEBUG=-DENABLE_STDERR_DEBUG
+
 # If you want antialiasing (note that It requires gd2)
 USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 
@@ -223,7 +247,8 @@ WMS=-DUSE_WMS_SVR
 # You will also need to set the full path to the Microsoft Visual C++ windows
 # socket library.
 WMSCLIENT= -DUSE_WMS_LYR
-CURL_DIR=c:/projects/curl-7.10.2
+#CURL_DIR=c:/projects/curl-7.10.2
+CURL_DIR=c:/projects/curl-7.10.7
 WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
 
 # Use -DUSE_WFS_SVR to compile with WFS server support, requires OGR and PROJ4
@@ -245,7 +270,7 @@ PROJ_DIR=c:\projects\proj
 # If you plan to build PHP mapscript uncomment the following flag and
 # set the full path to the PHP project directory
 PHP=1
-PHP_DIR=c:\projects\php-4.3.2
+PHP_DIR=c:\projects\php-4.3.4
 
 # Apparently these aren't as commonplace. Edit the
 # following line to reflect the missing functions on your platform.
@@ -274,7 +299,7 @@ STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP
 #you should uncomment the following line
 OUTPUT_GIF=-DUSE_GD_GIF -DGD_HAS_GDIMAGEGIFPTR
 
-GD_DIR=c:/projects/gd-2.0.12
+GD_DIR=c:/projects/gd-2.0.15
 
 # REGEX Libary
 # 
@@ -385,6 +410,10 @@ ECW_LIB=$(ECW_DIR)\lib\NCSEcw.lib $(ECW_DIR)\lib\NCSEcwC.lib \
 XERCES_LIB=$(XERCES_DIR)/lib/xerces-c_1.lib
 !ENDIF
 
+!IFDEF ODBC_SUPPORTED
+ODBC_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\ODBC32.lib"
+!ENDIF
+
 # Setup REGEX object and includes
 !IFNDEF PHP
 REGEX_OBJ=$(REGEX_DIR)\regex.obj
@@ -414,6 +443,7 @@ POSTGIS_INC=-I$(POSTGIS_DIR)/interfaces/libpq -I$(POSTGIS_DIR)/include
 !ENDIF
 #POSTGIS_LIB=$(POSTGIS_DIR)/src/interfaces/libpq/release/libpqdll.lib
 POSTGIS_LIB=$(POSTGIS_DIR)/interfaces/libpq/libpqdll.lib
+
 POSTGIS_OBJ=mappostgis.obj
 !ENDIF
 
@@ -421,6 +451,7 @@ POSTGIS_OBJ=mappostgis.obj
 !IFDEF MING
 MING_INC=-I$(MING_DIR)/src -I$(MING_DIR)
 MING_LIB= $(MING_DIR)/src/libming.lib
+#MING_VERSION=-DMING_VERSION_03
 !ENDIF
 
 # Setup PDF includes and libs
@@ -428,6 +459,14 @@ MING_LIB= $(MING_DIR)/src/libming.lib
 PDF_LIB=$(PDF_DIR)/pdflib/pdflib.lib
 PDF_INC=-I$(PDF_DIR)/pdflib
 !ENDIF
+
+#Oracle support
+!IFDEF ORACLE
+ORACLE_INC=-I$(ORACLE_DIR)/oci/include
+ORACLE_LIB=$(ORACLE_DIR)/oci/lib/msvc/oci.lib
+!ENDIF
+
+
 
 ########################################################################
 # Section V: UMN GIS System Support
@@ -456,21 +495,25 @@ IMGGEN_LIB=-L$(IMGGEN_DIR) -limgGEN
 ########################################################################
 # Should not need to be updated.
 ########################################################################
-LIBS=$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
+EXTERNAL_LIBS=$(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
-     $(XERCES_LIB) $(ECW_LIB)
+     $(XERCES_LIB) $(ECW_LIB) $(ORACLE_LIB) $(OGDI_LIB) $(ODBC_LIB)
+
+LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
+LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 
 INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
-		 $(IMGGEN_INC) $(ERR_INC)
+		 $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC)
 
 MS_CFLAGS=$(INCLUDES) $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) \
-          $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) \
+          $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(NEED_NONBLOCKING_STDERR) \
+          $(GDAL)  \
           -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(PDF) $(EGIS) \
-        $(USE_GD_ANTIALIAS)
+        $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION)
 
 

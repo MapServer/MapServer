@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2004/04/12 18:38:24  assefa
+ * Add dll export support for windows.
+ *
  * Revision 1.9  2004/02/06 02:23:01  assefa
  * Make sure that point symbolizers always initialize the color
  * parameter of the style.
@@ -72,9 +75,9 @@
 /* -------------------------------------------------------------------- */
 /*      prototypes.                                                     */
 /* -------------------------------------------------------------------- */
-int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer, 
+MS_DLL_EXPORT int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer, 
                      char *pszStyleLayerName);
-int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
+MS_DLL_EXPORT int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer, 
                   char *pszStyleLayerName);
 
 layerObj  *msSLDParseSLD(mapObj *map, char *psSLDXML, int *pnLayers);
@@ -113,7 +116,7 @@ void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psCla
 void ParseTextPointPlacement(CPLXMLNode *psRoot, classObj *psClass);
 void ParseTextLinePlacement(CPLXMLNode *psRoot, classObj *psClass);
 
-char *msSLDGenerateSLD(mapObj *map, int iLayer);
+MS_DLL_EXPORT char *msSLDGenerateSLD(mapObj *map, int iLayer);
 char *msSLDGenerateSLDLayer(layerObj *psLayer);
 
 char *msSLDGetFilter(classObj *psClass);

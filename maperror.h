@@ -43,6 +43,12 @@ extern "C" {
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define MS_DLL_EXPORT     __declspec(dllexport)
+#else
+#define  MS_DLL_EXPORT
+#endif
+
 typedef struct error_obj {
   int code;
   char routine[ROUTINELENGTH];
@@ -60,22 +66,22 @@ typedef struct error_obj {
 /*
 ** Function prototypes
 */
-errorObj *msGetErrorObj(void);
-void msResetErrorList();
-char *msGetVersion(void);
-char *msGetErrorString(char *delimiter);
+MS_DLL_EXPORT errorObj *msGetErrorObj(void);
+MS_DLL_EXPORT void msResetErrorList();
+MS_DLL_EXPORT char *msGetVersion(void);
+MS_DLL_EXPORT char *msGetErrorString(char *delimiter);
 
 #ifndef SWIG
-void msSetError(int code, const char *message, const char *routine, ...);
-void msWriteError(FILE *stream);
-void msWriteErrorXML(FILE *stream);
-char *msGetErrorCodeString(int code);
+MS_DLL_EXPORT void msSetError(int code, const char *message, const char *routine, ...);
+MS_DLL_EXPORT void msWriteError(FILE *stream);
+MS_DLL_EXPORT void msWriteErrorXML(FILE *stream);
+MS_DLL_EXPORT char *msGetErrorCodeString(int code);
 
 struct map_obj;
-void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
+MS_DLL_EXPORT void msWriteErrorImage(struct map_obj *map, char *filename, int blank);
 
-void msDebug( const char * pszFormat, ... );
-void msWebDebug( const char * pszFormat, ... );
+MS_DLL_EXPORT void msDebug( const char * pszFormat, ... );
+MS_DLL_EXPORT void msWebDebug( const char * pszFormat, ... );
 #endif
 
 #ifdef __cplusplus

@@ -17,6 +17,7 @@ extern "C" {
 #  endif
 #endif
 
+
 typedef struct {
 #ifdef SWIG
   %immutable;
@@ -36,22 +37,22 @@ typedef struct {
 } projectionObj;
 
 #ifndef SWIG
-int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point);
-int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
-int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
-int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect);
-int msProjectionsDiffer(projectionObj *, projectionObj *);
-int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int
+MS_DLL_EXPORT int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point);
+MS_DLL_EXPORT int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
+MS_DLL_EXPORT int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
+MS_DLL_EXPORT int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect);
+MS_DLL_EXPORT int msProjectionsDiffer(projectionObj *, projectionObj *);
+MS_DLL_EXPORT int msOGCWKT2ProjectionObj( const char *pszWKT, projectionObj *proj, int
                             debug_flag );
 
-void msFreeProjection(projectionObj *p);
-int msInitProjection(projectionObj *p);
-int msProcessProjection(projectionObj *p);
-int msLoadProjectionString(projectionObj *p, char *value);
+MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
+MS_DLL_EXPORT int msInitProjection(projectionObj *p);
+MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
+MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, char *value);
 
-const char *msGetEPSGProj(projectionObj *proj, hashTableObj metadata, int bReturnOnlyFirstOne);
+MS_DLL_EXPORT const char *msGetEPSGProj(projectionObj *proj, hashTableObj metadata, int bReturnOnlyFirstOne);
 
-void msSetPROJ_LIB( const char * );
+MS_DLL_EXPORT void msSetPROJ_LIB( const char * );
 
 /* Provides compatiblity with PROJ.4 4.4.2 */
 #ifndef PJ_VERSION
@@ -60,7 +61,7 @@ void msSetPROJ_LIB( const char * );
 #endif
 
 /*utility functions */
-int GetMapserverUnitUsingProj(projectionObj *psProj);
+MS_DLL_EXPORT int GetMapserverUnitUsingProj(projectionObj *psProj);
 
 #ifdef __cplusplus
 }

@@ -27,7 +27,8 @@ LINK=   link
 #
 # Main MapServer library.
 #
-MS_LIB  =	mapserver.lib
+MS_DLL = libmap.dll
+
 MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapparser.obj maplexer.obj mapindex.obj maptree.obj \
 		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
@@ -39,13 +40,14 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj \
 		mapgdal.obj mapwfs.obj mapwfslayer.obj mapows.obj maphttp.obj \
 		mappdf.obj mapcontext.obj mapdrawgdal.obj mapjoin.obj mapgraticule.obj \
-		mapmygis.obj mapimagemap.obj mapcopy.obj mapogcfilter.obj mapogcsld.obj $(EPPL_OBJ) $(REGEX_OBJ)
+		mapmygis.obj mapimagemap.obj mapcopy.obj \
+                mapogcfilter.obj mapogcsld.obj maptime.obj mapthread.obj $(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
 
-MS_EXE = 	mapserv.exe 
-#                shp2img.exe legend.exe  \
-#		shptree.exe scalebar.exe sortshp.exe tile4ms.exe
+MS_EXE = 	mapserv.exe  \
+                shp2img.exe legend.exe  \
+		shptree.exe scalebar.exe sortshp.exe tile4ms.exe
 
 #
 #
@@ -59,6 +61,9 @@ $(MS_OBJS):	$(MS_HDRS)
 $(MS_LIB):	$(MS_OBJS)
 	copy $(GDAL_DIR)\gdal.pdb .
 	lib /out:$(MS_LIB) $(MS_OBJS)
+        link /dll /debug \
+		$(MS_OBJS) $(EXTERNAL_LIBS)\
+		 /out:$(MS_DLL) /implib:$(MS_LIB_DLL)
 
 $(MS_EXE):	$(LIBS)
 
@@ -75,7 +80,11 @@ gd::
 
 .c.exe:
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
-	$(LINK) $(LDFLAGS) $*.obj $(LIBS)
+!IFDEF DLLBUILD
+	$(LINK) $(LDFLAGS) $*.obj $(LIBS_DLL)
+!ELSE
+        $(LINK) $(LDFLAGS) $*.obj $(LIBS)
+!ENDIF
 
 .cpp.exe:
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
@@ -85,7 +94,8 @@ gd::
 clean:
 	del *.obj
 	del $(REGEX_OBJ)
-	del $(MS_LIB)
+	del *.lib
+	del *.dll
 	del $(MS_EXE)
 	del *.pdb
 	del *.exp

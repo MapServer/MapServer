@@ -98,41 +98,41 @@ typedef struct
  * Allocate memory for all variables in strusture
  * and initiate default values
 */
-mapservObj* msAllocMapServObj(void);
+MS_DLL_EXPORT mapservObj* msAllocMapServObj(void);
 
 /*! \fn msFreeMapServObj
  * free all variables in structure
 */
-void msFreeMapServObj(mapservObj* msObj);
+MS_DLL_EXPORT void msFreeMapServObj(mapservObj* msObj);
 
 // For Mapserv.c
-int isOn(mapservObj* msObj, char *name, char *group);
-int checkWebScale(mapservObj *msObj);
-int setExtent(mapservObj *msObj);
+MS_DLL_EXPORT int isOn(mapservObj* msObj, char *name, char *group);
+MS_DLL_EXPORT int checkWebScale(mapservObj *msObj);
+MS_DLL_EXPORT int setExtent(mapservObj *msObj);
 
-int msReturnPage(mapservObj* msObj, char* , int, char **);
-int msReturnURL(mapservObj* msObj, char*, int);
-int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer);
+MS_DLL_EXPORT int msReturnPage(mapservObj* msObj, char* , int, char **);
+MS_DLL_EXPORT int msReturnURL(mapservObj* msObj, char*, int);
+MS_DLL_EXPORT int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer);
 
-int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType, 
+MS_DLL_EXPORT int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType, 
                           char **papszBuffer);
 
-int msRedirect(char* url);
+MS_DLL_EXPORT int msRedirect(char* url);
 
-char *generateLegendTemplate(mapservObj *msObj);
+MS_DLL_EXPORT char *generateLegendTemplate(mapservObj *msObj);
 
-int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError);
+MS_DLL_EXPORT int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError);
 
 
-char *msProcessTemplate(mapObj *map, int bGenerateImages, 
+MS_DLL_EXPORT char *msProcessTemplate(mapObj *map, int bGenerateImages, 
                          char **names, char **values, 
                          int numentries);
 
-char *msProcessLegendTemplate(mapObj *map,
+MS_DLL_EXPORT char *msProcessLegendTemplate(mapObj *map,
                               char **names, char **values, 
                               int numentries);
 
-char *msProcessQueryTemplate(mapObj *map,
+MS_DLL_EXPORT char *msProcessQueryTemplate(mapObj *map,
                              int bGenerateImages, 
                              char **names, char **values, 
                              int numentries);

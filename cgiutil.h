@@ -1,6 +1,12 @@
 #ifndef CGIUTIL_H
 #define CGIUTIL_H
 
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define MS_DLL_EXPORT     __declspec(dllexport)
+#else
+#define  MS_DLL_EXPORT
+#endif
+
 /*
 ** Misc. defines
 */
@@ -25,7 +31,7 @@ typedef struct
 /*
 ** Function prototypes
 */ 
-int loadParams(cgiRequestObj *);
+MS_DLL_EXPORT  int loadParams(cgiRequestObj *);
 void getword(char *, char *, char);
 char *makeword_skip(char *, char, char);
 char *makeword(char *, char);
