@@ -16,6 +16,16 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- When no RULE parameter has been specified in the WMS request
+  a legend should be returned with all classes for the specified LAYER.
+  Changes has been made in mapwms.c (bug 653). Also if the SCALE parameter
+  is provided in the WMS request is will be used to determine whether
+  the legend of the specified layer should be drawn in the case that the
+  layer is scale dependant (big 809).
+
+- Nested layers in the capabilities are supported by using a new metadata
+  tag WMS_LAYER_GROUP (bug 776)
+  
 - Added greyscale+alpha render support if mapdrawgdal.c: Bug 965. 
 
 - Added --with-fastcgi support to configure.
