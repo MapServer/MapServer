@@ -473,7 +473,6 @@ void msSDELayerClose(layerObj *layer) {
   if (sde == NULL) return;  // Silently return if layer not opened.
 
   if(layer->debug) msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
-  msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
 	
   if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
   if (sde->coordref) SE_coordref_free(sde->coordref);
