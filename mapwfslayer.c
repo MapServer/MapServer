@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2002/12/13 01:32:53  dan
+ * OOOpps.. lp->wfslayerinfo was not set in msWFSLayerOpen()
+ *
  * Revision 1.2  2002/12/13 00:57:31  dan
  * Modified WFS implementation to behave more as a real vector data source
  *
@@ -384,7 +387,7 @@ int msWFSLayerOpen(layerObj *lp,
 /* ------------------------------------------------------------------
  * Alloc and fill msWFSLayerInfo inside layer obj
  * ------------------------------------------------------------------ */
-    psInfo = msAllocWFSLayerInfo();
+    lp->wfslayerinfo = psInfo = msAllocWFSLayerInfo();
 
     if (pszGMLFilename)
         psInfo->pszGMLFilename = strdup(pszGMLFilename);
