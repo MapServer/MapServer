@@ -232,7 +232,7 @@ for (0..@{$shape->{Shapes}}-1){
          $gid++;
          $feat++;
 	 undef %object;
-	 if ($shape->{Shapetype} eq LINE){
+	 if ($shape->{Shapetype} eq LINE or $shape->{Shapetype} eq ARC){
 		$object{x0} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt-1][0];
 		$object{y0} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt-1][1];
 		$object{x1} = ${$shape->{Shapes}}[$_]{Vertices}[$vrt][0];
