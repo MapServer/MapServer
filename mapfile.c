@@ -1118,13 +1118,14 @@ int loadStyle(styleObj *style) {
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadStyle()");
-      return(MS_FAILURE);
-    case(END):
-      break; // done
+      return(MS_FAILURE); // missing END (probably)
+    case(END):     
+      return(MS_SUCCESS); // done
+      break;
     case(MAXSIZE):
       if(getInteger(&(style->maxsize)) == -1) return(-1);
-      break;    
-    case(MINSIZE):      
+      break;
+    case(MINSIZE):
       if(getInteger(&(style->minsize)) == -1) return(-1);
       break;
     case(OFFSET):
@@ -1151,8 +1152,6 @@ int loadStyle(styleObj *style) {
       return(MS_FAILURE);
     }
   }
-
-  return(MS_SUCCESS); 
 }
 
 int loadStyleString(styleObj *style) {
@@ -1328,7 +1327,8 @@ int loadClass(classObj *class, mapObj *map)
       }
       if(loadStyle(&(class->styles[class->numstyles])) != MS_SUCCESS) return(-1);
       class->numstyles++;
-    case(TEMPLATE):      
+      break;
+    case(TEMPLATE):
       if((class->template = getString()) == NULL) return(-1);
       break;
     case(TEXT):

@@ -150,8 +150,17 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     }
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
     status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
-    if(status != MS_SUCCESS)
-      return NULL;
+    if(status != MS_SUCCESS) return NULL;
+
+    // compute layer scale factors now
+    for(i=0;i<map->numlayers; i++) {
+      if(map->layers[i].symbolscale > 0 && map->scale > 0) {
+    	if(map->layers[i].sizeunits != MS_PIXELS)
+      	  map->layers[i].scalefactor = (inchesPerUnit[map->layers[i].sizeunits]/inchesPerUnit[map->units]) / map->cellsize; 
+    	else
+      	  map->layers[i].scalefactor = map->layers[i].symbolscale/map->scale;
+      }
+    }
 
     return image;
   }
