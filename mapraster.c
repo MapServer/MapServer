@@ -1682,17 +1682,13 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
     f = fopen(filename,"rb");
     if (!f) {
-            sprintf(ms_error.message, "(%s)", filename);
-      msSetError(MS_IOERR, ms_error.message, "msDrawRaster()");
-#ifndef IGNORE_MISSING_DATA
-      chdir(old_path);
-      return(-1);
-#else
-      continue; // skip it, next tile
-#endif
+      memset( dd, 0, 8 );
     }
-    fread(dd,8,1,f); // read some bytes to try and identify the file
-    fclose(f);
+    else
+    {
+        fread(dd,8,1,f); // read some bytes to try and identify the file
+        fclose(f);
+    }
 
 #if !defined(USE_GDAL) || defined(USE_TIFF)
     if (memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) {
@@ -1816,6 +1812,20 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         }
     }
 #endif
+
+    /* If GDAL doesn't recognise it, and it wasn't successfully opened 
+    ** Generate an error.
+    */
+    if( !f ) {
+      sprintf(ms_error.message, "(%s)", filename);
+      msSetError(MS_IOERR, ms_error.message, "msDrawRaster()");
+#ifndef IGNORE_MISSING_DATA
+      chdir(old_path);
+      return(-1);
+#else
+      continue; // skip it, next tile
+#endif
+    }
 
     /* put others which may require checks here */  
     
