@@ -468,8 +468,7 @@ static char *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     /* -------------------------------------------------------------------- */
     /*	Extract the requested field.					    */
     /* -------------------------------------------------------------------- */
-    strncpy( pszStringField, pabyRec+psDBF->panFieldOffset[iField],
-	     psDBF->panFieldSize[iField] );
+    strncpy( pszStringField, pabyRec+psDBF->panFieldOffset[iField], psDBF->panFieldSize[iField] );
     pszStringField[psDBF->panFieldSize[iField]] = '\0';
 
     /*
@@ -522,7 +521,7 @@ double	DBFReadDoubleAttribute( DBFHandle psDBF, int iRecord, int iField )
 /************************************************************************/
 const char *DBFReadStringAttribute( DBFHandle psDBF, int iRecord, int iField )
 {
-  return( DBFReadAttribute( psDBF, iRecord, iField ) );
+  return( DBFReadAttribute( psDBF, iRecord, iField ) );  
 }
 
 /************************************************************************/

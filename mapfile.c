@@ -2603,15 +2603,12 @@ int initMap(mapObj *map)
   }
   map->labelcache.markercachesize = MS_LABELCACHEINITSIZE;
   map->labelcache.nummarkers = 0;
-
-  map->symbolset.filename = NULL;
-  map->symbolset.numsymbols = 1; /* always 1 symbol */
-  map->symbolset.imagecache = NULL;
-  map->symbolset.imagecachesize = 0; /* 0 symbols in the cache */
-
+ 
   map->fontset.filename = NULL;
   map->fontset.numfonts = 0;  
   map->fontset.fonts = NULL;
+
+  msInitSymbolSet(&map->symbolset);
 
   initLegend(&map->legend);
   initScalebar(&map->scalebar);

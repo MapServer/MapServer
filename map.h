@@ -676,6 +676,7 @@ int strcasecmp(char *s1, char *s2);
 #endif
 
 int msLoadSymbolSet(symbolSetObj *symbolset); /* in mapsymbol.c */
+void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
 void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);

@@ -305,6 +305,20 @@ void msFreeSymbolSet(symbolSetObj *symbolset)
 #endif
 }
 
+void msInitSymbolSet(symbolSetObj *symbolset) 
+{
+  symbolset->filename = NULL;
+  symbolset->numsymbols = 1; /* always 1 symbol */
+  symbolset->imagecache = NULL;
+  symbolset->imagecachesize = 0; /* 0 symbols in the cache */
+
+#ifdef USE_TTF
+  symbolset->fontset.filename = NULL;
+  symbolset->fontset.numfonts = 0;  
+  symbolset->fontset.fonts = NULL;
+#endif
+}
+
 /*
 ** Load the symbols contained in the given file
 */
@@ -338,12 +352,6 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
   msyylineno = 0; /* reset line counter */
   msyyrestart(msyyin); /* flush the scanner - there's a better way but this works for now */
   msyyfiletype = MS_FILE_SYMBOL;
-
-#ifdef USE_TTF
-  symbolset->fontset.filename = NULL;
-  symbolset->fontset.numfonts = 0;  
-  symbolset->fontset.fonts = NULL;
-#endif
 
   /*
   ** Read the symbol file

@@ -572,7 +572,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
   }
 #endif      
 
-  if(layer->class[c].sizescaled == 0) return;
+  if(layer->class[c].sizescaled == 0) return(0);
 
 #ifdef USE_PROJ
     if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -667,7 +667,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
   }
 #endif      
 
-  if(layer->class[c].sizescaled == 0) return;
+  if(layer->class[c].sizescaled == 0) return(0);
 
 #ifdef USE_PROJ
   if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -1314,7 +1314,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
 	  pnt = NULL;
 	  msFreeShape(&shape);
-	  free(annotxt);
+	  if(annotxt) free(annotxt);
 	}
 	break;
       case MS_SHP_ARC:
@@ -1367,7 +1367,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));	    
 	    }
 
-	    free(annotxt);
+	    if(annotxt) free(annotxt);
 	  }
 	  
 	  msFreeShape(&shape);
@@ -1420,7 +1420,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));	    
 	    }
 
-	    free(annotxt);
+	    if(annotxt) free(annotxt);
 	  }
 	}
 	break;
@@ -1432,13 +1432,13 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       break;
       
     case MS_POINT:
-      
+
       for(i=start_feature;i<shpfile.numshapes;i++) {
 	
 	if(!msGetBit(status,i)) continue; /* next shape */
-	
+
 	if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
-	if(layer->class[c].sizescaled == 0) return;
+	if(layer->class[c].sizescaled == 0) return(0);
 
 #ifdef USE_PROJ
         SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));	    
@@ -1481,9 +1481,11 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	
 	pnt = NULL;
 	msFreeShape(&shape);
-	if(annotate)
-	  free(annotxt);
-      }	
+	if(annotate) {
+	  if(annotxt) free(annotxt);
+	  annotxt = NULL;
+	}
+      }
       
       break;
             
@@ -1538,7 +1540,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	    else
 	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
 
-	    free(annotxt);
+	    if(annotxt) free(annotxt);
 	  }
 	}
 
@@ -1607,7 +1609,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	    else
 	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
 	    
-	    free(annotxt);
+	    if(annotxt) free(annotxt);
 	  }
 	}
 
@@ -1678,7 +1680,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	    else
 	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));
 	    
-	    free(annotxt);
+	    if(annotxt) free(annotxt);
 	  }
 	}
 	
@@ -1693,12 +1695,12 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     }		
     
     msCloseSHPFile(&shpfile);
-    free(status);
+    if(status) free(status);
   } /* next tile */
   
   if(layer->tileindex) { /* tiling clean-up */
     msCloseSHPFile(&tilefile);
-    free(tileStatus);
+    if(tileStatus) free(tileStatus);
   }
 
   return(0);

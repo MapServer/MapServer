@@ -724,8 +724,7 @@ void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       /*      Fill the shape structure.                                       */
       /* -------------------------------------------------------------------- */
       if( (shape->line = (lineObj *)malloc(sizeof(lineObj)*nParts)) == NULL ) {
-	free(shape->line);
-	shape->numlines = 0;
+	msSetError(MS_MEMERR, NULL, "SHPReadShape()");
 	return;
       }
 
@@ -793,8 +792,7 @@ void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       /*      Fill the shape structure.                                       */
       /* -------------------------------------------------------------------- */
       if( (shape->line = (lineObj *)malloc(sizeof(lineObj))) == NULL ) {
-	free(shape->line);
-	shape->numlines = 0;
+	msSetError(MS_MEMERR, NULL, "SHPReadShape()");
 	return;
       }
 
@@ -825,8 +823,7 @@ void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       /*      Fill the shape structure.                                       */
       /* -------------------------------------------------------------------- */
       if( (shape->line = (lineObj *)malloc(sizeof(lineObj))) == NULL ) {
-	free(shape->line);
-	shape->numlines = 0;
+	msSetError(MS_MEMERR, NULL, "SHPReadShape()");
 	return;
       }
 
@@ -869,8 +866,6 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
       return;
     }
 
-    msInitShape(shape); /* initialize the shape */
-
     /* -------------------------------------------------------------------- */
     /*      Validate the record/entity number.                              */
     /* -------------------------------------------------------------------- */
@@ -894,7 +889,9 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
     /* -------------------------------------------------------------------- */
     fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 );
     fread( pabyRec, psSHP->panRecSize[hEntity]+8, 1, psSHP->fpSHP );
-    
+
+    msInitShape(shape); /* initialize the shape */
+
     /* -------------------------------------------------------------------- */
     /*  Extract vertices for a Polygon or Arc.				*/
     /* -------------------------------------------------------------------- */
@@ -930,8 +927,7 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
       /*      Fill the shape structure.                                       */
       /* -------------------------------------------------------------------- */
       if( (shape->line = (lineObj *)malloc(sizeof(lineObj)*nParts)) == NULL ) {
-	free(shape->line);
-	shape->numlines = 0;
+	msSetError(MS_MEMERR, NULL, "SHPReadShapeProj()");
 	return;
       }
 
@@ -1006,8 +1002,7 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
       /*      Fill the shape structure.                                       */
       /* -------------------------------------------------------------------- */
       if( (shape->line = (lineObj *)malloc(sizeof(lineObj))) == NULL ) {
-	free(shape->line);
-	shape->numlines = 0;
+	msSetError(MS_MEMERR, NULL, "SHPReadShapeProj()");
 	return;
       }
 
@@ -1059,15 +1054,14 @@ void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projection
       /*      Fill the shape structure.                                       */
       /* -------------------------------------------------------------------- */
       if( (shape->line = (lineObj *)malloc(sizeof(lineObj))) == NULL ) {
-	free(shape->line);
-	shape->numlines = 0;
+	msSetError(MS_MEMERR, NULL, "SHPReadShapeProj()");
 	return;
       }
-      
+
       shape->numlines = 1;
       shape->line[0].numpoints = 1;
       shape->line[0].point = (pointObj *) malloc(sizeof(pointObj));
-      
+
       memcpy( &(shape->line[0].point[0].x), pabyRec + 12, 8 );
       memcpy( &(shape->line[0].point[0].y), pabyRec + 20, 8 );
       
