@@ -127,7 +127,7 @@ Very important note: Constant names and class member variable names are
    colorObj getcolorbyindex(int iCloIndex)
 	Returns a colorObj corresponding to the color index in the palette
 
-   void setextent(rectObj oGeorefExtent)
+   void setextent(double minx, double miny, double maxx, double maxy)
 	Set the map extents using the georef extents passed in argument.
 
    void zoompoint(int nZoomFactor, pointObj oPixelPos, int nImageWidth, 
@@ -138,7 +138,8 @@ Very important note: Constant names and class member variable names are
 	Parmeters are :                                                 
        - Zoom factor : positive values do zoom in, negative values  
                       zoom out. Factor of 1 will recenter.           
-       - Pixel position (pointObj) : x, y coordinates of the click.   
+       - Pixel position (pointObj) : x, y coordinates of the click, 
+                                     with (0,0) at the top-left
        - Width : width in pixel of the current image.                 
        - Height : Height in pixel of the current image.               
        - Georef extent (rectObj) : current georef extents.            
@@ -151,7 +152,7 @@ Very important note: Constant names and class member variable names are
 	Set the map extents to a given extents.
 	
 	Parmeters are :
-	- Pixel Extents
+	- Pixel Extents, with (0,0) at the top-left
         - Width : width in pixel of the current image.
         - Height : Height in pixel of the current image. 
         - Georef extent (rectObj) : current georef extents.
@@ -538,7 +539,7 @@ Constructor:
    RectObj are sometimes embedded inside other objects.  New ones can
    also be created with:
 
-   RectObj ms_newPointObj()
+   RectObj ms_newRectObj()
 
  Members:
 
@@ -551,6 +552,9 @@ Constructor:
 
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
+
+   void setextent(double minx, double miny, double maxx, double maxy)
+	Set the rectangle extents.
 
    int draw(mapObj map, layerObj layer, imageObj img, 
             string class_name, string text)
