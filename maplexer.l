@@ -177,6 +177,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>minsize		       { return(MINSIZE); }
 <INITIAL,OBJECT_STRING>mintemplate	       { return(MINTEMPLATE); }
 <INITIAL,OBJECT_STRING>name		       { return(NAME); }
+<INITIAL>none                                 { return(MS_CJC_NONE); }
 <INITIAL,OBJECT_STRING>offset                  { return(OFFSET); }
 <INITIAL,OBJECT_STRING>offsite                 { return(OFFSITE); }
 <INITIAL,OBJECT_STRING>outlinecolor	       { return(OUTLINECOLOR); }
