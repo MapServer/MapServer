@@ -663,6 +663,7 @@ int msInitProjection(projectionObj *p)
 #ifdef USE_PROJ  
   p->numargs = 0;
   p->proj = NULL;
+  p->gt.need_geotransform = 0;
   if((p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *))) == NULL) {
     msSetError(MS_MEMERR, NULL, "initProjection()");
     return(-1);
