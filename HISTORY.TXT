@@ -17,7 +17,8 @@ Version 4.4.0-beta3 ()
 ----------------------
 
 - Ensure the outputFormatObj attached to msImageLoadGDStream() results reflect
-  the interlacedness of the loaded image.  (bug 1039)
+  the interlacedness of the loaded image.  Also ensure that the RGB PNG
+  reference images work (make imagemode match gdImg). (bug 1039)
 
 - Fixed support for non-square pixels in WCS. (bug 1014)
 
