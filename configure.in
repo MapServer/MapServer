@@ -392,35 +392,38 @@ AC_ARG_WITH(xpm,
                               libXpm install prefix).],
     XPM_DIR=$withval,XPM_DIR='')
 
-AC_EXPAND_PATH($XPM_DIR, XPM_DIR)
-AC_CHECKING(where libXpm is installed...)
-XPM_LIB=''
+if test "$with_xpm" != "no" ; then
 
-test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib"
-test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl && XPM_LIBDIR="$XPM_DIR"
+  AC_EXPAND_PATH($XPM_DIR, XPM_DIR)
+  AC_CHECKING(where libXpm is installed...)
+  XPM_LIB=''
 
-if test -n "$XPM_LIBDIR" ; then
+  test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib"
+  test -f $XPM_DIR/libXpm.a -o -f $XPM_DIR/libXpm.so -o -f $XPM_DIR/libXpm.sl && XPM_LIBDIR="$XPM_DIR"
 
-  XPM_LIB="-L$XPM_LIBDIR -lXpm -lX11"
-  AC_MSG_RESULT([        using libXpm from $XPM_LIB])
-  AC_ADD_RUNPATH("$XPM_LIBDIR")
+  if test -n "$XPM_LIBDIR" ; then
 
-else
+    XPM_LIB="-L$XPM_LIBDIR -lXpm -lX11"
+    AC_MSG_RESULT([        using libXpm from $XPM_LIB])
+    AC_ADD_RUNPATH("$XPM_LIBDIR")
 
-  dnl check for lib in system libs
-
-  AC_CHECK_LIB(Xpm, XpmFreeXpmImage, XPM_LIB="-lXpm -lX11",,-lX11)
-
-  if test -n "$XPM_LIB" ; then
-    AC_MSG_RESULT([        using libXpm from system libs.])
   else
-    AC_MSG_RESULT([        XPM (libXpm) library cannot be found, possibly needed for GD])
+  
+    dnl check for lib in system libs
+
+    AC_CHECK_LIB(Xpm, XpmFreeXpmImage, XPM_LIB="-lXpm -lX11",,-lX11)
+
+    if test -n "$XPM_LIB" ; then
+      AC_MSG_RESULT([        using libXpm from system libs.])
+    else
+      AC_MSG_RESULT([        XPM (libXpm) library cannot be found, possibly needed for GD])
+    fi
   fi
+
+  GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
 
 fi
 
-
-GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB $XPM_LIB"
 
 
 dnl ---------------------------------------------------------------------
