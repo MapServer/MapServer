@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.41  2004/09/30 13:01:43  julien
+ * Fix a typo in contact information encoding
+ *
  * Revision 1.40  2004/09/28 20:43:27  frank
  * avoid warnings
  *
@@ -894,9 +897,9 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
       // sub-elements are mandatory
       fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
 
-      msOWSPrintEncodeMetadata(stream, metadata, "OWS", "contactperson", 
+      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactperson", 
                   OWS_WARN, "      <ContactPerson>%s</ContactPerson>\n", NULL);
-      msOWSPrintEncodeMetadata(stream, metadata, "OWS", "contactorganization", 
+      msOWSPrintEncodeMetadata(stream, metadata, "OMF", "contactorganization", 
              OWS_WARN, "      <ContactOrganization>%s</ContactOrganization>\n",
              NULL);
       fprintf(stream, "%s  </ContactPersonPrimary>\n", tabspace);
