@@ -30,6 +30,10 @@ Version 3.7-dev (CVS)
 - New styleObj
   *** Full details still have to be documented here...
 
+- PostGIS: Added Sean Gillies <sgillies@i3.com>'s patch for "using unique 
+  <column name>". Added "using SRID=#" to specify a spatial reference 
+  for an arbitrary sql query.
+
 
 Version 3.6.0-beta1 (2002-04-30)
 --------------------------------
