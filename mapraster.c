@@ -224,25 +224,43 @@ int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
 
 {
     int	 r, g, b;
+    int i = 0;
+    int nGreyColors = 32;
+    int nSpaceGreyColors = 8;
+    int iColors = 0;
+    int	red, green, blue;
 
     for( r = 0; r < RED_LEVELS; r++ )
     {
         for( g = 0; g < GREEN_LEVELS; g++ )
         {
             for( b = 0; b < BLUE_LEVELS; b++ )
-            {
-                int	red, green, blue;
-                
+            {                
                 red = MS_MIN(255,r * (255 / (RED_LEVELS-1)));
                 green = MS_MIN(255,g * (255 / (GREEN_LEVELS-1)));
                 blue = MS_MIN(255,b * (255 / (BLUE_LEVELS-1)));
 
                 panColorCube[RGB_LEVEL_INDEX(r,g,b)] = 
                     add_color(map, img, red, green, blue );
+                iColors++;
             }
         }
     }
-
+/* -------------------------------------------------------------------- */
+/*      Adding 32 grey colors                                           */
+/* -------------------------------------------------------------------- */
+    
+    for (i=0; i<nGreyColors; i++)
+    {
+        red = i*nSpaceGreyColors;
+        green = red;
+        blue = red;
+        if(iColors < 256)
+        {
+            panColorCube[iColors] = add_color(map, img, red, green, blue );
+            iColors++;
+        }
+    }
     return MS_SUCCESS;
 }
 
