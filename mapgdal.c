@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/03/05 05:57:04  frank
+ * support multi-band rawmode output
+ *
  * Revision 1.15  2004/03/04 20:08:28  frank
  * added IMAGEMODE_BYTE (raw mode)
  *
@@ -195,14 +198,17 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     }
     else if( format->imagemode == MS_IMAGEMODE_INT16 )
     {
+        nBands = format->bands;
         eDataType = GDT_Int16;
     }
     else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
     {
+        nBands = format->bands;
         eDataType = GDT_Float32;
     }
     else if( format->imagemode == MS_IMAGEMODE_BYTE )
     {
+        nBands = format->bands;
         eDataType = GDT_Byte;
     }
     else
@@ -248,20 +254,23 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
             if( format->imagemode == MS_IMAGEMODE_INT16 )
             {
                 GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
-                              image->img.raw_16bit + iLine * image->width,
+                              image->img.raw_16bit + iLine * image->width
+                              + iBand * image->width * image->height,
                               image->width, 1, GDT_Int16, 2, 0 );
                 
             }
             else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
             {
                 GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
-                              image->img.raw_float + iLine * image->width,
+                              image->img.raw_float + iLine * image->width
+                              + iBand * image->width * image->height,
                               image->width, 1, GDT_Float32, 4, 0 );
             }
             else if( format->imagemode == MS_IMAGEMODE_BYTE )
             {
                 GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
-                              image->img.raw_byte + iLine * image->width,
+                              image->img.raw_byte + iLine * image->width
+                              + iBand * image->width * image->height,
                               image->width, 1, GDT_Byte, 1, 0 );
             }
 #if GD2_VERS > 1

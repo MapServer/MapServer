@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/03/05 05:57:04  frank
+ * support multi-band rawmode output
+ *
  * Revision 1.17  2004/03/04 20:08:28  frank
  * added IMAGEMODE_BYTE (raw mode)
  *
@@ -112,6 +115,12 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,
                layerObj *layer, 
                int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
                GByte *pabyBuffer, int dst_xsize, int dst_ysize );
+static int 
+msDrawRasterLayerGDAL_RawMode(
+    mapObj *map, layerObj *layer, imageObj *image, GDALDatasetH hDS, 
+    int src_xoff, int src_yoff, int src_xsize, int src_ysize,
+    int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
+
 
 #ifdef ENABLE_DITHER
 static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
@@ -159,7 +168,6 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   int truecolor = FALSE;
   int red_band=0, green_band=0, blue_band=0, alpha_band=0, cmt=0;
   gdImagePtr gdImg = NULL;
-  CPLErr  eErr;
   GDALDatasetH hDS = hDSVoid;
   GDALColorTableH hColorMap;
   GDALRasterBandH hBand1, hBand2, hBand3, hBandAlpha;
@@ -312,6 +320,20 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   }
 
   /*
+   * In RAWDATA mode we don't fool with colors.  Do the raw processing, 
+   * and return from the function early.
+   */
+  if( !gdImg )
+  {
+      assert( MS_RENDERER_RAWDATA( image->format ) );
+
+      return msDrawRasterLayerGDAL_RawMode( 
+          map, layer, image, hDS, 
+          src_xoff, src_yoff, src_xsize, src_ysize, 
+          dst_xoff, dst_yoff, dst_xsize, dst_ysize );
+  }
+
+  /*
    * Set up the band selection.  We look for a BANDS directive in the 
    * the PROCESSING options.  If not found we default to red=1 or
    * red=1,green=2,blue=3 or red=1,green=2,blue=3,alpha=4. 
@@ -370,82 +392,12 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
   }
 
   /*
-   * In RAWDATA mode we don't fool with colors.  Do the raw processing, 
-   * and return from the function early.
+   * Get band handles for PC256, RGB or RGBA cases.
    */
   hBand1 = GDALGetRasterBand( hDS, red_band );
   if( hBand1 == NULL )
       return -1;
 
-  if( !gdImg )
-  {
-      void *pBuffer;
-      GDALDataType eDataType;
-
-      assert( MS_RENDERER_RAWDATA( image->format ) );
-
-      if( image->format->imagemode == MS_IMAGEMODE_INT16 )
-          eDataType = GDT_Int16;
-      else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
-          eDataType = GDT_Float32;
-      else if( image->format->imagemode == MS_IMAGEMODE_BYTE )
-          eDataType = GDT_Byte;
-      else
-          return -1;
-
-      pBuffer = malloc(dst_xsize * dst_ysize 
-                       * (GDALGetDataTypeSize(eDataType)/8) );
-      if( pBuffer == NULL )
-          return -1;
-
-      eErr = GDALRasterIO( hBand1, GF_Read, 
-                           src_xoff, src_yoff, src_xsize, src_ysize, 
-                           pBuffer, dst_xsize, dst_ysize, eDataType, 0, 0 );
-      if( eErr != CE_None )
-      {
-          msSetError( MS_IOERR, "GDALRasterIO() failed: %s", 
-                      CPLGetLastErrorMsg(), "drawGDAL()" );
-          free( pBuffer );
-          return -1;
-      }
-
-      k = 0;
-      for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
-      {
-          if( image->format->imagemode == MS_IMAGEMODE_INT16 )
-          {
-              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-              {
-                  image->img.raw_16bit[j + i * image->width] = 
-                      ((GInt16 *) pBuffer)[k++];
-              }
-          }
-          else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
-          {
-              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-              {
-                  image->img.raw_float[j + i * image->width] = 
-                      ((float *) pBuffer)[k++];
-              }
-          }
-          else if( image->format->imagemode == MS_IMAGEMODE_BYTE )
-          {
-              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
-              {
-                  image->img.raw_byte[j + i * image->width] = 
-                      ((unsigned char *) pBuffer)[k++];
-              }
-          }
-      }
-
-      free( pBuffer );
-
-      return 0;
-  }
-
-  /*
-   * Are we in a one band, RGB or RGBA situation?
-   */
   hBand2 = hBand3 = hBandAlpha = NULL;
 
   if( green_band != 0 )
@@ -1271,6 +1223,159 @@ int msGetGDALGeoTransform( GDALDatasetH hDS, mapObj *map, layerObj *layer,
 /* -------------------------------------------------------------------- */
     else
         return MS_FAILURE;
+}
+
+/************************************************************************/
+/*                   msDrawRasterLayerGDAL_RawMode()                    */
+/*                                                                      */
+/*      Handle the loading and application of data in rawmode.          */
+/************************************************************************/
+
+static int 
+msDrawRasterLayerGDAL_RawMode(
+    mapObj *map, layerObj *layer, imageObj *image, GDALDatasetH hDS, 
+    int src_xoff, int src_yoff, int src_xsize, int src_ysize,
+    int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize )
+
+{
+    void *pBuffer;
+    GDALDataType eDataType;
+    int band_list[256];
+    int  i, j, k, band;
+    CPLErr eErr;
+
+    if( image->format->bands > 256 )
+    {
+        msSetError( MS_IMGERR, "Too many bands (more than 256).",
+                    "msDrawRasterLayerGDAL_RawMode()" );
+        return -1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      What data type do we need?                                      */
+/* -------------------------------------------------------------------- */
+    if( image->format->imagemode == MS_IMAGEMODE_INT16 )
+        eDataType = GDT_Int16;
+    else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
+        eDataType = GDT_Float32;
+    else if( image->format->imagemode == MS_IMAGEMODE_BYTE )
+        eDataType = GDT_Byte;
+    else
+        return -1;
+
+/* -------------------------------------------------------------------- */
+/*      Work out the band list.                                         */
+/* -------------------------------------------------------------------- */
+    if( CSLFetchNameValue( layer->processing, "BANDS" ) == NULL )
+    {
+        for( i = 0; i < image->format->bands; i++ )
+        {
+            if( GDALGetRasterCount( hDS ) < i+1 )
+                band_list[i] = GDALGetRasterCount( hDS );
+            else
+                band_list[i] = i+1;
+        }
+    }
+    else
+    {
+        char **papszItems = CSLTokenizeStringComplex( 
+            CSLFetchNameValue(layer->processing,"BANDS"), " ,", FALSE, FALSE );
+
+        if( CSLCount(papszItems) == 0 )
+        {
+            CSLDestroy( papszItems );
+            msSetError( MS_IMGERR, "BANDS PROCESSING directive has no items.",
+                        "msDrawRasterLayerGDAL_RawMode()" );
+            return -1;
+        }
+        else if( CSLCount(papszItems) != image->format->bands )
+        {
+            msSetError( MS_IMGERR, "BANDS PROCESSING directive has wrong number of bands, expected %d, got %d.",
+                        "msDrawRasterLayerGDAL_RawMode()",
+                        image->format->bands, CSLCount(papszItems) );
+            CSLDestroy( papszItems );
+            return -1;
+        }
+
+        for( i = 0; i < image->format->bands; i++ )
+        {
+            band_list[i] = atoi(papszItems[i]);
+            if( band_list[i] < 1 || band_list[i] > GDALGetRasterCount(hDS) )
+            {
+                msSetError( MS_IMGERR, 
+                            "BANDS PROCESSING directive includes illegal band '%s', should be from 1 to %d.", 
+                            "msDrawRasterLayerGDAL_RawMode()",
+                            papszItems[i], GDALGetRasterCount(hDS) );
+                CSLDestroy( papszItems );
+                return -1;
+            }
+        }
+        CSLDestroy( papszItems );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Allocate buffer, and read data into it.                         */
+/* -------------------------------------------------------------------- */
+    pBuffer = malloc(dst_xsize * dst_ysize * image->format->bands
+                     * (GDALGetDataTypeSize(eDataType)/8) );
+    if( pBuffer == NULL )
+        return -1;
+
+    eErr = GDALDatasetRasterIO( hDS, GF_Read,  
+                                src_xoff, src_yoff, src_xsize, src_ysize, 
+                                pBuffer, dst_xsize, dst_ysize, eDataType, 
+                                image->format->bands, band_list,
+                                0, 0, 0 );
+    if( eErr != CE_None )
+    {
+        msSetError( MS_IOERR, "GDALRasterIO() failed: %s", 
+                    CPLGetLastErrorMsg(), 
+                    "msDrawRasterLayerGDAL_RawMode()" );
+        free( pBuffer );
+        return -1;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Transfer the data to the imageObj.                              */
+/* -------------------------------------------------------------------- */
+    k = 0;
+    for( band = 0; band < image->format->bands; band++ )
+    {
+        for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+        {
+            if( image->format->imagemode == MS_IMAGEMODE_INT16 )
+            {
+                for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+                {
+                    image->img.raw_16bit[j + i * image->width
+                                         + band*image->width*image->height] = 
+                        ((GInt16 *) pBuffer)[k++];
+                }
+            }
+            else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
+            {
+                for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+                {
+                    image->img.raw_float[j + i * image->width
+                                         + band*image->width*image->height] = 
+                        ((float *) pBuffer)[k++];
+                }
+            }
+            else if( image->format->imagemode == MS_IMAGEMODE_BYTE )
+            {
+                for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+                {
+                    image->img.raw_byte[j + i * image->width
+                                        + band*image->width*image->height] = 
+                        ((unsigned char *) pBuffer)[k++];
+                }
+            }
+        }
+    }
+
+    free( pBuffer );
+
+    return 0;
 }
 
 #endif

@@ -1210,13 +1210,13 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
 
         if( format->imagemode == MS_IMAGEMODE_INT16 )
             image->img.raw_16bit = (short *) 
-                calloc(sizeof(short),width*height);
+                calloc(sizeof(short),width*height*format->bands);
         else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
             image->img.raw_float = (float *) 
-                calloc(sizeof(float),width*height);
+                calloc(sizeof(float),width*height*format->bands);
         else if( format->imagemode == MS_IMAGEMODE_BYTE )
             image->img.raw_byte = (unsigned char *) 
-                calloc(sizeof(unsigned char),width*height);
+                calloc(sizeof(unsigned char),width*height*format->bands);
 
         if( image->img.raw_16bit == NULL )
         {

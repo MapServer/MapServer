@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.21  2004/03/05 05:57:04  frank
+ * support multi-band rawmode output
+ *
  * Revision 1.20  2003/07/08 12:36:11  frank
  * don't crash if format==NULL
  *
@@ -403,6 +406,7 @@ static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name,
 /* -------------------------------------------------------------------- */
 /*      Initialize various fields.                                      */
 /* -------------------------------------------------------------------- */
+    format->bands = 1;
     format->name = strdup(name);
     format->driver = strdup(driver);
     format->refcount = 0;
@@ -588,6 +592,7 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
     dst->renderer = src->renderer;
 
     dst->transparent = src->transparent;
+    dst->bands = src->bands;
 
     dst->numformatoptions = src->numformatoptions;
     dst->formatoptions = (char **) 
@@ -663,7 +668,7 @@ void msSetOutputFormatOption( outputFormatObj *format,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Otherwise, we need to grow the list.                            */
+/*      otherwise, we need to grow the list.                            */
 /* -------------------------------------------------------------------- */
     format->numformatoptions++;
     format->formatoptions = (char **) 
@@ -671,6 +676,12 @@ void msSetOutputFormatOption( outputFormatObj *format,
                  sizeof(char*) * format->numformatoptions );
 
     format->formatoptions[format->numformatoptions-1] = newline;
+
+/* -------------------------------------------------------------------- */
+/*      Capture generic value(s) we are interested in.                  */
+/* -------------------------------------------------------------------- */
+    if( strcasecmp(key,"BAND_COUNT") == 0 )
+        format->bands = atoi(value);
 }
 
 /************************************************************************/
@@ -714,6 +725,9 @@ void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime )
 int msOutputFormatValidate( outputFormatObj *format )
 
 {
+    format->bands = 
+            atoi(msGetOutputFormatOption( format, "BAND_COUNT", "1" ));
+
     if( format->transparent && format->imagemode == MS_IMAGEMODE_RGB )
     {
         msSetError( MS_MISCERR, 

@@ -312,6 +312,7 @@ typedef struct {
   int  renderer;  // MS_RENDER_WITH_*
   int  imagemode; // MS_IMAGEMODE_* value.
   int  transparent;
+  int  bands;
   int  numformatoptions;
   char **formatoptions;
   int  refcount;
