@@ -245,6 +245,9 @@ sortshp: sortshp.o
 tile4ms: tile4ms.o
 	$(CC) $(CFLAGS) tile4ms.o $(LDFLAGS) $(STATIC_LIBS) -o tile4ms
 
+testexpr: testexpr.o
+	$(CC) $(CFLAGS) testexpr.o $(LDFLAGS) $(STATIC_LIBS) -o testexpr
+
 perlvars:
 	touch perlvars
 	pwd > perlvars
