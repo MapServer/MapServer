@@ -118,13 +118,37 @@ int msLayerOpen(layerObj *layer, char *shapepath)
 ** OGR and shapefiles this sets an internal bit vector that indicates whether a particular feature
 ** is to processed. For SDE it executes an SQL statement on the SDE server. Once run the msLayerNextShape
 ** function should be called to actually access the shapes.
+**
+** Note that for shapefiles we apply any maxfeatures constraint at this point. That may be the only
+** connection type where this is feasible.
 */
 int msLayerWhichShapes(layerObj *layer, rectObj rect)
 {
+  int i, n1=0, n2=0;
+  int status;
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    return(msSHPWhichShapes(&(layer->shpfile), rect));
+    status = msSHPWhichShapes(&(layer->shpfile), rect);
+    if(status != MS_SUCCESS) return(status);
+
+    // now apply the maxshapes criteria
+    if(layer->maxfeatures > 0) {
+      for(i=0; i<layer->shpfile.numshapes; i++)
+        n1 += msGetBit(layer->shpfile.status,i);
+    
+      if(n1 > layer->maxfeatures) {
+        for(i=0; i<layer->shpfile.numshapes; i++) {
+          if(msGetBit(layer->shpfile.status,i) && (n2 < (n1 - layer->maxfeatures))) {
+	    msSetBit(layer->shpfile.status,i,0);
+	    n2++;
+          }
+        }
+      }
+    }
+
+    return(MS_SUCCESS);
+
     break;
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPWhichShapes(layer, rect));
