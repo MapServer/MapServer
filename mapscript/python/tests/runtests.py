@@ -40,6 +40,7 @@ from cases.owstest import OWSRequestTestCase
 from cases.clonetest import MapCloningTestCase
 from cases.maptest import MapConstructorTestCase, MapLayersTestCase
 from cases.layertest import LayerConstructorTestCase
+from cases.recttest import RectObjTestCase
 
 # Create a test suite
 suite = unittest.TestSuite()
@@ -51,6 +52,7 @@ suite.addTest(OWSRequestTestCase)
 suite.addTest(MapConstructorTestCase)
 suite.addTest(MapLayersTestCase)
 suite.addTest(LayerConstructorTestCase)
+suite.addTest(RectObjTestCase)
 
 # If module is run as a script, execute every test case in the suite
 if __name__ == '__main__':

@@ -423,33 +423,6 @@ class SetExtentTestCase(MapTestCase):
         self.assertRaises(mapscript.MapServerError, self.mapobj1.setExtent,
                           1.0, -2.0, -3.0, 4.0)
 
-class RectObjTestCase(MapPrimitivesTestCase):
-    def testRectObjConstructorNoArgs(self):
-        r = mapscript.rectObj()
-        self.assertAlmostEqual(r.minx, 0.0)
-        self.assertAlmostEqual(r.miny, 0.0)
-        self.assertAlmostEqual(r.maxx, 0.0)
-        self.assertAlmostEqual(r.maxy, 0.0)
-    def testRectObjConstructorArgs(self):
-        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
-        self.assertAlmostEqual(r.minx, -1.0)
-        self.assertAlmostEqual(r.miny, -2.0)
-        self.assertAlmostEqual(r.maxx, 3.0)
-        self.assertAlmostEqual(r.maxy, 4.0)
-    def testRectObjConstructorBadly1(self):
-        self.assertRaises(mapscript.MapServerError, mapscript.rectObj, 1.0, -2.0, -3.0, 4.0)
-    def testRectObjConstructorBadly2(self):
-        self.assertRaises(mapscript.MapServerError, mapscript.rectObj, -1.0, 2.0, 3.0, -2.0)
-    def testRectObjToPolygon(self):
-        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
-        s = r.toPolygon()
-        assert s.numlines == 1, s.numlines
-        line = self.getLineFromShape(s, 0)
-        assert line.numpoints == 5, line.numpoints
-        point = self.getPointFromLine(line, 0)
-        self.assertAlmostEqual(point.x, -1.0)
-        self.assertAlmostEqual(point.y, -2.0)
-
 class LineObjTestCase(MapPrimitivesTestCase):
     """Testing the lineObj class in stand-alone mode"""
     def setUp(self):
