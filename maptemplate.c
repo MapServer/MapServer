@@ -1193,6 +1193,8 @@ char *generateLegendTemplate(mapservObj *msObj)
 
    regex_t re; /* compiled regular expression to be matched */ 
 
+   int  *panCurrentDrawingOrder = NULL;
+
    if(regcomp(&re, MS_TEMPLATE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
       msSetError(MS_IOERR, "Error regcomp.", "generateLegendTemplate()");      
       return NULL;
@@ -1204,6 +1206,24 @@ char *generateLegendTemplate(mapservObj *msObj)
      return NULL;
    }
    regfree(&re);
+
+/* -------------------------------------------------------------------- */
+/*      Keep the current drawing order. The drawing order is reset      */
+/*      at the end of the function.                                     */
+/* -------------------------------------------------------------------- */
+   if (msObj && msObj->Map && msObj->Map->numlayers > 0)
+   {
+       panCurrentDrawingOrder = 
+           (int *)malloc(sizeof(int)*msObj->Map->numlayers); 
+      
+       for (i=0; i<msObj->Map->numlayers; i++)
+       {
+           if (msObj->Map->layerorder)
+               panCurrentDrawingOrder[i] = msObj->Map->layerorder[i];
+           else
+             panCurrentDrawingOrder[i] = i;  
+       }
+   }
 
    /*
     * build prefix filename
@@ -1606,6 +1626,17 @@ char *generateLegendTemplate(mapservObj *msObj)
    if (legClassHtml){ free(legClassHtml); }
    
    fclose(stream);
+
+/* -------------------------------------------------------------------- */
+/*      Reset the layerdrawing order.                                   */
+/* -------------------------------------------------------------------- */
+   if (panCurrentDrawingOrder && msObj->Map->layerorder)
+   {
+       for (i=0; i<msObj->Map->numlayers; i++)
+          msObj->Map->layerorder[i] =  panCurrentDrawingOrder[i];
+
+       free(panCurrentDrawingOrder);
+   }
    
    return pszResult;
 }
