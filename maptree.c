@@ -114,13 +114,15 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree)
     memcpy( &psTree->signature, pabyBuf, 3 );
     if( strncmp(psTree->signature,"SQT",3) )
     {
-      psTree->needswap = (( pabyBuf[0] == 0 ) ^ ( bBigEndian ));
+      /* presume maxdepth never more than 65535 */
+      psTree->LSB_order = !(pabyBuf[4] == 0 && pabyBuf[5] == 0);
+      psTree->needswap = ((psTree->LSB_order) != (!bBigEndian));
+
   /* ---------------------------------------------------------------------- */
   /*     poor hack to see if this quadtree was created by a computer with a */
   /*     different Endian                                                   */
   /* ---------------------------------------------------------------------- */
       psTree->version = 0;
-      psTree->LSB_order = ( pabyBuf[0] != 0 );
     }
     else
     {
