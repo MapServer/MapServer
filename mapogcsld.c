@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.21  2004/02/11 20:47:18  assefa
+ * Use first the wms_name metadata as the name of the NamedLayer.
+ * If not available, use the layer's name.
+ *
  * Revision 1.20  2004/02/09 22:02:33  assefa
  * Forgot to remove debug statements.
  *
@@ -3280,6 +3284,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     char *pszFilter = NULL;
     char *pszFinalSLD = NULL;
     char *pszSLD = NULL;
+    char *pszTmp = NULL;
 
     if (psLayer && (psLayer->type == MS_LAYER_POINT ||
                     psLayer->type == MS_LAYER_LINE ||
@@ -3288,7 +3293,14 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
         sprintf(szTmp, "%s\n",  "<NamedLayer>");
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
-        sprintf(szTmp, "<NAME>%s</NAME>\n",  psLayer->name);
+        pszTmp = msLookupHashTable(psLayer->metadata, "wms_name");
+        if (pszTmp)
+          sprintf(szTmp, "<NAME>%s</NAME>\n", pszTmp);
+        else if (psLayer->name)
+          sprintf(szTmp, "<NAME>%s</NAME>\n", psLayer->name);
+        else
+          sprintf(szTmp, "<NAME>%s</NAME>\n", "NamedLayer");
+
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
 
         sprintf(szTmp, "%s\n",  "<UserStyle>");
