@@ -213,8 +213,9 @@ USE_GD_ANTIALIAS=-DUSE_GD_ANTIALIAS
 # Reprojecting.
 # If you would like mapserver to be able to reproject data from one
 # geographic projection to another, uncomment the following flag
-# Proj.4 distribution (cartographic projection routines). 
-# Not required for normal use. (EXPERIMENTAL)
+# Proj.4 distribution (cartographic projection routines).  PROJ.4 is
+# also required for all OGC services (WMS, WFS, and WCS). 
+#
 # For PROJ_DIR use full path to Proj.4 distribution
 #PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
 #PROJ_DIR=c:\projects\proj-4.4.9
