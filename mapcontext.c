@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.38  2003/01/30 22:43:29  julien
+ * Remove logourl heritage and customize encoding
+ *
  * Revision 1.37  2003/01/30 21:17:03  julien
  * Implement the version 0.1.7
  *
@@ -1134,19 +1137,20 @@ int msSaveMapContext(mapObj *map, char *filename)
   }
 
   // Decide which version we're going to return...
-  version = msLookupHashTable(map->web.metadata, "context_version");
+  version = msLookupHashTable(map->web.metadata, "wms_context_version");
   if(version == NULL)
       version = "0.1.7";
 
   // file header
-  fprintf( stream, 
-         "<?xml version='1.0' encoding=\"ISO-8859-1\" standalone=\"no\" ?>\n");
+  msOWSPrintMetadata(stream, map->web.metadata, "wms_encoding", OWS_NOERR,
+                "<?xml version='1.0' encoding=\"%s\" standalone=\"no\" ?>\n",
+                    "ISO-8859-1");
 
   // set the WMS_Viewer_Context information
   if(strcasecmp(version, "0.1.7") >= 0)
   {
       fprintf( stream, "<View_Context version=\"%s\"", version );
-      pszValue = msLookupHashTable(map->web.metadata, "context_fid");
+      pszValue = msLookupHashTable(map->web.metadata, "wms_context_fid");
       if(pszValue != NULL)
           fprintf( stream, " fid=\"%s\"", pszValue );
       else
@@ -1160,8 +1164,8 @@ int msSaveMapContext(mapObj *map, char *filename)
   fprintf( stream, 
            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
   fprintf( stream, 
-         " xsi:noNamespaceSchemaLocation=\"%s/contexts/0.1.4/context.xsd\">\n",
-           msOWSGetSchemasLocation(map) );
+         " xsi:noNamespaceSchemaLocation=\"%s/contexts/%s/context.xsd\">\n",
+           msOWSGetSchemasLocation(map), version );
 
   // set the General information
   fprintf( stream, "  <General>\n" );
@@ -1223,54 +1227,42 @@ int msSaveMapContext(mapObj *map, char *filename)
   pszLogoURL = msLookupHashTable(map->web.metadata, "wms_logourl");
   if(pszLogoURL != NULL)
   {
-      pszChar = strchr(pszLogoURL, ' ');
+      pszLogoItem = strdup(pszLogoURL);
+
+      // logourl width
+      pszChar = strchr(pszLogoItem, ' ');
       if(pszChar != NULL)
-      {
-          pszLogoItem = strdup(pszLogoURL);
+          pszLogoItem[pszChar - pszLogoItem] = '\0';
+      fprintf(stream, "    <LogoURL width=\"%s\"", pszLogoItem);
 
-          // logourl width
-          pszChar = strchr(pszLogoItem, ' ');
-          if(pszChar != NULL)
-              pszLogoItem[pszChar - pszLogoItem] = '\0';
-          fprintf(stream, "    <LogoURL width=\"%s\"", pszLogoItem);
+      // logourl height
+      pszLogoURL += strlen(pszLogoItem) + 1;
+      strcpy(pszLogoItem, pszLogoURL);
+      pszChar = strchr(pszLogoItem, ' ');
+      if(pszChar != NULL)
+          pszLogoItem[pszChar - pszLogoItem] = '\0';
+      fprintf(stream, " height=\"%s\"", pszLogoItem);
 
-          // logourl height
-          pszLogoURL += strlen(pszLogoItem) + 1;
-          strcpy(pszLogoItem, pszLogoURL);
-          pszChar = strchr(pszLogoItem, ' ');
-          if(pszChar != NULL)
-              pszLogoItem[pszChar - pszLogoItem] = '\0';
-          fprintf(stream, " height=\"%s\"", pszLogoItem);
+      // logourl format
+      pszLogoURL += strlen(pszLogoItem) + 1;
+      strcpy(pszLogoItem, pszLogoURL);
+      pszChar = strchr(pszLogoItem, ' ');
+      if(pszChar != NULL)
+          pszLogoItem[pszChar - pszLogoItem] = '\0';
+      fprintf(stream, " format=\"%s\">\n", pszLogoItem);
 
-          // logourl format
-          pszLogoURL += strlen(pszLogoItem) + 1;
-          strcpy(pszLogoItem, pszLogoURL);
-          pszChar = strchr(pszLogoItem, ' ');
-          if(pszChar != NULL)
-              pszLogoItem[pszChar - pszLogoItem] = '\0';
-          fprintf(stream, " format=\"%s\">\n", pszLogoItem);
+      // logourl url
+      pszLogoURL += strlen(pszLogoItem) + 1;
+      strcpy(pszLogoItem, pszLogoURL);
+      pszChar = strchr(pszLogoItem, ' ');
+      if(pszChar != NULL)
+          pszLogoItem[pszChar - pszLogoItem] = '\0';
+      pszEncodedVal = msEncodeHTMLEntities(pszLogoItem);
+      fprintf(stream, "      <OnlineResource xlink:type=\"simple\" ");
+      fprintf(stream, "xlink:href=\"%s\"/>\n    </LogoURL>\n",
+              pszEncodedVal);
 
-          // logourl url
-          pszLogoURL += strlen(pszLogoItem) + 1;
-          strcpy(pszLogoItem, pszLogoURL);
-          pszChar = strchr(pszLogoItem, ' ');
-          if(pszChar != NULL)
-              pszLogoItem[pszChar - pszLogoItem] = '\0';
-          pszEncodedVal = msEncodeHTMLEntities(pszLogoItem);
-          fprintf(stream, "      <OnlineResource xlink:type=\"simple\" ");
-          fprintf(stream, "xlink:href=\"%s\"/>\n    </LogoURL>\n",
-                  pszEncodedVal);
-
-          free(pszLogoItem);
-      }
-      else
-      {
-          pszEncodedVal = msEncodeHTMLEntities(pszLogoURL);
-          fprintf(stream, "    <LogoURL>\n");
-          fprintf(stream, "      <OnlineResource xlink:type=\"simple\" ");
-          fprintf(stream, "xlink:href=\"%s\"/>\n    </LogoURL>\n",
-                  pszEncodedVal);
-      }
+      free(pszLogoItem);
   }
 
   // Contact Info
