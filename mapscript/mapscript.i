@@ -1168,14 +1168,22 @@ memory.") const char * {
     return msProjectLine(in, out, self);
   }
 
+#ifdef NEXT_GENERATION_API
+  pointObj *getPoint(int i) {
+#else
   pointObj *get(int i) {
+#endif
     if(i<0 || i>=self->numpoints)
       return NULL;
     else
       return &(self->point[i]);
   }
 
+#ifdef NEXT_GENERATION_API
+  int addPoint(pointObj *p) {
+#else
   int add(pointObj *p) {
+#endif
     if(self->numpoints == 0) { /* new */	
       self->point = (pointObj *)malloc(sizeof(pointObj));      
       if(!self->point)
@@ -1193,7 +1201,11 @@ memory.") const char * {
     return MS_SUCCESS;
   }
 
+#ifdef NEXT_GENERATION_API
+  int setPoint(int i, pointObj *p) {
+#else
   int set(int i, pointObj *p) {
+#endif
     if(i<0 || i>=self->numpoints) // invalid index
       return MS_FAILURE;
 
@@ -1229,14 +1241,22 @@ memory.") const char * {
     return msProjectShape(in, out, self);
   }
 
+#ifdef NEXT_GENERATION_API
+  lineObj *getLine(int i) {
+#else
   lineObj *get(int i) {
+#endif
     if(i<0 || i>=self->numlines)
       return NULL;
     else
       return &(self->line[i]);
   }
 
+#ifdef NEXT_GENERATION_API
+  int addLine(lineObj *line) {
+#else
   int add(lineObj *line) {
+#endif
     return msAddLine(self, line);
   }
 
@@ -1373,13 +1393,33 @@ memory.") const char * {
 
     %newobject toPolygon;
     shapeObj *toPolygon() {
+        lineObj line = {0,NULL};
         shapeObj *shape;
         shape = (shapeObj *)malloc(sizeof(shapeObj));
         if (!shape)
             return NULL;
         msInitShape(shape);
         shape->type = MS_SHAPE_POLYGON;
-        msRectToPolygon(*self, shape);
+  
+        line.point = (pointObj *)malloc(sizeof(pointObj)*5);
+        line.point[0].x = self->minx;
+        line.point[0].y = self->miny;
+        line.point[1].x = self->minx;
+        line.point[1].y = self->maxy;
+        line.point[2].x = self->maxx;
+        line.point[2].y = self->maxy;
+        line.point[3].x = self->maxx;
+        line.point[3].y = self->miny;
+        line.point[4].x = line.point[0].x;
+        line.point[4].y = line.point[0].y;
+  
+        line.numpoints = 5;
+  
+        msAddLine(shape, &line);
+        msComputeBounds(shape);
+        
+        free(line.point);
+
         return shape;
     }
     

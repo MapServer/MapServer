@@ -39,6 +39,79 @@ if 'mapObj' not in dir(mapscript):
     mapscript.shapefileObj = mapscript.Shapefile
     mapscript.projectionObj = mapscript.Projection
 
+# Base class for Primitives Tests -- no actual tests in this class
+
+class MapPrimitivesTestCase(unittest.TestCase):
+    """Base class for testing primitives (points, lines, shapes)
+    in stand-alone mode"""
+
+    def addPointToLine(self, line, point):
+        """Using either the standard or next_generation_api"""
+        try:
+            line.add(point)
+        except AttributeError: # next_generation_api
+            line.addPoint(point)
+        except:
+            raise
+
+    def getPointFromLine(self, line, index):
+        """Using either the standard or next_generation_api"""
+        try:
+            point = line.get(index)
+            return point
+        except AttributeError: # next_generation_api
+            point = line.getPoint(index)
+            return point
+        except:
+            raise
+
+    def addLineToShape(self, shape, line):
+        """Using either the standard or next_generation_api"""
+        try:
+            shape.add(line)
+        except AttributeError: # next_generation_api
+            shape.addLine(line)
+        except:
+            raise
+
+    def getLineFromShape(self, shape, index):
+        """Using either the standard or next_generation_api"""
+        try:
+            line = shape.get(index)
+            return line
+        except AttributeError: # next_generation_api
+            line = shape.getLine(index)
+            return line
+        except:
+            raise
+
+    def assertPointsEqual(self, first, second):
+        self.assertAlmostEqual(first.x, second.x)
+        self.assertAlmostEqual(first.y, second.y)
+     
+    def assertLinesEqual(self, first, second):
+        assert first.numpoints == second.numpoints
+        for i in range(first.numpoints):
+            point_first = self.getPointFromLine(first, i)
+            point_second = self.getPointFromLine(second, i)
+            self.assertPointsEqual(point_first, point_second)
+
+    def assertShapesEqual(self, first, second):
+        assert first.numlines == second.numlines
+        for i in range(first.numlines):
+            line_first = self.getLineFromShape(first, i)
+            line_second = self.getLineFromShape(second, i)
+            self.assertLinesEqual(line_first, line_second)
+
+    def assertRectsEqual(self, first, second):
+        self.assertAlmostEqual(first.minx, second.minx)
+        self.assertAlmostEqual(first.miny, second.miny)
+        self.assertAlmostEqual(first.maxx, second.maxx)
+        self.assertAlmostEqual(first.maxy, second.maxy)
+        
+# ---------------------------------------------------------------------------
+# The tests begin here
+
 # Layer ordering tests
 class LayerOrderTestCase(unittest.TestCase):
     def setUp(self):
@@ -86,18 +159,15 @@ class RemoveLayerTestCase(unittest.TestCase):
 def rectObjToTuple(rect):
     return (rect.minx, rect.miny, rect.maxx, rect.maxy)
 
-class LayerExtentTestCase(unittest.TestCase):
+class LayerExtentTestCase(MapPrimitivesTestCase):
     def setUp(self):
         self.mapobj1 = mapscript.mapObj(testMapfile)
     def tearDown(self):
         self.mapobj1 = None
     def testPolygonExtent(self):
         layer = self.mapobj1.getLayerByName('POLYGON')
-        e = layer.getExtent()
-        assert int(100*e.minx) == -25
-        assert int(100*e.miny) == 5122
-        assert int(100*e.maxx) == 25
-        assert int(100*e.maxy) == 5172
+        e = mapscript.rectObj(-0.25, 51.227222, 0.25, 51.727222)
+        self.assertRectsEqual(e, layer.getExtent())
         
 # class removal tests
 class RemoveClassTestCase(unittest.TestCase):
@@ -121,7 +191,7 @@ class RemoveClassTestCase(unittest.TestCase):
         assert self.mapobj1.getLayer(0).getClass(0).name == c1name
 
 # symbol tests
-class SymbolTestCase(unittest.TestCase):
+class SymbolTestCase(MapPrimitivesTestCase):
     def setUp(self):
         self.mapobj1 = mapscript.mapObj(testMapfile)
     def tearDown(self):
@@ -152,21 +222,19 @@ class SymbolTestCase(unittest.TestCase):
         assert symbol.name == 'line'
         line = symbol.getPoints()
         assert line.numpoints == 1, line.numpoints
-        pt = line.get(0)
-        assert pt.x == 1.0, pt.x
-        assert pt.y == 1.0, pt.y
+        pt = self.getPointFromLine(line, 0)
+        self.assertPointsEqual(pt, mapscript.pointObj(1.0, 1.0))
     def testSetPoints(self):
         symbol = self.mapobj1.symbolset.getSymbol(1)
         assert symbol.name == 'line'
         line = mapscript.lineObj()
-        line.add(mapscript.pointObj(2.0, 2.0))
-        line.add(mapscript.pointObj(3.0, 3.0))
+        self.addPointToLine(line, mapscript.pointObj(2.0, 2.0))
+        self.addPointToLine(line, mapscript.pointObj(3.0, 3.0))
         assert symbol.setPoints(line) == 2
         line = symbol.getPoints()
         assert line.numpoints == 2, line.numpoints
-        pt = line.get(1)
-        assert pt.x == 3.0, pt.x
-        assert pt.y == 3.0, pt.y
+        pt = self.getPointFromLine(line, 1)
+        self.assertPointsEqual(pt, mapscript.pointObj(3.0, 3.0))
     def testSetStyle(self):
         symbol = self.mapobj1.symbolset.getSymbol(1)
         assert symbol.setStyle(0, 1) == mapscript.MS_SUCCESS
@@ -321,7 +389,7 @@ class ExpressionTestCase(unittest.TestCase):
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '([foo] >= 2)', fs
 
-class ZoomPointTestCase(unittest.TestCase):
+class ZoomPointTestCase(MapPrimitivesTestCase):
     "testing new zoom* methods that we are adapting from the PHP MapScript"
     
     def setUp(self):
@@ -336,26 +404,18 @@ class ZoomPointTestCase(unittest.TestCase):
         self.mapobj1 = None
     def testRecenter(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
+        p = mapscript.pointObj(50.0, 50.0)
         extent = self.mapobj1.extent
         self.mapobj1.zoomPoint(1, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == -50, new_extent.minx
-        assert int(new_extent.miny) == -50, new_extent.miny
-        assert int(new_extent.maxx) == 50, new_extent.maxx
-        assert int(new_extent.maxy) == 50, new_extent.maxy
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-50,-50,50,50))
     def testZoomInPoint(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
-        p = mapscript.pointObj()
-        p.x, p.y = (50, 50)
+        p = mapscript.pointObj(50.0, 50.0)
         extent = self.mapobj1.extent
         self.mapobj1.zoomPoint(2, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == -25, new_extent.minx
-        assert int(new_extent.miny) == -25, new_extent.miny
-        assert int(new_extent.maxx) == 25, new_extent.maxx
-        assert int(new_extent.maxy) == 25, new_extent.maxy
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-25,-25,25,25))
     def testZoomOutPoint(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = mapscript.pointObj()
@@ -363,10 +423,7 @@ class ZoomPointTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomPoint(-2, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == -100, new_extent.minx
-        assert int(new_extent.miny) == -100, new_extent.miny
-        assert int(new_extent.maxx) == 100, new_extent.maxx
-        assert int(new_extent.maxy) == 100, new_extent.maxy
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-100,-100,100,100))
     def testZoomOutPointConstrained(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         max = mapscript.rectObj()
@@ -376,10 +433,7 @@ class ZoomPointTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomPoint(-4, p, w, h, extent, max)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == int(max.minx), new_extent.minx
-        assert int(new_extent.miny) == int(max.miny), new_extent.miny
-        assert int(new_extent.maxx) == int(max.maxx), new_extent.maxx
-        assert int(new_extent.maxy) == int(max.maxy), new_extent.maxy
+        self.assertRectsEqual(new_extent, max)
     def testZoomBadSize(self):
         p = mapscript.pointObj()
         p.x, p.y = (50, 50)
@@ -398,7 +452,7 @@ class ZoomPointTestCase(unittest.TestCase):
         self.assertRaises(mapscript.MapServerError, 
             self.mapobj1.zoomPoint, -2, p, w, h, extent, None);
 
-class ZoomRectangleTestCase(unittest.TestCase):
+class ZoomRectangleTestCase(MapPrimitivesTestCase):
     "testing new zoom* methods that we are adapting from the PHP MapScript"
     
     def setUp(self):
@@ -418,10 +472,7 @@ class ZoomRectangleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomRectangle(r, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == -49, new_extent.minx
-        assert int(new_extent.miny) == 24, new_extent.miny
-        assert int(new_extent.maxx) == -24, new_extent.maxx
-        assert int(new_extent.maxy) == 49, new_extent.maxy
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-49,24,-24,49))
     def testZoomRectangleConstrained(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         max = mapscript.rectObj()
@@ -431,10 +482,7 @@ class ZoomRectangleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomRectangle(r, w, h, extent, max)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == int(max.minx), new_extent.minx
-        assert int(new_extent.miny) == int(max.miny), new_extent.miny
-        assert int(new_extent.maxx) == int(max.maxx), new_extent.maxx
-        assert int(new_extent.maxy) == int(max.maxy), new_extent.maxy
+        self.assertRectsEqual(new_extent, max)
     def testZoomRectangleBadly(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         r = mapscript.rectObj()
@@ -443,7 +491,7 @@ class ZoomRectangleTestCase(unittest.TestCase):
         self.assertRaises(mapscript.MapServerError, 
             self.mapobj1.zoomRectangle, r, w, h, extent, None)
 
-class ZoomScaleTestCase(unittest.TestCase):
+class ZoomScaleTestCase(MapPrimitivesTestCase):
     "testing new zoom* methods that we are adapting from the PHP MapScript"
    
     def setUp(self):
@@ -464,10 +512,7 @@ class ZoomScaleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == -50, new_extent.minx
-        assert int(new_extent.miny) == -50, new_extent.miny
-        assert int(new_extent.maxx) == 50, new_extent.maxx
-        assert int(new_extent.maxy) == 50, new_extent.maxy
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-50,-50,50,50))
     def testZoomInScale(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = mapscript.pointObj()
@@ -476,10 +521,7 @@ class ZoomScaleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == -25, new_extent.minx
-        assert int(new_extent.miny) == -25, new_extent.miny
-        assert int(new_extent.maxx) == 25, new_extent.maxx
-        assert int(new_extent.maxy) == 25, new_extent.maxy
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-25,-25,25,25))
     def testZoomOutScale(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         p = mapscript.pointObj()
@@ -488,10 +530,7 @@ class ZoomScaleTestCase(unittest.TestCase):
         extent = self.mapobj1.extent
         self.mapobj1.zoomScale(scale, p, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == -100, new_extent.minx
-        assert int(new_extent.miny) == -100, new_extent.miny
-        assert int(new_extent.maxx) == 100, new_extent.maxx
-        assert int(new_extent.maxy) == 100, new_extent.maxy
+        self.assertRectsEqual(new_extent, mapscript.rectObj(-100,-100,100,100))
     def testZoomOutPointConstrained(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         max = mapscript.rectObj()
@@ -502,14 +541,11 @@ class ZoomScaleTestCase(unittest.TestCase):
         scale = 10000
         self.mapobj1.zoomScale(scale, p, w, h, extent, max)
         new_extent = self.mapobj1.extent
-        assert int(new_extent.minx) == int(max.minx), new_extent.minx
-        assert int(new_extent.miny) == int(max.miny), new_extent.miny
-        assert int(new_extent.maxx) == int(max.maxx), new_extent.maxx
-        assert int(new_extent.maxy) == int(max.maxy), new_extent.maxy
+        self.assertRectsEqual(new_extent, max)
 
 # Tests of getScale
 
-class SetExtentTestCase(unittest.TestCase):
+class SetExtentTestCase(MapPrimitivesTestCase):
     def setUp(self):
         self.mapobj1 = mapscript.mapObj(testMapfile)
     def tearDown(self):
@@ -517,7 +553,7 @@ class SetExtentTestCase(unittest.TestCase):
     def testSetExtent(self):
         e = self.mapobj1.extent
         result = self.mapobj1.setExtent(e.minx, e.miny, e.maxx, e.maxy)
-        assert int(1000*self.mapobj1.scale) == 14173, self.mapobj1.scale
+        self.assertAlmostEqual(self.mapobj1.scale, 14.173236)
         assert result == mapscript.MS_SUCCESS
     def testSetExtentBadly(self):
         self.assertRaises(mapscript.MapServerError, self.mapobj1.setExtent,
@@ -525,19 +561,19 @@ class SetExtentTestCase(unittest.TestCase):
 
 # mapscript.rectObj tests
 
-class RectObjTestCase(unittest.TestCase):
+class RectObjTestCase(MapPrimitivesTestCase):
     def testRectObjConstructorNoArgs(self):
         r = mapscript.rectObj()
-        assert int(r.minx) == 0
-        assert int(r.miny) == 0
-        assert int(r.maxx) == 0
-        assert int(r.maxy) == 0
+        self.assertAlmostEqual(r.minx, 0.0)
+        self.assertAlmostEqual(r.miny, 0.0)
+        self.assertAlmostEqual(r.maxx, 0.0)
+        self.assertAlmostEqual(r.maxy, 0.0)
     def testRectObjConstructorArgs(self):
         r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
-        assert int(r.minx) == -1
-        assert int(r.miny) == -2
-        assert int(r.maxx) == 3
-        assert int(r.maxy) == 4
+        self.assertAlmostEqual(r.minx, -1.0)
+        self.assertAlmostEqual(r.miny, -2.0)
+        self.assertAlmostEqual(r.maxx, 3.0)
+        self.assertAlmostEqual(r.maxy, 4.0)
     def testRectObjConstructorBadly1(self):
         self.assertRaises(mapscript.MapServerError, mapscript.rectObj, 1.0, -2.0, -3.0, 4.0)
     def testRectObjConstructorBadly2(self):
@@ -546,40 +582,85 @@ class RectObjTestCase(unittest.TestCase):
         r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
         s = r.toPolygon()
         assert s.numlines == 1, s.numlines
-        assert s.get(0).numpoints == 5
-        assert int(s.get(0).get(0).x) == -1
-        assert int(s.get(0).get(0).y) == -2
+        line = self.getLineFromShape(s, 0)
+        assert line.numpoints == 5, line.numpoints
+        point = self.getPointFromLine(line, 0)
+        self.assertAlmostEqual(point.x, -1.0)
+        self.assertAlmostEqual(point.y, -2.0)
+
+# lineObj tests
+
+class LineObjTestCase(MapPrimitivesTestCase):
+    """Testing the lineObj class in stand-alone mode"""
+
+    def setUp(self):
+        """The test fixture is a line with two points"""
+        self.points = (mapscript.pointObj(0.0, 1.0),
+                       mapscript.pointObj(2.0, 3.0))
+        self.line = mapscript.lineObj()
+        self.addPointToLine(self.line, self.points[0])
+        self.addPointToLine(self.line, self.points[1])
+
+    def testCreateLine(self):
+        assert self.line.numpoints == 2
+
+    def testGetPointsFromLine(self):
+        for i in range(len(self.points)):
+            got_point = self.getPointFromLine(self.line, i)
+            self.assertPointsEqual(got_point, self.points[i])
+            
+    def testAddPointToLine(self):
+        new_point = mapscript.pointObj(4.0, 5.0)
+        self.addPointToLine(self.line, new_point)
+        assert self.line.numpoints == 3
+
+    def testAlterNumPoints(self):
+        """numpoints is immutable, this should raise error"""
+        self.assertRaises(AttributeError, setattr, self.line, 'numpoints', 3)
 
 # shapeObj tests
 
-class ShapeObjTestCase(unittest.TestCase):
-    def testShapeCopy(self):
-        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
-        s_original = r.toPolygon()
+class ShapeObjTestCase(MapPrimitivesTestCase):
+    """Base class for shapeObj tests"""
+    
+    def copyShape(self, shape):
+        try:
+            return shape.copy()
+        except AttributeError:
+            s = mapscript.shapeObj(shape.type)
+            return shape.copy(s)
+        except:
+            raise
 
-        s = None
-        try: # Try next generation api
-            s = s_original.copy()
-        except: # Fall back on standard
-            s = mapscript.shapeObj(mapscript.MS_SHAPE_POLYGON)
-            s_original.copy(s)
-            
-        assert s.numlines == 1, s.numlines
-        assert s.get(0).numpoints == 5
-        assert int(s.get(0).get(0).x) == -1
-        assert int(s.get(0).get(0).y) == -2
+class ShapePointTestCase(ShapeObjTestCase):
+    """Test point type shapeObj in stand-alone mode"""
+
+    def setUp(self):
+        """The test fixture is a shape of one point"""
+        self.points = (mapscript.pointObj(0.0, 1.0),)
+        self.lines = (mapscript.lineObj(),)
+        self.addPointToLine(self.lines[0], self.points[0])
+        self.shape = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
+        self.addLineToShape(self.shape, self.lines[0])
+
+    def testCreateShape(self):
+        assert self.shape.numlines == 1
+        
+    def testShapeCopy(self):
+        s = self.copyShape(self.shape)
+        self.assertShapesEqual(self.shape, s)
 
 # pointObj constructor tests
 
 class PointObjTestCase(unittest.TestCase):
     def testPointObjConstructorNoArgs(self):
         p = mapscript.pointObj()
-        assert p.x == 0.0
-        assert p.y == 0.0
+        self.assertAlmostEqual(p.x, 0.0)
+        self.assertAlmostEqual(p.y, 0.0)
     def testPointObjConstructorArgs(self):
         p = mapscript.pointObj(1.0, 1.0)
-        assert int(p.x) == 1
-        assert int(p.y) == 1
+        self.assertAlmostEqual(p.x, 1.0)
+        self.assertAlmostEqual(p.y, 1.0)
 
 # colorObj constructor tests
 
@@ -741,7 +822,7 @@ class NewStylesTestCase(unittest.TestCase):
         new_style = mapscript.styleObj()
         self.assertRaises(mapscript.MapServerChildError, class0.insertStyle, new_style, 6)
 
-class InlineFeatureTestCase(unittest.TestCase):
+class InlineFeatureTestCase(MapPrimitivesTestCase):
     """tests for issue http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=562"""
     def setUp(self):
         self.mapobj1 = mapscript.mapObj(testMapfile)
@@ -751,9 +832,9 @@ class InlineFeatureTestCase(unittest.TestCase):
         inline_layer = self.mapobj1.getLayerByName('INLINE')
         p = mapscript.pointObj(0.2, 51.5)
         l = mapscript.lineObj()
-        l.add(p)
+        self.addPointToLine(l, p)
         shape = mapscript.shapeObj(inline_layer.type)
-        shape.add(l)
+        self.addLineToShape(shape, l)
         inline_layer.addFeature(shape)
         msimg = self.mapobj1.draw()
         filename = 'testAddPointFeature.png'
@@ -766,10 +847,10 @@ class InlineFeatureTestCase(unittest.TestCase):
             inline_layer.getShape(s, 0, 0)
         except TypeError: # next generation API
             s = inline_layer.getShape(0)
-        l = s.get(0)
-        p = l.get(0)
-        assert int(p.x * 10) == -2
-        assert int(p.y * 10) == 515
+        l = self.getLineFromShape(s, 0)
+        p = self.getPointFromLine(l, 0)
+        self.assertAlmostEqual(p.x, -0.2)
+        self.assertAlmostEqual(p.y, 51.5)
     def testGetNumFeatures(self):
         inline_layer = self.mapobj1.getLayerByName('INLINE')
         assert inline_layer.getNumFeatures() == 1
