@@ -1067,6 +1067,10 @@ AC_SUBST(POSTGIS_ENABLED,$POSTGIS_ENABLED)
 AC_SUBST(POSTGIS_INC,$POSTGIS_INC)
 AC_SUBST(POSTGIS_LIB,$POSTGIS_LIB)
 
+ALL_ENABLED="$POSTGIS_ENABLED $ALL_ENABLED"
+ALL_INC="$POSTGIS_INC $ALL_INC"
+ALL_LIB="$POSTGIS_LIB $ALL_LIB"
+
 dnl ---------------------------------------------------------------------------
 dnl Try to find out if OracleSpatial support requested.
 dnl ---------------------------------------------------------------------------
