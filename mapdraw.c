@@ -357,14 +357,31 @@ imageObj *msDrawMap(mapObj *map)
 #else /* ndef USE_WMS_LYR */
                 status = MS_FAILURE;
 #endif
+
+                if(status == MS_FAILURE) {
+                    msSetError(MS_WMSCONNERR, 
+                               "Failed to draw WMS layer named '%s'. This most likely happened because "
+                               "the remote WMS server returned an invalid image, and XML exception "
+                               "or another unexpected result in response to the GetMap request. Also check "
+                               "and make sure that the layer's connection URL is valid.",
+                               "msDrawMap()", lp->name);
+                    msFreeImage(image);
+                    return(NULL);
+                }
+
+
             }        
             else 
+            {
+                /* Default case: anything but WMS layers */
+
                 status = msDrawLayer(map, lp, image);
-            if(status == MS_FAILURE) {
-                msSetError(MS_IMGERR, "Failed to draw layer named '%s'.",
-                           "msDrawMap()", lp->name);
-                msFreeImage(image);
-                return(NULL);
+                if(status == MS_FAILURE) {
+                    msSetError(MS_IMGERR, "Failed to draw layer named '%s'.",
+                               "msDrawMap()", lp->name);
+                    msFreeImage(image);
+                    return(NULL);
+                }
             }
         }
 
