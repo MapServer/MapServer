@@ -1133,7 +1133,7 @@ char *processLine(char *instr, int mode)
 
   sprintf(repstr, "%d %d", Map->width, Map->height);
   outstr = gsub(outstr, "[mapsize]", repstr);
-  outstr = gsub(outstr, "[mapsize]", (char *)encode_url(repstr));
+  outstr = gsub(outstr, "[mapsize_esc]", (char *)encode_url(repstr));
 
   sprintf(repstr, "%d", Map->width);
   outstr = gsub(outstr, "[mapwidth]", repstr);
