@@ -129,6 +129,11 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int r, int g, int b)
   int op = -1;
   long rd, gd, bd, dist;
   long mindist = 3*255*255;  /* init to max poss dist */
+
+#if GD2_VERS > 1
+  if( gdImageTrueColor( img ) )
+      return gdTrueColor( r, g, b );
+#endif
   
   /*
   ** We want to avoid using a color that matches a transparent background
