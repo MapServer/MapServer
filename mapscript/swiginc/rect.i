@@ -102,6 +102,7 @@
         return shape;
     }
 
+    %newobject toString;
     char *toString()
     {
         char buffer[256];

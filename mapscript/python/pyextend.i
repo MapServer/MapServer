@@ -20,6 +20,7 @@
 
 %extend pointObj {
 
+    %newobject __str__;
     char *__str__() {
         char buffer[256];
         char fmt[]="{ 'x': %f , 'y': %f }";
@@ -36,6 +37,7 @@
    
 %extend rectObj {
 
+    %newobject __str__;
     char *__str__() {
         char buffer[256];
         char fmt[]="{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }";
@@ -61,76 +63,6 @@
 }
 
 }
-
-/* ===========================================================================
-   Python mapserver container iterator classes
-   ======================================================================== */
-   
-%pythoncode {
-
-class MappingIterator:
-    def __init__(self, collection, limit_attr):
-        self.current = 0
-        self.collection = collection
-        self.limit_attr = limit_attr
-    def __iter__(self):
-        return self
-    def _getChildByIndex(self, index):
-        """Subclasses must implement this"""
-        pass
-    def next(self):
-        if self.current < getattr(self.collection, self.limit_attr):
-            o = self._getChildByIndex(self.current)
-            self.current = self.current + 1
-            return o
-        else:
-            raise StopIteration
-
-class LinePointIterator(MappingIterator):
-    def _getChildByIndex(self, index):
-        p = None
-        try:
-            p = self.collection.getPoint(self.current)
-        except AttributeError: # no getPoint
-            p = self.collection.get(self.current)
-        return p
-
-class ShapeLineIterator(MappingIterator):
-    def _getChildByIndex(self, index):
-        l = None
-        try:
-            l = self.collection.getLine(self.current)
-        except AttributeError: # no getLine
-            l = self.collection.get(self.current)
-        return l
-        
-class MapLayerIterator(MappingIterator):
-    def _getChildByIndex(self, index):
-        return self.collection.getLayer(i)
-  
-class LayerClassIterator(MappingIterator):
-    def _getChildByIndex(self, index):
-        return self.collection.getClass(i)
-
-}
-
-
-/* ===========================================================================
-   Python lineObj extensions
-   ======================================================================== */
-   
-%extend lineObj 
-{
-
-%pythoncode {
-
-    def __iter__(self):
-        return LinePointIterator(self, 'numpoints')
-    
-}
-
-}
-
 
 /******************************************************************************
  * Extensions to mapObj
