@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/07/14 19:09:43  dan
+ * OOpps... same problem with pIndex in getshape() and gettransformed()
+ *
  * Revision 1.5  2000/07/14 19:04:36  dan
  * Fix in shapefile_getextent(): convert pIndex to long and not double
  *
@@ -4373,7 +4376,7 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    convert_to_double(pIndex);
+    convert_to_long(pIndex);
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
@@ -4426,7 +4429,7 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    convert_to_double(pIndex);
+    convert_to_long(pIndex);
 
     self = (shapefileObj *)_phpms_fetch_handle(pThis, 
                                                PHPMS_GLOBAL(le_msshapefile),
