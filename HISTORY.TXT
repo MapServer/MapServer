@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- maporaclespatil.c: Bug fix for: #1109, #1110, #1111, #1112, #1136,
+  #1210, #1211, #1212, #1213. 
+  Support for compound polygons, fixed internal sql to stay more accurate
+  for geodetic data, added the support for getextent function.
+  Added VERSION token for layer data string.
+
 - mapimagemap.c: Preliminary implementation of support for emitting 
   MS_SYMBOL_VECTOR symbols in msDrawMarkerSymbolIM(). 
 
