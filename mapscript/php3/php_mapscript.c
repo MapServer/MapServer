@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.175  2003/07/21 14:43:21  assefa
+ * Change prototypes for certain functions (Bug 362).
+ *
  * Revision 1.174  2003/07/08 21:53:12  dan
  * Several fixes to the processXxxTemplate() functions to properly report errors
  * and fixed some memory leaks.
@@ -615,12 +618,16 @@ static zend_class_entry *error_class_entry_ptr;
 static zend_class_entry *labelcache_class_entry_ptr;
 
 #endif
+static unsigned char one_arg_force_ref[] = 
+  { 1, BYREF_FORCE};
+static unsigned char two_args_first_arg_force_ref[] = 
+    { 2, BYREF_FORCE, BYREF_NONE };
 
 function_entry php3_ms_functions[] = {
     {"ms_getversion",   php3_ms_getversion,     NULL},
     {"ms_newmapobj",    php3_ms_map_new,        NULL},
-    {"ms_newlayerobj",  php3_ms_lyr_new,        NULL},
-    {"ms_newclassobj",  php3_ms_class_new,      NULL},
+    {"ms_newlayerobj",  php3_ms_lyr_new,        two_args_first_arg_force_ref},
+    {"ms_newclassobj",  php3_ms_class_new,      one_arg_force_ref},
     {"ms_newpointobj",  php3_ms_point_new,      NULL},
     {"ms_newlineobj",   php3_ms_line_new,       NULL},
     {"ms_newshapeobj",  php3_ms_shape_new,      NULL},
@@ -631,8 +638,8 @@ function_entry php3_ms_functions[] = {
     {"ms_getscale",     php3_ms_getscale,       NULL},
     {"ms_newprojectionobj", php3_ms_projection_new, NULL},
     {"ms_tokenizemap",  php3_ms_tokenizeMap,    NULL},
-    {"ms_newstyleobj",  php3_ms_style_new,      NULL},
-    {"ms_newgridobj",   php3_ms_grid_new,       NULL},
+    {"ms_newstyleobj",  php3_ms_style_new,      one_arg_force_ref},
+    {"ms_newgridobj",   php3_ms_grid_new,       one_arg_force_ref},
     {"ms_geterrorobj",  php3_ms_get_error_obj,  NULL},
     {"ms_reseterrorlist", php3_ms_reset_error_list, NULL},
     {NULL, NULL, NULL}
@@ -3098,7 +3105,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis;
     mapObj *self;
     imageObj *im = NULL;
-    
+
 #ifdef PHP4
     pval   **pExtent;
 #else
@@ -5282,7 +5289,6 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pParamFileName;
     mapObj      *self=NULL;
     int         retVal=0;
-
 
 #ifdef PHP4
     HashTable   *list=NULL;
