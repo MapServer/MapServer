@@ -62,6 +62,8 @@ char *msSearchDiskTree(char *filename, rectObj aoi);
 treeObj *msReadTree(char *filename);
 int msWriteTree(treeObj *tree, char *filename, int LSB_order);
 
+void msFilterTreeSearch(shapefileObj *shp, char *status, rectObj search_rect);
+
 #ifdef __cplusplus
 }
 #endif

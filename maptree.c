@@ -707,3 +707,18 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
 
     return(MS_TRUE);
 }
+
+// Function to filter search results further against feature bboxes
+void msFilterTreeSearch(shapefileObj *shp, char *status, rectObj search_rect)
+{
+  int i;
+  rectObj shape_rect;
+
+  for(i=0;i<shp->numshapes;i++) { /* for each shape */
+    if(msGetBit(status, i)) {
+      if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
+	if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE)
+	  msSetBit(status, i, 0);
+    }
+  }
+}

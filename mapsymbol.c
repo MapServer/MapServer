@@ -698,7 +698,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
 
   int bbox[8];
   rectObj rect;
-  char *font=NULL, *error=NULL;
+  char *font=NULL;
 
   if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
     return;

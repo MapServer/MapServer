@@ -349,7 +349,9 @@ char *msWhichShapesProj(shapefileObj *shp, rectObj window, projectionObj *in, pr
     status = msSearchDiskTree(filename, search_rect);
     free(filename);
 
-    if(!status) { /* no index */
+    if(status) /* index */
+      msFilterTreeSearch(shp, status, search_rect);
+    else { /* no index */
       status = msAllocBitArray(shp->numshapes);
       if(!status) {
 	msSetError(MS_MEMERR, NULL, "msWhichShapes()");       
@@ -361,22 +363,7 @@ char *msWhichShapesProj(shapefileObj *shp, rectObj window, projectionObj *in, pr
 	  if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
 	    msSetBit(status, i, 1);
       }
-    } else { /* there was an index */
-
-      /* 
-      ** We need to refine the status array for potenial matches against
-      ** actual shape boundaries. The index search doesn't have enough 
-      ** information to do this itself.
-      */
-      for(i=0;i<shp->numshapes;i++) { /* for each shape */
-        if(msGetBit(status, i)) {
-	  if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
-	    if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE)
-	      msSetBit(status, i, 0);
-        }
-      }
-
-    } 
+    }   
   }
  
   return(status); /* success */
@@ -409,8 +396,9 @@ char *msWhichShapes(shapefileObj *shp, rectObj window)
     status = msSearchDiskTree(filename, search_rect);
     free(filename);    
 
-    if(!status) { /* no index */
-
+    if(status) /* index */
+      msFilterTreeSearch(shp, status, search_rect);
+    else { /* no index */
       status = msAllocBitArray(shp->numshapes);
       if(!status) {
 	msSetError(MS_MEMERR, NULL, "msWhichShapes()");       
@@ -422,23 +410,7 @@ char *msWhichShapes(shapefileObj *shp, rectObj window)
 	  if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
 	    msSetBit(status, i, 1);
       }
-
-    } else { /* there was an index */
-
-      /* 
-      ** We need to refine the status array for potenial matches against
-      ** actual shape boundaries. The index search doesn't have enough 
-      ** information to do this itself.
-      */
-      for(i=0;i<shp->numshapes;i++) { /* for each shape */
-        if(msGetBit(status, i)) {
-	  if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
-	    if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE)
-	      msSetBit(status, i, 0);
-        }
-      }
-
-    } 
+    }
   }
 
   return(status); /* success */
