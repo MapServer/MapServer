@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.49  2003/07/31 16:10:34  dan
+ * Enable map context stuff only if USE_OGR is set (cpl_minixml dependency)
+ *
  * Revision 1.48  2003/07/15 15:22:23  assefa
  * Modify schema location url.
  *
@@ -181,7 +184,7 @@
 
 #include "map.h"
 
-#if defined(USE_WMS_LYR)
+#if defined(USE_WMS_LYR) && defined(USE_OGR)
 
 /* There is a dependency to GDAL/OGR for the GML driver and MiniXML parser */
 #include "cpl_minixml.h"
@@ -242,7 +245,7 @@ char * msGetMapContextFileText(char *filename)
 }
 
 
-#if defined(USE_WMS_LYR)
+#if defined(USE_WMS_LYR) && defined(USE_OGR)
 
 /*
 **msGetMapContextXMLHashValue()
@@ -466,7 +469,7 @@ int msCombineXMLValueInHash( CPLXMLNode *psRoot,
 */
 int msLoadMapContext(mapObj *map, char *filename)
 {
-#if defined(USE_WMS_LYR)
+#if defined(USE_WMS_LYR) && defined(USE_OGR)
   char *pszWholeText, *pszMapProj=NULL, *pszProj=NULL;
   char *pszValue, *pszValue1, *pszValue2;
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
@@ -1274,7 +1277,7 @@ int msLoadMapContext(mapObj *map, char *filename)
 */
 int msSaveMapContext(mapObj *map, char *filename)
 {
-#if defined(USE_WMS_LYR)
+#if defined(USE_WMS_LYR) && defined(USE_OGR)
   FILE *stream;
   char szPath[MS_MAXPATHLEN];
   int nStatus;
@@ -1310,7 +1313,7 @@ int msSaveMapContext(mapObj *map, char *filename)
 
 int msWriteMapContext(mapObj *map, FILE *stream)
 {
-#if defined(USE_WMS_LYR)
+#if defined(USE_WMS_LYR) && defined(USE_OGR)
   const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
   char *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL, *pszLogoURL;
