@@ -93,7 +93,11 @@ double msInchesPerUnit(int units, double center_lat)
      * we have a perfect sphere and just use cos(lat) in our calculation.
      */
     if (center_lat != 0.0)
-        lat_adj = sqrt(1+cos(MS_PI*center_lat/180.0))/sqrt(2.0);
+    {
+        double cos_lat;
+        cos_lat = cos(MS_PI*center_lat/180.0);
+        lat_adj = sqrt(1+cos_lat*cos_lat)/sqrt(2.0);
+    }
     else 
         lat_adj = 1.0;
     ipu = inchesPerUnit[units]*lat_adj;
