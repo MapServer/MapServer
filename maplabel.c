@@ -688,6 +688,9 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	    break;
 	} // next position      
       }
+
+      if(label.force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+
     } else {
 
       cachePtr->status = MS_TRUE; /* assume label *can* be drawn */

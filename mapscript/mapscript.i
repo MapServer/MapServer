@@ -27,7 +27,7 @@
   mapObj(char *filename) {
     mapObj *map;
 
-    if(filename)
+    if(filename && strlen(filename))
       return msLoadMap(filename);
     else { /* create an empty map, no layers etc... */
       map = (mapObj *)malloc(sizeof(mapObj));
@@ -360,12 +360,12 @@
 //
 %addmethods featureObj {
   featureObj(layerObj *layer) {
-    if(!layer->features) { /* new feature list */
-      layer->features = initFeature();
-      return layer->features;
-    } else {
-      return addFeature(layer->features);
-    }
+    if(!layer->features)
+      layer->features = initFeature(); /* new feature list */
+    else
+      layer->features = addFeature(layer->features);	
+
+    return layer->features;
   }
 
   ~featureObj() {

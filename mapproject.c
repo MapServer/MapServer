@@ -3,6 +3,11 @@
 
 #ifdef USE_PROJ
 
+int msCompareProjections(PJ *pj1, PJ *pj2) 
+{
+
+}
+
 void msProjectPoint(PJ *in, PJ *out, pointObj *point)
 {
   projUV p;
