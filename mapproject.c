@@ -7,12 +7,19 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
                            projectionObj *dst_proj );
 #endif
 
+/************************************************************************/
+/*                           msProjectPoint()                           */
+/************************************************************************/
 int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 {
 #ifdef USE_PROJ
   projUV p;
   int	 error;
 
+/* -------------------------------------------------------------------- */
+/*      If we have a fully defined input coordinate system and          */
+/*      output coordinate system, then we will use pj_transform.        */
+/* -------------------------------------------------------------------- */
   if( in && in->proj && out && out->proj )
   {
       double	z = 0.0;
@@ -35,8 +42,21 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
           point->y *= RAD_TO_DEG;
       }
   }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise we fallback to using pj_fwd() or pj_inv() and         */
+/*      assuming that the NULL projectionObj is supposed to be          */
+/*      lat/long in the same datum as the other projectionObj.  This    */
+/*      is essentially a backwards compatibility mode.                  */
+/* -------------------------------------------------------------------- */
   else
   {
+      /* nothing to do if the other coordinate system is also lat/long */
+      if( in == NULL && out != NULL && pj_is_latlong(out->proj) )
+          return MS_SUCCESS;
+      if( out == NULL && in != NULL && pj_is_latlong(in->proj) )
+          return MS_SUCCESS;
+
       p.u = point->x;
       p.v = point->y;
 
