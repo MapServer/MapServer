@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.31  2001/03/07 19:01:34  assefa
+ * Add an argument to zoomrectangle to handle maxextents.
+ *
  * Revision 1.30  2001/03/03 01:03:43  dan
  * Fixes in saveImage() for new GD stuff + added ms_GetVersion()
  *
@@ -1296,7 +1299,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxx > poMaxGeorefExt->maxx)
         {
             oNewGeorefExt.maxx = poMaxGeorefExt->maxx;
-            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
         }
         if (oNewGeorefExt.miny < poMaxGeorefExt->miny)
         {
@@ -1306,7 +1309,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxy > poMaxGeorefExt->maxy)
         {
             oNewGeorefExt.maxy = poMaxGeorefExt->maxy;
-            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
     
@@ -1359,6 +1362,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 
+
 /************************************************************************/
 /*                           map->zoomRectange()                        */
 /*                                                                      */
@@ -1368,6 +1372,8 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 /*       - Width : width in pixel of the current image.                 */
 /*       - Height : Height in pixel of the current image.               */
 /*       - Georef extent (rectObj) : current georef extents.            */
+/*       - MaxGeoref extent (rectObj) : (optional) maximum georef       */
+/*                                      extents.                        */
 /*                                                                      */
 /************************************************************************/
 DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
@@ -1383,13 +1389,20 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pPixelExt;
     pval        *pWidth, *pHeight;
     pval        *pGeorefExt;
+    pval        *pMaxGeorefExt;
     rectObj     *poGeorefExt = NULL;
     rectObj     *poPixExt = NULL;
+    rectObj     *poMaxGeorefExt = NULL;
     double      dfNewScale = 0.0;
     rectObj     oNewGeorefExt;    
     double      dfMiddleX =0.0;
     double      dfMiddleY =0.0;
     double      dfDeltaExt =0.0;
+    int         bMaxExtSet = 0;
+    int         nArgs = ARG_COUNT(ht);
+    double      dfDeltaX = 0;
+    double      dfDeltaY = 0;
+    
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -1401,8 +1414,12 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 4, &pPixelExt, &pWidth, &pHeight,
-                      &pGeorefExt) != SUCCESS)
+        (nArgs != 4 && nArgs != 5))
+    {
+        WRONG_PARAM_COUNT;
+    }
+    if (getParameters(ht, nArgs, &pPixelExt, &pWidth, &pHeight,
+                      &pGeorefExt, &pMaxGeorefExt) != SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
@@ -1412,6 +1429,9 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     {
         RETURN_FALSE;
     }
+
+    if (nArgs == 5)
+      bMaxExtSet =1;
 
     convert_to_long(pWidth);
     convert_to_long(pHeight);
@@ -1425,13 +1445,20 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
                                                PHPMS_GLOBAL(le_msrect_new),
                                                list);
 
+    if (bMaxExtSet)
+        poMaxGeorefExt = 
+            (rectObj *)_phpms_fetch_handle2(pMaxGeorefExt, 
+                                            PHPMS_GLOBAL(le_msrect_ref),
+                                            PHPMS_GLOBAL(le_msrect_new),
+                                            list);
 /* -------------------------------------------------------------------- */
 /*      check the validity of the parameters.                           */
 /* -------------------------------------------------------------------- */
     if (pWidth->value.lval <= 0 ||
         pHeight->value.lval <= 0 ||
         poGeorefExt == NULL ||
-        poPixExt == NULL)
+        poPixExt == NULL ||
+        bMaxExtSet && poMaxGeorefExt == NULL)
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "zoomRectangle failed : incorrect parameters\n");
@@ -1488,6 +1515,44 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         else
           RETURN_FALSE;
     }
+
+/* -------------------------------------------------------------------- */
+/*      If the buffer is set, make sure that the extents do not go      */
+/*      beyond the buffer.                                              */
+/* -------------------------------------------------------------------- */
+    if (bMaxExtSet)
+    {
+        dfDeltaX = oNewGeorefExt.maxx - oNewGeorefExt.minx;
+        dfDeltaY = oNewGeorefExt.maxy - oNewGeorefExt.miny;
+        
+        /* Make sure Current georef extents is not bigger than max extents */
+        if (dfDeltaX > (poMaxGeorefExt->maxx-poMaxGeorefExt->minx))
+            dfDeltaX = poMaxGeorefExt->maxx-poMaxGeorefExt->minx;
+        if (dfDeltaY > (poMaxGeorefExt->maxy-poMaxGeorefExt->miny))
+            dfDeltaY = poMaxGeorefExt->maxy-poMaxGeorefExt->miny;
+
+        if (oNewGeorefExt.minx < poMaxGeorefExt->minx)
+        {
+            oNewGeorefExt.minx = poMaxGeorefExt->minx;
+            oNewGeorefExt.maxx =  oNewGeorefExt.minx + dfDeltaX;
+        }
+        if (oNewGeorefExt.maxx > poMaxGeorefExt->maxx)
+        {
+            oNewGeorefExt.maxx = poMaxGeorefExt->maxx;
+            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+        }
+        if (oNewGeorefExt.miny < poMaxGeorefExt->miny)
+        {
+            oNewGeorefExt.miny = poMaxGeorefExt->miny;
+            oNewGeorefExt.maxy =  oNewGeorefExt.miny + dfDeltaY;
+        }
+        if (oNewGeorefExt.maxy > poMaxGeorefExt->maxy)
+        {
+            oNewGeorefExt.maxy = poMaxGeorefExt->maxy;
+            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+        }
+    }
+
     self->extent.minx = oNewGeorefExt.minx;
     self->extent.miny = oNewGeorefExt.miny;
     self->extent.maxx = oNewGeorefExt.maxx;
@@ -1531,7 +1596,6 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
 
     RETURN_TRUE;
 }
-
 
 /************************************************************************/
 /*                             map->zoomScale()                         */
