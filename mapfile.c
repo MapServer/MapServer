@@ -2678,7 +2678,7 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
 static void writeScalebar(mapObj *map, scalebarObj *scalebar, FILE *stream)
 {
   fprintf(stream, "  SCALEBAR\n");
-  if(scalebar->backgroundcolor > -1) fprintf(stream, "    BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[scalebar->backgroundcolor-1].red, map->palette.colors[scalebar->backgroundcolor-1].green, map->palette.colors[scalebar->backgroundcolor-1].blue);
+  if(scalebar->backgroundcolor > 0) fprintf(stream, "    BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[scalebar->backgroundcolor-1].red, map->palette.colors[scalebar->backgroundcolor-1].green, map->palette.colors[scalebar->backgroundcolor-1].blue);
   if(scalebar->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[scalebar->color-1].red, map->palette.colors[scalebar->color-1].green, map->palette.colors[scalebar->color-1].blue);
   fprintf(stream, "    IMAGECOLOR %d %d %d\n", scalebar->imagecolor.red, scalebar->imagecolor.green, scalebar->imagecolor.blue);
   fprintf(stream, "    INTERLACE %s\n", msTrueFalse[scalebar->interlace]);
