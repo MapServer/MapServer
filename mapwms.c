@@ -231,16 +231,124 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
 /*
 ** msWMSCapabilities()
 */
-int msWMSCapabilities(mapObj *map, const char *wmtver) {
+int msWMSCapabilities(mapObj *map, const char *wmtver) 
+{
+  int i;
+  char *value=NULL;
 
-  printf("Content-type: application/xml%c%c",10,10);
+  layerObj *lp=NULL;
 
-  if(!map) {
-    // return a default capabilties document
-    return(MS_SUCCESS);
+  printf("Content-type: text/xml%c%c",10,10);
+
+  printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
+  printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"http://www.digitalearth.gov/wmt/xml/capabilities_1_0_7.dtd\"\n");
+  printf(" [\n");
+
+  // some mapserver specific declarations will go here
+
+  printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
+
+  printf("<WMT_MS_Capabilities version=\"1.0.7\" updateSequence=\"0\">\n");
+
+  // WMS definition
+  printf("<Service> <!-- a service IS a MapServer mapfile -->\n");
+  printf("  <Name>GetMap</Name> <!-- WMT defined -->\n");
+
+  // the majority of this section is dependent on appropriately named metadata in the WEB object
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "title"))) printf("  <Title>%s</Title>\n", value);
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "abstract"))) printf("  <Abstract>%s</Abstract>\n", value);
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "onlineresource"))) printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", value);
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "keywordlist"))) {
+    char **keywords;
+    int numkeywords;
+
+    keywords = split(value, ',', &numkeywords);
+    if(keywords && numkeywords > 0) {
+      printf("  <KeywordList>\n");
+      for(i=0; i<numkeywords; i++) printf("    <Keyword>%s</Keyword\n", keywords[i]);
+      printf("  </KeywordList>\n");
+      msFreeCharArray(keywords, numkeywords);
+    }    
   }
+  // need to add contact information here
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "accessconstraints"))) printf("  <AccessConstraints>%s</AccessConstraints>\n", value);
+  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "fees"))) printf("  <Fees>%s</Fees>\n", value);
 
-  // use the given map object to construct a capabilities document
+  printf("</Service>\n\n");
+
+  // WMS capabilities definitions (note: will probably need something even more portable than SCRIPT_NAME in non-cgi environments)
+  printf("<Capability>\n");
+  printf("  <Request>\n");
+
+  printf("    <Map>\n");
+  printf("      <Format>\n");
+#ifdef USE_GD_GIF
+  printf("        <GIF />\n");
+#endif
+#ifdef USE_GD_JPEG
+  printf("        <JPEG />\n");
+#endif
+#ifdef USE_GD_PNG
+  printf("        <PNG />\n");
+#endif
+#ifdef USE_GD_WBMP
+  printf("        <WBMP />\n");
+#endif
+  printf("      </Format>\n");
+  printf("      <DCPType>\n");
+  printf("        <HTTP>\n");
+  printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", getenv("SCRIPT_NAME"));
+  printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", getenv("SCRIPT_NAME"));
+  printf("        </HTTP>\n");
+  printf("      </DCPType>\n");
+  printf("    </Map>\n");
+
+  printf("    <Capabilities>\n");
+  printf("      <Format><WMS_XML /></Format>\n");
+  printf("      <DCPType>\n");
+  printf("        <HTTP>\n");
+  printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", getenv("SCRIPT_NAME"));
+  printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", getenv("SCRIPT_NAME"));
+  printf("        </HTTP>\n");
+  printf("      </DCPType>\n");
+  printf("    </Capabilities>\n");
+
+  printf("    <Exception>\n");
+  printf("      <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
+  printf("    </Exception>\n");
+
+  // need to add query (featureInfo) support
+
+  printf("    <VendorSpecificCapabilities />\n"); // nothing yet
+
+  for(i=0; i<map->numlayers; i++) {
+    lp = &(map->layers[i]);
+
+    printf("    <Layer queryable=\"0\">\n"); // no featureInfo support yet
+    printf("      <Name>%s</Name>\n", lp->name);
+
+    printf("      <SRS>coming...</SRS>\n");
+    printf("      <LatLonBoundingBox>coming...</LatLonBoundingBox>\n"); // hint look a Frank's changes to mapserv.c
+    printf("      <BoundingBox>coming...</BoundingBox>\n"); // hint add a layer EXTENT field, if not there then open and extract an extent
+
+    // the majority of this section is dependent on appropriately named metadata in the LAYER object
+    if(lp->metadata && (value = msLookupHashTable(lp->metadata, "title"))) printf("      <Title>%s</Title>\n", value);
+    if(lp->metadata && (value = msLookupHashTable(lp->metadata, "abstract"))) printf("      <Abstract>%s</Abstract>\n", value);
+    if(lp->metadata && (value = msLookupHashTable(lp->metadata, "keywordlist"))) {
+      char **keywords;
+      int numkeywords;
+      
+      keywords = split(value, ',', &numkeywords);
+      if(keywords && numkeywords > 0) {
+	printf("      <KeywordList>\n");
+	for(i=0; i<numkeywords; i++) printf("        <Keyword>%s</Keyword\n", keywords[i]);
+	printf("      </KeywordList>\n");
+	msFreeCharArray(keywords, numkeywords);
+      }    
+    }
+    
+    printf("    </Layer>\n");
+  }
 
   return(MS_SUCCESS);
 }
