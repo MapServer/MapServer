@@ -409,7 +409,7 @@ pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, do
     line.point[4].y = line.point[0].y;
 
     msAddLine(poly, &line);
-    msComputeBounds(poly);
+    msComputeBounds(poly); // make sure the polygon has a bounding box for fast collision testing
     free(line.point);
   }
 
@@ -448,7 +448,7 @@ int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
 
   /* STEP 0: check bounding boxes */
   if(!msRectOverlap(&p1->bounds, &p2->bounds)) // from alans@wunderground.com
-    return MS_FALSE;
+    return(MS_FALSE);
 
   /* STEP 1: look for intersecting line segments */
   for(c1=0; c1<p1->numlines; c1++)
