@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2004/04/08 20:32:18  frank
+ * now substantially complete
+ *
  * Revision 1.2  2004/04/06 18:45:56  frank
  * initial implementation working
  *
@@ -54,6 +57,8 @@ typedef struct {
     int raster_query_mode;
     int band_count;
 
+    int refcount;
+
     rectObj which_rect;
     int     next_shape;
 
@@ -69,6 +74,16 @@ typedef struct {
 
     /* query bound in force */
     shapeObj *searchshape;
+
+    /* Only nearest result to this point. */
+    int      range_mode; /* MS_SINGLE, MS_MULTI or -1 (skip test) */
+    double   range_dist;
+    pointObj target_point;
+
+    GDALColorTableH hCT;
+
+    int      current_tile;
+
 } rasterLayerInfo;
 
 #define RQM_UNKNOWN               0
@@ -127,7 +142,7 @@ static void msRasterLayerInfoFree( layerObj *layer )
     if( rlinfo->qc_x != NULL )
     {
         free( rlinfo->qc_x );
-        free( rlinfo->qc_x );
+        free( rlinfo->qc_y );
     }
 
     if( rlinfo->qc_values )
@@ -136,6 +151,10 @@ static void msRasterLayerInfoFree( layerObj *layer )
     if( rlinfo->qc_class )
     {
         free( rlinfo->qc_class );
+    }
+
+    if( rlinfo->qc_red )
+    {
         free( rlinfo->qc_red );
         free( rlinfo->qc_green );
         free( rlinfo->qc_blue );
@@ -167,8 +186,10 @@ static void msRasterLayerInfoInitialize( layerObj *layer )
     rlinfo = (rasterLayerInfo *) calloc(1,sizeof(rasterLayerInfo));
     layer->layerinfo = rlinfo;
     
-    rlinfo->band_count = 1;
+    rlinfo->band_count = -1;
     rlinfo->raster_query_mode = RQM_ENTRY_PER_PIXEL;
+    rlinfo->range_mode = -1; /* inactive */
+    rlinfo->refcount = 0;
     
     // We need to do this or the layer->layerinfo will be interpreted
     // as shapefile access info because the default connectiontype is
@@ -185,6 +206,7 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
 
 {
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
+    int red = 0, green = 0, blue = 0, nodata = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Is this our first time in?  If so, do an initial allocation     */
@@ -204,6 +226,15 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
             rlinfo->qc_values = (float *) 
                 calloc(sizeof(float),
                        rlinfo->query_alloc_max*rlinfo->band_count);
+            rlinfo->qc_red = (int *) 
+                calloc(sizeof(int),rlinfo->query_alloc_max);
+            rlinfo->qc_green = (int *) 
+                calloc(sizeof(int),rlinfo->query_alloc_max);
+            rlinfo->qc_blue = (int *) 
+                calloc(sizeof(int),rlinfo->query_alloc_max);
+            if( layer->numclasses > 0 )
+                rlinfo->qc_class = (int *) 
+                    calloc(sizeof(int),rlinfo->query_alloc_max);
             break;
            
           case RQM_HIST_ON_CLASS:
@@ -257,7 +288,70 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Record the available information.                               */
+/*      Handle classification.                                          */
+/* -------------------------------------------------------------------- */
+    if( rlinfo->qc_class != NULL )
+    {
+        int p_class = msGetClass_Float(layer, values[0] );
+
+        if( p_class == -1 )
+            nodata = TRUE;
+        else
+        {
+            rlinfo->qc_class[rlinfo->query_results] = p_class;
+            red   = layer->class[p_class].styles[0].color.red;
+            green = layer->class[p_class].styles[0].color.green;
+            blue  = layer->class[p_class].styles[0].color.blue;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Handle colormap                                                 */
+/* -------------------------------------------------------------------- */
+    else if( rlinfo->hCT != NULL )
+    {
+        int pct_index = (int) floor(values[0]);
+        GDALColorEntry sEntry;
+
+        if( GDALGetColorEntryAsRGB( rlinfo->hCT, pct_index, &sEntry ) )
+        {
+            red = sEntry.c1;
+            green = sEntry.c2;
+            blue = sEntry.c3;
+
+            if( sEntry.c4 == 0 )
+                nodata = TRUE;
+        }
+        else
+            nodata = TRUE;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Color derived from greyscale value.                             */
+/* -------------------------------------------------------------------- */
+    else
+    {
+        if( rlinfo->band_count >= 3 )
+        {
+            red = (int) MAX(0,MIN(255,values[0]));
+            green = (int) MAX(0,MIN(255,values[1]));
+            blue = (int) MAX(0,MIN(255,values[2]));
+        }
+        else
+        {
+            red = green = blue = (int) MAX(0,MIN(255,values[0]));
+        }
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Record the color.                                               */
+/* -------------------------------------------------------------------- */
+    rlinfo->qc_red[rlinfo->query_results] = red;
+    rlinfo->qc_green[rlinfo->query_results] = green;
+    rlinfo->qc_blue[rlinfo->query_results] = blue;
+
+/* -------------------------------------------------------------------- */
+/*      Record spatial location.                                        */
 /* -------------------------------------------------------------------- */
     if( rlinfo->qc_x != NULL )
     {
@@ -265,12 +359,21 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
         rlinfo->qc_y[rlinfo->query_results] = location->y;
     }
 
+/* -------------------------------------------------------------------- */
+/*      Record actual pixel value(s).                                   */
+/* -------------------------------------------------------------------- */
     if( rlinfo->qc_values != NULL )
         memcpy( rlinfo->qc_values + rlinfo->query_results * rlinfo->band_count,
                 values, sizeof(float) * rlinfo->band_count );
 
-    addResult( layer->resultcache, 0, rlinfo->query_results, 0 );
-    rlinfo->query_results++;
+/* -------------------------------------------------------------------- */
+/*      Add to the results cache.                                       */
+/* -------------------------------------------------------------------- */
+    if( ! nodata )
+    {
+        addResult( layer->resultcache, 0, rlinfo->query_results, 0 );
+        rlinfo->query_results++;
+    }
 }
 
 /************************************************************************/
@@ -286,7 +389,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     double      dfXMin, dfYMin, dfXMax, dfYMax, dfX, dfY;
     int         nWinXOff, nWinYOff, nWinXSize, nWinYSize;
     int         nRXSize, nRYSize;
-    float       *pafRaster;
+    float       *pafRaster, dfAdjustedRange;
     int         nBandCount, *panBandMap, iPixel, iLine;
     CPLErr      eErr;
     rasterLayerInfo *rlinfo;
@@ -373,7 +476,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     dfXMin = MAX(0.0,floor(dfXMin));
     dfYMin = MAX(0.0,floor(dfYMin));
     dfXMax = MIN(nRXSize,ceil(dfXMax));
-    dfYMax = MIN(nRXSize,ceil(dfYMax));
+    dfYMax = MIN(nRYSize,ceil(dfYMax));
 
 /* -------------------------------------------------------------------- */
 /*      Convert to integer offset/size values.                          */
@@ -384,14 +487,28 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     nWinYSize = (int) (dfYMax - dfYMin);
 
 /* -------------------------------------------------------------------- */
+/*      What bands are we operating on?                                 */
+/* -------------------------------------------------------------------- */
+    panBandMap = msGetGDALBandList( layer, hDS, 0, &nBandCount );
+    
+    if( rlinfo->band_count == -1 )
+        rlinfo->band_count = nBandCount;
+
+    if( nBandCount != rlinfo->band_count )
+    {
+        msSetError( MS_IMGERR, 
+                    "Got %d bands, but expected %d bands.", 
+                    "msRasterQueryByRectLow()", 
+                    nBandCount, rlinfo->band_count );
+
+        return -1;
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Try to load the raster data.  For now we just load the first    */
 /*      band in the file.  Later we will deal with the various band     */
 /*      selection criteria.                                             */
 /* -------------------------------------------------------------------- */
-    rlinfo->band_count = nBandCount = 1;
-    panBandMap = (int *) calloc(sizeof(int),1);
-    panBandMap[0] = 1;
-
     pafRaster = (float *) 
         calloc(sizeof(float),nWinXSize*nWinYSize*nBandCount);
 
@@ -413,6 +530,7 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
     return MS_FAILURE;
 #endif
 
+    
     if( eErr != CE_None )
     {
         msSetError( MS_IOERR, "GDALDatasetRasterIO() failed: %s", 
@@ -422,6 +540,30 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
         free( pafRaster );
         return -1;
     }
+
+/* -------------------------------------------------------------------- */
+/*      Fetch color table for intepreting colors if needed.             */
+/* -------------------------------------------------------------------- */
+    rlinfo->hCT = GDALGetRasterColorTable( 
+        GDALGetRasterBand( hDS, panBandMap[0] ) );
+
+    free( panBandMap );
+
+/* -------------------------------------------------------------------- */
+/*      When computing whether pixels are within range we do it         */
+/*      based on the center of the pixel to the target point but        */
+/*      really it ought to be the nearest point on the pixel.  It       */
+/*      would be too much trouble to do this rigerously, so we just     */
+/*      add a fudge factor so that a range of zero will find the        */
+/*      pixel the target falls in at least.                             */
+/* -------------------------------------------------------------------- */
+    dfAdjustedRange = 
+        sqrt(adfGeoTransform[1] * adfGeoTransform[1]
+             + adfGeoTransform[2] * adfGeoTransform[2]
+             + adfGeoTransform[4] * adfGeoTransform[4]
+             + adfGeoTransform[5] * adfGeoTransform[5]) * 0.5 * 1.41421356237;
+        + sqrt( rlinfo->range_dist );
+    dfAdjustedRange = dfAdjustedRange * dfAdjustedRange;
 
 /* -------------------------------------------------------------------- */
 /*      Loop over all pixels determining which are "in".                */
@@ -445,6 +587,27 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
                                             rlinfo->searchshape ) == MS_FALSE )
                 continue;
 
+            if( rlinfo->range_mode >= 0 )
+            {
+                double dist;
+
+                dist = (rlinfo->target_point.x - sPixelLocation.x) 
+                    * (rlinfo->target_point.x - sPixelLocation.x) 
+                    + (rlinfo->target_point.y - sPixelLocation.y)
+                    * (rlinfo->target_point.y - sPixelLocation.y);
+
+                if( dist >= dfAdjustedRange )
+                    continue;
+
+                // If we can only have one feature, trim range and clear
+                // previous result. 
+                if( rlinfo->range_mode == MS_SINGLE )
+                {
+                    rlinfo->range_dist = dist;
+                    rlinfo->query_results = 0;
+                }
+            }
+
             msRasterQueryAddPixel( layer, &sPixelLocation, 
                                    pafRaster 
                                    + (iLine*nWinXSize + iPixel) * nBandCount );
@@ -455,7 +618,6 @@ msRasterQueryByRectLow(mapObj *map, layerObj *layer, GDALDatasetH hDS,
 /*      Cleanup.                                                        */
 /* -------------------------------------------------------------------- */
     free( pafRaster );
-    free( panBandMap );
 
     return MS_SUCCESS;
 }
@@ -477,6 +639,13 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     int numtiles=1; /* always at least one tile */
     char szPath[MS_MAXPATHLEN];
     rectObj searchrect;
+    rasterLayerInfo *rlinfo = NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Get the layer info.                                             */
+/* -------------------------------------------------------------------- */
+    msRasterLayerInfoInitialize( layer );
+    rlinfo = (rasterLayerInfo *) layer->layerinfo;
 
 /* -------------------------------------------------------------------- */
 /*      Check if we should really be acting on this layer and           */
@@ -536,6 +705,8 @@ int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj queryRect)
     for(t=0; t<numtiles && status == MS_SUCCESS; t++) { 
 
         GDALDatasetH  hDS;
+
+        rlinfo->current_tile = t;
 
 /* -------------------------------------------------------------------- */
 /*      Get filename.                                                   */
@@ -664,9 +835,75 @@ int msRasterQueryByShape(mapObj *map, layerObj *layer, shapeObj *selectshape)
 /*                        msRasterQueryByPoint()                        */
 /************************************************************************/
 
-int msRasterQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, 
+int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, pointObj p, 
                          double buffer)
 {
+    int result;
+    rectObj bufferRect;
+    rasterLayerInfo *rlinfo = NULL;
+
+    msRasterLayerInfoInitialize( layer );
+
+    rlinfo = (rasterLayerInfo *) layer->layerinfo;
+
+/* -------------------------------------------------------------------- */
+/*      If the buffer is not set, then use layer tolerances             */
+/*      instead.   The "buffer" distince is now in georeferenced        */
+/*      units.  Note that tolerances in pixels are basically map        */
+/*      display pixels, not underlying raster pixels.  It isn't         */
+/*      clear that there is any way of requesting a buffer size in      */
+/*      underlying pixels.                                              */
+/* -------------------------------------------------------------------- */
+    if(buffer <= 0) { // use layer tolerance
+        if(layer->toleranceunits == MS_PIXELS)
+            buffer = layer->tolerance 
+                * msAdjustExtent(&(map->extent), map->width, map->height);
+        else
+            buffer = layer->tolerance 
+                * (msInchesPerUnit(layer->toleranceunits,0)
+                   / msInchesPerUnit(map->units,0));
+    }
+
+/* -------------------------------------------------------------------- */
+/*      if we are in the MS_SINGLE mode, first try a query with zero    */
+/*      tolerance.  If this gets a raster pixel then we can be          */
+/*      reasonably assured that it is the closest to the query          */
+/*      point.  This will potentially be must more efficient than       */
+/*      processing all pixels within the tolerance.                     */
+/* -------------------------------------------------------------------- */
+    if( mode == MS_SINGLE )
+    {
+        rectObj pointRect;
+
+        pointRect.minx = p.x;
+        pointRect.maxx = p.x;
+        pointRect.miny = p.y;
+        pointRect.maxy = p.y;
+
+        rlinfo->range_dist = buffer * buffer;
+        rlinfo->range_mode = MS_SINGLE;
+        rlinfo->target_point = p;
+        result = msRasterQueryByRect( map, layer, pointRect );
+
+        if( rlinfo->query_results > 0 )
+            return result;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Setup a rectangle that is everything within the designated      */
+/*      range and do a search against that.                             */
+/* -------------------------------------------------------------------- */
+    bufferRect.minx = p.x - buffer;
+    bufferRect.maxx = p.x + buffer;
+    bufferRect.miny = p.y - buffer;
+    bufferRect.maxy = p.y + buffer;
+
+    rlinfo->range_dist = buffer * buffer;
+    rlinfo->range_mode = mode;
+    rlinfo->target_point = p;
+    result = msRasterQueryByRect( map, layer, bufferRect );
+
+    return result;
 }
 
 /************************************************************************/
@@ -685,6 +922,9 @@ int msRasterQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p,
 int msRASTERLayerOpen(layerObj *layer) 
 {
     rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
+
+    if( rlinfo != NULL )
+        rlinfo->refcount = rlinfo->refcount + 1;
 
     if( rlinfo == NULL )
         return MS_FAILURE;
@@ -727,6 +967,15 @@ int msRASTERLayerWhichShapes(layerObj *layer, rectObj rect)
 
 int msRASTERLayerClose(layerObj *layer) 
 {
+    rasterLayerInfo *rlinfo = (rasterLayerInfo *) layer->layerinfo;
+
+    if( rlinfo != NULL )
+    {
+        rlinfo->refcount--;
+
+        if( rlinfo->refcount < 0 )
+            msRasterLayerInfoFree( layer );
+    }
     return MS_SUCCESS;
 }
 
@@ -786,7 +1035,7 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
         
         for( i = 0; i < layer->numitems; i++ )
         {
-            char szWork[100];
+            char szWork[1000];
 
             szWork[0] = '\0';
             if( EQUAL(layer->items[i],"x") && rlinfo->qc_x )
@@ -794,15 +1043,35 @@ int msRASTERLayerGetShape(layerObj *layer, shapeObj *shape, int tile,
             else if( EQUAL(layer->items[i],"y") && rlinfo->qc_y )
                 sprintf( szWork, "%.8g", rlinfo->qc_y[record] );
 
-            // TODO: How do we get multiple values? 
-            else if( EQUAL(layer->items[i],"value") && rlinfo->qc_values )
-                sprintf( szWork, "%.8g", 
-                         rlinfo->qc_values[record * rlinfo->band_count] );
+            else if( EQUAL(layer->items[i],"values") && rlinfo->qc_values )
+            {
+                int iValue;
 
+                for( iValue = 0; iValue < rlinfo->band_count; iValue++ )
+                {
+                    if( iValue != 0 )
+                        strcat( szWork, "," );
+
+                    sprintf( szWork+strlen(szWork), "%.8g", 
+                             rlinfo->qc_values[record * rlinfo->band_count
+                                               + iValue] );
+                }
+            }
+            else if( EQUALN(layer->items[i],"value_",6) && rlinfo->qc_values )
+            {
+                int iValue = atoi(layer->items[i]+6);
+                sprintf( szWork, "%.8g", 
+                         rlinfo->qc_values[record*rlinfo->band_count+iValue] );
+            }
             // TODO: Should this be the class name? 
             else if( EQUAL(layer->items[i],"class") && rlinfo->qc_class ) 
-                sprintf( szWork, "%d", rlinfo->qc_class[record] );
-
+            {
+                int p_class = rlinfo->qc_class[record];
+                if( layer->class[p_class].name != NULL )
+                    sprintf( szWork, "%.999s", layer->class[p_class].name );
+                else
+                    sprintf( szWork, "%d", p_class );
+            }
             else if( EQUAL(layer->items[i],"red") && rlinfo->qc_red )
                 sprintf( szWork, "%d", rlinfo->qc_red[record] );
             else if( EQUAL(layer->items[i],"green") && rlinfo->qc_green )
@@ -847,7 +1116,16 @@ int msRASTERLayerGetItems(layerObj *layer)
     if( rlinfo->qc_y )
         layer->items[layer->numitems++] = strdup("y");
     if( rlinfo->qc_values )
-        layer->items[layer->numitems++] = strdup("value");
+    {
+        int i;
+        for( i = 0; i < rlinfo->band_count; i++ )
+        {
+            char szName[100];
+            sprintf( szName, "value_%d", i );
+            layer->items[layer->numitems++] = strdup(szName);
+        }
+        layer->items[layer->numitems++] = strdup("values");
+    }
     if( rlinfo->qc_class )
         layer->items[layer->numitems++] = strdup("class");
     if( rlinfo->qc_red )
