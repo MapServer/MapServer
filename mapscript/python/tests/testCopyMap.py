@@ -107,17 +107,11 @@ class CopyMapObjTestCase(unittest.TestCase):
         self.mapobj1 = None
         assert self.mapobj2.status == val
     def testdraw(self):
-        img = self.mapobj1.draw()
-        img.save('map1.png')
+        img1 = self.mapobj1.draw()
+        data1 = img1.saveToString()
         self.mapobj1 = None
         img2 = self.mapobj2.draw()
-        img2.save('map2.png')
-        fh = open('map1.png', 'rb')
-        data1 = fh.read()
-        fh.close()
-        fh = open('map2.png', 'rb')
-        data2 = fh.read()
-        fh.close()
+        data2 = img2.saveToString()
         assert data1 == data2
 
 if __name__ == '__main__':
