@@ -152,7 +152,7 @@ memory.") const char * {
 
    Note: Python exceptions are in pymodule.i
    ====================================================================== */
-#ifndef SWIGPYTHON
+#if defined(SWIGCSHARP) || defined(SWIGJAVA) || defined(SWIHRUBY)
 %include "../mserror.i"
 #endif
 
