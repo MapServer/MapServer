@@ -546,10 +546,12 @@ and the MapServer Map File documentation at:
    int    overlaybackgroundcolor
    int    overlayoutlinecolor
    int    symbol
+   string symbolname
    int    size
    int    minsize
    int    maxsize
    int    overlaysymbol
+   string overlaysymbolname
    int    overlaysize
    int    overlayminsize
    int    overlaymaxsize

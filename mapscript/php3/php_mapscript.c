@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.94  2002/03/14 19:27:32  sacha
+ * When you set the size attribute or overlaysize of class it also set the
+ * sizescaled and overlaysizescaled.
+ *
  * Revision 1.93  2002/03/08 23:16:41  assefa
  * Add PHP4.1 support.
  *
@@ -6274,12 +6278,12 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "overlaybackgroundcolor",self->overlaybackgroundcolor)
     else IF_SET_LONG(  "overlayoutlinecolor", self->overlayoutlinecolor)
     else IF_SET_LONG(  "symbol",       self->symbol)
-    else IF_SET_LONG(  "size",         self->size)
+    else IF_SET_LONG(  "size",         self->sizescaled = self->size)
     else IF_SET_LONG(  "minsize",      self->minsize)
     else IF_SET_LONG(  "maxsize",      self->maxsize)
     else IF_SET_STRING("symbolname",   self->symbolname)
     else IF_SET_LONG(  "overlaysymbol",self->overlaysymbol)
-    else IF_SET_LONG(  "overlaysize",  self->overlaysize)
+    else IF_SET_LONG(  "overlaysize",  self->overlaysizescaled = self->overlaysize)
     else IF_SET_LONG(  "overlayminsize", self->overlayminsize)
     else IF_SET_LONG(  "overlaymaxsize", self->overlaymaxsize)
     else IF_SET_STRING("overlaysymbolname", self->overlaysymbolname)
