@@ -1,4 +1,12 @@
+
+#ifdef USE_FASTCGI
+#define NO_FCGI_DEFINES
+#include "fcgi_stdio.h"
+#endif
+
 #include "mapserv.h"
+
+
 
 mapservObj* msObj;
 
@@ -56,13 +64,14 @@ void writeError()
   writeLog(MS_TRUE);
 
   if(!msObj->Map) {
-    printf("Content-type: text/html%c%c",10,10);
-    printf("<HTML>\n");
-    printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-    printf("<!-- %s -->\n", msGetVersion());
-    printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
+    msIO_printf("Content-type: text/html%c%c",10,10);
+    msIO_printf("<HTML>\n");
+    msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
+    msIO_printf("<!-- %s -->\n", msGetVersion());
+    msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
     msWriteError(stdout);
-    printf("</BODY></HTML>");
+    msIO_printf("</BODY></HTML>");
+    msCleanup();
     exit(0);
   }
 
@@ -72,13 +81,13 @@ void writeError()
     if(msObj->Map->web.error) {      
       msRedirect(msObj->Map->web.error);
     } else {
-      printf("Content-type: text/html%c%c",10,10);
-      printf("<HTML>\n");
-      printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
-      printf("<!-- %s -->\n", msGetVersion());
-      printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
+      msIO_printf("Content-type: text/html%c%c",10,10);
+      msIO_printf("<HTML>\n");
+      msIO_printf("<HEAD><TITLE>MapServer Message</TITLE></HEAD>\n");
+      msIO_printf("<!-- %s -->\n", msGetVersion());
+      msIO_printf("<BODY BGCOLOR=\"#FFFFFF\">\n");
       msWriteError(stdout);
-      printf("</BODY></HTML>");
+      msIO_printf("</BODY></HTML>");
     }
   }
 
@@ -90,6 +99,7 @@ void writeError()
   if(QueryFile) free(QueryFile);
 
   msFreeMapServObj(msObj);
+  msCleanup();
 
   exit(0); // bail
 }
@@ -892,8 +902,6 @@ int main(int argc, char *argv[]) {
     imageObj *img=NULL;
     int status;
 
-    msObj = msAllocMapServObj();
-
     if(argc > 1 && strcmp(argv[1], "-v") == 0) {
       printf("%s\n", msGetVersion());
       fflush(stdout);
@@ -926,6 +934,15 @@ int main(int argc, char *argv[]) {
       putenv(buf);
     }
 
+#ifdef USE_FASTCGI
+    msIO_installFastCGIRedirect();
+
+    while( FCGI_Accept() >= 0 )
+    {
+#endif /* def USE_FASTCGI */
+
+    msObj = msAllocMapServObj();
+
     sprintf(msObj->Id, "%ld%d",(long)time(NULL),(int)getpid()); // asign now so it can be overridden
 
     msObj->request->ParamNames = (char **) malloc(MAX_PARAMS*sizeof(char*));
@@ -952,10 +969,18 @@ int main(int argc, char *argv[]) {
       msFreeMap(msObj->Map);
       msFreeCharArray(msObj->request->ParamNames, msObj->request->NumParams);
       msFreeCharArray(msObj->request->ParamValues, msObj->request->NumParams);
-       
-      exit(0);
-    }
+
+#ifdef USE_FASTCGI
+      /* FCGI_ --- return to top of loop */
+      continue;
+#else
+      /* normal case, processing is complete */
+      msCleanup();
+      exit( 0 );
 #endif
+
+    }
+#endif /* have an OWS service request */
 
     loadForm();
  
@@ -1008,8 +1033,8 @@ int main(int argc, char *argv[]) {
            writeError();
       } else {
 	if(TEMPLATE_TYPE(msObj->Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
-	  printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
-	  printf("<!-- %s -->\n", msGetVersion());
+	  msIO_printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
+	  msIO_printf("<!-- %s -->\n", msGetVersion());
 	  fflush(stdout);
 	  if (msReturnPage(msObj, msObj->Map->web.template, BROWSE, NULL) != MS_SUCCESS)
          writeError();
@@ -1044,9 +1069,9 @@ int main(int argc, char *argv[]) {
       if(!img) writeError();
 
       if (MS_DRIVER_SWF(msObj->Map->outputformat))
-        printf("Content-type: text/html%c%c", 10,10);
+        msIO_printf("Content-type: text/html%c%c", 10,10);
       else
-        printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+        msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
       if( msObj->Mode == MAP )
           status = msSaveImage(msObj->Map,img, NULL);
       else
@@ -1062,7 +1087,7 @@ int main(int argc, char *argv[]) {
 
           legendTemplate = generateLegendTemplate(msObj);
           if (legendTemplate) {
-             printf("Content-type: text/html\n\n%s", legendTemplate);
+             msIO_printf("Content-type: text/html\n\n%s", legendTemplate);
 
              free(legendTemplate);
           }
@@ -1074,7 +1099,7 @@ int main(int argc, char *argv[]) {
           img = msDrawLegend(msObj->Map);
           if(!img) writeError();
 
-          printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+          msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
           status = msSaveImage(NULL, img, NULL);
           if(status != MS_SUCCESS) writeError();
           
@@ -1309,7 +1334,7 @@ int main(int argc, char *argv[]) {
 	img = msDrawQueryMap(msObj->Map);
 	if(!img) writeError();
 
-	printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+	msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
 	status = msSaveImage(msObj->Map, img, NULL);
 	if(status != MS_SUCCESS) writeError();
 	msFreeImage(img);
@@ -1339,6 +1364,12 @@ int main(int argc, char *argv[]) {
     if(QueryFile) free(QueryFile);
    
     msFreeMapServObj(msObj);
+
+#ifdef USE_FASTCGI
+    }
+#endif
+
+    msCleanup();
 
     exit(0); // end MapServer
 } 
