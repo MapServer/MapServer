@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.43  2001/04/19 15:11:34  dan
+ * Sync with mapscript.i v.1.32
+ *
  * Revision 1.42  2001/04/03 23:16:19  dan
  * Fixed args to calls to reprojection functions
  *
@@ -153,7 +156,7 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_drawQueryMap(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_embedScalebar(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_embedLegend(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_drawLabelCache(INTERNAL_FUNCTION_PARAMETERS);
@@ -188,6 +191,7 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_drawQuery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS);
@@ -288,7 +292,7 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS);
 
 
 static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits, 
-                                        int nWidth);
+                                        int nWidth, int resolution);
 
 /*=====================================================================
  *               PHP Dynamically Loadable Library stuff
@@ -380,7 +384,7 @@ function_entry php_map_class_functions[] = {
     {"addcolor",        php3_ms_map_addColor,           NULL},
     {"getsymbolbyname", php3_ms_map_getSymbolByName,    NULL},
     {"draw",            php3_ms_map_draw,               NULL},
-    {"drawquerymap",    php3_ms_map_drawQueryMap,       NULL},
+    {"drawquery",       php3_ms_map_drawQuery,          NULL},
     {"embedscalebar",   php3_ms_map_embedScalebar,      NULL},
     {"embedlegend",     php3_ms_map_embedLegend,        NULL},
     {"drawlabelcache",  php3_ms_map_drawLabelCache,     NULL},
@@ -402,6 +406,8 @@ function_entry php_map_class_functions[] = {
     {"getlatlongextent", php3_ms_map_getLatLongExtent,  NULL},
     {"getmetadata",     php3_ms_map_getMetaData,        NULL},
     {"setmetadata",     php3_ms_map_setMetaData,        NULL},
+    {"prepareimage",    php3_ms_map_prepareImage,       NULL},
+    {"preparequery",    php3_ms_map_prepareQuery,       NULL},
     {NULL, NULL, NULL}
 };
 
@@ -439,6 +445,7 @@ function_entry php_reference_class_functions[] = {
 function_entry php_layer_class_functions[] = {
     {"set",             php3_ms_lyr_setProperty,        NULL},    
     {"draw",            php3_ms_lyr_draw,               NULL},    
+    {"drawquery",       php3_ms_lyr_drawQuery,          NULL},    
     {"getclass",        php3_ms_lyr_getClass,           NULL},    
     {"querybypoint",    php3_ms_lyr_queryByPoint,       NULL},    
     {"querybyrect",     php3_ms_lyr_queryByRect,        NULL},    
@@ -1015,7 +1022,8 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     self->cellsize = msAdjustExtent(&(self->extent), self->width, 
                                     self->height);      
     self->scale = msCalculateScale(*(&(self->extent)), self->units, 
-                                   self->width, self->height);
+                                   self->width, self->height, 
+                                   self->resolution);
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
@@ -1296,7 +1304,8 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
     msAdjustExtent(&oNewGeorefExt, self->width, self->height);
     dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
-                                   self->width, self->height);
+                                   self->width, self->height, 
+                                   self->resolution);
 
     if (self->web.maxscale > 0)
     {
@@ -1315,7 +1324,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     {
         dfDeltaExt = 
             GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
-                                      self->width);
+                                      self->width, self->resolution);
         if (dfDeltaExt > 0.0)
         {
             oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
@@ -1401,7 +1410,8 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     }
     
     self->scale = msCalculateScale(*(&(self->extent)), self->units, 
-                                   self->width, self->height);
+                                   self->width, self->height,
+                                   self->resolution);
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
@@ -1556,15 +1566,14 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     
 
     msAdjustExtent(&oNewGeorefExt, self->width, self->height);
-    dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
-                                   self->width, self->height);
 
 /* -------------------------------------------------------------------- */
 /*      if the min and max scale are set in the map file, we will       */
 /*      use them to test before settting extents.                       */
 /* -------------------------------------------------------------------- */
     dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
-                                   self->width, self->height);
+                                   self->width, self->height,
+                                   self->resolution);
 
     if (self->web.maxscale > 0 &&  dfNewScale > self->web.maxscale)
     {
@@ -1575,7 +1584,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     {
         dfDeltaExt = 
             GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
-                                      self->width);
+                                      self->width, self->resolution);
         dfMiddleX = oNewGeorefExt.minx + 
             ((oNewGeorefExt.maxx - oNewGeorefExt.minx)/2);
         dfMiddleY = oNewGeorefExt.miny + 
@@ -1663,7 +1672,8 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         }
     }
     self->scale = msCalculateScale(*(&(self->extent)), self->units, 
-                                   self->width, self->height);
+                                   self->width, self->height,
+                                   self->resolution);
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
@@ -1830,7 +1840,8 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
       nTmp = self->height;
 
     dfDeltaExt = 
-        GetDeltaExtentsUsingScale(pScale->value.lval, self->units, nTmp);
+        GetDeltaExtentsUsingScale(pScale->value.lval, self->units, nTmp,
+                                  self->resolution);
                                   
     if (dfDeltaExt > 0.0)
     {
@@ -1846,7 +1857,8 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 /*      get current scale.                                              */
 /* -------------------------------------------------------------------- */
     dfCurrentScale =  msCalculateScale(*poGeorefExt, self->units, 
-                                       self->width, self->height);
+                                       self->width, self->height,
+                                       self->resolution);
 
 /* -------------------------------------------------------------------- */
 /*      if the min and max scale are set in the map file, we will       */
@@ -1858,7 +1870,8 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
     msAdjustExtent(&oNewGeorefExt, self->width, self->height);
     dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
-                                   self->width, self->height);
+                                   self->width, self->height,
+                                   self->resolution);
 
     if (self->web.maxscale > 0)
     {
@@ -1877,7 +1890,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     {
         dfDeltaExt = 
             GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
-                                      self->width);
+                                      self->width, self->resolution);
         if (dfDeltaExt > 0.0)
         {
             oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
@@ -1964,7 +1977,8 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
     }
     
     self->scale = msCalculateScale(*(&(self->extent)), self->units, 
-                                   self->width, self->height);
+                                   self->width, self->height,
+                                   self->resolution);
 
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
@@ -2200,12 +2214,12 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 /**********************************************************************
- *                        map->drawQueryMap()
+ *                        map->drawQuery()
  **********************************************************************/
 
-/* {{{ proto int map.drawQueryMap()
+/* {{{ proto int map.drawQuery()
    Renders a query map, returns an image.. */
-DLEXPORT void php3_ms_map_drawQueryMap(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pThis;
     mapObj      *self;
@@ -2227,7 +2241,7 @@ DLEXPORT void php3_ms_map_drawQueryMap(INTERNAL_FUNCTION_PARAMETERS)
     }
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
-    if (self == NULL || (im =  mapObj_drawQueryMap(self)) == NULL)
+    if (self == NULL || (im =  mapObj_drawQuery(self)) == NULL)
         _phpms_report_mapserver_error(E_ERROR);
 
     /* Return an image object */
@@ -3602,6 +3616,53 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        layer->drawQuery()
+ **********************************************************************/
+
+/* {{{ proto int layer.drawQuery(image img)
+   Draw query results for a layer. */
+
+DLEXPORT void php3_ms_lyr_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval  *imgObj, *pThis;
+    mapObj *parent_map;
+    layerObj *self;
+    gdImagePtr im = NULL;
+    int    retVal=0;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &imgObj) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
+                                         PHPMS_GLOBAL(le_msimg), list);
+   
+    self = (layerObj *)_phpms_fetch_handle(pThis, 
+                                           PHPMS_GLOBAL(le_mslayer),list);
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list, E_ERROR);
+
+    if (im == NULL || self == NULL || parent_map == NULL ||
+        (retVal = layerObj_drawQuery(self, parent_map, im)) == -1)
+        _phpms_report_mapserver_error(E_WARNING);
+
+    RETURN_LONG(retVal);
+}
+/* }}} */
+
 
 /**********************************************************************
  *                        layer->getClass()
@@ -4234,7 +4295,7 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
 
     if (self == NULL || 
         layerObj_getShape(self, poShape, pTileId->value.lval, 
-                          pShapeId->value.lval, MS_TRUE) != MS_SUCCESS)
+                          pShapeId->value.lval) != MS_SUCCESS)
     {
         _phpms_report_mapserver_error(E_ERROR);
         shapeObj_destroy(poShape);
@@ -6917,15 +6978,16 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pGeorefExt = NULL;
     pval        *pWidth = NULL;
     pval        *pHeight;
-    pval        *pUnit;
+    pval        *pUnit, *pResolution;
     rectObj     *poGeorefExt = NULL;
     double      dfScale = 0.0;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
 
-    if (getParameters(ht, 4, 
-                      &pGeorefExt, &pWidth, &pHeight, &pUnit) != SUCCESS)
+    if (getParameters(ht, 5, 
+                      &pGeorefExt, &pWidth, &pHeight, 
+                      &pUnit, &pResolution) != SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
@@ -6933,6 +6995,7 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pWidth);
     convert_to_long(pHeight);
     convert_to_long(pUnit);
+    convert_to_long(pResolution);
 
     poGeorefExt = 
         (rectObj *)_phpms_fetch_handle2(pGeorefExt, 
@@ -6941,7 +7004,8 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
                                         list);
 
     dfScale =  msCalculateScale(*poGeorefExt, pUnit->value.lval, 
-                                pWidth->value.lval, pHeight->value.lval);
+                                pWidth->value.lval, pHeight->value.lval,
+                                pResolution->value.lval);
     
     RETURN_DOUBLE(dfScale);
 }
@@ -6957,7 +7021,7 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
 /************************************************************************/
 static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
 static double GetDeltaExtentsUsingScale(double dfScale, int nUnits, 
-                                        int nWidth)
+                                        int nWidth, int resolution)
 {
     double md = 0.0;
     double dfDelta = -1.0;
@@ -6973,7 +7037,7 @@ static double GetDeltaExtentsUsingScale(double dfScale, int nUnits,
       case(MS_MILES):
       case(MS_INCHES):  
       case(MS_FEET):
-        md = (nWidth-1)/(MS_PPI*inchesPerUnit[nUnits]);
+        md = (nWidth-1)/(resolution*inchesPerUnit[nUnits]);
         dfDelta = md * dfScale;
         break;
           

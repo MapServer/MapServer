@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.20  2001/04/19 15:11:34  dan
+ * Sync with mapscript.i v.1.32
+ *
  * Revision 1.19  2001/03/30 04:16:14  dan
  * Removed shapepath parameter to layer->getshape()
  *
@@ -146,7 +149,7 @@ int mapObj_getSymbolByName(mapObj* self, int type, char *name) {
 
 void mapObj_prepareQuery(mapObj* self) {
     self->scale = msCalculateScale(self->extent, self->units, 
-                                   self->width, self->height);
+                                   self->width, self->height, self->resolution);
   }
 
 gdImagePtr mapObj_prepareImage(mapObj* self) {
@@ -171,7 +174,7 @@ gdImagePtr mapObj_prepareImage(mapObj* self) {
       return NULL;
   
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
-    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height);
+    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution);
 
     return img;
   }
@@ -180,7 +183,7 @@ gdImagePtr mapObj_draw(mapObj* self) {
     return msDrawMap(self);
   }
 
-gdImagePtr mapObj_drawQueryMap(mapObj* self) {
+gdImagePtr mapObj_drawQuery(mapObj* self) {
     return msDrawQueryMap(self);
   }
 
@@ -284,7 +287,7 @@ void layerObj_close(layerObj *self) {
   }
 
 int layerObj_getShape(layerObj *self, shapeObj *shape, 
-                      int tileindex, int shapeindex, int allitems) {
+                      int tileindex, int shapeindex) {
     return msLayerGetShape(self, shape, tileindex, shapeindex);
   }
 
@@ -304,25 +307,12 @@ classObj *layerObj_getClass(layerObj *self, int i) { // returns an EXISTING clas
       return(NULL);
   }
 
-int layerObj_prepare(layerObj *self) {
-    // do scaling
+int layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img) {
+    return msDrawLayer(map, self, img);
   }
 
-int layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img) {
-    if(self->features) {
-#ifdef __TODO35__
-      return msDrawInlineLayer(map, self, img);
-#else
-      // ????
-      return msDrawLayer(map, self, img);
-#endif
-    } else {
-      if(self->type == MS_LAYER_RASTER) {
-        return msDrawRasterLayer(map, self, img);
-      } else {
-	return msDrawLayer(map, self, img);
-      }
-    }
+int layerObj_drawQuery(layerObj *self, mapObj *map, gdImagePtr img) {
+    return msDrawLayer(map, self, img);    
   }
 
 int layerObj_queryByPoint(layerObj *self, mapObj *map, 
@@ -408,6 +398,10 @@ void pointObj_destroy(pointObj *self) {
     free(self);
   }
 
+int pointObj_project(pointObj *self, projectionObj *in, projectionObj *out) {
+    return msProjectPoint(in, out, self);
+  }	
+
 int pointObj_draw(pointObj *self, mapObj *map, layerObj *layer, 
                   gdImagePtr img, int class_index, char *label_string) {
     return msDrawPoint(map, layer, self, img, class_index, label_string);
@@ -456,6 +450,10 @@ void lineObj_destroy(lineObj *self) {
     free(self);		
   }
 
+int lineObj_project(lineObj *self, projectionObj *in, projectionObj *out) {
+    return msProjectLine(in, out, self);
+  }
+
 pointObj *lineObj_get(lineObj *self, int i) {
     if(i<0 || i>=self->numpoints)
       return NULL;
@@ -500,6 +498,10 @@ shapeObj *shapeObj_new(int type) {
 void shapeObj_destroy(shapeObj *self) {
     msFreeShape(self);
     free(self);		
+  }
+
+int shapeObj_project(shapeObj *self, projectionObj *in, projectionObj *out) {
+    return msProjectShape(in, out, self);
   }
 
 lineObj *shapeObj_get(shapeObj *self, int i) {
@@ -585,6 +587,10 @@ rectObj *rectObj_new() {
 
 void rectObj_destroy(rectObj *self) {
     free(self);
+  }
+
+int rectObj_project(rectObj *self, projectionObj *in, projectionObj *out) {
+    return msProjectRect(in, out, self);
   }
 
 double rectObj_fit(rectObj *self, int width, int height) {

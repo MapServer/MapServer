@@ -141,7 +141,7 @@ Very important note: Constant names and class member variable names are
    imageObj draw()
         Render map and return handle on image object.
 
-    imageObj drawquerymap()
+   imageObj drawQuery()
         Render a query map and return handle on image object.
 
    imageObj drawLegend()
@@ -332,6 +332,9 @@ Very important note: Constant names and class member variable names are
    int draw(imageObj image)
         Draw a single layer, add labels to cache if required. 
         Returns -1 on error.
+
+   int drawQuery(imageObj image)
+        Draw query map for a single layer.
 
    classObj getClass(int classIndex)
         Returns a classObj from the layer given an index value (0=first class)
