@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.22  2004/02/12 16:01:06  assefa
+ * Test missing in Generate SLD for annotation layers.
+ *
  * Revision 1.21  2004/02/11 20:47:18  assefa
  * Use first the wms_name metadata as the name of the NamedLayer.
  * If not available, use the layer's name.
@@ -3288,7 +3291,8 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 
     if (psLayer && (psLayer->type == MS_LAYER_POINT ||
                     psLayer->type == MS_LAYER_LINE ||
-                    psLayer->type == MS_LAYER_POLYGON))
+                    psLayer->type == MS_LAYER_POLYGON ||
+                    psLayer->type == MS_LAYER_ANNOTATION))
     {
         sprintf(szTmp, "%s\n",  "<NamedLayer>");
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
