@@ -1,6 +1,10 @@
 #include "map.h"
+
 #include <sys/types.h>
+
+#if !defined(_WIN32)
 #include <netinet/in.h>
+#endif
 
 #ifndef FLT_MAX
 #define FLT_MAX 25000000.0

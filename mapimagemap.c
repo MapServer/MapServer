@@ -723,7 +723,12 @@ void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, s
 		int slen = 0;
 		int nchars = 0;
 		char buffer[200] = "";
+#if defined(_WIN32) && !defined(__CYGWIN__)
+                nchars = sprintf (buffer, "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy);
+#else
 		nchars = snprintf (buffer, 200, "<AREA href='javascript:SymbolClicked();' shape='circle' coords='%.0f,%.0f, 3'></A>\n", p->x + ox, p->y + oy);
+#endif
+
 //DEBUG printf ("%d, ",strlen(img->img.imagemap) );
 // DEBUG printf("nchars %d<BR>\n", nchars);
 		slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
@@ -1074,13 +1079,23 @@ double size;
 //DEBUG printf ("3");
       
 //DEBUG printf("BEF%s", img->img.imagemap);
-  nchars = snprintf (fbuffer, bsize, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
+#if defined(_WIN32) && !defined(__CYGWIN__)
+  nchars = sprintf (fbuffer, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
+#else
+   nchars = snprintf (fbuffer, bsize, "<AREA href='javascript:Clicked(%s);' title='%s' shape='poly' coords='", p->numvalues ? p->values[0] : "", p->numvalues ? p->values[0] : "");
+#endif
+
   if(style->symbol == 0) { // simply draw a single pixel of the specified color //    
 	  for(l=0,j=0; j<p->numlines; j++) {
 	//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
 	      for(i=0; i < p->line[j].numpoints; i++,l++) {
 		        int slen = 0;
-			nchars = snprintf (buffer, bsize, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+#if defined(_WIN32) && !defined(__CYGWIN__)
+			nchars = sprintf (buffer, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+#else
+                        nchars = snprintf (buffer, bsize, "%s %.0f,%.0f", first ? fbuffer: ",", p->line[j].point[i].x, p->line[j].point[i].y);
+#endif
+
 //DEBUG printf ("%d, ",strlen(img->img.imagemap) );
 // DEBUG printf("nchars %d<BR>\n", nchars);
 			slen = nchars + strlen(img->img.imagemap) + 8; // add 8 to accomodate </A> tag
