@@ -393,9 +393,11 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
 
   // identify target shapes
   searchrect = map->extent;
-#ifdef USE_PROJ     
-  if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+#ifdef USE_PROJ  
+  if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))  
     msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
+  else
+    lp->project = MS_FALSE;
 #endif
   status = msLayerWhichShapes(lp, searchrect);
   if(status == MS_DONE) { // no overlap
@@ -426,8 +428,10 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
     }
 
 #ifdef USE_PROJ
-    if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectShape(&(lp->projection), &(map->projection), &shape);
+    else
+      lp->project = MS_FALSE;
 #endif
 
     addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
@@ -526,8 +530,10 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     // identify target shapes
     searchrect = rect;
 #ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
+    else
+      lp->project = MS_FALSE;
 #endif
     status = msLayerWhichShapes(lp, searchrect);
     if(status == MS_DONE) { // no overlap
@@ -557,8 +563,10 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
       }
 
 #ifdef USE_PROJ
-      if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
+      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
 	msProjectShape(&(lp->projection), &(map->projection), &shape);
+      else
+	lp->project = MS_FALSE;
 #endif
 
       if(msRectContained(&shape.bounds, &rect) == MS_TRUE) { /* if the whole shape is in, don't intersect */	
@@ -695,17 +703,20 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       }
       
 #ifdef USE_PROJ
-      if((slp->projection.numargs > 0) && (map->projection.numargs > 0)) {
+      if(slp->project && msProjectionsDiffer(&(slp->projection), &(map->projection)))
 	msProjectShape(&(slp->projection), &(map->projection), &selectshape);
 	msComputeBounds(&selectshape); // recompute the bounding box AFTER projection
-      }
+      } else
+	slp->project = MS_FALSE;
 #endif
 
       // identify target shapes
       searchrect = selectshape.bounds;
 #ifdef USE_PROJ
-      if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))      
 	msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
+      else
+	lp->project = MS_FALSE;
 #endif
       status = msLayerWhichShapes(lp, searchrect);
       if(status == MS_DONE) { // no overlap
@@ -741,7 +752,10 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 	}
 	
 #ifdef USE_PROJ
-	if((lp->projection.numargs > 0) && (map->projection.numargs > 0)) msProjectShape(&(lp->projection), &(map->projection), &shape);
+	if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))	
+	  msProjectShape(&(lp->projection), &(map->projection), &shape);
+        else
+	  lp->project = MS_FALSE;
 #endif
  
 	switch(selectshape.type) { // may eventually support types other than polygon
@@ -862,8 +876,10 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     // identify target shapes
     searchrect = rect;
 #ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
+    else
+      lp->project = MS_FALSE;
 #endif
     status = msLayerWhichShapes(lp, searchrect);
     if(status == MS_DONE) { // no overlap
@@ -893,8 +909,10 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
       }
 
 #ifdef USE_PROJ
-      if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
+      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
 	msProjectShape(&(lp->projection), &(map->projection), &shape);
+      else
+	lp->project = MS_FALSE;
 #endif
 
       if(shape.type == MS_SHAPE_POINT)
@@ -990,8 +1008,10 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     // identify target shapes
     searchrect = searchshape->bounds;
 #ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
+    else
+      lp->project = MS_FALSE;
 #endif
     status = msLayerWhichShapes(lp, searchrect);
     if(status == MS_DONE) { // no overlap
@@ -1021,8 +1041,10 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
       }
 
 #ifdef USE_PROJ
-      if((lp->projection.numargs > 0) && (map->projection.numargs > 0))
+      if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))
 	msProjectShape(&(lp->projection), &(map->projection), &shape);
+      else
+	lp->project = MS_FALSE;
 #endif
 
       switch(shape.type) { // make sure shape actually intersects the shape

@@ -1618,8 +1618,8 @@ int initLayer(layerObj *layer)
   layer->numclasses = 0;
 
   layer->units = MS_METERS;
-  if(msInitProjection(&(layer->projection)) == -1)
-    return(-1);
+  if(msInitProjection(&(layer->projection)) == -1) return(-1);
+  layer->project = MS_FALSE;
 
   MS_INIT_COLOR(layer->offsite, -1,-1,-1);
 
@@ -1839,6 +1839,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(PROJECTION):
       if(loadProjection(&(layer->projection)) == -1) return(-1);
+      layer->project = MS_TRUE;
       break;
     case(REQUIRES):
       if((layer->requires = getString()) == NULL) return(-1);
@@ -2052,6 +2053,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(PROJECTION):
     msLoadProjectionString(&(layer->projection), value);
+    layer->project = MS_TRUE;
     break;
   case(REQUIRES):
     msFree(layer->requires);

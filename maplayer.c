@@ -427,6 +427,7 @@ static int string2list(char **list, int *listsize, char *string)
   return(i);
 }
 
+// TO DO: this function really needs to use the lexer
 static void expression2list(char **list, int *listsize, expressionObj *expression) 
 {
   int i, j, l;

@@ -656,6 +656,7 @@ typedef struct layer_obj {
 #ifndef SWIG
   projectionObj projection; // projection information for the layer
 #endif
+  int project; // boolean variable, do we need to project this layer or not
 
   int units; // units of the projection
 

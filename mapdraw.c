@@ -769,8 +769,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     r = MS_ABS(center.x - shape->line[0].point[0].x);
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
-        msProjectPoint(&layer->projection, &map->projection, &center);
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+      msProjectPoint(&layer->projection, &map->projection, &center);
+    else
+      layer->project = MS_FALSE;
 #endif
 
     if(layer->transform) {
@@ -793,8 +795,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     if(!shape->text) return(MS_SUCCESS); // nothing to draw
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
        msProjectShape(&layer->projection, &map->projection, shape);
+    else
+      layer->project = MS_FALSE;
 #endif
 
     switch(shape->type) {
@@ -882,8 +886,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
   case MS_LAYER_POINT:
 
 #ifdef USE_PROJ
-      if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
-          msProjectShape(&layer->projection, &map->projection, shape);
+      if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+        msProjectShape(&layer->projection, &map->projection, shape);
+      else
+        layer->project = MS_FALSE;
 #endif
 
     for(j=0; j<shape->numlines;j++) {
@@ -920,8 +926,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
-        msProjectShape(&layer->projection, &map->projection, shape);
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
+      msProjectShape(&layer->projection, &map->projection, shape);
+    else
+      layer->project = MS_FALSE;
 #endif
 
     if(layer->transform) {
@@ -958,8 +966,10 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, imageObj *image, 
     }
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection))) 
+    if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection))) 
       msProjectShape(&layer->projection, &map->projection, shape);
+    else
+      layer->project = MS_FALSE;
 #endif
 
     if(layer->transform) {
@@ -1004,8 +1014,10 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, imageObj *image,
   c = classindex;
  
 #ifdef USE_PROJ
-  if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
+  if(layer->project && msProjectionsDiffer(&(layer->projection), &(map->projection)))
     msProjectPoint(&layer->projection, &map->projection, point);
+  else
+    layer->project = MS_FALSE;
 #endif
 
   switch(layer->type) {
