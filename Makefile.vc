@@ -56,6 +56,8 @@ WMS=-DUSE_WMS_SVR
 # Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
 WFS=-DUSE_WFS_SVR
 
+#WFSCLIENT= -DUSE_WFS_LYR
+
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
@@ -192,7 +194,7 @@ INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
                 $(CURL_INC) $(MING_INC) $(PDF_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) -DFEATURE_INFO_HTML $(WFS) $(PDF)
+		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) -DFEATURE_INFO_HTML $(WFS) $(WFSCLIENT) $(PDF)
 
 default: 	all
 
