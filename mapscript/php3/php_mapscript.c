@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.160  2003/04/23 19:13:29  dan
+ * Use class names in the format ms_<classname>_obj for PHP class entry
+ * definitions.  (We were getting name collisions with the "error" class.)
+ *
  * Revision 1.159  2003/04/23 14:36:46  dan
  * Added error code constants to php mapscript
  *
@@ -1050,67 +1054,80 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
         sprintf(PHPMS_GLOBAL(tmpId), "%ld%d",(long)time(NULL),(int)getpid());
 
 #ifdef PHP4
-    INIT_CLASS_ENTRY(tmp_class_entry, "map", php_map_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_map_obj", php_map_class_functions);
     map_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
     
-    INIT_CLASS_ENTRY(tmp_class_entry, "img", php_img_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_img_obj", php_img_class_functions);
     img_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "rect", php_rect_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_rect_obj", php_rect_class_functions);
     rect_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "color", php_color_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_color_obj", 
+                     php_color_class_functions);
     color_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "web", php_web_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_web_obj", php_web_class_functions);
     web_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "reference", 
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_reference_obj", 
                      php_reference_class_functions);
     reference_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
     
-    INIT_CLASS_ENTRY(tmp_class_entry, "scalebar", php_scalebar_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_scalebar_obj", 
+                     php_scalebar_class_functions);
     scalebar_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "legend", php_legend_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_legend_obj", 
+                     php_legend_class_functions);
     legend_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "layer", php_layer_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_layer_obj", 
+                     php_layer_class_functions);
     layer_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "label", php_label_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_label_obj", 
+                     php_label_class_functions);
     label_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "class", php_class_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_class_obj", 
+                     php_class_class_functions);
     class_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "point", php_point_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_point_obj", 
+                     php_point_class_functions);
     point_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "line", php_line_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_line_obj", 
+                     php_line_class_functions);
     line_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "shape", php_shape_class_functions);
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_shape_obj", 
+                     php_shape_class_functions);
     shape_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
     
-    INIT_CLASS_ENTRY(tmp_class_entry, "shapefile", 
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_shapefile_obj", 
                      php_shapefile_class_functions);
     shapefile_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-    INIT_CLASS_ENTRY(tmp_class_entry, "projection", 
+    INIT_CLASS_ENTRY(tmp_class_entry, "ms_projection_obj", 
                      php_projection_class_functions);
     projection_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-     INIT_CLASS_ENTRY(tmp_class_entry, "style", php_style_class_functions);
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_style_obj", 
+                      php_style_class_functions);
     style_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-     INIT_CLASS_ENTRY(tmp_class_entry, "outputformat", php_outputformat_class_functions);
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_outputformat_obj", 
+                      php_outputformat_class_functions);
      outputformat_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-     INIT_CLASS_ENTRY(tmp_class_entry, "grid", php_grid_class_functions);
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_grid_obj", 
+                      php_grid_class_functions);
      grid_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
-     INIT_CLASS_ENTRY(tmp_class_entry, "error", php_error_class_functions);
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_error_obj", 
+                      php_error_class_functions);
      error_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
 #endif
