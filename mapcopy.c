@@ -909,7 +909,8 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 {
   int i, return_value;
   featureListNodeObjPtr current;
-  
+  char szPath[MS_MAXPATHLEN];
+
   copyProperty(&(dst->index), &(src->index), sizeof(int));
   copyStringProperty(&(dst->classitem), src->classitem);
 
@@ -1025,8 +1026,8 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   copyProperty(&(dst->sameconnection), &(src->sameconnection),
                sizeof(layerObj *));
   
-  msSHPOpenFile(&(dst->shpfile), "rb", src->data);
-  msSHPOpenFile(&(dst->tileshpfile), "rb", src->tileindex);
+  //msSHPOpenFile(&(dst->shpfile), "rb", msBuildPath(szPath, src->map->shapepath, src->data));
+  //msSHPOpenFile(&(dst->tileshpfile), "rb", msBuildPath(szPath, src->map->shapepath, src->tileindex));
 
   copyProperty(&(dst->layerinfo), &(src->layerinfo), sizeof(void));
 
@@ -1036,7 +1037,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 
   copyProperty(&(dst->numitems), &(src->numitems), sizeof(int));
 
-  for (i = 0; i < dst->num_processing; i++) {
+  for (i = 0; i < dst->numitems; i++) {
     copyStringProperty(&(dst->items[i]), src->items[i]);
   }
 
