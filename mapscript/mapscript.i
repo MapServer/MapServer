@@ -283,6 +283,15 @@
   int setProjection(char *string) {
     return(loadProjectionString(&(self->projection), string));
   }
+
+  int addFeature(shapeObj *shape) {
+    // need code here	
+  }
+
+  int classify(char *string) {
+    // use string to return matching class
+  }
+
 }
 
 //
@@ -336,35 +345,6 @@
 
   int setExpression(char *string) {    
     return loadExpressionString(&self->expression, string);
-  }
-}
-
-//
-// class extensions for featureObj, always within the context of a layer
-//
-%addmethods featureObj {
-  featureObj(layerObj *layer) {
-
-    /* MODIFY THIS CODE */
-	
-    if(!layer->features)
-      layer->features = initFeature(); /* new feature list */
-    else
-      layer->features = addFeature(layer->features);	
-
-    return layer->features;
-  }
-
-  ~featureObj() {
-    return; /* do nothing, map deconstrutor takes care of it all */
-  }
-
-  int classify(char *string) {
-    /* use string to classify this feature - NEED THIS CODE */
-  }
-
-  int add(lineObj *p) {
-    return msAddLine(&self->shape, p);
   }
 }
 

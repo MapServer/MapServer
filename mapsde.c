@@ -217,6 +217,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   shapeObj transformedshape={0,NULL,{-1,-1,-1,-1},MS_NULL};
   pointObj annopnt, *pnt;
 
+  featureListNodeObjPtr shpcache=NULL, current=NULL;           
+
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
 
@@ -486,7 +488,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  for(j=0; j<transformedshape.line[0].numpoints; j++) {
 	    pnt = &(transformedshape.line[0].point[j]); /* point to the correct point */
 
-	    msDrawMarkerSymbol(&map->symbolset, img, pnt, &layer->class[i], MS_FALSE);
+	    msDrawMarkerSymbol(&map->symbolset, img, &transformedshape, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
+	    if(layer->class[i].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &transformedshape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
 
 	    if(annotate) {	      
 	      if(numcolumns == 2) {
@@ -541,7 +544,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  if(SE_shape_is_nil(clippedshape)) continue;
 	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
 
-	  msDrawLineSymbol(&map->symbolset, img, &transformedshape, &(layer->class[i]), MS_FALSE);
+	  msDrawLineSymbol(&map->symbolset, img, &transformedshape, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
 
 	  if(annotate) {
 	    if(msPolylineLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize, &angle, &length) != -1) {
@@ -574,8 +577,12 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	      }
 	    }
 	  }
-	  
-	  msFreeShape(&transformedshape);
+
+	  if(layer->class[i].overlaysymbol >= 0) { // cache shape
+	    transformedshape.classindex = i;
+	    if(insertFeatureList(&shpcache, transformedshape) == NULL) return(-1);
+	  } else
+	    msFreeShape(&transformedshape);
 	} else {
 	  if(status != SE_FINISHED) {
 	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
@@ -583,8 +590,84 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
           }
 	}
       }
+
+      if(shpcache) {	
+	for(current=shpcache; current; current=current->next) {
+	  i = current->shape.classindex;
+	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
+	}
+	freeFeatureList(shpcache);
+      }
+
       break;
     case MS_POLYLINE:
+      while(status == SE_SUCCESS) {
+	status = SE_stream_fetch(stream);
+	if(status == SE_SUCCESS) {
+
+	  if(SE_shape_is_nil(shape)) continue;
+
+	  status = SE_shape_clip(shape, &rect, clippedshape);
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msDrawSDELayer()", "SE_shape_clip()");
+	    return(-1);
+          }
+
+	  if(SE_shape_is_nil(clippedshape)) continue;
+	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
+
+	  msDrawLineSymbol(&map->symbolset, img, &transformedshape, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
+
+	  if(annotate) {
+	    if(msPolygonLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize) != -1) {
+	      if(numcolumns == 2) {
+		switch(annotation_def.sde_type) {
+		case 1: // integers
+		case 2:
+		  sprintf(annotation, "%ld", annotation_long);
+		  break;
+		case 3: // floats
+		case 4:
+		  sprintf(annotation, "%g", annotation_double);
+		  break;
+		default:	     
+		  break;
+		}
+	      } else {
+		annotation = layer->class[i].text.string;
+	      }
+
+	      if(annotation) {
+		if(layer->labelcache)
+		  msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
+		else
+		  msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+	      }
+	    }
+	  }
+
+ 	  if(layer->class[i].overlaysymbol >= 0) { // cache shape
+	    transformedshape.classindex = i;
+	    if(insertFeatureList(&shpcache, transformedshape) == NULL) return(-1);
+	  } else
+	    msFreeShape(&transformedshape);
+	} else {
+	  if(status != SE_FINISHED) {
+	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
+	    return(-1);
+          }
+	}
+      }
+
+      if(shpcache) {	
+	for(current=shpcache; current; current=current->next) {
+	  i = current->shape.classindex;
+	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
+	}
+	freeFeatureList(shpcache);
+      }
+
+      break;
     case MS_POLYGON:
       while(status == SE_SUCCESS) {
 	status = SE_stream_fetch(stream);
@@ -601,11 +684,10 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  if(SE_shape_is_nil(clippedshape)) continue;
 	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
 
-	  if(layer->type == MS_POLYGON)
-	    msDrawShadeSymbol(&map->symbolset, img, &transformedshape, &(layer->class[i]), MS_FALSE);
-	  else
-	    msDrawLineSymbol(&map->symbolset, img, &transformedshape, &(layer->class[i]), MS_FALSE);
 
+	  msDrawShadeSymbol(&map->symbolset, img, &transformedshape, layer->class[i].symbol, layer->class[i].color, layer->class[i].backgroundcolor, layer->class[i].outlinecolor, layer->class[i].sizescaled);
+	  if(layer->class[i].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, &transformedshape, layer->class[i].overlaysymbol, layer->class[i].overlaycolor, layer->class[i].overlaybackgroundcolor, layer->class[i].overlayoutlinecolor, layer->class[i].overlaysizescaled);
+      
 	  if(annotate) {
 	    if(msPolygonLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize) != -1) {
 	      if(numcolumns == 2) {

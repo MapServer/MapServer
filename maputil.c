@@ -718,8 +718,11 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
       if(shape->numlines == 0) return(0);
       msTransformPolygon(map->extent, map->cellsize, shape);
     }
-    msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 
+    // no way to cache here
+    msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+    if(layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+    
     if(label_string) text = label_string;
     else text = layer->class[c].text.string;
     
@@ -737,17 +740,19 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     break;
 
   case MS_POLYLINE:
-   if(layer->transform) {      
+    if(layer->transform) {      
       msClipPolygonRect(shape, cliprect, shape);
       if(shape->numlines == 0) return(0);
       msTransformPolygon(map->extent, map->cellsize, shape);
     }
-
-   msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
-
+    
+    // no way to cache here
+    msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+    if(layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	
     if(label_string) text = label_string; 
     else text = layer->class[c].text.string;
-
+    
     if(text) {
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
 	if(layer->labelcache)
