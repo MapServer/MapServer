@@ -1222,7 +1222,8 @@ int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names,
      {
        for(k=0; k<map->numlayers; k++) 
        {
-         if (alllayers || strcasecmp(map->layers[k].name, layers[j]) == 0)
+         if (alllayers || (map->layers[k].name && 
+                           strcasecmp(map->layers[k].name, layers[j]) == 0))
          {
            if (map->layers[k].type == MS_LAYER_POINT ||
                map->layers[k].type == MS_LAYER_LINE ||
