@@ -935,11 +935,11 @@ int msCopyLayer(layerObj *dst, layerObj *src)
   //msSHPOpenFile(&(dst->shpfile), "rb", msBuildPath(szPath, src->map->shapepath, src->data));
   //msSHPOpenFile(&(dst->tileshpfile), "rb", msBuildPath(szPath, src->map->shapepath, src->tileindex));
 
-  copyProperty(&(dst->layerinfo), &(src->layerinfo), sizeof(void));
+  copyProperty(&(dst->layerinfo), &(src->layerinfo), sizeof(void*));
 
-  copyProperty(&(dst->ogrlayerinfo),&(src->ogrlayerinfo),sizeof(void)); 
+  copyProperty(&(dst->ogrlayerinfo),&(src->ogrlayerinfo),sizeof(void*)); 
   copyProperty(&(dst->wfslayerinfo), &(src->wfslayerinfo),
-               sizeof(void)); 
+               sizeof(void*)); 
 
   copyProperty(&(dst->numitems), &(src->numitems), sizeof(int));
 
@@ -947,7 +947,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
     copyStringProperty(&(dst->items[i]), src->items[i]);
   }
 
-  copyProperty(&(dst->iteminfo), &(src->iteminfo), sizeof(void)); 
+  copyProperty(&(dst->iteminfo), &(src->iteminfo), sizeof(void*)); 
 
   return_value = msCopyExpression(&(dst->filter), &(src->filter));
   if (return_value != MS_SUCCESS) {
