@@ -1638,181 +1638,187 @@ int main(int argc, char *argv[]) {
       gdImageDestroy(img);
     } else if(Mode >= QUERY) { // query modes
 
-      if((QueryLayerIndex = msGetLayerIndex(Map, QueryLayer)) != -1) /* force the query layer on */
-	Map->layers[QueryLayerIndex].status = MS_ON;
+      if(QueryFile) { // already got a completed query
+	status = msLoadQuery(Map, QueryFile);
+	if(status != MS_SUCCESS) writeError();
+      } else {
 
-      switch(Mode) {
-      case FEATUREQUERY:
-      case FEATURENQUERY:
-	if((SelectLayerIndex = msGetLayerIndex(Map, SelectLayer)) == -1) { /* force the selection layer on */
-	  msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
-	  writeError();
-	} else
-	  Map->layers[SelectLayerIndex].status = MS_ON;
+	if((QueryLayerIndex = msGetLayerIndex(Map, QueryLayer)) != -1) /* force the query layer on */
+	  Map->layers[QueryLayerIndex].status = MS_ON;
 
-	if(QueryCoordSource == NONE) { // use values
+        switch(Mode) {
+        case FEATUREQUERY:
+        case FEATURENQUERY:
+	  if((SelectLayerIndex = msGetLayerIndex(Map, SelectLayer)) == -1) { /* force the selection layer on */
+	    msSetError(MS_WEBERR, "Selection layer not set or references an invalid layer.", "mapserv()"); 
+	    writeError();
+	  } else
+	    Map->layers[SelectLayerIndex].status = MS_ON;
 
-	  if((status = msQueryByAttributes(Map, SelectLayerIndex)) != MS_SUCCESS) writeError();
+  	  if(QueryCoordSource == NONE) { // use values
 
-	} else { /* use coordinates */
+	    if((status = msQueryByAttributes(Map, SelectLayerIndex)) != MS_SUCCESS) writeError();
+
+  	  } else { /* use coordinates */
 	  
-	  if(Mode == FEATUREQUERY) {
-	    switch(QueryCoordSource) {
-	    case FROMIMGPNT:
-	      Map->extent = ImgExt; /* use the existing map extent */	
-	      setCoordinate();
-	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
-	      break;
-	    case FROMUSERPNT: /* only a buffer makes sense */
-	      if(Buffer == -1) {
-		msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
-		writeError();
+	    if(Mode == FEATUREQUERY) {
+	      switch(QueryCoordSource) {
+	      case FROMIMGPNT:
+	        Map->extent = ImgExt; /* use the existing map extent */	
+	        setCoordinate();
+	        if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
+	        break;
+	      case FROMUSERPNT: /* only a buffer makes sense */
+	        if(Buffer == -1) {
+		  msSetError(MS_WEBERR, "Point given but no search buffer specified.", "mapserv()");
+		  writeError();
+	        }
+	        if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
+	        break;
+	      default:
+	        msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
+	        writeError();
+	        break;
+	      }	  
+	    } else { /* FEATURENQUERY */
+	      switch(QueryCoordSource) {
+	      case FROMIMGPNT:
+	        Map->extent = ImgExt; /* use the existing map extent */	
+	        setCoordinate();
+	        if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
+	        break;	 
+	      case FROMIMGBOX:
+	        break;
+	      case FROMUSERPNT: /* only a buffer makes sense */
+	        if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
+	      default:
+	        setExtent();
+	        if((status = msQueryByRect(Map, SelectLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
+	        break;
 	      }
-	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_SINGLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
-	      break;
-	    default:
-	      msSetError(MS_WEBERR, "No way to the initial search, not enough information.", "mapserv()");
-	      writeError();
-	      break;
-	    }	  
-	  } else { /* FEATURENQUERY */
-	    switch(QueryCoordSource) {
-	    case FROMIMGPNT:
-	      Map->extent = ImgExt; /* use the existing map extent */	
-	      setCoordinate();
-	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
-	      break;	 
-	    case FROMIMGBOX:
-	      break;
-	    case FROMUSERPNT: /* only a buffer makes sense */
-	      if((status = msQueryByPoint(Map, SelectLayerIndex, MS_MULTIPLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
-	    default:
-	      setExtent();
-	      if((status = msQueryByRect(Map, SelectLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
-	      break;
-	    }
-	  } /* end switch */
-	} 
+	    } /* end switch */
+	  } 
 	
-	if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) == -1) writeError();
+	  if(msQueryByFeatures(Map, QueryLayerIndex, SelectLayerIndex) == -1) writeError();
       
-	break;
-      case ITEMQUERY:
-      case ITEMQUERYMAP:
+	  break;
+        case ITEMQUERY:
+        case ITEMQUERYMAP:
 	
-	if(QueryCoordSource != NONE && !UseShapes)
-	  setExtent(); /* set user area of interest */
+	  if(QueryCoordSource != NONE && !UseShapes)
+	    setExtent(); /* set user area of interest */
 
-	if((status = msQueryByAttributes(Map, QueryLayerIndex)) != MS_SUCCESS) writeError();
+	  if((status = msQueryByAttributes(Map, QueryLayerIndex)) != MS_SUCCESS) writeError();
 
-	break;
-      case NQUERY:
-      case NQUERYMAP:
-	switch(QueryCoordSource) {
-	case FROMIMGPNT:	  
-	  setCoordinate();
-	  
-	  if(SearchMap) { // compute new extent, pan etc then search that extent
-	    setExtent();
-	    Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
-	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
-	    if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
-	  } else {
-	    Map->extent = ImgExt; // use the existing image parameters
-	    Map->width = ImgCols;
-	    Map->height = ImgRows;
-	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	 
-	    if((status = msQueryByPoint(Map, QueryLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
-	  }
-	  break;	  
-	case FROMIMGBOX:	  
-	  if(SearchMap) { // compute new extent, pan etc then search that extent
-	    setExtent();
-	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
-	    Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
-	    if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
-	  } else {
-	    double cellx, celly;
-	    
-	    Map->extent = ImgExt; // use the existing image parameters
-	    Map->width = ImgCols;
-	    Map->height = ImgRows;
-	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	  
-	    
-	    cellx = (ImgExt.maxx-ImgExt.minx)/(ImgCols-1); // calculate the new search extent
-	    celly = (ImgExt.maxy-ImgExt.miny)/(ImgRows-1);
-	    RawExt.minx = ImgExt.minx + cellx*ImgBox.minx;
-	    RawExt.maxx = ImgExt.minx + cellx*ImgBox.maxx;
-	    RawExt.miny = ImgExt.maxy - celly*ImgBox.maxy;
-	    RawExt.maxy = ImgExt.maxy - celly*ImgBox.miny;
-	    
-	    if((status = msQueryByRect(Map, QueryLayerIndex, RawExt)) != MS_SUCCESS) writeError();
-	  }
 	  break;
-	case FROMIMGSHAPE:
-	  Map->extent = ImgExt; // use the existing image parameters
-	  Map->width = ImgCols;
-	  Map->height = ImgRows;
-	  Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
-	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+        case NQUERY:
+        case NQUERYMAP:
+	  switch(QueryCoordSource) {
+	  case FROMIMGPNT:	  
+	    setCoordinate();
 	  
-	  // convert from image to map coordinates here (see setCoordinate)
-	  for(i=0; i<SelectShape.numlines; i++) {
-	    for(j=0; j<SelectShape.line[i].numpoints; j++) {
-	      SelectShape.line[i].point[j].x = Map->extent.minx + Map->cellsize*SelectShape.line[i].point[j].x;
-	      SelectShape.line[i].point[j].y = Map->extent.maxy - Map->cellsize*SelectShape.line[i].point[j].y;
+	    if(SearchMap) { // compute new extent, pan etc then search that extent
+	      setExtent();
+	      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+	      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+	      if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
+	    } else {
+	      Map->extent = ImgExt; // use the existing image parameters
+	      Map->width = ImgCols;
+	      Map->height = ImgRows;
+	      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	 
+	      if((status = msQueryByPoint(Map, QueryLayerIndex, MS_MULTIPLE, MapPnt, 0)) != MS_SUCCESS) writeError();
 	    }
-	  }
+	    break;	  
+	  case FROMIMGBOX:	  
+	    if(SearchMap) { // compute new extent, pan etc then search that extent
+	      setExtent();
+	      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
+	      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+	      if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
+	    } else {
+	      double cellx, celly;
+	    
+	      Map->extent = ImgExt; // use the existing image parameters
+	      Map->width = ImgCols;
+	      Map->height = ImgRows;
+	      Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	  
+	    
+	      cellx = (ImgExt.maxx-ImgExt.minx)/(ImgCols-1); // calculate the new search extent
+	      celly = (ImgExt.maxy-ImgExt.miny)/(ImgRows-1);
+	      RawExt.minx = ImgExt.minx + cellx*ImgBox.minx;
+	      RawExt.maxx = ImgExt.minx + cellx*ImgBox.maxx;
+	      RawExt.miny = ImgExt.maxy - celly*ImgBox.maxy;
+	      RawExt.maxy = ImgExt.maxy - celly*ImgBox.miny;
+	    
+	      if((status = msQueryByRect(Map, QueryLayerIndex, RawExt)) != MS_SUCCESS) writeError();
+	    }
+	    break;
+	  case FROMIMGSHAPE:
+	    Map->extent = ImgExt; // use the existing image parameters
+	    Map->width = ImgCols;
+	    Map->height = ImgRows;
+	    Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);
 	  
-	  if((status = msQueryByShape(Map, QueryLayerIndex, &SelectShape)) != MS_SUCCESS) writeError();
-	  break;	  
-	case FROMUSERPNT:
-	  if(Buffer == 0) {
-	    if((status = msQueryByPoint(Map, QueryLayerIndex, MS_MULTIPLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
+	    // convert from image to map coordinates here (see setCoordinate)
+	    for(i=0; i<SelectShape.numlines; i++) {
+	      for(j=0; j<SelectShape.line[i].numpoints; j++) {
+	        SelectShape.line[i].point[j].x = Map->extent.minx + Map->cellsize*SelectShape.line[i].point[j].x;
+	        SelectShape.line[i].point[j].y = Map->extent.maxy - Map->cellsize*SelectShape.line[i].point[j].y;
+	      }
+	    }
+	  
+	    if((status = msQueryByShape(Map, QueryLayerIndex, &SelectShape)) != MS_SUCCESS) writeError();
+	    break;	  
+	  case FROMUSERPNT:
+	    if(Buffer == 0) {
+	      if((status = msQueryByPoint(Map, QueryLayerIndex, MS_MULTIPLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
+	      setExtent();
+	    } else {
+	      setExtent();
+	      if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
+	    }
+	    break;
+	  case FROMUSERSHAPE:
 	    setExtent();
-	  } else {
+	    if((status = msQueryByShape(Map, QueryLayerIndex, &SelectShape)) != MS_SUCCESS) writeError();
+	    break;	  
+	  default: // from an extent of some sort
 	    setExtent();
 	    if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
+	    break;
+	  }      
+	  break;
+        case QUERY:
+        case QUERYMAP:
+	  switch(QueryCoordSource) {
+	  case FROMIMGPNT:
+	    setCoordinate();
+	    Map->extent = ImgExt; // use the existing image parameters
+	    Map->width = ImgCols;
+	    Map->height = ImgRows;
+	    Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	 	  
+	    if((status = msQueryByPoint(Map, QueryLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
+	    break;
+	  
+	  case FROMUSERPNT: /* only a buffer makes sense, DOES IT? */	
+	    setExtent();	
+	    if((status = msQueryByPoint(Map, QueryLayerIndex, MS_SINGLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
+	    break;
+	  
+	  default:
+	    msSetError(MS_WEBERR, "Query mode needs a point, imgxy and mapxy are not set.", "mapserv()");
+	    writeError();
+	    break;
 	  }
 	  break;
-	case FROMUSERSHAPE:
-	  setExtent();
-	  if((status = msQueryByShape(Map, QueryLayerIndex, &SelectShape)) != MS_SUCCESS) writeError();
-	  break;	  
-	default: // from an extent of some sort
-	  setExtent();
-	  if((status = msQueryByRect(Map, QueryLayerIndex, Map->extent)) != MS_SUCCESS) writeError();
+        case INDEXQUERY:
+        case INDEXQUERYMAP:
+	  if((status = msQueryByIndex(Map, QueryLayerIndex, ShapeIndex, TileIndex)) != MS_SUCCESS) writeError();
 	  break;
-	}      
-	break;
-      case QUERY:
-      case QUERYMAP:
-	switch(QueryCoordSource) {
-	case FROMIMGPNT:
-	  setCoordinate();
-	  Map->extent = ImgExt; // use the existing image parameters
-	  Map->width = ImgCols;
-	  Map->height = ImgRows;
-	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution);	 	  
-	  if((status = msQueryByPoint(Map, QueryLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
-	  break;
-	  
-	case FROMUSERPNT: /* only a buffer makes sense, DOES IT? */	
-	  setExtent();	
-	  if((status = msQueryByPoint(Map, QueryLayerIndex, MS_SINGLE, MapPnt, Buffer)) != MS_SUCCESS) writeError();
-	  break;
-	  
-	default:
-	  msSetError(MS_WEBERR, "Query mode needs a point, imgxy and mapxy are not set.", "mapserv()");
-	  writeError();
-	  break;
-	}
-	break;
-      case INDEXQUERY:
-      case INDEXQUERYMAP:
-	if((status = msQueryByIndex(Map, QueryLayerIndex, ShapeIndex, TileIndex)) != MS_SUCCESS) writeError();
-	break;
-      } // end mode switch
+        } // end mode switch
+      }
 
       if(UseShapes)
 	setExtentFromShapes();
