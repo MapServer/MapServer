@@ -20,7 +20,7 @@ typedef struct {
   char **args; /* variable number of projection args */
   int numargs; /* actual number of projection args */ 
 #ifdef USE_PROJ
-  projPJ *proj; /* a projection structure for the PROJ package */
+  projPJ proj; /* a projection structure for the PROJ package */
 #endif
 } projectionObj;
 
