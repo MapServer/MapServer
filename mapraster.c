@@ -952,11 +952,11 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
   y=starty;
   for(i=0; i<img->sy; i++) { /* for each row */
-    if((y > -0.5) && (y < h)) {
+    if((y >= -0.5) && (y < h)) {
       x = startx;
       for(j=0; j<img->sx; j++) {
-	if((x > -0.5) && (x < w)) {
-	  pixel = png->pixels[MS_NINT(y)][MS_NINT(x)];	  
+	if((x >= -0.5) && (x < w)) {
+	  pixel = png->pixels[(y == -0.5)?0:MS_NINT(y)][(x == -0.5) < 0)?0:MS_NINT(x)];	  
 	  if(cmap[pixel] != -1)
 	    img->pixels[i][j] = cmap[pixel];
 	}
@@ -1055,11 +1055,11 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 
   y=starty;
   for(i=0; i<img->sy; i++) { /* for each row */
-    if((y > -0.5) && (y < h)) {
+    if((y >= -0.5) && (y < h)) {
       x = startx;
       for(j=0; j<img->sx; j++) {
-	if((x > -0.5) && (x < w)) {
-	  pixel = gif->pixels[MS_NINT(y)][MS_NINT(x)];	  
+	if((x >= -0.5) && (x < w)) {
+	  pixel = gif->pixels[(y == -0.5)?0:MS_NINT(y)][(x == -0.5)?0:MS_NINT(x)];	  
 	  if(cmap[pixel] != -1)
 	    img->pixels[i][j] = cmap[pixel];
 	}
@@ -1170,8 +1170,8 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
       
       x = startx;
       for(j=0; j<img->sx; j++) {
-	if((x > -0.5) && (x < cinfo.output_width)) {
-	  pixel = buffer[0][MS_NINT(x)];
+	if((x >= -0.5) && (x < cinfo.output_width)) {
+	  pixel = buffer[0][(x == -0.5)?0:MS_NINT(x)];
 	  if(cmap[pixel] != -1)
 	    img->pixels[i][j] = cmap[pixel];
 	}
