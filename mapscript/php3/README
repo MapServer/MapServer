@@ -57,7 +57,7 @@ and the MapServer Map File documentation at:
         MS_LAYER_POINT, MS_LAYER_LINE, MS_LAYER_POLYGON, 
         MS_LAYER_RASTER, MS_LAYER_ANNOTATION, MS_LAYER_QUERY
 
-    Layer/Legend/Scalebar Status:
+    Layer/Legend/Scalebar/Class Status:
         MS_ON, MS_OFF, MS_DEFAULT, MS_EMBED, MS_DELETE
 
     Font types:
@@ -328,7 +328,7 @@ and the MapServer Map File documentation at:
  Members:
    int    numclasses  (read-only)
    int    index       (read-only)
-   int    status
+   int    status      (MS_ON, MS_OFF, MS_DEFAULT or MS_DELETE)
    string classitem
    string name
    string group
@@ -497,6 +497,7 @@ and the MapServer Map File documentation at:
 
    string name
    int    type
+   int    status      (MS_ON, MS_OFF or MS_DELETE)
    int    color
    int    backgroundcolor
    int    outlinecolor
