@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.4  2002/07/08 20:04:58  dan
+ * Added symbolsetfilename and fontsetfilename in PHP MapScript's mapObj
+ *
  * Revision 1.104.2.3  2002/07/08 17:28:16  dan
  * Added map->setFontSet() to MapScript
  *
@@ -1150,6 +1153,10 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value, "keyspacingx",pNewObj->legend.keyspacingx);
     add_property_long(return_value, "keyspacingy",pNewObj->legend.keyspacingy);
 
+    PHPMS_ADD_PROP_STR(return_value, "symbolsetfilename", 
+                                                  pNewObj->symbolset.filename);
+    PHPMS_ADD_PROP_STR(return_value, "fontsetfilename", 
+                                                  pNewObj->fontset.filename);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
@@ -1243,7 +1250,9 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "keyspacingx", self->legend.keyspacingx)
     else IF_SET_LONG(  "keyspacingy", self->legend.keyspacingy)
     else if (strcmp( "numlayers", pPropertyName->value.str.val) == 0 ||
-             strcmp( "extent", pPropertyName->value.str.val) == 0)
+             strcmp( "extent", pPropertyName->value.str.val) == 0 ||
+             strcmp( "symbolsetfilename", pPropertyName->value.str.val) == 0 ||
+             strcmp( "fontsetfilename", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
                             pPropertyName->value.str.val);
@@ -4500,15 +4509,22 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
     if (self == NULL)
         RETURN_FALSE;
 
-    if(pParamFileName->value.str.val != NULL && strlen(pParamFileName->value.str.val) > 0)
+    if(pParamFileName->value.str.val != NULL && 
+       strlen(pParamFileName->value.str.val) > 0)
     {
-        if ((retVal = mapObj_setSymbolSet(self, pParamFileName->value.str.val)) != 0)
+        if ((retVal = mapObj_setSymbolSet(self, 
+                                          pParamFileName->value.str.val)) != 0)
         {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed loading symbolset from %s",
                        pParamFileName->value.str.val);
         }
     }
+
+    if (self->symbolset.filename)
+        _phpms_set_property_string(pThis, "symbolsetfilename", 
+                                   self->symbolset.filename?
+                                       self->symbolset.filename:"", E_ERROR); 
 
     RETURN_LONG(retVal);
 #endif
@@ -4609,6 +4625,11 @@ DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
                        pParamFileName->value.str.val);
         }
     }
+
+    if (self->fontset.filename)
+        _phpms_set_property_string(pThis, "fontsetfilename", 
+                                   self->fontset.filename?
+                                       self->fontset.filename:"", E_ERROR);
 
     RETURN_LONG(retVal);
 #endif
