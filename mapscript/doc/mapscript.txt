@@ -912,7 +912,7 @@ queryByFeatures( mapObj_ map, int slayer ) : int
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened.
 
-queryByPoint( mapObj_ map, pointObj_ point, int mode, double buffer ) : int
+queryByPoint( mapObj_ map, pointObj_ point, int mode, float buffer ) : int
     Query layer at point location specified in georeferenced map 
     coordinates (i.e. not pixels).  
     The query is performed on all the shapes that are part of a CLASS 
@@ -1194,7 +1194,7 @@ setMetaData( string key, string value ) : int
     Assign *value* to the web.metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
 
-setRotation(double rotation_angle) : int
+setRotation(float rotation_angle) : int
     Set map rotation angle. The map view rectangle (specified in 
     EXTENTS) will be rotated by the indicated angle in the counter-
     clockwise direction. Note that this implies the rendered map 
