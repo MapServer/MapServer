@@ -1,0 +1,70 @@
+#
+# makefile.vc - MSVC++ makefile for the C#/MapScript extension
+#
+# This VC++ makefile will build the PHP module CSHARP_MAPSCRIPT.DLL
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+
+
+# Flag indicating to the option files that this is the build of C#/MapScript
+!INCLUDE ../../nmake.opt
+
+OPTFLAGS =	/nologo /Zi $(WARNING_LEVEL) $(DEBUG)
+BASE_CFLAGS = 	$(OPTFLAGS) -DWIN32 -D_WIN32
+LDFLAGS =	/NODEFAULTLIB:msvcrt /NODEFAULTLIB:libcd /dll $(LDEBUG)
+#LDFLAGS =	/NODEFAULTLIB:libcd /dll $(LDEBUG)
+CFLAGS = 	$(BASE_CFLAGS) $(MS_CFLAGS) -I../.. 
+
+CC=     cl
+LINK=   link
+CSC = csc
+SWIG = swig
+
+!IFDEF DLLBUILD
+MS_LIBS = ../../mapserver_i.lib $(EXTERNAL_LIBS)
+!ELSE
+MS_LIBS = $(EXTERNAL_LIBS) ../../mapserver.lib
+!ENDIF
+
+#
+# The rest of the file should not have to be edited...
+#
+
+MAPSCRIPT_OBJS =  mapscript_wrap.obj  
+MAPSCRIPT_DLL =   mapscript.dll
+CSHARP_DLL = mapscript_csharp.dll
+
+default: 	all
+
+all:		interface $(MAPSCRIPT_DLL) $(CSHARP_DLL)
+
+interface: ../mapscript.i
+	$(SWIG) -csharp -DNEXT_GENERATION_API -I.. mapscript.i
+
+.c.obj:
+	$(CC) $(CFLAGS) /DCOMPILE_DL=1 /c $*.c /Fo$*.obj	
+		
+$(MAPSCRIPT_DLL): $(MAPSCRIPT_OBJS)
+	$(LINK) $(LDFLAGS) /out:$(MAPSCRIPT_DLL) $(MAPSCRIPT_OBJS) $(MS_LIBS)
+
+$(CSHARP_DLL)::
+	$(CSC) /t:library /out:mapscript_csharp.dll *.cs
+	$(CSC) /r:mapscript_csharp.dll examples\shpdump.cs
+	$(CSC) /r:mapscript_csharp.dll examples\drawmap.cs
+	$(CSC) /r:mapscript_csharp.dll examples\shapeinfo.cs
+		
+
+clean:
+	del *.obj
+	del *.dll
+	del *.lib
+	del *.pdb
+	del *.exp
+	del *.ilk
+
