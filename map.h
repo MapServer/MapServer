@@ -519,6 +519,7 @@ typedef struct {
   int tileitemindex;
   char *tileindex; /* layer index file for tiling support */
 
+  int units;
   projectionObj projection; /* projection information for the layer */
 
   featureListNodeObjPtr features; // linked list so we don't need a counter

@@ -472,6 +472,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 #endif
 
   switch(layer->type) {
+  case MS_LAYER_ELLIPSE:
+    break;
   case MS_LAYER_ANNOTATION:
     if(!shape->text) return(MS_SUCCESS); // nothing to draw
 

@@ -1542,6 +1542,7 @@ int initLayer(layerObj *layer)
   layer->classitemindex = -1;
   layer->numclasses = 0;
 
+  layer->units = MS_METERS;
   if(msInitProjection(&(layer->projection)) == -1)
     return(-1);
 
@@ -1792,6 +1793,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(TYPE):
       if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION, MS_LAYER_QUERY, MS_LAYER_ELLIPSE)) == -1) return(-1);
+      break;    
+    case(UNITS):
+      if((layer->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
       break;
     default:
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
@@ -2000,6 +2004,10 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msyystate = 2; msyystring = value;
     if((layer->type = getSymbol(8, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_POLYLINE,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_ELLIPSE)) == -1) return;
     break;
+  case(UNITS):
+    msyystate = 2; msyystring = value;
+    if((layer->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return;
+    break;
   default:
     break;
   }
@@ -2076,6 +2084,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
   fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
+  fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
   fprintf(stream, "  END\n\n");
 }
 
