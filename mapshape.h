@@ -65,7 +65,7 @@ typedef SHPInfo * SHPHandle;
 typedef	struct
 {
 #ifdef SWIG
-%readonly
+%immutable;
 #endif
     FILE	*fp;
 
@@ -91,7 +91,7 @@ typedef	struct
     char 	*pszStringField;
     int		nStringFieldLen;    
 #ifdef SWIG
-%readwrite
+%mutable;
 #endif
 } DBFInfo;
 typedef DBFInfo * DBFHandle;
@@ -101,7 +101,7 @@ typedef enum {FTString, FTInteger, FTDouble, FTInvalid} DBFFieldType;
 // Shapefile object, no write access via scripts                               
 typedef struct {
 #ifdef SWIG
-%readonly
+%immutable;
 #endif
   char source[MS_PATH_LENGTH]; // full path to this file data
 
@@ -126,7 +126,7 @@ typedef struct {
   rectObj statusbounds; // holds extent associated with the status vector
 
 #ifdef SWIG
-%readwrite
+%mutable;
 #endif
 } shapefileObj;
 
