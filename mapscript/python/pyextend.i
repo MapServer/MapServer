@@ -79,14 +79,14 @@
         int size;
         PyObject *imgstring; 
 
-#if GD2_VERS > 1
+%#if GD2_VERS > 1
         if (self->format->imagemode == MS_IMAGEMODE_RGBA) {
             gdImageSaveAlpha(self->img.gd, 1);
         }
         else if (self->format->imagemode == MS_IMAGEMODE_RGB) {
             gdImageSaveAlpha(self->img.gd, 0);
         }
-#endif 
+%#endif 
 
         if (strcasecmp("ON", 
             msGetOutputFormatOption(self->format, "INTERLACE", "ON" )) == 0) {
@@ -99,38 +99,38 @@
         }
 
         if (strcasecmp(self->format->driver, "gd/gif") == 0) {
-#ifdef USE_GD_GIF
+%#ifdef USE_GD_GIF
             imgbytes = gdImageGifPtr(self->img.gd, &size);
-#else
+%#else
             msSetError(MS_IMGERR, "GIF output is not available.", 
                        "saveToString()");
             return(MS_FAILURE);
-#endif
+%#endif
         } else if (strcasecmp(self->format->driver, "gd/png") == 0) {
-#ifdef USE_GD_PNG
+%#ifdef USE_GD_PNG
             imgbytes = gdImagePngPtr(self->img.gd, &size);
-#else
+%#else
             msSetError(MS_IMGERR, "PNG output is not available.", 
                        "saveToString()");
             return(MS_FAILURE);
-#endif
+%#endif
         } else if (strcasecmp(self->format->driver, "gd/jpeg") == 0) {
-#ifdef USE_GD_JPEG
+%#ifdef USE_GD_JPEG
             imgbytes = gdImageJpegPtr(self->img.gd, &size, 
                 atoi(msGetOutputFormatOption(self->format, "QUALITY", "75" )));
-#else
+%#else
             msSetError(MS_IMGERR, "JPEG output is not available.", 
                        "saveToString()");
             return(MS_FAILURE);
-#endif
+%#endif
         } else if (strcasecmp(self->format->driver, "gd/wbmp") == 0) {
-#ifdef USE_GD_WBMP
+%#ifdef USE_GD_WBMP
             imgbytes = gdImageWBMPPtr(self->img.gd, &size, 1);
-#else
+%#else
             msSetError(MS_IMGERR, "WBMP output is not available.", 
                       "saveToString()");
             return(MS_FAILURE);
-#endif
+%#endif
         } else {
             msSetError(MS_IMGERR, "Unknown output image type driver: %s.", 
                        "saveToString()", self->format->driver );
