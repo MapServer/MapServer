@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/11/21 00:16:22  sean
+ * prevent array lookup of NULL hash table items, simplify msFreeHashTable (bug 1077).
+ *
  * Revision 1.14  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -81,22 +84,7 @@ int initHashTable( hashTableObj *table )
 
 void msFreeHashTable( hashTableObj *table )
 {
-    int i;
-    struct hashObj *tp=NULL;
-    struct hashObj *prev_tp=NULL;
-
-    if (!table) return;
-
-    for (i=0; i<MS_HASHSIZE; i++) {
-        if (table->items[i] != NULL) {
-            for (tp=table->items[i]; tp!=NULL; prev_tp=tp,tp=tp->next,free(prev_tp)) {
-	            free(tp->key);
-	            free(tp->data);
-            }
-        }
-        if (tp) free(tp);
-    }
-    free(table->items);
+    msFreeHashItems(table);
     free(table);
     table = NULL;
 }
@@ -107,18 +95,36 @@ void msFreeHashItems( hashTableObj *table )
     struct hashObj *tp=NULL;
     struct hashObj *prev_tp=NULL;
 
-    if (!table) return;
-
-    for (i=0; i<MS_HASHSIZE; i++) {
-        if (table->items[i] != NULL) {
-            for (tp=table->items[i]; tp!=NULL; prev_tp=tp,tp=tp->next,free(prev_tp)) {
-	            free(tp->key);
-	            free(tp->data);
+    if (table)
+    {
+        if (table->items)
+        {
+            for (i=0; i<MS_HASHSIZE; i++) 
+            {
+                if (table->items[i] != NULL) 
+                {
+                    for (tp=table->items[i];
+                         tp!=NULL; 
+                         prev_tp=tp,tp=tp->next,free(prev_tp)) 
+                    {
+	                    free(tp->key);
+	                    free(tp->data);
+                    }
+                }
+                if (tp) free(tp);
             }
+        free(table->items);
+        table->items = NULL;
         }
-        if (tp) free(tp);
+        else
+        {
+            msSetError(MS_HASHERR, "Table has no items", "msFreeHashItems()");
+        }
     }
-    free(table->items);
+    else
+    {
+        msSetError(MS_HASHERR, "Can't free NULL table", "msFreeHashItems()");
+    }
 }
 
 struct hashObj *msInsertHashTable(hashTableObj *table, 
