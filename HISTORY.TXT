@@ -16,6 +16,11 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
+- Genrate a RULE <Name> tag when generating an SLD. (Bug 1010)
+
+-  WMS GetLegendGraphic uses now the RULE value to return an icon for
+   a class that has the same name as the RULE value (Bug 843)
+ 
 - Add msOWSPrintURLType: This funciton is a generic URL printing fuction for 
   OGC specification metadata (WMS, WFS, WCS, WMC, etc.) (Bug 944).
 
