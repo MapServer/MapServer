@@ -1,10 +1,12 @@
 #include "map.h"
 #include "maperror.h"
-#include "gdal.h"
 #include "mapthread.h"
-#include "cpl_string.h" // GDAL string handling
 
 #ifdef USE_WCS_SVR
+
+#include "gdal.h"
+#include "cpl_string.h" // GDAL string handling
+
 /*
 ** Structure to hold metadata taken from the image or image tile index
 */
@@ -1113,4 +1115,5 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
 
   return MS_SUCCESS;
 }
-#endif
+#endif /* def USE_WCS_SVR */
+
