@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- In PHP Mpascript when using  ms_newrectobj, the members minx, miny,
+  maxx, maxy are initialized to -1 (Bug 788).
+
 - Write out proper world file with remote WMS result, it was off by half
   a pixel. (Bug 1050).
 
