@@ -48,13 +48,6 @@ and then proceed to the build step explained above.  If you are
 using Python 2.2 or 2.3, you should add a -modern option which
 produces a higher performance module.
 
-Users who would like to try the next generation API should add
-the -DNEXT_GENERATION_API option to the swig statement.
-
-::
-
-    swig -python -shadow -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
-
 
 Testing
 ----------------------------------------------------------------

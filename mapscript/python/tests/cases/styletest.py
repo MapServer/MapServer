@@ -183,12 +183,7 @@ class BrushCachingTestCase(MapTestCase):
         # pull out the first feature from polygon layer, shift it
         # and use this as an inline feature in new layer
         p.open()
-        s0 = None
-        try:
-            s0 = mapscript.shapeObj(p.type)
-            p.getShape(s0, -1, 0)
-        except:
-            s0 = p.getShape(0)
+        s0 = p.getFeature(0)
         p.close()
         r0 = s0.bounds
         r1 = mapscript.rectObj(r0.minx-0.1, r0.miny-0.1, r0.maxx-0.1, r0.maxy-0.1)

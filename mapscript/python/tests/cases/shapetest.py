@@ -52,9 +52,9 @@ class ShapePointTestCase(ShapeObjTestCase):
     def testCreateShape(self):
         """ShapePointTestCase.testCreateShape: the number of lines is correct"""
         assert self.shape.numlines == 1
-    def testShapeCopy(self):
+    def testShapeClone(self):
         """ShapePointTestCase.testShapeCopy: test shape can be copied"""
-        s = self.copyShape(self.shape)
+        s = self.shape.clone()
         self.assertShapesEqual(self.shape, s)
 
 class InlineFeatureTestCase(MapTestCase):
@@ -76,12 +76,8 @@ class InlineFeatureTestCase(MapTestCase):
     def testGetShape(self):
         """InlineFeatureTestCase.testGetShape: returning the shape from an inline feature works"""
         inline_layer = self.map.getLayerByName('INLINE')
-        s = mapscript.shapeObj(inline_layer.type)
         inline_layer.open()
-        try:
-            inline_layer.getShape(s, 0, 0)
-        except TypeError: # next generation API
-            s = inline_layer.getShape(0)
+        s = inline_layer.getFeature(0)
         l = self.getLineFromShape(s, 0)
         p = self.getPointFromLine(l, 0)
         self.assertAlmostEqual(p.x, -0.2)

@@ -57,11 +57,7 @@
         return msProjectLine(projin, projout, self);
     }
 
-#ifdef NEXT_GENERATION_API
-    pointObj *getPoint(int i) 
-#else
     pointObj *get(int i) 
-#endif
     {
         if (i<0 || i>=self->numpoints)
             return NULL;
@@ -69,11 +65,7 @@
             return &(self->point[i]);
     }
 
-#ifdef NEXT_GENERATION_API
-    int addPoint(pointObj *p) 
-#else
     int add(pointObj *p)
-#endif
     {
         if (self->numpoints == 0) { /* new */	
         self->point = (pointObj *)malloc(sizeof(pointObj));      
@@ -93,11 +85,7 @@
         return MS_SUCCESS;
     }
 
-#ifdef NEXT_GENERATION_API
-    int setPoint(int i, pointObj *p)
-#else
     int set(int i, pointObj *p)
-#endif
     {
         if (i<0 || i>=self->numpoints) // invalid index
             return MS_FAILURE;

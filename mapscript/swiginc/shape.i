@@ -58,22 +58,14 @@
         return msProjectShape(projin, projout, self);
     }
 
-#ifdef NEXT_GENERATION_API
-    lineObj *getLine(int i) {
-#else
     lineObj *get(int i) {
-#endif
-    if (i<0 || i>=self->numlines)
-        return NULL;
-    else
-        return &(self->line[i]);
-  }
+        if (i<0 || i>=self->numlines)
+            return NULL;
+        else
+            return &(self->line[i]);
+    }
 
-#ifdef NEXT_GENERATION_API
-    int addLine(lineObj *line) {
-#else
     int add(lineObj *line) {
-#endif
         return msAddLine(self, line);
     }
 
@@ -87,9 +79,13 @@
         return;
     }
 
-#ifdef NEXT_GENERATION_API
-    %newobject copy;
-    shapeObj *copy() 
+#ifdef SWIGJAVA
+    %newobject cloneShape;
+    shapeObj *cloneShape()
+#else
+    %newobject clone;
+    shapeObj *clone()
+#endif
     {
         shapeObj *shape;
         shape = (shapeObj *)malloc(sizeof(shapeObj));
@@ -100,12 +96,11 @@
         msCopyShape(self, shape);
         return shape;
     }
-#else
+
     int copy(shapeObj *dest) 
     {
         return(msCopyShape(self, dest));
     }
-#endif
 
     char *getValue(int i) 
     { // returns an EXISTING value

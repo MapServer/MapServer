@@ -110,9 +110,8 @@
         msLayerClose(self);
     }
 
-#ifdef NEXT_GENERATION_API
-    %newobject getShape;
-    shapeObj *getShape(int shapeindex, int tileindex=0) 
+    %newobject getFeature;
+    shapeObj *getFeature(int shapeindex, int tileindex=-1) 
     {
     /* This version properly returns shapeObj and also has its
      * arguments properly ordered so that users can ignore the
@@ -129,12 +128,11 @@
         retval = msLayerGetShape(self, shape, tileindex, shapeindex);
         return shape;
     }
-#else
+
     int getShape(shapeObj *shape, int tileindex, int shapeindex) 
     {
         return msLayerGetShape(self, shape, tileindex, shapeindex);
     }
-#endif
   
     int getNumResults() 
     {

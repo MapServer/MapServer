@@ -176,13 +176,5 @@ class MapZoomTestCase(MapPrimitivesTestCase):
 
 class ShapeObjTestCase(MapPrimitivesTestCase):
     """Base class for shapeObj tests"""
-    def copyShape(self, shape):
-        try:
-            return shape.copy()
-        except TypeError:
-            s = mapscript.shapeObj(shape.type)
-            shape.copy(s)
-            return s
-        except:
-            raise
+    pass
 
