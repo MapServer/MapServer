@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/03/16 15:11:17  frank
+ * fixed bugs for geographic, don't write interim.png
+ *
  * Revision 1.2  2001/03/14 17:55:36  frank
  * fixed bug in non-GDAL case
  *
@@ -88,7 +91,7 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
             nSrcX = (int) x[nDstX];
             nSrcY = (int) y[nDstX];
 
-            if( nSrcX < 0 || nSrcY < 0 
+            if( x[nDstX] < 0.0 || y[nDstX] < 0.0
                 || nSrcX >= nSrcXSize || nSrcY >= nSrcYSize )
                 continue;
 
@@ -108,11 +111,14 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
     return 0;
 }
 
+#ifdef USE_PROJ
 typedef struct 
 {
     PJ *psSrcProj;
+    int bSrcIsGeographic;
     double adfSrcGeoTransform[6];
     PJ *psDstProj;
+    int bDstIsGeographic;
     double adfDstGeoTransform[6];
 } msProjTransformInfo;
 
@@ -131,10 +137,12 @@ void *msInitProjTransformer( projectionObj *psSrc,
     psPTInfo = (msProjTransformInfo *) malloc(sizeof(msProjTransformInfo));
 
     psPTInfo->psSrcProj = psSrc->proj;
+    psPTInfo->bSrcIsGeographic = psSrc->proj->is_latlong;
     memcpy( psPTInfo->adfSrcGeoTransform, padfSrcGeoTransform, 
             sizeof(double) * 6 );
 
     psPTInfo->psDstProj = psDst->proj;
+    psPTInfo->bDstIsGeographic = psDst->proj->is_latlong;
     memcpy( psPTInfo->adfDstGeoTransform, padfDstGeoTransform, 
             sizeof(double) * 6 );
 
@@ -180,6 +188,18 @@ int msProjTransformer( void *pCBData, int nPoints,
     }
         
 /* -------------------------------------------------------------------- */
+/*      Transform from degrees to radians if geographic.                */
+/* -------------------------------------------------------------------- */
+    if( psPTInfo->bDstIsGeographic )
+    {
+        for( i = 0; i < nPoints; i++ )
+        {
+            x[i] = x[i] * DEG_TO_RAD;
+            y[i] = y[i] * DEG_TO_RAD;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Transform back to source projection space.                      */
 /* -------------------------------------------------------------------- */
     if( psPTInfo->psDstProj != NULL
@@ -196,6 +216,18 @@ int msProjTransformer( void *pCBData, int nPoints,
     }
 
 /* -------------------------------------------------------------------- */
+/*      Transform back to degrees if source is geographic.              */
+/* -------------------------------------------------------------------- */
+    if( psPTInfo->bSrcIsGeographic )
+    {
+        for( i = 0; i < nPoints; i++ )
+        {
+            x[i] = x[i] * DEG_TO_RAD;
+            y[i] = y[i] * DEG_TO_RAD;
+        }
+    }
+
+/* -------------------------------------------------------------------- */
 /*      Transform to source raster space.                               */
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nPoints; i++ )
@@ -207,8 +239,9 @@ int msProjTransformer( void *pCBData, int nPoints,
         x[i] = x_out;
     }
 
-    return TRUE;
+    return 1;
 }
+#endif /* def USE_PROJ */
 
 #ifdef USE_GDAL
 /************************************************************************/
@@ -296,13 +329,36 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
         z[i] = 0.0;
     }
 
+    if( map->projection.proj->is_latlong )
+    {
+        for( i = 0; i < nSamples; i++ )
+        {
+            x[i] = x[i] * DEG_TO_RAD;
+            y[i] = y[i] * DEG_TO_RAD;
+        }
+    }
+
     /* transform to layer georeferenced coordinates. */
     if( pj_transform( map->projection.proj, layer->projection.proj, 
                       nSamples, 1, x, y, z ) != 0 )
     {
-        msSetError(MS_PROJERR, pj_strerrno(pj_errno), 
-                   "pj_transform() failed for edge point(s).");      
+        char	szErrorMsg[2048];
+
+        sprintf( szErrorMsg, 
+                 "%spj_transform() failed for edge point(s).",
+                 pj_strerrno(pj_errno));
+
+        msSetError(MS_PROJERR, szErrorMsg, "msResampleGDALToMap()" );
         return MS_PROJERR;
+    }
+
+    if( layer->projection.proj->is_latlong )
+    {
+        for( i = 0; i < nSamples; i++ )
+        {
+            x[i] = x[i] * RAD_TO_DEG;
+            y[i] = y[i] * RAD_TO_DEG;
+        }
     }
 
     /* transform to layer raster coordinates, and collect bounds. */
@@ -359,7 +415,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     else
         sDummyMap.cellsize = adfSrcGeoTransform[1];
 
-    fprintf( stderr, "cellsize = %f\n", sDummyMap.cellsize );
+    msDebug( "cellsize = %f\n", sDummyMap.cellsize );
 
     sDummyMap.extent.minx = sSrcExtent.minx * adfSrcGeoTransform[1]
         + adfSrcGeoTransform[0];
@@ -421,6 +477,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 /* -------------------------------------------------------------------- */
 /*      cleanup                                                         */
 /* -------------------------------------------------------------------- */
+#ifdef notdef
     {
         FILE	*fp;
 
@@ -428,6 +485,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
         gdImagePng( srcImg, fp );
         fclose( fp );
     }
+#endif
 
     gdImageDestroy( srcImg );
 
