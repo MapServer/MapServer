@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2001/09/10 13:33:18  frank
+ * modified to avoid using layer->data since it may be NULL
+ *
  * Revision 1.18  2001/09/05 13:24:47  frank
  * fixed last fix related to Z coordinate handling
  *
@@ -681,9 +684,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     adfDstGeoTransform[4] = 0.0;
     adfDstGeoTransform[5] = - map->cellsize;
 
-    if (GDALGetGeoTransform( hDS, adfSrcGeoTransform ) != CE_None)
+    if (GDALGetGeoTransform( hDS, adfSrcGeoTransform ) != CE_None
+        && GDALGetDescription(hDS) != NULL )
     {
-        GDALReadWorldFile(layer->data, "wld", adfSrcGeoTransform);
+        GDALReadWorldFile(GDALGetDescription(hDS), "wld", adfSrcGeoTransform);
     }
     nSrcXSize = GDALGetRasterXSize( hDS );
     nSrcYSize = GDALGetRasterYSize( hDS );
