@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.99  2004/11/16 19:18:43  assefa
+ * Make sure that the timestring is complete for pg layers (Bug 837)
+ *
  * Revision 1.98  2004/11/15 21:11:23  dan
  * Moved the layer->getExtent() logic down to msLayerGetExtent() (bug 1051)
  *
@@ -1200,7 +1203,7 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
     char *timeresolution = NULL;
     int timesresol = -1;
     char **atimes, **tokens = NULL;
-    int numtimes,i, ntmp = 0;
+    int numtimes=0,i=0,ntmp=0,nlength=0;
     char buffer[512];
 
     buffer[0] = '\0';
@@ -1296,7 +1299,46 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
         strcat(buffer, " = ");
         strcat(buffer,  "'");
         strcat(buffer, timestring);
+        //make sure that the timestring is complete and acceptable
+        //to the date_trunc function :
+        // - if the resolution is year (2004) or month (2004-01), 
+        //a complete string for time would be 2004-01-01
+        // - if the resolluion is hour or minute (2004-01-01 15), a 
+        // complete time is 2004-01-01 15:00:00
+        if (strcasecmp(timeresolution, "year")==0)
+        {
+            nlength = strlen(timestring);
+            if (timestring[nlength-1] != '-')
+              strcat(buffer,"-01-01");
+            else
+              strcat(buffer,"01-01");
+        }            
+        else if (strcasecmp(timeresolution, "month")==0)
+        {
+            nlength = strlen(timestring);
+            if (timestring[nlength-1] != '-')
+              strcat(buffer,"-01");
+            else
+              strcat(buffer,"01");
+        }            
+        else if (strcasecmp(timeresolution, "hour")==0)
+        {
+            nlength = strlen(timestring);
+            if (timestring[nlength-1] != ':')
+              strcat(buffer,":00:00");
+            else
+              strcat(buffer,"00:00");
+        }            
+        else if (strcasecmp(timeresolution, "minute")==0)
+        {
+            nlength = strlen(timestring);
+            if (timestring[nlength-1] != ':')
+              strcat(buffer,":00");
+            else
+              strcat(buffer,"00");
+        }            
         
+
         strcat(buffer,  "'");
 
         strcat(buffer, ")");
@@ -1342,7 +1384,43 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
                     strcat(buffer,  "'");
 
                     strcat(buffer, tokens[0]);
-                    
+                    // - if the resolution is year (2004) or month (2004-01), 
+                    //a complete string for time would be 2004-01-01
+                    // - if the resolluion is hour or minute (2004-01-01 15), a 
+                    // complete time is 2004-01-01 15:00:00
+                    if (strcasecmp(timeresolution, "year")==0)
+                    {
+                        nlength = strlen(tokens[0]);
+                        if (tokens[0][nlength-1] != '-')
+                          strcat(buffer,"-01-01");
+                        else
+                          strcat(buffer,"01-01");
+                    }            
+                    else if (strcasecmp(timeresolution, "month")==0)
+                    {
+                        nlength = strlen(tokens[0]);
+                        if (tokens[0][nlength-1] != '-')
+                          strcat(buffer,"-01");
+                        else
+                          strcat(buffer,"01");
+                    }            
+                    else if (strcasecmp(timeresolution, "hour")==0)
+                    {
+                        nlength = strlen(tokens[0]);
+                        if (tokens[0][nlength-1] != ':')
+                          strcat(buffer,":00:00");
+                        else
+                          strcat(buffer,"00:00");
+                    }            
+                    else if (strcasecmp(timeresolution, "minute")==0)
+                    {
+                        nlength = strlen(tokens[0]);
+                        if (tokens[0][nlength-1] != ':')
+                          strcat(buffer,":00");
+                        else
+                          strcat(buffer,"00");
+                    }            
+
                     strcat(buffer,  "'");
                     strcat(buffer, " AND ");
 
@@ -1357,7 +1435,44 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
                     
                     strcat(buffer,  "'");
                     strcat(buffer, tokens[1]);
-                    
+
+                    // - if the resolution is year (2004) or month (2004-01), 
+                    //a complete string for time would be 2004-01-01
+                    // - if the resolluion is hour or minute (2004-01-01 15), a 
+                    // complete time is 2004-01-01 15:00:00
+                    if (strcasecmp(timeresolution, "year")==0)
+                    {
+                        nlength = strlen(tokens[1]);
+                        if (tokens[1][nlength-1] != '-')
+                          strcat(buffer,"-01-01");
+                        else
+                          strcat(buffer,"01-01");
+                    }            
+                    else if (strcasecmp(timeresolution, "month")==0)
+                    {
+                        nlength = strlen(tokens[1]);
+                        if (tokens[1][nlength-1] != '-')
+                          strcat(buffer,"-01");
+                        else
+                          strcat(buffer,"01");
+                    }            
+                    else if (strcasecmp(timeresolution, "hour")==0)
+                    {
+                        nlength = strlen(tokens[1]);
+                        if (tokens[1][nlength-1] != ':')
+                          strcat(buffer,":00:00");
+                        else
+                          strcat(buffer,"00:00");
+                    }            
+                    else if (strcasecmp(timeresolution, "minute")==0)
+                    {
+                        nlength = strlen(tokens[1]);
+                        if (tokens[1][nlength-1] != ':')
+                          strcat(buffer,":00");
+                        else
+                          strcat(buffer,"00");
+                    }            
+
                     strcat(buffer,  "'");
                     strcat(buffer, ")");
                 }
@@ -1390,6 +1505,45 @@ int msPOSTGISLayerSetTimeFilter(layerObj *lp,
 
                 strcat(buffer, atimes[i]);
                 
+                //make sure that the timestring is complete and acceptable
+                //to the date_trunc function :
+                // - if the resolution is year (2004) or month (2004-01), 
+                //a complete string for time would be 2004-01-01
+                // - if the resolluion is hour or minute (2004-01-01 15), a 
+                // complete time is 2004-01-01 15:00:00
+                if (strcasecmp(timeresolution, "year")==0)
+                {
+                    nlength = strlen(atimes[i]);
+                    if (atimes[i][nlength-1] != '-')
+                      strcat(buffer,"-01-01");
+                    else
+                      strcat(buffer,"01-01");
+                }            
+                else if (strcasecmp(timeresolution, "month")==0)
+                {
+                    nlength = strlen(atimes[i]);
+                    if (atimes[i][nlength-1] != '-')
+                      strcat(buffer,"-01");
+                    else
+                      strcat(buffer,"01");
+                }            
+                else if (strcasecmp(timeresolution, "hour")==0)
+                {
+                    nlength = strlen(atimes[i]);
+                    if (atimes[i][nlength-1] != ':')
+                      strcat(buffer,":00:00");
+                    else
+                      strcat(buffer,"00:00");
+                }            
+                else if (strcasecmp(timeresolution, "minute")==0)
+                {
+                    nlength = strlen(atimes[i]);
+                    if (atimes[i][nlength-1] != ':')
+                      strcat(buffer,":00");
+                    else
+                      strcat(buffer,"00");
+                }            
+
                 strcat(buffer,  "'");
                 strcat(buffer, ")");
             } 
