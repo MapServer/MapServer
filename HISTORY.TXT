@@ -41,6 +41,16 @@ Version 4.3 (CVS)
 - Removed "xbasewohoo" debug output when using JOINs and fixed a few 
   error messages related to MySQL joins (bug 652)
 
+- Fixed "raster cracking" problem (bug 493)
+
+- Improvements to Makefile.vc, and nmake.opt so that a mapscriptvars file
+  can be produced on windows.  
+
+- Updated setup.py so Python MapScript builds on win32. 
+
+- Added preliminary raster query support.
+
+
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
