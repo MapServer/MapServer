@@ -2821,9 +2821,10 @@ ALL_ENABLED="$EPPL_ENABLED $ALL_ENABLED"
 
 unset ac_cv_lib_proj_pj_init
 unset ac_cv_lib_proj_pj_transform
+unset ac_cv_lib_proj_pj_latlong_from_proj
 
 echo "checking whether we should include PROJ.4 support..." 1>&6
-echo "configure:2827: checking whether we should include PROJ.4 support..." >&5
+echo "configure:2828: checking whether we should include PROJ.4 support..." >&5
 # Check whether --with-proj or --without-proj was given.
 if test "${with_proj+set}" = set; then
   withval="$with_proj"
@@ -2834,7 +2835,7 @@ fi
 if test "$with_proj" = "yes" ; then
 
   echo $ac_n "checking for pj_init in -lproj""... $ac_c" 1>&6
-echo "configure:2838: checking for pj_init in -lproj" >&5
+echo "configure:2839: checking for pj_init in -lproj" >&5
 ac_lib_var=`echo proj'_'pj_init | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -2842,7 +2843,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lproj  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 2846 "configure"
+#line 2847 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -2853,7 +2854,7 @@ int main() {
 pj_init()
 ; return 0; }
 EOF
-if { (eval echo configure:2857: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:2858: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -2874,7 +2875,7 @@ else
 fi
 
   echo $ac_n "checking for pj_transform in -lproj""... $ac_c" 1>&6
-echo "configure:2878: checking for pj_transform in -lproj" >&5
+echo "configure:2879: checking for pj_transform in -lproj" >&5
 ac_lib_var=`echo proj'_'pj_transform | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -2882,7 +2883,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lproj  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 2886 "configure"
+#line 2887 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -2893,7 +2894,7 @@ int main() {
 pj_transform()
 ; return 0; }
 EOF
-if { (eval echo configure:2897: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:2898: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -2915,7 +2916,7 @@ PJ_TRANSFORM=no
 fi
 
   echo $ac_n "checking for pj_latlong_from_proj in -lproj""... $ac_c" 1>&6
-echo "configure:2919: checking for pj_latlong_from_proj in -lproj" >&5
+echo "configure:2920: checking for pj_latlong_from_proj in -lproj" >&5
 ac_lib_var=`echo proj'_'pj_latlong_from_proj | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -2923,7 +2924,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lproj  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 2927 "configure"
+#line 2928 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -2934,7 +2935,7 @@ int main() {
 pj_latlong_from_proj()
 ; return 0; }
 EOF
-if { (eval echo configure:2938: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:2939: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3012,7 +3013,7 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
   fi
 
   echo $ac_n "checking for pj_transform in -lproj""... $ac_c" 1>&6
-echo "configure:3016: checking for pj_transform in -lproj" >&5
+echo "configure:3017: checking for pj_transform in -lproj" >&5
 ac_lib_var=`echo proj'_'pj_transform | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3020,7 +3021,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lproj $PROJ_LIB $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3024 "configure"
+#line 3025 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -3031,7 +3032,7 @@ int main() {
 pj_transform()
 ; return 0; }
 EOF
-if { (eval echo configure:3035: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3036: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3053,7 +3054,7 @@ PJ_TRANSFORM=no
 fi
 
   echo $ac_n "checking for pj_latlong_from_proj in -lproj""... $ac_c" 1>&6
-echo "configure:3057: checking for pj_latlong_from_proj in -lproj" >&5
+echo "configure:3058: checking for pj_latlong_from_proj in -lproj" >&5
 ac_lib_var=`echo proj'_'pj_latlong_from_proj | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3061,7 +3062,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lproj $PROJ_LIB $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3065 "configure"
+#line 3066 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -3072,7 +3073,7 @@ int main() {
 pj_latlong_from_proj()
 ; return 0; }
 EOF
-if { (eval echo configure:3076: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3077: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3119,7 +3120,7 @@ ALL_LIB="$PROJ_LIB $ALL_LIB"
 
 
 echo "checking whether we should include ESRI SDE support..." 1>&6
-echo "configure:3123: checking whether we should include ESRI SDE support..." >&5
+echo "configure:3124: checking whether we should include ESRI SDE support..." >&5
 # Check whether --with-sde or --without-sde was given.
 if test "${with_sde+set}" = set; then
   withval="$with_sde"
@@ -3141,7 +3142,7 @@ echo "$ac_t""SDE Version is $SDE_VERSION." 1>&6
 if test "$with_sde" = "yes" ; then
 
   echo $ac_n "checking for SE_connection_create in -lsde$SDE_VERSION""... $ac_c" 1>&6
-echo "configure:3145: checking for SE_connection_create in -lsde$SDE_VERSION" >&5
+echo "configure:3146: checking for SE_connection_create in -lsde$SDE_VERSION" >&5
 ac_lib_var=`echo sde$SDE_VERSION'_'SE_connection_create | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3149,7 +3150,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lsde$SDE_VERSION  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3153 "configure"
+#line 3154 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -3160,7 +3161,7 @@ int main() {
 SE_connection_create()
 ; return 0; }
 EOF
-if { (eval echo configure:3164: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3165: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3184,7 +3185,7 @@ fi
   if test -n "$SDE_ENABLED" ; then
       SDE_LIB="-lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
       echo $ac_n "checking for main in -lpthread""... $ac_c" 1>&6
-echo "configure:3188: checking for main in -lpthread" >&5
+echo "configure:3189: checking for main in -lpthread" >&5
 ac_lib_var=`echo pthread'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3192,14 +3193,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lpthread  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3196 "configure"
+#line 3197 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:3203: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3204: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3220,7 +3221,7 @@ else
 fi
 
       echo $ac_n "checking for main in -lsocket""... $ac_c" 1>&6
-echo "configure:3224: checking for main in -lsocket" >&5
+echo "configure:3225: checking for main in -lsocket" >&5
 ac_lib_var=`echo socket'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3228,14 +3229,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lsocket  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3232 "configure"
+#line 3233 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:3239: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3240: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3256,7 +3257,7 @@ else
 fi
 
       echo $ac_n "checking for main in -ldl""... $ac_c" 1>&6
-echo "configure:3260: checking for main in -ldl" >&5
+echo "configure:3261: checking for main in -ldl" >&5
 ac_lib_var=`echo dl'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3264,14 +3265,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-ldl  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3268 "configure"
+#line 3269 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:3275: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3276: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3316,7 +3317,7 @@ elif test -n "$with_sde" -a "$with_sde" != "no" ; then
       SDE_INC=-I$SDE_INCDIR
       SDE_LIB="-L$SDE_LIBDIR -lsde$SDE_VERSION -lpe$SDE_VERSION -lsg$SDE_VERSION"
       echo $ac_n "checking for main in -lpthread""... $ac_c" 1>&6
-echo "configure:3320: checking for main in -lpthread" >&5
+echo "configure:3321: checking for main in -lpthread" >&5
 ac_lib_var=`echo pthread'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3324,14 +3325,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lpthread  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3328 "configure"
+#line 3329 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:3335: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3336: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3352,7 +3353,7 @@ else
 fi
 
       echo $ac_n "checking for main in -lsocket""... $ac_c" 1>&6
-echo "configure:3356: checking for main in -lsocket" >&5
+echo "configure:3357: checking for main in -lsocket" >&5
 ac_lib_var=`echo socket'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3360,14 +3361,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lsocket  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3364 "configure"
+#line 3365 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:3371: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3372: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3388,7 +3389,7 @@ else
 fi
 
       echo $ac_n "checking for main in -ldl""... $ac_c" 1>&6
-echo "configure:3392: checking for main in -ldl" >&5
+echo "configure:3393: checking for main in -ldl" >&5
 ac_lib_var=`echo dl'_'main | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3396,14 +3397,14 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-ldl  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3400 "configure"
+#line 3401 "configure"
 #include "confdefs.h"
 
 int main() {
 main()
 ; return 0; }
 EOF
-if { (eval echo configure:3407: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3408: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3467,7 +3468,7 @@ ALL_LIB="$SDE_LIB $ALL_LIB"
 
 
 echo "checking whether we should compile in MPATROL support..." 1>&6
-echo "configure:3471: checking whether we should compile in MPATROL support..." >&5
+echo "configure:3472: checking whether we should compile in MPATROL support..." >&5
 # Check whether --with-mpatrol or --without-mpatrol was given.
 if test "${with_mpatrol+set}" = set; then
   withval="$with_mpatrol"
@@ -3477,7 +3478,7 @@ fi
 
 if test "$with_mpatrol" = "yes" ; then
   echo $ac_n "checking for __mp_free in -lmpatrol""... $ac_c" 1>&6
-echo "configure:3481: checking for __mp_free in -lmpatrol" >&5
+echo "configure:3482: checking for __mp_free in -lmpatrol" >&5
 ac_lib_var=`echo mpatrol'_'__mp_free | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3485,7 +3486,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lmpatrol  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3489 "configure"
+#line 3490 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -3496,7 +3497,7 @@ int main() {
 __mp_free()
 ; return 0; }
 EOF
-if { (eval echo configure:3500: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3501: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3586,7 +3587,7 @@ ALL_LIB="$MPATROL_LIB $ALL_LIB"
 
 
 echo "checking whether we should include OGR support..." 1>&6
-echo "configure:3590: checking whether we should include OGR support..." >&5
+echo "configure:3591: checking whether we should include OGR support..." >&5
 # Check whether --with-ogr or --without-ogr was given.
 if test "${with_ogr+set}" = set; then
   withval="$with_ogr"
@@ -3602,7 +3603,7 @@ if test "$with_ogr" = "yes" ; then
  # Extract the first word of "gdal-config", so it can be a program name with args.
 set dummy gdal-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:3606: checking for $ac_word" >&5
+echo "configure:3607: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GDAL_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -3646,7 +3647,7 @@ if test -n "$GDAL_CONFIG" ; then
   saved_LIBS="$LIBS"
   LIBS="$LIBS `$GDAL_CONFIG --libs`"
   echo $ac_n "checking for OGRRegisterAll in -lgdal.1.1""... $ac_c" 1>&6
-echo "configure:3650: checking for OGRRegisterAll in -lgdal.1.1" >&5
+echo "configure:3651: checking for OGRRegisterAll in -lgdal.1.1" >&5
 ac_lib_var=`echo gdal.1.1'_'OGRRegisterAll | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -3654,7 +3655,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lgdal.1.1  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 3658 "configure"
+#line 3659 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -3665,7 +3666,7 @@ int main() {
 OGRRegisterAll()
 ; return 0; }
 EOF
-if { (eval echo configure:3669: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:3670: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -3752,7 +3753,12 @@ elif test -n "$with_ogr" -a "$with_ogr" != "no" ; then
 
       fi
   else
-      { echo "configure: error: Could not find one of ogr_feature.h, ogrsf_fmrts.h, cpl_conv.h, ogr.a, ogrsf_frmts.a, or cpl.a in $OGR_DIR." 1>&2; exit 1; }
+      { echo "configure: error: 
+!!! Could not find ogr_feature.h, ogrsf_fmrts.h, cpl_conv.h,          !!!
+!!! ogr.a, ogrsf_frmts.a, or cpl.a in $OGR_DIR .
+!!! Either this is not the location of a recent GDAL/OGR source tree, !!!
+!!! or OGR has not been compiled yet. Please make sure you compile    !!!
+!!! OGR before calling configure.                                     !!!" 1>&2; exit 1; }
   fi
 
   OGR_ENABLED=-DUSE_OGR
@@ -3775,7 +3781,7 @@ ALL_STATIC_LIB="$OGR_STATIC $ALL_STATIC_LIB"
 
 
 echo $ac_n "checking if GDAL support requested""... $ac_c" 1>&6
-echo "configure:3779: checking if GDAL support requested" >&5
+echo "configure:3785: checking if GDAL support requested" >&5
 
 # Check whether --with-gdal or --without-gdal was given.
 if test "${with_gdal+set}" = set; then
@@ -3792,7 +3798,7 @@ if test "$with_gdal" = "yes" ; then
     # Extract the first word of "gdal-config", so it can be a program name with args.
 set dummy gdal-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:3796: checking for $ac_word" >&5
+echo "configure:3802: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GDAL_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -3864,7 +3870,7 @@ ALL_LIB="$GDAL_LIB $ALL_LIB"
 
 
 echo "checking whether we should include WMS support..." 1>&6
-echo "configure:3868: checking whether we should include WMS support..." >&5
+echo "configure:3874: checking whether we should include WMS support..." >&5
 # Check whether --with-wms or --without-wms was given.
 if test "${with_wms+set}" = set; then
   withval="$with_wms"
@@ -3999,7 +4005,7 @@ fi
 
 
 echo "checking for PHP/MapScript module options..." 1>&6
-echo "configure:4003: checking for PHP/MapScript module options..." >&5
+echo "configure:4009: checking for PHP/MapScript module options..." >&5
 # Check whether --with-php or --without-php was given.
 if test "${with_php+set}" = set; then
   withval="$with_php"
@@ -4016,7 +4022,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
   fi
 
               echo $ac_n "checking whether 'perl -V' works""... $ac_c" 1>&6
-echo "configure:4020: checking whether 'perl -V' works" >&5
+echo "configure:4026: checking whether 'perl -V' works" >&5
   if  (perl -V > /dev/null 2>&1)  ; then
     echo "$ac_t""yes" 1>&6
     
@@ -4045,27 +4051,27 @@ PERL_CCDLFLAGS="`grep ' ccdlflags=' perl.out | cut -d, -f4 | cut -d\' -f2 | sed 
 PERL_LDDLFLAGS=`grep ' lddlflags' perl.out | cut -d, -f2 | cut -d\' -f2`
 #--------
 
-if test -n "$PERL_CCDLFLAGS" ; then
-	echo "-------------------------"
-	echo "----- IMPORTANT !!! -----"
-	echo "-------------------------"
-	echo "To use PHP extensions on your OS, you will need to recompile "
-	echo "PHP.                                                         "
-	echo "You need to edit the Makefile in the php3 directory and add  "
-	echo "$PERL_CCDLFLAGS to the start of the LDFLAGS line at the top  "
-	echo "of the Makefile.  Then type: 'make clean; make'              "
-	echo "You can still go ahead and build the extensions now by typing"
-	echo "'make' in this directory.  They just won't work correctly    "
-	echo "until you recompile your PHP.                                "
-        echo "If you are compiling php as a module, you should also add    "
-        echo "$PERL_CCDLFLAGS to the start of the EXTRA_LDFLAGS in Apache  "
-        echo "Configuration file.  Note that if you are using the APACI    "
-        echo "build mechanism you should make this change in the           "
-        echo "Configuration.tmpl file instead.                             "
-	echo "-------------------------"
-	echo "-------------------------"
-	echo "-------------------------"
-fi
+#if test -n "$PERL_CCDLFLAGS" ; then
+#	echo "-------------------------"
+#	echo "----- IMPORTANT !!! -----"
+#	echo "-------------------------"
+#	echo "To use PHP extensions on your OS, you will need to recompile "
+#	echo "PHP.                                                         "
+#	echo "You need to edit the Makefile in the php3 directory and add  "
+#	echo "$PERL_CCDLFLAGS to the start of the LDFLAGS line at the top  "
+#	echo "of the Makefile.  Then type: 'make clean; make'              "
+#	echo "You can still go ahead and build the extensions now by typing"
+#	echo "'make' in this directory.  They just won't work correctly    "
+#	echo "until you recompile your PHP.                                "
+#        echo "If you are compiling php as a module, you should also add    "
+#        echo "$PERL_CCDLFLAGS to the start of the EXTRA_LDFLAGS in Apache  "
+#        echo "Configuration file.  Note that if you are using the APACI    "
+#        echo "build mechanism you should make this change in the           "
+#        echo "Configuration.tmpl file instead.                             "
+#	echo "-------------------------"
+#	echo "-------------------------"
+#	echo "-------------------------"
+#fi
 
 PERL_CC="$PERL_CC $PERL_OPT $PERL_CCFLAGS -I. -I.. $PERL_LFLAGS"
 PERL_LD="$PERL_LD $PERL_LDDLFLAGS $PERL_CCDLFLAGS"
@@ -4157,7 +4163,7 @@ rm -f perl.out
   fi
 
           echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
-echo "configure:4161: checking for location of config.h or php_config.h" >&5
+echo "configure:4167: checking for location of config.h or php_config.h" >&5
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
@@ -4170,7 +4176,7 @@ echo "configure:4161: checking for location of config.h or php_config.h" >&5
   fi
 
           echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
-echo "configure:4174: checking whether we have PHP3 or PHP4" >&5
+echo "configure:4180: checking whether we have PHP3 or PHP4" >&5
   if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
@@ -4179,7 +4185,7 @@ echo "configure:4174: checking whether we have PHP3 or PHP4" >&5
   echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:4183: checking whether we should use PHP's regex" >&5
+echo "configure:4189: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
 
@@ -4203,7 +4209,7 @@ echo "configure:4183: checking whether we should use PHP's regex" >&5
 
           if test -n "$TTF_ENABLED" -a "$PHP_VERSION_FLAG" = "-DPHP4" ; then
     echo $ac_n "checking whether PHP4 was compiled with TTF support""... $ac_c" 1>&6
-echo "configure:4207: checking whether PHP4 was compiled with TTF support" >&5
+echo "configure:4213: checking whether PHP4 was compiled with TTF support" >&5
     if test -n "`grep 'define HAVE_LIBTTF 1' $PHP_CONFIG_H`"  ; then
       echo "$ac_t""yes" 1>&6
       { echo "configure: error: 
@@ -4248,7 +4254,7 @@ fi
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:4252: checking for location of Apache headers using apxs" >&5
+echo "configure:4258: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -4275,7 +4281,7 @@ fi
 if test -n "$with_apache" -a "$with_apache" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:4279: checking for location of Apache headers" >&5
+echo "configure:4285: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi

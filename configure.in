@@ -348,6 +348,7 @@ dnl ---------------------------------------------------------------------
 
 unset ac_cv_lib_proj_pj_init
 unset ac_cv_lib_proj_pj_transform
+unset ac_cv_lib_proj_pj_latlong_from_proj
 
 AC_CHECKING(whether we should include PROJ.4 support...)
 AC_ARG_WITH(proj,
@@ -596,7 +597,12 @@ dnl check for OGDI
         AC_ADD_RUNPATH("$OGDI_LIBDIR")
       fi
   else
-      AC_MSG_ERROR([Could not find one of ogr_feature.h, ogrsf_fmrts.h, cpl_conv.h, ogr.a, ogrsf_frmts.a, or cpl.a in $OGR_DIR.])
+      AC_MSG_ERROR([
+!!! Could not find ogr_feature.h, ogrsf_fmrts.h, cpl_conv.h,          !!!
+!!! ogr.a, ogrsf_frmts.a, or cpl.a in $OGR_DIR .
+!!! Either this is not the location of a recent GDAL/OGR source tree, !!!
+!!! or OGR has not been compiled yet. Please make sure you compile    !!!
+!!! OGR before calling configure.                                     !!!])
   fi
 
   OGR_ENABLED=-DUSE_OGR
