@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.40  2001/11/01 01:15:00  dan
+ * Removed MS_LAYER_POLYLINE
+ *
  * Revision 1.39  2001/10/15 19:25:02  dave
  * More access to the OpenGIS well-known text support already available
  * from Frank's OGR library. Had to add functions because current accessors
@@ -450,10 +453,9 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
       }
       break;
 /* ------------------------------------------------------------------
- *      LINE / POLYLINE layer
+ *      LINE layer
  * ------------------------------------------------------------------ */
     case MS_LAYER_LINE:
-    case MS_LAYER_POLYLINE:
       if(ogrGeomLine(poGeom, outshp, MS_FALSE) == -1)
       {
           nStatus = MS_FAILURE; // Error message already produced.
