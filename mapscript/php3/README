@@ -4,17 +4,17 @@
 $Id$
                       --------------------------
 
-This is a PHP module to make MapServer's MapScript functionalities 
-available in PHP.  The approach used here is a Dynamically Loadable 
+This is a PHP3 module to make MapServer's MapScript functionalities 
+available in PHP3.  The approach used here is a Dynamically Loadable 
 Library, and the module is based on the PHP-3.0.14 code.  
 The module has been tested and used on Linux, Solaris, and WinNT.
 
-This module is still under development and is not (yet) an officially 
-supported part of MapServer, so for any questions/comments/suggestions/
-bug-reports, please Email me, Daniel Morissette (danmo@videotron.ca)
-
-See also the PHP/MapScript FAQ at:
-	http://www2.dmsolutions.on.ca/mapserver/php_mapscript_faq.html
+This module is constantly under development and is not (yet) an officially 
+supported part of MapServer, the main resource for help is the PHP/MapScript
+web page at:
+  http://www2.dmsolutions.on.ca/mapserver/php_mapscript/
+and especially the FAQ at:
+  http://www2.dmsolutions.on.ca/mapserver/php_mapscript/php_mapscript_faq.html
 
                       --------------------------
 
@@ -23,7 +23,7 @@ Currently supported classes, properties and methods:
 
 For more complete information, see the MapScript documentation at:
 	http://mapserver.gis.umn.edu/mapscript.html
-and the Map File documentation at:
+and the MapServer Map File documentation at:
 	http://mapserver.gis.umn.edu/mapfile.html
 
 Very important note: Constant names and class member variable names are
@@ -299,6 +299,10 @@ Very important note: Constant names and class member variable names are
    int    shadowcolor
    int    shadowsizex
    int    shadowsizey
+   int    backgroundcolor
+   int    backgroundshadowcolor
+   int    backgroundshadowsizex
+   int    backgroundshadowsizey
    int    size
    int    minsize
    int    maxsize
