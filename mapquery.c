@@ -262,7 +262,10 @@ int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int
   }
 
   // apply the passed query parameters
-  lp->filteritem = strdup(qitem);
+  if(qitem) 
+    lp->filteritem = strdup(qitem);
+  else
+    lp->filteritem = NULL;
   loadExpressionString(&(lp->filter), qstring);
 
   msInitShape(&shape);
