@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/04/23 16:44:54  frank
+ * msRemoteOutputFormat() now frees output formats if refcount==0
+ *
  * Revision 1.22  2004/03/08 04:28:46  sean
  * New functions to support mapscript interface to outputformatlist
  *
@@ -437,12 +440,11 @@ static outputFormatObj *msAllocOutputFormat( mapObj *map, const char *name,
 }
 
 /************************************************************************/
-/* msAppendOutputFormat() and msRemoveOutputFormat(                     */
+/*                        msAppendOutputFormat()                        */
 /*                                                                      */
-/* Add/remove an output format  .                                       */
-/* http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=511                */
+/*      Add an output format  .                                         */
+/*      http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=511           */
 /************************************************************************/
-
 int msAppendOutputFormat(mapObj *map, outputFormatObj *format) 
 {
 /* -------------------------------------------------------------------- */
@@ -465,6 +467,12 @@ int msAppendOutputFormat(mapObj *map, outputFormatObj *format)
     return map->numoutputformats;
 }
 
+/************************************************************************/
+/*                        msRemoveOutputFormat()                        */
+/*                                                                      */
+/*      Remove an output format (by name).                              */
+/*      http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=511           */
+/************************************************************************/
 int msRemoveOutputFormat(mapObj *map, const char *name)
 {
     int i, j;
@@ -484,7 +492,9 @@ int msRemoveOutputFormat(mapObj *map, const char *name)
             if (i >= 0) 
             {
                 map->numoutputformats--;
-                map->outputformatlist[i]->refcount--;
+                if( map->outputformatlist[i]->refcount-- < 1 )
+                    msFreeOutputFormat( map->outputformatlist[i] );
+
                 for (j=i; j<map->numoutputformats-1; j++)
                 {
                     map->outputformatlist[j] = map->outputformatlist[j+1];
@@ -499,11 +509,11 @@ int msRemoveOutputFormat(mapObj *map, const char *name)
     return MS_FAILURE;
 }
 
-/* -------------------------------------------------------------------- */
-/* msGetOutputFormatIndex()                                             */
+/************************************************************************/
+/*                       msGetOutputFormatIndex()                       */
 /*                                                                      */
-/* Pulled this out of msSelectOutputFormat for use in other cases.      */
-/* -------------------------------------------------------------------- */
+/*      Pulled this out of msSelectOutputFormat for use in other cases. */
+/************************************************************************/
 
 int msGetOutputFormatIndex(mapObj *map, const char *imagetype)
 {
