@@ -942,9 +942,6 @@ getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, 
 getShape( shapeObj_ shape, int tileindex, int shapeindex ) : int
     Get a shape from layer data.
 
-**NEXT_GENERATION_API** getShape( int shapeindex [, int tileindex=0 ] ) : shapeObj_
-    Get a shape from layer data using the next generation API.
-
 moveClassDown( int class ) : int 
        The class specified by the class index will be moved up into
        the array of layers. Returns MS_SUCCESS or MS_FAILURE.
@@ -2001,17 +1998,11 @@ new shapeObj( int type ) : shapeObj
 add( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
 
-**NEXT_GENERATION_API** addLine( lineObj_ line ) : int
-    Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
-
 contains( pointObj_ point ) : int
     Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
 
 copy( shapeObj shape_copy ) : int
     Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
-
-**NEXT_GENERATION_API** copy( ) : shapeObj
-    Return a copy of the shape.
 
 distanceToPoint( pointObj_ point ) : float
     Return distance to *point*.
@@ -2023,10 +2014,6 @@ draw( mapObj_ map, layerObj_ layer, imageObj_ img ) : int
     Draws the individual shape using layer.  Returns MS_SUCCESS or MS_FAILURE.
 
 get( int index ) : lineObj_
-    Returns a reference to part at *index*.  Reference is valid
-    only during the life of the shapeObj.
-
-**NEXT_GENERATION_API** getLine( int index ) : lineObj_
     Returns a reference to part at *index*.  Reference is valid
     only during the life of the shapeObj.
 
@@ -2324,24 +2311,6 @@ webObj Methods
 --------------
 
 None.
-
-
-=======================
-Next Generation Classes
-=======================
-
-By defining the preprocessor symbol *NEXT_GENERATION_API* when running
-SWIG to produce wrapper code, one can use the 'next generation' mapscript
-API.  For example
-
-::
-
-    swig -python -shadow -modern -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
-
-The API changes in the next generation classes result
-from efforts to merge the best of the PHP-Mapscript and SWIG mapscript
-interfaces (Bugzilla issue 575 - 
-http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).
 
 
 =========
