@@ -1516,6 +1516,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	if(layer->class[c].overlaysymbol >= 0) { // cache shape
 	  shape.classindex = c;
 	  if(insertFeatureList(&shpcache, shape) == NULL) return(-1);
+	  msInitShape(&shape);
 	} else
 	  msFreeShape(&shape);
       }
@@ -1583,6 +1584,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	if(layer->class[c].overlaysymbol >= 0) { // cache shape
 	  shape.classindex = c;
 	  if(insertFeatureList(&shpcache, shape) == NULL) return(-1);
+	  msInitShape(&shape);
 	} else
 	  msFreeShape(&shape);
       }	

@@ -579,6 +579,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	  if(layer->class[i].overlaysymbol >= 0) { // cache shape
 	    transformedshape.classindex = i;
 	    if(insertFeatureList(&shpcache, transformedshape) == NULL) return(-1);
+	    msInitShape(&transformedshape);
 	  } else
 	    msFreeShape(&transformedshape);
 	} else {
@@ -647,6 +648,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
  	  if(layer->class[i].overlaysymbol >= 0) { // cache shape
 	    transformedshape.classindex = i;
 	    if(insertFeatureList(&shpcache, transformedshape) == NULL) return(-1);
+	    msInitShape(&transformedshape);
 	  } else
 	    msFreeShape(&transformedshape);
 	} else {
