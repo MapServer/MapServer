@@ -47,6 +47,7 @@ TESTS_PATH = '../../tests'
 
 TESTMAPFILE = os.path.join(TESTS_PATH, 'test.map')
 XMARKS_IMAGE = os.path.join(TESTS_PATH, 'xmarks.png')
+TEST_IMAGE = os.path.join(TESTS_PATH, 'test.png')
 
 # Put local build directory on head of python path
 platformdir = '-'.join((distutils.util.get_platform(), 

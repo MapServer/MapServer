@@ -85,31 +85,31 @@ class FontSetTestCase(MapTestCase):
 
 # If PIL is available, use it to test the saveToString() method
 
-have_image = 0
-try:
-    from PIL import Image
-    have_image = 1
-except ImportError:
-    pass
-    
-from StringIO import StringIO
-
-class SaveToStringTestCase(MapTestCase):
-    def testSaveToString(self):
-        msimg = self.mapobj1.draw()
-        assert msimg.thisown == 1
-        data = msimg.saveToString()
-        filename = 'testSaveToString.png'
-        fh = open(filename, 'wb')
-        fh.write(data)
-        fh.close()
-        if have_image:
-            pyimg = Image.open(filename)
-            assert pyimg.format == 'PNG'
-            assert pyimg.size == (200, 200)
-            assert pyimg.mode == 'P'
-        else:
-            assert 1
+##have_image = 0
+##try:
+##    from PIL import Image
+##    have_image = 1
+##except ImportError:
+##    pass
+##    
+##from StringIO import StringIO
+##
+##class SaveToStringTestCase(MapTestCase):
+##    def testSaveToString(self):
+##        msimg = self.mapobj1.draw()
+##        assert msimg.thisown == 1
+##        data = msimg.saveToString()
+##        filename = 'testSaveToString.png'
+##        fh = open(filename, 'wb')
+##        fh.write(data)
+##        fh.close()
+##        if have_image:
+##            pyimg = Image.open(filename)
+##            assert pyimg.format == 'PNG'
+##            assert pyimg.size == (200, 200)
+##            assert pyimg.mode == 'P'
+##        else:
+##            assert 1
 
 class NoFontSetTestCase(unittest.TestCase):
     def setUp(self):
@@ -119,28 +119,28 @@ class NoFontSetTestCase(unittest.TestCase):
     def testNoGetFontSetFile(self):
         assert self.mapobj1.fontset.filename == None
 
-class ExpressionTestCase(MapTestCase):
-    def testClearExpression(self):
-        self.mapobj1.getLayer(0).setFilter('')
-        fs = self.mapobj1.getLayer(0).getFilterString()
-        assert fs == '"(null)"', fs
-    def testSetStringExpression(self):
-        self.mapobj1.getLayer(0).setFilter('foo')
-        fs = self.mapobj1.getLayer(0).getFilterString()
-        assert fs == '"foo"', fs
-    def testSetQuotedStringExpression(self):
-        self.mapobj1.getLayer(0).setFilter('"foo"')
-        fs = self.mapobj1.getLayer(0).getFilterString()
-        assert fs == '"foo"', fs
-    def testSetRegularExpression(self):
-        self.mapobj1.getLayer(0).setFilter('/foo/')
-        fs = self.mapobj1.getLayer(0).getFilterString()
-        assert fs == '/foo/', fs
-    def testSetLogicalExpression(self):
-        self.mapobj1.getLayer(0).setFilter('([foo] >= 2)')
-        #self.mapobj1.getLayer(0).setFilter('foo')
-        fs = self.mapobj1.getLayer(0).getFilterString()
-        assert fs == '([foo] >= 2)', fs
+##class ExpressionTestCase(MapTestCase):
+##    def testClearExpression(self):
+##        self.mapobj1.getLayer(0).setFilter('')
+##        fs = self.mapobj1.getLayer(0).getFilterString()
+##        assert fs == '"(null)"', fs
+##    def testSetStringExpression(self):
+##        self.mapobj1.getLayer(0).setFilter('foo')
+##        fs = self.mapobj1.getLayer(0).getFilterString()
+##        assert fs == '"foo"', fs
+##    def testSetQuotedStringExpression(self):
+##        self.mapobj1.getLayer(0).setFilter('"foo"')
+##        fs = self.mapobj1.getLayer(0).getFilterString()
+##        assert fs == '"foo"', fs
+##    def testSetRegularExpression(self):
+##        self.mapobj1.getLayer(0).setFilter('/foo/')
+##        fs = self.mapobj1.getLayer(0).getFilterString()
+##        assert fs == '/foo/', fs
+##    def testSetLogicalExpression(self):
+##        self.mapobj1.getLayer(0).setFilter('([foo] >= 2)')
+##        #self.mapobj1.getLayer(0).setFilter('foo')
+##        fs = self.mapobj1.getLayer(0).getFilterString()
+##        assert fs == '([foo] >= 2)', fs
 
 ##class ZoomPointTestCase(MapZoomTestCase):
 ##    def testRecenter(self):
@@ -346,51 +346,51 @@ class ExpressionTestCase(MapTestCase):
 ##        c = mapscript.colorObj()
 ##        self.assertRaises(mapscript.MapServerError, c.setHex, '#fffffg')
 
-class ImageObjTestCase(unittest.TestCase):
-    def testConstructor(self):
-        imgobj = mapscript.imageObj(10, 10)
-        assert imgobj.thisown == 1
-        assert imgobj.height == 10
-        assert imgobj.width == 10
-    def testConstructorWithDriver(self):
-        driver = 'GD/PNG'
-        imgobj = mapscript.imageObj(10, 10, driver)
-        assert imgobj.thisown == 1
-        assert imgobj.format.driver == driver
-        assert imgobj.height == 10
-        assert imgobj.width == 10
-    def testConstructorFilename(self):
-        imgobj = mapscript.imageObj(0, 0, None, test_image)
-        assert imgobj.thisown == 1
-        assert imgobj.height == 200
-        assert imgobj.width == 200
-    def testConstructorFilenameDriver(self):
-        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', test_image)
-        assert imgobj.thisown == 1
-        assert imgobj.height == 200
-        assert imgobj.width == 200
-    def testConstructorStream(self):
-        f = open(test_image, 'rb')
-        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', f)
-        f.close()
-        assert imgobj.thisown == 1
-        assert imgobj.height == 200
-        assert imgobj.width == 200
-    def testConstructorStringIO(self):
-        f = open(test_image, 'rb')
-        data = f.read()
-        f.close()
-        s = cStringIO.StringIO(data)
-        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', s)
-        assert imgobj.thisown == 1
-        assert imgobj.height == 200
-        assert imgobj.width == 200
-    def testConstructorUrlStream(self):
-        url = urllib.urlopen('http://mapserver.gis.umn.edu/bugs/ant.jpg')
-        imgobj = mapscript.imageObj(0, 0, 'GD/JPEG', url)
-        assert imgobj.thisown == 1
-        assert imgobj.height == 220
-        assert imgobj.width == 329
+##class ImageObjTestCase(unittest.TestCase):
+##    def testConstructor(self):
+##        imgobj = mapscript.imageObj(10, 10)
+##        assert imgobj.thisown == 1
+##        assert imgobj.height == 10
+##        assert imgobj.width == 10
+##    def testConstructorWithDriver(self):
+##        driver = 'GD/PNG'
+##        imgobj = mapscript.imageObj(10, 10, driver)
+##        assert imgobj.thisown == 1
+##        assert imgobj.format.driver == driver
+##        assert imgobj.height == 10
+##        assert imgobj.width == 10
+##    def testConstructorFilename(self):
+##        imgobj = mapscript.imageObj(0, 0, None, test_image)
+##        assert imgobj.thisown == 1
+##        assert imgobj.height == 200
+##        assert imgobj.width == 200
+##    def testConstructorFilenameDriver(self):
+##        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', test_image)
+##        assert imgobj.thisown == 1
+##        assert imgobj.height == 200
+##        assert imgobj.width == 200
+##    def testConstructorStream(self):
+##        f = open(test_image, 'rb')
+##        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', f)
+##        f.close()
+##        assert imgobj.thisown == 1
+##        assert imgobj.height == 200
+##        assert imgobj.width == 200
+##    def testConstructorStringIO(self):
+##        f = open(test_image, 'rb')
+##        data = f.read()
+##        f.close()
+##        s = cStringIO.StringIO(data)
+##        imgobj = mapscript.imageObj(0, 0, 'GD/PNG', s)
+##        assert imgobj.thisown == 1
+##        assert imgobj.height == 200
+##        assert imgobj.width == 200
+##    def testConstructorUrlStream(self):
+##        url = urllib.urlopen('http://mapserver.gis.umn.edu/bugs/ant.jpg')
+##        imgobj = mapscript.imageObj(0, 0, 'GD/JPEG', url)
+##        assert imgobj.thisown == 1
+##        assert imgobj.height == 220
+##        assert imgobj.width == 329
 
 ##class NewStylesTestCase(MapTestCase):
 ##    def testStyleConstructor(self):
@@ -515,39 +515,39 @@ class ImageObjTestCase(unittest.TestCase):
 ##        inline_layer = self.mapobj1.getLayerByName('INLINE')
 ##        assert inline_layer.getNumFeatures() == 1
 
-class NewOutputFormatTestCase(MapTestCase):
-    """http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=511"""
-    def testOutputFormatConstructor(self):
-        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiff')
-        assert new_format.refcount == 1, new_format.refcount
-        assert new_format.name == 'gtiff'
-        assert new_format.mimetype == 'image/tiff'
-    def testAppendNewOutputFormat(self):
-        num = self.mapobj1.numoutputformats
-        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
-        assert new_format.refcount == 1, new_format.refcount
-        self.mapobj1.appendOutputFormat(new_format)
-        assert self.mapobj1.numoutputformats == num + 1
-        assert new_format.refcount == 2, new_format.refcount
-        self.mapobj1.setImageType('gtiffx')
-        self.mapobj1.save('testAppendNewOutputFormat.map')
-        imgobj = self.mapobj1.draw()
-        filename = 'testAppendNewOutputFormat.tif'
-        imgobj.save(filename)
-    def testRemoveOutputFormat(self):
-        """testRemoveOutputFormat may fail depending on GD options"""
-        num = self.mapobj1.numoutputformats
-        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
-        self.mapobj1.appendOutputFormat(new_format)
-        assert self.mapobj1.numoutputformats == num + 1
-        assert new_format.refcount == 2, new_format.refcount
-        assert self.mapobj1.removeOutputFormat('gtiffx') == mapscript.MS_SUCCESS
-        assert new_format.refcount == 1, new_format.refcount
-        assert self.mapobj1.numoutputformats == num
-        self.assertRaises(mapscript.MapServerError,
-                          self.mapobj1.setImageType, 'gtiffx')
-        self.mapobj1.setImageType('GTiff')
-        assert self.mapobj1.outputformat.mimetype == 'image/tiff'
+##class NewOutputFormatTestCase(MapTestCase):
+##    """http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=511"""
+##    def testOutputFormatConstructor(self):
+##        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiff')
+##        assert new_format.refcount == 1, new_format.refcount
+##        assert new_format.name == 'gtiff'
+##        assert new_format.mimetype == 'image/tiff'
+##    def testAppendNewOutputFormat(self):
+##        num = self.mapobj1.numoutputformats
+##        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
+##        assert new_format.refcount == 1, new_format.refcount
+##        self.mapobj1.appendOutputFormat(new_format)
+##        assert self.mapobj1.numoutputformats == num + 1
+##        assert new_format.refcount == 2, new_format.refcount
+##        self.mapobj1.setImageType('gtiffx')
+##        self.mapobj1.save('testAppendNewOutputFormat.map')
+##        imgobj = self.mapobj1.draw()
+##        filename = 'testAppendNewOutputFormat.tif'
+##        imgobj.save(filename)
+##    def testRemoveOutputFormat(self):
+##        """testRemoveOutputFormat may fail depending on GD options"""
+##        num = self.mapobj1.numoutputformats
+##        new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
+##        self.mapobj1.appendOutputFormat(new_format)
+##        assert self.mapobj1.numoutputformats == num + 1
+##        assert new_format.refcount == 2, new_format.refcount
+##        assert self.mapobj1.removeOutputFormat('gtiffx') == mapscript.MS_SUCCESS
+##        assert new_format.refcount == 1, new_format.refcount
+##        assert self.mapobj1.numoutputformats == num
+##        self.assertRaises(mapscript.MapServerError,
+##                          self.mapobj1.setImageType, 'gtiffx')
+##        self.mapobj1.setImageType('GTiff')
+##        assert self.mapobj1.outputformat.mimetype == 'image/tiff'
 
 ##class MapMetaDataTestCase(MapTestCase):
 ##    def testInvalidKeyAccess(self):

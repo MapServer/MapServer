@@ -197,6 +197,33 @@ class RemoveLayerTestCase(MapTestCase):
         l1name = self.map.getLayer(0).name
         self.map.removeLayer(1)
         assert self.map.getLayer(0).name == l1name
+
+class ExpressionTestCase(MapTestCase):
+    def testClearExpression(self):
+        """ExpressionTestCase.testClearExpression: layer expression can be properly cleared"""
+        self.map.getLayer(0).setFilter('')
+        fs = self.map.getLayer(0).getFilterString()
+        assert fs == '"(null)"', fs
+    def testSetStringExpression(self):
+        """ExpressionTestCase.testSetStringExpression: layer expression can be set to string"""
+        self.map.getLayer(0).setFilter('foo')
+        fs = self.map.getLayer(0).getFilterString()
+        assert fs == '"foo"', fs
+    def testSetQuotedStringExpression(self):
+        """ExpressionTestCase.testSetQuotedStringExpression: layer expression string can be quoted"""
+        self.map.getLayer(0).setFilter('"foo"')
+        fs = self.map.getLayer(0).getFilterString()
+        assert fs == '"foo"', fs
+    def testSetRegularExpression(self):
+        """ExpressionTestCase.testSetRegularExpression: layer expression can be regular expression"""
+        self.map.getLayer(0).setFilter('/foo/')
+        fs = self.map.getLayer(0).getFilterString()
+        assert fs == '/foo/', fs
+    def testSetLogicalExpression(self):
+        """ExpressionTestCase.testSetLogicalExpression: layer expression can be logical expression"""
+        self.map.getLayer(0).setFilter('([foo] >= 2)')
+        fs = self.map.getLayer(0).getFilterString()
+        assert fs == '([foo] >= 2)', fs
         
 # ===========================================================================
 # Run the tests outside of the main suite

@@ -53,6 +53,7 @@ class OutputFormatTestCase(unittest.TestCase):
 class MapOutputFormatTestCase(MapTestCase):
 
     def testAppendNewOutputFormat(self):
+        """MapOutputFormatTestCase.testAppendNewOutputFormat: test that a new output format can be created on-the-fly"""
         num = self.map.numoutputformats
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         assert new_format.refcount == 1, new_format.refcount
@@ -66,7 +67,7 @@ class MapOutputFormatTestCase(MapTestCase):
         imgobj.save(filename)
         
     def testRemoveOutputFormat(self):
-        """testRemoveOutputFormat may fail depending on GD options"""
+        """MapOutputFormatTestCase.testRemoveOutputFormat: testRemoveOutputFormat may fail depending on GD options"""
         num = self.map.numoutputformats
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         self.map.appendOutputFormat(new_format)
