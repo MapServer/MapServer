@@ -266,6 +266,10 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     break;
   }
 
+  // TO DO! This is where dynamic joins will happen. Joined attributes will be
+  // tagged on to the main attributes with the naming scheme [join name].[item name].
+  // We need to leverage the iteminfo (I think) at this point
+
   return(MS_FAILURE);
 }
 
@@ -317,6 +321,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   default:
     break;
   }
+
+  // TO DO! This is where dynamic joins will happen. Joined attributes will be
+  // tagged on to the main attributes with the naming scheme [join name].[item name].
 
   return(MS_FAILURE);
 }
@@ -415,6 +422,8 @@ int msLayerGetItems(layerObj *layer)
   default:
     break;
   }
+
+  // TO DO! Need to add any joined itemd on to the core layer items, one long list! 
 
   return(MS_FAILURE);
 }
@@ -533,6 +542,18 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate, char *metadat
 {
   int i, nt=0, ne=0;
   
+  //
+  // TO DO! I have a better algorithm.
+  // 
+  // 1) call msLayerGetItems to get a complete list (including joins)
+  // 2) loop though item-based parameters and expressions to identify items to keep
+  // 3) based on 2) build a list of items
+  //
+  // This is more straight forward and robust, fixes the problem of [...] regular expressions
+  // embeded in logical expressions. It also opens up to using dynamic joins anywhere...
+  //
+
+
   // Cleanup any previous item selection
   layerFreeItemInfo(layer);
   if(layer->items) {
