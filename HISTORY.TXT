@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Bug 1185 : php/mapscript : add constant MS_GD_ALPHA 
+
 - Bug 1173: In HTML legend, added opt_flag support for layer groups.
 
 - Bug 1179: added --with-warnings configure switch, overhauled warning logic.
