@@ -86,7 +86,7 @@ char *msStrptime(const char *s, const char *format, struct tm *tm)
     msSetError(MS_MISCERR, 
                "strptime() not available on Windows, see bug 556.", 
                "msStrptime()");
-    return s;
+    return (char *) s;
 #else
     /* Use system strptime() on non-windows systems */
     return strptime(s, format, tm);
