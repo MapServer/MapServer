@@ -280,7 +280,10 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
   map->symbolset.symbol[s].name = strdup("scalebar");  
 
-  if(map->scalebar.transparent == MS_ON)
+  /* in 8 bit, mark 0 as being transparent.  In 24bit hopefully already
+     have transparency enabled ... */
+  if(map->scalebar.transparent == MS_ON 
+     && !gdImageTrueColor(image->img.gd ) )
     gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
 
   switch(map->scalebar.position) {
