@@ -12,6 +12,11 @@
 #endif
 #include <stdarg.h>
 
+#ifdef NEED_NONBLOCKING_STDERR
+#include <unistd.h>
+#include <fcntl.h>
+#endif
+
 static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"Unable to access file.",
 						"Memory allocation error.",
@@ -488,6 +493,16 @@ void msDebug( const char * pszFormat, ... )
 #ifdef ENABLE_STDERR_DEBUG
     va_list args;
     struct timeval tv;
+
+#ifdef NEED_NONBLOCKING_STDERR
+    static char nonblocking_set = 0;
+    if (!nonblocking_set)
+    {
+        fcntl(fileno(stderr), F_SETFL, O_NONBLOCK);
+        nonblocking_set = 1;
+    }
+#endif
+
     gettimeofday(&tv, NULL);
     fprintf(stderr, "[%s].%ld ", chop(ctime(&(tv.tv_sec))), tv.tv_usec);
 
