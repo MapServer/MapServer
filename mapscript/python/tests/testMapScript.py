@@ -168,7 +168,25 @@ class LayerExtentTestCase(MapPrimitivesTestCase):
         layer = self.mapobj1.getLayerByName('POLYGON')
         e = mapscript.rectObj(-0.25, 51.227222, 0.25, 51.727222)
         self.assertRectsEqual(e, layer.getExtent())
-        
+  
+class LayerRasterProcessingTestCase(MapTestCase):
+    def testSetProcessing(self):
+        layer = self.mapobj1.getLayer(0)
+        layer.setProcessing('directive0=foo')
+        assert layer.numprocessing == 1
+        layer.setProcessing('directive1=bar')
+        assert layer.numprocessing == 2
+        directives = [layer.getProcessing(i) \
+                      for i in range(layer.numprocessing)]
+        assert directives == ['directive0=foo', 'directive1=bar']
+    def testClearProcessing(self):
+        layer = self.mapobj1.getLayer(0)
+        layer.setProcessing('directive0=foo')
+        assert layer.numprocessing == 1
+        layer.setProcessing('directive1=bar')
+        assert layer.numprocessing == 2
+        assert layer.clearProcessing() == mapscript.MS_SUCCESS
+
 # class removal tests
 class RemoveClassTestCase(MapTestCase):
     def testRemoveClass1NumClasses(self):

@@ -944,3 +944,23 @@ void msLayerAddProcessing( layerObj *layer, const char *directive )
     layer->processing[layer->num_processing-1] = strdup(directive);
     layer->processing[layer->num_processing] = NULL;
 }
+
+char *msLayerGetProcessing( layerObj *layer, int proc_index) {
+    if (proc_index < 0 || proc_index >= layer->num_processing) {
+        msSetError(MS_CHILDERR, "Invalid processing index.", "msLayerGetProcessing()");
+        return NULL;
+    }
+    else {
+        return layer->processing[proc_index];
+    }
+}
+
+int msLayerClearProcessing( layerObj *layer ) {
+    if (layer->num_processing > 0) {
+        msFreeCharArray( layer->processing, layer->num_processing );
+        layer->processing = NULL;
+        layer->num_processing = 0;
+    }
+    return layer->num_processing;
+}
+

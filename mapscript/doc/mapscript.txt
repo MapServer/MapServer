@@ -594,11 +594,6 @@ addFeature( shapeObj_ shape ) : int
     **TODO**: Is this similar to inline features in a mapfile?  Does it work
     for any kind of layer or connection type? 
     
-addProcessing( string directive ) : void
-    Adds a new processing directive line to a layer, similar to the PROCESSING
-    directive in a map file.  Processing directives supports are specific to
-    the layer type and underlying renderer. 
-
 applySLD( string sld, string stylelayer ) : int 
     Apply the SLD document to the layer object. 
     The matching between the sld document and the layer will be done 
@@ -615,6 +610,11 @@ applySLDURL( string sld, string stylelayer ) : int
     the NamedLayer in the sld that matchs it will be used to style 
     the layer.
     See SLD HOWTO for more information on the SLD support.
+
+clearProcessing() : int
+    Clears the layer's raster processing directives.  Returns the subsequent
+    number of  directives, which will equal MS_SUCCESS if the directives have
+    been cleared.
 
 close() : void
     Close the underlying layer.
@@ -674,6 +674,9 @@ getNumFeatures() : int
     Returns the number of inline features in a layer.  **TODO**: is this
     really only online features or will it return the number of non-inline
     features on a regular layer? 
+
+getProcessing( int index) : string
+    Return the raster processing directive at *index*.
 
 getResult( int i ) : resultCacheMemberObj_ 
     Fetches the requested query result cache entry, or NULL if the index is
@@ -788,6 +791,11 @@ setFilter( string filter ) : int
 setMetaData( string key, string value ) : int
     Assign *value* to the metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
+
+setProcessing( string directive ) : void
+    Adds a new processing directive line to a layer, similar to the PROCESSING
+    directive in a map file.  Processing directives supports are specific to
+    the layer type and underlying renderer. 
 
 setProjection( string proj4 ) : int
     Set the layer projection using a PROJ.4 format projection definition. 

@@ -156,6 +156,8 @@ memory.") const char * {
 %rename(FontSet) fontSetObj;
 #endif
 
+%rename(numprocessing) num_processing;
+
 // grab mapserver declarations to wrap
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
@@ -1010,7 +1012,15 @@ memory.") const char * {
     }
 
     void setProcessing(const char *directive) {
-	msLayerAddProcessing( self, directive );
+	    msLayerAddProcessing( self, directive );
+    }
+
+    char *getProcessing(int index) {
+        return msLayerGetProcessing(self, index);
+    }
+
+    int clearProcessing() {
+        return msLayerClearProcessing(self);
     }
 
 }

@@ -744,8 +744,8 @@ typedef struct layer_obj {
 
   int dump;
   int debug;
-#ifndef SWIG
   int  num_processing;
+#ifndef SWIG
   char **processing;
 #endif
   joinObj *joins;
