@@ -87,6 +87,21 @@ class MapSymbolTestCase(MapTestCase):
         symbol = self.map.symbolset.getSymbol(1)
         assert symbol.setStyle(0, 1) == mapscript.MS_SUCCESS
 
+    def testRGBASymbolInPNG24(self):
+        """draw a RGBA PNG pixmap on PNG canvas"""
+        self.map.setImageType('PNG24')
+        self.map.getLayerByName('INLINE-PIXMAP-RGBA').status == MS_ON
+        img = self.map.draw()
+        img.save('pixmap-rgba-24.png')
+
+    def testRGBASymbolInJPEG(self):
+        """draw a RGBA PNG pixmap on JPEG canvas"""
+        self.map.setImageType('JPEG')
+        self.map.getLayerByName('INLINE-PIXMAP-RGBA').status == MS_ON
+        img = self.map.draw()
+        img.save('pixmap-rgba.jpg')
+
+
                 
 # ===========================================================================
 # Run the tests outside of the main suite
