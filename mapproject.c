@@ -158,6 +158,16 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
 
+  /* first ensure the top left corner is processed, even if the rect
+     turns out to be degenerate. */
+
+  prj_point.x = rect->minx;
+  prj_point.y = rect->miny;
+
+  msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                    &failure);
+
+  /* sample along top and bottom */
   if(dx > 0) {
     for(x=rect->minx; x<=rect->maxx; x+=dx) {
       prj_point.x = x;
@@ -172,6 +182,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
     }
   }
 
+  /* sample along left and right */
   if(dy > 0) {
     for(y=rect->miny; y<=rect->maxy; y+=dy) {
       prj_point.y = y;
