@@ -315,6 +315,9 @@ exe-clean:
 distclean:
 	$(MAKE) clean
 	rm config.*
+	if test -d autom4te.cache ; then \
+	  rm -f -r autom4te.cache ; \
+	fi
 
 sorta-clean:
 	rm -f *.o
