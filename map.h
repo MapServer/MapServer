@@ -487,7 +487,8 @@ typedef struct {
   // a variety of data connection objects (probably should be pointers!)
   shapefileObj shpfile;
   shapefileObj tileshpfile;
-  void *ogrlayerinfo;  // For OGR layers, will contain a msOGRLayerInfo struct
+  void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
+  void *sdelayer; // For SDE layers, will contain a sdeLayerObj struct
 
   // attribute handling components
   char **items;
@@ -729,6 +730,12 @@ int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msOGRLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msOGRLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, 
                        int tile, int record, int allitems);
+
+int msSDELayerOpen(layerObj *layer); // in mapsde.c
+void msSDELayerClose(layerObj *layer);
+int msSDELayerWhichShapes(layerObj *layer, rectObj rect);
+int msSDELayerNextShape(layerObj *layer, shapeObj *shape);
+int msSDELayerGetShape(layerObj *layer, shapeObj *shape, int record, int allitems);
 
 #endif
 

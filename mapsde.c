@@ -1,11 +1,25 @@
 #include "map.h"
 #include "maperror.h"
 
+#ifdef USE_SDE
+#include <sdetype.h> /* ESRI SDE Client Includes */
+#include <sdeerno.h>
+
+struct sdeLayerObj { 
+  SE_CONNECTION connection;
+  SE_LAYERINFO layerinfo;
+  SE_COORDREF coordref;  
+  SE_STREAM stream;
+
+  char **items;
+  char numitems;
+
+  char *table, *column;
+};
+
 /*
 ** Start SDE/MapServer helper functions.
 */
-
-#ifdef USE_SDE
 static void sde_error(long error_code, char *routine, char *sde_routine) {
   char error_string[SE_MAX_MESSAGE_LENGTH];
 
@@ -109,7 +123,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 */
 
 // connects, gets basic information and opens a stream
-int msSDELayerOpen(layer) {
+int msSDELayerOpen(layerObj *layer) {
 #ifdef USE_SDE
   long status;
   char **params;
@@ -119,7 +133,7 @@ int msSDELayerOpen(layer) {
 
   sdeLayerObj *sde;
 
-  if (layer->sdelayerinfo) return MS_SUCCESS; // layer already open
+  if (layer->sdelayer) return MS_SUCCESS; // layer already open
  
   params = split(layer->connection, ',', &numparams);
   if(!params) {
@@ -137,7 +151,7 @@ int msSDELayerOpen(layer) {
     msSetError(MS_MEMERR, "Error allocating SDE layer structure.", "msSDELayerOpen()");
     return(MS_FAILURE);
   }
-  layer->sdelayerinfo = sde;
+  layer->sdelayer = sde;
 
   // initialize a few things
   sde->items = NULL;
@@ -152,6 +166,45 @@ int msSDELayerOpen(layer) {
 
   msFreeCharArray(params, numparams);
 
+  params = split(layer->data, ',', &numparams);
+  if(!params) {
+    msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msSDELayerOpen()");
+    return(MS_FAILURE);
+  }
+
+  if(numparams != 2) {
+    msSetError(MS_SDEERR, "Not enough SDE layer parameters specified.", "msSDELayerOpen()");
+    return(MS_FAILURE);
+  }
+
+  sde->table = params[0]; // no need to free
+  sde->column = params[1];
+
+  SE_layerinfo_create(NULL, &(sde->layerinfo));
+  status = SE_layer_get_info(connection, params[0], params[1], sde->layerinfo);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_layer_get_info()");
+    return(MS_FAILURE);
+  }
+
+  SE_coordref_create(&(sde->coordref));
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_coordref_create()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_layerinfo_get_coordref(sde->layerinfo, sde->coordref);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_layerinfo_get_coordref()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_stream_create(sde->connection, &(sde->stream));
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_stream_create()");
+    return(MS_FAILURE);
+  }
+
   return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerOpen()");
@@ -159,59 +212,23 @@ int msSDELayerOpen(layer) {
 #endif
 }
 
-void msSDELayerClose(layer) {
+void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
-  SE_stream_free(layer->sdelayerinfo->stream);
-  SE_connection_free(layer->sdelayerinfo->connection);
+  SE_stream_free(layer->sdelayer->stream);
+  SE_connection_free(layer->sdelayer->connection);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
   return;
 #endif
 }
 
-int msSDELayerNextShape(layer, shape) {
-#ifdef USE_SDE
-  long id, status;
-  sdeLayerObj *sde=NULL;
-
-  sde = layer->sdelayerinfo;
-
-  // fetch the next record from the stream
-  status = SE_stream_fetch(sde->stream);
-  if(status == SE_FINISHED)
-    return(MS_DONE);
-  else if(status != MS_SUCCESS) {
-    sde_error(status, "msSDELayerNextShape()", "SE_stream_fetch()");
-    return(MS_FAILURE);
-  }
-
-  // get the shape and attributes (first column is the shape, second is the shape id)
-
-  if(SE_shape_is_nil(shape)) 
-    return(msSDELayerNextShape(layer, shape));
-  
-#else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerNextShape()");
-  return(MS_FAILURE);
-#endif
-}
-
-int msSDELayerGetShape(layerObj *layer, shapeObj *shape, int record, int allitems) {
-#ifdef USE_SDE
-  return(MS_FAILURE);
-#else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetShape()");
-  return(MS_FAILURE);
-#endif
-}	
-
 // starts a stream query using spatial filter (and optionally attributes)
-int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj) {
+int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 #ifdef USE_SDE
   int i;
   long status;
-  char **params, **columns;
-  int numparams, numcolumns;
+  char **columns;
+  int numcolumns;
 
   SE_ERROR error;
   SE_ENVELOPE envelope;
@@ -221,41 +238,11 @@ int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projec
 
   sdeLayerObj *sde=NULL;
 
-  sde = layer->sdelayerinfo;
+  sde = layer->sdelayer;
 
   status = SE_shape_create(sde->coordref, &shape); // allocate early, might be threading problems
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_shape_create()");
-    return(MS_FAILURE);
-  }
-
-  params = split(layer->data, ',', &numparams);
-  if(!params) {
-    msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msSDELayerWhichShapes()");
-    return(MS_FAILURE);
-  }
-
-  if(numparams < 2) {
-    msSetError(MS_SDEERR, "Not enough SDE layer parameters specified.", "msSDELayerWhichShapes()");
-    return(MS_FAILURE);
-  }
-
-  SE_layerinfo_create(NULL, &(sde->layerinfo));
-  status = SE_layer_get_info(connection, params[0], params[1], sde->layerinfo);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_layer_get_info()");
-    return(MS_FAILURE);
-  }
-
-  SE_coordref_create(&(sde->coordref));
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_coordref_create()");
-    return(MS_FAILURE);
-  }
-
-  status = SE_layerinfo_get_coordref(sde->layerinfo, sde->coordref);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_layerinfo_get_coordref()");
     return(MS_FAILURE);
   }
 
@@ -292,25 +279,23 @@ int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projec
   constraint.filter_type = SE_SHAPE_FILTER;
   constraint.truth = TRUE;
 
-  // set up the SQL statement
-  status = SE_sql_construct_alloc((numparams-1), &sql);
+  // set up the SQL statement, no joins allowed here
+  status = SE_sql_construct_alloc(1, &sql);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_sql_construct_alloc()");
     return(-1);
   }
 
   strcpy(sql->tables[0], params[0]); // main table
-  for(i=2; i<numparams; i++)
-    strcpy(sql->tables[i-1], params[i]); // joined tables  
 
-  numcolumns = layer->numitems + 2;
+  numcolumns = layer->numitems + 2; //
   columns = (char **)malloc(numcolumns*sizeof(char *));
   if(!columns) {
     msSetError(MS_MEMERR, "Error allocating columns array.", "msSDELayerWhichShapes()");
     return(MS_FAILURE);
   }
 
-  column[0] = strdup(params[1]); // the shape  
+  column[0] = strdup(sde->column); // the shape  
   column[1] = strdup("SE_ROW_ID"); // row id
   for(i=0; i<layer->numitems; i++)
     column[i+2] = strdup(layer->items[i]); // any other items needed for labeling or classification
@@ -320,12 +305,6 @@ int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projec
     sql->where = strdup("");
   else
     sql->where = strdup(layer->filter.string);
-
-  status = SE_stream_create(sde->connection, &(sde->stream));
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_create()");
-    return(MS_FAILURE);
-  }
     
   status = SE_stream_query(sde->stream, numcolumns, columns, sql);
   if(status != SE_SUCCESS) {
@@ -349,11 +328,46 @@ int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projec
   SE_shape_free(shape);
   SE_sql_construct_free(sql);
   msFreeCharArray(params, numparams);
-  msFreeCharArray(columns, numcolumns);
 
   return(MS_SUCCESS);
 #else
   msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerWhichShapes()");
+  return(MS_FAILURE);
+#endif
+}
+
+int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
+#ifdef USE_SDE
+  long id, status;
+  sdeLayerObj *sde=NULL;
+
+  sde = layer->sdelayer;
+
+  // fetch the next record from the stream
+  status = SE_stream_fetch(sde->stream);
+  if(status == SE_FINISHED)
+    return(MS_DONE);
+  else if(status != MS_SUCCESS) {
+    sde_error(status, "msSDELayerNextShape()", "SE_stream_fetch()");
+    return(MS_FAILURE);
+  }
+
+  // get the shape and attributes (first column is the shape, second is the shape id)
+
+  if(SE_shape_is_nil(shape)) 
+    return(msSDELayerNextShape(layer, shape));
+  
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerNextShape()");
+  return(MS_FAILURE);
+#endif
+}
+
+int msSDELayerGetShape(layerObj *layer, shapeObj *shape, int record, int allitems) {
+#ifdef USE_SDE
+  return(MS_FAILURE);
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetShape()");
   return(MS_FAILURE);
 #endif
 }
