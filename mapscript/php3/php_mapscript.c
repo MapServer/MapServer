@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.179  2003/09/30 05:38:45  dan
+ * First round of changes to re-enable php_mapscript to work with PHP DSO
+ *
  * Revision 1.178  2003/09/24 12:27:43  dan
  * Added new MAXSIZE mapObj parameter (bug 435)
  *
@@ -178,81 +181,6 @@
  * Revision 1.132  2003/01/08 01:16:05  assefa
  * Correct bugs on Windows related to paths.
  *
- * Revision 1.131  2002/12/24 05:19:23  dan
- * Produce a warning in selectOutputFormat() if it fails.
- *
- * Revision 1.130  2002/12/19 19:27:32  julien
- * use an absolute path in map->mappath
- *
- * Revision 1.129  2002/12/17 22:52:53  dan
- * Fixed return value of map->selectOutputFormat()
- *
- * Revision 1.128  2002/12/17 22:04:58  dan
- * Added PNG24 to the list of default output formats with GD2
- *
- * Revision 1.127  2002/12/16 19:08:43  assefa
- * Remove unuses vraiables.
- *
- * Revision 1.126  2002/12/13 19:33:25  julien
- * zoomScale receive a double instead of an integer
- *
- * Revision 1.125  2002/11/26 21:19:02  dan
- * Made load/saveMapContext() produce E_WARNING instead of E_ERROR if
- * context fails to load or save.  (i.e. so we can trap errors)
- *
- * Revision 1.124  2002/11/20 22:18:28  julien
- * Propagate changes made by msLoadMapContext to PHP mapObj
- *
- * Revision 1.123  2002/11/17 17:21:15  dan
- * Fixed bug 186 - Crash with project() method of rect, point, line, shape
- *
- * Revision 1.122  2002/11/15 15:32:03  dan
- * ReferenceMap's extents, color and outlinecolor shouldn't be marked read-only
- *
- * Revision 1.121  2002/11/13 16:54:23  julien
- * Change the search of the header to be flexible.
- *
- * Revision 1.120  2002/10/28 21:43:59  dan
- * Added missing MS_CC constant
- *
- * Revision 1.119  2002/10/28 20:31:21  dan
- * New support for WMS Map Context (from Julien)
- *
- * Revision 1.3  2002/10/22 20:03:57  julien
- * Add the mapcontext support
- *
- * Revision 1.118  2002/10/28 17:03:33  assefa
- * Add a getstyle function on the class object.
- *
- * Revision 1.117  2002/10/28 15:27:30  dan
- * Added MS_LAYER_CIRCLE constant
- *
- * Revision 1.116  2002/10/23 19:44:08  assefa
- * Add setcolor functions for style and label objects.
- * Add function to select the output format.
- * Correct PrepareImage and PasteImage functions.
- *
- * Revision 1.115  2002/08/14 20:13:08  assefa
- * Offset in the layer object changed type.
- *
- * Revision 1.114  2002/08/09 22:55:38  assefa
- * Update code to be in sync with mapserver addition of Styles.
- *
- * Revision 1.113  2002/07/08 21:28:57  dan
- * Added symbolsetfilename and fontsetfilename in PHP MapScript's mapObj
- *
- * Revision 1.112  2002/07/08 19:07:06  dan
- * Added map->setFontSet() to MapScript
- *
- * Revision 1.111  2002/06/27 19:12:11  dan
- * Added msTokenizeMap() in MapServer and PHP MapScript (3.7 branch)
- *
- * Revision 1.110  2002/06/19 14:01:53  assefa
- * Correct compilation error in function saveimage.
- *
- * Revision 1.109  2002/06/11 23:47:11  assefa
- * Upgrade code to support new outputformat support.
- *
  * ...
  *
  * Revision 1.1  2000/05/09 21:06:11  dan
@@ -282,7 +210,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "($Revision$ $Date$)"
+#define PHPMS_VERSION "($Revision$ $Date$)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -297,9 +225,11 @@
  *====================================================================*/
 
 PHP_MINFO_FUNCTION(mapscript);
+PHP_MINIT_FUNCTION(phpms);
+PHP_MSHUTDOWN_FUNCTION(phpms);
+PHP_RINIT_FUNCTION(phpms);
+PHP_RSHUTDOWN_FUNCTION(phpms);
 
-DLEXPORT int  php3_init_mapscript(INIT_FUNC_ARGS);
-DLEXPORT int  php3_end_mapscript(SHUTDOWN_FUNC_ARGS);
 
 static void php_ms_free_map(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 
@@ -569,6 +499,7 @@ static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits,
  *               PHP Dynamically Loadable Library stuff
  *====================================================================*/
 
+/* True global resources - no need for thread safety here */
 #define PHPMS_GLOBAL(a) a
 static int le_msmap;
 static int le_mslayer;
@@ -597,13 +528,45 @@ static int le_msgrid;
 static int le_mserror_ref;
 static int le_mslabelcache;
 
-static char tmpId[128] = "ttt"; /* big enough for time + pid */
-static int  tmpCount = 0;
+/* 
+ * Declare any global variables you may need between the BEGIN
+ * and END macros here:     
+ */
+ZEND_BEGIN_MODULE_GLOBALS(phpms)
+    /* We'll use tmpId and tmpCount to generate unique filenames */
+    char tmpId[128]; /* big enough for time + pid */
+    int  tmpCount;
+ZEND_END_MODULE_GLOBALS(phpms)
+
+ZEND_DECLARE_MODULE_GLOBALS(phpms)
+
+static void phpms_init_globals(zend_phpms_globals *phpms_globals)
+{
+    sprintf(phpms_globals->tmpId, "%ld%d",(long)time(NULL),(int)getpid());
+    phpms_globals->tmpCount = 0;
+}
+
+
+/* In every utility function you add that needs to use variables 
+   in phpms_globals, call TSRM_FETCH(); after declaring other 
+   variables used by that function, or better yet, pass in TSRMLS_CC
+   after the last function argument and declare your utility function
+   with TSRMLS_DC after the last declared argument.  Always refer to
+   the globals in your function as PHPMS_G(variable).  You are 
+   encouraged to rename these macros something shorter, see
+   examples in any other php module directory.
+*/
+
+#ifdef ZTS
+#define PHPMS_G(v) TSRMG(phpms_globals_id, zend_phpms_globals *, v)
+#else
+#define PHPMS_G(v) (phpms_globals.v)
+#endif
+
 
 /* -------------------------------------------------------------------- */
 /*      class entries.                                                  */
 /* -------------------------------------------------------------------- */
-#ifdef PHP4
 static zend_class_entry *map_class_entry_ptr;
 static zend_class_entry *img_class_entry_ptr;
 static zend_class_entry *rect_class_entry_ptr;
@@ -626,13 +589,12 @@ static zend_class_entry *grid_class_entry_ptr;
 static zend_class_entry *error_class_entry_ptr;
 static zend_class_entry *labelcache_class_entry_ptr;
 
-#endif
 static unsigned char one_arg_force_ref[] = 
   { 1, BYREF_FORCE};
 static unsigned char two_args_first_arg_force_ref[] = 
     { 2, BYREF_FORCE, BYREF_NONE };
 
-function_entry php3_ms_functions[] = {
+function_entry phpms_functions[] = {
     {"ms_getversion",   php3_ms_getversion,     NULL},
     {"ms_newmapobj",    php3_ms_map_new,        NULL},
     {"ms_newlayerobj",  php3_ms_lyr_new,        two_args_first_arg_force_ref},
@@ -654,22 +616,32 @@ function_entry php3_ms_functions[] = {
     {NULL, NULL, NULL}
 };
 
-php3_module_entry php3_ms_module_entry = {
+zend_module_entry php_ms_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
     STANDARD_MODULE_HEADER,
 #endif
-    "MapScript", php3_ms_functions, php3_init_mapscript, php3_end_mapscript,
-    NULL, NULL,
+    "MapScript", 
+    phpms_functions,
+    /* MINIT()/MSHUTDOWN() are called once only when PHP starts up and 
+     * shutdowns.  They're really called only once and *not* when a new Apache
+     * child process is created.
+     */
+    PHP_MINIT(phpms),
+    PHP_MSHUTDOWN(phpms),
+    /* RINIT()/RSHUTDOWN() are called once per request 
+     */
+    PHP_RINIT(phpms),
+    PHP_RSHUTDOWN(phpms),
     PHP_MINFO(mapscript),
 #if ZEND_MODULE_API_NO >= 20010901
-    PHP3_MS_VERSION,          /* extension version number (string) */
+    PHPMS_VERSION,          /* extension version number (string) */
 #endif
     STANDARD_MODULE_PROPERTIES 
 };
 
 
 #if COMPILE_DL
-DLEXPORT php3_module_entry *get_module(void) { return &php3_ms_module_entry; }
+DLEXPORT zend_module_entry *get_module(void) { return &php_ms_module_entry; }
 #endif
 
 /* -------------------------------------------------------------------- */
@@ -842,17 +814,17 @@ function_entry php_line_class_functions[] = {
 };
 
 function_entry php_shape_class_functions[] = {
-    {"set",             php3_ms_shape_setProperty,      NULL},    
-    {"project",         php3_ms_shape_project,          NULL},    
-    {"add",             php3_ms_shape_add,              NULL},    
-    {"line",            php3_ms_shape_line,             NULL},    
-    {"draw",            php3_ms_shape_draw,             NULL},    
-    {"contains",        php3_ms_shape_contains,         NULL},    
-    {"intersects",      php3_ms_shape_intersects,       NULL},    
-    {"getvalue",        php3_ms_shape_getvalue,         NULL},    
-    {"getpointusingmeasure", php3_ms_shape_getpointusingmeasure,         NULL},    
-    {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint,         NULL},    
-    {"free",            php3_ms_shape_free,             NULL},    
+    {"set",             php3_ms_shape_setProperty,      NULL},
+    {"project",         php3_ms_shape_project,          NULL},
+    {"add",             php3_ms_shape_add,              NULL},
+    {"line",            php3_ms_shape_line,             NULL},
+    {"draw",            php3_ms_shape_draw,             NULL},
+    {"contains",        php3_ms_shape_contains,         NULL},
+    {"intersects",      php3_ms_shape_intersects,       NULL},
+    {"getvalue",        php3_ms_shape_getvalue,         NULL},
+    {"getpointusingmeasure", php3_ms_shape_getpointusingmeasure, NULL},
+    {"getmeasureusingpoint", php3_ms_shape_getmeasureusingpoint, NULL},
+    {"free",            php3_ms_shape_free,             NULL},
     {NULL, NULL, NULL}
 };
 
@@ -868,18 +840,18 @@ function_entry php_shapefile_class_functions[] = {
 };
 
 function_entry php_projection_class_functions[] = {
-    {"free",            php3_ms_projection_free,              NULL},    
+    {"free",            php3_ms_projection_free,        NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_style_class_functions[] = {
-    {"set",              php3_ms_style_setProperty,      NULL},    
+    {"set",             php3_ms_style_setProperty,      NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_outputformat_class_functions[] = {
-    {"setformatoption",    php_ms_outputformat_setOutputformatoption,      NULL},    
-    {"getformatoption",    php_ms_outputformat_getOutputformatoption,      NULL},    
+    {"setformatoption", php_ms_outputformat_setOutputformatoption, NULL},
+    {"getformatoption", php_ms_outputformat_getOutputformatoption, NULL},
     {NULL, NULL, NULL}
 };
 
@@ -903,18 +875,27 @@ PHP_MINFO_FUNCTION(mapscript)
 {
   php_info_print_table_start();
   php_info_print_table_row(2, "MapServer Version", msGetVersion());
-  php_info_print_table_row(2, "PHP MapScript Version", PHP3_MS_VERSION);
+  php_info_print_table_row(2, "PHP MapScript Version", PHPMS_VERSION);
   php_info_print_table_end();
+
+  /* Remove comments if you have entries in php.ini
+  DISPLAY_INI_ENTRIES();
+  */
+
 }
 
 
-DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
+PHP_MINIT_FUNCTION(phpms)
 {
-#ifdef PHP4
     zend_class_entry tmp_class_entry;
-#endif
 
     int const_flag = CONST_CS|CONST_PERSISTENT;
+
+    ZEND_INIT_MODULE_GLOBALS(phpms, phpms_init_globals, NULL);
+
+    /* If you have INI entries, uncomment this line
+    REGISTER_INI_ENTRIES();
+    */
 
     PHPMS_GLOBAL(le_msmap)  = 
         zend_register_list_destructors_ex(php_ms_free_map, NULL, 
@@ -1137,13 +1118,6 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_HTTPERR",    MS_HTTPERR,     const_flag);
  
 
-    /* We'll use tmpId and tmpCount to generate unique filenames 
-     * Note that tmpId and tmpCount are shared between multiple instances
-     * of PHP MapScript when PHP4 is running as a module.
-     */
-    if (tmpCount == 0)
-        sprintf(PHPMS_GLOBAL(tmpId), "%ld%d",(long)time(NULL),(int)getpid());
-
 #ifdef PHP4
     INIT_CLASS_ENTRY(tmp_class_entry, "ms_map_obj", php_map_class_functions);
     map_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
@@ -1230,10 +1204,21 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     return SUCCESS;
 }
 
-DLEXPORT int php3_end_mapscript(SHUTDOWN_FUNC_ARGS)
+PHP_MSHUTDOWN_FUNCTION(phpms)
 {
     return SUCCESS;
 }
+
+PHP_RINIT_FUNCTION(phpms)
+{
+    return SUCCESS;
+}
+
+PHP_RSHUTDOWN_FUNCTION(phpms)
+{
+    return SUCCESS;
+}
+
 
 
 /**********************************************************************
@@ -1435,26 +1420,6 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     char        szPath[MS_MAXPATHLEN], szFname[MS_MAXPATHLEN];
     char        szNewPath[MS_MAXPATHLEN];
 #endif
-
-    /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
-     * as an Apache (or ISAPI) module.  It works fine only with PHP configured
-     * as a CGI.
-     *
-     * Hopefully we'll be able to get rid of that limitation soon, but for
-     * now we'll produce an error of PHP is not running as a CGI.
-     */
-    if (sapi_module.name && (strcmp(sapi_module.name, "cgi") != 0) &&
-        (strcmp(sapi_module.name, "cgi-fcgi") != 0) &&
-        (strcmp(sapi_module.name, "cli") != 0))
-    {
-        php3_error(E_ERROR, 
-             "Due to thread-safety problems, php_mapscript cannot be used "
-             "as a '%s' module.  You will have to reconfigure your PHP as "
-             "a CGI to run this version of MapScript. \n"
-             "See <a href=\"http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI\">http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI</a>.\n",
-              sapi_module.name);
-        RETURN_FALSE;
-    }
 
     nArgs = ARG_COUNT(ht);
     if ((nArgs != 1 && nArgs != 2) ||
@@ -5689,18 +5654,11 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     imageObj *im = NULL;
 
     char *pImagepath, *pImageurl, *pBuf;
-    int nBufSize, nLen1, nLen2;
+    int nBufSize, nLen1, nLen2, nTmpCount;
     const char *pszImageExt;
 
-#ifdef PHP4
     HashTable   *list=NULL;
-#endif
-
-#ifdef PHP4
     pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
 
     if (pThis == NULL)
     {
@@ -5717,10 +5675,11 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
      */
     nLen1 = strlen(pImagepath);
     nLen2 = strlen(pImageurl);
-    nBufSize = (nLen1>nLen2 ? nLen1:nLen2) + strlen(tmpId) + 30;
+    nBufSize = (nLen1>nLen2 ? nLen1:nLen2) + strlen(PHPMS_G(tmpId)) + 30;
     pBuf = (char*)emalloc(nBufSize);
-    tmpCount++;
-    sprintf(pBuf, "%s%s%d.%s", pImagepath, tmpId, tmpCount, pszImageExt);
+    nTmpCount = ++(PHPMS_G(tmpCount));
+    sprintf(pBuf, "%s%s%d.%s", 
+            pImagepath, PHPMS_G(tmpId), nTmpCount, pszImageExt);
 
 
     /* Save the image... 
@@ -5735,7 +5694,8 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 
     /* ... and return the corresponding URL
      */
-    sprintf(pBuf, "%s%s%d.%s", pImageurl, tmpId, tmpCount, pszImageExt);
+    sprintf(pBuf, "%s%s%d.%s", 
+            pImageurl, PHPMS_G(tmpId), nTmpCount, pszImageExt);
     RETURN_STRING(pBuf, 0);
 }
 /* }}} */
