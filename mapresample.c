@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2001/09/05 13:24:47  frank
+ * fixed last fix related to Z coordinate handling
+ *
  * Revision 1.17  2001/09/04 13:20:52  frank
  * ensure Z is passed to pj_transform for datum shifts
  *
@@ -336,16 +339,19 @@ int msProjTransformer( void *pCBData, int nPoints,
     if( psPTInfo->psDstProj != NULL
         && psPTInfo->psSrcProj != NULL )
     {
-        double	z = 0;
-
+        double *z;
+        
+        z = (double *) calloc(sizeof(double),nPoints);
         if( pj_transform( psPTInfo->psDstProj, psPTInfo->psSrcProj, 
-                          nPoints, 1, x, y,  &z) != 0 )
+                          nPoints, 1, x, y,  z) != 0 )
         {
+            free( z );
             for( i = 0; i < nPoints; i++ )
                 panSuccess[i] = 0;
 
             return MS_FALSE;
         }
+        free( z );
     }
 
 /* -------------------------------------------------------------------- */
