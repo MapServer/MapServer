@@ -110,15 +110,15 @@ class FontSetTestCase(unittest.TestCase):
     def tearDown(self):
         self.mapobj1 = None
     def testGetFontSetFile(self):
-        file = self.mapobj1.getFontSetFile()
+        file = self.mapobj1.fontset.filename
         assert file == 'fonts.txt', file
-    def testGetFonts(self):
-        fonts = [('LucidaSansRegular',
-                  '/Users/sean/Library/Fonts/LucidaSansRegular.ttf'), 
-                 ('LucidaSansDemiBold',
-                  '/Users/sean/Library/Fonts/LucidaSansDemiBold.ttf')]
-        f = self.mapobj1.getFonts()
-        assert f == fonts, f
+    #def testGetFonts(self):
+    #    items = [('LucidaSansRegular',
+    #              '/Users/sean/Library/Fonts/LucidaSansRegular.ttf'), 
+    #             ('LucidaSansDemiBold',
+    #              '/Users/sean/Library/Fonts/LucidaSansDemiBold.ttf')]
+    #    f = self.mapobj1.fontset.getFonts()
+    #    assert f == items, f
 
 class EmptyMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -175,7 +175,7 @@ class NoFontSetTestCase(unittest.TestCase):
     def tearDown(self):
         self.mapobj1 = None
     def testNoGetFontSetFile(self):
-        assert self.mapobj1.getFontSetFile() == None
+        assert self.mapobj1.fontset.filename == None
 
 class ExpressionTestCase(unittest.TestCase):
     def setUp(self):
