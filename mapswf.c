@@ -2069,7 +2069,7 @@ static int msSWFGetMovieIndex(int *panIndex, int nSize, int nIndex)
     {
         for (i=0; i<nSize; i++)
         {
-            if (panIndex[i] = nIndex)
+            if (panIndex[i] == nIndex)
             {
                 nIndice = i;
                 break;
