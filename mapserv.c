@@ -298,9 +298,12 @@ void loadForm()
 	msFreeCharArray(tokens, 4);
 	
 #ifdef USE_PROJ
+	// make sure both coordinates are in range!
 	if(msObj->Map->projection.proj && !pj_is_latlong(msObj->Map->projection.proj)
            && (msObj->Map->extent.minx >= -180.0 && msObj->Map->extent.minx <= 180.0) 
-           && (msObj->Map->extent.miny >= -90.0 && msObj->Map->extent.miny <= 90.0))
+           && (msObj->Map->extent.miny >= -90.0 && msObj->Map->extent.miny <= 90.0)
+	   && (msObj->Map->extent.maxx >= -180.0 && msObj->Map->extent.maxx <= 180.0) 
+           && (msObj->Map->extent.maxy >= -90.0 && msObj->Map->extent.maxy <= 90.0))
 	  msProjectRect(&(msObj->Map->latlon), 
                         &(msObj->Map->projection), 
                         &(msObj->Map->extent)); // extent is a in lat/lon
