@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.89  2002/03/01 16:02:48  assefa
+ * Correct typo error in zoompoint/zoomscale.
+ *
  * Revision 1.88  2002/02/19 19:58:14  assefa
  * Forgot to udate extents information in the php object
  * when map->draw and map->drawquery are called.
@@ -1743,7 +1746,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         }
         if (self->extent.maxy > poMaxGeorefExt->maxy)
         {
-            self->extent.miny = poMaxGeorefExt->maxy;
+            self->extent.maxy = poMaxGeorefExt->maxy;
             oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
@@ -2038,7 +2041,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         }
         if (self->extent.maxy > poMaxGeorefExt->maxy)
         {
-            self->extent.miny = poMaxGeorefExt->maxy;
+            self->extent.maxy = poMaxGeorefExt->maxy;
             oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
