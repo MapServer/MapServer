@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.29  2004/05/12 19:40:19  frank
+ * Fixed my last fix ... damn it.
+ *
  * Revision 1.28  2004/05/11 22:35:06  frank
  * Avoid data init warning.
  *
@@ -340,7 +343,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       dst_lrx = (int) ((copyRect.maxx - mapRect.minx) / map->cellsize + 0.5);
       dst_lry = (int) ((mapRect.maxy - copyRect.miny) / map->cellsize + 0.5);
       dst_lrx = MAX(0,MIN(image->width,dst_lrx));
-      dst_lrx = MAX(0,MIN(image->height,dst_lry));
+      dst_lry = MAX(0,MIN(image->height,dst_lry));
       
       dst_xsize = MAX(0,MIN(image->width,dst_lrx - dst_xoff));
       dst_ysize = MAX(0,MIN(image->height,dst_lry - dst_yoff));
@@ -352,7 +355,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           return 0;
       }
 
-#ifdef notdef
+#ifndef notdef
       if( layer->debug )
           msDebug( "msDrawGDAL(): src=%d,%d,%d,%d, dst=%d,%d,%d,%d\n", 
                    src_xoff, src_yoff, src_xsize, src_ysize, 
