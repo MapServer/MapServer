@@ -5,10 +5,10 @@
  * Project:  PHP/MapScript extension for MapServer : Utility functions
  * Language: ANSI C
  * Purpose:  Utility functions
- * Author:   Daniel Morissette, danmo@videotron.ca
+ * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000, Daniel Morissette
+ * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/09/13 20:56:27  dan
+ * Added _phpms_fetch_property_resource().
+ *
  * Revision 1.3  2001/01/09 05:24:41  dan
  * Fixes to build with PHP 4.0.4
  *
@@ -127,6 +130,8 @@ char *_phpms_fetch_property_string(pval *pObj, char *property_name,
 long _phpms_fetch_property_long(pval *pObj, char *property_name, 
                                 int err_type);
 double _phpms_fetch_property_double(pval *pObj, char *property_name,
+                                    int err_type);
+long _phpms_fetch_property_resource(pval *pObj, char *property_name, 
                                     int err_type);
 int _phpms_set_property_string(pval *pObj, char *property_name, 
                                char *szNewValue, int err_type);
