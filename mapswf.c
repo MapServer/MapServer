@@ -2080,10 +2080,35 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     
     int         nCurrentMovie = 0;
     int         bLayerOpen = 0;
+    imageObj    *imagetmp;
+    //int         nTmp = -1;
+    SWFShape    oShape;
+
+
+/* -------------------------------------------------------------------- */
+/*      test for driver.                                                */
+/* -------------------------------------------------------------------- */
     if (!image || !MS_DRIVER_SWF(image->format))
         return -1;
 
 
+/* -------------------------------------------------------------------- */
+/*      if the output is single (SWF file based on one raster that      */
+/*      will contain all  the rendering), draw the lables using the     */
+/*      GD driver.                                                      */
+/* -------------------------------------------------------------------- */
+    if(strcasecmp(msGetOutputFormatOption(image->format,
+                                          "OUTPUT_MOVIE","SINGLE"), 
+                  "SINGLE") == 0)
+    {
+        imagetmp = (imageObj *)image->img.swf->imagetmp;
+        msImageInitGD( imagetmp, &map->imagecolor );
+        msDrawLabelCacheGD(imagetmp->img.gd, map);
+        oShape = gdImage2Shape(imagetmp->img.gd);
+        //nTmp = image->img.swf->nCurrentMovie;
+        SWFMovie_add(GetCurrentMovie(map, image), oShape);
+        return 0;
+    }
 /* -------------------------------------------------------------------- */
 /*      keep the current layer index.                                   */
 /* -------------------------------------------------------------------- */
@@ -2512,7 +2537,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
         }
 
 /* -------------------------------------------------------------------- */
-/*      If the output is MULTIPLE save individula movies as well as     */
+/*      If the output is MULTIPLE save individual movies as well as     */
 /*      the main movie.                                                 */
 /* -------------------------------------------------------------------- */
 
