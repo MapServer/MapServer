@@ -41,20 +41,20 @@ typedef struct
 ** Function prototypes
 */ 
 MS_DLL_EXPORT  int loadParams(cgiRequestObj *);
-void getword(char *, char *, char);
-char *makeword_skip(char *, char, char);
-char *makeword(char *, char);
-char *fmakeword(FILE *, char, int *);
-char x2c(char *);
-void unescape_url(char *);
-void plustospace(char *);
-int rind(char *, char);
-int _getline(char *, int, FILE *);
-void send_fd(FILE *, FILE *);
-int ind(char *, char);
-void escape_shell_cmd(char *);
+MS_DLL_EXPORT void getword(char *, char *, char);
+MS_DLL_EXPORT char *makeword_skip(char *, char, char);
+MS_DLL_EXPORT char *makeword(char *, char);
+MS_DLL_EXPORT char *fmakeword(FILE *, char, int *);
+MS_DLL_EXPORT char x2c(char *);
+MS_DLL_EXPORT void unescape_url(char *);
+MS_DLL_EXPORT void plustospace(char *);
+MS_DLL_EXPORT int rind(char *, char);
+MS_DLL_EXPORT int _getline(char *, int, FILE *);
+MS_DLL_EXPORT void send_fd(FILE *, FILE *);
+MS_DLL_EXPORT int ind(char *, char);
+MS_DLL_EXPORT void escape_shell_cmd(char *);
 
-cgiRequestObj *msAllocCgiObj(void);
-void msFreeCgiObj(cgiRequestObj *request);
+MS_DLL_EXPORT cgiRequestObj *msAllocCgiObj(void);
+MS_DLL_EXPORT void msFreeCgiObj(cgiRequestObj *request);
 
 #endif /* CGIUTIL_H */
