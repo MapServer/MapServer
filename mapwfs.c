@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2002/10/28 15:26:42  dan
+ * Fixed typo in DescribeFeatureType schemaLocation
+ *
  * Revision 1.5  2002/10/09 02:29:03  dan
  * Initial implementation of WFS client support.
  *
@@ -466,7 +469,7 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
 
     printf("\n"
            "  <import namespace=\"http://www.opengis.net/gml\" \n"
-           "          schemaLocation\"%s/gml/2.1/feature.xsd\" />\n",
+           "          schemaLocation=\"%s/gml/2.1/feature.xsd\" />\n",
            msWFSGetSchemasLocation(map));
 
     /*
