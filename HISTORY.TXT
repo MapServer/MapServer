@@ -15,7 +15,12 @@ the CVS logs is updated daily at the following URL:
 
 Version 4.3 (CVS)
 -----------------
+- Fixed SDE only recognizing SE_ROW_ID as the unique column (bug 536). 
+  The code now autosenses the unique row id column.
 
+- Enhanced SDE support to include support for queries against 
+  user-specified versions.  The version name can be specified as the 
+  last parameter of the CONNECTION string.
 
 
 Version 4.2-beta1 (2004-04-17)
