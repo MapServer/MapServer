@@ -300,6 +300,7 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
       numRowsAllocated += ROW_ALLOCATION_SIZE;
     }
     joininfo->rows[joininfo->numrows] = split(buffer, ',', &(joininfo->numcols));
+    joininfo->numrows++;
   }
 
   // get "from" item index  
@@ -377,8 +378,8 @@ int msCSVJoinNext(joinObj *join)
     msFreeCharArray(join->values, join->numitems);
     join->values = NULL;
   }
-    
-  for(i=joininfo->nextrow; i<joininfo->numrows; i++) { // find a match
+
+  for(i=joininfo->nextrow; i<joininfo->numrows; i++) { // find a match    
     if(strcmp(joininfo->target, joininfo->rows[i][joininfo->toindex]) == 0) break;
   }  
 
