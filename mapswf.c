@@ -2668,6 +2668,7 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
 
     if (imagetmp)
     {
+        msImageInitGD( imagetmp, &map->imagecolor );
         //msLoadPalette(imagetmp->img.gd, &(map->palette), map->imagecolor);
         msDrawVectorLayer(map, layer, imagetmp);
         
