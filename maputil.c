@@ -197,7 +197,7 @@ gdImagePtr msDrawMap(mapObj *map)
     return(NULL);
   
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
+  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution);
 
   for(i=0; i<map->numlayers; i++) {
 
@@ -269,7 +269,7 @@ gdImagePtr msDrawQueryMap(mapObj *map)
     return(NULL);
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
+  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution);
 
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);

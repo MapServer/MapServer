@@ -39,7 +39,7 @@ static double roundInterval(double d)
 ** Calculate the approximate scale based on a few parameters. Note that this assumes the scale is
 ** the same in the x direction as in the y direction, so run msAdjustExtent(...) first.
 */
-double msCalculateScale(rectObj extent, int units, int width, int height)
+double msCalculateScale(rectObj extent, int units, int width, int height, int resolution)
 {
   double md, gd, scale;
 
@@ -56,7 +56,7 @@ double msCalculateScale(rectObj extent, int units, int width, int height)
   case(MS_MILES):
   case(MS_INCHES):  
   case(MS_FEET):
-    md = (width-1)/(MS_PPI*inchesPerUnit[units]);
+    md = (width-1)/(resolution*inchesPerUnit[units]);
     gd = extent.maxx - extent.minx;
     scale = gd/md;
     break;
@@ -87,7 +87,7 @@ gdImagePtr msDrawScalebar(mapObj *map)
   if(!fontPtr) return(NULL);
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
+  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution);
   
   msx = (map->cellsize * map->scalebar.width)/(inchesPerUnit[map->scalebar.units]/inchesPerUnit[map->units]);
   i = roundInterval(msx/map->scalebar.intervals);

@@ -23,7 +23,7 @@ gdImagePtr msDrawLegend(mapObj *map)
   rectObj rect;
 
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height);
+  map->scale = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution);
 
   /* Initialize the polygon/polyline */
   p.line = (lineObj *)malloc(sizeof(lineObj));

@@ -71,8 +71,6 @@ extern "C" {
 #define MS_GREEN 1
 #define MS_BLUE 2
 
-#define MS_PPI 72 /* number of pixels/inch on a monitor, used for simple scale calculations */
-
 #define MS_MAXCOLORS 256
 
 #define MS_BUFFER_LENGTH 2048 /* maximum input line length */
@@ -551,6 +549,7 @@ typedef struct { /* structure for a map */
 
   enum MS_UNITS units; /* units of the projection */
   double scale; /* scale of the output image */
+  int resolution;
 
   char *shapepath; /* where are the shape files located */
 
@@ -632,7 +631,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 
 gdImagePtr msDrawScalebar(mapObj *map); // in mapscale.c
-double msCalculateScale(rectObj extent, int units, int width, int height);
+double msCalculateScale(rectObj extent, int units, int width, int height, int resolution);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
 
 int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c

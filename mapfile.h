@@ -137,4 +137,6 @@
 #define METADATA 1120
 #define LATLON 1121
 
+#define RESOLUTION 1122
+
 #endif /* MAPFILE_H */
