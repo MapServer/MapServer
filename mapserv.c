@@ -163,8 +163,8 @@ static double getNumeric(regex_t re, char *s)
 */
 void loadForm()
 {
-  int i, n;
-  char **tokens, *tmpstr;
+  int i,j,k,n;
+  char **tokens, *tmpstr, *expptr;
   regex_t re;
 
   for(i=0;i<NumEntries;i++) // find the mapfile parameter first
@@ -803,6 +803,20 @@ void loadForm()
   if(ImgCols == -1) ImgCols = Map->width;  
   if(Map->height == -1) Map->height = ImgRows;
   if(Map->width == -1) Map->width = ImgCols;
+
+  for(i=0;i<NumEntries;i++) {
+    tmpstr = (char *)malloc(sizeof(char)*strlen(Entries[i].name) + 3);
+    sprintf(tmpstr,"%%%s%%", Entries[i].name);
+
+    for(j=0; j<Map->numlayers; j++) {
+      for(k=0; k<Map->layers[j].numclasses; k++) {
+	expptr = Map->layers[j].class[k].expression.string;
+	if(expptr && (strstr(expptr, tmpstr) != NULL)) expptr = gsub(expptr, tmpstr, Entries[i].val);
+      }
+    }
+    
+    free(tmpstr);
+  }
 }
 
 /*
