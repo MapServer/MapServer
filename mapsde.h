@@ -15,6 +15,11 @@ struct sdeLayerObj {
   SE_LAYERINFO layerinfo;
   SE_COORDREF coordref;  
   SE_STREAM stream;
+
+  char **items;
+  char numitems;
+
+  char *table, *column;
 };
 
 #endif

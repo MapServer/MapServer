@@ -108,6 +108,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 ** Start SDE/MapServer library functions.
 */
 
+// connects, gets basic information and opens a stream
 int msSDELayerOpen(layer) {
 #ifdef USE_SDE
   long status;
@@ -137,6 +138,11 @@ int msSDELayerOpen(layer) {
     return(MS_FAILURE);
   }
   layer->sdelayerinfo = sde;
+
+  // initialize a few things
+  sde->items = NULL;
+  sde->numitems = 0;
+  sde->table = sde->column = 0;
 
   status = SE_connection_create(params[0], params[1], params[2], params[3], params[4], &error, &(sde->connection));
   if(status != SE_SUCCESS) {
@@ -199,6 +205,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, int record, int allitem
 #endif
 }	
 
+// starts a stream query using spatial filter (and optionally attributes)
 int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj) {
 #ifdef USE_SDE
   int i;
