@@ -98,6 +98,7 @@ classes themselves
  Mapscript Classes
 =============================================================================
 
+classObj_, colorObj_, pointObj_, rectObj_, styleObj_
 
 -----------------------------------------------------------------------------
  classObj
