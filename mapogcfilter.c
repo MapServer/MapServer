@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.18  2004/02/04 21:20:36  assefa
+ * Add Intersect in the list of supported operators.
+ *
  * Revision 1.17  2004/02/04 19:58:00  assefa
  * Remove unused variables.
  *
@@ -184,7 +187,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
         psQueryShape = FLTGetShape(psNode, NULL);
     }
 
-    if (!szExpression && !szEPSG && !bIsBBoxFilter && !bPointQuery)
+    if (!szExpression && !szEPSG && !bIsBBoxFilter && !bPointQuery && !bShapeQuery)
       return NULL;
 
     lp = &(map->layers[iLayerIndex]);
@@ -788,7 +791,6 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
     CPLXMLNode *psRoot = NULL, *psChild=NULL, *psFilter=NULL;
     CPLXMLNode  *psFilterStart = NULL;
     FilterEncodingNode *psFilterNode = NULL;
-
 
     if (szXMLString == NULL || strlen(szXMLString) <= 0 ||
         (strstr(szXMLString, "Filter") == NULL))
@@ -1569,7 +1571,8 @@ int FLTIsSpatialFilterType(char *pszValue)
     if (pszValue)
     {
         if ( strcasecmp(pszValue, "BBOX") == 0 ||
-             strcasecmp(pszValue, "DWithin") == 0)
+             strcasecmp(pszValue, "DWithin") == 0 ||
+             strcasecmp(pszValue, "Intersect") == 0)
           return MS_TRUE;
     }
 
