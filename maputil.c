@@ -866,7 +866,8 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     
   switch(layer->type) {      
   case MS_ANNOTATION:
-    
+    if(!layer->annotate) break;
+
     for(fptr=layer->features; fptr; fptr=fptr->next) {
 
       if((c = getClassIndex(layer, fptr->class)) == -1) continue; /* next feature */
@@ -928,7 +929,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	    msDrawMarkerSymbol(&map->markerset, img, pnt, &layer->class[c]);
 	  }
 	  
-	  if(fptr->text || layer->class[c].text.string) {
+	  if(layer->annotate) {
 	    if(fptr->text) text = fptr->text; 
 	    else text = layer->class[c].text.string;
 
@@ -962,7 +963,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
       msDrawLineSymbol(&map->lineset, img, &fptr->shape, &layer->class[c]); 
       
-      if(fptr->text || layer->class[c].text.string) {
+      if(layer->annotate) {
 	if(fptr->text) text = fptr->text; 
 	else text = layer->class[c].text.string;
 
@@ -996,7 +997,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
       msDrawLineSymbol(&map->lineset, img, &fptr->shape, &layer->class[c]); 
       
-      if(fptr->text || layer->class[c].text.string) {
+      if(layer->annotate) {
 	if(fptr->text) text = fptr->text; 
 	else text = layer->class[c].text.string;
 
@@ -1033,7 +1034,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
       msDrawShadeSymbol(&map->shadeset, img, &fptr->shape, &layer->class[c]);
       
-      if(fptr->text || layer->class[c].text.string) {
+      if(layer->annotate) {
 	if(fptr->text) text = fptr->text; 
 	else text = layer->class[c].text.string;
 
