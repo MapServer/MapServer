@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.49  2001/08/29 14:36:06  dan
+ * Changes to msCalculateScale() args.  Sync with mapscript.i v1.42
+ *
  * Revision 1.48  2001/08/21 19:09:02  dan
  * Made map->draw() and drawQuery() produce only a PHP warning so that the map
  * rendering errors can be trapped by the scripts using the '@' operator.
@@ -133,7 +136,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Aug 21, 2001)"
+#define PHP3_MS_VERSION "(Aug 29, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -1076,9 +1079,11 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
     
     self->cellsize = msAdjustExtent(&(self->extent), self->width, 
                                     self->height);      
-    self->scale = msCalculateScale(*(&(self->extent)), self->units, 
-                                   self->width, self->height, 
-                                   self->resolution);
+    if (msCalculateScale(self->extent, self->units, self->width, self->height, 
+                         self->resolution, &(self->scale)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
@@ -1358,9 +1363,12 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 /*      use them to test before zooming.                                */
 /* -------------------------------------------------------------------- */
     msAdjustExtent(&oNewGeorefExt, self->width, self->height);
-    dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
-                                   self->width, self->height, 
-                                   self->resolution);
+    if (msCalculateScale(oNewGeorefExt, self->units, 
+                         self->width, self->height, 
+                         self->resolution, &dfNewScale) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
     if (self->web.maxscale > 0)
     {
@@ -1464,9 +1472,11 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         }
     }
     
-    self->scale = msCalculateScale(*(&(self->extent)), self->units, 
-                                   self->width, self->height,
-                                   self->resolution);
+    if (msCalculateScale(self->extent, self->units, self->width, self->height, 
+                         self->resolution, &(self->scale)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
@@ -1626,9 +1636,12 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
 /*      if the min and max scale are set in the map file, we will       */
 /*      use them to test before settting extents.                       */
 /* -------------------------------------------------------------------- */
-    dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
-                                   self->width, self->height,
-                                   self->resolution);
+    if (msCalculateScale(oNewGeorefExt, self->units, 
+                         self->width, self->height, 
+                         self->resolution, &dfNewScale) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
     if (self->web.maxscale > 0 &&  dfNewScale > self->web.maxscale)
     {
@@ -1726,9 +1739,12 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
             oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
-    self->scale = msCalculateScale(*(&(self->extent)), self->units, 
-                                   self->width, self->height,
-                                   self->resolution);
+
+    if (msCalculateScale(self->extent, self->units, self->width, self->height, 
+                         self->resolution, &(self->scale)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
@@ -1911,9 +1927,12 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
 /*      get current scale.                                              */
 /* -------------------------------------------------------------------- */
-    dfCurrentScale =  msCalculateScale(*poGeorefExt, self->units, 
-                                       self->width, self->height,
-                                       self->resolution);
+    if (msCalculateScale(*poGeorefExt, self->units, 
+                         self->width, self->height,
+                         self->resolution, &dfCurrentScale) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
 /* -------------------------------------------------------------------- */
 /*      if the min and max scale are set in the map file, we will       */
@@ -1924,9 +1943,12 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
 /*      zoom out.                                                       */
 /* -------------------------------------------------------------------- */
     msAdjustExtent(&oNewGeorefExt, self->width, self->height);
-    dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
-                                   self->width, self->height,
-                                   self->resolution);
+    if (msCalculateScale(oNewGeorefExt, self->units, 
+                         self->width, self->height,
+                         self->resolution, &dfNewScale) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
     if (self->web.maxscale > 0)
     {
@@ -2031,10 +2053,11 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         }
     }
     
-    self->scale = msCalculateScale(*(&(self->extent)), self->units, 
-                                   self->width, self->height,
-                                   self->resolution);
-
+    if (msCalculateScale(self->extent, self->units, self->width, self->height, 
+                         self->resolution, &(self->scale)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
     _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
     _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
@@ -7579,9 +7602,12 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
                                         PHPMS_GLOBAL(le_msrect_new),
                                         list);
 
-    dfScale =  msCalculateScale(*poGeorefExt, pUnit->value.lval, 
-                                pWidth->value.lval, pHeight->value.lval,
-                                pResolution->value.lval);
+    if (msCalculateScale(*poGeorefExt, pUnit->value.lval, 
+                         pWidth->value.lval, pHeight->value.lval,
+                         pResolution->value.lval, &dfScale) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
     
     RETURN_DOUBLE(dfScale);
 }

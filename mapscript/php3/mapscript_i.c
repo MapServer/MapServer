@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.23  2001/08/29 14:36:06  dan
+ * Changes to msCalculateScale() args.  Sync with mapscript.i v1.42
+ *
  * Revision 1.22  2001/08/01 13:52:59  dan
  * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
  * to getSymbolByName().
@@ -156,11 +159,14 @@ int mapObj_getSymbolByName(mapObj* self, char *name) {
   }
 
 void mapObj_prepareQuery(mapObj* self) {
-    self->scale = msCalculateScale(self->extent, self->units, 
-                                   self->width, self->height, self->resolution);
+    int status;
+
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
+    if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
   }
 
 gdImagePtr mapObj_prepareImage(mapObj* self) {
+    int status;
     gdImagePtr img;
 
     if(self->width == -1 && self->height == -1) {
@@ -182,7 +188,9 @@ gdImagePtr mapObj_prepareImage(mapObj* self) {
       return NULL;
   
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
-    self->scale = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution);
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
+    if(status != MS_SUCCESS)
+      return NULL;
 
     return img;
   }
@@ -576,7 +584,7 @@ int shapeObj_intersects(shapeObj *self, shapeObj *shape) {
       case(MS_SHAPE_LINE):
 	return msIntersectPolylinePolygon(shape, self);
       case(MS_SHAPE_POLYGON):
-	return msIntersectPolylines(self, shape);
+	return msIntersectPolygons(self, shape);
       }
       break;
     }
