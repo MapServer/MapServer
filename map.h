@@ -1122,6 +1122,8 @@ MS_DLL_EXPORT int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, lo
 MS_DLL_EXPORT int msLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 MS_DLL_EXPORT void msLayerAddProcessing( layerObj *layer, const char *directive );
+MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key, 
+                                            const char *value);
 
 // maplayer.c
 MS_DLL_EXPORT int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);
