@@ -2254,7 +2254,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
         }
         
         msAcquireLock( TLOCK_GDAL );
-        hDS = GDALOpen( msBuildPath(szPath, cwd, filename), GA_ReadOnly );
+        hDS = GDALOpen( msTryBuildPath(szPath, cwd, filename), GA_ReadOnly );
         if( hDS != NULL )
         {
             double	adfGeoTransform[6];
