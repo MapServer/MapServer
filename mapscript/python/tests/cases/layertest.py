@@ -132,24 +132,25 @@ class RemoveClassTestCase(MapLayerTestCase):
 
     def testRemoveClass1NumClasses(self):
         """RemoveClassTestCase.testRemoveClass1NumClasses: removing the layer's first class by index leaves one class left"""
-        self.layer.removeClass(0)
+        c = self.layer.removeClass(0)
+        assert c.thisown == 1
         assert self.layer.numclasses == 1
     
     def testRemoveClass1ClassName(self):
         """RemoveClassTestCase.testRemoveClass1ClassName: confirm removing the layer's first class reverts the name of the second class"""
         c2name = self.layer.getClass(1).name
-        self.layer.removeClass(0)
+        c = self.layer.removeClass(0)
         assert self.layer.getClass(0).name == c2name
     
     def testRemoveClass2NumClasses(self):
         """RemoveClassTestCase.testRemoveClass2NumClasses: removing the layer's second class by index leaves one class left"""
-        self.layer.removeClass(1)
+        c = self.layer.removeClass(1)
         assert self.layer.numclasses == 1
     
     def testRemoveClass2ClassName(self):
         """RemoveClassTestCase.testRemoveClass2ClassName: confirm removing the layer's second class reverts the name of the first class"""
         c1name = self.layer.getClass(0).name
-        self.layer.removeClass(1)
+        c = self.layer.removeClass(1)
         assert self.layer.getClass(0).name == c1name
 
 class LayerTestCase(MapTestCase):

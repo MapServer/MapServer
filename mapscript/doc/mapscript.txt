@@ -1424,10 +1424,10 @@ queryByShape( mapObj_ map, shapeObj_ shape ) : int
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened 
 
-removeClass( int index ) : void
-    Removes the class indicated.  Note that subsequent classes will be
-    renumbered by this operation.  The numclasses field contains the number
-    of classes available.
+removeClass( int index ) : classObj_
+    Removes the class indicated and returns a copy, or NULL in the case
+    of a failure.  Note that subsequent classes will be renumbered by this
+    operation.  The numclasses field contains the number of classes available.
 
 removeMetaData( string key ) : int
     Delete the metadata hash at *key*.  Returns MS_SUCCESS or

@@ -36,6 +36,65 @@
 #  include "cpl_conv.h"
 #endif
 
+/* ===========================================================================
+   msRemoveClass
+
+   remove the class at an index from a layer, returning a copy
+   ======================================================================== */
+
+classObj *msRemoveClass(layerObj *layer, int nIndex) 
+{
+    int i;
+    classObj *classobj;
+    
+    if (nIndex < 0 || nIndex >= layer->numclasses)
+    {
+        msSetError(MS_CHILDERR, "Cannot remove class, invalid index %d",
+                   "removeClass()", nIndex);
+        return NULL;
+    }
+    else 
+    {
+        classobj = (classObj *) malloc(sizeof(classObj));
+        if (!classobj) {
+            msSetError(MS_MEMERR, 
+                       "Failed to allocate classObj to return as removed Class",
+                       "msRemoveClass");
+            return NULL;
+        }
+        initClass(classobj);
+#ifndef __cplusplus
+        msCopyClass(classobj, &(layer->class[nIndex]), NULL);
+#else
+        msCopyClass(classobj, &(layer->_class[nIndex]), NULL);
+#endif
+
+        /* Iteratively copy the higher index classes down one index */
+        for (i=nIndex; i<layer->numclasses-1; i++)
+        {
+#ifndef __cplusplus
+            freeClass(&(layer->class[i]));
+            initClass(&(layer->class[i]));
+            msCopyClass(&layer->class[i], &layer->class[i+1], layer);
+#else
+            freeClass(&(layer->_class[i]));
+            initClass(&(layer->_class[i]));
+            msCopyClass(&layer->_class[i], &layer->_class[i+1], layer);
+#endif
+        }
+        /* Free the extra class at the end */
+#ifndef __cplusplus
+        freeClass(&(layer->class[layer->numclasses-1]));
+#else  
+        freeClass(&(layer->_class[layer->numclasses-1]));
+#endif
+        
+        /* decrement number of layers and return copy of removed layer */
+        layer->numclasses--;
+        return classobj;
+    }
+}
+
 /**
  * Move the class up inside the array of classes.
  */  

@@ -82,17 +82,10 @@
     }
 
     /* removeClass() */
-    void removeClass(int index) 
+    %newobject removeClass;
+    classObj *removeClass(int index) 
     {
-        int i;
-        for (i = index + 1; i < self->numclasses; i++) {
-#ifndef __cplusplus
-            self->class[i-1] = self->class[i];
-#else
-            self->_class[i-1] = self->_class[i];
-#endif
-        }
-        self->numclasses--;
+        return msRemoveClass(self, index);
     }
 
     int open() 

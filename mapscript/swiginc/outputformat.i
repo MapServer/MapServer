@@ -40,8 +40,10 @@
         if ( format != NULL ) 
             format->refcount++;
         if (name != NULL)
+        {
+            free(format->name);
             format->name = strdup(name);
-    
+        }
         return format;
     }
 
