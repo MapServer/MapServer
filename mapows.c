@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.30  2004/04/23 16:17:53  frank
+ * avoid const warnings
+ *
  * Revision 1.29  2004/04/21 13:02:42  sdlime
  * Updated msOWSPrintMetadataList() so that NULL values for startTag/endTag are valid.
  *
@@ -741,7 +744,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 */
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
 {
-  static char *value;
+  static const char *value;
 
   if ((value = msOWSLookupMetadata(lp->metadata, "WFCO", "extent")) != NULL)
   {
@@ -951,7 +954,7 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj metadata, const c
   static char *value;
 
   // metadata value should already be in format "EPSG:n" or "AUTO:..."
-  if (metadata && ((value = msOWSLookupMetadata(metadata, namespaces, "srs")) != NULL)) {
+  if (metadata && ((value = (char *) msOWSLookupMetadata(metadata, namespaces, "srs")) != NULL)) {
     
     if (!bReturnOnlyFirstOne) return value;
 
