@@ -84,12 +84,18 @@ Attributes
 attribute : type [access]
     Concise description of the attribute.
 
+Note that because of the way that mapscript is generated many confusing,
+meaningless, and even dangerous attributes are creeping into objects.  See
+outputFormatObj.refcount for example.  Until we get a grip on the structure
+members we are exposing to SWIG this problem will continue to grow.
+
 Methods
 -------
 
-method : type
+method(type mandatory_parameter [, type optional_parameter=default]) : type
     Description of the method including elaboration on the method
     arguments, the method's actions, and returned values.
+
 
 Now that the style of the documentation has been introduced, on to the
 classes themselves
@@ -100,7 +106,8 @@ classes themselves
 
 References to sections below will be added here as the documentation grows.
 
-classObj_, colorObj_, labelObj_, pointObj_, rectObj_, shapeObj_, styleObj_
+classObj_, colorObj_, imageObj_, labelObj_, pointObj_, rectObj_, shapeObj_,
+styleObj_
 
 -----------------------------------------------------------------------------
  classObj
@@ -292,16 +299,16 @@ toHex() : string
  imageObj
 -----------------------------------------------------------------------------
 
-An image object is a decorated GD image.
+An image object is a wrapper for GD and GDAL images.
 
 Attributes
 ----------
 
 format : outputFormatObj_
-    An object attribute
+    Image format.
 
 height : int immutable
-    Image height in pixels
+    Image height in pixels.
     
 imagepath : string immutable
     If image is drawn by mapObj.draw(), this is the mapObj's web.imagepath.
@@ -317,7 +324,7 @@ size : int
     I don't see where this is used.  Anyone?
 
 width : int immutable
-    Image width in pixels
+    Image width in pixels.
 
 
 Methods
@@ -329,12 +336,9 @@ new imageObj(int width, int height, string driver [, string filename]) : imageOb
     Create new instance of imageObj.  If *filename* is specified, an imageObj
     is created from the file and any specified *width*, *height*, and
     *driver* parameters will be overridden by values of the image in 
-    *filename*.  Otherwise, if *driver* specified an imageObj is created using
-    that driver.  For GD the possible driver names are "GD/Gif", "GD/PNG",
-    "GD/WBMP" and "GD/JPEG".  For flash the driver is just called "SWF".  For
-    output through GDAL the GDAL shortname for the format is appended, such 
-    as "GDAL/GTiff".  If *filename* is not specified, then *width* and *height*
-    should be specified.
+    *filename*.  Otherwise, if *driver* is specified an imageObj is created
+    using that driver.  See the *driver* attribute above for details.  If
+    *filename* is not specified, then *width* and *height* should be specified.
 
 .. _imageObj.save:
 
@@ -509,6 +513,40 @@ Secondary associations are with legendObj, scalebarObj, and referenceMapObj.
                            | --------------- |
                            | legendObj       |
                            +---------------- + 
+
+
+-----------------------------------------------------------------------------
+ outputFormatObj
+-----------------------------------------------------------------------------
+
+Attributes
+----------
+
+**TODO**
+
+driver : string
+    A string such as 'GD/PNG' or 'GDAL/GTiff'.
+
+Methods
+-------
+
+.. _getOption:
+
+getOption(string key [, string value=""]) : string
+    Return the option at *key* or *value* if *key* is not a valid
+    hash index.
+
+.. _setExtension:
+
+setExtension(string extension) : void
+    Set file extension for output format such as 'png' or 'jpg'.
+
+setMimetype(string mimetype) : void
+    Set mimetype for output format such as 'image/png' or 'image/jpeg'.
+    
+setOption(string key, string value) : void
+    Set the option at *key* to *value*.
+    
 
 -----------------------------------------------------------------------------
  pointObj
