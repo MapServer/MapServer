@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2003/02/27 21:26:47  frank
+ * Added TLOCK_TTF
+ *
  * Revision 1.5  2003/02/19 14:13:38  frank
  * cleanup warnings
  *
@@ -159,7 +162,7 @@ files instead.
 static int thread_debug = 0;
 
 static char *lock_names[] = 
-{ NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", NULL };
+{ NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", "TTF", NULL };
 #endif
 
 /************************************************************************/
