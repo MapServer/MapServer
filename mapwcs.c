@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.55  2004/10/28 01:27:32  frank
+ * Generate an error if a GetCoverage lacks a COVERAGE specification.
+ * Must nicer than just segfaulting.
+ *
  * Revision 1.54  2004/10/26 15:20:19  julien
  * msOWSPrintURLType: metadata:Link had a %s missing in it's format. (Bug 944)
  *
@@ -806,6 +810,13 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
   // make sure all required parameters are available (at least the easy ones)
   if(!params->crs) {
     msSetError( MS_WCSERR, "Required parameter CRS was not supplied.", "msWCSGetCoverage()");
+    return msWCSException(params->version);
+  }
+
+  if( params->coverages == NULL || params->coverages[0] == NULL ) {
+    msSetError( MS_WCSERR, 
+                "Required parameter COVERAGE was not supplied.", 
+                "msWCSGetCoverage()");
     return msWCSException(params->version);
   }
 
