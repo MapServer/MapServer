@@ -681,6 +681,7 @@ typedef struct layer_obj {
   void *sdelayerinfo; // For SDE layers, will contain a sdeLayerObj struct
   void *postgislayerinfo; // For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
   void *oraclespatiallayerinfo;
+  void *wfslayerinfo; // For WFS layers, will contain a msWFSLayerInfo struct
 #endif
 
   // attribute/classification handling components
@@ -1038,7 +1039,8 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape);
 int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 void msTiledSHPClose(layerObj *layer);
 
-int msOGRLayerOpen(layerObj *layer);   // in mapogr.cpp
+int msOGRLayerOpen(layerObj *layer,                       // in mapogr.cpp
+                   const char *pszOverrideConnection);
 int msOGRLayerClose(layerObj *layer);
 int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
@@ -1091,6 +1093,7 @@ int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, 
 void msClearPenValues(mapObj *map);
 imageObj *msDrawMap(mapObj *map);
 imageObj *msDrawQueryMap(mapObj *map);
+int msLayerIsVisible(mapObj *map, layerObj *layer);
 int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image);

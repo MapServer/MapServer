@@ -23,6 +23,9 @@ static int layerInitItemInfo(layerObj *layer)
   case(MS_OGR):
     return(msOGRLayerInitItemInfo(layer));
     break;
+  case(MS_WFS):
+    return(msWFSLayerInitItemInfo(layer));
+    break;
   case(MS_POSTGIS):
     return(msPOSTGISLayerInitItemInfo(layer));
     break;
@@ -51,6 +54,7 @@ static void layerFreeItemInfo(layerObj *layer)
   case(MS_INLINE):
     break;
   case(MS_OGR):
+  case(MS_WFS):
     msOGRLayerFreeItemInfo(layer);
     break;
   case(MS_POSTGIS):
@@ -96,7 +100,10 @@ int msLayerOpen(layerObj *layer, char *shapepath)
     return(MS_SUCCESS);
     break;
   case(MS_OGR):
-    return(msOGRLayerOpen(layer));
+    return(msOGRLayerOpen(layer, NULL));
+    break;
+  case(MS_WFS):
+    return(msWFSLayerOpen(layer, NULL, NULL));
     break;
   case(MS_POSTGIS):
     return(msPOSTGISLayerOpen(layer));
@@ -160,6 +167,9 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     break;
   case(MS_OGR):
     return(msOGRLayerWhichShapes(layer, rect));
+    break;
+  case(MS_WFS):
+    return(msWFSLayerWhichShapes(layer, rect));
     break;
   case(MS_POSTGIS):
     return(msPOSTGISLayerWhichShapes(layer, rect));
@@ -227,6 +237,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     return(MS_SUCCESS);
     break;
   case(MS_OGR):
+  case(MS_WFS):
     return(msOGRLayerNextShape(layer, shape));
     break;
   case(MS_POSTGIS):
@@ -276,6 +287,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     return(MS_FAILURE);
     break;
   case(MS_OGR):
+  case(MS_WFS):
     return(msOGRLayerGetShape(layer, shape, tile, record));
     break;
   case(MS_POSTGIS):
@@ -318,6 +330,9 @@ void msLayerClose(layerObj *layer)
     break;
   case(MS_OGR):
     msOGRLayerClose(layer);
+    break;
+  case(MS_WFS):
+    msWFSLayerClose(layer);
     break;
   case(MS_POSTGIS):
     msPOSTGISLayerClose(layer);
@@ -363,6 +378,9 @@ int msLayerGetItems(layerObj *layer)
   case(MS_OGR):
     return(msOGRLayerGetItems(layer));
     break;
+  case(MS_WFS):
+    return(msWFSLayerGetItems(layer));
+    break;
   case(MS_POSTGIS):
     return(msPOSTGISLayerGetItems(layer));
     break;
@@ -398,6 +416,7 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent) {
     return(MS_FAILURE);
     break;
   case(MS_OGR):
+  case(MS_WFS):
     return(msOGRLayerGetExtent(layer, extent));
     break;
   case(MS_POSTGIS):
@@ -689,6 +708,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
   case(MS_POSTGIS):
   case(MS_SDE):
   case(MS_ORACLESPATIAL):
+  case(MS_WFS):
   default:
     msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", 
                "msLayerGetAutoStyle()");

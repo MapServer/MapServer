@@ -126,7 +126,8 @@ imageObj *msDrawMap(mapObj *map)
 #ifdef USE_WMS_LYR
         if (map->layers[i].connectiontype == MS_WMS)  
         {
-            if ( msPrepareWMSLayerRequest(i, map, &(map->layers[i]),
+            if ( msLayerIsVisible(map, &(map->layers[i])) &&
+                 msPrepareWMSLayerRequest(i, map, &(map->layers[i]),
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
@@ -137,7 +138,8 @@ imageObj *msDrawMap(mapObj *map)
 #ifdef USE_WFS_LYR
         if (map->layers[i].connectiontype == MS_WFS)  
         {
-            if ( msPrepareWFSLayerRequest(i, map, &(map->layers[i]),
+            if ( msLayerIsVisible(map, &(map->layers[i])) &&
+                 msPrepareWFSLayerRequest(i, map, &(map->layers[i]),
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
@@ -147,7 +149,7 @@ imageObj *msDrawMap(mapObj *map)
 #endif
     }
     if (numOWSRequests && 
-        msHTTPExecuteRequests(asOWSReqInfo, numOWSRequests) == MS_FAILURE)
+        msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map) == MS_FAILURE)
     {
         return NULL;
     }
@@ -167,13 +169,6 @@ imageObj *msDrawMap(mapObj *map)
             if (lp->connectiontype == MS_WMS) 
 #ifdef USE_WMS_LYR 
                 status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
-                                           map, lp, image);
-#else
-	        status = MS_FAILURE;
-#endif
-            else if (lp->connectiontype == MS_WFS) 
-#ifdef USE_WFS_LYR 
-                status = msDrawWFSLayerLow(i, asOWSReqInfo, numOWSRequests, 
                                            map, lp, image);
 #else
 	        status = MS_FAILURE;
@@ -204,13 +199,6 @@ imageObj *msDrawMap(mapObj *map)
     if (lp->connectiontype == MS_WMS)  
 #ifdef USE_WMS_LYR 
         status = msDrawWMSLayerLow(i, asOWSReqInfo, numOWSRequests, 
-                                   map, lp, image);
-#else
-	status = MS_FAILURE;
-#endif
-    else if (lp->connectiontype == MS_WFS)
-#ifdef USE_WFS_LYR 
-        status = msDrawWFSLayerLow(i, asOWSReqInfo, numOWSRequests, 
                                    map, lp, image);
 #else
 	status = MS_FAILURE;
@@ -319,29 +307,26 @@ imageObj *msDrawQueryMap(mapObj *map)
 }
 
 /*
- * Generic function to render a layer object.
-*/
-int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
+ * Test whether a layer should be drawn or not in the current map view and
+ * at the current scale.  
+ * Returns TRUE if layer is visible, FALSE if not.
+ */
+int msLayerIsVisible(mapObj *map, layerObj *layer)
 {
   int i;
-  imageObj *image_draw = image;
-  outputFormatObj *transFormat = NULL;
-  int retcode=MS_SUCCESS;
-
-  msImageStartLayer(map, layer, image);
 
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features)
-  return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
+  return(MS_FALSE); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
-  if(layer->type == MS_LAYER_QUERY) return(MS_SUCCESS);
-  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
-  if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_SUCCESS);
+  if(layer->type == MS_LAYER_QUERY) return(MS_FALSE);
+  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_FALSE);
+  if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_FALSE);
 
   if(map->scale > 0) {
     
     // layer scale boundaries should be checked first
-    if((layer->maxscale > 0) && (map->scale > layer->maxscale)) return(MS_SUCCESS);
-    if((layer->minscale > 0) && (map->scale <= layer->minscale)) return(MS_SUCCESS);
+    if((layer->maxscale > 0) && (map->scale > layer->maxscale)) return(MS_FALSE);
+    if((layer->minscale > 0) && (map->scale <= layer->minscale)) return(MS_FALSE);
 
     // now check class scale boundaries (all layers *must* pass these tests)
     if(layer->numclasses > 0) {
@@ -353,14 +338,37 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
         break; // can't skip this class (or layer for that matter)
       } 
-      if(i == layer->numclasses) return(MS_SUCCESS);
+      if(i == layer->numclasses) return(MS_FALSE);
     }
 
+  }
+
+  return MS_TRUE;  // All tests passed.  Layer is visible.
+}
+
+
+/*
+ * Generic function to render a layer object.
+*/
+int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
+{
+  imageObj *image_draw = image;
+  outputFormatObj *transFormat = NULL;
+  int retcode=MS_SUCCESS;
+
+  if (!msLayerIsVisible(map, layer))
+      return MS_SUCCESS;  // Nothing to do, layer is either turned off, out of
+                          // scale, has no classes, etc.
+
+  if(map->scale > 0) {
     //if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
     // annotate = MS_FALSE;
     //if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
     // annotate = MS_FALSE;
   }
+
+  // Inform the rendering device that layer draw is starting.
+  msImageStartLayer(map, layer, image);
 
   if ( MS_RENDERER_GD(image_draw->format) ) {
     // Create a temp image for this layer tranparency
@@ -387,14 +395,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   {
 #ifdef USE_WMS_LYR
       retcode = msDrawWMSLayer(map, layer, image_draw);
-#else  
-      retcode = MS_FAILURE;
-#endif
-  }
-  else if(layer->connectiontype == MS_WFS) 
-  {
-#ifdef USE_WFS_LYR
-      retcode = msDrawWFSLayer(map, layer, image_draw);
 #else  
       retcode = MS_FAILURE;
 #endif
@@ -755,7 +755,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
 
         if ( msPrepareWMSLayerRequest(1, map, layer,
                                       asReqInfo, &numReq) == MS_FAILURE  ||
-             msHTTPExecuteRequests(asReqInfo, numReq) == MS_FAILURE )
+             msOWSExecuteRequests(asReqInfo, numReq, map) == MS_FAILURE )
         {
             return MS_FAILURE;
         }
@@ -788,47 +788,6 @@ PDF doesn't support WMS yet so return failure
 #endif
         else
             nStatus = MS_SUCCESS; // Should we fail if output doesn't support WMS?
-        // Cleanup
-        msHTTPFreeRequestObj(asReqInfo, numReq);
-    }
-
-    return nStatus;
-}
-#endif
-
-/**
- * msDrawWFSLayer()
- *
- * Draw a single WFS layer.  
- * Multiple WFS layers in a map are preloaded and then drawn using
- * msDrawWFSLayerLow()
- */
-
-#ifdef USE_WFS_LYR
-int msDrawWFSLayer(mapObj *map, layerObj *layer, imageObj *image)
-{
-    int nStatus = MS_FAILURE;
-
-    if (image && map && layer)
-    {
-/* ------------------------------------------------------------------
- * Start by downloading the layer then pass control to msDrawWFSLayerLow()
- * ------------------------------------------------------------------ */
-        httpRequestObj asReqInfo[2];
-        int numReq = 0;
-
-        msHTTPInitRequestObj(asReqInfo, 2);
-
-        if ( msPrepareWFSLayerRequest(1, map, layer,
-                                      asReqInfo, &numReq) == MS_FAILURE  ||
-             msHTTPExecuteRequests(asReqInfo, numReq) == MS_FAILURE )
-        {
-            return MS_FAILURE;
-        }
-
-        nStatus = msDrawWFSLayerLow(1, asReqInfo, numReq,
-                                    map, layer, image) ;
-
         // Cleanup
         msHTTPFreeRequestObj(asReqInfo, numReq);
     }

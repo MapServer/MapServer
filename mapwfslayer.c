@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2002/12/13 00:57:31  dan
+ * Modified WFS implementation to behave more as a real vector data source
+ *
  * Revision 1.1  2002/10/09 02:29:03  dan
  * Initial implementation of WFS client support.
  *
@@ -160,6 +163,59 @@ char *msBuildWFSLayerURL(mapObj *map, layerObj *lp, rectObj *bbox_ret)
 }
 
 
+typedef struct ms_wfs_layer_info_t
+{
+    char        *pszGMLFilename;
+    rectObj     rect;                     /* set by WhichShapes */
+    char        *pszGetUrl;
+    int         nStatus;           /* HTTP status */
+    int         bLayerOpened;      /* False until msWFSLayerOpen() is called*/
+} msWFSLayerInfo;
+
+
+/**********************************************************************
+ *                          msAllocWFSLayerInfo()
+ *
+ **********************************************************************/
+static msWFSLayerInfo *msAllocWFSLayerInfo()
+{
+    msWFSLayerInfo *psInfo;
+
+    psInfo = (msWFSLayerInfo*)calloc(1,sizeof(msWFSLayerInfo));
+    if (psInfo)
+    {
+        psInfo->pszGMLFilename = NULL;
+        psInfo->rect.minx = psInfo->rect.maxx = 0;
+        psInfo->rect.miny = psInfo->rect.maxy = 0;
+        psInfo->pszGetUrl = NULL;
+        psInfo->nStatus = 0;
+        psInfo->bLayerOpened = MS_FALSE;
+    }
+    else
+    {
+        msSetError(MS_MEMERR, NULL, "msAllocWFSLayerInfo()");
+    }
+
+    return psInfo;
+}
+
+/**********************************************************************
+ *                          msFreeWFSLayerInfo()
+ *
+ **********************************************************************/
+static void msFreeWFSLayerInfo(msWFSLayerInfo *psInfo)
+{
+    if (psInfo)
+    {
+        if (psInfo->pszGMLFilename)
+            free(psInfo->pszGMLFilename);
+        if (psInfo->pszGetUrl)
+            free(psInfo->pszGetUrl);
+
+        free(psInfo);
+    }
+}
+
 /**********************************************************************
  *                          msPrepareWFSLayerRequest()
  *
@@ -173,20 +229,11 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     const char *pszTmp;
     rectObj bbox;
     int nTimeout;
+    int nStatus = MS_SUCCESS;
+    msWFSLayerInfo *psInfo = NULL;
 
     if (lp->connectiontype != MS_WFS || lp->connection == NULL)
         return MS_FAILURE;
-
-    if((lp->status != MS_ON) && (lp->status != MS_DEFAULT))
-        return MS_SUCCESS;
-
-  if(map->scale > 0) {
-    // layer scale boundaries should be checked first
-    if((lp->maxscale > 0) && (map->scale > lp->maxscale))
-      return(MS_SUCCESS);
-    if((lp->minscale > 0) && (map->scale <= lp->minscale))
-      return(MS_SUCCESS);
-  }
 
 /* ------------------------------------------------------------------
  * Build the request URL, this will also set layer projection and
@@ -196,44 +243,6 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     {
         /* an error was already reported. */
         return MS_FAILURE;
-    }
-
-/* ------------------------------------------------------------------
- * Check if layer overlaps current view window (using wfs_latlonboundingbox)
- * ------------------------------------------------------------------ */
-    if ((pszTmp = msLookupHashTable(lp->metadata, 
-                                    "wfs_latlonboundingbox")) != NULL)
-    {
-        char **tokens;
-        int n;
-        rectObj ext;
-
-        tokens = split(pszTmp, ' ', &n);
-        if (tokens==NULL || n != 4) {
-            msSetError(MS_WFSCONNERR, "Wrong number of arguments for 'wfs_latlonboundingbox' metadata.",
-                       "msDrawWFSLayer()");
-            free(pszURL);
-            return MS_FAILURE;
-        }
-
-        ext.minx = atof(tokens[0]);
-        ext.miny = atof(tokens[1]);
-        ext.maxx = atof(tokens[2]);
-        ext.maxy = atof(tokens[3]);
-
-        msFreeCharArray(tokens, n);
-
-        // Reproject latlonboundingbox to the selected SRS for the layer and
-        // check if it overlaps the bbox that we calculated for the request
-
-        msProjectRect(&(map->latlon), &(lp->projection), &ext);
-        if (!msRectOverlap(&bbox, &ext))
-        {
-            // No overlap... nothing to do
-            free(pszURL);
-
-            return MS_SUCCESS;  // No overlap.
-        }
     }
 
 /* ------------------------------------------------------------------
@@ -267,7 +276,315 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].nTimeout = nTimeout;
     pasReqInfo[(*numRequests)].bbox = bbox;
 
+/* ------------------------------------------------------------------
+ * Pre-Open the layer now, (i.e. alloc and fill msWFSLayerInfo inside 
+ * layer obj).  Layer will be ready for use when the main mapserver 
+ * code calls msLayerOpen().
+ * ------------------------------------------------------------------ */
+    if (lp->wfslayerinfo != NULL)
+    {
+        psInfo =(msWFSLayerInfo*)(lp->wfslayerinfo);
+    }
+    else
+    {
+        lp->wfslayerinfo = psInfo = msAllocWFSLayerInfo();
+    }
+
+    if (psInfo->pszGMLFilename) 
+        free(psInfo->pszGMLFilename);
+    psInfo->pszGMLFilename=strdup(pasReqInfo[(*numRequests)].pszOutputFile);
+ 
+    psInfo->rect = pasReqInfo[(*numRequests)].bbox;
+
+    if (psInfo->pszGetUrl) 
+        free(psInfo->pszGetUrl);
+    psInfo->pszGetUrl = strdup(pasReqInfo[(*numRequests)].pszGetUrl);
+
+    psInfo->nStatus = 0;
+
     (*numRequests)++;
+
+    return nStatus;
+
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msPrepareWFSLayerRequest");
+  return(MS_FAILURE);
+
+#endif /* USE_WFS_LYR */
+
+}
+
+/**********************************************************************
+ *                          msWFSUpdateRequestInfo()
+ *
+ * This function is called after a WFS request has been completed so that
+ * we can copy request result information from the httpRequestObj to the
+ * msWFSLayerInfo struct.  Things to copy here are the HTTP status, exceptions
+ * information, mime type, etc.
+ **********************************************************************/
+void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo)
+{
+    if (lp->wfslayerinfo)
+    {
+        msWFSLayerInfo *psInfo = NULL;
+
+        psInfo =(msWFSLayerInfo*)(lp->wfslayerinfo);
+
+        // Copy request results infos to msWFSLayerInfo struct
+        // For now there is only nStatus, but we should eventually add
+        // mime type and WFS exceptions information.
+        psInfo->nStatus = pasReqInfo->nStatus;
+    }
+}
+
+/**********************************************************************
+ *                          msWFSLayerOpen()
+ *
+ * WFS layers are just a special case of OGR connection.  Only the open/close
+ * methods differ since they have to download and maintain GML files in cache
+ * but the rest is mapped directly to OGR function calls in maplayer.c
+ *
+ **********************************************************************/
+
+int msWFSLayerOpen(layerObj *lp, 
+                   const char *pszGMLFilename, rectObj *defaultBBOX) 
+{
+#ifdef USE_WFS_LYR
+    int status = MS_SUCCESS;
+    msWFSLayerInfo *psInfo = NULL;
+
+    if (lp->wfslayerinfo != NULL)
+    {
+        psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
+
+        // Layer already opened.  If explicit filename requested then check
+        // that file was already opened with the same filename.
+        // If no explicit filename requested then we'll try to reuse the
+        // previously opened layer... this will happen in a msDrawMap() call.
+        if (pszGMLFilename == NULL ||
+            (psInfo->pszGMLFilename && pszGMLFilename && 
+             strcmp(psInfo->pszGMLFilename, pszGMLFilename) == 0) )
+        {
+            return MS_SUCCESS;  // Nothing to do... layer is already opened
+        }
+        else
+        {
+            // Hmmm... should we produce a fatal error?
+            // For now we'll just close the layer and reopen it.
+            msDebug("msWFSLayerOpen(): Layer already opened (%s)\n",
+                    lp->connection );
+            msWFSLayerClose(lp);
+        }
+    }
+
+/* ------------------------------------------------------------------
+ * Alloc and fill msWFSLayerInfo inside layer obj
+ * ------------------------------------------------------------------ */
+    psInfo = msAllocWFSLayerInfo();
+
+    if (pszGMLFilename)
+        psInfo->pszGMLFilename = strdup(pszGMLFilename);
+    else
+        psInfo->pszGMLFilename = msTmpFile(lp->map->web.imagepath, 
+                                           "gml.tmp");
+
+    if (defaultBBOX)
+    {
+        // __TODO__ If new bbox differs from current one then we should
+        // invalidate current GML file in cache
+        psInfo->rect = *defaultBBOX;
+    }
+
+    psInfo->bLayerOpened = MS_TRUE;
+
+    return status;
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msWFSLayerOpen()");
+  return(MS_FAILURE);
+
+#endif /* USE_WFS_LYR */
+}
+
+/**********************************************************************
+ *                          msWFSLayerInitItemInfo()
+ *
+ **********************************************************************/
+
+int msWFSLayerInitItemInfo(layerObj *layer)
+{
+    // Nothing to do here.  OGR will do its own initialization when it
+    // opens the actual file.
+    // Note that we didn't implement our own msWFSLayerFreeItemInfo()
+    // so that the OGR one gets called.
+    return MS_SUCCESS;
+}
+
+/**********************************************************************
+ *                          msWFSLayerGetItems()
+ *
+ **********************************************************************/
+
+int msWFSLayerGetItems(layerObj *layer)
+{
+    // __TODO__
+    // For now this method does nothing.  
+    // It should be implemented to call DescribeFeatureType for
+    // this layer, but we don't want to do that all the time so we should
+    // cache the information somehow.
+    // For now we can live without it, so we'll keep thinking about the
+    // best way to handle this and do it later.
+    return MS_SUCCESS;
+}
+
+/**********************************************************************
+ *                          msWFSLayerWhichShapes()
+ *
+ **********************************************************************/
+
+int msWFSLayerWhichShapes(layerObj *lp, rectObj rect)
+{
+#ifdef USE_WFS_LYR
+    msWFSLayerInfo *psInfo;
+    int status = MS_SUCCESS;
+    const char *pszTmp;
+
+    psInfo =(msWFSLayerInfo*)lp->wfslayerinfo;
+
+    if (psInfo == NULL)
+    {
+        msSetError(MS_MISCERR, "Assertion failed: WFS layer not opened!!!", 
+                   "msWFSLayerWhichShapes()");
+        return(MS_FAILURE);
+    }
+
+/* ------------------------------------------------------------------
+ * Check if layer overlaps current view window (using wfs_latlonboundingbox)
+ * ------------------------------------------------------------------ */
+    if ((pszTmp = msLookupHashTable(lp->metadata, 
+                                    "wfs_latlonboundingbox")) != NULL)
+    {
+        char **tokens;
+        int n;
+        rectObj ext;
+
+        tokens = split(pszTmp, ' ', &n);
+        if (tokens==NULL || n != 4) {
+            msSetError(MS_WFSCONNERR, "Wrong number of values in 'wfs_latlonboundingbox' metadata.",
+                       "msWFSLayerWhichShapes()");
+            return MS_FAILURE;
+        }
+
+        ext.minx = atof(tokens[0]);
+        ext.miny = atof(tokens[1]);
+        ext.maxx = atof(tokens[2]);
+        ext.maxy = atof(tokens[3]);
+
+        msFreeCharArray(tokens, n);
+
+        // Reproject latlonboundingbox to the selected SRS for the layer and
+        // check if it overlaps the bbox that we calculated for the request
+
+        msProjectRect(&(lp->map->latlon), &(lp->projection), &ext);
+        if (!msRectOverlap(&rect, &ext))
+        {
+            // No overlap... nothing to do
+            return MS_DONE;  // No overlap.
+        }
+    }
+
+
+ /* ------------------------------------------------------------------
+  * __TODO__ If new bbox differs from current one then we should
+  * invalidate current GML file in cache
+  * ------------------------------------------------------------------ */
+    psInfo->rect = rect;
+
+
+/* ------------------------------------------------------------------
+ * If file not downloaded yet then do it now.
+ * ------------------------------------------------------------------ */
+    if (psInfo->nStatus == 0)
+    {
+        httpRequestObj asReqInfo[2];
+        int numReq = 0;
+
+        msHTTPInitRequestObj(asReqInfo, 2);
+
+        if ( msPrepareWFSLayerRequest(1, lp->map, lp,
+                                      asReqInfo, &numReq) == MS_FAILURE  ||
+             msOWSExecuteRequests(asReqInfo, numReq, lp->map) == MS_FAILURE )
+        {
+            return MS_FAILURE;
+        }
+
+        // Cleanup
+        msHTTPFreeRequestObj(asReqInfo, numReq);
+
+    }
+
+    if (psInfo->nStatus != 200)
+    {
+        msSetError(MS_MISCERR, 
+                   "Got HTTP status %d downloading WFS layer (%s)", 
+                   "msWFSLayerWhichShapes()",
+                   psInfo->nStatus, lp->connection);
+        return(MS_FAILURE);
+    }
+
+/* ------------------------------------------------------------------
+ * Open GML file using OGR.
+ * ------------------------------------------------------------------ */
+    if ((status = msOGRLayerOpen(lp, psInfo->pszGMLFilename)) != MS_SUCCESS)
+        return status;
+    
+    status = msOGRLayerWhichShapes(lp, rect);
+
+    return status;
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msWFSLayerWhichShapes()");
+  return(MS_FAILURE);
+
+#endif /* USE_WFS_LYR */
+}
+
+
+
+/**********************************************************************
+ *                          msWFSLayerClose()
+ *
+ **********************************************************************/
+
+int msWFSLayerClose(layerObj *lp)
+{
+#ifdef USE_WFS_LYR
+
+/* ------------------------------------------------------------------
+ * Cleanup OGR connection
+ * ------------------------------------------------------------------ */
+    if (lp->ogrlayerinfo)
+        msOGRLayerClose(lp);
+
+/* ------------------------------------------------------------------
+ * Cleanup WFS connection info.
+ * __TODO__ For now we flush everything, but we should try to cache some stuff
+ * ------------------------------------------------------------------ */
+    // __TODO__ unlink()  .gml file and OGR's schema file if they exist
+    // unlink(
+
+    msFreeWFSLayerInfo(lp->wfslayerinfo);
+    lp->wfslayerinfo = NULL;
 
     return MS_SUCCESS;
 
@@ -276,80 +593,10 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * WFS CONNECTION Support not included...
  * ------------------------------------------------------------------ */
   msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
-             "msDrawWFSLayer()");
+             "msWFSLayerClose()");
   return(MS_FAILURE);
 
 #endif /* USE_WFS_LYR */
-
-}
-
-
-/**********************************************************************
- *                          msDrawWFSLayerLow()
- *
- **********************************************************************/
-
-int msDrawWFSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
-                      int numRequests, mapObj *map, layerObj *lp, imageObj *img) 
-{
-#ifdef USE_WFS_LYR
-    int status = MS_SUCCESS;
-    int iReq = -1;
-    char szPath[MS_MAXPATHLEN];
-    char *pszOldConnection = NULL;
-
-/* ------------------------------------------------------------------
- * Find the request info for this layer in the array, based on nLayerId
- * ------------------------------------------------------------------ */
-    for(iReq=0; iReq<numRequests; iReq++)
-    {
-        if (pasReqInfo[iReq].nLayerId == nLayerId)
-            break;
-    }
-
-    if (iReq == numRequests)
-        return MS_SUCCESS;  // This layer was skipped... nothing to do.
-
-    if (pasReqInfo[iReq].nStatus != 200)
-    {
-/* ==================================================================== 
-      Failed downloading layer... we still return SUCCESS here so that 
-      the layer is only skipped intead of aborting the whole draw map.
- ==================================================================== */
-        return MS_SUCCESS;
-    }
-
-/* ------------------------------------------------------------------
- * Prepare layer for drawing, set as an OGR connection to the GML data file
- * after saving the original WFS connection string to restore it at the end.
- * ------------------------------------------------------------------ */
-    pszOldConnection = lp->connection;
-    lp->connectiontype = MS_OGR;
-    lp->connection = strdup(pasReqInfo[iReq].pszOutputFile);
-
-    // Render as a regular OGR layer
-    status = msDrawLayer(map, lp, img);
-
-    // Restore original WFS CONNECITON value
-    free(lp->connection);
-    lp->connection = pszOldConnection;
-
-    // We're done with the remote server's response... delete it.
-    // __TODO__ We should cache the responses for reuse
-    //unlink(pasReqInfo[iReq].pszOutputFile);
-
-    return status;
-
-#else
-/* ------------------------------------------------------------------
- * WFS CONNECTION Support not included...
- * ------------------------------------------------------------------ */
-  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
-             "msDrawWFSLayer()");
-  return(MS_FAILURE);
-
-#endif /* USE_WFS_LYR */
-
 }
 
 

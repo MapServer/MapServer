@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.40  2002/12/13 00:57:31  dan
+ * Modified WFS implementation to behave more as a real vector data source
+ *
  * Revision 1.39  2002/11/27 20:13:49  julien
  * valid only the style (not stylelist) to build the base url
  *
@@ -549,17 +552,6 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
 
     if (lp->connectiontype != MS_WMS)
         return MS_FAILURE;
-
-    if((lp->status != MS_ON) && (lp->status != MS_DEFAULT))
-        return MS_SUCCESS;
-
-  if(map->scale > 0) {
-    // layer scale boundaries should be checked first
-    if((lp->maxscale > 0) && (map->scale > lp->maxscale))
-      return(MS_SUCCESS);
-    if((lp->minscale > 0) && (map->scale <= lp->minscale))
-      return(MS_SUCCESS);
-  }
 
 /* ------------------------------------------------------------------
  * Build the request URL, this will also set layer projection and

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.8  2002/12/13 00:57:31  dan
+ * Modified WFS implementation to behave more as a real vector data source
+ *
  * Revision 1.7  2002/11/20 21:22:32  dan
  * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
  *
@@ -35,6 +38,28 @@
 
 #ifndef MAPOWS_H
 #define MAPOWS_H
+
+/*====================================================================
+ *   maphttp.c
+ *====================================================================*/
+
+typedef struct http_request_info
+{
+    int         nLayerId;
+    void      * request;  /* HTRequest * */
+    char      * pszGetUrl;
+    char      * pszOutputFile;
+    int         nStatus;
+    int         nTimeout;
+    rectObj     bbox;
+} httpRequestObj;
+
+void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
+int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests);
+int  msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
+                   int nTimeout);
+
 
 /*====================================================================
  *   mapows.c
@@ -76,6 +101,8 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 char *msEncodeHTMLEntities(const char *string);
 void msDecodeHTMLEntities(const char *string);
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext);
+int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
+                         mapObj *map);
 
 #endif
 
@@ -87,28 +114,6 @@ int msGMLWriteQuery(mapObj *map, char *filename);
 #ifdef USE_WFS_SVR
 int msGMLWriteWFSQuery(mapObj *map, FILE *stream);
 #endif
-
-
-/*====================================================================
- *   maphttp.c
- *====================================================================*/
-
-typedef struct http_request_info
-{
-    int         nLayerId;
-    void      * request;  /* HTRequest * */
-    char      * pszGetUrl;
-    char      * pszOutputFile;
-    int         nStatus;
-    int         nTimeout;
-    rectObj     bbox;
-} httpRequestObj;
-
-void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
-int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests);
-int  msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
-                   int nTimeout);
 
 
 /*====================================================================
@@ -149,9 +154,13 @@ const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp);
 
 int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
                              httpRequestObj *pasReqInfo, int *numRequests);
-int msDrawWFSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
-                      int numRequests, mapObj *map, layerObj *lp, 
-                      imageObj *img);
+void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo);
+int msWFSLayerOpen(layerObj *lp, 
+                   const char *pszGMLFilename, rectObj *defaultBBOX);
+int msWFSLayerInitItemInfo(layerObj *layer);
+int msWFSLayerGetItems(layerObj *layer);
+int msWFSLayerWhichShapes(layerObj *layer, rectObj rect);
+int msWFSLayerClose(layerObj *lp);
 
 
 /*====================================================================

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.58  2002/12/13 00:57:31  dan
+ * Modified WFS implementation to behave more as a real vector data source
+ *
  * Revision 1.57  2002/11/17 17:47:51  frank
  * use msTryBuildPath() for open statement
  *
@@ -84,102 +87,6 @@
  *
  * Revision 1.41  2002/01/09 05:10:28  frank
  * avoid use of ms_error global
- *
- * Revision 1.40  2001/11/01 01:15:00  dan
- * Removed MS_LAYER_POLYLINE
- *
- * Revision 1.39  2001/10/15 19:25:02  dave
- * More access to the OpenGIS well-known text support already available
- * from Frank's OGR library. Had to add functions because current accessors
- * tailored to the needs of GDAL layers.
- * Added msLoadWKTProjectionString to mapogr.cpp and mapproject.h.
- * Added loadWKTProjection to mapscript.i in the layerObj and mapObj.
- *
- * Revision 1.38  2001/07/18 21:06:11  dan
- * Include USE_GD_FT in test for TTF fonts
- *
- * Revision 1.37  2001/07/04 19:06:39  dan
- * Styleitem AUTO: properly handle ogr-pen-1, the invisible pen.
- *
- * Revision 1.36  2001/07/03 04:55:40  dan
- * Fixed scale problem with text size, line width, etc, reading OGR Styles.
- *
- * Revision 1.35  2001/06/27 20:16:02  dan
- * Improved font and symbol name mapping for STYLEITEM AUTO
- *
- * Revision 1.34  2001/06/24 17:32:25  dan
- * Initial implementation of STYLEITEM AUTO for rendering maps using style 
- * info from the data source instead of static mapfile classes.  Still a few 
- * issues with fonts and symbols.
- *
- * Revision 1.33  2001/04/03 23:16:19  dan
- * Fixed args to calls to reprojection functions
- *
- * Revision 1.32  2001/03/22 22:45:09  dan
- * Forgot to change one instance of itemindexes to iteminfo
- *
- * Revision 1.31  2001/03/22 17:12:28  dan
- * Added msOGRLayerInitItemInfo() and msOGRLayerFreeItemInfo()
- *
- * Revision 1.30  2001/03/21 21:36:13  dan
- * Added msOGRLayerInitItemIndexes() (to keep itemindexes[] and item[] in sync)
- *
- * Revision 1.29  2001/03/21 04:40:49  sdlime
- * Fixed setting of itemindexes. Fixed TTF/FT preprocessor settings.
- *
- * Revision 1.28  2001/03/21 04:01:32  frank
- * added msOGCWKT2ProjectionObj(), update for other proj changes
- *
- * Revision 1.27  2001/03/18 17:21:13  dan
- * Set bounds member on returned shapes, and fixed filtering of incompatible
- * shape types in layers with mixed geometries.
- *
- * Revision 1.26  2001/03/15 04:48:35  dan
- * Fixed maplayer.c - had been committed with conflicts in it
- *
- * Revision 1.25  2001/03/12 19:02:46  dan
- * Added query-related stuff in PHP MapScript
- *
- * Revision 1.24  2001/03/12 16:05:07  sdlime
- * Fixed parameters for msLayerGetItems. Added preprocessor wrapper to OGR version of the same function.
- *
- * Revision 1.23  2001/03/11 22:01:32  dan
- * Implemented msOGRLayerGetItems()
- *
- * Revision 1.22  2001/03/05 23:15:46  sdlime
- * Many fixes in mapsde.c, now compiles. Switched shape index to long from int. Layer ...WhichShapes() functions now return MS_DONE if there is no overlap.
- *
- * Revision 1.21  2001/03/03 01:01:55  dan
- * Set shape->index in GetNextShape() for queries to work.
- *
- * Revision 1.20  2001/03/02 05:42:43  sdlime
- * Checking in Dan's new configure stuff. Updated code to essentially be GD versionless. Needs lot's of testing.
- *
- * Revision 1.19  2001/03/02 05:05:19  dan
- * Fixed problem reading LOCAL_CS SpatialRef. Handle as if no PROJECTION was set
- *
- * Revision 1.18  2001/03/02 03:48:08  frank
- * fixed to ensure it compiles with gdal and without ogr
- *
- * Revision 1.17  2001/03/01 22:54:07  dan
- * Test for geographic proj using IsGeographic() before conversion to PROJ4
- *
- * Revision 1.16  2001/03/01 22:37:14  dan
- * Added support for PROJECTION AUTO to use projection from dataset
- *
- * Revision 1.15  2001/02/28 04:56:39  dan
- * Support for OGR Label text, angle, size, implemented msOGRLayerGetShape
- * and reworked msLayerNextShape, added layer FILTER support, annotation, etc.
- *
- * Revision 1.14  2001/02/25 23:46:17  sdlime
- * Fully implemented FILTER option for shapefiles. Changed parameters for 
- * ...NextShapes and ...GetShapes functions.
- *
- * Revision 1.13  2001/02/23 21:58:00  dan
- * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
- *
- * Revision 1.12  2001/02/20 20:48:44  dan
- * OGR support working for classified maps
  *
  * ...
  *
@@ -1354,6 +1261,11 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
  *
  * Open OGR data source for the specified map layer.
  *
+ * If pszOverrideConnection != NULL then this value is used as the connection
+ * string instead of lp->connection.  This is used for instance to open
+ * a WFS layer, in this case lp->connection is the WFS url, but we want
+ * OGR to open the local file on disk that was previously downloaded.
+ *
  * An OGR connection string is:   <dataset_filename>[,<layer_index>]
  *  <dataset_filename>   is file format specific
  *  <layer_index>        (optional) is the OGR layer index
@@ -1363,7 +1275,7 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
  *
  * Returns MS_SUCCESS/MS_FAILURE
  **********************************************************************/
-int msOGRLayerOpen(layerObj *layer) 
+int msOGRLayerOpen(layerObj *layer, const char *pszOverrideConnection) 
 {
 #ifdef USE_OGR
 
@@ -1379,7 +1291,9 @@ int msOGRLayerOpen(layerObj *layer)
 /* -------------------------------------------------------------------- */
   if( layer->tileindex == NULL )
   {
-      psInfo = msOGRFileOpen( layer, layer->connection );
+      psInfo = msOGRFileOpen( layer, 
+                              (pszOverrideConnection ? pszOverrideConnection:
+                                                       layer->connection) );
       layer->ogrlayerinfo = psInfo;
       layer->tileitemindex = -1;
       
@@ -1443,7 +1357,9 @@ int msOGRLayerOpen(layerObj *layer)
                      "PROJECTION AUTO cannot be used for this "
                      "OGR connection (`%s').",
                      "msOGRLayerOpen()",
-                     ms_error->message, layer->connection);
+                     ms_error->message, 
+                     (pszOverrideConnection ? pszOverrideConnection:
+                                              layer->connection) );
           msOGRFileClose( layer, psInfo );
           layer->ogrlayerinfo = NULL;
           return(MS_FAILURE);
@@ -1601,6 +1517,13 @@ int msOGRLayerInitItemInfo(layerObj *layer)
           return MS_FAILURE;
       
       psInfo = psInfo->poCurTile;
+  }
+
+  if (psInfo == NULL || psInfo->poLayer == NULL)
+  {
+      msSetError(MS_MISCERR, "Assertion failed: OGR layer not opened!!!", 
+                 "msOGRLayerInitItemInfo()");
+      return(MS_FAILURE);
   }
 
   if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL) 

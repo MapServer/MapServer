@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.9  2002/12/13 00:57:31  dan
+ * Modified WFS implementation to behave more as a real vector data source
+ *
  * Revision 1.8  2002/11/20 21:22:32  dan
  * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
  *
@@ -760,6 +763,40 @@ int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
   }
 
   return MS_FAILURE;
+}
+
+
+/**********************************************************************
+ *                          msOWSExecuteRequests()
+ *
+ * Execute a number of WFS/WMS HTTP requests in parallel, and then 
+ * update layerObj information with the result of the requests.
+ **********************************************************************/
+int msOWSExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
+                         mapObj *map)
+{
+    int nStatus, iReq;
+
+    // Execute requests
+    nStatus = msHTTPExecuteRequests(pasReqInfo, numRequests);
+
+    // Scan list of layers and call the handler for each layer type to
+    // pass them the request results.
+    for(iReq=0; iReq<numRequests; iReq++)
+    {
+        if (pasReqInfo[iReq].nLayerId >= 0 && 
+            pasReqInfo[iReq].nLayerId < map->numlayers)
+        {
+            layerObj *lp;
+
+            lp = &(map->layers[pasReqInfo[iReq].nLayerId]);
+
+            if (lp->connectiontype == MS_WFS)
+                msWFSUpdateRequestInfo(lp, &(pasReqInfo[iReq]));
+        }
+    }
+
+    return nStatus;
 }
 
 
