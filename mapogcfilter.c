@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2003/10/22 13:19:51  assefa
+ * Change delimiter from single quote to double quote when buidging expressions.
+ *
  * Revision 1.12  2003/10/07 23:54:24  assefa
  * Additional Validation for propertyislike.
  *
@@ -1225,14 +1228,14 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
     }
 
     if (bString)
-      strcat(szBuffer, " ('[");
+      strcat(szBuffer, " (\"[");
     else
       strcat(szBuffer, " ([");
     //attribute
 
     strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
     if (bString)
-      strcat(szBuffer, "]' ");
+      strcat(szBuffer, "]\" ");
     else
       strcat(szBuffer, "] "); 
     
@@ -1261,10 +1264,10 @@ char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode)
     
     //value
     if (bString)
-      strcat(szBuffer, "'");
+      strcat(szBuffer, "\"");
     strcat(szBuffer, psFilterNode->psRightNode->pszValue);
     if (bString)
-      strcat(szBuffer, "'");
+      strcat(szBuffer, "\"");
     strcat(szBuffer, ") ");
 
     return strdup(szBuffer);
@@ -1335,7 +1338,7 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /*      build expresssion.                                              */
 /* -------------------------------------------------------------------- */
     if (bString)
-      strcat(szBuffer, " ('[");
+      strcat(szBuffer, " (\"[");
     else
       strcat(szBuffer, " ([");
 
@@ -1343,22 +1346,22 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
     strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
 
     if (bString)
-      strcat(szBuffer, "]' ");
+      strcat(szBuffer, "]\" ");
     else
       strcat(szBuffer, "] ");
         
     
     strcat(szBuffer, " >= ");
     if (bString)
-      strcat(szBuffer,"'");
+      strcat(szBuffer,"\"");
     strcat(szBuffer, aszBounds[0]);
     if (bString)
-      strcat(szBuffer,"'");
+      strcat(szBuffer,"\"");
 
     strcat(szBuffer, " AND ");
 
     if (bString)
-      strcat(szBuffer, " '[");
+      strcat(szBuffer, " \"[");
     else
       strcat(szBuffer, " ["); 
 
@@ -1366,16 +1369,16 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
     strcat(szBuffer, psFilterNode->psLeftNode->pszValue);
     
     if (bString)
-      strcat(szBuffer, "]' ");
+      strcat(szBuffer, "]\" ");
     else
       strcat(szBuffer, "] ");
     
     strcat(szBuffer, " <= ");
     if (bString)
-      strcat(szBuffer,"'");
+      strcat(szBuffer,"\"");
     strcat(szBuffer, aszBounds[1]);
     if (bString)
-      strcat(szBuffer,"'");
+      strcat(szBuffer,"\"");
     strcat(szBuffer, ")");
      
     
