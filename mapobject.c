@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.16  2004/09/27 13:31:34  sean
+ * corrections to msInsertLayer and msRemoveLayer, a 524 byte leak remains for each mapscript layer (bug 841)
+ *
  * Revision 1.15  2004/09/24 16:28:01  sean
  * mapscript can be again compiled without requiring WMS support, mapObj::loadOWSParameters will set an error in that case (bug 894).
  *
@@ -463,19 +466,22 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
     }
     else if (nIndex >= 0 && nIndex < MS_MAXLAYERS) {
     
-        // Move layers existing at the specified nIndex or greater
-        // to a higher nIndex
-        for (i=map->numlayers-1; i>=nIndex; i--) {
-            map->layers[i+1] = map->layers[i];
-            map->layers[i+1].index = i+1;
+        // Copy layers existing at the specified nIndex or greater
+        // to an index one higher
+        for (i=map->numlayers; i>nIndex; i--) {
+            if (i<map->numlayers) freeLayer(&(map->layers[i]));
+            initLayer(&(map->layers[i]), map);
+            msCopyLayer(&(map->layers[i]), &(map->layers[i-1]));
+            map->layers[i].index = i;
         }
+
+        /* copy new layer to specified index */
+        freeLayer(&(map->layers[nIndex]));
         initLayer(&(map->layers[nIndex]), map);
         msCopyLayer(&(map->layers[nIndex]), layer);
         map->layers[map->numlayers].index = nIndex;
 
         /* adjust layers drawing order */
-        
-        // shift everything above this index one higher
         for (i=map->numlayers; i>nIndex; i--) {
             map->layerorder[i] = map->layerorder[i-1];
             if (map->layerorder[i] >= nIndex) map->layerorder[i]++;
@@ -485,6 +491,7 @@ int msInsertLayer(mapObj *map, layerObj *layer, int nIndex)
         }
         map->layerorder[nIndex] = nIndex;
         
+        /* increment number of layers and return */
         map->numlayers++;
         return nIndex;
     }
@@ -506,6 +513,7 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex)
         return NULL;
     }
     else {
+        /* allocate a copy of the removed layer */
         layer = (layerObj *) malloc(sizeof(layerObj));
         if (!layer) {
             msSetError(MS_MEMERR, 
@@ -514,13 +522,17 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex)
             return NULL;
         }
         initLayer(layer, NULL);
-        //msInitProjection(&(layer->projection));
         msCopyLayer(layer, &(map->layers[nIndex]));
+        
+        /* Iteratively copy the higher index layers down one index */
         for (i=nIndex; i<map->numlayers-1; i++) {
-            map->layers[i] = map->layers[i+1];
+            freeLayer(&(map->layers[i]));
+            initLayer(&(map->layers[i]), map);
+            msCopyLayer(&map->layers[i], &map->layers[i+1]);
             map->layers[i].index = i;
-            //msCopyLayer(&map->layers[i], &map->layers[i+1]);
         }
+        /* Free the extra layer at the end */
+        freeLayer(&(map->layers[map->numlayers-1]));
         
         /* Adjust drawing order */
         order_index = 0;
@@ -531,12 +543,13 @@ layerObj *msRemoveLayer(mapObj *map, int nIndex)
                 break;
             }
         }
-        for (i=order_index; i<map->numlayers; i++) {
+        for (i=order_index; i<map->numlayers-1; i++) {
             map->layerorder[i] = map->layerorder[i+1];
             if (map->layerorder[i] > nIndex) map->layerorder[i]--;
         }
+        
+        /* decrement number of layers and return copy of removed layer */
         map->numlayers--;
-            
         return layer;
     }
 }
