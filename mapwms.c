@@ -326,7 +326,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
 
       if (map->layerorder)
          free(map->layerorder);
-       
+
       map->layerorder = (int*)malloc(sizeof(int) * map->numlayers + 1);
       for(j=0; j<map->numlayers; j++)
          map->layerorder[j] = -1;
@@ -345,7 +345,11 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
           if (strcasecmp(map->layers[j].name, layers[k]) == 0 ||
               (map->name && strcasecmp(map->name, layers[k]) == 0) ) {
             map->layers[j].status = MS_DEFAULT;
-            map->layerorder[k] = j;
+            
+            if (map->name && strcasecmp(map->name, layers[k]) == 0)
+               map->layerorder[j] = j;
+            else
+               map->layerorder[k] = j;
           }
         }
       }
