@@ -28,6 +28,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.48  2004/11/25 21:25:20  assefa
+ * Make sure that spatial filters are not applied on raster layers (Bug 1987).
+ *
  * Revision 1.47  2004/11/17 17:24:52  dan
  * Fixed warnings introduced by last change
  *
@@ -377,7 +380,12 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 /*      the layer. Insert also a metadata that will be used when        */
 /*      rendering the final image.                                      */
 /* ==================================================================== */
-                    if (pasLayers[j].layerinfo)
+                    if (pasLayers[j].layerinfo && 
+                        (map->layers[i].type ==  MS_LAYER_POINT || 
+                         map->layers[i].type == MS_LAYER_LINE ||
+                         map->layers[i].type == MS_LAYER_POLYGON ||
+                         map->layers[i].type == MS_LAYER_ANNOTATION ||
+                         map->layers[i].type == MS_LAYER_TILEINDEX))
                     {  
                         FilterEncodingNode *psNode = NULL;
 
@@ -3665,7 +3673,7 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
 /*      get the Filter if there is a class expression.                  */
 /* -------------------------------------------------------------------- */
                 pszFilter = msSLDGetFilter(&psLayer->class[i], 
-                                           pszWfsFilterEncoded);
+                                           pszWfsFilter);//pszWfsFilterEncoded);
                     
                 if (pszFilter)
                 {
@@ -4679,13 +4687,13 @@ char *msSLDParseLogicalExpression(char *pszExpression, const char *pszWfsFilter)
             pszTmp = strcatalloc(pszTmp, "<ogc:Filter>");
             if (pszWfsFilter)
             {
-                pszTmp = strcatalloc(pszTmp, "<AND>");
+                pszTmp = strcatalloc(pszTmp, "<ogc:And>");
                 pszTmp = strcatalloc(pszTmp, (char *)pszWfsFilter);
             }
             pszTmp = strcatalloc(pszTmp, pszFLTExpression);
 
             if (pszWfsFilter)
-              pszTmp = strcatalloc(pszTmp, "</AND>");
+              pszTmp = strcatalloc(pszTmp, "</ogc:And>");
 
             pszTmp = strcatalloc(pszTmp, "</ogc:Filter>\n");
 
@@ -4815,7 +4823,7 @@ char *msSLDGetFilter(classObj *psClass, const char *pszWfsFilter)
             if (psClass->layer && psClass->layer->classitem)
             {
                 if (pszWfsFilter)
-                  sprintf(szBuffer, "<ogc:Filter><AND>%s<ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></AND></ogc:Filter>\n", 
+                  sprintf(szBuffer, "<ogc:Filter><ogc:And>%s<ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></ogc:And></ogc:Filter>\n", 
                         pszWfsFilter, psClass->layer->classitem, psClass->expression.string);
                 else
                   sprintf(szBuffer, "<ogc:Filter><ogc:PropertyIsEqualTo><ogc:PropertyName>%s</ogc:PropertyName><ogc:Literal>%s</ogc:Literal></ogc:PropertyIsEqualTo></ogc:Filter>\n", 
