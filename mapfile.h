@@ -187,8 +187,9 @@
 
 #ifdef DEBUG
 #undef DEBUG
-#define DEBUG 1154
 #endif 
+
+#define DEBUG 1154
 
 #define EXTENSION 1155
 
