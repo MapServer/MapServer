@@ -93,6 +93,7 @@ REGEX_INC=	@PHP_REGEX_INC@
 #
 # Pick a compiler, etc. Flex and bison are only required if you need to modify the mapserver lexer (maplexer.l) or expression parser (mapparser.y).
 #
+CXX=	@CXX@
 CC=     @CC@
 AR= ar rc
 RANLIB= @RANLIB@
@@ -146,8 +147,8 @@ mapparser.o: mapparser.c map.h
 mapparser.c: mapparser.y
 	$(YACC) -p msyy -d -omapparser.c mapparser.y
 
-mapogr.o:	mapogr.cpp
-	$(CXX) -c $(CFLAGS) $(OGR_INC) $< -o $@
+mapogr.o: mapogr.cpp
+	$(CXX) -c $(CFLAGS) $(OGR_INC) mapogr.cpp -o mapogr.o
 
 lib: libmap.a
 libmap: libmap.a
@@ -182,8 +183,8 @@ sortshp: sortshp.o
 perlvars:
 	touch perlvars
 	pwd > perlvars
-	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) >> perlvars
-	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) >> perlvars
+	echo $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) >> perlvars
+	echo -I. $(PROJ_INC) $(GD_INC) $(TTF_INC) $(TIFF_INC) $(JPEG_INC) $(SDE_INC) $(OGR_INC) >> perlvars
 	echo $(LDFLAGS) >> perlvars
 
 gd_clean:
