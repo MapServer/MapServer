@@ -4780,20 +4780,6 @@ echo "configure:4762: checking whether we should use PHP's regex" >&5
     echo "$ac_t""no" 1>&6
   fi
 
-          if test -n "$TTF_ENABLED" -a "$PHP_VERSION_FLAG" = "-DPHP4" ; then
-    echo $ac_n "checking whether PHP4 was compiled with TTF support""... $ac_c" 1>&6
-echo "configure:4786: checking whether PHP4 was compiled with TTF support" >&5
-    if test -n "`grep 'define HAVE_LIBTTF 1' $PHP_CONFIG_H`"  ; then
-      echo "$ac_t""yes" 1>&6
-      { echo "configure: error: 
-!!! Cannot have both PHP4 and MapScript compiled with Freetype support.   !!!
-!!! You have to configure either PHP or MapServer using the --without-ttf !!!
-!!! switch to avoid conflicts at runtime.                                 !!!" 1>&2; exit 1; }
-    else
-      echo "$ac_t""no" 1>&6
-    fi
-  fi
-
   PHPMS_MAKEFILE=mapscript/php3/Makefile
   MAKE_PHPMS=php3_mapscript
   MAKE_PHPMS_CLEAN=php3_mapscript_clean
@@ -4827,7 +4813,7 @@ fi
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:4831: checking for location of Apache headers using apxs" >&5
+echo "configure:4817: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -4854,7 +4840,7 @@ fi
 if test -n "$with_apache" -a "$with_apache" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:4858: checking for location of Apache headers" >&5
+echo "configure:4844: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi
