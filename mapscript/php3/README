@@ -270,9 +270,6 @@ Very important note: Constant names and class member variable names are
         Set map projection and coordinate system.  Parameters are given as 
         a single string of comma-delimited PROJ.4 parameters.
 
-   int addFeature(shapeObj shape)
-        Add a new feature in a layer.  Returns -1 on error.
-
    int getMetaData(string name)
         Fetch metadata entry by name (stored in the WEB object in the map
         file).  Returns "" if no entry matches the name.  Note that the
@@ -405,6 +402,9 @@ Very important note: Constant names and class member variable names are
 
    shapeObj getShape(int tileindex, int shapeindex)
         Retrieve shapeObj from a layer by index.
+
+   int addFeature(shapeObj shape)
+        Add a new feature in a layer.  Returns -1 on error.
 
    int getMetaData(string name)
         Fetch layer metadata entry by name.  Returns "" if no entry 
