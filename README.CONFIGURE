@@ -55,6 +55,8 @@ Here is the list of available options as returned by "./configure --help":
   --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).
   --with-gdal[=DIR]       Include GDAL support (DIR is path to gdal-config
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)
+  --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)
+  --with-ming[=ARG] Include MING/Flash Support (ARG=yes/path to Ming directory)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libwww
                           required).
@@ -343,6 +345,22 @@ PostGIS Support:
   be found.
 
 
+Flash/SWF/Ming Support:
+-----------------------
+
+  --with-ming[=ARG] Include MING/Flash Support (ARG=yes/path to Ming directory)
+
+  Support for generating Flash output is enabled only if requested.  Use
+  the --with-ming switch to request it if the ming libraries have been 
+  installed in the default path.  To use a local ming build also provide the
+  path to the ming build directory.
+
+  The IMAGETYPE for Flash output is SWF.  
+
+  More information on the MING library should be available at:
+  http://www.opaque.net/ming/
+
+
 OGC WMS Server Compatibility:
 -----------------------------
 
@@ -466,6 +484,14 @@ Perl MapScript Module:
   The Perl MapScript module is not yet handled by the configure script.
 
   See the file ./mapscript/perl/README for compilation instructions.
+
+
+Python MapScript Module:
+------------------------
+
+  The Python MapScript module is not yet handled by the configure script.
+
+  See the file ./mapscript/python/README for brief compilation instructions.
 
 
 Tcl MapScript Module:
