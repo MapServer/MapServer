@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.98  2005/02/28 14:17:49  dan
+ * Added a comment to msSaveImageBufferGD() to remind that the returned buffer
+ * should be freed by gdFree() (bug 1257)
+ *
  * Revision 1.97  2005/02/18 03:06:45  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -3165,6 +3169,8 @@ int msSaveImageGDCtx( gdImagePtr img, gdIOCtx *ctx, outputFormatObj *format)
 
    Save image data to a unsigned char * buffer.  In the future we should try
    to merge this with msSaveImageStreamGD function.
+
+   The returned buffer is owned by the caller. It should be freed with gdFree()
    ======================================================================== */
 
 unsigned char *msSaveImageBufferGD(gdImagePtr img, int *size_ptr,
