@@ -638,6 +638,24 @@ int msMoveStyleDown(classObj *class, int nStyleIndex)
     return (MS_FAILURE);
 }
 
+/**
+ * Delete the style identified by the index and shift
+ * styles that follows the deleted style.
+ */  
+int msDeleteStyle(classObj *class, int iStyleIndex)
+{
+    int i = 0;
+    if (class && iStyleIndex < class->numstyles && iStyleIndex >=0)
+    {
+        for (i=iStyleIndex; i< class->numstyles-1; i++)
+        {
+             msCopyStyle(&class->styles[i], &class->styles[i+1]);
+        }
+        class->numstyles--;
+        return(MS_SUCCESS);
+    }
+    return (MS_FAILURE);
+}
 /*
 ** Return the projection string. 
 */
