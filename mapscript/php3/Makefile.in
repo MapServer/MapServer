@@ -1,0 +1,83 @@
+# Run ./configure in the main MapServer directory to turn this Makefile.in
+# into a proper Makefile
+
+#
+# This is an adapted version of php-3.0.14/dl/Makefile.tmpl for the 
+# MapServer php_mapscript.so module.
+#
+# $Id$
+#
+
+# +----------------------------------------------------------------------+
+# | PHP HTML Embedded Scripting Language Version 3.0                     |
+# +----------------------------------------------------------------------+
+# | Copyright (c) 1997,1998 PHP Development Team (See Credits file)      |
+# +----------------------------------------------------------------------+
+# | This program is free software; you can redistribute it and/or modify |
+# | it under the terms of one of the following licenses:                 |
+# |                                                                      |
+# |  A) the GNU General Public License as published by the Free Software |
+# |     Foundation; either version 2 of the License, or (at your option) |
+# |     any later version.                                               |
+# |                                                                      |
+# |  B) the PHP License as published by the PHP Development Team and     |
+# |     included in the distribution in the file: LICENSE                |
+# |                                                                      |
+# | This program is distributed in the hope that it will be useful,      |
+# | but WITHOUT ANY WARRANTY; without even the implied warranty of       |
+# | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the        |
+# | GNU General Public License for more details.                         |
+# |                                                                      |
+# | You should have received a copy of both licenses referred to here.   |
+# | If you did not, or have any questions about PHP licensing, please    |
+# | contact core@php.net.                                                |
+# +----------------------------------------------------------------------+
+
+CC =     @PHP_CC@
+LD =     @PHP_LD@
+CFLAGS = @CFLAGS@
+
+#
+# Set PHP_SRC_DIR to point to the root of the PHP source tree
+#
+PHP_SRC_DIR = @PHP_SRC_DIR@
+
+PHP_INC = -I$(PHP_SRC_DIR) -I$(PHP_SRC_DIR)/dl
+
+#
+# Set MapServer extensions parameters.  See main MapServer Makefile for 
+# more details... 
+# Common defaults are:
+# MS_DEFINE = -DUSE_TTF -DUSE_TIFF -DUSE_EPPL -DUSE_GD_1_2
+# MS_INCLUDE = -I../.. -I../../gd-1.2 -I../../gdft
+# MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
+#
+MS_DEFINE = @ALL_ENABLED@
+MS_INC =    @MS_INC@ @ALL_INC@
+MS_LIBS =   @MS_LIB@ @ALL_LIB@ @XTRALIBS@
+
+
+#
+# The rest of the file should not have to be edited...
+#
+
+CFLAGS := $(CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC)
+
+all: php_mapscript.so
+
+PHPMS_OBJS =  php_mapscript.o mapscript_i.o
+
+
+php_mapscript.so: $(PHPMS_OBJS)
+	$(LD) -o $@ $(PHPMS_OBJS) $(MS_LIBS)
+
+%.o: %.c php_mapscript.h
+	$(CC) $(CFLAGS) -DCOMPILE_DL=1 -c -o $@ $<
+
+
+clean:
+	-rm -f *.so *.o perl.out
+
+# Local Variables:
+# tab-width: 4
+# End:

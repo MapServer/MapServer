@@ -1,0 +1,674 @@
+                    PHP/MapScript Mapserver Module
+                    ==============================
+
+$Id$
+                      --------------------------
+
+This is a PHP module to make MapServer's MapScript functionalities 
+available in PHP.  The approach used here is a Dynamically Loadable 
+Library, and the module is based on the PHP-3.0.14 code.  
+The module has been tested and used on Linux, Solaris, and WinNT.
+
+This module is still under development and is not (yet) an officially 
+supported part of MapServer, so for any questions/comments/suggestions/
+bug-reports, please Email me, Daniel Morissette (danmo@videotron.ca)
+
+                      --------------------------
+
+Currently supported classes, properties and methods:
+====================================================
+
+For more complete information, see the MapScript documentation at:
+	http://mapserver.gis.umn.edu/mapscript.html
+and the Map File documentation at:
+	http://mapserver.gis.umn.edu/mapfile.html
+
+
+Very important note: Constant names and class member variable names are
+                     case-sensitive in PHP.
+
+  Constants:
+  ----------
+  The following MapServer constants are available:
+
+    Boolean values:
+  	MS_TRUE, MS_FALSE, MS_ON, MS_OFF, MS_YES, MS_NO
+
+    Map units:
+ 	MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD,
+        MS_PIXELS
+
+    Layer types:
+        MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER,
+        MS_ANNOTATION, MS_NULL
+
+    Font types:
+        MS_TRUETYPE, MS_BITMAP
+
+    Label positions:
+        MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
+        MS_CC, MS_AUTO
+
+    Symbol set types:
+        MS_MARKERSET, MS_LINESET, MS_SHADESET
+
+    Shapefile types:
+        MS_SHP_POINT, MS_SHP_ARC, MS_SHP_POLYGON, MS_SHP_MULTIPOINT
+
+    Query/join types:
+        MS_SINGLE, MS_MULTIPLE
+
+
+ MapObj Class:
+ -------------
+
+ Constructor:
+
+   mapObj ms_newMapObj(string map_file_name)
+        Returns a new object to deal with a MapServer map file.
+
+
+ Members:
+
+   int    	numlayers  (read-only)
+   string 	name
+   int    	status
+   int    	width
+   int    	height
+   int    	transparent
+   int    	interlace
+   rectObj 	extent;	
+   double 	cellsize
+   double 	scale
+   string 	shapepath
+   string 	tile
+   int    	keysizex
+   int    	keysizey
+   int    	keyspacingx
+   int    	keyspacingy
+   webObj 	web;
+   referenceMapObj reference;
+	
+
+ Methods:
+
+   int set(string property_name, new_value)
+        Set map object property to new value. Returns -1 on error.
+
+   int addColor(int r, int g, int b)  
+        Add a color to map's palette.  Returns color index.
+
+   imageObj prepareImage()
+        Return handle on blank image object.
+
+   imageObj draw()
+        Render map and return handle on image object.
+
+   imageObj drawLegend()
+        Render legend and return handle on image object.
+
+   imageObj drawReferenceMap()
+        Render reference map and return handle on image object.
+
+   imageObj drawScaleBar()
+        Render scale bar and return handle on image object.
+
+   int drawLabelCache(imageObj image)
+        Renders the labels for a map. Returns -1 on error.
+
+   layerObj getLayer(int index)
+        Returns a layerObj from the map given an index value (0=first layer)
+
+   layerObj getLayerByName(string layer_name)
+        Returns a layerObj from the map given a layer name.
+
+   colorObj getcolorbyindex(int iCloIndex)
+	Returns a colorObj corresponding to the color index in the palette
+
+   void setextent(rectObj oGeorefExtent)
+	Set the map extents using the georef extents passed in argument.
+
+   void zoompoint(int nZoomFactor, pointObj oPixelPos, int nImageWidth, 
+                  int nImageHeight, rectObj oGeorefExt)
+
+	Zoom to a given	XY postion;
+
+	Parmeters are :                                                 
+       - Zoom factor : positive values do zoom in, negative values  
+                      zoom out. Factor of 1 will recenter.           
+       - Pixel position (pointObj) : x, y coordinates of the click.   
+       - Width : width in pixel of the current image.                 
+       - Height : Height in pixel of the current image.               
+       - Georef extent (rectObj) : current georef extents.            
+       - MaxGeoref extent (rectObj) : (optional) maximum georef extents.
+         If provided then it will be impossible to zoom/pan outside of
+         those extents.
+
+   void zoomrectange(rectObj oPixelExt, int nImageWidth, int nImageHeight,
+		     rectObj oGeorefExt)
+	Set the map extents to a given extents.
+	
+	Parmeters are :
+	- Pixel Extents
+        - Width : width in pixel of the current image.
+        - Height : Height in pixel of the current image. 
+        - Georef extent (rectObj) : current georef extents.
+
+   void queryUsingPoint(pointObj point, int type, double buffer)
+        Query all selected layers in map at point location.
+        Type is MS_SINGLE or MS_MULTIPLE depending on number of results
+        you want. 
+        Passing buffer <=0 defaults to tolerances set in the map file 
+        (in pixels) but you can use a constant buffer (specified in 
+        ground units) instead.
+
+
+ LayerObj Class:
+ ---------------
+
+ Constructor:
+   Layer Objects can be returned by the MapObj class, or can be created
+   using:
+
+   layerObj ms_newLayerObj(MapObj map)
+
+ Members:
+   int    numclasses  (read-only)
+   int    index       (read-only)
+   int    status
+   string classitem
+   string name
+   string group
+   string description
+   string legend
+   string data
+   int    type
+   double tolerance
+   int    toleranceunits
+   double symbolscale
+   double minscale
+   double maxscale
+   double labelminscale
+   double labelmaxscale
+   int    maxfeatures
+   int    offsite
+   int    annotate
+   int    transform
+   int    labelcache
+   string labelitem
+   string labelsizeitem
+   string labelangleitem
+   string tileitem
+   string tileindex
+   string header
+   string footer
+
+ Methods:
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+   int draw(imageObj image)
+        Draw a single layer, add labels to cache if required. 
+        Returns -1 on error.
+
+   featureObj firstFeature()
+        Returns a reference to the first featureObj in this layer, or 0
+        if the layer contains no featureObj yet.
+
+   void queryUsingPoint(pointObj point, int type, double buffer)
+        Query layer in map at point location.
+        Type is MS_SINGLE or MS_MULTIPLE depending on number of results
+        you want. 
+        Passing buffer <=0 defaults to tolerances set in the map file 
+        (in pixels) but you can use a constant buffer (specified in 
+        ground units) instead.
+
+
+ ClassObj Class:
+ ---------------
+
+ Constructor:
+   Class Objects can be returned by the LayerObj class, or can be created
+   using:
+
+   classObj ms_newClassObj(layerObj layer)
+
+ Members:
+
+   string name
+   int    color
+   int    backgroundcolor
+   int    outlinecolor
+   int    symbol
+   int    size
+   int    minsize
+   int    maxsize
+   labelObj label
+
+ Methods:
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+
+ ImageObj Class:
+ ---------------
+
+ Constructor:
+
+   Instances of image objects are always created by the map class methods.
+
+ Members:
+
+   int    width     (read-only)
+   int    height    (read-only)
+   string imagepath
+   string imageurl
+
+ Methods:
+
+   int saveImage(string filename, , int transparent, int interlace)
+        Writes image object to specifed filename. Returns -1 on error.
+
+   string saveWebImage(int transparent, int interlace)
+        Writes image to temp directory.  Returns image URL.
+
+   void free()
+        Destroys resources used by an image object.
+
+
+ LabelObj Class:
+ ---------------
+
+ Constructor:
+
+   LabelObj are always embedded inside other classes.
+
+ Members:
+
+   string font
+   int    type
+   int    color
+   int    outlinecolor
+   int    shadowcolor
+   int    shadowsizex
+   int    shadowsizey
+   int    size
+   int    minsize
+   int    maxsize
+   int    position
+   int    offsetx
+   int    offsety
+   double angle
+   int    autoangle
+   int    buffer
+   int    antialias
+   int    wrap
+   int    minfeaturesize
+   int    autominfeaturesize
+   int    mindistance
+   int    partials
+   int    force
+
+ Methods:
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+
+ webObj Calss
+ -----------
+
+ Constructor:
+
+   Instances of image objects are always created by the map class methods.
+
+ Members:
+
+   string log;
+   string imagepath;
+   string template;		
+   string imageurl;
+   string header;
+   string footer;
+   string empty; /*read-only*/
+   string error;  /*read-only
+   string mintemplate;
+   string maxtemplate;
+   double minscale;
+   double maxscale;
+   rectObj extent;  /*read-only
+
+ Methods:
+
+      int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+
+
+ referenceMapObj Class
+ --------------------
+
+Constructor:
+
+   Instances of image objects are always created by the map class methods.
+
+ Members:
+ 
+   string   image;
+   int      width;
+   int      height;
+   int      status;
+   retcObj  extent; /*read-only*/
+   ColorObj color; /*read-only*/
+   ColorObj outlinecolor; /*read-only*/
+
+ Method :
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+ 
+ ColorObj Class:
+ ---------------
+
+ Constructor:
+
+   ColorObj are always embedded inside other classes.
+
+ Members:
+
+   int    red
+   int    green
+   int    blue
+
+ Methods:
+
+   void setRGB(int red, int green, int blue)
+        Set red, green, blue values.
+
+
+ QueryResultObj Class:
+ ---------------------
+
+ Constructor:
+
+   There is no public constructor, instances of QueryResultObj objects are 
+   always returned by the MapObj and LayerObj query methods.
+
+ Members:
+
+   int    numresults      (read-only)
+   int    numquerylayers  (read-only)
+   int    numlayers       (read-only)
+   int    currentlayer
+   int    currentshape
+   int    currenttile
+
+ Methods:
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+   ShapeResultObj next()
+        Returns the next result record in a ShapeResultObj.
+        The last ShapeResultObj will have all its members set to -1.
+
+   void rewind()
+        Move the cursor back to the first result record.
+        This is the same as setting currentlayer=currentshape=currenttile=0
+
+   void free()
+        Destroys resources used by a QueryResultObj.
+
+
+ ShapeResultObj Class:
+ ---------------------
+
+ Constructor:
+
+   There is no public constructor, instances of ShapeResultObj objects are 
+   always returned by QueryResultObj methods.
+
+ Members:
+
+   int    layer      (read-only)
+   int    tile       (read-only)
+   int    shape      (read-only)
+   int    query      (read-only)
+
+ Methods:
+
+    No methods.
+
+
+ PointObj Class:
+ ---------------
+
+ Constructor:
+
+   PointObj ms_newPointObj()
+
+ Members:
+
+   double x
+   double y
+
+ Methods:
+
+   int setXY(double x, double y)
+        Set X,Y coordinate values.
+
+   int draw(mapObj map, layerObj layer, imageObj img, 
+            string class_name, string text)
+        Draws the individual point using layer.  The class_name is used
+        to classify the point based on the classes defined for the layer.
+        The text string is used to annotate the point.
+        Returns 0 on success, -1 on error.
+
+
+ LineObj Class:
+ --------------
+
+ Constructor:
+
+   LineObj ms_newLineObj()
+
+ Members:
+
+   int    numpoints  (read-only)
+
+ Methods:
+
+   int add(pointObj point)
+        Add a point to the end of line.
+
+   int addXY(double x, double y)
+        Add a point to the end of line.
+
+   PointObj point(int i)
+        Returns a reference to point number i.  Reference is valid only
+        during the life of the lineObj that contains the point.
+
+
+ ShapeObj Class:
+ --------------
+
+ Constructor:
+
+   ShapeObj ms_newShapeObj(int type)
+
+ Members:
+
+   int     type      (read-only)
+   int     numlines  (read-only)
+   rectObj bounds
+
+ Methods:
+
+   int add(lineObj line)
+        Add a line (i.e. a part) to the shape.
+
+   LineObj line(int i)
+        Returns a reference to line number i.  Reference is valid only
+        during the life of the shapeObj that contains the point.
+
+   int draw(mapObj map, layerObj layer, imageObj img, 
+            string class_name, string text)
+        Draws the individual shape using layer.  The class_name is used
+        to classify the shape based on the classes defined for the layer.
+        The text string is used to annotate the shape.
+        Returns 0 on success, -1 on error.
+
+
+ RectObj Class:
+ --------------
+
+ Constructor:
+
+   RectObj are sometimes embedded inside other objects.  New ones can
+   also be created with:
+
+   RectObj ms_newPointObj()
+
+ Members:
+
+   double minx
+   double miny
+   double maxx
+   double maxy
+
+ Methods:
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+   int draw(mapObj map, layerObj layer, imageObj img, 
+            string class_name, string text)
+        Draws the individual rectangle using layer.  The class_name is used
+        to classify the rectangle based on the classes defined for the layer.
+        The text string is used to annotate the rectangle.
+        Returns 0 on success, -1 on error.
+
+
+ FeatureObj Class:
+ ---------------
+
+ Constructor:
+   Inline Feature Objects are always created in the context of a layer.
+   They contain a shape object that should be filled using the 
+   shapeObj->add(line) method after the featureObj is created.
+
+   featureObj ms_newFeatureObj(layerObj layer)
+
+ Members:
+
+   shapeObj shape
+   string   class
+   string   text
+
+ Methods:
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+   int next()
+        Returns the next featureObj in the list for this layer.
+        Returns 0 when the end of the list is reached.
+
+
+ ShapefileObj Class:
+ -------------------
+
+ Constructor:
+
+   shapefileObj ms_newShapefileObj(string filename, int type)
+        Opens a shapefile and returns a new object to deal with it. 
+        Filename should be passed with no extension.
+        Pass type as -1 when opening an existing file.  
+        To create a new file, type should be one of MS_SHP_POINT, 
+        MS_SHP_ARC, MS_SHP_POLYGON or MS_SHP_MULTIPOINT.
+
+ Members:
+
+   int     numshapes  (read-only)
+   int     type       (read-only)
+   string  source     (read-only)
+   rectObj bounds     (read-only)
+
+ Methods:
+
+   shapeObj getShape(int i)
+        Retrieve shape by index.
+
+   rectObj getExtent(int i)
+        Retrieve a shape's bounding box by index.
+
+   int addShape(shapeObj shape)
+        Appends a shape to an open shapefile.
+
+   void free()
+        Closes a shape file (and commits all changes in write mode) and 
+        releases all resources used by the object.
+
+                      --------------------------
+
+To compile/install the module on Linux:
+=======================================
+
+- The main MapServer configure script will automatically setup the main
+  makefile to compile php_mapscript.so if you pass the --with-php3=DIR
+  argument to the configure script.
+
+- Copy the 'php_mapscript.so' library in your PHP development area, and
+  then use the dl() function to load the module at the beginning of
+  your PHP scripts. 
+
+  See also the PHP function extension_loaded() to check whether an 
+  extension is already loaded.
+
+  Make sure all directories in the path to the location of php_mapscript.so
+  are at least r-x for the HTTPd user (usually 'nobody'), otherwise dl()
+  may complain that it cannot find the file even if it's there.
+
+- If you get an error from PHP complaining that it cannot load the 
+  library, then make sure that you recompiled and reinstalled PHP with
+  support for dynamic libraries.  On RedHat 5.x and 6.x, this means
+  adding "-rdynamic" to the CLDFLAGS in the main PHP Makefile after
+  running ./configure
+
+
+                      --------------------------
+
+Following is a copy of the README for PHP3 Dynamic Libs:
+
+ ---------------------- begin php-3.0.14/dl/README --------------
+ PHP3 Dynamically Loadable Libraries
+
+ The build procedure for dynamic modules is not very clean yet.
+ It will be improved in PHP4.
+
+ Try:
+
+ ./setup
+
+ This will generate a Makefile.  You should edit this Makefile
+ and on the CC line add your Apache include directories.  
+ Something similar to: 
+
+   -I/path/apache/src/include -I/path/apache/src/os/unix
+
+ To build an individual library type, for example:
+
+   make calendar.so
+
+ You can then put the library somewhere and from within PHP
+ use: dl("/path/calendar.so");
+
+ A function from within the library can then be called like any
+ regular PHP function.  For example:
+
+   echo jdmonthname(1,3);
+ ---------------------- end of php-3.0.14/dl/README --------------
+
+

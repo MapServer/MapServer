@@ -1,0 +1,84 @@
+#
+# makefile.vc - MSVC++ makefile for the PHP/MapScript extension
+#
+# This VC++ makefile will build the PHP module PHP_MAPSCRIPT.DLL
+#
+# To use the makefile:
+#  - Open a DOS prompt window
+#  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
+#  - Start the build with:  nmake /f makefile.vc
+#
+# $Id$
+#
+
+#OPTFLAGS =	/nologo /Zi /W3 /DDEBUG
+OPTFLAGS =	/nologo /Zi /W3
+BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32
+
+LINK_OPT =	/dll /debug
+
+#
+# Set PHP_SOURCE_DIR to point to the root of the PHP source tree
+#
+PHP_SOURCE_DIR = ../../../php-3.0.14
+
+PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/dl
+
+#
+# Where do you want php3_mapscript.dll to be installed?
+#
+PHP_INSTALL_DIR =  C:\Apache\php3
+
+#
+# Set MapServer extensions parameters.  See main MapServer Makefile for 
+# more details... 
+# Common defaults are:
+# MS_DEFINE = -DUSE_TTF -DUSE_TIFF -DUSE_EPPL -DUSE_GD_1_2
+# MS_INCLUDE = -I../.. -I../../gd-1.2 -I../../gdft
+# MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
+#
+MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF
+MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../gd-1.2 -I../../../proj/src
+MS_LIBS = ../../mapserver.lib ../../gd-1.2/gd.lib \
+	../../../tiff-v3.5.4/libtiff/libtiff.lib \
+	../../gdft/gdft.lib \
+	../../../freetype/lib/freetype.lib \
+        ../../../proj/src/proj.lib
+
+
+#
+# The rest of the file should not have to be edited...
+#
+
+PHPMS_OBJS =  php_mapscript.obj mapscript_i.obj
+
+PHPMS_DLL =	php3_mapscript.dll
+
+CFLAGS = 	$(BASE_CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC)
+
+default: 	all
+
+all:		$(PHPMS_DLL)
+
+install:	all
+	copy $(PHPMS_DLL) $(PHP_INSTALL_DIR)
+
+$(PHPMS_DLL):	$(PHPMS_OBJS)
+	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
+		$(PHP_SOURCE_DIR)\win32\cgi_debug\php.lib
+
+$(PHPMS_OBJS):	php_mapscript.h $(MS_LIBS)
+
+.c.obj:
+	$(CC) $(CFLAGS) /DCOMPILE_DL=1 /c $*.c /Fo$*.obj
+
+
+clean:
+	del *.obj
+	del $(PHPMS_OBJS)
+	del $(PHPMS_DLL)
+	del *.lib
+	del *.pdb
+	del *.exp
+	del *.ilk
+

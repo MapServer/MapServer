@@ -1,0 +1,470 @@
+dnl
+dnl MapServer configure.in
+dnl
+dnl Process this file with autoconf to produce a configure script.
+dnl
+dnl $Id$
+dnl
+
+AC_INIT(Makefile.in)
+
+dnl Checks for programs.
+AC_PROG_CC
+dnl AC_PROG_CXX
+AC_PROG_RANLIB
+AC_PROG_LEX
+AC_PROG_YACC
+
+dnl ---------------------------------------------------------------------
+dnl Checks for libraries.
+dnl ---------------------------------------------------------------------
+AC_CHECK_LIB(m,exp, XTRALIBS="$XTRALIBS -lm",,)
+AC_SUBST(XTRALIBS, $XTRALIBS)
+
+LIBS="$XTRALIBS $LIBS"
+
+dnl ---------------------------------------------------------------------
+dnl Checks for header files.
+dnl ---------------------------------------------------------------------
+AC_HEADER_STDC
+
+dnl ---------------------------------------------------------------------
+dnl Check for some string functions
+dnl ---------------------------------------------------------------------
+AC_CHECK_FUNC(strcasecmp, ,  STRINGS="-DNEED_STRCASECMP $STRINGS")
+AC_CHECK_FUNC(strncasecmp, , STRINGS="-DNEED_STRNCASECMP $STRINGS")
+AC_CHECK_FUNC(strdup, ,      STRINGS="-DNEED_STRDUP $STRINGS")
+AC_SUBST(STRINGS, $STRINGS)
+
+dnl ---------------------------------------------------------------------
+dnl Which version of GD are we using?
+dnl
+dnl If --with-gd not given, then check in system libs, and if not found
+dnl there then fall back on local copy of gd-1.2
+dnl ---------------------------------------------------------------------
+
+dnl Clear some cache variables
+unset ac_cv_lib_gd_gdImageGif
+unset ac_cv_lib_gd_gdImageString16
+unset ac_cv_lib_gd_gdImagePng
+
+AC_CHECKING(which version of GD to use...)
+AC_ARG_WITH(gd,
+[  --with-gd[=DIR]         Specify which version of GD to use (DIR is GD's 
+                          install dir).],,)
+
+if test "$with_gd" = "no" ; then
+
+  AC_MSG_ERROR(gd library cannot be disabled)
+
+elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
+
+  dnl
+  dnl --with-gd was specified explicitly... try to establish which version
+  dnl           of GD this is
+  dnl
+  AC_EXPAND_PATH($with_gd, GD_DIR)
+  test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
+  test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
+  test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
+  if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then 
+      GD_INC=-I$GD_INCLUDE
+      GD_LIB="-L$GD_LIBDIR -lgd"
+  else
+      AC_MSG_ERROR("Could not find gd.h or libgd.a in $GD_DIR.  Make sure gd is compiled before calling configure.")
+  fi
+
+  AC_CHECK_LIB(gd, gdImageGif, GD_DEF=-DUSE_GD_1_2,, $GD_LIB)
+  AC_CHECK_LIB(gd, gdImageString16, GD_DEF=-DUSE_GD_1_3,, $GD_LIB)
+  AC_CHECK_LIB(gd, gdImagePng, GD_DEF=-DUSE_GD_1_6,, $GD_LIB -lpng -lz)
+
+  AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
+
+else
+
+  dnl
+  dnl --width-gd was not given... look in system libs, and if not found
+  dnl            then use the local copy of gd 1.2
+  dnl
+  AC_CHECK_LIB(gd, gdImageGif, GD_DEF=-DUSE_GD_1_2,,)
+  AC_CHECK_LIB(gd, gdImageString16, GD_DEF=-DUSE_GD_1_3,,)
+  AC_CHECK_LIB(gd, gdImagePng, GD_DEF=-DUSE_GD_1_6,, -lpng -lz)
+  if test -n "$GD_DEF" ; then
+      GD_LIB="-lgd"
+      AC_MSG_RESULT([        found GD ($GD_DEF) in system libs.])
+  else
+      dnl GD not found on system... use local copy of gd 1.2
+      GD_DEF=-DUSE_GD_1_2
+      MAKE_GD=gd
+      MAKE_GD_CLEAN=gd_clean
+      AC_EXPAND_PATH(gd-1.2, GD_DIR)
+      GD_INC=-I$GD_DIR
+      GD_LIB="-L$GD_DIR -lgd"
+      test -f $GD_DIR/Makefile.in && GD_MAKEFILE="$GD_DIR/Makefile"
+      AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
+  fi
+
+fi
+
+if test "$ac_cv_lib_gd_gdImagePng" = "yes"; then
+      GD_LIB="$GD_LIB -lpng -lz"
+fi
+
+AC_SUBST(GD_DEF, $GD_DEF)
+AC_SUBST(GD_INC, $GD_INC)
+AC_SUBST(GD_LIB, $GD_LIB)
+AC_SUBST(MAKE_GD, $MAKE_GD)
+AC_SUBST(MAKE_GD_CLEAN, $MAKE_GD_CLEAN)
+
+ALL_ENABLED="$GD_DEF $ALL_ENABLED"
+ALL_INC="$GD_INC $ALL_INC"
+ALL_LIB="$GD_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
+dnl libTIFF (included by default if found on system).
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_tiff_TIFFOpen
+
+AC_CHECKING(whether we should include TIFF support...)
+AC_ARG_WITH(tiff,
+[  --without-tiff          Disable TIFF support.
+  --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).],,)
+if test "$with_tiff" = "no" ; then
+  AC_MSG_RESULT([        disabled by --without-tiff])
+elif test -n "$with_tiff" -a "$with_tiff" != "yes" ; then
+
+  AC_EXPAND_PATH($with_tiff, TIFF_DIR)
+  test -f $TIFF_DIR/include/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/include"
+  test -f $TIFF_DIR/libtiff/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/libtiff"
+  test -f $TIFF_DIR/include/libtiff/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/include/libtiff"
+  test -f $TIFF_DIR/tiffio.h && TIFF_INCLUDE="$TIFF_DIR"
+  test -f $TIFF_DIR/lib/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/lib"
+  test -f $TIFF_DIR/libtiff/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/libtiff"
+  test -f $TIFF_DIR/libtiff.a && TIFF_LIBDIR="$TIFF_DIR"
+
+  if test -n "$TIFF_INCLUDE" -a -n "$TIFF_LIBDIR" ; then 
+      TIFF_INC=-I$TIFF_INCLUDE
+      TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
+  else
+      AC_MSG_ERROR("Could not find tiffio.h or libtiff.a in $TIFF_DIR.")
+  fi
+
+  TIFF_ENABLED="-DUSE_TIFF"
+  AC_MSG_RESULT([        using libtiff from $TIFF_DIR.])
+
+else
+
+  AC_CHECK_LIB(tiff,TIFFOpen,TIFF_ENABLED=-DUSE_TIFF,,,)
+
+  if test -n "$TIFF_ENABLED" ; then
+      TIFF_LIB="-ltiff"
+      AC_MSG_RESULT([        found libtiff in system libs.])
+  else
+      AC_MSG_RESULT([        libtiff not found... TIFF support not included.])
+  fi
+
+fi
+
+AC_SUBST(TIFF_ENABLED,$TIFF_ENABLED)
+AC_SUBST(TIFF_INC,    $TIFF_INC)
+AC_SUBST(TIFF_LIB,    $TIFF_LIB)
+
+ALL_ENABLED="$TIFF_ENABLED $ALL_ENABLED"
+ALL_INC="$TIFF_INC $ALL_INC"
+ALL_LIB="$TIFF_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
+dnl libJPEG (included by default if found on system).
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_jpeg_jpeg_read_header
+
+AC_CHECKING(whether we should include JPEG support...)
+AC_ARG_WITH(jpeg,
+[  --without-jpeg          Disable JPEG support.
+  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
+if test "$with_jpeg" = "no" ; then
+  AC_MSG_RESULT([        disabled by --without-jpeg])
+elif test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
+
+  AC_EXPAND_PATH($with_jpeg, JPEG_DIR)
+  test -f $JPEG_DIR/include/jpeg/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include/jpeg"
+  test -f $JPEG_DIR/include/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include"
+  test -f $JPEG_DIR/lib/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR"
+  test -f $JPEG_DIR/lib/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR"
+  if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then 
+      JPEG_INC=-I$JPEG_INCLUDE
+      JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
+  else
+      AC_MSG_ERROR("Could not find jpeglib.h.h or libjpeg.a in $JPEG_DIR.")
+  fi
+
+  JPEG_ENABLED="-DUSE_JPEG"
+  AC_MSG_RESULT([        using libjpeg from $JPEG_DIR.])
+
+else
+
+  AC_CHECK_LIB(jpeg,jpeg_read_header, JPEG_ENABLED=-DUSE_JPEG,,,)
+
+  if test -n "$JPEG_ENABLED" ; then
+      JPEG_LIB="-ljpeg"
+      AC_MSG_RESULT([        found libjpeg in system libs.])
+  else
+      AC_MSG_RESULT([        libjpeg not found... JPEG support not included.])
+  fi
+
+fi
+
+AC_SUBST(JPEG_ENABLED,$JPEG_ENABLED)
+AC_SUBST(JPEG_INC,    $JPEG_INC)
+AC_SUBST(JPEG_LIB,    $JPEG_LIB)
+
+ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
+ALL_INC="$JPEG_INC $ALL_INC"
+ALL_LIB="$JPEG_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
+dnl EPPL7 support (included by default)
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should include EPPL7 support...)
+AC_ARG_WITH(eppl,
+[  --without-eppl          Disable EPPL7 support.
+  --with-eppl             Include EPPL7 support.],,)
+if test "$with_eppl" = "no" ; then
+  AC_MSG_RESULT([        disabled by --without-eppl])
+else
+
+  EPPL_OBJ="epplib.o"
+  EPPL_ENABLED="-DUSE_EPPL"
+
+  AC_MSG_RESULT([        including EPPL7 support.])
+
+fi
+
+AC_SUBST(EPPL_ENABLED,$EPPL_ENABLED)
+AC_SUBST(EPPL_OBJ,    $EPPL_OBJ)
+
+ALL_ENABLED="$EPPL_ENABLED $ALL_ENABLED"
+
+
+dnl ---------------------------------------------------------------------
+dnl FreeType (included by default if found on system).
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_ttf_TT_Init_FreeType
+
+AC_CHECKING([whether we should include Freetype (TTF) support...])
+AC_ARG_WITH(ttf,
+[  --without-ttf           Disable Freetype (TTF) support.
+  --with-ttf[=DIR]        Include Freetype (TTF) support (DIR is Freetype's
+                          install dir).],,)
+if test "$with_ttf" = "no" ; then
+  AC_MSG_RESULT([        disabled by --without-ttf])
+elif test -n "$with_ttf" -a "$with_ttf" != "yes" ; then
+
+  AC_EXPAND_PATH($with_ttf, TTF_DIR)
+  test -f $TTF_DIR/include/freetype/freetype.h && TTF_INCLUDE="$TTF_DIR/include/freetype"
+  test -f $TTF_DIR/include/freetype.h && TTF_INCLUDE="$TTF_DIR/include"
+  test -f $TTF_DIR/lib/freetype.h && TTF_INCLUDE="$TTF_DIR/lib"
+  test -f $TTF_DIR/freetype.h && TTF_INCLUDE="$TTF_DIR"
+  test -f $TTF_DIR/lib/.libs/libttf.so && TTF_LIBDIR="$TTF_DIR/lib/.libs"
+  test -f $TTF_DIR/lib/libttf.so && TTF_LIBDIR="$TTF_DIR/lib"
+  test -f $TTF_DIR/libttf.so && TTF_LIBDIR="$TTF_DIR"
+  if test -n "$TTF_INCLUDE" -a -n "$TTF_LIBDIR" ; then 
+      TTF_INC=-I$TTF_INCLUDE
+      TTF_LIB="-L$TTF_LIBDIR -lttf"
+  else
+      AC_MSG_ERROR("Could not find freetype.h or libttf.so in $TTF_DIR.")
+  fi
+
+  TTF_ENABLED="-DUSE_TTF"
+
+  AC_MSG_RESULT([        using ttf from $TTF_DIR.])
+
+else
+
+  AC_CHECK_LIB(ttf,TT_Init_FreeType, TTF_ENABLED=-DUSE_TTF,,,)
+
+  if test -n "$TTF_ENABLED" ; then
+      TTF_LIB="-lttf"
+      AC_MSG_RESULT([        found libttf in system libs.])
+  else
+      AC_MSG_RESULT([        libttf not found... Freetype support not included.])
+  fi
+
+fi
+
+if test -n "$TTF_ENABLED" ; then
+  dnl
+  dnl We need to link with the GDFT directory as well
+  dnl
+  AC_EXPAND_PATH(gdft, GDFT_DIR)
+  TTF_LIB="-L$GDFT_DIR -lgdft $TTF_LIB"
+  TTF_INC="-I$GDFT_DIR $TTF_INC"
+  MAKE_GDFT="gdft"
+  MAKE_GDFT_CLEAN="gdft_clean"
+fi
+
+AC_SUBST(TTF_ENABLED,    $TTF_ENABLED)
+AC_SUBST(TTF_INC,        $TTF_INC)
+AC_SUBST(TTF_LIB,        $TTF_LIB)
+AC_SUBST(MAKE_GDFT,      $MAKE_GDFT)
+AC_SUBST(MAKE_GDFT_CLEAN,$MAKE_GDFT_CLEAN)
+
+ALL_ENABLED="$TTF_ENABLED $ALL_ENABLED"
+ALL_INC="$TTF_INC $ALL_INC"
+ALL_LIB="$TTF_LIB $ALL_LIB"
+
+
+dnl ---------------------------------------------------------------------
+dnl Find PROJ.4 ONLY IF REQUESTED.
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_proj_pj_init
+
+AC_CHECKING(whether we should include PROJ.4 support...)
+AC_ARG_WITH(proj,
+[  --without-proj          Disable PROJ.4 support.
+  --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).],,)
+
+if test "$with_proj" = "yes" ; then
+
+  AC_CHECK_LIB(proj,pj_init,PROJ_ENABLED=-DUSE_PROJ,,,)
+
+  if test -n "$PROJ_ENABLED" ; then
+      LIBS="$LIBS -lproj"
+      AC_MSG_RESULT([        found PROJ.4 in system libs.])
+  else
+      AC_MSG_WARN([        PROJ.4 not found insystem libs... use --with-proj=DIR.])
+  fi
+
+elif test -n "$with_proj" -a "$with_proj" != "no" ; then
+
+  AC_EXPAND_PATH($with_proj, PROJ_DIR)
+  LIBS="-L$PROJ_DIR/src -L$PROJ_DIR/lib -lproj $LIBS"
+  PROJ_INC="-I$PROJ_DIR/src -I$PROJ_DIR/include"
+  PROJ_ENABLED=-DUSE_PROJ
+  AC_MSG_RESULT([        using PROJ.4 from $PROJ_DIR.])
+
+else
+
+  AC_MSG_RESULT([        PROJ.4 support not requested.])
+fi
+
+AC_SUBST(PROJ_ENABLED,$PROJ_ENABLED)
+AC_SUBST(PROJ_INC,    $PROJ_INC)
+AC_SUBST(PROJ_LIB,    $PROJ_LIB)
+
+ALL_ENABLED="$PROJ_ENABLED $ALL_ENABLED"
+ALL_INC="$PROJ_INC $ALL_INC"
+ALL_LIB="$PROJ_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
+dnl Define some vars for the mapserver library itself for modules that
+dnl link with it.
+dnl ---------------------------------------------------------------------
+
+MS_DIR="`pwd`"
+MS_INC="-I$MS_DIR"
+MS_LIB="-L$MS_DIR -lmap"
+AC_SUBST(MS_INC, $MS_INC)
+AC_SUBST(MS_LIB, $MS_LIB)
+
+dnl ---------------------------------------------------------------------
+dnl Check IGNORE_MISSING_DATA option (ON by default)
+dnl ---------------------------------------------------------------------
+
+AC_ARG_ENABLE(ignore-missing-data,
+[  --enable-ignore-missing-data   Ignore missing data file errors at runtime
+                                 (enabled by default).
+  --disable-ignore-missing-data  Report all missing data files.],,)
+if test "enable_ignore_missing_data" != "no" ; then
+
+  IGNORE_MISSING_DATA="-DIGNORE_MISSING_DATA"
+
+  AC_MSG_RESULT([Compiling with -DIGNORE_MISSING_DATA.])
+fi
+AC_SUBST(IGNORE_MISSING_DATA, $IGNORE_MISSING_DATA)
+
+
+dnl ---------------------------------------------------------------------
+dnl Check --enable-debug option for "-g" compile flag. (OFF by default)
+dnl ---------------------------------------------------------------------
+
+AC_ARG_ENABLE(debug,
+[  --enable-debug   Include "-g" in CFLAGS for debugging.
+  --disable-debug  Do not include "-g" in CFLAGS (the default).],,)
+
+if test "$enable_debug" = "yes" ; then
+  AC_COMPILER_WFLAGS_DEBUG
+else
+  AC_COMPILER_WFLAGS
+fi
+
+
+dnl ---------------------------------------------------------------------
+dnl PHP3/MapScript module options
+dnl ---------------------------------------------------------------------
+
+
+AC_CHECKING(for PHP3/MapScript module options...)
+AC_ARG_WITH(php3,
+[  --with-php3=DIR   Specify directory where PHP3 source tree is installed.  
+                    Required in order to compile the PHP3/MapScript module.],,)
+
+if test -n "$with_php3" -a -d "$with_php3" ; then
+  AC_EXPAND_PATH($with_php3, PHP_SRC_DIR)
+  dnl
+  dnl Checks for shared library linking.
+  dnl
+  dnl Try to use the perl-based macro if perl is available... 
+  dnl
+  dnl if test -n "`which perl`" ; then
+  AC_MSG_CHECKING([whether 'perl -V' works])
+  if  (perl -V > /dev/null 2>&1)  ; then
+    AC_MSG_RESULT(yes)
+    AC_LD_SHARED_FROM_PERL
+    PHP_CC="$PERL_CC"
+    PHP_LD="$PERL_LD"
+  else
+    AC_MSG_RESULT(no)
+    AC_COMPILER_PIC
+    AC_LD_SHARED
+    PHP_CC="$CC $C_PIC"
+    PHP_LD="$LD_SHARED"
+  fi
+
+  PHPMS_MAKEFILE=mapscript/php3/Makefile
+  MAKE_PHPMS=php3_mapscript
+  MAKE_PHPMS_CLEAN=php3_mapscript_clean
+
+  AC_SUBST(PHP_SRC_DIR, $PHP_SRC_DIR)
+  AC_SUBST(PHP_CC, $PHP_CC)
+  AC_SUBST(PHP_LD, $PHP_LD)
+
+  AC_MSG_RESULT([        PHP3/MapScript module configured.])
+elif test -n "$with_php3" -a "$with_php3" != "no" ; then
+  AC_MSG_ERROR([Missing or invalid PHP3 source directory in --with-php3=DIR.])
+else
+  AC_MSG_RESULT([        PHP3/MapScript module not configured.])
+fi
+
+AC_SUBST(MAKE_PHPMS, $MAKE_PHPMS)
+AC_SUBST(MAKE_PHPMS_CLEAN, $MAKE_PHPMS_CLEAN)
+
+
+dnl ---------------------------------------------------------------------
+dnl Generate output files
+dnl ---------------------------------------------------------------------
+
+AC_SUBST(ALL_ENABLED, $ALL_ENABLED)
+AC_SUBST(ALL_INC, $ALL_INC)
+AC_SUBST(ALL_LIB, $ALL_LIB)
+
+AC_OUTPUT(Makefile $GD_MAKEFILE gdft/Makefile $PHPMS_MAKEFILE)
+
