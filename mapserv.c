@@ -390,6 +390,9 @@ void loadForm()
       }
       line.numpoints = n/2;
 
+      msInitShape(&SelectShape);
+      SelectShape.type = MS_SHAPE_POLYGON;
+
       for(j=0; j<n/2; j++) {
 	line.point[j].x = atof(tmp[2*j]);
 	line.point[j].y = atof(tmp[2*j+1]);
@@ -405,6 +408,8 @@ void loadForm()
       }
 
       if(msAddLine(&SelectShape, &line) == -1) writeError();
+
+      msFree(line.point);	
       msFreeCharArray(tmp, n);
 
       QueryCoordSource = FROMUSERSHAPE;
@@ -505,12 +510,17 @@ void loadForm()
       }
       line.numpoints = n/2;
 
+      msInitShape(&SelectShape);
+      SelectShape.type = MS_SHAPE_POLYGON;
+
       for(j=0; j<n/2; j++) {
 	line.point[j].x = atof(tmp[2*j]);
 	line.point[j].y = atof(tmp[2*j+1]);
       }
 
       if(msAddLine(&SelectShape, &line) == -1) writeError();
+
+      msFree(line.point);
       msFreeCharArray(tmp, n);
 
       QueryCoordSource = FROMIMGSHAPE;
@@ -1722,12 +1732,12 @@ int main(int argc, char *argv[]) {
 	      Map->height = ImgRows;
 	      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();	  
 	    
-	      cellx = (ImgExt.maxx-ImgExt.minx)/(ImgCols-1); // calculate the new search extent
-	      celly = (ImgExt.maxy-ImgExt.miny)/(ImgRows-1);
-	      RawExt.minx = ImgExt.minx + cellx*ImgBox.minx;
-	      RawExt.maxx = ImgExt.minx + cellx*ImgBox.maxx;
-	      RawExt.miny = ImgExt.maxy - celly*ImgBox.maxy;
-	      RawExt.maxy = ImgExt.maxy - celly*ImgBox.miny;
+	      cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImgCols); // calculate the new search extent
+	      celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImgRows);
+	      RawExt.minx = MS_IMAGE2MAP_X(ImgBox.minx, ImgExt.minx, cellx);
+	      RawExt.maxx = MS_IMAGE2MAP_X(ImgBox.maxx, ImgExt.minx, cellx);
+	      RawExt.miny = MS_IMAGE2MAP_Y(ImgBox.miny, ImgExt.maxy, celly);
+	      RawExt.maxy = MS_IMAGE2MAP_Y(ImgBox.maxy, ImgExt.maxy, celly);
 	    
 	      if((status = msQueryByRect(Map, QueryLayerIndex, RawExt)) != MS_SUCCESS) writeError();
 	    }
@@ -1742,8 +1752,8 @@ int main(int argc, char *argv[]) {
 	    // convert from image to map coordinates here (see setCoordinate)
 	    for(i=0; i<SelectShape.numlines; i++) {
 	      for(j=0; j<SelectShape.line[i].numpoints; j++) {
-	        SelectShape.line[i].point[j].x = Map->extent.minx + Map->cellsize*SelectShape.line[i].point[j].x;
-	        SelectShape.line[i].point[j].y = Map->extent.maxy - Map->cellsize*SelectShape.line[i].point[j].y;
+	        SelectShape.line[i].point[j].x = MS_IMAGE2MAP_X(SelectShape.line[i].point[j].x, Map->extent.minx, Map->cellsize);
+	        SelectShape.line[i].point[j].y = MS_IMAGE2MAP_X(SelectShape.line[i].point[j].y, Map->extent.maxy, Map->cellsize);
 	      }
 	    }
 	  
