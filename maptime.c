@@ -13,24 +13,25 @@ typedef struct {
   char pattern[64];
   regex_t *regex;
   char  format[32];  
+  char userformat[32];
 } timeFormatObj;
 
 #define MS_NUMTIMEFORMATS 13
 
 timeFormatObj ms_timeFormats[MS_NUMTIMEFORMATS] = {
-  {"^[0-9]{8}$", NULL, "%Y%m%d"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", NULL, "%Y-%m-%dT%H:%M:%SZ"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%dT%H:%M:%S"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%d %H:%M:%S"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%dT%H:%M"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$", NULL, "%Y-%m-%d %H:%M"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}$", NULL, "%Y-%m-%dT%H"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}$", NULL, "%Y-%m-%d %H"},
-  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}$", NULL, "%Y-%m-%d"},
-  {"^[0-9]{4}-[0-9]{2}$", NULL, "%Y-%m"},
-  {"^[0-9]{4}$", NULL, "%Y"},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$", NULL, "T%H:%M:%SZ"},
-  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}$", NULL, "T%H:%M:%S"},
+  {"^[0-9]{8}", NULL, "%Y%m%d","YYYYMMDD"},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "%Y-%m-%dT%H:%M:%SZ","YYYY-MM-DDTHH:MM:SSZ"},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M:%S", "YYYY-MM-DDTHH:MM:SS"},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M:%S", "YYYY-MM-DD HH:MM:SS"},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%dT%H:%M", "YYYY-MM-DDTHH:MM"},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}", NULL, "%Y-%m-%d %H:%M", "YYYY-MM-DD HH:MM"},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}", NULL, "%Y-%m-%dT%H", "YYYY-MM-DDTHH"},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}", NULL, "%Y-%m-%d %H", "YYYY-MM-DD HH"},
+  {"^[0-9]{4}-[0-9]{2}-[0-9]{2}", NULL, "%Y-%m-%d", "YYYY-MM-DD"},
+  {"^[0-9]{4}-[0-9]{2}", NULL, "%Y-%m", "YYYY-MM"},
+  {"^[0-9]{4}", NULL, "%Y", "YYYY"},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", NULL, "T%H:%M:%SZ", "THH:MM:SSZ"},
+  {"^T[0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "T%H:%M:%S", "THH:MM:SSZ"},
 };
 
 int *ms_limited_pattern = NULL;
@@ -132,7 +133,7 @@ int msTimeMatchPattern(char *timestring, char *timeformat)
     //matchs the pattern. If it is the case retrurn the MS_TRUE
     for (i=0; i<MS_NUMTIMEFORMATS; i++)
     {
-        if (strcasecmp(ms_timeFormats[i].format, timeformat) == 0)
+        if (strcasecmp(ms_timeFormats[i].userformat, timeformat) == 0)
           break;
     }
      
@@ -181,7 +182,7 @@ void msSetLimitedPattersToUse(char *patternstring)
             {
                 for (j=0; j<MS_NUMTIMEFORMATS; j++)
                 {
-                    if (strcasecmp( ms_timeFormats[j].format, patterns[i]) ==0)
+                    if (strcasecmp( ms_timeFormats[j].userformat, patterns[i]) ==0)
                     {
                         limitedpatternindice[numpatterns] = j;
                         numpatterns++;
