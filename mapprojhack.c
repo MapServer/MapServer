@@ -26,6 +26,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2001/12/10 22:31:27  sdlime
+ * Added include for string.h to mapprojhack.c to avoid a compiler warning.
+ *
  * Revision 1.2  2001/10/17 14:13:49  dan
  * Hopefully fixed conflict between projects.h and proj_api.h includes.
  *
@@ -49,6 +52,8 @@
 #ifdef USE_PROJ
 #include <projects.h>
 #endif
+
+#include <string.h>
 #include "mapproject.h"
 
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, 
