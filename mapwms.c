@@ -27,6 +27,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.141  2004/11/04 19:26:42  assefa
+ * MapServer now provids one default style named (default), title and LegendURL
+ * when possible.
+ * Added also the possibility to use the keword defulat for STYLES parameter when
+ * doing a GetMap (..&STYLES=defuatlt,default,...). Bug 1011.
+ *
  * Revision 1.140  2004/11/04 12:32:39  julien
  * Add xlink:type=... in WMS MetadataURL (bug 1027)
  *
@@ -933,15 +939,22 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
   */
   if(styles && strlen(styles) > 0)
   {
-    int length = strlen(styles);
-    int ilength = 0;
-    for (ilength = 0; ilength < length; ilength++)
-      if (styles[ilength] != ',')
+      char **tokens;
+      int n=0, i=0;
+      
+      tokens = split(styles, ',' ,&n);
+      for (i=0; i<n; i++)
       {
-          msSetError(MS_WMSERR, "Invalid style (%s). Mapserver supports only default styles and is expecting an empty string for the STYLES : STYLES= or STYLES=,,,",
-               "msWMSLoadGetMapParams()", values[i]);
-          return msWMSException(map, nVersion, "StyleNotDefined");
+          if (tokens[i] && strlen(tokens[i]) > 0 && 
+              strcasecmp(tokens[i],"default") != 0)
+          {
+              msSetError(MS_WMSERR, "Invalid style (%s). Mapserver supports only default styles and is expecting an empty string for the STYLES : STYLES= or STYLES=,,, or using keyword default  STYLES=default,default, ...",
+                         "msWMSLoadGetMapParams()", styles);
+              return msWMSException(map, nVersion, "StyleNotDefined");
+          }
       }
+      if (tokens && n > 0)
+        msFreeCharArray(tokens, n);
   }
 
   /*
@@ -1068,8 +1081,10 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    char *encoded;
    int n, i;
    const char *projstring;
-   const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL, *pszStyle;
-
+   const char *pszWmsTimeExtent, *pszWmsTimeDefault= NULL, *pszStyle=NULL;
+   const char *pszLegendURL=NULL;
+   char *pszMetadataName;
+       
    if (nVersion <= OWS_1_0_7)
    {
        msIO_printf("%s    <Layer queryable=\"%d\">\n",
@@ -1247,102 +1262,117 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    // the current style before reading it. Also in the Style block, we need
    // a Title and a name. We can get those in wms_style.
    pszStyle = msOWSLookupMetadata(&(lp->metadata), "MO", "style");
-   if(pszStyle != NULL && strlen(pszStyle) > 0)
+   if (pszStyle)
    {
-       char *pszMetadataName;
        pszMetadataName = (char*)malloc(strlen(pszStyle)+205);
        sprintf(pszMetadataName, "style_%s_legendurl_href", pszStyle);
+       pszLegendURL = msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName);
+       msFree(pszMetadataName);
+       
+   }
+   else
+     pszStyle = "default";
 
        
-       if(nVersion <= OWS_1_0_0 && 
-          msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName) != NULL)
+   if(nVersion <= OWS_1_0_0 && pszLegendURL)
+   {
+       // First, print the style block
+       fprintf(stdout, "        <Style>\n");
+       fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+       fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+
+          
+       // Inside, print the legend url block
+       msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", 
+                                pszMetadataName,
+                                OWS_NOERR, 
+                                "          <StyleURL>%s</StyleURL>\n", 
+                                NULL);
+
+       // close the style block
+       fprintf(stdout, "        </Style>\n");
+   }
+   else if(nVersion >= OWS_1_1_0)
+   {
+       if (pszLegendURL)
        {
            // First, print the style block
            fprintf(stdout, "        <Style>\n");
            fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
            fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
 
-          
-           // Inside, print the legend url block
-           msOWSPrintEncodeMetadata(stdout, &(lp->metadata), "MO", 
-                                    pszMetadataName,
-                                    OWS_NOERR, 
-                                    "          <StyleURL>%s</StyleURL>\n", 
-                                    NULL);
-
-           // close the style block
-           fprintf(stdout, "        </Style>\n");
-       }
-       else if(nVersion >= OWS_1_1_0)
-       {
-           if (msOWSLookupMetadata(&(lp->metadata), "MO", pszMetadataName) != NULL)
-           {
-               // First, print the style block
-               fprintf(stdout, "        <Style>\n");
-               fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
-               fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
-
            
-               // Inside, print the legend url block
-               sprintf(pszMetadataName, "style_%s_legendurl", pszStyle);
-               msOWSPrintURLType(stdout, &(lp->metadata), "MO",pszMetadataName,
-                                 OWS_NOERR, NULL, "LegendURL", NULL, 
-                                 " width=\"%s\"", " height=\"%s\"", 
-                                 ">\n             <Format>%s</Format", 
-                                 "\n             <OnlineResource "
-                                 "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
-                                 " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
-                                 "          ",
-                                 MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
-                                 NULL, NULL, NULL, NULL, NULL, "          ");
-               fprintf(stdout, "        </Style>\n");
+           // Inside, print the legend url block
+           sprintf(pszMetadataName, "style_%s_legendurl", pszStyle);
+           msOWSPrintURLType(stdout, &(lp->metadata), "MO",pszMetadataName,
+                             OWS_NOERR, NULL, "LegendURL", NULL, 
+                             " width=\"%s\"", " height=\"%s\"", 
+                             ">\n             <Format>%s</Format", 
+                             "\n             <OnlineResource "
+                             "xmlns:xlink=\"http://www.w3.org/1999/xlink\""
+                             " xlink:type=\"simple\" xlink:href=\"%s\"/>\n"
+                             "          ",
+                             MS_FALSE, MS_TRUE, MS_TRUE, MS_TRUE, MS_TRUE, 
+                             NULL, NULL, NULL, NULL, NULL, "          ");
+           fprintf(stdout, "        </Style>\n");
+           msFree(pszMetadataName);
                
-           }
-           else
-           {
-               const char *script_url;
-               char *script_url_encoded=NULL;
+       }
+       else
+       {
+           const char *script_url;
+           char *script_url_encoded=NULL;
 
-               script_url = msOWSLookupMetadata(&(map->web.metadata), "MO", 
-                                                "onlineresource");
-               
-               if (script_url)
+           script_url = msOWSLookupMetadata(&(map->web.metadata), "MO", 
+                                            "onlineresource");
+           if (script_url)
+           {
+               if (lp->connectiontype != MS_WMS && 
+                   lp->connectiontype != MS_WFS &&
+                   lp->connectiontype != MS_UNUSED_1 &&
+                   lp->numclasses > 0)
                {
                    int width=20, height=20;
                    char *legendurl = NULL;
-
-                   if (map->legend.keysizex > 0)
-                     width= map->legend.keysizex ;
-                   if (map->legend.keysizey > 0)
-                     height= map->legend.keysizey;
+                   int classnameset = 0, i=0;
+                   for (i=0; i<lp->numclasses; i++)
+                   {
+                       if (lp->class[i].name && 
+                           strlen(lp->class[i].name) > 0)
+                       {
+                           classnameset = 1;
+                           break;
+                       }
+                   }
+                   if (classnameset)
+                   {
+                       if (map->legend.keysizex > 0)
+                         width= map->legend.keysizex ;
+                       if (map->legend.keysizey > 0)
+                         height= map->legend.keysizey;
                    
-                   script_url_encoded = msEncodeHTMLEntities(script_url);
-                   legendurl = (char*)malloc(strlen(script_url_encoded)+200);
-                   sprintf(legendurl, "%sVERSION=%s&service=WMS&request=GetLegendGraphic&layer=%s&FORMAT=%s",  
-                           script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
-                           msEncodeHTMLEntities(MS_IMAGE_MIME_TYPE(map->outputformat)));
+                       script_url_encoded = msEncodeHTMLEntities(script_url);
+                       legendurl = (char*)malloc(strlen(script_url_encoded)+200);
+                       sprintf(legendurl, "%sVERSION=%s&service=WMS&request=GetLegendGraphic&layer=%s&=FORMAT=%s",  
+                       script_url_encoded,"1.1.1",msEncodeHTMLEntities(lp->name),
+                       msEncodeHTMLEntities(MS_IMAGE_MIME_TYPE(map->outputformat)));
                    
                            
-                   fprintf(stdout, "        <Style>\n");
-                   fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
-                   fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
-                   fprintf(stdout, "          <LegendURL width=\"%d\" height=\"%d\">\n", 
-                           width, height);
-                   fprintf(stdout, "             <Format>%s</Format>\n", MS_IMAGE_MIME_TYPE(map->outputformat));
-                   fprintf(stdout, "             <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\" />\n", legendurl);
-                   fprintf(stdout, "          </LegendURL>\n");
-                   fprintf(stdout, "        </Style>\n");
-                   free(legendurl);
-                   free(script_url_encoded);
-                           
-               }
-
+                       fprintf(stdout, "        <Style>\n");
+                       fprintf(stdout, "          <Name>%s</Name>\n", pszStyle);
+                       fprintf(stdout, "          <Title>%s</Title>\n", pszStyle);
+                       fprintf(stdout, "          <LegendURL width=\"%d\" height=\"%d\">\n", 
+                               width, height);
+                       fprintf(stdout, "             <Format>%s</Format>\n", MS_IMAGE_MIME_TYPE(map->outputformat));
+                       fprintf(stdout, "             <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:type=\"simple\" xlink:href=\"%s\" />\n", legendurl);
+                       fprintf(stdout, "          </LegendURL>\n");
+                       fprintf(stdout, "        </Style>\n");
+                       free(legendurl);
+                       free(script_url_encoded);
+                   }
+               }       
            }
-
        }
-       
-       
-       msFree(pszMetadataName);
    }
    
 
