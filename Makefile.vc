@@ -59,7 +59,7 @@ all:		$(MS_LIB) $(MS_EXE)
 $(MS_OBJS):	$(MS_HDRS)
 
 $(MS_LIB):	$(MS_OBJS)
-	copy $(GDAL_DIR)\gdal.pdb .
+	if exist $(GDAL_DIR)\gdal.pdb copy $(GDAL_DIR)\gdal.pdb .
 	lib /out:$(MS_LIB) $(MS_OBJS)
         link /dll /debug \
 		$(MS_OBJS) $(EXTERNAL_LIBS)\
