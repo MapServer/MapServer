@@ -2513,9 +2513,18 @@ static int loadOutputFormat(mapObj *map)
             msFree( format->mimetype );
             format->mimetype = mimetype;
         }
-        if( format->imagemode != MS_NOOVERRIDE )
+        if( imagemode != MS_NOOVERRIDE )
         {
             format->imagemode = imagemode;
+
+            if( transparent == MS_NOOVERRIDE )
+            {
+                if( imagemode == MS_IMAGEMODE_RGB  )
+                    format->transparent = MS_FALSE;
+                else if( imagemode == MS_IMAGEMODE_RGBA  )
+                    format->transparent = MS_TRUE;
+            }
+
             if( format->imagemode == MS_IMAGEMODE_INT16 
                 || format->imagemode == MS_IMAGEMODE_FLOAT32 )
                 format->renderer = MS_RENDER_WITH_RAWDATA;
@@ -2530,10 +2539,10 @@ static int loadOutputFormat(mapObj *map)
                     sizeof(char *)*numformatoptions );
         }
 
-        // We really needs some sort of generic and driver specific
-        // validation at this point.
-
-        return(0);
+        if( !msOutputFormatValidate( format ) )
+            return -1;
+        else
+            return(0);
     }
     case(NAME):
       msFree( name );
