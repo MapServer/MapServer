@@ -384,6 +384,12 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
   shapeObj shape, searchshape;
   rectObj searchrect;
 
+  if( qlayer >= 0 && qlayer < map->numlayers 
+      && map->layers[qlayer].type == MS_LAYER_RASTER )
+  {
+      return msRasterQueryByRect( map, map->layers+qlayer, rect );
+  }
+
   msInitShape(&shape);
   msInitShape(&searchshape);
 
@@ -751,6 +757,12 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   rectObj rect, searchrect;
   shapeObj shape;
 
+  if( qlayer >= 0 && qlayer < map->numlayers 
+      && map->layers[qlayer].type == MS_LAYER_RASTER )
+  {
+      return msRasterQueryByPoint( map, map->layers+qlayer, mode, p, buffer );
+  }
+
   msInitShape(&shape);
 
   if(qlayer < 0 || qlayer >= map->numlayers)
@@ -889,6 +901,12 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
   if(selectshape->type != MS_SHAPE_POLYGON) {
     msSetError(MS_QUERYERR, "Search shape MUST be a polygon.", "msQueryByShape()"); 
     return(MS_FAILURE);
+  }
+
+  if( qlayer >= 0 && qlayer < map->numlayers 
+      && map->layers[qlayer].type == MS_LAYER_RASTER )
+  {
+      return msRasterQueryByShape( map, map->layers+qlayer, selectshape );
   }
 
   if(qlayer < 0 || qlayer >= map->numlayers)

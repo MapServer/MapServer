@@ -54,6 +54,9 @@ static int layerInitItemInfo(layerObj *layer)
   case(MS_GRATICULE):
     return(msGraticuleLayerInitItemInfo(layer));
     break;
+  case(MS_RASTER):
+    return(msRASTERLayerInitItemInfo(layer));
+    break;
   default:
     break;
   }
@@ -89,6 +92,9 @@ static void layerFreeItemInfo(layerObj *layer)
     break;
   case(MS_GRATICULE):
     msGraticuleLayerFreeItemInfo(layer);
+    break;
+  case(MS_RASTER):
+    msRASTERLayerFreeItemInfo(layer);
     break;
   default:
     break;
@@ -157,6 +163,9 @@ int msLayerOpen(layerObj *layer)
     break;
   case(MS_GRATICULE):
     return(msGraticuleLayerOpen(layer));
+    break;
+  case(MS_RASTER):
+    return(msRASTERLayerOpen(layer));
     break;
   default:
     break;
@@ -236,6 +245,9 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     break;
   case(MS_GRATICULE):
     return(msGraticuleLayerWhichShapes(layer, rect));
+    break;
+  case(MS_RASTER):
+    return(msRASTERLayerWhichShapes(layer, rect));
     break;
   default:
     break;
@@ -319,6 +331,9 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   case(MS_GRATICULE):
     return(msGraticuleLayerNextShape(layer, shape));
     break;
+  case(MS_RASTER):
+    return(msRASTERLayerNextShape(layer, shape));
+    break;
   default:
     break;
   }
@@ -387,6 +402,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   case(MS_GRATICULE):
     return(msGraticuleLayerGetShape(layer, shape, tile, record));
     break;
+  case(MS_RASTER):
+    return(msRASTERLayerGetShape(layer, shape, tile, record));
+    break;
   default:
     break;
   }
@@ -446,6 +464,9 @@ void msLayerClose(layerObj *layer)
     break;
   case(MS_GRATICULE):
     msGraticuleLayerClose(layer);
+    break;
+  case(MS_RASTER):
+    msRASTERLayerClose(layer);
     break;
   default:
     break;
@@ -511,6 +532,9 @@ int msLayerGetItems(layerObj *layer)
   case(MS_GRATICULE):
     return(msGraticuleLayerGetItems(layer));
     break;
+  case(MS_RASTER):
+    return(msRASTERLayerGetItems(layer));
+    break;
   default:
     break;
   }
@@ -555,6 +579,9 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
     break;
   case(MS_GRATICULE):
     return(msGraticuleLayerGetExtent(layer, extent));
+    break;
+  case(MS_RASTER):
+    return(msRASTERLayerGetExtent(layer, extent));
     break;
   default:
     break;
@@ -878,6 +905,7 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, lon
   case(MS_ORACLESPATIAL):
   case(MS_WFS):
   case(MS_GRATICULE):
+  case(MS_RASTER):
   default:
     msSetError(MS_MISCERR, "'STYLEITEM AUTO' not supported for this data source.", "msLayerGetAutoStyle()");
     return(MS_FAILURE);    
