@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.23  2004/07/13 20:39:36  dan
+ * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
+ *
  * Revision 1.22  2004/05/25 15:56:26  frank
  * added rotation/geotransform support
  *
@@ -192,13 +195,13 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
             pszExtension = "img.tmp";
 
         if( map != NULL && map->web.imagepath != NULL )
-            filename = msTmpFile(map->web.imagepath, pszExtension );
+            filename = msTmpFile(map->mappath,map->web.imagepath,pszExtension);
         else
         {
 #ifndef _WIN32
-            filename = msTmpFile("/tmp/", pszExtension );
+            filename = msTmpFile(NULL, "/tmp/", pszExtension );
 #else
-            filename = msTmpFile("C:\\", pszExtension );
+            filename = msTmpFile(NULL, "C:\\", pszExtension );
 #endif
         }
             

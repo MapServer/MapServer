@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.35  2004/07/13 20:39:36  dan
+ * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
+ *
  * Revision 1.34  2004/06/23 21:33:27  assefa
  * Correct bug related to onlineresource (Bug 739).
  *
@@ -192,7 +195,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
 
     if (map && szURL)
     {
-        pszSLDTmpFile = msTmpFile(map->web.imagepath, "sld.xml");
+        pszSLDTmpFile = msTmpFile(map->mappath, map->web.imagepath, "sld.xml");
         if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS)
         {
             if ((fp = fopen(pszSLDTmpFile, "rb")) != NULL)
@@ -1987,9 +1990,9 @@ void msSLDParseExternalGraphic(CPLXMLNode *psExternalGraphic,
                     pszURL = (char*)psTmp->psChild->pszValue;
 
                     if (strcasecmp(pszFormat, "GIF") == 0)
-                      pszTmpSymbolName = msTmpFile(map->web.imagepath, "gif");
+                      pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "gif");
                     else
-                      pszTmpSymbolName = msTmpFile(map->web.imagepath, "png");
+                      pszTmpSymbolName = msTmpFile(map->mappath, map->web.imagepath, "png");
 
                     if (msHTTPGetFile(pszURL, pszTmpSymbolName, &status,-1, 0, 0) ==  
                         MS_SUCCESS)

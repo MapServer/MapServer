@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23  2004/07/13 20:39:37  dan
+ * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
+ *
  * Revision 1.22  2004/06/22 20:55:21  sean
  * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
  *
@@ -844,8 +847,19 @@ int msWFSLayerOpen(layerObj *lp,
     if (pszGMLFilename)
         psInfo->pszGMLFilename = strdup(pszGMLFilename);
     else
-        psInfo->pszGMLFilename = msTmpFile(lp->map->web.imagepath, 
+    {
+        if (lp->map->web.imagepath==NULL || strlen(lp->map->web.imagepath)==0)
+        {
+            msSetError(MS_WFSERR, 
+                  "WEB.IMAGEPATH must be set to use WFS client connections.",
+                       "msPrepareWMSLayerRequest()");
+            return MS_FAILURE;
+        }
+
+        psInfo->pszGMLFilename = msTmpFile(lp->map->mappath, 
+                                           lp->map->web.imagepath, 
                                            "tmp.gml");
+    }
 
     if (defaultBBOX)
     {

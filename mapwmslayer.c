@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.67  2004/07/13 20:39:37  dan
+ * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
+ *
  * Revision 1.66  2004/06/22 20:55:21  sean
  * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
  *
@@ -957,7 +960,15 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
         pszURL = NULL;
         // We'll store the remote server's response to a tmp file.
-        pasReqInfo[(*numRequests)].pszOutputFile =msTmpFile(map->web.imagepath,
+        if (map->web.imagepath == NULL || strlen(map->web.imagepath) == 0)
+        {
+            msSetError(MS_WMSERR, 
+                  "WEB.IMAGEPATH must be set to use WMS client connections.",
+                       "msPrepareWMSLayerRequest()");
+            return MS_FAILURE;
+        }
+        pasReqInfo[(*numRequests)].pszOutputFile =msTmpFile(map->mappath,
+                                                            map->web.imagepath,
                                                             "img.tmp");
         pasReqInfo[(*numRequests)].nStatus = 0;
         pasReqInfo[(*numRequests)].nTimeout = nTimeout;

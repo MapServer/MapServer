@@ -1164,10 +1164,12 @@ char **msGetAllGroupNames(mapObj *map, int *numTok)
  * Generate a Unique temporary filename using PID + timestamp + extension
  * char* returned must be freed by caller
  **********************************************************************/
-char *msTmpFile(const char *path, const char *ext)
+char *msTmpFile(const char *mappath, const char *tmppath, const char *ext)
 {
     char *tmpFname;
-    static char tmpId[128]; /* big enough for time + pid */
+    char szPath[MS_MAXPATHLEN];
+    const char *fullFname;
+    static char tmpId[128]; /* big enough for time + pid + ext */
     static int tmpCount = -1;
 
     if (tmpCount == -1)
@@ -1177,14 +1179,18 @@ char *msTmpFile(const char *path, const char *ext)
         tmpCount = 0;
     }
 
-    if (path == NULL) path="";
     if (ext == NULL)  ext = "";
+    tmpFname = (char*)malloc(strlen(tmpId) + 4  + strlen(ext) + 1);
 
-    tmpFname = (char*)malloc(strlen(path) + strlen(tmpId) + 4  + strlen(ext) + 1);
+    sprintf(tmpFname, "%s%d.%s", tmpId, tmpCount++, ext);
 
-    sprintf(tmpFname, "%s%s%d.%s%c", path, tmpId, tmpCount++, ext, '\0');
+    fullFname = msBuildPath3(szPath, mappath, tmppath, tmpFname);
+    free(tmpFname);
 
-    return tmpFname;
+    if (fullFname)
+        return strdup(fullFname);
+
+    return NULL;
 }
 
 /**

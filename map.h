@@ -1062,10 +1062,10 @@ MS_DLL_EXPORT void trimEOL(char *string);
 MS_DLL_EXPORT char *gsub(char *str, const char *old, const char *sznew);
 MS_DLL_EXPORT char *stripPath(char *fn);
 MS_DLL_EXPORT char *getPath(char *fn);
-MS_DLL_EXPORT char *msBuildPath(char *pszReturnPath, char *abs_path, char *path);
-MS_DLL_EXPORT char *msBuildPath3(char *pszReturnPath,char *abs_path,char *path1,char *path2);
-MS_DLL_EXPORT char *msTryBuildPath(char *szReturnPath, char *abs_path, char *path);
-MS_DLL_EXPORT char *msTryBuildPath3(char *szReturnPath, char *abs_path, char *path1, char *path2);
+MS_DLL_EXPORT char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path);
+MS_DLL_EXPORT char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1, const char *path2);
+MS_DLL_EXPORT char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path);
+MS_DLL_EXPORT char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path1, const char *path2);
 MS_DLL_EXPORT char **split(const char *string, char cd, int *num_tokens);
 MS_DLL_EXPORT int countChars(char *str, char ch);
 MS_DLL_EXPORT char *long2string(long value);
@@ -1418,7 +1418,7 @@ MS_DLL_EXPORT pointObj *getPointUsingMeasure(shapeObj *shape, double m);
 MS_DLL_EXPORT pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point);
 
 MS_DLL_EXPORT char **msGetAllGroupNames(mapObj* map, int *numTok);
-MS_DLL_EXPORT char *msTmpFile(const char *path, const char *ext);
+MS_DLL_EXPORT char *msTmpFile(const char *mappath, const char *tmppath, const char *ext);
 
 MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 

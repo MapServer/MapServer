@@ -9,6 +9,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2004/07/13 20:39:37  dan
+ * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
+ *
  * Revision 1.7  2004/06/02 16:57:06  sdlime
  * Removed spurrious DOS linefeeds from mapserv.c and mapserv_fcgi.c.
  *
@@ -1473,7 +1476,7 @@ static int msSaveImage_FastCGI(mapObj *map, imageObj *img)
 /*      Figure out a temporary filename.                                */
 /* -------------------------------------------------------------------- */
     if( map != NULL && map->web.imagepath != NULL )
-        filename = msTmpFile(map->web.imagepath, "tmp" );
+        filename = msTmpFile(map->mappath, map->web.imagepath, "tmp" );
     else
     {
 #ifndef _WIN32

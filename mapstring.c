@@ -312,7 +312,7 @@ char *getPath(char *fn)
 ** The pszReturnPath must be declared by the caller function as an array
 ** of MS_MAXPATHLEN char
 */
-char *msBuildPath(char *pszReturnPath, char *abs_path, char *path)
+char *msBuildPath(char *pszReturnPath, const char *abs_path, const char *path)
 {
   int   abslen = 0;
   int   pathlen = 0;
@@ -363,7 +363,7 @@ char *msBuildPath(char *pszReturnPath, char *abs_path, char *path)
 ** The pszReturnPath must be declared by the caller function as an array
 ** of MS_MAXPATHLEN char
 */
-char *msBuildPath3(char *pszReturnPath, char *abs_path,char *path1,char *path2)
+char *msBuildPath3(char *pszReturnPath, const char *abs_path, const char *path1,const char *path2)
 {
   char szPath[MS_MAXPATHLEN];
 
@@ -378,7 +378,7 @@ char *msBuildPath3(char *pszReturnPath, char *abs_path,char *path1,char *path2)
 ** Returns NULL if the resulting path doesn't point to a readable file.
 */
 
-char *msTryBuildPath(char *szReturnPath, char *abs_path, char *path)
+char *msTryBuildPath(char *szReturnPath, const char *abs_path, const char *path)
 
 {
     FILE	*fp;
@@ -405,7 +405,7 @@ char *msTryBuildPath(char *szReturnPath, char *abs_path, char *path)
 ** Returns NULL if the resulting path doesn't point to a readable file.
 */
 
-char *msTryBuildPath3(char *szReturnPath, char *abs_path, char *path1, char *path2)
+char *msTryBuildPath3(char *szReturnPath, const char *abs_path, const char *path1, const char *path2)
 
 {
     FILE	*fp;
