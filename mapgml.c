@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/03/25 20:39:24  sdlime
+ * Fixed problem in WFS GML writer. Memory was being free'd in the wrong place. Should've been inside the if-then statement that tests if a layer is valid for WFS output.
+ *
  * Revision 1.50  2005/03/16 17:19:30  sdlime
  * Updated GML group reading code to explicitly initialize all structure members.
  *
@@ -700,16 +703,13 @@ gmlItemListObj *msGMLGetItems(layerObj *layer)
 void msGMLFreeItems(gmlItemListObj *itemList)
 {
   int i;
-  gmlItemObj *item;
 
   if(!itemList) return;
 
   for(i=0; i<itemList->numitems; i++) {
-    item = &(itemList->items[i]);
-
-    msFree(item->name);
-    msFree(item->alias);
-    msFree(item->type);
+    msFree(itemList->items[i].name);
+    msFree(itemList->items[i].alias);
+    msFree(itemList->items[i].type);
   }
 
   free(itemList);
@@ -778,7 +778,7 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
     for(i=0; i<groupList->numgroups; i++) {
       group = &(groupList->groups[i]);
 
-      group->name = strdup(names[i]); // initialize a few things
+      group->name = strdup(names[i]); /* initialize a few things */
       group->items = NULL;
       group->numitems = 0;
       
@@ -796,15 +796,12 @@ gmlGroupListObj *msGMLGetGroups(layerObj *layer)
 void msGMLFreeGroups(gmlGroupListObj *groupList)
 {
   int i;
-  gmlGroupObj *group;
 
   if(!groupList) return;
 
   for(i=0; i<groupList->numgroups; i++) {
-    group = &(groupList->groups[i]);
-
-    msFree(group->name);
-    msFreeCharArray(group->items, group->numitems);
+    msFree(groupList->groups[i].name);
+    msFreeCharArray(groupList->groups[i].items, groupList->groups[i].numitems);
   }
 
   free(groupList);
@@ -1061,7 +1058,7 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
       status = msLayerGetItems(lp);
       /* if(status != MS_SUCCESS) return(status); */
 
-      // populate item and group metadata structures
+      /* populate item and group metadata structures */
       itemList = msGMLGetItems(lp);
       groupList = msGMLGetGroups(lp);
 
@@ -1140,14 +1137,14 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *wfs_nam
          /* end this layer */
       }
 
+      msGMLFreeGroups(groupList);
+      msGMLFreeItems(itemList);
+
       msLayerClose(lp);
     }
 
     if (maxfeatures > 0 && features == maxfeatures)
       break;
-
-    msGMLFreeGroups(groupList);
-    msGMLFreeItems(itemList);
 
   } /* next layer */
 
