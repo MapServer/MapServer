@@ -115,25 +115,34 @@ memory.") const char * {
  * has been updated by Sean Gillies <sgillies@frii.com> to use 
  * PyErr_SetString, %exception and $action for SWIG 1.3, do the most
  * obvious mapping of MapServer errors to Python exceptions and map all 
- * others to a new 'MapservError' exception which can be caught like this:
+ * others to a new 'MapServerError' exception which can be caught like this:
  * 
  *   from mapscript import *
  *   empty_map = mapObj('')
  *   try:
  *       img = empty_map.draw()
- *   except MapservError, msg:
- *       print "Caught MapservError:", msg
+ *   except MapServerError, msg:
+ *       print "Caught MapServerError:", msg
  *
  *************************************************************************/
 
 %{
-PyObject *MSExc_MapservError;
+PyObject *MSExc_MapServerError;
+PyObject *MSExc_MapServerNotFoundError;
 %}
 
 %init %{
-MSExc_MapservError = PyErr_NewException("_mapscript.MapservError", NULL, NULL);
-if (MSExc_MapservError != NULL)
-    PyDict_SetItemString(d, "MapservError", MSExc_MapservError);
+
+// Generic MapServer error
+MSExc_MapServerError=PyErr_NewException("_mapscript.MapServerError",NULL,NULL);
+if (MSExc_MapServerError != NULL)
+    PyDict_SetItemString(d, "MapServerError", MSExc_MapServerError);
+
+// MapServer query MS_NOTFOUND error
+MSExc_MapServerNotFoundError = PyErr_NewException("_mapscript.MapServerNotFoundError", NULL, NULL);
+if (MSExc_MapServerNotFoundError != NULL)
+    PyDict_SetItemString(d, "MapServerNotFoundError", MSExc_MapServerNotFoundError);
+
 %}
 
 %{
@@ -173,8 +182,11 @@ if (MSExc_MapservError != NULL)
             case MS_EOFERR:
                 PyErr_SetString(PyExc_EOFError, errmsg);
                 break;
+            case MS_NOTFOUND:
+                PyErr_SetString(MSExc_MapServerNotFoundError, errmsg);
+                break;
             default:
-                PyErr_SetString(MSExc_MapservError, errmsg);
+                PyErr_SetString(MSExc_MapServerError, errmsg);
                 break;
         }
     }
@@ -197,8 +209,9 @@ if (MSExc_MapservError != NULL)
         }
     }
 }
-
+         
 %pythoncode %{
-MapservError = _mapscript.MapservError
+MapServerError = _mapscript.MapServerError
+MapServerNotFoundError = _mapscript.MapServerNotFoundError
 %}
 

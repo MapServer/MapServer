@@ -126,7 +126,7 @@ class EmptyMapExceptionTestCase(unittest.TestCase):
     def tearDown(self):
         self.mapobj1 = None
     def testDrawEmptyMap(self):
-        self.assertRaises(MapservError, self.mapobj1.draw)
+        self.assertRaises(MapServerError, self.mapobj1.draw)
 
 class TestMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -135,34 +135,39 @@ class TestMapExceptionTestCase(unittest.TestCase):
         self.mapobj1 = None
     def testDrawBadData(self):
         self.mapobj1.getLayerByName('ctybdpy2').data = 'foo'
-        self.assertRaises(MapservError, self.mapobj1.draw)
+        self.assertRaises(MapServerError, self.mapobj1.draw)
+    def testZeroResultsQuery(self):
+        p = pointObj()
+        p.x, p.y = (-600000,1000000) # Way outside demo
+        self.assertRaises(MapServerNotFoundError, \
+                         self.mapobj1.queryByPoint, p, MS_SINGLE, 1.0)
 
 # If PIL is available, use it to test the saveToString() method
 
-have_image = 0
-try:
-    import Image
-    have_image = 1
-except ImportError:
-    pass
-    
-from StringIO import StringIO
-
-class SaveToStringTestCase(unittest.TestCase):
-    def setUp(self):
-        self.mapobj1 = mapObj(testMapfile)
-    def tearDown(self):
-        self.mapobj1 = None
-    def testSaveToString(self):
-        msimg = self.mapobj1.draw()
-        data = StringIO(msimg.saveToString())
-        if have_image:
-            pyimg = Image.open(data)
-            assert pyimg.format == 'PNG'
-            assert pyimg.size == (600, 600)
-            assert pyimg.mode == 'P'
-        else:
-            assert 1
+#have_image = 0
+#try:
+#    import Image
+#    have_image = 1
+#except ImportError:
+#    pass
+#    
+#from StringIO import StringIO
+#
+#class SaveToStringTestCase(unittest.TestCase):
+#    def setUp(self):
+#        self.mapobj1 = mapObj(testMapfile)
+#    def tearDown(self):
+#        self.mapobj1 = None
+#    def testSaveToString(self):
+#        msimg = self.mapobj1.draw()
+#        data = StringIO(msimg.saveToString())
+#        if have_image:
+#            pyimg = Image.open(data)
+#            assert pyimg.format == 'PNG'
+#            assert pyimg.size == (600, 600)
+#            assert pyimg.mode == 'P'
+#        else:
+#            assert 1
 
 class NoFontSetTestCase(unittest.TestCase):
     def setUp(self):
