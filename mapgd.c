@@ -2263,7 +2263,7 @@ static void billboardGD(gdImagePtr img, shapeObj *shape, labelObj *label)
 ** Simple charset converter.
 ** The return value must be freed by the caller.
 */
-char *msGetEncodedString(char *string, char *encoding)
+char *msGetEncodedString(const char *string, const char *encoding)
 {
 #ifdef USE_ICONV
   iconv_t cd = NULL;
@@ -2301,7 +2301,7 @@ char *msGetEncodedString(char *string, char *encoding)
       msFree(in);
       msFree(out);
       iconv_close(cd);
-      return string;
+      return strdup(string);
     }
   }
   out[bufsize - bufleft] = '\0';
@@ -2329,19 +2329,8 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
   if(strlen(string) == 0) return(0);
 
   if( label->encoding != NULL ) { /* converting the label encoding */
-      char *temp;
-      temp = msGetEncodedString(string, label->encoding);
-      if( temp != NULL )
-      {
-          if( strlen(string) <= strlen(temp) )
-              string = realloc( string, strlen(temp)+1 );
-          strcpy(string, temp);
-          msFree(temp);
-      }
-      else
-      {
-          return(-1);
-      }
+      string = msGetEncodedString(string, label->encoding);
+      if(string == NULL) return(-1);
   }
   x = MS_NINT(labelPnt.x);
   y = MS_NINT(labelPnt.y);
@@ -2363,17 +2352,20 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 #ifdef USE_GD_FT
     if(!fontset) {
       msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextGD()");
+      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
     if(!label->font) {
       msSetError(MS_TTFERR, "No Trueype font defined.", "msDrawTextGD()");
+      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
     font = msLookupHashTable(&(fontset->fonts), label->font);
     if(!font) {
-       msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextGD()", label->font);
+      msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextGD()", label->font);
+      if(label->encoding != NULL) msFree(string);
       return(-1);
     }
 
@@ -2389,6 +2381,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
         if( gdImageTrueColor(img) )
             gdImageAlphaBlending( img, oldAlphaBlending );
 	msSetError(MS_TTFERR, error, "msDrawTextGD()");
+        if(label->encoding != NULL) msFree(string);
 	return(-1);
       }
 
@@ -2406,6 +2399,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
       if(error) {
 	msSetError(MS_TTFERR, error, "msDrawTextGD()");
+        if(label->encoding != NULL) msFree(string);
 	return(-1);
       }
     }
@@ -2417,6 +2411,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
 
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextGD()");
+    if(label->encoding != NULL) msFree(string);
     return(-1);
 #endif
 
@@ -2425,12 +2420,16 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     int t, num_tokens;
     gdFontPtr fontPtr;
 
-    if((fontPtr = msGetBitmapFont(label->size)) == NULL)
+    if((fontPtr = msGetBitmapFont(label->size)) == NULL) {
+      if(label->encoding != NULL) msFree(string);
       return(-1);
+    }
 
     if(label->wrap != '\0') {
-      if((token = split(string, label->wrap, &(num_tokens))) == NULL)
+      if((token = split(string, label->wrap, &(num_tokens))) == NULL) {
+        if(label->encoding != NULL) msFree(string);
 	return(-1);
+      }
 
       y -= fontPtr->h*num_tokens;
       for(t=0; t<num_tokens; t++) {
@@ -2474,6 +2473,8 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       gdImageString(img, fontPtr, x, y, string, label->color.pen);
     }
   }
+
+  if(label->encoding != NULL) msFree(string);
 
   return(0);
 }

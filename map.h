@@ -1381,7 +1381,7 @@ MS_DLL_EXPORT int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
 
 // Modify the character encoding.
-char *msGetEncodedString(char *string, char *encoding);
+char *msGetEncodedString(const char *string, const char *encoding);
 
 // various JOIN functions (in mapjoin.c)
 MS_DLL_EXPORT int msJoinConnect(layerObj *layer, joinObj *join);
