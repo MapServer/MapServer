@@ -44,8 +44,8 @@
         free(self);
     }
 
-    int project(projectionObj *in, projectionObj *out) {
-        return msProjectRect(in, out, self);
+    int project(projectionObj *projin, projectionObj *projout) {
+        return msProjectRect(projin, projout, self);
     }
 
     double fit(int width, int height) {

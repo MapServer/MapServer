@@ -49,9 +49,9 @@
         free(self);
     }
 
-    int project(projectionObj *in, projectionObj *out) 
+    int project(projectionObj *projin, projectionObj *projout) 
     {
-        return msProjectPoint(in, out, self);
+        return msProjectPoint(projin, projout, self);
     }	
 
     int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, 

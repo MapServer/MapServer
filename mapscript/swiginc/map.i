@@ -287,8 +287,8 @@
     return msQueryByShape(self, -1, shape);
   }
 
-  int setWKTProjection(char *string) {
-    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
+  int setWKTProjection(char *wkt) {
+    return msOGCWKT2ProjectionObj(wkt, &(self->projection), self->debug);
   }
 
   %newobject getProjection;
@@ -296,8 +296,8 @@
     return msGetProjectionString(&(self->projection));
   }
 
-  int setProjection(char *string) {
-    return msLoadProjectionString(&(self->projection), string);
+  int setProjection(char *proj4) {
+    return msLoadProjectionString(&(self->projection), proj4);
   }
 
   int save(char *filename) {

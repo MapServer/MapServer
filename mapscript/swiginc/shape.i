@@ -53,9 +53,9 @@
         free(self);		
     }
 
-    int project(projectionObj *in, projectionObj *out) 
+    int project(projectionObj *projin, projectionObj *projout) 
     {
-        return msProjectShape(in, out, self);
+        return msProjectShape(projin, projout, self);
     }
 
 #ifdef NEXT_GENERATION_API

@@ -32,7 +32,7 @@
 %extend projectionObj 
 {
   
-    projectionObj(char *string) 
+    projectionObj(char *proj4) 
     {
         int status;
         projectionObj *proj=NULL;
@@ -41,7 +41,7 @@
         if (!proj) return NULL;
         msInitProjection(proj);
 
-        status = msLoadProjectionString(proj, string);
+        status = msLoadProjectionString(proj, proj4);
         if (status == -1) {
             msFreeProjection(proj);
             free(proj);

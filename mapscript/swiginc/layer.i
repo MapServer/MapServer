@@ -204,13 +204,13 @@
         return msQueryByShape(map, self->index, shape);
     }
 
-    int setFilter(char *string) 
+    int setFilter(char *filter) 
     {
-        if (!string || strlen(string) == 0) {
+        if (!filter || strlen(filter) == 0) {
             freeExpression(&self->filter);
             return MS_SUCCESS;
         }
-        else return loadExpressionString(&self->filter, string);
+        else return loadExpressionString(&self->filter, filter);
     }
 
     %newobject getFilterString;
@@ -219,10 +219,10 @@
         return msLayerGetFilterString(self);
     }
 
-    int setWKTProjection(char *string) 
+    int setWKTProjection(char *wkt) 
     {
         self->project = MS_TRUE;
-        return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
+        return msOGCWKT2ProjectionObj(wkt, &(self->projection), self->debug);
     }
 
     %newobject getProjection;
@@ -231,10 +231,10 @@
         return (char *) msGetProjectionString(&(self->projection));
     }
 
-    int setProjection(char *string) 
+    int setProjection(char *proj4) 
     {
         self->project = MS_TRUE;
-        return msLoadProjectionString(&(self->projection), string);
+        return msLoadProjectionString(&(self->projection), proj4);
     }
 
     int addFeature(shapeObj *shape) 

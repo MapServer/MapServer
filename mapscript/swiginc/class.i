@@ -50,13 +50,13 @@
         return; // do nothing, map deconstrutor takes care of it all
     }
 
-    int setExpression(char *string) 
+    int setExpression(char *expression) 
     {
-      if (!string || strlen(string) == 0) {
+      if (!expression || strlen(expression) == 0) {
           freeExpression(&self->expression);
           return MS_SUCCESS;
       }
-      else return loadExpressionString(&self->expression, string);
+      else return loadExpressionString(&self->expression, expression);
   }
 
   %newobject getExpressionString;
@@ -77,8 +77,8 @@
   }
 
   // Should be deprecated!  Completely bogus layer argument.  SG.
-  int setText(layerObj *layer, char *string) {
-    return loadExpressionString(&self->text, string);
+  int setText(layerObj *layer, char *text) {
+    return loadExpressionString(&self->text, text);
   }
 
 //  char *getMetaData(char *name) {
