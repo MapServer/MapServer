@@ -299,6 +299,10 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   status = msLayerOpen(lp, map->shapepath);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
+  // build item list (no annotation) since we do have to classify the shape
+  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
   lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
   lp->resultcache->results = NULL;
   lp->resultcache->numresults = lp->resultcache->cachesize = 0;
@@ -312,8 +316,8 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
 
   shape.classindex = msShapeGetClass(lp, &shape);
   if((shape.classindex == -1) || (lp->class[shape.classindex].status == MS_OFF)) { // not a valid shape
+    msSetError(MS_NOTFOUND, "Shape %d not valid against layer classification.", "msQueryByIndex()", shapeindex);
     msFreeShape(&shape);
-    msSetError(MS_NOTFOUND, "Shape not valid against layer classification.", "msQueryByIndex()"); 
     return(MS_FAILURE);
   }
     

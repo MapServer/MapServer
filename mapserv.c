@@ -1275,7 +1275,7 @@ int main(int argc, char *argv[]) {
 	  break;
         case INDEXQUERY:
         case INDEXQUERYMAP:
-	  if((status = msQueryByIndex(msObj->Map, QueryLayerIndex, ShapeIndex, TileIndex)) != MS_SUCCESS) writeError();
+	  if((status = msQueryByIndex(msObj->Map, QueryLayerIndex, TileIndex, ShapeIndex)) != MS_SUCCESS) writeError();
 	  break;
         } // end mode switch
       }

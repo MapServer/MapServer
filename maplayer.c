@@ -248,6 +248,13 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
+
+    // msSHPReadShape *should* return success or failure so we don't have to test here
+    if(record < 0 || record >= layer->shpfile.numshapes) {
+      msSetError(MS_MISCERR, "Invalid feature id.", "msLayerGetShape()");
+      return(MS_FAILURE);
+    }
+
     msSHPReadShape(layer->shpfile.hSHP, record, shape);
     if(layer->numitems > 0 && layer->iteminfo) {
       shape->numvalues = layer->numitems;
