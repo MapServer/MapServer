@@ -1721,7 +1721,10 @@ insertLayer( layerObj layer [, int nIndex=-1 ] ) : int
     Insert a copy of *layer* into the Map at index *nIndex*.  The default
     value of *nIndex* is -1, which means the last possible index.  Returns
     the index of the new Layer, or -1 in the case of a failure.
-    
+
+loadMapContext( string filename [, int useUniqueNames=MS_FALSE ] ) : int
+    Load an OGC map context file to define extents and layers of a map.
+
 loadOWSParameters( OWSRequest_ request [, string version='1.1.1' ] ) : int
     Load OWS request parameters (BBOX, LAYERS, &c.) into map.  Returns
     MS_SUCCESS or MS_FAILURE.

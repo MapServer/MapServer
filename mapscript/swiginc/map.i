@@ -330,8 +330,8 @@
     return msSaveMapContext(self, szFileName);
   }
 
-  int loadMapContext(char *szFileName) {
-    return msLoadMapContext(self, szFileName);
+  int loadMapContext(char *szFileName, int useUniqueNames=MS_FALSE) {
+    return msLoadMapContext(self, szFileName, useUniqueNames);
   }
 
   int  moveLayerUp(int layerindex) {
