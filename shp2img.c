@@ -19,7 +19,15 @@ int main(int argc, char *argv[])
 
   /* ---- check the number of arguments, return syntax if not correct ---- */
   if( argc < 3 ) {
-    fprintf(stdout,"Syntax: shp2img -m [mapfile] -o [image] -t -l [layers]\n" );
+    fprintf(stdout,
+            "Syntax: shp2img -m [mapfile] -o [image] -e minx miny maxx maxy\n"
+            "                -t -l [layers]\n");
+
+    fprintf(stdout,"  -m mapfile: Map file to operate on - required.\n" );
+    fprintf(stdout,"  -t: enable transparency\n" );
+    fprintf(stdout,"  -o image: output filename (stdout if not provided)\n");
+    fprintf(stdout,"  -e minx miny maxx maxy: extents to render - optional\n");
+    fprintf(stdout,"  -l layers: layers to enable - optional\n" );
     exit(0);
   }
   
@@ -45,7 +53,7 @@ int main(int argc, char *argv[])
       i+=1;
     }
 
-    if(strncmp(argv[i],"-o",2) == 0) { /* load the output image size */
+    if(strncmp(argv[i],"-o",2) == 0) { /* load the output image filename */
       outfile = strdup(argv[i+1]);
       i+=1;
     }
