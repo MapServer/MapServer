@@ -1788,7 +1788,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   for(i=0; i<layer->numclasses; i++) writeClass(map, &(layer->class[i]), stream);
   if(layer->classitem) fprintf(stream, "    CLASSITEM \"%s\"\n", layer->classitem);
   if(layer->connection) {
-    fprintf(stream, "    CONNECTION \"%s\"\n", layer->conection);
+    fprintf(stream, "    CONNECTION \"%s\"\n", layer->connection);
     if(layer->connectiontype == "SDE")
       fprintf(stream, "    CONNECTIONTYPE SDE\n");
     else
