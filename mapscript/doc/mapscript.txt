@@ -575,12 +575,21 @@ The other important association for layerObj is with classObj
     +-------+            +-------+
 
 
+Attributes
+----------
+
+**TODO**
+
 Methods
 -------
 
 **TODO**
 
-addFeature( shapeObj shape ) : int 
+new layerObj( mapObj_ map) : layerObj_
+    Create a new layerObj in *map*.  The layer index of the new layerObj
+    will be equal to the *map* numlayers - 1.
+    
+addFeature( shapeObj_ shape ) : int 
     Add a new inline feature on a layer.  Returns -1 on error. 
     **TODO**: Is this similar to inline features in a mapfile?  Does it work
     for any kind of layer or connection type? 
@@ -613,13 +622,13 @@ close() : void
 demote() : void
     Moves this layer below the following layer on the same map.
 
-draw( mapObj map, imageObj image ) : int
+draw( mapObj_ map, imageObj_ image ) : int
     Renders this layer into the target image, adding labels to the cache if
     required.  Returns MS_SUCCESS or MS_FAILURE. 
     **TODO**: Does the map need to be the map on which the layer is defined?  
     I suspect so.  
 
-drawQuery( mapObj map, imageObj image ) : 
+drawQuery( mapObj_ map, imageObj_ image ) : 
     Draw query map for a single layer into the target image.  Returns
     MS_SUCCESS or MS_FAILURE.
 
@@ -631,12 +640,12 @@ executeWFSGetFeature( layer ) : string
 generateSLD() : void
     Returns an SLD XML string based on all the classes found in the layers.
 
-getClass( int i ) : classObj
+getClass( int i ) : classObj_
     Fetch the requested class object.  Returns NULL if the class index is
     out of the legal range.   The numclasses field contains the number of
     classes available, and the first class is index 0.
 
-getExtent() : rectObj
+getExtent() : rectObj_
     Fetches the extents of the data in the layer.  This normally requires a
     full read pass through the features of the layer and does not work for
     raster layers.  
@@ -653,10 +662,10 @@ getItem( int i ) : string
     returns the item name (field name).   The numitems field contains the 
     number of items available, and the first item is index zero.
     
-getMetaData(string key) : string
+getMetaData( string key ) : string
     Return the value at *key* from the metadata hash table.
 
-getNextMetaDataKey(string lastkey) : string
+getNextMetaDataKey( string lastkey ) : string
     Returns the next key in the metadata hash table or NULL if
     *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
     first key of the metadata hash table.
@@ -666,14 +675,13 @@ getNumFeatures() : int
     really only online features or will it return the number of non-inline
     features on a regular layer? 
 
-getResult( int i ) : resultCacheMemberObj 
+getResult( int i ) : resultCacheMemberObj_ 
     Fetches the requested query result cache entry, or NULL if the index is
     outside the range of available results.  This method would normally only
     be used after issuing a query operation.  **TODO**: How do we get 
     number of results? 
 
-getWMSFeatureInfoURL( mapObj map, int click_x, int click_y, 
-		      int feature_count, string info_format ) : string
+getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, string info_format ) : string
     Return a WMS GetFeatureInfo URL (works only for WMS layers)
     clickX, clickY is the location of to query in pixel coordinates
     with (0,0) at the top left of the image.
@@ -686,10 +694,10 @@ getWMSFeatureInfoURL( mapObj map, int click_x, int click_y,
     
 .. _layerObj.getShape :
 
-getShape(shapeObj_ shape, int tileindex, int shapeindex) : int
+getShape( shapeObj_ shape, int tileindex, int shapeindex ) : int
     Get a shape from layer data.
 
-**NEXT_GENERATION_API** getShape(int shapeindex [, int tileindex=0]) : shapeObj_
+**NEXT_GENERATION_API** getShape( int shapeindex [, int tileindex=0]) : shapeObj_
     Get a shape from layer data using the next generation API.
 
 moveClassDown( int class ) : int 
@@ -713,7 +721,7 @@ open() : void
 promote() : void
     Moves this layer over the preceeding layer on the same map. 
 
-queryByAttributes( mapObj map, string qitem, string qstring, int mode ) : int
+queryByAttributes( mapObj_ map, string qitem, string qstring, int mode ) : int
     Query layer for shapes that intersect current map extents.  qitem is the 
     item (attribute) on which the query is performed, and qstring is the 
     expression to match.  The query is performed on all the shapes that are 
@@ -725,14 +733,14 @@ queryByAttributes( mapObj map, string qitem, string qstring, int mode ) : int
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened.
 
-queryByFeatures( mapObj map, int slayer ) : int 
+queryByFeatures( mapObj_ map, int slayer ) : int 
     Perform a query set based on a previous set of results from
     another layer. At present the results MUST be based on a polygon
     layer.
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened.
 
-queryByPoint( mapObj map, pointObj point, int mode, double buffer ) : int
+queryByPoint( mapObj_ map, pointObj_ point, int mode, double buffer ) : int
     Query layer at point location specified in georeferenced map 
     coordinates (i.e. not pixels).  
     The query is performed on all the shapes that are part of a CLASS 
@@ -746,7 +754,7 @@ queryByPoint( mapObj map, pointObj point, int mode, double buffer ) : int
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened.
 
-queryByRect( map, rectObj rect ) : int
+queryByRect( mapObj_ map, rectObj_ rect ) : int
     Query layer using a rectangle specified in georeferenced map 
     coordinates (i.e. not pixels).
     The query is performed on all the shapes that are part of a CLASS 
@@ -755,7 +763,7 @@ queryByRect( map, rectObj rect ) : int
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
     was found or if some other error happened.
 
-queryByShape( mapObj map, int slayer ) : int
+queryByShape( mapObj_ map, int slayer ) : int
     Query layer based on a single shape, the shape has to be a polygon
     at this point. 
     Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
@@ -763,25 +771,25 @@ queryByShape( mapObj map, int slayer ) : int
     **TODO**: What shape is being used?  Does slayer need to be a layer
     with a single polygon?
 
-setFilter( string filter ) : int 
-    Sets a filter expression similarly to the FILTER expression in a map 
-    file.  Returns MS_SUCCESS on success or MS_FAILURE if the expression
-    fails to parse. 
-
 removeClass( int index ) : void
     Removes the class indicated.  Note that subsequent classes will be
     renumbered by this operation.  The numclasses field contains the number
     of classes available.
 
-removeMetaData(string key) : int
+removeMetaData( string key ) : int
     Delete the metadata hash at *key*.  Returns MS_SUCCESS or
     MS_FAILURE.
 
-setMetaData(string key, string value) : int
+setFilter( string filter ) : int 
+    Sets a filter expression similarly to the FILTER expression in a map 
+    file.  Returns MS_SUCCESS on success or MS_FAILURE if the expression
+    fails to parse. 
+
+setMetaData( string key, string value ) : int
     Assign *value* to the metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
 
-setProjection() : int
+setProjection( string proj4 ) : int
     Set the layer projection using a PROJ.4 format projection definition. 
     (ie. "+proj=utm +zone=11 +datum=WGS84").  Returns MS_SUCCESS or 
     MS_FAILURE. 
@@ -1124,6 +1132,13 @@ toPolygon() : shapeObj_
 
 -----------------------------------------------------------------------------
  referenceMapObj
+-----------------------------------------------------------------------------
+
+x
+
+
+-----------------------------------------------------------------------------
+ resultCacheMemberObj
 -----------------------------------------------------------------------------
 
 x
