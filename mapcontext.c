@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23  2002/11/21 17:07:34  julien
+ * temporaly fix a seg. fault with pszSLD2
+ *
  * Revision 1.22  2002/11/21 15:54:46  julien
  * Valid empty Format and style, some chage to 0.1.2 version
  *
@@ -1158,8 +1161,10 @@ int msSaveMapContext(mapObj *map, char *filename)
                       pszValue[pszChar - pszValue] = '\0';
 
                   pszSLD2 = strdup(map->layers[i].connection);
-                  pszSLD = pszSLD2;
-                  pszSLD = strstr(pszSLD, "SLD=");
+                  if(pszSLD2)
+                      pszSLD = strstr(pszSLD2, "SLD=");
+                  else
+                      pszSLD = NULL;
                   if( pszSLD )
                   {
                       pszChar = strchr(pszSLD, '&');
@@ -1167,9 +1172,8 @@ int msSaveMapContext(mapObj *map, char *filename)
                           pszSLD[pszChar - pszSLD] = '\0';
                       pszSLD += 4;
                   }
-                  if( (pszValue || pszSLD) && 
-                      ((strcasecmp(pszValue, "") != 0) ||        
-                      strcasecmp(pszSLD, "") != 0))
+                  if( (pszValue && (strcasecmp(pszValue, "") != 0)) || 
+                      (pszSLD && (strcasecmp(pszSLD, "") != 0)))
                   {
                       fprintf( stream, "      <StyleList>\n");
                       fprintf( stream, "        <Style current=\"1\">\n");
@@ -1196,8 +1200,8 @@ int msSaveMapContext(mapObj *map, char *filename)
               }
               if(pszURL)
                   free(pszURL);
-              if(pszSLD2)
-                  free(pszSLD2);
+//              if(pszSLD2)
+//                  free(pszSLD2);
           }
           else
           {
