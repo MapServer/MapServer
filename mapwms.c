@@ -350,6 +350,18 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
     }
   }
 
+  /* Validate requested image size. */
+  if(map->width > MS_MAXIMGSIZE || map->height > MS_MAXIMGSIZE || 
+     map->width < 1 || map->height < 1) 
+  {
+      msSetError(MS_WMSERR, "Image size out of range, WIDTH and HEIGHT must be between 1 and %d pixels.", "msWMSLoadGetMapParams()", MS_MAXIMGSIZE);
+
+      // Restore valid default values in case errors INIMAGE are used
+      map->width = 400;
+      map->height= 300;
+      return msWMSException(map, wmtver);
+  }
+
   /*
   ** Apply the selected output format (if one was selected), and override
   ** the transparency if needed.
