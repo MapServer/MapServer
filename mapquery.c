@@ -7,6 +7,23 @@
 static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
 
 /*
+** msIsLayerQueryable()  returns MS_TRUE/MS_FALSE
+*/
+int msIsLayerQueryable(layerObj *lp)
+{
+  int i, is_queryable = MS_FALSE;
+
+  for(i=0; i<lp->numclasses; i++) {
+    if(lp->class[i].template) {
+      is_queryable = MS_TRUE;
+      break;
+    }
+  }
+
+  return is_queryable;
+}
+
+/*
 ** This function fills the items and data buffers for a given join (record based).
 ** Now handles one-to-many joins correctly. Cleans up previous join before allocating
 ** space for the new one. 

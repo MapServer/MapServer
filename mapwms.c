@@ -5,23 +5,6 @@
 #include "mapgml.h"
 #include "gdfonts.h"
 
-/*
-** msIsLayerQueryable()  returns MS_TRUE/MS_FALSE
-*/
-int msIsLayerQueryable(layerObj *lp)
-{
-  int i, is_queryable = MS_FALSE;
-
-  for(i=0; i<lp->numclasses; i++) {
-    if(lp->class[i].template) {
-      is_queryable = MS_TRUE;
-      break;
-    }
-  }
-
-  return is_queryable;
-}
-
 #ifdef USE_WMS
 
 /*
