@@ -15,6 +15,23 @@
 
 
 /*
+** msIsLayerQueryable()  returns MS_TRUE/MS_FALSE
+*/
+int msIsLayerQueryable(layerObj *lp)
+{
+  int i, is_queryable = MS_FALSE;
+
+  for(i=0; i<lp->numclasses; i++) {
+    if(lp->class[i].template) {
+      is_queryable = MS_TRUE;
+      break;
+    }
+  }
+
+  return is_queryable;
+}
+
+/*
 ** msWMSException()
 **
 ** Report current MapServer error in requested format.
@@ -206,6 +223,33 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
   return MS_SUCCESS;
 }
 
+
+/*
+**
+*/
+void msWMSPrintRequesCap(const char *wmtver, const char *request, 
+                         const char *script_url, const char *formats)
+{
+  printf("    <%s>\n", request);
+  printf("      <Format>%s</Format>\n", formats);
+  printf("      <DCPType>\n");
+  printf("        <HTTP>\n");
+
+  if (strcasecmp(wmtver, "1.0.0") == 0) {
+    printf("          <Get onlineResource=\"%s\" />\n", script_url);
+    printf("          <Post onlineResource=\"%s\" />\n", script_url);
+  }
+  else {
+    printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", script_url);
+    printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", script_url);
+  }
+
+  printf("        </HTTP>\n");
+  printf("      </DCPType>\n");
+  printf("    </%s>\n", request);
+}
+
+
 /*
 ** msWMSCapabilities()
 */
@@ -300,54 +344,22 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf("<Capability>\n");
   printf("  <Request>\n");
 
-  printf("    <Map>\n");
-  printf("      <Format>\n");
+  msWMSPrintRequesCap(wmtver, "Map", script_url, 
 #ifdef USE_GD_GIF
-  printf("        <GIF />\n");
+                      "<GIF />"
 #endif
 #ifdef USE_GD_JPEG
-  printf("        <JPEG />\n");
+                      "<JPEG />"
 #endif
 #ifdef USE_GD_PNG
-  printf("        <PNG />\n");
+                      "<PNG />"
 #endif
 #ifdef USE_GD_WBMP
-  printf("        <WBMP />\n");
+                      "<WBMP />"
 #endif
-  printf("      </Format>\n");
-  printf("      <DCPType>\n");
-  printf("        <HTTP>\n");
-
-  if (strcasecmp(wmtver, "1.0.0") == 0) {
-    printf("          <Get onlineResource=\"%s\" />\n", script_url);
-    printf("          <Post onlineResource=\"%s\" />\n", script_url);
-  }
-  else {
-    printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", script_url);
-    printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", script_url);
-  }
-
-  printf("        </HTTP>\n");
-  printf("      </DCPType>\n");
-  printf("    </Map>\n");
-
-  printf("    <Capabilities>\n");
-  printf("      <Format><WMS_XML /></Format>\n");
-  printf("      <DCPType>\n");
-  printf("        <HTTP>\n");
-
-  if (strcasecmp(wmtver, "1.0.0") == 0) {
-    printf("          <Get onlineResource=\"%s\" />\n", script_url);
-    printf("          <Post onlineResource=\"%s\" />\n", script_url);
-  }
-  else {
-    printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", script_url);
-    printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", script_url);
-  }
-
-  printf("        </HTTP>\n");
-  printf("      </DCPType>\n");
-  printf("    </Capabilities>\n");
+                      );
+  msWMSPrintRequesCap(wmtver, "Capabilities", script_url, "<WMS_XML />");
+  msWMSPrintRequesCap(wmtver, "FeatureInfo", script_url, "<MIME />");
 
   printf("  </Request>\n");
 
@@ -355,7 +367,6 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
   printf("  </Exception>\n");
 
-  // need to add query (featureInfo) support
 
   printf("  <VendorSpecificCapabilities />\n"); // nothing yet
 
@@ -371,7 +382,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
 
-    printf("    <Layer queryable=\"0\">\n"); // no featureInfo support yet
+    printf("    <Layer queryable=\"%d\">\n", msIsLayerQueryable(lp));
     printf("      <Name>%s</Name>\n", lp->name);
 
     // the majority of this section is dependent on appropriately named metadata in the LAYER object
