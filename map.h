@@ -337,7 +337,6 @@ typedef struct {
   int type;
 
   hashTableObj metadata;
-  int export;
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
@@ -542,6 +541,8 @@ typedef struct {
   char *labelrequires;
 
   hashTableObj metadata;
+  
+  int dump;
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application

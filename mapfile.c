@@ -1192,7 +1192,6 @@ int initClass(classObj *class)
   class->type = -1;
 
   class->metadata = NULL;
-  class->export = MS_FALSE;
 
   return(0);
 }
@@ -1278,9 +1277,6 @@ int loadClass(classObj *class, mapObj *map)
       return(-1);
     case(END):
       return(0);
-      break;
-    case(EXPORT):
-      if((class->export = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
     case(EXPRESSION):
       if(loadExpression(&(class->expression)) == -1) return(-1);
@@ -1472,7 +1468,6 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
   fprintf(stream, "    CLASS\n");
   if(class->backgroundcolor > -1) fprintf(stream, "      BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[class->backgroundcolor-1].red, map->palette.colors[class->backgroundcolor-1].green, map->palette.colors[class->backgroundcolor-1].blue);
   if(class->color > -1) fprintf(stream, "      COLOR %d %d %d\n", map->palette.colors[class->color-1].red, map->palette.colors[class->color-1].green, map->palette.colors[class->color-1].blue);
-  if(class->status == MS_TRUE) fprintf(stream, "      EXPORT TRUE\n");
   if(class->expression.string) {
     fprintf(stream, "      EXPRESSION ");
     writeExpression(&(class->expression), stream);
@@ -1584,6 +1579,7 @@ int initLayer(layerObj *layer)
   layer->requires = layer->labelrequires = NULL;
 
   layer->metadata = NULL;
+  layer->dump = MS_FALSE;
 
   layer->styleitem = NULL;
   layer->styleitemindex = -1;
@@ -1659,6 +1655,9 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(DATA):
       if((layer->data = getString()) == NULL) return(-1);
+      break;
+    case(DUMP):
+      if((layer->dump = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return(-1);
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadLayer()");      
@@ -2030,6 +2029,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
       fprintf(stream, "    CONNECTIONTYPE ORACLESPATIAL\n");
   }
   if(layer->data) fprintf(stream, "    DATA \"%s\"\n", layer->data);
+  if(layer->dump) fprintf(stream, "    DUMP TRUE\n");
 
   current = layer->features;
   while(current != NULL) {
