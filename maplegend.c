@@ -322,7 +322,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   if(map->legend.postlabelcache) // add it directly to the image
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   else
-    msAddLabel(map, l, 0, -1, -1, &point, " ", -1, 1.0);
+    msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0);
 
   return(0);
 }
