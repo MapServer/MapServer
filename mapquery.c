@@ -609,7 +609,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
       msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
 #endif
-    status = msLayerWhichShapes(lp, rect);
+    status = msLayerWhichShapes(lp, searchrect);
     if(status == MS_DONE) { // no overlap
       msLayerClose(lp);
       continue;
