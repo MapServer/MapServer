@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.27  2005/01/15 20:03:14  frank
+ * Fixed byte swapping error for 24bit images on bigendian systems.
+ *
  * Revision 1.26  2004/11/04 21:06:09  frank
  * centralize 'stdout binary mode setting' for win32, add for gdal output
  *
@@ -313,14 +316,24 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 #if GD2_VERS > 1
             else if( nBands > 1 && iBand < 3 )
             {
+                GByte *pabyData;
+#ifdef CPL_MSB
+
+                pabyData = ((GByte *) image->img.gd->tpixels[iLine])+iBand+1;
+#else
+                pabyData = ((GByte *) image->img.gd->tpixels[iLine])+(2-iBand);
+#endif
                 GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
-                          ((GByte *) image->img.gd->tpixels[iLine])+(2-iBand), 
-                              image->width, 1, GDT_Byte, 4, 0 );
+                              pabyData, image->width, 1, GDT_Byte, 4, 0 );
             }
             else if( nBands > 1 && iBand == 3 ) /* Alpha band */
             {
                 int x;
+#ifdef CPL_MSB
+                GByte *pabySrc = ((GByte *) image->img.gd->tpixels[iLine]);
+#else
                 GByte *pabySrc = ((GByte *) image->img.gd->tpixels[iLine])+3;
+#endif
 
                 for( x = 0; x < image->width; x++ )
                 {
