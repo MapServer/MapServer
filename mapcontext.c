@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.2  2002/10/28 22:31:09  dan
+ * Added map arg to initLayer() call
+ *
  * Revision 1.1  2002/10/28 20:31:20  dan
  * New support for WMS Map Context (from Julien)
  *
@@ -348,7 +351,7 @@ int msLoadMapContext(mapObj *map, char *filename)
           {
               // Init new layer
               layer = &(map->layers[map->numlayers]);
-              initLayer(layer);
+              initLayer(layer, map);
               layer->map = (mapObj *)map;
               map->numlayers++;
               if(layer->metadata == NULL)
