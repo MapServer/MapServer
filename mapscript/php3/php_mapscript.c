@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.198  2004/05/31 14:52:24  assefa
+ * Add MS_WCSERR.
+ *
  * Revision 1.197  2004/05/13 21:35:33  dan
  * Use MS_INIT_COLOR() in setRGB() (bug 663)
  *
@@ -1246,6 +1249,7 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_WFSCONNERR", MS_WFSCONNERR,  const_flag);
     REGISTER_LONG_CONSTANT("MS_MAPCONTEXTERR", MS_MAPCONTEXTERR, const_flag);
     REGISTER_LONG_CONSTANT("MS_HTTPERR",    MS_HTTPERR,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_WCSERR",    MS_WCSERR,     const_flag);
  
     /*symbol types */
     REGISTER_LONG_CONSTANT("MS_SYMBOL_SIMPLE", MS_SYMBOL_SIMPLE, const_flag);
