@@ -612,6 +612,17 @@
     return 0;
   }
 
+  int getTransformed(mapObj *map, int i, shapeObj *shape) {
+    if(i<0 || i>=self->numshapes)
+      return -1;
+
+    msFreeShape(shape); /* frees all lines and points before re-filling */
+    SHPReadShape(self->hSHP, i, shape);
+    msTransformPolygon(map->extent, map->cellsize, shape);
+
+    return 0;
+  }
+
   void getExtent(int i, rectObj *rect) {
     SHPReadBounds(self->hSHP, i, rect);
   }

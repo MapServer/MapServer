@@ -137,8 +137,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   SE_COORDREF coordref=NULL;
   SE_LAYERINFO layerinfo;
 
-  SE_ENVELOPE rect, cliprect, shaperect;
-  SE_SHAPE filtershape=0, shape1=0, clipshape=0;
+  SE_ENVELOPE rect;
+  SE_SHAPE filtershape=0, shape=0, clippedshape=0;
   short shape_is_null;
 
   SE_SQL_CONSTRUCT *sql;
@@ -154,7 +154,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   char **params;
   int numparams;
 
-  shapeObj shape2={0,NULL,{-1,-1,-1,-1},MS_NULL};
+  shapeObj transformedshape={0,NULL,{-1,-1,-1,-1},MS_NULL};
   pointObj annopnt;
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
@@ -188,19 +188,6 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     }
   }
 
-  /* Set clipping rectangle (used by certain layer types only) */
-  if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
-    cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
-    cliprect.miny = map->extent.miny - 2*map->cellsize;
-    cliprect.maxx = map->extent.maxx + 2*map->cellsize;
-    cliprect.maxy = map->extent.maxy + 2*map->cellsize;
-  } else {
-    cliprect.minx = map->extent.maxx;
-    cliprect.maxx = map->extent.minx;
-    cliprect.miny = map->extent.maxy;
-    cliprect.maxy = map->extent.miny;
-  }
-
   params = split(layer->connection, ',', &numparams);
   if(!params) {
     msSetError(MS_MEMERR, "Error spliting SDE connection information.", "msDrawSDELayer()");
@@ -218,6 +205,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     return(-1);
   }
 
+  fprintf(stderr, "SDE connection established...\n");
+
   msFreeCharArray(params, numparams);
 
   status = SE_stream_create(connection, &stream);
@@ -225,6 +214,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     sde_error(status, "msDrawSDELayer()", "SE_stream_create()");
     return(-1);
   }
+
+  fprintf(stderr, "SDE stream created...\n");
 
   /*
   ** Get some basic information about the layer (error checking)
@@ -249,6 +240,11 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   }
 
   SE_coordref_create(&coordref);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msDrawSDELayer()", "SE_coordref_create()");
+    return(-1);
+  }
+
   status = SE_layerinfo_get_coordref(layerinfo, coordref);
   if(status != SE_SUCCESS) {
     sde_error(status, "msDrawSDELayer()", "SE_layerinfo_get_coordref()");
@@ -261,20 +257,48 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     return(-1);
   }
   
-  if(rect.minx > map->extent.maxx) return(0); // msRectOverlap()
+  if(rect.minx > map->extent.maxx) return(0); // i.e. msRectOverlap()
   if(rect.maxx < map->extent.minx) return(0);
   if(rect.miny > map->extent.maxy) return(0);
   if(rect.maxy < map->extent.miny) return(0);
 
-  /*
-  ** define the spatial filter, used with all classes
-  */  
-  SE_shape_create(coordref, &filtershape);
+  fprintf(stderr, "layer envelope: %g %g %g %g\n", rect.minx, rect.miny, rect.maxx, rect.maxy);
 
-  rect.minx = MS_MAX(map->extent.minx, rect.minx);
-  rect.miny = MS_MAX(map->extent.miny, rect.miny);
-  rect.maxx = MS_MIN(map->extent.maxx, rect.maxx);
-  rect.maxy = MS_MIN(map->extent.maxy, rect.maxy);
+  /*
+  ** initialize a few shapes
+  */
+  status = SE_shape_create(coordref, &shape);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msDrawSDELayer()", "SE_shape_create()");
+    return(-1);
+  }
+
+  status = SE_shape_create(coordref, &clippedshape);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msDrawSDELayer()", "SE_shape_create()");
+    return(-1);
+  }
+
+  SE_shape_create(coordref, &filtershape);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msDrawSDELayer()", "SE_shape_create()");
+    return(-1);
+  }
+
+  /* 
+  ** define the spatial filter, used with all classes
+  */ 
+  if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
+    rect.minx = MS_MAX(map->extent.minx - 2*map->cellsize, rect.minx); /* just a bit larger than the map extent */
+    rect.miny = MS_MAX(map->extent.miny - 2*map->cellsize, rect.miny);
+    rect.maxx = MS_MIN(map->extent.maxx + 2*map->cellsize, rect.maxx);
+    rect.maxy = MS_MIN(map->extent.maxy + 2*map->cellsize, rect.maxy);
+  } else {
+    rect.minx = MS_MAX(map->extent.minx, rect.minx);
+    rect.maxx = MS_MAX(map->extent.miny, rect.miny);
+    rect.miny = MS_MIN(map->extent.maxx, rect.maxx);
+    rect.maxy = MS_MIN(map->extent.maxy, rect.maxy);
+  }
 
   status = SE_shape_generate_rectangle(&rect, filtershape);
   if(status != SE_SUCCESS) {
@@ -310,12 +334,15 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   numcolumns = 1;
   columns[0] = strdup(params[1]);  
 
-  if(layer->labelitem && layer->annotate) {
+  if(layer->labelitem && annotate) {
     numcolumns = 2;
     columns[1] = strdup(layer->labelitem);    
   }  
 
   msFreeCharArray(params, numparams);
+
+  for(i=0; i<numcolumns; i++)
+    fprintf(stderr, "%d:%s\n", i+1, columns[i]);
 
   /*
   ** each class is a SQL statement, no expression means all features
@@ -327,11 +354,15 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     else
       sql->where = strdup(layer->class[i].expression.string);
 
+    fprintf(stderr, "class %d where: %s\n", i, sql->where);
+
     status = SE_stream_query(stream, numcolumns, columns, sql);
     if(status != SE_SUCCESS) {
       sde_error(status, "msDrawSDELayer()", "SE_stream_query()");
       return(-1);
     }
+
+    fprintf(stderr, "attribute query set\n");
 
     status = SE_stream_set_spatial_constraints(stream, SE_SPATIAL_FIRST, FALSE, 1, &filter);
     if(status != SE_SUCCESS) {
@@ -339,8 +370,9 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       return(-1);
     }
 
-    SE_shape_create(coordref, &shape1);
-    status = SE_stream_bind_output_column(stream, 1, shape1, &shape_is_null);
+    fprintf(stderr, "spatial query set\n");
+
+    status = SE_stream_bind_output_column(stream, 1, shape, &shape_is_null);
     if(status != SE_SUCCESS) {
       sde_error(status, "msDrawSDELayer()", "SE_stream_bind_output_column()");
       return(-1);
@@ -349,8 +381,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     if(numcolumns == 2) {
       status = SE_stream_bind_output_column(stream, 2, annotation, &annotation_is_null);
       if(status != SE_SUCCESS) {
-	sde_error(status, "msDrawSDELayer()", "SE_stream_bind_output_column()");
-	return(-1);
+    	sde_error(status, "msDrawSDELayer()", "SE_stream_bind_output_column()");
+    	return(-1);
       }
     }
 
@@ -359,6 +391,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       sde_error(status, "msDrawSDELayer()", "SE_stream_query()");
       return(-1);
     }
+
+    fprintf(stderr, "search executed...\n");
     
     switch(layer->type) {
     case MS_ANNOTATION:
@@ -372,49 +406,53 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     case MS_POLYGON:
       while(status == SE_SUCCESS) {
 	status = SE_stream_fetch(stream);
-	if(status != SE_SUCCESS) {
-	  sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
-	  return(-1);
-	}
+	if(status == SE_SUCCESS) {
 
-	clipshape = shape1;
-	SE_shape_get_extent(shape1, 0, &shaperect);
-	if(!sdeRectContained(&shaperect, &cliprect)) {
-	  if(!sdeRectOverlap(&shaperect, &cliprect)) continue;
-	  SE_shape_clip(shape1, &cliprect, clipshape);
-	  if(SE_shape_is_nil(clipshape)) continue;
-	}
-	sdeTransformShape(map->extent, map->cellsize, clipshape, &shape2);
+	  if(SE_shape_is_nil(shape)) continue;
 
-	msDrawShadeSymbol(&map->shadeset, img, &shape2, &(layer->class[i]));
-	
-	if(layer->annotate) {
-	  if(msPolygonLabelPoint(&shape2, &annopnt, layer->class[i].label.minfeaturesize) != -1) {
+	  status = SE_shape_clip(shape, &rect, clippedshape);
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msDrawSDELayer()", "SE_shape_clip()");
+	    return(-1);
+          }
 
-	    if(!annotation)
-	      annotation = layer->class[i].text.string;
-	    
-	    if(layer->labelcache)
-	      msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
-	    else
-	      msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+	  if(SE_shape_is_nil(clippedshape)) continue;
+	  sdeTransformShape(map->extent, map->cellsize, clippedshape, &transformedshape);
+	  
+	  msDrawShadeSymbol(&map->shadeset, img, &transformedshape, &(layer->class[i]));
+	  
+	  if(annotate) {
+	    if(msPolygonLabelPoint(&transformedshape, &annopnt, layer->class[i].label.minfeaturesize) != -1) {
+	      
+	      if(!annotation)
+		annotation = layer->class[i].text.string;
+	      
+	      if(layer->labelcache)
+		msAddLabel(map, layer->index, i, -1, -1, annopnt, annotation, -1);
+	      else
+		msDrawLabel(img, map, annopnt, annotation, &(layer->class[i].label));
+	    }
 	  }
+	  
+	  msFreeShape(&transformedshape);
+	} else {
+	  if(status != SE_FINISHED) {
+	    sde_error(status, "msDrawSDELayer()", "SE_stream_fetch()");
+	    return(-1);
+          }
 	}
-	
-	SE_shape_free(clipshape);
-	msFreeShape(&shape2);
-
       }
       break;
     default:
       msSetError(MS_MISCERR, "Unknown or unsupported layer type.", "msDrawSDELayer()");
       return(-1);
     }
-
-    SE_shape_free(shape1);
+    
     free(sql->where);
   }
 
+  SE_shape_free(shape);
+  SE_shape_free(clippedshape);  
   SE_shape_free(filtershape);
   SE_stream_free(stream);
   SE_connection_free(connection);
