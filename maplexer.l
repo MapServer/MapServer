@@ -87,7 +87,6 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>connection	       { return(CONNECTION); }
 <INITIAL,OBJECT_STRING>connectiontype	       { return(CONNECTIONTYPE); }
 <INITIAL,OBJECT_STRING>data		       { return(DATA); }
-<INITIAL,OBJECT_STRING>description             { return(DESCRIPTION); }
 <INITIAL,OBJECT_STRING>empty		       { return(EMPTY); }
 <INITIAL>end			               { return(END); }
 <INITIAL,OBJECT_STRING>error		       { return(ERROR); }

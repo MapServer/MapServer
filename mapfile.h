@@ -13,7 +13,7 @@
 #define COLOR 1006
 #define DATA 1007
 #define DD 1008
-#define DESCRIPTION 1009
+
 #define EMPTY 1010
 #define END 1011
 #define ERROR 1012
