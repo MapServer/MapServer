@@ -1,31 +1,26 @@
-..  $Id$
-    
-    This is the mapscript imagery HOWTO for mapserver 4.4.
-    
-    ***************************************************************
-    RULE #1: No tabs in this document!
-    RULE #2: Indent is 4 characters.
-    RULE #3: There is no rule 3.
+.. $Id$
 
-    Thank you.
-    ***************************************************************
-    
-    reStructured Text is part of the Python docutils module
-    
-        http://docutils.sourceforge.net/
-    
-    Documentation on reStructured Text is found at
-
-        http://docutils.sourceforge.net/rst.html
-
-    First reST note is about comments: a double period begins a comment
-    block (like a /* in C) and a double period on a line all by itself
-    closes the comment block.
-..
-
-..  Below is our main heading (becomes H1).  Note that we require empty
-    lines between every different reST element such as the empty line
-    between the end of this comment and the begining of the heading.
+   ===========================================================================
+   Copyright (c) 2004 Sean Gillies.
+   
+   Permission is hereby granted, free of charge, to any person obtaining a
+   copy of this software and associated documentation files (the "Software"),
+   to deal in the Software without restriction, including without limitation
+   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+   and/or sell copies of the Software, and to permit persons to whom the
+   Software is furnished to do so, subject to the following conditions:
+ 
+   The above copyright notice and this permission notice shall be included
+   in all copies or substantial portions of the Software.
+ 
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+   THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE.
+   ===========================================================================
 ..
 
 *****************************************************************************
@@ -50,8 +45,10 @@
 Introduction
 ============
 
-All examples in this document refer to the mapfile and testing layers
-distributed with MapServer 4.2+ and found under mapserver/tests.
+The mapscript HOWTO docs are intended to complement the API reference with
+examples of usage for specific subjects.  All examples in this document refer
+to the mapfile and testing layers distributed with MapServer 4.2+ and found
+under mapserver/tests.  
 
 Pseudocode
 ----------
@@ -71,7 +68,7 @@ This imagery might be saved to a file on disk or be streamed directly to
 another device.
 
 The imageObj Class
-------------------
+==================
 
 Imagery is represented in mapscript by the imageObj class.  Please see the
 API Reference (mapscript.txt) for class attribute and method details.
@@ -118,7 +115,7 @@ can be used without making any assumptions::
     filename = 'test.' + map_image.format.extension
     map_image.save(filename)
 
-If the image is using the GDAL/GTiff format, a GeoTIFF file can be created
+If the image is using a GDAL/GTiff-based format, a GeoTIFF file can be created
 on disk by adding a mapObj as a second optional argument to 'save'::
 
     map_image.save(filename, test_map)

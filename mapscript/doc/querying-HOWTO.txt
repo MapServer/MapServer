@@ -1,35 +1,30 @@
-..  $Id$
-    
-    This is the mapscript querying HOWTO for mapserver 4.4.
-    
-    ***************************************************************
-    RULE #1: No tabs in this document!
-    RULE #2: Indent is 4 characters.
-    RULE #3: There is no rule 3.
+.. $Id$
 
-    Thank you.
-    ***************************************************************
-    
-    reStructured Text is part of the Python docutils module
-    
-        http://docutils.sourceforge.net/
-    
-    Documentation on reStructured Text is found at
-
-        http://docutils.sourceforge.net/rst.html
-
-    First reST note is about comments: a double period begins a comment
-    block (like a /* in C) and a double period on a line all by itself
-    closes the comment block.
-..
-
-..  Below is our main heading (becomes H1).  Note that we require empty
-    lines between every different reST element such as the empty line
-    between the end of this comment and the begining of the heading.
+   ===========================================================================
+   Copyright (c) 2004 Sean Gillies.
+   
+   Permission is hereby granted, free of charge, to any person obtaining a
+   copy of this software and associated documentation files (the "Software"),
+   to deal in the Software without restriction, including without limitation
+   the rights to use, copy, modify, merge, publish, distribute, sublicense,
+   and/or sell copies of the Software, and to permit persons to whom the
+   Software is furnished to do so, subject to the following conditions:
+ 
+   The above copyright notice and this permission notice shall be included
+   in all copies or substantial portions of the Software.
+ 
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+   THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+   DEALINGS IN THE SOFTWARE.
+   ===========================================================================
 ..
 
 *****************************************************************************
- Mapscript Query HowTo
+ Mapscript Query HOWTO
 *****************************************************************************
 
 :Author: Sean Gillies
