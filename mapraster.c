@@ -1569,7 +1569,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
     if(strlen(filename) == 0) continue;
 
-    f = fopen(msBuildPath(szPath, cwd, filename),"rb");
+    f = fopen(msBuildPath3(szPath,  map->mappath, map->shapepath, filename),"rb");
     if (!f) {
       memset( dd, 0, 8 );
     }
@@ -1650,7 +1650,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
         msGDALInitialize();
 
         msAcquireLock( TLOCK_GDAL );
-        hDS = GDALOpen( msTryBuildPath(szPath, cwd, filename), GA_ReadOnly );
+        hDS = GDALOpen(msBuildPath3(szPath,  map->mappath, 
+                                    map->shapepath, filename) , GA_ReadOnly );
         if( hDS != NULL )
         {
             double	adfGeoTransform[6];
