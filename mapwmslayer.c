@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.25  2002/06/11 13:54:08  frank
+ * avoid warning
+ *
  * Revision 1.24  2002/05/14 14:07:32  assefa
  * Use of ImageObj to be able to output Vector/Raster beside GD.
  *
@@ -138,6 +141,8 @@ static int tracer (const char * fmt, va_list pArgs)
 /* Do not write to stderr on windoze as this makes Apache hang. */
 #ifdef ENABLE_STDERR_DEBUG
     return (vfprintf(stderr, fmt, pArgs));
+#else
+    return 0;
 #endif
 }
 
