@@ -103,7 +103,18 @@ class RectObjTestCase(MapPrimitivesTestCase):
         r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
         r_str = r.toString()
         assert r_str == "{ 'minx': -1.000000 , 'miny': -2.000000 , 'maxx': 3.000000 , 'maxy': 4.000000 }", r_str
+
+    def testRectContainsPoint(self):
+        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
+        p = mapscript.pointObj(0.0, 0.0)
+        assert p in r, (p.x, p.y, r)
+
+    def testRectContainsPointNot(self):
+        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
+        p = mapscript.pointObj(3.00001, 0.0)
+        assert p not in r, (p.x, p.y, r)
     
+
 # ===========================================================================
 # Run the tests outside of the main suite
 

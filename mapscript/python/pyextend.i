@@ -23,7 +23,26 @@
         msRectToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
         return strdup(buffer);
     }
-    
+   
+// Extensions in Python
+%pythoncode {
+
+    def __contains__(self, item):
+        item_type = str(type(item))
+        if item_type == "<class 'mapscript.pointObj'>":
+            if item.x >= self.minx and item.x <= self.maxx \
+            and item.y >= self.miny and item.y <= self.maxy:
+                return True
+            else:
+                return False
+        else:
+            raise TypeError, \
+                '__contains__ does not yet handle %s' % (item_type)
+            
+            
+        
+}
+
 }
 
 
