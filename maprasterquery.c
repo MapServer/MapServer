@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2004/11/01 21:32:01  frank
+ * Added pointer to raster query classification bug.
+ *
  * Revision 1.10  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -326,6 +329,11 @@ static void msRasterQueryAddPixel( layerObj *layer, pointObj *location,
 
 /* -------------------------------------------------------------------- */
 /*      Handle classification.                                          */
+/*                                                                      */
+/*      NOTE: The following is really quite inadequate to deal with     */
+/*      classifications based on [red], [green] and [blue] as           */
+/*      described in:                                                   */
+/*       http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=1021         */
 /* -------------------------------------------------------------------- */
     if( rlinfo->qc_class != NULL )
     {
