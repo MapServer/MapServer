@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.54  2002/08/16 20:50:10  julien
+ * Fixed for new styleObj except for styleitem auto
+ *
  * Revision 1.53  2002/08/14 17:30:44  dan
  * Fixed problem with numeric labels with STYLEITEM AUTO (bug 185)
  *
@@ -1967,13 +1970,13 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (poLabelStyle->GetRGBFromString(poLabelStyle->
                                                  ForeColor(bIsNull),r,g,b,t))
               {
-                  c->label.color = msAddColor(map, r,g,b);
+                  MS_INIT_COLOR(c->label.color, r, g, b);
               }
               if (poLabelStyle->GetRGBFromString(poLabelStyle->
                                                  BackColor(bIsNull),r,g,b,t) 
                   && !bIsNull)
               {
-                  c->label.backgroundcolor = msAddColor(map, r,g,b);
+                  MS_INIT_COLOR(c->label.color, r, g, b);
               }
 
               // Label font... do our best to use TrueType fonts, otherwise
@@ -2009,7 +2012,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
               const char *pszPenName = poPenStyle->Id(bIsNull);
               if (bIsNull) pszPenName = NULL;
-              int nPenColor = -1;
+              colorObj oPenColor;
               int nPenSymbol = 0;
               int nPenSize = 1;
 
@@ -2017,14 +2020,14 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               // If that's what we have then set pen color to -1
               if (pszPenName && strstr(pszPenName, "ogr-pen-1") != NULL)
               {
-                  nPenColor = -1;
+                  MS_INIT_COLOR(oPenColor, -1, -1, -1);
               }
               else
               {
                   if (poPenStyle->GetRGBFromString(poPenStyle->
                                                Color(bIsNull),r,g,b,t))
                   {
-                      nPenColor = msAddColor(map, r,g,b);
+                      MS_INIT_COLOR(oPenColor, r, g, b);
                       // msDebug("** PEN COLOR = %d %d %d (%d)**\n", r,g,b, nPenColor);
                   }
 
@@ -2045,21 +2048,23 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                                            (nPenSize>1)?"default-circle":NULL);
                   }
               }
-
+              //msDebug("** PEN COLOR = %d %d %d **\n", oPenColor.red,oPenColor.green,oPenColor.blue);
               if (bIsBrush || layer->type == MS_LAYER_POLYGON)
               {
                   // This is a multipart symbology, so pen defn goes in the
                   // overlaysymbol params (also set outlinecolor just in case)
-                  c->outlinecolor = c->overlayoutlinecolor = nPenColor;
-                  c->overlaysize = nPenSize;
-                  c->overlaysymbol = nPenSymbol;
+                  c->styles[0].outlinecolor = c->styles[1].outlinecolor = 
+                      oPenColor;
+                  c->styles[1].size = nPenSize;
+                  c->styles[1].symbol = nPenSymbol;
+                  c->numstyles = 2;
               }
               else
               {
                   // Single part symbology
-                  c->outlinecolor = c->color = nPenColor;
-                  c->symbol = nPenSymbol;
-                  c->size = nPenSize;
+                  c->styles[0].outlinecolor = c->styles[0].color = oPenColor;
+                  c->styles[0].symbol = nPenSymbol;
+                  c->styles[0].size = nPenSize;
               }
 
           }
@@ -2071,14 +2076,14 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (poBrushStyle->GetRGBFromString(poBrushStyle->
                                                  ForeColor(bIsNull),r,g,b,t))
               {
-                  c->color = msAddColor(map, r,g,b);
+                  MS_INIT_COLOR(c->styles[0].color, r, g, b);
                   // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
               }
               if (poBrushStyle->GetRGBFromString(poBrushStyle->
                                                  BackColor(bIsNull),r,g,b,t) 
                   && !bIsNull)
               {
-                  c->backgroundcolor = msAddColor(map, r,g,b);
+                  MS_INIT_COLOR(c->styles[0].backgroundcolor, r, g, b);
               }
 
               // Symbol name mapping:
@@ -2089,7 +2094,8 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               const char *pszName = poBrushStyle->Id(bIsNull);
               if (bIsNull)
                   pszName = NULL;
-              c->symbol = msOGRGetSymbolId(&(map->symbolset), pszName, NULL);
+              c->styles[0].symbol = msOGRGetSymbolId(&(map->symbolset), 
+                                                    pszName, NULL);
 
           }
           else if (poStylePart->GetType() == OGRSTCSymbol)
@@ -2099,10 +2105,10 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (poSymbolStyle->GetRGBFromString(poSymbolStyle->
                                                   Color(bIsNull),r,g,b,t))
               {
-                  c->color = msAddColor(map, r,g,b);
+                  MS_INIT_COLOR(c->styles[0].color, r, g, b);
               }
 
-              c->size = (int)poSymbolStyle->Size(bIsNull);
+              c->styles[0].size = (int)poSymbolStyle->Size(bIsNull);
 
               // Symbol name mapping:
               // First look for the native symbol name, then the ogr-...
@@ -2112,9 +2118,9 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
               if (bIsNull)
                   pszName = NULL;
 
-              c->symbol = msOGRGetSymbolId(&(map->symbolset),
-                                           pszName, 
-                                           "default-marker");
+              c->styles[0].symbol = msOGRGetSymbolId(&(map->symbolset),
+                                                    pszName, 
+                                                    "default-marker");
           }
 
           delete poStylePart;
