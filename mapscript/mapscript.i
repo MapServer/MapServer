@@ -1100,6 +1100,19 @@ memory.") const char * {
     
     return MS_SUCCESS;
   }
+
+    %newobject toPolygon;
+    shapeObj *toPolygon() {
+        shapeObj *shape;
+        shape = (shapeObj *)malloc(sizeof(shapeObj));
+        if (!shape)
+            return NULL;
+        msInitShape(shape);
+        shape->type = MS_SHAPE_POLYGON;
+        msRectToPolygon(*self, shape);
+        return shape;
+    }
+    
 }
 
 //

@@ -585,7 +585,7 @@ class ClonedSetExtentTestCase(unittest.TestCase):
         self.assertRaises(MapServerError, self.mapobj1.setExtent,
                           1.0, -2.0, -3.0, 4.0)
 
-# rectObj constructor tests
+# rectObj tests
 
 class RectObjTestCase(unittest.TestCase):
     def testRectObjConstructorNoArgs(self):
@@ -604,7 +604,14 @@ class RectObjTestCase(unittest.TestCase):
         self.assertRaises(MapServerError, rectObj, 1.0, -2.0, -3.0, 4.0)
     def testRectObjConstructorBadly2(self):
         self.assertRaises(MapServerError, rectObj, -1.0, 2.0, 3.0, -2.0)
-        
+    def testRectObjToPolygon(self):
+        r = rectObj(-1.0, -2.0, 3.0, 4.0)
+        s = r.toPolygon()
+        assert s.numlines == 1, s.numlines
+        assert s.get(0).numpoints == 5
+        assert s.get(0).get(0).x == -1.0
+        assert s.get(0).get(0).y == -2.0
+
 # pointObj constructor tests
 
 class PointObjTestCase(unittest.TestCase):
@@ -616,6 +623,9 @@ class PointObjTestCase(unittest.TestCase):
         p = pointObj(1.0, 1.0)
         assert p.x == 1.0
         assert p.y == 1.0
+
+# colorObj constructor tests
+
 
 if __name__ == '__main__':
     unittest.main()
