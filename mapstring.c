@@ -322,6 +322,8 @@ char *msBuildPath3(char *pszReturnPath, char *abs_path,char *path1,char *path2)
 /*
 ** Similar to msBuildPath(), but the input path is only qualified by the
 ** absolute path if this will result in it pointing to a readable file.
+**
+** Returns NULL if the resulting path doesn't point to a readable file.
 */
 
 char *msTryBuildPath(char *szReturnPath, char *abs_path, char *path)
@@ -334,7 +336,37 @@ char *msTryBuildPath(char *szReturnPath, char *abs_path, char *path)
 
     fp = fopen( szReturnPath, "r" );
     if( fp == NULL )
+    {
         strcpy( szReturnPath, path );
+        return NULL;
+    }
+    else
+        fclose( fp );
+
+    return szReturnPath;
+}
+
+/*
+** Similar to msBuildPath3(), but the input path is only qualified by the
+** absolute path if this will result in it pointing to a readable file.
+**
+** Returns NULL if the resulting path doesn't point to a readable file.
+*/
+
+char *msTryBuildPath3(char *szReturnPath, char *abs_path, char *path1, char *path2)
+
+{
+    FILE	*fp;
+
+    if( msBuildPath3( szReturnPath, abs_path, path1, path2 ) == NULL )
+        return NULL;
+
+    fp = fopen( szReturnPath, "r" );
+    if( fp == NULL )
+    {
+        strcpy( szReturnPath, path2 );
+        return NULL;
+    }
     else
         fclose( fp );
 
