@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.13  2004/01/15 19:49:23  frank
+ * ensure geotransform is set on failure of GetGeotransform
+ *
  * Revision 1.12  2003/10/29 21:23:03  frank
  * Added special logic to flip coordinate system y axis if the input raster image
  * is ungeoreferenced (transform is 0,1,0,0,0,1) to (0,1,0,ysize,0,-1) effectively
@@ -223,6 +226,14 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
    */
   else if( layer->transform )
   {
+      /* some GDAL drivers (ie. GIF) don't set geotransform on failure. */
+      adfGeoTransform[0] = 0.0;
+      adfGeoTransform[1] = 1.0;
+      adfGeoTransform[2] = 0.0;
+      adfGeoTransform[3] = GDALGetRasterYSize(hDS);
+      adfGeoTransform[4] = 0.0;
+      adfGeoTransform[5] = -1.0;
+
       if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
           GDALReadWorldFile((char *)GDALGetDescription(hDS),
                             "wld", adfGeoTransform);
