@@ -1,11 +1,5 @@
 /* $Id$ */
 
-%{
-#include "../../map.h"
-#include "../../mapows.h"
-#include "../../cgiutil.h"
-%}
-
 %rename(OWSRequest) cgiRequestObj;
 
 %include "../../cgiutil.h"

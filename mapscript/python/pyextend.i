@@ -14,7 +14,6 @@
  *
  *****************************************************************************/
 
-
 /******************************************************************************
  * Extensions to mapObj
  *****************************************************************************/
@@ -45,34 +44,6 @@
         return MS_SUCCESS;
     }
 }
-
-/*%extend fontSetObj {
-    
-    // get a list of font alias/filename tuples from the map fontset
-
-    PyObject *getFonts() {
-        int i;
-        PyObject *PyFonts, *PyTemp;
-        struct hashObj *tp=NULL;
-        char **keys;
-
-        keys = (char **)malloc(sizeof(char *) * MS_HASHSIZE);
-        msGetHashTableKeys(self->fonts, keys, MS_HASHSIZE); 
-        
-        PyFonts = PyList_New(0);
-
-        for (i=0; i<MS_HASHSIZE; i++) {
-            if (keys[i] != NULL) {
-                PyTemp = PyTuple_New(2);
-                PyTuple_SetItem(PyTemp, 0, PyString_FromString(tp->key));
-                PyTuple_SetItem(PyTemp, 1, PyString_FromString(tp->data));
-                PyList_Append(PyFonts, PyTemp);
-            }
-        }
-        return PyFonts;
-    }
-            
-}*/
 
 /****************************************************************************
  * Support for bridging Python file-like objects and GD through IOCtx

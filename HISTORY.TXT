@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 ----------------- 
 
+- SWIG mapscript class extensions are completely moved from mapscript.i
+  into separate interface files under mapscript/swiginc.
+
 - Overhaul of mapscript unit testing framework with a comprehensive test
   runner mapscript/python/tests/runtests.py.
 

@@ -1,14 +1,5 @@
 /* $Id$ */
 
-%{
-#include "../../map.h"
-#include "../../mapprimitive.h"
-%}
-
-%include "../../mapprimitive.h"
-
-// class extensions for rectObj
-
 %extend rectObj {
 
     rectObj(double minx=-1.0, double miny=-1.0, 

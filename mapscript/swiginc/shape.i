@@ -29,15 +29,6 @@
    ===========================================================================
 */
 
-
-%{
-#include "../../map.h"
-#include "../../mapprimitive.h"
-%}
-
-%include "../../mapprimitive.h"
-
-
 // extensions for shapeObj
 
 %extend shapeObj 

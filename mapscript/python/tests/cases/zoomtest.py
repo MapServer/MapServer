@@ -118,8 +118,9 @@ class ZoomRectangleTestCase(MapZoomTestCase):
         self.mapobj1.zoomRectangle(r, w, h, extent, max)
         new_extent = self.mapobj1.extent
         self.assertRectsEqual(new_extent, max)
+    
     def testZoomRectangleBadly(self):
-        """ZoomRectangleTestCase.testZoomRectangleBadly: zooming into an invalid extent raises proper error"""
+        """zooming into an invalid extent raises proper error"""
         w, h = (self.mapobj1.width, self.mapobj1.height)
         r = mapscript.rectObj()
         r.minx, r.miny, r.maxx, r.maxy = (0, 0, 200, 200)
@@ -170,3 +171,10 @@ class ZoomScaleTestCase(MapZoomTestCase):
         self.mapobj1.zoomScale(scale, p, w, h, extent, max)
         new_extent = self.mapobj1.extent
         self.assertRectsEqual(new_extent, max)
+
+# ===========================================================================
+# Run the tests outside of the main suite
+
+if __name__ == '__main__':
+    unittest.main()
+    
