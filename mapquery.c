@@ -420,6 +420,14 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   }
 
   if(status != MS_DONE) return(MS_FAILURE);
+
+  // the FILTER is just temporary and needs to be cleared here
+  freeExpression(&(lp->filter));
+  if(lp->filteritem) {
+    free(lp->filteritem);
+    lp->filteritem = NULL;
+    lp->filteritemindex = -1;
+  }
   
   msLayerClose(lp);
 

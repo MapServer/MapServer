@@ -1032,7 +1032,7 @@ void freeExpression(expressionObj *exp)
 {
   if(!exp) return;
 
-  free(exp->string);
+  if(exp->string) free(exp->string);
   if(exp->type == MS_REGEX && exp->compiled) {
     regfree(&(exp->regex));
     exp->compiled = MS_FALSE;
@@ -1041,6 +1041,8 @@ void freeExpression(expressionObj *exp)
     if(exp->numitems) msFreeCharArray(exp->items, exp->numitems);
     if(exp->indexes) free(exp->indexes);
   }
+
+  initExpression(exp); // re-initialize
 }
 
 int loadExpression(expressionObj *exp)
