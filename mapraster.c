@@ -2224,15 +2224,9 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 #ifdef USE_GDAL
     {
         GDALDatasetH  hDS;
-        static int    bGDALInitialized = 0;
 
-        if( !bGDALInitialized )
-        {
-            GDALAllRegister();
-            CPLPushErrorHandler( CPLQuietErrorHandler );
-            bGDALInitialized = 1;
-        }
-        
+        msGDALInitialize();
+
         msAcquireLock( TLOCK_GDAL );
         hDS = GDALOpen( msTryBuildPath(szPath, cwd, filename), GA_ReadOnly );
         if( hDS != NULL )

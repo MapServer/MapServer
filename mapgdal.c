@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2002/11/19 05:47:29  frank
+ * centralize GDAL initialization and cleanup
+ *
  * Revision 1.10  2002/11/16 21:39:45  frank
  * fix support for generating colormaped files with transparency
  *
@@ -73,16 +76,15 @@
 #include "cpl_string.h"
 
 static char *msProjectionObjToWKT( projectionObj *proj );
+static int    bGDALInitialized = 0;
 
 /************************************************************************/
-/*                           InitializeGDAL()                           */
+/*                          msGDALInitialize()                          */
 /************************************************************************/
 
-static void InitializeGDAL( void )
+void msGDALInitialize( void )
 
 {
-    static int    bGDALInitialized = 0;
-
     if( !bGDALInitialized )
     {
         msAcquireLock( TLOCK_GDAL );
@@ -94,6 +96,26 @@ static void InitializeGDAL( void )
         bGDALInitialized = 1;
     }
 }
+
+/************************************************************************/
+/*                           msGDALCleanup()                            */
+/************************************************************************/
+
+void msGDALCleanup( void )
+
+{
+    if( bGDALInitialized )
+    {
+        msAcquireLock( TLOCK_GDAL );
+
+        GDALDestroyDriverManager();
+
+        msReleaseLock( TLOCK_GDAL );
+
+        bGDALInitialized = 0;
+    }
+}
+
 
 /************************************************************************/
 /*                          msSaveImageGDAL()                           */
@@ -112,7 +134,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     outputFormatObj *format = image->format;
     GDALDataType eDataType = GDT_Byte;
 
-    InitializeGDAL();
+    msGDALInitialize();
 
 /* -------------------------------------------------------------------- */
 /*      We will need to write the output to a temporary file and        */
@@ -411,7 +433,7 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
 {
     GDALDriverH hDriver; 
 
-    InitializeGDAL();
+    msGDALInitialize();
 
 /* -------------------------------------------------------------------- */
 /*      check that this driver exists.  Note visiting drivers should    */
@@ -519,5 +541,11 @@ char *msProjectionObjToWKT( projectionObj *projection )
     
     return pszWKT;
 }
+
+#else
+
+void msGDALInitialize( void ) {}
+void msGDALCleanup(void) {}
+
 
 #endif /* def USE_GDAL */
