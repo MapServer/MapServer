@@ -17,6 +17,8 @@ int msyyfiletype = MS_FILE_DEFAULT;
 
 int msyystate=0;
 char *msyystring=NULL;
+
+int msyyreturncomments = 0;
 %}
 
 %s OBJECT_STRING
@@ -31,18 +33,21 @@ char *msyystring=NULL;
          BEGIN(OBJECT_STRING);         
          msyy_scan_string(msyystring);
          msyystate=0;
+         msyyreturncomments=0; 
          break;
        case(2):
          BEGIN(VALUE_STRING);
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyystate=0;
+         msyyreturncomments=0; 
          break;
        case(3):
          BEGIN(INITIAL);
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyystate=0;
          msyystring=NULL;
+         msyyreturncomments=0; 
          return(0);
          break;
        case(4):
@@ -50,11 +55,20 @@ char *msyystring=NULL;
          msyy_delete_buffer(YY_CURRENT_BUFFER);
          msyy_scan_string(msyystring);
          msyystate=0;
+         msyyreturncomments=0; 
          break;
        case(5):
          BEGIN(INITIAL);        
          msyystate=0;
          msyystring=NULL;
+         msyyreturncomments=0; 
+         return(0);
+         break;
+       case(6):
+         BEGIN(INITIAL);        
+         msyystate=0;
+         msyystring=NULL;
+         msyyreturncomments=1;  /* Return comments in tokenizer mode */
          return(0);
          break;
        default:
@@ -63,7 +77,7 @@ char *msyystring=NULL;
 
 <INITIAL,VALUE_STRING,EXPRESSION_STRING>[ \t\r]+             ;
 
-<INITIAL>#.*                                               ;
+<INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
 
 <OBJECT_STRING>_+                                          ;
 
