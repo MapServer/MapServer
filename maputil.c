@@ -87,7 +87,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
   case(MS_EXPRESSION):
     tmpstr = strdup(expression->string);
 
-    for(i=0; i<expression->numitems; i++)
+    for(i=0; i<expression->numitems; i++)      
       tmpstr = gsub(tmpstr, expression->items[i], items[expression->indexes[i]]);
 
     msyystate = 4; msyystring = tmpstr; // set lexer state to EXPRESSION_STRING

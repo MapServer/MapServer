@@ -292,7 +292,6 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 */
 void msLayerClose(layerObj *layer) 
 {
-
   // no need for items once the layer is closed
   layerFreeItemInfo(layer);
   if(layer->items) {
@@ -415,10 +414,15 @@ static int string2list(char **list, int *listsize, char *string)
   int i;
 
   for(i=0; i<(*listsize); i++)
-    if(strcmp(list[i], string) == 0) return(i);
+    if(strcmp(list[i], string) == 0) { 
+      printf("string2list (duplicate): %s %d\n", string, i);
+      return(i);
+    }
 
   list[i] = strdup(string);
   (*listsize)++;
+
+  printf("string2list: %s %d\n", string, i);
 
   return(i);
 }
@@ -428,6 +432,7 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
   int i, j, l;
   char tmpstr1[1024], tmpstr2[1024];
   short in=MS_FALSE;
+  int tmpint;
 
   j = 0;
   l = strlen(expression->string);
@@ -441,12 +446,16 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
     if(expression->string[i] == ']') {
       in = MS_FALSE;
 
+      tmpint = expression->numitems;
+
       tmpstr2[j] = expression->string[i];
       tmpstr2[j+1] = '\0';
       string2list(expression->items, &(expression->numitems), tmpstr2);
 
-      tmpstr1[j-1] = '\0';
-      expression->indexes[expression->numitems - 1] = string2list(list, listsize, tmpstr1);
+      if(tmpint != expression->numitems) { // not a duplicate, so no need to calculate the index
+        tmpstr1[j-1] = '\0';
+        expression->indexes[expression->numitems - 1] = string2list(list, listsize, tmpstr1);
+      }
 
       j = 0; // reset
 
@@ -555,69 +564,58 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate,
     layer->items[0] = msSDELayerGetRowIDColumn(); // row id
     layer->items[1] = msSDELayerGetSpatialColumn(layer);
     layer->numitems = 2;
-  } 
-  else 
-  {
-      //if(nt == 0) return(MS_SUCCESS);
-      if (nt > 0)
-      {
-          layer->items = (char **)calloc(nt, sizeof(char *)); // should be more than enough space
-          if(!layer->items) {
-              msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-              return(MS_FAILURE);
-          }
-          layer->numitems = 0;
+  } else {
+    //if(nt == 0) return(MS_SUCCESS);
+    if(nt > 0) {
+      layer->items = (char **)calloc(nt, sizeof(char *)); // should be more than enough space
+      if(!layer->items) {
+        msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+        return(MS_FAILURE);
       }
+      layer->numitems = 0;
+    }
   }
 
-  if (nt > 0)
-  {
-      if(classify && layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
-      if(classify && layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
-      if(annotate && layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
-      if(annotate && layer->labelsizeitem) layer->labelsizeitemindex = string2list(layer->items, &(layer->numitems), layer->labelsizeitem);
-      if(annotate && layer->labelangleitem) layer->labelangleitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
+  if(nt > 0) {
+    if(classify && layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
+    if(classify && layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
+    if(annotate && layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
+    if(annotate && layer->labelsizeitem) layer->labelsizeitemindex = string2list(layer->items, &(layer->numitems), layer->labelsizeitem);
+    if(annotate && layer->labelangleitem) layer->labelangleitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
   
-      if(classify && layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));
+    if(classify && layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));
 
-      for(i=0; i<layer->numclasses; i++) {
-          if(classify && layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
-          if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].text));
-      }
+    for(i=0; i<layer->numclasses; i++) {
+      if(classify && layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
+      if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].text));
+    }
   }
 
-  if (metadata)
-  {
-      char **tokens;
-      int n = 0;
-      int j;
-      int bFound = 0;
-      tokens = split(metadata, ',', &n);
-      if (tokens)
-      {
-          for (i=0; i<n; i++)
-          {
-              bFound = 0;
-              for (j=0; j<layer->numitems; j++)
-              {
-                  if (strcmp(tokens[i], layer->items[j]) == 0)
-                  {
-                      bFound = 1;
-                      break;
-                  }
-              }
-              if (!bFound)
-              {
-                  layer->numitems++;
-                  layer->items = 
-                      (char **)realloc(layer->items, 
-                                       sizeof(char *)*(layer->numitems));
-                  layer->items[layer->numitems-1] = strdup(tokens[i]);
-                  
-              }
+  if(metadata) {
+    char **tokens;
+    int n = 0;
+    int j;
+    int bFound = 0;
+      
+    tokens = split(metadata, ',', &n);
+    if(tokens) {
+      for(i=0; i<n; i++) {
+        bFound = 0;
+        for(j=0; j<layer->numitems; j++) {
+          if(strcmp(tokens[i], layer->items[j]) == 0) {
+            bFound = 1;
+            break;
           }
-          msFreeCharArray(tokens, n);
+        }
+              
+        if(!bFound) {
+          layer->numitems++;
+          layer->items =  (char **)realloc(layer->items, sizeof(char *)*(layer->numitems));
+          layer->items[layer->numitems-1] = strdup(tokens[i]);
+        }
       }
+      msFreeCharArray(tokens, n);
+    }
   }
 
   // populate the iteminfo array

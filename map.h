@@ -91,7 +91,7 @@ extern "C" {
 #define MS_URL_LENGTH 1024
 #define MS_MAXPATHLEN 1024
 
-#define MS_MAXIMGSIZE 1024
+#define MS_MAXIMGSIZE 2048
 
 #define MS_MAXCLASSES 50
 #define MS_MAXSTYLES 5
