@@ -896,13 +896,7 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     return;
     break;
   case(MS_SYMBOL_CARTOLINE):
-    /* Single line */
-    if (size == 1) {
-      bc = gdTransparent;
-      break;
-    } else {
-      msImageCartographicPolyline(img, p, fc, size, symbol->linecap, symbol->linejoin, symbol->linejoinmaxsize);
-    }
+    msImageCartographicPolyline(img, p, style, symbol, fc, size, scalefactor);
     return;
     break;
   case(MS_SYMBOL_ELLIPSE):

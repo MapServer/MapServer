@@ -1012,7 +1012,7 @@ void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize);
 void msImageScanline(gdImagePtr img, int x1, int x2, int y, int c);
 void msImageFilledCircle(gdImagePtr im, pointObj *p, int r, int c);
 void msImageFilledPolygon(gdImagePtr img, shapeObj *p, int c);
-void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, int c, double sz, int captype, int jointype, double joinmaxsize);
+void msImageCartographicPolyline(gdImagePtr im, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor);
 int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angle, double *length);
 int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 int msAddLine(shapeObj *p, lineObj *new_line);
