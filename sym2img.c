@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     }
   }
 
- if((stream = fopen(argv[3],"wb")) == NULL) { /* open the file */
+ if((stream = fopen(argv[2],"wb")) == NULL) { /* open the file */
     fprintf(stderr, "Unable to open output file: %s\n", argv[2]);
     exit(0);
   }
