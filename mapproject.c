@@ -9,6 +9,8 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 
   if( in && in->proj && out && out->proj )
   {
+      double	z = 0.0;
+
       if( pj_is_latlong(in->proj) )
       {
           point->x *= DEG_TO_RAD;
@@ -16,7 +18,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
       }
 
       error = pj_transform( in->proj, out->proj, 1, 0, 
-                            &(point->x), &(point->y), NULL );
+                            &(point->x), &(point->y), &z );
 
       if( error )
           return MS_FAILURE;
@@ -183,7 +185,7 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
   int i, be_careful = 0;
 
   if( be_careful )
-      be_careful = pj_is_latlong(out->proj);
+      be_careful = out->proj != NULL && pj_is_latlong(out->proj);
 
   if( be_careful )
   {
