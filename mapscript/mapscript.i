@@ -769,11 +769,30 @@ memory.") const char * {
 
   int addFeature(shapeObj *shape) {    
     self->connectiontype = MS_INLINE; // set explicitly
-    
     if(insertFeatureList(&(self->features), shape) == NULL) 
       return MS_FAILURE;
-
     return MS_SUCCESS;
+  }
+
+  /*%newobject removeFeature;
+  shapeObj *removeFeature(int featureindex) {
+      return msLayerRemoveInlineFeature(self, featureindex);
+  }
+  */
+
+  /*
+  Returns the number of inline feature of a layer
+  */
+  int getNumFeatures() {
+      return msLayerGetNumFeatures(self);
+  }
+
+  %newobject getExtent;
+  rectObj *getExtent() {
+      rectObj *extent;
+      extent = (rectObj *) malloc(sizeof(rectObj));
+      msLayerGetExtent(self, extent);
+      return extent;
   }
 
   char *getMetaData(char *name) {

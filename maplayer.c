@@ -364,8 +364,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPGetShape(layer, shape, tile, record));
   case(MS_INLINE):
-    msSetError(MS_MISCERR, "Cannot retrieve inline shapes randomly.", "msLayerGetShape()");
-    return(MS_FAILURE);
+    return msINLINELayerGetShape(layer, shape, record);
+    //msSetError(MS_MISCERR, "Cannot retrieve inline shapes randomly.", "msLayerGetShape()");
+    //return(MS_FAILURE);
     break;
   case(MS_OGR):
   case(MS_WFS):
@@ -885,3 +886,92 @@ int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, lon
 
   return(MS_FAILURE);
 }
+
+/* Author: Cristoph Spoerri and Sean Gillies */
+int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex) {
+    int i=0;
+    featureListNodeObjPtr current;
+
+    current = layer->features;
+    while (current!=NULL && i!=shapeindex) {
+        i++;
+        current = current->next;
+    }
+    if (current == NULL) {
+        msSetError(MS_SHPERR, "No inline feature with this index.",
+                   "msINLINELayerGetShape()");
+        return MS_FAILURE;
+    } 
+    
+    if (msCopyShape(&(current->shape), shape) != MS_SUCCESS) {
+        msSetError(MS_SHPERR, "Cannot retrieve inline shape. There some problem with the shape", "msLayerGetShape()");
+        return MS_FAILURE;
+    }
+    return MS_SUCCESS;
+}
+
+/* Code is not safe, will fix this before next release - see issue 562
+shapeObj *msLayerRemoveInlineFeature(layerObj *layer, int shapeindex) {
+    int i = 1;
+	featureListNodeObjPtr current, next;
+    shapeObj *shape;
+
+    if (layer->connectiontype != MS_INLINE) {
+	    msSetError(MS_SHPERR, "Feature can only be removed from inline layers.",
+                              "msLayerRemoveInlineFeature()");
+	    return NULL;
+	}
+	if (shapeindex < 0 ) {
+	    msSetError(MS_SHPERR, "Invalid index: %d",
+                              "msLayerRemoveInlineFeature()", shapeindex);
+	    return NULL;
+	}
+
+	current = layer->features;
+	if (shapeindex == 0) {
+		// if just the first shape is remove we don't have to worry
+        // about the rest
+		//layer->features = current->next;
+        msCopyShape(&(current->shape), shape);
+		freeFeatureList(current);
+        //msFreeShape(&(current->shape));
+		//msFree(current);
+		return shape;
+	} else {
+		while (current != NULL) {
+			if (i == shapeindex) {
+                msCopyShape(&(current->shape), shape);
+				next = current->next;
+				current->next = next->next;
+				msFreeShape(&(next->shape));
+				msFree(next);
+				return shape;
+			}
+			i++;
+		}
+	}
+	msSetError(MS_SHPERR, "Index was not found.", "msLayerRemoveShape()");
+	    return NULL;
+}
+*/
+
+/*
+Returns the number of inline feature of a layer
+*/
+int msLayerGetNumFeatures(layerObj *layer) {
+    int i = 0;
+    featureListNodeObjPtr current;
+    if (layer->connectiontype==MS_INLINE) {
+        current = layer->features;
+        while (current!=NULL) {
+            i++;
+            current = current->next;
+        }
+    }
+    else {
+        msSetError(MS_SHPERR, "Not an inline layer", "msLayerGetNumFeatures()");
+        return MS_FAILURE;
+    }
+    return i;
+}
+

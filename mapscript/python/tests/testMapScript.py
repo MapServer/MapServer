@@ -29,17 +29,17 @@ class LayerOrderTestCase(unittest.TestCase):
         self.mapobj1 = None
     def testGetLayerOrder(self):
         order = self.mapobj1.getLayerOrder()
-        assert order == tuple(range(3)), order
+        assert order == tuple(range(4)), order
     def testPromoteLayer1(self):
         self.mapobj1.getLayer(1).promote()
         order = self.mapobj1.getLayerOrder()
-        assert order == (0, 2, 1), order
+        assert order == (0, 2, 1, 3), order
     def testDemoteLayer1(self):
         self.mapobj1.getLayer(1).demote()
         order = self.mapobj1.getLayerOrder()
-        assert order == (1, 0, 2), order
+        assert order == (1, 0, 2, 3), order
     def testSetLayerOrder(self):
-        ord = (1, 0, 2)
+        ord = (1, 0, 2, 3)
         self.mapobj1.setLayerOrder(ord)
         order = self.mapobj1.getLayerOrder()
         assert order == ord, order
@@ -52,14 +52,14 @@ class RemoveLayerTestCase(unittest.TestCase):
         self.mapobj1 = None
     def testRemoveLayer1NumLayers(self):
         self.mapobj1.removeLayer(0)
-        assert self.mapobj1.numlayers == 2
+        assert self.mapobj1.numlayers == 3
     def testRemoveLayer1LayerName(self):
         l2name = self.mapobj1.getLayer(1).name
         self.mapobj1.removeLayer(0)
         assert self.mapobj1.getLayer(0).name == l2name
     def testRemoveLayer2NumLayers(self):
         self.mapobj1.removeLayer(1)
-        assert self.mapobj1.numlayers == 2
+        assert self.mapobj1.numlayers == 3
     def testRemoveLayer2LayerName(self):
         l1name = self.mapobj1.getLayer(0).name
         self.mapobj1.removeLayer(1)
@@ -604,6 +604,43 @@ class NewStylesTestCase(unittest.TestCase):
         class0 = p_layer.getClass(0)
         new_style = styleObj()
         self.assertRaises(MapServerChildError, class0.insertStyle, new_style, 6)
+
+class InlineFeatureTestCase(unittest.TestCase):
+    """tests for issue http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=562"""
+    def setUp(self):
+        self.mapobj1 = mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testAddPointFeature(self):
+        inline_layer = self.mapobj1.getLayerByName('INLINE')
+        p = pointObj(0.2, 51.5)
+        l = lineObj()
+        l.add(p)
+        shape = shapeObj(inline_layer.type)
+        shape.add(l)
+        inline_layer.addFeature(shape)
+        msimg = self.mapobj1.draw()
+        filename = 'testAddPointFeature.png'
+        msimg.save(filename)
+    def testGetShape(self):
+        inline_layer = self.mapobj1.getLayerByName('INLINE')
+        s = shapeObj(inline_layer.type)
+        inline_layer.open()
+        inline_layer.getShape(s, 0, 0)
+        l = s.get(0)
+        p = l.get(0)
+        assert int(p.x * 10) == -2
+        assert int(p.y * 10) == 515
+    def testGetNumFeatures(self):
+        inline_layer = self.mapobj1.getLayerByName('INLINE')
+        assert inline_layer.getNumFeatures() == 1
+    #def testRemoveFeature(self):
+    #    inline_layer = self.mapobj1.getLayerByName('INLINE')
+    #    s = inline_layer.removeFeature(0)
+    #    l = s.get(0)
+    #    p = l.get(0)
+    #    assert int(p.x * 10) == -2
+    #    assert int(p.y * 10) == 515
 
 if __name__ == '__main__':
     unittest.main()

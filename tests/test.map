@@ -89,5 +89,22 @@ MAP
       END
     END
   END
-  
+ 
+  LAYER
+    NAME "INLINE"
+    TYPE POINT
+    STATUS DEFAULT
+    FEATURE
+      POINTS -0.2 51.5 END
+    END
+    CLASS
+      NAME "0"
+      STYLE
+        COLOR 0 0 0
+        SYMBOL 1
+        SIZE 3
+      END
+    END
+  END
+
 END

@@ -1101,6 +1101,11 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 int msLayerGetExtent(layerObj *layer, rectObj *extent);
 int msLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 
+// maplayer.c
+int msINLINELayerGetShape(layerObj *layer, shapeObj *shape, int shapeindex);
+shapeObj *msLayerRemoveInlineFeature(layerObj *layer, int shapeindex);
+int msLayerGetNumFeatures(layerObj *layer);
+
 int msTiledSHPOpenFile(layerObj *layer); // in mapshape.c
 int msTiledSHPWhichShapes(layerObj *layer, rectObj rect);
 int msTiledSHPNextShape(layerObj *layer, shapeObj *shape);
