@@ -870,7 +870,7 @@ memory.") const char * {
   }
 
   int drawQuery(mapObj *map, imageObj *image) {
-    return msDrawLayer(map, self, image);    
+    return msDrawQueryLayer(map, self, image);    
   }
 
   int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) {
