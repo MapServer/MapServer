@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.58  2001/10/17 13:14:50  assefa
+ * Change setProjection to be able to set the map units and extents.
+ *
  * Revision 1.57  2001/10/12 00:34:26  assefa
  * Add utility function getAllGroupNames and getAllLayerNames.
  *
@@ -1126,11 +1129,18 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
 {
-    mapObj *self;
-    pval   *pProjString;
-    pval   *pThis;
-    int     nStatus = 0;
-
+    mapObj              *self;
+    pval                *pProjString, *pSetUnitsAndExtents;
+    pval                *pThis;
+    int                 nStatus = 0;
+    int                 nUnits =   MS_METERS;  
+    projectionObj       in;
+    projectionObj       out;
+    rectObj             sRect;
+    int                 bSetNewExtents = 0; 
+    int                 bSetUnitsAndExtents = 0;
+    int                 nArgs = ARG_COUNT(ht);
+    
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -1141,18 +1151,48 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
+ 
     if (pThis == NULL ||
-        getParameters(ht, 1, &pProjString) != SUCCESS)
+        (nArgs != 1 && nArgs != 2))
+    {
+        WRONG_PARAM_COUNT;
+    }
+        
+    if (getParameters(ht, nArgs, &pProjString, &pSetUnitsAndExtents) != SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
 
     convert_to_string(pProjString);
+    if (nArgs == 2)
+    {
+        convert_to_long(pSetUnitsAndExtents);
+        bSetUnitsAndExtents = pSetUnitsAndExtents->value.lval;
+    }
 
+    
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
     if (self == NULL)
     {
         RETURN_LONG(-1);
+    }
+
+    msInitProjection(&in);
+    in = self->projection;
+    msInitProjection(&out);
+    msLoadProjectionString(&(out),  pProjString->value.str.val);
+    sRect.minx = self->extent.minx;
+    sRect.miny = self->extent.miny;
+    sRect.maxx = self->extent.maxx;
+    sRect.maxy = self->extent.maxy;
+    
+    if (in.proj!= NULL && out.proj!=NULL)
+    {
+        if (msProjectionsDiffer(&in, &out))
+        {
+            if (msProjectRect(&in, &out, &sRect) == MS_SUCCESS)
+              bSetNewExtents =1;
+        }
     }
 
     if (self == NULL || 
@@ -1160,6 +1200,28 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
                                         pProjString->value.str.val)) == -1)
         _phpms_report_mapserver_error(E_ERROR);
 
+    
+    nUnits = GetMapserverUnitUsingProj(&(self->projection));
+    if (nUnits != -1 && bSetUnitsAndExtents)
+    {
+/* -------------------------------------------------------------------- 
+      set the units and map extents.                                  
+ -------------------------------------------------------------------- */
+        self->units = nUnits;
+
+        if (bSetNewExtents)
+        {
+            self->extent.minx =  sRect.minx;
+            self->extent.miny = sRect.miny;
+            self->extent.maxx = sRect.maxx;
+            self->extent.maxy = sRect.maxy;
+
+            self->cellsize = msAdjustExtent(&(self->extent), self->width, 
+                                            self->height); 
+            msCalculateScale(self->extent, self->units, self->width, self->height, 
+                             self->resolution, &(self->scale));
+        }
+    }   
     RETURN_LONG(nStatus);
 }
 /* }}} */
@@ -1690,7 +1752,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
 
 /* -------------------------------------------------------------------- */
 /*      if the min and max scale are set in the map file, we will       */
-/*      use them to test before settting extents.                       */
+/*      use them to test before setting extents.                        */
 /* -------------------------------------------------------------------- */
     if (msCalculateScale(oNewGeorefExt, self->units, 
                          self->width, self->height, 

@@ -277,9 +277,12 @@ and the MapServer Map File documentation at:
    int save(string filename)
         Save current map object state to a file. Returns -1 on error.
 
-   int setProjection(string proj_params)
+   int setProjection(string proj_params, boolean bSetUnitsAndExtents)
         Set map projection and coordinate system.  Parameters are given as 
         a single string of comma-delimited PROJ.4 parameters.
+        The argument : bSetUnitsAndExtents is used to automatically update
+        the map units and extents based on the new projection. Possible 
+        values are MS_TRUE and MS_FALSE. By defualt it is set at MS_FALSE
 
    int getMetaData(string name)
         Fetch metadata entry by name (stored in the WEB object in the map
