@@ -343,7 +343,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
 
 #ifdef USE_PROJ
     if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-      msProjectPoint(&layer->projection, &ap->projection, point);
+      msProjectPoint(&layer->projection, &map->projection, point);
 #endif
 
   switch(layer->type) {      

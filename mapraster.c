@@ -1475,7 +1475,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     searchrect = map->extent;
 #ifdef USE_PROJ
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-      msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+      msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
 #endif
     status = msSHPWhichShapes(&tilefile, searchrect);
     if(status != MS_SUCCESS) 
@@ -1489,7 +1489,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     if(layer->tileindex) {
       if(!msGetBit(tilefile.status,t)) continue; /* on to next tile */
       if(layer->data == NULL) /* assume whole filename is in attribute field */
-	filename = msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex);
+	filename = (char*)msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex);
       else {  
 	sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex) , layer->data);
 	filename = tilename;
@@ -1593,7 +1593,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         if( hDS != NULL )
         {
             if (layer->projection.numargs > 0 && 
-                EQUAL(layer->projection.projargs[0], "auto"))
+                EQUAL(layer->projection.args[0], "auto"))
             {
                 const char *pszWKT;
 

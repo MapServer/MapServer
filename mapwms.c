@@ -254,7 +254,7 @@ const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata)
   static char *value;
 
   if (proj && proj->numargs > 0 && 
-      (value = strstr(proj->projargs[0], "init=epsg:")) != NULL &&
+      (value = strstr(proj->args[0], "init=epsg:")) != NULL &&
       strlen(value) < 20)
   {
     sprintf(epsgCode, "EPSG:%s", value+10);

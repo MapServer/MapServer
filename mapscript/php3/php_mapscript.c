@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.42  2001/04/03 23:16:19  dan
+ * Fixed args to calls to reprojection functions
+ *
  * Revision 1.41  2001/03/30 04:16:14  dan
  * Removed shapepath parameter to layer->getshape()
  *
@@ -110,7 +113,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Mar 29, 2001)"
+#define PHP3_MS_VERSION "(Apr 3, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -2924,7 +2927,7 @@ DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS)
         
         if (self->projection.proj != NULL)
         {
-            msProjectRect(self->projection.proj, NULL, &oGeorefExt);
+            msProjectRect(&(self->projection), NULL, &oGeorefExt);
         }
         
     }

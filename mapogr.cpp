@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.33  2001/04/03 23:16:19  dan
+ * Fixed args to calls to reprojection functions
+ *
  * Revision 1.32  2001/03/22 22:45:09  dan
  * Forgot to change one instance of itemindexes to iteminfo
  *
@@ -595,7 +598,7 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
 int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
                                   projectionObj *proj)
 {
-  if (proj->numargs == 0  || !EQUAL(proj->projargs[0], "auto"))
+  if (proj->numargs == 0  || !EQUAL(proj->args[0], "auto"))
       return MS_SUCCESS;  // Nothing to do!
 
 #ifdef USE_PROJ
@@ -753,7 +756,7 @@ int msOGRLayerOpen(layerObj *layer)
  * ------------------------------------------------------------------ */
 #ifdef USE_PROJ
   if (layer->projection.numargs > 0 && 
-      EQUAL(layer->projection.projargs[0], "auto"))
+      EQUAL(layer->projection.args[0], "auto"))
   {
       OGRSpatialReference *poSRS = poLayer->GetSpatialRef();
 

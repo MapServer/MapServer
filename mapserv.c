@@ -306,8 +306,8 @@ void loadForm()
 	if(Map->projection.proj && !pj_is_latlong(Map->projection.proj)
            && (Map->extent.minx >= -180.0 && Map->extent.minx <= 180.0) 
            && (Map->extent.miny >= -90.0 && Map->extent.miny <= 90.0))
-	  msProjectRect(Map->latlon.proj, 
-                        Map->projection.proj, 
+	  msProjectRect(&(Map->latlon), 
+                        &(Map->projection), 
                         &(Map->extent)); // extent is a in lat/lon
 #endif
 
@@ -365,8 +365,8 @@ void loadForm()
 	if(Map->projection.proj && !pj_is_latlong(Map->projection.proj)
            && (MapPnt.x >= -180.0 && MapPnt.x <= 180.0) 
            && (MapPnt.y >= -90.0 && MapPnt.y <= 90.0))
-	  msProjectPoint(Map->projection.proj, 
-                         Map->projection.proj, 
+	  msProjectPoint(&(Map->projection), 
+                         &(Map->projection), 
                          &MapPnt); // point is a in lat/lon
 #endif
 
@@ -399,8 +399,8 @@ void loadForm()
 	if(Map->projection.proj && !pj_is_latlong(Map->projection.proj)
            && (line.point[j].x >= -180.0 && line.point[j].x <= 180.0) 
            && (line.point[j].y >= -90.0 && line.point[j].y <= 90.0))
-	  msProjectPoint(Map->latlon.proj, 
-                         Map->projection.proj, 
+	  msProjectPoint(&(Map->latlon), 
+                         &(Map->projection), 
                          &line.point[j]); // point is a in lat/lon
 #endif
       }
@@ -977,7 +977,7 @@ void returnCoordinate()
 #ifdef USE_PROJ
   if(Map->projection.proj != NULL && !pj_is_latlong(Map->projection.proj) ) {
     pointObj p=MapPnt;
-    msProjectPoint(Map->projection.proj, Map->latlon.proj, &p);
+    msProjectPoint(&(Map->projection), &(Map->latlon), &p);
     sprintf(ms_error.message, "%s Computed lat/lon value is (%g, %g).\n", ms_error.message, p.x, p.y);
   }
 #endif
@@ -1135,8 +1135,8 @@ char *processLine(char *instr, int mode)
      && !pj_is_latlong(Map->projection.proj) ) {
     llextent=Map->extent;
     llpoint=MapPnt;
-    msProjectRect(Map->projection.proj, Map->latlon.proj, &llextent);
-    msProjectPoint(Map->projection.proj, Map->latlon.proj, &llpoint);
+    msProjectRect(&(Map->projection), &(Map->latlon), &llextent);
+    msProjectPoint(&(Map->projection), &(Map->latlon), &llpoint);
 
     sprintf(repstr, "%f", llpoint.x);
     outstr = gsub(outstr, "[maplon]", repstr);

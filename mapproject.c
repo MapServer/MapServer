@@ -6,7 +6,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 #ifdef USE_PROJ
   projUV p;
 
-  if( in->proj && out->proj )
+  if( in && in->proj && out && out->proj )
   {
       if( pj_is_latlong(in->proj) )
       {
@@ -27,12 +27,12 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
       p.u = point->x;
       p.v = point->y;
 
-      if(in->proj==NULL) { /* input coordinates are lat/lon */
+      if(in==NULL || in->proj==NULL) { /* input coordinates are lat/lon */
           p.u *= DEG_TO_RAD; /* convert to radians */
           p.v *= DEG_TO_RAD;  
           p = pj_fwd(p, out->proj);
       } else {
-          if(out->proj==NULL) { /* output coordinates are lat/lon */
+          if(out==NULL || out->proj==NULL) { /* output coordinates are lat/lon */
               p = pj_inv(p, in->proj);
               p.u *= RAD_TO_DEG; /* convert to decimal degrees */
               p.v *= RAD_TO_DEG;
@@ -68,7 +68,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 
   prj_point.x = rect->minx;
   prj_point.y = rect->miny;
-  msProjectPoint(in->proj, out->proj, &prj_point);
+  msProjectPoint(in, out, &prj_point);
   prj_rect.minx = prj_rect.maxx = prj_point.x;
   prj_rect.miny = prj_rect.maxy = prj_point.y;
 
@@ -76,7 +76,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
     for(x=rect->minx+dx; x<=rect->maxx; x+=dx) {
       prj_point.x = x;
       prj_point.y = rect->miny;
-      msProjectPoint(in->proj, out->proj, &prj_point);
+      msProjectPoint(in, out, &prj_point);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
       prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
@@ -84,7 +84,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
       
       prj_point.x = x;
       prj_point.y = rect->maxy;
-      msProjectPoint(in->proj, out->proj, &prj_point);
+      msProjectPoint(in, out, &prj_point);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
       prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
@@ -96,7 +96,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
     for(y=rect->miny+dy; y<=rect->maxy; y+=dy) {
       prj_point.y = y;
       prj_point.x = rect->minx;    
-      msProjectPoint(in->proj, out->proj, &prj_point);
+      msProjectPoint(in, out, &prj_point);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
       prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
@@ -104,7 +104,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
       
       prj_point.x = rect->maxx;
       prj_point.y = y;
-      msProjectPoint(in->proj, out->proj, &prj_point);
+      msProjectPoint(in, out, &prj_point);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
       prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
@@ -131,7 +131,7 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 
   for(i=0; i<shape->numlines; i++)
     for(j=0; j<shape->line[i].numpoints; j++)
-      msProjectPoint(in->proj, out->proj, &(shape->line[i].point[j]));
+      msProjectPoint(in, out, &(shape->line[i].point[j]));
 
   return(MS_SUCCESS);
 #else
@@ -146,7 +146,7 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
   int i;
   
   for(i=0; i<line->numpoints; i++)
-    msProjectPoint(in->proj, out->proj, &(line->point[i]));
+    msProjectPoint(in, out, &(line->point[i]));
 
   return(MS_SUCCESS);
 #else
