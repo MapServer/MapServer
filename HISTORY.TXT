@@ -13,8 +13,8 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
-Version 4.2 ???
-------------------------------
+Version 4.2.0 (2004-05-25)
+--------------------------
 
 - Postgis: added "WHERE false" to query that looks up the schema for item
   queries.  This should greatly improve performance for complex queries.
@@ -25,6 +25,7 @@ Version 4.2 ???
 
 - mapresample.c: Ensure background value is properly initialized in 
   case of rgb or rgba resampled rasters.
+
 
 Version 4.2-beta3 (2004-05-14)
 ------------------------------
