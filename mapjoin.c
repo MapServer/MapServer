@@ -82,6 +82,10 @@ int msDBFJoinConnect(layerObj *layer, joinObj *join)
     return(MS_FAILURE);
   }
 
+  // initialize any members that won't get set later on in this function
+  joininfo->target = NULL;
+  joininto->nextrecord = 0;
+
   join->joininfo = joininfo;
 
   // open the XBase file
@@ -121,10 +125,20 @@ int msDBFJoinConnect(layerObj *layer, joinObj *join)
 
 int msDBFJoinPrepare(joinObj *join, shapeObj *shape) 
 {
-  msDBFJoinInfo *joininfo = join->joininfo;
+  msDBFJoinInfo *joininfo = join->joininfo;  
 
   if(!joininfo) {
     msSetError(MS_JOINERR, "Join connection has not be created.", "msDBFJoinPrepare()"); 
+    return(MS_FAILURE);
+  }
+
+  if(!shape) {
+    msSetError(MS_JOINERR, "Shape to be joined is empty.", "msDBFJoinPrepare()"); 
+    return(MS_FAILURE);
+  }
+
+  if(!shape->values) {
+    msSetError(MS_JOINERR, "Shape to be joined has no attributes.", "msDBFJoinPrepare()"); 
     return(MS_FAILURE);
   }
 
@@ -132,7 +146,7 @@ int msDBFJoinPrepare(joinObj *join, shapeObj *shape)
 
   if(joininfo->target) free(joininfo->target); // clear last target
   joininfo->target = strdup(shape->values[joininfo->fromindex]);
-  
+
   return(MS_SUCCESS);
 }
 
@@ -182,9 +196,11 @@ int msDBFJoinClose(joinObj *join)
   msDBFJoinInfo *joininfo = join->joininfo;
 
   if(!joininfo) return(MS_SUCCESS); // already closed
+
   msDBFClose(joininfo->hDBF);
   if(joininfo->target) free(joininfo->target);
   free(joininfo);
   joininfo = NULL;
+
   return(MS_SUCCESS);
 }

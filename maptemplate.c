@@ -2503,9 +2503,11 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
 
     // open any necessary JOINs here
     if(lp->numjoins > 0) {
-      for(k=0; k<lp->numjoins; k++)
-	msJoinConnect(lp, &(lp->joins[k]));
-    }
+      for(k=0; k<lp->numjoins; k++) {
+	status = msJoinConnect(lp, &(lp->joins[k]));
+	if(status != MS_SUCCESS) return status;        
+      }
+    }  
 
     msObj->LRN = 1; // layer result number
     for(j=0; j<lp->resultcache->numresults; j++) {
