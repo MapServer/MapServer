@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2002/11/14 18:46:14  julien
+ * Include the ifdef to compile without the USE_WMS_LYR tag
+ *
  * Revision 1.13  2002/11/13 16:54:23  julien
  * Change the search of the header to be flexible.
  *
@@ -134,6 +137,8 @@ char * msGetMapContextFileText(char *filename)
 }
 
 
+#if defined(USE_WMS_LYR)
+
 /*
 **msGetMapContextXMLHashValue()
 **
@@ -229,6 +234,7 @@ int msGetMapContextXMLFloatValue( CPLXMLNode *psRoot, char *pszXMLPath,
   return MS_SUCCESS;
 }
 
+#endif
 
 /* msLoadMapContext()
 **
