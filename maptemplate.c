@@ -430,7 +430,7 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr)
    // find the begining of tag
    pszImgTag = strstr(*pszInstr, "[leg_icon");
    
-   if (pszImgTag) {
+   while (pszImgTag) {
 
       if (getTagArgs("leg_icon", pszImgTag, &myHashTable) != MS_SUCCESS)
         return MS_FAILURE;
@@ -498,9 +498,14 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr)
             
          free(pszFullImgFname);
          free(pszImgFname);
+
+         // find the begining of tag
+         pszImgTag = strstr(*pszInstr, "[leg_icon");
       }
-      else
-        free(pszImgFname);
+      else {
+         free(pszImgFname);
+         pszImgTag = NULL;
+      }
    }
 
    return MS_SUCCESS;
