@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.43  2004/01/24 09:50:51  frank
+ * Check pj_transform() return values for HUGE_VAL, and handle cases where
+ * not all points transform successfully, but some do.
+ *
  * Revision 1.42  2003/02/28 20:58:41  frank
  * added preliminary support for the COLOR_MATCH_THRESHOLD
  *
@@ -526,6 +530,12 @@ int msProjTransformer( void *pCBData, int nPoints,
         }
         free( z );
     }
+    
+    for( i = 0; i < nPoints; i++ )
+    {
+        if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
+            panSuccess[i] = 0;
+    }
 
 /* -------------------------------------------------------------------- */
 /*      Transform back to degrees if source is geographic.              */
@@ -534,8 +544,11 @@ int msProjTransformer( void *pCBData, int nPoints,
     {
         for( i = 0; i < nPoints; i++ )
         {
-            x[i] = x[i] * RAD_TO_DEG;
-            y[i] = y[i] * RAD_TO_DEG;
+            if( panSuccess[i] )
+            {
+                x[i] = x[i] * RAD_TO_DEG;
+                y[i] = y[i] * RAD_TO_DEG;
+            }
         }
     }
 
@@ -544,13 +557,21 @@ int msProjTransformer( void *pCBData, int nPoints,
 /* -------------------------------------------------------------------- */
     for( i = 0; i < nPoints; i++ )
     {
-        x_out = psPTInfo->adfInvSrcGeoTransform[0] 
-            + psPTInfo->adfInvSrcGeoTransform[1] * x[i]
-            + psPTInfo->adfInvSrcGeoTransform[2] * y[i];
-        y[i] = psPTInfo->adfInvSrcGeoTransform[3] 
-            + psPTInfo->adfInvSrcGeoTransform[4] * x[i]
-            + psPTInfo->adfInvSrcGeoTransform[5] * y[i];
-        x[i] = x_out;
+        if( panSuccess[i] )
+        {
+            x_out = psPTInfo->adfInvSrcGeoTransform[0] 
+                + psPTInfo->adfInvSrcGeoTransform[1] * x[i]
+                + psPTInfo->adfInvSrcGeoTransform[2] * y[i];
+            y[i] = psPTInfo->adfInvSrcGeoTransform[3] 
+                + psPTInfo->adfInvSrcGeoTransform[4] * x[i]
+                + psPTInfo->adfInvSrcGeoTransform[5] * y[i];
+            x[i] = x_out;
+        }
+        else
+        {
+            x[i] = -1;
+            y[i] = -1;
+        }
     }
 
     return 1;
@@ -638,7 +659,7 @@ static int msApproxTransformer( void *pCBData, int nPoints,
     bSuccess = 
         psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, 3, x2, y2, 
                                       anSuccess2 );
-    if( !bSuccess )
+    if( !bSuccess || !anSuccess2[0] || !anSuccess2[1] || !anSuccess2[2] )
         return psATInfo->pfnBaseTransformer( psATInfo->pBaseCBData, nPoints,
                                              x, y, panSuccess );
     
@@ -713,7 +734,7 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
 {
 #define EDGE_STEPS    10
 
-    int		i, nSamples = 0;
+    int		i, nSamples = 0, bOutInit = FALSE;
     double      dfRatio;
     double	x[EDGE_STEPS*4+4], y[EDGE_STEPS*4+4], z[EDGE_STEPS*4+4];
 
@@ -764,8 +785,11 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     {
         for( i = 0; i < nSamples; i++ )
         {
-            x[i] = x[i] * RAD_TO_DEG;
-            y[i] = y[i] * RAD_TO_DEG;
+            if( x[i] != HUGE_VAL && y[i] != HUGE_VAL )
+            {
+                x[i] = x[i] * RAD_TO_DEG;
+                y[i] = y[i] * RAD_TO_DEG;
+            }
         }
     }
 
@@ -774,6 +798,9 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     {
         double		x_out, y_out; 
 
+        if( x[i] == HUGE_VAL || y[i] == HUGE_VAL )
+            continue;
+
         x_out =      adfInvSrcGeoTransform[0]
             +   x[i]*adfInvSrcGeoTransform[1]
             +   y[i]*adfInvSrcGeoTransform[2];
@@ -781,10 +808,11 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
             +   x[i]*adfInvSrcGeoTransform[4]
             +   y[i]*adfInvSrcGeoTransform[5];
 
-        if( i == 0 )
+        if( !bOutInit )
         {
             psSrcExtent->minx = psSrcExtent->maxx = x_out;
             psSrcExtent->miny = psSrcExtent->maxy = y_out;
+            bOutInit = TRUE;
         }
         else
         {
@@ -794,6 +822,9 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
             psSrcExtent->maxy = MAX(psSrcExtent->maxy, y_out);
         }
     }
+
+    if( !bOutInit )
+        return MS_FALSE;
 
     return MS_TRUE;
 }
@@ -855,11 +886,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     adfDstGeoTransform[4] = 0.0;
     adfDstGeoTransform[5] = - map->cellsize;
 
-    if (GDALGetGeoTransform( hDS, adfSrcGeoTransform ) != CE_None
-        && GDALGetDescription(hDS) != NULL )
-    {
-        GDALReadWorldFile(GDALGetDescription(hDS), "wld", adfSrcGeoTransform);
-    }
+    msGetGDALGeoTransform( hDS, map, layer, adfSrcGeoTransform );
+
     nSrcXSize = GDALGetRasterXSize( hDS );
     nSrcYSize = GDALGetRasterYSize( hDS );
 
