@@ -353,8 +353,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
   if(layer->symbolscale > 0 && map->scale > 0) scalefactor = layer->symbolscale/map->scale;
 
   if(layer->sizeunits != MS_PIXELS) {
-    layer->class[c].sizescaled = layer->class[c].size * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
-    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
+    layer->class[c].sizescaled = layer->class[c].size * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]) / map->cellsize;
+    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]) / map->cellsize;
   } else {
     layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
     layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
@@ -449,8 +449,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   if(layer->symbolscale > 0 && map->scale > 0) scalefactor = layer->symbolscale/map->scale;
 
   if(layer->sizeunits != MS_PIXELS) {
-    layer->class[c].sizescaled = layer->class[c].size * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
-    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
+    layer->class[c].sizescaled = layer->class[c].size * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]) / map->cellsize;
+    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]) / map->cellsize;
   } else {
     layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
     layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
@@ -487,7 +487,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     if(layer->transform) {
       center.x = MS_MAP2IMAGE_X(center.x, map->extent.minx, map->cellsize);
       center.y = MS_MAP2IMAGE_Y(center.y, map->extent.maxy, map->cellsize);
-      r *= (inchesPerUnit[layer->units]/inchesPerUnit[map->units]);      
+      r *= (inchesPerUnit[layer->units]/inchesPerUnit[map->units])/map->cellsize;      
     }
 
     if(layer->class[c].color < 0)

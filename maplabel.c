@@ -29,7 +29,7 @@ static void class_cache(classObj *from, classObj *to)
   to->overlaysymbol = from->overlaysymbol;
 
   to->label = from->label; // this copies all non-pointers
-  if(from->label.font) to->label.font = strdup(from->label.font);  
+  if(from->label.font) to->label.font = strdup(from->label.font);
 }
 
 int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize)

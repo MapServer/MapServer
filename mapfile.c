@@ -973,6 +973,8 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
 
 static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
 {
+  if(label->size == -1) return; // there is no default label anymore
+
   fprintf(stream, "%sLABEL\n", tab);
   if(label->type == MS_BITMAP) {
     fprintf(stream, "  %sSIZE %s\n", tab, msBitmapFontSizes[label->size]);
@@ -2031,8 +2033,7 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if (layer->status == MS_DELETE)
       return;
 
-  fprintf(stream, "  LAYER\n");
-  for(i=0; i<layer->numclasses; i++) writeClass(map, &(layer->class[i]), stream);
+  fprintf(stream, "  LAYER\n");  
   if(layer->classitem) fprintf(stream, "    CLASSITEM \"%s\"\n", layer->classitem);
   if(layer->connection) {
     fprintf(stream, "    CONNECTION \"%s\"\n", layer->connection);
@@ -2049,12 +2050,6 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   }
   if(layer->data) fprintf(stream, "    DATA \"%s\"\n", layer->data);
   if(layer->dump) fprintf(stream, "    DUMP TRUE\n");
-
-  current = layer->features;
-  while(current != NULL) {
-    writeFeature(&(current->shape), stream);
-    current = current->next;
-  }
 
   if(layer->filter.string) {
     fprintf(stream, "      FILTER ");
@@ -2096,6 +2091,16 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
   fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
   fprintf(stream, "    UNITS %s\n", msUnits[layer->units]);
+
+  // write potentially multiply occuring features last
+  for(i=0; i<layer->numclasses; i++) writeClass(map, &(layer->class[i]), stream);
+
+  current = layer->features;
+  while(current != NULL) {
+    writeFeature(&(current->shape), stream);
+    current = current->next;
+  }
+
   fprintf(stream, "  END\n\n");
 }
 
