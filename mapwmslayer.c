@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.32  2002/10/28 23:07:38  dan
+ * Fixed crash in msDrawWMSLayerLow(): free(wldfile) not needed
+ *
  * Revision 1.31  2002/10/09 02:29:03  dan
  * Initial implementation of WFS client support.
  *
@@ -545,7 +548,6 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
                 status = MS_FAILURE;
 
             unlink(wldfile);
-            free(wldfile);
         }
         else
         {
