@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.1 (CVS)
 ------------------------
 
+- Modified configure scripts to be able to configure/build PHP MapScript
+  using an installed PHP instead of requiring the full source tree.
+
 - Added ability to combine multiple WMS connections to the same server 
   into a single request when the layers are adjacent and compatible. (bug 116)
 
