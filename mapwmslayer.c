@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.58  2004/02/13 15:28:56  assefa
+ * Use wms_sld_url to send sld request.
+ *
  * Revision 1.57  2004/02/11 20:45:38  assefa
  * When generating the SLD, generate only for the layer and not the whole map.
  *
@@ -202,7 +205,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     const char *pszSLD=NULL, *pszVersionKeyword=NULL;
     const char *pszSLDBody=NULL;
     char *pszSLDGenerated = NULL, *pszSLDBodyEnc=NULL;
-
+    char *pszSLDURLEnc= NULL, *pszSLDURL = NULL;
     int nLen;
 
     /* If lp->connection is not set then use wms_onlineresource metadata */
@@ -218,6 +221,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     pszStyleList =      msLookupHashTable(lp->metadata, "wms_stylelist");
     pszTime =           msLookupHashTable(lp->metadata, "wms_time");
     pszSLDBody =       msLookupHashTable(lp->metadata, "wms_sld_body");
+    pszSLDURL =       msLookupHashTable(lp->metadata, "wms_sld_url");
 
     if (pszOnlineResource==NULL || pszVersion==NULL || pszName==NULL)
     {
@@ -354,6 +358,12 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         }
 
     }
+    
+    if (pszSLDURL)
+    {
+        pszSLDURLEnc = msEncodeUrl(pszSLDURL);
+        nLen += strlen(pszSLDURLEnc)+5;
+    }
 
 
     pszURL = (char*)malloc((nLen+1)*sizeof(char*));
@@ -409,6 +419,11 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     if (pszSLDBodyEnc)
     {
         sprintf(pszURL + strlen(pszURL), "&SLD_BODY=%s", pszSLDBodyEnc);
+    }	
+
+    if (pszSLDURLEnc)
+    {
+        sprintf(pszURL + strlen(pszURL), "&SLD=%s", pszSLDURLEnc);
     }	
 
 
