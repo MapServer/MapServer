@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2004/06/14 17:34:22  frank
+ * added msTestConfigOption
+ *
  * Revision 1.3  2004/05/31 20:20:56  frank
  * ensure gdal.h is included for Config stuff
  *
@@ -160,6 +163,26 @@ void msSetConfigOption( mapObj *map, const char *key, const char *value)
     if( msLookupHashTable( map->configoptions, key ) != NULL )
         msRemoveHashTable( map->configoptions, key );
     msInsertHashTable( map->configoptions, key, value );
+}
+
+/************************************************************************/
+/*                         msTestConfigOption()                         */
+/************************************************************************/
+
+int msTestConfigOption( mapObj *map, const char *key, int default_result )
+
+{
+    const char *result = msGetConfigOption( map, key );
+
+    if( result == NULL )
+        return default_result;
+    
+    if( strcasecmp(result,"YES") == 0 
+        || strcasecmp(result,"ON") == 0 
+        || strcasecmp(result,"TRUE") == 0 )
+        return MS_TRUE;
+    else
+        MS_FALSE;
 }
 
 /************************************************************************/
