@@ -451,16 +451,18 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex)
         {
             // we do not need to promote if it is the first one.
             if (iCurrentIndex == 0)
-                return 0;
+                return MS_SUCCESS;
 
             map->layerorder[iCurrentIndex] =  
                 map->layerorder[iCurrentIndex-1];
             map->layerorder[iCurrentIndex-1] = nLayerIndex;
 
-            return 0;
+            return MS_SUCCESS;
         }
     }
-    return -1;
+    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveLayerUp()",
+               nLayerIndex);
+    return MS_FAILURE;
 }
 
 /*
@@ -485,16 +487,18 @@ int msMoveLayerDown(mapObj *map, int nLayerIndex)
         {
             // we do not need to demote if it is the last one.
             if (iCurrentIndex == map->numlayers-1)
-                return 0;
+                return MS_SUCCESS;
 
             map->layerorder[iCurrentIndex] =  
                 map->layerorder[iCurrentIndex+1];
             map->layerorder[iCurrentIndex+1] = nLayerIndex;
 
-            return 0;
+            return MS_SUCCESS;
         }
     }
-    return -1;
+    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveLayerDown()",
+               nLayerIndex);
+    return MS_FAILURE;
 }
 
 
@@ -567,6 +571,8 @@ int msMoveClassUp(layerObj *layer, int nClassIndex)
 
         return(MS_SUCCESS);
     }
+    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveClassUp()",
+               nClassIndex);
     return (MS_FAILURE);
 }
 
@@ -591,6 +597,8 @@ int msMoveClassDown(layerObj *layer, int nClassIndex)
 
         return(MS_SUCCESS);
     }
+    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveClassDown()",
+               nClassIndex);
     return (MS_FAILURE);
 }
 
@@ -615,6 +623,8 @@ int msMoveStyleUp(classObj *class, int nStyleIndex)
 
         return(MS_SUCCESS);
     }
+    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveStyleUp()",
+               nStyleIndex);
     return (MS_FAILURE);
 }
 
@@ -625,6 +635,7 @@ int msMoveStyleUp(classObj *class, int nStyleIndex)
 int msMoveStyleDown(classObj *class, int nStyleIndex)
 {
     styleObj *psTmpStyle = NULL;
+
     if (class && nStyleIndex < class->numstyles-1 && nStyleIndex >=0)
     {
         psTmpStyle = (styleObj *)malloc(sizeof(styleObj));
@@ -639,25 +650,89 @@ int msMoveStyleDown(classObj *class, int nStyleIndex)
 
         return(MS_SUCCESS);
     }
+    msSetError(MS_CHILDERR, "Invalid index: %d", "msMoveStyleDown()",
+               nStyleIndex);
     return (MS_FAILURE);
+}
+
+/* Moved here from mapscript.i 
+ *
+ * Returns the index at which the style was inserted
+ *
+ */
+int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
+    int i;
+    // Possible to add another style?
+    if (class->numstyles == MS_MAXSTYLES) {
+        msSetError(MS_CHILDERR, "Maximum number of class styles, %d, has been reached", "insertStyle()", MS_MAXSTYLES);
+        return -1;
+    }
+    // Catch attempt to insert past end of styles array
+    else if (nStyleIndex >= MS_MAXSTYLES) {
+        msSetError(MS_CHILDERR, "Cannot insert style beyond index %d", "insertStyle()", MS_MAXSTYLES-1);
+        return -1;
+    }
+    else if (nStyleIndex < 0) { // Insert at the end by default
+        msCopyStyle(&(class->styles[class->numstyles]), style);
+        class->numstyles++;
+        return class->numstyles-1;
+    }
+    else if (nStyleIndex >= 0 && nStyleIndex < MS_MAXSTYLES) {
+        // Move styles existing at the specified nStyleIndex or greater
+        // to a higher nStyleIndex
+        for (i=class->numstyles-1; i>=nStyleIndex; i--) {
+            class->styles[i+1] = class->styles[i];
+        }
+        msCopyStyle(&(class->styles[nStyleIndex]), style);
+        class->numstyles++;
+        return nStyleIndex;
+    }
+    else {
+        msSetError(MS_CHILDERR, "Invalid nStyleIndex", "insertStyle()");
+        return -1;
+    }
+}
+
+styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
+    int i;
+    styleObj *style;
+    if (class->numstyles == 1) {
+        msSetError(MS_CHILDERR, "Cannot remove a class's sole style", "removeStyle()");
+        return NULL;
+    }
+    else if (nStyleIndex < 0 || nStyleIndex >= class->numstyles) {
+        msSetError(MS_CHILDERR, "Cannot remove style, invalid nStyleIndex %d", "removeStyle()", nStyleIndex);
+        return NULL;
+    }
+    else {
+        style = (styleObj *)malloc(sizeof(styleObj));
+        msCopyStyle(style, &(class->styles[nStyleIndex]));
+        for (i=nStyleIndex+1; i<class->numstyles; i++) {
+            class->styles[i-1] = class->styles[i];
+        }
+        class->numstyles--;
+        return style;
+    }
 }
 
 /**
  * Delete the style identified by the index and shift
  * styles that follows the deleted style.
  */  
-int msDeleteStyle(classObj *class, int iStyleIndex)
+int msDeleteStyle(classObj *class, int nStyleIndex)
 {
     int i = 0;
-    if (class && iStyleIndex < class->numstyles && iStyleIndex >=0)
+    if (class && nStyleIndex < class->numstyles && nStyleIndex >=0)
     {
-        for (i=iStyleIndex; i< class->numstyles-1; i++)
+        for (i=nStyleIndex; i< class->numstyles-1; i++)
         {
              msCopyStyle(&class->styles[i], &class->styles[i+1]);
         }
         class->numstyles--;
         return(MS_SUCCESS);
     }
+    msSetError(MS_CHILDERR, "Invalid index: %d", "msDeleteStyle()",
+               nStyleIndex);
     return (MS_FAILURE);
 }
 /*
