@@ -150,9 +150,6 @@ and the MapServer Map File documentation at:
    int set(string property_name, new_value)
         Set map object property to new value. Returns -1 on error.
 
-   int addColor(int r, int g, int b)  
-        Add a color to map's palette.  Returns color index.
-
    int getsymbolbyname(string symbol_name)  
         Returns the symbol index using the name.
 
