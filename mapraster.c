@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include <assert.h>
 #include "map.h"
 #include "mapresample.h"
@@ -1587,6 +1589,7 @@ imageObj *msDrawReferenceMap(mapObj *map) {
       {
 	  styleObj style;
 
+          initStyle(&style);
           style.color = map->reference.color;
           style.outlinecolor = map->reference.outlinecolor;
           style.size = map->reference.markersize;
