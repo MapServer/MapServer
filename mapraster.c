@@ -1,4 +1,5 @@
 #include "map.h"
+#include "mapresample.h"
 
 extern int msyyparse();
 extern int msyylex();
@@ -1589,7 +1590,11 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
         hDS = GDALOpen( filename, GA_ReadOnly );
         if( hDS != NULL )
         {
-            status = drawGDAL(map, layer, img, hDS );
+            if( map->projection.numargs > 0 && layer->projection.numargs > 0 )
+                status = msResampleGDALToMap( map, layer, img, hDS );
+            else
+                status = drawGDAL(map, layer, img, hDS );
+
             GDALClose( hDS );
             chdir(old_path); /* restore old cwd */
             return status;
