@@ -417,7 +417,7 @@ queryResultObj *msQueryUsingItem(mapObj *map, char *layer, int mode, char *item,
 
     queryItemIndex = msGetItemIndex(shpfile.hDBF, map->layers[l].queryitem);
 
-    if(strcmp(item, "rec#") == 0) {
+    if(strcmp(item, "recno") == 0) {
       char **ids=NULL;
       int nids, id;
 
@@ -917,15 +917,15 @@ int msQueryUsingFeatures(mapObj *map, char *layer, queryResultObj *results)
 	  for(j=0; j<shpfile.numshapes; j++) {
 	    
 	    if(!msGetBit(status,j)) continue;
-	    
-	    if(results->layers[l].status[j]) continue; /* already found this feature */
+
+	    if(msGetBit(results->layers[l].status, j)) continue; /* already found this feature */
 	    
 #ifdef USE_PROJ
 	    SHPReadShapeProj(shpfile.hSHP, j, &shape, &(map->layers[l].projection), &(map->projection));
 #else	    
 	    SHPReadShape(shpfile.hSHP, j, &shape);	    
 #endif
-	    
+
 	    if(msIntersectMultipointPolygon(&shape.line[0], &search_shape) == MS_TRUE) {
 	      index = shpGetQueryIndex(shpfile.hDBF, &(map->layers[l]), j, queryItemIndex);
 	      if((index >= 0) && (index < map->layers[l].numqueries)) {
@@ -933,10 +933,10 @@ int msQueryUsingFeatures(mapObj *map, char *layer, queryResultObj *results)
 		results->layers[l].index[j] = index;
 		results->layers[l].numresults++;
 	      }
-	    }	    
+	    }
 	    
 	    msFreeShape(&shape);	
-	  }	  
+	  }
 	  
 	  break; /* next search shape */
 	case MS_SHP_ARC:
