@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.64  2003/06/03 23:49:16  assefa
+ * Set layer->prject to true when setting the projection.
+ *
  * Revision 1.63  2003/05/27 19:30:03  assefa
  * Call msFreeLabelCache instaed of loacl call for function
  * labelCacheObj_freeCache.
@@ -659,7 +662,12 @@ char *layerObj_getProjection(layerObj* self) {
  }
 
 int layerObj_setProjection(layerObj *self, char *string) {
-    return(msLoadProjectionString(&(self->projection), string));
+  int nReturn;
+  nReturn = msLoadProjectionString(&(self->projection), string);
+  if (nReturn == 0)
+    self->project = MS_TRUE;
+  return nReturn;
+
   }
 
 int layerObj_addFeature(layerObj *self, shapeObj *shape) {
