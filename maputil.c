@@ -894,7 +894,7 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     {
         image = msImageCreateGD(width, height, format,
                                 imagepath, imageurl);
-        if( image != NULL ) msImageInitGD( image, &map->imagecolor );
+        if( image != NULL && map) msImageInitGD( image, &map->imagecolor );
     }
 
     else if( MS_RENDERER_RAWDATA(format) )
@@ -945,27 +945,25 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
             
         return image;
     }
-    else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
+    else if( MS_RENDERER_IMAGEMAP(format) )
     {
-        image = msImageCreateIM(map->width, map->height, map->outputformat, 
-				map->web.imagepath, map->web.imageurl);        
+        image = msImageCreateIM(width, height, format,
+                                imagepath, imageurl);
         if( image != NULL ) msImageInitIM( image );
     }
 #ifdef USE_MING_FLASH
-    else if( MS_RENDERER_SWF(map->outputformat) )
+    else if( MS_RENDERER_SWF(format) && map )
     {
-        image = msImageCreateSWF(map->width, map->height, map->outputformat,
-                                 map->web.imagepath, map->web.imageurl,
-                                 map);
+        image = msImageCreateSWF(width, height, format,
+                                 imagepath, imageurl, map);
     }
 #endif
 #ifdef USE_PDF
-    else if( MS_RENDERER_PDF(map->outputformat) )
+    else if( MS_RENDERER_PDF(format) && map)
     {
-        image = msImageCreatePDF(map->width, map->height, map->outputformat,
-                                 map->web.imagepath, map->web.imageurl,
-                                 map);
-	}
+        image = msImageCreatePDF(width, height, format,
+                                 imagepath, imageurl, map);
+    }
 #endif
     
     else 
