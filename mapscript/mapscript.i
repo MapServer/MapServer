@@ -277,7 +277,7 @@
   }
 
   int queryByAttributes(mapObj *map, int mode) {
-    return msQueryByAttributes(map, self->index, int mode);
+    return msQueryByAttributes(map, self->index, mode);
   }
 
   int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) {
