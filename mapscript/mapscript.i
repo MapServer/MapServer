@@ -523,6 +523,23 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return loadExpressionString(&self->filter, string);
   }
 
+  %newobject getFilterString;
+  char *getFilterString() {
+    char exprstring[256];
+    switch(self->filter.type) {
+    case(MS_REGEX):
+      snprintf(exprstring, 255, "/%s/", self->filter.string);
+      return strdup(exprstring);
+    case(MS_STRING):
+      snprintf(exprstring, 255, "\"%s\"", self->filter.string);
+      return strdup(exprstring);
+    case(MS_EXPRESSION):
+      snprintf(exprstring, 255, "(%s)", self->filter.string);
+      return strdup(exprstring);
+    }
+    return NULL;
+  }
+
   int setWKTProjection(char *string) {
     self->project = MS_TRUE;
     return msLoadWKTProjectionString(string, &(self->projection));
