@@ -390,8 +390,43 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 	return MS_FAILURE;
     return MS_SUCCESS;
   }
-}
 
+  int  moveLayerup(int layerindex) {
+        return msMoveLayerUp(self, layerindex);
+  }
+
+  int  moveLayerdown(int layerindex) {
+        return msMoveLayerDown(self, layerindex);
+  }
+
+  int  *getLayersdrawingOrder() {
+        return  self->layerorder;
+  }
+  
+  int   setLayersdrawingOrder(int *panIndexes) {
+        return  msSetLayersdrawingOrder(self, panIndexes); 
+  }
+
+  char *mapObj_processTemplate(mapObj *self, int bGenerateImages, 
+                               char **names, char **values, 
+                               int numentries) {
+      return msProcessTemplate(self, bGenerateImages,
+                              names, values, numentries);
+  }
+  
+  char *mapObj_processLegendTemplate(mapObj *self,
+                                     char **names, char **values, 
+                                     int numentries) {
+    return msProcessLegendTemplate(self, names, values, numentries);
+  }
+  
+
+  char *mapObj_processQueryTemplate(mapObj *self,
+                                    char **names, char **values, 
+                                    int numentries) {
+    return msProcessQueryTemplate(self, names, values, numentries);
+  }
+}
 //
 // class extensions for layerObj, always within the context of a map
 //
