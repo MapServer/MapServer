@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2001/08/21 19:11:53  dan
+ * Improved error handling, verify HTTP status, etc.
+ *
  * Revision 1.3  2001/08/17 20:08:07  dan
  * A few more fixes... we're able to load layers from cubeserv in GMap... cool!
  *
@@ -49,6 +52,11 @@
 #endif
 
 #ifdef USE_WMS_LYR
+
+#define WMS_V_1_0_0  100
+#define WMS_V_1_0_7  107
+#define WMS_V_1_1_0  110
+
 
 /*
 ** Note: This code uses the w3c-libwww library to access remote WMS servers 
@@ -73,6 +81,30 @@ static int tracer (const char * fmt, va_list pArgs)
 
 #ifndef PREEMPTIVE_MODE
 
+/*
+**  We get called here from the event loop when we are done
+**  loading.
+*/
+static int terminate_handler (HTRequest * request, HTResponse * response,
+                              void * param, int status)
+{
+
+    if (status != 200)
+    {
+        static char errmsg[100];
+        msDebug("HTTP GET request returned status %d\n", status);
+
+        sprintf(errmsg, "HTTP GET request failed with status %d", status);
+        msSetError(MS_WMSCONNERR, errmsg, "msGetImage()");
+    }
+
+    if (param) 
+        *((int*)param) = status;
+
+    return 0;
+}
+
+
 /**********************************************************************
  *                          msWMSGetImage()
  *
@@ -83,10 +115,13 @@ static int tracer (const char * fmt, va_list pArgs)
 int msWMSGetImage(const char *geturl, const char *outputfile)
 {
     HTRequest * request;
+    int nHTTPStatus = 0;
+
+    int nStatus = MS_SUCCESS;
 
     if (geturl == NULL || outputfile == NULL)
     {
-        msSetError(MS_MISCERR, "URL or output file parameter missing.", 
+        msSetError(MS_WMSCONNERR, "URL or output file parameter missing.", 
                    "msGetImage()");
         return(MS_FAILURE);
     }
@@ -94,15 +129,56 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
     request = HTRequest_new();
     HTProfile_newPreemptiveClient("MapServer WMS Client", "1.0");
 
+    /* Add our own after filter to return HTTP status */
+    HTNet_addAfter(terminate_handler, NULL, &nHTTPStatus, 
+                   HT_ALL, HT_FILTER_LAST);
+
     HTPrint_setCallback(tracer);
     HTTrace_setCallback(tracer);
 
-    HTLoadToFile(geturl, request, outputfile);
+    if (HTLoadToFile(geturl, request, outputfile) != YES)
+    {
+        msDebug("HTLoadFile() != YES\n");
+        msSetError(MS_WMSCONNERR, "HTLoadToFile Error.", "msWMSGetImage()");
+        nStatus = MS_FAILURE;
+    }
+
+    if (nHTTPStatus != 200)
+    {
+        // msSetError() already called in terminate_handler
+        nStatus = MS_FAILURE;
+    }
+
+
+#ifdef __TODO__
+    HTResponse *response;
+    const char * mimetype;  // Should be HTFormat
+
+    response = HTRequest_response(request);
+    mimetype = HTResponse_format(response);
+    msDebug("Content-type: %s\n",  mimetype?mimetype:"(null)");
+    if (mimetype == NULL)
+    {
+        msSetError(MS_WMSCONNERR, "Remote server error or invalid response.", 
+                   "msWMSGetImage()");
+        nStatus = MS_FAILURE;
+    }
+    else if (strcmp(mimetype, "image/gif") != 0 ||
+             strcmp(mimetype, "image/png") != 0 ||
+             strcmp(mimetype, "image/jpeg") != 0 ||
+             strcmp(mimetype, "image/wbmp") != 0   )
+    {
+        char err[256];
+        sprintf(err, "Unsupported image format: %s", mimetype);
+        msSetError(MS_WMSCONNERR, err, "msWMSGetImage()");
+        nStatus = MS_FAILURE;
+    }
+#endif
 
     HTRequest_delete(request);                  /* Delete the request object */
     HTProfile_delete();
 
-    return MS_SUCCESS;
+    return nStatus;
 }
 
 
@@ -125,8 +201,8 @@ static int terminate_handler (HTRequest * request, HTResponse * response,
 
     if (status)
     {
-        sprintf(errmsg, "WMS HTTP GET request failed with status %d", status);
-        msSetError(MS_MISCERR, errmsg, "msGetImage()");
+        sprintf(errmsg, "HTTP GET request failed with status %d", status);
+        msSetError(MS_WMSCONNERR, errmsg, "msGetImage()");
     }
 
     return status;
@@ -164,7 +240,7 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
 
     if (geturl == NULL || outputfile == NULL)
     {
-        msSetError(MS_MISCERR, "URL or output file parameter missing.", 
+        msSetError(MS_WMSCONNERR, "URL or output file parameter missing.", 
                    "msGetImage()");
         return(MS_FAILURE);
     }
@@ -174,7 +250,7 @@ int msWMSGetImage(const char *geturl, const char *outputfile)
     /* Start the load */
     if (HTLoadToFile(geturl, request, outputfile) != YES) 
     {
-        msSetError(MS_MISCERR, "Can't open output file.", "msGetImage()");
+        msSetError(MS_WMSCONNERR, "Can't open output file.", "msGetImage()");
         HTProfile_delete();
         return(MS_FAILURE);
     }
@@ -228,12 +304,36 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
 {
 #ifdef USE_WMS_LYR
     char *pszURL = NULL, *pszEPSG = NULL;
-    const char *pszTmp;
+    const char *pszTmp, *pszRequestParam, *pszExceptionsParam;
     rectObj bbox;
-    int status = MS_SUCCESS;
+    int status = MS_SUCCESS, nVersion;
     
     if (lp->connectiontype != MS_WMS || lp->connection == NULL)
         return MS_FAILURE;
+
+/* ------------------------------------------------------------------
+ * Find out request version
+ * ------------------------------------------------------------------ */
+    if ((pszTmp = strstr(lp->connection, "VERSION=")) == NULL &&
+        (pszTmp = strstr(lp->connection, "version=")) == NULL &&
+        (pszTmp = strstr(lp->connection, "WMTVER=")) == NULL &&
+        (pszTmp = strstr(lp->connection, "wmtver=")) == NULL )
+    {
+        msSetError(MS_WMSCONNERR, "WMS Connection String must contain the VERSION or WMTVER parameter (with name in uppercase).", "msDrawWMSLayer()");
+        return MS_FAILURE;
+    }
+    pszTmp = strchr(pszTmp, '=');
+    if (strncmp(pszTmp, "1.0.8", 5) >= 0)    /* 1.0.8 == 1.1.0 */
+        nVersion = WMS_V_1_1_0;
+    else if (strncmp(pszTmp, "1.0.7", 5) >= 0)
+        nVersion = WMS_V_1_0_7;
+    else if (strncmp(pszTmp, "1.0.0", 5) >= 0)
+        nVersion = WMS_V_1_0_0;
+    else
+    {
+        msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.1.0 (please verify the VERSION parameter in the connection string).", "msDrawWMSLayer()");
+        return MS_FAILURE;
+    }
 
 /* ------------------------------------------------------------------
  * Figure the SRS we'll use for the request.
@@ -242,7 +342,8 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
  * - If map SRS is valid for this layer then use it
  * - Otherwise request layer in its default SRS and we'll reproject later
  * ------------------------------------------------------------------ */
-    if ((pszEPSG = msWMSGetEPSGProj(&(map->projection), NULL, TRUE)) != NULL &&
+    if ((pszEPSG = (char*)msWMSGetEPSGProj(&(map->projection), 
+                                           NULL, TRUE)) != NULL &&
         (pszEPSG = strdup(pszEPSG)) != NULL &&
         strncasecmp(pszEPSG, "EPSG:", 5) == 0)
     {
@@ -264,12 +365,12 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     }
 
     if (pszEPSG == NULL &&
-        ((pszEPSG = msWMSGetEPSGProj(&(lp->projection), 
-                                     lp->metadata, TRUE)) == NULL ||
+        ((pszEPSG = (char*)msWMSGetEPSGProj(&(lp->projection), 
+                                            lp->metadata, TRUE)) == NULL ||
          (pszEPSG = strdup(pszEPSG)) == NULL ||
          strncasecmp(pszEPSG, "EPSG:", 5) != 0) )
     {
-        msSetError(MS_MISCERR, "Layer must have an EPSG projection code (in its PROJECTION object or wms_srs metadata)", "msDrawWMSLayer()");
+        msSetError(MS_WMSCONNERR, "Layer must have an EPSG projection code (in its PROJECTION object or wms_srs metadata)", "msDrawWMSLayer()");
         if (pszEPSG) free(pszEPSG);
         return MS_FAILURE;
     }
@@ -322,10 +423,21 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     // __TODO__ We have to urlencode each value... especially the BBOX values
     // because if they end up in exponent format (123e+06) the + will be seen
     // as a space by the remote server.
+    if (nVersion >= WMS_V_1_0_7)
+        pszRequestParam = "GetMap";
+    else
+        pszRequestParam = "Map";
+
+    if (nVersion >= WMS_V_1_1_0)
+        pszExceptionsParam = "application/vnd.odc.se_inimage";
+    else
+        pszExceptionsParam = "INIMAGE";
+
     sprintf(pszURL, 
-            "%s&REQUEST=GetMap&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f",
-            lp->connection, map->width, map->height, 
-            pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
+            "%s&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f&EXCEPTIONS=%s",
+            lp->connection, pszRequestParam, map->width, map->height, 
+            pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
+            pszExceptionsParam);
 
     msDebug("WMS GET %s\n", pszURL);
     if (msWMSGetImage(pszURL, lp->data) != MS_SUCCESS)
@@ -358,14 +470,14 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
 
 
         // __TODO__ not implemented yet!
-        msSetError(MS_MISCERR, 
+        msSetError(MS_WMSCONNERR, 
                    "WMS Layer reprojection not implemented yet.", 
                    "msDrawWMSLayer()");
         status = MS_FAILURE;
     } 
 
     // We're done with the remote server's response... delete it.
-    //unlink(lp->data);
+    unlink(lp->data);
 
     free(lp->data);
     lp->data = NULL;
@@ -379,7 +491,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
 /* ------------------------------------------------------------------
  * WMS CONNECTION Support not included...
  * ------------------------------------------------------------------ */
-  msSetError(MS_MISCERR, "WMS CLIENT CONNECTION support is not available.", 
+  msSetError(MS_WMSCONNERR, "WMS CLIENT CONNECTION support is not available.", 
              "msDrawWMSLayer()");
   return(MS_FAILURE);
 
