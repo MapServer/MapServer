@@ -557,7 +557,7 @@ and the MapServer Map File documentation at:
         index in the range 0 to numresults-1.  
         Returns a valid object or FALSE(0) if index is invalid.
 
-   int open(string shapepath)
+   int open()
         Open the layer for use with getShape().  
         Returns MS_SUCCESS/MS_FAILURE.
 
