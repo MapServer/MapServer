@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.30  2004/09/03 14:24:07  frank
+ * %p cannot be encoded and decoded properly on win32
+ *
  * Revision 1.29  2004/05/12 19:40:19  frank
  * Fixed my last fix ... damn it.
  *
@@ -1170,25 +1173,25 @@ static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
                       NULL );
 
     /* Add Red Band */
-    sprintf( szDataPointer, "%p", pabyRed );
+    sprintf( szDataPointer, "%ld", (long) pabyRed );
     papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
                                         szDataPointer );
     GDALAddBand( hDS, GDT_Byte, papszBandOptions );
                                         
     /* Add Green Band */
-    sprintf( szDataPointer, "%p", pabyGreen );
+    sprintf( szDataPointer, "%ld", (long) pabyGreen );
     papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
                                         szDataPointer );
     GDALAddBand( hDS, GDT_Byte, papszBandOptions );
                                         
     /* Add Blue Band */
-    sprintf( szDataPointer, "%p", pabyBlue );
+    sprintf( szDataPointer, "%ld", (long) pabyBlue );
     papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
                                         szDataPointer );
     GDALAddBand( hDS, GDT_Byte, papszBandOptions );
                                         
     /* Add Dithered Band */
-    sprintf( szDataPointer, "%p", pabyDithered );
+    sprintf( szDataPointer, "%ld", (long) pabyDithered );
     papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
                                         szDataPointer );
     GDALAddBand( hDS, GDT_Byte, papszBandOptions );
