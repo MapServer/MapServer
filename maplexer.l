@@ -13,20 +13,26 @@
 #include "mapsymbol.h"
 #include "mapparser.h"
 
-double msyynumber;
-int msyylineno = 1;
-
-int msyystate=0;
-char *msyystring=NULL;
-
-int msyyreturncomments = 0;
+/* msyylineno and other globals declared extern and defined in mapfile.c to 
+ * avoid redefinition by flex 2.5.31 (bug 975)
+ */
+extern int    msyylineno;
+extern double msyynumber;
+extern int    msyystate;
+extern char  *msyystring;
+extern int    msyyreturncomments;
 
 void lexer_cleanup() {
+#ifndef YY_CURRENT_BUFFER_LVALUE
+    /* yy_current_buffer was there only in older versions (e.g. 2.5.4)
+     * but is gone in newer versions (e.g. 2.5.31)
+     */
     if( yy_current_buffer != NULL )
     {
         yy_delete_buffer( yy_current_buffer );
         yy_current_buffer = 0;
     }
+#endif
 }
 %}
 
