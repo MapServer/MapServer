@@ -1331,24 +1331,26 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
   else if (request && strcasecmp(request, "GetMap") == 0 &&
            format && strcasecmp(format,  "image/txt") == 0)
   {
-      // Until someone adds full support for ASCII grahics this should do. ;)
+      // Until someone adds full support for ASCII graphics this should do. ;)
       printf("Content-type: text/plain\n\n");
-      printf(".\n               ,,ggddY\"\"\"Ybbgg,,\n          ,agd888b,_ \""
-             "Y8, ___'\"\"Ybga,\n       ,gdP\"\"88888888baa,.\"\"8b    \"888g"
-             ",\n     ,dP\"     ]888888888P'  \"Y     '888Yb,\n   ,dP\"      "
-             ",88888888P\"  db,       \"8P\"\"Yb,\n  ,8\"       ,888888888b, "
-             "d8888a           \"8,\n ,8'        d88888888888,88P\"' a,      "
-             "'8,\n,8'         88888888888888PP\"  \"\"           '8,\nd'    "
-             "I88888888888P\"                   'b\n8           '8\"88P\"\"Y8"
-             "P'                      8\n8            Y 8[  _ \"             "
-             "8\n8              \"Y8d8b  \"Y a                   8\n8        "
-             "'\"\"8d,   __                 8\nY,                    '\"8bd88"
-             "8b,             ,P\n'8,                     ,d8888888baaa      "
-             ",8'\n '8,                    888888888888'      ,8'\n  '8a     "
-             "\"8888888888I      a8'\n   'Yba                  'Y8888888P'   "
-             "adP'\n     \"Yba                 '888888P'   adY\"\n       '\"Y"
-             "ba,             d8888P\" ,adP\"' \n          '\"Y8baa,      ,d8"
-             "88P,ad8P\"' \n               ''\"\"YYba8888P\"\"''\n");
+      printf(".\n               ,,ggddY\"\"\"Ybbgg,,\n          ,agd888b,_ "
+             "\"Y8, ___'\"\"Ybga,\n       ,gdP\"\"88888888baa,.\"\"8b    \""
+             "888g,\n     ,dP\"     ]888888888P'  \"Y     '888Yb,\n   ,dP\""
+             "      ,88888888P\"  db,       \"8P\"\"Yb,\n  ,8\"       ,8888"
+             "88888b, d8888a           \"8,\n ,8'        d88888888888,88P\""
+             "' a,          '8,\n,8'         88888888888888PP\"  \"\"      "
+             "     '8,\nd'          I88888888888P\"                   'b\n8"
+             "           '8\"88P\"\"Y8P'                      8\n8         "
+             "   Y 8[  _ \"                        8\n8              \"Y8d8"
+             "b  \"Y a                   8\n8                 '\"\"8d,   __"
+             "                 8\nY,                    '\"8bd888b,        "
+             "     ,P\n'8,                     ,d8888888baaa       ,8'\n '8"
+             ",                    888888888888'      ,8'\n  '8a           "
+             "        \"8888888888I      a8'\n   'Yba                  'Y88"
+             "88888P'    adP'\n     \"Yba                 '888888P'   adY\""
+             "\n       '\"Yba,             d8888P\" ,adP\"' \n          '\""
+             "Y8baa,      ,d888P,ad8P\"' \n               ''\"\"YYba8888P\""
+             "\"''\n");
       return MS_SUCCESS;
   }
 
