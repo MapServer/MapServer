@@ -487,8 +487,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
         strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE", ""),  
                    "SINGLE") == 0)
     return msDrawVectorLayerAsRasterSWF(map, layer, image);
+  }
 #endif
-
+  
   annotate = msEvalContext(map, layer->labelrequires);
   if(map->scale > 0) {
     if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale)) annotate = MS_FALSE;
@@ -609,6 +610,7 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   msLayerClose(layer);  
   return MS_SUCCESS;
+  
 }
 
 /*
