@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93  2004/12/16 21:30:42  sdlime
+ * Updated mapgd.c to use GD filled ellipse and arc drawing routines. Also modified code for circular markers to respect a style's angle value. The allows for simple pie charts to used as markers.
+ *
  * Revision 1.92  2004/12/13 03:21:06  frank
  * fixed msFreeFileCtx() to call free instead of gdFree as per bug 1125
  *
@@ -772,28 +775,6 @@ static void imageFilledSegment(gdImagePtr im, double x, double y, double sz, dou
   }
 }
 
-static void imageFilledCircle(gdImagePtr im, pointObj *p, int r, int c)
-{
-  int y;
-  int ymin, ymax, xmin, xmax;
-  double dx, dy;
-
-  ymin = (int) (MS_MAX((p->y - r), 0));
-  ymax = (int) (MS_MIN((p->y + r), (gdImageSY(im)-1)));
-
-  for(y=ymin; y<=ymax; y++) {
-    dy = MS_ABS(p->y - y);
-    dx = sqrt((r*r) - (dy*dy));
-
-    xmin = (int)(MS_MAX((p->x - dx), 0));
-    xmax = (int)(MS_MIN((p->x + dx), (gdImageSX(im)-1)));
-
-    imageScanline(im, xmin, xmax, y, c);
-  }
-
-  return;
-}
-
 static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
   int i, j, first;
@@ -1091,9 +1072,10 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
       y = MS_NINT(brush->sy/2);
       
       // draw in the brush image
-      gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
       if(symbol->filled)
-	gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
+	gdImageFilledEllipse(brush, x, y,  MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), brush_fc);
+      else
+	gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
       
       symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
     }
@@ -1145,8 +1127,6 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
       if(sc==fc) sc = bc; else sc = fc;
     }
     gdImageSetStyle(img, styleDashed, k);
-
-    // gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
 
     if(!brush && !symbol->img)
       gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)(2*r), (int)(2*r), 0, 360, gdStyled);      
@@ -1221,8 +1201,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
   printf("here (3)...\n");
       
-  if(style->symbol == 0) { // simply draw a single pixel of the specified color    
-    imageFilledCircle(img, p, (int) r, fc);
+  if(style->symbol == 0) { // solid fill        
+    gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), fc);
     if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
     return;
   }
@@ -1252,7 +1232,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
     // fill with the background color before drawing transparent symbol
     if(symbol->transparent == MS_TRUE && bc > -1)
-      imageFilledCircle(img, p, (int) r, bc);
+      gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), bc);      
     
     gdImageSetTile(img, symbol->img);
 
@@ -1264,7 +1244,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     y = MS_NINT(symbol->sizey*d)+1;
 
     if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid
-      imageFilledCircle(img, p, (int) r, fc);
+      gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), fc);
       if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
       return;
     }
@@ -1275,9 +1255,10 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     y = MS_NINT(tile->sy/2);
     
     // draw in the tile image
-    gdImageArc(tile, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tile_fc);
     if(symbol->filled)
-      gdImageFillToBorder(tile, x, y, tile_fc, tile_fc);
+      gdImageFilledEllipse(tile, x, y,  MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), tile_fc);
+    else
+      gdImageArc(tile, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tile_fc);
 
     gdImageSetTile(img, tile);
  
@@ -1291,8 +1272,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     x = MS_NINT(symbol->sizex*d)+1;    
     y = MS_NINT(symbol->sizey*d)+1;
 
-    if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid
-      imageFilledCircle(img, p, (int)r, fc);
+    if((x <= 1) && (y <= 1)) { // No sense using a tile, just fill solid      
+      gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), fc);
       if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
       return;
     }
@@ -1339,8 +1320,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     break;
   }
 
-  // fill the circle in the main image
-  imageFilledCircle(img, p, (int)r, gdTiled);
+  // fill the circle in the main image  
+  gdImageFilledEllipse(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), gdTiled);
   if(oc>-1) gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, oc);
   if(tile) gdImageDestroy(tile);
 
@@ -1468,19 +1449,17 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     x = MS_NINT(tmp->sx/2);
     y = MS_NINT(tmp->sy/2);
 
-    /* draw in the temporary image */
-    if(tmp_oc >= 0) {
-      gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_oc);
-      if(symbol->filled && tmp_fc >= 0)
-	gdImageFillToBorder(tmp, x, y, tmp_oc, tmp_fc);
+    // for a circle interpret the style angle as the size of the arc (for drawing pies)
+    if(symbol->points[0].x == symbol->points[0].y && style->angle != 360) {
+      if(symbol->filled && tmp_fc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_fc, gdEdged|gdPie);
+      if(!symbol->filled && tmp_fc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_fc, gdEdged|gdNoFill);
+      if(tmp_oc >= 0) gdImageFilledArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, style->angle, tmp_oc, gdEdged|gdNoFill);
     } else {
-      if(tmp_fc >= 0) {
-	gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_fc);
-	if(symbol->filled)
-	  gdImageFillToBorder(tmp, x, y, tmp_fc, tmp_fc);
-      }
+      if(symbol->filled && tmp_fc >= 0) gdImageFilledEllipse(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), tmp_fc);
+      if(!symbol->filled && tmp_fc >= 0) gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_fc);
+      if(tmp_oc >= 0) gdImageArc(tmp, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tmp_oc);
     }
-
+    
     /* paste the tmp image in the main image */
     offset_x = MS_NINT(p->x - .5*tmp->sx + ox);
     offset_y = MS_NINT(p->y - .5*tmp->sx + oy);
@@ -1633,9 +1612,10 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
       y = MS_NINT(brush->sy/2);
       
       // draw in the brush image
-      gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
       if(symbol->filled)
-        gdImageFillToBorder(brush, x, y, brush_fc, brush_fc);
+	gdImageFilledEllipse(brush,  x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), brush_fc);
+      else
+	gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
       
       symbolset->imagecache = addImageCache(symbolset->imagecache, &symbolset->imagecachesize, style, (int)size, brush);
     }
@@ -1872,9 +1852,10 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     y = MS_NINT(tile->sy/2);
 
     // draw in tile image
-    gdImageArc(tile, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tile_fc);
     if(symbol->filled)
-      gdImageFillToBorder(tile, x, y, tile_fc, tile_fc);
+      gdImageFilledEllipse(tile,  x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), tile_fc);
+    else
+      gdImageArc(tile, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, tile_fc);
 
     // fill the polygon in the main image
     gdImageSetTile(img, tile);
