@@ -64,7 +64,7 @@ int loadParams(char **names, char **values) {
 
   // check for any available cookies
   s = getenv("HTTP_COOKIE");
-  if(s == NULL) {
+  if(s != NULL) {
     for(x=0;s[0] != '\0';x++) {
       values[m] = makeword(s,';');
       plustospace(values[m]);

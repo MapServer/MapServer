@@ -159,7 +159,7 @@ imageObj *msDrawScalebar(mapObj *map)
                        map->scalebar.interlace, 
                        MS_NOOVERRIDE );
 
-  /* create image */
+   /* create image */
   image = msImageCreateGD(map->scalebar.width, sy, format,
                           map->web.imagepath, map->web.imageurl);
 
