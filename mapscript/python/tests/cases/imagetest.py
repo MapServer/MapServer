@@ -178,9 +178,6 @@ class ImageWriteTestCase(MapTestCase):
         image = self.map.draw()
         assert image.thisown == 1
          
-        if hasattr(im, 'getBytes'):
-            image.data.write(im.getBytes())
-
         s = cStringIO.StringIO(image.getBytes())
         
         filename = 'testImageGetBytes.png'
