@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.39  2003/01/30 22:46:32  julien
+ * mv context_* metadata to wms_context_*
+ *
  * Revision 1.38  2003/01/30 22:43:29  julien
  * Remove logourl heritage and customize encoding
  *
@@ -533,12 +536,12 @@ int msLoadMapContext(mapObj *map, char *filename)
       map->web.metadata =  msCreateHashTable();
 
   // Version
-  msInsertHashTable( map->web.metadata, "context_version", pszVersion );
+  msInsertHashTable( map->web.metadata, "wms_context_version", pszVersion );
 
   if( strcasecmp(pszVersion, "0.1.7") >= 0 )
   {
       if( msGetMapContextXMLHashValue(psMapContext, "fid", 
-                           &(map->web.metadata), "context_fid") == MS_FAILURE )
+                           &(map->web.metadata), "wms_context_fid") == MS_FAILURE )
       {
           msDebug("Mandatory data fid in %s.", filename);
       }
