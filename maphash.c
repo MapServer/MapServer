@@ -64,8 +64,7 @@ char *msLookupHashTable(hashTableObj table, const char *string)
 {
   struct hashObj *tp;
 
-  if(!table || !string) {
-    msSetError(MS_HASHERR, "Invalid hash table or key", "msLookupHashTable");
+  if (!table || !string) {
     return(NULL);
   }
 

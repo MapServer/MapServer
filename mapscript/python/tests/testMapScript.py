@@ -13,10 +13,13 @@ platformdir = '-'.join((distutils.util.get_platform(),
                        '.'.join(map(str, sys.version_info[0:2]))))
 sys.path.insert(0, 'build/lib.' + platformdir)
 
-# Our testing mapfile
-testMapfile = '../../tests/test.map'
-testNoFontSetMapfile = '../../tests/test_nofontset.map'
-test_image = '../../tests/test.png'
+# Set the variable below to the mapserver/tests path
+TESTS_PATH = '../../tests'
+
+testMapfile = os.path.join(TESTS_PATH, 'test.map')
+testNoFontSetMapfile = os.path.join(TESTS_PATH, 'test_nofontset.map')
+test_image = os.path.join(TESTS_PATH, 'test.png')
+xmarks_image = os.path.join(TESTS_PATH, 'xmarks.png')
 
 # Import all from mapscript
 import mapscript
@@ -242,7 +245,7 @@ class SymbolTestCase(MapPrimitivesTestCase):
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
     def testConstructorImage(self):
-        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol = mapscript.symbolObj('xmarks', xmarks_image)
         assert symbol.name == 'xmarks'
         assert symbol.type == mapscript.MS_SYMBOL_PIXMAP
     def testGetPoints(self):
@@ -322,7 +325,7 @@ class SymbolSetTestCase(MapTestCase):
         symbolset.appendSymbol(symbolb)
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
     def testDrawNewSymbol(self):
-        symbol = mapscript.symbolObj('xmarks', '../../tests/xmarksthespot.png')
+        symbol = mapscript.symbolObj('xmarks', xmarks_image)
         symbol_index = self.mapobj1.symbolset.appendSymbol(symbol)
         assert symbol_index == 2, symbol_index
         num = self.mapobj1.symbolset.numsymbols
@@ -678,11 +681,13 @@ class ShapeObjTestCase(MapPrimitivesTestCase):
     """Base class for shapeObj tests"""
     
     def copyShape(self, shape):
+        """Try the next generation API, fall back to standard API"""
         try:
             return shape.copy()
-        except AttributeError:
+        except TypeError:
             s = mapscript.shapeObj(shape.type)
-            return shape.copy(s)
+            shape.copy(s)
+            return s
         except:
             raise
 
@@ -733,7 +738,7 @@ class PointObjTestCase(MapscriptTestCase):
 class ColorObjTestCase(unittest.TestCase):
     def testColorObjConstructorNoArgs(self):
         c = mapscript.colorObj()
-        assert (c.red, c.green, c.blue) == (0, 0, 0)
+        assert (c.red, c.green, c.blue, c.pen) == (0, 0, 0, -4)
     def testColorObjConstructorArgs(self):
         c = mapscript.colorObj(1, 2, 3)
         assert (c.red, c.green, c.blue) == (1, 2, 3)
@@ -743,11 +748,11 @@ class ColorObjTestCase(unittest.TestCase):
     def testColorObjSetRGB(self):
         c = mapscript.colorObj()
         c.setRGB(255, 255, 255)
-        assert (c.red, c.green, c.blue) == (255, 255, 255)
+        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
     def testColorObjSetHexLower(self):
         c = mapscript.colorObj()
         c.setHex('#ffffff')
-        assert (c.red, c.green, c.blue) == (255, 255, 255)
+        assert (c.red, c.green, c.blue, c.pen) == (255, 255, 255, -4)
     def testColorObjSetHexUpper(self):
         c = mapscript.colorObj()
         c.setHex('#FFFFFF')
@@ -945,11 +950,13 @@ class NewOutputFormatTestCase(unittest.TestCase):
     def tearDown(self):
         self.mapobj1 = None
     def testOutputFormatConstructor(self):
+        """testOutputFormatConstructor may error without GDAL"""
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiff')
         assert new_format.refcount == 1, new_format.refcount
         assert new_format.name == 'gtiff'
         assert new_format.mimetype == 'image/tiff'
     def testAppendNewOutputFormat(self):
+        """testAppendNewOutputFormat may error without GDAL"""
         num = self.mapobj1.numoutputformats
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         assert new_format.refcount == 1, new_format.refcount
@@ -962,6 +969,7 @@ class NewOutputFormatTestCase(unittest.TestCase):
         filename = 'testAppendNewOutputFormat.tif'
         imgobj.save(filename)
     def testRemoveOutputFormat(self):
+        """testRemoveOutputFormat may error without GDAL"""
         num = self.mapobj1.numoutputformats
         assert num == 6, num
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
@@ -977,6 +985,9 @@ class NewOutputFormatTestCase(unittest.TestCase):
         assert self.mapobj1.outputformat.mimetype == 'image/tiff'
 
 class MapMetaDataTestCase(MapTestCase):
+    def testInvalidKeyAccess(self):
+        self.assertRaises(mapscript.MapServerError, 
+                          self.mapobj1.getMetaData, 'foo')
     def testFirstKeyAccess(self):
         key = self.mapobj1.getFirstMetaDataKey()
         assert key == 'key1'
@@ -1025,7 +1036,28 @@ class MapMetaDataTestCase(MapTestCase):
     def testAccessNullClassMetaData(self):
         layer = self.mapobj1.getLayer(1).getClass(1)
         self.assertRaises(mapscript.MapServerError, layer.getFirstMetaDataKey)
-        
+
+class DrawProgrammedStylesTestCase(MapTestCase):
+    
+    def testDrawPoints(self):
+        points = [mapscript.pointObj(-0.2, 51.6),
+                  mapscript.pointObj(0.0, 51.2),
+                  mapscript.pointObj(0.2, 51.6)]
+        colors = [mapscript.colorObj(255,0,0),
+                  mapscript.colorObj(0,255,0),
+                  mapscript.colorObj(0,0,255)]
+        img = self.mapobj1.prepareImage()
+        layer = self.mapobj1.getLayerByName('POINT')
+        #layer.draw(self.mapobj1, img)
+        class0 = layer.getClass(0)
+        for i in range(len(points)):
+            style0 = class0.getStyle(0)
+            style0.color = colors[i]
+            #style0.color.pen = -4
+            assert style0.color.toHex() == colors[i].toHex()
+            points[i].draw(self.mapobj1, layer, img, 0, "foo")
+        img.save('test_draw_points.png')
+    
 if __name__ == '__main__':
     unittest.main()
 

@@ -20,7 +20,7 @@ For the impatient:
 To build the "mapserv" CGI program with the default options, go to the
 directory where you extracted the MapServer source code package and...
 
- $ cd mapserver-4.0.x
+ $ cd mapserver-4.2.x
  $ ./configure
  $ make
 
@@ -160,13 +160,19 @@ TIFF Support:
   --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
 
   Tiff support is optional, but it will be included by default if configure
-  finds libtiff on your system.
+  finds libtiff on your system. If you use --with-gdal then Tiff support is
+  disabled by default since GDAL includes Tiff support.
 
   Use --without-tiff to explicitly disable Tiff support.
 
   Use the --with-tiff=DIR option to use a copy of LibTiff installed in
   directory "DIR".  Make sure that this copy of LibTiff is compiled before
   using this option.
+
+  Do not use --with-tiff together with --with-gdal. If you are also using
+  --with-gdal then you should *not* use --with-tiff. GDAL provides better
+  Tiff support than this option, and that will save potential problems at
+  runtime.
 
   Note:  Your version of libtiff may have been compiled with JPEG or ZLIB
   support.  If so, you may need to specify --with-jpeg=DIR or --with-zlib=DIR

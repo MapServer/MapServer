@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "map.h"
 
 #define ROW_ALLOCATION_SIZE 10
@@ -121,7 +123,6 @@ int msDBFJoinConnect(layerObj *layer, joinObj *join)
   char szPath[MS_MAXPATHLEN];
   msDBFJoinInfo *joininfo;
 
-printf("xbasewohoo");
   if(join->joininfo) return(MS_SUCCESS); // already open
     
   // allocate a msDBFJoinInfo struct
@@ -458,15 +459,15 @@ MYSQL_RES *msMySQLQuery(char *q, MYSQL *conn)
 		MYSQL_RES *qresult=NULL;
     if (mysql_query(conn,q) < 0){
       mysql_close(conn);
-			msSetError(MS_QUERYERR, " bad mysql query ", q);
-			return qresult;
+      msSetError(MS_QUERYERR, "Bad mysql query (%s)", "msMySQLQuery()", q);
+      return qresult;
     }
     if (!(qresult=mysql_store_result(conn)))    {
       mysql_close(conn);
-  		msSetError(MS_QUERYERR, " mysql query failed ", q);
-			return qresult;
+      msSetError(MS_QUERYERR, "mysql query failed (%s)", "msMySQLQuery()", q);
+      return qresult;
     }
-		return qresult;
+    return qresult;
 }
 
 //
@@ -516,7 +517,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
   // open the mysql connection
 
   if( join->connection == NULL ) {
-      msSetError(MS_QUERYERR, "Error parsing MYSQL JOIN: nothing specified in CONNECTION statement.<br><br>\n\n",
+      msSetError(MS_QUERYERR, "Error parsing MYSQL JOIN: nothing specified in CONNECTION statement.",
       "msMySQLJoinConnect()");
 
         return(MS_FAILURE);
@@ -529,7 +530,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
 
     if (DB_HOST == NULL || DB_USER == NULL || DB_PASSWD == NULL || DB_DATABASE == NULL)
     {
-      printf("DB param error %s/%s/%s/%s !\n",DB_HOST,DB_USER,DB_PASSWD,DB_DATABASE);
+      msSetError(MS_QUERYERR, "DB param error: at least one of HOST, USER, PASSWD or DATABASE is null!", "msMySQLJoinConnect()");
       return MS_FAILURE;
     }
     if (strcmp(DB_PASSWD, "none") == 0) strcpy(DB_PASSWD, "");
