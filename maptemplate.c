@@ -1539,6 +1539,16 @@ char *generateLegendTemplate(mapservObj *msObj)
       }
    }
    
+   /*
+    * if we reach this point, that mean no error was generated.
+    * So check if template is null and initialize it to <space>.
+    */
+   if (pszResult == NULL)
+   {
+      pszResult = strcatalloc(pszResult, " ");
+   }
+   
+   
    /********************************************************************/
       
    error:
