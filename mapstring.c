@@ -270,7 +270,9 @@ char *getPath(char *fn)
 */
 char *msBuildPath(char *szReturnPath, char *abs_path, char *path)
 {
-  int abslen, pathlen;
+  int   abslen = 0;
+  int   pathlen = 0;
+
 
   if(path == NULL)
   {
@@ -279,7 +281,8 @@ char *msBuildPath(char *szReturnPath, char *abs_path, char *path)
   }
 
   pathlen = strlen(path);
-  abslen = strlen(abs_path);
+  if (abs_path)
+    abslen = strlen(abs_path);
 
   if((pathlen + abslen + 2) > MS_MAXPATHLEN)
   {
