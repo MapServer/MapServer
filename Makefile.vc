@@ -113,5 +113,5 @@ mapscriptvars: makefile.vc nmake.opt
 	echo $(INCLUDES) >> mapscriptvars
 	echo $(LIBS_DLL) >> mapscriptvars
 	echo $(LIBS) >> mapscriptvars
-    findstr MS_VERSION map.h >> mapscriptvars
+    findstr MS_VERSION map.h || findstr define >> mapscriptvars
 
