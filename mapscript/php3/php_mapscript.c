@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.4  2000/07/12 20:20:50  dan
+ * Added labelObj background and shadow members
+ *
  * Revision 1.3  2000/06/30 14:27:23  dan
  * Add a possibility to zoom in as much as possible using the minscale.
  *
@@ -115,7 +118,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "1.0.011 (Jun 28, 2000)"
+#define PHP3_MS_VERSION "1.0.011 (Jul 12, 2000)"
 
 /*=====================================================================
  *                         Prototypes
@@ -332,6 +335,9 @@ DLEXPORT void php3_info_mapscript(void)
 #endif
 #ifdef USE_JPEG
     php3_printf(" -JPEG");
+#endif
+#ifdef USE_EGIS
+    php3_printf(" -EGIS");
 #endif
     php3_printf("<BR>\n");
 }
@@ -2591,6 +2597,14 @@ static long _phpms_build_label_object(labelObj *plabel,
     add_property_long(return_value,   "shadowcolor",plabel->shadowcolor);
     add_property_long(return_value,   "shadowsizex",plabel->shadowsizex);
     add_property_long(return_value,   "shadowsizey",plabel->shadowsizey);
+    add_property_long(return_value,   "backgroundcolor",
+                                                plabel->backgroundcolor);
+    add_property_long(return_value,   "backgroundshadowcolor",
+                                                plabel->backgroundshadowcolor);
+    add_property_long(return_value,   "backgroundshadowsizex",
+                                                plabel->backgroundshadowsizex);
+    add_property_long(return_value,   "backgroundshadowsizey",
+                                                plabel->backgroundshadowsizey);
     add_property_long(return_value,   "size",       plabel->size);
     add_property_long(return_value,   "minsize",    plabel->minsize);
     add_property_long(return_value,   "maxsize",    plabel->maxsize);
@@ -2706,18 +2720,10 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
     add_property_long(return_value,   "size",       pclass->size);
     add_property_long(return_value,   "minsize",    pclass->minsize);
     add_property_long(return_value,   "maxsize",    pclass->maxsize);
+    PHPMS_ADD_PROP_STR(return_value,  "symbolname", pclass->symbolname);
 
     _phpms_build_label_object(&(pclass->label), list, &new_obj_param);
     _phpms_add_property_object(return_value, "label", &new_obj_param,E_ERROR);
-
-#ifdef __TODO__
-    /* symbolname is not always set nor initialized to NULL... probably 
-     * depends on the value of symbol???? 
-     */
-    PHPMS_ADD_PROP_STR(return_value,  "symbolname", pclass->symbolname);
-
- ... expressionObj member ...
-#endif
 
     add_method(return_value, "set",    php3_ms_class_setProperty);
     add_method(return_value, "setexpression",php3_ms_class_setExpression);
