@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.137  2004/11/01 22:05:16  dan
+ * Get rid of WMS 1.0.8, it's not one of the 'official' WMS releases (bug 1022)
+ *
  * Revision 1.136  2004/10/29 22:18:54  assefa
  * Use ows_schama_location metadata. The default value if metadata is not found
  * is http://schemas.opengeospatial.net
@@ -135,7 +138,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
       else if (nVersion <= OWS_1_0_7)
         wms_exception_format = "SE_XML";   // WMS 1.0.1 to 1.0.7
       else
-        wms_exception_format = "application/vnd.ogc.se_xml"; // WMS 1.0.8, 1.1.0 and later
+        wms_exception_format = "application/vnd.ogc.se_xml"; // WMS 1.1.0 and later
   }
 
   if (strcasecmp(wms_exception_format, "INIMAGE") == 0 ||
@@ -162,7 +165,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     msIO_printf("</WMTException>\n");
   }
   else // XML error, the default: SE_XML (1.0.1 to 1.0.7)
-       // or application/vnd.ogc.se_xml (1.0.8, 1.1.0 and later)
+       // or application/vnd.ogc.se_xml (1.1.0 and later)
   {
     if (nVersion <= OWS_1_0_7)
     {
@@ -179,7 +182,7 @@ int msWMSException(mapObj *map, int nVersion, const char *exception_code)
     }
     else if (nVersion <= OWS_1_1_0)
     {
-      // In V1.0.8, 1.1.0 and later, we have OGC-specific MIME types
+      // In V1.1.0 and later, we have OGC-specific MIME types
       // we cannot return anything else than application/vnd.ogc.se_xml here.
       msIO_printf("Content-type: application/vnd.ogc.se_xml%c%c",10,10);
 
@@ -1063,7 +1066,7 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
    }
    else
    {
-       // 1.0.8, 1.1.0 and later: opaque and cascaded are new.
+       // 1.1.0 and later: opaque and cascaded are new.
        int cascaded=0, opaque=0;
        if ((value = msLookupHashTable(&(lp->metadata), "wms_opaque")) != NULL)
            opaque = atoi(value);
@@ -1491,27 +1494,20 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
     dtd_url = strcatalloc(dtd_url, "/wms/1.0.0/capabilities_1_0_0.dtd");
   }
 
-  else if (nVersion < OWS_1_0_8) {
+  else if (nVersion < OWS_1_1_0) {
     nVersion = OWS_1_0_7;
     dtd_url = strdup(schemalocation);
     dtd_url = strcatalloc(dtd_url, "/wms/1.0.7/capabilities_1_0_7.dtd");
-    //dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_0_7.dtd";
-  }
-  else if (nVersion < OWS_1_1_0) {
-    nVersion = OWS_1_0_8;
-    dtd_url = strdup("http://www.digitalearth.gov/wmt/xml/capabilities_1_0_8.dtd");
   }
   else if (nVersion == OWS_1_1_0) {
     nVersion = OWS_1_1_0;
     dtd_url = strdup(schemalocation);
     dtd_url = strcatalloc(dtd_url, "/wms/1.1.0/capabilities_1_1_0.dtd");
-    //dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_1_0.dtd";
   }
   else {
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
     dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
-    //dtd_url = "http://schemas.opengis.net/wms/1.1.1/WMS_MS_Capabilities.dtd";
   }
 
   // We need this server's onlineresource.
@@ -1527,7 +1523,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   if (nVersion <= OWS_1_0_7)
       msIO_printf("Content-type: text/xml%c%c",10,10);  // 1.0.0 to 1.0.7
   else
-      msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.0.8, 1.1.0 and later
+      msIO_printf("Content-type: application/vnd.ogc.wms_xml%c%c",10,10);  // 1.1.0 and later
 
   msOWSPrintEncodeMetadata(stdout, &(map->web.metadata),
                      NULL, "wms_encoding", OWS_NOERR,
@@ -1628,7 +1624,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   else
   {
     char *mime_list[20];
-    // WMS 1.0.8, 1.1.0 and later
+    // WMS 1.1.0 and later
     // Note changes to the request names, their ordering, and to the formats
 
     msWMSPrintRequestCap(nVersion, "GetCapabilities", script_url_encoded,
@@ -1678,7 +1674,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
       msIO_printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
   else
   {
-      // 1.0.8, 1.1.0 and later
+      // 1.1.0 and later
       msIO_printf("    <Format>application/vnd.ogc.se_xml</Format>\n");
       msIO_printf("    <Format>application/vnd.ogc.se_inimage</Format>\n");
       msIO_printf("    <Format>application/vnd.ogc.se_blank</Format>\n");
