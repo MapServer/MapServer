@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.142  2003/02/04 14:51:40  assefa
+ * Add test on module name "cgi-fcgi".
+ *
  * Revision 1.141  2003/01/24 17:01:05  dan
  * Produce a warning instead of an error in getLayerByName() if layer not found
  *
@@ -1069,7 +1072,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * Hopefully we'll be able to get rid of that limitation soon, but for
      * now we'll produce an error of PHP is not running as a CGI.
      */
-    if (sapi_module.name && strcmp(sapi_module.name, "cgi") != 0)
+    if (sapi_module.name && (strcmp(sapi_module.name, "cgi") != 0) &&
+        (strcmp(sapi_module.name, "cgi-fcgi") != 0))
     {
         php3_error(E_ERROR, 
              "Due to thread-safety problems, php_mapscript cannot be used "
@@ -3604,6 +3608,7 @@ DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self=NULL;
     rectObj *poRect=NULL;
     int      nStatus = MS_FAILURE;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
