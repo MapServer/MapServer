@@ -170,7 +170,7 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
 
 int msSaveQuery(mapObj *map, char *filename) {
   FILE *stream;
-  int i;
+  int i, j, n=0;
 
   if(!filename) {
     msSetError(MS_MISCERR, "No filename provided to save query to.", "msSaveQuery()");
@@ -184,7 +184,21 @@ int msSaveQuery(mapObj *map, char *filename) {
     return(MS_FAILURE);
   }
 
-  // FIX: write the puppy
+  // count the number of layers with results
+  for(i=0; i<map->numlayers; i++)
+    if(map->layers[i].resultcache) n++;
+  fwrite(&n, sizeof(int), 1, stream);
+
+  // now write the result set for each layer
+  for(i=0; i<map->numlayers; i++) {
+    if(map->layers[i].resultcache) {
+      fwrite(&i, sizeof(int), 1, stream); // layer index
+      fwrite(&(map->layers[i].resultcache->numresults), sizeof(int), 1, stream); // number of results
+      fwrite(&(map->layers[i].resultcache->bounds), sizeof(rectObj), 1, stream); // bounding box
+      for(j=0; j<map->layers[i].resultcache->numresults; j++)
+	fwrite(&(map->layers[i].resultcache->results[j]), sizeof(resultCacheMemberObj), 1, stream); // each result
+    }
+  }
 
   fclose(stream);
   return(MS_SUCCESS); 
@@ -192,7 +206,7 @@ int msSaveQuery(mapObj *map, char *filename) {
 
 int msLoadQuery(mapObj *map, char *filename) {
   FILE *stream;
-  int i;
+  int i, j, k, n=0;
 
   if(!filename) {
     msSetError(MS_MISCERR, "No filename provided to load query from.", "msLoadQuery()");
@@ -206,7 +220,30 @@ int msLoadQuery(mapObj *map, char *filename) {
     return(MS_FAILURE);
   }
 
-  // FIX: read the puppy
+  fread(&n, sizeof(int), 1, stream);
+
+  // now load the result set for each layer found in the query file
+  for(i=0; i<n; i++) {
+    fread(&j, sizeof(int), 1, stream); // layer index
+
+    if(j<0 || j>map->numlayers) {
+      msSetError(MS_MISCERR, "Invalid layer index loaded from query file.", "msLoadQuery()");
+      return(MS_FAILURE);
+    }
+    
+    // inialize the results for this layer
+    map->layers[j].resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
+
+    fread(&(map->layers[j].resultcache->numresults), sizeof(int), 1, stream); // number of results   
+    map->layers[j].resultcache->cachesize = map->layers[j].resultcache->numresults;
+
+    fread(&(map->layers[j].resultcache->bounds), sizeof(rectObj), 1, stream); // bounding box
+
+    map->layers[j].resultcache->results = (resultCacheMemberObj *) malloc(sizeof(resultCacheMemberObj)*map->layers[j].resultcache->numresults);
+
+    for(k=0; k<map->layers[j].resultcache->numresults; k++)
+      fread(&(map->layers[j].resultcache->results[k]), sizeof(resultCacheMemberObj), 1, stream); // each result
+  }
 
   fclose(stream);
   return(MS_SUCCESS);
@@ -215,7 +252,7 @@ int msLoadQuery(mapObj *map, char *filename) {
 
 int msQueryByItem(mapObj *map, char *layer, int mode, char *item, char *value)
 {
-  // NEED A GENERIC SOMETHING OR OTHER HERE
+  // FIX: NEED A GENERIC SOMETHING OR OTHER HERE
   return(MS_FAILURE);
 }
 
