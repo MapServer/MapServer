@@ -871,8 +871,9 @@ getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, 
 getShape( shapeObj_ shape, int tileindex, int shapeindex ) : int
     Get a shape from layer data.
 
-**NEXT_GENERATION_API** getShape( int shapeindex [, int tileindex=0]) : shapeObj_
-    Get a shape from layer data using the next generation API.
+.. admonition:: Next Generation API
+   
+   getShape( int shapeindex [, int tileindex=0]) : shapeObj_
 
 moveClassDown( int class ) : int 
        The class specified by the class index will be moved up into
@@ -1074,14 +1075,16 @@ Methods
 add(pointObj_ point) : int
     Add *point* to the line.  Returns MS_SUCCESS or MS_FAILURE.
 
-**NEXT_GENERATION_API** addPoint(pointObj_ point) : int
-    Add *point* to the line.  Returns MS_SUCCESS or MS_FAILURE.
+.. admonition:: Next Generation API
+   
+   addPoint(pointObj_ point) : int
 
 get(int index) : pointObj_
     Return reference to point at *index*.
 
-**NEXT_GENERATION_API** getPoint(int index) : pointObj_
-    Return reference to point at *index*.
+.. admonition:: Next Generation API
+
+   getPoint(int index) : pointObj_
 
 project(projectionObj_ proj_in, projectionObj_ proj_out) : int
     Transform line in place from *proj_in* to *proj_out*.  Returns
@@ -1089,9 +1092,10 @@ project(projectionObj_ proj_in, projectionObj_ proj_out) : int
 
 set(int index, pointObj_ point) : int
     Set the point at *index* to *point*.  Returns MS_SUCCESS or MS_FAILURE.
-    
-**NEXT_GENERATION_API** setPoint(int index, pointObj_ point) : int
-    Set the point at *index* to *point*.  Returns MS_SUCCESS or MS_FAILURE.
+
+.. admonition:: Next Generation API
+
+   setPoint(int index, pointObj_ point) : int
     
 -----------------------------------------------------------------------------
  mapObj
@@ -1725,8 +1729,9 @@ new shapeObj( int type ) : shapeObj
 add( lineObj_ line ) : int
     Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
 
-**NEXT_GENERATION_API** addLine( lineObj_ line ) : int
-    Add *line* (i.e. a part) to the shape.  Returns MS_SUCCESS or MS_FAILURE.
+.. admonition:: Next Generation API
+
+   addLine( lineObj_ line ) : int
 
 .. _contains:
 
@@ -1736,8 +1741,9 @@ contains( pointObj_ point ) : int
 copy( shapeObj shape_copy ) : int
     Copy the shape to *shape_copy*.  Returns MS_SUCCESS or MS_FAILURE.
 
-**NEXT_GENERATION_API** copy() : shapeObj
-    Return a copy of the shape.
+.. admonition:: Next Generation API
+
+   copy() : shapeObj
 
 distanceToPoint( pointObj_ point ) : float
     Return distance to *point*.
@@ -1756,9 +1762,9 @@ get( int index ) : lineObj_
     Returns a reference to part at *index*.  Reference is valid
     only during the life of the shapeObj.
 
-**NEXT_GENERATION_API** getLine( int index ) : lineObj_
-    Returns a reference to part at *index*.  Reference is valid
-    only during the life of the shapeObj.
+.. admonition:: Next Generation API
+
+   getLine( int index ) : lineObj_
 
 .. _getValue:
 
@@ -1807,7 +1813,7 @@ be explicitly inserted into the classObj for use in mapping.
     new_style = new styleObj()
     the_class.insertStyle(new_style)
     
-It is important to understand that insertStyle_ inserts a **copy** of the
+It is important to understand that insertStyle inserts a **copy** of the
 styleObj instance, not a reference to the instance itself.
 
 The more standard use case 
