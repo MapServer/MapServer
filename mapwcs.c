@@ -172,6 +172,58 @@ static const char *msWCSGetRequestParameter(cgiRequestObj *request, char *name) 
   return NULL;
 }
 
+static void msWCSSetDefaultBandsRangeSetInfo( wcsParamsObj *params,
+                                              coverageMetadataObj *cm,
+                                              layerObj *lp ) 
+{
+    
+    // This function will provide default rangeset information for the "special"
+    // "bands" rangeset if it appears in the axes list but has no specifics provided
+    // in the metadata.  
+
+    const char *value;
+    char *bandlist;
+    int  i;
+
+    // Does this item exist in the axes list? 
+
+    value = msOWSLookupMetadata(lp->metadata, "COM", "rangeset_axes");
+    if( value == NULL )
+        return;
+
+    value = strstr(value,"bands");
+    if( value[5] != '\0' && value[5] != ' ' )
+        return;
+
+    // Are there any w*s_bands_ metadata already? If so, skip out.
+    if( msOWSLookupMetadata(lp->metadata, "COM", "bands_description") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_name") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_label") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_values") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_values_semantic") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_values_type") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_rangeitem") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_semantic") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_refsys") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_refsyslabel") != NULL
+        || msOWSLookupMetadata(lp->metadata, "COM", "bands_interval") != NULL )
+        return;
+
+    // OK, we have decided to fill in the information.
+
+    msInsertHashTable( lp->metadata, "wcs_bands_name", "bands" );
+    msInsertHashTable( lp->metadata, "wcs_bands_label", "Bands/Channels/Samples" );
+    msInsertHashTable( lp->metadata, "wcs_bands_rangeitem", "_bands" ); // ?
+
+    bandlist = (char *) malloc(cm->bandcount*30+30 );
+    strcpy( bandlist, "1" );
+    for( i = 1; i < cm->bandcount; i++ )
+        sprintf( bandlist+strlen(bandlist),",%d", i+1 );
+    
+    msInsertHashTable( lp->metadata, "wcs_bands_values", bandlist );
+    free( bandlist );
+}    
+
 static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapObj *map)
 {
   int i;
@@ -490,6 +542,9 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
   status = msWCSGetCoverageMetadata(layer, &cm);
   if(status != MS_SUCCESS) return MS_FAILURE;
+
+  // Fill in bands rangeset info, if required. 
+  msWCSSetDefaultBandsRangeSetInfo( params, &cm, layer );
   
   // start the Coverage section
   printf("  <CoverageOffering>\n");
