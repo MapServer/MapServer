@@ -564,7 +564,7 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
   {
       allocColorCube( map, gdImg, anColorCube );
   }
-  else
+  else if( !truecolor )
   {
       msSetError(MS_IOERR, 
                  "Unsupported configuration for raster layer read via GDAL.",
