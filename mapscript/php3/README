@@ -727,9 +727,9 @@ Constructor:
    double m //used for measured shape files. set to 0 for other types.     
  Methods:
 
-   int setXY(double x, double y)
+   int setXY(double x, double y, double m)
         Set X,Y coordinate values.
-
+        Note : the 3rd parameter m is used for measured shape files. It is not mandatory.
    int draw(mapObj map, layerObj layer, imageObj img, 
             int class_index, string text)
         Draws the individual point using layer.  The class_index is used
@@ -770,8 +770,9 @@ Constructor:
    int add(pointObj point)
         Add a point to the end of line.
 
-   int addXY(double x, double y)
+   int addXY(double x, double y, double m)
         Add a point to the end of line.
+        Note : the 3rd parameter m is used for measured shape files. It is not mandatory.
 
    PointObj point(int i)
         Returns a reference to point number i.  Reference is valid only

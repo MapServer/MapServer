@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.31  2002/01/29 23:38:32  assefa
+ * Add write support for measured shape files.
+ *
  * Revision 1.30  2002/01/22 21:19:01  sacha
  * Add two functions in maplegend.c
  * - msDrawLegendIcon that draw an class legend icon over an existing image.
@@ -551,6 +554,7 @@ int lineObj_add(lineObj *self, pointObj *p) {
 
     self->point[self->numpoints].x = p->x;
     self->point[self->numpoints].y = p->y;
+    self->point[self->numpoints].m = p->m;
     self->numpoints++;
 
     return 0;

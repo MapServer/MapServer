@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.83  2002/01/29 23:38:31  assefa
+ * Add write support for measured shape files.
+ *
  * Revision 1.82  2002/01/28 16:59:01  dan
  * Added mapObj->resolution.  Added optional dstx,dsty args to PasteImage().
  *
@@ -6280,13 +6283,16 @@ DLEXPORT void php3_ms_point_new(INTERNAL_FUNCTION_PARAMETERS)
  *                        point->setXY()
  **********************************************************************/
 
-/* {{{ proto int point.setXY(double x, double y)
-   Set new RGB point. Returns -1 on error. */
+/* {{{ proto int point.setXY(double x, double y, double m)
+ 3rd argument m is used for Measured shape files. It is not mandatory.
+   Set new point. Returns -1 on error. */
 
 DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pointObj *self;
-    pval   *pX, *pY, *pThis;
+    pointObj    *self;
+    pval        *pX, *pY, *pM, *pThis;
+    int         nArgs = ARG_COUNT(ht);
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -6298,7 +6304,12 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 2, &pX, &pY) != SUCCESS)
+        (nArgs != 2 && nArgs != 3))
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    if (getParameters(ht, nArgs, &pX, &pY, &pM) != SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
@@ -6315,11 +6326,23 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_double(pX);
     convert_to_double(pY);
 
+    
+
     self->x = pX->value.dval;
     self->y = pY->value.dval;
 
+    if (nArgs == 3)
+    {
+        convert_to_double(pM); 
+        self->m = pM->value.dval;
+    }
+    else
+      self->m = 0.0; 
+
     _phpms_set_property_double(pThis, "x", self->x, E_ERROR);
     _phpms_set_property_double(pThis, "y", self->y, E_ERROR);
+    _phpms_set_property_double(pThis, "m", self->y, E_ERROR);
+
 
     RETURN_LONG(0);
 }
@@ -6814,15 +6837,17 @@ DLEXPORT void php3_ms_line_add(INTERNAL_FUNCTION_PARAMETERS)
  *                        line->addXY()
  **********************************************************************/
 
-/* {{{ proto int line.addXY(double x, double y)
+/* {{{ proto int line.addXY(double x, double y, double m)
+3rd argument m is used for Measured shape files. It is not mandatory.
    Adds a point to the end of a line */
 
 DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval *pThis, *pX, *pY;
+    pval *pThis, *pX, *pY, *pM;
     lineObj     *self;
     pointObj    oPoint;
     int         nRetVal=0;
+    int         nArgs = ARG_COUNT(ht);
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -6834,8 +6859,14 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
+     if (pThis == NULL ||
+         (nArgs != 2 && nArgs != 3))
+     {
+         WRONG_PARAM_COUNT;
+     }
+
     if (pThis == NULL ||
-        getParameters(ht, 2, &pX, &pY) !=SUCCESS)
+        getParameters(ht, nArgs, &pX, &pY, &pM) !=SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
@@ -6845,7 +6876,14 @@ DLEXPORT void php3_ms_line_addXY(INTERNAL_FUNCTION_PARAMETERS)
 
     oPoint.x = pX->value.dval;
     oPoint.y = pY->value.dval;
-
+    if (nArgs == 3)
+    {
+        convert_to_double(pM); 
+        oPoint.m = pM->value.dval;
+    }
+    else
+      oPoint.m = 0.0;
+ 
     self = (lineObj *)_phpms_fetch_handle2(pThis, 
                                            PHPMS_GLOBAL(le_msline_ref),
                                            PHPMS_GLOBAL(le_msline_new),
@@ -8469,6 +8507,7 @@ DLEXPORT void php3_ms_shapefile_getshape(INTERNAL_FUNCTION_PARAMETERS)
     pval *pThis, *pIndex;
     shapefileObj *self;
     shapeObj    *poShape;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif

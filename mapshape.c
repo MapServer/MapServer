@@ -574,7 +574,8 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   int nRecordOffset, i, j, k, nRecordSize=0;
   uchar	*pabyRec;
   int32	i32, nPoints, nParts;
-  
+  double dfMMin, dfMMax = 0;
+
   psSHP->bUpdated = MS_TRUE;
   
   /* -------------------------------------------------------------------- */
@@ -610,7 +611,8 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
   /* -------------------------------------------------------------------- */
   /*  Write vertices for a Polygon or Arc.				    */
   /* -------------------------------------------------------------------- */
-  if( psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC ) {
+  if(psSHP->nShapeType == SHP_POLYGON || psSHP->nShapeType == SHP_ARC ||
+     psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM) {
     int32 t_nParts, t_nPoints, partSize;
     
     t_nParts = nParts;
@@ -646,18 +648,49 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 	  SwapWord( 8, pabyRec + 44+4*t_nParts+8+k*16 );
 	  SwapWord( 8, pabyRec + 44+4*t_nParts+8+k*16+8 );
 	}
-	
+
 	k++;
       }
     }
-    
-    nRecordSize = 44 + 4*t_nParts + 16 * t_nPoints;
+
+/* -------------------------------------------------------------------- */
+/*      measured shape : polygon and arc.                               */
+/* -------------------------------------------------------------------- */
+    if(psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM)
+    {
+        dfMMin = shape->line[0].point[0].m;
+        dfMMax = 
+            shape->line[shape->numlines-1].point[shape->line[shape->numlines-1].numpoints-1].m;
+            
+        nRecordSize = 44 + 4*t_nParts + 8 + (t_nPoints* 16);
+
+        ByteCopy( &(dfMMin), pabyRec + nRecordSize, 8 );
+        if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+        nRecordSize += 8;
+
+        ByteCopy( &(dfMMax), pabyRec + nRecordSize, 8 );
+        if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+        nRecordSize += 8;
+            
+        for( i = 0; i < shape->numlines; i++ ) 
+        {
+            for( j = 0; j < shape->line[i].numpoints; j++ ) 
+            {
+                ByteCopy( &(shape->line[i].point[j].m), pabyRec + nRecordSize, 8 );
+                if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+                nRecordSize += 8;
+            }
+        }
+    }
+    else
+      nRecordSize = 44 + 4*t_nParts + 16 * t_nPoints;
   }
   
   /* -------------------------------------------------------------------- */
-  /*  Write vertices for a MultiPoint.				    */
+  /*  Write vertices for a MultiPoint.				          */
   /* -------------------------------------------------------------------- */
-  else if( psSHP->nShapeType == SHP_MULTIPOINT ) {
+  else if( psSHP->nShapeType == SHP_MULTIPOINT ||
+           psSHP->nShapeType == SHP_MULTIPOINTM) {
     int32 t_nPoints;
     
     t_nPoints = nPoints;
@@ -676,14 +709,36 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 	SwapWord( 8, pabyRec + 48 + i*16 + 8 );
       }
     }
-    
-    nRecordSize = 40 + 16 * t_nPoints;
+    if (psSHP->nShapeType == SHP_MULTIPOINTM)
+    {
+        nRecordSize = 48 + 16 * t_nPoints;
+
+        dfMMin = shape->line[0].point[0].m;
+        dfMMax = shape->line[0].point[shape->line[0].numpoints-1].m;
+        
+        ByteCopy( &(dfMMin), pabyRec + nRecordSize, 8 );
+        if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+        nRecordSize += 8;
+
+        ByteCopy( &(dfMMax), pabyRec + nRecordSize, 8 );
+        if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+        nRecordSize += 8;
+        
+        for( i = 0; i < shape->line[0].numpoints; i++ ) 
+        {
+            ByteCopy( &(shape->line[0].point[i].m), pabyRec + nRecordSize, 8 );
+            if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+            nRecordSize += 8;
+        }
+    }
+    else
+      nRecordSize = 40 + 16 * t_nPoints;
   }
   
   /* -------------------------------------------------------------------- */
   /*      Write vertices for a point.                                     */
   /* -------------------------------------------------------------------- */
-  else if( psSHP->nShapeType == SHP_POINT ) {
+  else if( psSHP->nShapeType == SHP_POINT ||  psSHP->nShapeType == SHP_POINTM) {
     ByteCopy( &(shape->line[0].point[0].x), pabyRec + 12, 8 );
     ByteCopy( &(shape->line[0].point[0].y), pabyRec + 20, 8 );
     
@@ -692,7 +747,16 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
       SwapWord( 8, pabyRec + 20 );
     }
     
-    nRecordSize = 20;
+    if (psSHP->nShapeType == SHP_POINTM)
+    {
+        nRecordSize = 28;
+
+        ByteCopy( &(shape->line[0].point[0].m), pabyRec + nRecordSize, 8 );
+        if( bBigEndian ) SwapWord( 8, pabyRec + nRecordSize );
+        nRecordSize += 8;
+    }
+    else
+      nRecordSize = 20;
   }
   
   /* -------------------------------------------------------------------- */
@@ -906,7 +970,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
           
           shape->line[i].point[j].m = 0; // initialize
 /* -------------------------------------------------------------------- */
-/*      Measured ar and polygon support.                                */
+/*      Measured arc and polygon support.                               */
 /* -------------------------------------------------------------------- */
           if (psSHP->nShapeType == SHP_POLYGONM || psSHP->nShapeType == SHP_ARCM)
           {
@@ -976,7 +1040,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 
         shape->line[0].point[i].m = 0; //initialize
 /* -------------------------------------------------------------------- */
-/*      Measured ar and polygon support.                                */
+/*      Measured shape : multipont.                                     */
 /* -------------------------------------------------------------------- */
         if (psSHP->nShapeType == SHP_MULTIPOINTM)
         {
@@ -1018,7 +1082,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 
       shape->line[0].point[0].m = 0; //initialize
 /* -------------------------------------------------------------------- */
-/*      Measured ar and polygon support.                                */
+/*      Measured support : point.                                       */
 /* -------------------------------------------------------------------- */
       if (psSHP->nShapeType == SHP_POINTM)
       {
@@ -1174,7 +1238,9 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *file
 // Creates a new shapefile
 int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
 {
-  if(type != SHP_POINT && type != SHP_MULTIPOINT && type != SHP_ARC && type != SHP_POLYGON) {
+  if(type != SHP_POINT && type != SHP_MULTIPOINT && type != SHP_ARC &&
+     type != SHP_POLYGON && type != SHP_POINTM && type != SHP_MULTIPOINTM &&
+     type != SHP_ARCM && type != SHP_POLYGONM) {
     msSetError(MS_SHPERR, "Invalid shape type.", "msNewSHPFile()");
     return(-1);
   }
