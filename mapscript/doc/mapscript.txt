@@ -810,6 +810,11 @@ addFeature( shapeObj_ shape ) : int
     **TODO**: Is this similar to inline features in a mapfile?  Does it work
     for any kind of layer or connection type? 
     
+addProcessing( string directive ) : void
+    Adds a new processing directive line to a layer, similar to the PROCESSING
+    directive in a map file.  Processing directives supported are specific to
+    the layer type and underlying renderer. 
+
 applySLD( string sld, string stylelayer ) : int 
     Apply the SLD document to the layer object. 
     The matching between the sld document and the layer will be done 
@@ -1010,10 +1015,11 @@ setMetaData( string key, string value ) : int
     Assign *value* to the metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
 
-setProcessing( string directive ) : void
-    Adds a new processing directive line to a layer, similar to the PROCESSING
-    directive in a map file.  Processing directives supports are specific to
-    the layer type and underlying renderer. 
+setProcessingKey( string key, string value ) : void
+    Adds or replaces a processing directive of the form "key=value".  Unlike
+    the addProcessing() call, this will replace an existing processing
+    directive for the given key value.  Processing directives supported are 
+    specific to the layer type and underlying renderer. 
 
 setProjection( string proj4 ) : int
     Set the layer projection using a PROJ.4 format projection definition. 
