@@ -140,14 +140,14 @@ class LayerMetadataTestCase(WebMetadataTestCase):
 
     def setUp(self):
         MapTestCase.setUp(self)
-        self.table = self.map.getLayer(0).metadata
+        self.table = self.map.getLayer(1).metadata
        
 
 class ClassMetadataTestCase(WebMetadataTestCase):
 
     def setUp(self):
         MapTestCase.setUp(self)
-        self.table = self.map.getLayer(0).getClass(0).metadata        
+        self.table = self.map.getLayer(1).getClass(0).metadata        
 
 
 # ===========================================================================

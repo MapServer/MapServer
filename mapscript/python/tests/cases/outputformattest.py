@@ -53,7 +53,7 @@ class OutputFormatTestCase(unittest.TestCase):
 class MapOutputFormatTestCase(MapTestCase):
 
     def testAppendNewOutputFormat(self):
-        """MapOutputFormatTestCase.testAppendNewOutputFormat: test that a new output format can be created on-the-fly"""
+        """test that a new output format can be created on-the-fly"""
         num = self.map.numoutputformats
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         assert new_format.refcount == 1, new_format.refcount
@@ -62,12 +62,13 @@ class MapOutputFormatTestCase(MapTestCase):
         assert new_format.refcount == 2, new_format.refcount
         self.map.setImageType('gtiffx')
         self.map.save('testAppendNewOutputFormat.map')
+        self.map.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
         imgobj = self.map.draw()
         filename = 'testAppendNewOutputFormat.tif'
         imgobj.save(filename)
         
     def testRemoveOutputFormat(self):
-        """MapOutputFormatTestCase.testRemoveOutputFormat: testRemoveOutputFormat may fail depending on GD options"""
+        """testRemoveOutputFormat may fail depending on GD options"""
         num = self.map.numoutputformats
         new_format = mapscript.outputFormatObj('GDAL/GTiff', 'gtiffx')
         self.map.appendOutputFormat(new_format)
@@ -80,6 +81,28 @@ class MapOutputFormatTestCase(MapTestCase):
                           self.map.setImageType, 'gtiffx')
         self.map.setImageType('GTiff')
         assert self.map.outputformat.mimetype == 'image/tiff'
+
+    def testBuiltInPNG24Format(self):
+        """test built in PNG RGB format"""
+        self.map.setImageType('PNG24')
+        assert self.map.outputformat.mimetype == 'image/png'
+        self.map.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
+        img = self.map.draw()
+        assert img.format.mimetype == 'image/png'
+        filename = 'testBuiltInPNG24Format.png'
+        img.save(filename)
+
+    def testBuiltInJPEGFormat(self):
+        """test built in JPEG format"""
+        self.map.setImageType('JPEG')
+        assert self.map.outputformat.mimetype == 'image/jpeg'
+        self.map.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
+        img = self.map.draw()
+        assert img.format.mimetype == 'image/jpeg'
+        filename = 'testBuiltInJPEGFormat.jpg'
+        img.save(filename)
+        
+
 
 
 # ===========================================================================

@@ -44,7 +44,7 @@ class LayerQueryTestCase(MapTestCase):
 
     def setUp(self):
         MapTestCase.setUp(self)
-        self.layer = self.map.getLayer(0)
+        self.layer = self.map.getLayer(1)
         self.layer.template = 'some day i will fix this!'
   
     def pointquery(self):

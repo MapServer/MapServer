@@ -100,10 +100,10 @@ class MapLayersTestCase(MapTestCase):
         assert index == n, index
         assert self.map.numlayers == n + 1
         names = [self.map.getLayer(i).name for i in range(self.map.numlayers)]
-        assert names == ['POLYGON', 'LINE', 'POINT', 'INLINE', 
+        assert names == ['RASTER', 'POLYGON', 'LINE', 'POINT', 'INLINE', 
                          'INLINE-PIXMAP-RGBA', 'INLINE-PIXMAP-PCT', 'new']
         order = self.map.getLayerOrder()
-        assert order == (0, 1, 2, 3, 4, 5, 6), order
+        assert order == (0, 1, 2, 3, 4, 5, 6, 7), order
         
     def testMapInsertLayerAtZero(self):
         """MapLayersTestCase.testMapInsertLayerAtZero: test insertion of a new layer at first index"""
@@ -114,16 +114,16 @@ class MapLayersTestCase(MapTestCase):
         assert index == 0, index
         assert self.map.numlayers == n + 1
         names = [self.map.getLayer(i).name for i in range(self.map.numlayers)]
-        assert names == ['new', 'POLYGON', 'LINE', 'POINT', 'INLINE',
+        assert names == ['new', 'RASTER', 'POLYGON', 'LINE', 'POINT', 'INLINE',
                          'INLINE-PIXMAP-RGBA', 'INLINE-PIXMAP-PCT'], names 
         order = self.map.getLayerOrder()
-        assert order == (0, 1, 2, 3, 4, 5, 6), order
+        assert order == (0, 1, 2, 3, 4, 5, 6, 7), order
 
     def testMapInsertLayerDrawingOrder(self):
         """MapLayersTestCase.testMapInsertLayerDrawingOrder: test affect of insertion of a new layer at index 1 on drawing order"""
         n = self.map.numlayers
         # reverse layer drawing order
-        o_start = (5, 4, 3, 2, 1, 0)
+        o_start = (6, 5, 4, 3, 2, 1, 0)
         self.map.setLayerOrder(o_start)
         # insert Layer
         layer = mapscript.layerObj()
@@ -132,7 +132,7 @@ class MapLayersTestCase(MapTestCase):
         assert index == 1, index 
         # We expect our new layer to be at index 1 in drawing order as well
         order = self.map.getLayerOrder()
-        assert order == (6, 1, 5, 4, 3, 2, 0), order
+        assert order == (7, 1, 6, 5, 4, 3, 2, 0), order
 
     def testMapInsertLayerBadIndex(self):
         """MapLayersTestCase.testMapInsertLayerBadIndex: expect an exception when index is too large"""
@@ -149,30 +149,30 @@ class MapLayersTestCase(MapTestCase):
         assert layer.thisown == 1
         del layer
         order = self.map.getLayerOrder()
-        assert order == (0, 1, 2, 3, 4), order
+        assert order == (0, 1, 2, 3, 4, 5), order
 
     def testMapRemoveLayerAtZero(self):
         """removal of lowest index (0) layer"""
         n = self.map.numlayers
         layer = self.map.removeLayer(0)
         assert self.map.numlayers == n-1
-        assert layer.name == 'POLYGON'
+        assert layer.name == 'RASTER'
         order = self.map.getLayerOrder()
-        assert order == (0, 1, 2, 3, 4), order
+        assert order == (0, 1, 2, 3, 4, 5), order
         
     def testMapRemoveLayerDrawingOrder(self):
         """test affect of layer removal on drawing order"""
         n = self.map.numlayers
         # reverse layer drawing order
-        o_start = (5, 4, 3, 2, 1, 0)
+        o_start = (6, 5, 4, 3, 2, 1, 0)
         self.map.setLayerOrder(o_start)
         layer = self.map.removeLayer(1)
         assert self.map.numlayers == n-1
-        assert layer.name == 'LINE'
+        assert layer.name == 'POLYGON'
         order = self.map.getLayerOrder()
-        assert order == (4, 3, 2, 1, 0), order
+        assert order == (5, 4, 3, 2, 1, 0), order
         names = [self.map.getLayer(i).name for i in range(self.map.numlayers)]
-        assert names == ['POLYGON', 'POINT', 'INLINE', 
+        assert names == ['RASTER', 'LINE', 'POINT', 'INLINE', 
                          'INLINE-PIXMAP-RGBA', 'INLINE-PIXMAP-PCT'], names  
         
 class MapExceptionTestCase(MapTestCase):
@@ -222,10 +222,10 @@ class MapMetaDataTestCase(MapTestCase):
     def testLayerMetaData(self):
         """MapMetaDataTestCase.testLayerMetaData: layer metadata keys are correct values"""
         keys = []
-        key = self.map.getLayer(0).getFirstMetaDataKey()
+        key = self.map.getLayer(1).getFirstMetaDataKey()
         if key is not None: keys.append(key)
         while 1:
-            key = self.map.getLayer(0).getNextMetaDataKey(key)
+            key = self.map.getLayer(1).getNextMetaDataKey(key)
             if not key:
                 break
             keys.append(key)
@@ -233,10 +233,10 @@ class MapMetaDataTestCase(MapTestCase):
     def testClassMetaData(self):
         """MapMetaDataTestCase.testClassMetaData: class metadata keys are correct values"""
         keys = []
-        key = self.map.getLayer(0).getClass(0).getFirstMetaDataKey()
+        key = self.map.getLayer(1).getClass(0).getFirstMetaDataKey()
         if key is not None: keys.append(key)
         while 1:
-            key = self.map.getLayer(0).getClass(0).getNextMetaDataKey(key)
+            key = self.map.getLayer(1).getClass(0).getNextMetaDataKey(key)
             if not key:
                 break
             keys.append(key)

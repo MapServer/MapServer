@@ -90,14 +90,16 @@ class MapSymbolTestCase(MapTestCase):
     def testRGBASymbolInPNG24(self):
         """draw a RGBA PNG pixmap on PNG canvas"""
         self.map.setImageType('PNG24')
-        self.map.getLayerByName('INLINE-PIXMAP-RGBA').status == MS_ON
+        #self.map.getLayerByName('INLINE-PIXMAP-RGBA').status \
+        #    == mapscript.MS_DEFAULT
         img = self.map.draw()
         img.save('pixmap-rgba-24.png')
 
     def testRGBASymbolInJPEG(self):
         """draw a RGBA PNG pixmap on JPEG canvas"""
         self.map.setImageType('JPEG')
-        self.map.getLayerByName('INLINE-PIXMAP-RGBA').status == MS_ON
+        #self.map.getLayerByName('INLINE-PIXMAP-RGBA').status \
+        #    == mapscript.MS_DEFAULT
         img = self.map.draw()
         img.save('pixmap-rgba.jpg')
 
