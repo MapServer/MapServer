@@ -16,68 +16,88 @@
 #include "libpq-fe.h"
 #include <string.h>
 
+char tolower(char c)
+{
+	if ((c <'A') || (c>'Z'))
+		return c;
+	return c-'A'+'a';
 
+}
+
+
+char *strstrIgnoreCase(char *haystack, char *needle)
+{
+	char *hay_lower;
+	char *needle_lower;
+	int len_hay,len_need;
+	int t;
+	char *loc;
+
+	len_hay = strlen(haystack);
+	len_need= strlen(needle);
+
+	hay_lower = (char *) malloc (len_hay +1);
+	needle_lower=(char*) malloc (len_need+1);
+
+
+	for(t=0;t<len_hay;t++)
+	{
+		hay_lower[t] = tolower(haystack[t]);
+	}
+	hay_lower[t] = 0;
+
+	for(t=0;t<len_need;t++)
+	{
+			needle_lower[t] = tolower(needle[t]);
+	}
+	needle_lower[t] =0;
+
+	loc = strstr(hay_lower,needle_lower);
+	free(hay_lower);
+	free(needle_lower);
+
+	if (loc == NULL)
+	{
+		return NULL;
+	}
+	return haystack + (loc-hay_lower);
+}
 
 
 void postresql_NOTICE_HANDLER(void *arg, const char *message);
 
 
-char *DATAERRORMESSAGE(char *dataString, char *preamble)
+char *DATAERRORMESSAGE(char *dString, char *preamble)
 {
-	char	*message;
-	char	tmp[5000];
+	char	*m;
+	char	tmp[7000];
 
-	message = malloc(7000);
-
-	sprintf(message,"%s",preamble);
-
-		sprintf(tmp,"Error parsing POSTGIS data variable. You specified '%s'.<br>\nStandard ways of specifiying are : <br>\n(1) 'geometry_column from geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' <br><br>\n\n",
-																		  dataString);
-		strcat(message,tmp);
-
-		sprintf(tmp,"NOTE: for (2) 'using unique' and 'SRID=' are optional, but its highly recommended that you use them!!! <br><br>\n\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"The most common problem with (1) is incorrectly uploading your data.  There must be an entry in the geometry_columns table.  This will be automatically done if you used the shp2pgsql program or created your geometry column with the AddGeometryColumn() postgis function. <br><br>\n\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"Another important thing to check is that the postgis user specified in the CONNECTION string does have SELECT permissions on the table(s) specified in your DATA string. <br><br>\n\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"If you are using the (2) method, you've probably made a typo.<br>\nExample:  'the_geom from (select the_geom,oid from mytable) as foo using unique oid using SRID=76'<br>\nThis is very much like the (1) example.  The subquery ('select the_geom,oid from mytable') will be executed, and mapserver will use 'oid' (a postgresql system column) for uniquely specifying a geometry (for mapserver queries).  The geometry (the_geom) must have a SRID of 76. <br><br>\n\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"Example:  'roads from (select table1.roads,table1.rd_segment_id,table2.rd_name,table2.rd_type from table1,table2 where table1.rd_segment_id=table2.rd_segment_id) as foo using unique rd_segment_id using SRID=89' <br><Br>\n\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"This is a more complex sub-query involving joining two tables.  The resulting geometry (column 'roads') has SRID=89, and mapserver will use rd_segment_id to uniquely identify a geometry.  The attributes rd_type and rd_name are useable by other parts of mapserver.<br><br>\n\n");
-		strcat(message,tmp);
+	m = (char*) malloc(10000);
 
 
-		sprintf(tmp,"To use a view, do something like:<BR>\n'<geometry_column> from (SELECT * FROM <view>) as foo using unique <column name> using SRID=<srid#>'<br>\nFor example: 'the_geom from (SELECT * FROM myview) as foo using unique gid using SRID=-1' <br><br>\n\n");
-		strcat(message,tmp);
 
-		sprintf(tmp,"NOTE: for the (2) case, the ' as foo ' is requred.  The 'using unique &lt;column&gt;' and 'using SRID=' are case sensitive.<br>\n ");
-		strcat(message,tmp);
+	sprintf(m,"%s",preamble);
 
+		sprintf(tmp,"Error with POSTGIS data variable. You specified '%s'.<br>\n", dString);
+		strcat(m,tmp);
 
-		sprintf(tmp,"NOTE: 'using unique &lt;column&gt;' would normally be the system column 'oid', but for views and joins you'll almost certainly want to use a real column in one of your tables. <Br>\n");
-		strcat(message,tmp);
+		sprintf(tmp,"Standard ways of specifiying are : <br>\n(1) 'geometry_column from geometry_table' <br>\n(2) 'geometry_column from (&lt;sub query&gt;) as foo using unique &lt;column name&gt; using SRID=&lt;srid#&gt;' <br><br>\n\n");
+		strcat(m,tmp);
 
-		sprintf(tmp,"NOTE: you'll want to build a spatial index on your geometric data:<br>\n");
-		strcat(message,tmp);
+		sprintf(tmp,"Make sure you put in the 'using unique  &lt;column name&gt;' and 'using SRID=#' clauses in.\n\n<br><br>");
+		strcat(m,tmp);
 
-		sprintf(tmp,"CREATE INDEX &lt;indexname&gt; ON &lt;table&gt; USING GIST (&lt;geometrycolumn&gt; GIST_GEOMETRY_OPS ) <br>\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"You'll also want to put an index on either oid or whatever you used for your unique column:<br>\n");
-		strcat(message,tmp);
-
-		sprintf(tmp,"CREATE INDEX &lt;indexname&gt; ON &lt;table&gt; (&lt;uniquecolumn&gt;)");
-		strcat(message,tmp);
+		sprintf(tmp,"For more help, please see http://postgis.refractions.net/documentation.php \n\n<br><br>");
+		strcat(m,tmp);
 
 
-	return message;
+		sprintf(tmp,"Mappostgis.c - version of Nov 15/2002.\n");
+		strcat(m,tmp);
+
+//printf("%s",m);
+//printf("size = %i\n",strlen(m));
+
+	return m;
 
 
 }
@@ -556,9 +576,13 @@ int msPOSTGISLayerWhichShapes(layerObj *layer, rectObj rect)
     {
 		char tmp[4000];
 
-		sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s", layerinfo->sql);
-        	msSetError(MS_QUERYERR, tmp,
-                 "msPOSTGISLayerWhichShapes()");
+		sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s\n-%s\n", query_str,PQerrorMessage(layerinfo->conn) );
+
+
+          msSetError(MS_QUERYERR,
+				 	DATAERRORMESSAGE("",tmp),
+					"msPOSTGISLayerWhichShapes()");
+
 
         	PQclear(layerinfo->query_result);
 	  	layerinfo->query_result = NULL;
@@ -1130,9 +1154,12 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     {
 		char tmp[4000];
 
-		sprintf(tmp, "Error executing POSTGIS  SQL   statement: %s", query_str);
-        	msSetError(MS_QUERYERR, tmp,
-                 "msPOSTGISLayerGetShape()");
+		sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s\n-%s\n<br>More Help:<br>", query_str,PQerrorMessage(layerinfo->conn) );
+
+
+          msSetError(MS_QUERYERR,
+				 	DATAERRORMESSAGE("",tmp),
+					"msPOSTGISLayerGetShape()");
 
         	PQclear(query_result);
 	  	query_result = NULL;
@@ -1146,10 +1173,12 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
     {
 		char tmp[4000];
 
-		sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s <br><br>\n\nMore Help:", query_str);
-        	msSetError(MS_QUERYERR, tmp,
-                 "msPOSTGISLayerWhichShapes()");
+			sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s\n-%s\n", query_str,PQerrorMessage(layerinfo->conn) );
 
+
+          msSetError(MS_QUERYERR,
+				 	DATAERRORMESSAGE("",tmp),
+					"msPOSTGISLayerGetShape()");
         	PQclear(query_result);
 	  	query_result = NULL;
 		return(MS_FAILURE);
@@ -1286,9 +1315,12 @@ int msPOSTGISLayerGetItems(layerObj *layer)
     {
 		char tmp[4000];
 
-		sprintf(tmp, "Error executing POSTGIS  SQL   statement: %s", sql);
-        	msSetError(MS_QUERYERR, tmp,
-                 "msPOSTGISLayerGetItems()");
+				sprintf(tmp, "Error executing POSTGIS  SQL   statement (in FETCH ALL): %s\n-%s\n", sql,PQerrorMessage(layerinfo->conn) );
+
+
+          msSetError(MS_QUERYERR,
+				 	DATAERRORMESSAGE("",tmp),
+					"msPOSTGISLayerGetShape()");
 
         	PQclear(query_result);
 	  	query_result = NULL;
@@ -1367,15 +1399,7 @@ int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
 {
 //fprintf(stderr,"msPOSTGISLayerGetExtent called\n");
 
-	PGresult   *query_result;
-	char		sql[5000];
 
-	msPOSTGISLayerInfo *layerinfo;
-
-   char    table_name[5000];
-      char    geom_column_name[5000];
-      char    urid_name[5000];
-    char    user_srid[5000];
 
 
 
@@ -1391,6 +1415,16 @@ int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent)
 		// pretty useless.  Untested since you cannot actually call it.
 
 /*
+
+PGresult   *query_result;
+	char		sql[5000];
+
+	msPOSTGISLayerInfo *layerinfo;
+
+   char    table_name[5000];
+      char    geom_column_name[5000];
+      char    urid_name[5000];
+    char    user_srid[5000];
 	if (layer == NULL)
 	{
 				char tmp[5000];
@@ -1477,7 +1511,7 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
 	 */
 
 	/* First look for the optional ' using unique ID' string */
-	pos_opt = strstr(data, " using unique ");
+	pos_opt = strstrIgnoreCase(data, " using unique ");
 	if (pos_opt == NULL) {
 		/* No user specified unique id so we will use the Postgesql OID */
 		strcpy(urid_name, "OID");
@@ -1498,7 +1532,7 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
 
 	}
 
-	pos_srid = strstr(data," using SRID=");
+	pos_srid = strstrIgnoreCase(data," using SRID=");
 	if (pos_srid == NULL)
 	{
 		user_srid[0] = 0; // = ""
@@ -1570,7 +1604,7 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
 					"msPOSTGISLayerParseData()");
 		return(MS_FAILURE);
 	}
-printf("msPOSTGISLayerParseData: unique column = %s, srid='%s', geom_column_name = %s, table_name=%s\n", urid_name,user_srid,geom_column_name,table_name);
+//printf("msPOSTGISLayerParseData: unique column = %s, srid='%s', geom_column_name = %s, table_name=%s\n", urid_name,user_srid,geom_column_name,table_name);
 	return(MS_SUCCESS);
 }
 
