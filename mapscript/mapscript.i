@@ -625,7 +625,7 @@ memory.") const char * {
 // class extensions for shapefileObj
 //
 %extend shapefileObj {
-  shapefileObj(char *filename, int type) {    
+  shapefileObj(char *filename, int type=-1) {    
     shapefileObj *shapefile;
     int status;
 
@@ -663,6 +663,21 @@ memory.") const char * {
 
     return MS_SUCCESS;
   }
+
+    %newobject getShape;
+    shapeObj *getShape(int i)
+    {
+        int retval;
+        shapeObj *shape;
+        shape = (shapeObj *)malloc(sizeof(shapeObj));
+        if (!shape)
+            return NULL;
+        msInitShape(shape);
+        shape->type = self->type;
+        msSHPReadShape(self->hSHP, i, shape);
+        return shape;
+
+    }
 
   int getPoint(int i, pointObj *point) {
     if(i<0 || i>=self->numshapes)

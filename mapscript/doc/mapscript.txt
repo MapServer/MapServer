@@ -1676,6 +1676,42 @@ None
 
 
 -----------------------------------------------------------------------------
+ shapefileObj
+-----------------------------------------------------------------------------
+
+Attributes
+----------
+
+bounds : rectObj_
+    Extent of shapes
+    
+numshapes : int
+    Number of shapes
+
+type : int
+    See mapshape.h for values of type.
+
+Methods
+-------
+
+new shapefileObj( string filename [, int type=-1 ] ) : shapefileObj
+    Create a new instance.  Omit the *type* argument or use a value of -1
+    to open an existing shapefile.
+
+add( shapeObj_ shape ) : int
+    Add shape to the shapefile.  Returns MS_SUCCESS or MS_FAILURE.
+    
+get( int i, shapeObj_ shape ) : int
+    Get the shapefile feature from index *i* and store it in *shape*.
+    Returns MS_SUCCESS or MS_FAILURE.
+
+getShape( int i ) : shapeObj_
+    Returns the shapefile feature at index i.  More effecient than *get*.
+
+*TODO*
+
+
+-----------------------------------------------------------------------------
  shapeObj
 -----------------------------------------------------------------------------
 
