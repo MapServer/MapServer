@@ -114,6 +114,7 @@ if (MSExc_MapServerChildError != NULL)
             case MS_NOERR:
                 break;
             case MS_NOTFOUND:
+                msResetErrorList();
                 break;
             case -1:
                 break;
