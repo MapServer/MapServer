@@ -946,6 +946,7 @@ MS_DLL_EXPORT void freeFeatureList(featureListNodeObjPtr list);
 
 MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, char *value);
 
+MS_DLL_EXPORT int msLoadExpressionString(expressionObj *exp, char *value);
 MS_DLL_EXPORT int loadExpressionString(expressionObj *exp, char *value);
 MS_DLL_EXPORT void freeExpression(expressionObj *exp);
 
@@ -1070,7 +1071,10 @@ MS_DLL_EXPORT int strcasecmp(char *s1, char *s2);
 MS_DLL_EXPORT size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
 
-MS_DLL_EXPORT int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map); // in mapsymbol.c
+// in mapsymbol.c
+MS_DLL_EXPORT int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map);
+MS_DLL_EXPORT int loadSymbolSet(symbolSetObj *symbolset, mapObj *map);
+
 MS_DLL_EXPORT int msCopySymbol(symbolObj *dst, symbolObj *src, mapObj *map);
 MS_DLL_EXPORT int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map);
 MS_DLL_EXPORT void msInitSymbolSet(symbolSetObj *symbolset);

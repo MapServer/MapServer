@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.69.2.1  2004/10/10 17:22:40  sean
+ * bring in thread safety fixes committed to 4.3 and described in bug 339
+ *
  * Revision 1.69  2004/04/16 20:19:39  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -1935,7 +1938,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
 
               // Enclose the text sting inside quotes to make sure it is seen
               // as a string by the parser inside loadExpression(). (bug185)
-              loadExpressionString(&(c->text), 
+              msLoadExpressionString(&(c->text), 
                          (char*)CPLSPrintf("\"%s\"", 
                                            poLabelStyle->TextString(bIsNull)));
 

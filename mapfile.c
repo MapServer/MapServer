@@ -1378,6 +1378,29 @@ int loadExpression(expressionObj *exp)
   return(0);
 }
 
+/* ---------------------------------------------------------------------------
+   msLoadExpressionString and loadExpressionString
+
+   msLoadExpressionString wraps calls to loadExpressionString with mutex 
+   acquisition and release.  It should be used everywhere outside the mapfile
+   loading phase of an application.  loadExpressionString should only be used
+   when a mutex exists.  It does not check for existence of a lock!
+
+   See bug 339 for more details -- SG.
+   ------------------------------------------------------------------------ */
+
+int msLoadExpressionString(expressionObj *exp, char *value)
+{
+    int retval = MS_FAILURE;
+    
+    msAcquireLock( TLOCK_PARSER );
+    retval = loadExpressionString(exp, value);
+    msReleaseLock( TLOCK_PARSER );
+
+    return retval;
+}
+
+
 int loadExpressionString(expressionObj *exp, char *value)
 {
   msyystate = 2; msyystring = value;
@@ -4166,7 +4189,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
           return NULL;
 
-      if(msLoadSymbolSet(&(map->symbolset), map) == -1) return(NULL);
+      if(loadSymbolSet(&(map->symbolset), map) == -1) return(NULL);
 
       // step through layers and classes to resolve symbol names
       for(i=0; i<map->numlayers; i++) {

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.26.2.1  2004/10/10 17:22:40  sean
+ * bring in thread safety fixes committed to 4.3 and described in bug 339
+ *
  * Revision 1.26  2004/02/26 14:48:03  frank
  * Avoid warnings by pre-include cpl_minixml.h before ogr_api.h is included.
  *
@@ -227,7 +230,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
 
         lp->class[0].type = lp->type;
         lp->numclasses = 1;
-        loadExpressionString(&lp->class[0].expression, 
+        msLoadExpressionString(&lp->class[0].expression, 
                                   szExpression);
 /* -------------------------------------------------------------------- */
 /*      classitems are necessary for filter type PropertyIsLike         */
@@ -254,7 +257,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
                     
                     lp->class[1].type = lp->type;
                     lp->numclasses++;
-                    loadExpressionString(&lp->class[1].expression, 
+                    msLoadExpressionString(&lp->class[1].expression, 
                                          szExpression);
                     if (!lp->class[1].template)
                       lp->class[1].template = strdup("ttt.html");

@@ -3,6 +3,7 @@
 
 #include "map.h"
 #include "mapparser.h"
+#include "mapthread.h"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -71,12 +72,20 @@ int msEvalContext(mapObj *map, char *context)
   else
     tmpstr1 = gsub(tmpstr1, "[raster]", "0");
 
+  msAcquireLock( TLOCK_PARSER );
   msyystate = 4; msyystring = tmpstr1;
   status = msyyparse();
+  msReleaseLock( TLOCK_PARSER );
   free(tmpstr1);
 
-  if(status != 0) return(MS_FALSE); // error in parse
-  return(msyyresult);
+  if(status != 0)
+  {
+    msSetError(MS_PARSEERR, "msyyparse returned false", "msEvalContext");
+    return(MS_FALSE); // error in parse
+  }
+
+  return MS_TRUE;
+  //return (msyyresult);
 }
 
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
@@ -105,13 +114,20 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     for(i=0; i<expression->numitems; i++)      
       tmpstr = gsub(tmpstr, expression->items[i], items[expression->indexes[i]]);
 
+    msAcquireLock( TLOCK_PARSER );
     msyystate = 4; msyystring = tmpstr; // set lexer state to EXPRESSION_STRING
     status = msyyparse();
+    msReleaseLock( TLOCK_PARSER );
     free(tmpstr);
 
-    if(status != 0) return(MS_FALSE); // error in parse (TO DO: we should generate an error here!)
+    if(status != 0) 
+    {
+        msSetError(MS_PARSEERR, "msyyparse returned false", "msEvalExpression");
+        return(MS_FALSE); // error in parse
+    }
 
-    return(msyyresult);
+    return MS_TRUE;
+    //return(msyyresult);
     break;
   case(MS_REGEX):
     if(itemindex == -1) {

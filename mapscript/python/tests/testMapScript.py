@@ -319,6 +319,7 @@ class SymbolSetTestCase(MapTestCase):
 
     def testDrawNewSymbol(self):
         symbol = mapscript.symbolObj('xmarks', xmarks_image)
+        self.mapobj1.setImageType('JPEG')
         symbol_index = self.mapobj1.symbolset.appendSymbol(symbol)
         assert symbol_index == 3, symbol_index
         num = self.mapobj1.symbolset.numsymbols
@@ -328,7 +329,6 @@ class SymbolSetTestCase(MapTestCase):
         s = inline_layer.getClass(0).getStyle(0)
         s.symbol = symbol_index
         s.size = 24
-        self.mapobj1.setImageType('JPEG')
         msimg = self.mapobj1.draw()
         assert msimg.thisown == 1
         data = msimg.saveToString()
