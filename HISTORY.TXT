@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Use doubles instead of integers in function php3_ms_symbol_setPoints 
+  (Bug 1137).
+
 - Change the output of the expression when using a wild card for
   PropertyIsLike (Bug 1107).
 
