@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/05/14 17:49:39  frank
+ * tentative fix for gdImagePaletteCopy() bug
+ *
  * Revision 1.21  2001/11/02 22:41:57  dan
  * Test for nSrcX or nSrcY < 0 in msSimpleRasterResampler() to prevent crash
  * when accessing pixels buffer.
@@ -661,7 +664,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     return 0;
 #else
     int		nSrcXSize, nSrcYSize, nDstXSize, nDstYSize;
-    int		result, bSuccess;
+    int		result, bSuccess, iColor, nColorCount;
     double	adfSrcGeoTransform[6], adfDstGeoTransform[6];
     double      adfInvSrcGeoTransform[6];
     rectObj	sSrcExtent;
@@ -787,7 +790,27 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
                 sDummyMap.extent.minx)/sDummyMap.cellsize+0.01), 
         (int) ((sDummyMap.extent.maxy - 
                 sDummyMap.extent.miny)/sDummyMap.cellsize+0.01));
-    gdImagePaletteCopy( srcImg, img );
+
+/* -------------------------------------------------------------------- */
+/*      Copy over the paletted.  For now we avoid                       */
+/*      gdImagePaletteCopy() because it had some problems in            */
+/*      gd-1.8.4. (see bug 1002 at DMSolutions).                        */
+/* -------------------------------------------------------------------- */
+    
+    /* gdImagePaletteCopy( srcImg, img ); */
+
+    nColorCount = gdImageColorsTotal( img );
+    for( iColor = 0; iColor < nColorCount; iColor++ )
+    {
+        int nResultColor;
+
+        nResultColor = gdImageColorAllocate( srcImg, 
+                                             gdImageRed( img, iColor ),
+                                             gdImageGreen( img, iColor ),
+                                             gdImageBlue( img, iColor ) );
+        assert( nResultColor == iColor );
+    }
+    gdImageColorTransparent( srcImg, gdImageGetTransparent( img ) );
 
 /* -------------------------------------------------------------------- */
 /*      If layer has an offsite color then fill the BG of the           */
