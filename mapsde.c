@@ -466,18 +466,26 @@ int msSDELayerOpen(layerObj *layer) {
 
 void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
+	long status=-1;
   msSDELayerInfo *sde=NULL;
 
   sde = layer->layerinfo;
   if (sde == NULL) return;  // Silently return if layer not opened.
 
   if(layer->debug) msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
-
-  SE_stream_free(sde->stream);
-  SE_layerinfo_free(sde->layerinfo);
-  SE_coordref_free(sde->coordref);
-  SE_connection_free(sde->connection);
-
+  msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
+	
+  if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
+  if (sde->coordref) SE_coordref_free(sde->coordref);
+  if (sde->connection) { 
+  	//We need to provoke SDE into telling us whether or 
+  	//not the connection object is valid.  
+  	status= SE_connection_free_all_locks (sde->connection);
+  	if (status == SE_SUCCESS) {
+  		if (sde->stream) SE_stream_free(sde->stream);
+  		SE_connection_free(sde->connection);
+  	}
+}
   if(sde->table) free(sde->table);
   if(sde->column) free(sde->column);
   if(sde->row_id_column) free(sde->row_id_column);
