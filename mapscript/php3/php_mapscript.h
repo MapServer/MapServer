@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.24  2002/07/08 19:07:06  dan
+ * Added map->setFontSet() to MapScript
+ *
  * Revision 1.23  2002/05/10 19:16:30  dan
  * Added qitem,qstring args to PHP version of layer->queryByAttributes()
  *
@@ -175,9 +178,9 @@ char            *mapObj_processLegendTemplate(mapObj *self,
 char            *mapObj_processQueryTemplate(mapObj *self,
                                              char **names, char **values, 
                                              int numentries);
-int             mapObj_setSymbolSet(mapObj *self,
-                                    char *szFileName);
+int             mapObj_setSymbolSet(mapObj *self, char *szFileName);
 int             mapObj_getNumSymbols(mapObj *self);
+int             mapObj_setFontSet(mapObj *self, char *szFileName);
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);

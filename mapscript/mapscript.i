@@ -386,6 +386,17 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return self->symbolset.numsymbols;
   }
 
+  int setFontSet(char *szFileName)
+  {
+    msFreeFontSet(&(self->fontset));
+    msInitFontSet(&(self->fontset));
+   
+    // Set fontset filename
+    self->fontset.filename = strdup(szFileName);
+
+    return msLoadFontSet(&(self->fontset));
+  }
+
   int  moveLayerup(int layerindex) {
         return msMoveLayerUp(self, layerindex);
   }

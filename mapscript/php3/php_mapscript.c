@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.112  2002/07/08 19:07:06  dan
+ * Added map->setFontSet() to MapScript
+ *
  * Revision 1.111  2002/06/27 19:12:11  dan
  * Added msTokenizeMap() in MapServer and PHP MapScript (3.7 branch)
  *
@@ -288,6 +291,7 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -576,6 +580,7 @@ function_entry php_map_class_functions[] = {
     {"processquerytemplate",   php3_ms_map_processQueryTemplate,  NULL},
     {"setsymbolset",   php3_ms_map_setSymbolSet,  NULL},
     {"getnumsymbols",   php3_ms_map_getNumSymbols,  NULL},
+    {"setfontset",      php3_ms_map_setFontSet,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1105,7 +1110,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * should really do is make all of MapServer use the V_* macros and
      * avoid calling setcwd() from anywhere.
      */
-    if (IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
+    if (strlen(pFname->value.str.val) == 0 ||
+        IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
         pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
     else
     {
@@ -4511,8 +4517,7 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    if (ZEND_NUM_ARGS() != 1 ||
-        getParameters(ht,1,&pParamFileName)==FAILURE)
+    if (getParameters(ht,1,&pParamFileName) == FAILURE)
     {
         WRONG_PARAM_COUNT;
     }
@@ -4570,9 +4575,72 @@ DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS)
    
     RETURN_LONG(self->symbolset.numsymbols);
 }
-
-
 /* }}} */
+
+/**********************************************************************
+ *                        map->setFontSet(szFileName)
+ *
+ * Load a new fontset
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_setFontSet(fileName)*/
+
+DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamFileName;
+    mapObj      *self=NULL;
+    int         retVal=0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (getParameters(ht,1,&pParamFileName) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pParamFileName);
+   
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+        RETURN_FALSE;
+
+    if(pParamFileName->value.str.val != NULL && 
+       strlen(pParamFileName->value.str.val) > 0)
+    {
+        if ((retVal = mapObj_setFontSet(self, 
+                                        pParamFileName->value.str.val)) != 0)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "Failed loading fontset from %s",
+                       pParamFileName->value.str.val);
+        }
+    }
+
+    RETURN_LONG(retVal);
+#endif
+}
+/* }}} */
+
+
 
 /*=====================================================================
  *                 PHP function wrappers - image class

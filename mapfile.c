@@ -3303,8 +3303,7 @@ void msFreeMap(mapObj *map) {
   }
   msFree(map->labelcache.markers);
 
-  if(map->fontset.fonts) msFreeHashTable(map->fontset.fonts);
-  msFree(map->fontset.filename);
+  msFreeFontSet(&(map->fontset));
 
   freeWeb(&(map->web));
 

@@ -942,6 +942,8 @@ int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, in
 gdImagePtr msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);
    
 int msLoadFontSet(fontSetObj *fontSet); // in maplabel.c
+int msInitFontSet(fontSetObj *fontset);
+int msFreeFontSet(fontSetObj *fontset);
 
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
 int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize);

@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.46  2002/07/08 19:07:06  dan
+ * Added map->setFontSet() to MapScript
+ *
  * Revision 1.45  2002/06/11 23:47:11  assefa
  * Upgrade code to support new outputformat support.
  *
@@ -419,6 +422,16 @@ int mapObj_getNumSymbols(mapObj *self)
     return self->symbolset.numsymbols;
 }
 
+int mapObj_setFontSet(mapObj *self, char *szFileName)
+{
+    msFreeFontSet(&(self->fontset));
+    msInitFontSet(&(self->fontset));
+   
+    // Set fontset filename
+    self->fontset.filename = strdup(szFileName);
+
+    return msLoadFontSet(&(self->fontset));
+}
 
   
       

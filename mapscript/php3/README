@@ -372,6 +372,10 @@ and the MapServer Map File documentation at:
    int getNumSymbols()
        Return the number of symbols in map.
        
+   int setFontSet(string fileName)
+       Load and set a new fontset.
+       
+
  LayerObj Class:
  ---------------
 
