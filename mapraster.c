@@ -1685,9 +1685,14 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
             else
                 status = drawGDAL(map, layer, img, hDS );
 
+            if( status == -1 )
+            {
+                chdir(old_path); /* restore old cwd */
+                continue;
+            }
+
             GDALClose( hDS );
-            chdir(old_path); /* restore old cwd */
-            return status;
+            continue;
         }
     }
 #endif
