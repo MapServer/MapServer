@@ -1256,7 +1256,7 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
 #endif
 
 /* ==================================================================== */
-/*      prototypes for functions in mapoutput.c                         */
+/*      prototypes for functions in mapgdal.c                           */
 /* ==================================================================== */
 int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename, 
                      outputFormatObj *format );
