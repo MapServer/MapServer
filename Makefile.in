@@ -74,13 +74,12 @@ SDE_LIB=  @SDE_LIB@
 SDE_INC=  @SDE_INC@
 
 # Optional OGR Support.  OGC Simple Feature inspired interface for vector
-# formats.  See http://gdal.velocet.ca/projects/opengis/
+# formats.  See http://ogr.maptools.org/
+# Note that since OGR is part of the GDAL library, it uses GDAL_LIB + GDAL_INC
 OGR=	  @OGR_ENABLED@
-OGR_LIB=  @OGR_LIB@
-OGR_INC=  @OGR_INC@
 
 # Optional GDAL Support (provides read access to a variety of raster formats)
-# See http://www.remotesensing.org/gdal
+# See http://www.remotesensing.org/gdal/
 GDAL=	  @GDAL_ENABLED@
 GDAL_LIB=  @GDAL_LIB@
 GDAL_INC=  @GDAL_INC@
@@ -149,15 +148,15 @@ RUNPATHS= @RPATHS@
 CFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
         $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(OWS) $(MING) \
 	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) \
-	$(POSTGIS) $(MYGIS) $(MPATROL) $(THREAD) \
-	$(GD_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
-	$(REGEX_INC) $(MPATROL_INC) $(OGR_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
+	$(POSTGIS) $(MYGIS) $(MPATROL) $(THREAD) $(GD_INC) $(PDF_INC) \
+	$(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
+	$(REGEX_INC) $(MPATROL_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \
 	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC)
 
 # Link flags and shared libs only
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
-          $(JPEG_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
-	  $(MING_LIB) $(POSTGIS_LIB) $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
+          $(JPEG_LIB) $(SDE_LIB) $(GDAL_LIB) $(MING_LIB) $(POSTGIS_LIB) \
+	  $(MYGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
 	  $(MPATROL_LIB) $(THREAD_LIB) $(XTRALIBS)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked

@@ -923,21 +923,11 @@ fi
 
 if test -n "$GDAL_CONFIG" -a "$with_ogr" != "no" ; then
 
-  saved_LIBS="$LIBS"
-  LIBS="$LIBS `$GDAL_CONFIG --libs`"
-  AC_CHECK_LIB(gdal, OGRRegisterAll, OGR_ENABLED=-DUSE_OGR,,,)
-  if test -z "$OGR_ENABLED" ; then
-    dnl Not found!  Try using -lgdal.1.1 in case we have gdal 1.1.8 or older
-    AC_CHECK_LIB(gdal.1.1, OGRRegisterAll, OGR_ENABLED=-DUSE_OGR,,,)
-  fi
-  LIBS="$saved_LIBS"
+  dnl Is OGR enabled in this gdal build?
 
-  HAVE_GDAL_LIB=yes
-
-  if test -n "$OGR_ENABLED" ; then
-      OGR_LIB="`$GDAL_CONFIG --libs`"
-      OGR_INC="`$GDAL_CONFIG --cflags`"
-      AC_MSG_RESULT([        OGR enabled ($OGR_LIB).])
+  if test x`$GDAL_CONFIG --ogr-enabled` = "xyes" ; then
+      OGR_ENABLED=-DUSE_OGR
+      AC_MSG_RESULT([        OGR enabled ($OGR_ENABLED).])
   else
       AC_MSG_WARN([        OGR not available.])
   fi
@@ -947,14 +937,9 @@ else
   AC_MSG_RESULT([        OGR support not requested.])
 fi
 
-AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
-AC_SUBST(OGR_INC,    $OGR_INC)
-AC_SUBST(OGR_LIB,    $OGR_LIB)
-
-ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
-ALL_INC="$OGR_INC $ALL_INC"
-ALL_LIB="$OGR_LIB $ALL_LIB"
-
+dnl
+dnl OGR Makefile substitutions are done together with GDAL stuff below.
+dnl
 
 dnl ---------------------------------------------------------------------
 dnl Find GDAL only if requested (and not supplied by OGR)
@@ -980,6 +965,8 @@ if test "$with_gdal" = "yes" ; then
     AC_MSG_ERROR([couldn't find gdal-config])
   fi
 
+  GDAL_ENABLED=-DUSE_GDAL
+
 elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
 
   GDAL_CONFIG=$with_gdal
@@ -990,6 +977,7 @@ elif test -n "$with_gdal" -a "$with_gdal" != "no" ; then
     AC_MSG_ERROR(['$GDAL_CONFIG' is not an executable.  Make sure you use --with-gdal=/path/to/gdal-config])
   fi
 
+  GDAL_ENABLED=-DUSE_GDAL
 
 else
 
@@ -997,22 +985,23 @@ else
 
 fi
 
-if test -n "$GDAL_CONFIG" ; then
+dnl
+dnl GDAL_LIB and GDAL_INC are used for both GDAL and OGR
+dnl
 
-  if test "$HAVE_GDAL_LIB" != "yes" ; then
-    GDAL_LIB=`$GDAL_CONFIG --libs`
-  fi
+if test -n "$GDAL_ENABLED" -o "$OGR_ENABLED"; then
 
+  GDAL_LIB=`$GDAL_CONFIG --libs`
   GDAL_INC=`$GDAL_CONFIG --cflags`
-  GDAL_ENABLED=-DUSE_GDAL
 
 fi
 
 AC_SUBST(GDAL_ENABLED,$GDAL_ENABLED)
+AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
 AC_SUBST(GDAL_INC,    $GDAL_INC)
 AC_SUBST(GDAL_LIB,    $GDAL_LIB)
 
-ALL_ENABLED="$GDAL_ENABLED $ALL_ENABLED"
+ALL_ENABLED="$GDAL_ENABLED $OGR_ENABLED $ALL_ENABLED"
 ALL_INC="$GDAL_INC $ALL_INC"
 ALL_LIB="$GDAL_LIB $ALL_LIB"
 

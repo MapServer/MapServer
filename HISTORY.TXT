@@ -24,9 +24,9 @@ Version 4.1 (CVS)
 
 - MySQL joins available
 
-- Fixed detection of OGRRegisterAll() with GDAL 1.1.9 in configure. 
-  We were looking for libgdal.1.1.so but the name changed to 
-  libgdal.so.x.y.z starting with GDAL 1.1.9
+- Fixed problems with detection of OGRRegisterAll() with GDAL 1.1.9 in 
+  configure due to GDAL's library name change. Fixed a few other minor
+  issues with GDAL/OGR in configure.
 
 - Modified configure to disable native TIFF/PNG/JPEG/GIF support by default
   if GDAL is enabled.  You can still enable them explicitly if you like.
