@@ -546,18 +546,9 @@ else
   AC_MSG_RESULT([        OGR support not requested.])
 fi
 
-if test -n "$OGR_ENABLED" ; then
-  dnl
-  dnl We need to add mapogr.o in list of OBJ files
-  dnl
-  OGR_OBJ="mapogr.o"
-fi
-
-
 AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
 AC_SUBST(OGR_INC,    $OGR_INC)
 AC_SUBST(OGR_LIB,    $OGR_LIB)
-AC_SUBST(OGR_OBJ,    $OGR_OBJ)
 
 ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
 ALL_INC="$OGR_INC $ALL_INC"

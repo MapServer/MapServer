@@ -31,21 +31,30 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/08/28 02:00:25  dan
+ * Fixed compile problem when OGR not enabled
+ *
  * Revision 1.1  2000/08/25 18:41:05  dan
  * Added optional OGR support
  *
  **********************************************************************/
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "map.h"
+#include "maperror.h"
+
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef USE_OGR
+
 #include "ogrsf_frmts.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
-
-CPL_C_START
-#include "map.h"
-#include "maperror.h"
-CPL_C_END
-
-#ifdef USE_OGR
 
 /**********************************************************************
  *                     ogrTransformPointsAddPoint()
