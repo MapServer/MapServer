@@ -72,6 +72,11 @@
         msSetOutputFormatOption( self, key, value );
     }
 
+    int validate() 
+    {
+       	return msOutputFormatValidate( self );
+    }
+
     %newobject getOption;
     char *getOption(const char *key, const char *value="") 
     {
