@@ -1,4 +1,4 @@
-Mdnl
+dnl
 dnl MapServer configure.in
 dnl
 dnl Process this file with autoconf to produce a configure script.
@@ -39,7 +39,88 @@ AC_SUBST(STRINGS, $STRINGS)
 
 
 dnl ---------------------------------------------------------------------
-dnl Which options does GD have compiled in?
+dnl libJPEG (included by default if found on system).
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_jpeg_jpeg_read_header
+
+AC_CHECKING(whether we should include JPEG support...)
+AC_ARG_WITH(jpeg,
+[  --without-jpeg          Disable JPEG support.
+  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
+
+if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
+
+  AC_EXPAND_PATH($with_jpeg, JPEG_DIR)
+  test -f $JPEG_DIR/include/jpeg/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include/jpeg"
+  test -f $JPEG_DIR/include/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include"
+  test -f $JPEG_DIR/lib/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR"
+
+  test -f $JPEG_DIR/lib/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR"
+
+  test -f $JPEG_DIR/lib/libjpeg.so -o -f $JPEG_DIR/lib/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR/lib"
+  test -f $JPEG_DIR/libjpeg.so -o -f $JPEG_DIR/libjpeg.sl && JPEG_LIBDIR="$JPEG_DIR"
+
+  if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then 
+      JPEG_ENABLED="-DUSE_JPEG"
+      JPEG_INC=-I$JPEG_INCLUDE
+      JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
+      AC_ADD_RUNPATH("$JPEG_LIBDIR")
+  else
+      if test "$with_jpeg" != "no" ; then
+        AC_MSG_RESULT("Could not find jpeglib.h or libjpeg.a/libjpeg.so in $JPEG_DIR.")
+      fi
+  fi
+
+  dnl if --without-jpeg was requested, disable mapserver from using it, but
+  dnl libjpeg may still be needed by GD
+
+  if test "$with_jpeg" = "no" ; then
+    AC_MSG_RESULT([        disabled by --without-jpeg])
+  else
+    JPEG_ENABLED="-DUSE_JPEG"
+  fi
+  
+  if test -z "$JPEG_LIB" ; then
+
+    AC_CHECK_LIB(jpeg, jpeg_read_header, JPEG_LIB="-ljpeg",,,)
+
+    if test -n "$JPEG_LIB" ; then
+        JPEG_LIB="-ljpeg"
+        AC_MSG_RESULT([        using libjpeg from system libs.])
+    else
+        AC_MSG_RESULT([        libjpeg not found. JPEG support not included, possibly needed for GD.])
+    fi
+  else
+     AC_MSG_RESULT([        using libjpeg from system $JPEG_LIB])
+  fi
+
+else
+
+  AC_CHECK_LIB(jpeg, jpeg_read_header, JPEG_ENABLED=-DUSE_JPEG,,,)
+
+  if test -n "$JPEG_ENABLED" ; then
+      JPEG_LIB="-ljpeg"
+      AC_MSG_RESULT([        using libjpeg from system libs.])
+  else
+      AC_MSG_RESULT([        libjpeg not found. JPEG support not included, possibly needed for GD.])
+  fi
+
+fi
+
+AC_SUBST(JPEG_ENABLED,$JPEG_ENABLED)
+AC_SUBST(JPEG_INC,    $JPEG_INC)
+AC_SUBST(JPEG_LIB,    $JPEG_LIB)
+
+ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
+ALL_INC="$JPEG_INC $ALL_INC"
+ALL_LIB="$JPEG_LIB $ALL_LIB"
+
+
+dnl ---------------------------------------------------------------------
+dnl Find GD library
 dnl
 dnl If --with-gd not given, then check in system libs.
 dnl ---------------------------------------------------------------------
@@ -59,14 +140,15 @@ unset ac_cv_lib_gd_gdImageWBMP
 unset ac_cv_lib_gd_gdImageStringTTF
 unset ac_cv_lib_gd_gdImageStringFT
 unset ac_cv_lib_gd_gdImageGifPtr
-unset ac_cv_lib_m_gdImageString16
-unset ac_cv_lib_m_gdImageGif
-unset ac_cv_lib_m_gdImagePng
-unset ac_cv_lib_m_gdImageJpeg
-unset ac_cv_lib_m_gdImageWBMP
-unset ac_cv_lib_m_gdImageStringTTF
-unset ac_cv_lib_m_gdImageStringFT
-unset ac_cv_lib_m_gdImageGifPtr
+unset ac_cv_lib_c_gdImageCreate
+unset ac_cv_lib_c_gdImageString16
+unset ac_cv_lib_c_gdImageGif
+unset ac_cv_lib_c_gdImagePng
+unset ac_cv_lib_c_gdImageJpeg
+unset ac_cv_lib_c_gdImageWBMP
+unset ac_cv_lib_c_gdImageStringTTF
+unset ac_cv_lib_c_gdImageStringFT
+unset ac_cv_lib_c_gdImageGifPtr
 
 AC_CHECKING(which version of GD to use...)
 AC_ARG_WITH(gd,
@@ -88,51 +170,248 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
   test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
   test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
+
   test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
   test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
   test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
+
+  test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl && GD_LIBDIR="$GD_DIR/.libs"
+  test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
+  test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
+
   if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then 
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
+      AC_MSG_RESULT([        using libgd from $GD_LIB])     
       AC_ADD_RUNPATH("$GD_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find gd.h or libgd.a in $GD_DIR.  Make sure gd is compiled before calling configure.")
+      AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure gd is compiled before calling configure.")
   fi
 
+else
+
+  dnl  --with-gd specified without a DIR, look for gd in system dirs
+  dnl  /usr or /usr/local
+  for GD_DIR in /usr /usr/local
+  do
+    test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
+    test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+    test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+    
+    if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then 
+      GD_INC=-I$GD_INCLUDE
+      GD_LIB="-L$GD_LIBDIR -lgd"
+      AC_MSG_RESULT([        using libgd from system libs.])     
+      AC_ADD_RUNPATH("$GD_LIBDIR")
+      break
+    fi
+  done
+
+fi
+
+dnl ---------------------------------------------------------------------
+dnl Several libraries might be needed for GD: png, zlib, freetype,
+dnl and jpeg (processed above).  Use where GD was found as default.
+dnl ---------------------------------------------------------------------
+
+dnl ---------------------------------------------------------------------
+dnl Check where FreeType is installed
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_freetype_FT_Init_FreeType
+unset ac_cv_lib_ttf_TT_Init_FreeType
+
+AC_ARG_WITH(freetype,
+[  --with-freetype=DIR Specify where FreeType is installed (DIR is path to 
+    FreeType 2.x freetype-config program or FreeType 1.x/2.x install dir).],
+    FT_DIR=$withval,FT_DIR='')
+
+AC_EXPAND_PATH($FT_DIR, FT_DIR)
+AC_CHECKING(where FreeType is installed...)
+FT_LIB=''
+FT_BIN=''
+FT_TYPE=''
+
+test -x "$FT_DIR" -a "freetype-config" = "`basename $FT_DIR ''`" && FT_BIN="$FT_DIR"
+test -x "$FT_DIR/freetype-config" && FT_BIN="$FT_DIR/freetype-config"
+test -x "$FT_DIR/bin/freetype-config" && FT_BIN="$FT_DIR/bin/freetype-config"
+
+if test "$with_freetype" = "yes" ; then
+ AC_PATH_PROG(FT_BIN, freetype-config, no)
+fi
+
+if test -n "$FT_BIN" ; then
+  dnl we have freetype-config program, use its values
+  FT_LIB=`$FT_BIN --libs`
+  FT_LIBDIR="`$FT_BIN --exec-prefix`/lib"
+  AC_MSG_RESULT([        using libfreetype from $FT_LIB])
+  AC_ADD_RUNPATH("$FT_LIBDIR")
+
+else
+
+  dnl try freetype 2.x install lib name
+  test -f $FT_DIR/lib/libfreetype.a -o -f $FT_DIR/lib/libfreetype.so -o -f $FT_DIR/lib/libfreetype.sl && FT_LIBDIR="$FT_DIR/lib"
+  test -f $FT_DIR/libfreetype.a -o -f $FT_DIR/libfreetype.so -o -f $FT_DIR/libfreetype.sl && FT_LIBDIR="$FT_DIR"
+
+  if test -n "$FT_LIBDIR" ; then
+     FT_TYPE="-lfreetype"
+  else
+
+    dnl try freetype 1.x install lib name
+    test -f $FT_DIR/lib/libttf.a -o -f $FT_DIR/lib/libttf.so -o -f $FT_DIR/lib/libttf.sl && FT_LIBDIR="$FT_DIR/lib"
+    test -f $FT_DIR/libttf.a -o -f $FT_DIR/libttf.so -o -f $FT_DIR/libttf.sl && FT_LIBDIR="$FT_DIR"
+    if test -n "$FT_LIBDIR" ; then
+        FT_TYPE="-lttf"
+    fi
+  fi
+fi
+
+if test -n "$FT_LIBDIR" -a -z "$FT_BIN" ; then
+
+  FT_LIB="-L$FT_LIBDIR $FT_TYPE"
+  AC_MSG_RESULT([        using libfreetype from $FT_LIB])
+  AC_ADD_RUNPATH("$FT_LIBDIR")
+
+else
+ 
+  dnl check for lib in system libs
+
+  AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",
+    AC_CHECK_LIB(ttf, TT_Init_FreeType, FT_LIB="-lttf",,)
+   ,)
+  
+  if test -n "$FT_LIB" ; then
+    AC_MSG_RESULT([        using libfreetype $FT_LIB from system libs.])
+  else
+    AC_MSG_RESULT([        freetype-config or libfreetype cannot be found, possibly needed for GD])
+  fi
+
+fi
+
+
+dnl ---------------------------------------------------------------------
+dnl Check where zlib is installed
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_z_z,zlibVersion
+ 
+AC_ARG_WITH(zlib,
+[  --with-zlib=DIR Specify where zlib is installed (DIR is path to 
+    zlib install dir).],
+    ZL_DIR=$withval,ZL_DIR='')
+
+AC_EXPAND_PATH($ZL_DIR, ZL_DIR)
+AC_CHECKING(where Zlib is installed...)
+ZL_LIB=''
+
+test -f $ZL_DIR/lib/libz.a -o -f $ZL_DIR/lib/libz.so -o -f $ZL_DIR/lib/libz.sl && ZL_LIBDIR="$ZL_DIR/lib"
+test -f $ZL_DIR/libz.a -o -f $ZL_DIR/libz.so -o -f $ZL_DIR/libz.sl && ZL_LIBDIR="$ZL_DIR"
+
+if test -n "$ZL_LIBDIR" ; then
+
+  ZL_LIB="-L$ZL_LIBDIR -lz"
+  AC_MSG_RESULT([        using libz from $ZL_LIB])
+  AC_ADD_RUNPATH("$ZL_DIR")
+
+else
+
+  dnl check for lib in system libs
+
+  AC_CHECK_LIB(z, zlibVersion, ZL_LIB="-lz",,)
+
+  if test -n "$ZL_LIB" ; then
+    AC_MSG_RESULT([        using libz from system libs.])
+  else
+    AC_MSG_RESULT([        Zlib (libz) library cannot be found, possibly needed for GD])
+  fi
+
+fi
+
+
+dnl ---------------------------------------------------------------------
+dnl Check where PNG is installed
+dnl ---------------------------------------------------------------------
+
+unset ac_cv_lib_png_png_init_io
+ 
+AC_ARG_WITH(png,
+[  --with-png=DIR Specify where PNG is installed (DIR is path to 
+    PNG install dir).],
+    PNG_DIR=$withval,PNG_DIR='')
+
+AC_EXPAND_PATH($PNG_DIR, PNG_DIR)
+AC_CHECKING(where PNG is installed...)
+PNG_LIB=''
+
+test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl && PNG_LIBDIR="$PNG_DIR/lib"
+test -f $PNG_DIR/libpng.a -o -f $PNG_DIR/libpng.so -o -f $PNG_DIR/libpng.sl && PNG_LIBDIR="$PNG_DIR"
+
+if test -n "$PNG_LIBDIR" ; then
+
+  PNG_LIB="-L$PNG_LIBDIR -lpng"
+  AC_MSG_RESULT([        using libpng from $PNG_LIB])
+  AC_ADD_RUNPATH("$PNG_LIBDIR")
+
+else
+
+  dnl check for lib in system libs
+
+  AC_CHECK_LIB(png, png_init_io, PNG_LIB="-lpng",, $ZL_LIB)
+
+  if test -n "$PNG_LIB" ; then
+    AC_MSG_RESULT([        using libpng from system libs.])
+  else
+    AC_MSG_RESULT([        PNG (libpng) library cannot be found, possibly needed for GD])
+  fi
+
+fi
+
+
+GD_XTRA_LIBS="$JPEG_LIB $FT_LIB $PNG_LIB $ZL_LIB"
+
+
+dnl ---------------------------------------------------------------------
+dnl Continue with GD processing - determine GD formats
+dnl ---------------------------------------------------------------------
+
+if test -n "$with_gd" -a "$with_gd" != "yes" ; then
+
+  dnl check gd lib that was found on --with-gd=
+ 
   if test "$GD_STATIC" = "yes" ; then
-    dnl To test against static GD, do AC_CHECK_LIB calls against -lm and 
+    dnl To test against static GD, do AC_CHECK_LIB calls against -lc and 
     dnl include libgd.a in GD_LIB param
-    GD_CHECKLIB=m
+    GD_CHECKLIB=c
     GD_LIB=""
     GD_STATIC=$GD_LIBDIR/libgd.a
     AC_MSG_RESULT([static linkage of $GD_STATIC requested... testing supported formats...])
   else
-    GD_CHECKLIB=gd
+    GD_CHECKLIB=c
     # GD_LIB was already set above
     GD_STATIC=""
   fi
 
-  dnl Check supported formats
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageGif, GD_DEF="$GD_DEF -DUSE_GD_GIF",, $GD_STATIC $GD_LIB)
-  AC_CHECK_LIB($GD_CHECKLIB, gdImagePng, GD_DEF="$GD_DEF -DUSE_GD_PNG"; GD_LIB="$GD_LIB -lpng -lz",, $GD_STATIC $GD_LIB -lpng -lz)
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG"; GD_LIB="$GD_LIB -ljpeg",, $GD_STATIC $GD_LIB -ljpeg)
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_STATIC $GD_LIB)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageGif, GD_DEF="$GD_DEF -DUSE_GD_GIF",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImagePng, GD_DEF="$GD_DEF -DUSE_GD_PNG",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl Check for Freetype 2 support
   GD_FT_FOUND=no 
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT"; GD_LIB="$GD_LIB -lfreetype",, $GD_STATIC $GD_LIB -lfreetype)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl If we can't find Freetype 2 in GD then check for Freetype 1
   if test "$GD_FT_FOUND" = "no" ; then
-    AC_CHECK_LIB($GD_CHECKLIB, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_STATIC $GD_LIB -lttf)
+    AC_CHECK_LIB($GD_CHECKLIB, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
   fi
 
   dnl For GD 1.2, x/y in buffers are swapped.
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY" , $GD_STATIC $GD_LIB)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY" , $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl gdImageGifPtr is there only in GIF-patched GD versions
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr,GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr,GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
@@ -143,31 +422,31 @@ else
   dnl
 
   dnl Make sure GD is at least there!
-  AC_CHECK_LIB(gd, gdImageCreate, GD_FOUND=yes , ,)
+  AC_CHECK_LIB(gd, gdImageCreate, GD_FOUND=yes , ,$GD_XTRA_LIBS)
   if test -z "$GD_FOUND" ; then
       AC_MSG_ERROR([GD is required but was not found... use --with-gd=DIR to specify its location.])
   fi
 
   dnl Check supported formats
-  AC_CHECK_LIB(gd, gdImageGif, GD_DEF="$GD_DEF -DUSE_GD_GIF",, $GD_LIB)
-  AC_CHECK_LIB(gd, gdImagePng, GD_DEF="$GD_DEF -DUSE_GD_PNG"; GD_LIB="$GD_LIB -lpng -lz",, $GD_LIB -lpng -lz)
-  AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG"; GD_LIB="$GD_LIB -ljpeg",, $GD_LIB -ljpeg)
-  AC_CHECK_LIB(gd, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_LIB)
+  AC_CHECK_LIB(gd, gdImageGif, GD_DEF="$GD_DEF -DUSE_GD_GIF",, $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB(gd, gdImagePng, GD_DEF="$GD_DEF -DUSE_GD_PNG",, $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG",, $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB(gd, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_LIB $GD_XTRA_LIBS)
 
   dnl Check for Freetype 2 support
   GD_FT_FOUND=no 
-  AC_CHECK_LIB(gd, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT"; GD_LIB="$GD_LIB -lfreetype",, $GD_LIB -lfreetype)
+  AC_CHECK_LIB(gd, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_LIB $GD_XTRA_LIBS)
 
   dnl If we can't find Freetype 2 in GD then check for Freetype 1
   if test "$GD_FT_FOUND" = "no" ; then
-    AC_CHECK_LIB(gd, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_LIB -lttf)
+    AC_CHECK_LIB(gd, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF",, $GD_LIB $GD_XTRA_LIBS)
   fi
 
   dnl For GD 1.2, x/y in buffers are swapped.
-  AC_CHECK_LIB(gd, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY", $GD_LIB)
+  AC_CHECK_LIB(gd, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY", $GD_LIB $GD_XTRA_LIBS)
 
   dnl gdImageGifPtr is there only in GIF-patched GD versions
-  AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB)
+  AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB $GD_XTRA_LIBS)
 
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd $GD_LIB"
@@ -176,6 +455,7 @@ else
 
 fi
 
+GD_LIB="$GD_LIB $GD_XTRA_LIBS"
 
 AC_SUBST(GD_DEF, $GD_DEF)
 AC_SUBST(GD_INC, $GD_INC)
@@ -211,43 +491,30 @@ elif test -n "$with_tiff" -a "$with_tiff" != "yes" ; then
   test -f $TIFF_DIR/libtiff/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/libtiff"
   test -f $TIFF_DIR/include/libtiff/tiffio.h && TIFF_INCLUDE="$TIFF_DIR/include/libtiff"
   test -f $TIFF_DIR/tiffio.h && TIFF_INCLUDE="$TIFF_DIR"
+
   test -f $TIFF_DIR/lib/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/lib"
   test -f $TIFF_DIR/libtiff/libtiff.a && TIFF_LIBDIR="$TIFF_DIR/libtiff"
   test -f $TIFF_DIR/libtiff.a && TIFF_LIBDIR="$TIFF_DIR"
 
+  test -f $TIFF_DIR/lib/libtiff.so -o $TIFF_DIR/lib/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/lib"
+  test -f $TIFF_DIR/libtiff/libtiff.so -o -f $TIFF_DIR/libtiff/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR/libtiff"
+  test -f $TIFF_DIR/libtiff.so -o -f $TIFF_DIR/libtiff.sl && TIFF_LIBDIR="$TIFF_DIR"
+
   if test -n "$TIFF_INCLUDE" -a -n "$TIFF_LIBDIR" ; then 
-      dnl
-      dnl Found the header and lib file... try to establish if zlib required
-      dnl 
-      TMP_LIB="-L$TIFF_LIBDIR -ltiff"
-      AC_CHECK_LIB(tiff,TIFFOpen,TIFF_LIB=$TMP_LIB,,[$TMP_LIB])
 
-      if test -z "$TIFF_LIB" ; then
-        AC_CHECKING(whether libtiff works with zlib (-lz)...)
-        unset ac_cv_lib_tiff_TIFFOpen
-        AC_CHECK_LIB(tiff,TIFFOpen,TIFF_LIB="$TMP_LIB -lz", ,[$TMP_LIB -lz])
-      fi
-      if test -z "$TIFF_LIB" ; then
-        AC_MSG_ERROR("Unable to link against libtiff using $TMP_LIB")
-      fi
-
+      TIFF_LIB="-L$TIFF_LIBDIR -ltiff"
       TIFF_INC=-I$TIFF_INCLUDE
       AC_ADD_RUNPATH("$TIFF_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find tiffio.h or libtiff.a in $TIFF_DIR.")
+      AC_MSG_ERROR("Could not find tiffio.h or libtiff.a/libtiff.so in $TIFF_DIR.")
   fi
 
   TIFF_ENABLED="-DUSE_TIFF"
-  AC_MSG_RESULT([        using libtiff ($TIFF_LIB).])
+  AC_MSG_RESULT([        using libtiff from $TIFF_LIB.])
 
 else
 
-  AC_CHECK_LIB(tiff,TIFFOpen,TIFF_LIB=-ltiff,,)
-  if test -z "$TIFF_LIB" ; then
-      AC_CHECKING(whether libtiff works with zlib (-lz)...)
-      unset ac_cv_lib_tiff_TIFFOpen
-      AC_CHECK_LIB(tiff,TIFFOpen,TIFF_LIB="-ltiff -lz", ,-lz)
-  fi
+  AC_CHECK_LIB(tiff,TIFFOpen,TIFF_LIB="-ltiff",,$GD_XTRA_LIBS)
   if test -n "$TIFF_LIB" ; then
       TIFF_ENABLED=-DUSE_TIFF
       AC_MSG_RESULT([        using libtiff from system libs.])
@@ -257,6 +524,11 @@ else
 
 fi
 
+dnl
+dnl libtiff may need the same libs (libz, libjpeg) that are included with GD
+dnl 
+TIFF_LIB="$TIFF_LIB $GD_XTRA_LIBS"
+
 AC_SUBST(TIFF_ENABLED,$TIFF_ENABLED)
 AC_SUBST(TIFF_INC,    $TIFF_INC)
 AC_SUBST(TIFF_LIB,    $TIFF_LIB)
@@ -264,59 +536,6 @@ AC_SUBST(TIFF_LIB,    $TIFF_LIB)
 ALL_ENABLED="$TIFF_ENABLED $ALL_ENABLED"
 ALL_INC="$TIFF_INC $ALL_INC"
 ALL_LIB="$TIFF_LIB $ALL_LIB"
-
-dnl ---------------------------------------------------------------------
-dnl libJPEG (included by default if found on system).
-dnl ---------------------------------------------------------------------
-
-unset ac_cv_lib_jpeg_jpeg_read_header
-
-AC_CHECKING(whether we should include JPEG support...)
-AC_ARG_WITH(jpeg,
-[  --without-jpeg          Disable JPEG support.
-  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
-if test "$with_jpeg" = "no" ; then
-  AC_MSG_RESULT([        disabled by --without-jpeg])
-elif test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
-
-  AC_EXPAND_PATH($with_jpeg, JPEG_DIR)
-  test -f $JPEG_DIR/include/jpeg/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include/jpeg"
-  test -f $JPEG_DIR/include/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/include"
-  test -f $JPEG_DIR/lib/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR/lib"
-  test -f $JPEG_DIR/jpeglib.h && JPEG_INCLUDE="$JPEG_DIR"
-  test -f $JPEG_DIR/lib/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR/lib"
-  test -f $JPEG_DIR/libjpeg.a && JPEG_LIBDIR="$JPEG_DIR"
-  if test -n "$JPEG_INCLUDE" -a -n "$JPEG_LIBDIR" ; then 
-      JPEG_INC=-I$JPEG_INCLUDE
-      JPEG_LIB="-L$JPEG_LIBDIR -ljpeg"
-      AC_ADD_RUNPATH("$JPEG_LIBDIR")
-  else
-      AC_MSG_ERROR("Could not find jpeglib.h.h or libjpeg.a in $JPEG_DIR.")
-  fi
-
-  JPEG_ENABLED="-DUSE_JPEG"
-  AC_MSG_RESULT([        using libjpeg from $JPEG_DIR.])
-
-else
-
-  AC_CHECK_LIB(jpeg,jpeg_read_header, JPEG_ENABLED=-DUSE_JPEG,,,)
-
-  if test -n "$JPEG_ENABLED" ; then
-      JPEG_LIB="-ljpeg"
-      AC_MSG_RESULT([        using libjpeg from system libs.])
-  else
-      AC_MSG_RESULT([        libjpeg not found... JPEG support not included.])
-  fi
-
-fi
-
-AC_SUBST(JPEG_ENABLED,$JPEG_ENABLED)
-AC_SUBST(JPEG_INC,    $JPEG_INC)
-AC_SUBST(JPEG_LIB,    $JPEG_LIB)
-
-ALL_ENABLED="$JPEG_ENABLED $ALL_ENABLED"
-ALL_INC="$JPEG_INC $ALL_INC"
-ALL_LIB="$JPEG_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl EPPL7 support (included by default)
@@ -376,16 +595,21 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
   test -f $PROJ_DIR/include/proj/projects.h && PROJ_INCLUDE="$PROJ_DIR/include/proj"
   test -f $PROJ_DIR/src/projects.h && PROJ_INCLUDE="$PROJ_DIR/src"
   test -f $PROJ_DIR/projects.h && PROJ_INCLUDE="$PROJ_DIR"
+
   test -f $PROJ_DIR/src/.libs/libproj.a && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
   test -f $PROJ_DIR/lib/libproj.a && PROJ_LIBDIR="$PROJ_DIR/lib"
   test -f $PROJ_DIR/libproj.a && PROJ_LIBDIR="$PROJ_DIR"
+
+  test -f $PROJ_DIR/src/.libs/libproj.so -o -f $PROJ_DIR/src/.libs/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
+  test -f $PROJ_DIR/lib/libproj.so -o -f $PROJ_DIR/lib/libproj.sl && PROJ_LIBDIR="$PROJ_DIR/lib"
+  test -f $PROJ_DIR/libproj.so -o -f $PROJ_DIR/libproj.sl && PROJ_LIBDIR="$PROJ_DIR"
 
   if test -n "$PROJ_INCLUDE" -a -n "$PROJ_LIBDIR" ; then 
       PROJ_INC=-I$PROJ_INCLUDE
       PROJ_LIB="-L$PROJ_LIBDIR -lproj"
       AC_ADD_RUNPATH("$PROJ_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find projects.h or libproj.a in $PROJ_DIR.")
+      AC_MSG_ERROR("Could not find projects.h or libproj.a/libproj.so in $PROJ_DIR.")
   fi
 
   AC_CHECK_LIB(proj,pj_transform,PJ_TRANSFORM=yes,PJ_TRANSFORM=no,$PROJ_LIB)
@@ -448,8 +672,12 @@ elif test -n "$with_sde" -a "$with_sde" != "no" ; then
   test -f $SDE_DIR/arcsde/coverages/include/sdetype.h && SDE_INCDIR="$SDE_DIR/arcsde/coverages/include"
   test -f $SDE_DIR/include/sdetype.h && SDE_INCDIR="$SDE_DIR/include"
   test -f $SDE_DIR/sdetype.h && SDE_INCDIR="$SDE_DIR"
+
   test -f $SDE_DIR/lib/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR/lib"
   test -f $SDE_DIR/libsde$SDE_VERSION.a && SDE_LIBDIR="$SDE_DIR"
+
+  test -f $SDE_DIR/lib/libsde$SDE_VERSION.so -o -f $SDE_DIR/lib/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR/lib"
+  test -f $SDE_DIR/libsde$SDE_VERSION.so -o -f $SDE_DIR/libsde$SDE_VERSION.sl && SDE_LIBDIR="$SDE_DIR"
 
   if test -n "$SDE_INCDIR" -a -n "$SDE_LIBDIR" ; then 
       SDE_INC=-I$SDE_INCDIR
@@ -459,7 +687,7 @@ elif test -n "$with_sde" -a "$with_sde" != "no" ; then
       AC_CHECK_LIB(dl, main, SDE_LIB="$SDE_LIB -ldl",,)
       AC_ADD_RUNPATH("$SDE_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find sdetype.h or libsde$SDE_VERSION.a in $SDE_DIR.")
+      AC_MSG_ERROR("Could not find sdetype.h or libsde$SDE_VERSION.a/libsde$SDE_VERSION.so in $SDE_DIR.")
   fi
 
   SDE_ENABLED=-DUSE_SDE
@@ -503,8 +731,9 @@ elif test -n "$with_mpatrol" -a "$with_patrol" != "no" ; then
   test -f $MPATROL_DIR/include/mpatrol.h && MPATROL_INCDIR="$MPATROL_DIR/include"
   test -f $MPATROL_DIR/libmpatrol.a && MPATROL_LIBDIR="$MPATROL_DIR"
   test -f $MPATROL_DIR/lib/libmpatrol.a && MPATROL_LIBDIR="$MPATROL_DIR/lib"
-  test -f $MPATROL_DIR/libmpatrol.so && MPATROL_LIBDIR="$MPATROL_DIR"
-  test -f $MPATROL_DIR/lib/libmpatrol.so && MPATROL_LIBDIR="$MPATROL_DIR/lib"
+
+  test -f $MPATROL_DIR/libmpatrol.so -o -f $MPATROL_DIR/libmpatrol.sl && MPATROL_LIBDIR="$MPATROL_DIR"
+  test -f $MPATROL_DIR/lib/libmpatrol.so -o -f $MPATROL_DIR/lib/libmpatrol.sl && MPATROL_LIBDIR="$MPATROL_DIR/lib"
 
   if test -n "$MPATROL_INCDIR" -a -n "$MPATROL_LIBDIR" ; then 
       MPATROL_INC=-I$MPATROL_INCDIR
@@ -697,6 +926,7 @@ if test "$PG_CONFIG" = "no" ; then
   POSTGIS_INC=
   POSTGIS_LIB=
 else
+  AC_MSG_RESULT([yes, user supplied pg_config])  
   POSTGIS_ENABLED=-DUSE_POSTGIS
   POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
   POSTGIS_INC="-I`$PG_CONFIG --includedir`"
