@@ -2,6 +2,7 @@
 #define MAPPROJECT_H
 
 #include "mapprimitive.h"
+#include "maphash.h"
 
 #ifdef __cplusplus
 extern "C" {
