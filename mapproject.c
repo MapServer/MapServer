@@ -486,11 +486,11 @@ void msSetPROJ_LIB( const char *proj_lib )
 
 {
 #ifdef USE_PROJ
-    static int finder_installed = FALSE;
+    static int finder_installed = 0;
 
-    if( finder_installed == FALSE )
+    if( finder_installed == 0 )
     {
-        finder_installed = TRUE;
+        finder_installed = 1;
         pj_set_finder( msProjFinder );
     }
     
