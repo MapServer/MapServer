@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.180  2003/10/20 21:46:06  dan
+ * Fixed PHP MapScript's pasteImage() to work with GD 2.x.  The transparent
+ * color value is now a 0xrrggbb value instead of a color index.
+ *
  * Revision 1.179  2003/09/30 05:38:45  dan
  * First round of changes to re-enable php_mapscript to work with PHP DSO
  *
@@ -5707,11 +5711,11 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 
 /* {{{ proto void img.pasteImage(imageObj Src, int transparentColor [,int dstx, int dsty])
    Pastes another imageObj on top of this imageObj. transparentColor is
-   the index of the color from srcImg that should be considered transparent.
+   the color (0xrrggbb) from srcImg that should be considered transparent.
    Pass transparentColor=-1 if you don't want any transparent color.
-   If optional dstx,dsty are provided then it defined the position where the
+   If optional dstx,dsty are provided then they define the position where the
    image should be copied (dstx,dsty = top-left corner position).
-   NOTE : this function only works for GD images.
+   NOTE : this function only works for 8 bits GD images.
 */
 
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
@@ -5765,10 +5769,22 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 
     if (imgSrc != NULL && imgDst != NULL)
     {
-        int    nOldTransparentColor;
+        int    nOldTransparentColor, nNewTransparentColor=-1, nR, nG, nB;
+
+        /* Look for r,g,b in color table and make it transparent.
+         * will return -1 if there is no exact match which will result in
+         * no transparent color in the call to gdImageColorTransparent().
+         */
+        if (pTransparent->value.lval != -1)
+        {
+            nR = (pTransparent->value.lval / 0x010000) & 0xff;
+            nG = (pTransparent->value.lval / 0x0100) & 0xff;
+            nB = pTransparent->value.lval & 0xff;
+            nNewTransparentColor = gdImageColorExact(imgSrc->img.gd, nR,nG,nB);
+        }
 
         nOldTransparentColor = gdImageGetTransparent(imgSrc->img.gd);
-        gdImageColorTransparent(imgSrc->img.gd, pTransparent->value.lval);
+        gdImageColorTransparent(imgSrc->img.gd, nNewTransparentColor);
 
         gdImageCopy(imgDst->img.gd, imgSrc->img.gd, nDstX, nDstY, 
                     0, 0, imgSrc->img.gd->sx, imgSrc->img.gd->sy);

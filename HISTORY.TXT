@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.1 (CVS)
 ------------------------
 
+- PHP MapScript's pasteImage() now takes a hex color value (e.g. 0xrrggbb)
+  for the transparent color instead of a color index. (bug 463)
+
 - OGR data sources with relative paths are now checked relative to 
   SHAPEPATH first, and if not found then we try again relative to the
   mapfile location.  (bug 295)

@@ -733,15 +733,16 @@ and the MapServer Map File documentation at:
         map file.
        
 
-   void pasteImage(imageObj srcImg, int transparentColorIndex 
+   void pasteImage(imageObj srcImg, int transparentColorHex 
                    [, int dstX, dstY])
         Copy srcImg on top of the current imageObj.
-        transparentColorIndex is the color from srcImg that should be
-        considered transparent (i.e. those pixels won't be copied).  
-        Pass -1 if you don't want any transparent color.
+        transparentColorHex is the color (in 0xrrggbb format) from srcImg 
+        that should be considered transparent (i.e. those pixels won't 
+        be copied).  Pass -1 if you don't want any transparent color.
         If optional dstx,dsty are provided then it defines the position 
         where the image should be copied (dstx,dsty = top-left corner 
         position).
+        Note: this function works only with 8 bits GD images (PNG or GIF).
 
 
  LabelObj Class:
