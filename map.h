@@ -900,6 +900,9 @@ int msFreeLabelCache(labelCacheObj *cache);
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c
 #endif
 
+void msCleanup();
+void msGDALCleanup();
+void msGDALInitialize();
    
 imageObj *msDrawScalebar(mapObj *map); // in mapscale.c
 int msCalculateScale(rectObj extent, int units, int width, int height, int resolution, double *scale);

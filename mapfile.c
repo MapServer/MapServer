@@ -2429,6 +2429,7 @@ static int loadOutputFormat(mapObj *map)
                        "loadOutputFormat()", driver );
             return -1;
         }
+        msFree( driver );
 
         if( name != NULL )
         {
@@ -3235,6 +3236,15 @@ int msFreeLabelCache(labelCacheObj *cache) {
   cache->nummarkers = 0;
 
   return(MS_SUCCESS);
+}
+
+/* This is intended to be a function to cleanup anything that "hangs around"
+   when all maps are destroyed, like Registered GDAL drivers, and so forth. */
+void msCleanup()
+{
+#ifdef USE_GDAL
+    msGDALCleanup();
+#endif    
 }
 
 void msFreeMap(mapObj *map) {

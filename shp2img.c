@@ -172,5 +172,8 @@ int main(int argc, char *argv[])
   msFreeMap(map);
   free(outfile);
 
+
+  msCleanup();
+
   return(0);
 } /* ---- END Main Routine ---- */
