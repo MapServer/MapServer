@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.48  2002/03/26 16:53:12  dan
+ * Fixed msDebug() format string in msOGRFileClose()
+ *
  * Revision 1.47  2002/03/18 20:40:14  frank
  * initial pass on tiled ogr support
  *
@@ -896,7 +899,7 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
   if (!psInfo)
       return MS_SUCCESS;
 
-  msDebug("msOGRFileClose(%s,%s).\n", psInfo->pszFname, psInfo->nLayerIndex);
+  msDebug("msOGRFileClose(%s,%d).\n", psInfo->pszFname, psInfo->nLayerIndex);
 
   CPLFree(psInfo->pszFname);
 
