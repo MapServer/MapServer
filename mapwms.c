@@ -1,5 +1,6 @@
 #include "map.h"
 #include "maperror.h"
+#include "mapgml.h"
 #include "gdfonts.h"
 
 /*
@@ -219,7 +220,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
 /*
 **
 */
-void msWMSPrintRequesCap(const char *wmtver, const char *request, 
+static void printRequestCap(const char *wmtver, const char *request, 
                          const char *script_url, const char *formats)
 {
   printf("    <%s>\n", request);
@@ -230,8 +231,7 @@ void msWMSPrintRequesCap(const char *wmtver, const char *request,
   if (strcasecmp(wmtver, "1.0.0") == 0) {
     printf("          <Get onlineResource=\"%s\" />\n", script_url);
     printf("          <Post onlineResource=\"%s\" />\n", script_url);
-  }
-  else {
+  } else {
     printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", script_url);
     printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", script_url);
   }
@@ -459,7 +459,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf("<Capability>\n");
   printf("  <Request>\n");
 
-  msWMSPrintRequesCap(wmtver, "Map", script_url, 
+  printRequestCap(wmtver, "Map", script_url, 
 #ifdef USE_GD_GIF
                       "<GIF />"
 #endif
@@ -473,8 +473,8 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
                       "<WBMP />"
 #endif
                       );
-  msWMSPrintRequesCap(wmtver, "Capabilities", script_url, "<WMS_XML />");
-  msWMSPrintRequesCap(wmtver, "FeatureInfo", script_url, "<MIME />");
+  printRequestCap(wmtver, "Capabilities", script_url, "<WMS_XML />");
+  printRequestCap(wmtver, "FeatureInfo", script_url, "<MIME />");
 
   printf("  </Request>\n");
 
@@ -656,8 +656,8 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
   }
 
   // Generate response
-  if (strcasecmp(info_format, "MIME") == 0)
-  {
+  if (strcasecmp(info_format, "MIME") == 0) {
+
     // MIME response... we're free to use any valid MIME type
     int numresults = 0;
 
@@ -702,22 +702,50 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
       msLayerClose(lp);
     }
 
-    if (numresults == 0)
-    {
-        printf("\n  Search returned no results.\n");
+    if (numresults == 0) printf("\n  Search returned no results.\n");
+
+  } else if (strcasecmp(info_format, "GML") == 0) {
+    int numresults=0;
+
+    printf("Content-type: text/xml%c%c", 10,10);
+    
+    msGMLStart(stdout, "2.0", map->name, NULL, NULL); // fix the NULL values, 2.0 is the GML version
+
+    for(i=0; i<map->numlayers && numresults<feature_count; i++) {
+      int j;
+      layerObj *lp;
+      lp = &(map->layers[i]);
+
+      if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0)
+        continue;
+
+      if(msLayerOpen(lp, map->shapepath) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
+        return msWMSException(map, wmtver);
+
+      for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++) {
+        shapeObj shape;
+        msInitShape(&shape);
+
+        if(msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
+          return msWMSException(map, wmtver);
+
+	if(msGMLWriteShape(stdout, &shape, NULL, NULL) != MS_SUCCESS)
+	  return msWMSException(map, wmtver);
+
+        msFreeShape(&shape);
+        numresults++;
+      }
+
+      msLayerClose(lp);
     }
-  }
-  else if (strcasecmp(info_format, "GML") == 0)
-  {
-      msSetError(MS_MISCERR, "INFO_FORMAT=GML not implemented yet.",
-                 "msWMSFeatureInfo()");
-      return msWMSException(map, wmtver);
-  }
-  else
-  {
-      msSetError(MS_MISCERR, "Unsupported INFO_FORMAT value.",
-                 "msWMSFeatureInfo()");
-      return msWMSException(map, wmtver);
+
+    if (numresults == 0) printf("<!-- Search returned no results. -->\n");
+
+    msGMLFinish(stdout, map->name);
+
+  } else {
+    msSetError(MS_MISCERR, "Unsupported INFO_FORMAT value.", "msWMSFeatureInfo()");
+    return msWMSException(map, wmtver);
   }
 
   return(MS_SUCCESS);

@@ -17,12 +17,12 @@
 int msGMLStart(FILE *gmlOut, const char *gmlversion, char *projectElement, char *schemaLocation, char *prjDescription) 
 {
 
-  if (gmlOut == NULL) return -1;
+  if (gmlOut == NULL) return(MS_FAILURE);
   
-  fprintf(gmlOut, "<?xml version=\"%s\" encoding=\"UTF-8\"?>\n\n", gmlversion);
+  fprintf(gmlOut, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\n");
   
-  //fprintf(gmlOut, "<%s xmlns=\"http://mapserver.gis.umn.edu/wmtprojects\" \n", projectElement);
-  fprintf(gmlOut, "<msProject xmlns=\"http://mapserver.gis.umn.edu/wmtprojects\" \n");
+  fprintf(gmlOut, "<%s xmlns=\"http://mapserver.gis.umn.edu/wmtprojects\" \n", projectElement);
+  //fprintf(gmlOut, "<msProject xmlns=\"http://mapserver.gis.umn.edu/wmtprojects\" \n");
   
   fprintf(gmlOut, "\t\t xmlns:gml=\"http://www.opengis.net/gml\" \n" );
   fprintf(gmlOut, "\t\t xmlns:xlink=\"http://www.w3.org/1999/xlink\" \n");
@@ -38,14 +38,13 @@ int msGMLStart(FILE *gmlOut, const char *gmlversion, char *projectElement, char 
   // if needed than we need char *prjDescription parameter
   
   // fprintf(gmlOut, "\t<gml:description> %s </gml:description>\n", prjDescription);
-  fprintf(gmlOut, "\t<gml:description> Natural Resource Monitoring with AVHRR </gml:description>\n"); 
+  fprintf(gmlOut, "\t<gml:description> Natural Resource Monitoring with AVHRR </gml:description>\n");
   
-  return 1;
+  return(MS_SUCCESS);
 }
 
 /*
-** int msGMLWriteShape(FILE *stream, shapeObj *shape, const char *gmlversion) 
-**			Note : gmlversion may be not needed here
+** int msGMLWriteShape(FILE *gmlOut, shapeObj *shape, char *srsName, char **gmlType)
 **
 **	Additional requirements
 ** Data Structures :: for mapping shape->type to gmlType
@@ -67,7 +66,8 @@ int msGMLWriteShape(FILE *gmlOut, shapeObj *shape, char *srsName, char **gmlType
   // Bounding box - map extents (or shape extents)
   
   fprintf(gmlOut, "\t<gml:boundedBy>\n");
-  
+
+ 
   // srsName - for now default
   // fprintf(gmlOut, "\t\t<gml:Box srsName=\"%s\">\n", srsName);
   fprintf(gmlOut, "\t\t<gml:Box srsName=\"http://www.opengis.net/gml/srs/epsg.xml#4326\">\n");
@@ -79,7 +79,7 @@ int msGMLWriteShape(FILE *gmlOut, shapeObj *shape, char *srsName, char **gmlType
 	  shape->bounds.miny,
 	  shape->bounds.maxx,
 	  shape->bounds.maxy );
-  
+   
   fprintf(gmlOut, "\t\t\t</gml:coordinates>\n");
   fprintf(gmlOut, "\t\t</gml:Box>\n");
   fprintf(gmlOut, "\t</gml:boundedBy>\n");
@@ -113,6 +113,8 @@ int msGMLWriteShape(FILE *gmlOut, shapeObj *shape, char *srsName, char **gmlType
       //fprintf(gmlOut, "\t\t</geometricProperty>\n", psShape->nVertices);
       //fprintf(gmlOut, "\t</featureMember>\n");
     }
+
+  return(MS_SUCCESS);
 }
 
 /*
@@ -121,4 +123,5 @@ int msGMLWriteShape(FILE *gmlOut, shapeObj *shape, char *srsName, char **gmlType
 int msGMLFinish(FILE *gmlOut, const char *prjElement) 
 {
   fprintf(gmlOut, "</%s>\n", prjElement);
+  return(MS_SUCCESS);
 }

@@ -30,12 +30,9 @@ PROJ=     @PROJ_ENABLED@
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
-#   - Version 1.2 is included and writes LZW GIF (-DUSE_GD_1_2).
 #   - Versions 1.3 to 1.5 write non-LZW GIF (-DUSE_GD_1_3).
 #   - Versions 1.6 and greater write PNG (-DUSE_GD_1_6). Add -lpng -lz to GD_LIB line.
 #
-# If you're not using the 1.2 version included in the MapServer distribution 
-# then comment out the MAKE_GD and MAKE_GD_CLEAN entries.
 #
 GDFONT_OBJ=gd-1.2/gdfontt.o gd-1.2/gdfonts.o gd-1.2/gdfontmb.o gd-1.2/gdfontl.o gd-1.2/gdfontg.o
 GD_INC=  @GD_INC@
@@ -127,7 +124,7 @@ STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)
 
 RM= /bin/rm -f
 
-OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o maplayer.o mapresample.o mapwms.o $(EPPL_OBJ) $(REGEX_OBJ)
+OBJS= mapbits.o maphash.o mapshape.o mapxbase.o mapparser.o maplexer.o maptree.o mapsearch.o mapstring.o mapsymbol.o mapfile.o maplegend.o maputil.o mapscale.o mapquery.o maplabel.o maperror.o mapprimitive.o mapproject.o mapraster.o mapsde.o mapogr.o maplayer.o mapresample.o mapwms.o mapgml.o $(EPPL_OBJ) $(REGEX_OBJ)
 
 #
 # --- You shouldn't have to edit anything else. ---
