@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.138  2004/11/02 13:16:39  dan
+ * Fixed problem with msWMSIsSubGroup() when not all layers use
+ * wms_layer_group (bug 1024)
+ *
  * Revision 1.137  2004/11/01 22:05:16  dan
  * Get rid of WMS 1.0.8, it's not one of the 'official' WMS releases (bug 1022)
  *
@@ -1391,19 +1395,19 @@ void msWMSPrepareNestedGroups(mapObj* map, int nVersion, char*** nestedGroups, i
 int msWMSIsSubGroup(char** currentGroups, int currentLevel, char** otherGroups, int numOtherGroups)
 {
    int i;
-   if (numOtherGroups < currentLevel) 
+   if (numOtherGroups == 0 || numOtherGroups < currentLevel) 
    {
-      return 0;
+      return MS_FALSE;
    }
    //compare all groups below the current level
    for (i = 0; i <= currentLevel; i++)
    {
       if (strncmp(currentGroups[i], otherGroups[i], strlen(currentGroups[i])) != 0)
       {
-         return 0; // if one of these is not equal it is not a sub group
+         return MS_FALSE; // if one of these is not equal it is not a sub group
       }
    }
-   return 1;
+   return MS_TRUE;
 }
 
 /***********************************************************************************
