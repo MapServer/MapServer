@@ -87,7 +87,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   mapObj *clone() {
     mapObj *dstMap;
     dstMap = msNewMapObj();
-    msCopyMap(dstMap, self);
+    if (msCopyMap(dstMap, self) != MS_SUCCESS)
+    {
+        msFreeMap(dstMap);
+        dstMap = NULL;
+    }
     return dstMap;
   }
 
