@@ -93,7 +93,15 @@ int msLookupColor( mapObj *map, int color_index )
     else if( color_index < 1 || color_index > map->palette.numcolors )
         return -1;
     else
+    {
+/* -------------------------------------------------------------------- */
+/*      For drivers other that GD return the color_index.               */
+/* -------------------------------------------------------------------- */
+      if( MS_RENDERER_GD(map->outputformat))
         return map->palette.colorvalue[color_index-1];
+      else
+        return  color_index;
+    }
 }
 
 /*
