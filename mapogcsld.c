@@ -28,6 +28,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.48.2.1  2005/01/03 15:50:26  assefa
+ * Correct bug 1151 : generates twice a </Mark> tag when generating an SLD.
+ * This was happening the style did not have a size set.
+ *
  * Revision 1.48  2004/11/25 21:25:20  assefa
  * Make sure that spatial filters are not applied on raster layers (Bug 1987).
  *
@@ -2999,9 +3003,10 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer,
                         pszSLD = strcatalloc(pszSLD, szTmp);
                     
                         if (psStyle->size > 0)
-                          sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
-                        pszSLD = strcatalloc(pszSLD, szTmp);
-
+                        {
+                            sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
+                            pszSLD = strcatalloc(pszSLD, szTmp);
+                        }
                         sprintf(szTmp, "%s\n", "</Graphic>");
                         pszSLD = strcatalloc(pszSLD, szTmp);
 

@@ -12,6 +12,13 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
+Version 4.4.2
+--------------------------
+
+- Correct bug 1151 : generates twice a </Mark> tag when generating an SLD.
+  This was happening the style did not have a size set.
+
+
 
 Version 4.4.1 (2004-12-22)
 --------------------------
