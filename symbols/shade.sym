@@ -1,0 +1,54 @@
+SHADESET
+
+Symbol
+Type VECTOR
+Points
+0 1
+1 1
+END
+END 
+
+Symbol
+Type VECTOR
+Points
+1 0
+1 1
+END
+END 
+
+Symbol
+Type VECTOR
+Points
+0 0
+1 1
+END
+END 
+
+Symbol
+Type VECTOR
+Points
+0 1
+1 0
+END
+END 
+
+Symbol
+Type VECTOR
+Points
+0 1
+1 0
+-99 -99
+0 0
+1 1
+END
+END 
+
+Symbol
+Type ELLIPSE
+Filled
+Points
+1 1
+END
+END 
+
+END # SHADESET
