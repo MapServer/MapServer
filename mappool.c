@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/02 17:57:48  frank
+ * Added multithreading safety support for pool
+ *
  * Revision 1.4  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -145,6 +148,7 @@ o Currently the connection pooling API makes not attempt to address
  ****************************************************************************/
 
 #include "map.h"
+#include "mapthread.h"
 
 MS_CVSID("$Id$")
 
@@ -160,6 +164,7 @@ typedef struct {
 
     int   lifespan;
     int   ref_count;
+    int   thread_id;
     int   debug;
 
     time_t last_used;
@@ -219,6 +224,8 @@ void msConnPoolRegister( layerObj *layer,
 /* -------------------------------------------------------------------- */
 /*      Grow the array of connection information objects if needed.     */
 /* -------------------------------------------------------------------- */
+    msAcquireLock( TLOCK_POOL );
+
     if( connectionCount == connectionMax )
     {
         connectionMax += 10;
@@ -228,6 +235,7 @@ void msConnPoolRegister( layerObj *layer,
         if( connections == NULL )
         {
             msSetError(MS_MEMERR, NULL, "msConnPoolRegister()");
+            msReleaseLock( TLOCK_POOL );
             return;
         }
     }
@@ -243,6 +251,7 @@ void msConnPoolRegister( layerObj *layer,
     conn->connection = strdup( layer->connection );
     conn->close = close_func;
     conn->ref_count = 1;
+    conn->thread_id = msGetThreadId();
     conn->last_used = time(NULL);
     conn->conn_handle = conn_handle;
     conn->debug = layer->debug;
@@ -271,6 +280,8 @@ void msConnPoolRegister( layerObj *layer,
                     close_connection );
         conn->lifespan = MS_LIFE_ZEROREF;
     }
+
+    msReleaseLock( TLOCK_POOL );
 }
 
 /************************************************************************/
@@ -307,6 +318,7 @@ static void msConnPoolClose( int conn_index )
 
     /* free malloced() stuff in this connection */
 
+    msAcquireLock( TLOCK_POOL );
     free( conn->connection );
 
     /* move the last connection in place of our now closed one */
@@ -324,7 +336,7 @@ static void msConnPoolClose( int conn_index )
         free( connections );
         connections = NULL;
     }
-    
+    msReleaseLock( TLOCK_POOL );
 }
 
 /************************************************************************/
@@ -349,9 +361,13 @@ void *msConnPoolRequest( layerObj *layer )
         connectionObj *conn = connections + i;
 
         if( layer->connectiontype == conn->connectiontype
-            && strcasecmp( layer->connection, conn->connection ) == 0 )
+            && strcasecmp( layer->connection, conn->connection ) == 0 
+            && (conn->ref_count == 0 || conn->thread_id == msGetThreadId()) )
         {
+            void *conn_handle = NULL;
+
             conn->ref_count++;
+            conn->thread_id = msGetThreadId();
             conn->last_used = time(NULL);
 
             if( layer->debug )
@@ -361,9 +377,14 @@ void *msConnPoolRequest( layerObj *layer )
                 conn->debug = layer->debug;
             }
 
-            return conn->conn_handle;
+            conn_handle = conn->conn_handle;
+
+            msReleaseLock( TLOCK_POOL );
+            return conn_handle;
         }
     }
+
+    msReleaseLock( TLOCK_POOL );
 
     return NULL;
 }
@@ -387,6 +408,8 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
 
     if( layer->connection == NULL )
         return;
+
+    msAcquireLock( TLOCK_POOL );
 
     for( i = 0; i < connectionCount; i++ )
     {
@@ -412,6 +435,9 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
 
             conn->ref_count--;
             conn->last_used = time(NULL);
+
+            if( conn->ref_count == 0 )
+                conn->thread_id = 0;
 
             if( conn->ref_count == 0 && conn->lifespan == MS_LIFE_ZEROREF )
                 msConnPoolClose( i );
@@ -444,13 +470,21 @@ void msConnPoolCloseUnreferenced()
     // this really needs to be commented out before commiting. 
     // msDebug( "msConnPoolCloseUnreferenced()\n" );
 
+    msAcquireLock( TLOCK_POOL );
     for( i = connectionCount - 1; i >= 0; i-- )
     {
         connectionObj *conn = connections + i;
 
         if( conn->ref_count == 0 )
+        {
+            // for now we don't assume the locks are re-entrant, so release
+            // it so msConnPoolClose() can get it. 
+            msReleaseLock( TLOCK_POOL );
             msConnPoolClose( i );
+            msAcquireLock( TLOCK_POOL );
+        }
     }
+    msReleaseLock( TLOCK_POOL );
 }
 
 /************************************************************************/

@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Added multi-threading support in mapthread.c.  List of connections is
+  managed within a mutex lock, and connections are only allowed to be used
+  by one thread at a time. 
+
 - Bug 1185 : php/mapscript : add constant MS_GD_ALPHA 
 
 - Bug 1173: In HTML legend, added opt_flag support for layer groups.
