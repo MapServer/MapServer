@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.38  2003/12/01 16:12:01  assefa
+ * Add applysld and applysldurl on map.
+ *
  * Revision 1.37  2003/10/30 22:55:04  assefa
  * getexpression function in Sync with the mapscript.i
  *
@@ -175,6 +178,7 @@
 
 //#include "map.h"
 #include "maptemplate.h"
+#include "mapogcsld.h"
 
 /*=====================================================================
  *                   Internal functions from mapscript_i.c
@@ -240,6 +244,9 @@ int             mapObj_saveMapContext(mapObj *self, char *szFileName);
 int             mapObj_loadMapContext(mapObj *self, char *szFileName);
 int             mapObj_selectOutputFormat(mapObj *self,
                                           const char *imagetype);
+int             mapObj_applySLD(mapObj *self, char *sld);
+int             mapObj_applySLDURL(mapObj *self, char *sld);
+char            *mapObj_generateSLD(mapObj *self);
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);

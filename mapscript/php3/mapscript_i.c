@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.71  2003/12/01 16:12:01  assefa
+ * Add applysld and applysldurl on map.
+ *
  * Revision 1.70  2003/10/30 22:55:04  assefa
  * getexpression function in Sync with the mapscript.i
  *
@@ -589,7 +592,21 @@ int mapObj_selectOutputFormat(mapObj *self,
     return(MS_FAILURE);
     
 }
-      
+
+int mapObj_applySLD(mapObj *self, char *sld)
+{
+    return msSLDApplySLD(self, sld);
+}
+int mapObj_applySLDURL(mapObj *self, char *sld)
+{
+    return msSLDApplySLDURL(self, sld);
+}
+
+char *mapObj_generateSLD(mapObj *self)
+{
+    return msSLDGenerateSLD(self);
+}
+
 /**********************************************************************
  * class extensions for layerObj, always within the context of a map
  **********************************************************************/

@@ -459,6 +459,16 @@ and the MapServer Map File documentation at:
         Returns MS_SUCCESS/MS_FAILURE.
 
 
+  int applySLD(string sldxml)
+        Apply the SLD document to the map file. The matching between the
+        sld document and the map file will be done using the layer's name.
+        See SLD How to for more information on the SLD support.
+
+  int applySLDURL(string sldurl)
+        Apply the SLD document pointed by the URL to the map file. The matching between the
+        sld document and the map file will be done using the layer's name.
+        See SLD How to for more information on the SLD support.
+
  LayerObj Class:
  ---------------
 

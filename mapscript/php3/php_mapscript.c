@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.184  2003/12/01 16:12:01  assefa
+ * Add applysld and applysldurl on map.
+ *
  * Revision 1.183  2003/10/30 22:55:03  assefa
  * getexpression function in Sync with the mapscript.i
  *
@@ -323,6 +326,10 @@ DLEXPORT void php3_ms_map_saveMapContext(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void  php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void  php3_ms_map_applySLD(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_map_applySLDURL(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void  php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -720,6 +727,9 @@ function_entry php_map_class_functions[] = {
     {"savemapcontext",  php3_ms_map_saveMapContext,     NULL},
     {"loadmapcontext",  php3_ms_map_loadMapContext,     NULL},
     {"selectoutputformat", php3_ms_map_selectOutputFormat, NULL},
+    {"applysld",         php3_ms_map_applySLD,           NULL},
+    {"applysldurl",         php3_ms_map_applySLDURL,           NULL},
+    {"generatesld",      php3_ms_map_generateSLD,           NULL},
     {NULL, NULL, NULL}
 };
 
@@ -5491,6 +5501,123 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
 
     RETURN_LONG(nStatus);
 }
+
+/**********************************************************************
+ *                        map->applySLD(szSLDString)
+ *
+ * Apply an XML SLD string to the map file
+ **********************************************************************/
+DLEXPORT void php3_ms_map_applySLD(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     pval        *pSLDString;
+     mapObj      *self=NULL;
+      HashTable   *list=NULL;
+     int         nStatus = MS_SUCCESS;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    if (getParameters(ht,1,&pSLDString) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pSLDString);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    nStatus = mapObj_applySLD(self, pSLDString->value.str.val);
+
+    RETURN_LONG(nStatus);
+}
+
+
+/**********************************************************************
+ *                        map->applySLD(szSLDURL)
+ *
+ * Apply an SLD to map. The SLD is given as an URL.
+ **********************************************************************/
+DLEXPORT void php3_ms_map_applySLDURL(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     pval        *pSLDString;
+     mapObj      *self=NULL;
+     HashTable   *list=NULL;
+     int         nStatus = MS_SUCCESS;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    if (getParameters(ht,1,&pSLDString) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pSLDString);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    nStatus = mapObj_applySLDURL(self, pSLDString->value.str.val);
+
+    RETURN_LONG(nStatus);
+}
+
+
+DLEXPORT void php3_ms_map_generateSLD(INTERNAL_FUNCTION_PARAMETERS)
+{
+     pval        *pThis;
+     mapObj      *self=NULL;
+     HashTable   *list=NULL;
+     char       *pszBuffer = NULL;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+    {
+        RETURN_LONG(MS_FAILURE);
+    }
+
+    pszBuffer = mapObj_generateSLD(self);
+
+    if (pszBuffer)
+    {
+        RETVAL_STRING(pszBuffer, 1);
+        free(pszBuffer);
+    }
+    else
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_STRING("", 0);
+    }
+}
+
 /* }}} */
 
 
