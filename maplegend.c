@@ -9,7 +9,7 @@
 
 int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int height, gdImagePtr img, int dstX, int dstY)
 {
-  int i;
+  int i, type;
   shapeObj box, zigzag;
   pointObj marker;
   char szPath[MS_MAXPATHLEN];
@@ -63,10 +63,23 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   box.line[0].point[4].y = box.line[0].point[0].y;
   box.line[0].numpoints = 5;
   
+  type = lp->type;
+
+  // some polygon layers may be better drawn using zigzag if there is no fill
+  if(type == MS_LAYER_POLYGON) {
+    type = MS_LAYER_LINE;
+    for(i=0; i<class->numstyles; i++) {
+      if(MS_VALID_COLOR(class->styles[i].color)) { // there is a fill
+	type = MS_LAYER_POLYGON;
+	break;
+      }
+    }
+  }
+
   /* 
   ** now draw the appropriate color/symbol/size combination 
   */      
-  switch(lp->type) {
+  switch(type) {
   case MS_LAYER_ANNOTATION:
   case MS_LAYER_POINT:
     for(i=0; i<class->numstyles; i++)
@@ -80,7 +93,7 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   case MS_LAYER_RASTER:
   case MS_LAYER_POLYGON:
     for(i=0; i<class->numstyles; i++) { // TO DO: it may not be this easy
-      if(MS_VALID_COLOR(class->styles[0].color))
+      if(MS_VALID_COLOR(class->styles[i].color))
         msDrawShadeSymbolGD(&map->symbolset, img, &box, &(class->styles[i]), 1.0);
       else
 	msDrawLineSymbolGD(&map->symbolset, img, &box, &(class->styles[i]), 1.0);
