@@ -181,7 +181,7 @@ EXE_LIST = 	shp2img shp2pdf legend mapserv shptree shptreevis \
 .c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
-all: $(MAKE_GD) libmap.a $(EXE_LIST) @MAKE_PHPMS@ $(EXTRA_DEFAULT)
+all: $(MAKE_GD) libmap.a $(EXTRA_DEFAULT) $(EXE_LIST) @MAKE_PHPMS@ 
 
 php3_mapscript:: libmap.a
 	cd mapscript/php3; $(MAKE); cd ../..
