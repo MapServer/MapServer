@@ -237,7 +237,6 @@ typedef struct {
 #endif
 } fontSetObj;
 
-
 // FEATURE LIST OBJECT - for inline features, shape caches and queries
 #ifndef SWIG
 typedef struct listNode {
@@ -800,6 +799,10 @@ typedef struct map_obj{ /* structure for a map */
   rectObj extent; /* map extent array */
   double cellsize; /* in map units */
 
+
+  geotransformObj gt; /* rotation / geotransform */
+  rectObj saved_extent;
+
   enum MS_UNITS units; /* units of the projection */
   double scale; /* scale of the output image */
   double resolution;
@@ -962,15 +965,35 @@ double dist(pointObj a, pointObj b);
 /*
 ** Main API Functions
 */
+
+// mapobject.c
+
+MS_DLL_EXPORT void msFreeMap(mapObj *map);
+MS_DLL_EXPORT mapObj *msNewMapObj(void);
+MS_DLL_EXPORT const char *msGetConfigOption( mapObj *map, const char *key);
+MS_DLL_EXPORT void msSetConfigOption( mapObj *map, const char *key, const char *value);
+MS_DLL_EXPORT void msApplyMapConfigOptions( mapObj *map );
+MS_DLL_EXPORT int msMapComputeGeotransform( mapObj *map );
+
+MS_DLL_EXPORT void msMapPixelToGeoref( mapObj *map, double *x, double *y );
+MS_DLL_EXPORT void msMapGeorefToPixel( mapObj *map, double *x, double *y );
+
+MS_DLL_EXPORT int msMapSetExtent(mapObj *map, double minx, double miny, 
+                                 double maxx, double maxy);
+MS_DLL_EXPORT int msMapSetRotation( mapObj *map, double rotation_angle );
+MS_DLL_EXPORT int msMapSetSize( mapObj *map, int width, int height );
+MS_DLL_EXPORT int msMapSetSize( mapObj *map, int width, int height );
+MS_DLL_EXPORT int msMapSetFakedExtent( mapObj *map );
+MS_DLL_EXPORT int msMapRestoreRealExtent( mapObj *map );
+
+// mapfile.c
    
 MS_DLL_EXPORT int msGetLayerIndex(mapObj *map, char *name); // in mapfile.c
 MS_DLL_EXPORT int msGetSymbolIndex(symbolSetObj *set, char *name, int try_addimage_if_notfound);
 MS_DLL_EXPORT mapObj  *msLoadMap(char *filename, char *new_mappath);
 MS_DLL_EXPORT int msSaveMap(mapObj *map, char *filename);
-MS_DLL_EXPORT void msFreeMap(mapObj *map);
 MS_DLL_EXPORT void msFreeCharArray(char **array, int num_items);
 MS_DLL_EXPORT int msLoadMapString(mapObj *map, char *object, char *value);
-MS_DLL_EXPORT mapObj *msNewMapObj(void);
 MS_DLL_EXPORT int msEvalRegex(char *e, char *s);
 MS_DLL_EXPORT void msFree(void *p);
 MS_DLL_EXPORT char **msTokenizeMap(char *filename, int *numtokens);
@@ -1028,9 +1051,6 @@ MS_DLL_EXPORT int msRasterQueryByRect(mapObj *map, layerObj *layer, rectObj quer
 MS_DLL_EXPORT int msRasterQueryByPoint(mapObj *map, layerObj *layer, int mode, 
                          pointObj p, double buffer );
 
-MS_DLL_EXPORT const char *msGetConfigOption( mapObj *map, const char *key);
-MS_DLL_EXPORT void msSetConfigOption( mapObj *map, const char *key, const char *value);
-MS_DLL_EXPORT void msApplyMapConfigOptions( mapObj *map );
 
 MS_DLL_EXPORT void trimBlanks(char *string); // in mapstring.c
 MS_DLL_EXPORT char *chop(char *string);

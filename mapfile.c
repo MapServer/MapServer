@@ -840,6 +840,8 @@ int msProcessProjection(projectionObj *p)
 
 static int loadProjection(projectionObj *p)
 {
+  p->gt.need_geotransform = MS_FALSE;
+
 #ifdef USE_PROJ
   int i=0;
 
@@ -848,7 +850,7 @@ static int loadProjection(projectionObj *p)
       msSetError(MS_MISCERR, "Projection is already initialized. Multiple projection definitions are not allowed in this object. (line %d)", 
                    "loadProjection()", msyylineno);	  
         return(-1);
-   }
+  }
 
   for(;;) {
     switch(msyylex()) {
@@ -895,8 +897,11 @@ static int loadProjection(projectionObj *p)
 
 int msLoadProjectionString(projectionObj *p, char *value)
 {
+  p->gt.need_geotransform = MS_FALSE;
+
 #ifdef USE_PROJ
   if(p) msFreeProjection(p);
+
 
   /*
    * Handle new style definitions, the same as they would be given to
@@ -3724,6 +3729,9 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
 
 /*
 ** Initialize, load and free a mapObj structure
+**
+** This really belongs in mapobject.c, but currently it also depends on 
+** lots of other init methods in this file.
 */
 int initMap(mapObj *map)
 {
@@ -3743,6 +3751,9 @@ int initMap(mapObj *map)
  
   map->height = map->width = -1;
   map->maxsize = MS_MAXIMAGESIZE_DEFAULT; // default limit is 1024x1024
+
+  map->gt.need_geotransform = MS_FALSE;
+  map->gt.rotation_angle = 0.0;
 
   map->units = MS_METERS;
   map->cellsize = 0;
@@ -3859,80 +3870,6 @@ int msFreeLabelCache(labelCacheObj *cache) {
   return(MS_SUCCESS);
 }
 
-/* This is intended to be a function to cleanup anything that "hangs around"
-   when all maps are destroyed, like Registered GDAL drivers, and so forth. */
-extern void lexer_cleanup();
-
-void msCleanup()
-{
-    lexer_cleanup();
-#ifdef USE_OGR
-    msOGRCleanup();
-#endif    
-#ifdef USE_GDAL
-    msGDALCleanup();
-#endif    
-#ifdef USE_PROJ
-    pj_deallocate_grids();
-    msSetPROJ_LIB( NULL );
-#endif
-#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
-    msHTTPCleanup();
-#endif
-    msResetErrorList();
-}
-
-void msFreeMap(mapObj *map) {
-  int i;
-
-  if(!map) return;
-  msCloseConnections(map);
-
-  msFree(map->name);
-  msFree(map->shapepath);
-  msFree(map->mappath);
-
-  msFreeProjection(&(map->projection));
-  msFreeProjection(&(map->latlon));
-
-  msFreeLabelCache(&(map->labelcache));
-
-  if( map->outputformat && --map->outputformat->refcount < 1 )
-      msFreeOutputFormat( map->outputformat );
-
-  for(i=0; i < map->numoutputformats; i++ ) {
-      if( --map->outputformatlist[i]->refcount < 1 )
-      msFreeOutputFormat( map->outputformatlist[i] );
-  }
-  if( map->outputformatlist != NULL )
-      msFree( map->outputformatlist );
-
-  msFree( map->imagetype );
-
-  msFreeFontSet(&(map->fontset));
-
-  msFreeSymbolSet(&map->symbolset); // free symbols
-  msFree(map->symbolset.filename);
-
-  freeWeb(&(map->web));
-
-  freeScalebar(&(map->scalebar));
-  freeReferenceMap(&(map->reference));
-  freeLegend(&(map->legend));  
-
-  for(i=0; i<map->numlayers; i++)
-    freeLayer(&(map->layers[i]));
-  msFree(map->layers);
-
-  if (map->layerorder)
-      free(map->layerorder);
-
-  msFree(map->templatepattern);
-  msFree(map->datapattern);
-  msFreeHashTable(map->configoptions);
-  msFree(map);
-}
-
 int msSaveMap(mapObj *map, char *filename)
 {
   int i;
@@ -4018,30 +3955,6 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
-/*
-** Init a map and create the output format
-*/
-mapObj *msNewMapObj()
-{
-    mapObj *map;
-
-    /* create an empty map, no layers etc... */
-    map = (mapObj *)malloc(sizeof(mapObj));
-
-    if(!map)
-    {
-        msSetError(MS_MEMERR, NULL, "msCreateMap()");
-        return NULL;
-    }
-
-    if( initMap( map ) == -1 )
-        return NULL;
-
-    if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
-        return NULL;
-
-    return map;
-}
 static mapObj *loadMapInternal(char *filename, char *new_mappath)
 {
   mapObj *map=NULL;
@@ -4067,7 +3980,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
   /*
   ** Allocate mapObj structure
   */
-  map = (mapObj *)malloc(sizeof(mapObj));
+  map = (mapObj *)calloc(sizeof(mapObj),1);
   if(!map) {
     msSetError(MS_MEMERR, NULL, "msLoadMap()");
     return(NULL);
@@ -4126,9 +4039,13 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
     case(END):
       fclose(msyyin);      
 
+
       /*** Make config options current ***/
       msApplyMapConfigOptions( map );
 
+      /*** Compute rotated extent info if applicable ***/
+      msMapComputeGeotransform( map );
+                                            
       /*** OUTPUTFORMAT related setup ***/
       if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
           return NULL;
@@ -4159,11 +4076,22 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       msSetError(MS_EOFERR, NULL, "msLoadMap()");
       return(NULL);
     case(EXTENT):
-      if(getDouble(&(map->extent.minx)) == -1) return(NULL);
-      if(getDouble(&(map->extent.miny)) == -1) return(NULL);
-      if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
-      if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
-      break;
+    {
+        if(getDouble(&(map->extent.minx)) == -1) return(NULL);
+        if(getDouble(&(map->extent.miny)) == -1) return(NULL);
+        if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
+        if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
+    }
+    break;
+    case(ANGLE):
+    {
+        double rotation_angle;
+
+        if(getDouble(&(rotation_angle)) == -1) return(NULL);
+
+        msMapSetRotation( map, rotation_angle );
+    }
+    break;
     case(TEMPLATEPATTERN):
       if((map->templatepattern = getString()) == NULL) return(NULL);
       break;
@@ -4321,7 +4249,18 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if(getDouble(&(map->extent.miny)) == -1) break;
       if(getDouble(&(map->extent.maxx)) == -1) break;
       if(getDouble(&(map->extent.maxy)) == -1) break;
+      msMapComputeGeotransform( map );
       break;
+    case(ANGLE):
+    {
+        double rotation_angle;
+
+        msyystate = 2; msyystring = value;
+        if(getDouble(&(rotation_angle)) == -1) break;
+
+        msMapSetRotation( map, rotation_angle );
+    }
+    break;
     case(INTERLACE):
       msyystate = 2; msyystring = value;
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
@@ -4378,7 +4317,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
 	msSetError(MS_WEBERR, "Image size out of range.", "msLoadMapString()");
 	break;
       }
-
+      msMapComputeGeotransform( map );
       break;
     case(SHAPEPATH):
       msFree(map->shapepath);
@@ -4609,44 +4548,3 @@ void msCloseConnections(mapObj *map) {
   }
 }
 
-const char *msGetConfigOption( mapObj *map, const char *key)
-
-{
-    return msLookupHashTable( map->configoptions, key );
-}
-
-void msSetConfigOption( mapObj *map, const char *key, const char *value)
-
-{
-    // We have special "early" handling of this so that it will be
-    // in effect when the projection blocks are parsed and pj_init is called.
-    if( strcasecmp(key,"PROJ_LIB") == 0 )
-        msSetPROJ_LIB( value );
-
-    if( msLookupHashTable( map->configoptions, key ) != NULL )
-        msRemoveHashTable( map->configoptions, key );
-    msInsertHashTable( map->configoptions, key, value );
-}
-
-void msApplyMapConfigOptions( mapObj *map )
-
-{
-    const char *key;
-
-    for( key = msFirstKeyFromHashTable( map->configoptions );
-         key != NULL;
-         key = msNextKeyFromHashTable( map->configoptions, key ) )
-    {
-        const char *value = msLookupHashTable( map->configoptions, key );
-        if( strcasecmp(key,"PROJ_LIB") == 0 )
-        {
-            msSetPROJ_LIB( value );
-        }
-        else 
-        {
-#if defined(USE_GDAL) && GDAL_RELEASE_DATE > 20030601
-            CPLSetConfigOption( key, value );
-#endif         
-        }   
-    }
-}

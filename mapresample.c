@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.48  2004/05/25 15:56:26  frank
+ * added rotation/geotransform support
+ *
  * Revision 1.47  2004/04/30 19:13:16  dan
  * Fixed problem compiling without GDAL (use of TRUE and CPLAssert)
  *
@@ -445,10 +448,12 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
 
 typedef struct 
 {
+    projectionObj *psSrcProjObj;
     projPJ psSrcProj;
     int bSrcIsGeographic;
     double adfInvSrcGeoTransform[6];
 
+    projectionObj *psDstProjObj;
     projPJ psDstProj;
     int bDstIsGeographic;
     double adfDstGeoTransform[6];
@@ -819,8 +824,13 @@ static int msTransformMapToSource( int nDstXSize, int nDstYSize,
     {
         double		x_out, y_out; 
 
-        x_out = adfDstGeoTransform[0] + x[i] * adfDstGeoTransform[1];
-        y_out = adfDstGeoTransform[3] + y[i] * adfDstGeoTransform[5];
+        x_out = adfDstGeoTransform[0] 
+            + x[i] * adfDstGeoTransform[1]
+            + y[i] * adfDstGeoTransform[2];
+
+        y_out = adfDstGeoTransform[3] 
+            + x[i] * adfDstGeoTransform[4]
+            + y[i] * adfDstGeoTransform[5];
 
         x[i] = x_out;
         y[i] = y_out;
@@ -984,12 +994,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     nDstXSize = image->width;
     nDstYSize = image->height;
 
-    adfDstGeoTransform[0] = map->extent.minx - map->cellsize*0.5;
-    adfDstGeoTransform[1] = map->cellsize;
-    adfDstGeoTransform[2] = 0.0;
-    adfDstGeoTransform[3] = map->extent.maxy + map->cellsize*0.5;
-    adfDstGeoTransform[4] = 0.0;
-    adfDstGeoTransform[5] = - map->cellsize;
+    memcpy( adfDstGeoTransform, map->gt.geotransform, sizeof(double)*6 );
 
     msGetGDALGeoTransform( hDS, map, layer, adfSrcGeoTransform );
 
@@ -1116,6 +1121,8 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      for the temporary image to include transparentency support.     */
 /* -------------------------------------------------------------------- */
     sDummyMap.outputformat = msCloneOutputFormat( image->format );
+    sDummyMap.width = nLoadImgXSize;
+    sDummyMap.height = nLoadImgYSize;
     
 /* -------------------------------------------------------------------- */
 /*      If we are working in 256 color GD mode, allocate 0 as the       */
@@ -1131,7 +1138,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         sDummyMap.imagecolor.red = 117;
         sDummyMap.imagecolor.green = 17;
         sDummyMap.imagecolor.blue = 191;
-
     }
 /* -------------------------------------------------------------------- */
 /*      If we are working in RGB mode ensure we produce an RGBA         */
@@ -1145,6 +1151,10 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 
         sDummyMap.outputformat->transparent = MS_TRUE;
         sDummyMap.outputformat->imagemode = MS_IMAGEMODE_RGBA;
+
+        sDummyMap.imagecolor.red = map->imagecolor.red;
+        sDummyMap.imagecolor.green = map->imagecolor.green;
+        sDummyMap.imagecolor.blue = map->imagecolor.blue;
     }
 
 /* -------------------------------------------------------------------- */

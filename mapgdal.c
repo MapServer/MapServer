@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/05/25 15:56:26  frank
+ * added rotation/geotransform support
+ *
  * Revision 1.21  2004/05/18 14:42:51  frank
  * Removed unused variable.
  *
@@ -396,17 +399,9 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 
     if( map != NULL )
     {
-        double adfGeoTransform[6];
         char *pszWKT;
 
-        adfGeoTransform[0] = map->extent.minx;
-        adfGeoTransform[1] = map->cellsize;
-        adfGeoTransform[2] = 0.0;
-        adfGeoTransform[3] = map->extent.maxy;
-        adfGeoTransform[4] = 0.0;
-        adfGeoTransform[5] = - map->cellsize;
-
-        GDALSetGeoTransform( hMemDS, adfGeoTransform );
+        GDALSetGeoTransform( hMemDS, map->gt.geotransform );
 
         pszWKT = msProjectionObjToWKT( &(map->projection) );
         if( pszWKT != NULL )

@@ -183,6 +183,13 @@ imageObj *msDrawMap(mapObj *map)
     status = msCalculateScale(map->extent, map->units, map->width, map->height,
                               map->resolution, &map->scale);
     if(status != MS_SUCCESS) return(NULL);
+    
+    // update geotransform based on adjusted extent. 
+    msMapComputeGeotransform( map );
+
+    // Do we need to fake out stuff for rotated support?
+    if( map->gt.need_geotransform )
+        msMapSetFakedExtent( map );
 
     // compute layer scale factors now
     for(i=0;i<map->numlayers; i++) {
@@ -385,6 +392,11 @@ imageObj *msDrawMap(mapObj *map)
     }
 
   }
+  
+  // Do we need to fake out stuff for rotated support?
+  // This really needs to be done on every preceeding exit point too...
+  if( map->gt.need_geotransform )
+      msMapRestoreRealExtent( map );
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
       msEmbedScalebar(map, image->img.gd); //TODO

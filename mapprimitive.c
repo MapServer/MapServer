@@ -462,7 +462,7 @@ void msClipPolygonRect(shapeObj *shape, rectObj rect)
 }
 
 /*
-** Converts from map coordinates to image coordinates
+** converts from map coordinates to image coordinates
 */
 void msTransformShapeToPixel(shapeObj *shape, rectObj extent, double cellsize)
 {
@@ -875,5 +875,3 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
 
   return(MS_SUCCESS);
 }
-
-

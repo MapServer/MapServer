@@ -226,8 +226,13 @@ double msAdjustExtent(rectObj *rect, int width, int height)
   if(cellsize <= 0) /* avoid division by zero errors */
     return(0);
 
+#ifndef notdef
+  ox = MS_MAX((width - (rect->maxx - rect->minx)/cellsize)/2,0); // these were width-1 and height-1
+  oy = MS_MAX((height - (rect->maxy - rect->miny)/cellsize)/2,0);
+#else
   ox = MS_NINT(MS_MAX((width - (rect->maxx - rect->minx)/cellsize)/2,0)); // these were width-1 and height-1
   oy = MS_NINT(MS_MAX((height - (rect->maxy - rect->miny)/cellsize)/2,0));
+#endif
 
   rect->minx = rect->minx - ox*cellsize;
   rect->miny = rect->miny - oy*cellsize;
@@ -1295,3 +1300,26 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
     msTransformShapeToPixel(shape, extent, cellsize);
 }
  
+/* This is intended to be a function to cleanup anything that "hangs around"
+   when all maps are destroyed, like Registered GDAL drivers, and so forth. */
+extern void lexer_cleanup();
+
+void msCleanup()
+{
+    lexer_cleanup();
+#ifdef USE_OGR
+    msOGRCleanup();
+#endif    
+#ifdef USE_GDAL
+    msGDALCleanup();
+#endif    
+#ifdef USE_PROJ
+    pj_deallocate_grids();
+    msSetPROJ_LIB( NULL );
+#endif
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+    msHTTPCleanup();
+#endif
+    msResetErrorList();
+}
+

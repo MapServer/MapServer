@@ -16,6 +16,21 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   projUV p;
   int	 error;
 
+  if( in->gt.need_geotransform )
+  {
+      double x_out, y_out;
+
+      x_out = in->gt.geotransform[0]
+          + in->gt.geotransform[1] * point->x 
+          + in->gt.geotransform[2] * point->y;
+      y_out = in->gt.geotransform[3]
+          + in->gt.geotransform[4] * point->x 
+          + in->gt.geotransform[5] * point->y;
+
+      point->x = x_out;
+      point->y = y_out;
+  }
+
 /* -------------------------------------------------------------------- */
 /*      If we have a fully defined input coordinate system and          */
 /*      output coordinate system, then we will use pj_transform.        */
@@ -78,6 +93,22 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
       point->x = p.u;
       point->y = p.v;
   }
+
+  if( out->gt.need_geotransform )
+  {
+      double x_out, y_out;
+
+      x_out = out->gt.invgeotransform[0]
+          + out->gt.invgeotransform[1] * point->x 
+          + out->gt.invgeotransform[2] * point->y;
+      y_out = out->gt.invgeotransform[3]
+          + out->gt.invgeotransform[4] * point->x 
+          + out->gt.invgeotransform[5] * point->y;
+
+      point->x = x_out;
+      point->y = y_out;
+  }
+
   return(MS_SUCCESS);
 #else
   msSetError(MS_PROJERR, "Projection support is not available.", "msProjectPoint()");
@@ -314,6 +345,11 @@ int msProjectionsDiffer( projectionObj *proj1, projectionObj *proj2 )
         return MS_FALSE;
 
     if( proj1->numargs != proj2->numargs )
+        return MS_TRUE;
+
+    // This test should be more rigerous.
+    if( proj1->gt.need_geotransform 
+        || proj2->gt.need_geotransform )
         return MS_TRUE;
 
     for( i = 0; i < proj1->numargs; i++ )

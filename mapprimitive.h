@@ -59,4 +59,14 @@ typedef struct {
   short numdecimals;
 } itemObj;
 
+typedef struct {
+ int  need_geotransform;
+
+ double rotation_angle;  
+
+ double geotransform[6];    // Pixel/line to georef.
+ double invgeotransform[6]; // georef to pixel/line
+  
+} geotransformObj;
+
 #endif /* MAPPRIMITIVE_H */

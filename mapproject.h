@@ -33,6 +33,7 @@ typedef struct {
 #else
   void *proj;
 #endif
+  geotransformObj gt; // extra transformation to apply
 #endif
 } projectionObj;
 
