@@ -427,6 +427,7 @@ int getTagArgs(char* pszTag, char* pszInstr, hashTableObj *oHashTable)
                free(papszArgs[i]);
             }
             free(papszArgs);
+            free(pszArgs);
          }
       }
    }  
@@ -1003,6 +1004,8 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
       }
    }
   
+   msFreeHashTable(myHashTable);
+
    /*
     * Process all metadata tags
     * only web object is accessible
@@ -1065,7 +1068,11 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
 
    if (pszOptFlag)
      nOptFlag = atoi(pszOptFlag);
-      
+
+   // don't display deleted layers
+   if (map->layers[nIdxLayer].status == MS_DELETE)
+     return MS_SUCCESS;
+
    // dont display layer is off.
    // check this if Opt flag is not set
    if((nOptFlag & 2) == 0 && map->layers[nIdxLayer].status == MS_OFF)
@@ -1191,6 +1198,10 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    if (pszOptFlag)
      nOptFlag = atoi(pszOptFlag);
       
+   // don't display deleted layers
+   if (map->layers[nIdxLayer].status == MS_DELETE)
+     return MS_SUCCESS;
+
    // dont display class if layer is off.
    // check this if Opt flag is not set
    if((nOptFlag & 2) == 0 && map->layers[nIdxLayer].status == MS_OFF)
@@ -1329,7 +1340,7 @@ char *generateLegendTemplate(mapservObj *msObj)
    regfree(&re);
 
 /* -------------------------------------------------------------------- */
-/*      Keep the current drawing order. The drawing order is reset      */
+/*      Save the current drawing order. The drawing order is reset      */
 /*      at the end of the function.                                     */
 /* -------------------------------------------------------------------- */
    if (msObj && msObj->Map && msObj->Map->numlayers > 0)
@@ -1443,8 +1454,12 @@ char *generateLegendTemplate(mapservObj *msObj)
        return NULL;
 
       
-   msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height);
-   if(msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale) != MS_SUCCESS)
+   msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), 
+                                         msObj->Map->width, 
+                                         msObj->Map->height);
+   if(msCalculateScale(msObj->Map->extent, msObj->Map->units, 
+                       msObj->Map->width, msObj->Map->height, 
+                       msObj->Map->resolution, &msObj->Map->scale) != MS_SUCCESS)
      return(NULL);
    
    /********************************************************************/
@@ -2758,14 +2773,14 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
                         char **names, char **values, 
                         int numentries)
 {
-    mapservObj          *msObj  = NULL;
-    char                *pszBuffer = NULL;
+    char    *pszBuffer = NULL;
 
     if (map)
     {
 /* -------------------------------------------------------------------- */
 /*      initialize object and set values.                               */
 /* -------------------------------------------------------------------- */
+        mapservObj  *msObj  = NULL;
         msObj = msAllocMapServObj();
 
         msObj->Map = map;
@@ -2793,10 +2808,20 @@ char *msProcessTemplate(mapObj *map, int bGenerateImages,
 /* -------------------------------------------------------------------- */
         if (msReturnPage(msObj, msObj->Map->web.template, 
                          BROWSE, &pszBuffer) == MS_SUCCESS)
-            return pszBuffer;
+        {
+            msFree(pszBuffer);
+            pszBuffer = NULL;
+        }
+
+        // Don't free the map and names and values arrays since they were
+        // passed by ref
+        msObj->Map = NULL;
+        msObj->ParamNames = msObj->ParamValues = NULL;
+        msObj->NumParams = 0;
+        msFreeMapServObj(msObj);
     }
 
-    return NULL;
+    return pszBuffer;
 }
         
 
@@ -2812,13 +2837,14 @@ char *msProcessLegendTemplate(mapObj *map,
                               char **names, char **values, 
                               int numentries)
 {
-    mapservObj          *msObj  = NULL;
+    char    *pszOutBuf = NULL;
 
     if (map && map->legend.template)
     {
 /* -------------------------------------------------------------------- */
 /*      initialize object and set values.                               */
 /* -------------------------------------------------------------------- */
+        mapservObj  *msObj  = NULL;
         msObj = msAllocMapServObj();
 
         msObj->Map = map;
@@ -2831,10 +2857,18 @@ char *msProcessLegendTemplate(mapObj *map,
             msObj->ParamValues = values;
             msObj->NumParams = numentries;    
         }
-        return generateLegendTemplate(msObj);
+
+        pszOutBuf = generateLegendTemplate(msObj);
+
+        // Don't free the map and names and values arrays since they were
+        // passed by ref
+        msObj->Map = NULL;
+        msObj->ParamNames = msObj->ParamValues = NULL;
+        msObj->NumParams = 0;
+        msFreeMapServObj(msObj);
     }
 
-    return NULL;
+    return pszOutBuf;
 }
 
 
@@ -2850,7 +2884,6 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages,
                              char **names, char **values, 
                              int numentries)
 {
-    mapservObj          *msObj  = NULL;
     char                *pszBuffer = NULL;
 
     if (map)
@@ -2858,6 +2891,7 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages,
 /* -------------------------------------------------------------------- */
 /*      initialize object and set values.                               */
 /* -------------------------------------------------------------------- */
+        mapservObj      *msObj  = NULL;
         msObj = msAllocMapServObj();
 
         msObj->Map = map;
@@ -2874,6 +2908,13 @@ char *msProcessQueryTemplate(mapObj *map, int bGenerateImages,
           msGenerateImages(msObj, NULL, MS_FALSE);
 
         msReturnQuery(msObj, NULL, &pszBuffer );
+
+        // Don't free the map and names and values arrays since they were
+        // passed by ref
+        msObj->Map = NULL;
+        msObj->ParamNames = msObj->ParamValues = NULL;
+        msObj->NumParams = 0;
+        msFreeMapServObj(msObj);
     }
 
     return pszBuffer;
