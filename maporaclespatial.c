@@ -18,7 +18,8 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.19 $Date$
+ * Revision 1.20        $Date$
+ * and Revision 1.19    2005/02/10 20:27:03 [CVS-TIME]
  * Bux fix: #1109.
  *
  * Revision 1.18 2005/02/04 13:10:46 [CVS-TIME]
@@ -27,57 +28,57 @@
  * Cleaned code.
  * Added debug messages for internal SQL's.
  *
- * Revision 1.15  2004/12/20 14:01:10 [CVS-TIME]
+ * Revision 1.15        2004/12/20 14:01:10 [CVS-TIME]
  * Fixed problem with LayerClose function.
  * Added token NONE for DATA statement. 
  *
- * Revision 1.14  2004/11/15 20:35:02 [CVS-TIME] dan
+ * Revision 1.14        2004/11/15 20:35:02 [CVS-TIME] dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
- * Revision 1.13  2004/11/15 20:35:02 [CVS-TIME]
+ * Revision 1.13        2004/11/15 20:35:02 [CVS-TIME]
  * Fixed declarations problems - Bug #1044
  *
- * Revision 1.12  2004/11/05 20:33:14 [CVS-TIME]
+ * Revision 1.12        2004/11/05 20:33:14 [CVS-TIME]
  * Added debug messages.
  *
- * Revision 1.11  2004/10/30 05:15:15 [CVS-TIME]
+ * Revision 1.11        2004/10/30 05:15:15 [CVS-TIME]
  * Connection Pool support.
  * New query item support.
  * New improve of performance.
  * Updated mapfile DATA statement to include more options.
  * Bug fix from version 1.9
  *
- * Revision 1.10  2004/10/21 04:30:54 [CVS-TIME]
+ * Revision 1.10        2004/10/21 04:30:54 [CVS-TIME]
  * MS_CVSID support added.
  *
- * Revision 1.9   2004/04/30 13:27:46 [CVS-TIME]
+ * Revision 1.9         2004/04/30 13:27:46 [CVS-TIME]
  * Query item support implemented.
  * Query map is not being generated yet.
  *
- * Revision 1.8   2003/03/18 04:56:28 [CVS-TIME]
+ * Revision 1.8         2003/03/18 04:56:28 [CVS-TIME]
  * Updated mapfile DATA statement to include SRID number.
  * SRID fix in r1.6 proved to be inefficient and time-consuming.
  *
- * Revision 1.7   2002/01/19 18:29:25 [CVS-TIME]
+ * Revision 1.7         2002/01/19 18:29:25 [CVS-TIME]
  * Fixed bug in SQL statement when using "FILTER" in mapfile.
  *
- * Revision 1.6   2001/12/22 18:32:02 [CVS-TIME]
+ * Revision 1.6         2001/12/22 18:32:02 [CVS-TIME]
  * Fixed SRID mismatch error.
  *
- * Revision 1.5   2001/11/21 22:35:58 [CVS-TIME]
+ * Revision 1.5         2001/11/21 22:35:58 [CVS-TIME]
  * Added support for 2D circle geometries (gtype/etype/interpretation):
  * - (2003/[?00]3/4)
  *
- * Revision 1.4   2001/10/22 17:09:03 [CVS-TIME]
+ * Revision 1.4         2001/10/22 17:09:03 [CVS-TIME]
  * Added support for mapfile items.
  *
- * Revision 1.3   2001/10/18 11:39:04 [CVS-TIME]
+ * Revision 1.3         2001/10/18 11:39:04 [CVS-TIME]
  * Added support for the following 2D geometries:
  * - 2001/1/1         point
  * - 2001/1/n         multipoint
  * - 2002/2/1         line string
  *
- * Revision 1.2   2001/09/28 10:42:29 [GMT-03:00]
+ * Revision 1.2         2001/09/28 10:42:29 [GMT-03:00]
  * Added OracleSpatial "partial" support. Displaying only the following
  * 2D geometries (gtype/etype/interpretation):
  * - 2001/NULL/NULL   point
@@ -96,20 +97,16 @@
  *   or
  *   DATA 'geometr_column FROM <table> USING UNIQUE <column>' 
  *   or
- *   DATA 'geometry_column FROM <table> [USING SRID srid#]'
- *   or
- *   DATA 'geometr_column FROM <table> USING FILTER'
- *   or
- *   DATA 'geometr_column FROM <table> USING RELATE'
- *   or
- *   DATA 'geometr_column FROM <table> USING GEOPMRELATE'
- *   or
- *   DATA 'geometr_column FROM <table> USING NONE'
- *
- *   <table> can be:
- *   One database table name
- *   or
- *   (SELECT stmt)
+ *   DATA 'geometry_column FROM <table> [USING SRID #srid <function> VERSION <vcode>]'
+ *       <function> can be:
+ *           'FILTER', 'RELATE', GEOPMRELATE' or 'NONE'
+ *       <vcode> can be:
+ *           '8i', '9i' or '10g'
+ * 
+ *       <table> can be:
+ *            One database table name
+ *       or:
+ *            (SELECT stmt)
  *
  *****************************************************************************
  * Notices above shall be included in all copies or portions of the software.
@@ -541,11 +538,11 @@ static int msOCISetLayerInfo(msOracleSpatialLayerInfo *layerinfo)
         /* get TDO for SDO_GEOMETRY */
         OCIObjectPin( hand->envhp, hand->errhp, type_ref, (OCIComplexObject *)0, OCI_PIN_ANY, OCI_DURATION_SESSION, OCI_LOCK_NONE, (dvoid **)&layerinfo->tdo ) );
 
-        /*if ( !success ) {
-            layerinfo = NULL;
-            free( layerinfo );
-            return NULL;
-        }*/
+  /*if ( !success ) {
+        layerinfo = NULL;
+        free( layerinfo );
+        return NULL;
+    }*/
     return success;
 }
 
@@ -963,7 +960,7 @@ static void osCalculateArc(double p1x, double p1y, double p2x, double p2y, doubl
 
 /*
 Part of this function was based on Terralib function TeGenerateArc
-founded in TeGeometryAlgorith.cpp (www.terralib.org).
+found in TeGeometryAlgorith.cpp (www.terralib.org).
 Part of this function was based on Dr. Ialo (Univali/Cttmar) functions.
 */
 static void osGenerateArc(shapeObj *shape, lineObj arcline, lineObj points, int i, int n)
@@ -1203,7 +1200,8 @@ static void osArcPolygon(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, S
 
 static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, SDOGeometryObj *obj, SDOGeometryInd *ind)
 {
-    int gtype, elem_type, compound_type, compound_lenght, compound_count;
+    int gtype, elem_type, compound_type;
+    float compound_lenght, compound_count;
     ub4 etype;
     ub4 interpretation;
     int nelems, nords;
@@ -1239,7 +1237,7 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
                 success = TRY( hand, OCINumberToReal( hand->errhp, &(obj->point.x), (uword)sizeof(double), (dvoid *)&x ) )
                        && TRY( hand, OCINumberToReal( hand->errhp, &(obj->point.y), (uword)sizeof(double), (dvoid *)&y ) );
                 
-                if (ERROR( "msOracleSpatialLayerNextShape()", layerinfo ))
+                if (ERROR( "osGetOrdinates()", layerinfo ))
                     return MS_FAILURE;
                 
                 shape->type = MS_SHAPE_POINT;
@@ -1281,7 +1279,7 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
                         && TRY( hand, OCICollGetElem( hand->envhp, hand->errhp, (OCIColl *)obj->elem_info, (sb4)elem+2, (boolean *)&exists, (dvoid *)&oci_number, (dvoid **)0 ) )
                         && TRY( hand, OCINumberToInt( hand->errhp, oci_number, (uword)sizeof(ub4), OCI_NUMBER_UNSIGNED, (dvoid *)&interpretation ) ));
           
-              if (ERROR( "msOracleSpatialLayerNextShape()", layerinfo ))
+              if (ERROR( "osGetOrdinates()", layerinfo ))
                   return MS_FAILURE;          
           
               if ( etype == 1005 || etype == 2005  || etype == 4 )
@@ -1325,21 +1323,27 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
               }
 
               if (compound_count >= compound_lenght)
-                  osCloneShape(&newshape, shape);             
+              {
+                  osCloneShape(&newshape, shape);
+                  msFreeShape(&newshape);
+              }
                     
-              if (ERROR( "msOracleSpatialLayerNextShape()", layerinfo )) 
+              if (ERROR( "osGetOrdinates()", layerinfo )) 
                   return MS_FAILURE;
             
               /* prepare for next cycle */
               ord_start = ord_end; 
               elem += 3;
-              compound_count++;
+              
+              if (compound_type)
+                  compound_count++;
+              
           } while (elem < nelems); /* end of element loop */
       } /* end of gtype big-if */
     } /* end of not-null-object if */  
 
     if (compound_type)
-      msFreeShape(&newshape);
+        msFreeShape(&newshape);
     
     return MS_SUCCESS;
 }
@@ -1357,9 +1361,6 @@ int msOracleSpatialLayerOpen( layerObj *layer )
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)malloc(sizeof(msOracleSpatialLayerInfo));
     msOracleSpatialHandler *hand = (msOracleSpatialHandler *)malloc(sizeof(msOracleSpatialHandler));
   
-    if (layer->debug)
-        msDebug("msOracleSpatialLayerOpen called with: %s\n",layer->data);
-    
     memset( hand, 0, sizeof(msOracleSpatialHandler) );  
     memset( layerinfo, 0, sizeof(msOracleSpatialLayerInfo) );  
   
@@ -1605,7 +1606,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
   
     if (layerinfo == NULL) 
     {
-        msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerWhichShapes called on unopened layer", "msOracleSpatialLayerWhichShapes()" );
+        msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerWhichShapes called on unopened layer", "msOracleSpatialLayerNextShape()" );
         return MS_FAILURE;
     }
 
@@ -1644,7 +1645,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
         shape->values = (char **)malloc( sizeof(char*) * shape->numvalues );        
         if (shape->values == NULL)
         {
-            msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the values", "msOracleSpatialLayerWhichShapes()" );        
+            msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the values", "msOracleSpatialLayerNextShape()" );        
             return MS_FAILURE;
         }
     
@@ -1653,7 +1654,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
             shape->values[i] = (char *)malloc(strlen(layerinfo->items[i+1][ layerinfo->row ])+1);
             if (shape->values[i] == NULL)
             {
-                msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerWhichShapes()" );
+                msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerNextShape()" );
                 return MS_FAILURE;
             }
             else
@@ -1710,7 +1711,7 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
                     "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
                     "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
                     "Your data statement: %s", 
-                    "msOracleSpatialLayerWhichShapes()", layer->data );  
+                    "msOracleSpatialLayerGetItems()", layer->data );  
         
         return MS_FAILURE;
     }    
@@ -1763,7 +1764,7 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
         flk = (char *)malloc(sizeof(char*) * flk_len+1);
         if (flk == NULL)
         {
-            msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerGetShape()" );
+            msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items", "msOracleSpatialLayerGetItems()" );
             return MS_FAILURE;
         }
         else
@@ -1779,7 +1780,7 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
             layer->items[count_item] = (char *)malloc(sizeof(char) * flk_len+1);
             if (layer->items[count_item] == NULL)
             {
-                msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer", "msOracleSpatialLayerGetShape()" );
+                msSetError( MS_ORACLESPATIALERR, "No memory avaliable to allocate the items buffer", "msOracleSpatialLayerGetItems()" );
                 return MS_FAILURE;
             }
             else
@@ -1834,7 +1835,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
         layerinfo->items_query = (item_text_array_query *)malloc( sizeof(item_text_array_query) * (layer->numitems) );
         if (layerinfo->items_query == NULL)
         {
-            msSetError( MS_ORACLESPATIALERR, "Cannot allocate items buffer", "msOracleSpatialLayerWhichShapes()" );
+            msSetError( MS_ORACLESPATIALERR, "Cannot allocate items buffer", "msOracleSpatialLayerGetShape()" );
             return MS_FAILURE;
         }
     }
@@ -1847,7 +1848,7 @@ int msOracleSpatialLayerGetShape( layerObj *layer, shapeObj *shape, long record 
                     "'geometry_column FROM (SELECT stmt) [USING UNIQUE <column> SRID srid# FUNCTION]'. "
                     "If want to set the FUNCTION statement you can use: FILTER, RELATE, GEOMRELATE or NONE. "
                     "Your data statement: %s", 
-                    "msOracleSpatialLayerWhichShapes()", layer->data );
+                    "msOracleSpatialLayerGetShape()", layer->data );
         
         return MS_FAILURE;
     }
