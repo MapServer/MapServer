@@ -2905,6 +2905,13 @@ int msLoadMapString(mapObj *map, char *object, char *value)
   switch(msyylex()) {
   case(MAP):
     switch(msyylex()) {
+    case(EXTENT):
+      msyystate = 2; msyystring = value;
+      if(getDouble(&(map->extent.minx)) == -1) break;
+      if(getDouble(&(map->extent.miny)) == -1) break;
+      if(getDouble(&(map->extent.maxx)) == -1) break;
+      if(getDouble(&(map->extent.maxy)) == -1) break;
+      break;
     case(INTERLACE):
       msyystate = 2; msyystring = value;
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
