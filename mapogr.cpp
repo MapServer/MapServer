@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2001/03/01 22:54:07  dan
+ * Test for geographic proj using IsGeographic() before conversion to PROJ4
+ *
  * Revision 1.16  2001/03/01 22:37:14  dan
  * Added support for PROJECTION AUTO to use projection from dataset
  *
@@ -598,9 +601,8 @@ int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
 
   // First flush the "auto" name from the projargs[]... 
   if(proj->proj) pj_free(proj->proj);
+  proj->proj = NULL;
   msFreeCharArray(proj->projargs, proj->numargs);  
-  proj->numargs = 0;
-
   proj->projargs = NULL;
   proj->numargs = 0;
 
@@ -609,6 +611,17 @@ int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
       // Dataset had no set projection... Nothing else to do.
       // Leave proj empty and no reprojections will happen!
       return MS_SUCCESS;  
+  }
+
+  // +proj=longlat is a special case because versions of PROJ4 prior to 4.4.2
+  // didn't accept it.  Just catch that case for now and when we switch to
+  // 4.4.2 to use pj_transform() then we can get rid of that special case.
+  if (poSRS->IsGeographic())
+  {
+      // Do the same as what loadProjection() does for GEOGRAPHIC
+      proj->projargs = split("GEOGRAPHIC", ' ', &proj->numargs);
+      proj->proj = NULL;
+      return MS_SUCCESS;
   }
 
   // Export OGR SRS to a PROJ4 string
@@ -620,18 +633,6 @@ int msOGRSpatialRef2ProjectionObj(OGRSpatialReference *poSRS,
                  "msOGRSpatialRef2ProjectionObj()");
       CPLFree(pszProj);
       return(MS_FAILURE);
-  }
-
-  // +proj=longlat is a special case because versions of PROJ4 prior to 4.4.2
-  // didn't accept it.  Just catch that case for now and when we switch to
-  // 4.4.2 to use pj_transform() then we can get rid of that special case.
-  if (strstr(pszProj, "proj=longlat") != NULL)
-  {
-      // Do the same as what loadProjection() does for GEOGRAPHIC
-      proj->projargs = split("GEOGRAPHIC", ' ', &proj->numargs);
-      proj->proj = NULL;
-      CPLFree(pszProj);
-      return MS_SUCCESS;
   }
 
   // Set new proj params in projargs[] array
