@@ -126,6 +126,9 @@ imageObj *msDrawMap(mapObj *map)
 
     if(map->width == -1 || map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
+#ifdef USE_WMS_LYR
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
 
@@ -134,6 +137,9 @@ imageObj *msDrawMap(mapObj *map)
 
     if(!map->outputformat) {
         msSetError(MS_GDERR, "Map outputformat not set!", "msDrawMap()");
+#ifdef USE_WMS_LYR
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
     else if( MS_RENDERER_GD(map->outputformat) )
@@ -177,13 +183,23 @@ imageObj *msDrawMap(mapObj *map)
   
     if(!image) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawMap()");
+#ifdef USE_WMS_LYR
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
 
     map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
     status = msCalculateScale(map->extent, map->units, map->width, map->height,
                               map->resolution, &map->scale);
-    if(status != MS_SUCCESS) return(NULL);
+    if(status != MS_SUCCESS)
+    {
+#ifdef USE_WMS_LYR
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
+        msFreeImage(image);
+        return(NULL);
+    }
 
     // compute layer scale factors now
     for(i=0;i<map->numlayers; i++) {
@@ -214,6 +230,8 @@ imageObj *msDrawMap(mapObj *map)
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
+                msFreeWmsParamsObj(&sLastWMSParams);
+                msFreeImage(image);
                 return NULL;
             }
         }
@@ -225,6 +243,8 @@ imageObj *msDrawMap(mapObj *map)
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
+                msFreeWmsParamsObj(&sLastWMSParams);
+                msFreeImage(image);
                 return NULL;
             }
         }
@@ -239,6 +259,7 @@ imageObj *msDrawMap(mapObj *map)
     if (numOWSRequests && 
         msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE)
     {
+        msFreeImage(image);
         return NULL;
     }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
@@ -297,6 +318,7 @@ imageObj *msDrawMap(mapObj *map)
             if(status == MS_FAILURE) {
                 msSetError(MS_IMGERR, "Failed to draw layer named '%s'.",
                            "msDrawMap()", lp->name);
+                msFreeImage(image);
                 return(NULL);
             }
         }
@@ -330,7 +352,10 @@ imageObj *msDrawMap(mapObj *map)
       msGettimeofday(&starttime, NULL);
 
   if(msDrawLabelCache(image, map) == -1)
+  {
+    msFreeImage(image);
     return(NULL);
+  }
 
   if (map->debug)
   {
@@ -382,7 +407,11 @@ imageObj *msDrawMap(mapObj *map)
     }
     else 
         status = msDrawLayer(map, lp, image);
-    if(status == MS_FAILURE) return(NULL);
+    if(status == MS_FAILURE)
+    {
+      msFreeImage(image);
+      return(NULL);
+    }
 
     if (map->debug)
     {
