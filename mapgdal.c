@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/06/11 19:55:37  frank
+ * added support for writing projection
+ *
  * Revision 1.1  2002/06/11 13:49:52  frank
  * New
  *
@@ -39,6 +42,11 @@
 #ifdef USE_GDAL
 
 #include "gdal.h"
+#include "ogr_srs_api.h"
+#include "cpl_conv.h"
+#include "cpl_string.h"
+
+static char *msProjectionObjToWKT( projectionObj *proj );
 
 /************************************************************************/
 /*                           InitializeGDAL()                           */
@@ -200,6 +208,7 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
     if( map != NULL )
     {
         double adfGeoTransform[6];
+        char *pszWKT;
 
         adfGeoTransform[0] = map->extent.minx;
         adfGeoTransform[1] = map->cellsize;
@@ -210,7 +219,12 @@ int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename,
 
         GDALSetGeoTransform( hMemDS, adfGeoTransform );
 
-        /* add projection */
+        pszWKT = msProjectionObjToWKT( &(map->projection) );
+        if( pszWKT != NULL )
+        {
+            GDALSetProjection( hMemDS, pszWKT );
+            CPLFree( pszWKT );
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -321,6 +335,62 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
     }
     
     return MS_SUCCESS;
+}
+
+/************************************************************************/
+/*                        msProjectionObjToWKT()                        */
+/*                                                                      */
+/*      We stick to the C API for OGRSpatialReference object access     */
+/*      to allow MapServer+GDAL to be built without C++                 */
+/*      complications.                                                  */
+/*                                                                      */
+/*      Note that this function will return NULL on failure, and the    */
+/*      returned string must be freed with CPLFree(), not msFree().     */
+/************************************************************************/
+
+char *msProjectionObjToWKT( projectionObj *projection )
+
+{
+    OGRSpatialReferenceH hSRS;
+    char *pszWKT=NULL, *pszProj4;
+    int  nLength = 0, i;
+    OGRErr eErr;
+
+    if( projection->proj == NULL )
+        return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      Form arguments into a full Proj.4 definition string.            */
+/* -------------------------------------------------------------------- */
+    for( i = 0; i < projection->numargs; i++ )
+        nLength += strlen(projection->args[i]) + 2;
+
+    pszProj4 = (char *) CPLMalloc(nLength+2);
+    pszProj4[0] = '\0';
+
+    for( i = 0; i < projection->numargs; i++ )
+    {
+        strcat( pszProj4, "+" );
+        strcat( pszProj4, projection->args[i] );
+        strcat( pszProj4, " " );
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Ingest the string into OGRSpatialReference.                     */
+/* -------------------------------------------------------------------- */
+    hSRS = OSRNewSpatialReference( NULL );
+    eErr =  OSRImportFromProj4( hSRS, pszProj4 );
+    CPLFree( pszProj4 );
+
+/* -------------------------------------------------------------------- */
+/*      Export as a WKT string.                                         */
+/* -------------------------------------------------------------------- */
+    if( eErr == OGRERR_NONE )
+        eErr = OSRExportToWkt( hSRS, &pszWKT );
+
+    OSRDestroySpatialReference( hSRS );
+    
+    return pszWKT;
 }
 
 #endif /* def USE_GDAL */
