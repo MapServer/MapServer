@@ -21,10 +21,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
 {
   int i;
 
-  if(!string)
-    return(0); /* not an error */
-
-  fprintf(stderr, "added %s to the label cache\n", string);
+  if(!string) return(0); /* not an error */
 
   if(map->labelcache.numlabels == map->labelcache.cachesize) { /* just add it to the end */
     map->labelcache.labels = (labelCacheMemberObj *) realloc(map->labelcache.labels, sizeof(labelCacheMemberObj)*(map->labelcache.cachesize+MS_LABELCACHEINCREMENT));

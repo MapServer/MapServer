@@ -163,8 +163,8 @@ static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int 
   cache->results[i].classindex = classindex;
   cache->results[i].tileindex = tileindex;
   cache->results[i].shapeindex = shapeindex;
-
   cache->numresults++;
+
   return(MS_SUCCESS);
 }
 
@@ -272,24 +272,28 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
   msRectToPolygon(rect, &search_shape);
 
   if(qlayer < 0 || qlayer >= map->numlayers)
-    start = stop = qlayer;
-  else
     start = map->numlayers-1;
+  else
+    start = stop = qlayer;
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
 
-    if(lp->status == MS_OFF)
-      continue;
+    if(lp->status == MS_OFF) continue;
 
     if(map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale))
-	continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale))
-	continue;
+      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
+      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
 
-    // FIX: CHECK CLASSES FOR TEMPLATES TO MAKE SURE THIS LAYER CAN BE PROCESSED
+    status = MS_FAILURE;
+    for(i=0; i<lp->numclasses; i++) {
+      if(lp->class[i].template) {
+	status = MS_SUCCESS;
+	break;
+      }
+    }
+    if(status != MS_SUCCESS) continue;
 
     // build item list (no annotation)
     status = msLayerWhichItems(lp, MS_FALSE);
@@ -311,7 +315,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-    while(msLayerNextShape(lp, map->shapepath, &shape, MS_TRUE)) { /* step through the shapes */ 
+    while((status = msLayerNextShape(lp, map->shapepath, &shape, MS_TRUE)) == MS_SUCCESS) { // step through the shapes
       shape.classindex = msShapeGetClass(lp, &shape);
 
       if(shape.classindex == -1) { // not a valid shape
@@ -387,25 +391,37 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   rectObj rect;
   shapeObj shape;
 
+  fprintf(stderr, "in msQueryByPoint()...\n");
+
   msInitShape(&shape);
 
   if(qlayer < 0 || qlayer >= map->numlayers)
-    start = stop = qlayer;
-  else
     start = map->numlayers-1;
+  else
+    start = stop = qlayer;
+
+  fprintf(stderr, "start = %d, stop = %d\n", start, stop);
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
 
-    if(lp->status == MS_OFF)
-      continue;
+    if(lp->status == MS_OFF) continue;
 
     if(map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale))
-	continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale))
-	continue;
+      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
+      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
+
+    status = MS_FAILURE;
+    for(i=0; i<lp->numclasses; i++) {
+      if(lp->class[i].template) {
+	status = MS_SUCCESS;
+	break;
+      }
+    }
+    if(status != MS_SUCCESS) continue;
+
+    fprintf(stderr, "working on %s\n", lp->name);
 
     if(buffer <= 0) { // use layer tolerance
       if(lp->toleranceunits == MS_PIXELS)
@@ -440,9 +456,8 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     lp->resultcache->numresults = lp->resultcache->cachesize = 0;
     lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
 
-    while(msLayerNextShape(lp, map->shapepath, &shape, MS_TRUE)) { // step through the shapes
+    while((status = msLayerNextShape(lp, map->shapepath, &shape, MS_TRUE)) == MS_SUCCESS) { // step through the shapes
       shape.classindex = msShapeGetClass(lp, &shape);
-
       if(shape.classindex == -1) { // not a valid shape
 	msFreeShape(&shape);
 	continue;
@@ -464,17 +479,14 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 	if(mode == MS_SINGLE) {
 	  lp->resultcache->numresults = 0;
 	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	  t = d;
+	  lp->resultcache->bounds = shape.bounds;
+	  t = d; // next one must be closer
 	} else {
 	  addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
-	}	
+	  msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+	}
       }
-
-      if(lp->resultcache->numresults == 1)
-	lp->resultcache->bounds = shape.bounds;
-      else
-	msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
-      
+ 
       msFreeShape(&shape);	
     } // next shape
 
@@ -485,6 +497,8 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     if((lp->resultcache->numresults > 0) && (mode == MS_SINGLE)) // no need to search any further
       break;
   } // next layer
+
+  fprintf(stderr, "done searching\n");
 
   // was anything found?
   for(l=start; l>=stop; l--) {    
@@ -503,34 +517,38 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
 
 int msQueryByShape(mapObj *map, int qlayer, shapeObj *search_shape)
 {
-  int start, stop=0, l;
+  int start, stop=0, i, l;
   shapeObj shape;
   layerObj *lp;
   char status;
 
   // FIX: do some checking on search_shape here...
 
-  if(qlayer < 0 || qlayer >= map->numlayers) // set layers to search
-    start = stop = qlayer;
-  else
+  if(qlayer < 0 || qlayer >= map->numlayers)
     start = map->numlayers-1;
-  
+  else
+    start = stop = qlayer;
+
   msComputeBounds(search_shape); // make sure an accurate extent exists
  
   for(l=start; l>=stop; l--) { /* each layer */
     lp = &(map->layers[l]);
 
-    if(lp->status == MS_OFF)
-      continue;
+    if(lp->status == MS_OFF) continue;
     
     if(map->scale > 0) {
-      if((lp->maxscale > 0) && (map->scale > lp->maxscale))
-	continue;
-      if((lp->minscale > 0) && (map->scale <= lp->minscale))
-	continue;
+      if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
+      if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }
-        
-    // FIX: CHECK CLASSES FOR TEMPLATES TO MAKE SURE THIS LAYER CAN BE PROCESSED
+   
+    status = MS_FAILURE;
+    for(i=0; i<lp->numclasses; i++) {
+      if(lp->class[i].template) {
+	status = MS_SUCCESS;
+	break;
+      }
+    }
+    if(status != MS_SUCCESS) continue;
 
     // build item list (no annotation)
     status = msLayerWhichItems(lp, MS_FALSE);
