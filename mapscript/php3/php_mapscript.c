@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.90  2002/03/04 12:58:56  tomas
+ * Added layerObj->transparency
+ * - type: integer value between 1-100
+ *
  * Revision 1.89  2002/03/01 16:02:48  assefa
  * Correct typo error in zoompoint/zoomscale.
  *
@@ -4472,6 +4476,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_long(return_value,   "connectiontype",player->connectiontype);
     PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
     PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
+    add_property_long(return_value,   "transparency",player->transparency);
 
     return layer_id;
 }
@@ -4589,6 +4594,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "connectiontype", self->connectiontype)
     else IF_SET_STRING("filteritem", self->filteritem)
     else IF_SET_STRING("template",   self->template)
+    else IF_SET_LONG(  "transparency", self->transparency)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {
