@@ -88,7 +88,7 @@
   gdImagePtr prepareImage() {
     gdImagePtr img;
 
-    if(map->width == -1 && map->height == -1) {
+    if(self->width == -1 && self->height == -1) {
       msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
       return NULL;
     }
