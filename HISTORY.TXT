@@ -82,6 +82,14 @@ Version 4.1 (CVS)
 - MapScript layerObj: added getExtent, getNumFeatures extension methods,
   allowing getShape to access inline features (bug 562).
 
+- Added fixes for AMD64/Linux in configure (bug 565)
+
+- Removed OGR_STATIC stuff in configure script that used to allow us to 
+  build with OGR statically by pointing to the OGR source tree.  That 
+  means you can only build with OGR when *installed* as part of GDAL,
+  but that's what everyone is doing these days anyway.
+
+
 Version 4.0 (2003-08-01)
 ------------------------
 

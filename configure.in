@@ -321,11 +321,13 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
 
   test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
   test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
   test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
 
   test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
   test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl && GD_LIBDIR="$GD_DIR/.libs"
   test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
@@ -357,7 +359,9 @@ else
   do
     test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
     test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+    test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+    test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
 
     dnl make sure it is GD 2.0.12 or higher
     AC_CHECK_LIB(gd, gdImageSetAntiAliased, IS_GD2="true",,$GD_XTRA_LIBS)
@@ -827,7 +831,7 @@ if test "$with_ogr" = "yes" ; then
   fi
 fi
 
-if test -n "$GDAL_CONFIG" ; then
+if test -n "$GDAL_CONFIG" -a "$with_ogr" != "no" ; then
 
   saved_LIBS="$LIBS"
   LIBS="$LIBS `$GDAL_CONFIG --libs`"
@@ -843,53 +847,10 @@ if test -n "$GDAL_CONFIG" ; then
   if test -n "$OGR_ENABLED" ; then
       OGR_LIB="`$GDAL_CONFIG --libs`"
       OGR_INC="`$GDAL_CONFIG --cflags`"
-      AC_MSG_RESULT([        using OGR from system libs.])
+      AC_MSG_RESULT([        OGR enabled ($OGR_LIB).])
   else
-      AC_MSG_WARN([        OGR not found in system libs... use --with-ogr=DIR.])
+      AC_MSG_WARN([        OGR not available.])
   fi
-
-elif test -n "$with_ogr" -a "$with_ogr" != "no" ; then
-
-  AC_EXPAND_PATH($with_ogr, OGR_DIR)
-
-dnl check in case we were pointed to GDAL parent dir
-  test -f $OGR_DIR/ogr/ogr_feature.h && OGR_DIR="$OGR_DIR/ogr"
-
-dnl check for headers
-  test -f $OGR_DIR/ogr_feature.h && OGR_INCDIR="$OGR_DIR"
-  test -f $OGR_DIR/ogrsf_frmts/ogrsf_frmts.h && OGR_FRMTSDIR="$OGR_DIR/ogrsf_frmts"
-  test -f $OGR_DIR/../port/cpl_conv.h && OGR_CPLDIR="$OGR_DIR/../port"
-  test -f $OGR_DIR/port/cpl_conv.h && OGR_CPLDIR="$OGR_DIR/port"
-
-dnl check for static OGR libs
-  test -f $OGR_DIR/ogr.a && OGR_OGRLIB="$OGR_DIR/ogr.a"
-  test -f $OGR_DIR/ogrsf_frmts/ogrsf_frmts.a && OGR_FRMTSLIB="$OGR_DIR/ogrsf_frmts/ogrsf_frmts.a"
-  test -f $OGR_DIR/../port/cpl.a && OGR_CPLLIB="$OGR_DIR/../port/cpl.a"
-  test -f $OGR_DIR/port/cpl.a && OGR_CPLLIB="$OGR_DIR/port/cpl.a"
-
-  if test -n "$OGR_INCDIR" -a -n "$OGR_FRMTSDIR" -a -n "$OGR_CPLDIR" -a \
-          -n "$OGR_OGRLIB" -a -n "$OGR_FRMTSLIB" -a -n "$OGR_CPLLIB" ; then
-      OGR_INC="-I$OGR_FRMTSDIR -I$OGR_INCDIR -I$OGR_CPLDIR"
-      OGR_LIB=""
-      OGR_STATIC="$OGR_FRMTSLIB $OGR_OGRLIB $OGR_CPLLIB"
-
-dnl check for OGDI
-      if test -n "$TOPDIR" -a -n "$TARGET" ; then
-        OGDI_LIBDIR="$TOPDIR/bin/$TARGET"
-        OGR_LIB="$OGR_LIB -L$TOPDIR/bin/$TARGET -logdi -lzlib -ldl"
-        AC_ADD_RUNPATH("$OGDI_LIBDIR")
-      fi
-  else
-      AC_MSG_ERROR([
-!!! Could not find ogr_feature.h, ogrsf_fmrts.h, cpl_conv.h,          !!!
-!!! ogr.a, ogrsf_frmts.a, or cpl.a in $OGR_DIR .
-!!! Either this is not the location of a recent GDAL/OGR source tree, !!!
-!!! or OGR has not been compiled yet. Please make sure you compile    !!!
-!!! OGR before calling configure.                                     !!!])
-  fi
-
-  OGR_ENABLED=-DUSE_OGR
-  AC_MSG_RESULT([        using OGR from $OGR_DIR.])
 
 else
 
@@ -899,12 +860,10 @@ fi
 AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
 AC_SUBST(OGR_INC,    $OGR_INC)
 AC_SUBST(OGR_LIB,    $OGR_LIB)
-AC_SUBST(OGR_STATIC, $OGR_STATIC)
 
 ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
 ALL_INC="$OGR_INC $ALL_INC"
 ALL_LIB="$OGR_LIB $ALL_LIB"
-ALL_STATIC_LIB="$OGR_STATIC $ALL_STATIC_LIB"
 
 
 dnl ---------------------------------------------------------------------

@@ -78,7 +78,6 @@ SDE_INC=  @SDE_INC@
 OGR=	  @OGR_ENABLED@
 OGR_LIB=  @OGR_LIB@
 OGR_INC=  @OGR_INC@
-OGR_STATIC= @OGR_STATIC@
 
 # Optional GDAL Support (provides read access to a variety of raster formats)
 # See http://www.remotesensing.org/gdal
@@ -161,7 +160,7 @@ LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
 	  $(MPATROL_LIB) $(THREAD_LIB) $(XTRALIBS)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked
-STATIC_LIBS= $(GD_STATIC) $(OGR_STATIC)
+STATIC_LIBS= $(GD_STATIC)
 
 RM= /bin/rm -f
 

@@ -271,7 +271,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP STRINGS FT_BIN GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GDAL_CONFIG OGR_ENABLED OGR_INC OGR_LIB OGR_STATIC GDAL_ENABLED GDAL_INC GDAL_LIB JPEG_ENABLED JPEG_INC JPEG_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS C_PIC LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP STRINGS FT_BIN GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GDAL_CONFIG OGR_ENABLED OGR_INC OGR_LIB GDAL_ENABLED GDAL_INC GDAL_LIB JPEG_ENABLED JPEG_INC JPEG_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS C_PIC LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -4578,11 +4578,13 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
 
   test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
   test -f $GD_DIR/.libs/libgd.a && GD_LIBDIR="$GD_DIR/.libs"
   test -f $GD_DIR/_libs/libgd.a && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
 
   test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+  test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
   test -f $GD_DIR/.libs/libgd.so -o -f $GD_DIR/.libs/libgd.sl && GD_LIBDIR="$GD_DIR/.libs"
   test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
@@ -4750,7 +4752,9 @@ else
   do
     test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
     test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
+    test -f $GD_DIR/lib64/libgd.a && GD_LIBDIR="$GD_DIR/lib64"
     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
+    test -f $GD_DIR/lib64/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib64"
 
         echo "$as_me:$LINENO: checking for gdImageSetAntiAliased in -lgd" >&5
 echo $ECHO_N "checking for gdImageSetAntiAliased in -lgd... $ECHO_C" >&6
@@ -7366,7 +7370,7 @@ echo "$as_me: error: couldn't find gdal-config" >&2;}
   fi
 fi
 
-if test -n "$GDAL_CONFIG" ; then
+if test -n "$GDAL_CONFIG" -a "$with_ogr" != "no" ; then
 
   saved_LIBS="$LIBS"
   LIBS="$LIBS `$GDAL_CONFIG --libs`"
@@ -7495,86 +7499,12 @@ fi
   if test -n "$OGR_ENABLED" ; then
       OGR_LIB="`$GDAL_CONFIG --libs`"
       OGR_INC="`$GDAL_CONFIG --cflags`"
-      echo "$as_me:$LINENO: result:         using OGR from system libs." >&5
-echo "${ECHO_T}        using OGR from system libs." >&6
+      echo "$as_me:$LINENO: result:         OGR enabled ($OGR_LIB)." >&5
+echo "${ECHO_T}        OGR enabled ($OGR_LIB)." >&6
   else
-      { echo "$as_me:$LINENO: WARNING:         OGR not found in system libs... use --with-ogr=DIR." >&5
-echo "$as_me: WARNING:         OGR not found in system libs... use --with-ogr=DIR." >&2;}
+      { echo "$as_me:$LINENO: WARNING:         OGR not available." >&5
+echo "$as_me: WARNING:         OGR not available." >&2;}
   fi
-
-elif test -n "$with_ogr" -a "$with_ogr" != "no" ; then
-
-
-  if test -z "$with_ogr" || echo "$with_ogr" | grep '^/' >/dev/null ; then
-    OGR_DIR="$with_ogr"
-  else
-    OGR_DIR="`pwd`/$with_ogr"
-  fi
-
-
-  test -f $OGR_DIR/ogr/ogr_feature.h && OGR_DIR="$OGR_DIR/ogr"
-
-  test -f $OGR_DIR/ogr_feature.h && OGR_INCDIR="$OGR_DIR"
-  test -f $OGR_DIR/ogrsf_frmts/ogrsf_frmts.h && OGR_FRMTSDIR="$OGR_DIR/ogrsf_frmts"
-  test -f $OGR_DIR/../port/cpl_conv.h && OGR_CPLDIR="$OGR_DIR/../port"
-  test -f $OGR_DIR/port/cpl_conv.h && OGR_CPLDIR="$OGR_DIR/port"
-
-  test -f $OGR_DIR/ogr.a && OGR_OGRLIB="$OGR_DIR/ogr.a"
-  test -f $OGR_DIR/ogrsf_frmts/ogrsf_frmts.a && OGR_FRMTSLIB="$OGR_DIR/ogrsf_frmts/ogrsf_frmts.a"
-  test -f $OGR_DIR/../port/cpl.a && OGR_CPLLIB="$OGR_DIR/../port/cpl.a"
-  test -f $OGR_DIR/port/cpl.a && OGR_CPLLIB="$OGR_DIR/port/cpl.a"
-
-  if test -n "$OGR_INCDIR" -a -n "$OGR_FRMTSDIR" -a -n "$OGR_CPLDIR" -a \
-          -n "$OGR_OGRLIB" -a -n "$OGR_FRMTSLIB" -a -n "$OGR_CPLLIB" ; then
-      OGR_INC="-I$OGR_FRMTSDIR -I$OGR_INCDIR -I$OGR_CPLDIR"
-      OGR_LIB=""
-      OGR_STATIC="$OGR_FRMTSLIB $OGR_OGRLIB $OGR_CPLLIB"
-
-      if test -n "$TOPDIR" -a -n "$TARGET" ; then
-        OGDI_LIBDIR="$TOPDIR/bin/$TARGET"
-        OGR_LIB="$OGR_LIB -L$TOPDIR/bin/$TARGET -logdi -lzlib -ldl"
-
-  if test ""$OGDI_LIBDIR"" != "/usr/lib"; then
-
-  if test -z ""$OGDI_LIBDIR"" || echo ""$OGDI_LIBDIR"" | grep '^/' >/dev/null ; then
-    ai_p=""$OGDI_LIBDIR""
-  else
-    ai_p="`pwd`/"$OGDI_LIBDIR""
-  fi
-
-
-  unique=`echo $ac_n "$ai_p$ac_c" | tr -c -d a-zA-Z0-9`
-  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
-  if test -n "$unique" && test "`eval $cmd`" = "" ; then
-    eval "LIBPATH$unique=set"
-
-      EXTRA_LIBS="$EXTRA_LIBS -L$ai_p"
-        RPATHS="$RPATHS ${ld_runpath_switch}$ai_p"
-
-  fi
-
-  fi
-
-      fi
-  else
-      { { echo "$as_me:$LINENO: error:
-!!! Could not find ogr_feature.h, ogrsf_fmrts.h, cpl_conv.h,          !!!
-!!! ogr.a, ogrsf_frmts.a, or cpl.a in $OGR_DIR .
-!!! Either this is not the location of a recent GDAL/OGR source tree, !!!
-!!! or OGR has not been compiled yet. Please make sure you compile    !!!
-!!! OGR before calling configure.                                     !!!" >&5
-echo "$as_me: error:
-!!! Could not find ogr_feature.h, ogrsf_fmrts.h, cpl_conv.h,          !!!
-!!! ogr.a, ogrsf_frmts.a, or cpl.a in $OGR_DIR .
-!!! Either this is not the location of a recent GDAL/OGR source tree, !!!
-!!! or OGR has not been compiled yet. Please make sure you compile    !!!
-!!! OGR before calling configure.                                     !!!" >&2;}
-   { (exit 1); exit 1; }; }
-  fi
-
-  OGR_ENABLED=-DUSE_OGR
-  echo "$as_me:$LINENO: result:         using OGR from $OGR_DIR." >&5
-echo "${ECHO_T}        using OGR from $OGR_DIR." >&6
 
 else
 
@@ -7588,13 +7518,10 @@ OGR_INC=$OGR_INC
 
 OGR_LIB=$OGR_LIB
 
-OGR_STATIC=$OGR_STATIC
-
 
 ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
 ALL_INC="$OGR_INC $ALL_INC"
 ALL_LIB="$OGR_LIB $ALL_LIB"
-ALL_STATIC_LIB="$OGR_STATIC $ALL_STATIC_LIB"
 
 
 echo "$as_me:$LINENO: checking if GDAL support requested" >&5
@@ -9943,7 +9870,6 @@ s,@GDAL_CONFIG@,$GDAL_CONFIG,;t t
 s,@OGR_ENABLED@,$OGR_ENABLED,;t t
 s,@OGR_INC@,$OGR_INC,;t t
 s,@OGR_LIB@,$OGR_LIB,;t t
-s,@OGR_STATIC@,$OGR_STATIC,;t t
 s,@GDAL_ENABLED@,$GDAL_ENABLED,;t t
 s,@GDAL_INC@,$GDAL_INC,;t t
 s,@GDAL_LIB@,$GDAL_LIB,;t t
