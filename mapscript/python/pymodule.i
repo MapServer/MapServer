@@ -55,16 +55,10 @@ if (MSExc_MapServerNotFoundError != NULL)
 
 %{
     static void _raise_ms_exception(void) {
-        char *errmsg;
         int errcode;
         errorObj *ms_error;
-        
-        strcpy(errmsg, "");
         ms_error = msGetErrorObj();
         errcode = ms_error->code;
-        
-        // New style
-        errmsg = msGetErrorString("\n");
         
         // Map MapServer errors to Python exceptions, will define
         // custom Python exceptions soon.  The exception we raise
@@ -72,22 +66,22 @@ if (MSExc_MapServerNotFoundError != NULL)
         // list.  All other errors appear in the error message.
         switch (errcode) {
             case MS_IOERR:
-                PyErr_SetString(PyExc_IOError, errmsg);
+                PyErr_SetString(PyExc_IOError, msGetErrorString("\n"));
                 break;
             case MS_MEMERR:
-                PyErr_SetString(PyExc_MemoryError, errmsg);
+                PyErr_SetString(PyExc_MemoryError, msGetErrorString("\n"));
                 break;
             case MS_TYPEERR:
-                PyErr_SetString(PyExc_TypeError, errmsg);
+                PyErr_SetString(PyExc_TypeError, msGetErrorString("\n"));
                 break;
             case MS_EOFERR:
-                PyErr_SetString(PyExc_EOFError, errmsg);
+                PyErr_SetString(PyExc_EOFError, msGetErrorString("\n"));
                 break;
             case MS_NOTFOUND:
-                PyErr_SetString(MSExc_MapServerNotFoundError, errmsg);
+                PyErr_SetString(MSExc_MapServerNotFoundError, msGetErrorString("\n"));
                 break;
             default:
-                PyErr_SetString(MSExc_MapServerError, errmsg);
+                PyErr_SetString(MSExc_MapServerError, msGetErrorString("\n"));
                 break;
         }
     }
