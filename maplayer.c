@@ -627,8 +627,9 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
 
 int msLayerWhichItemsNew(layerObj *layer, int classify, int annotate, char *metadata) 
 {
-  int i, status;
+  int status;
   int numchars;
+//  int i;
 
   status = msLayerGetItems(layer); // get a list of all attributes available for this layer (including JOINs)
   if(status != MS_SUCCESS) return(status);
