@@ -3080,6 +3080,13 @@ int msSaveMap(mapObj *map, char *filename)
       //writeLayer(map, &(map->layers[i]), stream);
   }
 
+  //once the map is saved the layer order should be reset
+  for(i=0; i<map->numlayers; i++)
+  {
+      map->layerorder[i] = i;
+  }
+
+
   fprintf(stream, "END\n");
 
   fclose(stream);
