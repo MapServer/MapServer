@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.72  2002/01/17 03:36:43  dan
+ * Added imageObj->pasteImage()
+ *
  * Revision 1.71  2002/01/17 01:39:01  dan
  * Added class->status, and include CVS Revision/Date in PHP3_MS_VERSION
  *
@@ -231,6 +234,7 @@ DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_moveLayerUp(INTERNAL_FUNCTION_PARAMETERS);
@@ -505,6 +509,7 @@ function_entry php_map_class_functions[] = {
 function_entry php_img_class_functions[] = {
     {"saveimage",       php3_ms_img_saveImage,          NULL},
     {"savewebimage",    php3_ms_img_saveWebImage,       NULL},
+    {"pasteimage",      php3_ms_img_pasteImage,         NULL},
     {"free",            php3_ms_img_free,               NULL},    
     {NULL, NULL, NULL}
 };
@@ -4105,6 +4110,59 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_STRING(pBuf, 0);
 }
 /* }}} */
+
+
+/**********************************************************************
+ *                        image->pasteImage()
+ **********************************************************************/
+
+/* {{{ proto void img.pasteImage(imageObj Src, bool bTransparent)
+   Pastes another imageObj on top of this imageObj. Pass bTransparent=MS_TRUE
+   to request that the background color of srcImg be considered transparent
+*/
+
+DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval   *pSrcImg, *pTransparent, *pThis;
+
+    gdImagePtr imgDst = NULL, imgSrc = NULL;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pSrcImg, &pTransparent) != SUCCESS  )
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    imgDst = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list);
+
+    imgSrc = (gdImagePtr)_phpms_fetch_handle(pSrcImg, PHPMS_GLOBAL(le_msimg), 
+                                             list);
+    
+    convert_to_long(pTransparent);
+    if (pTransparent->value.lval)
+        gdImageColorTransparent(imgSrc, 0);
+
+    if (imgSrc != NULL && imgDst != NULL)
+    {
+        gdImageCopy(imgDst, imgSrc, 0, 0, 0, 0, imgSrc->sx, imgSrc->sy);
+    }
+    else
+    {
+        php3_error(E_ERROR, "Source or destination image is invalid.");
+    }
+
+}
+/* }}} */
+
 
 
 /**********************************************************************
