@@ -2,7 +2,7 @@
  *	filename: mappdf.c
  *	created : Thu Oct  4 09:58:19 2001
  *	@author :  <jwall@webpeak.com> , <jspielberg@webpeak.com>
- *	LastEditDate Was "Thu Nov  1 15:36:38 2001"
+ *	LastEditDate Was "Tue Dec 18 13:28:31 2001"
  *
  * [$Author$ $Date$]
  * [$Revision$]
@@ -343,7 +343,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int s
             x = MS_NINT(symbol->sizex*scale)+1;
             y = MS_NINT(symbol->sizey*scale)+1;
 
-            PDF_circle(pdf, p->x, p->y, .8*x/2);
+            PDF_circle(pdf, p->x, p->y, x/2);
 
             if(symbol->filled)
                 PDF_fill_stroke(pdf);
@@ -1112,111 +1112,120 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
     return(MS_SUCCESS);
 }
 
+    //(mapObj *map, layerObj *layer, gdImagePtr img)
 int msDrawLayerPDF(mapObj *map, layerObj *layer, PDF *pdf, hashTableObj fontHash)
 {
-    int status;
-    char annotate=MS_TRUE, cache=MS_FALSE;
-    shapeObj shape;
-    rectObj searchrect;
+  int status;
+  char annotate=MS_TRUE, cache=MS_FALSE;
+  shapeObj shape;
+  rectObj searchrect;
 
-    featureListNodeObjPtr shpcache=NULL, current=NULL;
 
-    if(layer->connectiontype == MS_WMS) return(MS_SUCCESS); // return(msDrawWMSLayer(map, layer, img));
-    if(layer->type == MS_LAYER_RASTER)  return(MS_SUCCESS); // return(msDrawRasterLayer(map, layer, img));
-    if(layer->type == MS_LAYER_QUERY)   return(MS_SUCCESS);
-    if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
+  featureListNodeObjPtr shpcache=NULL, current=NULL;
 
-    if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_SUCCESS);
-    annotate = msEvalContext(map, layer->labelrequires);
+  if(!layer->data && !layer->tileindex && !layer->connection && !layer->features)
+  return(MS_SUCCESS); // no data associated with this layer, not an error since layer may be used as a template from MapScript
 
-    if(map->scale > 0) {
-        if((layer->maxscale > 0) && (map->scale > layer->maxscale))
-            return(MS_SUCCESS);
-        if((layer->minscale > 0) && (map->scale <= layer->minscale))
-            return(MS_SUCCESS);
-        if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
-            annotate = MS_FALSE;
-        if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
-            annotate = MS_FALSE;
+  if(layer->connectiontype == MS_WMS) return(MS_SUCCESS); // return(msDrawWMSLayer(map, layer, img));
+
+  if(layer->type == MS_LAYER_RASTER) return(MS_SUCCESS); //return(msDrawRasterLayer(map, layer, img));
+  if(layer->type == MS_LAYER_QUERY) return(MS_SUCCESS);
+
+  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT)) return(MS_SUCCESS);
+
+  if(msEvalContext(map, layer->requires) == MS_FALSE) return(MS_SUCCESS);
+  annotate = msEvalContext(map, layer->labelrequires);
+
+  if(map->scale > 0) {
+    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
+      return(MS_SUCCESS);
+    if((layer->minscale > 0) && (map->scale <= layer->minscale))
+      return(MS_SUCCESS);
+    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
+      annotate = MS_FALSE;
+    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
+      annotate = MS_FALSE;
+  }
+
+  // open this layer
+  status = msLayerOpen(layer, map->shapepath);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
+  // build item list
+  status = msLayerWhichItems(layer, MS_TRUE, annotate);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
+  // identify target shapes
+  searchrect = map->extent;
+#ifdef USE_PROJ
+  if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
+    msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
+#endif
+
+  status = msLayerWhichShapes(layer, searchrect);
+  if(status == MS_DONE) { // no overlap
+    msLayerClose(layer);
+    return(MS_SUCCESS);
+  } else if(status != MS_SUCCESS)
+    return(MS_FAILURE);
+
+  // step through the target shapes
+  msInitShape(&shape);
+
+  while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
+
+    shape.classindex = msShapeGetClass(layer, &shape);
+    if((shape.classindex == -1) || (layer->class[shape.classindex].status == MS_OFF)) {
+      msFreeShape(&shape);
+      continue;
     }
 
-        // open this layer
-    status = msLayerOpen(layer, map->shapepath);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    cache = MS_FALSE;
+    if(layer->type == MS_LAYER_LINE || (layer->type == MS_LAYER_POLYGON && layer->class[shape.classindex].color < 0))
+      cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
-        // build item list
-    status = msLayerWhichItems(layer, MS_TRUE, annotate);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
-
-        // identify target shapes
-    searchrect = map->extent;
-#ifdef USE_PROJ
-    if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-        msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
-#endif
-    status = msLayerWhichShapes(layer, searchrect);
-    if(status == MS_DONE) { // no overlap
-        msLayerClose(layer);
-        return(MS_SUCCESS);
-    } else if(status != MS_SUCCESS)
-        return(MS_FAILURE);
-
-        // step through the target shapes
-    msInitShape(&shape);
-
-    if(layer->type == MS_LAYER_LINE || layer->type == MS_LAYER_CIRCLE) cache = MS_TRUE;
-// only line/polyline layers need to (potentially) be cached with overlayed symbols
-    while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
-
-        shape.classindex = msShapeGetClass(layer, &shape);
-        if((shape.classindex == -1) || (layer->class[shape.classindex].status == MS_OFF)) {
-            msFreeShape(&shape);
-            continue;
+    // With 'STYLEITEM AUTO', we will have the datasource fill the class'
+    // style parameters for this shape.
+    if (layer->styleitem && strcasecmp(layer->styleitem, "AUTO") == 0)
+    {
+        if (msLayerGetAutoStyle(map, layer, &(layer->class[shape.classindex]),
+                                shape.tileindex, shape.index) != MS_SUCCESS)
+        {
+            return MS_FAILURE;
         }
 
-            // With 'STYLEITEM AUTO', we will have the datasource fill the class'
-            // style parameters for this shape.
-        if (layer->styleitem && strcasecmp(layer->styleitem, "AUTO") == 0)
-        {
-            if (msLayerGetAutoStyle(map, layer, &(layer->class[shape.classindex]),
-                                    shape.tileindex, shape.index) != MS_SUCCESS)
-            {
-                return MS_FAILURE;
-            }
-
-                // Dynamic class update may have extended the color palette...
-// For the PDF there are no palette issues
+        // Dynamic class update may have extended the color palette...
 //        if (!msUpdatePalette(img, &(map->palette)))
 //            return MS_FAILURE;
 
-                // __TODO__ For now, we can't cache features with 'AUTO'
-                // style
-            cache = MS_FALSE;
-        }
-
-        if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
-            shape.text = msShapeGetAnnotation(layer, &shape);
-
-        status = msDrawShapePDF(map, layer, &shape, pdf, !cache, fontHash); // if caching we DON'T want to do overlays at this time
-        if(status != MS_SUCCESS) {
-            msLayerClose(layer);
-            return(MS_FAILURE);
-        }
-
-        if(shape.numlines == 0) { // once clipped the shape didn't need to be drawn
-            msFreeShape(&shape);
-            continue;
-        }
-
-        if(cache && layer->class[shape.classindex].overlaysymbol >= 0)
-            if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); // problem adding to the cache
-
-        msFreeShape(&shape);
+        // __TODO__ For now, we can't cache features with 'AUTO' style
+        cache = MS_FALSE;
     }
 
-    if(status != MS_DONE) return(MS_FAILURE);
+    if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
+      shape.text = msShapeGetAnnotation(layer, &shape);
 
-    if(shpcache) {
+    status = msDrawShapePDF(map, layer, &shape, pdf, !cache, fontHash); // if caching we DON'T want to do overlays at this time
+
+    if(status != MS_SUCCESS) {
+      msLayerClose(layer);
+      return(MS_FAILURE);
+    }
+
+    if(shape.numlines == 0) { // once clipped the shape didn't need to be drawn
+      msFreeShape(&shape);
+      continue;
+    }
+
+    if(cache && layer->class[shape.classindex].overlaysymbol >= 0)
+      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); // problem adding to the cache
+
+    msFreeShape(&shape);
+  }
+
+  if(status != MS_DONE) return(MS_FAILURE);
+
+  if(shpcache) {
         int c;
         colorObj overlaycolor, overlaybackgroundcolor, overlayoutlinecolor;
 
@@ -1239,16 +1248,21 @@ int msDrawLayerPDF(mapObj *map, layerObj *layer, PDF *pdf, hashTableObj fontHash
             msDrawLineSymbolPDF(&map->symbolset, pdf, &current->shape, layer->class[c].overlaysymbol,
                                 &overlaycolor, &overlaybackgroundcolor, &overlayoutlinecolor,
                                 layer->class[c].overlaysizescaled);
-        }
 
-        freeFeatureList(shpcache);
-        shpcache = NULL;
+//    int c;
+
+//    for(current=shpcache; current; current=current->next) {
+//      c = current->shape.classindex;
+//      msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlaysizescaled);
     }
 
-    msLayerClose(layer);
-    return(MS_SUCCESS);
-}
+    freeFeatureList(shpcache);
+    shpcache = NULL;
+  }
 
+  msLayerClose(layer);
+  return(MS_SUCCESS);
+}
 
 int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
 {
@@ -1422,7 +1436,6 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash)
         return(NULL);
     }
 
-
 // ok we don't need to do this.. pdf has its one color palette
 //  if(msLoadPalette(img, &(map->palette), map->imagecolor) == -1)
 //    return(NULL);
@@ -1433,7 +1446,8 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash)
 
     for(i=0; i<map->numlayers; i++) {
 
-        lp = &(map->layers[i]);
+        lp = &(map->layers[ map->layerorder[i]]);
+//        lp = &(map->layers[i]);
 
         if(lp->postlabelcache) // wait to draw
             continue;
