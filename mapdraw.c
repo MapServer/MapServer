@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.86  2005/03/02 04:24:11  assefa
+ * Add #ifdef USE_SVG.
+ *
  * Revision 1.85  2005/02/18 21:50:03  jerryp
  * Fixed memory and resource leaks in msDrawVectorLayer (bug 1228)
  *
@@ -1721,7 +1724,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
        else if( MS_RENDERER_PDF(image->format) )
            msDrawMarkerSymbolPDF(symbolset, image, p, style, scalefactor);
 #endif
-#ifdef SVG            
+#ifdef USE_SVG            
        else if( MS_RENDERER_SVG(image->format) )
            msDrawMarkerSymbolSVG(symbolset, image, p, style, scalefactor);
 #endif
