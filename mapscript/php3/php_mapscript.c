@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.15  2000/09/18 13:39:10  dan
+ * Added missing params to msSaveImage() with USE_GD_1_8 in saveWebImage()
+ *
  * Revision 1.14  2000/09/18 13:00:07  dan
  * Display GD version in php3_info_mapscript()
  *
@@ -2257,9 +2260,18 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     if(pFname->value.str.val != NULL && strlen(pFname->value.str.val) > 0)
     {
         if (im == NULL ||
+#ifdef USE_GD_1_8
+            (retVal = msSaveImage(im, pFname->value.str.val, 
+                                  pType->value.lval, 
+                                  pTransparent->value.lval, 
+                                  pInterlace->value.lval, 
+                                  pQuality->value.lval) ) != 0
+#else
             (retVal = msSaveImage(im, pFname->value.str.val, 
                                   pTransparent->value.lval, 
-                                  pInterlace->value.lval) ) != 0)
+                                  pInterlace->value.lval) ) != 0
+#endif
+            )
         {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed writing image to %s", 
