@@ -394,9 +394,10 @@ const char *msGetEPSGProj(projectionObj *proj, hashTableObj metadata, int bRetur
   static char epsgCode[20] ="";
   static char *value;
 
-  if ((value = msLookupHashTable(metadata, "wms_srs")) != NULL ||
-      (value = msLookupHashTable(metadata, "wfs_srs")) != NULL ||
-      (value = msLookupHashTable(metadata, "gml_srs")) != NULL)
+  if (metadata &&
+      ((value = msLookupHashTable(metadata, "wms_srs")) != NULL ||
+       (value = msLookupHashTable(metadata, "wfs_srs")) != NULL ||
+       (value = msLookupHashTable(metadata, "gml_srs")) != NULL ) )
   {
     // Metadata value should already be in format "EPSG:n" or "AUTO:..."
     if (!bReturnOnlyFirstOne)

@@ -16,9 +16,13 @@ the CVS logs is updated daily at the following URL:
 Version 4.0-dev (CVS)
 ------------------------------
 
+- Fixed problem with invalid BoundingBox tag in WMS capabilities (bug 34)
+
 - Fixed problems with SIZEUNITS not working properly (bug 373)
 
 - Fixed MacOSX configure problems for linking php_mapscript (bug 208)
+
+- Fixed problem with reference map marker symbol not showing up (bug 378)
 
 
 Version 4.0-beta2 (2003-07-11)

@@ -5,11 +5,18 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.16  2003/07/29 20:24:18  dan
+ * Fixed problem with invalid BoundingBox tag in WMS capabilities (bug 34)
+ *
  * Revision 1.15  2003/02/05 04:40:10  sdlime
- * Removed shapepath as an argument from msLayerOpen and msSHPOpenFile. The shapefile opening routine now expects just a filename. So, you must use msBuildPath or msBuildPath3 to create a full qualified filename. Relatively simple change, but required lots of changes. Demo still works...
+ * Removed shapepath as an argument from msLayerOpen and msSHPOpenFile. The shapefile
+ * opening routine now expects just a filename. So, you must use msBuildPath or 
+ * msBuildPath3 to create a full qualified filename. Relatively simple change, but
+ * required lots of changes. Demo still works...
  *
  * Revision 1.14  2003/01/10 06:39:06  sdlime
- * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c to mapstring.c so they can be used a bit more freely.
+ * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c to mapstring.c
+ * so they can be used a bit more freely.
  *
  * Revision 1.13  2002/12/20 03:43:03  frank
  * ensure this builds without libcurl
@@ -450,7 +457,10 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 {
     const char	*value, *resx, *resy;
 
-    value = msGetEPSGProj(srcproj, metadata, MS_TRUE);
+    /* Look for EPSG code in PROJECTION block only.  "wms_srs" metadata cannot be
+     * used to establish the native projection of a layer for BoundingBox purposes.
+     */
+    value = msGetEPSGProj(srcproj, NULL, MS_TRUE);
     
     if( value != NULL )
     {
@@ -469,6 +479,7 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
  
         fprintf( stream, " />\n" );
     }
+
 }
 
 
