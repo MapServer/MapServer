@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.15  2004/03/04 20:08:28  frank
+ * added IMAGEMODE_BYTE (raw mode)
+ *
  * Revision 1.14  2003/04/10 17:24:02  frank
  * Use format extension for file created in the temp directory.  This is mostly
  * intended to work around the fact that some GDAL drivers (such as ECW) will
@@ -198,6 +201,10 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
     {
         eDataType = GDT_Float32;
     }
+    else if( format->imagemode == MS_IMAGEMODE_BYTE )
+    {
+        eDataType = GDT_Byte;
+    }
     else
     {
         assert( format->imagemode == MS_IMAGEMODE_PC256
@@ -250,6 +257,12 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
                 GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
                               image->img.raw_float + iLine * image->width,
                               image->width, 1, GDT_Float32, 4, 0 );
+            }
+            else if( format->imagemode == MS_IMAGEMODE_BYTE )
+            {
+                GDALRasterIO( hBand, GF_Write, 0, iLine, image->width, 1, 
+                              image->img.raw_byte + iLine * image->width,
+                              image->width, 1, GDT_Byte, 1, 0 );
             }
 #if GD2_VERS > 1
             else if( nBands > 1 && iBand < 3 )

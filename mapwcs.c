@@ -503,12 +503,12 @@ msWCSGetCoverageDomain( mapObj *map, layerObj *layer,
         *pnPreferredImageMode = MS_IMAGEMODE_FLOAT32;
         if( (value=msLookupHashTable(layer->metadata,"wcs_imagemode")) != NULL )
         {
-            if( EQUAL(value,"PC256") )
-                *pnPreferredImageMode = MS_IMAGEMODE_PC256;
-            else if( EQUAL(value,"INT16") )
+            if( EQUAL(value,"INT16") )
                 *pnPreferredImageMode = MS_IMAGEMODE_INT16;
             else if( EQUAL(value,"FLOAT32") )
                 *pnPreferredImageMode = MS_IMAGEMODE_FLOAT32;
+            else if( EQUAL(value,"BYTE") )
+                *pnPreferredImageMode = MS_IMAGEMODE_BYTE;
             else
             {
                 msSetError( MS_WMSERR, 
@@ -574,7 +574,7 @@ msWCSGetCoverageDomain( mapObj *map, layerObj *layer,
         switch( GDALGetRasterDataType( hBand ) )
         {
           case GDT_Byte:
-            *pnPreferredImageMode = MS_IMAGEMODE_PC256;
+            *pnPreferredImageMode = MS_IMAGEMODE_BYTE;
             break;
 
           case GDT_Int16:

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.46  2004/03/04 20:08:28  frank
+ * added IMAGEMODE_BYTE (raw mode)
+ *
  * Revision 1.45  2004/01/30 16:55:42  assefa
  * Fixed a problem while compiling on windows.
  *
@@ -388,8 +391,23 @@ msSimpleRasterResampler( imageObj *psSrcImage, colorObj offsite,
                     psDstImage->img.raw_float[
                         nDstX + nDstY * psDstImage->width] = fValue;
                 }
+                else if( psSrcImage->format->imagemode == MS_IMAGEMODE_BYTE)
+                {
+                    int nValue;
+
+                    nValue = psSrcImage->img.raw_byte[
+                        nSrcX + nSrcY * psSrcImage->width];
+
+                    if( nValue == offsite.red )
+                        continue;
+                    
+                    nSetPoints++;
+                    psDstImage->img.raw_byte[nDstX + nDstY * psDstImage->width]
+                        = (unsigned char) nValue;
+                }
                 else
                 {
+                    CPLAssert( FALSE );
                 }
             }
         }

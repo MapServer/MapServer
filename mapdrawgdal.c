@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.17  2004/03/04 20:08:28  frank
+ * added IMAGEMODE_BYTE (raw mode)
+ *
  * Revision 1.16  2004/02/05 05:46:09  frank
  * don't call msOWSGetLayerExtent without OWS services being enabled
  *
@@ -385,6 +388,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
           eDataType = GDT_Int16;
       else if( image->format->imagemode == MS_IMAGEMODE_FLOAT32 )
           eDataType = GDT_Float32;
+      else if( image->format->imagemode == MS_IMAGEMODE_BYTE )
+          eDataType = GDT_Byte;
       else
           return -1;
 
@@ -421,6 +426,14 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
               {
                   image->img.raw_float[j + i * image->width] = 
                       ((float *) pBuffer)[k++];
+              }
+          }
+          else if( image->format->imagemode == MS_IMAGEMODE_BYTE )
+          {
+              for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+              {
+                  image->img.raw_byte[j + i * image->width] = 
+                      ((unsigned char *) pBuffer)[k++];
               }
           }
       }

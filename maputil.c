@@ -1197,7 +1197,8 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     else if( MS_RENDERER_RAWDATA(format) )
     {
         if( format->imagemode != MS_IMAGEMODE_INT16
-            && format->imagemode != MS_IMAGEMODE_FLOAT32 )
+            && format->imagemode != MS_IMAGEMODE_FLOAT32 
+            && format->imagemode != MS_IMAGEMODE_BYTE )
         {
             msSetError(MS_IMGERR, 
                     "Attempt to use illegal imagemode with rawdata renderer.",
@@ -1213,6 +1214,9 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
         else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
             image->img.raw_float = (float *) 
                 calloc(sizeof(float),width*height);
+        else if( format->imagemode == MS_IMAGEMODE_BYTE )
+            image->img.raw_byte = (unsigned char *) 
+                calloc(sizeof(unsigned char),width*height);
 
         if( image->img.raw_16bit == NULL )
         {

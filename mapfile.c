@@ -2927,7 +2927,8 @@ static int loadOutputFormat(mapObj *map)
                     format->transparent = MS_TRUE;
             }
             if( format->imagemode == MS_IMAGEMODE_INT16 
-                || format->imagemode == MS_IMAGEMODE_FLOAT32 )
+                || format->imagemode == MS_IMAGEMODE_FLOAT32 
+                || format->imagemode == MS_IMAGEMODE_BYTE )
                 format->renderer = MS_RENDER_WITH_RAWDATA;
         }
 
@@ -2986,9 +2987,12 @@ static int loadOutputFormat(mapObj *map)
           imagemode = MS_IMAGEMODE_INT16;
       else if( strcasecmp(value,"FLOAT32") == 0)
           imagemode = MS_IMAGEMODE_FLOAT32;
+      else if( strcasecmp(value,"BYTE") == 0)
+          imagemode = MS_IMAGEMODE_BYTE;
       else
       {
-          msSetError(MS_IDENTERR, "Parsing error near (%s):(line %d)", "loadOutputFormat()", 
+          msSetError(MS_IDENTERR, 
+                     "Parsing error near (%s):(line %d), expected PC256, RGB, RGBA, BYTE, INT16, or FLOAT32 for IMAGEMODE.", "loadOutputFormat()", 
                      msyytext, msyylineno);      
           return -1;
       }
@@ -3029,6 +3033,8 @@ static void writeOutputformatobject(outputFormatObj *outputformat,
            fprintf(stream, "    IMAGEMODE %s\n", "INT16");
          else if (outputformat->imagemode == MS_IMAGEMODE_FLOAT32)
            fprintf(stream, "    IMAGEMODE %s\n", "FLOAT32");
+         else if (outputformat->imagemode == MS_IMAGEMODE_BYTE)
+           fprintf(stream, "    IMAGEMODE %s\n", "BYTE");
 
         fprintf(stream, "    TRANSPARENT %s\n", 
                 msTrueFalse[outputformat->transparent]);
