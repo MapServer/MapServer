@@ -820,6 +820,7 @@ Constructor:
         Set X,Y coordinate values.
         Note : the 3rd parameter m is used for measured shape files only.
         It is not mandatory.
+        Returns 0 on success, -1 on error.
 
    int draw(mapObj map, layerObj layer, imageObj img, 
             int class_index, string text)
