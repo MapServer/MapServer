@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.109  2002/06/11 23:47:11  assefa
+ * Upgrade code to support new outputformat support.
+ *
  * Revision 1.108  2002/05/14 14:10:12  assefa
  * Add MS_SWF for the mong flash support.
  *
@@ -865,11 +868,13 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_ORACLESPATIAL", MS_ORACLESPATIAL,const_flag);
  
     /* output image type constants*/
+    /*
     REGISTER_LONG_CONSTANT("MS_GIF",        MS_GIF,         const_flag);
     REGISTER_LONG_CONSTANT("MS_PNG",        MS_PNG,         const_flag);
     REGISTER_LONG_CONSTANT("MS_JPEG",       MS_JPEG,        const_flag);
     REGISTER_LONG_CONSTANT("MS_WBMP",       MS_WBMP,        const_flag);
     REGISTER_LONG_CONSTANT("MS_SWF",        MS_SWF,        const_flag);
+    */
 
     /* querymap style constants */
     REGISTER_LONG_CONSTANT("MS_NORMAL",     MS_NORMAL,      const_flag);
@@ -1131,7 +1136,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value,  "height",    pNewObj->height);
     add_property_long(return_value,  "transparent", pNewObj->transparent);
     add_property_long(return_value,  "interlace", pNewObj->interlace);
-    add_property_long(return_value,  "imagetype", pNewObj->imagetype);
+    //add_property_long(return_value,  "imagetype", pNewObj->imagetype);
+    PHPMS_ADD_PROP_STR(return_value,  "imagetype", pNewObj->imagetype);
     add_property_long(return_value,  "imagequality", pNewObj->imagequality);
 
 #ifdef PHP4
@@ -1232,7 +1238,7 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "height",      self->height)
     else IF_SET_LONG(  "transparent", self->transparent)
     else IF_SET_LONG(  "interlace",   self->interlace)
-    else IF_SET_LONG(  "imagetype",   self->imagetype)
+    else IF_SET_STRING(  "imagetype",   self->imagetype)
     else IF_SET_LONG(  "imagequality",self->imagequality)
     else IF_SET_DOUBLE("cellsize",    self->cellsize)
     else IF_SET_LONG(  "units",       self->units)
@@ -2574,6 +2580,8 @@ DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     pval   *pR, *pG, *pB, *pThis;
     int     nColorId = 0;
+
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2734,6 +2742,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self;
     imageObj *im = NULL;
 
+
 #ifdef PHP4
     pval   **pExtent;
 #else
@@ -2750,7 +2759,6 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
- 
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -2758,7 +2766,6 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
     
-
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im = mapObj_draw(self)) == NULL)
     {
@@ -4592,7 +4599,8 @@ static long _phpms_build_img_object(imageObj *im, webObj *pweb,
     PHPMS_ADD_PROP_STR(return_value, "imageurl", im->imageurl);
     
 
-    add_property_long(return_value, "imagetype", im->imagetype);
+    //add_property_long(return_value, "imagetype", im->imagetype);
+    PHPMS_ADD_PROP_STR(return_value, "imagetype", im->format->name);
 
 /* php3_printf("Create image: id=%d, ptr=0x%x<P>\n", img_id, im);*/
 
@@ -4602,8 +4610,7 @@ static long _phpms_build_img_object(imageObj *im, webObj *pweb,
 /**********************************************************************
  *                        image->saveImage()
  *
- *       saveImage(string filename, int type, int transparent, 
- *                 int interlace, int quality)
+ *       saveImage(string filename)
  **********************************************************************/
 
 /* {{{ proto int img.saveImage(string filename, int type, int transparent, int interlace, int quality)
@@ -4611,9 +4618,9 @@ static long _phpms_build_img_object(imageObj *im, webObj *pweb,
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval   *pFname, *pTransparent, *pInterlace, *pThis;
-    pval   *pType, *pQuality;
+    pval   *pFname, *pThis;
     imageObj *im = NULL;
+    mapObj      *map = NULL;
     int retVal = 0;
     int bCompatible = 0;
 #ifdef PHP4
@@ -4627,52 +4634,23 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 5, &pFname, &pType, &pTransparent, 
-                      &pInterlace, &pQuality) != SUCCESS  )
+        getParameters(ht, 1, &pFname) != SUCCESS  )
     {
         WRONG_PARAM_COUNT;
     }
 
     convert_to_string(pFname);
-    convert_to_long(pTransparent);
-    convert_to_long(pInterlace);
-    convert_to_long(pType);
-    convert_to_long(pQuality);
 
     im = (imageObj *)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
-
-/* -------------------------------------------------------------------- */
-/*      Compare the image type passed as argument and the imagetype     */
-/*      used the imageObj to make that they are compatible .            */
-/*      This is temporary and the image type argument will be           */
-/*      removed.                                                        */
-/* -------------------------------------------------------------------- */
-    bCompatible = 0;
-    if (im)
-    {
-        //just test GD fdormats for now.
-        if ((im->imagetype >= MS_GIF &&  im->imagetype <= MS_WBMP &&
-            pType->value.lval >= MS_GIF && pType->value.lval < MS_WBMP) ||
-            (im->imagetype == pType->value.lval))
-            bCompatible = 1;
-    }
-    if (!bCompatible)
-    {
-        _phpms_report_mapserver_error(E_WARNING);
-        php3_error(E_ERROR, "Image object type %d is not comaptible with type passed as argument %d", im->imagetype, pType->value.lval);
-    }
 
     if(pFname->value.str.val != NULL && strlen(pFname->value.str.val) > 0)
     {
         if (im == NULL ||
-            (retVal = msSaveImage(im, pFname->value.str.val, 
-                                  pTransparent->value.lval, 
-                                  pInterlace->value.lval, 
-                                  pQuality->value.lval) ) != 0  )
+            (retVal = msSaveImage(map, im, pFname->value.str.val) != 0))
         {
-            _phpms_report_mapserver_error(E_WARNING);
-            php3_error(E_ERROR, "Failed writing image to %s", 
-                       pFname->value.str.val);
+          _phpms_report_mapserver_error(E_WARNING);
+          php3_error(E_ERROR, "Failed writing image to %s", 
+                     pFname->value.str.val);
         }
     }
     else
@@ -4694,41 +4672,32 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         php3_header();
 #endif
 
-        //TODO
-        if(pInterlace->value.lval)
-            gdImageInterlace(im->img.gd, 1);
-
-        //TODO
-        if(pTransparent->value.lval)
-            gdImageColorTransparent(im->img.gd, 0);
-
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
 
 #ifdef USE_GD_GIF
-        if(im->imagetype == MS_GIF)
+        if(im->format->name && strcasecmp(im->format->name, "gif")==0)
             iptr = gdImageGifPtr(im->img.gd, &size); //TODO
         else
 #endif
 #ifdef USE_GD_PNG
-        if( im->imagetype == MS_PNG)
+        if(im->format->name && strcasecmp(im->format->name, "png")==0) 
             iptr = gdImagePngPtr(im->img.gd, &size); //TODO
         else
 #endif
 #ifdef USE_GD_JPEG
-        if(im->imagetype == MS_JPEG)
+        if(im->format->name && strcasecmp(im->format->name, "jpeg")==0) 
             iptr = gdImageJpegPtr(im->img.gd, &size, pQuality->value.lval);//TODO
         else
 #endif
 #ifdef USE_GD_WBMP
-        if(im->imagetype == MS_WBMP)
+          if(im->format->name && strcasecmp(im->format->name, "wbmp")==0)
             iptr = gdImageWBMPPtr(im->img.gd, &size, 1); //TODO
         else
 #endif
         {
             php3_error(E_ERROR, "Output to '%s' not available", 
-                       MS_IMAGE_FORMAT_EXT(im->imagetype) );
+                       im->format->name);
         }
-
         if (size == 0) {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed writing image to stdout");
@@ -4737,9 +4706,9 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         else
         {
 #ifdef PHP4
-                php_write(iptr, size TSRMLS_CC);
+            php_write(iptr, size TSRMLS_CC);
 #else
-                php3_write(iptr, size);
+            php3_write(iptr, size);
 #endif
             retVal = size;
             free(iptr);
@@ -4789,7 +4758,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
 /**********************************************************************
  *                        image->saveWebImage()
- *       saveWebImage(int type, int transparent, int interlace, int quality)
+ *       saveWebImage()
  **********************************************************************/
 
 /* {{{ proto int img.saveWebImage(int type, int transparent, int interlace, int quality)
@@ -4797,10 +4766,11 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval   *pTransparent, *pInterlace, *pThis;
-    pval   *pType, *pQuality;
+    pval   *pThis;
 
     imageObj *im = NULL;
+    mapObj      *map = NULL;
+
     char *pImagepath, *pImageurl, *pBuf;
     int nBufSize, nLen1, nLen2;
     const char *pszImageExt;
@@ -4815,24 +4785,17 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
-    if (pThis == NULL ||
-        getParameters(ht, 4, &pType, &pTransparent, 
-                      &pInterlace, &pQuality) != SUCCESS  )
+    if (pThis == NULL)
     {
         WRONG_PARAM_COUNT;
     }
-
-    convert_to_long(pTransparent);
-    convert_to_long(pInterlace);
-    convert_to_long(pType);
-    convert_to_long(pQuality);
-
 
     im = (imageObj *)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
     pImagepath = _phpms_fetch_property_string(pThis, "imagepath", E_ERROR);
     pImageurl = _phpms_fetch_property_string(pThis, "imageurl", E_ERROR);
 
-    pszImageExt = MS_IMAGE_FORMAT_EXT(im->imagetype);
+    //pszImageExt = MS_IMAGE_FORMAT_EXT(im->imagetype);
+    pszImageExt = im->format->extension;
 
     /* Build a unique filename in the IMAGEPATH directory 
      */
@@ -4843,33 +4806,11 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     tmpCount++;
     sprintf(pBuf, "%s%s%d.%s", pImagepath, tmpId, tmpCount, pszImageExt);
 
-/* -------------------------------------------------------------------- */
-/*      Compare the image type passed as argument and the imagetype     */
-/*      used the imageObj to make that they are compatible .            */
-/*      This is temporary and the image type argument will be           */
-/*      removed.                                                        */
-/* -------------------------------------------------------------------- */
-    bCompatible = 0;
-    if (im)
-    {
-        //just test GD fdormats for now.
-        if ((im->imagetype >= MS_GIF &&  im->imagetype <= MS_WBMP &&
-            pType->value.lval >= MS_GIF && pType->value.lval < MS_WBMP) ||
-            (im->imagetype == pType->value.lval))
-            bCompatible = 1;
-    }
-    if (!bCompatible)
-    {
-        _phpms_report_mapserver_error(E_WARNING);
-        php3_error(E_ERROR, "Image object type %d is not comaptible with type passed as argument %d", im->imagetype, pType->value.lval);
-    }
 
- 
     /* Save the image... 
      */
     if (im == NULL || 
-        msSaveImage(im, pBuf, pTransparent->value.lval, 
-                    pInterlace->value.lval, pQuality->value.lval) != 0 )
+        msSaveImage(map, im, pBuf) != 0 )
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "Failed writing image to %s", 

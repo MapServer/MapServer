@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.45  2002/06/11 23:47:11  assefa
+ * Upgrade code to support new outputformat support.
+ *
  * Revision 1.44  2002/05/31 16:09:10  assefa
  * Change call tp msTransformShapeToPixel.
  *
@@ -249,20 +252,17 @@ imageObj *mapObj_prepareImage(mapObj* self) {
       if(msAdjustImage(self->extent, &self->width, &self->height) == -1)
         return NULL;
 
-    img = msImageCreate(self->width, self->height, self->imagetype,
+    img = msImageCreate(self->width, self->height, self->outputformat,
                         self->web.imagepath, self->web.imageurl);
     if(!img) {
       msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
     }
   
-    if (self->imagetype == MS_GIF ||
-        self->imagetype == MS_PNG ||
-        self->imagetype == MS_JPEG ||
-        self->imagetype == MS_WBMP)
+    if (MS_RENDERER_GD(self->outputformat))
     {
         if(msLoadPalette(img->img.gd, &(self->palette), self->imagecolor) == -1)
-            return NULL;
+          return NULL;
     }
 
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
@@ -582,7 +582,7 @@ imageObj *classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer
     if (image == NULL) return NULL;
 
     image->img.gd = msCreateLegendIcon(map, layer, self, width, height);
-    image->imagetype = map->imagetype;
+    image->format = msSelectOutputFormat(map, map->imagetype);
     image->width = gdImageSX(image->img.gd);
     image->height = gdImageSY(image->img.gd);
     image->imagepath = map->web.imagepath?strdup(map->web.imagepath):NULL; 
