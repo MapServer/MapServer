@@ -735,8 +735,9 @@ ALL_LIB="$PROJ_LIB $ALL_LIB"
 dnl ---------------------------------------------------------------------
 dnl ENABLE THREADS ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
-export THREAD_LIB=
-export THREAD_FLAG=
+
+THREAD_LIB=""
+THREAD_FLAG=""
 
 AC_CHECKING(whether we should include thread safe support...)
 AC_ARG_WITH(threads,
