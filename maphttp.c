@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2003/01/07 23:47:00  assefa
+ * Correct Compilation error.
+ *
  * Revision 1.5  2002/12/19 06:30:59  dan
  * Enable caching WMS/WFS request using tmp filename built from URL
  *
@@ -57,8 +60,9 @@
 #include <time.h>
 #ifndef _WIN32
 #include <sys/time.h>
-#endif
 #include <unistd.h>
+
+#endif
 
 /*
  * Note: This code uses libcurl to access remote files via the HTTP protocol.

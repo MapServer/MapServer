@@ -151,7 +151,7 @@ static double getNumeric(regex_t re, char *s)
 */
 mapObj *loadMap()
 {
-  int i;
+  int i,j,k;
   mapObj *map = NULL;
   char *tmpstr;
 
@@ -198,7 +198,7 @@ mapObj *loadMap()
 */
 void loadForm()
 {
-  int i,j,k,n;
+  int i,j,n;
   char **tokens, *tmpstr;
   regex_t re;
   int rosa_type=0;
@@ -861,7 +861,6 @@ void loadForm()
 }
 
 void setExtentFromShapes() {
-  int i;
   int found=0;
   double dx, dy, cellsize;
 
