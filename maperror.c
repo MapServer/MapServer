@@ -284,7 +284,7 @@ void msWriteError(FILE *stream)
 
   while (ms_error && ms_error->code != MS_NOERR)
   {
-      fprintf(stream, "%s: %s %s <br>\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
+      msIO_fprintf(stream, "%s: %s %s <br>\n", ms_error->routine, ms_errorCodes[ms_error->code], ms_error->message);
       ms_error = ms_error->next;
   }
 }
@@ -298,8 +298,8 @@ void msWriteErrorXML(FILE *stream)
   {
       message = msEncodeHTMLEntities(ms_error->message);
 
-      fprintf(stream, "%s: %s %s\n", ms_error->routine, 
-              ms_errorCodes[ms_error->code], message);
+      msIO_fprintf(stream, "%s: %s %s\n", ms_error->routine, 
+                   ms_errorCodes[ms_error->code], message);
       ms_error = ms_error->next;
 
       msFree(message);
@@ -399,7 +399,8 @@ void msWriteErrorImage(mapObj *map, char *filename, int blank) {
   }
 
   // actually write the image
-  if(!filename) printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
+  if(!filename) 
+      msIO_printf("Content-type: %s%c%c", MS_IMAGE_MIME_TYPE(format), 10,10);
   msSaveImageGD(img, filename, format);
   gdImageDestroy(img);
 
@@ -451,6 +452,9 @@ char *msGetVersion() {
 #ifdef USE_WCS_SVR
   strcat(version, " SUPPORTS=WCS_SERVER");
 #endif
+#ifdef USE_FASTCGI
+  strcat(version, " SUPPORTS=FASTCGI");
+#endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");
 #endif
@@ -487,9 +491,8 @@ void msDebug( const char * pszFormat, ... )
 {
 #ifdef ENABLE_STDERR_DEBUG
     va_list args;
-    struct timeval tv;
 
-#ifdef NEED_NONBLOCKING_STDERR
+#if defined(NEED_NONBLOCKING_STDERR) && !defined(USE_MAPIO)
     static char nonblocking_set = 0;
     if (!nonblocking_set)
     {
@@ -498,11 +501,19 @@ void msDebug( const char * pszFormat, ... )
     }
 #endif
 
-    msGettimeofday(&tv, NULL);
-    fprintf(stderr, "[%s].%ld ", chop(ctime(&(tv.tv_sec))), tv.tv_usec);
+#ifndef USE_FASTCGI
+    // It seems the FastCGI stuff inserts a timestamp anyways, so 
+    // we might as well skip this one. 
+    {
+        struct timeval tv;
+        msGettimeofday(&tv, NULL);
+        msIO_fprintf(stderr, "[%s].%ld ", 
+                     chop(ctime(&(tv.tv_sec))), tv.tv_usec);
+    }
+#endif
 
     va_start(args, pszFormat);
-    vfprintf(stderr, pszFormat, args);
+    msIO_vfprintf(stderr, pszFormat, args);
     va_end(args);
 #endif
 }
