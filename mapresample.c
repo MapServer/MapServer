@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2001/11/02 16:13:00  frank
+ * fixed degree/radian conversion bug in msProjTransformer
+ *
  * Revision 1.19  2001/09/10 13:33:18  frank
  * modified to avoid using layer->data since it may be NULL
  *
@@ -176,7 +179,7 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
 /* -------------------------------------------------------------------- */
 /*      Some debugging output.                                          */
 /* -------------------------------------------------------------------- */
-#ifdef notdef
+#ifndef notdef
     if( nFailedPoints > 0 )
     {
         char	szMsg[256];
@@ -364,8 +367,8 @@ int msProjTransformer( void *pCBData, int nPoints,
     {
         for( i = 0; i < nPoints; i++ )
         {
-            x[i] = x[i] * DEG_TO_RAD;
-            y[i] = y[i] * DEG_TO_RAD;
+            x[i] = x[i] * RAD_TO_DEG;
+            y[i] = y[i] * RAD_TO_DEG;
         }
     }
 
