@@ -446,13 +446,13 @@ int msSDELayerOpen(layerObj *layer) {
     sde_error(status, "msSDELayerOpen()", "SE_stream_create()");
     return(MS_FAILURE);
   }
-  
-  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
-    return(MS_FAILURE);
-  }  
-  
+  if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
+	  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
+	    return(MS_FAILURE);
+	  }  
+	}  
   layer->layerinfo = sde; // point to the SDE layer information (note this might actually be in another layer)
 
   return(MS_SUCCESS);
@@ -595,11 +595,13 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   }
   
 	//Set the stream state back to the state_id of our user-specified version
-  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_set_state()");
-    return(MS_FAILURE);
-  }  
+  if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
+	  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
+	    return(MS_FAILURE);
+	  }  
+	} 
 
   status = SE_stream_query_with_info(sde->stream, query_info);
   if(status != SE_SUCCESS) {
@@ -787,11 +789,13 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
   }
 
 	//Set the stream state back to the state_id of our user-specified version
-  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerGetShape()", "SE_stream_set_state()");
-    return(MS_FAILURE);
-  }   
+  if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
+	  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
+	  if(status != SE_SUCCESS) {
+	    sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
+	    return(MS_FAILURE);
+	  }  
+	}  
   status = SE_stream_fetch_row(sde->stream, sde->table, record, layer->numitems, (const char **)layer->items);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetShape()", "SE_stream_fetch_row()");
