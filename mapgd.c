@@ -1748,13 +1748,6 @@ msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
     if( !gdImageTrueColor(dst) || !gdImageTrueColor(src) )
         return gdImageCopyMerge( dst, src, dstX, dstY, srcX, srcY, w, h, pct );
 
-
-    /* 
-    ** But for RGBA to RGBA we need to take into account the source
-    ** alpha as well as the percentage transparency 
-    */
-    pct_alpha = 127 - (pct * 127) / 100;
-
     /* 
     ** Turn off blending in output image to prevent it doing it's own attempt
     ** at blending instead of using our result. 
@@ -1775,10 +1768,10 @@ msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
                 continue;
 
             /* Adjust dst alpha according to percentages */
-            dst_alpha = dst_alpha * (pct*src_alpha/127) / 100;
+            dst_alpha = dst_alpha * ((100-pct)*src_alpha/127) / 100;
 
             /* adjust source according to transparency percentage */
-            src_alpha = src_alpha * (100-pct) / 100;
+            src_alpha = src_alpha * (pc-100) / 100;
 
             /* Use simple additive model for resulting transparency */
             res_alpha = src_alpha + dst_alpha;
