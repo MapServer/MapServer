@@ -6,14 +6,15 @@ To run the tests, execute
 
    python tests/testMapScript.py
 
-from the mapscript/python directory.  By default, the unit test
-script will insert the local build directory produced by Python
-distutils into the head of the Python PATH.  This allows us to
-run the unit tests before installing the mapscript module.
+from the mapscript/python directory of the mapserver distribution.  The
+tests cannot be run properly from another path.  By default, the unit
+test script will insert the local build directory produced by Python
+distutils into the head of the Python PATH.  This allows us to run the
+unit tests before installing the mapscript module.
 
-The unit tests require that the MapServer Itasca demo data be 
-installed on your system.  Edit test.map so that SHAPEPATH points
-to the proper path.  If your MapServer does not have PROJ.4
-compiled in, you will also need to comment out all PROJECTION
-blocks.
+The unit tests use a map config file, symbolset file, fontset file, and
+data located in the 'tests' directory of the mapserver distribution.  If
+you are using TrueType fonts, make the necessary edits to the fontset
+file.  If you are not using TrueType fonts, simply ignore the several
+resulting test failures.
 

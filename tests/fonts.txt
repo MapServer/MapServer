@@ -1,0 +1,2 @@
+LucidaSansRegular /Library/Fonts/LucidaSansRegular.ttf
+LucidaSansDemiBold /Library/Fonts/LucidaSansDemiBold.ttf

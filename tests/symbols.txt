@@ -1,0 +1,9 @@
+
+SYMBOL
+    NAME 'line' 
+    TYPE ellipse 
+    FILLED true 
+    POINTS
+      1 1 
+    END 
+END
