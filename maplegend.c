@@ -190,7 +190,7 @@ imageObj *msDrawLegend(mapObj *map)
     for(j=0;j<map->layers[i].numclasses;j++) {
       if(!map->layers[i].class[j].name)
 	continue; /* skip it */
-      if(msGetLabelSize(map->layers[i].class[j].name, &map->legend.label, &rect, &(map->fontset)) != 0)
+      if(msGetLabelSize(map->layers[i].class[j].name, &map->legend.label, &rect, &(map->fontset), 1.0) != 0)
 	return(NULL); /* something bad happened */
       maxheight = MS_MAX(maxheight, MS_NINT(rect.maxy - rect.miny));
       maxwidth = MS_MAX(maxwidth, MS_NINT(rect.maxx - rect.minx));

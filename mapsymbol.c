@@ -495,15 +495,21 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 ** Returns the size, in pixels, of a marker symbol defined for a specific array of styles and scalefactor. Used for annotation
 ** layer collision avoidance. A marker is made up of a number of styles.
 */
-void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, int *width, int *height)
+void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, int *width, int *height, double scalefactor)
 {
   int i;
   rectObj rect;
   char *font=NULL;
 
+  int size;
+
   *width = *height = 0; // set a starting value
 
   for(i=0; i<numstyles; i++) {
+
+    size = MS_NINT(styles[i]->size*scalefactor);
+    size = MS_MAX(size, styles[i]->minsize);
+    size = MS_MIN(size, styles[i]->maxsize);
 
     if(styles[i]->symbol > symbolset->numsymbols || styles[i]->symbol == -1) return; /* no such symbol, 0 is OK */
 
@@ -519,7 +525,7 @@ void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, 
       font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[styles[i]->symbol].font);
       if(!font) return;
 
-      if(getCharacterSize(symbolset->symbol[styles[i]->symbol].character, styles[i]->size, font, &rect) == -1) return;
+      if(getCharacterSize(symbolset->symbol[styles[i]->symbol].character, size, font, &rect) == -1) return;
 
       *width = MS_MAX(*width, rect.maxx - rect.minx);
       *height = MS_MAX(*height, rect.maxy - rect.miny);
@@ -528,18 +534,18 @@ void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, 
 #endif
 
     case(MS_SYMBOL_PIXMAP):
-      if(styles[i]->size == 1) {        
+      if(size == 1) {        
 	*width = MS_MAX(*width, symbolset->symbol[styles[i]->symbol].img->sx);
         *height = MS_MAX(*height, symbolset->symbol[styles[i]->symbol].img->sy);
       } else {
-        *width = MS_MAX(*width, MS_NINT((styles[i]->size/symbolset->symbol[styles[i]->symbol].img->sy) * symbolset->symbol[styles[i]->symbol].img->sx));
-        *height = MS_MAX(*height, styles[i]->size);
+        *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[styles[i]->symbol].img->sy) * symbolset->symbol[styles[i]->symbol].img->sx));
+        *height = MS_MAX(*height, size);
       }
       break;
     default: /* vector and ellipses, scalable */
       if(styles[i]->size > 0) {
-        *width = MS_MAX(*width, MS_NINT((styles[i]->size/symbolset->symbol[styles[i]->symbol].sizey) * symbolset->symbol[styles[i]->symbol].sizex));
-        *height = MS_MAX(*height, styles[i]->size);
+        *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[styles[i]->symbol].sizey) * symbolset->symbol[styles[i]->symbol].sizex));
+        *height = MS_MAX(*height, size);
       } else { /* use symbol defaults */
         *width = MS_MAX(*width, symbolset->symbol[styles[i]->symbol].sizex);
         *height = MS_MAX(*height, symbolset->symbol[styles[i]->symbol].sizey);

@@ -1329,10 +1329,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
     if(!cachePtr->string || strlen(cachePtr->string) == 0)
       continue; // not an error, just don't want to do anything
 
-    if(cachePtr->label.type == MS_TRUETYPE)
-      cachePtr->label.size *= layerPtr->scalefactor;
-
-    if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset)) == -1)
+    if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
       return(-1);
 
     if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
@@ -1340,9 +1337,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
     marker_offset_x = marker_offset_y = 0; /* assume no marker */
     if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker      
-      msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, &marker_height);
-      marker_width *= layerPtr->scalefactor;
-      marker_height *= layerPtr->scalefactor;
+      msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, &marker_height, layerPtr->scalefactor);
 
       marker_offset_x = MS_NINT(marker_width/2.0);
       marker_offset_y = MS_NINT(marker_height/2.0);      
@@ -1350,10 +1345,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
       marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width);
       marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height);
       marker_rect.maxx = marker_rect.minx + (marker_width-1);
-      marker_rect.maxy = marker_rect.miny + (marker_height-1);
-
-      for(i=0; i<cachePtr->numstyles; i++)
-	cachePtr->styles[i].size *= layerPtr->scalefactor;
+      marker_rect.maxy = marker_rect.miny + (marker_height-1); 
     }
 
     if(labelPtr->position == MS_AUTO) {
@@ -1532,7 +1524,7 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
     if(MS_VALID_COLOR(labelPtr->backgroundcolor)) billboardGD(img, cachePtr->poly, labelPtr);
     msDrawTextGD(img, p, cachePtr->string, labelPtr, &(map->fontset), layerPtr->scalefactor); // actually draw the label
 
-  } /* next label in cache */
+  } // next label
 
   return(0);
 }

@@ -16,8 +16,9 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   int i;
   char wrap[2];
 
-  layerObj *lp=NULL;
-  classObj *cp=NULL;
+  labelCacheMemberObj *cachePtr=NULL;
+  layerObj *layerPtr=NULL;
+  classObj *classPtr=NULL;
 
   if(!string) return(MS_SUCCESS); /* not an error */
 
@@ -30,58 +31,55 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     map->labelcache.cachesize += MS_LABELCACHEINCREMENT;
   }
 
-  i = map->labelcache.numlabels;
-  map->labelcache.labels[i].layerindex = layerindex;
-  map->labelcache.labels[i].classindex = classindex;
-  map->labelcache.labels[i].tileindex = tileindex;
-  map->labelcache.labels[i].shapeindex = shapeindex;
+  cachePtr = &(map->labelcache.labels[map->labelcache.numlabels]); // set up a few pointers for clarity
+  layerPtr = &(map->layers[layerindex]);
+  classPtr = &(map->layers[layerindex].class[classindex]);
+  
+  cachePtr->layerindex = layerindex; // so we can get back to this *raw* data if necessary
+  cachePtr->classindex = classindex;
+  cachePtr->tileindex = tileindex;
+  cachePtr->shapeindex = shapeindex;
 
-  lp = &(map->layers[layerindex]);
-  cp = &(map->layers[layerindex].class[classindex]);
+  cachePtr->point = *point; // the actual label point
+  cachePtr->point.x = MS_NINT(cachePtr->point.x);
+  cachePtr->point.y = MS_NINT(cachePtr->point.y);
 
-  map->labelcache.labels[i].point = *point;
-  map->labelcache.labels[i].point.x = MS_NINT(map->labelcache.labels[i].point.x);
-  map->labelcache.labels[i].point.y = MS_NINT(map->labelcache.labels[i].point.y);
-
-  map->labelcache.labels[i].string = strdup(string);
+  cachePtr->string = strdup(string); // the actual text
 
   // GD/Freetype recognizes \r\n as a true line wrap so we must turn the wrap character into that pattern
-  if(cp->label.type != MS_BITMAP && cp->label.wrap != '\0') {
-    wrap[0] = cp->label.wrap;
+  if(classPtr->label.type != MS_BITMAP && classPtr->label.wrap != '\0') {
+    wrap[0] = classPtr->label.wrap;
     wrap[1] = '\0';
-    map->labelcache.labels[i].string = gsub(map->labelcache.labels[i].string, wrap, "\r\n");
+    cachePtr->string = gsub(cachePtr->string, wrap, "\r\n");
   }
 
   // copy the styles (only if there is an accompanying marker)
-  map->labelcache.labels[i].styles = NULL;
-  map->labelcache.labels[i].numstyles = 0;
-  if(lp->type == MS_LAYER_ANNOTATION && MS_VALID_COLOR(cp->styles[0].color)) {
-    map->labelcache.labels[i].styles = (styleObj *) malloc(sizeof(styleObj)*cp->numstyles);
-    memcpy(map->labelcache.labels[i].styles, cp->styles, sizeof(styleObj)*cp->numstyles);
-    map->labelcache.labels[i].numstyles = cp->numstyles;
+  cachePtr->styles = NULL;
+  cachePtr->numstyles = 0;
+  if(layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) {
+    cachePtr->styles = (styleObj *) malloc(sizeof(styleObj)*classPtr->numstyles);
+    memcpy(cachePtr->styles, classPtr->styles, sizeof(styleObj)*classPtr->numstyles);
+    cachePtr->numstyles = classPtr->numstyles;
 
-    /* Copy the style's symbolnames as well */
-    if (cp->numstyles) {
-      int j;
-      for(j=0; j<cp->numstyles; j++) {
-        if (cp->styles[j].symbolname)
-          map->labelcache.labels[i].styles[j].symbolname = strdup(cp->styles[j].symbolname);
-      }
+    // copy the style symbol name
+    if (classPtr->numstyles > 0) {      
+      for(i=0; i<classPtr->numstyles; i++)
+        if (classPtr->styles[i].symbolname) cachePtr->styles[i].symbolname = strdup(classPtr->styles[i].symbolname);
     }
   }
 
   // copy the label
-  map->labelcache.labels[i].label = cp->label; // this copies all non-pointers
-  if(cp->label.font) map->labelcache.labels[i].label.font = strdup(cp->label.font);
+  cachePtr->label = classPtr->label; // this copies all non-pointers
+  if(classPtr->label.font) cachePtr->label.font = strdup(classPtr->label.font);
 
-  map->labelcache.labels[i].featuresize = featuresize;
+  cachePtr->featuresize = featuresize;
 
-  map->labelcache.labels[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
-  msInitShape(map->labelcache.labels[i].poly);
+  cachePtr->poly = (shapeObj *) malloc(sizeof(shapeObj));
+  msInitShape(cachePtr->poly);
 
-  map->labelcache.labels[i].status = MS_FALSE;
+  cachePtr->status = MS_FALSE;
 
-  if(lp->type == MS_LAYER_POINT) { // cache the marker placement, it's already on the map
+  if(layerPtr->type == MS_LAYER_POINT) { // cache the marker placement, it's already on the map
     rectObj rect;
     int w, h;
 
@@ -99,9 +97,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     map->labelcache.markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
     msInitShape(map->labelcache.markers[i].poly);
 
-    msGetMarkerSize(&map->symbolset, &(cp->styles), cp->numstyles, &w, &h);
-    w *= lp->scalefactor;
-    h *= lp->scalefactor;
+    msGetMarkerSize(&map->symbolset, &(classPtr->styles), classPtr->numstyles, &w, &h, layerPtr->scalefactor);
 
     rect.minx = MS_NINT(point->x - .5 * w);
     rect.miny = MS_NINT(point->y - .5 * h);
@@ -233,12 +229,18 @@ int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 ** LL corner of the text to be rendered, this is first line for TrueType fonts.
 */
 
-int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset) /* assumes an angle of 0 */
+int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset, double scalefactor) // assumes an angle of 0
 {
+  int size;
+
   if(label->type == MS_TRUETYPE) {
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
     int bbox[8];
     char *error=NULL, *font=NULL;
+
+    size = MS_NINT(label->size*scalefactor);
+    size = MS_MAX(size, label->minsize);
+    size = MS_MIN(size, label->maxsize);
 
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
@@ -252,9 +254,9 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     }
 
 #ifdef USE_GD_TTF
-    error = gdImageStringTTF(NULL, bbox, 0, font,label->size, 0, 0, 0, string);
+    error = gdImageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, string);
 #else
-    error = gdImageStringFT(NULL, bbox, 0, font, label->size, 0, 0, 0, string);
+    error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
 #endif
     if(error) {
         msSetError(MS_TTFERR, error, "msGetLabelSize()");
@@ -525,7 +527,7 @@ int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p
   label.outlinecolor = style->outlinecolor;
   label.antialias = symbol->antialias;
   
-  if(msGetLabelSize(symbol->character, &label, &label_rect, symbolset->fontset) == -1)
+  if(msGetLabelSize(symbol->character, &label, &label_rect, symbolset->fontset, 1.0) == -1)
     return(-1);
 
   label_width = label_rect.maxx - label_rect.minx;

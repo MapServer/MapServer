@@ -982,7 +982,7 @@ void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
 
-void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, int *width, int *height);
+void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, int *width, int *height, double scalefactor);
 int getCharacterSize(char *character, int size, char *font, rectObj *rect);
 void freeImageCache(struct imageCacheObj *ic);
 
@@ -995,7 +995,7 @@ int msLoadFontSet(fontSetObj *fontSet, mapObj *map); // in maplabel.c
 int msInitFontSet(fontSetObj *fontset);
 int msFreeFontSet(fontSetObj *fontset);
 
-int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
+int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet, double scalefactor);
 int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int tileindex, pointObj *point, char *string, double featuresize);
 
 gdFontPtr msGetBitmapFont(int size);

@@ -318,7 +318,7 @@ int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string,
         pointObj p;
         rectObj r;
 
-        if(msGetLabelSize(string, label, &r, fontset) == -1) return(-1);
+        if(msGetLabelSize(string, label, &r, fontset, scalefactor) == -1) return(-1);
         p = get_metrics(&labelPnt, label->position, r,
                                    label->offsetx,
                                    label->offsety,
@@ -372,7 +372,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         if(strlen(cachePtr->string) == 0)
             continue; /* not an error, just don't want to do anything */
 
-        if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset)) == -1)
+        if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset), layerPtr->scalefactor) == -1)
             return(-1);
 
         if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
@@ -383,7 +383,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         { /* there *is* a marker */
 
             msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles,
-                            &marker_width, &marker_height);
+                            &marker_width, &marker_height, layerPtr->scalefactor);
             marker_offset_x = MS_NINT(marker_width/2.0);
             marker_offset_y = MS_NINT(marker_height/2.0);
 

@@ -1293,7 +1293,7 @@ int msDrawLabel(imageObj *image, pointObj labelPnt, char *string,
     pointObj p;
     rectObj r;
 
-    if(msGetLabelSize(string, label, &r, fontset) == -1) return(-1);
+    if(msGetLabelSize(string, label, &r, fontset, scalefactor) == -1) return(-1);
     p = get_metrics(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 0, NULL);
     msDrawText(image, p, string, label, fontset, scalefactor); /* actually draw the label */
   } else {
