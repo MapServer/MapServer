@@ -202,6 +202,11 @@
         return msQueryByShape(map, self->index, shape);
     }
 
+    resultCacheObj *getResults(void)
+    {
+        return self->resultcache;
+    }
+        
     int setFilter(char *filter) 
     {
         if (!filter || strlen(filter) == 0) {
