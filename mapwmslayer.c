@@ -6,7 +6,7 @@
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2001, Daniel Morissette, DM Solutions Group Inc
+ * Copyright (c) 2001-2002, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2002/01/24 18:31:14  dan
+ * Use REQUEST=map instead of REQUEST=Map for WMS 1.0.0 requests.
+ *
  * Revision 1.19  2002/01/22 23:00:04  dan
  * Added -DENABLE_STDERR_DEBUG in --enable-debug config option to
  * enable/disable msDebug() output to stderr.  Default is disabled.
@@ -464,7 +467,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         if (nVersion >= WMS_V_1_0_7)
             pszRequestParam = "GetMap";
         else
-            pszRequestParam = "Map";
+            pszRequestParam = "map";
 
         if (nVersion >= WMS_V_1_1_0)
             pszExceptionsParam = "application/vnd.ogc.se_inimage";
