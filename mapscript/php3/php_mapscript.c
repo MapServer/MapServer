@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.131  2002/12/24 05:19:23  dan
+ * Produce a warning in selectOutputFormat() if it fails.
+ *
  * Revision 1.130  2002/12/19 19:27:32  julien
  * use an absolute path in map->mappath
  *
@@ -4906,9 +4909,14 @@ DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_LONG(MS_FAILURE);
     }
 
-    nStatus = mapObj_selectOutputFormat(self, pImageType->value.str.val);
+    if ((nStatus = mapObj_selectOutputFormat(self, 
+                                 pImageType->value.str.val)) != MS_SUCCESS)
 
-    if(self->imagetype)
+    {
+        php3_error(E_WARNING, "Unable to set output format to '%s'", 
+                   pImageType->value.str.val);
+    }
+    else if(self->imagetype)
         _phpms_set_property_string(pThis,"imagetype", self->imagetype,E_ERROR);
 
     RETURN_LONG(nStatus);
