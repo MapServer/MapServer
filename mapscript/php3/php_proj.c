@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.5  2001/09/25 14:52:54  assefa
+ * Add pj_transform function.
+ *
  * Revision 1.4  2001/02/23 20:35:57  assefa
  * Free function does not work for PHP4. Disable it for now.
  *
@@ -51,7 +54,7 @@
  *  This is a PHP module that gives acces to basic PROJ4 projection 
  *  functionalities.
  *
- * There are four functions available in this module :
+ * There following functions available in this module :
  *
  * 1) pj_init : create and initializes a projection structures
  * 
@@ -90,7 +93,32 @@
  *              printf("lat = %f<br>\n", $ret["u"]);
  *              printf("lon = %f<br>\n",$ret["v"]);
  *
- * 4) pj_free : frees PJ structure
+ *
+ * 4) pj_transform : pj_transform(PJ pjsrc, PJ pjdst, double x, double y)
+ *      transforms coordinates from source projection to 
+ *                   destination projection.
+ *
+ *   Example :  $projarray[0] = "proj=lcc";
+ *              $projarray[1] = "ellps=GRS80";
+ *              $projarray[2] = "lat_0=49";
+ *              $projarray[3] = "lon_0=-95";
+ *              $projarray[4] = "lat_1=49";
+ *              $projarray[5] = "lat_2=77";
+ *              $projarray[6] = "";
+ *
+ *              $pjlcc = pj_init($projarray);
+ *              $projarray2[0] = "proj=latlong";
+ *              $pjlat = pj_init($projarray2);
+ *
+ *              $ingeox = 1537490.335842;
+ *              $ingeoy = -181633.471555;
+ *
+ *              $ret = pj_datum_transform($pjlcc, $pjlat, $ingeox, $ingeoy);
+ *
+ * 5) pj_datum_transform : pj_datum_transform(PJ pjsrc, PJ pjdst, double x, double y)
+ *        
+ *
+ * 6) pj_free : frees PJ structure
  *     
  *  void pj_free(PJ pj); 
  *
@@ -135,6 +163,8 @@
 DLEXPORT void php_proj_pj_init(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_proj_pj_fwd(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_proj_pj_free(INTERNAL_FUNCTION_PARAMETERS);
 
 
@@ -156,6 +186,8 @@ function_entry php_proj_functions[] = {
     {"pj_fwd",  php_proj_pj_fwd,   NULL},
     {"pj_inv",  php_proj_pj_inv,   NULL}, 
     {"pj_init",  php_proj_pj_init,   NULL},
+    {"pj_transform",  php_proj_pj_transform,   NULL},
+    {"pj_datum_transform",  php_proj_pj_datum_transform,   NULL},
     {"pj_free",  php_proj_pj_free,   NULL},
     {NULL, NULL, NULL}
 };
@@ -462,6 +494,182 @@ DLEXPORT void php_proj_pj_inv(INTERNAL_FUNCTION_PARAMETERS)
 
     add_assoc_double(return_value, "u", pntReturn.v);
     add_assoc_double(return_value, "v", pntReturn.u);
+}
+
+/************************************************************************/
+/*    DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS) */
+/*                                                                      */
+/*       Transform coordinates from source projection to destination    */
+/*      projection.                                                     */
+/*                                                                      */
+/*       Parameters :                                                   */
+/*                                                                      */
+/*         - PJ *srcdefn,                                               */
+/*         - PJ *dstdefn,                                               */
+/*         - double x                                                   */
+/*         - double y                                                   */
+/*                                                                      */
+/************************************************************************/
+DLEXPORT void php_proj_pj_transform(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+    pval        *p1, *p2;
+    pval        *pjin, *pjout = NULL;
+    PJ          *in = NULL;
+    PJ          *out = NULL;
+    projUV      pnt = {0, 0};
+    double      z = 0;
+    int         error = -1;
+/* -------------------------------------------------------------------- */
+/*      extract parameters.                                             */
+/* -------------------------------------------------------------------- */
+    if (getParameters(ht, 4, &pjin , &pjout, &p1, &p2) != SUCCESS)
+    {           
+        WRONG_PARAM_COUNT;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      initilize return array.                                         */
+/* -------------------------------------------------------------------- */
+    if (array_init(return_value) == FAILURE) 
+    {
+        RETURN_FALSE;
+    }
+    
+    convert_to_double(p1);
+    convert_to_double(p2);
+
+    in = (PJ *)_phpms_fetch_handle(pjin, 
+                                   PHPMS_GLOBAL(le_projobj), list);
+
+    out = (PJ *)_phpms_fetch_handle(pjout, 
+                                    PHPMS_GLOBAL(le_projobj), list);
+
+    if (in && out)
+    {
+        pnt.u = p1->value.dval;
+        pnt.v = p2->value.dval;
+        
+        if( pj_is_latlong(in) )
+        {
+            pnt.u *= DEG_TO_RAD;
+            pnt.v *= DEG_TO_RAD;
+        }
+
+        error = pj_transform(in, out, 1, 0, 
+                             &(pnt.u), &(pnt.v), &z );
+
+        if( pj_is_latlong(out) )
+        {
+            pnt.u *= RAD_TO_DEG;
+            pnt.v *= RAD_TO_DEG;
+        }
+    }
+
+    if (error)
+    {
+        php_error(E_ERROR,"Error in pj_transform"); 
+                  
+        RETURN_LONG(-1);
+    }
+    else
+    {
+        add_assoc_double(return_value, "u", pnt.u);
+        add_assoc_double(return_value, "v", pnt.v);
+    }
+}
+
+
+
+/************************************************************************/
+/*                                 DLEXPORT                             */
+/*      void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)  */
+/*                                                                      */
+/*         Datum from source projection to destination                  */
+/*        projection.                                                   */
+/*                                                                      */
+/*         Parameters :                                                 */
+/*                                                                      */
+/*           - PJ *srcdefn,                                             */
+/*           - PJ *dstdefn,                                             */
+/*           - double x                                                 */
+/*           - double y                                                 */
+/*                                                                      */
+/************************************************************************/
+DLEXPORT void php_proj_pj_datum_transform(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+    pval        *p1, *p2;
+    pval        *pjin, *pjout = NULL;
+    PJ          *in = NULL;
+    PJ          *out = NULL;
+    projUV      pnt = {0, 0};
+    double      z = 0;
+    int         error = -1;
+/* -------------------------------------------------------------------- */
+/*      extract parameters.                                             */
+/* -------------------------------------------------------------------- */
+    if (getParameters(ht, 4, &pjin , &pjout, &p1, &p2) != SUCCESS)
+    {           
+        WRONG_PARAM_COUNT;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      initilize return array.                                         */
+/* -------------------------------------------------------------------- */
+    if (array_init(return_value) == FAILURE) 
+    {
+        RETURN_FALSE;
+    }
+    
+    convert_to_double(p1);
+    convert_to_double(p2);
+
+    in = (PJ *)_phpms_fetch_handle(pjin, 
+                                   PHPMS_GLOBAL(le_projobj), list);
+
+    out = (PJ *)_phpms_fetch_handle(pjout, 
+                                    PHPMS_GLOBAL(le_projobj), list);
+
+    if (in && out)
+    {
+        pnt.u = p1->value.dval;
+        pnt.v = p2->value.dval;
+        
+        if( pj_is_latlong(in) )
+        {
+            pnt.u *= DEG_TO_RAD;
+            pnt.v *= DEG_TO_RAD;
+        }
+
+        error = pj_transform(in, out, 1, 0, 
+                             &(pnt.u), &(pnt.v), &z );
+
+        if (!error)
+        {
+            if( pj_is_latlong(out) )
+            {
+                pnt.u *= RAD_TO_DEG;
+                pnt.v *= RAD_TO_DEG;
+            }
+        }
+    }
+
+    if (error)
+    {
+        php_error(E_ERROR,"Error in pj_datum_transform");
+                  
+        RETURN_LONG(-1);
+    }
+    else
+    {
+        add_assoc_double(return_value, "u", pnt.u);
+        add_assoc_double(return_value, "v", pnt.v);
+    }
 }
 
 /************************************************************************/
