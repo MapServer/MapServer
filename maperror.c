@@ -52,7 +52,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES] = {"",
 						"Child array error.",
 						"WCS server error.",
 						"GEOS library error.",
-                        "Invalid rectangle."
+						"Invalid rectangle.",
+						"Date/time error."
 };
 
 #ifndef USE_THREAD

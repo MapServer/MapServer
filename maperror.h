@@ -40,7 +40,8 @@ extern "C" {
 #define MS_WCSERR 32
 #define MS_GEOSERR 33
 #define MS_RECTERR 34
-#define MS_NUMERRORCODES 35
+#define MS_TIMEERR 36
+#define MS_NUMERRORCODES 37
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64
