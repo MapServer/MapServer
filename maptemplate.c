@@ -769,7 +769,8 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
       else
       {
          // Create an image corresponding to the current class
-         if ( nIdxClass > map->layers[nIdxLayer].numclasses || nIdxClass < 0)
+         if (map->layers[nIdxLayer].numclasses <= 0 || 
+             nIdxClass > map->layers[nIdxLayer].numclasses || nIdxClass < 0)
          {
              // Nonexistent class.  Create an empty image
              img = msCreateLegendIcon(map, NULL, NULL, nWidth, nHeight);
