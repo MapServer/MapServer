@@ -274,6 +274,13 @@ GD_HAS_GETBITMAPFONT=-DGD_HAS_GETBITMAPFONT
 REGEX_DIR=c:\projects\regex-0.12
 !ENDIF
 
+# FastCGI Support
+#
+# Uncomment, and update accordingly. 
+#FCGIDIR=C:\projects\fcgi-2.4.0
+#FCGILIB=$(FCGIDIR)\libfcgi\Debug\libfcgi.lib
+#FCGIINC=-I$(FCGIDIR)\include
+#FCGIDEF=-DUSE_FASTCGI
 
 ########################################################################
 # Section III: Debug flags
@@ -450,7 +457,7 @@ EXTERNAL_LIBS=$(GD_LIBS) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
-     $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB)
+     $(ORACLE_LIB) $(SDE_LIB) $(ICONV_LIB) $(FCGILIB)
 
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
@@ -459,13 +466,13 @@ INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC)  \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
          $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
-         $(ICONV_INC)
+         $(ICONV_INC) $(FCGIINC)
         
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS)  -DWIN32 -D_WIN32 \
           $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) \
           $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(NEED_NONBLOCKING_STDERR) $(ENABLE_STDERR_DEBUG) \
-          $(GDAL)  \
+          $(GDAL) $(FCGIDEF) \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
         $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) $(SDE_OPT) $(ICONV)
 
