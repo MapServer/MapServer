@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.11  2000/09/08 21:27:13  dan
+ * Added map/layer setProjection() + missing members in several classes
+ *
  * Revision 1.10  2000/09/06 19:44:07  dan
  * Ported module to PHP4
  *
@@ -146,7 +149,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "1.1.000 (Aug 24, 2000)"
+#define PHP3_MS_VERSION "(Sep 8, 2000)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -179,6 +182,7 @@ DLEXPORT void php3_ms_free_stub(void *ptr) ;
 
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_drawLabelCache(INTERNAL_FUNCTION_PARAMETERS);
@@ -207,9 +211,9 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_lyr_firstFeature(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryUsingPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -227,6 +231,7 @@ DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_rect_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_rect_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_rect_setExtent(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_point_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS);
@@ -249,16 +254,7 @@ DLEXPORT void php3_ms_shapefile_gettransformed(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_getextent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS);
 
-DLEXPORT void php3_ms_feature_new(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_feature_setProperty(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_feature_next(INTERNAL_FUNCTION_PARAMETERS);
-
 DLEXPORT void php3_ms_web_setProperty(INTERNAL_FUNCTION_PARAMETERS);
-
-DLEXPORT void php3_ms_rect_new(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_rect_setProperty(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_rect_setExtent(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -281,9 +277,6 @@ static long _phpms_build_color_object(colorObj *pcolor,
                                       HashTable *list, pval *return_value);
 static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
                                       HashTable *list, pval *return_value);
-static long _phpms_build_feature_object(struct featureObj *pfeature, 
-                                        int parent_layer_id,
-                                        HashTable *list, pval *return_value);
 static long _phpms_build_web_object(webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_rect_object(rectObj *prect, int handle_type,
@@ -322,7 +315,6 @@ static int le_msline_ref;
 static int le_msshape_new;
 static int le_msshape_ref;
 static int le_msshapefile;
-static int le_msfeature;
 static int le_msweb;
 static int ls_msrefmap;
 
@@ -346,25 +338,21 @@ static zend_class_entry *queryresult_class_entry_ptr;
 static zend_class_entry *point_class_entry_ptr;
 static zend_class_entry *line_class_entry_ptr;
 static zend_class_entry *shape_class_entry_ptr;
-static zend_class_entry *feature_class_entry_ptr;
 static zend_class_entry *shapefile_class_entry_ptr;
 
 #endif
 
 function_entry php3_ms_functions[] = {
-    {"ms_newmapobj",    php3_ms_map_new,   NULL},
-    {"ms_newlayerobj",  php3_ms_lyr_new,   NULL},
-    {"ms_newclassobj",  php3_ms_class_new, NULL},
-    {"ms_newpointobj",  php3_ms_point_new, NULL},
-    {"ms_newlineobj",   php3_ms_line_new,  NULL},
-    {"ms_newshapeobj",  php3_ms_shape_new,  NULL},
+    {"ms_newmapobj",    php3_ms_map_new,        NULL},
+    {"ms_newlayerobj",  php3_ms_lyr_new,        NULL},
+    {"ms_newclassobj",  php3_ms_class_new,      NULL},
+    {"ms_newpointobj",  php3_ms_point_new,      NULL},
+    {"ms_newlineobj",   php3_ms_line_new,       NULL},
+    {"ms_newshapeobj",  php3_ms_shape_new,      NULL},
     {"ms_newshapefileobj", php3_ms_shapefile_new,  NULL},
-    {"ms_newrectobj",      php3_ms_rect_new,  NULL},
-#ifdef ___TODO__FEATURE_OBJ__
-    {"ms_newfeatureobj",   php3_ms_feature_new,  NULL},
-#endif
-    {"ms_getcwd",    php3_ms_getcwd,   NULL},
-    {"ms_getpid",    php3_ms_getpid,   NULL},
+    {"ms_newrectobj",      php3_ms_rect_new,    NULL},
+    {"ms_getcwd",       php3_ms_getcwd,         NULL},
+    {"ms_getpid",       php3_ms_getpid,         NULL},
     {NULL, NULL, NULL}
 };
 
@@ -386,125 +374,118 @@ DLEXPORT php3_module_entry *get_module(void) { return &php3_ms_module_entry; }
 #endif
 
 /* -------------------------------------------------------------------- */
-/*      class entries definitions.                                      */
+/*      Class method definitions.                                       */
+/*      We use those to initialize objects in both PHP3 and PHP4        */
+/*      through _phpms_object_init()                                    */
 /* -------------------------------------------------------------------- */
-#ifdef PHP4
 function_entry php_map_class_functions[] = {
-    {"set",	php3_ms_map_setProperty,	NULL},
-    {"addcolor",	php3_ms_map_addColor,	NULL},
-    {"draw",	php3_ms_map_draw,	NULL},
-    {"drawlabelcache",	php3_ms_map_drawLabelCache,	NULL},
-    {"drawlegend",	php3_ms_map_drawLegend,	NULL},
-    {"drawreferencemap",	php3_ms_map_drawReferenceMap,	NULL},
-    {"drawscalebar",	php3_ms_map_drawScaleBar,	NULL},
-    {"getlayer",	php3_ms_map_getLayer,	NULL},
-    {"getlayerbyname",	php3_ms_map_getLayerByName,	NULL},
-    {"getcolorbyindex",	php3_ms_map_getColorByIndex,	NULL},
-    {"setextent",	php3_ms_map_setExtent,	NULL},
-    {"zoompoint",	php3_ms_map_zoomPoint,	NULL},
-    {"zoomrectangle",	php3_ms_map_zoomRectangle,	NULL},
-    {"queryusingpoint",	php3_ms_map_queryUsingPoint,	NULL},
-    {"queryusingrect",	php3_ms_map_queryUsingRect,	NULL},
-    {"save",	php3_ms_map_save,	NULL},
+    {"set",             php3_ms_map_setProperty,        NULL},
+    {"setprojection",   php3_ms_map_setProjection,      NULL},
+    {"addcolor",        php3_ms_map_addColor,           NULL},
+    {"draw",            php3_ms_map_draw,               NULL},
+    {"drawlabelcache",  php3_ms_map_drawLabelCache,     NULL},
+    {"drawlegend",      php3_ms_map_drawLegend,         NULL},
+    {"drawreferencemap",php3_ms_map_drawReferenceMap,   NULL},
+    {"drawscalebar",    php3_ms_map_drawScaleBar,       NULL},
+    {"getlayer",        php3_ms_map_getLayer,           NULL},
+    {"getlayerbyname",  php3_ms_map_getLayerByName,     NULL},
+    {"getcolorbyindex", php3_ms_map_getColorByIndex,    NULL},
+    {"setextent",       php3_ms_map_setExtent,          NULL},
+    {"zoompoint",       php3_ms_map_zoomPoint,          NULL},
+    {"zoomrectangle",   php3_ms_map_zoomRectangle,      NULL},
+    {"queryusingpoint", php3_ms_map_queryUsingPoint,    NULL},
+    {"queryusingrect",  php3_ms_map_queryUsingRect,     NULL},
+    {"save",            php3_ms_map_save,               NULL},
     {NULL, NULL, NULL}
 };
 
 function_entry php_img_class_functions[] = {
-    {"saveimage",	php3_ms_img_saveImage,	NULL},
-    {"savewebimage",	php3_ms_img_saveWebImage,	NULL},
-    {"free",	php3_ms_img_free,	NULL},    
+    {"saveimage",       php3_ms_img_saveImage,          NULL},
+    {"savewebimage",    php3_ms_img_saveWebImage,       NULL},
+    {"free",            php3_ms_img_free,               NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_rect_class_functions[] = {
-    {"set",	php3_ms_rect_setProperty,	NULL},    
-    {"setextent",	php3_ms_rect_setExtent,	NULL},    
+    {"set",             php3_ms_rect_setProperty,       NULL},    
+    {"setextent",       php3_ms_rect_setExtent,         NULL},    
+    {"draw",            php3_ms_rect_draw,              NULL},
     {NULL, NULL, NULL}
 };
 
 function_entry php_color_class_functions[] = {
-    {"setrgb",	php3_ms_color_setRGB,	NULL},    
+    {"setrgb",          php3_ms_color_setRGB,           NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_web_class_functions[] = {
-    {"set",	php3_ms_web_setProperty,	NULL},    
+    {"set",             php3_ms_web_setProperty,        NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_reference_class_functions[] = {
-    {"set",	php3_ms_referenceMap_setProperty,	NULL},    
+    {"set",             php3_ms_referenceMap_setProperty,NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_layer_class_functions[] = {
-    {"set",	php3_ms_lyr_setProperty,	NULL},    
-    {"draw",	php3_ms_lyr_draw,	NULL},    
-    {"getclass",	php3_ms_lyr_getClass,	NULL},    
-#ifdef __TODO__FEATURE_OBJ__
-    {"firstfeature",	php3_ms_lyr_firstFeature,	NULL},    
-#endif
-    {"queryusingpoint",	php3_ms_lyr_queryUsingPoint,	NULL},    
-    {"queryusingrect",	php3_ms_lyr_queryUsingRect,	NULL},    
+    {"set",             php3_ms_lyr_setProperty,        NULL},    
+    {"draw",            php3_ms_lyr_draw,               NULL},    
+    {"getclass",        php3_ms_lyr_getClass,           NULL},    
+    {"queryusingpoint", php3_ms_lyr_queryUsingPoint,    NULL},    
+    {"queryusingrect",  php3_ms_lyr_queryUsingRect,     NULL},    
+    {"setprojection",   php3_ms_lyr_setProjection,      NULL},
     {NULL, NULL, NULL}
 };
 
 function_entry php_label_class_functions[] = {
-    {"set",	php3_ms_label_setProperty,	NULL},    
+    {"set",             php3_ms_label_setProperty,      NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_class_class_functions[] = {
-    {"set",	php3_ms_class_setProperty,	NULL},    
-    {"setexpression",	php3_ms_class_setExpression,	NULL},    
+    {"set",             php3_ms_class_setProperty,      NULL},    
+    {"setexpression",   php3_ms_class_setExpression,    NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_queryresult_class_functions[] = {
-    {"set",	php3_ms_queryresult_setProperty,	NULL},    
-    {"free",	php3_ms_queryresult_free,	NULL},    
-    {"next",	php3_ms_queryresult_next,	NULL},    
-    {"rewind",	php3_ms_queryresult_rewind,	NULL},    
+    {"set",             php3_ms_queryresult_setProperty,NULL},    
+    {"free",            php3_ms_queryresult_free,       NULL},    
+    {"next",            php3_ms_queryresult_next,       NULL},    
+    {"rewind",          php3_ms_queryresult_rewind,     NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_point_class_functions[] = {
-    {"setxy",	php3_ms_point_setXY,	NULL},    
+    {"setxy",           php3_ms_point_setXY,            NULL},    
+    {"draw",            php3_ms_point_draw,             NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_line_class_functions[] = {
-    {"add",	php3_ms_line_add,	NULL},    
-    {"addxy",	php3_ms_line_addXY,	NULL},    
-    {"point",	php3_ms_line_point,	NULL},    
+    {"add",             php3_ms_line_add,               NULL},    
+    {"addxy",           php3_ms_line_addXY,             NULL},    
+    {"point",           php3_ms_line_point,             NULL},    
     {NULL, NULL, NULL}
 };
 
 function_entry php_shape_class_functions[] = {
-    {"add",	php3_ms_shape_add,	NULL},    
-    {"point",	php3_ms_shape_line,	NULL},    
-    {"draw",	php3_ms_shape_draw,	NULL},    
+    {"add",             php3_ms_shape_add,              NULL},    
+    {"line",            php3_ms_shape_line,             NULL},    
+    {"draw",            php3_ms_shape_draw,             NULL},    
     {NULL, NULL, NULL}
 };
-
-#ifdef __TODO__FEATURE_OBJ__
-function_entry php_feature_class_functions[] = {
-    {"set",	php3_ms_feature_setProperty,	NULL},    
-    {"next",	php3_ms_feature_next,	NULL},    
-    {NULL, NULL, NULL}
-};
-#endif
 
 function_entry php_shapefile_class_functions[] = {
-    {"getshape",	php3_ms_shapefile_getshape,	NULL},    
-    {"gettransformed",	php3_ms_shapefile_gettransformed,	NULL},    
-    {"getextent",	php3_ms_shapefile_getextent,	NULL},    
-    {"addshape",	php3_ms_shapefile_addshape,	NULL},    
-    {"free",	php3_ms_shapefile_free,	NULL},    
+    {"getshape",        php3_ms_shapefile_getshape,     NULL},    
+    {"gettransformed",  php3_ms_shapefile_gettransformed, NULL},    
+    {"getextent",       php3_ms_shapefile_getextent,    NULL},    
+    {"addshape",        php3_ms_shapefile_addshape,     NULL},    
+    {"free",            php3_ms_shapefile_free,         NULL},    
     {NULL, NULL, NULL}
 };
 
-#endif
 
 
 #ifdef ZEND_VERSION 
@@ -530,6 +511,12 @@ DLEXPORT void php3_info_mapscript(void)
 #endif
 #ifdef USE_JPEG
     php3_printf(" -JPEG");
+#endif
+#ifdef USE_SDE
+    php3_printf(" -SDE");
+#endif
+#ifdef USE_OGR
+    php3_printf(" -OGR");
 #endif
 #ifdef USE_EGIS
     php3_printf(" -EGIS");
@@ -575,8 +562,6 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     PHPMS_GLOBAL(le_msshapefile)= 
                               register_list_destructors(php3_ms_free_shapefile,
                                                         NULL);
-    PHPMS_GLOBAL(le_msfeature)= register_list_destructors(php3_ms_free_stub,
-                                                        NULL);
     PHPMS_GLOBAL(le_msweb)= register_list_destructors(php3_ms_free_stub,
                                                       NULL);
     PHPMS_GLOBAL(ls_msrefmap)= register_list_destructors(php3_ms_free_stub,
@@ -613,11 +598,20 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_NULL",       MS_NULL,        const_flag);
 
     /* layer status constants (see also MS_ON, MS_OFF) */
+    REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
     REGISTER_LONG_CONSTANT("MS_QUERY",      MS_QUERY,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_EMBED",      MS_EMBED,       const_flag);
 
     /* font type constants*/
     REGISTER_LONG_CONSTANT("MS_TRUETYPE",   MS_TRUETYPE,    const_flag);
     REGISTER_LONG_CONSTANT("MS_BITMAP",     MS_BITMAP,      const_flag);
+
+    /* bitmap font style constants */
+    REGISTER_LONG_CONSTANT("MS_TINY",       MS_TINY,        const_flag);
+    REGISTER_LONG_CONSTANT("MS_SMALL",      MS_SMALL,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_MEDIUM",     MS_MEDIUM,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_LARGE",      MS_LARGE,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_GIANT",      MS_GIANT,       const_flag);
 
     /* label position constants*/
     REGISTER_LONG_CONSTANT("MS_UL",         MS_UL,          const_flag);
@@ -629,6 +623,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_UC",         MS_UC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_LC",         MS_LC,          const_flag);
     REGISTER_LONG_CONSTANT("MS_AUTO",       MS_AUTO,        const_flag);
+    REGISTER_LONG_CONSTANT("MS_XY",         MS_XY,          const_flag);
 
     /* shapefile type constants*/
     REGISTER_LONG_CONSTANT("MS_SHP_POINT",  MS_SHP_POINT,   const_flag);
@@ -639,6 +634,17 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     /* query/join type constants*/
     REGISTER_LONG_CONSTANT("MS_SINGLE",     MS_SINGLE,      const_flag);
     REGISTER_LONG_CONSTANT("MS_MULTIPLE",   MS_MULTIPLE,    const_flag);
+
+    /* connection type constants*/
+    REGISTER_LONG_CONSTANT("MS_LOCAL",      MS_LOCAL,       const_flag);
+    REGISTER_LONG_CONSTANT("MS_SDE",        MS_SDE,         const_flag);
+    REGISTER_LONG_CONSTANT("MS_OGR",        MS_OGR,         const_flag);
+
+    /* querymap style constants */
+    REGISTER_LONG_CONSTANT("MS_NORMAL",     MS_NORMAL,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_HILITE",     MS_HILITE,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_SELECTED",   MS_SELECTED,    const_flag);
+    REGISTER_LONG_CONSTANT("MS_INVERTED",   MS_INVERTED,    const_flag);
 
     /* We'll use tmpId and tmpCount to generate unique filenames */
     sprintf(PHPMS_GLOBAL(tmpId), "%ld%d",(long)time(NULL),(int)getpid());
@@ -686,11 +692,6 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     INIT_CLASS_ENTRY(tmp_class_entry, "shape", php_shape_class_functions);
     shape_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
     
-#ifdef __TODO__FEATURE_OBJ__
-    INIT_CLASS_ENTRY(tmp_class_entry, "feature", php_feature_class_functions);
-    feature_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
-#endif
-
     INIT_CLASS_ENTRY(tmp_class_entry, "shapefile", 
                      php_shapefile_class_functions);
     shapefile_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
@@ -796,19 +797,11 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Create a PHP object, add all mapObj methods, etc.
      */
-#ifdef PHP4
-    object_init_ex(return_value, map_class_entry_ptr);
-#else
-    object_init(return_value);
-#endif
-
     map_id = php3_list_insert(pNewObj, PHPMS_GLOBAL(le_msmap));
 
-#ifdef PHP4
-    add_property_resource(return_value, "_handle_", map_id);
-#else
-    add_property_long(return_value, "_handle_", map_id);
-#endif
+    _phpms_object_init(return_value, map_id, php_map_class_functions,
+                       PHP4_CLASS_ENTRY(map_class_entry_ptr));
+
     /* read-only properties */
     add_property_long(return_value, "numlayers", pNewObj->numlayers);
 
@@ -825,8 +818,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
 
     _phpms_add_property_object(return_value, "extent", &new_obj_param,E_ERROR);
 
-
     add_property_double(return_value,"cellsize",  pNewObj->cellsize);
+    add_property_long(return_value,  "units",     pNewObj->units);
     add_property_double(return_value,"scale",     pNewObj->scale);
     PHPMS_ADD_PROP_STR(return_value, "shapepath", pNewObj->shapepath);
     PHPMS_ADD_PROP_STR(return_value, "tile",      pNewObj->tile);
@@ -850,34 +843,6 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
                                      &new_obj_param);
     _phpms_add_property_object(return_value, 
                                "reference", &new_obj_param, E_ERROR);
-
-    /* methods */
-#ifndef PHP4    
-    add_method(return_value, "set",             php3_ms_map_setProperty);
-    add_method(return_value, "addcolor",        php3_ms_map_addColor);
-    add_method(return_value, "prepareimage",    php3_ms_map_prepareImage);
-    add_method(return_value, "draw",            php3_ms_map_draw);
-    add_method(return_value, "drawlabelcache",  php3_ms_map_drawLabelCache);
-    add_method(return_value, "drawlegend",      php3_ms_map_drawLegend);
-    add_method(return_value, "drawreferencemap",php3_ms_map_drawReferenceMap);
-    add_method(return_value, "drawscalebar",    php3_ms_map_drawScaleBar);
-    add_method(return_value, "getlayer",        php3_ms_map_getLayer);
-    add_method(return_value, "getlayerbyname",  php3_ms_map_getLayerByName);
-#ifdef __TODO__
-    add_method(return_value, "getsymbolbyname", php3_ms_map_getSymbolByName);
-    add_method(return_value, "nextlabel",       php3_ms_map_nextLabel);
-#endif
-    add_method(return_value, "getcolorbyindex",  php3_ms_map_getColorByIndex);
-
-    add_method(return_value, "setextent",       php3_ms_map_setExtent);
-    add_method(return_value, "zoompoint",       php3_ms_map_zoomPoint);
-    add_method(return_value, "zoomrectangle",   php3_ms_map_zoomRectangle);
-    
-    add_method(return_value, "queryusingpoint", php3_ms_map_queryUsingPoint);
-    add_method(return_value, "queryusingrect",  php3_ms_map_queryUsingRect);
-
-    add_method(return_value, "save",            php3_ms_map_save);
-#endif
 
     return;
 }
@@ -929,6 +894,7 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "transparent", self->transparent)
     else IF_SET_LONG(  "interlace",   self->interlace)
     else IF_SET_DOUBLE("cellsize",    self->cellsize)
+    else IF_SET_LONG(  "units",       self->units)
     else IF_SET_DOUBLE("scale",       self->scale)
     else IF_SET_STRING("shapepath",   self->shapepath)
     else IF_SET_STRING("tile",        self->tile)
@@ -1043,6 +1009,53 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
 }
+
+/**********************************************************************
+ *                        map->setProjection()
+ **********************************************************************/
+
+/* {{{ proto int map.setProjection(string projection)
+   Set projection and coord. system for the map. Returns -1 on error. */
+
+DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj *self;
+    pval   *pProjString;
+    pval   *pThis;
+    int     nStatus = 0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pProjString) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pProjString);
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    if (self == NULL || 
+        (nStatus = mapObj_setProjection(self, 
+                                        pProjString->value.str.val)) == -1)
+        _phpms_report_mapserver_error(E_ERROR);
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
 
 /* ==================================================================== */
 /*      Zoom related functions.                                         */
@@ -2145,20 +2158,8 @@ static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
 
     img_id = php3_list_insert(im, PHPMS_GLOBAL(le_msimg));
 
-#ifdef PHP4
-    object_init_ex(return_value, img_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", img_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", img_id);
-    
-#endif
-
-#ifndef PHP4 
-    add_method(return_value, "saveimage", php3_ms_img_saveImage);
-    add_method(return_value, "savewebimage", php3_ms_img_saveWebImage);
-    add_method(return_value, "free", php3_ms_img_free);
-#endif
+    _phpms_object_init(return_value, img_id, php_img_class_functions,
+                       PHP4_CLASS_ENTRY(img_class_entry_ptr));
 
     /* width/height params are read-only */
     add_property_long(return_value, "width", gdImageSX(im));
@@ -2366,19 +2367,16 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     
     layer_id = php3_list_insert(player, PHPMS_GLOBAL(le_mslayer));
 
-#ifdef PHP4
-    object_init_ex(return_value, layer_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", layer_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", layer_id);
-#endif
+    _phpms_object_init(return_value, layer_id, php_layer_class_functions,
+                       PHP4_CLASS_ENTRY(layer_class_entry_ptr));
 
     add_property_long(return_value, "_map_handle_", parent_map_id);
 
     /* read-only properties */
     add_property_long(return_value,   "numclasses", player->numclasses);
     add_property_long(return_value,   "index",      player->index);
+    PHPMS_ADD_PROP_STR(return_value,  "queryitem",  player->queryitem);
+    add_property_long(return_value,   "numqueries", player->numqueries);
 
     /* editable properties */
     add_property_long(return_value,   "status",     player->status);
@@ -2400,6 +2398,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_long(return_value,   "offsite",    player->offsite);
     add_property_long(return_value,   "transform",  player->transform);
     add_property_long(return_value,   "labelcache", player->labelcache);
+    add_property_long(return_value,   "postlabelcache",player->postlabelcache);
     PHPMS_ADD_PROP_STR(return_value,  "labelitem",  player->labelitem);
     PHPMS_ADD_PROP_STR(return_value,  "labelsizeitem",player->labelsizeitem);
     PHPMS_ADD_PROP_STR(return_value,  "labelangleitem",player->labelangleitem);
@@ -2407,17 +2406,8 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "tileindex",  player->tileindex);
     PHPMS_ADD_PROP_STR(return_value,  "header",     player->header);
     PHPMS_ADD_PROP_STR(return_value,  "footer",     player->footer);
-
-#ifndef PHP4
-    add_method(return_value, "set",      php3_ms_lyr_setProperty);
-    add_method(return_value, "draw",     php3_ms_lyr_draw);
-    add_method(return_value, "getclass", php3_ms_lyr_getClass);
-#ifdef __TODO__FEATURE_OBJ__
-    add_method(return_value, "firstfeature", php3_ms_lyr_firstFeature);
-#endif
-    add_method(return_value, "queryusingpoint", php3_ms_lyr_queryUsingPoint);
-    add_method(return_value, "queryusingrect", php3_ms_lyr_queryUsingRect);
-#endif
+    PHPMS_ADD_PROP_STR(return_value,  "connection", player->connection);
+    add_property_long(return_value,   "connectiontype",player->connectiontype);
 
     return layer_id;
 }
@@ -2521,6 +2511,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "offsite",    self->offsite)
     else IF_SET_LONG(  "transform",  self->transform)
     else IF_SET_LONG(  "labelcache", self->labelcache)
+    else IF_SET_LONG(  "postlabelcache", self->postlabelcache)
     else IF_SET_STRING("labelitem",  self->labelitem)
     else IF_SET_STRING("labelsizeitem",self->labelsizeitem)
     else IF_SET_STRING("labelangleitem",self->labelangleitem)
@@ -2528,8 +2519,12 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("tileindex",  self->tileindex)
     else IF_SET_STRING("header",     self->header)
     else IF_SET_STRING("footer",     self->footer)
+    else IF_SET_STRING("connection", self->connection)
+    else IF_SET_LONG(  "connectiontype", self->connectiontype)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
-             strcmp( "index",      pPropertyName->value.str.val) == 0)
+             strcmp( "index",      pPropertyName->value.str.val) == 0 ||
+             strcmp( "queryitem",  pPropertyName->value.str.val) == 0 ||
+             strcmp( "numqueries", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
                             pPropertyName->value.str.val);
@@ -2649,52 +2644,6 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
-#ifdef __TODO__FEATURE_OBJ__
-/**********************************************************************
- *                        layer->firstFeature()
- **********************************************************************/
-
-/* {{{ proto int layer.firstFeature()
-   Returns a reference to the first featureObj in this layer, or 0 if the layer contains no featureObj yet. */
-
-DLEXPORT void php3_ms_lyr_firstFeature(INTERNAL_FUNCTION_PARAMETERS)
-{
-    pval       *pThis;
-    layerObj   *self;
-    int         layer_id;
-#ifdef PHP4
-    HashTable   *list=NULL;
-#endif
-
-#ifdef PHP4
-    pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
-    if (pThis == NULL || ARG_COUNT(ht) > 0)
-    {
-        WRONG_PARAM_COUNT;
-    }
-
-    self = (layerObj*)_phpms_fetch_handle(pThis,PHPMS_GLOBAL(le_mslayer),list);
-
-    if (self==NULL || self->features == NULL)
-    {
-        /* Return 0 when we reach the last feature of the list. */
-        RETURN_LONG(0);
-    }
-
-    layer_id = _phpms_fetch_property_long(pThis, "_handle_", E_ERROR);
-
-    /* Return reference to the feature.  Reference is valid only
-     * during the life of this layerObj.
-     */
-    _phpms_build_feature_object(self->features, layer_id, list, return_value);
-}
-/* }}} */
-
-#endif /* __TODO__FEATURE_OBJ__ */
 
 
 /**********************************************************************
@@ -2815,6 +2764,53 @@ DLEXPORT void php3_ms_lyr_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        layer->setProjection()
+ **********************************************************************/
+
+/* {{{ proto int layer.setProjection(string projection)
+   Set projection and coord. system for the layer. Returns -1 on error. */
+
+DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pProjString;
+    pval   *pThis;
+    int     nStatus = 0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pProjString) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pProjString);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    if (self == NULL || 
+        (nStatus = layerObj_setProjection(self, 
+                                          pProjString->value.str.val)) == -1)
+        _phpms_report_mapserver_error(E_ERROR);
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
 
 /*=====================================================================
  *                 PHP function wrappers - labelObj class
@@ -2833,13 +2829,8 @@ static long _phpms_build_label_object(labelObj *plabel,
 
     label_id = php3_list_insert(plabel, PHPMS_GLOBAL(le_mslabel));
 
-#ifdef PHP4
-    object_init_ex(return_value, label_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", label_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", label_id);
-#endif
+    _phpms_object_init(return_value, label_id, php_label_class_functions,
+                       PHP4_CLASS_ENTRY(label_class_entry_ptr));
 
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "font",       plabel->font);
@@ -2858,6 +2849,7 @@ static long _phpms_build_label_object(labelObj *plabel,
     add_property_long(return_value,   "backgroundshadowsizey",
                                                 plabel->backgroundshadowsizey);
     add_property_long(return_value,   "size",       plabel->size);
+    add_property_long(return_value,   "sizescaled", plabel->sizescaled);
     add_property_long(return_value,   "minsize",    plabel->minsize);
     add_property_long(return_value,   "maxsize",    plabel->maxsize);
     add_property_long(return_value,   "position",   plabel->position);
@@ -2873,10 +2865,6 @@ static long _phpms_build_label_object(labelObj *plabel,
     add_property_long(return_value,   "mindistance",plabel->mindistance);
     add_property_long(return_value,   "partials",   plabel->partials);
     add_property_long(return_value,   "force",      plabel->force);
-
-#ifndef PHP4
-    add_method(return_value, "set",    php3_ms_label_setProperty);
-#endif
 
     return label_id;
 }
@@ -2926,6 +2914,7 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "shadowsizex",  self->shadowsizex)
     else IF_SET_LONG(  "shadowsizey",  self->shadowsizey)
     else IF_SET_LONG(  "size",         self->size)
+    else IF_SET_LONG(  "sizescaled",   self->sizescaled)
     else IF_SET_LONG(  "minsize",      self->minsize)
     else IF_SET_LONG(  "maxsize",      self->maxsize)
     else IF_SET_LONG(  "position",     self->position)
@@ -2970,13 +2959,8 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
 
     class_id = php3_list_insert(pclass, PHPMS_GLOBAL(le_msclass));
 
-#ifdef PHP4
-    object_init_ex(return_value, class_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", class_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", class_id);
-#endif
+    _phpms_object_init(return_value, class_id, php_class_class_functions,
+                       PHP4_CLASS_ENTRY(class_class_entry_ptr));
 
     add_property_long(return_value, "_layer_handle_", parent_layer_id);
 
@@ -2985,19 +2969,28 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
     add_property_long(return_value,   "color",      pclass->color);
     add_property_long(return_value, "backgroundcolor",pclass->backgroundcolor);
     add_property_long(return_value,   "outlinecolor", pclass->outlinecolor);
+    add_property_long(return_value,   "overlaycolor", pclass->overlaycolor);
+    add_property_long(return_value, "overlaybackgroundcolor",
+                                               pclass->overlaybackgroundcolor);
+    add_property_long(return_value,   "overlayoutlinecolor", 
+                                               pclass->overlayoutlinecolor);
     add_property_long(return_value,   "symbol",     pclass->symbol);
     add_property_long(return_value,   "size",       pclass->size);
+    add_property_long(return_value,   "sizescaled", pclass->sizescaled);
     add_property_long(return_value,   "minsize",    pclass->minsize);
     add_property_long(return_value,   "maxsize",    pclass->maxsize);
     PHPMS_ADD_PROP_STR(return_value,  "symbolname", pclass->symbolname);
+    add_property_long(return_value,   "overlaysymbol", pclass->overlaysymbol);
+    add_property_long(return_value,   "overlaysize", pclass->overlaysize);
+    add_property_long(return_value,   "overlaysizescaled", 
+                                                pclass->overlaysizescaled);
+    add_property_long(return_value,   "overlayminsize",pclass->overlayminsize);
+    add_property_long(return_value,   "overlaymaxsize",pclass->overlaymaxsize);
+    PHPMS_ADD_PROP_STR(return_value,  "overlaysymbolname", 
+                                                pclass->overlaysymbolname);
 
     _phpms_build_label_object(&(pclass->label), list, &new_obj_param);
     _phpms_add_property_object(return_value, "label", &new_obj_param,E_ERROR);
-
-#ifndef PHP4
-    add_method(return_value, "set",    php3_ms_class_setProperty);
-    add_method(return_value, "setexpression",php3_ms_class_setExpression);
-#endif
 
     return class_id;
 }
@@ -3087,11 +3080,21 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "color",        self->color)
     else IF_SET_LONG(  "backgroundcolor",self->backgroundcolor)
     else IF_SET_LONG(  "outlinecolor", self->outlinecolor)
+    else IF_SET_LONG(  "overlaycolor", self->overlaycolor)
+    else IF_SET_LONG(  "overlaybackgroundcolor",self->overlaybackgroundcolor)
+    else IF_SET_LONG(  "overlayoutlinecolor", self->overlayoutlinecolor)
     else IF_SET_LONG(  "symbol",       self->symbol)
-    else IF_SET_STRING("symbolname",   self->symbolname)
     else IF_SET_LONG(  "size",         self->size)
+    else IF_SET_LONG(  "sizescaled",   self->sizescaled)
     else IF_SET_LONG(  "minsize",      self->minsize)
     else IF_SET_LONG(  "maxsize",      self->maxsize)
+    else IF_SET_STRING("symbolname",   self->symbolname)
+    else IF_SET_LONG(  "overlaysymbol",self->overlaysymbol)
+    else IF_SET_LONG(  "overlaysize",  self->overlaysize)
+    else IF_SET_LONG(  "overlaysizescaled", self->overlaysizescaled)
+    else IF_SET_LONG(  "overlayminsize", self->overlayminsize)
+    else IF_SET_LONG(  "overlaymaxsize", self->overlaymaxsize)
+    else IF_SET_STRING("overlaysymbolname", self->overlaysymbolname)
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
@@ -3170,22 +3173,13 @@ static long _phpms_build_color_object(colorObj *pcolor,
 
     color_id = php3_list_insert(pcolor, PHPMS_GLOBAL(le_mscolor));
 
-#ifdef PHP4
-    object_init_ex(return_value, color_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", color_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", color_id);
-#endif
+    _phpms_object_init(return_value, color_id, php_color_class_functions,
+                       PHP4_CLASS_ENTRY(color_class_entry_ptr));
 
     /* editable properties */
     add_property_long(return_value,   "red",   pcolor->red);
     add_property_long(return_value,   "green", pcolor->green);
     add_property_long(return_value,   "blue",  pcolor->blue);
-
-#ifndef PHP4
-     add_method(return_value, "setrgb", php3_ms_color_setRGB);
-#endif
 
     return color_id;
 }
@@ -3259,13 +3253,10 @@ static long _phpms_build_queryresult_object(queryResultObj *pquery,
         return 0;
 
     queryresult_id = php3_list_insert(pquery, PHPMS_GLOBAL(le_msqueryresult));
-#ifdef PHP4
-    object_init_ex(return_value, queryresult_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", queryresult_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", queryresult_id);
-#endif
+
+    _phpms_object_init(return_value, queryresult_id, 
+                       php_queryresult_class_functions,
+                       PHP4_CLASS_ENTRY(queryresult_class_entry_ptr));
 
     /* read-only properties */
     add_property_long(return_value, "numresults",     pquery->numresults);
@@ -3274,14 +3265,6 @@ static long _phpms_build_queryresult_object(queryResultObj *pquery,
     add_property_long(return_value, "currentlayer",   pquery->currentlayer);
     add_property_long(return_value, "currenttile",    pquery->currenttile);
     add_property_long(return_value, "currentshape",   pquery->currentshape);
-
-#ifndef PHP4
-    add_method(return_value, "free", php3_ms_queryresult_free);
-    add_method(return_value, "next", php3_ms_queryresult_next);
-    add_method(return_value, "rewind", php3_ms_queryresult_rewind);
-
-    add_method(return_value, "set",  php3_ms_queryresult_setProperty);
-#endif
 
     return queryresult_id;
 }
@@ -3522,21 +3505,12 @@ static long _phpms_build_point_object(pointObj *ppoint, int handle_type,
 
     point_id = php3_list_insert(ppoint, handle_type);
 
-#ifdef PHP4
-    object_init_ex(return_value, point_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", point_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", point_id);
-#endif
+    _phpms_object_init(return_value, point_id, php_point_class_functions,
+                       PHP4_CLASS_ENTRY(point_class_entry_ptr));
 
     /* editable properties */
     add_property_double(return_value,   "x",   ppoint->x);
     add_property_double(return_value,   "y",   ppoint->y);
-
-#ifndef PHP4
-    add_method(return_value, "setxy", php3_ms_point_setXY);
-#endif
 
     return point_id;
 }
@@ -3697,22 +3671,11 @@ static long _phpms_build_line_object(lineObj *pline, int handle_type,
 
     line_id = php3_list_insert(pline, handle_type);
 
-#ifdef PHP4
-    object_init_ex(return_value, line_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", line_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", line_id);
-#endif
+    _phpms_object_init(return_value, line_id, php_line_class_functions,
+                       PHP4_CLASS_ENTRY(line_class_entry_ptr));
 
     /* read-only properties */
     add_property_long(return_value, "numpoints", pline->numpoints);
-
-#ifndef PHP4
-    add_method(return_value, "add", php3_ms_line_add);
-    add_method(return_value, "addxy", php3_ms_line_addXY);
-    add_method(return_value, "point", php3_ms_line_point);
-#endif
 
     return line_id;
 }
@@ -3917,13 +3880,8 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
 
     shape_id = php3_list_insert(pshape, handle_type);
 
-#ifdef PHP4
-    object_init_ex(return_value, shape_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", shape_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", shape_id);
-#endif
+    _phpms_object_init(return_value, shape_id, php_shape_class_functions,
+                       PHP4_CLASS_ENTRY(shape_class_entry_ptr));
 
     /* read-only properties */
     add_property_long(return_value, "numlines", pshape->numlines);
@@ -3932,12 +3890,6 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
     _phpms_build_rect_object(&(pshape->bounds), PHPMS_GLOBAL(le_msrect_ref), 
                              list, &new_obj_param);
     _phpms_add_property_object(return_value, "bounds", &new_obj_param,E_ERROR);
-
-#ifndef PHP4
-    add_method(return_value, "add", php3_ms_shape_add);
-    add_method(return_value, "point", php3_ms_shape_line);
-    add_method(return_value, "draw", php3_ms_shape_draw);
-#endif
 
     return shape_id;
 }
@@ -4127,202 +4079,6 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
-#ifdef __TODO__FEATURE_OBJ__
-
-/*=====================================================================
- *                 PHP function wrappers - featureObj class
- *====================================================================*/
-
-/**********************************************************************
- *                     _phpms_build_feature_object()
- **********************************************************************/
-static long _phpms_build_feature_object(struct featureObj *pfeature, 
-                                        int parent_layer_id,
-                                        HashTable *list, pval *return_value)
-{
-    int feature_id;
-    pval new_obj_param;  /* No, it's not a pval * !!! */
-
-    if (pfeature == NULL)
-        return 0;
-
-    feature_id = php3_list_insert(pfeature, PHPMS_GLOBAL(le_msfeature));
- 
-#ifdef PHP4    
-    object_init_ex(return_value, feature_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", feature_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", feature_id);
-#endif
-
-    add_property_long(return_value, "_layer_handle_", parent_layer_id);
-
-    /* editable properties */
-    PHPMS_ADD_PROP_STR(return_value,  "class",      pfeature->class);
-    PHPMS_ADD_PROP_STR(return_value,  "text",       pfeature->text);
-
-    _phpms_build_shape_object(&(pfeature->shape), PHPMS_GLOBAL(le_msshape_ref),
-                              list, &new_obj_param);
-    _phpms_add_property_object(return_value, "shape", &new_obj_param, E_ERROR);
-
-#ifndef PHP4
-    add_method(return_value, "set",    php3_ms_feature_setProperty);
-    add_method(return_value, "next",   php3_ms_feature_next);
-#endif
-
-    return feature_id;
-}
-
-
-/**********************************************************************
- *                        ms_newFeatureObj()
- **********************************************************************/
-
-/* {{{ proto layerObj ms_newFeatureObj(layerObj layer)
-   Create a new inline feature in the specified layer. */
-
-DLEXPORT void php3_ms_feature_new(INTERNAL_FUNCTION_PARAMETERS)
-{
-    pval  *pLayerObj;
-    layerObj *parent_layer;
-    struct featureObj *pNewFeature;
-    int layer_id;
-#ifdef PHP4
-    HashTable   *list=NULL;
-#endif
-
-    if (getParameters(ht, 1, &pLayerObj) == FAILURE) 
-    {
-        WRONG_PARAM_COUNT;
-    }
-
-    parent_layer = (layerObj*)_phpms_fetch_handle(pLayerObj, 
-                                                  PHPMS_GLOBAL(le_mslayer),
-                                                  list);
-
-    if (parent_layer == NULL ||
-        (pNewFeature = featureObj_new(parent_layer)) == NULL)
-    {
-        _phpms_report_mapserver_error(E_ERROR);
-        RETURN_FALSE;
-    }
-
-    /* We will store a reference to the parent_layer object id inside
-     * the feature obj.
-     */
-    layer_id = _phpms_fetch_property_long(pLayerObj, "_handle_", E_ERROR);
-
-    /* Return feature object */
-    _phpms_build_feature_object(pNewFeature, layer_id, list, return_value);
-}
-/* }}} */
-
-
-/**********************************************************************
- *                        feature->set()
- **********************************************************************/
-
-/* {{{ proto int feature.set(string property_name, new_value)
-   Set object property to a new value. Returns -1 on error. */
-
-DLEXPORT void php3_ms_feature_setProperty(INTERNAL_FUNCTION_PARAMETERS)
-{
-    struct featureObj *self;
-    pval   *pPropertyName, *pNewValue, *pThis;
-#ifdef PHP4
-    HashTable   *list=NULL;
-#endif
-
-#ifdef PHP4
-    pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
-    if (pThis == NULL ||
-        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
-    {
-        WRONG_PARAM_COUNT;
-    }
-
-    self = (struct featureObj *)_phpms_fetch_handle(pThis, 
-                                                    PHPMS_GLOBAL(le_msfeature),
-                                                    list);
-    if (self == NULL)
-    {
-        RETURN_LONG(-1);
-    }
-
-    convert_to_string(pPropertyName);
-
-    IF_SET_STRING(      "class",   self->class)
-    else IF_SET_STRING( "text",    self->text)
-    else if (strcmp( "shape", pPropertyName->value.str.val) == 0)
-    {
-        php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
-                            pPropertyName->value.str.val);
-        RETURN_LONG(-1);
-    }         
-    else
-    {
-        php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
-                            pPropertyName->value.str.val);
-        RETURN_LONG(-1);
-    }
-
-    RETURN_LONG(0);
-}
-/* }}} */
-
-
-/**********************************************************************
- *                        feature->next()
- **********************************************************************/
-
-/* {{{ proto int feature.next()
-   Returns the next featureObj in the list for this layer. Returns 0 when the end of the list is reached. */
-
-DLEXPORT void php3_ms_feature_next(INTERNAL_FUNCTION_PARAMETERS)
-{
-    pval       *pThis;
-    struct featureObj *self;
-    int         layer_id;
-#ifdef PHP4
-    HashTable   *list=NULL;
-#endif
-
-#ifdef PHP4
-    pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
-    if (pThis == NULL || ARG_COUNT(ht) > 0)
-    {
-        WRONG_PARAM_COUNT;
-    }
-
-    self = (struct featureObj *)_phpms_fetch_handle(pThis, 
-                                                    PHPMS_GLOBAL(le_msfeature),
-                                                    list);
-
-    if (self==NULL || self->next == NULL)
-    {
-        /* Return 0 when we reach the last feature of the list. */
-        RETURN_LONG(0);
-    }
-
-    layer_id = _phpms_fetch_property_long(pThis, "_layer_handle_", E_ERROR);
-
-    /* Return reference to the next feature.  Reference is valid only
-     * during the life of the layerObj that contains the feature.
-     */
-    _phpms_build_feature_object(self->next, layer_id, list, return_value);
-}
-/* }}} */
-
-#endif /* __TODO__FEATURE_OBJ__ */
 
 /*=====================================================================
  *                 PHP function wrappers - webObj class
@@ -4341,13 +4097,8 @@ static long _phpms_build_web_object(webObj *pweb,
 
     web_id = php3_list_insert(pweb, PHPMS_GLOBAL(le_msweb));
 
-#ifdef PHP4
-    object_init_ex(return_value, web_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", web_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", web_id);
-#endif
+    _phpms_object_init(return_value, web_id, php_web_class_functions,
+                       PHP4_CLASS_ENTRY(web_class_entry_ptr));
 
     PHPMS_ADD_PROP_STR(return_value,  "log",            pweb->log);
     PHPMS_ADD_PROP_STR(return_value,  "imagepath",      pweb->imagepath);
@@ -4365,10 +4116,6 @@ static long _phpms_build_web_object(webObj *pweb,
     _phpms_build_rect_object(&(pweb->extent), PHPMS_GLOBAL(le_msrect_ref), 
                              list, &new_obj_param);
     _phpms_add_property_object(return_value, "extent", &new_obj_param,E_ERROR);
-
-#ifndef PHP4
-    add_method(return_value, "set",    php3_ms_web_setProperty);
-#endif
 
     return web_id;
 }
@@ -4466,23 +4213,13 @@ static long _phpms_build_rect_object(rectObj *prect, int handle_type,
 
     rect_id = php3_list_insert(prect, handle_type);
 
-#ifdef PHP4
-    object_init_ex(return_value, rect_class_entry_ptr);
-    add_property_resource(return_value, "_handle_", rect_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", rect_id);
-#endif
+    _phpms_object_init(return_value, rect_id, php_rect_class_functions,
+                       PHP4_CLASS_ENTRY(rect_class_entry_ptr));
 
     add_property_double(return_value,   "minx",       prect->minx);
     add_property_double(return_value,   "miny",       prect->miny);
     add_property_double(return_value,   "maxx",       prect->maxx);
     add_property_double(return_value,   "maxy",       prect->maxy);
-
-#ifndef PHP4
-    add_method(return_value, "set",    php3_ms_rect_setProperty);
-    add_method(return_value, "setextent",    php3_ms_rect_setExtent);
-#endif
 
     return rect_id;
 }
@@ -4704,13 +4441,9 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
 
     reference_id = php3_list_insert(preference, PHPMS_GLOBAL(ls_msrefmap));
 
-#ifdef PHP4
-    object_init_ex(return_value, reference_class_entry_ptr);
-    add_property_resource(return_value, "_handle_",  reference_id);
-#else
-    object_init(return_value);
-    add_property_long(return_value, "_handle_", reference_id);
-#endif
+    _phpms_object_init(return_value, reference_id, 
+                       php_reference_class_functions,
+                       PHP4_CLASS_ENTRY(reference_class_entry_ptr));
 
     PHPMS_ADD_PROP_STR(return_value,  "image",   preference->image);
     add_property_long(return_value,   "width",  preference->width);
@@ -4727,10 +4460,6 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preference,
     _phpms_build_color_object(&(preference->outlinecolor),list,&new_obj_param);
     _phpms_add_property_object(return_value, "outlinecolor", 
                                &new_obj_param, E_ERROR);
-
-#ifndef PHP4
-    add_method(return_value, "set",    php3_ms_referenceMap_setProperty);
-#endif
 
     return reference_id;
 }
@@ -4816,14 +4545,10 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
 
     shapefile_id = php3_list_insert(pshapefile, PHPMS_GLOBAL(le_msshapefile));
 
-#ifdef PHP4
-    object_init_ex(return_value, shapefile_class_entry_ptr);    
-    add_property_resource(return_value, "_handle_", shapefile_id);
-#else
-    object_init(return_value);    
-    add_property_long(return_value, "_handle_", shapefile_id);
-#endif
- 
+    _phpms_object_init(return_value, shapefile_id, 
+                       php_shapefile_class_functions,
+                       PHP4_CLASS_ENTRY(shapefile_class_entry_ptr));
+
     /* read-only properties */
     add_property_long(return_value, "numshapes",  pshapefile->numshapes);
     add_property_long(return_value, "type",       pshapefile->numshapes);
@@ -4833,16 +4558,6 @@ static long _phpms_build_shapefile_object(shapefileObj *pshapefile,
                              PHPMS_GLOBAL(le_msrect_ref), 
                              list, &new_obj_param);
     _phpms_add_property_object(return_value, "bounds", &new_obj_param,E_ERROR);
-
-
-#ifndef PHP4
-    /* methods */
-    add_method(return_value, "getshape",        php3_ms_shapefile_getshape);
-    add_method(return_value,"gettransformed",php3_ms_shapefile_gettransformed);
-    add_method(return_value, "getextent",       php3_ms_shapefile_getextent);
-    add_method(return_value, "addshape",        php3_ms_shapefile_addshape);
-    add_method(return_value, "free",            php3_ms_shapefile_free);
-#endif
 
     return shapefile_id;
 }
