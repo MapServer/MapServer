@@ -42,6 +42,7 @@ from testing import MapscriptTestCase
 
 class ShapePointTestCase(ShapeObjTestCase):
     """Test point type shapeObj in stand-alone mode"""
+    
     def setUp(self):
         """The test fixture is a shape of one point"""
         self.points = (mapscript.pointObj(0.0, 1.0),)
@@ -49,18 +50,21 @@ class ShapePointTestCase(ShapeObjTestCase):
         self.addPointToLine(self.lines[0], self.points[0])
         self.shape = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
         self.addLineToShape(self.shape, self.lines[0])
+    
     def testCreateShape(self):
-        """ShapePointTestCase.testCreateShape: the number of lines is correct"""
+        """the number of lines is correct"""
         assert self.shape.numlines == 1
+    
     def testShapeClone(self):
-        """ShapePointTestCase.testShapeCopy: test shape can be copied"""
+        """test shape can be copied"""
         s = self.shape.clone()
         self.assertShapesEqual(self.shape, s)
 
 class InlineFeatureTestCase(MapTestCase):
     """tests for issue http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=562"""
+    
     def testAddPointFeature(self):
-        """InlineFeatureTestCase.testAddPointFeature: adding a point to an inline feature works correctly"""
+        """adding a point to an inline feature works correctly"""
         inline_layer = self.map.getLayerByName('INLINE')
         assert inline_layer.connectiontype == mapscript.MS_INLINE
         p = mapscript.pointObj(0.2, 51.5)
@@ -73,8 +77,9 @@ class InlineFeatureTestCase(MapTestCase):
         msimg = self.map.draw()
         filename = 'testAddPointFeature.png'
         msimg.save(filename)
+    
     def testGetShape(self):
-        """InlineFeatureTestCase.testGetShape: returning the shape from an inline feature works"""
+        """returning the shape from an inline feature works"""
         inline_layer = self.map.getLayerByName('INLINE')
         inline_layer.open()
         s = inline_layer.getFeature(0)
@@ -82,10 +87,27 @@ class InlineFeatureTestCase(MapTestCase):
         p = self.getPointFromLine(l, 0)
         self.assertAlmostEqual(p.x, -0.2)
         self.assertAlmostEqual(p.y, 51.5)
+    
     def testGetNumFeatures(self):
-        """InlineFeatureTestCase.testGetNumFeatures: the number of features in the inline layer is correct"""
+        """the number of features in the inline layer is correct"""
         inline_layer = self.map.getLayerByName('INLINE')
         assert inline_layer.getNumFeatures() == 1  
 
+
+class ShapeValuesTestCase(unittest.TestCase):
+
+    def testNullValue(self):
+        so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
+        assert so.numvalues == 0
+        assert so.getValue(0) == None
+    
+    def testSetValue(self):
+        so = mapscript.shapeObj(mapscript.MS_SHAPE_POINT)
+        so.setValue(0, 'Foo');
+        assert so.numvalues == 1
+        assert so.getValue(0) == 'Foo'
+        assert so.getValue(1) == None
+        
+        
 if __name__ == '__main__':
     unittest.main()

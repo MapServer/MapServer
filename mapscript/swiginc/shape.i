@@ -36,6 +36,7 @@
   
     shapeObj(int type) 
     {
+        int i;
         shapeObj *shape;
         shape = (shapeObj *)malloc(sizeof(shapeObj));
         if (!shape)
@@ -44,6 +45,18 @@
         msInitShape(shape);
         if (type >= 0) shape->type = type;
 
+        /* Allocate memory for 4 values */
+        if ((shape->values = (char **)malloc(sizeof(char *)*4)) == NULL)
+        {
+            msSetError(MS_MEMERR, "Failed to allocate memory for values",
+                       "shapeObj()");
+            return NULL;
+        }
+        else
+        {
+            for (i=0; i<4; i++) shape->values[i] = strdup("");
+        }
+        
         return shape;
     }
 
@@ -104,7 +117,7 @@
 
     char *getValue(int i) 
     { // returns an EXISTING value
-        if (i >= 0 && i < self->numvalues)
+        if (i >= 0 && i < self->numvalues && self->values)
             return (self->values[i]);
         else
             return NULL;
@@ -151,6 +164,34 @@
 
         return -1;
     }
-    
+   
+    int setValue(int i, char *value)
+    {
+        if (!self->values || !value)
+        {
+            msSetError(MS_SHPERR, "Can't set value", "setValue()");
+            return MS_FAILURE;
+        }
+        if (i >= 0 && i < 4)
+        {
+            msFree(self->values[i]);
+            self->values[i] = strdup(value);
+            if (!self->values[i])
+            {
+                return MS_FAILURE;
+            }
+            else 
+            {
+                self->numvalues++;
+                return MS_SUCCESS;
+            }
+        }
+        else
+        {
+            msSetError(MS_SHPERR, "Invalid index, only 4 possible values", "setValue()");
+            return MS_FAILURE;
+        }
+    }
+
 }
 
