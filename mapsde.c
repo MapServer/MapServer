@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2004/11/17 17:16:16  hobu
+ * define USE_SDERASTER to turn on experimental SDE
+ * raster support
+ *
  * Revision 1.91  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -109,7 +113,10 @@
 #ifdef USE_SDE
 #include <sdetype.h> /* ESRI SDE Client Includes */
 #include <sdeerno.h>
+
+#ifdef USE_SDERASTER
 #include <sderaster.h>
+#endif
 
 #define MS_SDE_MAXBLOBSIZE 1024*50 // 50 kbytes
 #define MS_SDE_NULLSTRING "<null>"
