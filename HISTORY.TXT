@@ -47,6 +47,8 @@ Version 4.4.0-beta2 ()
   that don't show up in WMS request when the server administrator forgets
   to explicitly set projections on all the layers in a WMS mapfile. (bug 947)
 
+- Implemented FastCGI cleanup support for win32 and unix in mapserv.c.
+
 
 Version 4.4.0-beta1 (2004-10-21)
 --------------------------------
