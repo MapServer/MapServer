@@ -33,7 +33,8 @@ void msInitShape(shapeObj *shape)
   shape->bounds.minx = shape->bounds.miny = -1;
   shape->bounds.maxx = shape->bounds.maxy = -1;
   
-  // attribute component ...to be added soon
+  // attribute component
+  shape->attributes = NULL;
 
   // annotation component
   shape->text = NULL;

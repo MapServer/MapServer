@@ -10,7 +10,7 @@
 #define MS_SDE_MAXBLOBSIZE 1024*50 // 50 kbytes
 #define MS_SDE_NULLSTRING "<null>"
 #define MS_SDE_SHAPESTRING "<shape>"
-#define MS_SDE_TIMEFMTSIZE 128 // 128 bytes
+#define MS_SDE_TIMEFMTSIZE 128 // bytes
 #define MS_SDE_TIMEFMT "%T %m/%d/%Y"
 
 typedef struct { 
@@ -164,12 +164,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
 
   msDebug("in sdeGetRecord(), skip=%d\n", skip);
   
-  status = SE_shape_create(sde->coordref, &shapeval); // allocate early, might be threading problems
-  if(status != SE_SUCCESS) {
-    sde_error(status, "sdeGetRecord()", "SE_shape_create()");
-    return(MS_FAILURE);
-  }
-
   msDebug("layer->numitems = %d\n", layer->numitems);
 
   if(layer->numitems > 0) {
@@ -182,13 +176,20 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
 
   msDebug("allocated attribute memory\n");
 
+  // status = SE_shape_create(sde->coordref, &shapeval);
+  status = SE_shape_create(NULL, &shapeval);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "sdeGetRecord()", "SE_shape_create()");
+    return(MS_FAILURE);
+  }
+  msDebug("shape created...\n");
+
   if(skip == 2) { // a ...Next... request (id, shape)
     status = SE_stream_get_integer(sde->stream, 1, &shape->index);
     if(status != SE_SUCCESS) {
       sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
       return(MS_FAILURE);
     }
-
     msDebug("Got the shape id (%d).\n", shape->index);
 
     status = SE_stream_get_shape(sde->stream, 2, shapeval);
@@ -196,7 +197,6 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
       sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
       return(MS_FAILURE);
     }
-
     msDebug("Got the shape itself.\n");    
   } else if(skip == 1) { // a ...Get.. request, with item list (shape)
     status = SE_stream_get_shape(sde->stream, 1, shapeval);
@@ -207,7 +207,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
   }
   
   for(i=1; i<=layer->numitems; i++) {
-    switch(sde->itemdefs[i+skip].sde_type) {
+    switch(sde->itemdefs[i].sde_type) {
     case SE_SMALLINT_TYPE:
       status = SE_stream_get_smallint(sde->stream, i+skip, (short *) &longval);
       if(status == SE_SUCCESS) {
@@ -215,7 +215,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
 	sprintf(shape->attributes[i], "%ld", longval);
       } else if(status == SE_NULL_VALUE) {
 	shape->attributes[i] = strdup(MS_SDE_NULLSTRING);
-      } else {     
+      } else {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_smallint()");
 	return(MS_FAILURE);
       }      
@@ -352,7 +352,7 @@ int msSDELayerOpen(layerObj *layer) {
   sde->items = NULL;
   sde->numitems = 0;
   sde->itemdefs = NULL;
-  sde->table = sde->column = 0;
+  sde->table = sde->column = NULL;
 
   status = SE_connection_create(params[0], params[1], params[2], params[3], params[4], &error, &(sde->connection));
   if(status != SE_SUCCESS) {
@@ -447,7 +447,8 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   msDebug("in msSDELayerWhichShapes\n");
 
-  status = SE_shape_create(sde->coordref, &shape); // allocate early, might be threading problems
+  status = SE_shape_create(sde->coordref, &shape);
+  // status = SE_shape_create(NULL, &shape);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_shape_create()");
     return(MS_FAILURE);
@@ -537,17 +538,16 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     return(MS_FAILURE);
   }
 
-  for(i=0; i<sde->numitems; i++)
-    msDebug("query column: %s\n", sde->items[i]);
-
   // now that query has been run we can gather item descriptions
-  sde->itemdefs = (SE_COLUMN_DEF *) malloc(sizeof(SE_COLUMN_DEF)*sde->numitems);
+  sde->itemdefs = (SE_COLUMN_DEF *) malloc(sizeof(SE_COLUMN_DEF)*sde->numitems); // don't need defs for id or shape
   if(!sde->itemdefs) {
     msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerWhichShapes()");
     return(MS_FAILURE);
   }
-  for(i=1; i<=sde->numitems; i++) { // column numbers start at one
-    status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i]));
+  for(i=2; i<=sde->numitems; i++) { // column numbers start at one, don't mess with SE_ROW_ID column
+    msDebug("query column: %s\n", sde->items[i-1]);
+
+    status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i-1]));
     if(status != MS_SUCCESS) {
       sde_error(status, "msSDELayerWhichShapes()", "SE_stream_describe_column()");
       return(MS_FAILURE);
@@ -654,8 +654,8 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record, int allite
 	msSetError(MS_MEMERR, "Error allocating SDE item definition array.", "msSDELayerWhichShapes()");
 	return(MS_FAILURE);
       }
-      for(i=0; i<sde->numitems; i++) {
-	status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i]));
+      for(i=1; i<=sde->numitems; i++) { // columns start at one
+	status = SE_stream_describe_column(sde->stream, i, &(sde->itemdefs[i-1]));
 	if(status != MS_SUCCESS) {
 	  sde_error(status, "msSDELayerWhichShapes()", "SE_stream_describe_column()");
 	  return(MS_FAILURE);
