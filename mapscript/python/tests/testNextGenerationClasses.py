@@ -20,6 +20,13 @@ test_image = '../../tests/test.png'
 
 import mapscript
 
+# Test ability to back-port classes
+class BackPortTestCase(unittest.TestCase):
+    def testBackPort(self):
+        mapscript.mapObj = mapscript.Map
+        mapobj = mapscript.mapObj(testMapfile)
+        assert mapobj.name == 'Testing', mapobj.name
+
 # mapscript Layer tests
 class LayerTestCase(unittest.TestCase):
     def setUp(self):

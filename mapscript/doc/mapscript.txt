@@ -84,6 +84,9 @@ Attributes
 attribute : type [access]
     Concise description of the attribute.
 
+Attribute name are completely lower case.  Multiple words are
+packed together like *outlinecolor*.
+
 Note that because of the way that mapscript is generated many confusing,
 meaningless, and even dangerous attributes are creeping into objects.  See
 outputFormatObj.refcount for example.  Until we get a grip on the structure
@@ -94,28 +97,61 @@ Methods
 
 method(type mandatory_parameter [, type optional_parameter=default]) : type
     Description of the method including elaboration on the method
-    arguments, the method's actions, and returned values.
+    arguments, the method's actions, and returned values.  Optional
+    parameters and their default values are enclosed in brackets.
+
+Class method names are camel case with a leading lower case character
+like *getExpressionString*.
+
 
 Next Generation Classes
 -----------------------
 
-By defining the preprocessor symbol *NEXT_GENERATION_CLASSES* when running
-SWIG to produce wrapper code, one can use the "next generation" mapscript
-classes.  For example
+By defining the preprocessor symbol *NEXT_GENERATION_API* when running
+SWIG to produce wrapper code, one can use the 'next generation' mapscript
+API.  For example
 
 ::
 
-    swig -python -shadow -modern -DNEXT_GENERATION_CLASSES -o mapscript_wrap.c ../mapscript.i
+    swig -python -shadow -modern -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
 
-The next generation classes are named *Map*, *Layer*, *OutputFormat*, and so
-on rather than the standard *mapObj*, *layerObj*, and *outputFormatObj*.  
-We're all using object-oriented languages, so the 'Obj' suffix is redundant.
-It is also a cross-language convention (see CPAN and the Python standard
-library) that class names be capitalized.
-
-There are also some API changes in the next generation classes which result
+The API changes in the next generation classes result
 from efforts to merge the best of the PHP-Mapscript and SWIG mapscript
 interfaces (see Bugzilla issue 575 - http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=575).  As an example, see the documentation of `layerObj.getShape`_.
+
+Additionally, programmers can experiment with better mapscript class naming
+by defining the symbol *NEXT_GENERATION_NAMES*.  
+
+::
+
+    swig -python -shadow -modern -DNEXT_GENERATION_NAMES -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
+
+The next generation class names are in capitalized camel case form: *Map*,
+*Layer*, *OutputFormat*, and so on rather than the standard *mapObj*,
+*layerObj*, and *outputFormatObj* names which are not distinguished from
+class method names.  We're all using object-oriented languages, so the *Obj*
+suffix is redundant.  It is also a cross-language convention (see CPAN and
+the Python standard library) that package and class names be capitalized.
+Forming class names in a way distinctly different from class attributes and
+methods improves API clarity.
+
+The features enabled by *NEXT_GENERATION_API* will almost certainly become
+standard in a future release.  The next generation class names are more
+controversial and more likely to remain an option for users.  Python users
+want them, and can easily port existing code to use the new names.  For 
+example:
+
+::
+
+    import mapscript
+    
+    # Rename the next generation classes for use with older code
+    mapscript.mapObj = mapscript.Map
+
+    # Continue with older code
+    mapobj = mapscript.mapObj('foo.map')
+    ...
+
 
 Now that the style of the documentation has been introduced, on to the
 classes themselves.
@@ -505,10 +541,10 @@ Methods
 
 .. _layerObj.getShape :
 
-getShape() : int
+getShape(shapeObj_ shape, int tileindex, int shapeindex) : int
     Get a shape from layer data.
     
-*NEXT_GENERATION_API* getShape() : shapeObj_
+**NEXT_GENERATION_API** getShape(int shapeindex [, int tileindex=0]) : shapeObj_
     Get a shape from layer data using the next generation API.
 
 -----------------------------------------------------------------------------
