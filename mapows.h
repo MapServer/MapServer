@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.34  2004/05/22 15:51:10  sean
+ * Prototype msWMSLoadGetMapParams
+ *
  * Revision 1.33  2004/05/11 19:13:46  sean
  * Changes to function prototypes to reduce number of SWIG-mapscript build warnings (bug 568) and committed changes to fix bug 650, WMS layer drawing
  *
@@ -225,6 +228,8 @@ int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
  *   mapwms.c
  *====================================================================*/
 int msWMSDispatch(mapObj *map, cgiRequestObj *req); 
+int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
+                          char **names, char **values, int numentries);
 
 
 /*====================================================================
