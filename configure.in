@@ -689,8 +689,12 @@ if test -n "$with_php" -a -d "$with_php" ; then
   dnl We'll need the config file to find info about the PHP configuration
   dnl
   AC_MSG_CHECKING([for location of config.h or php_config.h])
+  dnl In PHP3, it was called config.h
   test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
+  dnl In PHP 4.0.1 to 4.0.3, it was php-4.0.x/php_config.h
   test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
+  dnl Starting with PHP 4.0.4, it's php-4.0.x/main/php_config.h
+  test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
   if test -n "$PHP_CONFIG_H" ; then
     AC_MSG_RESULT([$PHP_CONFIG_H])
   else
