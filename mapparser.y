@@ -13,10 +13,10 @@
 
 #include "map.h" // for TRUE/FALSE
 
-extern int yylex(); /* lexer globals */
-extern int yyerror();
+extern int msyylex(); /* lexer globals */
+extern int msyyerror();
 
-int yyresult;
+int msyyresult;
 %}
 
 /* Bison/Yacc declarations */
@@ -46,7 +46,7 @@ int yyresult;
 %%
 
 input: /* empty string */
-       | logical_exp      { yyresult = $1; }
+       | logical_exp      { msyyresult = $1; }
 ;
 
 logical_exp:
@@ -125,7 +125,7 @@ math_exp: NUMBER
        | math_exp '*' math_exp   { $$ = $1 * $3; }
        | math_exp '/' math_exp   {
 	                           if($3 == 0.0) {
-				     yyerror("Division by Zero");
+				     msyyerror("Division by Zero");
 				     return(-1);
 				   } else
 	                             $$ = $1 / $3; 

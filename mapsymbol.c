@@ -10,13 +10,13 @@
 #include "freetype.h"
 #endif
 
-extern int yylex(); /* lexer globals */
-extern void yyrestart();
-extern double yynumber;
-extern char *yytext;
-extern int yylineno;
-extern FILE *yyin;
-extern int yyfiletype;
+extern int msyylex(); /* lexer globals */
+extern void msyyrestart();
+extern double msyynumber;
+extern char *msyytext;
+extern int msyylineno;
+extern FILE *msyyin;
+extern int msyyfiletype;
 
 static void initSymbol(symbolObj *s)
 {
@@ -55,7 +55,7 @@ static int loadSymbol(symbolObj *s)
   initSymbol(s);
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(ANTIALIAS):
       s->antialias = 1;
       break;
@@ -88,17 +88,17 @@ static int loadSymbol(symbolObj *s)
       if((s->font = getString()) == NULL) return(-1);
       break;  
     case(IMAGE):
-      if(yylex() != MS_STRING) { /* get image location from next token */
+      if(msyylex() != MS_STRING) { /* get image location from next token */
 	msSetError(MS_TYPEERR, NULL, "loadSymbol()"); 
-	sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
-	fclose(yyin);
+	sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+	fclose(msyyin);
 	return(-1);
       }
       
-      if((stream = fopen(yytext, "rb")) == NULL) {
+      if((stream = fopen(msyytext, "rb")) == NULL) {
 	msSetError(MS_IOERR, NULL, "loadSymbol()");
-	sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
-	fclose(yyin);
+	sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+	fclose(msyyin);
 	return(-1);
       }
       
@@ -111,7 +111,7 @@ static int loadSymbol(symbolObj *s)
       
       if(s->img == NULL) {
 	msSetError(MS_GDERR, NULL, "loadSymbol()");
-	fclose(yyin);
+	fclose(msyyin);
 	return(-1);
       }
       break;
@@ -122,12 +122,12 @@ static int loadSymbol(symbolObj *s)
       i = 0;
       done = MS_FALSE;
       for(;;) {
-	switch(yylex()) { 
+	switch(msyylex()) { 
 	case(END):
 	  done = MS_TRUE;
 	  break;
 	case(MS_NUMBER):
-	  s->points[i].x = atof(yytext); /* grab the x */
+	  s->points[i].x = atof(msyytext); /* grab the x */
 	  if(getDouble(&(s->points[i].y)) == -1) return(-1); /* grab the y */
 	  s->sizex = MS_MAX(s->sizex, s->points[i].x);
 	  s->sizey = MS_MAX(s->sizey, s->points[i].y);	
@@ -135,8 +135,8 @@ static int loadSymbol(symbolObj *s)
 	  break;
 	default:
 	  msSetError(MS_TYPEERR, NULL, "loadSymbol()"); 
-	  sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno); 
-	  fclose(yyin);
+	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
+	  fclose(msyyin);
 	  return(-1);
 	}
 
@@ -149,20 +149,20 @@ static int loadSymbol(symbolObj *s)
       i = 0;
       done = MS_FALSE;
       for(;;) { /* read till the next END */
-	switch(yylex()) {  
+	switch(msyylex()) {  
 	case(END):
 	  done = MS_TRUE;
 	  break;
 	case(MS_NUMBER): /* read the style values */
-	  s->offset[i] = atoi(yytext);
+	  s->offset[i] = atoi(msyytext);
 	  if(getInteger(&(s->numon[i])) == -1) return(-1);
 	  if(getInteger(&(s->numoff[i])) == -1) return(-1);
 	  i++;
 	  break;
 	default:
 	  msSetError(MS_TYPEERR, NULL, "loadSymbol()"); 
-	  sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno); 
-	  fclose(yyin);
+	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
+	  fclose(msyyin);
 	  return(-1);
 	}
 	if(done == MS_TRUE)
@@ -185,8 +185,8 @@ static int loadSymbol(symbolObj *s)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadSymbol()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
-      fclose(yyin);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      fclose(msyyin);
       return(-1);
     } /* end switch */
   } /* end for */
@@ -216,7 +216,7 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
   /*
   ** Open the file
   */
-  if((yyin = fopen(symbolset->filename, "r")) == NULL) {
+  if((msyyin = fopen(symbolset->filename, "r")) == NULL) {
     msSetError(MS_IOERR, NULL, "msLoadSymbolFile()");
     sprintf(ms_error.message, "(%s)", symbolset->filename);
     return(-1);
@@ -227,9 +227,9 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
   chdir(symbol_path);
   free(symbol_path);
 
-  yylineno = 0; /* reset line counter */
-  yyrestart(yyin); /* flush the scanner - there's a better way but this works for now */
-  yyfiletype = MS_FILE_SYMBOL;
+  msyylineno = 0; /* reset line counter */
+  msyyrestart(msyyin); /* flush the scanner - there's a better way but this works for now */
+  msyyfiletype = MS_FILE_SYMBOL;
 
 #ifdef USE_TTF
   symbolset->fontset.filename = NULL;
@@ -241,7 +241,7 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
   ** Read the symbol file
   */
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(END):      
       symbolset->numsymbols = n;
       status = 0;
@@ -288,15 +288,15 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "msLoadSymbolFile()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       status = -1;
     } /* end switch */
 
     if(status != 1) break;
   } /* end for */
 
-  yyfiletype = MS_FILE_DEFAULT;
-  fclose(yyin);
+  msyyfiletype = MS_FILE_DEFAULT;
+  fclose(msyyin);
   chdir(old_path);
   return(status);
 }

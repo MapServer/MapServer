@@ -140,10 +140,10 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
   return(0);
 }
 
-extern int yyresult; // result of parsing, true/false
-extern int yystate;
-extern char *yystring;
-extern int yyparse();
+extern int msyyresult; // result of parsing, true/false
+extern int msyystate;
+extern char *msyystring;
+extern int msyyparse();
 
 static int shpGetQueryIndex(DBFHandle hDBF, layerObj *layer, int record, int item)
 {
@@ -194,13 +194,13 @@ static int shpGetQueryIndex(DBFHandle hDBF, layerObj *layer, int record, int ite
       for(j=0; j<layer->query[i].expression.numitems; j++)
 	tmpstr = gsub(tmpstr, layer->query[i].expression.items[j], values[(int)layer->query[i].expression.indexes[j]]);
 
-      yystate = 4; yystring = tmpstr;
-      if(yyparse() != 0)
+      msyystate = 4; msyystring = tmpstr;
+      if(msyyparse() != 0)
 	return(-1);
 
       free(tmpstr);
 
-      if(yyresult) /* got a match */
+      if(msyyresult) /* got a match */
 	found=MS_TRUE;
       break;
     case(MS_REGEX):

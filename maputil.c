@@ -6,9 +6,9 @@
 #include <io.h>
 #endif
 
-extern int yyparse();
-extern int yylex();
-extern char *yytext;
+extern int msyyparse();
+extern int msyylex();
+extern char *msyytext;
 
 /*
 ** Load item names into a character array
@@ -88,10 +88,10 @@ int msGetItemIndex(DBFHandle dbffile, char *name)
   return(-1); /* item not found */
 }
 
-extern int yyresult; // result of parsing, true/false
-extern int yystate;
-extern char *yystring;
-extern int yyparse();
+extern int msyyresult; // result of parsing, true/false
+extern int msyystate;
+extern char *msyystring;
+extern int msyyparse();
 
 /* 
 ** Returns class index for a given layer and record, non-shapefile data. Used in mapraster.c as well.
@@ -120,13 +120,13 @@ int getClassIndex(layerObj *layer, char *str)
       tmpstr = strdup(layer->class[i].expression.string);
       tmpstr = gsub(tmpstr, "[value]", str);
 
-      yystate = 4; yystring = tmpstr;
-      if(yyparse() != 0)
+      msyystate = 4; msyystring = tmpstr;
+      if(msyyparse() != 0)
 	return(-1);
 
       free(tmpstr);
 
-      if(yyresult) /* got a match */
+      if(msyyresult) /* got a match */
 	return(i);
     }
   }
@@ -186,13 +186,13 @@ static int shpGetClassIndex(DBFHandle hDBF, layerObj *layer, int record, int ite
       for(j=0; j<layer->class[i].expression.numitems; j++)
 	tmpstr = gsub(tmpstr, layer->class[i].expression.items[j], values[layer->class[i].expression.indexes[j]]);
 
-      yystate = 4; yystring = tmpstr;
-      if(yyparse() != 0)
+      msyystate = 4; msyystring = tmpstr;
+      if(msyyparse() != 0)
 	return(-1);
 
       free(tmpstr);
 
-      if(yyresult) /* got a match */
+      if(msyyresult) /* got a match */
 	found=MS_TRUE;
       break;
     case(MS_REGEX):

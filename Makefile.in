@@ -123,12 +123,12 @@ php3_mapscript::
 maplexer.o: maplexer.c map.h mapfile.h
 
 maplexer.c: maplexer.l
-	$(LEX) -i -omaplexer.c maplexer.l
+	$(LEX) -Pmsyy -i -omaplexer.c maplexer.l
 
 mapparser.o: mapparser.c map.h
 
 mapparser.c: mapparser.y
-	$(YACC) -d -omapparser.c mapparser.y
+	$(YACC) -p msyy -d -omapparser.c mapparser.y
 
 lib: libmap.a
 libmap: libmap.a

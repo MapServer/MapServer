@@ -11,12 +11,12 @@
 #include "mapsymbol.h"
 #include "mapparser.h"
 
-double yynumber;
-int yylineno = 1;
-int yyfiletype = MS_FILE_DEFAULT;
+double msyynumber;
+int msyylineno = 1;
+int msyyfiletype = MS_FILE_DEFAULT;
 
-int yystate=0;
-char *yystring=NULL;
+int msyystate=0;
+char *msyystring=NULL;
 %}
 
 %s OBJECT_STRING
@@ -24,32 +24,32 @@ char *yystring=NULL;
 %s EXPRESSION_STRING
 
 %%
-       switch(yystate) {
+       switch(msyystate) {
        case(0):
          break;
        case(1):         
          BEGIN(OBJECT_STRING);         
-         yy_scan_string(yystring);
-         yystate=0;
+         msyy_scan_string(msyystring);
+         msyystate=0;
          break;
        case(2):
          BEGIN(VALUE_STRING);
-         yy_delete_buffer(YY_CURRENT_BUFFER);
-         yy_scan_string(yystring);
-         yystate=0;
+         msyy_delete_buffer(YY_CURRENT_BUFFER);
+         msyy_scan_string(msyystring);
+         msyystate=0;
          break;
        case(3):
          BEGIN(INITIAL);
-         yy_delete_buffer(YY_CURRENT_BUFFER);
-         yystate=0;
-         yystring=NULL;
+         msyy_delete_buffer(YY_CURRENT_BUFFER);
+         msyystate=0;
+         msyystring=NULL;
          return(0); 
          break;
        case(4):
          BEGIN(EXPRESSION_STRING);
-         yy_delete_buffer(YY_CURRENT_BUFFER);
-         yy_scan_string(yystring);
-         yystate=0;
+         msyy_delete_buffer(YY_CURRENT_BUFFER);
+         msyy_scan_string(msyystring);
+         msyystate=0;
          break;
        default:
          break;
@@ -211,62 +211,62 @@ char *yystring=NULL;
 <INITIAL>styled                                { return(MS_SYMBOL_STYLED); }
 <INITIAL,VALUE_STRING>tiny		       { return(MS_TINY); }
 <INITIAL,VALUE_STRING>true                     { return(MS_TRUE); }
-<INITIAL,VALUE_STRING>truetype		       { if(yyfiletype == MS_FILE_SYMBOL) return(MS_SYMBOL_TRUETYPE); else return(MS_TRUETYPE); }
+<INITIAL,VALUE_STRING>truetype		       { if(msyyfiletype == MS_FILE_SYMBOL) return(MS_SYMBOL_TRUETYPE); else return(MS_TRUETYPE); }
 <INITIAL,VALUE_STRING>uc                       { return(MS_UC); }
 <INITIAL,VALUE_STRING>ul                       { return(MS_UL); }
 <INITIAL,VALUE_STRING>ur                       { return(MS_UR); }
 <INITIAL>vector                                { return(MS_SYMBOL_VECTOR); }
 
 <OBJECT_STRING>[0-9]+                          {
-                                                 yynumber = atof(yytext);
+                                                 msyynumber = atof(msyytext);
 			                         return(MS_NUMBER);
 			                       }
 
 <INITIAL,VALUE_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+ {
-                                                                                                                                               yynumber = atof(yytext);
+                                                                                                                                               msyynumber = atof(msyytext);
                                                                                                                                                return(MS_NUMBER); 
                                                                                                                                              }
 
 <EXPRESSION_STRING>-?[0-9]+|-?[0-9]+\.[0-9]*|-?\.[0-9]*|-?[0-9]+[eE][+-]?[0-9]+|-?[0-9]+\.[0-9]*[eE][+-]?[0-9]+|-?\.[0-9]*[eE][+-]?[0-9]+    { 
-                                                                                                                                               yylval.dblval = atof(yytext); 
+                                                                                                                                               msyylval.dblval = atof(msyytext); 
                                                                                                                                                return(NUMBER); 
                                                                                                                                              }
 
 <INITIAL,VALUE_STRING>\/[^\/]*\/               {
-                                                 yytext++;
-			                         yytext[strlen(yytext)-1] = '\0';
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-1] = '\0';
 			                         return(MS_REGEX);
 			                       }
 
 <INITIAL,VALUE_STRING>\(.*\)                   {
-                                                 yytext++;
-			                         yytext[strlen(yytext)-1] = '\0';
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-1] = '\0';
 			                         return(MS_EXPRESSION);
 			                       }
 
 <INITIAL,VALUE_STRING>\"[^\"]*\"	       {
-			                         yytext++;
-			                         yytext[strlen(yytext)-1] = '\0';
+			                         msyytext++;
+			                         msyytext[strlen(msyytext)-1] = '\0';
      			                         return(MS_STRING);
 			                       }
 
 <INITIAL,VALUE_STRING>\'[^\']*\'	       {                                                 
-                                                 yytext++;
-			                         yytext[strlen(yytext)-1] = '\0';
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-1] = '\0';
        			                         return(MS_STRING);
 			                       }
 
 <EXPRESSION_STRING>\"[^\"]*\"	               {
-                                                 yytext++;
-			                         yytext[strlen(yytext)-1] = '\0';
-			                         yylval.strval = strdup(yytext);
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-1] = '\0';
+			                         msyylval.strval = strdup(msyytext);
 			                         return(STRING);
 			                       }
 
 <EXPRESSION_STRING>\'[^\']*\'	               {
-                                                 yytext++;
-			                         yytext[strlen(yytext)-1] = '\0';
-			                         yylval.strval = strdup(yytext);
+                                                 msyytext++;
+			                         msyytext[strlen(msyytext)-1] = '\0';
+			                         msyylval.strval = strdup(msyytext);
 			                         return(STRING);
                                                }
 
@@ -274,26 +274,26 @@ char *yystring=NULL;
 <OBJECT_STRING>[a-z/\.][a-z0-9/\.\-\=]*	       { return(MS_STRING); }
 <VALUE_STRING>[a-z/\.][a-z0-9/\. \-\=]*        { return(MS_STRING); }
 
-<INITIAL>\n                                    { yylineno++; }
+<INITIAL>\n                                    { msyylineno++; }
 
 <INITIAL><<EOF>>                               { return(EOF); }
 
 <EXPRESSION_STRING,VALUE_STRING,OBJECT_STRING>[\n|\0]          { return(0); }
 
 <INITIAL,OBJECT_STRING,VALUE_STRING>.          { return(0); }
-<EXPRESSION_STRING>.                           { return(yytext[0]); }
+<EXPRESSION_STRING>.                           { return(msyytext[0]); }
 %%
 
 /*
 ** Any extra C functions
 */
 
-int yywrap() /* override */
+int msyywrap() /* override */
 {
   return(1);
 }
 
-int yyerror(char *s) {
-  msSetError(MS_PARSEERR, s, "yyparse()");
+int msyyerror(char *s) {
+  msSetError(MS_PARSEERR, s, "msyyparse()");
   return(0);
 }

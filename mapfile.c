@@ -4,14 +4,14 @@
 #include "mapfile.h"
 #include "mapparser.h"
 
-extern int yylex();
-extern double yynumber;
-extern char *yytext;
-extern int yylineno;
-extern FILE *yyin;
+extern int msyylex();
+extern double msyynumber;
+extern char *msyytext;
+extern int msyylineno;
+extern FILE *msyyin;
 
-extern int yystate;
-extern char *yystring;
+extern int msyystate;
+extern char *msyystring;
 
 /*
 ** Palette maniputation routines. Temporary until a good 24-bit
@@ -103,7 +103,7 @@ int getSymbol(int n, ...) {
   va_list argp;
   int i=0;
 
-  symbol = yylex();
+  symbol = msyylex();
 
   va_start(argp, n);
   while(i<n) { /* check each symbol in the list */
@@ -117,7 +117,7 @@ int getSymbol(int n, ...) {
   va_end(argp);
 
   msSetError(MS_SYMERR, NULL, "getSymbol()"); 
-  sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno); 
+  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
 
   return(-1);
 }
@@ -128,11 +128,11 @@ int getSymbol(int n, ...) {
 */
 char *getString() {
   
-  if(yylex() == MS_STRING)
-    return(strdup(yytext));
+  if(msyylex() == MS_STRING)
+    return(strdup(msyytext));
 
   msSetError(MS_TYPEERR, NULL, "loadString()"); 
-  sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno); 
+  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
 
   return(NULL);
 }
@@ -142,13 +142,13 @@ char *getString() {
 */
 int getDouble(double *d) {
 
-  if(yylex() == MS_NUMBER) {
-    *d = yynumber;
+  if(msyylex() == MS_NUMBER) {
+    *d = msyynumber;
     return(0); /* success */
   }
 
   msSetError(MS_TYPEERR, NULL, "getDouble()"); 
-  sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno); 
+  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
   
   return(-1);
 }
@@ -158,25 +158,25 @@ int getDouble(double *d) {
 */
 int getInteger(int *i) {
 
-  if(yylex() == MS_NUMBER) {
-    *i = (int)yynumber;
+  if(msyylex() == MS_NUMBER) {
+    *i = (int)msyynumber;
     return(0); /* success */
   }
 
   msSetError(MS_TYPEERR, NULL, "getInteger()"); 
-  sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno); 
+  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
 
   return(-1);
 }
 
 int getCharacter(char *c) {
-  if(yylex() == MS_STRING) {
-    *c = yytext[0];
+  if(msyylex() == MS_STRING) {
+    *c = msyytext[0];
     return(0);
   }
 
   msSetError(MS_TYPEERR, NULL, "getCharacter()"); 
-  sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno); 
+  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
 
   return(-1);
 }
@@ -274,7 +274,7 @@ static int loadFeaturePoints(lineObj *points)
   buffer_size = MS_FEATUREINITSIZE;
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadFeaturePoints()");      
       return(-1);
@@ -290,14 +290,14 @@ static int loadFeaturePoints(lineObj *points)
 	buffer_size+=MS_FEATUREINCREMENT;
       }
 
-      points->point[points->numpoints].x = atof(yytext);
+      points->point[points->numpoints].x = atof(msyytext);
       if(getDouble(&(points->point[points->numpoints].y)) == -1) return(-1);
 
       points->numpoints++;
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadFeaturePoints()");    
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);      
     }
   }
@@ -308,7 +308,7 @@ static int loadFeature(struct featureObj *feature)
   multipointObj points={0,NULL};
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadFeature()");      
       return(-1);
@@ -329,7 +329,7 @@ static int loadFeature(struct featureObj *feature)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadfeature()");    
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */  
@@ -367,7 +367,7 @@ static int loadProjection(projectionObj *p)
   int i=0;
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadProjection()");      
        return(-1);
@@ -385,12 +385,12 @@ static int loadProjection(projectionObj *p)
       return(0);
       break;    
     case(MS_STRING):
-      p->projargs[i] = strdup(yytext);
+      p->projargs[i] = strdup(msyytext);
       i++;
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadProjection()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -466,13 +466,13 @@ static int loadLabel(labelObj *label, mapObj *map)
   int symbol;
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(ANGLE):
       if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1) 
 	return(-1);
 
       if(symbol == MS_NUMBER)
-	label->angle = MS_DEG_TO_RAD*yynumber;
+	label->angle = MS_DEG_TO_RAD*msyynumber;
       else
 	label->autoangle = MS_TRUE;
       break;
@@ -516,7 +516,7 @@ static int loadLabel(labelObj *label, mapObj *map)
 	return(-1);
 
       if(symbol == MS_NUMBER)
-	label->minfeaturesize = yynumber;
+	label->minfeaturesize = msyynumber;
       else
 	label->autominfeaturesize = MS_TRUE;
       break;
@@ -556,7 +556,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
 	return(-1);
       if(label->size == MS_NUMBER)
-	label->size = yynumber;
+	label->size = msyynumber;
 #else
       if((label->size = getSymbol(5, MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) 
 	return(-1);
@@ -570,7 +570,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadlabel()");    
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -581,15 +581,15 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
   int red, green, blue;
   int symbol;
 
-  switch(yylex()) {
+  switch(msyylex()) {
   case(ANGLE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     label->autoangle = MS_FALSE;
     if((symbol = getSymbol(2, MS_NUMBER,MS_AUTO)) == -1) 
       return;
     
     if(symbol == MS_NUMBER)
-      label->angle = MS_DEG_TO_RAD*yynumber;
+      label->angle = MS_DEG_TO_RAD*msyynumber;
     else
       label->autoangle = MS_TRUE;
     break;
@@ -597,11 +597,11 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     label->antialias = 1;
     break;  
   case(BUFFER):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(label->buffer)) == -1) break;
     break;
   case(COLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
@@ -617,7 +617,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     
     if(!(msLookupHashTable(map->fontset.fonts, label->font))) {
       msSetError(MS_IDENTERR, "Unknown font alias.", "loadLabelString()");    
-      sprintf(ms_error.message, "(%s)", yytext);
+      sprintf(ms_error.message, "(%s)", msyytext);
       return;
     }
 #else
@@ -627,70 +627,70 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
 
     break;
   case(FORCE):
-      yystate = 2; yystring = value;
+      msyystate = 2; msyystring = value;
       if((label->force = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
       break; 
   case(MAXSIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(label->maxsize)) == -1) return;
     break;
   case(MINDISTANCE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(label->mindistance)) == -1) return;
     break;
   case(MINFEATURESIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(label->minfeaturesize)) == -1) return;
     break;
   case(MINSIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(label->minsize)) == -1) return;
     break;
   case(OFFSET):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(label->offsetx)) == -1) return;
     if(getInteger(&(label->offsety)) == -1) return;
     break;  
   case(OUTLINECOLOR):
   case(BACKGROUNDCOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     label->outlinecolor =msAddColor(map,red,green,blue);
     break;
   case(PARTIALS):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((label->partials = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;
   case(POSITION):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((label->position = getSymbol(10, MS_UL,MS_UC,MS_UR,MS_CL,MS_CC,MS_CR,MS_LL,MS_LC,MS_LR,MS_AUTO)) == -1) return;
     break;
   case(SHADOWCOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     label->shadowcolor =msAddColor(map,red,green,blue);
     break;
   case(SHADOWSIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(label->shadowsizex)) == -1) return;
     if(getInteger(&(label->shadowsizey)) == -1) return;
     break;
   case(SIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
 #ifdef USE_TTF
     if((label->size = getSymbol(6, MS_NUMBER,MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) return;
     if(label->size == MS_NUMBER)
-      label->size = yynumber;
+      label->size = msyynumber;
 #else
     if((label->size = getSymbol(5, MS_TINY,MS_SMALL,MS_MEDIUM,MS_LARGE,MS_GIANT)) == -1) return;
 #endif
     break;
   case(TYPE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((label->type = getSymbol(2, MS_TRUETYPE,MS_BITMAP)) == -1) return;
     break;    
   case(WRAP):
@@ -725,12 +725,12 @@ void freeExpression(expressionObj *exp)
 int loadExpression(expressionObj *exp)
 {
   if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
-  exp->string = strdup(yytext);
+  exp->string = strdup(msyytext);
   
   if(exp->type == MS_REGEX) {
     if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
       msSetError(MS_REGEXERR, NULL, "loadExpression()");
-      sprintf(ms_error.message, "(%s):(%d)", exp->string, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
       return(-1);
     }
   }
@@ -740,18 +740,18 @@ int loadExpression(expressionObj *exp)
 
 int loadExpressionString(expressionObj *exp, char *value)
 {
-  yystate = 2; yystring = value;
+  msyystate = 2; msyystring = value;
 
   freeExpression(exp); // we're totally replacing the old expression so free then init to start over
   initExpression(exp);
 
   if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
-  exp->string = strdup(yytext);
+  exp->string = strdup(msyytext);
   
   if(exp->type == MS_REGEX) {
     if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
       msSetError(MS_REGEXERR, NULL, "loadExpression()");
-      sprintf(ms_error.message, "(%s):(%d)", exp->string, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
       return(-1);
     }
   }
@@ -797,7 +797,7 @@ int loadClass(classObj *class, mapObj *map)
   initClass(class);
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(BACKGROUNDCOLOR): 
       if(getInteger(&(red)) == -1) return(-1);
       if(getInteger(&(green)) == -1) return(-1);
@@ -844,9 +844,9 @@ int loadClass(classObj *class, mapObj *map)
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
 
       if(state == MS_NUMBER)
-	class->symbol = (int) yynumber;
+	class->symbol = (int) msyynumber;
       else
-	class->symbolname = strdup(yytext);
+	class->symbolname = strdup(msyytext);
       break;
     case(TEXT):
       if(loadExpression(&(class->text)) == -1) return(-1);
@@ -857,7 +857,7 @@ int loadClass(classObj *class, mapObj *map)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadClass()");    
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   }
@@ -868,16 +868,16 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
   int red, green, blue;
   int state;
 
-  switch(yylex()) {
+  switch(msyylex()) {
   case(BACKGROUNDCOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     class->backgroundcolor = msAddColor(map, red, green, blue);
     break;
   case(COLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
@@ -890,42 +890,42 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     loadLabelString(map, &(class->label), value);
     break;
   case(MAXSIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     getInteger(&(class->maxsize));
     break;
   case(MINSIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     getInteger(&(class->minsize));
     break;
   case(OUTLINECOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     class->outlinecolor = msAddColor(map, red, green, blue);
     break;
   case(SIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     getInteger(&(class->size));
     break;
   case(SYMBOL):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
 
     if(state == MS_NUMBER)
-      class->symbol = (int) yynumber;
+      class->symbol = (int) msyynumber;
     else {
       switch(type) {
       case(MS_ANNOTATION):
       case(MS_POINT):
-	if((class->symbol = msGetSymbolIndex(&(map->markerset), yytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+	if((class->symbol = msGetSymbolIndex(&(map->markerset), msyytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
 	break;
       case(MS_LINE):
       case(MS_POLYLINE):
-	if((class->symbol = msGetSymbolIndex(&(map->lineset), yytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+	if((class->symbol = msGetSymbolIndex(&(map->lineset), msyytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
 	break;
       case(MS_POLYGON):
-	if((class->symbol = msGetSymbolIndex(&(map->shadeset), yytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
+	if((class->symbol = msGetSymbolIndex(&(map->shadeset), msyytext)) == -1) msSetError(MS_EOFERR, "Undefined symbol.", "loadClassString()");
 	break;
       default:
 	break;
@@ -997,7 +997,7 @@ int loadJoin(joinObj *join)
   initJoin(join);
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadJoin()");
       return(-1);
@@ -1037,7 +1037,7 @@ int loadJoin(joinObj *join)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadJoin()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -1085,7 +1085,7 @@ int loadQuery(queryObj *query)
     return(-1);
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadQuery()");
       return(-1);
@@ -1109,7 +1109,7 @@ int loadQuery(queryObj *query)
       break;    
     default:
       msSetError(MS_IDENTERR, NULL, "loadQuery()");    
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -1117,7 +1117,7 @@ int loadQuery(queryObj *query)
 
 void loadQueryString(queryObj *query, char *value)
 {
-  switch(yylex()) {
+  switch(msyylex()) {
   case(EXPRESSION):
     loadExpressionString(&(query->expression), value);
     break;
@@ -1240,7 +1240,7 @@ int loadLayer(layerObj *layer, mapObj *map)
     return(-1);
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(CLASS):
       if(loadClass(&(layer->class[c]), map) == -1) return(-1);
       if(layer->class[c].text.string) layer->annotate = MS_TRUE;
@@ -1373,7 +1373,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadLayer()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -1385,7 +1385,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   multipointObj points={0,NULL};
   int done=0;
 
-  switch(yylex()) {
+  switch(msyylex()) {
   case(CLASS):
     if(layer->numclasses != 1) { /* if only 1 class no need for index */
       if(getInteger(&i) == -1) break;
@@ -1409,9 +1409,9 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     break;
   case(FEATURE):    
     
-    switch(yylex()) {      
+    switch(msyylex()) {      
     case(POINTS):
-      yystate = 2; yystring = value;
+      msyystate = 2; msyystring = value;
 
       if(layer->features == NULL)
 	if((layer->features = initFeature()) == NULL) return; /* create initial feature */
@@ -1424,7 +1424,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       buffer_size = MS_FEATUREINITSIZE;
             
       while(!done) {
-	switch(yylex()) {	  
+	switch(msyylex()) {	  
 	case(MS_NUMBER):
 	  if(points.numpoints == buffer_size) { /* just add it to the end */
 	    points.point = (pointObj *) realloc(points.point, sizeof(pointObj)*(buffer_size+MS_FEATUREINCREMENT));    
@@ -1435,7 +1435,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
 	    buffer_size+=MS_FEATUREINCREMENT;
 	  }
 	  
-	  points.point[points.numpoints].x = atof(yytext);
+	  points.point[points.numpoints].x = atof(msyytext);
 	  if(getDouble(&(points.point[points.numpoints].y)) == -1) return;
 	  
 	  points.numpoints++;	  
@@ -1479,7 +1479,7 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->labelangleitem = strdup(value);
     break;
   case(LABELCACHE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((layer->labelcache = getSymbol(2, MS_ON, MS_OFF)) == -1) return;
     break;
   case(LABELITEM):
@@ -1488,11 +1488,11 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->annotate = MS_TRUE;
     break;
   case(LABELMAXSCALE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&(layer->labelmaxscale)) == -1) return;
     break;
   case(LABELMINSCALE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&(layer->labelminscale)) == -1) return;
     break;    
   case(LABELSIZEITEM):
@@ -1504,23 +1504,23 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     layer->legend = strdup(value);
     break;
   case(MAXFEATURES):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(layer->maxfeatures)) == -1) return;
     break;
   case(MAXSCALE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&(layer->maxscale)) == -1) return;
     break;
   case(MINSCALE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&(layer->minscale)) == -1) return;
     break;    
   case(OFFSITE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(layer->offsite)) == -1) return; /* using an index rather than an actual color */        
     break;
   case(POSTLABELCACHE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((layer->postlabelcache = getSymbol(2, MS_TRUE, MS_FALSE)) == -1) return;
     if(layer->postlabelcache)
       layer->labelcache = MS_OFF;
@@ -1540,26 +1540,26 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     for(i=0;i<layer->numclasses; i++) {
       if(!layer->class[i].name) /* skip it */
 	continue;
-      if(strcmp(yytext, layer->class[i].name) == 0) {	
+      if(strcmp(msyytext, layer->class[i].name) == 0) {	
 	loadClassString(map, &(layer->class[i]), value, layer->type);
 	break;
       }
     }
     break;
   case(SYMBOLSCALE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&(layer->symbolscale)) == -1) return;
     break;
   case(TOLERANCE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&(layer->tolerance)) == -1) return;
     break;
   case(TOLERANCEUNITS):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((layer->toleranceunits = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return;
     break;
   case(TYPE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((layer->type = getSymbol(6, MS_POINT,MS_LINE,MS_RASTER,MS_POLYGON,MS_POLYLINE,MS_ANNOTATION)) == -1) return;
     break;
   default:
@@ -1594,7 +1594,7 @@ void freeReferenceMap(referenceMapObj *ref)
 int loadReferenceMap(referenceMapObj *ref)
 {
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadReferenceMap()");      
       return(-1);
@@ -1629,7 +1629,7 @@ int loadReferenceMap(referenceMapObj *ref)
       break;   
     default:
       msSetError(MS_IDENTERR, NULL, "loadReferenceMap()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -1637,37 +1637,37 @@ int loadReferenceMap(referenceMapObj *ref)
 
 static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *value)
 {
-  switch(yylex()) {
+  switch(msyylex()) {
   case(COLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(ref->color.red)) == -1) return;
     if(getInteger(&(ref->color.green)) == -1) return;
     if(getInteger(&(ref->color.blue)) == -1) return;
     break;
   case(EXTENT):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&(ref->extent.minx)) == -1) return;
     if(getDouble(&(ref->extent.miny)) == -1) return;
     if(getDouble(&(ref->extent.maxx)) == -1) return;
     if(getDouble(&(ref->extent.maxy)) == -1) return;
     break;  
   case(IMAGE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((ref->image = getString()) == NULL) return;
     break;
   case(OUTLINECOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(ref->outlinecolor.red)) == -1) return;
     if(getInteger(&(ref->outlinecolor.green)) == -1) return;
     if(getInteger(&(ref->outlinecolor.blue)) == -1) return;
     break;
   case(SIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(ref->width)) == -1) return;
     if(getInteger(&(ref->height)) == -1) return;
     break;          
   case(STATUS):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((ref->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;
     break;   
   default:
@@ -1711,7 +1711,7 @@ int loadLegend(legendObj *legend, mapObj *map)
   int red, green, blue;
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadLegend()");      
       return(-1);
@@ -1758,7 +1758,7 @@ int loadLegend(legendObj *legend, mapObj *map)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadLegend()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -1768,20 +1768,20 @@ static void loadLegendString(mapObj *map, legendObj *legend, char *value)
 {
   int red, green, blue;
 
-  switch(yylex()) {
+  switch(msyylex()) {
   case(IMAGECOLOR):      
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(legend->imagecolor.red)) == -1) return;
     if(getInteger(&(legend->imagecolor.green)) == -1) return;
     if(getInteger(&(legend->imagecolor.blue)) == -1) return;
     break;
   case(KEYSIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(legend->keysizex)) == -1) return;
     if(getInteger(&(legend->keysizey)) == -1) return;
     break;      
   case(KEYSPACING):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(legend->keyspacingx)) == -1) return;
     if(getInteger(&(legend->keyspacingy)) == -1) return;
     break;  
@@ -1790,22 +1790,22 @@ static void loadLegendString(mapObj *map, legendObj *legend, char *value)
     legend->label.angle = 0; /* force */
     break;
   case(OUTLINECOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     legend->outlinecolor =msAddColor(map,red,green,blue);
     break;
   case(POSITION):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((legend->position = getSymbol(6, MS_UL,MS_UR,MS_LL,MS_LR,MS_UC,MS_LC)) == -1) return;
     break;
   case(POSTLABELCACHE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((legend->postlabelcache = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;
   case(STATUS):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((legend->status = getSymbol(3, MS_ON,MS_OFF,MS_EMBED)) == -1) return;      
     break;   
   default:
@@ -1849,7 +1849,7 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
   int red, green, blue;
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(BACKGROUNDCOLOR):      
       if(getInteger(&(red)) == -1) return(-1);
       if(getInteger(&(green)) == -1) return(-1);
@@ -1918,7 +1918,7 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadScalebar()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -1928,33 +1928,33 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
 {
   int red, green, blue;
 
-  switch(yylex()) {
+  switch(msyylex()) {
   case(BACKGROUNDCOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     scalebar->backgroundcolor =msAddColor(map,red,green,blue);
     break;
   case(COLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     scalebar->color =msAddColor(map,red,green,blue);
     break;
   case(IMAGECOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(scalebar->imagecolor.red)) == -1) return;
     if(getInteger(&(scalebar->imagecolor.green)) == -1) return;
     if(getInteger(&(scalebar->imagecolor.blue)) == -1) return;
     break;
   case(INTERVALS):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(scalebar->intervals)) == -1) return;
     break;
   case(LABEL):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     loadLabelString(map, &(scalebar->label), value);
     scalebar->label.angle = 0;
     if(scalebar->label.type != MS_BITMAP) {
@@ -1963,35 +1963,35 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
     }
     break;
   case(OUTLINECOLOR):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(red)) == -1) return;
     if(getInteger(&(green)) == -1) return;
     if(getInteger(&(blue)) == -1) return;
     scalebar->outlinecolor =msAddColor(map,red,green,blue);
     break;
   case(POSITION):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((scalebar->position = getSymbol(4, MS_UL,MS_UR,MS_LL,MS_LR)) == -1) return;
     break;
   case(POSTLABELCACHE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((scalebar->postlabelcache = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;
   case(SIZE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(scalebar->width)) == -1) return;
     if(getInteger(&(scalebar->height)) == -1) return;
     break;
   case(STATUS):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((scalebar->status = getSymbol(3, MS_ON,MS_OFF,MS_EMBED)) == -1) return;      
     break;
   case(STYLE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getInteger(&(scalebar->style)) == -1) return;
     break;  
   case(UNITS):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if((scalebar->units = getSymbol(5, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS)) == -1) return;
     break;
   default:
@@ -2017,7 +2017,7 @@ int loadQueryMap(queryMapObj *queryMap, mapObj *map)
   int red, green, blue;
 
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(COLOR):
       if(getInteger(&(red)) == -1) return(-1);
       if(getInteger(&(green)) == -1) return(-1);
@@ -2079,7 +2079,7 @@ void freeWeb(webObj *web)
 int loadWeb(webObj *web)
 {
   for(;;) {
-    switch(yylex()) {
+    switch(msyylex()) {
     case(EMPTY):
       if((web->empty = getString()) == NULL) return(-1);
       break;
@@ -2132,7 +2132,7 @@ int loadWeb(webObj *web)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadWeb()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(-1);
     }
   }
@@ -2140,7 +2140,7 @@ int loadWeb(webObj *web)
 
 static void loadWebString(webObj *web, char *value)
 {
-  switch(yylex()) {
+  switch(msyylex()) {
   case(EMPTY):
     free(web->empty);
     web->empty = strdup(value);
@@ -2150,7 +2150,7 @@ static void loadWebString(webObj *web, char *value)
     web->error = strdup(value);
     break;
   case(EXTENT):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&(web->extent.minx)) == -1) return;
     if(getDouble(&(web->extent.miny)) == -1) return;
     if(getDouble(&(web->extent.maxx)) == -1) return;
@@ -2165,7 +2165,7 @@ static void loadWebString(webObj *web, char *value)
     web->header = strdup(value);
     break;
   case(MAXSCALE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&web->maxscale) == -1) return;
     break;
   case(MAXTEMPLATE):
@@ -2173,7 +2173,7 @@ static void loadWebString(webObj *web, char *value)
     web->maxtemplate = strdup(value);
     break;
   case(MINSCALE):
-    yystate = 2; yystring = value;
+    msyystate = 2; msyystring = value;
     if(getDouble(&web->minscale) == -1) return;
     break;
   case(MINTEMPLATE):
@@ -2337,7 +2337,7 @@ mapObj *msLoadMap(char *filename)
   }
   regfree(&re);
   
-  if((yyin = fopen(filename,"r")) == NULL) {
+  if((msyyin = fopen(filename,"r")) == NULL) {
     msSetError(MS_IOERR, NULL, "msLoadMap()");
     sprintf(ms_error.message, "(%s)", filename);
     return(NULL);
@@ -2356,17 +2356,17 @@ mapObj *msLoadMap(char *filename)
   chdir(map_path); /* switch so all filenames are relative to the location of the map file */
   free(map_path);
 
-  yylineno = 0; /* reset line counter */
+  msyylineno = 0; /* reset line counter */
 
   if(initMap(map) == -1) /* initialize this map */
     return(NULL);
 
   for(;;) {
 
-    switch(yylex()) {   
+    switch(msyylex()) {   
     case(END):
       map->numlayers = n;
-      fclose(yyin);
+      fclose(msyyin);
 
       if(msLoadSymbolFile(&(map->markerset)) == -1) return(NULL);
       if(msLoadSymbolFile(&(map->shadeset)) == -1) return(NULL); 
@@ -2495,7 +2495,7 @@ mapObj *msLoadMap(char *filename)
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "msLoadMap()");
-      sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
       return(NULL);
     }
   } /* next token */
@@ -2508,20 +2508,20 @@ int msLoadMapString(mapObj *map, char *object, char *value)
 {
   int i;
 
-  yystate = 1; /* set lexer state */
-  yystring = object;
+  msyystate = 1; /* set lexer state */
+  msyystring = object;
 
   ms_error.code = MS_NOERR; /* init error code */
 
-  switch(yylex()) {
+  switch(msyylex()) {
   case(MAP):
-    switch(yylex()) {
+    switch(msyylex()) {
     case(INTERLACE):
-      yystate = 2; yystring = value;
+      msyystate = 2; msyystring = value;
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
       break;
     case(IMAGECOLOR):
-      yystate = 2; yystring = value;
+      msyystate = 2; msyystring = value;
       if(getInteger(&(map->imagecolor.red)) == -1) break;
       if(getInteger(&(map->imagecolor.green)) == -1) break;
       if(getInteger(&(map->imagecolor.blue)) == -1) break;
@@ -2544,7 +2544,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       loadScalebarString(map, &(map->scalebar), value);
       break;
     case(SIZE):
-      yystate = 2; yystring = value;
+      msyystate = 2; msyystring = value;
       if(getInteger(&(map->width)) == -1) break;
       if(getInteger(&(map->height)) == -1) break;
       break;
@@ -2553,7 +2553,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       map->shapepath = strdup(value);
       break;
     case(MS_STRING):
-      i = msGetLayerIndex(map, yytext);
+      i = msGetLayerIndex(map, msyytext);
       if(i>=map->numlayers || i<0) break;
       loadLayerString(map, &(map->layers[i]), value);
     case(TILE):
@@ -2561,11 +2561,11 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       map->tile = strdup(value);
       break; 
     case(TRANSPARENT):
-      yystate = 2; yystring = value;
+      msyystate = 2; msyystring = value;
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
       break;
     case(UNITS):
-      yystate = 2; yystring = value;
+      msyystate = 2; msyystring = value;
       if((map->units = getSymbol(6, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD)) == -1) break;
       break;
     case(WEB):
@@ -2579,8 +2579,8 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     break;
   }
 
-  yystate = 3; /* restore lexer state */
-  yylex();
+  msyystate = 3; /* restore lexer state */
+  msyylex();
 
   if(ms_error.code != MS_NOERR)
     return(-1);
