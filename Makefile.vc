@@ -157,7 +157,10 @@ REGEX_OPT=-DHAVE_STRING_H -DREGEX_MALLOC
 #MING_INC=-I../ming-0.2a/src -I../ming-0.2a
 #MING=-DUSE_MING_FLASH
 
-
+#PDF Suuport
+#PDF_LIB=../pdflib-4.0.3/pdflib/pdflib.lib
+#PDF_INC=-I../pdflib-4.0.3/pdflib
+#PDF=-DUSE_PDF
 #
 # --- You shouldn't have to edit anything else. ---
 #
@@ -175,7 +178,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
         maptemplate.obj mappostgis.obj maplayer.obj mapresample.obj \
         mapwms.obj mapwmslayer.obj mapgml.obj maporaclespatial.obj \
         mapprojhack.obj mapdraw.obj mapgd.obj mapoutput.obj mapswf.obj mapgdal.obj \
-        mapwfs.obj mapows.obj \
+        mapwfs.obj mapows.obj mappdf.obj \
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
@@ -188,14 +191,14 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
 		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB) \
-                $(WWWLIB_LIB) $(ECW_LIB) $(MING_LIB)
+                $(WWWLIB_LIB) $(ECW_LIB) $(MING_LIB) $(PDF_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC) \
-                $(WWWLIB_INC) $(MING_INC)
+                $(WWWLIB_INC) $(MING_INC) $(PDF_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) -DFEATURE_INFO_HTML $(WFS)
+		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) -DFEATURE_INFO_HTML $(WFS) $(PDF)
 
 default: 	all
 
