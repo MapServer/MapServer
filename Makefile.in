@@ -245,7 +245,7 @@ sortshp: sortshp.o
 tile4ms: tile4ms.o
 	$(CC) $(CFLAGS) tile4ms.o $(LDFLAGS) $(STATIC_LIBS) -o tile4ms
 
-testexpr: testexpr.o mapparser.o
+testexpr: testexpr.o mapparser.o maplexer.o
 	$(CC) $(CFLAGS) testexpr.o $(LDFLAGS) $(STATIC_LIBS) -o testexpr
 
 perlvars:
