@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.37  2002/11/25 21:50:29  julien
+ * add \0 in the isspace validation for epsg in msBuildWMSLayerURL
+ *
  * Revision 1.36  2002/11/25 18:41:26  dan
  * Do not overwrite lp->connection in msBuildWMSLayerURL()
  *
@@ -363,7 +366,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         if (pszLyrEPSG == NULL ||
             (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
-            ! isspace(*(pszFound+nLen)) )
+            ! ((*(pszFound+nLen) == '\0') || isspace(*(pszFound+nLen))) )
         {
             // Not found in Layer's list of SRS (including projection object)
             free(pszEPSG);
