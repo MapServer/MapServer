@@ -85,8 +85,6 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
         {
 #if GD2_VERS > 1
             image->img.gd = gdImageCreateTrueColor(width, height);
-            if( image->img.gd != NULL )
-                gdImageAlphaBlending( image->img.gd, 0 );
 #else
             msSetError(MS_IMGERR, 
                        "Attempt to use RGB or RGBA IMAGEMODE with GD 1.x, please upgrade to GD 2.x.", "msImageCreateGD()" );
@@ -1801,6 +1799,12 @@ msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
     */
     pct_alpha = 127 - (pct * 127) / 100;
 
+    /* 
+    ** Turn off blending in output image to prevent it doing it's own attempt
+    ** at blending instead of using our result. 
+    */
+    gdImageAlphaBlending( dst, 0 );
+
     for (y = 0; (y < h); y++)
     {
         for (x = 0; (x < w); x++)
@@ -1843,6 +1847,11 @@ msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
                                               127-res_alpha ));
         }
     }
+
+    /*
+    ** Restore original alpha blending flag. 
+    */
+    gdImageAlphaBlending( dst, 0 );
 }
 
 #endif /* if GD2_VERS > 1 */
