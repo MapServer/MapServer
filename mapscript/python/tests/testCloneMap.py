@@ -1,27 +1,54 @@
 # $Id$
+#
+# Unit tests concerning getLayerOrder(), setLayerOrder(),
+# raiseLayer(), lowerLayer() extensions.
 
-import os
-import sys
-import unittest
-import cStringIO
-import urllib
+import os, sys
 import distutils.util
+import unittest
 
-from mapscripttest import MapscriptTestCase, MapPrimitivesTestCase
-from mapscripttest import MapTestCase, MapZoomTestCase, ShapeObjTestCase
-from mapscripttest import normalize_class_names, test_image, testMapfile
-
-# Put local build directory on path
+# Construct the distutils build path, allowing us to run unit tests 
+# before the module is installed
 platformdir = '-'.join((distutils.util.get_platform(), 
-                        '.'.join(map(str, sys.version_info[0:2]))))
-sys.path.insert(0, os.path.join('build', 'lib.' + platformdir))
+                       '.'.join(map(str, sys.version_info[0:2]))))
+sys.path.insert(0, 'build/lib.' + platformdir)
 
+# Our testing mapfile
+testMapfile = '../../tests/test.map'
+test_image = '../../tests/test.png'
+fontsetfile = "/home/sean/projects/ms_42/mapserver/tests/fonts.txt"
+symbolsetfile = "/home/sean/projects/ms_42/mapserver/tests/symbols.txt"
+
+# Import all from mapscript
 import mapscript
-normalize_class_names(mapscript)
 
-# ===========================================================================
-# The test begins now!
+# If mapscript is using the next generation names
+if 'mapObj' not in dir(mapscript):
+    mapscript.mapObj = mapscript.Map
+    mapscript.layerObj = mapscript.Layer
+    mapscript.classObj = mapscript.Class
+    mapscript.styleObj = mapscript.Style
+    mapscript.shapeObj = mapscript.Shape
+    mapscript.lineObj = mapscript.Line
+    mapscript.pointObj = mapscript.Point
+    mapscript.rectObj = mapscript.Rect
+    mapscript.outputFormatObj = mapscript.OutputFormat
+    mapscript.symbolObj = mapscript.Symbol
+    mapscript.symbolSetObj = mapscript.SymbolSet
+    mapscript.colorObj = mapscript.Color
+    mapscript.imageObj = mapscript.Image
+    mapscript.shapefileObj = mapscript.Shapefile
+    mapscript.projectionObj = mapscript.Projection
+    mapscript.fontSetObj = mapscript.FontSet
 
+class MapscriptTestCase(unittest.TestCase):
+
+    def assertAlmostEqual(self, first, second, places=7):
+        """Copied from unittest for use with Python 2.1 or 2.2"""
+        if round(second-first, places) != 0:
+            raise AssertionError, \
+                '%s != %s within %s places' % (`first`, `second`, `places`)
+        
 class MapCloneTestCase(MapscriptTestCase):
     """Base class for testing with a map fixture"""
 
@@ -60,18 +87,22 @@ class ClonedMapAttributesTestCase(MapCloneTestCase):
 
 class FontSetTestCase(MapCloneTestCase):
 
-    def testFontSetNumfonts(self):
+    def testSetFontSet(self):
+        #self.mapobj_clone.setFontSet(fontsetfile)
         assert self.mapobj_clone.fontset.numfonts == 2
     
 class SymbolSetTestCase(MapCloneTestCase):
 
-    def testSymbolSetNumsymbols(self):
+    def testSetSymbolSet(self):
+        #self.mapobj_clone.setSymbolSet(symbolsetfile)
         num = self.mapobj_clone.symbolset.numsymbols
         assert num == 2, num
    
 class DrawingTestCase(MapCloneTestCase):
 
     def testDrawClone(self):
+        #self.mapobj_clone.setFontSet(fontsetfile)
+        #self.mapobj_clone.setSymbolSet(symbolsetfile)
         msimg = self.mapobj_clone.draw()
         assert msimg.thisown == 1
         data = msimg.saveToString()

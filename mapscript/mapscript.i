@@ -163,8 +163,6 @@ memory.") const char * {
 %rename(FontSet) fontSetObj;
 #endif
 
-%rename(OWSRequest) cgiRequestObj;
-
 // grab mapserver declarations to wrap
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
@@ -499,7 +497,7 @@ memory.") const char * {
       msSetError(MS_HASHERR, "NULL key", "getMetaData");
     }
      
-    value = (char *) msLookupHashTable(self->web.metadata, name);
+    value = (char *) msLookupHashTable(&(self->web.metadata), name);
     if (!value) {
       msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
       return NULL;
@@ -508,23 +506,23 @@ memory.") const char * {
   }
 
   int setMetaData(char *name, char *value) {
-    if (!self->web.metadata)
-        self->web.metadata = msCreateHashTable();
-    if (msInsertHashTable(self->web.metadata, name, value) == NULL)
+    //if (!&(self->web.metadata))
+    //    self->web.metadata = msCreateHashTable();
+    if (msInsertHashTable(&(self->web.metadata), name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
   }
   
   int removeMetaData(char *name) {
-    return(msRemoveHashTable(self->web.metadata, name));
+    return(msRemoveHashTable(&(self->web.metadata), name));
   }
 
   char *getFirstMetaDataKey() {
-    return (char *) msFirstKeyFromHashTable(self->web.metadata);
+    return (char *) msFirstKeyFromHashTable(&(self->web.metadata));
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return (char *) msNextKeyFromHashTable(self->web.metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(&(self->web.metadata), lastkey);
   }
   
   int setSymbolSet(char *szFileName) {
@@ -967,7 +965,7 @@ memory.") const char * {
       msSetError(MS_HASHERR, "NULL key", "getMetaData");
     }
      
-    value = (char *) msLookupHashTable(self->metadata, name);
+    value = (char *) msLookupHashTable(&(self->metadata), name);
     if (!value) {
       msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
       return NULL;
@@ -976,23 +974,23 @@ memory.") const char * {
   }
 
   int setMetaData(char *name, char *value) {
-    if (!self->metadata)
-        self->metadata = msCreateHashTable();
-    if (msInsertHashTable(self->metadata, name, value) == NULL)
+    //if (!self->metadata)
+    //    self->metadata = msCreateHashTable();
+    if (msInsertHashTable(&(self->metadata), name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
   }
 
   int removeMetaData(char *name) {
-    return(msRemoveHashTable(self->metadata, name));
+    return(msRemoveHashTable(&(self->metadata), name));
   }
 
   char *getFirstMetaDataKey() {
-      return (char *) msFirstKeyFromHashTable(self->metadata);
+      return (char *) msFirstKeyFromHashTable(&(self->metadata));
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return (char *) msNextKeyFromHashTable(self->metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
   }
   
     %newobject getWMSFeatureInfoURL;
@@ -1152,7 +1150,7 @@ memory.") const char * {
       msSetError(MS_HASHERR, "NULL key", "getMetaData");
     }
      
-    value = (char *) msLookupHashTable(self->metadata, name);
+    value = (char *) msLookupHashTable(&(self->metadata), name);
     if (!value) {
       msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
       return NULL;
@@ -1161,19 +1159,19 @@ memory.") const char * {
   }
 
   int setMetaData(char *name, char *value) {
-    if (!self->metadata)
-        self->metadata = msCreateHashTable();
-    if (msInsertHashTable(self->metadata, name, value) == NULL)
+    //if (!self->metadata)
+    //    self->metadata = msCreateHashTable();
+    if (msInsertHashTable(&(self->metadata), name, value) == NULL)
         return MS_FAILURE;
     return MS_SUCCESS;
   }
 
   char *getFirstMetaDataKey() {
-    return (char *) msFirstKeyFromHashTable(self->metadata);
+    return (char *) msFirstKeyFromHashTable(&(self->metadata));
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return (char *) msNextKeyFromHashTable(self->metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(&(self->metadata), lastkey);
   }
   
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
@@ -1934,93 +1932,9 @@ memory.") const char * {
     }
 }
 
-%extend fontSetObj {
-   
-  char *getFirstFont() {
-    return (char *) msFirstKeyFromHashTable(self->fonts);
-  }
- 
-  char *getNextFont(char *font) {
-    return (char *) msNextKeyFromHashTable(self->fonts, font);
-  }
-  
-}
+// OWSRequest
+%include "owsrequest.i"
 
-// Class for programming OWS services - SG
-
-%extend cgiRequestObj {
-
-    cgiRequestObj(void) {
-        cgiRequestObj *request;
-        
-        request = msAllocCgiObj();
-        if (!request) {
-            msSetError(MS_CGIERR, "Failed to initialize object","OWSRequest()");
-            return NULL;
-        }
-        
-        request->ParamNames = (char **) malloc(MAX_PARAMS*sizeof(char*));
-        request->ParamValues = (char **) malloc(MAX_PARAMS*sizeof(char*));
-        if (request->ParamNames==NULL || request->ParamValues==NULL) {
-	        msSetError(MS_MEMERR, NULL, "OWSRequest()");
-            return NULL;
-        }
-        return request;
-    }
-
-    ~cgiRequestObj(void) {
-        msFreeCharArray(self->ParamNames, self->NumParams);
-        msFreeCharArray(self->ParamValues, self->NumParams);
-        free(self);
-    }
-
-    void setParameter(const char *name, const char *value) {
-        int i;
-        
-        if (self->NumParams == MAX_PARAMS) {
-            msSetError(MS_CHILDERR, "Maximum number of items, %d, has been reached", "setItem()", MAX_PARAMS);
-        }
-        
-        // Exists already?
-        for (i=0; i<self->NumParams; i++) {
-            if (strcasecmp(self->ParamNames[i], name) == 0) {
-                free(self->ParamValues[i]);
-                self->ParamValues[i] = strdup(value);
-                break;
-            }
-        }
-        if (i == self->NumParams) {  // Does not exist
-            self->ParamNames[self->NumParams] = strdup(name);
-            self->ParamValues[self->NumParams] = strdup(value);
-            self->NumParams++;
-        }
-    }
-
-    char *getName(int index) {
-        if (index < 0 || index >= self->NumParams) {
-            msSetError(MS_CHILDERR, "Invalid index, valid range is [0, %d]", "getName()", self->NumParams-1);
-            return NULL;
-        }
-        return self->ParamNames[index];
-    }
-
-    char *getValue(int index) {
-        if (index < 0 || index >= self->NumParams) {
-            msSetError(MS_CHILDERR, "Invalid index, valid range is [0, %d]", "getValue()", self->NumParams-1);
-            return NULL;
-        }
-        return self->ParamValues[index];
-    }
-
-    char *getValueByName(const char *name) {
-        int i;
-        for (i=0; i<self->NumParams; i++) {
-            if (strcasecmp(self->ParamNames[i], name) == 0) {
-                return self->ParamValues[i];
-            }
-        }
-        return NULL;
-    }
-
-}
+// HashTable
+%include "hashtable.i"
 

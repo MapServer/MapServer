@@ -201,8 +201,8 @@ An instance of classObj is associated with with one instance of layerObj_.
     | Class | <--------> | Layer |
     +-------+            +-------+
 
-The other important associations for classObj are with styleObj_ and
-labelObj_.
+The other important associations for classObj are with styleObj_, 
+labelObj_, and hashTableObj_.
 
 ::
 
@@ -213,6 +213,13 @@ labelObj_.
     +-------+ 1     0..1 +-------+
     | Class | ---------> | Label |
     +-------+            +-------+
+
+    +-------+ 1        1 +-----------+
+    | Class | ---------> | HashTable |
+    +-------+            |    --     |
+                         | metadata  |
+                         +-----------+
+
 
 Multiple class styles are now supported in 4.1.  See the styleObj_ section
 for details on use of multiple class styles.
@@ -404,21 +411,52 @@ Attributes
 
 filename : string immutable
     Path to the fontset file on disk.
-    
+
+fonts : hashTableObj_
+    Mapping of fonts.
+
 numfonts : int immutable
     Number of fonts in set.
 
 Methods
 -------
 
-getFirstFont() : string
-    Return the name of the first font in the fonts hash table.  Along with
-    getNextFont(), provides an opaque iterator for fonts.
+None
 
-getNextFont( string lastfont ) : string
-    Returns the next font following *lastfont* in the fonts hash table or
-    NULL if *lastfont* is the last non-NULL key.  If *lastfont* is NULL,
-    returns the **first** key of the fonts hash table.
+
+-----------------------------------------------------------------------------
+ hashTableObj
+-----------------------------------------------------------------------------
+
+A hashTableObj is a very simple mapping of case-insensitive string keys to
+single string values.  Map, Layer, and Class *metadata* have always been
+hash hables and now these are exposed directly.
+
+Attributes
+----------
+
+numitems : int immutable
+    Number of hash items.
+
+Methods
+-------
+
+clear( ) : void
+    Empties the table of all items.
+    
+get( string key ) : string
+    Returns the value of the item by its *key*.
+
+nextKey( [string key=NULL] ) : string
+    Returns the name of the next key or NULL if there is no valid next key.
+    If the input *key* is NULL, returns the first key.
+
+remove( string key ) : int
+    Removes the hash item by its *key*.  Returns MS_SUCCESS or MS_FAILURE.
+    
+set( string key, string value ) : int
+    Sets a hash item.  Returns MS_SUCCESS or MS_FAILURE.
+
 
 -----------------------------------------------------------------------------
  imageObj
@@ -595,13 +633,23 @@ A layerObj is associated with one mapObj and has no other existence [1]_.
     | Layer | <--------> | Map |
     +-------+            +-----+
    
-The other important association for layerObj is with classObj
+The other important association for layerObj is with classObj_
 
 ::
 
     +-------+ 1     0..* +-------+
     | Layer | <--------> | Class |
     +-------+            +-------+
+
+and hashTableObj_
+
+::
+
+    +-------+ 1        1 +-----------+
+    | Layer | ---------> | HashTable |
+    +-------+            |    --     |
+                         | metadata  |
+                         +-----------+
 
 
 Attributes
@@ -674,6 +722,9 @@ maxfeatures : int
 maxscale : float
     Maximum scale at which layer will be drawn.
 
+metadata : hashTableObj_
+    Layer metadata.
+    
 minscale : float
     Minimum scale at which layer will be drawn.
 
@@ -1109,7 +1160,7 @@ Secondary associations are with legendObj_, scalebarObj_, referenceMapObj_,
                         | ReferenceMap |
                         +--------------+ 
 
-and outputFormatObj_.
+outputFormatObj_.
 
 ::
 
@@ -1117,11 +1168,24 @@ and outputFormatObj_.
      | Map | ---------> | OutputFormat |
      +-----+            +------------- + 
                            
+and hashTableObj_
+
+::
+
+     +-----+ 1        1 +-----------+
+     | Map | ---------> | HashTable |
+     +-----+            |    --     |
+                        | metadata  |
+                        +-----------+
+
 
 Attributes
 ----------
 
 **TODO**
+
+metadata : hashTableObj_
+    Map metadata.
 
 numoutputformats : int
     Number of output formats.
@@ -1194,7 +1258,7 @@ setMetaData( string key, string value ) : int
     Assign *value* to the web.metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
 
-setRotation(float rotation_angle) : int
+setRotation( float rotation_angle ) : int
     Set map rotation angle. The map view rectangle (specified in 
     EXTENTS) will be rotated by the indicated angle in the counter-
     clockwise direction. Note that this implies the rendered map 

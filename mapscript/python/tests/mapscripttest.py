@@ -19,6 +19,10 @@ platformdir = '-'.join((distutils.util.get_platform(),
                        '.'.join(map(str, sys.version_info[0:2]))))
 sys.path.insert(0, os.path.join('build', 'lib.' + platformdir))
 
+# import module
+import mapscript
+
+# normalize names
 def normalize_class_names(module):
     if 'mapObj' not in dir(module):
         module.mapObj = module.Map
@@ -37,7 +41,6 @@ def normalize_class_names(module):
         module.shapefileObj = module.Shapefile
         module.projectionObj = module.Projection
         module.fontSetObj = module.FontSet
-
 
 # ===========================================================================
 # Import mapscript module and normalize any next generation class names
