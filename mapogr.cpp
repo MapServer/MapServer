@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.6  2000/09/17 17:35:21  dan
+ * Fixed label point generation for polygons
+ *
  * Revision 1.5  2000/09/17 03:10:19  sdlime
  * Fixed a few more things. Real close, just needs some testing.
  *
@@ -336,7 +339,7 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   pointObj annopnt, *pnt;
 
 /* ------------------------------------------------------------------
- * Register OGDI Drivers, only once per execution
+ * Register OGR Drivers, only once per execution
  * ------------------------------------------------------------------ */
   static int bDriversRegistered = MS_FALSE;
   if (!bDriversRegistered)
@@ -366,17 +369,17 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(layer->symbolscale > 0) scalefactor = layer->symbolscale/map->scale;
 
   for(i=0; i<layer->numclasses; i++) {
-    layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
-    layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
-    layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
-    layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
-    layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
-    layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
+    layer->_class[i].sizescaled = MS_NINT(layer->_class[i].size * scalefactor);
+    layer->_class[i].sizescaled = MS_MAX(layer->_class[i].sizescaled, layer->_class[i].minsize);
+    layer->_class[i].sizescaled = MS_MIN(layer->_class[i].sizescaled, layer->_class[i].maxsize);
+    layer->_class[i].overlaysizescaled = MS_NINT(layer->_class[i].overlaysize * scalefactor);
+    layer->_class[i].overlaysizescaled = MS_MAX(layer->_class[i].overlaysizescaled, layer->_class[i].overlayminsize);
+    layer->_class[i].overlaysizescaled = MS_MIN(layer->_class[i].overlaysizescaled, layer->_class[i].overlaymaxsize);
 #ifdef USE_TTF
-    if(layer->class[i].label.type == MS_TRUETYPE) { 
-      layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
-      layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
-      layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
+    if(layer->_class[i].label.type == MS_TRUETYPE) { 
+      layer->_class[i].label.sizescaled = MS_NINT(layer->_class[i].label.size * scalefactor);
+      layer->_class[i].label.sizescaled = MS_MAX(layer->_class[i].label.sizescaled, layer->_class[i].label.minsize);
+      layer->_class[i].label.sizescaled = MS_MIN(layer->_class[i].label.sizescaled, layer->_class[i].label.maxsize);
     }
 #endif
   }
@@ -599,15 +602,26 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                                   poFeature->GetGeometryRef(), 
                                   &transformedshape, MS_TRUE) != -1)
           {
+              int nLabelStatus = -1;
+
+              angle = layer->_class[nClassId].label.angle;
+              length = -1;
 
               if(layer->type == MS_POLYGON)
+              {
                   msDrawShadeSymbol(&map->symbolset, img, &transformedshape,
                                    layer->_class[nClassId].symbol, 
                                    layer->_class[nClassId].color, 
                                    layer->_class[nClassId].backgroundcolor,
                                    layer->_class[nClassId].outlinecolor, 
                                    layer->_class[nClassId].sizescaled);
+                  if(pszLabel)
+                      nLabelStatus = msPolygonLabelPoint(&transformedshape, 
+                                                          &annopnt, 
+                                 layer->_class[nClassId].label.minfeaturesize);
+              }
               else
+              {
                   msDrawLineSymbol(&map->symbolset, img, &transformedshape,
                                    layer->_class[nClassId].symbol, 
                                    layer->_class[nClassId].color, 
@@ -615,10 +629,14 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                                    layer->_class[nClassId].outlinecolor, 
                                    layer->_class[nClassId].sizescaled);
 
-              if(pszLabel &&
-                 msPolylineLabelPoint(&transformedshape, &annopnt, 
+                  if(pszLabel)
+                      nLabelStatus = msPolylineLabelPoint(&transformedshape, 
+                                                          &annopnt, 
                                  layer->_class[nClassId].label.minfeaturesize, 
-                                      &angle, &length) != -1)
+                                                          &angle, &length);
+              }
+
+              if(nLabelStatus != -1)
               {
                   if(layer->_class[nClassId].label.autoangle)
                       layer->_class[nClassId].label.angle = angle;
@@ -663,3 +681,4 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
 #endif /* USE_OGR */
 }
+
