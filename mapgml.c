@@ -140,7 +140,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, 
         fprintf(stream, "%s\t<gml:LineString>\n", tab); // no srsname at this point
 
         fprintf(stream, "%s\t\t<gml:coordinates>", tab);
-        for(j=0; j<shape->line[0].numpoints; j++)
+        for(j=0; j<shape->line[i].numpoints; j++)
 	  fprintf(stream, "%f,%f", shape->line[i].point[j].x, shape->line[i].point[j].y);
         fprintf(stream, "</gml:coordinates>\n");
         fprintf(stream, "%s\t</gml:LineString>\n", tab);
