@@ -18,6 +18,8 @@ Version 3.6.7 (current CVS)
 
 - Modified PHP MapScript SAPI test to accept 'cli' as well
 
+- Fixed seg fault with WMS GetFeatureInfo of type text/html
+
 
 Version 3.6.6 (2003-06-01)
 --------------------------
