@@ -660,7 +660,8 @@ void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *
   rectObj rect;
   char *font=NULL;
 
-  if(class->symbol > symbolset->numsymbols) { /* no such symbol, 0 is OK */
+  if(class->symbol > symbolset->numsymbols ||
+     class->symbol == -1) { /* no such symbol, 0 is OK */
     *width = 0;
     *height = 0;
     return;
