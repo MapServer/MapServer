@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.123  2004/10/21 19:20:48  assefa
+ * Correct test in time functions on return value (Bug 976).
+ *
  * Revision 1.122  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -274,6 +277,7 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
     char *time = NULL;
     char **atimes, **tokens = NULL;
     int numtimes, ntmp, i = 0;
+    char *tmpstr = NULL;
 
     if (timepatternstring && timestring)
     {
@@ -312,11 +316,16 @@ void msWMSSetTimePattern(const char *timepatternstring, char *timestring)
             {
                 for (i=0; i<ntmp; i++)
                 {
-                    if (msTimeMatchPattern(time, tokens[i]) >= 0)
-                    {
-                        msSetLimitedPattersToUse(tokens[i]);
-                        break;
-                    }
+                  if (tokens[i] && strlen(tokens[i]) > 0)
+                  {
+                      trimBlanks(tokens[i]);
+                      tmpstr = trimLeft(tokens[i]);
+                      if (msTimeMatchPattern(time, tmpstr) == MS_TRUE)
+                      {
+                          msSetLimitedPattersToUse(tmpstr);
+                          break;
+                      }
+                  }
                 }
                 msFreeCharArray(tokens, ntmp);
             }
@@ -337,8 +346,6 @@ int msWMSApplyTime(mapObj *map, int version, char *time)
 
     if (map)
     {
-
-
         for (i=0; i<map->numlayers; i++)
         {
             lp = &(map->layers[i]);
