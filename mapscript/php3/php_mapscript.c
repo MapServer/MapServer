@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.164  2003/05/27 12:57:17  assefa
+ * Set label size to default value (Bug245).
+ *
  * Revision 1.163  2003/05/19 16:09:26  assefa
  * Set transparency and interlace in SaveImage.
  *
@@ -6048,6 +6051,7 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
+
     if (pThis == NULL ||
         getParameters(ht, 1, &imgObj) == FAILURE) 
     {
@@ -7269,6 +7273,13 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_LONG(-1);
     }
 
+    if (self->size == -1)
+    {
+        _phpms_set_property_long(pThis,"size", MS_MEDIUM, E_ERROR);
+        self->size =  MS_MEDIUM;
+        self->sizescaled =  MS_MEDIUM;
+    }
+
     RETURN_LONG(0);
 }
 
@@ -8044,7 +8055,6 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     int         nRetVal=MS_FAILURE;
 
 
-
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -8054,7 +8064,6 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
-
 
     if (pThis == NULL ||
         getParameters(ht, 5, &pMap, &pLayer, &pImg, &pClass, &pText) !=SUCCESS)
