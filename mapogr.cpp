@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2000-2002, Daniel Morissette, DM Solutions Group Inc
+ * Copyright (c) 2000-2003, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.60  2003/03/25 17:43:57  dan
+ * Handle ogr-brush-1 (no fill) properly with STYLEITEM AUTO
+ *
  * Revision 1.59  2003/03/05 16:13:05  frank
  * added support for layers derived from ExecuteSQL()
  *
@@ -2047,32 +2050,43 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
           else if (poStylePart->GetType() == OGRSTCBrush)
           {
               OGRStyleBrush *poBrushStyle = (OGRStyleBrush*)poStylePart;
-              bIsBrush = TRUE;
 
-              if (poBrushStyle->GetRGBFromString(poBrushStyle->
-                                                 ForeColor(bIsNull),r,g,b,t))
-              {
-                  MS_INIT_COLOR(c->styles[0].color, r, g, b);
-                  // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
-              }
-              if (poBrushStyle->GetRGBFromString(poBrushStyle->
-                                                 BackColor(bIsNull),r,g,b,t) 
-                  && !bIsNull)
-              {
-                  MS_INIT_COLOR(c->styles[0].backgroundcolor, r, g, b);
-              }
+              const char *pszBrushName = poBrushStyle->Id(bIsNull);
+              if (bIsNull) pszBrushName = NULL;
 
-              // Symbol name mapping:
-              // First look for the native symbol name, then the ogr-...
-              // generic name.  
-              // If none provided or found then use 0: solid fill
+              // Check for Brush Pattern "ogr-brush-1": the invisible fill
+              // If that's what we have then set fill color to -1
+              if (pszBrushName && strstr(pszBrushName, "ogr-brush-1") != NULL)
+              {
+                  MS_INIT_COLOR(c->styles[0].color, -1, -1, -1);
+              }
+              else
+              {
+                  bIsBrush = TRUE;
+                  if (poBrushStyle->GetRGBFromString(poBrushStyle->
+                                                   ForeColor(bIsNull),r,g,b,t))
+                  {
+                      MS_INIT_COLOR(c->styles[0].color, r, g, b);
+                      // msDebug("** BRUSH COLOR = %d %d %d (%d)**\n", r,g,b,c->color);
+                  }
+                  if (poBrushStyle->GetRGBFromString(poBrushStyle->
+                                                   BackColor(bIsNull),r,g,b,t) 
+                      && !bIsNull)
+                  {
+                      MS_INIT_COLOR(c->styles[0].backgroundcolor, r, g, b);
+                  }
+
+                  // Symbol name mapping:
+                  // First look for the native symbol name, then the ogr-...
+                  // generic name.  
+                  // If none provided or found then use 0: solid fill
               
-              const char *pszName = poBrushStyle->Id(bIsNull);
-              if (bIsNull)
+                  const char *pszName = poBrushStyle->Id(bIsNull);
+                  if (bIsNull)
                   pszName = NULL;
-              c->styles[0].symbol = msOGRGetSymbolId(&(map->symbolset), 
-                                                    pszName, NULL);
-
+                  c->styles[0].symbol = msOGRGetSymbolId(&(map->symbolset), 
+                                                         pszName, NULL);
+              }
           }
           else if (poStylePart->GetType() == OGRSTCSymbol)
           {
