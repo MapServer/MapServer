@@ -100,9 +100,10 @@ REGEX_INC=-I./regex-0.12
 # MapServer uses the same version of the REGEX library that PHP was 
 # compiled with:
 #
-#PHP_REGEX=../php-3.0.14/regex
-#REGEX_OBJ=$(PHP_REGEX)/regcomp.obj $(PHP_REGEX)/regerror.obj \
-#          $(PHP_REGEX)/regexec.obj $(PHP_REGEX)/regfree.obj
+
+#PHP_REGEX=..\php-3.0.14\regex
+#REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
+#          $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
 #REGEX_INC=-I$(PHP_REGEX)
 
 #
@@ -133,7 +134,7 @@ MS_EXE = 	mapserv.exe shp2img.exe sym2img.exe legend.exe shpindex.exe \
 #
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) $(TTF_LIB) \
-		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB)
+		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(REGEX_OBJ)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) $(TTF_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC)
