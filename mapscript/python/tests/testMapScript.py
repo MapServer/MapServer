@@ -1048,16 +1048,27 @@ class DrawProgrammedStylesTestCase(MapTestCase):
                   mapscript.colorObj(0,0,255)]
         img = self.mapobj1.prepareImage()
         layer = self.mapobj1.getLayerByName('POINT')
-        #layer.draw(self.mapobj1, img)
         class0 = layer.getClass(0)
         for i in range(len(points)):
             style0 = class0.getStyle(0)
             style0.color = colors[i]
-            #style0.color.pen = -4
             assert style0.color.toHex() == colors[i].toHex()
             points[i].draw(self.mapobj1, layer, img, 0, "foo")
         img.save('test_draw_points.png')
-    
+
+class QueryTestCase(MapTestCase):
+    """Query tests"""
+
+    def testLayerQueryRect(self):
+        e = self.mapobj1.extent
+        qrect = mapscript.rectObj(e.minx, e.miny, e.maxx, e.maxy)
+        point_layer = self.mapobj1.getLayerByName('POINT')
+        point_layer.template = 'foo'
+        point_layer.queryByRect(self.mapobj1, qrect)
+        assert point_layer.getNumResults() == 1
+        result = point_layer.getResult(0)
+        assert result.shapeindex == 0, result.shapeindex
+
 if __name__ == '__main__':
     unittest.main()
 
