@@ -344,6 +344,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return(NULL);
 
     map->layers[map->numlayers].index = map->numlayers;
+    map->layerorder[map->numlayers] = map->numlayers;
     map->numlayers++;
 
     return &(map->layers[map->numlayers-1]);
