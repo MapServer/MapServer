@@ -70,41 +70,44 @@ if (MSExc_MapServerChildError != NULL)
 %}
 
 %{
-    static void _raise_ms_exception() {
-        int errcode;
-        errorObj *ms_error;
-        char *errmsg;
-        ms_error = msGetErrorObj();
-        errcode = ms_error->code;
-        errmsg = msGetErrorString("\n");
-        
-        // Map MapServer errors to Python exceptions, will define
-        // custom Python exceptions soon.  The exception we raise
-        // is based on the error at the head of the MapServer error
-        // list.  All other errors appear in the error message.
-        switch (errcode) {
-            case MS_IOERR:
-                PyErr_SetString(PyExc_IOError, errmsg);
-                break;
-            case MS_MEMERR:
-                PyErr_SetString(PyExc_MemoryError, errmsg);
-                break;
-            case MS_TYPEERR:
-                PyErr_SetString(PyExc_TypeError, errmsg);
-                break;
-            case MS_EOFERR:
-                PyErr_SetString(PyExc_EOFError, errmsg);
-                break;
-            case MS_CHILDERR:
-                PyErr_SetString(MSExc_MapServerChildError, errmsg);
-                break;
-            default:
-                PyErr_SetString(MSExc_MapServerError, errmsg);
-                break;
-        }
 
-        free(errmsg);
+static void _raise_ms_exception( void );
+
+static void _raise_ms_exception() {
+    int errcode;
+    errorObj *ms_error;
+    char *errmsg;
+    ms_error = msGetErrorObj();
+    errcode = ms_error->code;
+    errmsg = msGetErrorString("\n");
+    
+    // Map MapServer errors to Python exceptions, will define
+    // custom Python exceptions soon.  The exception we raise
+    // is based on the error at the head of the MapServer error
+    // list.  All other errors appear in the error message.
+    switch (errcode) {
+        case MS_IOERR:
+            PyErr_SetString(PyExc_IOError, errmsg);
+            break;
+        case MS_MEMERR:
+            PyErr_SetString(PyExc_MemoryError, errmsg);
+            break;
+        case MS_TYPEERR:
+            PyErr_SetString(PyExc_TypeError, errmsg);
+            break;
+        case MS_EOFERR:
+            PyErr_SetString(PyExc_EOFError, errmsg);
+            break;
+        case MS_CHILDERR:
+            PyErr_SetString(MSExc_MapServerChildError, errmsg);
+            break;
+        default:
+            PyErr_SetString(MSExc_MapServerError, errmsg);
+            break;
     }
+
+    free(errmsg);
+}
   
 %}
 

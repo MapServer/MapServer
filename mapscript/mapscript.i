@@ -149,7 +149,7 @@ memory.") const char * {
 
    Note: Python exceptions are in pymodule.i
    ====================================================================== */
-#ifdef SWIGJAVA
+#ifndef SWIGPYTHON
 %include "../mserror.i"
 #endif
 
