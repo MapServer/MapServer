@@ -38,32 +38,45 @@ import unittest
 import cases
 
 from cases.recttest import RectObjTestCase
+
 from cases.hashtest import HashTableTestCase
-from cases.owstest import OWSRequestTestCase 
+
+from cases.owstest import OWSRequestTestCase
+
 from cases.clonetest import MapCloningTestCase
 
-from cases.maptest import MapConstructorTestCase, MapLayersTestCase
+from cases.maptest import MapConstructorTestCase
+from cases.maptest import MapLayersTestCase
 from cases.maptest import MapExtentTestCase
 
 from cases.layertest import LayerConstructorTestCase
 from cases.layertest import LayerExtentTestCase
 from cases.layertest import LayerRasterProcessingTestCase
 
+from cases.zoomtest import ZoomPointTestCase
+from cases.zoomtest import ZoomRectangleTestCase
+from cases.zoomtest import ZoomScaleTestCase
+
 # Create a test suite
 suite = unittest.TestSuite()
 
 # Add tests to the suite
-suite.addTest(RectObjTestCase)
-suite.addTest(HashTableTestCase)
-suite.addTest(MapCloningTestCase)
-suite.addTest(OWSRequestTestCase)
+suite.addTests([RectObjTestCase])
+suite.addTests([HashTableTestCase])
+suite.addTests([MapCloningTestCase])
+suite.addTests([OWSRequestTestCase])
 
-suite.addTests([MapConstructorTestCase])
+suite.addTests([MapConstructorTestCase,
+                MapLayersTestCase,
+                MapExtentTestCase])
 
-suite.addTests([MapLayersTestCase,
-                MapExtentTestCase,
-                LayerConstructorTestCase,
+suite.addTests([LayerConstructorTestCase,
+                LayerExtentTestCase,
                 LayerRasterProcessingTestCase])
+
+suite.addTests([ZoomPointTestCase,
+                ZoomRectangleTestCase,
+                ZoomScaleTestCase])
 
 # If module is run as a script, execute every test case in the suite
 if __name__ == '__main__':
