@@ -1097,6 +1097,39 @@ class DrawProgrammedStylesTestCase(MapTestCase):
             points[i].draw(self.mapobj1, layer, img, 0, "foo")
         img.save('test_draw_points.png')
 
+
+class BrushCachingTestCase(MapTestCase):
+    
+    def testDrawMapWithSecondPolygon(self):
+        """draw a blue polygon and a red polygon"""
+        p = self.mapobj1.getLayerByName('POLYGON')
+        ip = mapscript.layerObj(self.mapobj1)
+        ip.type = mapscript.MS_LAYER_POLYGON
+        ip.status = mapscript.MS_DEFAULT
+        c0 = mapscript.classObj(ip)
+        
+        # turn off first polygon layer's color
+        p.getClass(0).getStyle(0).color.setRGB(-1,-1,-1)
+        
+        # copy this style to inline polygon layer, then change outlinecolor
+        c0.insertStyle(p.getClass(0).getStyle(0))
+        st0 = c0.getStyle(0)
+        st0.outlinecolor.setRGB(255, 0, 0)
+        
+        # pull out the first feature from polygon layer, shift it
+        # and use this as an inline feature in new layer
+        p.open()
+        s0 = p.getShape(0)
+        p.close()
+        r0 = s0.bounds
+        r1 = mapscript.rectObj(r0.minx-0.1, r0.miny-0.1, r0.maxx-0.1, r0.maxy-0.1)
+        s1 = r1.toPolygon()
+        
+        ip.addFeature(s1)
+        img = self.mapobj1.draw()
+        img.save('test_drawmapw2ndpolygon.png')
+        
+
 class QueryTestCase(MapTestCase):
     """Query tests"""
 
