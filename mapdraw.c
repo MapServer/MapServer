@@ -73,6 +73,14 @@ imageObj *msDrawMap(mapObj *map)
                                  map);
     }
 #endif
+#ifdef USE_PDF
+    else if( MS_RENDERER_PDF(map->outputformat) )
+    {
+        image = msImageCreatePDF(map->width, map->height, map->outputformat,
+                                 map->web.imagepath, map->web.imageurl,
+                                 map);
+	}
+#endif
     else
     {
         image = NULL;
@@ -645,6 +653,10 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
         else if( MS_RENDERER_SWF(image->format) )
             return  msDrawRasterLayerSWF(map, layer, image);
 #endif
+#ifdef USE_PDF
+        else if( MS_RENDERER_PDF(image->format) )
+            return  msDrawRasterLayerPDF(map, layer, image);
+#endif
     }
 
     return MS_FAILURE;
@@ -693,6 +705,16 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
         else if( MS_RENDERER_SWF(image->format) )
             nStatus = msDrawWMSLayerSWF(1, asReqInfo, numReq,
                                         map, layer, image);
+#endif
+#ifdef USE_PDF
+        else if( MS_RENDERER_PDF(image->format) )
+        {
+/*            nReturnVal = msDrawWMSLayerPDF(image, labelPnt, string, label, 
+                                      fontset, scalefactor); 
+PDF doesn't support WMS yet so return failure
+*/
+			nStatus = MS_FAILURE;
+		}
 #endif
         else
             nStatus = MS_SUCCESS; // Should we fail if output doesn't support WMS?
@@ -1075,6 +1097,10 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
        else if( MS_RENDERER_SWF(image->format) )
            msDrawMarkerSymbolSWF(symbolset, image, p, style, scalefactor);
 #endif
+#ifdef USE_PDF
+       else if( MS_RENDERER_PDF(image->format) )
+           msDrawMarkerSymbolPDF(symbolset, image, p, style, scalefactor);
+#endif
     }
 }
 
@@ -1089,6 +1115,10 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
         else if( MS_RENDERER_SWF(image->format) )
             msDrawLineSymbolSWF(symbolset, image, p,  style, scalefactor);
 #endif
+#ifdef USE_PDF
+        else if( MS_RENDERER_PDF(image->format) )
+            msDrawLineSymbolPDF(symbolset, image, p,  style, scalefactor);
+#endif
     }
 }
 
@@ -1102,6 +1132,10 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             msDrawShadeSymbolSWF(symbolset, image, p, style, scalefactor);
+#endif
+#ifdef USE_PDF
+        else if( MS_RENDERER_PDF(image->format) )
+            msDrawShadeSymbolPDF(symbolset, image, p, style, scalefactor);
 #endif
     }
 }
@@ -1159,6 +1193,11 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label
             nReturnVal = draw_textSWF(image, labelPnt, string, label, 
                                       fontset, scalefactor); 
 #endif
+#ifdef USE_PDF
+        else if( MS_RENDERER_PDF(image->format) )
+            nReturnVal = msDrawTextPDF(image, labelPnt, string, label, 
+                                      fontset, scalefactor); 
+#endif
     }
 
     return nReturnVal;
@@ -1175,6 +1214,10 @@ int msDrawLabelCache(imageObj *image, mapObj *map)
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             nReturnVal = msDrawLabelCacheSWF(image, map);
+#endif
+#ifdef USE_PDF
+        else if( MS_RENDERER_PDF(image->format) )
+            nReturnVal = msDrawLabelCachePDF(image, map);
 #endif
     }
 
@@ -1193,6 +1236,10 @@ void msImageStartLayer(mapObj *map, layerObj *layer, imageObj *image)
 #ifdef USE_MING_FLASH
         if( MS_RENDERER_SWF(image->format) )
             msImageStartLayerSWF(map, layer, image);
+#endif
+#ifdef USE_PDF
+        if( MS_RENDERER_PDF(image->format) )
+            msImageStartLayerPDF(map, layer, image); 
 #endif
     }
 }
@@ -1219,8 +1266,12 @@ void msDrawStartShape(mapObj *map, layerObj *layer, imageObj *image,
     {
 
 #ifdef USE_MING_FLASH
-          if( MS_RENDERER_SWF(map->outputformat) )
+        if( MS_RENDERER_SWF(map->outputformat) )
             msDrawStartShapeSWF(map, layer, image, shape);
+#endif
+#ifdef USE_PDF
+        if( MS_RENDERER_PDF(map->outputformat) )
+            msDrawStartShapePDF(map, layer, image, shape);
 #endif
                
     }

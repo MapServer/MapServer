@@ -291,6 +291,10 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
         else if( MS_DRIVER_SWF(img->format) )
             nReturnVal = msSaveImageSWF(img, filename);
 #endif
+#ifdef USE_PDF
+        else if( MS_RENDERER_PDF(img->format) )
+            nReturnVal = msSaveImagePDF(img, filename);
+#endif
         else
             msSetError(MS_MISCERR, "Unknown image type", 
                        "msSaveImage()"); 
@@ -314,6 +318,10 @@ void msFreeImage(imageObj *image)
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             msFreeImageSWF(image);
+#endif
+#ifdef USE_PDF
+        else if( MS_RENDERER_PDF(image->format) )
+            msFreeImagePDF(image);
 #endif
         else
             msSetError(MS_MISCERR, "Unknown image type", 
@@ -1026,6 +1034,14 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
     if (image != NULL && MS_RENDERER_SWF(image->format) )
     {
         msTransformShapeSWF(shape, extent, cellsize);
+        return;
+    }
+#endif
+#ifdef USE_PDF
+    if (image != NULL && MS_RENDERER_PDF(image->format) )
+    {
+      //msTransformShapePDF(shape, extent, cellsize);
+        msTransformShapeToPixel(shape, extent, cellsize);
         return;
     }
 #endif

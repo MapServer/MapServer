@@ -147,14 +147,17 @@ extern "C" {
 #define MS_DRIVER_GD(format)	(strncasecmp((format)->driver,"gd/",3)==0)
 #define MS_DRIVER_SWF(format)	(strncasecmp((format)->driver,"swf",3)==0)
 #define MS_DRIVER_GDAL(format)	(strncasecmp((format)->driver,"gdal/",5)==0)
+#define MS_DRIVER_PDF(format)	(strncasecmp((format)->driver,"pdf",3)==0)
 
 #define MS_RENDER_WITH_GD	1
 #define MS_RENDER_WITH_SWF    	2
 #define MS_RENDER_WITH_RAWDATA 	3
+#define MS_RENDER_WITH_PDF 	4
 
 #define MS_RENDERER_GD(format)	((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format)	((format)->renderer == MS_RENDER_WITH_SWF)
 #define MS_RENDERER_RAWDATA(format) ((format)->renderer == MS_RENDER_WITH_RAWDATA)
+#define MS_RENDERER_PDF(format) ((format)->renderer == MS_RENDER_WITH_PDF)
 
 // ok, we'll switch to an UL cell model to make this work with WMS
 #define MS_CELLSIZE(min,max,d)    ((max - min)/d)
@@ -792,6 +795,17 @@ typedef struct
 
 #endif
 
+//PDF Object structure
+#ifdef USE_PDF
+
+typedef struct 
+{
+    mapObj *map;
+    PDF * pdf;
+} PDFObj; 
+
+#endif
+
 // IMAGE OBJECT - a wrapper for GD images
 typedef struct {
 #ifdef SWIG
@@ -813,8 +827,9 @@ typedef struct {
 #ifdef USE_MING_FLASH
       SWFObj     *swf;
 #endif
-      //PDF       *pdf;
-
+#ifdef USE_PDF
+      PDFObj       *pdf;
+#endif
       short       *raw_16bit;
       float       *raw_float;
   }img;
@@ -1197,10 +1212,10 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
 int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj*image);
 
-  /*int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, 
+/*int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, 
                       mapObj *map, layerObj *layer, imageObj *image);
-  */
+*/
 
 void msTransformShapeSWF(shapeObj *shape, rectObj extent, double cellsize);
 
@@ -1216,6 +1231,53 @@ void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapswf.c                     */
+/* ==================================================================== */
+
+/* ==================================================================== */
+
+/* ==================================================================== */
+/*      prototypes for functions in mappdf.c                            */
+/* ==================================================================== */
+#ifdef USE_PDF
+PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash);
+
+imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format,
+                           char *imagepath, char *imageurl, mapObj *map);
+
+void msImageStartLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
+
+int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string, 
+                   labelObj *label, fontSetObj *fontset, double scalefactor);
+
+int msDrawLabelCachePDF(imageObj *image, mapObj *map);
+
+void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
+                         styleObj *style, double scalefactor);
+
+void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image, 
+                          shapeObj *p, styleObj *style, double scalefactor);
+
+void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image, 
+                           pointObj *p, styleObj *style, double scalefactor);
+int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
+int msDrawVectorLayerAsRasterPDF(mapObj *map, layerObj *layer, imageObj*image);
+
+void msTransformShapePDF(shapeObj *shape, rectObj extent, double cellsize);
+
+int msSaveImagePDF(imageObj *image, char *filename);
+
+void msFreeImagePDF(imageObj *image);
+
+int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, 
+                 labelObj *label, fontSetObj *fontset, double scalefactor);
+                 
+void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image,
+                         shapeObj *shape);
+
+#endif
+
+/* ==================================================================== */
+/*      End of prototypes for functions in mappdf.c                     */
 /* ==================================================================== */
 
 /* ==================================================================== */

@@ -307,7 +307,16 @@ int drawGDAL(mapObj *map, layerObj *layer, imageObj *image,
 
   memset( cmap, 0xff, MAXCOLORS * sizeof(int) );
 
-  if( MS_RENDERER_GD(map->outputformat) )
+/* -------------------------------------------------------------------- */
+/*      Test the image format instead of the map format.                */
+/*      Normally the map format and the image format should be the      */
+/*      same but In somes cases like swf and pdf support, a temporary   */
+/*      GD image object is created and used to render raster layers     */
+/*      and then dumped into the SWF or the PDF file.                   */
+/* -------------------------------------------------------------------- */
+  
+  //if( MS_RENDERER_GD(map->outputformat) )
+  if( MS_RENDERER_GD(image->format) )
   {
       gdImg = image->img.gd;
 

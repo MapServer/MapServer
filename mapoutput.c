@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2002/10/04 21:15:59  assefa
+ * Add PDF support using the new output architecture. Work done
+ * by Zak James (zak@aiya.dhs.org).
+ *
  * Revision 1.4  2002/06/21 18:29:45  frank
  * Added support for GD/PC256 as a pseudo-driver
  *
@@ -213,6 +217,16 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
         format->renderer = MS_RENDER_WITH_SWF;
     }
 #endif
+#ifdef USE_PDF
+    if( strcasecmp(driver,"pdf") == 0 )
+    {
+        format = msAllocOutputFormat( map, "pdf", driver );
+        format->mimetype = strdup("application/x-pdf");
+        format->imagemode = MS_IMAGEMODE_PC256;
+        format->extension = strdup("pdf");
+        format->renderer = MS_RENDER_WITH_PDF;
+    }
+#endif
 #ifdef USE_GDAL
     if( strncasecmp(driver,"gdal/",5) == 0 )
     {
@@ -249,6 +263,7 @@ void msApplyDefaultOutputFormats( mapObj *map )
     msCreateDefaultOutputFormat( map, "GD/JPEG" );
     msCreateDefaultOutputFormat( map, "GD/WBMP" );
     msCreateDefaultOutputFormat( map, "swf" );
+    msCreateDefaultOutputFormat( map, "pdf" );
 
 #ifdef USE_GDAL
     msCreateDefaultOutputFormat( map, "GDAL/GTiff" );

@@ -33,7 +33,10 @@ int main(int argc, char *argv[])
 #else
   int i,j,k;
 
-  mapObj    	   *map=NULL;
+  imageObj *image;
+  
+  mapObj *map=NULL;
+  outputFormatObj *format=NULL;
   gdImagePtr       img=NULL;
 
   char **layers=NULL;
@@ -64,10 +67,10 @@ int main(int argc, char *argv[])
   for(i=1;i<argc;i++) { /* Step though the user arguments, 1st to find map file */
 
     if(strncmp(argv[i],"-m",2) == 0) {
-      map = msLoadMap(argv[i+1]);
+      map = msLoadMap(argv[i+1], NULL);
       if(!map) {
-	msWriteError(stderr);
-	exit(0);
+    msWriteError(stderr);
+    exit(0);
       }
     }
   }
@@ -90,11 +93,11 @@ int main(int argc, char *argv[])
 
     if(strncmp(argv[i],"-d",2) == 0) { /* swap layer data */
       for(j=0; j<map->numlayers; j++) {
-	 if(strcmp(map->layers[j].name, argv[i+1]) == 0) {
-	   free(map->layers[j].data);
-	   map->layers[j].data = strdup(argv[i+2]);
-	   break;
-	 }
+     if(strcmp(map->layers[j].name, argv[i+1]) == 0) {
+       free(map->layers[j].data);
+       map->layers[j].data = strdup(argv[i+2]);
+       break;
+     }
       }
       i+=2;
     }
@@ -109,22 +112,24 @@ int main(int argc, char *argv[])
       map->extent.maxy = atof(argv[i+4]);
       i+=4;
     }
+    format = msCreateDefaultOutputFormat(map, "pdf");
+    map->outputformat = format;
 
     if(strncmp(argv[i],"-l",2) == 0) { /* load layer list */
       layers = split(argv[i+1], ' ', &(num_layers));
 
       for(j=0; j<map->numlayers; j++) {
-	if(map->layers[j].status == MS_DEFAULT)
-	  continue;
-	else {
-	  map->layers[j].status = MS_OFF;
-	  for(k=0; k<num_layers; k++) {
-	    if(strcmp(map->layers[j].name, layers[k]) == 0) {
-	      map->layers[j].status = MS_ON;
-	      break;
-	    }
-	  }
-	}
+    if(map->layers[j].status == MS_DEFAULT)
+      continue;
+    else {
+      map->layers[j].status = MS_OFF;
+      for(k=0; k<num_layers; k++) {
+        if(strcmp(map->layers[j].name, layers[k]) == 0) {
+          map->layers[j].status = MS_ON;
+          break;
+        }
+      }
+    }
       }
       msFreeCharArray(layers, num_layers);
 
@@ -143,14 +148,9 @@ int main(int argc, char *argv[])
   gdImageDestroy(img);*/
   map->height = PagePixelHeight-(2*PagePixelMargin);
   map->width = PagePixelWidth-(2*PagePixelMargin);
-  pdf = initializePDF(outfile);
-  PDF_begin_page(pdf,PagePixelWidth, PagePixelHeight);
-  PDF_set_value(pdf,"textrendering",2);
-  PDF_translate(pdf, PagePixelMargin, PagePixelHeight-PagePixelMargin);
-  PDF_scale(pdf,(float)1,(float)-1);
-  pdf=(PDF*)msDrawMapPDF(map, pdf, NULL);
-  releasePDF(pdf);
-
+  image = msDrawMap(map);
+  msSaveImage(map, image, outfile);
+    
   msFreeMap(map);
   free(outfile);
 #endif
