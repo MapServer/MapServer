@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2001/01/09 05:24:41  dan
+ * Fixes to build with PHP 4.0.4
+ *
  * Revision 1.2  2000/09/08 21:27:54  dan
  * Added _phpms_object_init()
  *
@@ -42,8 +45,6 @@
 #ifdef PHP4
 #include "php.h"
 #include "php_globals.h"
-#include "ext/standard/php_standard.h"
-#include "ext/standard/info.h"
 #else
 #include "phpdl.h"
 #include "php3_list.h"

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.26  2001/01/09 05:24:41  dan
+ * Fixes to build with PHP 4.0.4
+ *
  * Revision 1.25  2000/11/08 15:24:34  dan
  * Add #ifdef necessary for PHP4 compilation.
  *
@@ -117,8 +120,6 @@
 #ifdef PHP4
 #include "php.h"
 #include "php_globals.h"
-#include "ext/standard/php_standard.h"
-#include "ext/standard/info.h"
 #else
 #include "phpdl.h"
 #include "php3_list.h"
@@ -135,7 +136,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Nov 01, 2000)"
+#define PHP3_MS_VERSION "(Jan 8, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -858,7 +859,6 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     HashTable   *list=NULL;
 #endif
 
-
     if (getParameters(ht, 1, &pFname) != SUCCESS)
     {
         WRONG_PARAM_COUNT;
@@ -867,7 +867,31 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     /* Attempt to open the MAP file 
      */
     convert_to_string(pFname);
+#ifdef PHP4
+    /* With PHP4, we have to use the virtual_cwd API... for now we'll
+     * just make sure that the .map file path is absolute, but what we
+     * should really do is make all of MapServer use the V_* macros and
+     * avoid calling setcwd() from anywhere.
+     */
+    if (IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
+        pNewObj = mapObj_new(pFname->value.str.val);
+    else
+    {
+        char    szFname[MAXPATHLEN];
+        if (virtual_getcwd(szFname, MAXPATHLEN) != NULL)
+        {
+#ifdef WIN32
+            strcat(szFname, "\\");
+#else
+            strcat(szFname, "/");
+#endif
+            strcat(szFname, pFname->value.str.val);
+            pNewObj = mapObj_new(szFname);
+        }
+    }
+#else
     pNewObj = mapObj_new(pFname->value.str.val);
+#endif
     if (pNewObj == NULL)
     {
         _phpms_report_mapserver_error(E_WARNING);
