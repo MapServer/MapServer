@@ -354,7 +354,7 @@ void loadForm()
 	if(msObj->Map->projection.proj && !pj_is_latlong(msObj->Map->projection.proj)
            && (msObj->MapPnt.x >= -180.0 && msObj->MapPnt.x <= 180.0) 
            && (msObj->MapPnt.y >= -90.0 && msObj->MapPnt.y <= 90.0))
-	  msProjectPoint(&(msObj->Map->projection), 
+	  msProjectPoint(&(msObj->Map->latlon), 
                          &(msObj->Map->projection), 
                          &msObj->MapPnt); // point is a in lat/lon
 #endif
