@@ -589,91 +589,65 @@ int msWMSGetMap(mapObj *map, const char *wmtver)
 /*
 ** msWMSFeatureInfo()
 */
-int msWMSFeatureInfo(mapObj *map, const char *wmtver, 
-                     char **names, char **values, int numentries) 
+int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **values, int numentries) 
 {
   int i, feature_count=1, numlayers_found=0;
   pointObj point = {-1.0, -1.0};
   const char *info_format="MIME";
+  double cellx, celly;
 
-  for(i=0; map && i<numentries; i++)
-  {
-    if (strcasecmp(names[i], "QUERY_LAYERS") == 0) 
-    {
+  for(i=0; map && i<numentries; i++) {
+    if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
       char **layers;
       int numlayers, j, k;
 
       layers = split(values[i], ',', &numlayers);
-      if (layers==NULL || numlayers < 1) {
-        msSetError(MS_MISCERR, 
-                   "At least one layer name required in QUERY_LAYERS.",
-                   "msWMSFeatureInfo()");
+      if(layers==NULL || numlayers < 1) {
+        msSetError(MS_MISCERR, "At least one layer name required in QUERY_LAYERS.", "msWMSFeatureInfo()");
         return msWMSException(map, wmtver);
       }
 
-      for(j=0; j<map->numlayers; j++)
-      {
+      for(j=0; j<map->numlayers; j++) {
         // Force all layers OFF by default
-         map->layers[j].status = MS_OFF;
+	map->layers[j].status = MS_OFF;
 
-        for(k=0; k<numlayers; k++)
-        {
-            if (strcasecmp(map->layers[j].name, layers[k]) == 0) {
-            map->layers[j].status = MS_ON;
+        for(k=0; k<numlayers; k++) {
+	  if(strcasecmp(map->layers[j].name, layers[k]) == 0) {
+	    map->layers[j].status = MS_ON;
             numlayers_found++;
           }
         }
       }
 
       msFreeCharArray(layers, numlayers);
-    }
-    else if (strcasecmp(names[i], "INFO_FORMAT") == 0) 
-    {
-        info_format = values[i];
-    }
+    } else if (strcasecmp(names[i], "INFO_FORMAT") == 0) 
+      info_format = values[i];
     else if (strcasecmp(names[i], "FEATURE_COUNT") == 0) 
-    {
-        feature_count = atoi(values[i]);
-    }
-    else if (strcasecmp(names[i], "X") == 0) 
-    {
-        point.x = atof(values[i]);
-    }
-    else if (strcasecmp(names[i], "Y") == 0) 
-    {
-        point.y = atof(values[i]);
-    }
+      feature_count = atoi(values[i]);
+    else if(strcasecmp(names[i], "X") == 0) 
+      point.x = atof(values[i]);
+    else if (strcasecmp(names[i], "Y") == 0)
+      point.y = atof(values[i]);
   }
 
-  if (numlayers_found == 0) {
-      msSetError(MS_MISCERR, 
-                 "Required QUERY_LAYERS parameter missing for getFeatureInfo.",
-                 "msWMSFeatureInfo()");
-      return msWMSException(map, wmtver);
+  if(numlayers_found == 0) {
+    msSetError(MS_MISCERR, "Required QUERY_LAYERS parameter missing for getFeatureInfo.", "msWMSFeatureInfo()");
+    return msWMSException(map, wmtver);
   }
 
-  if (point.x == -1.0 || point.y == -1.0) {
-      msSetError(MS_MISCERR, 
-                 "Required X/Y parameters missing for getFeatureInfo.",
-                 "msWMSFeatureInfo()");
-      return msWMSException(map, wmtver);
+  if(point.x == -1.0 || point.y == -1.0) {
+    msSetError(MS_MISCERR, "Required X/Y parameters missing for getFeatureInfo.", "msWMSFeatureInfo()");
+    return msWMSException(map, wmtver);
   }
 
   // Perform the actual query
+  cellx = MS_CELLSIZE(map->extent.minx, map->extent.maxx, map->width); // note: don't adjust extent, WMS assumes incoming extent is correct
+  celly = MS_CELLSIZE(map->extent.miny, map->extent.maxy, map->height);
+  point.x = MS_MAP2IMAGE_X(point.x, map->extent.minx, cellx);
+  point.y = MS_MAP2IMAGE_Y(point.y, map->extent.maxx, celly);
 
-  // __TODO__ For now we let MapServer adjust map extent, but the spec
-  // says that we should not adjust the extent to fit image aspect ratio
-  map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-
-  point.x = map->extent.minx + map->cellsize*point.x;
-  point.y = map->extent.maxy - map->cellsize*point.y;
-
-  if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), 
-                    point, 0) != MS_SUCCESS) 
-  {
-    if (ms_error.code != MS_NOTFOUND)
-      return msWMSException(map, wmtver);
-  }
+  if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0) != MS_SUCCESS)
+    if(ms_error.code != MS_NOTFOUND) return msWMSException(map, wmtver);
 
   // Generate response
   if (strcasecmp(info_format, "MIME") == 0) {
@@ -684,36 +658,30 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
     printf("Content-type: text/plain%c%c", 10,10);
     printf("GetFeatureInfo results:\n");
 
-    for(i=0; i<map->numlayers && numresults<feature_count; i++)
-    {
+    for(i=0; i<map->numlayers && numresults<feature_count; i++) {
       int j, k;
       layerObj *lp;
       lp = &(map->layers[i]);
 
-      if (lp->status != MS_ON || 
-          lp->resultcache==NULL || lp->resultcache->numresults == 0) 
+      if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0) 
         continue;
 
-      if (msLayerOpen(lp, map->shapepath) != MS_SUCCESS ||
-          msLayerGetItems(lp) != MS_SUCCESS)
+      if(msLayerOpen(lp, map->shapepath) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
         return msWMSException(map, wmtver);
 
       printf("\nLayer '%s'\n", lp->name);
 
-      for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++)
-      {
+      for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++) {
         shapeObj shape;
+
         msInitShape(&shape);
-        if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex,
-                            lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
+        if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
           return msWMSException(map, wmtver);
 
         printf("  Feature %ld: \n", lp->resultcache->results[j].shapeindex);
         
         for(k=0; k<lp->numitems; k++)
-        {
-            printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
-        }
+	  printf("    %s = '%s'\n", lp->items[k], shape.values[k]);
 
         msFreeShape(&shape);
         numresults++;
@@ -770,7 +738,6 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
 
   return(MS_SUCCESS);
 }
-
 #endif /* USE_WMS */
 
 /*
@@ -791,21 +758,15 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
   ** Process Params common to all requests
   */
   // VERSION (WMTVER in 1.0.0) and REQUEST must be present in a valid request
-  for(i=0; i<numentries; i++)
-  {
-    if (strcasecmp(names[i], "WMTVER") == 0 ||
-        strcasecmp(names[i], "VERSION") == 0) {
+  for(i=0; i<numentries; i++) {
+    if (strcasecmp(names[i], "WMTVER") == 0 || strcasecmp(names[i], "VERSION") == 0)
       wmtver = values[i];
-    }
-    else if (strcasecmp(names[i], "REQUEST") == 0) {
+    else if (strcasecmp(names[i], "REQUEST") == 0)
       request = values[i];
-    }
-    else if (strcasecmp(names[i], "EXCEPTIONS") == 0) {
+    else if (strcasecmp(names[i], "EXCEPTIONS") == 0)
       wms_exception_format = values[i];
-    }
-    else if (strcasecmp(names[i], "SERVICE") == 0) {
+    else if (strcasecmp(names[i], "SERVICE") == 0)
       service = values[i];
-    }
   }
 
   /*
@@ -828,25 +789,17 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
   status = msWMSLoadGetMapParams(map, wmtver, names, values, numentries);
   if (status != MS_SUCCESS) return status;
 
-  if (strcasecmp(request, "map") == 0 ||
-      strcasecmp(request, "GetMap") == 0) {
-      return msWMSGetMap(map, wmtver);
-  }
-  else if (strcasecmp(request, "feature_info") == 0 ||
-           strcasecmp(request, "GetFeatureInfo") == 0) {
-      return msWMSFeatureInfo(map, wmtver, names, values, numentries);
-  }
+  if (strcasecmp(request, "map") == 0 || strcasecmp(request, "GetMap") == 0)
+    return msWMSGetMap(map, wmtver);
+  else if (strcasecmp(request, "feature_info") == 0 || strcasecmp(request, "GetFeatureInfo") == 0)
+    return msWMSFeatureInfo(map, wmtver, names, values, numentries);
 
   // Hummmm... incomplete or unsupported WMS request
-  msSetError(MS_MISCERR, "Incomplete or unsupported WMS request",
-             "msWMSDispatch()");
+  msSetError(MS_MISCERR, "Incomplete or unsupported WMS request", "msWMSDispatch()");
   return msWMSException(map, wmtver);
-
 #else
-
   msSetError(MS_MISCERR, "WMS support is not available.", "msWMSDispatch()");
   return(MS_FAILURE);
-
 #endif
 }
 

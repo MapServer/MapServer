@@ -348,8 +348,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
   case MS_LAYER_ANNOTATION:    
     if(layer->transform) {
       if(!msPointInRect(point, &map->extent)) return(0);
-      point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
-      point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
+      point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
+      point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
     }
       
     if(labeltext) {
@@ -368,8 +368,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
   case MS_LAYER_POINT:
     if(layer->transform) {
       if(!msPointInRect(point, &map->extent)) return(0);
-      point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
-      point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
+      point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
+      point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
     }
 
     msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
@@ -508,8 +508,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	  
 	  if(layer->transform) {
 	    if(!msPointInRect(point, &map->extent)) return(MS_SUCCESS);
-	    point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
-	    point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
+	    point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
+	    point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
 	  }
 	  
 	  if(layer->labelangleitemindex != -1) 
@@ -546,8 +546,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	
 	if(layer->transform) {
 	  if(!msPointInRect(point, &map->extent)) return(MS_SUCCESS);
-	  point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
-	  point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
+	  point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
+	  point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
 	}
 
 	msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);

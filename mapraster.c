@@ -1721,8 +1721,8 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
 
   char bytes[8];
 
-  /* Allocate input and output images (same size) */
-  stream = fopen(map->reference.image,"rb");
+  
+  stream = fopen(map->reference.image,"rb"); // allocate input and output images (same size)
   if(!stream) {
     sprintf(ms_error.message, "(%s)", map->reference.image);
     msSetError(MS_IOERR, ms_error.message, "msDrawReferenceMap()");
@@ -1766,22 +1766,20 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
     return(NULL);
   }
 
-  /* Re-map users extent to this image */
-  cellsize = msAdjustExtent(&(map->reference.extent), img->sx, img->sy);
+  cellsize = msAdjustExtent(&(map->reference.extent), img->sx, img->sy); // make sure the extent given in mapfile fits the image
 
-  /* allocate some colors */
+  // allocate some colors
   if(map->reference.outlinecolor.red != -1 && map->reference.outlinecolor.green != -1 && map->reference.outlinecolor.blue != -1)
     oc = gdImageColorAllocate(img, map->reference.outlinecolor.red, map->reference.outlinecolor.green, map->reference.outlinecolor.blue);
   if(map->reference.color.red != -1 && map->reference.color.green != -1 && map->reference.color.blue != -1)
     c = gdImageColorAllocate(img, map->reference.color.red, map->reference.color.green, map->reference.color.blue); 
+    
+  x1 = MS_MAP2IMAGE_X(map->extent.minx,  map->reference.extent.minx, cellsize); // convert map extent to reference image coordinates
+  x2 = MS_MAP2IMAGE_X(map->extent.maxx,  map->reference.extent.minx, cellsize);
+  y1 = MS_MAP2IMAGE_Y(map->extent.miny,  map->reference.extent.maxy, cellsize);
+  y2 = MS_MAP2IMAGE_Y(map->extent.maxy,  map->reference.extent.maxy, cellsize);
   
-  /* Remember 0,0 file coordinates equals minx,maxy map coordinates (e.g. UTM) */
-  x1 = MS_NINT((map->extent.minx - map->reference.extent.minx)/cellsize);
-  x2 = MS_NINT((map->extent.maxx - map->reference.extent.minx)/cellsize);
-  y2 = MS_NINT((map->reference.extent.maxy - map->extent.miny)/cellsize);
-  y1 = MS_NINT((map->reference.extent.maxy - map->extent.maxy)/cellsize);
-  
-  /* Add graphic element to the output image file */
+  // now draw that extent on the reference image
   if(c != -1)
     gdImageFilledRectangle(img,x1,y1,x2,y2,c);
   if(oc != -1)

@@ -125,11 +125,11 @@ extern "C" {
                                    (type)==MS_WBMP?"wbmp":"unknown")
 
 // ok, we'll switch to an UL cell model to make this work with WMS
-#define MS_CELLSIZE(min, max, d)    ((maxx - minx)/d)
-#define MS_MAP2IMAGE_X(x, minx, cx) (MS_NINT((x - minx)/cx))
-#define MS_MAP2IMAGE_Y(y, maxy, cy) (MS_NINT((maxy - y)/cy))
-#define MS_IMAGE2MAP_X(x, minx, cx) (minx + cx*x)
-#define MS_IMAGE2MAP_Y(y, maxy, cy) (maxy - cy*y)
+#define MS_CELLSIZE(min,max,d)    ((max - min)/d)
+#define MS_MAP2IMAGE_X(x,minx,cx) (MS_NINT((x - minx)/cx))
+#define MS_MAP2IMAGE_Y(y,maxy,cy) (MS_NINT((maxy - y)/cy))
+#define MS_IMAGE2MAP_X(x,minx,cx) (minx + cx*x)
+#define MS_IMAGE2MAP_Y(y,maxy,cy) (maxy - cy*y)
 
 #endif
 

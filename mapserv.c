@@ -887,16 +887,16 @@ void setExtent()
   case FROMUSERBOX: /* user passed in a map extent */
     break;
   case FROMIMGBOX: /* fully interactive web, most likely with java front end */
-    cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImageCols);
-    celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImageRows);
+    cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImgCols);
+    celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImgRows);
     Map->extent.minx = MS_IMAGE2MAP_X(ImgBox.minx, ImgExt.minx, cellx);
     Map->extent.maxx = MS_IMAGE2MAP_X(ImgBox.maxx, ImgExt.minx, cellx);
     Map->extent.miny = MS_IMAGE2MAP_Y(ImgBox.miny, ImgExt.maxy, celly);
     Map->extent.maxy = MS_IMAGE2MAP_Y(ImgBox.maxy, ImgExt.maxy, celly);
     break;
   case FROMIMGPNT:
-    cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImageCols);
-    celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImageRows);
+    cellx = MS_CELLSIZE(ImgExt.minx, ImgExt.maxx, ImgCols);
+    celly = MS_CELLSIZE(ImgExt.miny, ImgExt.maxy, ImgRows);
     MapPnt.x = MS_IMAGE2MAP_X(ImgPnt.x, ImgExt.minx, cellx);
     MapPnt.y = MS_IMAGE2MAP_Y(ImgPnt.y, ImgExt.maxy, celly);
 
