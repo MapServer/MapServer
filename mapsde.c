@@ -2,6 +2,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.79  2004/10/04 22:13:49  hobu
+ * touch up comments that weren't properly
+ * closed that were causing gcc to complain
+ *
  * Revision 1.78  2004/10/04 20:15:00  hobu
  * touch up commit comment
  *
@@ -43,7 +47,7 @@ typedef struct {
 /************************************************************************/
 
 /* -------------------------------------------------------------------- */
-/* msSDECloseConnection
+/* msSDECloseConnection                                                 */
 /* -------------------------------------------------------------------- */
 /*     Closes the SDE connection handle, which is given as a callback   */
 /*     function to the connection pooling API                           */
@@ -59,7 +63,7 @@ static void msSDECloseConnection( void *conn_handle )
 }
 
 /* -------------------------------------------------------------------- */
-/* sde_error
+/* sde_error                                                            */
 /* -------------------------------------------------------------------- */
 /*     Reports more detailed error information from SDE                 */
 /* -------------------------------------------------------------------- */
@@ -81,7 +85,7 @@ static void sde_error(long error_code, char *routine, char *sde_routine)
 }
 
 /* -------------------------------------------------------------------- */
-/* sdeShapeCopy
+/* sdeShapeCopy                                                         */
 /* -------------------------------------------------------------------- */
 /*     Copies a SDE shape into a MapServer shapeObj                     */
 /* -------------------------------------------------------------------- */
@@ -204,7 +208,7 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 }
 
 /* -------------------------------------------------------------------- */
-/* sdeGetRecord
+/* sdeGetRecord                                                         */
 /* -------------------------------------------------------------------- */
 /*     Retrieves the current row as setup via the SDE stream query      */
 /*     or row fetch routines.                                           */
@@ -376,7 +380,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 /************************************************************************/
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerOpen
+/* msSDELayerOpen                                                       */
 /* -------------------------------------------------------------------- */
 /*     Connects to SDE using the SDE C API.  Connections are pooled     */
 /*     using the MapServer pooling API.  After a connection is made,    */
@@ -608,7 +612,7 @@ int msSDELayerOpen(layerObj *layer) {
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerClose
+/* msSDELayerClose                                                      */
 /* -------------------------------------------------------------------- */
 /*     Closes the MapServer layer.  This doesn't necessarily close the  */
 /*     connection to the layer.                                         */
@@ -643,7 +647,7 @@ void msSDELayerClose(layerObj *layer) {
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerWhichShapes
+/* msSDELayerWhichShapes                                                */
 /* -------------------------------------------------------------------- */
 /*     starts a stream query using spatial filter.  Also limits the     */
 /*     query by the layer's FILTER item as well.                        */
@@ -825,7 +829,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerNextShape
+/* msSDELayerNextShape                                                  */
 /* -------------------------------------------------------------------- */
 /*     Recursively gets the shapes for the SDE layer                    */
 /* -------------------------------------------------------------------- */
@@ -872,7 +876,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerGetItems
+/* msSDELayerGetItems                                                   */
 /* -------------------------------------------------------------------- */
 /*     Queries the SDE table's column names into layer->iteminfo        */
 /* -------------------------------------------------------------------- */
@@ -952,7 +956,7 @@ int msSDELayerGetItems(layerObj *layer) {
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerGetExtent
+/* msSDELayerGetExtent                                                  */
 /* -------------------------------------------------------------------- */
 /*     Returns the extent of the SDE layer                              */
 /* -------------------------------------------------------------------- */
@@ -995,7 +999,7 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerGetShape
+/* msSDELayerGetShape                                                   */
 /* -------------------------------------------------------------------- */
 /*     Queries SDE for a shape (and its attributes, if requested)       */
 /*     given the ID (which is the MS_SDE_ROW_ID_COLUMN column           */
@@ -1065,7 +1069,7 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerInitItemInfo
+/* msSDELayerInitItemInfo                                               */
 /* -------------------------------------------------------------------- */
 /*     Inits the stuff we'll be querying from SDE                       */
 /* -------------------------------------------------------------------- */
@@ -1140,7 +1144,7 @@ int msSDELayerInitItemInfo(layerObj *layer)
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerFreeItemInfo
+/* msSDELayerFreeItemInfo                                               */
 /* -------------------------------------------------------------------- */
 void msSDELayerFreeItemInfo(layerObj *layer)
 {
@@ -1157,7 +1161,7 @@ void msSDELayerFreeItemInfo(layerObj *layer)
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerGetSpatialColumn
+/* msSDELayerGetSpatialColumn                                           */
 /* -------------------------------------------------------------------- */
 /*     A helper function to return the spatial column for               */ 
 /*     an opened SDE layer                                              */
@@ -1185,7 +1189,7 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
 }
 
 /* -------------------------------------------------------------------- */
-/* msSDELayerGetRowIDColumn
+/* msSDELayerGetRowIDColumn                                             */
 /* -------------------------------------------------------------------- */
 /*     A helper function to return unique row ID column for             */ 
 /*     an opened SDE layer                                              */
