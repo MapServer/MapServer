@@ -928,11 +928,11 @@ int msDumpLayer(mapObj *map, layerObj *lp, int nVersion, const char *indent)
        pszWmsTimeDefault = msOWSLookupMetadata(&(lp->metadata),  "MO", 
                                                "timedefault");
 
-       fprintf(stdout, "        <Dimension name=\"time\" units=\"ISO8601\">\n");
+       fprintf(stdout, "        <Dimension name=\"time\" units=\"ISO8601\"/>\n");
        if (pszWmsTimeDefault)
-         fprintf(stdout, "        <Extent name=\"time\" default=\"%s\" multipleValues=\"1\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeDefault, pszWmsTimeExtent);  
+         fprintf(stdout, "        <Extent name=\"time\" default=\"%s\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeDefault, pszWmsTimeExtent);  
        else
-           fprintf(stdout, "        <Extent name=\"time\" multipleValues=\"1\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeExtent);  
+           fprintf(stdout, "        <Extent name=\"time\" nearestValue=\"0\">%s</Extent>\n",pszWmsTimeExtent);  
               
    }
 
