@@ -3417,6 +3417,8 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
   for(;;) {
 
     switch(msyylex()) {   
+    case(DATAPATTERN):
+      break;
     case(DEBUG):
       if((map->debug = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
       break;
@@ -3457,6 +3459,8 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if(getDouble(&(map->extent.miny)) == -1) return(NULL);
       if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
       if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
+      break;
+    case(FILEPATTERN):
       break;
     case(FONTSET):
       if((map->fontset.filename = getString()) == NULL) return(NULL);

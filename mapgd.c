@@ -291,7 +291,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   int i, j;
   symbolObj *symbol;
   int styleDashed[100];
-  int x, y;
+  int x, y, ox, oy;
   int bc, fc;
   int brush_bc, brush_fc;
   double size, d;
@@ -308,6 +308,8 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   if(fc==-1) fc = style->outlinecolor.pen;
+  ox = style->offsetx; // TODO: add scaling?
+  oy = style->offsety;
   size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
@@ -317,7 +319,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
   if(size < 1) return; // size too small
 
   if(symbol == 0) { // just draw a single width line
-    gdImageArc(img, (int)p->x, (int)p->y, (int)r, (int)r, 0, 360, fc);
+    gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)r, (int)r, 0, 360, fc);
     return;
   }
 
@@ -338,7 +340,7 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     d = size/symbol->sizey;
     x = MS_NINT(symbol->sizex*d);    
     y = MS_NINT(symbol->sizey*d);
-    
+   
     if((x < 2) && (y < 2)) break;
     
     // create the brush image
@@ -417,14 +419,14 @@ void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj 
     // gdImageArc(brush, x, y, MS_NINT(d*symbol->points[0].x), MS_NINT(d*symbol->points[0].y), 0, 360, brush_fc);
 
     if(!brush && !symbol->img)
-      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, gdStyled);      
+      gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)(2*r), (int)(2*r), 0, 360, gdStyled);      
     else 
-      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, gdStyledBrushed);
+      gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)(2*r), (int)(2*r), 0, 360, gdStyledBrushed);
   } else {
     if(!brush && !symbol->img)
-      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, fc);
+      gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)(2*r), (int)(2*r), 0, 360, fc);
     else
-      gdImageArc(img, (int)p->x, (int)p->y, (int)(2*r), (int)(2*r), 0, 360, gdBrushed);
+      gdImageArc(img, (int)p->x + ox, (int)p->y + oy, (int)(2*r), (int)(2*r), 0, 360, gdBrushed);
   }
 
   return;
@@ -441,7 +443,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   gdPoint oldpnt,newpnt;
   gdPoint sPoints[MS_MAXVECTORPOINTS];
   gdImagePtr tile=NULL;
-  int x,y;
+  int x, y, ox, oy;
 
   int fc, bc, oc;
   int tile_bc=-1, tile_fc=-1; /* colors (background and foreground) */
@@ -461,6 +463,8 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
+  ox = style->offsetx; // TODO: add scaling?
+  oy = style->offsety;
   size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
@@ -653,6 +657,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   int tmp_fc=-1, tmp_bc, tmp_oc=-1;
   int fc, bc, oc;
   double size,d;
+
+  int ox, oy;
   
   int bbox[8];
   rectObj rect;
@@ -668,6 +674,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   bc = style->backgroundcolor.pen;
   fc = style->color.pen;
   oc = style->outlinecolor.pen;
+  ox = style->offsetx; // TODO: add scaling?
+  oy = style->offsety;
   size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
@@ -677,7 +685,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   if(size < 1) return; // size too small
 
   if(style->symbol == 0 && fc >= 0) { /* simply draw a single pixel of the specified color */
-    gdImageSetPixel(img, p->x, p->y, fc);
+    gdImageSetPixel(img, p->x + ox, p->y + oy, fc);
     return;
   }  
 
@@ -690,8 +698,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 
     if(getCharacterSize(symbol->character, size, font, &rect) == -1) return;
 
-    x = p->x - (rect.maxx - rect.minx)/2 - rect.minx;
-    y = p->y - rect.maxy + (rect.maxy - rect.miny)/2;  
+    x = p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx;
+    y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
 
 #ifdef USE_GD_TTF
     gdImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
@@ -704,13 +712,13 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     break;
   case(MS_SYMBOL_PIXMAP):
     if(size == 1) { // don't scale
-      offset_x = MS_NINT(p->x - .5*symbol->img->sx);
-      offset_y = MS_NINT(p->y - .5*symbol->img->sy);
+      offset_x = MS_NINT(p->x - .5*symbol->img->sx + ox);
+      offset_y = MS_NINT(p->y - .5*symbol->img->sy + oy);
       gdImageCopy(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx, symbol->img->sy);
     } else {
       d = size/symbol->img->sy;
-      offset_x = MS_NINT(p->x - .5*symbol->img->sx*d);
-      offset_y = MS_NINT(p->y - .5*symbol->img->sy*d);
+      offset_x = MS_NINT(p->x - .5*symbol->img->sx*d + ox);
+      offset_y = MS_NINT(p->y - .5*symbol->img->sy*d + oy);
       gdImageCopyResized(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*d, symbol->img->sy*d, symbol->img->sx, symbol->img->sy);
     }
     break;
@@ -745,8 +753,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     }
 
     /* paste the tmp image in the main image */
-    offset_x = MS_NINT(p->x - .5*tmp->sx);
-    offset_y = MS_NINT(p->y - .5*tmp->sx);
+    offset_x = MS_NINT(p->x - .5*tmp->sx + ox);
+    offset_y = MS_NINT(p->y - .5*tmp->sx + oy);
     gdImageCopy(img, tmp, offset_x, offset_y, 0, 0, tmp->sx, tmp->sy);
 
     gdImageDestroy(tmp);
@@ -754,8 +762,8 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     break;
   case(MS_SYMBOL_VECTOR):
     d = size/symbol->sizey;
-    offset_x = MS_NINT(p->x - d*.5*symbol->sizex);
-    offset_y = MS_NINT(p->y - d*.5*symbol->sizey);
+    offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
+    offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
     
     if(symbol->filled) { /* if filled */
       for(j=0;j < symbol->numpoints;j++) {

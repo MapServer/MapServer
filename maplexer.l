@@ -109,6 +109,7 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>connection	       { return(CONNECTION); }
 <INITIAL,OBJECT_STRING>connectiontype	       { return(CONNECTIONTYPE); }
 <INITIAL,OBJECT_STRING>data		       { return(DATA); }
+<INITIAL,OBJECT_STRING>datapattern	       { return(DATAPATTERN); }
 <INITIAL,OBJECT_STRING>debug		       { return(DEBUG); }
 <INITIAL,OBJECT_STRING>driver		       { return(DRIVER); }
 <INITIAL,OBJECT_STRING>dump		       { return(DUMP); }
@@ -119,6 +120,7 @@ int msyyreturncomments = 0;
 <INITIAL>extent		                       { return(EXTENT); }
 <INITIAL,OBJECT_STRING>feature                 { return(FEATURE); }
 <INITIAL>filled                                { return(FILLED); }
+<INITIAL,OBJECT_STRING>filepattern	       { return(FILEPATTERN); }
 <INITIAL,OBJECT_STRING>filter                  { return(FILTER); }
 <INITIAL,OBJECT_STRING>filteritem              { return(FILTERITEM); }
 <INITIAL,OBJECT_STRING>footer		       { return(FOOTER); }

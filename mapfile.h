@@ -167,4 +167,7 @@
 #define GRATICULE 1140
 #define DEBUG 1141
 
+#define FILEPATTERN 1142
+#define DATAPATTERN 1143
+
 #endif /* MAPFILE_H */

@@ -778,7 +778,9 @@ typedef struct map_obj{ /* structure for a map */
 
   int *layerorder;
 
-  int debug;   
+  int debug;
+
+  char *datapattern, *filepattern;   
 } mapObj;
 
 //SWF Object structure
