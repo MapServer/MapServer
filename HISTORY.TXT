@@ -39,6 +39,9 @@ Version 4.2-???
 
 - Resolved issue with pens and dynamically drawing points (bug 663).
 
+- Removed unused metadata gml_uri in WFS code (Bug 527)
+
+
 Version 4.2-beta2 (2004-05-03)
 ------------------------------
 
