@@ -31,7 +31,8 @@ LINK_OPT =	/dll /debug
 #
 
 !ifdef PHP4
-PHP_SOURCE_DIR = ../../../php-4.0.6
+#PHP_SOURCE_DIR = ../../../php-4.0.6
+PHP_SOURCE_DIR = ../../../php-4.2.1
 PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/main -I$(PHP_SOURCE_DIR)/zend -I$(PHP_SOURCE_DIR)/include -I$(PHP_SOURCE_DIR)/tsrm
 !else
 PHP_SOURCE_DIR = ../../../php-3.0.14
