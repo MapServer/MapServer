@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.6  2000/08/24 05:46:22  dan
+ * #ifdef everything related to featureObj
+ *
  * Revision 1.5  2000/08/16 21:14:00  dan
  * Sync with mapscript.i version 1.12
  *
@@ -363,6 +366,7 @@ int queryObj_setExpression(queryObj *self, char *string) {
   }
 
 
+#ifdef __TODO__FEATURE__OBJ__
 /**********************************************************************
  * class extensions for featureObj, always within the context of a layer
  **********************************************************************/
@@ -382,7 +386,7 @@ void featureObj_destroy(struct featureObj *self) {
 int featureObj_add(struct featureObj *self, lineObj *p) {
     return msAddLine(&self->shape, p);
   }
-
+#endif
 
 /**********************************************************************
  * class extensions for pointObj, useful many places

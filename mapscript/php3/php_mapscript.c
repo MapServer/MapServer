@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.9  2000/08/24 05:46:22  dan
+ * #ifdef everything related to featureObj
+ *
  * Revision 1.8  2000/08/22 05:56:28  dan
  * Fixed rectObj->set() to treat minx, miny, etc. as doubles instead of ints
  *
@@ -130,7 +133,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "1.0.011 (Jul 14, 2000)"
+#define PHP3_MS_VERSION "1.0.012 (Aug 24, 2000)"
 
 /*=====================================================================
  *                         Prototypes
@@ -310,7 +313,9 @@ function_entry php3_ms_functions[] = {
     {"ms_newshapeobj",  php3_ms_shape_new,  NULL},
     {"ms_newshapefileobj", php3_ms_shapefile_new,  NULL},
     {"ms_newrectobj",      php3_ms_rect_new,  NULL},
+#ifdef ___TODO__FEATURE_OBJ__
     {"ms_newfeatureobj",   php3_ms_feature_new,  NULL},
+#endif
     {"ms_getcwd",    php3_ms_getcwd,   NULL},
     {"ms_getpid",    php3_ms_getpid,   NULL},
     {NULL, NULL, NULL}
@@ -2237,7 +2242,9 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_method(return_value, "set",      php3_ms_lyr_setProperty);
     add_method(return_value, "draw",     php3_ms_lyr_draw);
     add_method(return_value, "getclass", php3_ms_lyr_getClass);
+#ifdef __TODO__FEATURE_OBJ__
     add_method(return_value, "firstfeature", php3_ms_lyr_firstFeature);
+#endif
     add_method(return_value, "queryusingpoint", php3_ms_lyr_queryUsingPoint);
     add_method(return_value, "queryusingrect", php3_ms_lyr_queryUsingRect);
 
@@ -2440,7 +2447,7 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
-
+#ifdef __TODO__FEATURE_OBJ__
 /**********************************************************************
  *                        layer->firstFeature()
  **********************************************************************/
@@ -2476,7 +2483,7 @@ DLEXPORT void php3_ms_lyr_firstFeature(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
-
+#endif /* __TODO__FEATURE_OBJ__ */
 
 /**********************************************************************
  *                        layer->queryUsingPoint()
@@ -3674,6 +3681,7 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+#ifdef __TODO__FEATURE_OBJ__
 
 /*=====================================================================
  *                 PHP function wrappers - featureObj class
@@ -3839,6 +3847,7 @@ DLEXPORT void php3_ms_feature_next(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+#endif /* __TODO__FEATURE_OBJ__ */
 
 /*=====================================================================
  *                 PHP function wrappers - webObj class
