@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.22  2004/03/08 17:50:22  frank
+ * completed 16bit classified support
+ *
  * Revision 1.21  2004/03/05 23:18:52  frank
  * Added small TODO note.
  *
@@ -137,6 +140,9 @@ msDrawRasterLayerGDAL_16BitClassification(
     int src_xoff, int src_yoff, int src_xsize, int src_ysize,
     int dst_xoff, int dst_yoff, int dst_xsize, int dst_ysize );
 
+static double 
+msGetGDALNoDataValue( layerObj *layer, GDALRasterBandH hBand,
+                      int *pbGotNoData );
 
 #ifdef ENABLE_DITHER
 static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
@@ -502,7 +508,8 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       */
       {
           int    bGotNoData;
-          double dfNoDataValue = GDALGetRasterNoDataValue(hBand1,&bGotNoData);
+          double dfNoDataValue = msGetGDALNoDataValue( layer, hBand1, 
+                                                       &bGotNoData);
 
           if( bGotNoData && dfNoDataValue >= 0 && dfNoDataValue <= 255.0 )
           {
@@ -900,10 +907,10 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer,
     
 {
     CPLErr eErr;
-    double dfScaleMin=0.0, dfScaleMax=255.0, dfScaleRatio;
+    double dfScaleMin=0.0, dfScaleMax=255.0, dfScaleRatio, dfNoDataValue;
     const char *pszScaleInfo;
     float *pafRawData;
-    int   nPixelCount = dst_xsize * dst_ysize, i;
+    int   nPixelCount = dst_xsize * dst_ysize, i, bGotNoData = FALSE;
 
 /* -------------------------------------------------------------------- */
 /*      Fetch the scale processing option.                              */
@@ -1023,6 +1030,18 @@ LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer,
     }
 
     free( pafRawData );
+
+/* -------------------------------------------------------------------- */
+/*      Report a warning if NODATA keyword was applied.  We are         */
+/*      unable to utilize it since we can't return any pixels marked    */
+/*      as nodata from this function.  Need to fix someday.             */
+/* -------------------------------------------------------------------- */
+    dfNoDataValue = msGetGDALNoDataValue( layer, hBand, &bGotNoData );
+    if( bGotNoData )
+        msDebug( "LoadGDALImage(%s): NODATA value %g in GDAL\n"
+                 "file or PROCESSING directive ignored.  Not yet supported for\n"
+                 "unclassified scaled data.\n",
+                 layer->name, dfNoDataValue );
 
     return 0;
 }
@@ -1433,15 +1452,6 @@ msDrawRasterLayerGDAL_RawMode(
 /*      the 16bit cases at the cost of some complication.               */
 /************************************************************************/
 
-/*
-  TODO: 
-   o Currently the values are cast to int before passing to the 
-     msGetClass() function.  Somehow we need a version of that function
-     that supports floating point values, but a change to the API will be
-     required. 
-   o There is essentially no support for OFFSITE or inherent NODATA values. 
- */
-
 static int 
 msDrawRasterLayerGDAL_16BitClassification(
     mapObj *map, layerObj *layer, imageObj *image, 
@@ -1454,10 +1464,10 @@ msDrawRasterLayerGDAL_16BitClassification(
     double dfScaleMin=0.0, dfScaleMax=0.0, dfScaleRatio;
     int   nPixelCount = dst_xsize * dst_ysize, i, nBucketCount=0;
     GDALDataType eDataType;
-    float fDataMin, fDataMax;
+    float fDataMin, fDataMax, fNoDataValue;
     const char *pszScaleInfo;
     int  bUseIntegers = FALSE;
-    int  *cmap, c, j, k;
+    int  *cmap, c, j, k, bGotNoData = FALSE, bGotFirstValue;
     gdImagePtr gdImg = image->img.gd;
     CPLErr eErr;
 
@@ -1495,6 +1505,8 @@ msDrawRasterLayerGDAL_16BitClassification(
         return -1;
     }
 
+    fNoDataValue = msGetGDALNoDataValue( layer, hBand, &bGotNoData );
+
 /* ==================================================================== */
 /*      Determine scaling.                                              */
 /* ==================================================================== */
@@ -1505,12 +1517,23 @@ msDrawRasterLayerGDAL_16BitClassification(
 /*                                                                      */
 /*      TODO: Ignore "nodata".                                          */
 /* -------------------------------------------------------------------- */
-    fDataMin = fDataMax = pafRawData[0];
+    bGotFirstValue = FALSE;
     
     for( i = 1; i < nPixelCount; i++ )
     {
-        fDataMin = MIN(fDataMin,pafRawData[i]);
-        fDataMax = MAX(fDataMax,pafRawData[i]);
+        if( bGotNoData && pafRawData[0] == fNoDataValue )
+            continue;
+
+        if( !bGotFirstValue )
+        {
+            fDataMin = fDataMax = pafRawData[0];
+            bGotFirstValue = TRUE;
+        }
+        else
+        {
+            fDataMin = MIN(fDataMin,pafRawData[i]);
+            fDataMax = MAX(fDataMax,pafRawData[i]);
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1604,7 +1627,8 @@ msDrawRasterLayerGDAL_16BitClassification(
     dfScaleRatio = nBucketCount / (dfScaleMax - dfScaleMin);
 
     if( layer->debug > 0 )
-        msDebug( "msDrawGDAL(%s): scaling to %d buckets from range=%g,%g\n",
+        msDebug( "msDrawRasterGDAL_16BitClassification(%s):\n"
+                 "  scaling to %d buckets from range=%g,%g.\n",
                  layer->name, nBucketCount, dfScaleMin, dfScaleMax );
 
 /* ==================================================================== */
@@ -1615,34 +1639,23 @@ msDrawRasterLayerGDAL_16BitClassification(
 
     for(i=0; i < nBucketCount; i++) 
     {
-        colorObj pixel;
         double dfOriginalValue;
 
         cmap[i] = -1;
 
         dfOriginalValue = (i+0.5) / dfScaleRatio + dfScaleMin;
             
-        pixel.red = 0;
-        pixel.green = 0;
-        pixel.blue = 0;
-        pixel.pen = (int) (dfOriginalValue+0.5); /* TODO: FIX THIS! */
-        
-	if(!MS_COMPARE_COLORS(pixel, layer->offsite))
+        c = msGetClass_Float(layer, dfOriginalValue);
+        if( c != -1 )
         {
-            c = msGetClass(layer, &pixel);
-            if( c != -1 )
+            RESOLVE_PEN_GD(gdImg, layer->class[c].styles[0].color);
+            if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
+                cmap[i] = -1;
+            else if( MS_VALID_COLOR(layer->class[c].styles[0].color))
             {
-                RESOLVE_PEN_GD(gdImg, layer->class[c].styles[0].color);
-                if( MS_TRANSPARENT_COLOR(layer->class[c].styles[0].color) )
-                    cmap[i] = -1;
-                else if( MS_VALID_COLOR(layer->class[c].styles[0].color))
-                {
-                    /* use class color */
-                    cmap[i] = layer->class[c].styles[0].color.pen;
-                }
+                /* use class color */
+                cmap[i] = layer->class[c].styles[0].color.pen;
             }
-            
-            /* NOTE: data not in a class will be transparent. */
         }
     }
     
@@ -1661,8 +1674,10 @@ msDrawRasterLayerGDAL_16BitClassification(
             int   iMapIndex;
 
             /* 
-             * TODO: There likely ought to be some NODATA testing here.
+             * Skip nodata pixels ... no processing.
              */
+            if( bGotNoData && fRawValue == fNoDataValue )
+                continue;
             
             /*
              * The funny +1/-1 is to avoid odd rounding around zero.
@@ -1690,6 +1705,42 @@ msDrawRasterLayerGDAL_16BitClassification(
     assert( k == dst_xsize * dst_ysize );
 
     return 0;
+}
+
+/************************************************************************/
+/*                          msGetGDALNoDataValue()                      */
+/************************************************************************/
+static double 
+msGetGDALNoDataValue( layerObj *layer, GDALRasterBandH hBand,
+                      int *pbGotNoData )
+
+{
+    const char *pszNODATAOpt;
+
+    *pbGotNoData = FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      Check for a NODATA setting in the .map file.                    */
+/* -------------------------------------------------------------------- */
+    pszNODATAOpt = CSLFetchNameValue(layer->processing,"NODATA");
+    if( pszNODATAOpt != NULL )
+    {
+        if( EQUAL(pszNODATAOpt,"OFF") || strlen(pszNODATAOpt) == 0 )
+            return -1234567.0;
+        if( !EQUAL(pszNODATAOpt,"AUTO") )
+        {
+            *pbGotNoData = TRUE;
+            return atof(pszNODATAOpt);
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      Check for a NODATA setting on the raw file.                     */
+/* -------------------------------------------------------------------- */
+    if( hBand == NULL )
+        return -1234567.0;
+    else
+        return GDALGetRasterNoDataValue( hBand, pbGotNoData );
 }
 
 #endif
