@@ -1154,6 +1154,79 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   return(MS_SUCCESS);
 }
 
+int msWMSDescribeLayer(mapObj *map, const char *wmtver, char **names, char **values, 
+                        int numentries)
+{
+  int i = 0;
+
+  for(i=0; map && i<numentries; i++){
+      if (strcasecmp(names[i], "LAYERS") == 0)
+      break;
+  }
+
+  if (i== numentries){
+        msSetError(MS_WMSERR, "Required LAYERS parameter missing.", "msWMSDescribeLayer()");
+        return msWMSException(map, wmtver, NULL);
+      }
+    
+   for(i=0; map && i<numentries; i++) {
+     if(strcasecmp(names[i], "LAYERS") == 0) {
+      char **layers;
+      int numlayers, j, k, l;
+      layerObj *lp = NULL;
+      char *pszTmp = NULL;
+
+      layers = split(values[i], ',', &numlayers);
+      if(layers==NULL || numlayers < 1) {
+        msSetError(MS_WMSERR, "At least one layer name required in LAYERS.", "msWMSDescribeLayer()");
+        return msWMSException(map, wmtver, NULL);
+      }
+      printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+      printf("<!DOCTYPE WMS_DescribeLayerResponse>\n");
+      printf("<WMS_DescribeLayerResponse version=\"1.1.0\" >\n");
+      
+      //check if metadata wfs_onlineresource is available
+      pszTmp = msLookupHashTable(map->web.metadata, "wfs_onlineresource");
+      if (pszTmp && strlen(pszTmp) > 0) 
+      {
+          for(j=0; j<numlayers; j++) 
+          {
+              for(k=0; k<map->numlayers; k++) 
+              {
+                  if (strcasecmp(map->layers[k].name, layers[j]) == 0)
+                  {
+                      if (map->layers[k].type == MS_LAYER_POINT ||
+                          map->layers[k].type == MS_LAYER_LINE ||
+                          map->layers[k].type == MS_LAYER_POLYGON)
+                      { 
+                          printf("<LayerDescription name=\"%s\" wfs=\"%s\">\n",
+                                 map->layers[k].name, pszTmp);
+                          lp = &map->layers[k];
+                          if (msLayerOpen(lp) == MS_SUCCESS)
+                          {
+                              if (msLayerGetItems(lp) == MS_SUCCESS)
+                              {
+                                  for(l=0; l<lp->numitems; l++)
+                                    printf("<Query typeName=\"%s\" />\n",
+                                           lp->items[l]);
+                              }
+                          }
+                          printf("</LayerDescription>\n");
+                      }
+                      else
+                      {
+                          printf("<LayerDescription name=\"%s\"></LayerDescription>\n",
+                                 map->layers[j].name);
+                      }
+                      break;
+                  }
+              }
+          }
+      }
+      printf("</WMS_DescribeLayerResponse>\n");
+     }
+   }
+}
 #endif /* USE_WMS_SVR */
 
 
@@ -1262,6 +1335,11 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries)
     return msWMSGetMap(map, wmtver);
   else if (strcasecmp(request, "feature_info") == 0 || strcasecmp(request, "GetFeatureInfo") == 0)
     return msWMSFeatureInfo(map, wmtver, names, values, numentries);
+  else if (strcasecmp(request, "DescribeLayer") == 0)
+  {
+      printf("Content-type: text/xml\n\n");
+      return msWMSDescribeLayer(map, wmtver, names, values, numentries);
+  }
 
   // Hummmm... incomplete or unsupported WMS request
   msSetError(MS_WMSERR, "Incomplete or unsupported WMS request", "msWMSDispatch()");
