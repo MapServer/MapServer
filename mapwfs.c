@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.28  2003/10/13 15:50:01  assefa
+ * myns namespace is the default.
+ *
  * Revision 1.27  2003/10/08 14:01:50  assefa
  * Write properly the geomelement.
  *
@@ -634,7 +637,7 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             else
               printf("\n"
                      "  <element name=\"%s\" \n"
-                     "           type=\"myns:%s_Type\" \n"
+                     "           type=\"%s_Type\" \n"
                      "           substitutionGroup=\"gml:_Feature\" />\n\n",
                      lp->name, lp->name);
 
@@ -720,7 +723,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
     char   *pszFilter = NULL;
     int bFilterSet = 0;
     int bBBOXSet = 0;
-    char *pszNameSpace = strdup("myns");
+    char *pszNameSpace = NULL;
     char *user_namespace_prefix = NULL;
     char *user_namespace_uri = NULL;
 
@@ -1181,8 +1184,8 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
       msLookupHashTable(map->web.metadata, "wfs_namespace_prefix");
     if (user_namespace_prefix && user_namespace_uri)
       pszNameSpace = strdup(user_namespace_prefix);
-    else
-      pszNameSpace = strdup("myns");
+    //else
+    //  pszNameSpace = strdup("myns");
 
      
 
