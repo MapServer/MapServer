@@ -15,6 +15,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.2
 --------------------------
 
+- Bug 1273: Fixed case in msProjectPoint() were in or out are NULL and
+  a failure occurs to return NULL.  Fixed problem of WMS capabilities with
+  'inf' in it. 
+
 - Fixed crash in template generation with empty layer names (bug 1271)
 
 - SLD generation bug 1150 : replacing <AND> tag to <ogc:And>  
