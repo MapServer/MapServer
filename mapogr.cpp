@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.59  2003/03/05 16:13:05  frank
+ * added support for layers derived from ExecuteSQL()
+ *
  * Revision 1.58  2002/12/13 00:57:31  dan
  * Modified WFS implementation to behave more as a real vector data source
  *
@@ -789,93 +792,131 @@ msOGRFileOpen(layerObj *layer, const char *connection )
 /* ------------------------------------------------------------------
  * Parse connection string into dataset name, and layer name. 
  * ------------------------------------------------------------------ */
-  char **papszTokens = NULL, szPath[MS_MAXPATHLEN];
+  char *pszDSName = NULL, *pszLayerDef = NULL;
 
-  if( connection != NULL )
+  if( layer->connection == NULL )
+  {
+      /* we don't have anything */
+  }
+  else if( layer->data != NULL )
+  {
+      pszDSName = CPLStrdup(connection);
+      pszLayerDef = CPLStrdup(layer->data);
+  }
+  else
+  {
+      char **papszTokens = NULL;
+
       papszTokens = CSLTokenizeStringComplex( connection, ",", TRUE, FALSE );
 
-  if(connection==NULL || CSLCount( papszTokens ) < 1 )
+      if( CSLCount(papszTokens) > 0 )
+          pszDSName = CPLStrdup( papszTokens[0] );
+      if( CSLCount(papszTokens) > 1 )
+          pszLayerDef = CPLStrdup( papszTokens[1] );
+
+      CSLDestroy(papszTokens);
+  }
+
+  if( pszDSName == NULL )
   {
       msSetError(MS_OGRERR, 
                  "Error parsing OGR connection information:%s", 
                  "msOGRFileOpen()",
                  connection );
-      CSLDestroy( papszTokens );
       return NULL;
   }
+
+  if( pszLayerDef == NULL )
+      pszLayerDef = CPLStrdup("0");
 
 /* ------------------------------------------------------------------
  * Attempt to open OGR dataset
  * ------------------------------------------------------------------ */
+  char szPath[MS_MAXPATHLEN];
   OGRDataSource *poDS;
 
   msDebug("msOGRFileOpen(%s)...\n", connection);
 
   poDS = OGRSFDriverRegistrar::Open( 
-      msTryBuildPath(szPath, layer->map->mappath, papszTokens[0]) );
+      msTryBuildPath(szPath, layer->map->mappath, pszDSName) );
   if( poDS == NULL )
   {
       msSetError(MS_OGRERR, 
                  (char*)CPLSPrintf("Open failed for OGR connection `%s'.  "
                                    "File not found or unsupported format.", 
-                                   connection),
+                                   pszDSName),
                  "msOGRFileOpen()");
-      CSLDestroy( papszTokens );
+      CPLFree( pszDSName );
+      CPLFree( pszLayerDef );
       return NULL;
   }
+
+  CPLFree( pszDSName );
+  pszDSName = NULL;
 
 /* ------------------------------------------------------------------
  * Find the layer selected.
  * ------------------------------------------------------------------ */
+  
   int   nLayerIndex = 0;
   OGRLayer    *poLayer = NULL;
 
-  if( CSLCount(papszTokens) == 1 )
+  int  iLayer;
+
+  for( iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
   {
-      poLayer = poDS->GetLayer( 0 );
-      nLayerIndex = 0;
+      poLayer = poDS->GetLayer( iLayer );
+      if( poLayer != NULL 
+          && EQUAL(poLayer->GetLayerDefn()->GetName(),pszLayerDef) )
+      {
+          nLayerIndex = iLayer;
+          break;
+      }
+      else
+          poLayer = NULL;
   }
-  else
+  
+  if( poLayer == NULL && (atoi(pszLayerDef) > 0 || EQUAL(pszLayerDef,"0")) )
   {
-      int  iLayer;
-
-      for( iLayer = 0; iLayer < poDS->GetLayerCount(); iLayer++ )
-      {
-          poLayer = poDS->GetLayer( iLayer );
-          if( poLayer != NULL 
-              && EQUAL(poLayer->GetLayerDefn()->GetName(),papszTokens[1]) )
-          {
-              nLayerIndex = iLayer;
-              break;
-          }
-          else
-              poLayer = NULL;
-      }
-
-      if( poLayer == NULL 
-          && (atoi(papszTokens[1]) > 0 || EQUAL(papszTokens[1],"0")) )
-      {
-          nLayerIndex = atoi(papszTokens[1]);
+      nLayerIndex = atoi(pszLayerDef);
+      if( nLayerIndex < poDS->GetLayerCount() )
           poLayer = poDS->GetLayer( nLayerIndex );
+  }
+
+  if( poLayer == NULL && EQUALN(pszLayerDef,"SELECT",6) )
+  {
+      poLayer = poDS->ExecuteSQL( pszLayerDef, NULL, NULL );
+      if( poLayer == NULL )
+      {
+          msSetError(MS_OGRERR, 
+                     "ExecuteSQL(%s) failed.\n%s",
+                     "msOGRFileOpen()", 
+                     pszLayerDef, CPLGetLastErrorMsg() );
+          delete poDS;
+          CPLFree( pszLayerDef );
+          return NULL;
       }
+      nLayerIndex = -1;
   }
 
   if (poLayer == NULL)
   {
       msSetError(MS_OGRERR, "GetLayer(%s) failed for OGR connection `%s'.",
                  "msOGRFileOpen()", 
-                 papszTokens[1], connection );
-      CSLDestroy( papszTokens );
+                 pszLayerDef, connection );
+      CPLFree( pszLayerDef );
       delete poDS;
       return NULL;
   }
+
+  CPLFree( pszLayerDef );
 
 /* ------------------------------------------------------------------
  * OK... open succeded... alloc and fill msOGRFileInfo inside layer obj
  * ------------------------------------------------------------------ */
   msOGRFileInfo *psInfo =(msOGRFileInfo*)CPLCalloc(1,sizeof(msOGRFileInfo));
 
-  psInfo->pszFname = CPLStrdup(papszTokens[0]);
+  psInfo->pszFname = CPLStrdup(poDS->GetName());
   psInfo->nLayerIndex = nLayerIndex;
   psInfo->poDS = poDS;
   psInfo->poLayer = poLayer;
@@ -884,9 +925,6 @@ msOGRFileOpen(layerObj *layer, const char *connection )
   psInfo->poCurTile = NULL;
   psInfo->rect.minx = psInfo->rect.maxx = 0;
   psInfo->rect.miny = psInfo->rect.maxy = 0;
-
-  // Cleanup and exit;
-  CSLDestroy( papszTokens );
 
   return psInfo;
 }
@@ -905,6 +943,10 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
 
   if (psInfo->poLastFeature)
       delete psInfo->poLastFeature;
+
+  /* If nLayerIndex == -1 then the layer is an SQL result ... free it */
+  if( psInfo->nLayerIndex == -1 )
+      psInfo->poDS->ReleaseResultSet( psInfo->poLayer );
 
   /* Destroying poDS automatically closes files, destroys the layer, etc. */
   delete psInfo->poDS;
