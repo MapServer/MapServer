@@ -966,6 +966,43 @@ ALL_ENABLED="$WMS_ENABLED $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
+dnl WMS Client support - Enabled by default if PROJ.4 and libwww are there.
+dnl Can be explicitly disabled using --without-wmsclient
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should include WMS Client Connections support...)
+AC_ARG_WITH(wms,
+[  --without-wmsclient     Disable OGC WMS Client Connections (enabled by default).],,)
+
+if test "$with_wmsclient" = "no" ; then
+
+  AC_MSG_RESULT([        OGC WMS Client Layers disabled by --without-wmsclient.])
+
+elif test -z "$PROJ_ENABLED" ; then
+
+  AC_MSG_RESULT([        OGC WMS Client Connections not enabled (PROJ.4 and libwww required).])
+
+elif test "$with_wmsclient" = "yes" ; then
+
+  WMS_LYR_ENABLED="-DUSE_WMS_LYR"
+  
+  WWW_INC=`libwww-config --cflags`
+  WWW_LIB=`libwww-config --libs`
+
+  AC_MSG_RESULT([        OGC WMS Client Connections enabled ($WMS_LYR_ENABLED).])
+
+fi
+
+AC_SUBST(WMS_LYR_ENABLED,$WMS_LYR_ENABLED)
+AC_SUBST(WWW_INC,    $WWW_INC)
+AC_SUBST(WWW_LIB,    $WWW_LIB)
+
+ALL_ENABLED="$WMS_LYR_ENABLED $ALL_ENABLED"
+ALL_INC="$WWW_INC $ALL_INC"
+ALL_LIB="$WWW_LIB $ALL_LIB"
+
+
+dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that
 dnl link with it.
 dnl ---------------------------------------------------------------------
