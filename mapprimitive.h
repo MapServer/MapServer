@@ -18,27 +18,34 @@ typedef struct {
 } pointObj;
 
 typedef struct {
+#ifdef SWIG
+%immutable;
+#endif
   int numpoints;
   pointObj *point;
+#ifdef SWIG
+%mutable;
+#endif
 } lineObj;
 
 typedef struct {
+#ifdef SWIG
+%immutable;
+#endif
   int numlines;
+  int numvalues;
   lineObj *line;
+  char **values;
+#ifdef SWIG
+%mutable;
+#endif
+
   rectObj bounds;
-
   int type; // MS_SHAPE_TYPE
-
   long index;
   int tileindex;
-
   int classindex;
-
   char *text;
-
-  char **values;
-  int numvalues;
-
 } shapeObj;
 
 typedef lineObj multipointObj;
