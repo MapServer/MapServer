@@ -117,7 +117,8 @@ imageObj *msDrawScalebar(mapObj *map)
   sy = (2*VMARGIN) + MS_NINT(VSPACING*fontPtr->h) + fontPtr->h + map->scalebar.height - VSLOP;
   
   //TODO
-  image = msImageCreateGD(map->scalebar.width, sy, map->imagetype,
+  
+  image = msImageCreateGD(map->scalebar.width, sy, map->outputformat,
                           map->web.imagepath, map->web.imageurl);
   if (image)
       img = image->img.gd;
@@ -230,7 +231,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
   map->symbolset.symbol[s].name = strdup("scalebar");  
 
-  if(map->scalebar.transparent)
+  if(map->scalebar.transparent == MS_ON)
     gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
 
   switch(map->scalebar.position) {
