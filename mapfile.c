@@ -79,8 +79,8 @@ int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color)
 {  
   int i;
 
-  if(img == NULL) {
-    msSetError(MS_GDERR, "Image not initialized.", "msLoadPalette()");
+  if(!img) {
+    msSetError(MS_GDERR, "Image not initialized, can't allocate colors yet.", "msLoadPalette()");
     return(-1);
   }
 
@@ -101,8 +101,7 @@ void msFreeCharArray(char **array, int num_items)
 {
   int i;
 
-  if((num_items == 0) || (array == NULL))
-    return;
+  if((num_items < 0) || !array) return;
 
   for(i=0;i<num_items;i++)
     free(array[i]);
@@ -133,9 +132,8 @@ int getSymbol(int n, ...) {
 
   va_end(argp);
 
-  msSetError(MS_SYMERR, NULL, "getSymbol()"); 
   sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-
+  msSetError(MS_SYMERR, ms_error.message, "getSymbol()");   
   return(-1);
 }
 
@@ -148,9 +146,8 @@ char *getString() {
   if(msyylex() == MS_STRING)
     return(strdup(msyytext));
 
-  msSetError(MS_TYPEERR, NULL, "loadString()"); 
   sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-
+  msSetError(MS_SYMERR, ms_error.message, "getString()");   
   return(NULL);
 }
 
@@ -164,9 +161,8 @@ int getDouble(double *d) {
     return(0); /* success */
   }
 
-  msSetError(MS_TYPEERR, NULL, "getDouble()"); 
   sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-  
+  msSetError(MS_SYMERR, ms_error.message, "getDouble()"); 
   return(-1);
 }
 
@@ -180,9 +176,8 @@ int getInteger(int *i) {
     return(0); /* success */
   }
 
-  msSetError(MS_TYPEERR, NULL, "getInteger()"); 
   sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-
+  msSetError(MS_SYMERR, ms_error.message, "getInteger()"); 
   return(-1);
 }
 
@@ -192,9 +187,8 @@ int getCharacter(char *c) {
     return(0);
   }
 
-  msSetError(MS_TYPEERR, NULL, "getCharacter()"); 
   sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-
+  msSetError(MS_SYMERR, ms_error.message, "getCharacter()"); 
   return(-1);
 }
 
@@ -306,8 +300,8 @@ static int loadFeaturePoints(lineObj *points)
       points->numpoints++;
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadFeaturePoints()");    
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadFeaturePoints()");          
       return(-1);      
     }
   }
@@ -338,8 +332,8 @@ static int loadFeature(featureListNodeObjPtr *list)
       if((shape.text = getString()) == NULL) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadfeature()");    
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadfeature()");
       return(-1);
     }
   } /* next token */  
@@ -403,8 +397,7 @@ static int loadProjection(projectionObj *p)
 	p->proj = NULL;
       } else {
 	if( !(p->proj = pj_init(p->numargs, p->projargs)) ) {
-	  msSetError(MS_PROJERR, NULL, "loadProjection()");      
-	  sprintf(ms_error.message, "%s", pj_strerrno(pj_errno));
+	  msSetError(MS_PROJERR, pj_strerrno(pj_errno), "loadProjection()");	  
 	  return(-1);
 	}
       }
@@ -415,8 +408,8 @@ static int loadProjection(projectionObj *p)
       i++;
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadProjection()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadProjection()");
       return(-1);
     }
   } /* next token */
@@ -435,8 +428,7 @@ int loadProjectionString(projectionObj *p, char *value)
     p->proj = NULL;
   } else {
     if( !(p->proj = pj_init(p->numargs, p->projargs)) ) {
-      msSetError(MS_PROJERR, NULL, "loadProjectionString()");
-      sprintf(ms_error.message, "%s", pj_strerrno(pj_errno));
+      msSetError(MS_PROJERR, pj_strerrno(pj_errno), "loadProjectionString()");      
       return(-1);
     }
   }
@@ -629,8 +621,8 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getCharacter(&(label->wrap)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadlabel()");    
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadlabel()");
       return(-1);
     }
   } /* next token */
@@ -695,8 +687,8 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     label->font = strdup(value);
     
     if(!(msLookupHashTable(map->fontset.fonts, label->font))) {
-      msSetError(MS_IDENTERR, "Unknown font alias.", "loadLabelString()");    
-      sprintf(ms_error.message, "(%s)", msyytext);
+      sprintf(ms_error.message, "Unknown font alias. (%s)", msyytext);
+      msSetError(MS_IDENTERR, ms_error.message, "loadLabelString()");      
       return;
     }
 #else
@@ -855,8 +847,8 @@ int loadExpression(expressionObj *exp)
   
   if(exp->type == MS_REGEX) {
     if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
-      msSetError(MS_REGEXERR, NULL, "loadExpression()");
       sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
+      msSetError(MS_REGEXERR, ms_error.message, "loadExpression()");
       return(-1);
     }
   }
@@ -876,8 +868,8 @@ int loadExpressionString(expressionObj *exp, char *value)
   
   if(exp->type == MS_REGEX) {
     if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
-      msSetError(MS_REGEXERR, NULL, "loadExpression()");
       sprintf(ms_error.message, "(%s):(%d)", exp->string, msyylineno);
+      msSetError(MS_REGEXERR, ms_error.message, "loadExpression()");
       return(-1);
     }
   }
@@ -1045,8 +1037,8 @@ int loadClass(classObj *class, mapObj *map)
       }
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadClass()");    
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadClass()");
       return(-1);
     }
   }
@@ -1243,8 +1235,8 @@ int loadJoin(joinObj *join)
       if((join->type = getSymbol(2, MS_SINGLE, MS_MULTIPLE)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadJoin()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadJoin()");
       return(-1);
     }
   } /* next token */
@@ -1328,8 +1320,8 @@ int loadQuery(queryObj *query)
       if((query->template = getString()) == NULL) return(-1);
       break;    
     default:
-      msSetError(MS_IDENTERR, NULL, "loadQuery()");    
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadQuery()");    
       return(-1);
     }
   } /* next token */
@@ -1599,8 +1591,8 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->type = getSymbol(6, MS_POINT,MS_LINE,MS_RASTER,MS_POLYGON,MS_POLYLINE,MS_ANNOTATION)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadLayer()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadLayer()");      
       return(-1);
     }
   } /* next token */
@@ -1913,8 +1905,8 @@ int loadReferenceMap(referenceMapObj *ref)
       if((ref->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;   
     default:
-      msSetError(MS_IDENTERR, NULL, "loadReferenceMap()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadReferenceMap()");      
       return(-1);
     }
   } /* next token */
@@ -2055,8 +2047,8 @@ int loadLegend(legendObj *legend, mapObj *map)
       if((legend->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadLegend()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadLegend()");      
       return(-1);
     }
   } /* next token */
@@ -2232,8 +2224,8 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       if((scalebar->units = getSymbol(5, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS)) == -1) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadScalebar()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadScalebar()");      
       return(-1);
     }
   } /* next token */
@@ -2495,8 +2487,8 @@ int loadWeb(webObj *web)
       if((web->template = getString()) == NULL) return(-1);
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadWeb()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadWeb()");
       return(-1);
     }
   }
@@ -2694,8 +2686,8 @@ int msSaveMap(mapObj *map, char *filename)
 
   stream = fopen(filename, "w");
   if(!stream) {
-    msSetError(MS_IOERR, NULL, "msSaveMap()");
     sprintf(ms_error.message, "(%s)", filename);
+    msSetError(MS_IOERR, ms_error.message, "msSaveMap()");    
     return(-1);
   }
 
@@ -2750,20 +2742,20 @@ mapObj *msLoadMap(char *filename)
   ** Check map filename to make sure it's legal
   */
   if(regcomp(&re, MS_MAPFILE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
-   msSetError(MS_REGEXERR, NULL, "msLoadMap()");
    sprintf(ms_error.message, "(%s)", MS_MAPFILE_EXPR);
+   msSetError(MS_REGEXERR, ms_error.message, "msLoadMap()");   
    return(NULL);
   }
   if(regexec(&re, filename, 0, NULL, 0) != 0) { /* no match */
     regfree(&re);
-    msSetError(MS_IOERR, "Illegal name.", "msLoadMap()");
+    msSetError(MS_IOERR, "Illegal mapfile name.", "msLoadMap()");
     return(NULL);
   }
   regfree(&re);
   
   if((msyyin = fopen(filename,"r")) == NULL) {
-    msSetError(MS_IOERR, NULL, "msLoadMap()");
     sprintf(ms_error.message, "(%s)", filename);
+    msSetError(MS_IOERR, ms_error.message, "msLoadMap()");    
     return(NULL);
   }
 
@@ -2800,7 +2792,8 @@ mapObj *msLoadMap(char *filename)
 	  if(map->layers[i].class[j].overlaysymbolname) {
 	    if((map->layers[i].class[j].overlaysymbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
 	      if((map->layers[i].class[j].overlaysymbol = msAddImageSymbol(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
-		msSetError(MS_MISCERR, "Undefined overlay symbol.", "msLoadMap()");
+		sprintf(ms_error.message, "Undefined overlay symbol \"%s\" in class %d of layer %s.", map->layers[i].class[j].overlaysymbolname, j, map->layers[i].name);
+		msSetError(MS_MISCERR, ms_error.message, "msLoadMap()");
 		return(NULL);
 	      }
 	    }
@@ -2809,7 +2802,8 @@ mapObj *msLoadMap(char *filename)
 	  if(map->layers[i].class[j].symbolname) {
 	    if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1) {
 	      if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1) {
-		msSetError(MS_MISCERR, "Undefined symbol.", "msLoadMap()");
+		sprintf(ms_error.message, "Undefined symbol \"%s\" in class %d of layer %s.", map->layers[i].class[j].symbolname, j, map->layers[i].name);
+		msSetError(MS_MISCERR, ms_error.message, "msLoadMap()");
 		return(NULL);
 	      }
 	    }
@@ -2918,8 +2912,8 @@ mapObj *msLoadMap(char *filename)
       if(loadWeb(&map->web) == -1) return(NULL);
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "msLoadMap()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "msLoadMap()");
       return(NULL);
     }
   } /* next token */

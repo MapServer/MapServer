@@ -675,8 +675,6 @@ int msWriteTree(treeObj *tree, char *filename, int B_order)
     }
     
   // write the header
-/*    fprintf(stderr," needswap (%d), MyEndian (%d), B_ORDER (%d) \n",disktree->needswap, mtBigEndian, B_order);
-*/
    if ( B_order > 0 )
     {  
       memcpy( pabyBuf, &signature, 3 );

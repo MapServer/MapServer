@@ -1163,8 +1163,8 @@ int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, cha
     shpfile->hSHP = SHPOpen(filename, mode);
 
   if(!shpfile->hSHP) {
-    msSetError(MS_IOERR, NULL, "msOpenSHPFile()");
     sprintf(ms_error.message, "(%s)", filename);
+    msSetError(MS_IOERR, ms_error.message, "msOpenSHPFile()");    
     chdir(old_path); /* restore old cwd */
     return(-1);
   }
@@ -1198,8 +1198,8 @@ int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, cha
   free(dbfFilename);
 
   if(!shpfile->hDBF) {
-    msSetError(MS_IOERR, NULL, "msOpenSHPFile()");
     sprintf(ms_error.message, "(%s)", dbfFilename);
+    msSetError(MS_IOERR, ms_error.message, "msOpenSHPFile()");    
     chdir(old_path); /* restore old cwd */
     return(-1);
   }
@@ -1220,8 +1220,8 @@ int msCreateSHPFile(shapefileObj *shpfile, char *filename, int type)
   // create the spatial portion
   shpfile->hSHP = SHPCreate(filename, type);
   if(!shpfile->hSHP) {
-    msSetError(MS_IOERR, NULL, "msNewSHPFile()");
     sprintf(ms_error.message, "(%s)", filename);
+    msSetError(MS_IOERR, NULL, "msNewSHPFile()");    
     return(-1);
   }
 

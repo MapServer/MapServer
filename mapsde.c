@@ -14,8 +14,8 @@ static void sde_error(long error_code, char *routine, char *sde_routine) {
   error_string[0] = '\0';
   SE_error_get_string(error_code, error_string);
 
-  msSetError(MS_SDEERR, NULL, routine);
   sprintf(ms_error.message, "%s: %s. (%ld)", sde_routine, error_string, error_code);
+  msSetError(MS_SDEERR, ms_error.message, routine);
 
   return;
 }
@@ -389,6 +389,8 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   ** each class is a SQL statement, no expression means all features
   */
   for(i=0; i<layer->numclasses; i++) {
+
+    if(layer->class[c].sizescaled == 0) return;
 
     /*
     ** should be able to move this outside the loop, but the

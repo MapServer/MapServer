@@ -83,8 +83,8 @@ int msGetItemIndex(DBFHandle dbffile, char *name)
       return(i);
   }
 
-  msSetError(MS_DBFERR, NULL, "msFindRecords()");
   sprintf(ms_error.message, "Item %s not found.", name);
+  msSetError(MS_DBFERR, ms_error.message, "msFindRecords()");  
   return(-1); /* item not found */
 }
 
@@ -566,6 +566,8 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
   }
 #endif      
 
+  if(layer->class[c].sizescaled == 0) return;
+
 #ifdef USE_PROJ
     if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
       msProjectPoint(layer->projection.proj, map->projection.proj, point);
@@ -658,6 +660,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
   }
 #endif      
+
+  if(layer->class[c].sizescaled == 0) return;
 
 #ifdef USE_PROJ
   if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -907,6 +911,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
       c = current->shape.classindex; // features *must* be pre-classified
       if(c<0 || c>=layer->numclasses) continue;
+      if(layer->class[c].sizescaled == 0) continue;
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -950,6 +955,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
       c = current->shape.classindex; // features *must* be pre-classified
       if(c<0 || c>=layer->numclasses) continue;
+      if(layer->class[c].sizescaled == 0) continue;
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -999,6 +1005,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
       c = current->shape.classindex; // features *must* be pre-classified
       if(c<0 || c>=layer->numclasses) continue;
+      if(layer->class[c].sizescaled == 0) continue;
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -1041,6 +1048,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     
       c = current->shape.classindex; // features *must* be pre-classified
       if(c<0 || c>=layer->numclasses) continue;
+      if(layer->class[c].sizescaled == 0) continue;
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -1202,15 +1210,13 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
     /* Find item numbers of any columns to be used, can't check this until you have a file to open so it has to be in 
        the tile loop. Only need to check one tile since they should have the same structure. */
-    if(t == 0) {
-      if(layer->classitem)
-	if((classItemIndex = msGetItemIndex(shpfile.hDBF, layer->classitem)) == -1) return(-1);
-
-      if(layer->labelitem && annotate) {
-	if((labelItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelitem)) == -1) return(-1);	
-	labelAngleItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelangleitem); /* not required */
-	labelSizeItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelsizeitem);
-      }
+    if(layer->classitem)
+      if((classItemIndex = msGetItemIndex(shpfile.hDBF, layer->classitem)) == -1) return(-1);
+    
+    if(layer->labelitem && annotate) {
+      if((labelItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelitem)) == -1) return(-1);	
+      labelAngleItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelangleitem); /* not required */
+      labelSizeItemIndex = msGetItemIndex(shpfile.hDBF, layer->labelsizeitem);
     }
 
     if(layer->transform == MS_TRUE) {
@@ -1426,6 +1432,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	if(!msGetBit(status,i)) continue; /* next shape */
 	
 	if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+	if(layer->class[c].sizescaled == 0) return;
 
 #ifdef USE_PROJ
         SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));	    
@@ -1486,6 +1493,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	if(!msGetBit(status,i)) continue; /* next shape */
 
         if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+	if(layer->class[c].sizescaled == 0) continue;
 
 #ifdef USE_PROJ
 	SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));	    
@@ -1558,6 +1566,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	if(!msGetBit(status,i)) continue; /* next shape */
 	
 	if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+	if(layer->class[c].sizescaled == 0) continue;
 
 #ifdef USE_PROJ
 	SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));
@@ -1626,6 +1635,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	if(!msGetBit(status,i)) continue; /* next shape */	
 	
 	if((c = shpGetClassIndex(shpfile.hDBF, layer, i, classItemIndex)) == -1) continue; /* next shape */
+	if(layer->class[c].sizescaled == 0) continue;
 
 #ifdef USE_PROJ
 	SHPReadShapeProj(shpfile.hSHP, i, &shape, &(layer->projection), &(map->projection));
@@ -1699,8 +1709,8 @@ int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace)
   if(filename != NULL && strlen(filename) > 0) {
     stream = fopen(filename, "wb");
     if(!stream) {
-      msSetError(MS_IOERR, NULL, "msSaveImage()");      
       sprintf(ms_error.message, "(%s)", filename);
+      msSetError(MS_IOERR, ms_error.message, "msSaveImage()");      
       return(-1);
     }
   } else { /* use stdout */
@@ -1741,8 +1751,8 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
   if(filename != NULL && strlen(filename) > 0) {
     stream = fopen(filename, "wb");
     if(!stream) {
-      msSetError(MS_IOERR, NULL, "msSaveImage()");      
-      sprintf(ms_error.message, "(%s)", filename);
+       sprintf(ms_error.message, "(%s)", filename);
+      msSetError(MS_IOERR, ms_error.message, "msSaveImage()");     
       return(-1);
     }
   } else { /* use stdout */

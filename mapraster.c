@@ -1304,8 +1304,8 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
     f = fopen(filename,"rb");
     if (!f) {
-      msSetError(MS_IOERR, NULL, "msDrawRaster()");
-      sprintf(ms_error.message, "Unable to open %s.", filename);
+            sprintf(ms_error.message, "(%s)", filename);
+      msSetError(MS_IOERR, ms_error.message, "msDrawRaster()");
 #ifndef IGNORE_MISSING_DATA
       chdir(old_path);
       return(-1);
@@ -1411,8 +1411,8 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
   /* Allocate input and output images (same size) */
   stream = fopen(map->reference.image,"rb");
   if(!stream) {
-    msSetError(MS_IOERR, NULL, "msDrawReferenceMap()");
     sprintf(ms_error.message, "(%s)", map->reference.image);
+    msSetError(MS_IOERR, ms_error.message, "msDrawReferenceMap()");
     return(NULL);
   }
 

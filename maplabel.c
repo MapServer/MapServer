@@ -113,8 +113,8 @@ int msLoadFontSet(fontSetObj *fontset)
 
   stream = fopen(fontset->filename, "r");
   if(!stream) {
-    msSetError(MS_IOERR, NULL, "msLoadFontset()");
     sprintf(ms_error.message, "Error opening fontset %s.", fontset->filename);
+    msSetError(MS_IOERR, ms_error.message, "msLoadFontset()");
     return(-1);
   }
  
@@ -162,8 +162,8 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
-      msSetError(MS_TTFERR, NULL, "msGetLabelSize()");
       if(label->font) sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
+      msSetError(MS_TTFERR, ms_error.message, "msGetLabelSize()");
       return(-1);
     }
 
@@ -224,8 +224,7 @@ gdFontPtr msGetBitmapFont(int size)
     return(gdFontGiant);
     break;
   default:
-    msSetError(MS_GDERR, NULL, "msGetBitmapFont()");
-    sprintf(ms_error.message, "Invalid bitmap font (%d).", size);
+    msSetError(MS_GDERR,"Invalid bitmap font. Must be one of tiny, small, medium, large or giant." , "msGetBitmapFont()");    
     return(NULL);
   }
 }
@@ -345,11 +344,20 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     int bbox[8];
 
 #ifdef USE_TTF
+    if(!fontset) {
+      msSetError(MS_TTFERR, "No fontset defined.", "draw_text()");
+      return(-1);
+    }
+
+    if(!label->font) {
+      msSetError(MS_TTFERR, "No TrueType font defined.", "draw_text()");
+      return(-1);
+    }
 
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
-      msSetError(MS_TTFERR, NULL, "draw_text()");
-      if(label->font) sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
+      sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
+      msSetError(MS_TTFERR, ms_error.message, "draw_text()");
       return(-1);
     }
 

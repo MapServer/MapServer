@@ -24,15 +24,15 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
 
   /* first open the lookup table file */
   if((hDBF = DBFOpen(join->table, "rb")) == NULL) {
-    msSetError(MS_IOERR, NULL, "msJoinDBFTables()");
     sprintf(ms_error.message, "(%s)", join->table);
+    msSetError(MS_IOERR, ms_error.message, "msJoinDBFTables()");
     chdir(old_path); /* restore old cwd */
     return(-1);
   }
 
-  if((idx = msGetItemIndex(hDBF, join->to)) == -1) {    
-    msSetError(MS_DBFERR, NULL, "msJoinDBFTables()");
-    sprintf(ms_error.message, "Item %s not found.", join->to);
+  if((idx = msGetItemIndex(hDBF, join->to)) == -1) { 
+    sprintf(ms_error.message, "Item %s not found.", join->to);   
+    msSetError(MS_DBFERR, ms_error.message, "msJoinDBFTables()");    
     DBFClose(hDBF);
     chdir(old_path); /* restore old cwd */
     return(-1);
@@ -295,8 +295,8 @@ int msSaveQuery(queryResultObj *results, char *filename) {
 
   stream = fopen(filename, "wb");
   if(!stream) {
-    msSetError(MS_IOERR, NULL, "msSaveQuery()");
     sprintf(ms_error.message, "(%s)", filename);
+    msSetError(MS_IOERR, ms_error.message, "msSaveQuery()");
     return(-1);
   }
 
@@ -328,8 +328,8 @@ queryResultObj *msLoadQuery(char *filename) {
 
   stream = fopen(filename, "rb");
   if(!stream) {
-    msSetError(MS_IOERR, NULL, "msLoadQuery()");
     sprintf(ms_error.message, "(%s)", filename);
+    msSetError(MS_IOERR, ms_error.message, "msLoadQuery()");    
     return(NULL);
   }
 
@@ -387,8 +387,8 @@ queryResultObj *msQueryUsingItem(mapObj *map, char *layer, int mode, char *item,
   */
   if(layer != NULL) {
     if((start = msGetLayerIndex(map, layer)) == -1) {
-      msSetError(MS_MISCERR, NULL, "msQueryUsingItem()");
-      sprintf(ms_error.message, "Undefined layer %s.", layer);
+      sprintf(ms_error.message, "Unable to find query layer %s.", layer);
+      msSetError(MS_MISCERR, ms_error.message, "msQueryUsingItem()");
       return(NULL);
     }
     stop = start;
@@ -529,8 +529,8 @@ queryResultObj *msQueryUsingRect(mapObj *map, char *layer, rectObj *rect) {
 
   if(layer) {
     if((start = msGetLayerIndex(map, layer)) == -1) {
-      msSetError(MS_MISCERR, NULL, "msQueryUsingRect()");
-      sprintf(ms_error.message, "Undefined layer %s.", layer);
+      sprintf(ms_error.message, "Unable to find query layer %s.", layer);
+      msSetError(MS_MISCERR, ms_error.message, "msQueryUsingRect()");
       return(NULL);
     }
     stop = start;
@@ -695,8 +695,8 @@ queryResultObj *msQueryUsingPoint(mapObj *map, char *layer, int mode, pointObj p
   */
   if(layer) {
     if((start = msGetLayerIndex(map, layer)) == -1) {
-      msSetError(MS_MISCERR, NULL, "msQueryUsingPoint()");
-      sprintf(ms_error.message, "Undefined layer %s.", layer);
+      sprintf(ms_error.message, "Unable to find query layer %s.", layer);
+      msSetError(MS_MISCERR, ms_error.message, "msQueryUsingPoint()");
       return(NULL);
     }
     stop = start;
@@ -843,9 +843,9 @@ int msQueryUsingFeatures(mapObj *map, char *layer, queryResultObj *results)
   ** Do we have query layer, if not we need to search all layers
   */
   if(layer) {
-    if((start = msGetLayerIndex(map, layer)) == -1) {
-      msSetError(MS_MISCERR, NULL, "msFindUsingFeatures()");
-      sprintf(ms_error.message, "Undefined layer %s.", layer);
+    if((start = msGetLayerIndex(map, layer)) == -1) {      
+      sprintf(ms_error.message, "Unable to find query layer %s.", layer);
+      msSetError(MS_MISCERR, ms_error.message, "msQueryUsingFeatures()");
       return(-1);
     }
     stop = start;
@@ -1044,8 +1044,8 @@ queryResultObj *msQueryUsingShape(mapObj *map, char *layer, shapeObj *search_sha
   */
   if(layer) {
     if((start = msGetLayerIndex(map, layer)) == -1) {
-      msSetError(MS_MISCERR, NULL, "msFindUsingShape()");
-      sprintf(ms_error.message, "Undefined layer %s.", layer);
+      sprintf(ms_error.message, "Unable to find query layer %s.", layer);
+      msSetError(MS_MISCERR, ms_error.message, "msFindUsingShape()");
       return(NULL);
     }
     stop = start;

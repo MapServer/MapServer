@@ -1,5 +1,6 @@
 #include "map.h"
 #include "maperror.h"
+#include <time.h>
 
 static char *ms_errorCodes[MS_NUMERRORCODES]={"",
 					    "Unable to access file.",
@@ -38,6 +39,10 @@ char *msGetErrorString(int code) {
 
 void msSetError(int code, char *message, char *routine)
 {
+  char *errfile=NULL;
+  FILE *errstream;
+  time_t errtime;
+
   ms_error.code = code;
 
   if(!routine)
@@ -49,6 +54,20 @@ void msSetError(int code, char *message, char *routine)
     strcpy(ms_error.message, "");
   else
     strncpy(ms_error.message, message, MESSAGELENGTH);
+
+  errfile = getenv("MS_ERRORFILE");
+  if(errfile) {
+    if(strcmp(errfile, "stderr") == 0)
+      errstream = stderr;
+    else if(strcmp(errfile, "stdout") == 0)
+      errstream = stdout;
+    else
+      errstream = fopen(errfile, "a");
+    if(!errstream) return;
+    errtime = time(NULL);
+    fprintf(errstream, "%s - %s: %s %s\n", chop(ctime(&errtime)), ms_error.routine, ms_errorCodes[ms_error.code], ms_error.message);
+    fclose(errstream);
+  }
 }
 
 void msWriteError(FILE *stream)

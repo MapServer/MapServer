@@ -135,15 +135,15 @@ int loadSymbol(symbolObj *s)
       break;  
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
-	msSetError(MS_TYPEERR, NULL, "loadSymbol()"); 
 	sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+	msSetError(MS_TYPEERR, ms_error.message, "loadSymbol()");	
 	fclose(msyyin);
 	return(-1);
       }
       
       if((stream = fopen(msyytext, "rb")) == NULL) {
-	msSetError(MS_IOERR, NULL, "loadSymbol()");
 	sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+	msSetError(MS_IOERR, ms_error.message, "loadSymbol()");
 	fclose(msyyin);
 	return(-1);
       }
@@ -181,8 +181,8 @@ int loadSymbol(symbolObj *s)
 	  i++;
 	  break;
 	default:
-	  msSetError(MS_TYPEERR, NULL, "loadSymbol()"); 
 	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
+	  msSetError(MS_TYPEERR, ms_error.message, "loadSymbol()"); 	  
 	  fclose(msyyin);
 	  return(-1);
 	}
@@ -207,8 +207,8 @@ int loadSymbol(symbolObj *s)
 	  i++;
 	  break;
 	default:
-	  msSetError(MS_TYPEERR, NULL, "loadSymbol()"); 
 	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
+	  msSetError(MS_TYPEERR, ms_error.message, "loadSymbol()"); 	  
 	  fclose(msyyin);
 	  return(-1);
 	}
@@ -231,8 +231,8 @@ int loadSymbol(symbolObj *s)
 #endif
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "loadSymbol()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadSymbol()");      
       fclose(msyyin);
       return(-1);
     } /* end switch */
@@ -294,7 +294,7 @@ void msFreeSymbolSet(symbolSetObj *symbolset)
 
   freeImageCache(symbolset->imagecache);
 
-  for(i=0; i<symbolset->numsymbols; i++)
+  for(i=1; i<symbolset->numsymbols; i++)
     freeSymbol(&(symbolset->symbol[i]));
 
 #ifdef USE_TTF
@@ -325,8 +325,8 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
   ** Open the file
   */
   if((msyyin = fopen(symbolset->filename, "r")) == NULL) {
-    msSetError(MS_IOERR, NULL, "msLoadSymbolFile()");
     sprintf(ms_error.message, "(%s)", symbolset->filename);
+    msSetError(MS_IOERR, ms_error.message, "msLoadSymbolFile()");    
     return(-1);
   }
 
@@ -371,8 +371,8 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
       symbolset->numsymbols++;
       break;
     default:
-      msSetError(MS_IDENTERR, NULL, "msLoadSymbolFile()");
       sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "msLoadSymbolFile()");      
       status = -1;
     } /* end switch */
 
@@ -615,8 +615,6 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int
 
   return;
 }
-
-/* NEED TO CHANGE THIS FUNCTION TO DEAL WITH OVERLAY SYMBOLS */
 
 /*
 ** Returns the size, in pixels, of a marker symbol defined for a specific class. Use for annotation
