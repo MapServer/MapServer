@@ -710,6 +710,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   int j;
   gdPoint oldpnt,newpnt;
   gdPoint mPoints[MS_MAXVECTORPOINTS];
+  char *error=NULL;
 
   gdImagePtr tmp;
   int tmp_fc=-1, tmp_bc, tmp_oc=-1;
@@ -758,6 +759,30 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
 
     x = p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx;
     y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
+
+   // ============== MOD BY DHC MAR 14, 2003 -- Can we get outline color (and rotation) for truetype symbols?
+   if( oc >= 0 ) {
+#ifdef USE_GD_TTF
+      error = gdImageStringTTF(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y-1, symbol->character);
+#else
+      error = gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y-1, symbol->character);
+#endif
+      if(error) {
+	msSetError(MS_TTFERR, error, "msDrawMarkerSymbolGD()");
+	return;
+      }
+
+#ifdef USE_GD_TTF
+      gdImageStringTTF(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y+1, symbol->character);
+      gdImageStringTTF(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y+1, symbol->character);
+      gdImageStringTTF(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y-1, symbol->character);
+#else
+      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y+1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y+1, symbol->character);
+      gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y-1, symbol->character);
+#endif
+   }
+   // END OF DHC MOD
 
 #ifdef USE_GD_TTF
     msGDImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
