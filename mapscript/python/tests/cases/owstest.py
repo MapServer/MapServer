@@ -90,7 +90,7 @@ class OWSRequestTestCase(MapTestCase):
         assert status == mapscript.MS_SUCCESS, status
         self.assertEqual(self.map.height, 60)
         self.assertEqual(self.map.width, 60)
-        self.assertEqual(self.map.getProjection(), "init=epsg:4326")
+        self.assertEqual(self.map.getProjection(), "+init=epsg:4326")
         # MapServer extents are from middle of the pixel
         self.assertAlmostEqual(self.map.extent.minx, -0.295)
         self.assertAlmostEqual(self.map.extent.miny, 51.205)
