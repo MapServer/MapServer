@@ -641,10 +641,6 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
                 "  <Title>%s</Title>\n", map->name);
   msOWSPrintMetadata(stdout, map->web.metadata, "wms_abstract", OWS_NOERR,
                 "  <Abstract>%s</Abstract>\n", NULL);
-  if (strcasecmp(wmtver, "1.0.0") == 0)
-    printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
-  else
-    printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url_encoded);
 
   if (strcasecmp(wmtver, "1.0.0") == 0)
   {
@@ -662,16 +658,22 @@ int msWMSGetCapabilities(mapObj *map, const char *wmtver)
                              "          <Keyword>%s</Keyword>\n");
   }
 
+  if (strcasecmp(wmtver, "1.0.0") == 0)
+    printf("  <OnlineResource>%s</OnlineResource>\n", script_url_encoded);
+  else
+    printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url_encoded);
+
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
   // In 1.1.0, ContactInformation becomes optional.
   msOWSPrintContactInfo(stdout, "  ", wmtver, map->web.metadata);
 
-  msOWSPrintMetadata(stdout, map->web.metadata, "wms_accessconstraints", 
-             OWS_NOERR, "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
   msOWSPrintMetadata(stdout, map->web.metadata, "wms_fees", OWS_NOERR,
                 "  <Fees>%s</Fees>\n", NULL);
 
+  msOWSPrintMetadata(stdout, map->web.metadata, "wms_accessconstraints", 
+             OWS_NOERR, "  <AccessConstraints>%s</AccessConstraints>\n", NULL);
+ 
   printf("</Service>\n\n");
 
   // WMS capabilities definitions
