@@ -49,8 +49,7 @@ unset ac_cv_lib_jpeg_jpeg_read_header
 
 AC_CHECKING(whether we should include JPEG support...)
 AC_ARG_WITH(jpeg,
-[  --without-jpeg          Disable JPEG support.
-  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
+[  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
 
 if test -n "$with_jpeg" -a "$with_jpeg" != "yes" ; then
 
@@ -129,8 +128,8 @@ dnl ---------------------------------------------------------------------
 unset ac_cv_lib_iconv_libiconv_open
 
 AC_ARG_WITH(libiconv,
-[  --with-libiconv=DIR       GD: Specify where libiconv is installed (DIR is path to
-                              libiconv install dir).],
+[  --with-libiconv=DIR     GD: Specify where libiconv is installed (DIR is path
+                              to libiconv install dir).],
     ICONV_DIR=$withval,ICONV_DIR='')
 
 AC_EXPAND_PATH($ICONV_DIR, ICONV_DIR)
@@ -289,8 +288,8 @@ unset ac_cv_lib_freetype_FT_Init_FreeType
 unset ac_cv_lib_ttf_TT_Init_FreeType
 
 AC_ARG_WITH(freetype,
-[  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is path
-                              to freetype-config program or install dir).],
+[  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is
+                              path to freetype-config program or install dir).],
     FT_DIR=$withval,FT_DIR='')
 
 AC_EXPAND_PATH($FT_DIR, FT_DIR)
@@ -955,7 +954,7 @@ dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include OGR support...)
 AC_ARG_WITH(ogr,
-[  --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).],,)
+[  --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config).],,)
 
 if test "`basename xx/$with_ogr`" = "gdal-config" ; then
   GDAL_CONFIG="$with_ogr"
@@ -1051,7 +1050,7 @@ dnl ---------------------------------------------------------------------
 AC_MSG_CHECKING(if GDAL support requested)
 
 AC_ARG_WITH(gdal,
-[  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config],,)
+[  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)],,)
 
 if test "$with_gdal" = "yes" ; then
 
@@ -1147,7 +1146,7 @@ dnl ---------------------------------------------------------------------------
 
 AC_MSG_CHECKING(if MyGIS support requested)
 
-AC_ARG_WITH(mygis,[  --with-mygis[=ARG]    Include MyGIS Support (ARG=yes/path to my_config)],,)
+AC_ARG_WITH(mygis,[  --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to my_config)],,)
 
 if test "$with_mygis" = "no" -o "$with_mygis" = "" ; then
   AC_MSG_RESULT(no)

@@ -15,14 +15,14 @@ ac_help="$ac_help
   --without-jpeg          Disable JPEG support.
   --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir)."
 ac_help="$ac_help
-  --with-libiconv=DIR       GD: Specify where libiconv is installed (DIR is path to
-                              libiconv install dir)."
+  --with-libiconv=DIR     GD: Specify where libiconv is installed (DIR is path
+                              to libiconv install dir)."
 ac_help="$ac_help
   --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
                           install dir)."
 ac_help="$ac_help
-  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is path
-                              to freetype-config program or install dir)."
+  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is
+                              path to freetype-config program or install dir)."
 ac_help="$ac_help
   --with-zlib=DIR         GD: Specify where zlib is installed (DIR is path to
                               zlib install dir)."
@@ -52,13 +52,13 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-mpatrol[=DIR]    Include MPATROL support (DIR is MPATROL's install dir)."
 ac_help="$ac_help
-  --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir)."
+  --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config)."
 ac_help="$ac_help
-  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config"
+  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config)"
 ac_help="$ac_help
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)"
 ac_help="$ac_help
-  --with-mygis[=ARG]    Include MyGIS Support (ARG=yes/path to my_config)"
+  --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to my_config)"
 ac_help="$ac_help
   --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)"
 ac_help="$ac_help
