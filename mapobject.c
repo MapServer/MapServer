@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2004/07/07 04:34:40  sean
+ * added msInsertLayer() and msRemoveLayer().  See mapserver bug 759.
+ *
  * Revision 1.6  2004/06/24 17:30:11  frank
  * fixed typo in msTestConfigOption()
  *
@@ -403,4 +406,74 @@ int msMapRestoreRealExtent( mapObj *map )
 
     return MS_SUCCESS;
 }
+
+/************************************************************************/
+/*                      msInsertLayer()                                 */
+/************************************************************************/
+/* Returns the index at which the layer was inserted
+ */
+ 
+int msInsertLayer(mapObj *map, layerObj *layer, int nIndex) 
+{
+    int i;
+
+    // Possible to add another?
+    if (map->numlayers == MS_MAXLAYERS) {
+        msSetError(MS_CHILDERR, "Maximum number of Layer, %d, has been reached",
+                   "msInsertLayer()", MS_MAXLAYERS);
+        return -1;
+    }
+    // Catch attempt to insert past end of styles array
+    else if (nIndex >= MS_MAXLAYERS) {
+        msSetError(MS_CHILDERR, "Cannot insert Layer beyond index %d",
+                   "msInsertLayer()", MS_MAXLAYERS-1);
+        return -1;
+    }
+    else if (nIndex < 0) { // Insert at the end by default
+        msCopyLayer(&(map->layers[map->numlayers]), layer);
+        map->numlayers++;
+        return map->numlayers-1;
+    }
+    else if (nIndex >= 0 && nIndex < MS_MAXLAYERS) {
+        // Move layers existing at the specified nIndex or greater
+        // to a higher nIndex
+        for (i=map->numlayers-1; i>=nIndex; i--) {
+            map->layers[i+1] = map->layers[i];
+        }
+        msCopyLayer(&(map->layers[nIndex]), layer);
+        map->numlayers++;
+        return nIndex;
+    }
+    else {
+        msSetError(MS_CHILDERR, "Invalid index", "msInsertLayer()");
+        return -1;
+    }
+}
+
+layerObj *msRemoveLayer(mapObj *map, int nIndex) {
+    int i;
+    layerObj *layer;
+    
+    if (nIndex < 0 || nIndex >= map->numlayers) {
+        msSetError(MS_CHILDERR, "Cannot remove Layer, invalid index %d",
+                   "msRemoveLayer()", nIndex);
+        return NULL;
+    }
+    else {
+        layer = (layerObj *) malloc(sizeof(layerObj));
+        if (!layer) {
+            msSetError(MS_MEMERR, 
+                       "Failed to allocate layerObj to return as removed Layer",
+                       "msRemoveLayer");
+            return NULL;
+        }
+        msCopyLayer(layer, &(map->layers[nIndex]));
+        for (i=nIndex; i<map->numlayers-1; i++) {
+             msCopyLayer(&map->layers[i], &map->layers[i+1]);
+        }
+        map->numlayers--;
+        return layer;
+    }
+}
+
 
