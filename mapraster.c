@@ -353,6 +353,9 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 
   char szPath[MS_MAXPATHLEN];
 
+  if( layer->debug )
+      msDebug( "drawTIFF(%s): entering\n", layer->name );
+
   for(i=0; i<MAXCOLORS; i++) cmap[i] = -1; // initialize the colormap to all transparent
 
   TIFFSetWarningHandler(NULL); // can these be directed to the mapserver error functions?
