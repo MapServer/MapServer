@@ -1421,7 +1421,7 @@ int msDrawText(imageObj *image, pointObj labelPnt, char *string, labelObj *label
             nReturnVal = msDrawTextGD(image->img.gd, labelPnt, string, 
                                      label, fontset, scalefactor);
 	else if( MS_RENDERER_IMAGEMAP(image->format) )
-            nReturnVal = msDrawTextIM(image->img.imagemap, labelPnt, string, 
+            nReturnVal = msDrawTextIM(image, labelPnt, string, 
                                      label, fontset, scalefactor);
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
