@@ -8,9 +8,73 @@
 #define LF 10
 #define CR 13
 
+static char *readPostBody( cgiRequestObj *request ) 
+{
+    char *data; 
+    int data_max, data_len, chunk_size;
+
+/* -------------------------------------------------------------------- */
+/*      If the length is provided, read in one gulp.                    */
+/* -------------------------------------------------------------------- */
+    if( getenv("CONTENT_LENGTH") != NULL )
+    {
+
+        data_max = atoi(getenv("CONTENT_LENGTH"));
+        data = (char *) malloc(data_max+1);
+        if( data == NULL )
+        {
+            printf("Content-type: text/html%c%c",10,10);
+            printf("malloc() failed, Content-Length: %d unreasonably large?\n",
+                   data_max );
+            exit( 1 );
+        }
+
+        if (fread(data, 1, data_max, stdin) < data_max ) {
+            printf("Content-type: text/html%c%c",10,10);
+            printf("POST body is short\n");
+            exit(1);
+        }
+        data[data_max] = '\0';
+        return data;
+    }
+
+/* -------------------------------------------------------------------- */
+/*      Otherwise read in chunks to the end.                            */
+/* -------------------------------------------------------------------- */
+    data_max = 10000;
+    data_len = 0;
+    data = (char *) malloc(data_max+1);
+
+    while( !feof(stdin) )
+    {
+        chunk_size = fread( data + data_len, 1, data_max - data_len, stdin );
+        if( chunk_size <= 0 )
+            break;
+
+        data_len += chunk_size;
+
+        if( data_len == data_max )
+        {
+            data_max = data_max + 10000;
+            data = (char *) realloc(data, data_max+1);
+
+            if( data == NULL )
+            {
+                printf("Content-type: text/html%c%c",10,10);
+                printf("out of memory trying to allocate %d input buffer, POST body too large?\n", data_max+1 );
+                exit(1);
+            }
+        }
+    }
+
+   data[data_len] = '\0';
+
+   return data;
+}
+
+
 int loadParams(cgiRequestObj *request){
   register int x,m=0;
-  int cl;
   char *s;
 
   if(getenv("REQUEST_METHOD")==NULL) {
@@ -20,33 +84,29 @@ int loadParams(cgiRequestObj *request){
   }
 
   if(strcmp(getenv("REQUEST_METHOD"),"POST") == 0) { /* we've got a post from a form */     
+    char *post_data;
+
     request->type = MS_POST_REQUEST;
     request->contenttype = strdup(getenv("CONTENT_TYPE"));
 
-    cl = atoi(getenv("CONTENT_LENGTH"));
-
-    if(strcmp(request->contenttype, "application/x-www-form-urlencoded")) {
-      
-      request->postrequest = (char *)malloc(sizeof(char)*cl+1);
-      if (fread(request->postrequest, 1, cl, stdin) < cl){
-        printf("Content-type: text/html%c%c",10,10);
-        printf("POST body is short\n");
-        exit(1);
-      }
-      request->postrequest[cl] = '\0';
-      //printf("%s",request->postrequest);
-      //} else {
-
-    }
-    else {
-      for(x=0;cl && (!feof(stdin));x++) {
-      printf("inside loop");
-      request->ParamValues[m] = fmakeword(stdin,'&',&cl);
-      plustospace(request->ParamValues[m]);
-      unescape_url(request->ParamValues[m]);
-      request->ParamNames[m] = makeword(request->ParamValues[m],'=');
-      m++;
-      }
+    post_data = readPostBody( request );
+    if(strcmp(request->contenttype, "application/x-www-form-urlencoded")) 
+        request->postrequest = post_data;
+    else 
+    {
+        int data_len = strlen(post_data);
+        while( data_len > 0 && isspace(post_data[data_len-1]) )
+            post_data[--data_len] = '\0';
+            
+        while( post_data[0] )
+        {
+            request->ParamValues[m] = makeword(post_data,'&');
+            plustospace(request->ParamValues[m]);
+            unescape_url(request->ParamValues[m]);
+            request->ParamNames[m] = makeword(request->ParamValues[m],'=');
+            m++;
+        }
+        free( post_data );
     }
   
     /*check the QUERY_STRING even in the post request since it can contain 
