@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.69  2004/08/03 23:43:31  dan
+ * Cleanup OWS version tests in the code (bug 799)
+ *
  * Revision 1.68  2004/07/28 17:52:16  dan
  * Pass FEATURE_COUNT instead of FEATURECOUNT in GetFeatureInfo (bug 790)
  *
@@ -92,10 +95,6 @@
 #include <process.h>
 #include <stdio.h>
 #endif
-
-#define WMS_V_1_0_0  100
-#define WMS_V_1_0_7  107
-#define WMS_V_1_1_0  110
 
 
 /**********************************************************************
@@ -496,18 +495,23 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         pszVersion = strchr(pszVersion, '=')+1;
     }
 
-    if (strncmp(pszVersion, "1.0.8", 5) >= 0)    /* 1.0.8 == 1.1.0 */
-        nVersion = WMS_V_1_1_0;
-    else if (strncmp(pszVersion, "1.0.7", 5) >= 0)
-        nVersion = WMS_V_1_0_7;
-    else if (strncmp(pszVersion, "1.0.0", 5) >= 0)
-        nVersion = WMS_V_1_0_0;
-    else
+    nVersion = msOWSParseVersionString(pszVersion);
+    switch (nVersion)
     {
-        msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.1.0 (please verify the VERSION parameter in the connection string).", "msBuildWMSLayerURL()");
+      case OWS_1_0_8:
+        nVersion = OWS_1_1_0;    /* 1.0.8 == 1.1.0 */
+        break;
+      case OWS_1_0_0:
+      case OWS_1_0_7:
+      case OWS_1_1_0:
+      case OWS_1_1_1:
+        // All is good, this is a supported version.
+        break;
+      default:
+        // Not a supported version
+        msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.1.1 (please verify the VERSION parameter in the connection string).", "msBuildWMSLayerURL()");
         return MS_FAILURE;
     }
-
 
 /* ------------------------------------------------------------------
  * For GetFeatureInfo requests, make sure QUERY_LAYERS is included
@@ -656,14 +660,14 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     {
         char szBuf[100] = "";
 
-        if (nVersion >= WMS_V_1_0_7)
+        if (nVersion >= OWS_1_0_7)
             pszRequestParam = "GetFeatureInfo";
         else
             pszRequestParam = "feature_info";
 
-        if (nVersion >= WMS_V_1_1_0)
+        if (nVersion >= OWS_1_1_0)
             pszExceptionsParam = "application/vnd.ogc.se_xml";
-        else if (nVersion > WMS_V_1_1_0)  /* 1.0.1 to 1.0.7 */
+        else if (nVersion > OWS_1_1_0)  /* 1.0.1 to 1.0.7 */
             pszExceptionsParam = "SE_XML";
         else
             pszExceptionsParam = "WMS_XML";
@@ -696,12 +700,12 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     {
         char szBuf[100] = "";
 
-        if (nVersion >= WMS_V_1_0_7)
+        if (nVersion >= OWS_1_0_7)
             pszRequestParam = "GetMap";
         else
             pszRequestParam = "map";
 
-        if (nVersion >= WMS_V_1_1_0)
+        if (nVersion >= OWS_1_1_0)
             pszExceptionsParam = "application/vnd.ogc.se_inimage";
         else
             pszExceptionsParam = "INIMAGE";
