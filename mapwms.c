@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.155  2004/11/24 00:00:13  assefa
+ * SLD rasters was failing when there is Spatial Filter into it (Bug 1087).
+ *
  * Revision 1.154  2004/11/17 23:53:07  assefa
  * Advertize only gd and gdal formats for wms capabilities (Bug 455).
  *
@@ -2121,7 +2124,13 @@ int msWMSGetMap(mapObj *map, int nVersion, char **names, char **values, int nume
       }
       for (i=0; i<map->numlayers; i++)
       {
-          if (msLookupHashTable(&(map->layers[i].metadata), "tmp_wms_sld_query"))
+          if (msLookupHashTable(&(map->layers[i].metadata), "tmp_wms_sld_query") &&
+              (map->layers[i].type == MS_LAYER_POINT || 
+               map->layers[i].type == MS_LAYER_LINE ||
+               map->layers[i].type == MS_LAYER_POLYGON ||
+               map->layers[i].type == MS_LAYER_ANNOTATION ||
+               map->layers[i].type == MS_LAYER_TILEINDEX))
+               
           {
               //make sure that there is a resultcache. If not just ignore
               //the layer
