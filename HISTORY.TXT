@@ -13,6 +13,13 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Current Version (CVS)
+--------------------------
+
+- Fixed the way PROCESSING directives are written in $map->save()
+  (chameleon bug 154)
+
+
 
 Version 4.0.1 (2003-10-14)
 --------------------------
