@@ -1302,10 +1302,9 @@ void returnQuery()
       status = msLayerOpen(lp, Map->shapepath);
       if(status != MS_SUCCESS) writeError();
 
-      if(lp->items) { // FIX: may be a better way to do this
-	msFreeCharArray(lp->items, lp->numitems);
-	lp->numitems = 0;
-      }
+      // retrieve all the item names
+      status = msLayerGetItems(lp, &lp->items, &lp->numitems);
+      if(status != MS_SUCCESS) writeError();
 
       status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex, MS_TRUE);
       if(status != MS_SUCCESS) writeError();
@@ -1351,6 +1350,10 @@ void returnQuery()
 
     // open this layer
     status = msLayerOpen(lp, Map->shapepath);
+    if(status != MS_SUCCESS) writeError();
+
+    // retrieve all the item names
+    status = msLayerGetItems(lp, &lp->items, &lp->numitems);
     if(status != MS_SUCCESS) writeError();
 
     LRN = 1; // layer result number

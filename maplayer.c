@@ -153,20 +153,20 @@ void msLayerClose(layerObj *layer)
   }
 }
 
-int msLayerGetItems(layerObj *layer, char **items, int *numitems) {
+int msLayerGetItems(layerObj *layer, char ***items, int *numitems) {
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):    
     *numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
-    items = msDBFGetItems(layer->shpfile.hDBF);
-    if(!items) return(MS_FAILURE);
+    *items = msDBFGetItems(layer->shpfile.hDBF);
+    if(!(*items)) return(MS_FAILURE);
     break;
   case(MS_INLINE):
     return(MS_SUCCESS); // inline shapes have no items
     break;
   case(MS_OGR):
-    return(msOGRLayerGetItems(layer, &items, numitems));
+    return(msOGRLayerGetItems(layer, items, numitems));
     break;
   case(MS_TILED_OGR):
     break;

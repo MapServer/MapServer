@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.24  2001/03/12 16:05:07  sdlime
+ * Fixed parameters for msLayerGetItems. Added preprocessor wrapper to OGR version of the same function.
+ *
  * Revision 1.23  2001/03/11 22:01:32  dan
  * Implemented msOGRLayerGetItems()
  *
@@ -891,6 +894,7 @@ int msOGRLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
  **********************************************************************/
 int msOGRLayerGetItems(layerObj *layer, char ***items, int *numitems)
 {
+#ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
   int   i;
   OGRFeatureDefn *poDefn;
@@ -915,6 +919,16 @@ int msOGRLayerGetItems(layerObj *layer, char ***items, int *numitems)
   }
 
   return(MS_SUCCESS);
+#else
+/* ------------------------------------------------------------------
+ * OGR Support not included...
+ * ------------------------------------------------------------------ */
+
+  msSetError(MS_MISCERR, "OGR support is not available.", 
+             "msOGRLayerGetItems()");
+  return(MS_FAILURE);
+
+#endif /* USE_OGR */
 }
 
 
