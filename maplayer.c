@@ -415,14 +415,14 @@ static int string2list(char **list, int *listsize, char *string)
 
   for(i=0; i<(*listsize); i++)
     if(strcmp(list[i], string) == 0) { 
-      printf("string2list (duplicate): %s %d\n", string, i);
+        // printf("string2list (duplicate): %s %d\n", string, i);
       return(i);
     }
 
   list[i] = strdup(string);
   (*listsize)++;
 
-  printf("string2list: %s %d\n", string, i);
+  // printf("string2list: %s %d\n", string, i);
 
   return(i);
 }
