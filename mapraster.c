@@ -1798,10 +1798,15 @@ imageObj *msDrawReferenceMap(mapObj *map) {
   cellsize = msAdjustExtent(&(map->reference.extent), 
                             image->width, image->height);
 
+  // Allocate a fake bg color because when using gd-1.8.4 with a PNG reference
+  // image, the box color could end up being set to color index 0 which is 
+  // transparent (yes, that's odd!).
+  gdImageColorAllocate(img, 255,255,255);
+
   // allocate some colors
-  if(map->reference.outlinecolor.red != -1 && map->reference.outlinecolor.green != -1 && map->reference.outlinecolor.blue != -1)
+  if( MS_VALID_COLOR(map->reference.outlinecolor) )
     oc = gdImageColorAllocate(img, map->reference.outlinecolor.red, map->reference.outlinecolor.green, map->reference.outlinecolor.blue);
-  if(map->reference.color.red != -1 && map->reference.color.green != -1 && map->reference.color.blue != -1)
+  if( MS_VALID_COLOR(map->reference.color) )
     c = gdImageColorAllocate(img, map->reference.color.red, map->reference.color.green, map->reference.color.blue); 
 
   // convert map extent to reference image coordinates
