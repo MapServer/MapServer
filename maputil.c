@@ -156,6 +156,19 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale)
 {
   int i;
 
+  // INLINE features do not work with expressions, allow the classindex
+  // value set prior to calling this function to carry through.
+  if(layer->connectiontype == MS_INLINE) {
+    if(scale > 0) {  // verify scale here 
+      if((layer->class[i].maxscale > 0) && (scale > layer->class[i].maxscale))
+        return -1; // can skip this feature
+      if((layer->class[i].minscale > 0) && (scale <= layer->class[i].minscale))
+        return -1; // can skip this feature
+    }
+
+    return shape->classindex;
+  }
+
   for(i=0; i<layer->numclasses; i++) {
     
     if(scale > 0) {  // verify scale here 
