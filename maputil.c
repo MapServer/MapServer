@@ -283,6 +283,8 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
             else
                 nReturnVal = msSaveImageGD(img->img.gd, filename, img->format);
         }
+	else if( MS_DRIVER_IMAGEMAP(img->format) )
+            nReturnVal = msSaveImageIM(img, filename, img->format);
 #ifdef USE_GDAL
         else if( MS_DRIVER_GDAL(img->format) )
         {
@@ -335,6 +337,8 @@ void msFreeImage(imageObj *image)
         if( MS_RENDERER_GD(image->format) )
             msFreeImageGD(image->img.gd);
 
+	else if( MS_RENDERER_IMAGEMAP(image->format) )
+            msFreeImageIM(image);
         else if( MS_RENDERER_RAWDATA(image->format) )
             msFree(image->img.raw_16bit);
 #ifdef USE_MING_FLASH

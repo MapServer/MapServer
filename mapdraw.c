@@ -79,6 +79,12 @@ imageObj *msDrawMap(mapObj *map)
 				map->web.imagepath, map->web.imageurl);        
         if( image != NULL ) msImageInitGD( image, &map->imagecolor );
     }
+    else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
+    {
+        image = msImageCreateIM(map->width, map->height, map->outputformat, 
+				map->web.imagepath, map->web.imageurl);        
+        if( image != NULL ) msImageInitIM( image );
+    }
     else if( MS_RENDERER_RAWDATA(map->outputformat) )
     {
         image = msImageCreate(map->width, map->height, map->outputformat,
@@ -477,7 +483,6 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
   rectObj     searchrect;
   char        cache=MS_FALSE;
   int         maxnumstyles=1;
-
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
 /* ==================================================================== */
@@ -1203,8 +1208,12 @@ void msCircleDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, pointObj *
 {
     if (image)
     {
-        if( MS_RENDERER_GD(image->format) )
+printf("format %s",image->format);
+	    
+	    if( MS_RENDERER_GD(image->format) )
             msCircleDrawLineSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
+	else if( MS_RENDERER_IMAGEMAP(image->format) )
+            msCircleDrawLineSymbolIM(symbolset, image, p, r, style, scalefactor);
         else
              msSetError(MS_MISCERR, "Unknown image type", 
                         "msCircleDrawLineSymbol()");
@@ -1215,8 +1224,11 @@ void msCircleDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, pointObj 
 {
     if (image)
     {
+printf("format %s",image->format);
         if( MS_RENDERER_GD(image->format) )
             msCircleDrawShadeSymbolGD(symbolset, image->img.gd, p, r, style, scalefactor);
+	else if( MS_RENDERER_IMAGEMAP(image->format) )
+            msCircleDrawShadeSymbolIM(symbolset, image, p, r, style, scalefactor);
               
         else
              msSetError(MS_MISCERR, "Unknown image type", 
@@ -1231,6 +1243,8 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset,imageObj *image, pointObj *p, st
    {
        if( MS_RENDERER_GD(image->format) )
            msDrawMarkerSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+       else if( MS_RENDERER_IMAGEMAP(image->format) )
+           msDrawMarkerSymbolIM(symbolset, image, p, style, scalefactor);
        
 #ifdef USE_MING_FLASH              
        else if( MS_RENDERER_SWF(image->format) )
@@ -1249,6 +1263,8 @@ void msDrawLineSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, sty
     {
         if( MS_RENDERER_GD(image->format) )
             msDrawLineSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+	else if( MS_RENDERER_IMAGEMAP(image->format) )
+            msDrawLineSymbolIM(symbolset, image, p, style, scalefactor);
 
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
@@ -1267,6 +1283,8 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, imageObj *image, shapeObj *p, st
     {
         if( MS_RENDERER_GD(image->format) )
             msDrawShadeSymbolGD(symbolset, image->img.gd, p, style, scalefactor);
+	else if( MS_RENDERER_IMAGEMAP(image->format) )
+            msDrawShadeSymbolIM(symbolset, image, p, style, scalefactor);
 
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
