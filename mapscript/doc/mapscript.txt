@@ -1026,7 +1026,65 @@ setWKTProjection( string wkt ) : int
  legendObj
 -----------------------------------------------------------------------------
 
-x
+legendObj is associated with mapObj_
+
+::
+
+     +--------+ 0..1     1 +-----+
+     | Legend | <--------> | Map |
+     +--------+            +-----+
+
+and with labelObj_.
+
+::
+
+     +--------+ 1        1 +-------+
+     | Legend | ---------> | Label |
+     +--------+            +-------+
+
+Attributes
+----------
+
+imagecolor : colorObj_
+    Legend background color.
+
+label : labelObj_
+    legend label.
+
+keysizex : int
+    Width in pixels of legend keys.
+
+keysizey : int
+    Pixels.
+
+keyspacingx : int
+    Horizontal padding around keys in pixels.
+
+keyspacingy : int
+    Vertical padding.
+
+map : mapObj_
+    Reference to parent mapObj.
+    
+outlinecolor : colorObj_
+    key outline color.
+
+position : int
+    MS_UL, MS_UC, MS_UR, MS_LL, MS_LC, or MS_LR.
+
+postlabelcache : int
+    MS_TRUE or MS_FALSE.
+
+status : int
+    MS_ON, MS_OFF, or MS_EMBED.
+
+template : string
+    Path to template file.
+
+Methods
+-------
+
+None
 
 
 -----------------------------------------------------------------------------
@@ -1088,13 +1146,13 @@ Secondary associations are with legendObj_, scalebarObj_, referenceMapObj_,
 
 ::
 
-     +-----+ 1     0..1 +----------+
-     | Map | ---------> | Legend   |
-     +-----+            | -------- |
-                        | Scalebar |
-                        | -------- |
-                        | Legend   |
-                        +----------+ 
+     +-----+ 1     0..1 +--------------+
+     | Map | ---------> | Legend       |
+     +-----+            | ------------ |
+                        | Scalebar     |
+                        | ------------ |
+                        | ReferenceMap |
+                        +--------------+ 
 
 and outputFormatObj_.
 
@@ -1357,7 +1415,60 @@ toPolygon() : shapeObj_
  referenceMapObj
 -----------------------------------------------------------------------------
 
-x
+A referenceMapObj is associated with mapObj_.
+
+::
+
+     +--------------+ 0..1     1 +-----+
+     | ReferenceMap | <--------> | Map |
+     +--------------+            +-----+
+
+Attributes
+----------
+
+color : colorObj_
+    Color of reference box.
+    
+extent : rectObj_
+    Spatial extent of reference in units of parent map.
+
+height : int
+    Height of reference map in pixels.
+
+image : string
+    Filename of reference map image.
+
+map : mapObj_
+    Reference to parent mapObj.
+    
+marker : int
+    Index of a symbol in the map symbol set to use for marker.
+
+markername : string
+    Name of a symbol.
+
+markersize : int
+    Size of marker.
+
+maxboxsize : int
+    Pixels.
+
+minboxsize : int
+    Pixels.
+    
+outlinecolor : colorObj_
+    Outline color of reference box.
+
+status : int
+    MS_ON or MS_OFF.
+    
+width : int
+    In pixels.
+
+Methods
+-------
+
+None
 
 
 -----------------------------------------------------------------------------
@@ -1385,7 +1496,68 @@ tileindex : int immutable
  scalebarObj
 -----------------------------------------------------------------------------
 
-x
+A scalebarObj is associated with mapObj_.
+
+::
+
+     +----------+ 0..1     1 +-----+
+     | Scalebar | <--------- | Map |
+     +----------+            +-----+
+     
+and also with labelObj_
+
+::
+
+     +----------+ 1        1 +-------+
+     | Scalebar | ---------> | Label |
+     +----------+            +-------+
+
+Attributes
+----------
+
+backgroundcolor : colorObj_
+    Scalebar background color.
+    
+color : colorObj_
+    Scalebar foreground color.
+    
+imagecolor : colorObj_
+    Background color of scalebar.
+
+height : int
+    Pixels.
+
+intervals : int
+    Number of intervals.
+
+label : labelObj_
+    Scalebar label.
+    
+outlinecolor : colorObj_
+    Foreground outline color.
+   
+position : int
+    MS_UL, MS_UC, MS_UR, MS_LL, MS_LC, or MS_LR.
+
+postlabelcache : int
+    MS_TRUE or MS_FALSE.
+
+status : int
+    MS_ON, MS_OFF, or MS_EMBED.
+    
+style : int
+    0 or 1.
+
+units : int
+    See MS_UNITS_.
+    
+width : int
+    Pixels.
+
+Methods
+-------
+
+None
 
 
 -----------------------------------------------------------------------------

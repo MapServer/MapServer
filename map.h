@@ -571,8 +571,10 @@ typedef struct {
   int units;
   int status; // ON, OFF or EMBED
   int position; // for embeded scalebars
+#ifndef SWIG
   int transparent;
   int interlace;
+#endif
   int postlabelcache;
 } scalebarObj;
 
@@ -586,8 +588,10 @@ typedef struct {
   int status; // ON, OFF or EMBED
   int height, width;
   int position; // for embeded legends
+#ifndef SWIG
   int transparent;
   int interlace;
+#endif
   int postlabelcache;
 #ifndef __cplusplus
    char *template;
