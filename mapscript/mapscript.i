@@ -377,14 +377,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return; // map deconstructor takes care of it
   }
 
-<<<<<<< mapscript.i
-    
   int open(char *path) {
-=======
-  int open() {
->>>>>>> 1.94
     int status;
-    status =  msLayerOpen(self);
+    status =  msLayerOpen(self, path);
     if (status == MS_SUCCESS) {
         return msLayerGetItems(self);
     }
@@ -514,10 +509,6 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return &(layer->class[layer->numclasses-1]);
   }
 
-  void copy(classObj *dstClass, layerObj *dstLayer) {
-    msCopyClass(dstClass, self, dstLayer);
-  }
-  
   ~classObj() {
     return; // do nothing, map deconstrutor takes care of it all
   }
@@ -798,7 +789,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 // class extensions for shapefileObj
 //
 %extend shapefileObj {
-  shapefileObj(char *filename, int type) {    
+  shapefileObj(char *filename, char *shapepath, int type) {    
     shapefileObj *shapefile;
     int status;
 
@@ -807,9 +798,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
 
     if(type == -1)
-      status = msSHPOpenFile(shapefile, "rb", filename);
+      status = msSHPOpenFile(shapefile, "rb", shapepath, filename);
     else if(type == -2)
-      status = msSHPOpenFile(shapefile, "rb+", filename);
+      status = msSHPOpenFile(shapefile, "rb+", shapepath, filename);
     else
       status = msSHPCreateFile(shapefile, filename, type);
 
