@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.38  2004/10/28 23:25:18  assefa
+ * Return exception when manadatory elements are missing from the filter (Bug 935)
+ *
  * Revision 1.37  2004/10/25 20:03:27  assefa
  * Do not use layer tolerance for msQueryByShape (Bug 768).
  *
@@ -1187,7 +1190,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     FLTInsertElementInNode(psFilterNode->psLeftNode, 
                                         psXMLNode->psChild); 
                 }
-            }                           
+            } 
+            else
+              psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
         }//end if is logical
 /* -------------------------------------------------------------------- */
 /*      Spatial Filter.                                                 */
@@ -1267,8 +1272,6 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                 int nCoords = 0;
                 char *pszTmpCoord = NULL;
                 int bCoordinatesValid = 0;
-
-                
 
                 psPropertyName = CPLGetXMLNode(psXMLNode, "PropertyName");
                 psBox = CPLGetXMLNode(psXMLNode, "Box");
@@ -1427,6 +1430,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                           strdup(psDistance->psChild->psNext->pszValue);
                     }
                 }
+                else
+                  psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
             }
             else if (strcasecmp(psXMLNode->pszValue, "Intersect") == 0)
             {
@@ -1471,6 +1476,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
 
                     }
                 }
+                else
+                  psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
             }
             
                 
@@ -1530,6 +1537,8 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                     else
                       psFilterNode->psRightNode->pszValue = NULL;
                 }
+                else
+                  psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
             }
 /* -------------------------------------------------------------------- */
 /*      PropertyIsBetween filter : extract property name and boudary    */
@@ -1608,6 +1617,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                          
                   
                 }
+                else
+                  psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+
             }//end of PropertyIsBetween 
 /* -------------------------------------------------------------------- */
 /*      PropertyIsLike                                                  */
@@ -1673,6 +1685,9 @@ void FLTInsertElementInNode(FilterEncodingNode *psFilterNode,
                         psFilterNode->psRightNode->eType = FILTER_NODE_TYPE_LITERAL;
                     }
                 }
+                else
+                  psFilterNode->eType = FILTER_NODE_TYPE_UNDEFINED;
+                  
             }
         }
             
