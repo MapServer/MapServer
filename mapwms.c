@@ -123,7 +123,9 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
   char *styles = NULL;
   int numlayers = 0;
   char **layers = NULL;
-      
+  int layerfound =0;
+  int invalidlayers = 0;
+
   // Some of the getMap parameters are actually required depending on the 
   // request, but for now we assume all are optional and the map file 
   // defaults will apply.
@@ -158,6 +160,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
        
       for (k=0; k<numlayers; k++)
       {
+          layerfound = 0;
           for (j=0; j<map->numlayers; j++)
           {   
               // Turn on selected layers only.
@@ -169,9 +172,11 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
                   map->layers[j].status = MS_ON;
                   map->layerorder[nLayerOrder++] = j;
                   validlayers++;
+                  layerfound = 1;
               }
-            
           }
+          if (layerfound == 0)
+            invalidlayers++;
           
       }
        
@@ -312,7 +317,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
 
   //validate all layers given. If an invalid layer is sent, return an exception. 
-  if (validlayers == 0 || validlayers != numlayers)
+  if (validlayers == 0 || invalidlayers > 0)
   {
       msSetError(MS_WMSERR, "Invalid layer(s) given in the LAYERS parameter.",
                  "msWMSLoadGetMapParams()");
