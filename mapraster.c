@@ -1340,7 +1340,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   // Only GDAL support image warping.
   if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
 #ifndef USE_GDAL
-    msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
+    msSetError(MS_MISCERR, "Attempt to render raster layer that requires reprojection but\nwithout GDAL available.  Image reprojection requires GDAL.", "msDrawRasterLayer()" );
     return MS_FAILURE;
 #else
     force_gdal = MS_TRUE;
@@ -1387,9 +1387,12 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
     if(strlen(filename) == 0) continue;
 
-    f = fopen(msBuildPath3(szPath,  map->mappath, map->shapepath, filename),"rb");
+    msBuildPath3( szPath, map->mappath, map->shapepath, filename );
+
+    f = fopen( szPath, "rb");
     if(!f) {
       memset( dd, 0, 8 );
+      strcpy( szPath, filename );
     } else {
       fread(dd,8,1,f); // read some bytes to try and identify the file
       fclose(f);
@@ -1446,7 +1449,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       msGDALInitialize();
 
       msAcquireLock( TLOCK_GDAL );
-      hDS = GDALOpen(msBuildPath3(szPath,  map->mappath, map->shapepath, filename) , GA_ReadOnly );
+      hDS = GDALOpen(szPath, GA_ReadOnly );
 
       if(hDS != NULL) {
         double	adfGeoTransform[6];
