@@ -554,6 +554,7 @@ int getClassIndex(layerObj *layer, char *str);
 int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
 int msGetSymbolIndex(symbolSetObj *set, char *name);
 mapObj *msLoadMap(char *filename);
+int msSaveMap(mapObj *map, char *filename);
 void msFreeMap(mapObj *map);
 void msFreeCharArray(char **array, int num_items);
 int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color);
