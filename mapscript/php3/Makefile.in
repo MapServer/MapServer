@@ -69,7 +69,7 @@ all: php_mapscript.so
 PHPMS_OBJS =  php_mapscript.o mapscript_i.o
 
 
-php_mapscript.so: $(PHPMS_OBJS)
+php_mapscript.so: $(PHPMS_OBJS) ../../libmap.a
 	$(LD) -o $@ $(PHPMS_OBJS) $(MS_LIBS)
 
 %.o: %.c php_mapscript.h

@@ -450,7 +450,7 @@ if test "$with_sde" = "yes" ; then
       AC_MSG_WARN([        ESRI SDE not found in system libs... use --with-sde=DIR.])
   fi
 
-elif test -n "$with_sde" -a "$with_proj" != "no" ; then
+elif test -n "$with_sde" -a "$with_sde" != "no" ; then
 
   AC_EXPAND_PATH($with_sde, SDE_DIR)
 
@@ -483,6 +483,86 @@ AC_SUBST(SDE_LIB,    $SDE_LIB)
 ALL_ENABLED="$SDE_ENABLED $ALL_ENABLED"
 ALL_INC="$SDE_INC $ALL_INC"
 ALL_LIB="$SDE_LIB $ALL_LIB"
+
+
+dnl ---------------------------------------------------------------------
+dnl Find OGR ONLY IF REQUESTED.
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should include OGR support...)
+AC_ARG_WITH(ogr,
+[  --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir).],,)
+
+if test "$with_ogr" = "yes" ; then
+
+  AC_CHECK_LIB(gdal.1.1, OGRRegisterAll, OGR_ENABLED=-DUSE_OGR,,,)
+
+  if test -n "$OGR_ENABLED" ; then
+      OGR_LIB="-lgdal.1.1 -ljpeg -lpng -ldl -logdi -lzlib"
+      AC_MSG_RESULT([        using OGR from system libs.])
+  else
+      AC_MSG_WARN([        OGR not found in system libs... use --with-ogr=DIR.])
+  fi
+
+elif test -n "$with_ogr" -a "$with_ogr " != "no" ; then
+
+  AC_EXPAND_PATH($with_ogr, OGR_DIR)
+
+dnl check in case we were pointed to GDAL parent dir
+  test -f $OGR_DIR/ogr/ogr_feature.h && OGR_DIR="$OGR_DIR/ogr"
+
+dnl check for headers
+  test -f $OGR_DIR/ogr_feature.h && OGR_INCDIR="$OGR_DIR"
+  test -f $OGR_DIR/ogrsf_frmts/ogrsf_frmts.h && OGR_FRMTSDIR="$OGR_DIR/ogrsf_frmts"
+  test -f $OGR_DIR/../port/cpl_conv.h && OGR_CPLDIR="$OGR_DIR/../port"
+  test -f $OGR_DIR/port/cpl_conv.h && OGR_CPLDIR="$OGR_DIR/port"
+
+dnl check for static OGR libs
+  test -f $OGR_DIR/ogr.a && OGR_OGRLIB="$OGR_DIR/ogr.a"
+  test -f $OGR_DIR/ogrsf_frmts/ogrsf_frmts.a && OGR_FRMTSLIB="$OGR_DIR/ogrsf_frmts/ogrsf_frmts.a"
+  test -f $OGR_DIR/../port/cpl.a && OGR_CPLLIB="$OGR_DIR/../port/cpl.a"
+  test -f $OGR_DIR/port/cpl.a && OGR_CPLLIB="$OGR_DIR/port/cpl.a"
+
+  if test -n "$OGR_INCDIR" -a -n "$OGR_FRMTSDIR" -a -n "$OGR_CPLDIR" -a \
+          -n "$OGR_OGRLIB" -a -n "$OGR_FRMTSLIB" -a -n "$OGR_CPLLIB" ; then 
+      OGR_INC="-I$OGR_FRMTSDIR -I$OGR_INCDIR -I$OGR_CPLDIR"
+      OGR_LIB="$OGR_FRMTSLIB $OGR_OGRLIB $OGR_CPLLIB"
+
+dnl check for OGDI
+      if test -n "$TOPDIR" -a -n "$TARGET" ; then
+        OGDI_LIBDIR="$TOPDIR/bin/$TARGET"
+        OGR_LIB="$OGR_LIB -L$TOPDIR/bin/$TARGET -logdi -lzlib -ldl"
+        AC_ADD_RUNPATH("$OGDI_LIBDIR")
+      fi
+  else
+      AC_MSG_ERROR([Could not find one of ogr_feature.h, ogrsf_fmrts.h, cpl_conv.h, ogr.a, ogrsf_frmts.a, or cpl.a in $OGR_DIR.])
+  fi
+
+  OGR_ENABLED=-DUSE_OGR
+  AC_MSG_RESULT([        using OGR from $OGR_DIR.])
+
+else
+
+  AC_MSG_RESULT([        OGR support not requested.])
+fi
+
+if test -n "$OGR_ENABLED" ; then
+  dnl
+  dnl We need to add mapogr.o in list of OBJ files
+  dnl
+  OGR_OBJ="mapogr.o"
+fi
+
+
+AC_SUBST(OGR_ENABLED,$OGR_ENABLED)
+AC_SUBST(OGR_INC,    $OGR_INC)
+AC_SUBST(OGR_LIB,    $OGR_LIB)
+AC_SUBST(OGR_OBJ,    $OGR_OBJ)
+
+ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
+ALL_INC="$OGR_INC $ALL_INC"
+ALL_LIB="$OGR_LIB $ALL_LIB"
+
 
 dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that

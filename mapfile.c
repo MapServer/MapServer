@@ -1485,7 +1485,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->connection = getString()) == NULL) return(-1);
       break;
     case(CONNECTIONTYPE):
-      if((layer->connectiontype = getSymbol(2, MS_LOCAL, MS_SDE)) == -1) return(-1);
+      if((layer->connectiontype = getSymbol(3, MS_LOCAL, MS_SDE, MS_OGR)) == -1) return(-1);
       break;
     case(DATA):
       if((layer->data = getString()) == NULL) return(-1);

@@ -22,7 +22,8 @@ static char *ms_errorCodes[MS_NUMERRORCODES]={"",
 					    "Search returned no results.",
 					    "Shapefile error.",
 					    "Expression parser error.",
-					    "SDE error."
+                                            "SDE error.",
+					    "OGR error."
 };
 
 errorObj ms_error = {-1, "", ""};

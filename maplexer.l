@@ -205,6 +205,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>multiple                 { return(MS_MULTIPLE); }
 <INITIAL,VALUE_STRING>normal                   { return(MS_NORMAL); }
 <INITIAL,VALUE_STRING>off		       { return(MS_OFF); }
+<INITIAL,VALUE_STRING>ogr		       { return(MS_OGR); }
 <INITIAL,VALUE_STRING>on		       { return(MS_ON); }
 <INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
 <INITIAL>pixels                                { return(MS_PIXELS); }

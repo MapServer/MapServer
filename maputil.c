@@ -351,6 +351,11 @@ gdImagePtr msDrawMap(mapObj *map)
       continue;
     }
 
+    if(lp->connection && lp->connectiontype == MS_OGR) {
+      if(msDrawOGRLayer(map, lp, img) == -1) return(NULL);
+      continue;
+    }
+
     // must be local files
     if(lp->type == MS_RASTER) {
       if(msDrawRasterLayer(map, lp, img) == -1) return(NULL);
@@ -385,6 +390,11 @@ gdImagePtr msDrawMap(mapObj *map)
     // check for remote data
     if(lp->connection && lp->connectiontype == MS_SDE) {
       if(msDrawSDELayer(map, lp, img) == -1) return(NULL);
+      continue;
+    }
+
+    if(lp->connection && lp->connectiontype == MS_OGR) {
+      if(msDrawOGRLayer(map, lp, img) == -1) return(NULL);
       continue;
     }
 

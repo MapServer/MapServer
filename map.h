@@ -121,7 +121,7 @@ enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement */
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED};
-enum MS_CONNECTION_TYPE {MS_LOCAL, MS_SDE};
+enum MS_CONNECTION_TYPE {MS_LOCAL, MS_SDE, MS_OGR};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP
 
@@ -185,7 +185,13 @@ typedef struct {
 
   char *table;
   char *from, *to;
-  char *header, *template, *footer;
+  char *header;
+#ifndef __cplusplus
+  char *template;
+#else
+  char *_template;
+#endif
+  char *footer;
   
   char *match;
 
@@ -196,7 +202,11 @@ typedef struct {
 // QUERY OBJECT - dictates how the query results for a particular layer should be handled
 typedef struct {
   expressionObj expression; // the expression to be matched  
+#ifndef __cplusplus
   char *template;
+#else
+  char *_template;
+#endif
 
 #ifndef SWIG
   joinObj *joins;
@@ -287,7 +297,11 @@ typedef struct {
 typedef struct {
   char *log;
   char *imagepath, *imageurl;
+#ifndef __cplusplus
   char *template;
+#else
+  char *_template;
+#endif
   char *header, *footer;  
   char *empty, *error; /* error handling */
   rectObj extent; /* clipping extent */
@@ -421,7 +435,11 @@ typedef struct {
   int index;
 
   char *classitem; /* .DBF item to be used for symbol lookup */
+#ifndef __cplusplus
   classObj *class; /* always at least 1 class */
+#else
+  classObj *_class;
+#endif
 
 #ifdef SWIG
 %readonly
@@ -542,6 +560,7 @@ void msFreeImage(gdImagePtr img);
 
 #ifndef SWIG
 int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapsde.c */
+int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapogr.cpp */
 
 
 /*
@@ -556,7 +575,7 @@ int getCharacter(char *c);
 
 int initMap(mapObj *map);
 int initLayer(layerObj *layer);
-int initClass(classObj *class);
+int initClass(classObj *_class);
 int initQuery(queryObj *query);
 
 /* NEED TEMPLATES HERE! (for feature lists) */
@@ -628,7 +647,7 @@ void msFreeQueryResults(queryResultObj *results);
 void trimBlanks(char *string); /* in mapstring.c */
 char *chop(char *string);
 void trimEOL(char *string);
-char *gsub(char *str, const char *old, const char *new);
+char *gsub(char *str, const char *old, const char *sznew);
 char *stripPath(char *fn);
 char *getPath(char *fn);
 char **split(const char *string, char cd, int *num_tokens);
@@ -650,7 +669,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset); /* in mapsymbol.c */
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
 void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);
-void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *height);
+void msGetMarkerSize(symbolSetObj *symbolset, classObj *_class, int *width, int *height);
 void msDrawMarkerSymbol(symbolSetObj *symbolset,gdImagePtr img, pointObj *p,  int sy, int fc, int bc, int oc, double sz);
 void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);
 
@@ -660,7 +679,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img);
 int msLoadFontSet(fontSetObj *fontSet);
 int msDrawLabel(gdImagePtr img, mapObj *map, pointObj labelPnt, char *string, labelObj *label);
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
-int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj point, char *string, double featuresize);
+int msAddLabel(mapObj *map, int layer, int nclass, int tile, int shape, pointObj point, char *string, double featuresize);
 int msDrawLabelCache(gdImagePtr img, mapObj *map);
 gdFontPtr msGetBitmapFont(int size);
 

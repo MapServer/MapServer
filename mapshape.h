@@ -7,6 +7,35 @@
 
 #ifndef SWIG
 #define MS_PATH_LENGTH 1024
+
+#ifdef USE_OGR
+// Since OGR comes with shapelib as well, we have to rename the public
+// shapelib functions to avoid conflicts
+
+#define SHPOpen                 msSHPOpen
+#define SHPClose                msSHPClose
+#define SHPCreate               msSHPCreate
+#define SHPGetInfo              msSHPGetInfo
+#define SHPInfo                 msSHPInfo
+#define SHPHandle               msSHPHandle
+
+#define DBFOpen                 msDBFOpen
+#define DBFClose                msDBFClose
+#define DBFCreate               msDBFCreate
+#define DBFGetFieldCount        msDBFGetFieldCount
+#define DBFGetRecordCount       msDBFGetRecordCount
+#define DBFAddField             msDBFAddField
+#define DBFGetFieldInfo         msDBFGetFieldInfo
+#define DBFReadIntegerAttribute msDBFReadIntegerAttribute
+#define DBFReadDoubleAttribute  msDBFReadDoubleAttribute
+#define DBFReadStringAttribute  msDBFReadStringAttribute
+#define DBFWriteIntegerAttribute msDBFWriteIntegerAttribute
+#define DBFWriteDoubleAttribute msDBFWriteDoubleAttribute
+#define DBFWriteStringAttribute msDBFWriteStringAttribute
+#define DBFInfo                 msDBFInfo
+#define DBFHandle               msDBFHandle
+#endif /* USE_OGR */
+
 #endif
 
 // Shapefile types
