@@ -20,78 +20,79 @@ Version 4.4.0-beta3 (2004-11-22)
   LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it
   is possible to circumvent that test by defining layers with problems 
   after running prepareImage. Other things crop up in that case too (symbol 
-  scaling dies) so it should be considered bad programming practice.(bug 1059)
+  scaling dies) so it should be considered bad programming practice
+  (bug 1059).
 
 - Added --with-sderaster configure option. 
 
 - Make sure that msDrawWMSLayerLow calls msDrawLayer instead of 
   msDrawRasterLayerLow directly ensuring that some logic (transparency) that 
-  are in msDrawLayer are applied (Bug 541).
+  are in msDrawLayer are applied (bug 541).
 
 - Force GD/JPEG outputFormatObjects to IMAGEMODE RGB and TRANSPARENT OFF
   if they are RGBA or ON.  Makes user error such as in bug 1703 less likely.
 
-- Advertize only gd and gdal formats for wms capabilities (Bug 455).
+- Advertize only gd and gdal formats for wms capabilities (bug 455).
 
 - Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all GML
   attributes are returned as strings to MapServer. This is most efficient
-  and prevents problems with autodetection of some attribute types. (bug1043)
-
+  and prevents problems with autodetection of some attribute types (bug 1043).
+  
 - msOGCWKT2ProjectionObj() now uses the OGRSpatialReference::SetFromUserInput()
   method.  This allows various convenient setting options, including the 
   ability to handle ESRI WKT by prefixing the WKT string with "ESRI::". 
 
 - Fixed GetLegendGraphic in WMS Capabilities that were missing the '?'
-  or '&' separator if it was not included in wms_onlineresource (bug 1065)
+  or '&' separator if it was not included in wms_onlineresource (bug 1065).
 
 - Updated WMS/WFS client and server code to lookup "ows_*" metadata names
   in addition to the default "wms_*" (or "wfs_*") metadatas (WCS was already
   implemented this way). This reduces the amount of duplication in mapfiles
   that support multiple OGC interfaces since "ows_*" metadata can be used
   almost everywhere for common metadata items shared by multiple OGC
-  interfaces. (bug 568)
+  interfaces (bug 568).
 
 - Added ows_service_onlineresource metadata for WMS/WFS to distinguish
-  between service and GetMap/Capabilities onlineresources (bug 375)
+  between service and GetMap/Capabilities onlineresources (bug 375).
 
-- Added map->setSize() to PHP MapScript (bug 1066)
+- Added map->setSize() to PHP MapScript (bug 1066).
 
 - Re-enabled building PHP MapScript using PHP's bundled regex/*.o. This is
   needed to build in an environment with PHP configured as an Apache DSO
-  (bugs 990, 520)
+  (bugs 990, 520).
 
 - Fixed problem with raster dither support on windows (related to ascii 
-  encoding pointers).  (bug 722)
+  encoding pointers) (bug 722).
 
 - Moved PHP/SWIG MapScript layer->getExtent() logic down to msLayerGetExtent()
-  to avoid code duplication (bug 1051)
+  to avoid code duplication (bug 1051).
 
 - Added SDE Raster drawing support (experimental).
 
-- HTML legends: Added [leg_header_html] and [leg_footer_html] (bug 1032)
+- HTML legends: Added [leg_header_html] and [leg_footer_html] (bug 1032).
 
-- Added "z" support in SWIG MapScript for pointObj (bug 871)
+- Added "z" support in SWIG MapScript for pointObj (bug 871).
 
 - In PHP Mpascript when using  ms_newrectobj, the members minx, miny,
-  maxx, maxy are initialized to -1 (Bug 788).
+  maxx, maxy are initialized to -1 (bug 788).
 
 - Write out proper world file with remote WMS result, it was off by half
-  a pixel. (Bug 1050).
+  a pixel (bug 1050).
 
 - Send a warning in the wms capabilities if the layer status is set 
-  to default (Bug 638).
+  to default (bug 638).
 
 - Fixed PHP MapScript compile warnings: dereferencing type-punned pointer
-  will break strict-aliasing rules (bug 1053)
+  will break strict-aliasing rules (bug 1053).
 
-- Added $layer->isVisible() to PHP MapScript (bug 539)
+- Added $layer->isVisible() to PHP MapScript (bug 539).
 
-- Ported $layer->getExtent() to PHP MapScript (bug 826)
+- Ported $layer->getExtent() to PHP MapScript (bug 826).
 
-- wms_group_abstract can now be used in the capabilities (Bug 754)
+- wms_group_abstract can now be used in the capabilities (bug 754).
 
 - If wms_stylelist is an empty string, do not output the <StyleList> tag
-  for MapContexts (Bug 595).
+  for MapContexts (bug 595).
 
 - Avoid passing FILE* to GD library by utilizing GD's gdIOCtx interface
   (bug 1047).
@@ -153,7 +154,7 @@ Version 4.4.0-beta2 (2004-11-03)
   default shapes come back witha classindex of 0 even if there are no classes.
   (ie. raster query results). 
 
-- the loadmapcontext function has changed it behaviour : before the 4.4 relase
+- the loadmapcontext function has changed it behaviour.  Before the 4.4 relase
   when loading layers from a map context, the layer name was built using
   a unique prefix + the name found in the context (eg for the 2nd layer in 
   map context named park, the layer name generated would possibly be l:2:park).
@@ -178,7 +179,7 @@ Version 4.4.0-beta2 (2004-11-03)
 
 - Use metadata ows_schema_location for WMS/WFS/WCS/SLD (bugs 999, 1013, 938).
   The default value if metadata is not found is 
-  http://schemas.opengeospatial.net)
+  http://schemas.opengeospatial.net.
  
 - Generate a RULE <Name> tag when generating an SLD (bug 1010).
 
@@ -203,17 +204,17 @@ Version 4.4.0-beta2 (2004-11-03)
 
 - WMS GetMap requests now have MS_NONSQUARE enabled by default. This means
   that if the width/height ratio doesn't match the extent's x/y ratio then
-  the map is stretched as stated in the WMS specification (bug 862)
+  the map is stretched as stated in the WMS specification (bug 862).
 
 - In WMS, layers with no explicit projection defined will receive a copy
   of the map's projectionObj if a new SRS is specified in the GetMap request
   or if MS_NONSQUARE is enabled. This will prevent the problem with layers 
   that don't show up in WMS request when the server administrator forgets
-  to explicitly set projections on all the layers in a WMS mapfile. (bug 947)
+  to explicitly set projections on all the layers in a WMS mapfile (bug 947).
 
 - Implemented FastCGI cleanup support for win32 and unix in mapserv.c.
 
-- Solved configure/compile issues with libiconv (bugs 909, 1017)
+- Solved configure/compile issues with libiconv (bugs 909, 1017).
 
 
 Version 4.4.0-beta1 (2004-10-21)
