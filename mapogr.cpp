@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2000/11/06 16:57:20  dan
+ * Changed layer->class to layer->_class in overlaysize handling
+ *
  * Revision 1.9  2000/11/01 16:55:38  sdlime
  * Changed overlaysize handling (when scaled) to be relative to the main class size.
  *
@@ -383,7 +386,7 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     layer->_class[i].sizescaled = MS_NINT(layer->_class[i].size * scalefactor);
     layer->_class[i].sizescaled = MS_MAX(layer->_class[i].sizescaled, layer->_class[i].minsize);
     layer->_class[i].sizescaled = MS_MIN(layer->_class[i].sizescaled, layer->_class[i].maxsize);
-    layer->class[i].overlaysizescaled = layer->class[i].sizescaled - (layer->class[i].size - layer->class[i].overlaysize);
+    layer->_class[i].overlaysizescaled = layer->_class[i].sizescaled - (layer->_class[i].size - layer->_class[i].overlaysize);
     // layer->_class[i].overlaysizescaled = MS_NINT(layer->_class[i].overlaysize * scalefactor);
     layer->_class[i].overlaysizescaled = MS_MAX(layer->_class[i].overlaysizescaled, layer->_class[i].overlayminsize);
     layer->_class[i].overlaysizescaled = MS_MIN(layer->_class[i].overlaysizescaled, layer->_class[i].overlaymaxsize);
