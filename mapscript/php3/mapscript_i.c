@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.77  2004/02/16 19:19:20  dan
+ * Free expression in setExpression() if expression is null or empty.
+ *
  * Revision 1.76  2004/01/30 17:01:12  assefa
  * Add function deletestyle on a class object.
  *
@@ -819,7 +822,11 @@ void  classObj_destroy(classObj *self) {
   }
 
 int classObj_setExpression(classObj *self, char *string) {
-    return loadExpressionString(&self->expression, string);
+    if (!string || strlen(string) == 0) {
+        freeExpression(&self->expression);
+        return MS_SUCCESS;
+    }
+    else return loadExpressionString(&self->expression, string);
   }
 
 char *classObj_getExpressionString(classObj *self) {
