@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.73  2004/08/30 20:12:57  frank
+ * added CLOSE_CONNECTION processing parameter - defer closes
+ *
  * Revision 1.72  2004/07/05 17:22:00  julien
  * msOGRLayerGetAutoStyle: outlinecolor is only useful if the type is polygon
  *
@@ -166,6 +169,9 @@ typedef struct ms_ogr_file_info_t
   rectObj     rect;                     /* set by WhichShapes */
 
 } msOGRFileInfo;
+
+// Undefine this if you are using a very old GDAL without OpenShared(). 
+#define USE_SHARED_ACCESS  
 
 /* ==================================================================
  * Geometry conversion functions
@@ -840,14 +846,22 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       /* Use relative path */
       if( layer->debug )
           msDebug("OGROPen(%s)\n", szPath);
+#ifdef USE_SHARED_ACCESS
+      poDS = OGRSFDriverRegistrar::GetRegistrar()->OpenShared( szPath );
+#else
       poDS = OGRSFDriverRegistrar::Open( szPath );
+#endif
   }
   else
   {
       /* pszDSName was succesful */
       if( layer->debug )
           msDebug("OGROPen(%s)\n", pszDSName);
+#ifdef USE_SHARED_ACCESS
+      poDS = OGRSFDriverRegistrar::GetRegistrar()->OpenShared( pszDSName );
+#else
       poDS = OGRSFDriverRegistrar::Open( pszDSName );
+#endif
   }
 
   if( poDS == NULL )
@@ -967,7 +981,26 @@ static int msOGRFileClose(layerObj *layer, msOGRFileInfo *psInfo )
       psInfo->poDS->ReleaseResultSet( psInfo->poLayer );
 
   /* Destroying poDS automatically closes files, destroys the layer, etc. */
+#ifdef USE_SHARED_ACCESS 
+  const char *pszCloseConnection = 
+      CSLFetchNameValue( layer->processing, "CLOSE_CONNECTION" );
+  if( pszCloseConnection == NULL )
+      pszCloseConnection = "NORMAL";
+
+  if( EQUAL(pszCloseConnection,"NORMAL") )
+      OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( psInfo->poDS );
+  else if( EQUAL(pszCloseConnection,"DEFER") )
+      psInfo->poDS->Dereference();
+  else
+  {
+      msDebug( "msOGRFileClose(%s): Illegal CLOSE_CONNECTION value '%s'.", 
+               psInfo->pszFname, pszCloseConnection );
+      OGRSFDriverRegistrar::GetRegistrar()->ReleaseDataSource( psInfo->poDS );
+  }
+      
+#else
   delete psInfo->poDS;
+#endif
 
   // Free current tile if there is one.
   if( psInfo->poCurTile != NULL )
