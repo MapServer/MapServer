@@ -695,6 +695,103 @@ int processIf(char** pszInstr, hashTableObj ht, int bLastPass)
    return MS_SUCCESS;
 }
 
+/*
+** Function to process a [coords ...] tag: line contains the tag, shape holds the coordinates. 
+** Syntax of the tag is [coords skip=n del=ch fmt=str].
+*/
+static int processCoords(char **line, shapeObj *shape) 
+{
+  char *tag, *tagStart, *tagEnd;
+  hashTableObj tagArgs=NULL;
+  int tagOffset, tagLength;
+
+  char *argValue;
+  char *pointFormat;
+
+  char *xh="", *xf=","; // various header and footers
+  char *yh="", *yf="";
+  char *ph="(", *pf=")"; // part
+  char *sh="", *sf=""; // shape 
+  int precision=0;
+
+  char *coords=NULL;  
+  int skip=1; // don't skip any points
+
+  int length;
+
+  if(!*line) {
+    msSetError(MS_WEBERR, "Invalid line pointer.", "processCoords()");
+    return(MS_FAILURE);
+  }
+
+  tagStart = findTag(*line, "coords");
+  while (tagStart) {  
+    tagOffset = tagStart - *line;
+    
+    // check for any tag arguments
+    if(getTagArgs("coords", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+    if(tagArgs) {
+      argValue = msLookupHashTable(tagArgs, "skip");
+      if(argValue) skip = atoi(argValue);
+
+      argValue = msLookupHashTable(tagArgs, "xh");
+      if(argValue) xh = argValue;
+      argValue = msLookupHashTable(tagArgs, "xf");
+      if(argValue) xf = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "yh");
+      if(argValue) yh = argValue;
+      argValue = msLookupHashTable(tagArgs, "yf");
+      if(argValue) yf = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "ph");
+      if(argValue) ph = argValue;
+      argValue = msLookupHashTable(tagArgs, "pf");
+      if(argValue) pf = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "sh");
+      if(argValue) sh = argValue;
+      argValue = msLookupHashTable(tagArgs, "sf");
+      if(argValue) sf = argValue;
+
+      argValue = msLookupHashTable(tagArgs, "precision");
+      if(argValue) precision = atoi(argValue);
+    }
+    
+    // build the per point format string
+    length = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + 10 + 1;
+    pointFormat = (char *) malloc(length);
+    snprintf(pointFormat, length, "%s%%lf.%d%s%s%%lf.%d%s", xh, precision, xf, yh, precision, yf); 
+
+    // build the coordinate string
+
+    // find the end of the tag
+    tagEnd = strchr(tagStart, ']');
+    tagEnd++;
+
+    // build the complete tag so we can do substitution           
+    tagLength = tagEnd - tagStart;
+    tag = (char *) malloc(tagLength + 1);
+    strncpy(tag, tagStart, tagLength);
+    tag[tagLength] = '\0';
+
+    // do the replacement
+    *line = gsub(*line, tag, coords);
+
+    // clean up
+    free(tag); tag = NULL;
+    msFreeHashTable(tagArgs); tagArgs=NULL;
+    free(pointFormat);
+
+    if((*line)[tagOffset] != '\0')
+      tagStart = findTag(*line+tagOffset+1, "coords");
+    else
+      tagStart = NULL;  
+  }
+
+  return(MS_SUCCESS);
+}
+
 /*!
  * this function process all metadata
  * in pszInstr. ht mus contain all corresponding
