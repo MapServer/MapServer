@@ -1896,6 +1896,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
     SWFText     oText = NULL;
     double         size = 0;
     
+    char szPath[MS_MAXPATHLEN];
 /* -------------------------------------------------------------------- */
 /*      if not SWF, return.                                             */
 /* -------------------------------------------------------------------- */
@@ -1999,6 +2000,8 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
     SWFFont     oFont = NULL;
     char        *font;
     double      dfWidth = 0.0;
+
+    char szPath[MS_MAXPATHLEN];
 
     if (!string || strlen(string) == 0 || !label || !rect ||
         !fontset)
