@@ -1239,14 +1239,15 @@ int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *file
   strcat(dbfFilename, ".dbf");
 
   shpfile->hDBF = msDBFOpen(dbfFilename, "rb");
-  free(dbfFilename);
 
   if(!shpfile->hDBF) {
     msSetError(MS_IOERR, "(%s)", "msOpenSHPFile()", dbfFilename);    
+    free(dbfFilename);
     chdir(old_path); /* restore old cwd */
     return(-1);
   }
-  
+  free(dbfFilename);
+
   chdir(old_path); /* restore old cwd */
 
   return(0); /* all o.k. */
