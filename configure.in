@@ -447,7 +447,7 @@ AC_ARG_WITH(sde,
 
 if test "$with_sde" = "yes" ; then
 
-  AC_CHECK_LIB(sde,SE_connection_create,SDE_ENABLED=-DUSE_SDE,,,)
+  AC_CHECK_LIB(sde80,SE_connection_create,SDE_ENABLED=-DUSE_SDE,,,)
 
   if test -n "$SDE_ENABLED" ; then
       SDE_LIB="-lsde80 -lpe -lsg -lpthread -lsocket"
@@ -471,7 +471,7 @@ elif test -n "$with_sde" -a "$with_sde" != "no" ; then
       SDE_LIB="-L$SDE_LIBDIR -lsde80 -lpe80 -lsg80 -lpthread -lsocket"
       AC_ADD_RUNPATH("$SDE_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find sdetype.h or libsde30.a in $SDE_DIR.")
+      AC_MSG_ERROR("Could not find sdetype.h or libsde80.a in $SDE_DIR.")
   fi
 
   SDE_ENABLED=-DUSE_SDE
@@ -490,6 +490,55 @@ ALL_ENABLED="$SDE_ENABLED $ALL_ENABLED"
 ALL_INC="$SDE_INC $ALL_INC"
 ALL_LIB="$SDE_LIB $ALL_LIB"
 
+dnl ---------------------------------------------------------------------
+dnl Use MPATROL ONLY IF REQUESTED.
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should compile in MPATROL support...)
+AC_ARG_WITH(mpatrol,[  --with-mpatrol[=DIR]    Include MPATROL support (DIR is MPATROL's install dir).],,)
+
+if test "$with_mpatrol" = "yes" ; then
+  AC_CHECK_LIB(mpatrol,__mp_free,MPATROL_ENABLED=-DUSE_MPATROL,,,)
+
+  if test -n "$MPATROL_ENABLED" ; then
+      MPATROL_LIB="-lbfd -liberty -lmpatrol"
+      AC_MSG_RESULT([        using MPATROL from system libs.])
+  else
+      AC_MSG_WARN([        MPATROL not found in system libs... use --with-mpatrol=DIR.])
+  fi
+
+elif test -n "$with_mpatrol" -a "$with_patrol" != "no" ; then
+
+  AC_EXPAND_PATH($with_mpatrol, MPATROL_DIR)
+
+  test -f $MPATROL_DIR/mpatrol.h && MPATROL_INCDIR="$MPATROL_DIR"
+  test -f $MPATROL_DIR/include/mpatrol.h && MPATROL_INCDIR="$MPATROL_DIR/include"
+  test -f $MPATROL_DIR/libmpatrol.a && MPATROL_LIBDIR="$MPATROL_DIR"
+  test -f $MPATROL_DIR/lib/libmpatrol.a && MPATROL_LIBDIR="$MPATROL_DIR/lib"
+  test -f $MPATROL_DIR/libmpatrol.so && MPATROL_LIBDIR="$MPATROL_DIR"
+  test -f $MPATROL_DIR/lib/libmpatrol.so && MPATROL_LIBDIR="$MPATROL_DIR/lib"
+
+  if test -n "$MPATROL_INCDIR" -a -n "$MPATROL_LIBDIR" ; then 
+      MPATROL_INC=-I$MPATROL_INCDIR
+      MPATROL_LIB="-L$MPATROL_LIBDIR -lbfd -liberty -lmpatrol"
+      AC_ADD_RUNPATH("$MPATROL_LIBDIR")
+  else
+      AC_MSG_ERROR("Could not find mpatrol.h or libmpatrol.a/libmpatrol.so in $MPATROL_DIR.")
+  fi
+
+  SDE_ENABLED=-DUSE_MPATROL
+  AC_MSG_RESULT([        using MPATROL from $MPATROL_DIR.])
+else
+  AC_MSG_RESULT([        MPATROL support not requested.])
+fi
+
+AC_SUBST(MPATROL_ENABLED,$MPATROL_ENABLED)
+AC_SUBST(MPATROL_INC,    $MPATROL_INC)
+AC_SUBST(MPATROL_LIB,    $MPATROL_LIB)
+
+ALL_ENABLED="$MPATROL_ENABLED $ALL_ENABLED"
+ALL_INC="$MPATROL_INC $ALL_INC"
+ALL_LIB="$MPATROL_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
 dnl Find OGR ONLY IF REQUESTED.
@@ -559,7 +608,6 @@ AC_SUBST(OGR_LIB,    $OGR_LIB)
 ALL_ENABLED="$OGR_ENABLED $ALL_ENABLED"
 ALL_INC="$OGR_INC $ALL_INC"
 ALL_LIB="$OGR_LIB $ALL_LIB"
-
 
 dnl ---------------------------------------------------------------------
 dnl Define some vars for the mapserver library itself for modules that

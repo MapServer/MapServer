@@ -192,15 +192,16 @@ int getCharacter(char *c) {
   return(-1);
 }
 
-int msGetSymbolIndex(symbolSetObj *set, char *name)
+int msGetSymbolIndex(symbolSetObj *symbols, char *name)
 {
   int i;
 
-  if(!name) return(-1);
+  if(!symbols || !name) return(-1);
 
-  for(i=0; i<set->numsymbols; i++) {
-    if(set->symbol[i].name)
-      if(strcasecmp(set->symbol[i].name, name) == 0) return(i);
+  // symbol 0 has no name
+  for(i=1; i<symbols->numsymbols; i++) {
+    if(symbols->symbol[i].name)
+      if(strcasecmp(symbols->symbol[i].name, name) == 0) return(i);
   }
 
   return(-1); /* symbol not found */

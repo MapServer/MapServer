@@ -2,6 +2,13 @@
 # into a proper Makefile
 
 #
+# mpatrol runtime memory debugger
+#
+MPATROL=  	@MPATROL_ENABLED@
+MPATROL_INC=	@MPATROL_INC@
+MPATROL_LIB=	@MPATROL_LIB@
+
+#
 # If you want to ignore missing datafile errors uncomment the following
 # line. This is especially useful with large tiled datasets that may not
 # have complete data for each tile.
@@ -104,11 +111,11 @@ XTRALIBS= @XTRALIBS@
 RUNPATHS= @RPATHS@
 
 CFLAGS= @CFLAGS@ $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(TTF) \
-        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(PROJ_INC) $(GD_INC) $(TTF_INC) \
-	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) $(REGEX_INC)
+        $(TIFF) $(JPEG) $(GD) $(SDE) $(OGR) $(MPATROL) $(PROJ_INC) $(GD_INC) $(TTF_INC) \
+	$(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) $(REGEX_INC) $(MPATROL_INC)
 
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(TTF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
-          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(XTRALIBS)
+          $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(MPATROL_LIB) $(XTRALIBS)
 
 RM= /bin/rm -f
 

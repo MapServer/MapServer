@@ -18,6 +18,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef USE_MPATROL
+#include "mpatrol.h"
+#endif
+
 #include "maperror.h"
 #include "mapprimitive.h"
 #include "mapshape.h"
