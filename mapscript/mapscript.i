@@ -33,6 +33,13 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include typemaps.i
 %include constraints.i
 
+/* Typemaps to support NULL in attribute accessor functions
+ * provided to Steve Lime by David Beazley and tested for Python
+ * only by Sean Gillies.  If these typemaps are going to be useful
+ * for other scripting interfaces and can be tested, I welcome
+ * the removal of the SWIGPYTHON ifdef */
+
+#ifdef SWIGPYTHON
 #ifdef __cplusplus
 %typemap(memberin) char * {
   if ($1) delete [] $1;
@@ -108,6 +115,7 @@ memory.") const char * {
   }
 }
 #endif
+#endif // SWIGPYTHON
 
 //%rename (_class) class;
 
