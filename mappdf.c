@@ -2,7 +2,7 @@
  *	filename: mappdf.c
  *	created : Thu Oct  4 09:58:19 2001
  *	@author :  <jwall@webpeak.com> , <jspielberg@webpeak.com>
- *	LastEditDate Was "Wed Oct 17 16:03:58 2001"
+ *	LastEditDate Was "Thu Nov  1 15:36:38 2001"
  *
  * [$Author$ $Date$]
  * [$Revision$]
@@ -73,8 +73,8 @@ void draw_federal_shieldPDF(PDF *pdf, float center_x, float center_y){
 //    }
 // This is going to be a bunch of separate curves
 
-    text_width = 21;
-    height = 17;
+    text_width = 19;
+    height = 15;
 
     center_y -= 5;
 
@@ -226,6 +226,7 @@ static int draw_text_PDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *la
 /* ------------------------------------------------------------------------------- */
 /*       Draw a single marker symbol of the specified size and color               */
 /* ------------------------------------------------------------------------------- */
+
 void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int sy, colorObj *fc, colorObj *bc, colorObj *oc, double sz, hashTableObj fontHash)
 {
     symbolObj *symbol;
@@ -240,6 +241,9 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int s
 
     if(sz < 1) /* size too small */
         return;
+
+    if (sy == 0)
+        return; // This is 1 pixel so skip it.
 
     if (!oc) oc=fc;// if now outline color, make the stroke and fill the same
 
@@ -298,19 +302,37 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int s
                 int length;
                 char *data;
                 int result;
+                float imageScale = 1;
+
+/*                FILE *pngOut;
+                char tempFile[32];
+                tempFile[0]=0;
+
+                sprintf(tempFile,"/tmp/%d.png",getpid());
+                msSetError(MS_MISCERR, tempFile, "drawPng()");
+                pngOut = fopen(tempFile,"wb");
+                gdImagePng(symbol->img,pngOut);
+                fclose(pngOut);
+                result = PDF_open_image_file(pdf,"png",tempFile,"",0);
+*/
+                if (sz>10 && symbol->img->sx > sz){
+                    imageScale = sz/symbol->img->sx;
+                }
 
                 length = 0;
-                data = gdImageJpegPtr(symbol->img, &length, 90);
+                data = gdImageJpegPtr(symbol->img, &length, 95);
                 result = PDF_open_image(pdf, "jpeg", "memory", data, (long)length, symbol->img->sx, symbol->img->sy, 3, 8, NULL);
                 gdFree(data);
+
                 PDF_scale(pdf,1,-1);
-                PDF_place_image(pdf,result,p->x-symbol->img->sx/2,-p->y-symbol->img->sy/2,1);
+                PDF_place_image(pdf,result,p->x-symbol->img->sx/2*imageScale,
+                                -p->y-symbol->img->sy/2*imageScale,imageScale);
                 PDF_scale(pdf,1,-1);
+
                 PDF_close_image(pdf,result);
-//            gdImageSetTile(img, symbol->img);
-//            msImageFilledPolygon(img, p, gdTiled);
-//            if(oc>-1)
-//                msImagePolyline(img, p, oc);
+                msSetError(MS_MISCERR, "finished drawing pixmap", "drawPixMapPDF()");
+
+//                remove(tempFile);
             }
 
         }
@@ -321,7 +343,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int s
             x = MS_NINT(symbol->sizex*scale)+1;
             y = MS_NINT(symbol->sizey*scale)+1;
 
-            PDF_circle(pdf, p->x, p->y, x/2);
+            PDF_circle(pdf, p->x, p->y, .8*x/2);
 
             if(symbol->filled)
                 PDF_fill_stroke(pdf);
@@ -384,10 +406,10 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
 
     rectObj r;
 
-    labelObj label;
     labelCacheMemberObj *cachePtr=NULL;
     classObj *classPtr=NULL;
     layerObj *layerPtr=NULL;
+    labelObj *labelPtr=NULL;
 
     int draw_marker;
     int marker_width, marker_height;
@@ -399,7 +421,8 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
         cachePtr = &(map->labelcache.labels[l]); /* point to right spot in cache */
 
         layerPtr = &(map->layers[cachePtr->layeridx]); /* set a couple of other pointers, avoids nasty references */
-        classPtr = &(layerPtr->class[cachePtr->classidx]);
+        classPtr = &(cachePtr->class);
+        labelPtr = &(cachePtr->class.label);
 
         if(!cachePtr->string)
             continue; /* not an error, just don't want to do anything */
@@ -407,14 +430,10 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
         if(strlen(cachePtr->string) == 0)
             continue; /* not an error, just don't want to do anything */
 
-        label = classPtr->label;
-        label.sizescaled = label.size = cachePtr->size;
-        label.angle = cachePtr->angle;
-
-        if(msGetLabelSize(cachePtr->string, &label, &r, &(map->fontset)) == -1)
+        if(msGetLabelSize(cachePtr->string, labelPtr, &r, &(map->fontset)) == -1)
             return(-1);
 
-        if(label.autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
+        if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
             continue; /* label too large relative to the feature */
 
         draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
@@ -432,7 +451,7 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
             if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
         }
 
-        if(label.position == MS_AUTO) {
+        if(labelPtr->position == MS_AUTO) {
 
             if(layerPtr->type == MS_LAYER_LINE) {
                 int position = MS_UC;
@@ -443,19 +462,19 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
                     cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
                     if(j == 1) {
-                        if(fabs(cos(label.angle)) < LINE_VERT_THRESHOLD)
-                            label.angle += 180.0;
+                        if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
+                            labelPtr->angle += 180.0;
                         else
                             position = MS_LC;
                     }
 
-                    p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+                    p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
                     if(draw_marker)
                         msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 
-                    if(!label.partials) { // check against image first
-                        if(labelInImage(map->width, map->height, cachePtr->poly, label.buffer) == MS_FALSE) {
+                    if(!labelPtr->partials) { // check against image first
+                        if(labelInImage(map->width, map->width, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
                             cachePtr->status = MS_FALSE;
                             continue; // next angle
                         }
@@ -476,7 +495,7 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
                     for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
                         if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-                            if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
+                            if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -499,13 +518,13 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
                     msFreeShape(cachePtr->poly);
                     cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-                    p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+                    p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
                     if(draw_marker)
                         msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 
-                    if(!label.partials) { // check against image first
-                        if(labelInImage(map->width, map->height, cachePtr->poly, label.buffer) == MS_FALSE) {
+                    if(!labelPtr->partials) { // check against image first
+                        if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
                             cachePtr->status = MS_FALSE;
                             continue; // next position
                         }
@@ -526,7 +545,7 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
                     for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
                         if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-                            if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
+                            if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -543,24 +562,24 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
                 } // next position
             }
 
-            if(label.force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+            if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
 
         } else {
 
             cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-            if(label.position == MS_CC) // don't need the marker_offset
-                p = get_metrics(&(cachePtr->point), label.position, r, label.offsetx, label.offsety, label.angle, label.buffer, cachePtr->poly);
+            if(labelPtr->position == MS_CC) // don't need the marker_offset
+                p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
             else
-                p = get_metrics(&(cachePtr->point), label.position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
+                p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
 
             if(draw_marker)
                 msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
-            if(!label.force) { // no need to check anything else
+            if(!labelPtr->force) { // no need to check anything else
 
-                if(!label.partials) {
-                    if(labelInImage(map->width, map->height, cachePtr->poly, label.buffer) == MS_FALSE)
+                if(!labelPtr->partials) {
+                    if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE)
                         cachePtr->status = MS_FALSE;
                 }
 
@@ -581,7 +600,7 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
 
                 for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
                     if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-                        if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
+                        if((labelPtr->mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
                             cachePtr->status = MS_FALSE;
                             break;
                         }
@@ -624,19 +643,19 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
 /// end of color initialization
             msDrawMarkerSymbolPDF(&map->symbolset, pdf, &(cachePtr->point), classPtr->symbol, fcp, bcp, ocp, classPtr->sizescaled, fontHash);
             if(classPtr->overlaysymbol >= 0)
-                msDrawMarkerSymbolPDF(&map->symbolset, pdf, &(cachePtr->point), classPtr->overlaysymbol, fcop, bcop, ocop, classPtr->overlaysizescaled, fontHash);
+                msDrawMarkerSymbolPDF(&map->symbolset, pdf, &(cachePtr->point), classPtr->overlaysymbol, fcop, bcop, ocop, classPtr->overlaysizescaled,  fontHash);
         }
 
-//        if(label.backgroundcolor >= 0)
-//            billboard(img, cachePtr->poly, &label);
+//        if(labelPtr->backgroundcolor >= 0)
+//            billboard(img, cachePtr->poly, labelPtr);
 
-        draw_text_PDF(pdf, p, cachePtr->string, &label, &(map->fontset), map, fontHash); /* actually draw the label */
+        /* actually draw the label */
+        draw_text_PDF(pdf, p, cachePtr->string, labelPtr, &(map->fontset), map, fontHash);
 
     } /* next in cache */
 
-  return(0);
+    return(0);
 }
-
 
 PDF *
 initializeDocument()
@@ -859,7 +878,7 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                             msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, length);
                         else {
                             if(layer->class[c].color != -1) {
-                                 msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].symbol, fcp,bcp,ocp, layer->class[c].sizescaled, fontHash);
+                                 msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].symbol, fcp,bcp,ocp, layer->class[c].sizescaled,  fontHash);
                             }
                             else {
                                 if(layer->class[c].overlaysymbol >= 0){
@@ -893,9 +912,9 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                         }
                         else {
                             if(layer->class[c].color != -1) {
-                                msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].symbol,fcp,bcp,ocp, layer->class[c].sizescaled, fontHash);
+                                msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].symbol,fcp,bcp,ocp, layer->class[c].sizescaled,  fontHash);
                                 if(layer->class[c].overlaysymbol >= 0){
-                                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled, fontHash);
+                                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled,  fontHash);
                                 }
                             }
                             msDrawLabelPDF(pdf, annopnt, shape->text, &(layer->class[c].label), &map->fontset, map, fontHash);
@@ -954,7 +973,7 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                         point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
                     }
 
-                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].symbol, fcp,bcp,ocp, layer->class[c].sizescaled, fontHash);
+                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].symbol, fcp,bcp,ocp, layer->class[c].sizescaled,  fontHash);
 
                     if(overlay && layer->class[c].overlaysymbol >= 0) {
                         msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled, fontHash);
@@ -1017,7 +1036,7 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
             }
             break;
 
-        case MS_LAYER_POLYLINE:
+        case MS_LAYER_CIRCLE:
             if(shape->type != MS_SHAPE_POLYGON){
                 msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polyline layer definition.", "msDrawShape()");
                 return(MS_FAILURE);
@@ -1145,7 +1164,7 @@ int msDrawLayerPDF(mapObj *map, layerObj *layer, PDF *pdf, hashTableObj fontHash
         // step through the target shapes
     msInitShape(&shape);
 
-    if(layer->type == MS_LAYER_LINE || layer->type == MS_LAYER_POLYLINE) cache = MS_TRUE;
+    if(layer->type == MS_LAYER_LINE || layer->type == MS_LAYER_CIRCLE) cache = MS_TRUE;
 // only line/polyline layers need to (potentially) be cached with overlayed symbols
     while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
@@ -1280,6 +1299,84 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
 }
 
 
+int msEmbedScalebarPDF(mapObj *map, PDF *pdf, hashTableObj fontHash)
+{
+    int s,l;
+    pointObj point;
+
+    s = msGetSymbolIndex(&(map->symbolset), "scalebar");
+    if(s == -1) {
+        s = map->symbolset.numsymbols;
+        map->symbolset.numsymbols++;
+        initSymbol(&(map->symbolset.symbol[s]));
+    } else {
+        if(map->symbolset.symbol[s].img)
+            gdImageDestroy(map->symbolset.symbol[s].img);
+    }
+
+    map->symbolset.symbol[s].img = msDrawScalebar(map);
+    if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
+
+    map->symbolset.symbol[s].type = MS_SYMBOL_PIXMAP; // intialize a few things
+    map->symbolset.symbol[s].name = strdup("scalebar");
+
+    if(map->scalebar.transparent)
+        gdImageColorTransparent(map->symbolset.symbol[s].img, 0);
+
+    switch(map->scalebar.position) {
+        case(MS_LL):
+            point.x = MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+            point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+            break;
+        case(MS_LR):
+            point.x = map->width - MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+            point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+            break;
+        case(MS_LC):
+            point.x = MS_NINT(map->width/2.0);
+            point.y = map->height - MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+            break;
+        case(MS_UR):
+            point.x = map->width - MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+            point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+            break;
+        case(MS_UL):
+            point.x = MS_NINT(map->symbolset.symbol[s].img->sx/2.0);
+            point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+            break;
+        case(MS_UC):
+            point.x = MS_NINT(map->width/2.0);
+            point.y = MS_NINT(map->symbolset.symbol[s].img->sy/2.0);
+            break;
+    }
+
+    l = msGetLayerIndex(map, "scalebar");
+    if(l == -1) {
+        l = map->numlayers;
+        map->numlayers++;
+
+        if(initLayer(&(map->layers[l])) == -1) return(-1);
+        map->layers[l].name = strdup("scalebar");
+        map->layers[l].type = MS_LAYER_ANNOTATION;
+        map->layers[l].status = MS_ON;
+
+        if(initClass(&(map->layers[l].class[0])) == -1) return(-1);
+    }
+
+    map->layers[l].class[0].symbol = s;
+    map->layers[l].class[0].color = 0;
+    map->layers[l].class[0].label.force = MS_TRUE;
+    map->layers[l].class[0].label.size = map->layers[l].class[0].label.sizescaled = MS_MEDIUM; // must set a size to have a valid label definition
+
+    if(map->scalebar.postlabelcache) // add it directly to the image
+        msDrawMarkerSymbolPDF(&map->symbolset, pdf, &point, map->layers[l].class[0].symbol, NULL, NULL, NULL, 10, fontHash);
+    else
+        msAddLabel(map, l, 0, -1, -1, point, " ", -1);
+
+    return(0);
+}
+
+
 
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash)
 {
@@ -1343,9 +1440,8 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash)
         if(status != MS_SUCCESS) return(NULL);
     }
 
-// ignore these for now
-//  if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
-//    msEmbedScalebar(map, img);
+    if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
+        msEmbedScalebarPDF(map, pdf, fontHash);
 
 //  if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
 //    msEmbedLegend(map, img);
@@ -1364,8 +1460,8 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash)
         if(status != MS_SUCCESS) return(NULL);
     }
 
-//  if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
-//    msEmbedScalebar(map, img);
+    if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
+      msEmbedScalebarPDF(map, pdf, fontHash);
 
 //  if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
 //    msEmbedLegend(map, img);
