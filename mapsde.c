@@ -411,6 +411,10 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   sdeLayerObj *sde=NULL;
 
   sde = layer->sdelayer;
+  if(!sde) {
+    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    return(MS_FAILURE);
+  }
 
   status = SE_shape_create(sde->coordref, &shape);
   // status = SE_shape_create(NULL, &shape);
@@ -530,6 +534,10 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
   sdeLayerObj *sde=NULL;
 
   sde = layer->sdelayer;
+  if(!sde) {
+    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    return(MS_FAILURE);
+  }
 
   // fetch the next record from the stream
   status = SE_stream_fetch(sde->stream);
@@ -564,6 +572,10 @@ int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems) {
   sdeLayerObj *sde=NULL;
 
   sde = layer->sdelayer;
+  if(!sde) {
+    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    return(MS_FAILURE);
+  }
 
   status = SE_table_describe(sde->connection, sde->table, &n, &sde->itemdefs);
   if(status != SE_SUCCESS) {
@@ -588,6 +600,38 @@ int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems) {
 #endif
 }
 
+int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
+#ifdef USE_SDE
+  long status;
+
+  SE_ENVELOPE envelope;
+
+  sdeLayerObj *sde=NULL;
+
+  sde = layer->sdelayer;
+  if(!sde) {
+    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerGetExtent()", "SE_layerinfo_get_envelope()");
+    return(MS_FAILURE);
+  }
+  
+  rect->minx = envelope.minx;
+  rect->miny = envelope.miny;
+  rect->maxx = envelope.maxx;
+  rect->maxy = envelope.maxy;
+
+  return(MS_SUCCESS);
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetExtent()");
+  return(MS_FAILURE);
+#endif
+}
+
 int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 #ifdef USE_SDE
   int i;
@@ -596,6 +640,10 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
   sdeLayerObj *sde=NULL;
 
   sde = layer->sdelayer;
+  if(!sde) {
+    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    return(MS_FAILURE);
+  }
 
   if(layer->numitems < 1) { // must be at least one thing to retrieve (i.e. spatial column)
     msSetError(MS_MISCERR, "No items requested, SDE requires at least one item.", "msSDELayerGetShape()");

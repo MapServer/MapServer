@@ -152,8 +152,8 @@ void msLayerClose(layerObj *layer)
   }
 }
 
-int msLayerGetItems(layerObj *layer, char ***items, int *numitems) {
-
+int msLayerGetItems(layerObj *layer, char ***items, int *numitems) 
+{
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):    
@@ -197,6 +197,33 @@ int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)
     break;
   case(MS_SDE):
     return(msSDELayerWhichShapes(layer, rect));
+    break;
+  default:
+    break;
+  }
+
+  return(MS_SUCCESS);
+}
+
+int msLayerGetExtent(layerObj *layer, rectObj *extent) {
+  switch(layer->connectiontype) {
+  case(MS_SHAPEFILE):
+    *extent = layer->shpfile.bounds;
+    return(MS_SUCCESS);
+    break;
+  case(MS_TILED_SHAPEFILE):
+    *extent = layer->tileshpfile.bounds;
+    return(MS_SUCCESS);
+    break;
+  case(MS_INLINE):
+    break;
+  case(MS_OGR):
+    return(msOGRLayerGetExtent(layer, extent));
+    break;
+  case(MS_TILED_OGR):
+    break;
+  case(MS_SDE):
+    return(msSDELayerGetExtent(layer, extent));
     break;
   default:
     break;

@@ -721,6 +721,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate);
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msLayerGetItems(layerObj *layer, char ***items, int *numitems);
 int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record, int allitems);
+int msLayerGetExtent(layerObj *layer, rectObj *extent);
 
 int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
 int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
@@ -742,6 +743,7 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect);
 int msSDELayerNextShape(layerObj *layer, shapeObj *shape);
 int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems);
 int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record);
+int msSDELayerGetExtent(layerObj *layer, rectObj *extent);
 
 #endif
 
