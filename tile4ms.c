@@ -1,11 +1,14 @@
 /******************************************************************************
+* $Id$
+*
 * tile4ms.mc  
 *
 * Version 1.0
 * Author Herbie Freytag hfreytag@dlwc.nsw.gov.au
 *
 * Create shapefile of rectangles from extents of several shapefiles (=tiles)
-* Create DBF with file names for shape tiles, in column LOCATION as required by mapserv.
+* Create DBF with file names for shape tiles, in column LOCATION as required
+* by mapserv.
 * For use with Mapserv tiling capability.
 * Issues: resulting shape files do not display in ArcView.
 *
@@ -23,27 +26,22 @@
 * DEALINGS IN THE SOFTWARE.
 ******************************************************************************
  *
- * requires shapelib 1.2
+ * This is a modified version of Herbie's program that works with MapServer's
+ * shapelib and should be using the MapServer makefile.
  *
- * 
- * to compile:
- * gcc -I <path to shapelib>  -o tile4ms tile4ms.c <path to shapelib>shpopen.o <path to shapelib>dbfopen.o
- *
- * 
  */
 
-
-#include <shapefil.h>
+#include "map.h"
 #include <string.h>
 
 
 /***********************************************************************/
 int process_shapefiles(char *metaFileNameP, char *tileFileNameP) 
 {
-int		nShapeType, nEntities, nVertices, nParts, i, iPart;
-double		adfBndsMin[4], adfBndsMax[4];
 SHPHandle	hSHP, tileSHP;
-SHPObject	*extentRect;
+rectObj 	extentRect;
+lineObj         line;
+shapeObj	shapeRect;
 DBFHandle	tileDBF;
 
 FILE		*metaFP = NULL;
@@ -51,14 +49,16 @@ char		*p;
 char		tileshapeName[256];
 char		tiledbfName[256];
 char		shapeFileName[256];
-double		shapeX[5];
-double		shapeY[5];
 int		entityNum;
 
 int		tilesFound = 0;
 int		tilesProcessed = 0;
 
 
+  msInitShape(&shapeRect);
+  line.point = (pointObj *)malloc(sizeof(pointObj)*5);
+  line.numpoints = 5;
+ 
   // open metafile
   // -------------
   if (NULL==(metaFP=fopen(metaFileNameP, "r"))) {
@@ -70,7 +70,7 @@ int		tilesProcessed = 0;
   // create new tileindex shapefiles and create a header
   // --------------------------------------------------
   sprintf(tileshapeName, "%s.shp", tileFileNameP);
-  if(NULL==(tileSHP=SHPCreate(tileFileNameP, SHPT_POLYGON))) {
+  if(NULL==(tileSHP=msSHPCreate(tileFileNameP, SHP_POLYGON))) {
 	fclose(metaFP);
 	printf("Unable to create %s.shp (.shx)\n", tileshapeName);
 	return(1);
@@ -80,17 +80,17 @@ int		tilesProcessed = 0;
   // create new tileindex dbf-file
   // -----------------------------
   sprintf(tiledbfName, "%s.dbf", tileFileNameP);
-  if (NULL==(tileDBF=DBFCreate(tiledbfName))) {
+  if (NULL==(tileDBF=msDBFCreate(tiledbfName))) {
 	fclose(metaFP);
-	SHPClose(tileSHP);
+	msSHPClose(tileSHP);
 	printf("DBFCreate(%s) failed.\n", tiledbfName);
 	return(1);
 	}
 
-   if(DBFAddField(tileDBF, "LOCATION", FTString, 255, 0 )== -1 ) {
+   if(msDBFAddField(tileDBF, "LOCATION", FTString, 255, 0 )== -1 ) {
 	fclose(metaFP);
-	SHPClose(tileSHP);
-	DBFClose(tileDBF);
+	msSHPClose(tileSHP);
+	msDBFClose(tileDBF);
 	printf("DBFAddField(fieldname='LOCATION') failed.\n");
 	return(1);
 	}
@@ -102,7 +102,13 @@ int		tilesProcessed = 0;
   while (fgets(shapeFileName, 255, metaFP)) {
 	
 
-	if (p=strchr(shapeFileName, '\n')) *p='\0';
+	if ((p=strchr(shapeFileName, '\n')) != NULL) *p='\0';
+
+        // Get rid of .shp extension if it was included.
+	if (strlen(shapeFileName) > 4 && 
+            (p=shapeFileName+strlen(shapeFileName)-4) &&
+            strcasecmp(p, ".shp") == 0)
+          *p = '\0';
 
 	if (!strlen(shapeFileName))
 		break;
@@ -112,56 +118,57 @@ int		tilesProcessed = 0;
 
 	// read extent from shapefile
 	// --------------------------
-	hSHP = SHPOpen(shapeFileName, "rb");
+	hSHP = msSHPOpen(shapeFileName, "rb");
 
 	if( hSHP == NULL )  {
 		printf( "Aborted. Unable to open:%s\n", shapeFileName);
 		break;
 		}
 
-	SHPGetInfo(hSHP, &nEntities, &nShapeType, adfBndsMin, adfBndsMax);
+        msSHPReadBounds(hSHP, -1, &extentRect);
+	// SHPGetInfo(hSHP, &nEntities, &nShapeType, adfBndsMin, adfBndsMax);
 
 	//printf("File:  %s Bounds 0/1: (%15.10lg,%15.10lg)\n\t(%15.10lg,%15.10lg)\n", shapeFileName, adfBndsMin[0], adfBndsMin[1], adfBndsMax[0], adfBndsMax[1] );
 
-	SHPClose(hSHP);
+	msSHPClose(hSHP);
 
 
 	// create rectangle describing current shapefile extent
 	// ----------------------------------------------------
 
-	shapeX[0] = shapeX[4] = adfBndsMin[0]; // bottom left
-	shapeY[0] = shapeY[4] = adfBndsMin[1];
-	shapeX[1] = adfBndsMin[0]; // top left
-	shapeY[1] = adfBndsMax[1];
-	shapeX[2] = adfBndsMax[0]; // top left
-	shapeY[2] = adfBndsMax[1];
-	shapeX[3] = adfBndsMax[0]; // bottom right
-	shapeY[3] = adfBndsMin[1];
+	line.point[0].x = line.point[4].x = extentRect.minx; // bottom left
+	line.point[0].y = line.point[4].y  = extentRect.miny;
+	line.point[1].x = extentRect.minx; // top left
+	line.point[1].y = extentRect.maxy;
+	line.point[2].x = extentRect.maxx; // top left
+	line.point[2].y = extentRect.maxy;
+	line.point[3].x = extentRect.maxx; // bottom right
+	line.point[3].y = extentRect.miny;
 
 
 	// create and add shape object.  Returns link to entry in DBF file
 	// ---------------------------------------------------------------
 
-	extentRect = SHPCreateSimpleObject(SHPT_POLYGON, 5, shapeX, shapeY, NULL);
-
-	entityNum = SHPWriteObject(tileSHP, -1, extentRect);
+        msAddLine(&shapeRect, &line);
+        entityNum = msSHPWriteShape( tileSHP, &shapeRect );
 	
-	SHPDestroyObject(extentRect);
-
+        msFreeShape(&shapeRect);
 
 	// store filepath of current shapefile as attribute of rectangle
 	// -------------------------------------------------------------
 
-	DBFWriteStringAttribute(tileDBF, entityNum, 0, shapeFileName);
+	msDBFWriteStringAttribute(tileDBF, entityNum, 0, shapeFileName);
 
 	tilesProcessed++;
 
 	}
 
-  SHPClose(tileSHP);
-  DBFClose(tileDBF);
+  msSHPClose(tileSHP);
+  msDBFClose(tileDBF);
 
   fclose(metaFP);
+
+  free(line.point);
 
   
   printf("Processed %i of %i files\n", tilesProcessed, tilesFound);
