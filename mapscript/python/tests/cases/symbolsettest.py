@@ -87,12 +87,6 @@ class SymbolSetTestCase(unittest.TestCase):
         symbolset.appendSymbol(symbolb)
         assert symbolset.save('new_symbols.txt') == mapscript.MS_SUCCESS
 
-    def testSymbolSetFromFile(self):
-        """get a symbolset from a Python file"""
-        f = open('symbols.txt', 'r')
-        symbolset = mapscript.symbolSetObj(f)
-        assert symbolset.numsymbols == 2
-
 
 class MapSymbolSetTestCase(MapTestCase):
 

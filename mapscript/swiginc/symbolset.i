@@ -47,7 +47,7 @@
         }
         return symbolset;
     }
-   
+
     ~symbolSetObj() 
     {
         msFreeSymbolSet(self);
