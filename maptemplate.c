@@ -291,17 +291,36 @@ int sortLayerByMetadata(mapObj *map, char* pszMetadata)
      return MS_FAILURE;
    }
    
-   if (map->layerorder)
-     free(map->layerorder);
-
-   map->layerorder = (int*)malloc(map->numlayers * sizeof(int));
-
    /*
-    * Initiate to default order
+    * Initiate to default order (Reverse mapfile order)
     */
-   for (i=0; i<map->numlayers ;i++)
-      map->layerorder[i] = map->numlayers - i - 1;
-     
+   if (map->layerorder)
+   {
+     int *pnLayerOrder;
+
+     // Backup the original layer order to be able to reverse it
+     pnLayerOrder = (int*)malloc(map->numlayers * sizeof(int));
+     for (i=0; i<map->numlayers ;i++)
+       pnLayerOrder[i] = map->layerorder[i];
+
+     // Get a new layerorder array
+     free(map->layerorder);
+     map->layerorder = (int*)malloc(map->numlayers * sizeof(int));
+
+     // Reverse the layerorder array
+     for (i=0; i<map->numlayers ;i++)
+       map->layerorder[i] = pnLayerOrder[map->numlayers - i - 1];
+
+     free(pnLayerOrder);
+   }
+   else
+   {
+     map->layerorder = (int*)malloc(map->numlayers * sizeof(int));
+
+     for (i=0; i<map->numlayers ;i++)
+       map->layerorder[i] = map->numlayers - i - 1;
+   }
+
    if (!pszMetadata)
      return MS_SUCCESS;
    
