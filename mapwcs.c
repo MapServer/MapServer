@@ -267,8 +267,8 @@ static int msWCSGetCapabilities_CoverageOfferingBrief(layerObj *layer, wcsParams
 
   // TODO: add elevation and temporal ranges to LatLonEnvelope (optional)
   printf("    <LatLonEnvelope srsName=\"WGS84 (DD)\">\n");
-  printf("      <min>%g %g</min>\n", cm.llextent.minx, cm.llextent.miny); // TODO: don't know if this is right
-  printf("      <max>%g %g</max>\n", cm.llextent.maxx, cm.llextent.maxy);
+  printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny); // TODO: don't know if this is right
+  printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
   printf("    </LatLonEnvelope>\n");
 
   // we are not supporting the optional keyword type, at least not yet
@@ -385,14 +385,54 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
 
   // TODO: add elevation and temporal ranges to LatLonEnvelope (optional)
   printf("    <LatLonEnvelope srsName=\"WGS84 (DD)\">\n");
-  printf("      <min>%g %g</min>\n", cm.llextent.minx, cm.llextent.miny); // TODO: don't know if this is right
-  printf("      <max>%g %g</max>\n", cm.llextent.maxx, cm.llextent.maxy);
+  printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny);
+  printf("      <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
   printf("    </LatLonEnvelope>\n");
 
   // we are not supporting the optional keyword type, at least not yet
   msOWSPrintMetadataList(stdout, layer->metadata, "CO", "keywordlist", "  <Keywords>\n", "  </Keywords>\n", "    <Keyword>%s</Keyword>\n", NULL);
 
-  // TODO: Domain set
+  // DomainSet: starting simple, just a spatial domain (gml:envelope) and optionally a temporal domain
+  printf("    <DomainSet>\n");
+
+  // SpatialDomain
+  printf("      <SpatialDomain>\n");
+  
+  // envelope in lat/lon
+  printf("        <gml:Envelope srsName=\"WGS84 (DD)\">\n");
+  printf("          <gml:pos>%g %g</gml:pos>\n", cm.llextent.minx, cm.llextent.miny);
+  printf("          <gml:pos>%g %g</gml:pos>\n", cm.llextent.maxx, cm.llextent.maxy);
+  printf("        </gml:Envelope>\n");
+  
+  // envelope in the native srs
+  if((value = msOWSGetEPSGProj(&(layer->projection), layer->metadata, "CO", MS_TRUE)) != NULL)    
+    printf("        <gml:Envelope srsName=\"%s\">\n", value);
+  else if((value = msOWSGetEPSGProj(&(layer->map->projection), layer->map->web.metadata, "CO", MS_TRUE)) != NULL)
+    printf("        <gml:Envelope srsName=\"%s\">\n", value);
+  else 
+    printf("        <!-- NativeCRSs ERROR: missing required information, no SRSs defined -->\n");
+  printf("          <gml:pos>%g %g</gml:pos>\n", cm.extent.minx, cm.extent.miny);
+  printf("          <gml:pos>%g %g</gml:pos>\n", cm.extent.maxx, cm.extent.maxy);
+  printf("        </gml:Envelope>\n");
+
+  printf("      </SpatialDomain>\n");
+
+  // TemporalDomain
+
+  // TODO: figure out when a temporal domain is valid, for example only tiled rasters support time as a domain, plus we need a timeitem
+  if(msOWSLookupMetadata(layer->metadata, "CO", "timeposition") || msOWSLookupMetadata(layer->metadata, "CO", "timeperiod")) {
+    printf("      <TemporalDomain>\n");
+
+    // TimePosition (should support a value AUTO, then we could mine positions from the timeitem)
+    msOWSPrintMetadataList(stdout, layer->metadata, "CO", "timeposition", NULL, NULL, "        <gml:timePosition>%s</gml:timePosition>\n", NULL);    
+
+    // TODO:  TimePeriod (only one/layer) 
+
+    printf("      </TemporalDomain>\n");
+  }
+  
+  printf("    </DomainSet>\n");
+  
   // TODO: Range set
 
   // SupportedCRSs
