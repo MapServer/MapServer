@@ -175,60 +175,58 @@ dnl      fi
 
 
 dnl
-dnl Try to find something to link shared libraries with.  Try "gcc -shared"
-dnl first and then "ld -shared".
-dnl For some reason, on SunOS, gcc -shared appears to work but fails with
-dnl the PHP module... so try to use "ld -G" instead on those systems.
+dnl Try to find something to link shared libraries with.  Use "c++ -shared"
+dnl in preference to "ld -shared" because it will link in required c++
+dnl run time support for us. 
 dnl
 AC_DEFUN(AC_LD_SHARED,
 [
   echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
 
-  echo 'void g(); void g(){}' > conftest2.c
+  echo '#include <stdio.h>' > conftest2.c
+  echo 'void g(); void g(){printf("");}' >> conftest2.c
   ${CC} ${C_PIC} -c conftest2.c
 
+  SO_EXT="so"
+  export SO_EXT
   LD_SHARED="/bin/true"
-
-  if test "`uname -s`" = "SunOS" \
-          -a -z "`ld -G conftest2.o -o libconftest.so 2>&1`" ; then
+  if test ! -z "`uname -a | grep IRIX`" ; then
+    IRIX_ALL=-all
+  else
+    IRIX_ALL=
+  fi
+  if test -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-      LD_LIBRARY_PATH="`pwd`"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ld -G ... yes"
-        LD_SHARED="ld -G"
+        echo "checking for ${CXX} -shared ... yes"
+        LD_SHARED="${CXX} -shared $IRIX_ALL"
+      else
+        echo "checking for ${CXX} -shared ... no(3)"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-    fi
-  fi
-
-  if test "$LD_SHARED" = "/bin/true" ; then
-    if test -z "`${CC} -shared conftest2.o -o libconftest.so 2>&1`" ; then
-      if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
-        LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-        LD_LIBRARY_PATH="`pwd`"
-        export LD_LIBRARY_PATH
-        if test -z "`./conftest1 2>&1`" ; then
-          echo "checking for ${CC} -shared ... yes"
-          LD_SHARED="${CC} -shared"
-        else
-          echo "checking for ${CC} -shared ... no(3)"
-        fi
-        LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-      else
-        echo "checking for ${CC} -shared ... no(2)"
-      fi
     else
-      echo "checking for ${CC} -shared ... no(1)"
+      echo "checking for ${CXX} -shared ... no(2)"
     fi
+  else
+    echo "checking for ${CXX} -shared ... no(1)"
   fi
 
   if test "$LD_SHARED" = "/bin/true" \
           -a -z "`ld -shared conftest2.o -o libconftest.so 2>&1`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-      LD_LIBRARY_PATH="`pwd`"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
         echo "checking for ld -shared ... yes"
@@ -238,12 +236,35 @@ AC_DEFUN(AC_LD_SHARED,
     fi
   fi
 
+  if test "$LD_SHARED" = "/bin/true" \
+          -a -z "`${CC} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
+    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
+      DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
+      if test -z "$DYLD_LIBRARY_PATH" ; then
+        DYLD_LIBRARY_PATH="`pwd`"
+      else
+        DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
+      fi
+      export DYLD_LIBRARY_PATH
+      if test -z "`./conftest1 2>&1`" ; then
+        echo "checking for ${CC} -dynamiclib ... yes"
+        LD_SHARED="${CC} -dynamiclib"
+	SO_EXT=dylib
+      fi
+      DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
+    fi
+  fi
+
   if test "$LD_SHARED" = "/bin/true" ; then
     echo "checking for ld -shared ... no"
+    if test ! -x /bin/true ; then
+      LD_SHARED=/usr/bin/true
+    fi
   fi
   rm -f conftest* libconftest* 
 
   AC_SUBST(LD_SHARED,$LD_SHARED)
+  AC_SUBST(SO_EXT,$SO_EXT)
 ])
 
 

@@ -5464,51 +5464,50 @@ rm -f perl.out
     
   echo 'void g(); int main(){ g(); return 0; }' > conftest1.c
 
-  echo 'void g(); void g(){}' > conftest2.c
+  echo '#include <stdio.h>' > conftest2.c
+  echo 'void g(); void g(){printf("");}' >> conftest2.c
   ${CC} ${C_PIC} -c conftest2.c
 
+  SO_EXT="so"
+  export SO_EXT
   LD_SHARED="/bin/true"
-
-  if test "`uname -s`" = "SunOS" \
-          -a -z "`ld -G conftest2.o -o libconftest.so 2>&1`" ; then
+  if test ! -z "`uname -a | grep IRIX`" ; then
+    IRIX_ALL=-all
+  else
+    IRIX_ALL=
+  fi
+  if test -z "`${CXX} -shared $IRIX_ALL conftest2.o -o libconftest.so 2>&1|grep -v WARNING`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-      LD_LIBRARY_PATH="`pwd`"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
-        echo "checking for ld -G ... yes"
-        LD_SHARED="ld -G"
+        echo "checking for ${CXX} -shared ... yes"
+        LD_SHARED="${CXX} -shared $IRIX_ALL"
+      else
+        echo "checking for ${CXX} -shared ... no(3)"
       fi
       LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-    fi
-  fi
-
-  if test "$LD_SHARED" = "/bin/true" ; then
-    if test -z "`${CC} -shared conftest2.o -o libconftest.so 2>&1`" ; then
-      if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
-        LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-        LD_LIBRARY_PATH="`pwd`"
-        export LD_LIBRARY_PATH
-        if test -z "`./conftest1 2>&1`" ; then
-          echo "checking for ${CC} -shared ... yes"
-          LD_SHARED="${CC} -shared"
-        else
-          echo "checking for ${CC} -shared ... no(3)"
-        fi
-        LD_LIBRARY_PATH="$LD_LIBRARY_PATH_OLD"
-      else
-        echo "checking for ${CC} -shared ... no(2)"
-      fi
     else
-      echo "checking for ${CC} -shared ... no(1)"
+      echo "checking for ${CXX} -shared ... no(2)"
     fi
+  else
+    echo "checking for ${CXX} -shared ... no(1)"
   fi
 
   if test "$LD_SHARED" = "/bin/true" \
           -a -z "`ld -shared conftest2.o -o libconftest.so 2>&1`" ; then
     if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
       LD_LIBRARY_PATH_OLD="$LD_LIBRARY_PATH"
-      LD_LIBRARY_PATH="`pwd`"
+      if test -z "$LD_LIBRARY_PATH" ; then
+        LD_LIBRARY_PATH="`pwd`"
+      else
+        LD_LIBRARY_PATH="`pwd`:$LD_LIBRARY_PATH"
+      fi
       export LD_LIBRARY_PATH
       if test -z "`./conftest1 2>&1`" ; then
         echo "checking for ld -shared ... yes"
@@ -5518,11 +5517,34 @@ rm -f perl.out
     fi
   fi
 
+  if test "$LD_SHARED" = "/bin/true" \
+          -a -z "`${CC} -dynamiclib conftest2.o -o libconftest.so 2>&1`" ; then
+    if test -z "`${CC} conftest1.c libconftest.so -o conftest1 2>&1`"; then
+      DYLD_LIBRARY_PATH_OLD="$DYLD_LIBRARY_PATH"
+      if test -z "$DYLD_LIBRARY_PATH" ; then
+        DYLD_LIBRARY_PATH="`pwd`"
+      else
+        DYLD_LIBRARY_PATH="`pwd`:$DYLD_LIBRARY_PATH"
+      fi
+      export DYLD_LIBRARY_PATH
+      if test -z "`./conftest1 2>&1`" ; then
+        echo "checking for ${CC} -dynamiclib ... yes"
+        LD_SHARED="${CC} -dynamiclib"
+	SO_EXT=dylib
+      fi
+      DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH_OLD"
+    fi
+  fi
+
   if test "$LD_SHARED" = "/bin/true" ; then
     echo "checking for ld -shared ... no"
+    if test ! -x /bin/true ; then
+      LD_SHARED=/usr/bin/true
+    fi
   fi
   rm -f conftest* libconftest* 
 
+  
   
 
     PHP_CC="$CC $C_PIC"
@@ -5530,7 +5552,7 @@ rm -f perl.out
   fi
 
           echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
-echo "configure:5534: checking for location of config.h or php_config.h" >&5
+echo "configure:5556: checking for location of config.h or php_config.h" >&5
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
@@ -5543,7 +5565,7 @@ echo "configure:5534: checking for location of config.h or php_config.h" >&5
   fi
 
           echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
-echo "configure:5547: checking whether we have PHP3 or PHP4" >&5
+echo "configure:5569: checking whether we have PHP3 or PHP4" >&5
   if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
@@ -5555,7 +5577,7 @@ echo "configure:5547: checking whether we have PHP3 or PHP4" >&5
   echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:5559: checking whether we should use PHP's regex" >&5
+echo "configure:5581: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
 
@@ -5617,7 +5639,7 @@ if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:5621: checking for location of Apache headers using apxs" >&5
+echo "configure:5643: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -5650,7 +5672,7 @@ if test -n "$with_apache" -a "$with_apache" != "no" ; then
 !!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!" 1>&2; exit 1; }
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:5654: checking for location of Apache headers" >&5
+echo "configure:5676: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi
@@ -5912,6 +5934,7 @@ s%@C_WFLAGS@%$C_WFLAGS%g
 s%@DEBUG_FLAGS@%$DEBUG_FLAGS%g
 s%@C_PIC@%$C_PIC%g
 s%@LD_SHARED@%$LD_SHARED%g
+s%@SO_EXT@%$SO_EXT%g
 s%@PHP_VERSION_FLAG@%$PHP_VERSION_FLAG%g
 s%@PHP_SRC_DIR@%$PHP_SRC_DIR%g
 s%@PHP_CC@%$PHP_CC%g
