@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2003/09/29 01:00:14  assefa
+ * Look for string Filter instead of <Filter since namespaces can be used.
+ *
  * Revision 1.5  2003/09/26 13:44:40  assefa
  * Add support for gml box with 2 <coord> elements.
  *
@@ -85,7 +88,7 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
     FilterEncodingNode *psFilterNode = NULL;
 
     if (szXMLString == NULL || strlen(szXMLString) <= 0 ||
-        (strstr(szXMLString, "<Filter") == NULL))
+        (strstr(szXMLString, "Filter") == NULL))
       return NULL;
 
     psRoot = CPLParseXMLString(szXMLString);
