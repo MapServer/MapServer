@@ -1009,9 +1009,6 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 
   copyStringProperty(&(dst->tileindex), src->tileindex); 
 
-  copyStringProperty(&(dst->timeindex), src->timeindex);
-  copyStringProperty(&(dst->time), src->time);
-
   return_value = msCopyProjection(&(dst->projection),&(src->projection));
   if (return_value != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy projection.", "msCopyLayer()");

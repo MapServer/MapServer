@@ -741,9 +741,6 @@ typedef struct layer_obj {
 #endif
   joinObj *joins;
   int numjoins;
-
-  char *timeindex;
-  char *time;
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application

@@ -229,8 +229,6 @@ int msyyreturncomments = 0;
 <INITIAL,OBJECT_STRING>text		       { return(TEXT); }
 <INITIAL,OBJECT_STRING>tileindex	       { return(TILEINDEX); }
 <INITIAL,OBJECT_STRING>tileitem		       { return(TILEITEM); }
-<INITIAL,OBJECT_STRING>timeindex	       { return(TIMEINDEX); }
-<INITIAL,OBJECT_STRING>time	               { return(TIME); }
 <INITIAL,OBJECT_STRING>title	               { return(TITLE); }
 <INITIAL,OBJECT_STRING>to                      { return(TO); }
 <INITIAL,OBJECT_STRING>tolerance               { return(TOLERANCE); }

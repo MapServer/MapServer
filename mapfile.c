@@ -2045,8 +2045,6 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->sameconnection = NULL;
 
-  layer->timeindex = layer->time = NULL;
-  
   return(0);
 }
 
@@ -2096,9 +2094,6 @@ void freeLayer(layerObj *layer) {
     freeJoin(&(layer->joins[i]));
   msFree(layer->joins);
   layer->numjoins = 0;
-
-  msFree(layer->timeindex);
-  msFree(layer->time);
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -2294,12 +2289,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(TILEITEM):
       if((layer->tileitem = getString()) == NULL) return(-1);
-      break;
-    case(TIMEINDEX):
-      if((layer->timeindex = getString()) == NULL) return(-1);
-      break;
-    case(TIME):
-      if((layer->time = getString()) == NULL) return(-1);
       break;
     case(TOLERANCE):
       if(getDouble(&(layer->tolerance)) == -1) return(-1);
@@ -2557,10 +2546,6 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msFree(layer->template);
     layer->template = strdup(value);
     break;
-  case(TIME):
-    msFree(layer->time);
-    layer->time = strdup(value);
-    break;
   case(TOLERANCE):
     msyystate = 2; msyystring = value;
     if(getDouble(&(layer->tolerance)) == -1) return;
@@ -2666,9 +2651,6 @@ static void writeLayer(layerObj *layer, FILE *stream)
     fprintf(stream, "    TILEINDEX \"%s\"\n", layer->tileindex);
     if(layer->tileitem) fprintf(stream, "    TILEITEM \"%s\"\n", layer->tileitem);
   } 
-
-  if(layer->timeindex) fprintf(stream, "    TIMEINDEX \"%s\"\n", layer->timeindex);
-  if(layer->time) fprintf(stream, "    TIME \"%s\"\n", layer->time);
 
   fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);

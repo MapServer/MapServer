@@ -189,7 +189,4 @@
 #define KEYIMAGE 1156
 #define QUERYFORMAT 1157
 
-#define TIMEINDEX 1158
-#define TIME 1159
-
 #endif /* MAPFILE_H */
