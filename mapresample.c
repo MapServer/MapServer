@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.9  2001/04/26 15:08:21  dan
+ * Return MS_FALSE instead of FALSE (undefined if gdal.h not included).
+ *
  * Revision 1.8  2001/04/09 13:27:34  frank
  * implemented limited support for rotated GDAL data sources
  *
@@ -280,7 +283,7 @@ int msProjTransformer( void *pCBData, int nPoints,
             for( i = 0; i < nPoints; i++ )
                 panSuccess[i] = 0;
 
-            return FALSE;
+            return MS_FALSE;
         }
     }
 
