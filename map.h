@@ -4,6 +4,8 @@
 /*
 ** Main includes. If a particular header was needed by several .c files then
 ** I just put it here. What the hell, it works and it's all right here. -SDL-
+**
+** $Id$
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,7 +48,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "3.6.4"
+#define MS_VERSION "3.6.5-dev"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
