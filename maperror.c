@@ -103,6 +103,12 @@ char *msGetVersion() {
 #if defined (USE_GD_TTF) || defined (USE_GD_FT)
   strcat(version, " SUPPORTS=TTF");
 #endif
+#ifdef USE_WMS
+  strcat(version, " SUPPORTS=WMS");
+#endif
+#ifdef USE_WMS_LYR
+  strcat(version, " SUPPORTS=WMS_LYR");
+#endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");
 #endif
