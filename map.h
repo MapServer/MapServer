@@ -724,6 +724,7 @@ int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect);
 int msLayerWhichItems(layerObj *layer, int classify, int annotate);
 int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape);
 int msLayerGetItems(layerObj *layer);
+int msLayerSetItems(layerObj *layer, char **items, int numitems);
 int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, long record);
 int msLayerGetExtent(layerObj *layer, rectObj *extent);
 
@@ -757,4 +758,3 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent);
 #endif
 
 #endif /* MAP_H */
-

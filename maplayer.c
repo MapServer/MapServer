@@ -400,6 +400,50 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
     if(!layer->itemindexes) return(MS_FAILURE);
     break;
   case(MS_OGR):
+    if(msOGRLayerInitItemIndexes(layer) != MS_SUCCESS) return(MS_FAILURE);
+    break;
+  default:
+    break;
+  }
+
+  return(MS_SUCCESS);
+}
+
+int msLayerSetItems(layerObj *layer, char **items, int numitems)
+{
+  int i;
+
+  // Cleanup any previous item selection
+  if(layer->items) {
+    msFreeCharArray(layer->items, layer->numitems);
+    layer->items = NULL;
+    layer->numitems = 0;
+  }
+  if (layer->itemindexes) {
+    free(layer->itemindexes);
+    layer->itemindexes = NULL;
+  }
+
+  // now allocate and set the layer item parameters 
+  layer->items = (char **)malloc(sizeof(char *)*numitems);
+  if(!layer->items) {
+    msSetError(MS_MEMERR, NULL, "msLayerSetItems()");
+    return(MS_FAILURE);
+  }
+
+  for(i=0; i<numitems; i++)
+    layer->items[i] = strdup(items[i]);
+  layer->numitems = numitems;
+
+  // some connection types need to set the itemindexes variable, SDE does not use that parameter
+  switch(layer->connectiontype) {
+  case(MS_SHAPEFILE):
+  case(MS_TILED_SHAPEFILE):
+    layer->itemindexes = msDBFGetItemIndexes(layer->shpfile.hDBF, layer->items, layer->numitems);
+    if(!layer->itemindexes) return(MS_FAILURE);
+    break;
+  case(MS_OGR):
+    if(msOGRLayerInitItemIndexes(layer) != MS_SUCCESS) return(MS_FAILURE);
     break;
   default:
     break;
