@@ -3576,9 +3576,9 @@ echo "configure:3563: checking for location of Apache headers" >&5
   test -f $APACHE_DIR/src/include/httpd.h && APACHE_INC_DIR="$APACHE_DIR/src/include"
   if test -n "$APACHE_INC_DIR" ; then
     APACHE_INC="-I$APACHE_INC_DIR $APACHE_INC"
-    echo "$ac_t"""-I$APACHE_INC"" 1>&6
+    echo "$ac_t"""-I$APACHE_INC_DIR"" 1>&6
   else
-      { echo "configure: error: "Could not find httpd.h in $APACHE_DIR."" 1>&2; exit 1; }
+    { echo "configure: error: "Could not find httpd.h in $APACHE_DIR."" 1>&2; exit 1; }
   fi
 fi
 

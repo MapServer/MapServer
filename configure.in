@@ -842,9 +842,9 @@ if test -n "$with_apache" -a "$with_apache" != "no" ; then
   test -f $APACHE_DIR/src/include/httpd.h && APACHE_INC_DIR="$APACHE_DIR/src/include"
   if test -n "$APACHE_INC_DIR" ; then
     APACHE_INC="-I$APACHE_INC_DIR $APACHE_INC"
-    AC_MSG_RESULT("-I$APACHE_INC")
+    AC_MSG_RESULT("-I$APACHE_INC_DIR")
   else
-      AC_MSG_ERROR("Could not find httpd.h in $APACHE_DIR.")
+    AC_MSG_ERROR("Could not find httpd.h in $APACHE_DIR.")
   fi
 fi
 
