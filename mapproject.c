@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.36  2004/10/29 20:27:06  dan
+ * Rewritten msGetProjectionString() to avoid multiple reallocs
+ *
  * Revision 1.35  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -619,53 +622,47 @@ void msSetPROJ_LIB( const char *proj_lib )
 */
 char *msGetProjectionString(projectionObj *proj)
 {
-    char        *pszPojString = NULL;
-    char        *pszTmp = NULL;
-    int         i = 0;
+    char        *pszProjString = NULL;
+    int         i = 0, nLen = 0;
 
     if (proj)
     {
+/* -------------------------------------------------------------------- */
+/*      Alloc buffer large enough to hold the whole projection defn     */
+/* -------------------------------------------------------------------- */
         for (i=0; i<proj->numargs; i++)
         {
-            if (!proj->args[i] || strlen(proj->args[i]) <=0)
-                continue;
+            if (proj->args[i])
+                nLen += (strlen(proj->args[i]) + 2);
+        }
 
-            pszTmp = proj->args[i];
+        pszProjString = (char*)malloc(sizeof(char) * nLen+1);
+        pszProjString[0] = '\0';
+
 /* -------------------------------------------------------------------- */
-/*      if narguments = 1 do not add a +.                               */
+/*      Plug each arg into the string with a '+' prefix                 */
 /* -------------------------------------------------------------------- */
-            if (proj->numargs == 1)
+        for (i=0; i<proj->numargs; i++)
+        {
+            if (!proj->args[i] || strlen(proj->args[i]) == 0)
+                continue;
+            if (pszProjString[0] == '\0')
             {
-                pszPojString = 
-                    malloc(sizeof(char) * strlen(pszTmp)+1);
-                pszPojString[0] = '\0';
-                strcat(pszPojString, pszTmp);
+                // no space at beginning of line
+                if (proj->args[i][0] != '+')
+                    strcat(pszProjString, "+");
             }
             else
             {
-/* -------------------------------------------------------------------- */
-/*      Copy chaque argument and add a + between them.                  */
-/* -------------------------------------------------------------------- */
-                if (pszPojString == NULL)
-                {
-                    pszPojString = 
-                        malloc(sizeof(char) * strlen(pszTmp)+2);
-                    pszPojString[0] = '\0';
-                    strcat(pszPojString, "+");
-                    strcat(pszPojString, pszTmp);
-                }
+                if (proj->args[i][0] != '+')
+                    strcat(pszProjString, " +");
                 else
-                {
-                    pszPojString =  
-                        realloc(pszPojString,
-                                sizeof(char) * (strlen(pszTmp)+ 
-                                                strlen(pszPojString) + 3));
-                    strcat(pszPojString, " +");
-                    strcat(pszPojString, pszTmp);
-                }
+                    strcat(pszProjString, " ");
             }
+            strcat(pszProjString, proj->args[i]);
         }
     }
-    return pszPojString;
+
+    return pszProjString;
 }
 
