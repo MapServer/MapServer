@@ -1239,8 +1239,8 @@ gridObj
    double    maxsubdivide;
    double    minarcs;
    double    maxacrs;
-   double    minincrement;
-   double    maxincrement;
+   double    mininterval;
+   double    maxinterval;
    string    labelformat;
   
 

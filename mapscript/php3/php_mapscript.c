@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.157  2003/04/22 23:38:58  assefa
+ * Use MIN/MAXINTERVAL instead of MIN/MAXINCREMENT for the grid.
+ *
  * Revision 1.156  2003/04/22 04:02:17  assefa
  * Add grid object and related functions inside the layer object.
  *
@@ -959,7 +962,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_POSTGIS",    MS_POSTGIS,     const_flag);
     REGISTER_LONG_CONSTANT("MS_MYGIS",      MS_MYGIS,       const_flag);
     REGISTER_LONG_CONSTANT("MS_WMS",        MS_WMS,         const_flag);
+    REGISTER_LONG_CONSTANT("MS_WFS",        MS_WFS,         const_flag);
     REGISTER_LONG_CONSTANT("MS_ORACLESPATIAL", MS_ORACLESPATIAL,const_flag);
+    REGISTER_LONG_CONSTANT("MS_GRATICULE", MS_GRATICULE,const_flag);
  
     /* output image type constants*/
     /*
@@ -11077,8 +11082,8 @@ static long _phpms_build_grid_object(graticuleObj *pgrid,
     add_property_double(return_value,  "maxsubdivide", pgrid->maxsubdivides);
     add_property_double(return_value,  "minarcs", pgrid->minarcs);
     add_property_double(return_value,  "maxarcs", pgrid->maxarcs);
-    add_property_double(return_value,  "minincrement", pgrid->minincrement);
-    add_property_double(return_value,  "maxincrement", pgrid->maxincrement);
+    add_property_double(return_value,  "mininterval", pgrid->minincrement);
+    add_property_double(return_value,  "maxinterval", pgrid->maxincrement);
     PHPMS_ADD_PROP_STR(return_value, "labelformat", pgrid->labelformat);
     
     return grid_id;
@@ -11175,8 +11180,8 @@ DLEXPORT void php3_ms_grid_setProperty(INTERNAL_FUNCTION_PARAMETERS)
         else IF_SET_DOUBLE(  "maxsubdivide",             self->maxsubdivides)
         else IF_SET_DOUBLE(  "minarcs",             self->minarcs)
         else IF_SET_DOUBLE(  "maxarcs",             self->maxarcs)
-        else IF_SET_DOUBLE(  "minincrement",             self->minincrement)
-        else IF_SET_DOUBLE(  "maxincrement",             self->maxincrement)
+        else IF_SET_DOUBLE(  "mininterval",             self->minincrement)
+        else IF_SET_DOUBLE(  "maxinterval",             self->maxincrement)
         else IF_SET_STRING( "labelformat",   self->labelformat)
         else
         {
