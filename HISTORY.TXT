@@ -105,6 +105,10 @@ Version 4.1 (CVS)
 - Paving way for future changes to SWIG mapscript API with new features
   enabled by NEXT_GENERATION_API symbol (bug 586).
 
+- Added ability to set string member variables to NULL in PHP MapScript
+  (bug 591)
+
+
 Version 4.0 (2003-08-01)
 ------------------------
 
