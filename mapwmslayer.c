@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.68  2004/07/28 17:52:16  dan
+ * Pass FEATURE_COUNT instead of FEATURECOUNT in GetFeatureInfo (bug 790)
+ *
  * Revision 1.67  2004/07/13 20:39:37  dan
  * Made msTmpFile() more robust using msBuildPath() to return absolute paths (bug 771)
  *
@@ -685,7 +688,7 @@ int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         // and if not passed then the behavior is up to the server
         if (nFeatureCount > 0)
         {
-            msSetWMSParamInt(psWMSParams, "FEATURECOUNT", nFeatureCount);
+            msSetWMSParamInt(psWMSParams, "FEATURE_COUNT", nFeatureCount);
         }
 
     }
