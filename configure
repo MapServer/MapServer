@@ -5298,12 +5298,13 @@ fi
     { echo "configure: error: couldn't find curl-config" 1>&2; exit 1; }
   fi
 
+  CURL_VERNUM=`$LIBCURL_CONFIG --vernum`
   CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
-  
+
   echo "$ac_t""        found libcurl version $CURL_VER" 1>&6
   
-    if test -z "$CURL_VER" -o `expr "$CURL_VER" \< "7.10"` = 1; then
-    { echo "configure: error: libcurl version 7.10 or more recent is required." 1>&2; exit 1; }
+    if test -z "$CURL_VERNUM" -o `expr "$CURL_VERNUM" \< "070a01"` = 1; then
+    { echo "configure: error: libcurl version 7.10.1 or more recent is required." 1>&2; exit 1; }
   fi
 
   if test "$WMS_REQUESTED" = "yes" ; then
@@ -5379,7 +5380,7 @@ fi
 
 
 echo "checking whether we should enable debug features..." 1>&6
-echo "configure:5383: checking whether we should enable debug features..." >&5
+echo "configure:5384: checking whether we should enable debug features..." >&5
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
@@ -5448,7 +5449,7 @@ ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
 
 
 echo "checking for PHP/MapScript module options..." 1>&6
-echo "configure:5452: checking for PHP/MapScript module options..." >&5
+echo "configure:5453: checking for PHP/MapScript module options..." >&5
 # Check whether --with-php or --without-php was given.
 if test "${with_php+set}" = set; then
   withval="$with_php"
@@ -5476,7 +5477,7 @@ if test -n "$with_php" -a -d "$with_php" ; then
       echo "$ac_t""Using perl -V macro to figure ld command to link php_mapscript.so" 1>&6
 
       echo $ac_n "checking whether 'perl -V' works""... $ac_c" 1>&6
-echo "configure:5480: checking whether 'perl -V' works" >&5
+echo "configure:5481: checking whether 'perl -V' works" >&5
       if  (perl -V > /dev/null 2>&1)  ; then
         echo "$ac_t""yes" 1>&6
         
@@ -5642,7 +5643,7 @@ rm -f perl.out
   fi
 
           echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
-echo "configure:5646: checking for location of config.h or php_config.h" >&5
+echo "configure:5647: checking for location of config.h or php_config.h" >&5
     test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
     test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
     test -f "$PHP_SRC_DIR/main/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/main/php_config.h"
@@ -5655,7 +5656,7 @@ echo "configure:5646: checking for location of config.h or php_config.h" >&5
   fi
 
           echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
-echo "configure:5659: checking whether we have PHP3 or PHP4" >&5
+echo "configure:5660: checking whether we have PHP3 or PHP4" >&5
   if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
@@ -5667,7 +5668,7 @@ echo "configure:5659: checking whether we have PHP3 or PHP4" >&5
   echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:5671: checking whether we should use PHP's regex" >&5
+echo "configure:5672: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
 
@@ -5729,7 +5730,7 @@ if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:5733: checking for location of Apache headers using apxs" >&5
+echo "configure:5734: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
@@ -5762,7 +5763,7 @@ if test -n "$with_apache" -a "$with_apache" != "no" ; then
 !!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!" 1>&2; exit 1; }
 
   echo $ac_n "checking for location of Apache headers""... $ac_c" 1>&6
-echo "configure:5766: checking for location of Apache headers" >&5
+echo "configure:5767: checking for location of Apache headers" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apache applies only if --with-php is used." 1>&2; exit 1; }
   fi

@@ -1307,13 +1307,14 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
     AC_MSG_ERROR([couldn't find curl-config])
   fi
 
+  CURL_VERNUM=`$LIBCURL_CONFIG --vernum`
   CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
-  
+
   AC_MSG_RESULT([        found libcurl version $CURL_VER])
   
-  dnl Need libcurl 7.10.x or more because of an infinite loop in older versions
-  if test -z "$CURL_VER" -o `expr "$CURL_VER" \< "7.10"` = 1; then
-    AC_MSG_ERROR([libcurl version 7.10 or more recent is required.])
+  dnl Need libcurl 7.10.1 or more recent
+  if test -z "$CURL_VERNUM" -o `expr "$CURL_VERNUM" \< "070a01"` = 1; then
+    AC_MSG_ERROR([libcurl version 7.10.1 or more recent is required.])
   fi
 
   if test "$WMS_REQUESTED" = "yes" ; then
