@@ -343,7 +343,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
 
 #ifdef USE_PROJ
     if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-      msProjectPoint(layer->projection.proj, map->projection.proj, point);
+      msProjectPoint(&layer->projection, &ap->projection, point);
 #endif
 
   switch(layer->type) {      
@@ -431,7 +431,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
 #ifdef USE_PROJ
   if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
-    msProjectPolyline(layer->projection.proj, map->projection.proj, shape);
+    msProjectShape(&layer->projection, &map->projection, shape);
 #endif
    
   switch(layer->type) {      
@@ -836,7 +836,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   searchrect = map->extent;
 #ifdef USE_PROJ
   if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
-    msProjectRect(map->projection.proj, layer->projection.proj, &searchrect); // project the searchrect to source coords
+    msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
 #endif
   status = msLayerWhichShapes(layer, searchrect);
   if(status == MS_DONE) { // no overlap

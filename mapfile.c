@@ -485,7 +485,7 @@ int msInitProjection(projectionObj *p)
 #ifdef USE_PROJ  
   p->numargs = 0;
   p->proj = NULL;
-  if((p->projargs = (char **)malloc(MS_MAXPROJARGS*sizeof(char *))) == NULL) {
+  if((p->args = (char **)malloc(MS_MAXPROJARGS*sizeof(char *))) == NULL) {
     msSetError(MS_MEMERR, NULL, "initProjection()");
     return(-1);
   }
@@ -502,8 +502,8 @@ void msFreeProjection(projectionObj *p) {
       p->proj = NULL;
   }
 
-  msFreeCharArray(p->projargs, p->numargs);  
-  p->projargs = NULL;
+  msFreeCharArray(p->args, p->numargs);  
+  p->args = NULL;
   p->numargs = 0;
 #endif
 }
@@ -514,7 +514,7 @@ int msProcessProjection(projectionObj *p)
 #ifdef USE_PROJ    
     assert( p->proj == NULL );
     
-    if( strcasecmp(p->projargs[0],"GEOGRAPHIC") == 0 ) {
+    if( strcasecmp(p->args[0],"GEOGRAPHIC") == 0 ) {
         msSetError(MS_PROJERR, 
                    "PROJECTION 'GEOGRAPHIC' no longer supported.\n"
                    "Provide explicit definition.\n"
@@ -524,12 +524,12 @@ int msProcessProjection(projectionObj *p)
         return(-1);
     }
 
-    if (strcasecmp(p->projargs[0], "AUTO") == 0) {
+    if (strcasecmp(p->args[0], "AUTO") == 0) {
 	p->proj = NULL;
         return 0;
     }
 
-    if( !(p->proj = pj_init(p->numargs, p->projargs)) ) {
+    if( !(p->proj = pj_init(p->numargs, p->args)) ) {
         msSetError(MS_PROJERR, pj_strerrno(pj_errno), 
                    "msProcessProjection()");	  
         return(-1);
@@ -559,7 +559,7 @@ static int loadProjection(projectionObj *p)
       break;    
     case(MS_STRING):
     case(MS_AUTO):
-      p->projargs[i] = strdup(msyytext);
+      p->args[i] = strdup(msyytext);
       i++;
       break;
 
@@ -599,7 +599,7 @@ int msLoadProjectionString(projectionObj *p, char *value)
       }
       trimmed[i_out] = '\0';
       
-      p->projargs = split(trimmed,'+', &p->numargs);
+      p->args = split(trimmed,'+', &p->numargs);
       free( trimmed );
   }
 
@@ -608,7 +608,7 @@ int msLoadProjectionString(projectionObj *p, char *value)
    */
   else
   {
-      p->projargs = split(value,',', &p->numargs);
+      p->args = split(value,',', &p->numargs);
   }
 
   return msProcessProjection( p );
@@ -626,7 +626,7 @@ static void writeProjection(projectionObj *p, FILE *stream, char *tab) {
   if(p->numargs > 0) {
     fprintf(stream, "%sPROJECTION\n", tab);
     for(i=0; i<p->numargs; i++)
-      fprintf(stream, "  %s%s\n", tab, p->projargs[i]);
+      fprintf(stream, "  %s%s\n", tab, p->args[i]);
     fprintf(stream, "%sEND\n", tab);
   }
 #endif
@@ -2740,11 +2740,18 @@ int initMap(mapObj *map)
   initReferenceMap(&map->reference);
   initQueryMap(&map->querymap);
 
-  if(msInitProjection(&map->projection) == -1)
+#ifdef USE_PROJ
+  if(msInitProjection(&(map->projection)) == -1)
+    return(-1);
+  if(msInitProjection(&(map->latlon)) == -1)
     return(-1);
 
-  if(msInitProjection(&map->io_projection) == -1)
-    return(-1);
+  // initialize a default "geographic" projection
+  map->latlon.numargs = 2;
+  map->latlon.args[0] = strdup("proj=latlong");
+  map->latlon.args[1] = strdup("ellps=clrk66"); // probably want a different ellipsoid
+  if(msProcessProjection(&(map->latlon)) == -1) return(-1);
+#endif
 
   return(0);
 }
@@ -2966,6 +2973,10 @@ mapObj *msLoadMap(char *filename)
       break;
     case(INTERLACE):
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
+      break;
+    case(LATLON):
+      msFreeProjection(&map->latlon);
+      if(loadProjection(&map->latlon) == -1) return(NULL);
       break;
     case(LAYER):
       if(map->numlayers == MS_MAXLAYERS) { 

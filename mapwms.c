@@ -288,8 +288,8 @@ void msWMSPrintLatLonBoundingBox(const char *tabspace,
   rectObj ll_ext;
   ll_ext = *extent;
 
-  if (srcproj->proj && !pj_is_latlong(srcproj->proj)) {
-    msProjectRect(srcproj->proj, NULL, &ll_ext);
+  if (srcproj->numargs > 0 && !pj_is_latlong(srcproj->proj)) {
+    msProjectRect(srcproj, NULL, &ll_ext);
   }
 
   printf("%s<LatLonBoundingBox minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", 

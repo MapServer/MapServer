@@ -1,23 +1,22 @@
 #include "map.h"
 #include "mapproject.h"
 
-#ifdef USE_PROJ
-
-void msProjectPoint(PJ *in, PJ *out, pointObj *point)
+int msProjectPoint(projectionobj *in, projectionobj *out, pointObj *point)
 {
+#ifdef USE_PROJ
   projUV p;
 
-  if( in && out )
+  if( in->proj && out->proj )
   {
-      if( pj_is_latlong(in) )
+      if( pj_is_latlong(in->proj) )
       {
           point->x *= DEG_TO_RAD;
           point->y *= DEG_TO_RAD;
       }
 
-      pj_transform( in, out, 1, 0, &(point->x), &(point->y), NULL );
+      pj_transform( in->proj, out->proj, 1, 0, &(point->x), &(point->y), NULL );
 
-      if( pj_is_latlong(out) )
+      if( pj_is_latlong(out->proj) )
       {
           point->x *= RAD_TO_DEG;
           point->y *= RAD_TO_DEG;
@@ -28,31 +27,36 @@ void msProjectPoint(PJ *in, PJ *out, pointObj *point)
       p.u = point->x;
       p.v = point->y;
 
-      if(in==NULL) { /* input coordinates are lat/lon */
+      if(in->proj==NULL) { /* input coordinates are lat/lon */
           p.u *= DEG_TO_RAD; /* convert to radians */
           p.v *= DEG_TO_RAD;  
-          p = pj_fwd(p, out);
+          p = pj_fwd(p, out->proj);
       } else {
-          if(out==NULL) { /* output coordinates are lat/lon */
-              p = pj_inv(p, in);
+          if(out->proj==NULL) { /* output coordinates are lat/lon */
+              p = pj_inv(p, in->proj);
               p.u *= RAD_TO_DEG; /* convert to decimal degrees */
               p.v *= RAD_TO_DEG;
           } else { /* need to go from one projection to another */
-              p = pj_inv(p, in);
-              p = pj_fwd(p, out);
+              p = pj_inv(p, in->proj);
+              p = pj_fwd(p, out->proj);
           }
       }
 
       point->x = p.u;
       point->y = p.v;
   }
-  return;
+  return(MS_SUCCESS);
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectPoint()");
+  return(MS_FAILURE);
+#endif
 }
 
 #define NUMBER_OF_SAMPLE_POINTS 100
 
-void msProjectRect(PJ *in, PJ *out, rectObj *rect) 
+int msProjectRect(projectionobj *in, projectionobj *out, rectObj *rect) 
 {
+#ifdef USE_PROJ
   pointObj prj_point;
   rectObj prj_rect;
 
@@ -64,7 +68,7 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
 
   prj_point.x = rect->minx;
   prj_point.y = rect->miny;
-  msProjectPoint(in, out, &prj_point);
+  msProjectPoint(in->proj, out->proj, &prj_point);
   prj_rect.minx = prj_rect.maxx = prj_point.x;
   prj_rect.miny = prj_rect.maxy = prj_point.y;
 
@@ -72,7 +76,7 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
     for(x=rect->minx+dx; x<=rect->maxx; x+=dx) {
       prj_point.x = x;
       prj_point.y = rect->miny;
-      msProjectPoint(in, out, &prj_point);
+      msProjectPoint(in->proj, out->proj, &prj_point);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
       prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
@@ -80,7 +84,7 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
       
       prj_point.x = x;
       prj_point.y = rect->maxy;
-      msProjectPoint(in, out, &prj_point);
+      msProjectPoint(in->proj, out->proj, &prj_point);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
       prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
@@ -92,7 +96,7 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
     for(y=rect->miny+dy; y<=rect->maxy; y+=dy) {
       prj_point.y = y;
       prj_point.x = rect->minx;    
-      msProjectPoint(in, out, &prj_point);
+      msProjectPoint(in->proj, out->proj, &prj_point);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
       prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
@@ -100,7 +104,7 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
       
       prj_point.x = rect->maxx;
       prj_point.y = y;
-      msProjectPoint(in, out, &prj_point);
+      msProjectPoint(in->proj, out->proj, &prj_point);
       prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
       prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
       prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
@@ -113,23 +117,40 @@ void msProjectRect(PJ *in, PJ *out, rectObj *rect)
   rect->maxx = prj_rect.maxx;
   rect->maxy = prj_rect.maxy;
 
-  return;
+  return(MS_SUCCESS);
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
+  return(MS_FAILURE);
+#endif
 }
 
-void msProjectPolyline(PJ *in, PJ *out, shapeObj *poly)
+int msProjectShape(projectionobj *in, projectionobj *out, shapeObj *shape)
 {
+#ifdef USE_PROJ
   int i,j;
 
-  for(i=0; i<poly->numlines; i++)
-    for(j=0; j<poly->line[i].numpoints; j++)
-      msProjectPoint(in, out, &(poly->line[i].point[j]));
+  for(i=0; i<shape->numlines; i++)
+    for(j=0; j<shape->line[i].numpoints; j++)
+      msProjectPoint(in->proj, out->proj, &(shape->line[i].point[j]));
+
+  return(MS_SUCCESS);
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectShape()");
+  return(MS_FAILURE);
+#endif
 }
 
-void msProjectLine(PJ *in, PJ *out, lineObj *line)
+int msProjectLine(projectionobj *in, projectionobj *out, lineObj *line)
 {
+#ifdef USE_PROJ
   int i;
   
   for(i=0; i<line->numpoints; i++)
-    msProjectPoint(in, out, &(line->point[i]));
-}
+    msProjectPoint(in->proj, out->proj, &(line->point[i]));
+
+  return(MS_SUCCESS);
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", "msProjectLine()");
+  return(MS_FAILURE);
 #endif
+}

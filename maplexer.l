@@ -125,6 +125,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>labelminscale	       { return(LABELMINSCALE); }
 <INITIAL,OBJECT_STRING>labelrequires           { return(LABELREQUIRES); }
 <INITIAL,OBJECT_STRING>labelsizeitem           { return(LABELSIZEITEM); }
+<INITIAL,OBJECT_STRING>latlon	               { return(LATLON); }
 <INITIAL,OBJECT_STRING>layer		       { return(LAYER); }
 <INITIAL,OBJECT_STRING>legend		       { return(LEGEND); }
 <INITIAL>log		                       { return(LOG); }

@@ -135,5 +135,6 @@
 #define LABELREQUIRES 1119
 
 #define METADATA 1120
+#define LATLON 1121
 
 #endif /* MAPFILE_H */
