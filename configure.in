@@ -53,13 +53,15 @@ unset ac_cv_lib_gd_gdImageJpeg
 unset ac_cv_lib_gd_gdImageWBMP
 unset ac_cv_lib_gd_gdImageStringTTF
 unset ac_cv_lib_gd_gdImageStringFT
+unset ac_cv_lib_gd_gdImageGifPtr
 unset ac_cv_lib_m_gdImageString16
 unset ac_cv_lib_m_gdImageGif
 unset ac_cv_lib_m_gdImagePng
 unset ac_cv_lib_m_gdImageJpeg
 unset ac_cv_lib_m_gdImageWBMP
-unset ac_cv_lib_n_gdImageStringTTF
-unset ac_cv_lib_n_gdImageStringFT
+unset ac_cv_lib_m_gdImageStringTTF
+unset ac_cv_lib_m_gdImageStringFT
+unset ac_cv_lib_m_gdImageGifPtr
 
 AC_CHECKING(which version of GD to use...)
 AC_ARG_WITH(gd,
@@ -112,13 +114,16 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   AC_CHECK_LIB($GD_CHECKLIB, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG"; GD_LIB="$GD_LIB -ljpeg",, $GD_STATIC $GD_LIB -ljpeg)
   AC_CHECK_LIB($GD_CHECKLIB, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_STATIC $GD_LIB)
 
-  dnl For GD 1.2, x/y in buffers are swapped.
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY" , $GD_STATIC $GD_LIB)
-
   dnl Check for TTF support
   AC_CHECK_LIB($GD_CHECKLIB, gdImageStringTTF, 	GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_STATIC $GD_LIB -lttf)
   dnl in 1.8.4, gdImageStringTTF changed to gdImageStringFT
   AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, 	GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_STATIC $GD_LIB -lttf)
+
+  dnl For GD 1.2, x/y in buffers are swapped.
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY" , $GD_STATIC $GD_LIB)
+
+  dnl gdImageGifPtr is there only in GIF-patched GD versions
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr,GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB)
 
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
@@ -140,13 +145,16 @@ else
   AC_CHECK_LIB(gd, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG"; GD_LIB="$GD_LIB -ljpeg",, $GD_LIB -ljpeg)
   AC_CHECK_LIB(gd, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_LIB)
 
-  dnl For GD 1.2, x/y in buffers are swapped.
-  AC_CHECK_LIB(gd, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY", $GD_LIB)
-
   dnl Check for TTF support
   AC_CHECK_LIB(gd, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_LIB -lttf)
   dnl in 1.8.4, gdImageStringTTF changed to gdImageStringFT
   AC_CHECK_LIB(gd, gdImageStringFT, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_LIB -lttf)
+
+  dnl For GD 1.2, x/y in buffers are swapped.
+  AC_CHECK_LIB(gd, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY", $GD_LIB)
+
+  dnl gdImageGifPtr is there only in GIF-patched GD versions
+  AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB)
 
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd $GD_LIB"
