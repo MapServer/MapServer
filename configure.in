@@ -1649,8 +1649,13 @@ if test -n "$with_php" -a -d "$with_php" ; then
 !!! The current version of PHP MapScript has some problems with       !!!
 !!! PHP4's bundled regex.  Until we figure the solution to the        !!!
 !!! problem, the workaround is to compile PHP4 with the system regex  !!!
-!!! Please re-configure and re-compile PHP4 with --with-regex=system  !!!
-!!! and then re-configure and re-compile MapServer.                   !!!])
+!!! Please re-configure and re-compile PHP4 using --with-regex=system !!!
+!!! and then re-configure and re-compile MapServer.                   !!!
+!!! Note that PHP's --with-regex=system works only when PHP is        !!!
+!!! is configured as a CGI (that is without the --with-apxs and       !!!
+!!! --with-httpd options). So if you configured your PHP using        !!!
+!!! --with-regex=system and still get this error then make sure you   !!!
+!!! configured PHP as a CGI.                                          !!!])
     fi
 
     PHP_REGEX_DIR="$PHP_SRC_DIR/regex"
