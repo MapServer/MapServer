@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.106  2005/03/04 13:37:56  dan
+ * Fixed crash in template generation with empty layer names (bug 1271)
+ *
  * Revision 1.105  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -2314,7 +2317,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   strcpy(repstr, ""); /* list of ALL layers that can be toggled */
   repstr[0] = '\0';
   for(i=0;i<msObj->Map->numlayers;i++) {
-    if(msObj->Map->layers[i].status != MS_DEFAULT) {
+    if(msObj->Map->layers[i].status != MS_DEFAULT && msObj->Map->layers[i].name != NULL) {
       strlcat(repstr, msObj->Map->layers[i].name, sizeof(repstr));
       strlcat(repstr, " ", sizeof(repstr));
     }
