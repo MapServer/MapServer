@@ -475,8 +475,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     if(shape->numlines != 1) return(MS_SUCCESS); // invalid shape
     if(shape->line[0].numpoints != 2) return(MS_SUCCESS); // invalid shape
 
-    center = shape->line[0].point[0];
-    r = msDistanceBetweenPoints(&(shape->line[0].point[0]), &(shape->line[0].point[1]));
+    center.x = (shape->line[0].point[0].x + shape->line[0].point[1].x)/2.0;
+    center.y = (shape->line[0].point[0].y + shape->line[0].point[1].y)/2.0;
+    r = MS_ABS(center.x - shape->line[0].point[0].x);
 
 #ifdef USE_PROJ
     if(msProjectionsDiffer(&(layer->projection), &(map->projection))
