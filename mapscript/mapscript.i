@@ -55,6 +55,9 @@
 
 %include constraints.i
 
+%include carrays.i
+%array_class(int, intarray)
+
 /* ===========================================================================
    Supporting 'None' as an argument to attribute accessor functions
 
