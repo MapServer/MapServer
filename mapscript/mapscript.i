@@ -140,7 +140,7 @@ memory.") const char * {
 #ifdef NEXT_GENERATION_NAMES
 %rename(Map) map_obj;
 %rename(Layer) layer_obj;
-%rename(Class) classObj;
+%rename(Class) class_obj;
 %rename(Style) styleObj;
 %rename(Image) imageObj;
 %rename(Point) pointObj;
@@ -151,7 +151,7 @@ memory.") const char * {
 %rename(Color) colorObj;
 %rename(Rect) rectObj;
 %rename(Projection) projectionObj;
-%rename(ShapeFile) shapefileObj;
+%rename(Shapefile) shapefileObj;
 %rename(SymbolSet) symbolSetObj;
 #endif
 
