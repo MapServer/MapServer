@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.53  2005/02/18 18:57:26  sean
+ * turn on GD alpha blending for legend icon images if specified by the target layer (bugs 490, 1250)
+ *
  * Revision 1.52  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -112,7 +115,13 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
 
     /* 
     ** now draw the appropriate color/symbol/size combination 
-    */      
+    */     
+
+    /* Bug 490 - switch alpha blending on for a layer that requires it */
+    if (lp->transparency == MS_GD_ALPHA) {
+        gdImageAlphaBlending(img, 1);
+    }
+
     switch(type) {
     case MS_LAYER_ANNOTATION:
     case MS_LAYER_POINT:
