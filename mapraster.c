@@ -1503,7 +1503,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   {
 #ifndef USE_GDAL
       msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
-      return -1;
+      return MS_FAILURE;
 #else
       force_gdal = MS_TRUE;
 #endif
@@ -1516,7 +1516,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   {
 #ifndef USE_GDAL
       msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
-      return -1;
+      return MS_FAILURE;
 #else
       force_gdal = MS_TRUE;
 #endif
@@ -1534,8 +1534,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       msBuildPath(cwd, map->mappath, "");
 
   if(layer->tileindex) { /* we have in index file */
-    if(msSHPOpenFile(&tilefile, "rb", cwd, layer->tileindex) == -1) return(-1);    
-    if((tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
+    if(msSHPOpenFile(&tilefile, "rb", cwd, layer->tileindex) == -1) return(MS_FAILURE);    
+    if((tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
     searchrect = map->extent;
 #ifdef USE_PROJ
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
@@ -1577,7 +1577,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if ((memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) && !force_gdal) {
         status = drawTIFF(map, layer, img, filename);
         if(status == -1) {
-            return(-1);
+            return(MS_FAILURE);
         }
         continue;
     }
@@ -1585,7 +1585,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if (memcmp(dd,"GIF8",4)==0 && !force_gdal ) {
         status = drawGIF(map, layer, img, filename);
         if(status == -1) {
-            return(-1);
+            return(MS_FAILURE);
         }
         continue;
     }
@@ -1593,7 +1593,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if (memcmp(dd,PNGsig,8)==0 && !force_gdal) {
         status = drawPNG(map, layer, img, filename);
         if(status == -1) {
-            return(-1);
+            return(MS_FAILURE);
         }
         continue;
     }
@@ -1602,7 +1602,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     {
         status = drawJPEG(map, layer, img, filename);
         if(status == -1) {
-            return(-1);
+            return(MS_FAILURE);
         }
         continue;
     }
@@ -1610,11 +1610,11 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if (memcmp(dd,"HEAD",4)==0) {
       if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
         msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library, but it does not support Erdas 7.x files.", "msDrawRasterLayer( ERD )");
-        return(-1);
+        return(MS_FAILURE);
       }
       status = drawERD(map, layer, img, filename);
       if(status == -1) {
-	return(-1);
+	return(MS_FAILURE);
       }
       continue;
     }
@@ -1629,7 +1629,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
       {
       if(layer->transform && msProjectionsDiffer(&(map->projection, &(layer->projection))) {
           msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library.", "msDrawRasterLayer( EGIS )");
-          return(-1);
+          return(MS_FAILURE);
         }
 	status = drawGEN(map, layer, img, filename);
 	
@@ -1718,7 +1718,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
             {
                 GDALClose( hDS );
                 msReleaseLock( TLOCK_GDAL );
-                return -1;
+                return MS_FAILURE;
             }
 
             GDALClose( hDS );
@@ -1743,7 +1743,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
           msDebug( "Unable to open file %s for layer %s ... fatal error.\n", 
                    filename, layer->name );
 
-      return(-1);
+      return(MS_FAILURE);
 #else
       if( layer->debug || map->debug )
           msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", 
@@ -1760,7 +1760,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if(status != 0) {
       if (status == -2) msSetError(MS_IMGERR, "Error reading EPPL file; probably corrupt.", "msDrawEPP()");
       if (status == -1) msSetError(MS_IMGERR, "Unrecognized or unsupported image format", "msDrawRaster()");
-      return(-1);
+      return(MS_FAILURE);
     }
     continue;
   } // next tile
