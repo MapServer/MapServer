@@ -1102,6 +1102,8 @@ static void writeExpression(expressionObj *exp, FILE *stream)
 */
 int initClass(classObj *class)
 {
+  class->status = MS_ON;
+
   initExpression(&(class->expression));
   class->name = NULL;
   initExpression(&(class->text));
@@ -1284,6 +1286,9 @@ int loadClass(classObj *class, mapObj *map)
       if(getInteger(&(class->size)) == -1) return(-1);
       class->sizescaled = class->size;
       break;
+    case(STATUS):
+      if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
+      break;
     case(SYMBOL):
       if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return(-1);
 
@@ -1359,6 +1364,10 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
     getInteger(&(class->size));
     class->sizescaled = class->size;
     break;
+  case(STATUS):
+    msyystate = 2; msyystring = value;
+    if((class->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return;      
+    break;
   case(SYMBOL):
     msyystate = 2; msyystring = value;
     if((state = getSymbol(2, MS_NUMBER,MS_STRING)) == -1) return;
@@ -1418,6 +1427,7 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
       fprintf(stream, "      OVERLAYSYMBOL %d\n", class->overlaysymbol);
   }
   fprintf(stream, "      SIZE %d\n", class->size);
+  if(class->status == MS_OFF) fprintf(stream, "      STATUS OFF\n");
   if(class->symbolname)
     fprintf(stream, "      SYMBOL \"%s\"\n", class->symbolname);
   else

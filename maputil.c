@@ -768,6 +768,10 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     shape.classindex = layer->resultcache->results[i].classindex;
+    if(layer->class[shape.classindex].status == MS_OFF) {
+      msFreeShape(&shape);
+      continue;
+    }
 
     if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
       shape.text = msShapeGetAnnotation(layer, &shape);
@@ -864,7 +868,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
     shape.classindex = msShapeGetClass(layer, &shape);    
-    if(shape.classindex == -1) {
+    if((shape.classindex == -1) || (layer->class[shape.classindex].status == MS_OFF)) {
       msFreeShape(&shape);
       continue;
     }

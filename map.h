@@ -295,6 +295,8 @@ typedef struct {
   expressionObj expression; // the expression to be matched
 #endif
 
+  int status;
+
   int color;
   int backgroundcolor;
   int outlinecolor;
