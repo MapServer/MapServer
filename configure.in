@@ -733,6 +733,44 @@ ALL_INC="$PROJ_INC $ALL_INC"
 ALL_LIB="$PROJ_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
+dnl ENABLE THREADS ONLY IF REQUESTED.
+dnl ---------------------------------------------------------------------
+export THREAD_LIB=
+export THREAD_FLAG=
+
+AC_CHECKING(whether we should include thread safe support...)
+AC_ARG_WITH(threads,
+[  --with-threads[=linkopt]Include thread safe support],,)
+
+if test "$with_threads" = "yes" ; then
+
+  AC_CHECK_LIB(pthread,pthread_create,THREAD_FLAG=-DUSE_THREAD,,,)
+
+  if test -n "$THREAD_FLAG" ; then
+      THREAD_LIB="-lpthread"
+      AC_MSG_RESULT([        using -lpthread from system libs.])
+  else
+      AC_MSG_ERROR([        -lpthread not found, use --with-thread=<pthread link options>])
+  fi
+
+elif test -n "$with_threads" -a "$with_threads" != "no" ; then
+
+  THREAD_FLAG=-DUSE_THREAD
+  THREAD_LIB="$with_threads"  
+
+  AC_MSG_RESULT([        using threads with link options "$THREAD_LIB".])
+
+else
+  AC_MSG_RESULT([        thread safe support disabled.])
+fi
+
+AC_SUBST(THREAD_FLAG,$THREAD_FLAG)
+AC_SUBST(THREAD_LIB,$THREAD_LIB)
+
+ALL_ENABLED="$THREAD_FLAG $ALL_ENABLED"
+ALL_LIB="$THREAD_LIB $ALL_LIB"
+
+dnl ---------------------------------------------------------------------
 dnl Find ESRI SDE ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
 
