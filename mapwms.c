@@ -518,8 +518,13 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
     if((value = msLookupHashTable(lp->metadata, "wms_all_proj"))) printf("      <SRS>%s</SRS>\n", value);
     if (msWMSGetLayerExtent(map, lp, &ext) == MS_SUCCESS)
     {
-      msWMSPrintLatLonBoundingBox("      ", &(ext), &(lp->projection));
-      if((value = msWMSGetEPSGProj(&(lp->projection), lp->metadata))) printf("      <BoundingBox SRS=\"%s\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", value, ext.minx, ext.miny, ext.maxx, ext.maxy);
+      if(lp->projection.numargs > 0) {
+	msWMSPrintLatLonBoundingBox("      ", &(ext), &(lp->projection));
+	if((value = msWMSGetEPSGProj(&(lp->projection), lp->metadata))) printf("      <BoundingBox SRS=\"%s\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", value, ext.minx, ext.miny, ext.maxx, ext.maxy);
+      } else {
+	msWMSPrintLatLonBoundingBox("      ", &(ext), &(map->projection));
+	if((value = msWMSGetEPSGProj(&(map->projection), map->web.metadata))) printf("      <BoundingBox SRS=\"%s\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", value, ext.minx, ext.miny, ext.maxx, ext.maxy);
+      }
     }
     
     printf("    </Layer>\n");
