@@ -2,6 +2,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.81  2004/10/14 15:20:08  hobu
+ * make sure that we call SE_stream_free
+ * when the layer is closed
+ *
  * Revision 1.80  2004/10/11 14:34:26  hobu
  * change thread locking policy
  * to SE_UNPROTECTED_POLICY
@@ -626,10 +630,10 @@ void msSDELayerClose(layerObj *layer) {
 	
   if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
   if (sde->coordref) SE_coordref_free(sde->coordref);
-  if(sde->table) free(sde->table);
-  if(sde->column) free(sde->column);
-  if(sde->row_id_column) free(sde->row_id_column);
-
+  if (sde->table) free(sde->table);
+  if (sde->column) free(sde->column);
+  if (sde->row_id_column) free(sde->row_id_column);
+  if (sde->stream) SE_stream_free(sde->stream);
   msConnPoolRelease( layer, sde->connection );  
   free(layer->layerinfo);
   layer->layerinfo = NULL;
