@@ -32,7 +32,6 @@
 
 #include "mapproject.h"
 
-
 #include <gd.h>
 
 #if defined USE_PDF
@@ -205,14 +204,21 @@ enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_
    
 
 // FONTSET OBJECT - used to hold aliases for TRUETYPE fonts
-#ifndef SWIG
 typedef struct {
-  char *filename;
-  hashTableObj fonts;
-  int numfonts;
-  struct map_obj *map;
-} fontSetObj;
+#ifdef SWIG
+%immutable;
 #endif
+  char *filename; 
+  int numfonts;
+#ifdef SWIG
+%mutable;
+#endif
+#ifndef SWIG
+  hashTableObj fonts;
+  struct map_obj *map;
+#endif
+} fontSetObj;
+
 
 // FEATURE LIST OBJECT - for inline features, shape caches and queries
 #ifndef SWIG
@@ -749,9 +755,7 @@ typedef struct map_obj{ /* structure for a map */
 #endif
 
   symbolSetObj symbolset;
-#ifndef SWIG
   fontSetObj fontset;
-#endif
 
   labelCacheObj labelcache; /* we need this here so multiple feature processors can access it */
 

@@ -65,6 +65,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include "pyextend.i"
 #endif //SWIGPYTHON
 
+// A few things neccessary for automatically wrapped functions
+%newobject msGetErrorString;
+
 //
 // class extensions for errorObj
 //
@@ -325,7 +328,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
   }
 
-  %new char *getProjection() {
+  %newobject getProjection;
+  char *getProjection() {
     return msGetProjectionString(&(self->projection));
   }
 
@@ -374,24 +378,20 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return self->symbolset.numsymbols;
   }
 
-  int setFontSet(char *szFileName) {
+  int setFontSet(char *filename) {
     msFreeFontSet(&(self->fontset));
     msInitFontSet(&(self->fontset));
    
     // Set fontset filename
-    self->fontset.filename = strdup(szFileName);
+    self->fontset.filename = strdup(filename);
 
     return msLoadFontSet(&(self->fontset), self);
   }
 
-  %newobject getFontSetFile;
-  char *getFontSetFile() {
-      if (! &(self->fontset)) return NULL;
-      else {
-          if (! self->fontset.filename) return NULL;
-          else return strdup(self->fontset.filename);
-      }
-  }
+  // I removed a method to get the fonset filename. Instead I updated map.h
+  // to allow SWIG access to the fonset, although the numfonts and filename
+  // members are read-only. Use the setFontSet method to actually change the
+  // fontset. To get the filename do $map->{fontset}->{filename};
   
   int saveMapContext(char *szFileName) {
     return msSaveMapContext(self, szFileName);
@@ -417,14 +417,17 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return  msSetLayersdrawingOrder(self, panIndexes); 
   }
 
+  %newobject processTemplate;
   char *processTemplate(int bGenerateImages, char **names, char **values, int numentries) {
     return msProcessTemplate(self, bGenerateImages, names, values, numentries);
   }
   
+  %newobject processLegendTemplate;
   char *processLegendTemplate(char **names, char **values, int numentries) {
     return msProcessLegendTemplate(self, names, values, numentries);
   }
   
+  %newobject processQueryTemplate;
   char *processQueryTemplate(char **names, char **values, int numentries) {
     return msProcessQueryTemplate(self, 1, names, values, numentries);
   }
@@ -432,14 +435,24 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 }
 
 %extend symbolSetObj {
+  symbolObj *getSymbol(int i) {
+    if(i >= 0 && i < self->numsymbols)	
+      return (symbolObj *) &(self->symbol[i]);
+    else
+      return NULL;
+  }
 
-    symbolObj *getSymbol(int i) {
-        if (i >= 0 && i < self->numsymbols)	
-            return (symbolObj *) &(self->symbol[i]);
-        else
-            return NULL;
-    }
+  symbolObj *getSymbolByName(char *name) {
+    int i;
 
+    if(!name) return NULL;
+
+    i = msGetSymbolIndex(self, name);
+    if(i == -1)
+      return NULL; // no such symbol
+    else
+      return (symbolObj *) &(self->symbol[i]);
+  }
 }
 
 //
@@ -525,7 +538,6 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   int promote() {
     return msMoveLayerUp(self->map, self->index);
-
   }
 
   int demote() {
@@ -590,7 +602,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
   }
 
-  %new char *getProjection() {    
+  %newobject getProjection;
+  char *getProjection() {    
     return msGetProjectionString(&(self->projection));
   }
 
@@ -620,17 +633,14 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return MS_SUCCESS;
   }
 
-  // No longer a memory leak, at least with swig 1.3.11. Swig makes a copy
-  // of the returned string and then free's it.
-  %new char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y, int feature_count, char *info_format) {
+  %newobject getWMSFeatureInfoURL;
+  char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y, int feature_count, char *info_format) {
     return(msWMSGetFeatureInfoURL(map, self, click_x, click_y, feature_count, info_format));
   }
-
-  
 }
 
 //
-// class extensions for classObj, always within the context of a layer
+// Class extensions for classObj, always within the context of a layer
 //
 %extend classObj {
   classObj(layerObj *layer) {
