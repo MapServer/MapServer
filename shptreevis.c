@@ -22,20 +22,6 @@ typedef unsigned char uchar;
    #define SHPT_POLYGON MS_SHP_POLYGON
 #endif
 
-
-static void SwapWord( int length, void * wordP )
-{
-  int i;
-  uchar	temp;
-  
-  for( i=0; i < length/2; i++ )
-    {
-      temp = ((uchar *) wordP)[i];
-      ((uchar *)wordP)[i] = ((uchar *) wordP)[length-i-1];
-      ((uchar *) wordP)[length-i-1] = temp;
-    }
-}
-
 char* AddFileSuffix ( const char * Filename, const char * Suffix ) {
     char	*pszFullname, *pszBasename;
     int	i;
@@ -70,30 +56,24 @@ int main( int argc, char ** argv )
 {
     SHPHandle	hSHP;
     DBFHandle   hDBF;
-    FILE	*qix;
+    SHPTreeHandle	qix;
     
     int		i, j;
     char	*myfile = NULL;
+
+    treeNodeObj *node;    
 
 #ifdef MAPSERVER
     shapeObj	shape;
     lineObj	line[3];
     pointObj	pts[6];
-    rectObj	rect;
 #else
     SHPObject	*shape;
-    double	rect[4], X[6], Y[6];
+    double	X[6], Y[6];
 #endif   
-    int		maxDepth, numShapes, pos;
-    int		ids, result;
-
-    unsigned int 	offset;
-    unsigned int	nShapes,nSubNodes;
-    int		res;
+    int		pos, result;
     char	mBigEndian;
     char	pabyBuf[64];
-    char	needswap,version; 
-    char	signature[3];
 
     int		this_rec, factor;
 
@@ -113,10 +93,10 @@ int main( int argc, char ** argv )
       mBigEndian = 1;
 
 
-    qix = fopen( AddFileSuffix(argv[1],".qix"), "rb" );
+    qix = msSHPDiskTreeOpen (AddFileSuffix(argv[1],".qix"));
     if( qix == NULL )
     {
-      printf("unable to open index file %s \n", argv[0]);
+      printf("unable to open index file %s \n", argv[1]);
       exit(-1);
     }
 
@@ -145,104 +125,50 @@ int main( int argc, char ** argv )
     hDBF = DBFOpen ( myfile, "r+b");
 #endif
 
-    fread( pabyBuf, 8, 1, qix );
-    
-    memcpy( &signature, pabyBuf, 3 );
-    if( strncmp(signature,"SQT",3) )
-    {
-      needswap = (( pabyBuf[0] == 0 ) ^ ( mBigEndian ));
-  /* ---------------------------------------------------------------------- */
-  /*     poor hack to see if this quadtree was created by a computer with a */
-  /*     different Endian                                                   */
-  /* ---------------------------------------------------------------------- */
-      version = 0;
-      printf ("old style index\n");
-    }
-    else
-    {
-      needswap = (( pabyBuf[0] == MS_NEW_LSB_ORDER ) ^ ( mBigEndian ));
-  /* 3rd char in file is non zero if this is MSB order                     */
+    printf ("This %s %s index supports a shapefile with %d shapes, %d depth \n",
+	(qix->version ? "new": "old"), (qix->LSB_order? "LSB": "MSB"), qix->nShapes, qix->nDepth);
 
-      if( needswap ) SwapWord( 4, pabyBuf+4 );
-      memcpy( &version, pabyBuf+4, 4 );   
-      printf ("new style index" );
-
-      fread( pabyBuf, 8, 1, qix );
-    }
-
-    if( needswap ) SwapWord( 4, pabyBuf );
-    memcpy( &numShapes, pabyBuf, 4 );
-  
-    if( needswap ) SwapWord( 4, pabyBuf+4 );
-    memcpy( &maxDepth, pabyBuf+4, 4 );
-
-    printf ("This index supports a shapefile with %d shapes, %d depth \n",numShapes, maxDepth);
 
 /* -------------------------------------------------------------------- */
 /*	Skim over the list of shapes, printing all the vertices.	*/
 /* -------------------------------------------------------------------- */
 
-    pos = ftell (qix);
+    pos = ftell (qix->fp);
     j = 0;
 
-    while( pos )
+    while( pos && (j < qix->nShapes) )
     {
       j ++;
-/*      fprintf (stderr,"box %d, at %d pos \n", j, (int) ftell(qix));
-*/
 
-      res = fread( &offset, 4, 1, qix );
-      if ( res > 0 )
+      node = readTreeNode (qix);
+      if (node )
       {
-        if ( needswap ) SwapWord ( 4, &offset );
-        fread( &rect, sizeof(double)*4, 1, qix );    
-        if ( needswap ) SwapWord ( 8, ((void *) &rect) );
-        if ( needswap ) SwapWord ( 8, ((void *) &rect)+8 );
-        if ( needswap ) SwapWord ( 8, ((void *) &rect)+16 );
-        if ( needswap ) SwapWord ( 8, ((void *) &rect)+24 );
-      
-        fread( &nShapes, 4, 1, qix );
-        if ( needswap ) SwapWord ( 4, &nShapes );
-        for( i=0; i < nShapes; i++ )
-        {
-          fread( &ids, sizeof(int), 1, qix );
-        }
-
-        fread( &nSubNodes, 4, 1, qix );
-        if ( needswap ) SwapWord ( 4, &nSubNodes );
 
 #ifdef MAPSERVER
-/*        fprintf (stderr,"%d, # %d, %d, %f,%f,%f,%f \n",offset,nShapes,nSubNodes,rect.minx, rect.miny, rect.maxx, rect.maxy);
-*/
-
-#else
-/*        fprintf (stderr,"%d, # %ld, %f,%f,%f,%f \n",offset,nShapes,rect[0], rect[1], rect[2], rect[3]);
-*/
-#endif        
-      
-#ifdef SMAPSERVER
         this_rec = hDBF->nRecords - 1;
 #else
         this_rec = hDBF->nRecords;	
+/*      Shapelib currently works this way
+ *      Map server is based on an old version of shapelib      
+ */
 #endif
 
-        DBFWriteIntegerAttribute( hDBF, this_rec, 0, nShapes);
-        DBFWriteIntegerAttribute( hDBF, this_rec, 1, nSubNodes);
-        factor = nShapes + nSubNodes;
-        DBFWriteIntegerAttribute( hDBF, this_rec, 2, factor);  
+        DBFWriteIntegerAttribute( hDBF, this_rec, 0, node->numshapes);
+        DBFWriteIntegerAttribute( hDBF, this_rec, 1, node->numsubnodes);
+        factor = node->numshapes + node->numsubnodes;
         
 #ifdef  MAPSERVER
 	shape.numlines = 1;
 	shape.type = SHPT_POLYGON;
-	((pointObj) pts[0]).x = rect.minx;  ((pointObj) pts[0]).y = rect.miny;
-	((pointObj) pts[1]).x = rect.maxx;  ((pointObj) pts[1]).y = rect.miny;
-	((pointObj) pts[2]).x = rect.maxx;  ((pointObj) pts[2]).y = rect.maxy;
-	((pointObj) pts[3]).x = rect.minx;  ((pointObj) pts[3]).y = rect.maxy;
-	((pointObj) pts[4]).x = rect.minx;  ((pointObj) pts[4]).y = rect.miny;
+	((pointObj) pts[0]).x = node->rect.minx;  ((pointObj) pts[0]).y = node->rect.miny;
+	((pointObj) pts[1]).x = node->rect.maxx;  ((pointObj) pts[1]).y = node->rect.miny;
+	((pointObj) pts[2]).x = node->rect.maxx;  ((pointObj) pts[2]).y = node->rect.maxy;
+	((pointObj) pts[3]).x = node->rect.minx;  ((pointObj) pts[3]).y = node->rect.maxy;
+	((pointObj) pts[4]).x = node->rect.minx;  ((pointObj) pts[4]).y = node->rect.miny;
 	line[0].numpoints = 5;
 	line[0].point = &pts[0];
 	shape.line = &line[0];
-	shape.bounds = rect;
+	shape.bounds = node->rect;
 	
 	result = SHPWriteShape ( hSHP, &shape );
 	if ( result < 0 )
@@ -251,19 +177,18 @@ int main( int argc, char ** argv )
 	  exit (0);
 	}
 
-	
 #else
-        X[0] = rect[0];
-        X[1] = rect[2];
-        X[2] = rect[2];
-        X[3] = rect[0];
-        X[4] = rect[0];
+        X[0] = node->rect.minx;
+        X[1] = node->rect.maxx;
+        X[2] = node->rect.maxx;
+        X[3] = node->rect.minx;
+        X[4] = node->rect.minx;
 
-        Y[0] = rect[1];
-        Y[1] = rect[1];
-        Y[2] = rect[3];
-        Y[3] = rect[3];
-        Y[4] = rect[1];
+        Y[0] = node->rect.miny;
+        Y[1] = node->rect.miny;
+        Y[2] = node->rect.maxy;
+        Y[3] = node->rect.maxy;
+        Y[4] = node->rect.miny;
         
         shape = SHPCreateSimpleObject( SHPT_POLYGON, 5, X, Y, NULL);
         SHPWriteObject(hSHP, -1, shape); 
@@ -274,11 +199,9 @@ int main( int argc, char ** argv )
         { pos = 0; }
     }
     
-/*    printf ("read entire file now pos %ld\n", ftell (hSHP->fpSHP));
-*/
     SHPClose( hSHP );
     DBFClose( hDBF );
-    fclose (qix);
+    msSHPDiskTreeClose (qix);    
     
     return(0);
 }
