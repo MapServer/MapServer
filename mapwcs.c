@@ -252,7 +252,7 @@ static int msWCSParseRequest(cgiRequestObj *request, wcsParamsObj *params, mapOb
           
          tokens = split(request->ParamValues[i], ',', &n);
          if(tokens==NULL || n != 4) {
-           msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.", "msWMSLoadGetMapParams()");
+           msSetError(MS_WMSERR, "Wrong number of arguments for BBOX.", "msWCSParseRequest()");
            return msWCSException(params->version);
          }
          params->bbox.minx = atof(tokens[0]);
@@ -1003,8 +1003,9 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
 int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 {
 #ifdef USE_WCS_SVR
-  wcsParamsObj *params;
-  
+  wcsParamsObj *params;  
+  int status;
+
   // populate the service parameters
   params = msWCSCreateParams();
   if( msWCSParseRequest(request, params, map) == MS_FAILURE )
@@ -1019,6 +1020,22 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
     return MS_DONE;
 
   /*
+  ** ok, it's a WCS request, check what we can at a global level and then dispatch to the various request handlers
+  */
+
+  // version is optional, but we do set a default value of 1.0.0, make sure request isn't for something different
+  if(strcmp(params->version, "1.0.0") != 0) {
+    msSetError(MS_WCSERR, "WCS Server does not support VERSION %s.", "msWCSDispatch()", params->version);
+    msWCSException(params->version);
+  
+    msWCSFreeParams(params); // clean up
+    free(params);
+    params = NULL;
+
+    return MS_FAILURE;
+  }
+
+  /*
   ** Start dispatching requests
   */
   if(strcasecmp(params->request, "GetCapabilities") == 0)    
@@ -1026,7 +1043,7 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
   else if(strcasecmp(params->request, "DescribeCoverage") == 0)    
     return msWCSDescribeCoverage(map, params);
   else if(strcasecmp(params->request, "GetCoverage") == 0)    
-return msWCSGetCoverage(map, request, params);
+    return msWCSGetCoverage(map, request, params);
 
   return MS_DONE; // not a WCS request, let MapServer take it
 #else
