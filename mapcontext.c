@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.42  2003/03/07 21:22:50  julien
+ * Fix a typo in ContactFacsimileTelephone
+ *
  * Revision 1.41  2003/02/21 19:19:49  julien
  * Do not put 'init=' before the srs to proj when it begin by 'AUTO:'
  *
@@ -708,7 +711,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   // Others
   msGetMapContextXMLHashValue(psContactInfo, "ContactVoiceTelephone", 
                             &(map->web.metadata), "wms_contactvoicetelephone");
-  msGetMapContextXMLHashValue(psContactInfo, "ContactFascimileTelephone", 
+  msGetMapContextXMLHashValue(psContactInfo, "ContactFacsimileTelephone", 
                         &(map->web.metadata), "wms_contactfacsimiletelephone");
   msGetMapContextXMLHashValue(psContactInfo, "ContactElectronicMailAddress", 
                      &(map->web.metadata), "wms_contactelectronicmailaddress");
