@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 3.7-dev (CVS)
 ---------------------
 
+- Replaced libwww with libcurl for WMS/WFS client HTTP requests.
+  (libcurl 7.10 required, see http://curl.haxx.se/libcurl/c/)
+
 - Added CONNECTION to the list of mapfile parameters that can accept %variable% substitutions
   when processed by the cgi version. This is useful for passing in username and/or passwords
   to database data sources.

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.9  2002/12/16 20:35:00  dan
+ * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
+ *
  * Revision 1.8  2002/12/13 00:57:31  dan
  * Modified WFS implementation to behave more as a real vector data source
  *
@@ -46,13 +49,21 @@
 typedef struct http_request_info
 {
     int         nLayerId;
-    void      * request;  /* HTRequest * */
     char      * pszGetUrl;
     char      * pszOutputFile;
-    int         nStatus;
     int         nTimeout;
     rectObj     bbox;
+    int         nStatus;       /* 200=success, value < 0 if request failed */
+    char      * pszContentType;
+    char      * pszErrBuf;     /* Buffer where curl can write errors */
+
+    /* Private members */
+    void      * curl_handle;   /* CURLM * handle */
+    FILE      * fp;            /* FILE * used during download */
 } httpRequestObj;
+
+int msHTTPInit();
+void msHTTPCleanup();
 
 void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
 void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);

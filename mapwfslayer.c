@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.4  2002/12/16 20:35:00  dan
+ * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
+ *
  * Revision 1.3  2002/12/13 01:32:53  dan
  * OOOpps.. lp->wfslayerinfo was not set in msWFSLayerOpen()
  *
@@ -269,7 +272,6 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * Add a request to the array (already preallocated)
  * ------------------------------------------------------------------ */
     pasReqInfo[(*numRequests)].nLayerId = nLayerId;
-    pasReqInfo[(*numRequests)].request = NULL;
     pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
     pszURL = NULL;
     // We'll store the remote server's response to a tmp file.

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.41  2002/12/16 20:35:00  dan
+ * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
+ *
  * Revision 1.40  2002/12/13 00:57:31  dan
  * Modified WFS implementation to behave more as a real vector data source
  *
@@ -623,7 +626,6 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  * Add a request to the array (already preallocated)
  * ------------------------------------------------------------------ */
     pasReqInfo[(*numRequests)].nLayerId = nLayerId;
-    pasReqInfo[(*numRequests)].request = NULL;
     pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
     pszURL = NULL;
     // We'll store the remote server's response to a tmp file.

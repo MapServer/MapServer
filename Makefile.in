@@ -102,15 +102,15 @@ MING =	@MING_ENABLED@
 MING_LIB=@MING_LIB@
 MING_INC=@MING_INC@
 
-# w3c-libwww ... required for WMS Client Connections
-WWW_INC= @WWW_INC@
-WWW_LIB= @WWW_LIB@
+# libcurl ... required for WMS/WFS Client Connections
+CURL_INC= @CURL_INC@
+CURL_LIB= @CURL_LIB@
 
 # OWS: OGC Web Services support
 # OGC WMS Server:  -DUSE_WMS_SVR (Requires PROJ4 support)
-# OGC WMS Client Connections:  -DUSE_WMS_LYR (Requires PROJ4 and libwww)
+# OGC WMS Client Connections:  -DUSE_WMS_LYR (Requires PROJ4 and libcurl)
 # OGC WFS Server: -DUSE_WFS_SVR (Requires OGR, PROJ4 recommended)
-# OGC WFS Client: -DUSE_WFS_LYR (Requires OGR, PROJ4 and libwww)
+# OGC WFS Client: -DUSE_WFS_LYR (Requires OGR, PROJ4 and libcurl)
 
 OWS=	@WMS_SVR_ENABLED@ @WMS_LYR_ENABLED@ @WFS_SVR_ENABLED@ @WFS_LYR_ENABLED@
 
@@ -158,12 +158,12 @@ CFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
 	$(POSTGIS) $(MPATROL) $(THREAD) \
 	$(GD_INC) $(PDF_INC) $(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(REGEX_INC) $(MPATROL_INC) $(OGR_INC) $(GDAL_INC) $(POSTGIS_INC) \
-	$(WWW_INC) $(MING_INC) $(ORACLESPATIAL_INC)
+	$(CURL_INC) $(MING_INC) $(ORACLESPATIAL_INC)
 
 # Link flags and shared libs only
 LDFLAGS=  $(RUNPATHS) -L. -lmap $(GD_LIB) $(PDF_LIB) $(TIFF_LIB) $(PROJ_LIB) \
           $(JPEG_LIB) $(EGIS_LIB) $(SDE_LIB) $(OGR_LIB) $(GDAL_LIB) \
-	  $(MING_LIB) $(POSTGIS_LIB) $(WWW_LIB) $(ORACLESPATIAL_LIB) \
+	  $(MING_LIB) $(POSTGIS_LIB) $(CURL_LIB) $(ORACLESPATIAL_LIB) \
 	  $(MPATROL_LIB) $(THREAD_LIB) $(XTRALIBS)
 
 # STATIC_LIBS is full filename with path of libs that will be statically linked

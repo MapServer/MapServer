@@ -43,14 +43,14 @@ PROJ=-DUSE_PROJ -DUSE_PROJ_API_H
 WMS=-DUSE_WMS_SVR
 
 #Use this flag to compile with WMS Client support
-#you need the libwww from http://www.w3.org/Library/.
+#you need the libcurl library from http://curl.haxx.se/library/c/
 #WMSCLIENT= -DUSE_WMS_LYR
 
-#WWWLIB_INC=-I../Libwww/library/src -I../libwww/modules/expat/xmlparse
-#WWWLIB_LIB=../Libwww/bin/wwwcore.lib ../Libwww/bin/wwwapp.lib ../Libwww/bin/wwwinit.lib ../Libwww/bin/wwwutils.lib
+#CURL_INC = -I../curl-7.10.2/include
+#CURL_LIB = ../curl-7.10.2/?????
 
 # Use -DUSE_WFS_SVR to compile with WFS server support, requires OGR and PROJ4
-# Use -DUSE_WFS_LYR to compile with WFS client support, requires libwww
+# Use -DUSE_WFS_LYR to compile with WFS client support, requires libcurl
 WFS=-DUSE_WFS_SVR
 
 
@@ -194,11 +194,11 @@ MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 #
 LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
 		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB) \
-                $(WWWLIB_LIB) $(ECW_LIB) $(MING_LIB) $(PDF_LIB)
+                $(CURL_LIB) $(ECW_LIB) $(MING_LIB) $(PDF_LIB)
 
 INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC) \
-                $(WWWLIB_INC) $(MING_INC) $(PDF_INC)
+                $(CURL_INC) $(MING_INC) $(PDF_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
 		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(GDAL) -DFEATURE_INFO_HTML $(WFS) $(PDF)

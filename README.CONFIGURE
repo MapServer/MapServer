@@ -58,7 +58,7 @@ Here is the list of available options as returned by "./configure --help":
   --with-oraclespatial[=ARG] Include OracleSpatial Support (ARG=yes/path to Oracle home)
   --with-ming[=ARG] Include MING/Flash Support (ARG=yes/path to Ming directory)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
-  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libwww
+  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
                           required).
   --enable-ignore-missing-data   Ignore missing data file errors at runtime
                                  (enabled by default).
@@ -371,22 +371,17 @@ OGC WMS Server Compatibility:
 OGC WMS Client Support:
 -----------------------
 
-  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libwww
+  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
                           required).
 
   This option enables MapServer's 'CONNECTIONTYPE WMS' to include layers
   from remote WMS servers in MapServer applications.
-  It requires PROJ4 and W3C's libwww.  GDAL is optional but highly 
-  recommended in order to support reprojection of layers obtained from
-  remote WMS servers.
+  It requires PROJ4 and libcurl 7.10 or more recent.  GDAL is optional 
+  but highly recommended in order to support reprojection of layers 
+  obtained from remote WMS servers.
 
   See the MapServer WMS Client HOWTO for more details at 
   http://mapserver.gis.umn.edu/doc/wms-client-howto.html
-
-  Note: A conflict has been reported on systems on which the rxposix 
-  library was installed (MapServer wants to use the system regex and 
-  libwww wants to use rxposix).  See MapServer bug#82 for the details
-  at http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=82
 
 
 Miscellaneous flags:

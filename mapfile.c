@@ -3303,6 +3303,9 @@ void msCleanup()
 #ifdef USE_PROJ
     pj_deallocate_grids();
 #endif
+#if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
+    msHTTPCleanup();
+#endif
 }
 
 void msFreeMap(mapObj *map) {

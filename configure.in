@@ -1250,13 +1250,13 @@ ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
-dnl WMS and WFS Client support - Requires PROJ.4 and libwww.
+dnl WMS and WFS Client support - Requires PROJ.4 and libcurl.
 dnl OGR recommended for WMS and required for WFS
 dnl ---------------------------------------------------------------------
 
 AC_CHECKING(whether we should include WMS Client Connections support...)
 AC_ARG_WITH(wmsclient,
-[  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libwww
+[  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
                           required).],,)
 
 if test "$with_wmsclient" = "no" ; then
@@ -1265,11 +1265,11 @@ if test "$with_wmsclient" = "no" ; then
 
 elif test -z "$PROJ_ENABLED" ; then
 
-  AC_MSG_RESULT([        OGC WMS Client Connections not enabled (PROJ.4 and libwww required).])
+  AC_MSG_RESULT([        OGC WMS Client Connections not enabled (PROJ.4 and libcurl required).])
 
 elif test "$with_wmsclient" = "yes" ; then
 
-  dnl we'll test for libwww below.
+  dnl we'll test for libcurl below.
   WMS_REQUESTED="yes"
 
 fi
@@ -1277,7 +1277,7 @@ fi
 
 AC_CHECKING(whether we should include WFS Client Connections support...)
 AC_ARG_WITH(wfsclient,
-[  --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libwww and
+[  --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).],,)
 
 if test "$with_wfsclient" = "no" ; then
@@ -1286,36 +1286,35 @@ if test "$with_wfsclient" = "no" ; then
 
 elif test -z "$PROJ_ENABLED" -o -z "$OGR_ENABLED"; then
 
-  AC_MSG_RESULT([        OGC WFS Client Connections not enabled (PROJ.4, libwwwand OGR required).])
+  AC_MSG_RESULT([        OGC WFS Client Connections not enabled (PROJ.4, libcurl and OGR required).])
 
 elif test "$with_wfsclient" = "yes" ; then
 
-  dnl we'll test for libwww below.
+  dnl we'll test for libcurl below.
   WFS_REQUESTED="yes"
 
 fi
 
 
 dnl Clear some cache variables
-unset ac_cv_path_LIBWWW_CONFIG
+unset ac_cv_path_LIBCURL_CONFIG
 
 if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
 
-  AC_PATH_PROG(LIBWWW_CONFIG, libwww-config, no)
+  AC_PATH_PROG(LIBCURL_CONFIG, curl-config, no)
 
-  if test "$LIBWWW_CONFIG" = "no" ; then
-    AC_MSG_ERROR([couldn't find libwww-config])
+  if test "$LIBCURL_CONFIG" = "no" ; then
+    AC_MSG_ERROR([couldn't find curl-config])
   fi
 
-  WWW_VER=`$LIBWWW_CONFIG --version`
+  CURL_VER=`$LIBCURL_CONFIG --version | awk '{print $2}'`
   
-  AC_MSG_RESULT([        found libwww version $WWW_VER])
+  AC_MSG_RESULT([        found libcurl version $CURL_VER])
   
-  dnl Need libwww 5.3.2 or more because of an infinite loop in older versions
-  if test -z "$WWW_VER" -o `expr "$WWW_VER" \< "5.3.2"` = 1; then
-    AC_MSG_ERROR([libwww version 5.3.2 or more recent is required.])
+  dnl Need libcurl 7.10.x or more because of an infinite loop in older versions
+  if test -z "$CURL_VER" -o `expr "$CURL_VER" \< "7.10"` = 1; then
+    AC_MSG_ERROR([libcurl version 7.10 or more recent is required.])
   fi
-
 
   if test "$WMS_REQUESTED" = "yes" ; then
     WMS_LYR_ENABLED="-DUSE_WMS_LYR"
@@ -1327,45 +1326,19 @@ if test "$WMS_REQUESTED" = "yes" -o "$WFS_REQUESTED" = "yes" ; then
     AC_MSG_RESULT([        OGC WFS Client Connections enabled ($WFS_LYR_ENABLED).])
   fi
 
-  WWW_INC=`$LIBWWW_CONFIG --cflags`
-  WWW_LIB=`$LIBWWW_CONFIG --libs`
-
-dnl
-dnl Check for possible conflict if libwww is used on a system with 
-dnl rxposix installed.  See MapServer bug#82
-dnl
-  AC_CHECKING(for potential conflict between system regex and rxposix...)
-  AC_CHECK_LIB(rx, regexec, RXPOSIX=yes,,,)
-
-AC_ARG_ENABLE(rxposix-conflict-error,
-[  --disable-rxposix-conflict-error Do not produce any configure error about
-                                 potential regex vs rxposix conflicts.
-                                 See MapServer bug 82],,)
-
-  if test "$RXPOSIX" = "yes" -a "$enable_rxposix_conflict_error" != "no" ; then
-      AC_MSG_ERROR([
-!!! Your system seems to have the 'rxposix' regex library installed   !!!
-!!! which could cause conflicts with the system regex if it gets      !!!
-!!! picked by libwww.                                                 !!!
-!!! See MapServer bug#82 for more details and possible solutions at   !!!
-!!! http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=82              !!!
-!!!                                                                   !!!
-!!! If you have dealt with this problem already then you may use      !!!
-!!! --disable-rxposix-conflict-error to disable this error            !!!
-|!! message and let configure complete without error.                 !!!])
-  fi
-
+  CURL_INC=`$LIBCURL_CONFIG --cflags`
+  CURL_LIB=`$LIBCURL_CONFIG --libs`
 
 fi
 
 AC_SUBST(WMS_LYR_ENABLED,$WMS_LYR_ENABLED)
 AC_SUBST(WFS_LYR_ENABLED,$WFS_LYR_ENABLED)
-AC_SUBST(WWW_INC,    $WWW_INC)
-AC_SUBST(WWW_LIB,    $WWW_LIB)
+AC_SUBST(CURL_INC,    $CURL_INC)
+AC_SUBST(CURL_LIB,    $CURL_LIB)
 
 ALL_ENABLED="$WMS_LYR_ENABLED $WFS_LYR_ENABLED $ALL_ENABLED"
-ALL_INC="$WWW_INC $ALL_INC"
-ALL_LIB="$WWW_LIB $ALL_LIB"
+ALL_INC="$CURL_INC $ALL_INC"
+ALL_LIB="$CURL_LIB $ALL_LIB"
 
 
 
