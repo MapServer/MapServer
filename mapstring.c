@@ -179,7 +179,7 @@ void trimEOL(char *string)
 {
   int i;
 
-  for(i=0;i<strlen(string);i++) {
+  for(i=0 ; string[i] != '\0'; i++) {
     if(string[i] == '\n') {
       string[i] = '\0'; /* Terminate the string at the newline */
       return;
