@@ -532,7 +532,7 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent)
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    *extent = layer->shpfile.bounds;
+    *extent = ((shapefileObj*)layer->layerinfo)->bounds;
     return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
