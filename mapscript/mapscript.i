@@ -1153,12 +1153,10 @@ memory.") const char * {
 
   ~imageObj() {
     msFreeImage(self);    
-    free(self);
   }
 
   void free() {
     msFreeImage(self);    
-    free(self);
   }
 
   void save(char *filename) {
