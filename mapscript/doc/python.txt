@@ -54,8 +54,6 @@ not yet been implemented for other languages.
 
 References to sections below will be added here as the documentation grows.
 
-imageObj_
-
 -----------------------------------------------------------------------------
  imageObj
 -----------------------------------------------------------------------------
@@ -131,3 +129,52 @@ saveToString() : string
 
         s = StringIO()
         imgobj.save(s)
+
+
+------------------------------------------------------------------------------
+ rectObj
+------------------------------------------------------------------------------
+
+Methods
+-------
+
+__contains__( pointObj point ) : boolean
+    Returns True if *point* is inside the rectangle, otherwise returns False.
+
+    ::
+
+        >>> r = mapscript.rectObj(0, 0, 1, 1)
+        >>> p = mapscript.pointObj(2, 0)       # outside
+        >>> p in r
+        False
+        >>> p not in r
+        True
+
+    
+__str__() : string
+    Return a string formatted like
+
+    ::
+
+        { 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }
+
+    
+    with the bounding values substituted appropriately.  Usage example:
+
+    ::
+
+        >>> r = mapscript.rectObj(0, 0, 1, 1)
+        >>> str(r)
+        { 'minx': 0.000000 , 'miny': 0.000000 , 'maxx': 1.000000 , 'maxy': 1.000000 }
+
+
+    Note that the return value can be conveniently eval'd into a Python
+    dictionary:
+
+    ::
+
+        >>> r_dict = eval(str(r))
+        >>> r_dict['minx']
+        0.000000
+
+

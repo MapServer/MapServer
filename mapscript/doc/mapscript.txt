@@ -1519,6 +1519,22 @@ project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
 toPolygon() : shapeObj_
     Convert to a polygon of five vertices.
 
+toString() : string
+    Return a string formatted like
+
+    ::
+
+        { 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }
+
+    
+    with the bounding values substituted appropriately.  Python users can
+    get the same effect via the rectObj __str__ method
+
+    ::
+
+        >>> r = mapscript.rectObj(0, 0, 1, 1)
+        >>> str(r)
+        { 'minx': 0.000000 , 'miny': 0.000000 , 'maxx': 1.000000 , 'maxy': 1.000000 }
 
 -----------------------------------------------------------------------------
  referenceMapObj
