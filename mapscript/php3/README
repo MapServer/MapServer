@@ -87,7 +87,7 @@ and the MapServer Map File documentation at:
         MS_TILED_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL
 
     Output Image Types:
-        MS_GIF, MS_PNG, MS_JPEG, MS_WBMP
+        MS_GIF, MS_PNG, MS_JPEG, MS_WBMP, MS_SWF
 
 
  Functions:
@@ -404,7 +404,7 @@ and the MapServer Map File documentation at:
    double labelminscale
    double labelmaxscale
    int    maxfeatures
-   int    offsite
+   color    offsite
    int    annotate
    int    transform
    int    labelcache
@@ -565,26 +565,16 @@ and the MapServer Map File documentation at:
  Members:
 
    string name
+   string title
    int    type
    int    status      (MS_ON, MS_OFF or MS_DELETE)
-   int    color
-   int    backgroundcolor
-   int    outlinecolor
-   int    overlaycolor
-   int    overlaybackgroundcolor
-   int    overlayoutlinecolor
-   int    symbol
-   string symbolname
-   int    size
-   int    minsize
-   int    maxsize
-   int    overlaysymbol
-   string overlaysymbolname
-   int    overlaysize
-   int    overlayminsize
-   int    overlaymaxsize
+   int    minscale
+   int    maxscale
+   string template
    labelObj label
-
+   sytleobj style
+   int    numstyles
+         
  Methods:
 
    int set(string property_name, new_value)
@@ -669,13 +659,13 @@ and the MapServer Map File documentation at:
 
    string font
    int    type
-   int    color
-   int    outlinecolor
-   int    shadowcolor
+   colorObj    color
+   colorObj    outlinecolor
+   colorObj    shadowcolor
    int    shadowsizex
    int    shadowsizey
-   int    backgroundcolor
-   int    backgroundshadowcolor
+   colorObj    backgroundcolor
+   colorObj    backgroundshadowcolor
    int    backgroundshadowsizex
    int    backgroundshadowsizey
    int    size
@@ -1050,9 +1040,9 @@ Constructor:
    int width;
    int style;      
    int intervals;
-   int color;
-   int backgroundcolor;            
-   int outlinecolor;
+   colorObj color;
+   colorObj backgroundcolor;            
+   colorObj outlinecolor;
    int units;
    int status; //MS_ON, MS_OFF, MS_EMBED
    int position; //for embeded scalebars, MS_UL, MS_UC, ...
@@ -1085,7 +1075,7 @@ Constructor:
    int keysizey;
    int keyspacingx;
    int keyspacingy;
-   int outlinecolor; //Color of outline of box, -1 for no outline
+   colorObj outlinecolor; //Color of outline of box, -1 for no outline
    int status; //MS_ON, MS_OFF, MS_EMBED
    int position; //for embeded legends, MS_UL, MS_UC, ...
    int transparent;
@@ -1101,4 +1091,37 @@ Constructor:
         Set object property to a new value. Returns -1 on error.
 
 
+styleObj Class
+ -----------
+
+ Constructor:
+
+   Instances of styleObj are always embedded inside the classObj.
+
+   styleObj ms_newStyleObj(classObj class)
+
+ Members:
+
+  int           symbol
+  string        symbolname
+  int           size
+  int           sizescaled
+  int           minsize 
+  int           maxsize 
+  int           offsetx
+  int           offsety
+  colorObj      color
+  colorObj      backgroundcolor
+  colorObj      outlinecolor
+        
+  Methods:
+
+   int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+ 
                       --------------------------
+
+
+
+
+
