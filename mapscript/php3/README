@@ -607,7 +607,6 @@ and the MapServer Map File documentation at:
    int    maxscale
    string template
    labelObj label
-   sytleobj style
    int    numstyles
          
  Methods:
