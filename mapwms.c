@@ -391,6 +391,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf(" [\n");
 
   // some mapserver specific declarations will go here
+  printf(" <!ELEMENT VendorSpecificCapabilities EMPTY>\n");
 
   printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
 
@@ -419,7 +420,36 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
       msFreeCharArray(keywords, numkeywords);
     }    
   }
-  // need to add contact information here
+  
+  // contact information is a required element in 1.0.7+
+  if (strcasecmp(wmtver, "1.0.0") != 0) {
+    printf("  <ContactInformation>\n");
+    if(map->web.metadata && msLookupHashTable(map->web.metadata, "ContactPerson") && msLookupHashTable(map->web.metadata, "ContactOrganization")) {
+      printf("    <ContactPersonPrimary>\n");
+      printf("      <ContactPerson>%s</ContactPerson>\n", msLookupHashTable(map->web.metadata, "ContactPerson"));
+      printf("      <ContactOrganization>%s</ContactOrganization>\n", msLookupHashTable(map->web.metadata, "ContactOrganization"));
+      printf("    </ContactPersonPrimary>\n");
+    }
+    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "contactposition"))) printf("    <ContactPosition>%s</ContactPosition>\n", value);
+    if(map->web.metadata && msLookupHashTable(map->web.metadata, "addresstype") && 
+       msLookupHashTable(map->web.metadata, "address") && msLookupHashTable(map->web.metadata, "city") &&
+       msLookupHashTable(map->web.metadata, "stateorprovince") && msLookupHashTable(map->web.metadata, "postcode") &&
+       msLookupHashTable(map->web.metadata, "country")) {
+      printf("    <ContactAddress>\n");
+      printf("      <AddressType>%s</AddressType>\n", msLookupHashTable(map->web.metadata, "addresstype"));
+      printf("      <Address>%s</Address>\n", msLookupHashTable(map->web.metadata, "address"));
+      printf("      <City>%s</City>\n", msLookupHashTable(map->web.metadata, "City"));
+      printf("      <StateOrProvince>%s</StateOrProvince>\n", msLookupHashTable(map->web.metadata, "StateOrProvince"));
+      printf("      <PostCode>%s</PostCode>\n", msLookupHashTable(map->web.metadata, "PostCode"));
+      printf("      <Country>%s</County>\n", msLookupHashTable(map->web.metadata, "Country"));
+      printf("    </ContactAddress>\n");
+    }
+    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "ContactVoiceTelephone"))) printf("    <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n", value);
+    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "ContactFacsimileTelephone"))) printf("    <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", value);
+    if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "ContactElectronicMailAddress"))) printf("    <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", value);
+    printf("  </ContactInformation>\n");
+  }
+
   if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "accessconstraints"))) printf("  <AccessConstraints>%s</AccessConstraints>\n", value);
   if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "fees"))) printf("  <Fees>%s</Fees>\n", value);
 
