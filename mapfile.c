@@ -1317,7 +1317,6 @@ int initLayer(layerObj *layer)
   layer->name = NULL;
   layer->group = NULL;
   layer->description = NULL;
-  layer->legend = NULL;
   layer->status = MS_OFF;
   layer->data = NULL;
 
@@ -1389,7 +1388,6 @@ void freeLayer(layerObj *layer) {
   free(layer->group);
   free(layer->data);
   free(layer->description);
-  free(layer->legend);
   free(layer->classitem);
   free(layer->labelitem);
   free(layer->labelsizeitem);
@@ -1523,9 +1521,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(LABELSIZEITEM):
       if((layer->labelsizeitem = getString()) == NULL) return(-1);
-      break;
-    case(LEGEND):
-      if((layer->legend = getString()) == NULL) return(-1);
       break;
     case(MAXFEATURES):
       if(getInteger(&(layer->maxfeatures)) == -1) return(-1);
@@ -1722,10 +1717,6 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     free(layer->labelsizeitem);
     layer->labelsizeitem = strdup(value);
     break;
-  case(LEGEND):
-    free(layer->legend);
-    layer->legend = strdup(value);
-    break;
   case(MAXFEATURES):
     msyystate = 2; msyystring = value;
     if(getInteger(&(layer->maxfeatures)) == -1) return;
@@ -1829,7 +1820,6 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(layer->labelminscale > -1) fprintf(stream, "    LABELMINSCALE %g\n", layer->labelminscale);
   if(layer->labelrequires) fprintf(stream, "    LABELREQUIRES \"%s\"\n", layer->labelrequires);
   if(layer->labelsizeitem) fprintf(stream, "    LABELSIZEITEM \"%s\"\n", layer->labelsizeitem);
-  if(layer->legend) fprintf(stream, "    LEGEND \"%s\"\n", layer->legend);
   if(layer->maxfeatures > 0) fprintf(stream, "    MAXFEATURES %d\n", layer->maxfeatures);
   if(layer->maxscale > -1) fprintf(stream, "    MAXSCALE %g\n", layer->maxscale); 
   if(layer->minscale > -1) fprintf(stream, "    MINSCALE %g\n", layer->minscale);

@@ -1020,12 +1020,6 @@ char *processLine(char *instr, int mode)
       outstr = gsub(outstr, repstr, Map->layers[i].description);
     else
       outstr = gsub(outstr, repstr, "");
-    
-    sprintf(repstr, "[%s_leg]", Map->layers[i].name);
-    if(Map->layers[i].status == MS_ON)
-      outstr = gsub(outstr, repstr, Map->layers[i].legend);
-    else
-      outstr = gsub(outstr, repstr, "");
   }
 
   for(i=0;i<Map->numlayers;i++) { // Set form widgets (i.e. checkboxes, radio and select lists), note that default layers don't show up here

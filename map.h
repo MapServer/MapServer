@@ -133,6 +133,13 @@ enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP
 
+typedef struct {
+  char *title;
+  char *abstract;
+  char *keywords;
+  char *url;
+} metadataObj;
+
 #ifndef SWIG
 // FONTSET OBJECT - used to hold aliases for TRUETYPE fonts
 typedef struct {
@@ -448,7 +455,6 @@ typedef struct {
   char *group; // shouldn't be unique it's supposed to be a group right?
 
   char *description; // layer title or description
-  char *legend; // legend graphic text
 
   int status; // on or off
   char *data; // filename, can be relative or full path
