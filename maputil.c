@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.168  2005/01/20 01:59:19  sean
+ * protect against labelitemindex < 0 take 2, > 0 changed to >= 0
+ *
  * Revision 1.167  2005/01/20 00:53:47  sean
  * protect against labelitemindex < 0
  *
@@ -363,7 +366,7 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
       break;
     }
   } else {
-    if (shape->values && layer->labelitemindex > 0)
+    if (shape->values && layer->labelitemindex >= 0)
         tmpstr = strdup(shape->values[layer->labelitemindex]);
   }
 
