@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.83  2004/11/11 19:06:36  sdlime
+ * Applied patch for bug 1003 (mapshape and projected layers).
+ *
  * Revision 1.82  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -1103,6 +1106,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
 int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
 {
   int i, found=0;
+  rectObj tmpBounds;
   
   for(i=0; i<map->numlayers; i++) {
     layerObj *lp;
@@ -1111,10 +1115,15 @@ int msGetQueryResultBounds(mapObj *map, rectObj *bounds)
     if(!lp->resultcache) continue;
     if(lp->resultcache->numresults <= 0) continue;
 
+    tmpBounds = lp->resultcache->bounds;
+    #ifdef USE_PROJ  
+    if(lp->project && msProjectionsDiffer(&(lp->projection), &(map->projection)))  
+        msProjectRect(&(lp->projection), &(map->projection), &tmpBounds);
+    #endif
     if(found == 0) {
-      *bounds = lp->resultcache->bounds;
+      *bounds = tmpBounds;
     } else {
-      msMergeRect(bounds, &(lp->resultcache->bounds));
+      msMergeRect(bounds, &tmpBounds);
     }
 
     found++;
