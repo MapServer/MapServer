@@ -169,80 +169,9 @@ module itself.
  Mapscript Variables
 =============================================================================
 
------------------------------------------------------------------------------
- General
------------------------------------------------------------------------------
+Refer to map.h, error.h for module symbols and their values.  No point in
+duplicating them here as they might get out of synch.
 
-=========== ======
-NAME         VALUE
------------ ------
-MS_VERSION     4.1
-MS_TRUE          1
-MS_FALSE         0
-MS_ON            1
-MS_OFF           0
-MS_DEFAULT       2
-MS_EMBED         3
-MS_DELETE        4
-MS_YES           1
-MS_NO            0
-MS_SINGLE        0
-MS_MULTIPLE      1
-=========== ======
-
------------------------------------------------------------------------------
- MS_UNITS
------------------------------------------------------------------------------
-
-============= =====
-NAME          VALUE
-------------- -----
-MS_INCHES         0
-MS_FEET           1
-MS_MILES          2
-MS_METERS         3
-MS_KILOMETERS     4
-MS_DD             5
-MS_PIXELS         6
-============= =====
-
------------------------------------------------------------------------------
- MS_LAYER_TYPE
------------------------------------------------------------------------------
-
-=================== =====
-NAME                VALUE
-------------------- -----
-MS_LAYER_POINT          0
-MS_LAYER_LINE           1
-MS_LAYER_POLYGON        2 
-MS_LAYER_RASTER         3 
-MS_LAYER_ANNOTATION     4  
-MS_LAYER_QUERY          5
-MS_LAYER_CIRCLE         6
-MS_LAYER_TILEINDEX      7 
-=================== =====
-
------------------------------------------------------------------------------
- MS_CONNECTION_TYPE
------------------------------------------------------------------------------
-
-================== =====
-NAME               VALUE
------------------- -----
-MS_INLINE              0
-MS_SHAPEFILE           1
-MS_TILED_SHAPEFILE     2
-MS_SDE                 3
-MS_OGR                 4
-MS_UNUSED_1            5
-MS_POSTGIS             6
-MS_WMS                 7
-MS_ORACLESPATIAL       8
-MS_WFS                 9
-MS_GRATICULE          10
-MS_MYGIS              11 
-================== =====
 
 =============================================================================
  Mapscript Functions
@@ -687,7 +616,7 @@ connection : string
     Layer connection or DSN.
 
 connectiontype : int
-    See MS_CONNECTION_TYPE_.
+    See MS_CONNECTION_TYPE in map.h for possible values.
 
 data : string
     Layer data definition, values depend upon connectiontype.
@@ -774,7 +703,7 @@ requires : string
     Logical expression.
     
 sizeunits : int
-    Units of class size values.  See MS_UNITS_.
+    Units of class size values.  See MS_UNITS in map.h.
 
 status : int
     MS_ON, MS_OFF, or MS_DEFAULT.
@@ -799,7 +728,7 @@ tolerance : float
     Search buffer for point and line queries.
 
 toleranceunits : int
-    See MS_UNITS_.
+    See MS_UNITS in map.h.
 
 transform : int
     Whether or not layer data is to be transformed to image units.  
@@ -810,10 +739,10 @@ transparency : int
     Layer transparency in range [0, 100].
     
 type : int
-    See MS_LAYER_TYPE_.
+    See MS_LAYER_TYPE in map.h.
     
 units : int
-    Units of the layer.  See MS_UNITS_.
+    Units of the layer.  See MS_UNITS in map.h.
 
 Methods
 -------
@@ -1228,7 +1157,7 @@ getConfigOption( string key ) : string
     Fetches the value of the requested configuration key if set.  Returns
     NULL if the key is not set.  
 
-getFirstMetaDataKey() : string
+getFirstMetaDataKey( ) : string
     Returns the first key in the web.metadata hash table.  With
     getNextMetaDataKey(), provides an opaque iterator over keys.
     
@@ -1240,13 +1169,16 @@ getNextMetaDataKey( string lastkey ) : string
     *lastkey* is the last valid key.  If *lastkey* is NULL, returns the
     first key of the metadata hash table.
 
-    
 getOutputFormat( string imagetype ) : outputFormatObj_
     Return the output format corresponding to driver name *imagetype* or
     to format name *imagetype*.  This works exactly the same as the
     IMAGETYPE directive in a mapfile, is case insensitive and allows 
     an output format to be found either by driver (like 'GD/PNG') or
     name (like 'PNG24').
+
+loadOWSParameters( string version, OWSRequest_ request ) : int
+    Load OWS request parameters (BBOX, LAYERS, &c.) into map.  Returns
+    MS_SUCCESS or MS_FAILURE.
 
 removeMetaData( string key ) : int
     Delete the web.metadata hash at *key*.  Returns MS_SUCCESS or
@@ -1311,30 +1243,96 @@ Methods
 
 .. _new outputFormatObj:
 
-new outputFormatObj(string driver [, string name=driver]) : outputFormatObj_
+new outputFormatObj( string driver [, string name=driver ] ) : outputFormatObj_
     Create new instance.  If *name* is not provided, the value of *driver*
     is used as a name.
     
 .. _getOption:
 
-getOption(string key [, string value=""]) : string
+getOption( string key [, string value="" ] ) : string
     Return the option at *key* or *value* if *key* is not a valid
     hash index.
 
 .. _setExtension:
 
-setExtension(string extension) : void
+setExtension( string extension ) : void
     Set file extension for output format such as 'png' or 'jpg'.  Method 
     could probably be deprecated since the extension attribute is mutable.
 
-setMimetype(string mimetype) : void
+setMimetype( string mimetype ) : void
     Set mimetype for output format such as 'image/png' or 'image/jpeg'.
     Method could probably be deprecated since the mimetype attribute is
     mutable.
     
-setOption(string key, string value) : void
+setOption( string key, string value ) : void
     Set the option at *key* to *value*.
     
+
+-----------------------------------------------------------------------------
+ OWSRequest
+-----------------------------------------------------------------------------
+
+Not associated with other mapscript classes.  Serves as a message
+intermediary between an application and MapServer's OWS capabilities.
+Using it permits creation of lightweight WMS services:
+
+::
+
+    wms_map = mapscript.mapObj('wms.map')
+    wms_request = mapscript.OWSRequest()
+
+    # Convert application request parameters (req.args)
+    for param, value in req.args.items():
+        wms_request.setParam(param, value)
+    
+    # Map loads parameters from OWSRequest, adjusting its SRS, extents,
+    # active layers accordingly
+    wms_map.loadWMSRequest('1.1.0', wms_request)
+
+    # Render the Map
+    img = wms_map.draw()
+
+
+Attributes
+----------
+
+NumParams : int immutable
+    Number of request parameters.  Eventually should be changed to numparams
+    lowercase like other attributes.
+
+postrequest : string
+    **TODO**
+    
+type : int
+    MS_GET_REQUEST or MS_POST_REQUEST.
+
+    
+Methods
+-------
+
+new OWSRequest( ) : OWSRequest
+    Create a new instance.
+
+setParameter( string name, string value ) : void
+    Set a request parameter.  For example
+
+::
+    
+    request.setParameter('REQUEST', 'GetMap')
+    request.setParameter('BBOX', '-107.0,40.0,-106.0,41.0')
+
+.. note: MapServer's OWSRequest supports only single valued parameters.
+
+getName( int index ) : string
+    Return the name of the parameter at *index* in the request's array
+    of parameter names.
+
+getValue( int index ) : string
+    Return the value of the parameter at *index* in the request's array
+    of parameter values.
+
+getValueByName( string name) : string
+    Return the value associated with the parameter *name*.
 
 -----------------------------------------------------------------------------
  pointObj
@@ -1365,7 +1363,7 @@ Methods
 
 .. _new pointObj:
 
-new pointObj( [float x=0.0, float y=0.0, float m=2e-38] ) : pointObj
+new pointObj( [ float x=0.0, float y=0.0, float m=2e-38 ] ) : pointObj
     Create new instance.  Easting, northing, and measure arguments are
     optional.
 
@@ -1397,7 +1395,7 @@ project( projectionObj_ proj_in, projectionObj_ proj_out ) : int
     Reproject point from *proj_in* to *proj_out*.  Transformation
     is done in place.  Returns MS_SUCCESS or MS_FAILURE.
 
-setXY( float x, float y [, float m=2e-38] ) : int
+setXY( float x, float y [, float m=2e-38 ] ) : int
     Set spatial coordinate and, optionally, measure values simultaneously.
     The measure will be set only if the value of *m* is greater than the
     ESRI measure no-data value of 1e-38.  Returns MS_SUCCESS or MS_FAILURE.
@@ -1619,7 +1617,7 @@ style : int
     0 or 1.
 
 units : int
-    See MS_UNITS_.
+    See MS_UNITS in map.h.
     
 width : int
     Pixels.
