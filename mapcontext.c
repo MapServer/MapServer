@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.17  2002/11/20 19:08:55  julien
+ * Support onlineResource of version 0.1.2
+ *
  * Revision 1.16  2002/11/20 17:17:21  julien
  * Support version 0.1.2 of MapContext
  * Remove warning from tags
@@ -618,32 +621,70 @@ int msLoadMapContext(mapObj *map, char *filename)
                                           &(layer->metadata), "wms_abstract");
 
               // Server
-              if(msGetMapContextXMLStringValueDecode(psLayer, 
-                                     "Server.OnlineResource.xlink:href", 
-                                     &(layer->connection)) == MS_FAILURE)
+              if(strcasecmp(pszVersion, "0.1.4") >= 0)
               {
-                  CPLDestroyXMLNode(psRoot);
-                  msSetError(MS_MAPCONTEXTERR, 
+                  if(msGetMapContextXMLStringValueDecode(psLayer, 
+                                           "Server.OnlineResource.xlink:href", 
+                                           &(layer->connection)) == MS_FAILURE)
+                  {
+                      CPLDestroyXMLNode(psRoot);
+                      msSetError(MS_MAPCONTEXTERR, 
               "Mandatory data Server.OnlineResource.xlink:href missing in %s.",
-                             "msLoadMapContext()", filename);
-                  return MS_FAILURE;
+                                 "msLoadMapContext()", filename);
+                      return MS_FAILURE;
+                  }
+                  else
+                  {
+                      msGetMapContextXMLHashValueDecode(psLayer, 
+                                     "Server.OnlineResource.xlink:href", 
+                                     &(layer->metadata), "wms_onlineresource");
+                      layer->connectiontype = MS_WMS;
+                  }
               }
               else
               {
-                  msGetMapContextXMLHashValueDecode(psLayer, 
-                                     "Server.OnlineResource.xlink:href", 
+                  if(msGetMapContextXMLStringValueDecode(psLayer, 
+                                           "Server.onlineResource", 
+                                           &(layer->connection)) == MS_FAILURE)
+                  {
+                      CPLDestroyXMLNode(psRoot);
+                      msSetError(MS_MAPCONTEXTERR, 
+                         "Mandatory data Server.onlineResource missing in %s.",
+                                 "msLoadMapContext()", filename);
+                      return MS_FAILURE;
+                  }
+                  else
+                  {
+                      msGetMapContextXMLHashValueDecode(psLayer, 
+                                                      "Server.onlineResource", 
                                      &(layer->metadata), "wms_onlineresource");
-                  layer->connectiontype = MS_WMS;
+                      layer->connectiontype = MS_WMS;
+                  }
               }
 
-              if(msGetMapContextXMLHashValue(psLayer, "Server.version", 
-                       &(layer->metadata), "wms_server_version") == MS_FAILURE)
+              if(strcasecmp(pszVersion, "0.1.4") >= 0)
               {
-                  CPLDestroyXMLNode(psRoot);
-                  msSetError(MS_MAPCONTEXTERR, 
-                             "Mandatory data Server.version missing in %s.",
-                             "msLoadMapContext()", filename);
-                  return MS_FAILURE;
+                  if(msGetMapContextXMLHashValue(psLayer, "Server.version", 
+                       &(layer->metadata), "wms_server_version") == MS_FAILURE)
+                  {
+                      CPLDestroyXMLNode(psRoot);
+                      msSetError(MS_MAPCONTEXTERR, 
+                                "Mandatory data Server.version missing in %s.",
+                                "msLoadMapContext()", filename);
+                      return MS_FAILURE;
+                  }
+              }
+              else
+              {
+                  if(msGetMapContextXMLHashValue(psLayer, "Server.wmtver", 
+                       &(layer->metadata), "wms_server_version") == MS_FAILURE)
+                  {
+                      CPLDestroyXMLNode(psRoot);
+                      msSetError(MS_MAPCONTEXTERR, 
+                                "Mandatory data Server.wmtver missing in %s.",
+                                "msLoadMapContext()", filename);
+                      return MS_FAILURE;
+                  }
               }
 
               // Projection
@@ -901,7 +942,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                                             layer->name);
                       // SLD
                       pszValue = (char*)CPLGetXMLValue(psStyle, 
-                                        "SLD.OnlineResource.xlink:href", NULL);
+                                        "SLD.onlineResource", NULL);
                       if(pszValue != NULL)
                       {
                           pszStyle = (char*)malloc(strlen(pszStyleName)+15);
@@ -912,7 +953,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                       }
                       // LegendURL
                       pszValue=(char*)CPLGetXMLValue(psStyle,
-                                   "LegendURL.OnlineResource.xlink:href",NULL);
+                                   "LegendURL.onlineResource",NULL);
                       if(pszValue != NULL)
                       {
                           pszStyle = (char*)malloc(strlen(pszStyleName)+25);
@@ -925,7 +966,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                           pszValue3=(char*)CPLGetXMLValue(psStyle,
                                                         "LegendURL.format","");
                           pszValue4=(char*)CPLGetXMLValue(psStyle, 
-                                     "LegendURL.OnlineResource.xlink:href","");
+                                                "LegendURL.onlineResource","");
                           msDecodeHTMLEntities(pszValue4);
                           pszValue = (char*)malloc(strlen(pszValue1)+
                                                    strlen(pszValue2)+
