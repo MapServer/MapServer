@@ -201,8 +201,7 @@ int msCopyHashTable(hashTableObj dst, hashTableObj src){
  **********************************************************************/
 
 int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map) {
-  dst->filename = strdup(src->filename);
-  //copyStringProperty(&(dst->filename), src->filename);
+  if (src->filename != NULL) dst->filename = strdup(src->filename);
   copyProperty(&(dst->numfonts), &(src->numfonts), sizeof(int));
   if (src->fonts) {
     dst->fonts = msCreateHashTable();

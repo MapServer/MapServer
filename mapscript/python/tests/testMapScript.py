@@ -15,6 +15,7 @@ sys.path.insert(0, 'build/lib.' + platformdir)
 
 # Our testing mapfile
 testMapfile = '../../tests/test.map'
+testNoFontSetMapfile = '../../tests/test_nofontset.map'
 
 # Import all from mapscript
 from mapscript import *
@@ -201,6 +202,22 @@ class ClonedFontSetTestCase(unittest.TestCase):
     def testGetFontSetFile(self):
         file = self.mapobj1.fontset.filename
         assert file == 'fonts.txt', file
+
+class ClonedNoFontSetTestCase(unittest.TestCase):
+    """ Test whether a mapObj with no fontset can be cloned.  Added in
+    response to MapServer bug 470.
+    
+    http://mapserver.gis.umn.edu/bugs/show_bug.cgi?id=470
+    """
+
+    def setUp(self):
+        mapobj = mapObj(testNoFontSetMapfile)
+        self.mapobj1 = mapobj.clone()
+    def tearDown(self):
+        self.mapobj1 = None
+    def testGetFontSetFile(self):
+        file = self.mapobj1.fontset.filename
+        assert file == None, file
 
 class EmptyMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
