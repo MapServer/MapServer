@@ -433,14 +433,6 @@ PHP/MapScript module:
   cases it is safe to have both PHP and MapServer compiled with the same 
   libraries (e.g. GD, regex, etc.) as long as they are of the same versions.
 
-  However, there is at least one exception that we know of: the Freetype 
-  library.  You cannot have Freetype enabled in both PHP and MapServer 
-  because of a conflict with the gdttf.c and gdcache.c files that are 
-  included in both PHP and MapServer but are not identical.  We may try to
-  fix that conflict in the future, but in the meantime, one of PHP or 
-  MapServer has to be compiled using --without-ttf.  This is especially
-  important with PHP4 because it includes TTF support by default.
-
 
 Perl MapScript Module:
 ----------------------
