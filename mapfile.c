@@ -3328,6 +3328,12 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       msyystate = 2; msyystring = value;
       if(getInteger(&(map->width)) == -1) break;
       if(getInteger(&(map->height)) == -1) break;
+
+      if(map->width > MS_MAXIMGSIZE || map->height > MS_MAXIMGSIZE || map->width < 0 || map->height < 0) {
+	msSetError(MS_WEBERR, "Image size out of range.", "msLoadMapString()");
+	break;
+      }
+
       break;
     case(SHAPEPATH):
       msFree(map->shapepath);

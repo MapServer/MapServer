@@ -46,7 +46,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "3.5 (beta)"
+#define MS_VERSION "3.5"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
@@ -80,6 +80,8 @@ extern "C" {
 
 #define MS_BUFFER_LENGTH 2048 /* maximum input line length */
 #define MS_URL_LENGTH 1024
+
+#define MS_MAXIMGSIZE 1024
 
 #define MS_MAXCLASSES 50
 #define MS_MAXQUERIES MS_MAXCLASSES

@@ -225,8 +225,6 @@ clean:
 	del *.exp
 	del *.ilk
 	cd gd-1.2
-	 nmake -f makefile.nt clean
-	 cd ..
-	cd gdft
-	 nmake -f makefile.vc clean
-	 cd ..
+	nmake -f makefile.nt clean
+	cd ..
+

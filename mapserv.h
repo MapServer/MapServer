@@ -15,9 +15,6 @@
 /*
 ** Defines
 */
-#define MAXIMGSIZE 1024
-#define MAXCLICK 2*MAXIMGSIZE
-#define MINCLICK -MAXCLICK
 #define MAXZOOM 25
 #define MINZOOM -25
 #define NUMEXP "[-]?(([0-9]+)|([0-9]*[.][0-9]+)([eE][-+]?[0-9]+)?)"

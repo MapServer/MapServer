@@ -421,7 +421,7 @@ void loadForm()
 
     if(strcasecmp(ParamNames[i],"img.x") == 0) { // mouse click, in pieces
       ImgPnt.x = getNumeric(re, ParamValues[i]);
-      if((ImgPnt.x > MAXCLICK) || (ImgPnt.x < MINCLICK)) {
+      if((ImgPnt.x > (2*MS_MAXIMGSIZE)) || (ImgPnt.x < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
       }
@@ -431,7 +431,7 @@ void loadForm()
     }
     if(strcasecmp(ParamNames[i],"img.y") == 0) {
       ImgPnt.y = getNumeric(re, ParamValues[i]);      
-      if((ImgPnt.y > MAXCLICK) || (ImgPnt.y < MINCLICK)) {
+      if((ImgPnt.y > (2*MS_MAXIMGSIZE)) || (ImgPnt.y < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
       }
@@ -461,7 +461,7 @@ void loadForm()
 
       msFreeCharArray(tokens, 2);
 
-      if((ImgPnt.x > MAXCLICK) || (ImgPnt.x < MINCLICK) || (ImgPnt.y > MAXCLICK) || (ImgPnt.y < MINCLICK)) {
+      if((ImgPnt.x > (2*MS_MAXIMGSIZE)) || (ImgPnt.x < (-2*MS_MAXIMGSIZE)) || (ImgPnt.y > (2*MS_MAXIMGSIZE)) || (ImgPnt.y < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Reference map coordinate out of range.", "loadForm()");
 	writeError();
       }
@@ -532,7 +532,7 @@ void loadForm()
 
     if(strcasecmp(ParamNames[i],"ref.x") == 0) { // mouse click in reference image, in pieces
       RefPnt.x = getNumeric(re, ParamValues[i]);      
-      if((RefPnt.x > MAXCLICK) || (RefPnt.x < MINCLICK)) {
+      if((RefPnt.x > (2*MS_MAXIMGSIZE)) || (RefPnt.x < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
       }
@@ -541,7 +541,7 @@ void loadForm()
     }
     if(strcasecmp(ParamNames[i],"ref.y") == 0) {
       RefPnt.y = getNumeric(re, ParamValues[i]); 
-      if((RefPnt.y > MAXCLICK) || (RefPnt.y < MINCLICK)) {
+      if((RefPnt.y > (2*MS_MAXIMGSIZE)) || (RefPnt.y < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
 	writeError();
       }
@@ -567,7 +567,7 @@ void loadForm()
 
       msFreeCharArray(tokens, 2);
       
-      if((RefPnt.x > MAXCLICK) || (RefPnt.x < MINCLICK) || (RefPnt.y > MAXCLICK) || (RefPnt.y < MINCLICK)) {
+      if((RefPnt.x > (2*MS_MAXIMGSIZE)) || (RefPnt.x < (-2*MS_MAXIMGSIZE)) || (RefPnt.y > (2*MS_MAXIMGSIZE)) || (RefPnt.y < (-2*MS_MAXIMGSIZE))) {
 	msSetError(MS_WEBERR, "Reference map coordinate out of range.", "loadForm()");
 	writeError();
       }
@@ -612,7 +612,7 @@ void loadForm()
 
       msFreeCharArray(tokens, 2);
       
-      if(ImgCols > MAXIMGSIZE || ImgRows > MAXIMGSIZE || ImgCols < 0 || ImgRows < 0) {
+      if(ImgCols > MS_MAXIMGSIZE || ImgRows > MS_MAXIMGSIZE || ImgCols < 0 || ImgRows < 0) {
 	msSetError(MS_WEBERR, "Image size out of range.", "loadForm()");
 	writeError();
       }
@@ -638,7 +638,7 @@ void loadForm()
 
       msFreeCharArray(tokens, 2);
       
-      if(Map->width > MAXIMGSIZE || Map->height > MAXIMGSIZE || Map->width < 0 || Map->height < 0) {
+      if(Map->width > MS_MAXIMGSIZE || Map->height > MS_MAXIMGSIZE || Map->width < 0 || Map->height < 0) {
 	msSetError(MS_WEBERR, "Image size out of range.", "loadForm()");
 	writeError();
       }
