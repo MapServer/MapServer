@@ -613,7 +613,7 @@ char *msHashString(const char *pszStr)
 {
     unsigned char sums[HASH_SIZE] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     char *pszOutBuf = NULL;
-    int i=0, j=0;
+    int i=0;
 
     pszOutBuf = (char*)malloc( (HASH_SIZE*2+1)*sizeof(char) );
     if (pszOutBuf == NULL)
