@@ -1249,7 +1249,7 @@ if (layer->debug)
 
 				find_bounds(shape);
 
-				PQexec(layerinfo->conn, "CLOSE mycursor");
+				PQexec(layerinfo->conn, "CLOSE mycursor2");
 
 				 	query_result = PQexec(layerinfo->conn, "ROLLBACK");
 				    if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
@@ -1268,7 +1268,7 @@ if (layer->debug)
 		}
 		else
 		{
-			PQexec(layerinfo->conn, "CLOSE mycursor");
+			PQexec(layerinfo->conn, "CLOSE mycursor2");
 
 			query_result = PQexec(layerinfo->conn, "ROLLBACK");
 			if (!(query_result) || PQresultStatus(query_result) != PGRES_COMMAND_OK)
