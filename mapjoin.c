@@ -468,9 +468,8 @@ MYSQL_RES *msMySQLQuery(char *q, MYSQL *conn)
     }
 		return qresult;
 }
-#endif
 
-#ifdef USE_MYGIS
+//
 // mysql join functions
 //
 typedef struct {
@@ -488,9 +487,6 @@ typedef struct {
 
 int msMySQLJoinConnect(layerObj *layer, joinObj *join) 
 {
-#ifdef MYDEBUG
-   MYDEBUG if (setvbuf(stdout, NULL, _IONBF , 0)){printf("Whoops...");};
-#endif
    
 #ifndef USE_MYGIS
   msSetError(MS_QUERYERR, "MySQL support not available (compile with --with-mygis)", "msMySQLJoinConnect()");
@@ -500,6 +496,7 @@ int msMySQLJoinConnect(layerObj *layer, joinObj *join)
   char qbuf[4000];
   msMySQLJoinInfo *joininfo;
 
+  MYDEBUG if (setvbuf(stdout, NULL, _IONBF , 0)){printf("Whoops...");};
   if(join->joininfo) return(MS_SUCCESS); // already open
     
   // allocate a msMySQLJoinInfo struct
