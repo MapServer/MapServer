@@ -16,7 +16,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
   projUV p;
   int	 error;
 
-  if( in->gt.need_geotransform )
+  if( in && in->gt.need_geotransform )
   {
       double x_out, y_out;
 
@@ -94,7 +94,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
       point->y = p.v;
   }
 
-  if( out->gt.need_geotransform )
+  if( out && out->gt.need_geotransform )
   {
       double x_out, y_out;
 
