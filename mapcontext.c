@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.31  2002/11/27 20:14:19  julien
+ * Use the map srs if no layer srs is specify
+ *
  * Revision 1.30  2002/11/26 01:37:55  dan
  * Fixed compile warnings
  *
@@ -362,7 +365,7 @@ int msGetMapContextXMLFloatValue( CPLXMLNode *psRoot, char *pszXMLPath,
 int msLoadMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
-  char *pszWholeText;
+  char *pszWholeText, *pszMapProj=NULL;
   char *pszValue, *pszValue1, *pszValue2, *pszValue3, *pszValue4, *pszChar;
   char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
@@ -463,6 +466,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   if(pszValue != NULL)
   {
       sprintf(szProj, "init=epsg:%s", pszValue+5);
+      pszMapProj = strdup(pszValue);
 
       msInitProjection(&map->projection);
       map->projection.args[map->projection.numargs] = strdup(szProj);
@@ -721,7 +725,6 @@ int msLoadMapContext(mapObj *map, char *filename)
                      strcasecmp(psSRS->pszValue, "SRS") == 0 )
                   {
                       pszValue = psSRS->psChild->pszValue;
-                      pszValue = (char*)CPLGetXMLValue(psLayer,"SRS",NULL);
 
                       if(nFirstSRS == 1)
                       {
@@ -760,6 +763,19 @@ int msLoadMapContext(mapObj *map, char *filename)
                   }
 
                   psSRS = psSRS->psNext;
+              }
+              pszHash = msLookupHashTable(layer->metadata, "wms_srs");
+              if((pszHash == NULL) || (strcasecmp(pszHash, "") == 0))
+              {
+                  if(pszMapProj != NULL)
+                  {
+                      msInsertHashTable(layer->metadata,"wms_srs", pszMapProj);
+                      sprintf(szProj, "init=epsg:%s", pszMapProj+5);
+                      msInitProjection(&layer->projection);
+                      layer->projection.args[layer->projection.numargs] = strdup(szProj);
+                      layer->projection.numargs++;
+                      msProcessProjection(&layer->projection);
+                  }
               }
 
               // Format
@@ -988,6 +1004,8 @@ int msLoadMapContext(mapObj *map, char *filename)
       }
   }
 
+  if(pszMapProj)
+      free(pszMapProj);
   CPLDestroyXMLNode(psRoot);
 
   return MS_SUCCESS;
