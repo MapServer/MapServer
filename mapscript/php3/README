@@ -513,6 +513,7 @@ and the MapServer Map File documentation at:
    int    dump
    double tolerance
    int    toleranceunits
+   int    sizeunits
    double symbolscale
    double minscale
    double maxscale

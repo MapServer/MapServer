@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.203  2004/06/29 18:04:40  dan
+ * Added layer->sizeunits in PHP MapScript (bug 752)
+ *
  * Revision 1.202  2004/06/25 15:59:45  assefa
  * Add queryformat in the web object.
  *
@@ -6325,6 +6328,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_long(return_value,   "dump",       player->dump);
     add_property_double(return_value, "tolerance",  player->tolerance);
     add_property_long(return_value,   "toleranceunits",player->toleranceunits);
+    add_property_long(return_value,   "sizeunits",  player->sizeunits);
     add_property_double(return_value, "symbolscale",player->symbolscale);
     add_property_double(return_value, "minscale",   player->minscale);
     add_property_double(return_value, "maxscale",   player->maxscale);
@@ -6483,6 +6487,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "dump",       self->dump)
     else IF_SET_DOUBLE("tolerance",  self->tolerance)
     else IF_SET_LONG(  "toleranceunits",self->toleranceunits)
+    else IF_SET_LONG(  "sizeunits",  self->sizeunits)
     else IF_SET_DOUBLE("symbolscale",self->symbolscale)
     else IF_SET_DOUBLE("minscale",   self->minscale)
     else IF_SET_DOUBLE("maxscale",   self->maxscale)
