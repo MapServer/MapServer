@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/07/26 14:12:37  dan
+ * Created hashtable_i.c for new hashTableObj
+ *
  * Revision 1.44  2004/05/31 15:35:39  dan
  * Added setRotation() (bug 702)
  *
@@ -50,134 +53,7 @@
  * applySLDURL and applySLD on a layer object can now take an optional
  * argument which is the name of the NamedLayer to use to style the layer.
  *
- * Revision 1.39  2003/12/03 18:56:09  assefa
- * Add functions to apply and to generate sld on a layer object.
- *
- * Revision 1.38  2003/12/01 16:12:01  assefa
- * Add applysld and applysldurl on map.
- *
- * Revision 1.37  2003/10/30 22:55:04  assefa
- * getexpression function in Sync with the mapscript.i
- *
- * Revision 1.36  2003/10/30 22:37:27  assefa
- * Add functions executewfsgetfeature on a WFS layer object.
- * Add function getexpression on a class object.
- *
- * Revision 1.35  2003/10/28 16:50:25  assefa
- * Add functions removeMetaData on map and layer.
- *
- * Revision 1.34  2003/07/03 15:31:47  assefa
- * Add the possibility to generate image for function
- * processquerytemplate (bug 341).
- *
- * Revision 1.33  2003/02/24 02:19:44  dan
- * Added map->clone() method
- *
- * Revision 1.32  2003/02/21 16:55:12  assefa
- * Add function querybyindex and freequery.
- *
- * Revision 1.31  2003/02/14 20:17:27  assefa
- * Add savequery and loadquery functions.
- *
- * Revision 1.30  2003/02/11 19:01:08  assefa
- * Distnace points functions have changed names.
- *
- * Revision 1.29  2003/01/11 00:06:40  dan
- * Added setWKTProjection() to mapObj and layerObj
- *
- * Revision 1.28  2003/01/08 15:00:16  assefa
- * Add setsymbolbyname in the style class.
- *
- * Revision 1.27  2002/10/28 20:31:22  dan
- * New support for WMS Map Context (from Julien)
- *
- * Revision 1.3  2002/10/22 20:03:57  julien
- * Add the mapcontext support
- *
- * Revision 1.26  2002/10/23 19:44:08  assefa
- * Add setcolor functions for style and label objects.
- * Add function to select the output format.
- * Correct PrepareImage and PasteImage functions.
- *
- * Revision 1.25  2002/08/09 22:55:38  assefa
- * Update code to be in sync with mapserver addition of Styles.
- *
- * Revision 1.24  2002/07/08 19:07:06  dan
- * Added map->setFontSet() to MapScript
- *
- * Revision 1.23  2002/05/10 19:16:30  dan
- * Added qitem,qstring args to PHP version of layer->queryByAttributes()
- *
- * Revision 1.22  2002/05/02 15:55:51  assefa
- * Adapt code to support imageObj.
- *
- * Revision 1.21  2002/04/22 19:31:57  dan
- * Added optional new_map_path arg to msLoadMap()
- *
- * Revision 1.20  2002/03/14 21:36:12  sacha
- * Add two mapscript function (in PHP and perl)
- * setSymbolSet(filename) that load a symbol file dynanictly
- * getNumSymbols() return the number of symbol in map.
- *
- * Revision 1.19  2002/03/07 22:31:01  assefa
- * Add template processing functions.
- *
- * Revision 1.18  2002/02/08 18:51:11  dan
- * Remove class and layer args to setSymbolByName()
- *
- * Revision 1.17  2002/02/08 18:25:40  sacha
- * let mapserv add a new symbol when we use the classobj setproperty function
- * with "symbolname" and "overlaysymbolname" arg.
- *
- * Revision 1.16  2002/01/22 21:19:02  sacha
- * Add two functions in maplegend.c
- * - msDrawLegendIcon that draw an class legend icon over an existing image.
- * - msCreateLegendIcon that draw an class legend icon and return the newly
- * created image.
- * Also, an php examples in mapscript/php3/examples/test_draw_legend_icon.phtml
- *
- * Revision 1.15  2001/12/19 03:46:02  assefa
- * Support of Measured shpe files.
- *
- * Revision 1.14  2001/11/01 21:10:09  assefa
- * Add getProjection on map and layer object.
- *
- * Revision 1.13  2001/11/01 02:47:06  dan
- * Added layerObj->getWMSFeatureInfoURL()
- *
- * Revision 1.12  2001/10/03 12:41:05  assefa
- * Add function getLayersIndexByGroup.
- *
- * Revision 1.11  2001/08/01 13:52:59  dan
- * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
- * to getSymbolByName().
- *
- * Revision 1.10  2001/07/26 19:50:08  assefa
- * Add projection class and related functions.
- *
- * Revision 1.9  2001/04/19 15:11:34  dan
- * Sync with mapscript.i v.1.32
- *
- * Revision 1.8  2001/03/30 04:16:15  dan
- * Removed shapepath parameter to layer->getshape()
- *
- * Revision 1.7  2001/03/21 21:55:28  dan
- * Added get/setMetaData() for layerObj and mapObj()
- *
- * Revision 1.6  2001/03/09 19:33:14  dan
- * Updated PHP MapScript... still a few methods missing, and needs testing.
- *
- * Revision 1.5  2001/02/23 21:58:00  dan
- * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
- *
- * Revision 1.4  2000/11/01 16:31:08  dan
- * Add missing functions (in sync with mapscript).
- *
- * Revision 1.3  2000/09/07 20:18:42  dan
- * Sync with mapscript.i version 1.16
- *
- * Revision 1.2  2000/06/28 20:22:02  dan
- * Sync with mapscript.i version 1.9
+ * ...
  *
  * Revision 1.1  2000/05/09 21:06:11  dan
  * Initial Import
@@ -409,5 +285,16 @@ void            styleObj_destroy(styleObj* self);
 int             styleObj_setSymbolByName(styleObj *self, mapObj *map, 
                                          char* pszSymbolName);
 styleObj       *styleObj_clone(styleObj *style);
+
+/*=====================================================================
+ *                   Internal functions from hashtable_i.c
+ *====================================================================*/
+hashTableObj   *hashTableObj_new();
+int             hashTableObj_set(hashTableObj *self, const char *key, 
+                                 const char *value);
+const char     *hashTableObj_get(hashTableObj *self, const char *key);
+int            *hashTableObj_remove(hashTableObj *self, const char *key);
+void           *hashTableObj_clear(hashTableObj *self);
+char           *hashTableObj_nextKey(hashTableObj *self, const char *prevkey);
 
 #endif /* _PHP_MAPSCRIPT_H_INCLUDED_ */
