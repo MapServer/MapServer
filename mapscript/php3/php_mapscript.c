@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.217  2004/11/11 03:27:57  dan
+ * Added $layer->isVisible() to PHP MapScript (bug 539)
+ *
  * Revision 1.216  2004/11/11 02:55:51  dan
  * layer->getExtent() uses value of layer->extent if set (bug 826)
  *
@@ -471,15 +474,16 @@ DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getFilter(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getWMSFeatureInfoURL(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getItems(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void  php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void  php3_ms_lyr_getProcessing(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void  php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void  php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void  php3_ms_lyr_applySLD(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void  php3_ms_lyr_applySLDURL(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void  php3_ms_lyr_generateSLD(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_setProcessing(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getProcessing(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_clearProcessing(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_executeWFSGetfeature(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_applySLD(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_applySLDURL(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_generateSLD(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_moveClassUp(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_moveClassDown(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -956,20 +960,21 @@ function_entry php_layer_class_functions[] = {
     {"getextent",       php3_ms_lyr_getExtent,          NULL},
     {"getmetadata",     php3_ms_lyr_getMetaData,        NULL},
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
-    {"removemetadata",     php3_ms_lyr_removeMetaData,        NULL},
+    {"removemetadata",  php3_ms_lyr_removeMetaData,     NULL},
     {"setfilter",       php3_ms_lyr_setFilter,          NULL},
     {"getfilter",       php3_ms_lyr_getFilter,          NULL},
     {"getwmsfeatureinfourl", php3_ms_lyr_getWMSFeatureInfoURL, NULL},
     {"getitems",        php3_ms_lyr_getItems,           NULL},
-    {"setprocessing",   php3_ms_lyr_setProcessing,           NULL},
-    {"getprocessing",   php3_ms_lyr_getProcessing,           NULL},
-    {"clearprocessing", php3_ms_lyr_clearProcessing,           NULL},
-    {"executewfsgetfeature", php3_ms_lyr_executeWFSGetfeature,           NULL},
+    {"setprocessing",   php3_ms_lyr_setProcessing,      NULL},
+    {"getprocessing",   php3_ms_lyr_getProcessing,      NULL},
+    {"clearprocessing", php3_ms_lyr_clearProcessing,    NULL},
+    {"executewfsgetfeature", php3_ms_lyr_executeWFSGetfeature, NULL},
     {"applysld",        php3_ms_lyr_applySLD,           NULL},
-    {"applysldurl",     php3_ms_lyr_applySLDURL,           NULL},
-    {"generatesld",      php3_ms_lyr_generateSLD,           NULL},
-    {"moveclassup",     php3_ms_lyr_moveClassUp, NULL},   
-    {"moveclassdown",   php3_ms_lyr_moveClassDown, NULL},   
+    {"applysldurl",     php3_ms_lyr_applySLDURL,        NULL},
+    {"generatesld",     php3_ms_lyr_generateSLD,        NULL},
+    {"moveclassup",     php3_ms_lyr_moveClassUp,        NULL},   
+    {"moveclassdown",   php3_ms_lyr_moveClassDown,      NULL},   
+    {"isvisible",       php3_ms_lyr_isVisible,          NULL},
     {NULL, NULL, NULL}
 };
 
@@ -8156,6 +8161,44 @@ DLEXPORT void  php3_ms_lyr_moveClassDown(INTERNAL_FUNCTION_PARAMETERS)
      RETURN_LONG(nStatus);
 }
 /* }}} */
+
+
+/**********************************************************************
+ *                        layer->isVisible()
+ **********************************************************************/
+
+/* {{{ proto int layer.isVisible()
+   Returns MS_TRUE/MS_FALSE depending on whether the layer is currently visible in the map (i.e. turned on, in scale, etc.). */
+
+DLEXPORT void php3_ms_lyr_isVisible(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    layerObj    *self=NULL;
+    mapObj      *parent_map = NULL;
+    int         bVisible = MS_FALSE;
+    HashTable   *list=NULL;
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) > 0) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list TSRMLS_CC, E_ERROR);
+    if (self != NULL && parent_map != NULL)
+    {
+        bVisible = msLayerIsVisible(parent_map, self);
+    }
+
+    RETURN_LONG(bVisible);
+}
+/* }}} */
+
 
 /*=====================================================================
  *                 PHP function wrappers - labelObj class

@@ -756,6 +756,9 @@ and the MapServer Map File documentation at:
           up to postion 1, and the class at position 1 will be moved
           to position 0.
 
+  boolean isVisible()
+       Returns MS_TRUE/MS_FALSE depending on whether the layer is 
+       currently visible in the map (i.e. turned on, in scale, etc.). 
 
 
  ClassObj Class:
