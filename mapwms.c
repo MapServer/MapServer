@@ -89,6 +89,21 @@ int msWMSException(mapObj *map, const char *wmtversion)
     gdFontPtr font = gdFontSmall;
     gdImagePtr img=NULL;
     int width=400, height=300, color, imagetype=MS_GIF, transparent=MS_FALSE;
+    int nMargin =5;
+    int nTextLength = 0;
+    int nUsableWidth = 0;
+    int nMaxCharsPerLine = 0;
+    int nLines = 0;
+    int i = 0;
+    int nStart = 0;
+    int nEnd = 0;
+    int nLength = 0;
+    char **papszLines = NULL;
+    int nXPos = 0;
+    int nYPos = 0;
+    int nWidthTxt = 0;
+    int nSpaceBewteenLines = font->h;
+    int nBlack = 0;     
 
     if (map) {
       width = map->width;
@@ -98,14 +113,74 @@ int msWMSException(mapObj *map, const char *wmtversion)
     }
     img = gdImageCreate(width, height);
     color = gdImageColorAllocate(img, 255,255,255);  // BG color
-    color = gdImageColorAllocate(img, 0,0,0);        // Text color
+    nBlack = gdImageColorAllocate(img, 0,0,0);        // Text color
 
     if (strcasecmp(wms_exception_format, "BLANK") != 0 &&
         strcasecmp(wms_exception_format, "application/vnd.ogc.se_blank") != 0)
     {
-      char errormsg[256];
+      char errormsg[512];
       sprintf(errormsg, "%s: %s", ms_error.routine, ms_error.message);
-      gdImageString(img, font, 5, height/2, errormsg, color);
+      nTextLength = strlen(errormsg); 
+      nWidthTxt  =  nTextLength * font->w;
+      nUsableWidth = width - (nMargin*2);
+/* -------------------------------------------------------------------- */
+/*      Check to see if it all fits on one line. If not, split the      */
+/*      text on sevral lines.                                           */
+/* -------------------------------------------------------------------- */
+    if (nWidthTxt > nUsableWidth)
+    {
+        nMaxCharsPerLine =  nUsableWidth/font->w;
+        nLines = (int) ceil ((double)nTextLength / (double)nMaxCharsPerLine);
+        if (nLines > 0)
+        {
+            papszLines = (char **)malloc(nLines*sizeof(char *));
+            for (i=0; i<nLines; i++)
+            {
+                papszLines[i] = 
+                    (char *)malloc((nMaxCharsPerLine+1)*sizeof(char));
+                papszLines[i][0] = '0';
+            }
+        }
+        for (i=0; i<nLines; i++)
+        {
+            nStart = i*nMaxCharsPerLine;
+            nEnd = nStart + nMaxCharsPerLine;
+            if (nStart < nTextLength)
+            {
+                if (nEnd > nTextLength)
+                    nEnd = nTextLength;
+                nLength = nEnd-nStart;
+
+                memcpy(papszLines[i],errormsg+nStart, nLength);
+                papszLines[i][nLength+1] = '0';
+            }
+        }
+    }
+    else
+    {
+        nLines = 1;
+        papszLines = (char **)malloc(nLines*sizeof(char *));
+        papszLines[0] = (char *)malloc((strlen(errormsg)+1)*sizeof(char));
+        papszLines[0] = strcpy(papszLines[0], errormsg);
+        papszLines[0][strlen(papszLines[0])+1]='\0';
+    }   
+    for (i=0; i<nLines; i++)
+    {
+        nYPos = (nSpaceBewteenLines) * ((i*2) +1); 
+        nXPos = nSpaceBewteenLines;
+
+        gdImageString(img, font, nXPos, nYPos,  
+                      (unsigned char *)papszLines[i], nBlack);
+    }
+    if (papszLines)
+    {
+	for (i=0; i<nLines; i++)
+	{
+	    free(papszLines[i]);
+	}
+	free (papszLines);
+    }
+    //gdImageString(img, font, 5, height/2, errormsg, color);
     }
 
     printf("Content-type: image/%s%c%c", MS_IMAGE_MIME_TYPE(imagetype), 10,10);
