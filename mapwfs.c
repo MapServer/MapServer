@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2003/09/10 03:51:25  assefa
+ * Add Filters in the Capabilities.
+ *
  * Revision 1.14  2003/09/04 17:47:15  assefa
  * Add filterencoding tests.
  *
@@ -411,19 +414,23 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
   ** OGC Filter Capabilities ... for now we support only BBOX
   */
 
-  printf("<ogc:Filter_Capabilities>\n");
-  printf("  <ogc:Spatial_Capabilities>\n");
-  printf("    <ogc:Spatial_Operators>\n");
-  printf("      <ogc:BBOX/>\n");
-  printf("    </ogc:Spatial_Operators>\n");
-  printf("  </ogc:Spatial_Capabilities>\n");
+  printf("<Filter_Capabilities>\n");
+  printf("  <Spatial_Capabilities>\n");
+  printf("    <Spatial_Operators>\n");
+  printf("      <BBOX/>\n");
+  printf("    </Spatial_Operators>\n");
+  printf("  </Spatial_Capabilities>\n");
 
-  printf("  <!-- Provide some ScalarCapabilties just for the XML to validate against the schema even if we don't support any.  (Yes this is stupid!) -->\n");
-  printf("  <ogc:Scalar_Capabilities>\n");
-  printf("    <ogc:Logical_Operators />\n");
-  printf("  </ogc:Scalar_Capabilities>\n");
+  printf("  <Scalar_Capabilities>\n");
+  printf("    <Logical_Operators />\n");
+  printf("    <Comparison_Operators>\n");
+  printf("      <Simple_Comparisons />\n");
+  printf("      <Like />\n");
+  printf("      <Between />\n");
+  printf("    </Comparison_Operators>\n");
+  printf("  </Scalar_Capabilities>\n");
 
-  printf("</ogc:Filter_Capabilities>\n\n");
+  printf("</Filter_Capabilities>\n\n");
 
   /*
   ** Done!
@@ -597,6 +604,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     char   *pszFilter = NULL;
     int bFilterSet, bBBOXSet = 0;
    
+    
     // Default filter is map extents
     bbox = map->extent;
 
@@ -736,12 +744,16 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     if (bFilterSet && pszFilter && strlen(pszFilter) > 0)
     {
         char **tokens = NULL;
-        int nFilters;
+        int nFilters, nTokens;
         FilterEncodingNode *psNode = NULL;
         char *szExpression = NULL;
+        char *szEPSG = NULL;
         char *szClassItem = NULL;
         layerObj *lp;
         int iLayerIndex =1;
+        rectObj sQueryRect = map->extent;
+        projectionObj sProjTmp;
+
 /* -------------------------------------------------------------------- */
 /*      Validate the parameters. When a FILTER parameter is given,      */
 /*      It needs the TYPENAME parameter for the layers. Also Filter     */
@@ -785,10 +797,19 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
             }
             for (i=0; i<nFilters; i++)
             {
-                psNode = PaserFilterEncoding(tokens[i]);
+                psNode = FLTParseFilterEncoding(tokens[i]);
                 if (!psNode)
                   continue;
-                szExpression = GetMapserverExpression(psNode);
+                
+                szExpression = FLTGetMapserverExpression(psNode);
+                if (!szExpression)
+                {
+                    msSetError(MS_WFSERR, 
+                               "Invalid or Unsupported FILTER in GetFeature : %s", 
+                               "msWFSGetFeature()", tokens[i]);
+                    return msWFSException(map, wmtver);
+                }
+
                 //TODO when the filter contains a bbox : need a diffrent logic
                 if (szExpression)
                 {
@@ -802,7 +823,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
                     lp->numclasses++;
 
                     loadExpressionString(&lp->class[0].expression, szExpression);
-                    msQueryByRect(map, lp->index, map->extent);
+                    msQueryByRect(map, lp->index, sQueryRect);
                 }
             }
         }
@@ -811,51 +832,86 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
 /* -------------------------------------------------------------------- */
         else if (numlayers == 1)
         {
-            psNode = PaserFilterEncoding(pszFilter);
+            psNode = FLTParseFilterEncoding(pszFilter);
             if (psNode)
-               szExpression = GetMapserverExpression(psNode);
-            if (szExpression)
             {
-                szClassItem = GetMapserverExpressionClassItem(psNode);
-                iLayerIndex = msGetLayerIndex(map, layers[0]);
-                if (iLayerIndex > 0)
+                szExpression = FLTGetMapserverExpression(psNode);
+                szEPSG = FLTGetBBOX(psNode, &sQueryRect);
+            }
+            
+              
+
+            if (!szExpression && !szEPSG)
+            {
+                msSetError(MS_WFSERR, 
+                   "Invalid or Unsupported FILTER in GetFeature : %s", 
+                   "msWFSGetFeature()", pszFilter);
+                return msWFSException(map, wmtver);
+            }
+
+            iLayerIndex = msGetLayerIndex(map, layers[0]);
+            if (iLayerIndex > 0)
+            {
+                if (szExpression)
                 {
+                    szClassItem = FLTGetMapserverExpressionClassItem(psNode);
+                
                     lp = &(map->layers[iLayerIndex]);
-                    if (initClass(&(lp->class[0])) != -1)
-                    {
-                        lp->class[0].type = lp->type;
-                        lp->numclasses = 1;
-                        loadExpressionString(&lp->class[0].expression, 
-                                             szExpression);
+                    initClass(&(lp->class[0]));
+
+                    lp->class[0].type = lp->type;
+                    lp->numclasses = 1;
+                    loadExpressionString(&lp->class[0].expression, 
+                                         szExpression);
 /* -------------------------------------------------------------------- */
 /*      classitems are necessary for filter type PropertyIsLike         */
 /* -------------------------------------------------------------------- */
-                        if (szClassItem)
-                        {
-                            if (lp->classitem)
-                              free (lp->classitem);
-                            lp->classitem = strdup(szClassItem);
-                        }
+                    if (szClassItem)
+                    {
+                        if (lp->classitem)
+                          free (lp->classitem);
+                        lp->classitem = strdup(szClassItem);
+                    }
 
-                        if (!lp->class[0].template)
-                          lp->class[0].template = strdup("ttt.html");
+                    if (!lp->class[0].template)
+                      lp->class[0].template = strdup("ttt.html");
 /* -------------------------------------------------------------------- */
 /*      Need to free the template so the all shapes's will not end      */
 /*      up being queried. The query is dependent on the class           */
 /*      expression.                                                     */
 /* -------------------------------------------------------------------- */
-                        if (lp->template)
-                        {
-                            free(lp->template);
-                            lp->template = NULL;
-                        }
-
-                        msQueryByRect(map, lp->index, map->extent);
+                    if (lp->template)
+                    {
+                        free(lp->template);
+                        lp->template = NULL;
                     }
                 }
+/* -------------------------------------------------------------------- */
+/*      Use the epsg code to reproject the values from the QueryRect    */
+/*      to the map projection.                                          */
+/*      The srs should be a string like                                 */
+/*      srsName="http://www.opengis.net/gml/srs/epsg.xml#4326".         */
+/*      We will just extrcat the value after the # and assume that      */
+/*      It corresponds to the epsg code on the system.                  */
+/* -------------------------------------------------------------------- */
+                if(szEPSG && map->projection.numargs > 0)
+                {
+#ifdef USE_PROJ
+                    nTokens = 0;
+                    tokens = split(szEPSG,'#', &nTokens);
+                    if (tokens && nTokens == 2)
+                    {
+                        char szTmp[32];
+                        sprintf(szTmp, "init:epsg:%s",tokens[1]);
+                        if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
+                          msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+                    }
+#endif
+                }
+                msQueryByRect(map, lp->index, sQueryRect);
             }
         }
-    }//end if filert set
+    }//end if filter set
 
     if(layers)
       msFreeCharArray(layers, numlayers);
