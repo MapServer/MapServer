@@ -44,6 +44,21 @@ rectObj 	extentRect;
 lineObj         line;
 shapeObj	shapeRect;
 DBFHandle	tileDBF;
+DBFHandle       shpDBF;
+
+typedef struct DBFFieldDef_struct {
+  DBFFieldType  type;
+  char          name[256];
+  int           width;
+  int           decimals;
+} DBFFieldDef;
+
+DBFFieldDef     *theFields = NULL;
+char            fldname[256];
+int             width;
+int             decimals;
+int             fieldCnt;
+int             i;
 
 FILE		*metaFP = NULL;
 char		*p;
@@ -54,7 +69,6 @@ int		entityNum;
 
 int		tilesFound = 0;
 int		tilesProcessed = 0;
-
 
   msInitShape(&shapeRect);
   line.point = (pointObj *)malloc(sizeof(pointObj)*5);
@@ -105,6 +119,47 @@ int		tilesProcessed = 0;
 
 	if ((p=strchr(shapeFileName, '\n')) != NULL) *p='\0';
 
+	if (!strlen(shapeFileName))
+		break;
+
+	tilesFound++;
+
+	// read the DBFFields for this shapefile
+	// and save them if the first, otherwise compare them
+	
+	shpDBF = msDBFOpen(shapeFileName, "rb");
+
+	if( shpDBF == NULL ) {
+		printf( "Aborted. Unable to open DBF:%s\n", shapeFileName);
+		break;
+		}
+
+	if( theFields == NULL ) {
+		fieldCnt = msDBFGetFieldCount(shpDBF);
+		theFields = (DBFFieldDef *) calloc(fieldCnt, sizeof(DBFFieldDef));
+		for (i=0; i<fieldCnt; i++) {
+			theFields[i].type = msDBFGetFieldInfo(shpDBF, i, 
+					theFields[i].name, 
+					&theFields[i].width, &theFields[i].decimals);
+			if( theFields[i].type == FTInvalid ) {
+				printf( "Aborted. DBF Invalid field (%d of %d) file:%s\n", 
+						i, fieldCnt, shapeFileName);
+				break;
+			}
+		}
+	} else {
+		fieldCnt = msDBFGetFieldCount(shpDBF);
+		for (i=0; i<fieldCnt; i++) {
+			if( theFields[i].type != msDBFGetFieldInfo(shpDBF, i, fldname, &width, &decimals) ||
+			    strcmp(theFields[i].name, fldname) ||
+			    theFields[i].width != width || theFields[i].decimals != decimals ) {
+				printf( "Aborted. DBF fields do not match for file:%s\n", shapeFileName);
+				break;
+			}
+		}
+	}
+	msDBFClose(shpDBF);
+
         // Get rid of .shp extension if it was included.
 	if (strlen(shapeFileName) > 4 && 
             (p=shapeFileName+strlen(shapeFileName)-4) &&
@@ -114,15 +169,12 @@ int		tilesProcessed = 0;
 	if (!strlen(shapeFileName))
 		break;
 
-	tilesFound++;
-
-
 	// read extent from shapefile
 	// --------------------------
 	hSHP = msSHPOpen(shapeFileName, "rb");
 
 	if( hSHP == NULL )  {
-		printf( "Aborted. Unable to open:%s\n", shapeFileName);
+		printf( "Aborted. Unable to open SHP:%s\n", shapeFileName);
 		break;
 		}
 

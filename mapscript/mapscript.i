@@ -203,6 +203,7 @@ memory.") const char * {
     msFreeMap(self);
   }
 
+  %newobject clone;
   mapObj *clone() {
     mapObj *dstMap;
     dstMap = msNewMapObj();
@@ -269,6 +270,7 @@ memory.") const char * {
     if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
   }
 
+  %newobject prepareImage;
   imageObj *prepareImage() {
     int i, status;
     imageObj *image=NULL;
@@ -355,27 +357,40 @@ memory.") const char * {
       }
   }
 
+    // append the given outputFormatObj to the map's outputformat
+    //%newobject newOutputFormat;
+    //outputFormatObj *newOutputFormat(char *name, char *driver) {
+    //    outputFormatObj *format = NULL;
+    //    format =  msAllocOutputFormat(self, name, driver);
+    //    return format;
+    //}
+  
   void setOutputFormat( outputFormatObj *format ) {
       msApplyOutputFormat( &(self->outputformat), format, MS_NOOVERRIDE, 
                            MS_NOOVERRIDE, MS_NOOVERRIDE );
   }
-
+  
+  %newobject draw;
   imageObj *draw() {
     return msDrawMap(self);
   }
 
+  %newobject drawQuery;
   imageObj *drawQuery() {
     return msDrawQueryMap(self);
   }
 
+  %newobject drawLegend;
   imageObj *drawLegend() {
     return msDrawLegend(self);
   }
 
+  %newobject drawScalebar;
   imageObj *drawScalebar() {
     return msDrawScalebar(self);
   }
 
+  %newobject drawReferenceMap;
   imageObj *drawReferenceMap() {
     return msDrawReferenceMap(self);
   }
@@ -624,8 +639,8 @@ memory.") const char * {
       return NULL;
   }
 
-  /* raise and lower extensions have the same sense as the underlying
-   * ms* functions.  'Raise' means to raise the layer within the virtual
+  /* promote and demote have the opposite sense as the underlying
+   * ms* functions.  'Promote' means to raise the layer within the virtual
    * stack, and draw it later.
    */
 
@@ -797,7 +812,8 @@ memory.") const char * {
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
     return msDrawLegendIcon(map, layer, self, width, height, dstImage->img.gd, dstX, dstY);
   }
-  
+ 
+  %newobject createLegendIcon;
   imageObj *createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
     return msCreateLegendIcon(map, layer, self, width, height);
   }  
@@ -1032,12 +1048,6 @@ memory.") const char * {
     return  msAdjustExtent(self, width, height);
   } 
 
-  /*
-  int contrain(rectObj *bounds, double overlay) {
-    return msConstrainRect(bounds,self, overlay);
-  }
-  */
-
   int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, char *text) {
     shapeObj shape;
 
@@ -1153,12 +1163,10 @@ memory.") const char * {
 
   ~imageObj() {
     msFreeImage(self);    
-    free(self);
   }
 
   void free() {
     msFreeImage(self);    
-    free(self);
   }
 
   void save(char *filename) {
@@ -1279,6 +1287,13 @@ memory.") const char * {
   void setOption( const char *key, const char *value ) {
     msSetOutputFormatOption( self, key, value );
   }
+
+    %newobject getOption;
+    char *getOption(const char *key, const char *value="") {
+        const char *retval;
+        retval = msGetOutputFormatOption(self, key, value);
+        return strdup(retval);
+    }
 }
 
 //

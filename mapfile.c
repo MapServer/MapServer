@@ -1328,6 +1328,8 @@ int loadExpressionString(expressionObj *exp, char *value)
   // initExpression(exp);
 
   if((exp->type = getSymbol(2, MS_EXPRESSION,MS_REGEX)) == -1) {
+    msResetErrorList(); // failure above is not really an error, so reset the stack
+
     exp->type = MS_STRING;
     if((strlen(value) - strlen(msyytext)) == 2)
       exp->string = strdup(msyytext); // value was quoted
@@ -2631,12 +2633,8 @@ static void writeLayer(layerObj *layer, FILE *stream)
   writeColor(&(layer->offsite), stream, "OFFSITE", "    ");
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
 
-  if(layer->num_processing > 0) {
-    fprintf(stream, "    PROCESSING\n");
-    for(i=0; i<layer->num_processing; i++)
-      if(layer->header) fprintf(stream, "    \"%s\"\n", layer->processing[i]);
-    fprintf(stream, "    END\n");
-  }
+  for(i=0; i<layer->num_processing; i++)
+    if(layer->processing[i]) fprintf(stream, "    PROCESSING \"%s\"\n", layer->processing[i]);
 
   writeProjection(&(layer->projection), stream, "    ");
   if(layer->requires) fprintf(stream, "    REQUIRES \"%s\"\n", layer->requires);
