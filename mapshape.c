@@ -1358,9 +1358,8 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
       }
     }
     
-    shape->tileindex = layer->tileshpfile.lastshape;
-    
     msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
+    shape->tileindex = layer->tileshpfile.lastshape;
     shape->values = values;
     shape->numvalues = layer->numitems;
   } while(!filter_passed);  // Loop until both spatial and attribute filters match 
