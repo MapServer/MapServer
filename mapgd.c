@@ -2101,9 +2101,17 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       return(-1);
     }
 
+    if( gdImageTrueColor(img) )
+    {
+        oldAlphaBlending = img->alphaBlendingFlag;
+        gdImageAlphaBlending( img, 1 );
+    }
+
     if(label->outlinecolor.pen >= 0) { /* handle the outline color */
       error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);
       if(error) {
+        if( gdImageTrueColor(img) )
+            gdImageAlphaBlending( img, oldAlphaBlending );
 	msSetError(MS_TTFERR, error, "msDrawTextGD()");
 	return(-1);
       }
@@ -2121,11 +2129,6 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
       }
     }
 
-    if( gdImageTrueColor(img) )
-    {
-        oldAlphaBlending = img->alphaBlendingFlag;
-        gdImageAlphaBlending( img, 1 );
-    }
     gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
 
     if( gdImageTrueColor(img) )
