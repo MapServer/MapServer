@@ -32,8 +32,8 @@ static void sde_error(long error_code, char *routine, char *sde_routine) {
   error_string[0] = '\0';
   SE_error_get_string(error_code, error_string);
 
-  sprintf(ms_error.message, "%s: %s. (%ld)", sde_routine, error_string, error_code);
-  msSetError(MS_SDEERR, ms_error.message, routine);
+  msSetError(MS_SDEERR, "%s: %s. (%ld)", routine,
+             sde_routine, error_string, error_code);
 
   return;
 }

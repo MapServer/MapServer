@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.41  2002/01/09 05:10:28  frank
+ * avoid use of ms_error global
+ *
  * Revision 1.40  2001/11/01 01:15:00  dan
  * Removed MS_LAYER_POLYLINE
  *
@@ -856,12 +859,14 @@ int msOGRLayerOpen(layerObj *layer)
       if (msOGRSpatialRef2ProjectionObj(poSRS,
                                         &(layer->projection)) != MS_SUCCESS)
       {
+          errorObj *ms_error = msGetErrorObj();
+
           msSetError(MS_OGRERR, 
-                  (char*)CPLSPrintf("%s  "
-                                    "PROJECTION AUTO cannot be used for this "
-                                    "OGR connection (`%s').",
-                                    ms_error.message, layer->connection),
-                     "msOGRLayerOpen()");
+                     "%s  "
+                     "PROJECTION AUTO cannot be used for this "
+                     "OGR connection (`%s').",
+                     "msOGRLayerOpen()",
+                     ms_error->message, layer->connection);
           delete poDS;
           return(MS_FAILURE);
       }

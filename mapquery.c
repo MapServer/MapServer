@@ -42,15 +42,14 @@ int msJoinDBFTables(joinObj *join, char *path, char *tile) {
 
   /* first open the lookup table file */
   if((hDBF = msDBFOpen(join->table, "rb")) == NULL) {
-    sprintf(ms_error.message, "(%s)", join->table);
-    msSetError(MS_IOERR, ms_error.message, "msJoinDBFTables()");
+    msSetError(MS_IOERR, "(%s)", "msJoinDBFTables()", join->table);
     chdir(old_path); /* restore old cwd */
     return(-1);
   }
 
   if((idx = msDBFGetItemIndex(hDBF, join->to)) == -1) { 
-    sprintf(ms_error.message, "Item %s not found.", join->to);   
-    msSetError(MS_DBFERR, ms_error.message, "msJoinDBFTables()");    
+    msSetError(MS_DBFERR, "Item %s not found.", "msJoinDBFTables()",
+               join->to);
     msDBFClose(hDBF);
     chdir(old_path); /* restore old cwd */
     return(-1);
@@ -200,8 +199,7 @@ int msSaveQuery(mapObj *map, char *filename) {
 
   stream = fopen(filename, "wb");
   if(!stream) {
-    sprintf(ms_error.message, "(%s)", filename);
-    msSetError(MS_IOERR, ms_error.message, "msSaveQuery()");
+    msSetError(MS_IOERR, "(%s)", "msSaveQuery()", filename);
     return(MS_FAILURE);
   }
 
@@ -236,8 +234,7 @@ int msLoadQuery(mapObj *map, char *filename) {
 
   stream = fopen(filename, "rb");
   if(!stream) {
-    sprintf(ms_error.message, "(%s)", filename);
-    msSetError(MS_IOERR, ms_error.message, "msLoadQuery()");    
+    msSetError(MS_IOERR, "(%s)", "msLoadQuery()", filename);
     return(MS_FAILURE);
   }
 

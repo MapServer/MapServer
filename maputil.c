@@ -990,8 +990,7 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
   if(filename != NULL && strlen(filename) > 0) {
     stream = fopen(filename, "wb");
     if(!stream) {
-       sprintf(ms_error.message, "(%s)", filename);
-      msSetError(MS_IOERR, ms_error.message, "msSaveImage()");
+      msSetError(MS_IOERR, "(%s)", "msSaveImage()", filename);
       return(MS_FAILURE);
     }
   } else { /* use stdout */

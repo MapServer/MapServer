@@ -217,8 +217,7 @@ static int draw_text_PDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *la
         PDF_translate(pdf, -x1, -y1);
 //        PDF_restore(pdf);
     }
-//    sprintf(ms_error.message, "(%d)", labelCount);
-//    msSetError(MS_MISCERR, ms_error.message, "drawText()");
+//    msSetError(MS_MISCERR, "(%d)", "drawText()", labelCount);
     PDF_setlinewidth(pdf,1);
     return(0);
 }
@@ -1279,8 +1278,8 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
 
     stream = fopen(fontset->filename, "r");
     if(!stream) {
-        sprintf(ms_error.message, "Error opening fontset %s.", fontset->filename);
-        msSetError(MS_IOERR, ms_error.message, "msLoadFontsetPDF()");
+        msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontsetPDF()",
+                   fontset->filename);
         return(-1);
     }
 

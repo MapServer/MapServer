@@ -138,8 +138,8 @@ int msLoadFontSet(fontSetObj *fontset)
 
   stream = fopen(fontset->filename, "r");
   if(!stream) {
-    sprintf(ms_error.message, "Error opening fontset %s.", fontset->filename);
-    msSetError(MS_IOERR, ms_error.message, "msLoadFontset()");
+    msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontset()",
+               fontset->filename);
     return(-1);
   }
 
@@ -187,8 +187,12 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
-      if(label->font) sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
-      msSetError(MS_TTFERR, ms_error.message, "msGetLabelSize()");
+      if(label->font) 
+          msSetError(MS_TTFERR, "Requested font (%s) not found.", 
+                     "msGetLabelSize()", label->font);
+      else
+          msSetError(MS_TTFERR, "Requested font (NULL) not found.", 
+                     "msGetLabelSize()" );
       return(-1);
     }
 
@@ -394,8 +398,8 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
 
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
-      sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
-      msSetError(MS_TTFERR, ms_error.message, "draw_text()");
+       msSetError(MS_TTFERR, "Requested font (%s) not found.", "draw_text()",
+                  label->font);
       return(-1);
     }
 

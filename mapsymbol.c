@@ -136,15 +136,14 @@ int loadSymbol(symbolObj *s)
       break; 
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
-	sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-	msSetError(MS_TYPEERR, ms_error.message, "loadSymbol()");	
+	msSetError(MS_TYPEERR, "(%s):(%d)", "loadSymbol()", msyylineno);
 	fclose(msyyin);
 	return(-1);
       }
       
       if((stream = fopen(msyytext, "rb")) == NULL) {
-	sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-	msSetError(MS_IOERR, ms_error.message, "loadSymbol()");
+	msSetError(MS_IOERR, "(%s):(%d)", "loadSymbol()", 
+                   msyytext, msyylineno);
 	fclose(msyyin);
 	return(-1);
       }
@@ -195,8 +194,8 @@ int loadSymbol(symbolObj *s)
 	  s->numpoints++;
 	  break;
 	default:
-	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-	  msSetError(MS_TYPEERR, ms_error.message, "loadSymbol()"); 	  
+	  msSetError(MS_TYPEERR, "(%s):(%d)", "loadSymbol()",  
+                     msyytext, msyylineno); 	  
 	  fclose(msyyin);
 	  return(-1);
 	}
@@ -225,8 +224,8 @@ int loadSymbol(symbolObj *s)
 	  s->stylelength++;
 	  break;
 	default:
-	  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-	  msSetError(MS_TYPEERR, ms_error.message, "loadSymbol()"); 	  
+	  msSetError(MS_TYPEERR, "(%s):(%d)", "loadSymbol()", 
+                     msyytext, msyylineno); 	  
 	  fclose(msyyin);
 	  return(-1);
 	}
@@ -248,8 +247,8 @@ int loadSymbol(symbolObj *s)
 #endif
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadSymbol()");      
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadSymbol()",
+                 msyytext, msyylineno);
       fclose(msyyin);
       return(-1);
     } /* end switch */
@@ -362,8 +361,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
   ** Open the file
   */
   if((msyyin = fopen(symbolset->filename, "r")) == NULL) {
-    sprintf(ms_error.message, "(%s)", symbolset->filename);
-    msSetError(MS_IOERR, ms_error.message, "msLoadSymbolFile()");    
+    msSetError(MS_IOERR, "(%s)", "msLoadSymbolFile()", symbolset->filename);
     return(-1);
   }
 
@@ -397,8 +395,8 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
     case(SYMBOLSET):
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "msLoadSymbolFile()");      
+      msSetError(MS_IDENTERR, "(%s):(%d)", "msLoadSymbolFile()",
+                 msyytext, msyylineno);      
       status = -1;
     } /* end switch */
 

@@ -70,6 +70,7 @@ static int gmlWriteBounds(FILE *stream, rectObj *rect, char *srsname, char *tab)
   fprintf(stream, "%s\t\t</gml:coordinates>\n", tab);
   fprintf(stream, "%s\t</gml:Box>\n", tab);
   fprintf(stream, "%s</gml:boundedBy>\n", tab);
+  return MS_SUCCESS;
 }
 
 // function only writes the feature geometry for a shapeObj
@@ -288,8 +289,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   if(filename && strlen(filename) > 0) { // deal with the filename if present
     stream = fopen(filename, "w");
     if(!stream) {
-       sprintf(ms_error.message, "(%s)", filename);
-      msSetError(MS_IOERR, ms_error.message, "msGMLWriteQuery()");
+      msSetError(MS_IOERR, "(%s)", "msGMLWriteQuery()", filename);
       return(MS_FAILURE);
     }
   }

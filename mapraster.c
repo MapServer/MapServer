@@ -1973,16 +1973,18 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
                     if (msOGCWKT2ProjectionObj(pszWKT,
                                      &(layer->projection)) != MS_SUCCESS)
                     {
-                        char	szLongMsg[2048];
+                        char	szLongMsg[MESSAGELENGTH*2];
+                        errorObj *ms_error = msGetErrorObj();
 
                         sprintf( szLongMsg, 
                                  "%s\n"
                                  "PROJECTION AUTO cannot be used for this "
                                  "GDAL raster (`%s').",
-                                 ms_error.message, filename);
+                                 ms_error->message, filename);
+                        szLongMsg[MESSAGELENGTH-1] = '\0';
 
-                        msSetError(MS_OGRERR, szLongMsg, 
-                                   "msDrawRasterLayer()");
+                        msSetError(MS_OGRERR, "%s","msDrawRasterLayer()",
+                                   szLongMsg);
 
                         return(MS_FAILURE);
                     }
@@ -2031,8 +2033,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     ** Generate an error.
     */
     if( !f ) {
-      sprintf(ms_error.message, "(%s)", filename);
-      msSetError(MS_IOERR, ms_error.message, "msDrawRaster()");
+      msSetError(MS_IOERR, "(%s)", "msDrawRaster()", filename);
 #ifndef IGNORE_MISSING_DATA
       chdir(old_path);
       return(-1);
@@ -2073,8 +2074,8 @@ gdImagePtr msDrawReferenceMap(mapObj *map) {
   
   stream = fopen(map->reference.image,"rb"); // allocate input and output images (same size)
   if(!stream) {
-    sprintf(ms_error.message, "(%s)", map->reference.image);
-    msSetError(MS_IOERR, ms_error.message, "msDrawReferenceMap()");
+    msSetError(MS_IOERR, "(%s)", "msDrawReferenceMap()",
+               map->reference.image);
     return(NULL);
   }
 

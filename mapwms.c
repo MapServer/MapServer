@@ -118,8 +118,9 @@ int msWMSException(mapObj *map, const char *wmtversion)
     if (strcasecmp(wms_exception_format, "BLANK") != 0 &&
         strcasecmp(wms_exception_format, "application/vnd.ogc.se_blank") != 0)
     {
-      char errormsg[512];
-      sprintf(errormsg, "%s: %s", ms_error.routine, ms_error.message);
+      char errormsg[MESSAGELENGTH+ROUTINELENGTH+4];
+      errorObj *ms_error = msGetErrorObj();
+      sprintf(errormsg, "%s: %s", ms_error->routine, ms_error->message);
       nTextLength = strlen(errormsg); 
       nWidthTxt  =  nTextLength * font->w;
       nUsableWidth = width - (nMargin*2);
@@ -1075,6 +1076,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   pointObj point = {-1.0, -1.0};
   const char *info_format="MIME";
   double cellx, celly;
+  errorObj *ms_error = msGetErrorObj();
 
   for(i=0; map && i<numentries; i++) {
     if(strcasecmp(names[i], "QUERY_LAYERS") == 0) {
@@ -1127,7 +1129,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   point.y = MS_IMAGE2MAP_Y(point.y, map->extent.maxy, celly);
 
   if(msQueryByPoint(map, -1, (feature_count==1?MS_SINGLE:MS_MULTIPLE), point, 0) != MS_SUCCESS)
-    if(ms_error.code != MS_NOTFOUND) return msWMSException(map, wmtver);
+    if(ms_error->code != MS_NOTFOUND) return msWMSException(map, wmtver);
 
   // Generate response
   if (strcasecmp(info_format, "MIME") == 0 ||

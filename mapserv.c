@@ -81,6 +81,7 @@ int writeLog(int show_error)
 void writeError()
 {
   int i;
+  errorObj *ms_error = msGetErrorObj();
 
   writeLog(MS_TRUE);
 
@@ -95,7 +96,7 @@ void writeError()
     exit(0);
   }
 
-  if((ms_error.code == MS_NOTFOUND) && (Map->web.empty)) {
+  if((ms_error->code == MS_NOTFOUND) && (Map->web.empty)) {
     redirect(Map->web.empty);
   } else {
     if(Map->web.error) {      
@@ -998,14 +999,17 @@ void setCoordinate()
 
 void returnCoordinate()
 {
-  msSetError(MS_NOERR, NULL, NULL);
-  sprintf(ms_error.message, "Your \"<i>click</i>\" corresponds to (approximately): (%g, %g).\n", MapPnt.x, MapPnt.y);
+  msSetError(MS_NOERR, 
+             "Your \"<i>click</i>\" corresponds to (approximately): (%g, %g).",
+             NULL,
+             MapPnt.x, MapPnt.y);
 
 #ifdef USE_PROJ
   if(Map->projection.proj != NULL && !pj_is_latlong(Map->projection.proj) ) {
     pointObj p=MapPnt;
     msProjectPoint(&(Map->projection), &(Map->latlon), &p);
-    sprintf(ms_error.message, "%s Computed lat/lon value is (%g, %g).\n", ms_error.message, p.x, p.y);
+    msSetError( MS_NOERR, 
+                "%s Computed lat/lon value is (%g, %g).\n", NULL, p.x, p.y);
   }
 #endif
 
