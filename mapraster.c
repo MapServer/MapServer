@@ -19,6 +19,10 @@ extern char *msyystring;
 #include <tiff.h>
 #endif
 
+#ifdef USE_GDAL
+#include "gdal.h"
+#endif
+
 #ifdef USE_EPPL
 #include "epplib.h"
 #endif
@@ -136,6 +140,186 @@ static int add_color(gdImagePtr img, int r, int g, int b)
   return op; /* Return newly allocated color */  
 }
 
+/*
+** GDAL Support.
+*/
+static int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img, 
+                    GDALDatasetH hDS )
+
+{
+#if defined(USE_GDAL)
+  int i,j, k; /* loop counters */
+  int cmap[MAXCOLORS];
+  double adfGeoTransform[6];
+  int	dst_xoff, dst_yoff, dst_xsize, dst_ysize;
+  int	src_xoff, src_yoff, src_xsize, src_ysize;
+  rectObj copyRect;
+  unsigned char *pabyRaw;
+
+  GDALColorTableH hColorMap;
+  GDALRasterBandH hBand;
+
+  /*
+   * Compute the georeferenced window of overlap, and do nothing if there
+   * is no overlap between the map extents, and the file we are operating on.
+   */
+  src_xsize = GDALGetRasterXSize( hDS );
+  src_ysize = GDALGetRasterYSize( hDS );
+
+  GDALGetGeoTransform( hDS, adfGeoTransform );
+
+  copyRect = map->extent;
+
+  if( copyRect.minx < adfGeoTransform[0] )
+      copyRect.minx = adfGeoTransform[0];
+  if( copyRect.maxx > adfGeoTransform[0] + adfGeoTransform[1] * src_xsize )
+      copyRect.maxx = adfGeoTransform[0] + adfGeoTransform[1] * src_xsize;
+
+  if( copyRect.miny < adfGeoTransform[3] + adfGeoTransform[5] * src_ysize )
+      copyRect.miny = adfGeoTransform[3] + adfGeoTransform[5] * src_ysize;
+  if( copyRect.maxy > adfGeoTransform[3] )
+      copyRect.maxy = adfGeoTransform[3];
+
+  if( copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy )
+      return 0;
+
+  /*
+   * Copy the source and destination raster coordinates.
+   */
+  src_xoff = (int) ((copyRect.minx - adfGeoTransform[0]) / adfGeoTransform[1]);
+  src_yoff = (int) ((copyRect.maxy - adfGeoTransform[3]) / adfGeoTransform[5]);
+  src_xsize = (int) ((copyRect.maxx - copyRect.minx) / adfGeoTransform[1]);
+  src_xsize = MIN(MAX(1,src_xsize),GDALGetRasterXSize(hDS) - src_xoff);
+  src_ysize = (int) ((copyRect.miny - copyRect.maxy) / adfGeoTransform[5]);
+  src_ysize = MIN(MAX(1,src_ysize),GDALGetRasterYSize(hDS) - src_yoff);
+
+  if( src_xsize == 0 || src_ysize == 0 )
+      return 0;
+
+  dst_xoff = (int) ((copyRect.minx - map->extent.minx) / map->cellsize);
+  dst_yoff = (int) ((map->extent.maxy - copyRect.maxy) / map->cellsize);
+  dst_xsize = (int) ((copyRect.maxx - copyRect.minx) / map->cellsize);
+  dst_xsize = MIN(MAX(1,dst_xsize),gdImageSX(img) - dst_xoff);
+  dst_ysize = (int) ((copyRect.maxy - copyRect.miny) / map->cellsize);
+  dst_ysize = MIN(MAX(1,dst_ysize),gdImageSY(img) - dst_yoff);
+
+  if( dst_xsize == 0 || dst_ysize == 0 )
+      return 0;
+  
+  /*
+   * Fetch the band(s).  For now we just operate on the first band of
+   * the file. 
+   */
+  hBand = GDALGetRasterBand( hDS, 1 );
+  if( hBand == NULL )
+      return -1;
+
+  /*
+   * Get colormap for this image.  If there isn't one, create a greyscale
+   * colormap. 
+   */
+  hColorMap = GDALGetRasterColorTable( hBand );
+  if( hColorMap != NULL )
+      hColorMap = GDALCloneColorTable( hColorMap );
+  else
+  {
+      hColorMap = GDALCreateColorTable( GPI_RGB );
+
+      for( i = 0; i < 256; i++ )
+      {
+          GDALColorEntry sEntry;
+
+          sEntry.c1 = i;
+          sEntry.c2 = i;
+          sEntry.c3 = i;
+          sEntry.c4 = 255;
+
+          GDALSetColorEntry( hColorMap, i, &sEntry );
+      }
+  }
+
+  /*
+   * Setup the mapping between source eightbit pixel values, and the
+   * output images color table.  There are two general cases, where the
+   * class colors are provided by the MAP file, or where we use the native
+   * color table.
+   */
+  if(layer->numclasses > 0) {
+    char tmpstr[3];
+    int c;
+
+    for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
+      if(i != layer->offsite) {
+        GDALColorEntry sEntry;
+
+	sprintf(tmpstr,"%d", i);
+	c = getClass(layer, tmpstr);
+
+        GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
+
+	if(c == -1) /* doesn't belong to any class, so handle like offsite */
+	  cmap[i] = -1;
+	else {
+	  if(layer->class[c].color == -1) /* use raster color */
+	    cmap[i] = add_color(img, sEntry.c1, sEntry.c2, sEntry.c3);
+	  else
+	    cmap[i] = layer->class[c].color; /* use class color */
+	}
+      } else
+	cmap[i] = -1;
+    }
+  } else {
+    for(i=0; i<GDALGetColorEntryCount(hColorMap); i++) {
+        GDALColorEntry sEntry;
+
+        GDALGetColorEntryAsRGB( hColorMap, i, &sEntry );
+
+        if(i != layer->offsite && sEntry.c4 != 0) 
+            cmap[i] = add_color(img, sEntry.c1, sEntry.c2, sEntry.c3);
+        else
+            cmap[i] = -1;
+    }
+  }
+
+  /*
+   * Read the entire region of interest in one gulp.  GDAL will take
+   * care of downsampling and window logic.  
+   */
+  pabyRaw = (unsigned char *) malloc(dst_xsize * dst_ysize);
+  if( pabyRaw == NULL )
+      return -1;
+
+  GDALRasterIO( hBand, GF_Read, src_xoff, src_yoff, src_xsize, src_ysize, 
+                pabyRaw, dst_xsize, dst_ysize, GDT_Byte, 0, 0 );
+
+  k = 0;
+  for( i = dst_yoff; i < dst_yoff + dst_ysize; i++ )
+  {
+      int	result;
+
+      for( j = dst_xoff; j < dst_xoff + dst_xsize; j++ )
+      {
+          result = cmap[pabyRaw[k++]];
+          if( result != -1 )
+#ifndef USE_GD_1_2
+              img->pixels[i][j] = result;
+#else
+              img->pixels[j][i] = result;
+#endif
+      }
+  }
+
+  free( pabyRaw );
+  GDALDestroyColorTable( hColorMap );
+
+  return 0;
+#else
+  msSetError(MS_IMGERR, "GDAL support is not available.", "drawGDAL()");
+  return(-1);
+#endif
+}
+
+  
 /*
 ** Function to read georeferencing information for an image from an
 ** ESRI world file.
@@ -809,7 +993,6 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 #endif
 }
 
-  
 typedef struct erdhead {
   char hdword[6];
   short pack,bands;
@@ -1356,7 +1539,7 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     }
     fread(dd,8,1,f); // read some bytes to try and identify the file
     fclose(f);
-    
+
     if (memcmp(dd,"II*\0",4)==0 || memcmp(dd,"MM\0*",4)==0) {
       status = drawTIFF(map, layer, img, filename);
       if(status == -1) {
@@ -1416,6 +1599,29 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	//ext = NULL;
 	return(status);
       }
+#endif
+
+#ifdef USE_GDAL
+    {
+        GDALDatasetH  hDS;
+        static int    bGDALInitialized = 0;
+
+        if( !bGDALInitialized )
+        {
+            GDALAllRegister();
+            CPLPushErrorHandler( CPLQuietErrorHandler );
+            bGDALInitialized = 1;
+        }
+        
+        hDS = GDALOpen( filename, GA_ReadOnly );
+        if( hDS != NULL )
+        {
+            status = drawGDAL(map, layer, img, hDS );
+            GDALClose( hDS );
+            chdir(old_path); /* restore old cwd */
+            return status;
+        }
+    }
 #endif
 
     /* put others which may require checks here */  
