@@ -6,8 +6,12 @@
 
 #ifdef USE_POSTGIS
 
+#ifndef LITTLE_ENDIAN
 #define LITTLE_ENDIAN 1
+#endif
+#ifndef BIG_ENDIAN
 #define BIG_ENDIAN 2
+#endif
 
 #include "libpq-fe.h"
 #include <string.h>
