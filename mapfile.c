@@ -2768,7 +2768,7 @@ void msFreeMap(mapObj *map) {
   free(map->symbolset.filename);
 
   msFreeProjection(&(map->projection));
-  msFreeProjection(&(map->io_projection));
+  msFreeProjection(&(map->latlon));
 
   for(i=0; i<map->labelcache.numlabels; i++) {
     free(map->labelcache.labels[i].string);

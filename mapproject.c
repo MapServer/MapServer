@@ -1,7 +1,7 @@
 #include "map.h"
 #include "mapproject.h"
 
-int msProjectPoint(projectionobj *in, projectionobj *out, pointObj *point)
+int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 {
 #ifdef USE_PROJ
   projUV p;
@@ -54,7 +54,7 @@ int msProjectPoint(projectionobj *in, projectionobj *out, pointObj *point)
 
 #define NUMBER_OF_SAMPLE_POINTS 100
 
-int msProjectRect(projectionobj *in, projectionobj *out, rectObj *rect) 
+int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) 
 {
 #ifdef USE_PROJ
   pointObj prj_point;
@@ -124,7 +124,7 @@ int msProjectRect(projectionobj *in, projectionobj *out, rectObj *rect)
 #endif
 }
 
-int msProjectShape(projectionobj *in, projectionobj *out, shapeObj *shape)
+int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 {
 #ifdef USE_PROJ
   int i,j;
@@ -140,7 +140,7 @@ int msProjectShape(projectionobj *in, projectionobj *out, shapeObj *shape)
 #endif
 }
 
-int msProjectLine(projectionobj *in, projectionobj *out, lineObj *line)
+int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 {
 #ifdef USE_PROJ
   int i;
