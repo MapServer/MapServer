@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
   msyystring = argv[1];
 
   status = msyyparse();
-  if(!status) 
+  if(status != 0) 
     printf("Error parsing expression.\n");
   else
     printf("Expression evalulated to: %d.\n", msyyresult);
