@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.79  2004/05/31 15:35:03  dan
+ * Added setRotation() (bug 702) and fixed layer->drawQuery() (bug 695)
+ *
  * Revision 1.78  2004/04/16 20:19:39  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -317,6 +320,9 @@ mapObj *mapObj_clone(mapObj* self) {
     return dstMap;
   }
 
+int mapObj_setRotation(mapObj* self, double rotation_angle ) {
+        return msMapSetRotation( self, rotation_angle );
+    }
 
 layerObj *mapObj_getLayer(mapObj* self, int i) {
     if(i >= 0 && i < self->numlayers)	
@@ -690,7 +696,7 @@ int layerObj_draw(layerObj *self, mapObj *map, imageObj *img) {
   }
 
 int layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img) {
-    return msDrawLayer(map, self, img);    
+    return msDrawQueryLayer(map, self, img);    
   }
 
 int layerObj_queryByAttributes(layerObj *self, mapObj *map, char *qitem, char *qstring, int mode) {
