@@ -1594,7 +1594,33 @@ int main(int argc, char *argv[]) {
 
     } else if(Mode == MAP || Mode == SCALEBAR || Mode == LEGEND || Mode == REFERENCE) { // "image" only modes
       setExtent();
-	
+
+      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height); // we do this cause we need a scale
+      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
+
+      if((Map->scale < Map->web.minscale) && (Map->web.minscale > 0)) {
+	fZoom = Zoom = 1 ;/* force zoom = 1 (i.e. pan) */
+	ZoomDirection = 0;
+	CoordSource = FROMSCALE;
+	Map->scale = Map->web.minscale;
+	MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
+	MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
+	setExtent();
+	Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
+	if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
+      }
+      if((Map->scale > Map->web.maxscale) && (Map->web.maxscale > 0)) {	 
+	fZoom = Zoom = 1; /* force zoom = 1 (i.e. pan) */
+	ZoomDirection = 0;
+	CoordSource = FROMSCALE;
+	Map->scale = Map->web.maxscale;
+	MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
+	MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
+	setExtent();
+	Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+	if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
+      }
+
       switch(Mode) {
       case MAP:
 	if(QueryFile) {
@@ -1834,15 +1860,84 @@ int main(int argc, char *argv[]) {
 	setExtentFromShapes();
 
       if(Map->querymap.status) {
-	img = msDrawQueryMap(Map);
-	if(!img) writeError();
-	
+	Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height); // we do this cause we need a scale
+        if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
+
 	if(Mode == QUERYMAP || Mode == NQUERYMAP || Mode == ITEMQUERYMAP || Mode == ITEMNQUERYMAP || Mode == FEATUREQUERYMAP || Mode == FEATURENQUERYMAP || Mode == ITEMFEATUREQUERYMAP || Mode == ITEMFEATURENQUERYMAP || Mode == INDEXQUERYMAP) { // just return the image
+	  
+          if((Map->scale < Map->web.minscale) && (Map->web.minscale > 0)) {
+	    fZoom = Zoom = 1 ;/* force zoom = 1 (i.e. pan) */
+	    ZoomDirection = 0;
+	    CoordSource = FROMSCALE;
+	    Map->scale = Map->web.minscale;
+	    MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
+	    MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
+	    setExtent();
+	    Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
+	    if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
+          }
+          if((Map->scale > Map->web.maxscale) && (Map->web.maxscale > 0)) {	 
+	    fZoom = Zoom = 1; /* force zoom = 1 (i.e. pan) */
+	    ZoomDirection = 0;
+	    CoordSource = FROMSCALE;
+	    Map->scale = Map->web.maxscale;
+	    MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
+	    MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
+	    setExtent();
+	    Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+	    if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
+          }
+
+	  img = msDrawQueryMap(Map);
+	  if(!img) writeError();
+
 	  printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(Map->imagetype), 10,10);
 	  status = msSaveImage(img, NULL, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 	  if(status != MS_SUCCESS) writeError();
 	  gdImageDestroy(img);
+
 	} else {
+
+	  if((Map->scale < Map->web.minscale) && (Map->web.minscale > 0)) {
+	    if(Map->web.mintemplate) { // use the template provided
+	      if(TEMPLATE_TYPE(Map->web.mintemplate) == MS_FILE)
+	        returnPage(Map->web.mintemplate, BROWSE);
+	      else
+	        returnURL(Map->web.mintemplate, BROWSE);
+	    } else { /* force zoom = 1 (i.e. pan) */
+	      fZoom = Zoom = 1;
+	      ZoomDirection = 0;
+	      CoordSource = FROMSCALE;
+	      Map->scale = Map->web.minscale;
+	      MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
+	      MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
+	      setExtent();
+	      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);      
+	      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
+	    }
+          }
+          if((Map->scale > Map->web.maxscale) && (Map->web.maxscale > 0)) {
+	    if(Map->web.maxtemplate) { // use the template provided
+	      if(TEMPLATE_TYPE(Map->web.maxtemplate) == MS_FILE)
+	        returnPage(Map->web.maxtemplate, BROWSE);
+	      else
+	        returnURL(Map->web.maxtemplate, BROWSE);
+	    } else { /* force zoom = 1 (i.e. pan) */
+	      fZoom = Zoom = 1;
+	      ZoomDirection = 0;
+	      CoordSource = FROMSCALE;
+	      Map->scale = Map->web.maxscale;
+	      MapPnt.x = (Map->extent.maxx + Map->extent.minx)/2; // use center of bad extent
+	      MapPnt.y = (Map->extent.maxy + Map->extent.miny)/2;
+	      setExtent();
+	      Map->cellsize = msAdjustExtent(&(Map->extent), Map->width, Map->height);
+	      if((status = msCalculateScale(Map->extent, Map->units, Map->width, Map->height, Map->resolution, &Map->scale)) != MS_SUCCESS) writeError();
+	    }
+          }
+
+  	  img = msDrawQueryMap(Map);
+	  if(!img) writeError();
+
 	  sprintf(buffer, "%s%s%s.%s", Map->web.imagepath, Map->name, Id, MS_IMAGE_EXTENSION(Map->imagetype));
 	  status = msSaveImage(img, buffer, Map->imagetype, Map->transparent, Map->interlace, Map->imagequality);
 	  if(status != MS_SUCCESS) writeError();
