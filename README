@@ -7,11 +7,8 @@ and point, area and feature queries. Virtually all aspects of an
 application, from web interface to map appearance can be developed 
 without any programming. For the more ambitious user, MapServer 
 applications can be enhanced using Java, JavaScript or many other web 
-technologies. MapServer is now distributed with MapScript a Perl module 
-that provides access to the basic MapServer C API and allows developers 
-to add mapping functions to their Perl scripts. In addition, MapScript 
-provides a basic interface for reading/writing ESRI shapefiles. For more 
-information and complete documentation please visit:
+technologies. For more  information and complete documentation please 
+visit:
 
 	http://mapserver.gis.umn.edu/
 
@@ -31,23 +28,33 @@ Please let us know how you are using the MapServer. Drop us a note at:
 
 CREDITS
 
-The MapServer was written by Stephen Lime. Raster access module developed by 
-Pete Olson of the State of Minnesota, Land Management Information Center and 
-Stephen Lime. Major funding for development of MapServer has been provided by
-NASA through cooperative argreements with the University of Minnesota, Department
-of Forest Resources.
+The MapServer was written by Stephen Lime. Major funding for development of 
+MapServer has been provided by NASA through  cooperative argreements with 
+the University of Minnesota, Department of Forest Resources.
 
-Portions copyright (c) 1998 State of Minnesota, Land Management Information Center.
+PHP/MapScript developed by DMSolutions Group.
 
-Portions copyright (c) 1995-1999 Frank Warmerdam.
+GDAL/OGR support and significant WMS support provided by DMSolutions Group 
+which received funding support from Canadian Government's GeoConnections 
+Program and the Canadian Forest Service.
 
-GDFT copyright (c) 1999 John Ellson.
+Raster support developed by Pete Olson of the State of Minnesota, Land Management Information Center.
+
+PostGIS spatial database support provided by Dave Blasby of Refractions Research.
+
+PDF support developed by Jeff Spielberg and Jamie Wall of Market Insite Group, Inc.
+
+OracleSpatial support developed by Rodrigo Cabral of CTTMAR/UNIVALI, Brazil.
+
+Portions Copyright (c) 1998 State of Minnesota, Land Management Information Center.
+
+Portions derived from Shapelib, Copyright 1995-1999 Frank Warmerdam.
 
 Supporting packages are covered by their own copyrights.
 
 LICENSE
 
-Copyright (c) 1996-1999 Regents of the University of Minnesota.
+Copyright (c) 1996-2001 Regents of the University of Minnesota.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of 
 this software and associated documentation files (the "Software"), to deal in 
