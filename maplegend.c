@@ -1,3 +1,5 @@
+/* $Id$ */
+
 #include "map.h"
 
 #define PSF .8
@@ -120,13 +122,13 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   // allocate the background color
   msImageInitGD( image, &(map->legend.imagecolor));
 
-  msClearLayerPenValues(lp); // just in case the mapfile has already been processed
-
   // Call drawLegendIcon with destination (0, 0)
   // Return an empty image if lp==NULL || class=NULL
-  if (lp && class)
+  if (lp && class) {
+    msClearLayerPenValues(lp); // just in case the mapfile has already been processed
     msDrawLegendIcon(map, lp, class, width, height, image->img.gd, 0, 0);
-   
+  }
+
   return image;
 }
 
