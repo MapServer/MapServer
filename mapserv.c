@@ -1111,8 +1111,12 @@ int main(int argc, char *argv[]) {
       
       if(!img) writeError();
 
-      printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->imagetype), 10,10);
-      status = msSaveImage(img, NULL, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+      printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+      if( msObj->Mode == MAP )
+          status = msSaveImage(msObj->Map,img, NULL);
+      else
+          status = msSaveImage(NULL,img, NULL);
+          
       if(status != MS_SUCCESS) writeError();
       
       msFreeImage(img);
@@ -1135,8 +1139,8 @@ int main(int argc, char *argv[]) {
           img = msDrawLegend(msObj->Map);
           if(!img) writeError();
 
-          printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->imagetype), 10,10);
-          status = msSaveImage(img, NULL, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+          printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+          status = msSaveImage(NULL, img, NULL);
           if(status != MS_SUCCESS) writeError();
           
           msFreeImage(img);            
@@ -1362,8 +1366,8 @@ int main(int argc, char *argv[]) {
 	img = msDrawQueryMap(msObj->Map);
 	if(!img) writeError();
 
-	printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->imagetype), 10,10);
-	status = msSaveImage(img, NULL, msObj->Map->transparent, msObj->Map->interlace, msObj->Map->imagequality);
+	printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);
+	status = msSaveImage(msObj->Map, img, NULL);
 	if(status != MS_SUCCESS) writeError();
 	msFreeImage(img);
 

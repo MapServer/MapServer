@@ -23,7 +23,6 @@ extern int loadSymbol(symbolObj *s); // in mapsymbol.c
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in map.h.
 */
-static char *msOutputImageType[6]={"GIF", "PNG", "JPEG", "WBMP", "GML", "SWF"};
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
 static char *msLayerTypes[7]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE"};
 static char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
@@ -82,6 +81,22 @@ int msAddColor(mapObj *map, int red, int green, int blue)
 }
 
 /*
+** Lookup a color index from the palette returning the color value to 
+** use with GD (or other?) drawing functions.
+*/
+
+int msLookupColor( mapObj *map, int color_index )
+
+{
+    if( color_index == -1 )
+        return -1;
+    else if( color_index < 1 || color_index > map->palette.numcolors )
+        return -1;
+    else
+        return map->palette.colorvalue[color_index-1];
+}
+
+/*
 ** Applies a palette to a particular image
 */
 int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color)
@@ -98,7 +113,13 @@ int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color)
 
   /* now the palette */
   for(i=0; i<palette->numcolors; i++)
-    gdImageColorAllocate(img, palette->colors[i].red, palette->colors[i].green, palette->colors[i].blue);
+  {
+      palette->colorvalue[i] = 
+          gdImageColorAllocate(img, 
+                               palette->colors[i].red, 
+                               palette->colors[i].green, 
+                               palette->colors[i].blue);
+  }
 
   return(1);
 }
@@ -164,6 +185,19 @@ int getSymbol(int n, ...) {
   msSetError(MS_SYMERR, "(%s):(%d)", "getSymbol()", msyytext, msyylineno);
   return(-1);
 }
+
+/*
+** Get a string or symbol as a string.   Operates like getString(), but also
+** supports symbols. 
+*/
+static char *getToken() {
+
+    msyylex();
+
+    return strdup(msyytext);
+}
+
+
 
 /*
 ** Load a string from the map file. A "string" is defined
@@ -2329,6 +2363,122 @@ static void writeReferenceMap(referenceMapObj *ref, FILE *stream)
   fprintf(stream, "  END\n\n");
 }
 
+#define MAX_FORMATOPTIONS 100
+
+static int loadOutputFormat(mapObj *map)
+{
+  char *name = NULL;
+  char *mimetype = NULL;
+  char *driver = NULL;
+  char *extension = NULL;
+  int imagemode = MS_NOOVERRIDE;
+  int transparent = MS_NOOVERRIDE;
+  char *formatoptions[MAX_FORMATOPTIONS];
+  int  numformatoptions = 0;
+  char *value;
+
+  for(;;) {
+    switch(msyylex()) {
+    case(EOF):
+      msSetError(MS_EOFERR, NULL, "loadOutputFormat()");      
+      return(-1);
+
+    case(END):
+    {
+        outputFormatObj *format;
+
+        if( driver == NULL )
+        {
+            msSetError(MS_MISCERR, 
+                       "OUTPUTFORMAT clause lacks DRIVER keyword near (%s):(%d)",
+                       "loadOutputFormat()",
+                       msyytext, msyylineno );
+            return -1;
+        }
+        format = msCreateDefaultOutputFormat( map, driver );
+        if( format == NULL )
+        {
+            msSetError(MS_MISCERR, 
+                       "OUTPUTFORMAT clause references driver %s, but this driver isn't configured.", 
+                       "loadOutputFormat()", driver );
+            return -1;
+        }
+
+        if( name != NULL )
+        {
+            msFree( format->name );
+            format->name = name;
+        }
+        if( transparent != MS_NOOVERRIDE )
+            format->transparent = transparent;
+        if( extension != NULL )
+        {
+            msFree( format->extension );
+            format->extension = extension;
+        }
+        if( mimetype != NULL )
+        {
+            msFree( format->mimetype );
+            format->mimetype = mimetype;
+        }
+        if( format->imagemode != MS_NOOVERRIDE )
+            format->imagemode = imagemode;
+
+        format->numformatoptions = numformatoptions;
+        if( numformatoptions > 0 )
+        {
+            format->formatoptions = (char **) 
+                malloc(sizeof(char *)*numformatoptions );
+            memcpy( format->formatoptions, formatoptions, 
+                    sizeof(char *)*numformatoptions );
+        }
+
+        return(0);
+    }
+    case(NAME):
+      msFree( name );
+      if((name = getToken()) == NULL) return(-1);
+      break;
+    case(MIMETYPE):
+      msFree( mimetype );
+      if((mimetype = getString()) == NULL) return(-1);
+      break;
+    case(DRIVER):
+      msFree( driver );
+      if((driver = getString()) == NULL) return(-1);
+      break;
+    case(FORMATOPTION):
+      if((value = getString()) == NULL) return(-1);
+      if( numformatoptions < MAX_FORMATOPTIONS )
+          formatoptions[numformatoptions++] = value;
+      break;
+    case(IMAGEMODE):
+      if((value = getString()) == NULL) return(-1);
+      if( strcasecmp(value,"PC256") == 0 )
+          imagemode = MS_IMAGEMODE_PC256;
+      else if( strcasecmp(value,"RGB") == 0 )
+          imagemode = MS_IMAGEMODE_RGB;
+      else if( strcasecmp(value,"RGBA") == 0)
+          imagemode = MS_IMAGEMODE_RGBA;
+      else
+      {
+          msSetError(MS_IDENTERR, "(%s):(%d)", "loadOutputFormat()", 
+                     msyytext, msyylineno);      
+          return -1;
+      }
+      msFree( value );
+      break;
+    case(TRANSPARENT):
+      if((transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
+      break;
+    default:
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadOutputFormat()", 
+                 msyytext, msyylineno);      
+      return(-1);
+    }
+  } /* next token */
+}
+
 /*
 ** Initialize, load and free a legendObj structure
 */
@@ -2345,8 +2495,8 @@ void initLegend(legendObj *legend)
   legend->keyspacingy = 5;
   legend->outlinecolor = -1; /* i,e. off */
   legend->status = MS_OFF;
-  legend->transparent = MS_OFF; /* no transparency */
-  legend->interlace = MS_ON;
+  legend->transparent = MS_NOOVERRIDE;
+  legend->interlace = MS_NOOVERRIDE;
   legend->position = MS_LL;
   legend->postlabelcache = MS_FALSE; // draw with labels
   legend->template = NULL;
@@ -2480,7 +2630,8 @@ static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
 {
   fprintf(stream, "  LEGEND\n");
   fprintf(stream, "    IMAGECOLOR %d %d %d\n", legend->imagecolor.red, legend->imagecolor.green, legend->imagecolor.blue);
-  fprintf(stream, "    INTERLACE %s\n", msTrueFalse[legend->interlace]);
+  if( legend->interlace != MS_NOOVERRIDE )
+      fprintf(stream, "    INTERLACE %s\n", msTrueFalse[legend->interlace]);
   fprintf(stream, "    KEYSIZE %d %d\n", legend->keysizex, legend->keysizey);
   fprintf(stream, "    KEYSPACING %d %d\n", legend->keyspacingx, legend->keyspacingy);
   writeLabel(map, &(legend->label), stream, "    ");
@@ -2488,7 +2639,8 @@ static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
   fprintf(stream, "    POSITION %s\n", msLabelPositions[legend->position]);
   if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
-  fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[legend->transparent]);
+  if( legend->transparent != MS_NOOVERRIDE )
+     fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[legend->transparent]);
   if (legend->template) fprintf(stream, "    TEMPLATE \"%s\"\n", legend->template);
   fprintf(stream, "  END\n\n");
 }
@@ -2513,8 +2665,8 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->units = MS_MILES;
   scalebar->status = MS_OFF;
   scalebar->position = MS_LL;
-  scalebar->transparent = MS_OFF; /* no transparency */
-  scalebar->interlace = MS_ON;
+  scalebar->transparent = MS_NOOVERRIDE; /* no transparency */
+  scalebar->interlace = MS_NOOVERRIDE;
   scalebar->postlabelcache = MS_FALSE; // draw with labels
 }
 
@@ -2687,7 +2839,8 @@ static void writeScalebar(mapObj *map, scalebarObj *scalebar, FILE *stream)
   if(scalebar->backgroundcolor > -1) fprintf(stream, "    BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[scalebar->backgroundcolor-1].red, map->palette.colors[scalebar->backgroundcolor-1].green, map->palette.colors[scalebar->backgroundcolor-1].blue);
   if(scalebar->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[scalebar->color-1].red, map->palette.colors[scalebar->color-1].green, map->palette.colors[scalebar->color-1].blue);
   fprintf(stream, "    IMAGECOLOR %d %d %d\n", scalebar->imagecolor.red, scalebar->imagecolor.green, scalebar->imagecolor.blue);
-  fprintf(stream, "    INTERLACE %s\n", msTrueFalse[scalebar->interlace]);
+  if( scalebar->interlace != MS_NOOVERRIDE )
+      fprintf(stream, "    INTERLACE %s\n", msTrueFalse[scalebar->interlace]);
   fprintf(stream, "    INTERVALS %d\n", scalebar->intervals);
   writeLabel(map, &(scalebar->label), stream, "    ");
   if(scalebar->outlinecolor > -1) fprintf(stream, "    OUTLINECOLOR %d %d %d\n", map->palette.colors[scalebar->outlinecolor-1].red, map->palette.colors[scalebar->outlinecolor-1].green, map->palette.colors[scalebar->outlinecolor-1].blue);
@@ -2696,7 +2849,9 @@ static void writeScalebar(mapObj *map, scalebarObj *scalebar, FILE *stream)
   fprintf(stream, "    SIZE %d %d\n", scalebar->width, scalebar->height);
   fprintf(stream, "    STATUS %s\n", msStatus[scalebar->status]);
   fprintf(stream, "    STYLE %d\n", scalebar->style);
-  fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[scalebar->transparent]);
+  if( scalebar->transparent != MS_NOOVERRIDE )
+      fprintf(stream, "    TRANSPARENT %s\n", 
+              msTrueFalse[scalebar->transparent]);
   fprintf(stream, "    UNITS %s\n", msUnits[scalebar->units]);
   fprintf(stream, "  END\n\n");
 }
@@ -2989,23 +3144,17 @@ int initMap(mapObj *map)
   map->imagecolor.green = 255;
   map->imagecolor.blue = 255;
 
-  // set the default image type (progression)
-#ifdef USE_GD_GIF
-  map->imagetype = MS_GIF;
-#elif USE_GD_PNG
-  map->imagetype = MS_PNG;
-#elif USE_GD_JPEG
-  map->imagetype = MS_JPEG;
-#elif USE_GD_WBMP
-  map->imagetype = MS_WBMP;
-#endif
+  map->numoutputformats = 0;
+  map->outputformatlist = NULL;
+  map->outputformat = NULL;
 
-  map->imagequality = 75;
+  map->imagetype = NULL;
 
   map->palette.numcolors = 0;
 
-  map->transparent = MS_OFF;
-  map->interlace = MS_ON;
+  map->transparent = MS_NOOVERRIDE;
+  map->interlace = MS_NOOVERRIDE;
+  map->imagequality = MS_NOOVERRIDE;
 
   map->labelcache.labels = (labelCacheMemberObj *)malloc(sizeof(labelCacheMemberObj)*MS_LABELCACHEINITSIZE);
   if(map->labelcache.labels == NULL) {
@@ -3079,6 +3228,17 @@ void msFreeMap(mapObj *map) {
   }
   msFree(map->labelcache.labels);
 
+  if( map->outputformat && --map->outputformat->refcount < 1 )
+      msFreeOutputFormat( map->outputformat );
+
+  for(i=0; i < map->numoutputformats; i++ ) {
+      msFreeOutputFormat( map->outputformatlist[i] );
+  }
+  if( map->outputformatlist != NULL )
+      msFree( map->outputformatlist );
+
+  msFree( map->imagetype );
+
   for(i=0; i<map->labelcache.nummarkers; i++) {
     msFreeShape(map->labelcache.markers[i].poly);
     msFree(map->labelcache.markers[i].poly);
@@ -3130,17 +3290,20 @@ int msSaveMap(mapObj *map, char *filename)
   if(map->fontset.filename) fprintf(stream, "  FONTSET \"%s\"\n", map->fontset.filename);
   fprintf(stream, "  IMAGECOLOR %d %d %d\n", map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
 
-  fprintf(stream, "  IMAGEQUALITY %d\n", map->imagequality);
-  fprintf(stream, "  IMAGETYPE %s\n", msOutputImageType[map->imagetype]);
+  if( map->imagetype != NULL )
+      fprintf(stream, "  IMAGETYPE %s\n", map->imagetype );
 
   if(map->resolution != 72) fprintf(stream, "  RESOLUTION %d\n", map->resolution);
 
-  fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
+  if( map->interlace != MS_NOOVERRIDE )
+      fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
   if(map->symbolset.filename) fprintf(stream, "  SYMBOLSET \"%s\"\n", map->symbolset.filename);
   if(map->shapepath) fprintf(stream, "  SHAPEPATH \"%s\"\n", map->shapepath);
   fprintf(stream, "  SIZE %d %d\n", map->width, map->height);
   fprintf(stream, "  STATUS %s\n", msStatus[map->status]);
-  fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
+  if( map->transparent != MS_NOOVERRIDE )
+      fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
+
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
 
@@ -3242,6 +3405,10 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
     case(END):
       fclose(msyyin);      
 
+      /*** OUTPUTFORMAT related setup ***/
+      if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
+          return NULL;
+
       if(msLoadSymbolSet(&(map->symbolset)) == -1) return(NULL);
 
       /* step through layers and classes to resolve symbol names */
@@ -3301,7 +3468,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
       if(getInteger(&(map->imagequality)) == -1) return(NULL);
       break;
     case(IMAGETYPE):
-      if((map->imagetype = getSymbol(6, MS_GIF,MS_PNG,MS_JPEG,MS_WBMP,MS_GML, MS_SWF)) == -1) return(NULL);
+      map->imagetype = getToken();
       break;
     case(INTERLACE):
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
@@ -3320,6 +3487,9 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
       //Update the layer order list with the layer's index.
       map->layerorder[map->numlayers] = map->numlayers;
       map->numlayers++;
+      break;
+    case(OUTPUTFORMAT):
+      if(loadOutputFormat(map) == -1) return(NULL);
       break;
     case(LEGEND):
       if(loadLegend(&(map->legend), map) == -1) return(NULL);
@@ -3440,7 +3610,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       break;
     case(IMAGETYPE):
       msyystate = 2; msyystring = value;
-      if((map->imagetype = getSymbol(4, MS_GIF,MS_PNG,MS_JPEG,MS_WBMP)) == -1) break;
+      map->imagetype = getToken();
       break;
     case(LAYER):      
       if(getInteger(&i) == -1) break;
