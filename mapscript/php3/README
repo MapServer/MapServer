@@ -69,13 +69,14 @@ Very important note: Constant names and class member variable names are
         MS_SINGLE, MS_MULTIPLE
 
     Querymap styles:
-        MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED
+        MS_NORMAL, MS_HILITE, MS_SELECTED
 
     Connection Types:
-        MS_LOCAL, MS_SDE, MS_OGR
+        MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, 
+        MS_TILED_OGR
 
     Output Image Types:
-        MS_GIF, MS_PNG, MS_JPEG
+        MS_GIF, MS_PNG, MS_JPEG, MS_WBMP
 
  MapObj Class:
  -------------
@@ -209,10 +210,11 @@ Very important note: Constant names and class member variable names are
          If provided then it will be impossible to zoom/pan outside of
          those extents.
 
-   queryResultObj queryUsingPoint(pointObj point, int type, double buffer)
+   int queryByPoint(pointObj point, int type, double buffer)
         Query all selected layers in map at point location specified in 
         georeferenced map coordinates (i.e. not pixels).  
-        Returns a queryResultObj on success, or 0 if nothing was found.
+    __TODO__ returns MS_SUCCESS/MS_FAILURE...
+Returns a queryResultObj on success, or 0 if nothing was found.
         Type is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
@@ -221,15 +223,15 @@ Very important note: Constant names and class member variable names are
         Note that to be queryable a layer must have a QUERYITEM and at least
         one QUERY object.
 
-   queryresultObj queryUsingRect(rectObj rect)
+   int queryByRect(rectObj rect)
         Query all selected layers in map using a rectangle specified in 
         georeferenced map coordinates (i.e. not pixels).
-        Returns a queryResultObj on success, or 0 if nothing was found.
+   __TODO__ Returns a queryResultObj on success, or 0 if nothing was found.
         Note that to be queryable a layer must have a QUERYITEM and at least
         one QUERY object.
 
-   int queryUsingFeatures(queryResultObj pQuery) 
-       Generates a result set based on a previous set of results. At present 
+   int queryByFeatures(int slayer) 
+   __TODO__ Generates a result set based on a previous set of results. At present 
         the results MUST be based on a polygon layer. Holes and disjoint 
         polygons should now be handled correctly.
 
@@ -334,6 +336,9 @@ Very important note: Constant names and class member variable names are
    queryresultObj queryUsingShape(shapeObj shape)
       Generates a result set based on a single shape, the shape is assumed 
       to be a polygon at this point.
+
+   int setFilter(string expression)
+        Set layer filter expression.
 
    int setProjection(string proj_params)
         Set layer projection and coordinate system.  Parameters are given as 
@@ -580,7 +585,7 @@ Constructor:
         Draws the individual point using layer.  The class_index is used
         to classify the point based on the classes defined for the layer.
         The text string is used to annotate the point.
-        Returns 0 on success, -1 on error.
+        Returns MS_SUCCESS/MS_FAILUREr.
 
   double distanceToPoint(pointObj poPoint)
        Calculates distance between two points.  
@@ -648,13 +653,13 @@ Constructor:
         Draws the individual shape using layer.  The class_index is used
         to classify the shape based on the classes defined for the layer.
         The text string is used to annotate the shape.
-        Returns 0 on success, -1 on error.
+        Returns MS_SUCCESS/MS_FAILURE.
 
    boolean contains(pointObj point)
-        Returns MS_TRUE if the point is in a polygone shape. Else MS_FALSE.
+        Returns MS_TRUE if the point is inside the shape, MS_FALSE otherwise.
 
-   boolean intersects(shapeObj pShape))
-        Returns MS_TRUE or false if the two shapes intersect. Else MS_FALSE.
+   boolean intersects(shapeObj shape)
+        Returns MS_TRUE if the two shapes intersect, MS_FALSE otherwise.
      
    void free()
         Destroys resources used by a shape object.  
@@ -690,7 +695,7 @@ Constructor:
         Draws the individual rectangle using layer.  The class_index is used
         to classify the rectangle based on the classes defined for the layer.
         The text string is used to annotate the rectangle.
-        Returns 0 on success, -1 on error.
+        Returns MS_SUCCESS/MS_FAILURE.
 
   double fit(int width, int height)
         Adjust extents of the rectangle to fit the width/height specified.

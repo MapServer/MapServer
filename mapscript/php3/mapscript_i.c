@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.13  2001/03/09 19:33:13  dan
+ * Updated PHP MapScript... still a few methods missing, and needs testing.
+ *
  * Revision 1.12  2001/02/23 21:58:00  dan
  * PHP MapScript working with new 3.5 stuff, but query stuff is disabled
  *
@@ -197,24 +200,22 @@ labelCacheMemberObj *mapObj_nextLabel(mapObj* self) {
       return NULL;	
   }
 
-#ifdef __TODO35__
-queryResultObj *mapObj_queryUsingPoint(mapObj* self, pointObj *point, 
-                                       int mode, double buffer) {
-    return msQueryUsingPoint(self, NULL, mode, *point, buffer);
+int mapObj_queryByPoint(mapObj* self, pointObj *point, 
+                         int mode, double buffer) {
+    return msQueryByPoint(self, -1, mode, *point, buffer);
   }
 
-queryResultObj *mapObj_queryUsingRect(mapObj* self, rectObj *rect) {
-    return msQueryUsingRect(self, NULL, rect);
+int mapObj_queryByRect(mapObj* self, rectObj rect) {
+    return msQueryByRect(self, -1, rect);
   }
 
-int mapObj_queryUsingFeatures(mapObj* self, queryResultObj *results) {
-    return msQueryUsingFeatures(self, NULL, results);
+int mapObj_queryByFeatures(mapObj* self, int slayer) {
+    return msQueryByFeatures(self, -1, slayer);
   }
 
-queryResultObj *mapObj_queryUsingShape(mapObj *map, shapeObj *shape) {
-    return msQueryUsingShape(map, NULL, shape);
+int mapObj_queryByShape(mapObj *self, shapeObj *shape) {
+    return msQueryByShape(self, -1, shape);
   }
-#endif
 
 int mapObj_setProjection(mapObj* self, char *string) {
     return(loadProjectionString(&(self->projection), string));
@@ -245,11 +246,37 @@ void layerObj_destroy(layerObj *self) {
     return; // map deconstructor takes care of it
   }
 
+int layerObj_open(layerObj *self, char *path) {
+    return msLayerOpen(self, path);
+  }
+
+void layerObj_close(layerObj *self) {
+    msLayerClose(self);
+  }
+
+int layerObj_getShape(layerObj *self, char *path, shapeObj *shape, 
+                      int tileindex, int shapeindex, int allitems) {
+    return msLayerGetShape(self, path, shape, tileindex, shapeindex, allitems);
+  }
+
+resultCacheMemberObj *layerObj_getResult(layerObj *self, int i) {
+    if(!self->resultcache) return NULL;
+
+    if(i >= 0 && i < self->resultcache->numresults)
+      return &self->resultcache->results[i]; 
+    else
+      return NULL;
+  }
+
 classObj *layerObj_getClass(layerObj *self, int i) { // returns an EXISTING class
     if(i >= 0 && i < self->numclasses)
       return &(self->class[i]); 
     else
       return(NULL);
+  }
+
+int layerObj_prepare(layerObj *self) {
+    // do scaling
   }
 
 int layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img) {
@@ -269,28 +296,26 @@ int layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img) {
     }
   }
 
-#ifdef __TODO35__
-queryResultObj *layerObj_queryUsingPoint(layerObj *self, mapObj *map, 
-                                         pointObj *point, int mode, 
-                                         double buffer) {
-    return msQueryUsingPoint(map, self->name, mode, *point, buffer);
+int layerObj_queryByPoint(layerObj *self, mapObj *map, 
+                          pointObj *point, int mode, double buffer) {
+    return msQueryByPoint(map, self->index, mode, *point, buffer);
   }
 
-queryResultObj *layerObj_queryUsingRect(layerObj *self, mapObj *map, 
-                                        rectObj *rect) {
-    return msQueryUsingRect(map, self->name, rect);
+int layerObj_queryByRect(layerObj *self, mapObj *map, rectObj rect) {
+    return msQueryByRect(map, self->index, rect);
   }
 
-int layerObj_queryUsingFeatures(layerObj *self, mapObj *map, 
-                                queryResultObj *results) {
-    return msQueryUsingFeatures(map, self->name, results);
+int layerObj_queryByFeatures(layerObj *self, mapObj *map, int slayer) {
+    return msQueryByFeatures(map, self->index, slayer);
   }
 
-queryResultObj *layerObj_queryUsingShape(layerObj *self, mapObj *map, 
-                                         shapeObj *shape) {
-    return msQueryUsingShape(map, self->name, shape);
+int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
+    return msQueryByShape(map, self->index, shape);
   }
-#endif
+
+int layerObj_setFilter(layerObj *self, char *string) {    
+    return loadExpressionString(&self->filter, string);
+  }
 
 int layerObj_setProjection(layerObj *self, char *string) {
     return(loadProjectionString(&(self->projection), string));
@@ -302,11 +327,6 @@ int layerObj_addFeature(layerObj *self, shapeObj *shape) {
     else
       return 0;
   }
-#ifdef __TODO35__
-int layerObj_classify(layerObj *self, char *string) {
-    return msGetClassIndex(self, string);
-  }
-#endif
 
 /**********************************************************************
  * class extensions for classObj, always within the context of a layer
@@ -450,12 +470,34 @@ lineObj *shapeObj_get(shapeObj *self, int i) {
 int shapeObj_add(shapeObj *self, lineObj *line) {
     return msAddLine(self, line);
   }
-#ifdef __TODO35__
+
 int shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer, 
-                  gdImagePtr img, int class_index, char *label_string) {
-    return msDrawShape(map, layer, self, img, class_index, label_string);
+                  gdImagePtr img) {
+    return msDrawShape(map, layer, self, img, MS_TRUE);
   }
-#endif
+
+void shapeObj_setBounds(shapeObj *self) {
+    int i, j;
+
+    self->bounds.minx = self->bounds.maxx = self->line[0].point[0].x;
+    self->bounds.miny = self->bounds.maxy = self->line[0].point[0].y;
+    
+    for( i=0; i<self->numlines; i++ ) {
+      for( j=0; j<self->line[i].numpoints; j++ ) {
+	self->bounds.minx = MS_MIN(self->bounds.minx, self->line[i].point[j].x);
+	self->bounds.maxx = MS_MAX(self->bounds.maxx, self->line[i].point[j].x);
+	self->bounds.miny = MS_MIN(self->bounds.miny, self->line[i].point[j].y);
+	self->bounds.maxy = MS_MAX(self->bounds.maxy, self->line[i].point[j].y);
+      }
+    }
+
+    return;
+  }
+
+int shapeObj_copy(shapeObj *self, shapeObj *dest) {
+    return(msCopyShape(self, dest));
+  }
+
 int shapeObj_contains(shapeObj *self, pointObj *point) {
     if(self->type == MS_POLYGON)
       return msIntersectPointPolygon(point, self);
@@ -507,21 +549,22 @@ double rectObj_fit(rectObj *self, int width, int height) {
     return  msAdjustExtent(self, width, height);
   } 
 
-#ifdef __TODO35__
 int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
-                 gdImagePtr img, int class_index, char *label_string) {
+                 gdImagePtr img, int classindex, char *text) {
     shapeObj shape;
 
     msInitShape(&shape);
-    msRect2Polygon(*self, &shape);
-    msDrawShape(map, layer, &shape, img, class_index, label_string);
+    msRectToPolygon(*self, &shape);
+    shape.classindex = classindex;
+    shape.text = strdup(text);
+
+    msDrawShape(map, layer, &shape, img, MS_TRUE);
+
     msFreeShape(&shape);
     
     return 0;
   }
-#endif
 
-#ifdef __TODO35__
 /**********************************************************************
  * class extensions for shapefileObj
  **********************************************************************/
@@ -534,14 +577,14 @@ shapefileObj *shapefileObj_new(char *filename, int type) {
       return NULL;
 
     if(type == -1)
-      status = msOpenSHPFile(shapefile, "rb", NULL, NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb", NULL, filename);
     else if (type == -2)
-      status = msOpenSHPFile(shapefile, "rb+", NULL, NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb+", NULL, filename);
     else
-      status = msCreateSHPFile(shapefile, filename, type);
+      status = msSHPCreateFile(shapefile, filename, type);
 
     if(status == -1) {
-      msCloseSHPFile(shapefile);
+      msSHPCloseFile(shapefile);
       free(shapefile);
       return NULL;
     }
@@ -550,7 +593,7 @@ shapefileObj *shapefileObj_new(char *filename, int type) {
   }
 
 void shapefileObj_destroy(shapefileObj *self) {
-    msCloseSHPFile(self);
+    msSHPCloseFile(self);
     free(self);  
   }
 
@@ -559,7 +602,7 @@ int shapefileObj_get(shapefileObj *self, int i, shapeObj *shape) {
       return -1;
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
-    SHPReadShape(self->hSHP, i, shape);
+    msSHPReadShape(self->hSHP, i, shape);
 
     return 0;
   }
@@ -570,18 +613,65 @@ int shapefileObj_getTransformed(shapefileObj *self, mapObj *map,
       return -1;
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
-    SHPReadShape(self->hSHP, i, shape);
-    msTransformPolygon(map->extent, map->cellsize, shape);
+    msSHPReadShape(self->hSHP, i, shape);
+    msTransformShape(shape, map->extent, map->cellsize);
 
     return 0;
   }
 
 void shapefileObj_getExtent(shapefileObj *self, int i, rectObj *rect) {
-    SHPReadBounds(self->hSHP, i, rect);
+    msSHPReadBounds(self->hSHP, i, rect);
   }
 
 int shapefileObj_add(shapefileObj *self, shapeObj *shape) {
-    return SHPWriteShape(self->hSHP, shape);	
+    return msSHPWriteShape(self->hSHP, shape);	
   }	
 
-#endif // __TODO35__
+/**********************************************************************
+ * class extensions for labelCacheObj - TP mods
+ **********************************************************************/
+void labelCacheObj_freeCache(labelCacheObj *self) {
+    int i;
+    for (i = 0; i < self->numlabels; i++) {
+        free(self->labels[i].string);
+        msFreeShape(self->labels[i].poly);
+    }   
+    self->numlabels = 0;
+    for (i = 0; i < self->nummarkers; i++) {
+        msFreeShape(self->markers[i].poly);
+    }
+    self->nummarkers = 0;
+  }
+
+/**********************************************************************
+ * class extensions for DBFInfo - TP mods
+ **********************************************************************/
+char *DBFInfo_getFieldName(DBFInfo *self, int iField) {
+        static char pszFieldName[1000];
+	int pnWidth;
+	int pnDecimals;
+	msDBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	return pszFieldName;
+    }
+
+int DBFInfo_getFieldWidth(DBFInfo *self, int iField) {
+        char pszFieldName[1000];
+	int pnWidth;
+	int pnDecimals;
+	msDBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	return pnWidth;
+    }
+
+int DBFInfo_getFieldDecimals(DBFInfo *self, int iField) {
+        char pszFieldName[1000];
+	int pnWidth;
+	int pnDecimals;
+	msDBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	return pnDecimals;
+    }
+    
+DBFFieldType DBFInfo_getFieldType(DBFInfo *self, int iField) {
+	return msDBFGetFieldInfo(self, iField, NULL, NULL, NULL);
+    }    
+
+

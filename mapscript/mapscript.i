@@ -173,8 +173,8 @@
     return msQueryByFeatures(self, -1, slayer);
   }
 
-  int queryByShape(mapObj *map, shapeObj *shape) {
-    return msQueryByShape(map, -1, shape);
+  int queryByShape(shapeObj *shape) {
+    return msQueryByShape(self, -1, shape);
   }
 
   int setProjection(char *string) {
@@ -513,7 +513,7 @@
     shapeObj shape;
 
     msInitShape(&shape);
-    msRect2Polygon(*self, &shape);
+    msRectToPolygon(*self, &shape);
     shape.classindex = classindex;
     shape.text = strdup(text);
 
@@ -574,7 +574,7 @@
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
     msSHPReadShape(self->hSHP, i, shape);
-    msTransformPolygon(map->extent, map->cellsize, shape);
+    msTransformShape(shape, map->extent, map->cellsize);
 
     return 0;
   }

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.33  2001/03/09 19:33:13  dan
+ * Updated PHP MapScript... still a few methods missing, and needs testing.
+ *
  * Revision 1.32  2001/03/07 22:13:13  assefa
  * Make sure to call msAdjustExtent in the zoom functions.
  *
@@ -83,7 +86,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Mar 2, 2001)"
+#define PHP3_MS_VERSION "(Mar 9, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -136,12 +139,10 @@ DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_nextLabel(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS);
-#ifdef __TODO35__
-DLEXPORT void php3_ms_map_queryUsingPoint(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_queryUsingFeatures(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_map_queryUsingShape(INTERNAL_FUNCTION_PARAMETERS);
-#endif // __TODO35__
+DLEXPORT void php3_ms_map_queryByPoint(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS);
@@ -159,12 +160,10 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS);
-#ifdef __TODO35__
-DLEXPORT void php3_ms_lyr_queryUsingPoint(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_lyr_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_lyr_queryUsingFeatures(INTERNAL_FUNCTION_PARAMETERS);
-DLEXPORT void php3_ms_lyr_queryUsingShape(INTERNAL_FUNCTION_PARAMETERS);
-#endif
+DLEXPORT void php3_ms_lyr_queryByPoint(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_classify(INTERNAL_FUNCTION_PARAMETERS);
@@ -306,9 +305,7 @@ function_entry php3_ms_functions[] = {
     {"ms_newpointobj",  php3_ms_point_new,      NULL},
     {"ms_newlineobj",   php3_ms_line_new,       NULL},
     {"ms_newshapeobj",  php3_ms_shape_new,      NULL},
-#ifdef __TODO35__
     {"ms_newshapefileobj", php3_ms_shapefile_new,  NULL},
-#endif
     {"ms_newrectobj",      php3_ms_rect_new,    NULL},
     {"ms_getcwd",       php3_ms_getcwd,         NULL},
     {"ms_getpid",       php3_ms_getpid,         NULL},
@@ -342,13 +339,11 @@ function_entry php_map_class_functions[] = {
     {"set",             php3_ms_map_setProperty,        NULL},
     {"setprojection",   php3_ms_map_setProjection,      NULL},
     {"addcolor",        php3_ms_map_addColor,           NULL},
-    {"getsymbolbyname", php3_ms_map_getSymbolByName,     NULL},
+    {"getsymbolbyname", php3_ms_map_getSymbolByName,    NULL},
     {"draw",            php3_ms_map_draw,               NULL},
-#ifdef __TODO35__
     {"drawquerymap",    php3_ms_map_drawQueryMap,       NULL},
-#endif
-    {"embedscalebar",   php3_ms_map_embedScalebar,     NULL},
-    {"embedlegend",     php3_ms_map_embedLegend,     NULL},
+    {"embedscalebar",   php3_ms_map_embedScalebar,      NULL},
+    {"embedlegend",     php3_ms_map_embedLegend,        NULL},
     {"drawlabelcache",  php3_ms_map_drawLabelCache,     NULL},
     {"drawlegend",      php3_ms_map_drawLegend,         NULL},
     {"drawreferencemap",php3_ms_map_drawReferenceMap,   NULL},
@@ -360,12 +355,10 @@ function_entry php_map_class_functions[] = {
     {"zoompoint",       php3_ms_map_zoomPoint,          NULL},
     {"zoomrectangle",   php3_ms_map_zoomRectangle,      NULL},
     {"zoomscale",       php3_ms_map_zoomScale,          NULL},
-#ifdef __TODO35__
-    {"queryusingpoint", php3_ms_map_queryUsingPoint,    NULL},
-    {"queryusingrect",  php3_ms_map_queryUsingRect,     NULL},
-    {"queryusingfeatures",  php3_ms_map_queryUsingFeatures,     NULL},
-    {"queryusingshape",  php3_ms_map_queryUsingShape,     NULL},
-#endif
+    {"querybypoint",    php3_ms_map_queryByPoint,       NULL},
+    {"querybyrect",     php3_ms_map_queryByRect,        NULL},
+    {"querybyfeatures", php3_ms_map_queryByFeatures,    NULL},
+    {"querybyshape",    php3_ms_map_queryByShape,       NULL},
     {"save",            php3_ms_map_save,               NULL},
     {"getlatlongextent", php3_ms_map_getLatLongExtent,  NULL},
     {NULL, NULL, NULL}
@@ -382,8 +375,8 @@ function_entry php_rect_class_functions[] = {
     {"set",             php3_ms_rect_setProperty,       NULL},    
     {"setextent",       php3_ms_rect_setExtent,         NULL},    
     {"draw",            php3_ms_rect_draw,              NULL},
-    {"fit",            php3_ms_rect_fit,              NULL},
-    {"free",            php3_ms_rect_free,               NULL},    
+    {"fit",             php3_ms_rect_fit,               NULL},
+    {"free",            php3_ms_rect_free,              NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -406,17 +399,12 @@ function_entry php_layer_class_functions[] = {
     {"set",             php3_ms_lyr_setProperty,        NULL},    
     {"draw",            php3_ms_lyr_draw,               NULL},    
     {"getclass",        php3_ms_lyr_getClass,           NULL},    
-#ifdef __TODO35__
-    {"queryusingpoint", php3_ms_lyr_queryUsingPoint,    NULL},    
-    {"queryusingrect",  php3_ms_lyr_queryUsingRect,     NULL},    
-    {"queryusingfeatures",  php3_ms_lyr_queryUsingFeatures,     NULL},    
-    {"queryusingshape",  php3_ms_lyr_queryUsingShape,     NULL},    
-#endif
+    {"querybypoint",    php3_ms_lyr_queryByPoint,       NULL},    
+    {"querybyrect",     php3_ms_lyr_queryByRect,        NULL},    
+    {"querybyfeatures", php3_ms_lyr_queryByFeatures,    NULL},    
+    {"querybyshape",    php3_ms_lyr_queryByShape,       NULL},    
     {"setprojection",   php3_ms_lyr_setProjection,      NULL},
-    {"addfeature",   php3_ms_lyr_addFeature,      NULL},
-#ifdef __TODO35__
-    {"classify",   php3_ms_lyr_classify,      NULL},
-#endif
+    {"addfeature",      php3_ms_lyr_addFeature,         NULL},
     {NULL, NULL, NULL}
 };
 
@@ -460,7 +448,6 @@ function_entry php_shape_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
-#ifdef __TODO35__
 function_entry php_shapefile_class_functions[] = {
     {"getshape",        php3_ms_shapefile_getshape,     NULL},    
     {"gettransformed",  php3_ms_shapefile_gettransformed, NULL},    
@@ -469,7 +456,6 @@ function_entry php_shapefile_class_functions[] = {
     {"free",            php3_ms_shapefile_free,         NULL},    
     {NULL, NULL, NULL}
 };
-#endif
 
 
 #ifdef ZEND_VERSION 
@@ -591,24 +577,28 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_MULTIPLE",   MS_MULTIPLE,    const_flag);
 
     /* connection type constants*/
-#ifdef __TODO35__
-    REGISTER_LONG_CONSTANT("MS_LOCAL",      MS_LOCAL,       const_flag);
-#endif
+    REGISTER_LONG_CONSTANT("MS_INLINE",     MS_INLINE,      const_flag);
+    REGISTER_LONG_CONSTANT("MS_SHAPEFILE",  MS_SHAPEFILE,   const_flag);
+    REGISTER_LONG_CONSTANT("MS_TILED_SHAPEFILE",MS_TILED_SHAPEFILE,const_flag);
     REGISTER_LONG_CONSTANT("MS_SDE",        MS_SDE,         const_flag);
     REGISTER_LONG_CONSTANT("MS_OGR",        MS_OGR,         const_flag);
+    REGISTER_LONG_CONSTANT("MS_TILED_OGR",  MS_TILED_OGR,   const_flag);
 
     /* output image type constants*/
     REGISTER_LONG_CONSTANT("MS_GIF",        MS_GIF,         const_flag);
     REGISTER_LONG_CONSTANT("MS_PNG",        MS_PNG,         const_flag);
     REGISTER_LONG_CONSTANT("MS_JPEG",       MS_JPEG,        const_flag);
+    REGISTER_LONG_CONSTANT("MS_WBMP",       MS_WBMP,        const_flag);
 
     /* querymap style constants */
     REGISTER_LONG_CONSTANT("MS_NORMAL",     MS_NORMAL,      const_flag);
     REGISTER_LONG_CONSTANT("MS_HILITE",     MS_HILITE,      const_flag);
     REGISTER_LONG_CONSTANT("MS_SELECTED",   MS_SELECTED,    const_flag);
-#ifdef __TODO35__
-    REGISTER_LONG_CONSTANT("MS_INVERTED",   MS_INVERTED,    const_flag);
-#endif
+
+    /* return value constants */
+    REGISTER_LONG_CONSTANT("MS_SUCCESS",    MS_SUCCESS,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_FAILURE",    MS_FAILURE,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_DONE",       MS_DONE,        const_flag);
 
     /* We'll use tmpId and tmpCount to generate unique filenames */
     sprintf(PHPMS_GLOBAL(tmpId), "%ld%d",(long)time(NULL),(int)getpid());
@@ -652,11 +642,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     INIT_CLASS_ENTRY(tmp_class_entry, "shape", php_shape_class_functions);
     shape_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
     
-#ifdef __TODO35__
     INIT_CLASS_ENTRY(tmp_class_entry, "shapefile", 
                      php_shapefile_class_functions);
     shapefile_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
-#endif // __TODO35__
 
 #endif
 
@@ -704,9 +692,7 @@ DLEXPORT void php3_ms_free_shape(shapeObj *pShape)
 
 DLEXPORT void php3_ms_free_shapefile(shapefileObj *pShapefile) 
 {
-#ifdef __TODO35__
     shapefileObj_destroy(pShapefile);
-#endif
 }
 
 
@@ -1487,7 +1473,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         pHeight->value.lval <= 0 ||
         poGeorefExt == NULL ||
         poPixExt == NULL ||
-        bMaxExtSet && poMaxGeorefExt == NULL)
+        (bMaxExtSet && poMaxGeorefExt == NULL))
     {
         _phpms_report_mapserver_error(E_WARNING);
         php3_error(E_ERROR, "zoomRectangle failed : incorrect parameters\n");
@@ -2156,16 +2142,13 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 /**********************************************************************
  *                        map->drawQueryMap()
  **********************************************************************/
-#ifdef __TODO35__
 
-/* {{{ proto int map.drawQueryMap(queryResultObj poQueryObject)
+/* {{{ proto int map.drawQueryMap()
    Renders a query map, returns an image.. */
 DLEXPORT void php3_ms_map_drawQueryMap(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pThis;
     mapObj      *self;
-    pval        *pQuery;
-    queryResultObj *poQueryResult;
     gdImagePtr im = NULL;
 
 #ifdef PHP4
@@ -2178,19 +2161,13 @@ DLEXPORT void php3_ms_map_drawQueryMap(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
-    if (pThis == NULL ||
-        getParameters(ht, 1, &pQuery) != SUCCESS)
+    if (pThis == NULL || ARG_COUNT(ht) > 0)
     {
         WRONG_PARAM_COUNT;
     }
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
-    poQueryResult = 
-        (queryResultObj*)_phpms_fetch_handle(pQuery, 
-                                             PHPMS_GLOBAL(le_msqueryresult),
-                                             list);
-    if (self == NULL || poQueryResult == NULL || 
-        (im =  mapObj_drawQueryMap(self, poQueryResult)) == NULL)
+    if (self == NULL || (im =  mapObj_drawQueryMap(self)) == NULL)
         _phpms_report_mapserver_error(E_ERROR);
 
     /* Return an image object */
@@ -2198,7 +2175,6 @@ DLEXPORT void php3_ms_map_drawQueryMap(INTERNAL_FUNCTION_PARAMETERS)
 }
      
 /* }}} */
-#endif // __TODO53__
 
 /**********************************************************************
  *                        map->drawLegend()
@@ -2613,10 +2589,8 @@ DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
-#ifdef __TODO35__
-
 /**********************************************************************
- *                        map->queryUsingPoint()
+ *                        map->queryByPoint()
  *
  * Type is MS_SINGLE or MS_MULTIPLE depending on number of results
  * you want. Passing buffer <=0 defaults to tolerances set in the map 
@@ -2624,15 +2598,15 @@ DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS)
  * ground units) instead.
  **********************************************************************/
 
-/* {{{ proto queryResultObj map.queryUsingPoint(pointObj point, int type, double buffer)
+/* {{{ proto int map.queryByPoint(pointObj point, int type, double buffer)
    Query at point location. */
 
-DLEXPORT void php3_ms_map_queryUsingPoint(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_map_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval   *pThis, *pPoint, *pType, *pBuffer;
     mapObj *self=NULL;
     pointObj *poPoint=NULL;
-    queryResultObj *poResult=NULL;
+    int      nStatus = MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2659,39 +2633,35 @@ DLEXPORT void php3_ms_map_queryUsingPoint(INTERNAL_FUNCTION_PARAMETERS)
                                                list);
 
     if (self && poPoint && 
-        (poResult=mapObj_queryUsingPoint(self, poPoint, pType->value.lval, 
-                                         pBuffer->value.dval)) != NULL)
+        (nStatus=mapObj_queryByPoint(self, poPoint, pType->value.lval, 
+                                      pBuffer->value.dval)) != MS_SUCCESS)
     {
-        /* Found something... return queryResult object */
-        _phpms_build_queryresult_object(poResult, list, return_value);
-        return;
+        _phpms_report_mapserver_error(E_ERROR);
     }
 
-    /* Nothing found... we should produce no error and just return 0 */
-    RETURN_LONG(0);
+    RETURN_LONG(nStatus);
 }
 /* }}} */
 
 
 /************************************************************************/
-/*                        map->queryUsingRect()                         */
+/*                          map->queryByRect()                          */
 /*                                                                      */
 /*      Parmeters :                                                     */
 /*                                                                      */
 /*       rectObj : poRect : extents used to make the query.             */
-/*                                                                      */
 /************************************************************************/
 
 
-/* {{{ proto queryResultObj map.queryUsingRect(rectObj poRect) */
+/* {{{ proto int map.queryByRect(rectObj poRect) */
  
 
-DLEXPORT void php3_ms_map_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval   *pThis, *pRect;
     mapObj *self=NULL;
     rectObj *poRect=NULL;
-    queryResultObj *poResult=NULL;
+    int      nStatus = MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2716,37 +2686,24 @@ DLEXPORT void php3_ms_map_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS)
                                              list);
 
     if (self && poRect && 
-        (poResult=mapObj_queryUsingRect(self, poRect)) != NULL)
+        (nStatus=mapObj_queryByRect(self, *poRect)) != MS_SUCCESS)
     {
-        /* Found something... return queryResult object */
-        _phpms_build_queryresult_object(poResult, list, return_value);
-        return;
+        _phpms_report_mapserver_error(E_ERROR);
     }
 
-    /* Nothing found... we should produce no error and just return 0 */
-    RETURN_LONG(0);
+    RETURN_LONG(nStatus);
 }
 /* }}} */
 
 
-/************************************************************************/
-/*                      map->queryUsingFeatures()                       */
-/*                                                                      */
-/*       Parmeters :                                                    */
-/*                                                                      */
-/*        queryResultObj : poQuery                                      */
-/*                                                                      */
-/*      Generates a result set based on a previous set of               */
-/*      results. At present the results MUST be based on a polygon      */
-/*      layer. Holes and disjoint polygons should now be handled        */
-/*      correctly.                                                      */
-/************************************************************************/
-DLEXPORT void php3_ms_map_queryUsingFeatures(INTERNAL_FUNCTION_PARAMETERS)
+/**********************************************************************
+ *                    map->queryByFeatures(int slayer)
+ **********************************************************************/
+DLEXPORT void php3_ms_map_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS)
 { 
-    pval   *pThis, *pResult;
+    pval   *pThis, *pSLayer;
     mapObj *self=NULL;
-    queryResultObj *poResult=NULL;
-    int nResult = -1;
+    int      nStatus = MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -2759,43 +2716,39 @@ DLEXPORT void php3_ms_map_queryUsingFeatures(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 1, &pResult) == FAILURE) 
+        getParameters(ht, 1, &pSLayer) == FAILURE) 
     {
         WRONG_PARAM_COUNT;
     }
 
+    convert_to_long(pSLayer);
 
     self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), list);
 
-    poResult = 
-        (queryResultObj*)_phpms_fetch_handle(pResult, 
-                                             PHPMS_GLOBAL(le_msqueryresult),
-                                             list);
-    if (self && poResult)
+    if (self &&
+        (nStatus=mapObj_queryByFeatures(self, 
+                                        pSLayer->value.lval)) != MS_SUCCESS)
     {
-        nResult = mapObj_queryUsingFeatures(self, poResult);
+        _phpms_report_mapserver_error(E_ERROR);
     }
 
-    RETURN_LONG(nResult);   
+    RETURN_LONG(nStatus);
 }
 
-/************************************************************************/
-/*                DLEXPORT void php3_ms_map_queryUsingShape             */
-/*                                                                      */
-/*      Parmeters :                                                     */
-/*             shapeObj : poShape                                       */
-/*                                                                      */
-/*      Generates a result set based on a single shape, the shape is    */
-/*      assumed to be a polygon at this point.                          */
-/*                                                                      */
-/************************************************************************/
-/* {{{ proto queryResultObj map.queryUsingShape(shapeObj poShape) */
-DLEXPORT void php3_ms_map_queryUsingShape(INTERNAL_FUNCTION_PARAMETERS)
+/**********************************************************************
+ *                    map->queryByShape(shape)
+ *
+ * Generates a result set based on a single shape, the shape is
+ * assumed to be a polygon at this point.
+ **********************************************************************/
+
+/* {{{ proto int map.queryByShape(shapeObj poShape) */
+DLEXPORT void php3_ms_map_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval        *pThis, *pShape;
     mapObj      *self=NULL;
     shapeObj    *poShape=NULL;
-    queryResultObj *poResult=NULL;
+    int         nStatus = MS_FAILURE;
 
 
 #ifdef PHP4
@@ -2824,19 +2777,14 @@ DLEXPORT void php3_ms_map_queryUsingShape(INTERNAL_FUNCTION_PARAMETERS)
                                          list);
     
     if (self && poShape && 
-        (poResult = mapObj_queryUsingShape(self, poShape))!= NULL)
+        (nStatus = mapObj_queryByShape(self, poShape))!= MS_SUCCESS)
     {
-        /* Found something... return queryResult object */
-        _phpms_build_queryresult_object(poResult, list, return_value);
-        return;
+        _phpms_report_mapserver_error(E_ERROR);
     }
 
-    /* Nothing found... we should produce no error and just return 0 */
-    RETURN_LONG(0);
-
+    RETURN_LONG(nStatus);
 }
 
-#endif // __TODO35__
    
 /**********************************************************************
  *                        map->save()
@@ -3564,10 +3512,8 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
-#ifdef __TODO35__
-
 /**********************************************************************
- *                        layer->queryUsingPoint()
+ *                        layer->queryByPoint()
  *
  * Type is MS_SINGLE or MS_MULTIPLE depending on number of results
  * you want. Passing buffer <=0 defaults to tolerances set in the map 
@@ -3575,16 +3521,16 @@ DLEXPORT void php3_ms_lyr_getClass(INTERNAL_FUNCTION_PARAMETERS)
  * ground units) instead.
  **********************************************************************/
 
-/* {{{ proto queryResultObj layer.queryUsingPoint(pointObj point, int type, double buffer)
+/* {{{ proto queryResultObj layer.queryByPoint(pointObj point, int type, double buffer)
    Query at point location. */
 
-DLEXPORT void php3_ms_lyr_queryUsingPoint(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_lyr_queryByPoint(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval   *pThis, *pPoint, *pType, *pBuffer;
     layerObj *self=NULL;
     mapObj   *parent_map;
     pointObj *poPoint=NULL;
-    queryResultObj *poResult=NULL;
+    int      nStatus = MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -3615,36 +3561,33 @@ DLEXPORT void php3_ms_lyr_queryUsingPoint(INTERNAL_FUNCTION_PARAMETERS)
                                                        list, E_ERROR);
 
     if (self && poPoint && parent_map &&
-        (poResult=layerObj_queryUsingPoint(self, parent_map, poPoint, 
-                                           pType->value.lval, 
-                                           pBuffer->value.dval)) != NULL)
+        (nStatus=layerObj_queryByPoint(self, parent_map, poPoint, 
+                                       pType->value.lval, 
+                                       pBuffer->value.dval)) != MS_SUCCESS)
     {
-        /* Found something... return queryResult object */
-        _phpms_build_queryresult_object(poResult, list, return_value);
-        return;
+        _phpms_report_mapserver_error(E_ERROR);
     }
 
-    /* Nothing found... we should produce no error and just return 0 */
-    RETURN_LONG(0);
+    RETURN_LONG(nStatus);
 }
 /* }}} */
 
 /************************************************************************/
-/*                        layer->queryUsingRect                         */
+/*                         layer->queryByRect()                         */
 /*                                                                      */
 /*      Query on a layer using rectangular extents.                     */
 /************************************************************************/
 
-/* {{{ proto queryResultObj layer.queryUsingRect(rectObj poRect)
+/* {{{ proto int layer.queryByRect(rectObj poRect)
    Query using rectangular extent. */
 
-DLEXPORT void php3_ms_lyr_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval   *pThis, *pRect;
     layerObj *self=NULL;
     mapObj   *parent_map;
     rectObj *poRect=NULL;
-    queryResultObj *poResult=NULL;
+    int      nStatus = MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -3672,31 +3615,27 @@ DLEXPORT void php3_ms_lyr_queryUsingRect(INTERNAL_FUNCTION_PARAMETERS)
                                                        list, E_ERROR);
 
     if (self && poRect && parent_map &&
-        (poResult=layerObj_queryUsingRect(self, parent_map, poRect)) != NULL)
+        (nStatus=layerObj_queryByRect(self, parent_map, 
+                                      *poRect)) != MS_SUCCESS)
     {
-        /* Found something... return queryResult object */
-        _phpms_build_queryresult_object(poResult, list, return_value);
-        return;
+        _phpms_report_mapserver_error(E_ERROR);
     }
 
-    /* Nothing found... we should produce no error and just return 0 */
-    RETURN_LONG(0);
+    RETURN_LONG(nStatus);
 }
 /* }}} */
 
 /************************************************************************/
-/*                        layer->queryUsingFeatues                      */
+/*                       layer->queryByFeatures()                       */
 /*                                                                      */
 /*      Query on a layer using query object.                            */
 /************************************************************************/
-/* {{{ proto queryResultObj layer.queryUsingFeatures(queryResultObj poQuery)*/
-DLEXPORT void php3_ms_lyr_queryUsingFeatures(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS)
 { 
-    pval   *pThis, *pQuery;
+    pval   *pThis, *pSLayer;
     layerObj *self=NULL;
     mapObj   *parent_map;
-    queryResultObj *poQuery=NULL;
-    int nResult = -1;
+    int      nStatus = MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -3709,48 +3648,46 @@ DLEXPORT void php3_ms_lyr_queryUsingFeatures(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 1, &pQuery) == FAILURE) 
+        getParameters(ht, 1, &pSLayer) == FAILURE) 
     {
         WRONG_PARAM_COUNT;
     }
 
+    convert_to_long(pSLayer);
+
     self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
                                            list);
-    poQuery = 
-        (queryResultObj*)_phpms_fetch_handle(pQuery, 
-                                             PHPMS_GLOBAL(le_msqueryresult),
-                                             list);
-
     parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_", 
                                                        PHPMS_GLOBAL(le_msmap),
                                                        list, E_ERROR);
 
-    if (self && poQuery && parent_map)
+    if (self && parent_map &&
+        (nStatus=layerObj_queryByFeatures(self, parent_map, 
+                                          pSLayer->value.lval)) != MS_SUCCESS)
     {
-        nResult=layerObj_queryUsingFeatures(self, parent_map, poQuery);
+        _phpms_report_mapserver_error(E_ERROR);
     }
 
-    /* Nothing found... we should produce no error and just return 0 */
-    RETURN_LONG(nResult);
+    RETURN_LONG(nStatus);
 }
 /* }}} */
 
 /************************************************************************/
-/*                        layer->queryUsingShape                        */
+/*                        layer->queryByShape()                         */
 /*                                                                      */
 /*      Query on a layer using a shape object.                          */
 /************************************************************************/
 
-/* {{{ proto queryResultObj layer.queryUsingRect(ShapeObj poShape)
+/* {{{ proto int layer.queryByRect(ShapeObj poShape)
    Query using a shape */
 
-DLEXPORT void php3_ms_lyr_queryUsingShape(INTERNAL_FUNCTION_PARAMETERS)
+DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval   *pThis, *pShape;
     layerObj *self=NULL;
     mapObj   *parent_map;
     shapeObj *poShape=NULL;
-    queryResultObj *poResult=NULL;
+    int      nStatus = MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -3780,19 +3717,61 @@ DLEXPORT void php3_ms_lyr_queryUsingShape(INTERNAL_FUNCTION_PARAMETERS)
                                                        list, E_ERROR);
 
     if (self && poShape && parent_map &&
-        (poResult=layerObj_queryUsingShape(self, parent_map, poShape)) != NULL)
+        (nStatus=layerObj_queryByShape(self, parent_map, 
+                                       poShape)) != MS_SUCCESS)
     {
-        /* Found something... return queryResult object */
-        _phpms_build_queryresult_object(poResult, list, return_value);
-        return;
+        _phpms_report_mapserver_error(E_ERROR);
     }
 
-    /* Nothing found... we should produce no error and just return 0 */
-    RETURN_LONG(0);
+    RETURN_LONG(nStatus);
 }
 /* }}} */
 
-#endif // __TODO35__
+
+/**********************************************************************
+ *                        layer->setFilter()
+ **********************************************************************/
+
+/* {{{ proto int layer.setFilter(string filter)
+   Set layer filter expression.  Returns 0 on success, -1 in error. */
+
+DLEXPORT void php3_ms_lyr_setFilter(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj *self;
+    pval   *pFilterString;
+    pval   *pThis;
+    int     nStatus = -1;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pFilterString) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pFilterString);
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    if (self == NULL || 
+        (nStatus = layerObj_setFilter(self, 
+                                      pFilterString->value.str.val)) != 0)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
+
+    RETURN_LONG(nStatus);
+}
+/* }}} */
 
 /**********************************************************************
  *                        layer->setProjection()
@@ -3891,53 +3870,6 @@ DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS)
 
 /* }}} */
 
-#ifdef __TODO35__
-/************************************************************************/
-/*                             layer->classify                          */
-/*                                                                      */
-/*      Return the class index which matches the string                 */
-/*      passed in parameters.                                           */
-/*                                                                      */
-/*      Note : If there is an empty expression class, the index will    */
-/*      be returned.                                                    */
-/************************************************************************/
-/* {{{ proto int layer.classify(ShapeObj poShape) */
-DLEXPORT void php3_ms_lyr_classify(INTERNAL_FUNCTION_PARAMETERS)
-{ 
-    pval        *pThis, *pString;
-    layerObj    *self=NULL;    
-    int         nResult = -1;
-#ifdef PHP4
-    HashTable   *list=NULL;
-#endif
-
-#ifdef PHP4
-    pThis = getThis();
-#else
-    getThis(&pThis);
-#endif
-
-    if (pThis == NULL ||
-        getParameters(ht, 1, &pString) == FAILURE) 
-    {
-        WRONG_PARAM_COUNT;
-    }
-
-    convert_to_string(pString);
-
-    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
-                                           list);
-
-    if (self && pString)
-    {
-        nResult = layerObj_classify(self, pString->value.str.val);
-    }
-
-    RETURN_LONG(nResult);
-}
-
-/* }}} */
-#endif // __TODO35__
 
 /*=====================================================================
  *                 PHP function wrappers - labelObj class
@@ -4534,7 +4466,7 @@ DLEXPORT void php3_ms_point_setXY(INTERNAL_FUNCTION_PARAMETERS)
  **********************************************************************/
 
 /* {{{ proto int point.draw(mapObj map, layerObj layer, imageObj img, string class_name, string text)
-   Draws the individual point using layer. */
+   Draws the individual point using layer. Returns MS_SUCCESS/MS_FAILURE */
 
 DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -4543,7 +4475,7 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *poMap;
     layerObj    *poLayer;
     gdImagePtr  im;
-    int         nRetVal=0;
+    int         nRetVal=MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -4573,11 +4505,14 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
                                              list);
     im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list);
 
-    if (self)
-        nRetVal = pointObj_draw(self, poMap, poLayer, im, 
-                                pClass->value.lval, pText->value.str.val);
+    if (self &&
+        (nRetVal = pointObj_draw(self, poMap, poLayer, im, 
+                                 pClass->value.lval, 
+                                 pText->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
-    /* Draw() seems to return 1 on success !?!?!? */
     RETURN_LONG(nRetVal)
 }
 /* }}} */
@@ -5226,17 +5161,17 @@ DLEXPORT void php3_ms_shape_line(INTERNAL_FUNCTION_PARAMETERS)
  *                        shape->draw()
  **********************************************************************/
 
-/* {{{ proto int shape.draw(mapObj map, layerObj layer, imageObj img, string class_name, string text)
-   Draws the individual shape using layer. */
+/* {{{ proto int shape.draw(mapObj map, layerObj layer, imageObj img)
+   Draws the individual shape using layer. Returns MS_SUCCESS/MS_FAILURE*/
 
 DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval *pThis, *pMap, *pLayer, *pImg, *pClass, *pText;
+    pval *pThis, *pMap, *pLayer, *pImg;
     shapeObj    *self;
     mapObj      *poMap;
     layerObj    *poLayer;
     gdImagePtr  im;
-    int         nRetVal=0;
+    int         nRetVal=MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -5248,13 +5183,10 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 5, &pMap, &pLayer, &pImg, &pClass, &pText) !=SUCCESS)
+        getParameters(ht, 3, &pMap, &pLayer, &pImg) !=SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
-
-    convert_to_long(pClass);
-    convert_to_string(pText);
 
     self = (shapeObj *)_phpms_fetch_handle2(pThis, 
                                             PHPMS_GLOBAL(le_msshape_ref),
@@ -5266,15 +5198,12 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
                                              list);
     im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list);
 
-#ifdef __TODO35__
-    if (self)
-      nRetVal = shapeObj_draw(self, poMap, poLayer, im, 
-                              pClass->value.lval, pText->value.str.val);
-#else
-    php3_error(E_ERROR,"Method shapeObj->draw() not reimplemented yet for version 3.5!");
-#endif
+    if (self && 
+        (nRetVal = shapeObj_draw(self, poMap, poLayer, im)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
-    /* Draw() seems to return 1 on success !?!?!? */
     RETURN_LONG(nRetVal);
 }
 /* }}} */
@@ -5721,7 +5650,7 @@ DLEXPORT void php3_ms_rect_setExtent(INTERNAL_FUNCTION_PARAMETERS)
  **********************************************************************/
 
 /* {{{ proto int rect.draw(mapObj map, layerObj layer, imageObj img, string class_name, string text)
-   Draws the individual rect using layer. */
+   Draws the individual rect using layer. Returns MS_SUCCESS/MS_FAILURE. */
 
 DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
 {
@@ -5730,7 +5659,7 @@ DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
     mapObj      *poMap;
     layerObj    *poLayer;
     gdImagePtr  im;
-    int         nRetVal=0;
+    int         nRetVal=MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -5760,15 +5689,14 @@ DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
                                              list);
     im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list);
 
-    if (self)
-#ifdef __TODO35__
-        nRetVal = rectObj_draw(self, poMap, poLayer, im, 
-                                pClass->value.lval, pText->value.str.val);
-#else
-    php3_error(E_ERROR,"Method rectObj->draw() not reimplemented yet for version 3.5!");
-#endif
+    if (self &&
+        (nRetVal = rectObj_draw(self, poMap, poLayer, im, 
+                                pClass->value.lval, 
+                                pText->value.str.val)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_ERROR);
+    }
 
-    /* Draw() seems to return 1 on success !?!?!? */
     RETURN_LONG(nRetVal)
 }
 /* }}} */
@@ -5985,7 +5913,6 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS)
  *                 PHP function wrappers - shapefileObj class
  *====================================================================*/
 
-#ifdef __TODO35__
 
 /**********************************************************************
  *                     _phpms_build_shapefile_object()
@@ -6344,7 +6271,6 @@ DLEXPORT void php3_ms_shapefile_free(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
-#endif __TODO35__
 
 /* ==================================================================== */
 /*      utility functions                                               */
