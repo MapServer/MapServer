@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.30  2004/08/17 17:42:04  assefa
+ * Correct bug in FLTGetQueryResultsForNode.
+ *
  * Revision 1.29  2004/07/29 21:50:19  assefa
  * Use wfs_filter metedata when generating an SLD (Bug 782)
  *
@@ -343,7 +346,7 @@ int *FLTGetQueryResultsForNode(FilterEncodingNode *psNode, mapObj *map,
             if (nEpsgTmp > 0)
             {
                 char szTmp[32];
-                sprintf(szTmp, "init=epsg:%s",tokens[0]);
+                sprintf(szTmp, "init=epsg:%d",nEpsgTmp);
                 msInitProjection(&sProjTmp);
                 if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
                   msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
