@@ -226,13 +226,8 @@ double msAdjustExtent(rectObj *rect, int width, int height)
   if(cellsize <= 0) /* avoid division by zero errors */
     return(0);
 
-#ifndef notdef
   ox = MS_MAX((width - (rect->maxx - rect->minx)/cellsize)/2,0); // these were width-1 and height-1
   oy = MS_MAX((height - (rect->maxy - rect->miny)/cellsize)/2,0);
-#else
-  ox = MS_NINT(MS_MAX((width - (rect->maxx - rect->minx)/cellsize)/2,0)); // these were width-1 and height-1
-  oy = MS_NINT(MS_MAX((height - (rect->maxy - rect->miny)/cellsize)/2,0));
-#endif
 
   rect->minx = rect->minx - ox*cellsize;
   rect->miny = rect->miny - oy*cellsize;
