@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.92  2002/03/08 00:39:38  assefa
+ * Remove unused variables.
+ *
  * Revision 1.91  2002/03/07 22:31:01  assefa
  * Add template processing functions.
  *
@@ -3922,8 +3925,8 @@ DLEXPORT void php3_ms_map_setLayersDrawingOrder(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pThis, *pArrayIndexes;
     mapObj      *self=NULL;
     int         nElements = 0;
-    int         i,j = 0;
-    int         bFound = 0;
+    int         i = 0;
+
     int         *panIndexes = NULL;
 
 #ifdef PHP4
@@ -4019,7 +4022,7 @@ DLEXPORT void php3_ms_map_processTemplate(INTERNAL_FUNCTION_PARAMETERS)
 
 #ifdef PHP4
     HashTable   *list=NULL;
-    pval        **pValue = NULL;    
+
 #else
     pval        *pValue = NULL;
 #endif
@@ -4127,7 +4130,7 @@ DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
 
 #ifdef PHP4
     HashTable   *list=NULL;
-    pval        **pValue = NULL;    
+
 #else
     pval        *pValue = NULL;
 #endif
@@ -4236,7 +4239,7 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS)
 
 #ifdef PHP4
     HashTable   *list=NULL;
-    pval        **pValue = NULL;    
+
 #else
     pval        *pValue = NULL;
 #endif
