@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.398  2005/02/23 04:40:17  sdlime
+ * Added wrapper for creating convex hulls to GEOS support. Added to MapScript as well.
+ *
  * Revision 1.397  2005/02/22 07:40:27  sdlime
  * A bunch of updates to GEOS integration. Can move many primatives between MapServer and GEOS, still need to do collections (e.g. multi-point/line/polygon). Added buffer method to mapscript (mapscript/shape.i).
  *
@@ -1854,6 +1857,7 @@ MS_DLL_EXPORT const char *msGetBasename( const char *pszFullFilename );
 /*      prototypes for functions in mapgeos.cpp                         */
 /* ==================================================================== */
 MS_DLL_EXPORT shapeObj *msGEOSBuffer(shapeObj *shape, double width);
+MS_DLL_EXPORT shapeObj *msGEOSConvexHull(shapeObj *shape);
 
 #endif
 

@@ -120,6 +120,12 @@
        return msGEOSBuffer(self, width);
     }
 
+    %newobject convexHull;
+    shapeObj *convexHull()
+    {
+       return msGEOSConvexHull(self);
+    }
+
     char *getValue(int i) 
     {
         if (i >= 0 && i < self->numvalues && self->values)

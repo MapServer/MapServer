@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/23 04:40:17  sdlime
+ * Added wrapper for creating convex hulls to GEOS support. Added to MapScript as well.
+ *
  * Revision 1.4  2005/02/22 18:33:37  dan
  * Fixes to build without USE_GEOS
  *
@@ -361,3 +364,30 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
 #endif
 }
 
+shapeObj *msGEOSConvexHull(shapeObj *shape)
+{
+#ifdef USE_GEOS
+  if(!shape)
+    return NULL;
+
+  if(!shape->geometry) /* if no geometry for the shape then build one */
+    shape->geometry = msGEOSShape2Geometry(shape);
+  Geometry *g = (Geometry *) shape->geometry;
+  if(!g)
+    return NULL;
+
+  try {
+    Geometry *bg = g->convexHull();
+    return msGEOSGeometry2Shape(bg);
+  } catch (GEOSException *ge) {
+    msSetError(MS_GEOSERR, "%s", "msGEOSConvexHull()", (char *) ge->toString().c_str());
+    delete ge;
+    return NULL;
+  } catch (...) {
+    return NULL;
+  }
+#else
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSConvexHull()");
+  return NULL;
+#endif
+}
