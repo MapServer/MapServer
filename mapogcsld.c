@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.6  2003/11/30 16:30:04  assefa
+ * Support mulitple symbolisers in a Rule.
+ *
  * Revision 1.5  2003/11/27 15:04:30  assefa
  * Remove unused varaibeles.
  *
@@ -71,6 +74,34 @@
 #define SLD_MARK_SYMBOL_X_FILLED "sld_mark_symbol_x_filled"
 
 
+void msSLDApplySLDURL(mapObj *map, char *szURL)
+{
+    char *pszSLDTmpFile = NULL;
+    int status = 0;
+    char *pszSLDbuf=NULL;
+    FILE *fp = NULL;               
+
+    if (map && szURL)
+    {
+        pszSLDTmpFile = msTmpFile(map->web.imagepath, "sld.xml");
+        if (msHTTPGetFile(szURL, pszSLDTmpFile, &status,-1, 0, 0) ==  MS_SUCCESS)
+        {
+            if ((fp = fopen(pszSLDTmpFile, "r")) != NULL)
+            {
+                int   nBufsize=0;
+                fseek(fp, 0, SEEK_END);
+                nBufsize = ftell(fp);
+                rewind(fp);
+                pszSLDbuf = (char*)malloc((nBufsize+1)*sizeof(char));
+                fread(pszSLDbuf, 1, nBufsize, fp);
+                pszSLDbuf[nBufsize] = '\0';
+            }
+        }
+
+        if (pszSLDbuf)
+          msSLDApplySLD(map, pszSLDbuf);
+    }
+}
 
 /************************************************************************/
 /*                              msSLDApplySLD                           */
@@ -80,7 +111,7 @@
 /*      they have the same name, copy the classes asscoaited with       */
 /*      the SLD layers onto the map layers.                             */
 /************************************************************************/
-void msSLDApplySLD(mapObj *map, const char *wmtver, char *psSLDXML)
+void msSLDApplySLD(mapObj *map, char *psSLDXML)
 {
     int nLayers = 0;
     layerObj *pasLayers = NULL;
@@ -135,8 +166,6 @@ void msSLDApplySLD(mapObj *map, const char *wmtver, char *psSLDXML)
         }
     }
 
-    //test
-    msSaveMap(map, "c:/msapps/ogc_cite/map/sld_map2.map");
 }
                         
     
@@ -258,6 +287,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     CPLXMLNode *psFeatureTypeStyle, *psRule, *psUserStyle;
     CPLXMLNode *psElseFilter = NULL, *psFilter=NULL;
     CPLXMLNode *psMinScale=NULL, *psMaxScale=NULL;
+    CPLXMLNode *psName=NULL, *psTitle=NULL;
     CPLXMLNode *psTmpNode = NULL;
     FilterEncodingNode *psNode = NULL;
     char *szExpression = NULL;
@@ -266,6 +296,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
     int nClassAfterRule=0, nClassBeforeRule=0;
     char *pszTmpFilter = NULL;
     double dfMinScale=0, dfMaxScale=0;
+    char *pszName=NULL, *pszTitle=NULL;
     
 
     if (psRoot && psLayer)
@@ -372,14 +403,26 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                             psMaxScale->psChild->pszValue)
                           dfMaxScale = atof(psMaxScale->psChild->pszValue);
 
-                        
+/* -------------------------------------------------------------------- */
+/*      parse name and title.                                           */
+/* -------------------------------------------------------------------- */
+                      psName = CPLGetXMLNode(psRule, "Name");  
+                      if (psName && psName->psChild && 
+                            psName->psChild->pszValue)
+                          pszName = psName->psChild->pszValue;
+
+                      psTitle = CPLGetXMLNode(psRule, "Title");  
+                      if (psTitle && psTitle->psChild && 
+                            psTitle->psChild->pszValue)
+                          pszTitle = psTitle->psChild->pszValue;
+
+
+                      nClassAfterRule = psLayer->numclasses;
 /* -------------------------------------------------------------------- */
 /*      set the scale to all the classes created by the rule.           */
 /* -------------------------------------------------------------------- */
                         if (dfMinScale > 0 || dfMaxScale > 0)
                         {
-                            nClassAfterRule = psLayer->numclasses;
-
                             nNewClasses = nClassAfterRule - nClassBeforeRule;
                             for (i=0; i<nNewClasses; i++)
                             {
@@ -389,7 +432,24 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                   psLayer->class[psLayer->numclasses-1-i].maxscale = dfMaxScale;
                             }                           
                         }
+/* -------------------------------------------------------------------- */
+/*      set name and title to the classes created by the rule.          */
+/* -------------------------------------------------------------------- */
+                        if (pszName || pszTitle)
+                        {
+                            nNewClasses = nClassAfterRule - nClassBeforeRule;
+                            for (i=0; i<nNewClasses; i++)
+                            {
+                                if (pszName)
+                                  psLayer->class[psLayer->numclasses-1-i].name = 
+                                    strdup(pszName);
+                                if (pszTitle)
+                                  psLayer->class[psLayer->numclasses-1-i].title = 
+                                    strdup(pszTitle);
+                            }                           
+                        }
 
+                        //TODO : parse legendgraphic
                         psRule = psRule->psNext;
 
                     }
@@ -415,6 +475,7 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
     CPLXMLNode *psMaxScale=NULL, *psMinScale=NULL;
     int i = 0;
     int bSymbolizer = 0;
+    int bNewClass=0, nSymbolizer=0;
 
     if (psRoot && psLayer)
     {
@@ -423,35 +484,59 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      The SLD specs assumes here that a certain FeatureType can only have*/
 /*      rules for only one type of symbolizer.                          */
 /* -------------------------------------------------------------------- */
+/* ==================================================================== */
+/*      For each rule a new class is created. If there are more that    */
+/*      one symbolizer of the same type, a style is added in the        */
+/*      same class.                                                     */
+/* ==================================================================== */
+
         //line symbolizer
         psLineSymbolizer = CPLGetXMLNode(psRoot, "LineSymbolizer");
+        nSymbolizer =0;
         while (psLineSymbolizer && psLineSymbolizer->pszValue && 
                strcasecmp(psLineSymbolizer->pszValue, 
                           "LineSymbolizer") == 0)
         {
             bSymbolizer = 1;
-            msSLDParseLineSymbolizer(psLineSymbolizer, psLayer);
+            if (nSymbolizer == 0)
+              bNewClass = 1;
+            else
+              bNewClass = 0;
+
+            msSLDParseLineSymbolizer(psLineSymbolizer, psLayer, bNewClass);
             psLineSymbolizer = psLineSymbolizer->psNext;
+            nSymbolizer++;
         }
 
         //Polygon symbolizer
         psPolygonSymbolizer = CPLGetXMLNode(psRoot, "PolygonSymbolizer");
+        nSymbolizer =0;
         while (psPolygonSymbolizer && psPolygonSymbolizer->pszValue && 
                strcasecmp(psPolygonSymbolizer->pszValue, 
                           "PolygonSymbolizer") == 0)
         {
             bSymbolizer = 1;
-            msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer);
+            if (nSymbolizer == 0)
+              bNewClass = 1;
+            else
+              bNewClass = 0;
+            msSLDParsePolygonSymbolizer(psPolygonSymbolizer, psLayer,
+                                        bNewClass);
             psPolygonSymbolizer = psPolygonSymbolizer->psNext;
         }
         //Point Symbolizer
         psPointSymbolizer = CPLGetXMLNode(psRoot, "PointSymbolizer");
+        nSymbolizer =0;
         while (psPointSymbolizer && psPointSymbolizer->pszValue && 
                strcasecmp(psPointSymbolizer->pszValue, 
                           "PointSymbolizer") == 0)
         {
             bSymbolizer = 1;
-            msSLDParsePointSymbolizer(psPointSymbolizer, psLayer);
+            if (nSymbolizer == 0)
+              bNewClass = 1;
+            else
+              bNewClass = 0;
+            msSLDParsePointSymbolizer(psPointSymbolizer, psLayer, bNewClass);
             psPointSymbolizer = psPointSymbolizer->psNext;
         }
         //Text symbolizer
@@ -543,22 +628,32 @@ void msSLDParseRule(CPLXMLNode *psRoot, layerObj *psLayer)
 /*      </Rule>                                                         */
 /*       ...                                                            */
 /************************************************************************/
-void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
+void msSLDParseLineSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+                              int bNewClass)
 {
     int nClassId = 0;
     CPLXMLNode *psStroke;
+    int iStyle = 0;
 
     if (psRoot && psLayer)
     {
         psStroke =  CPLGetXMLNode(psRoot, "Stroke");
         if (psStroke)
         {
-            initClass(&(psLayer->class[psLayer->numclasses]));
-            nClassId = psLayer->numclasses;
-            initStyle(&(psLayer->class[nClassId].styles[0]));
-            psLayer->class[nClassId].numstyles = 1;
-            psLayer->numclasses++;
-            msSLDParseStroke(psStroke, &psLayer->class[nClassId].styles[0],
+            if (bNewClass || psLayer->numclasses <= 0)
+            {
+                initClass(&(psLayer->class[psLayer->numclasses]));
+                nClassId = psLayer->numclasses;
+                psLayer->numclasses++;
+            }
+            else
+              nClassId = psLayer->numclasses-1;
+
+            iStyle = psLayer->class[nClassId].numstyles;
+            initStyle(&(psLayer->class[nClassId].styles[iStyle]));
+            psLayer->class[nClassId].numstyles++;
+            
+            msSLDParseStroke(psStroke, &psLayer->class[nClassId].styles[iStyle],
                              psLayer->map, 0); 
         }
     }
@@ -756,22 +851,31 @@ void msSLDParseStroke(CPLXMLNode *psStroke, styleObj *psStyle,
 /*      marks may be made solid or hollow depending on Fill and Stroke elements.*/
 /*                                                                      */
 /************************************************************************/
-void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
+void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer, 
+                                 int bNewClass)
 {
     CPLXMLNode *psFill, *psStroke;
-    int nClassId=0, nStyle=0;
+    int nClassId=0, iStyle=0;
 
     if (psRoot && psLayer)
     {
         psFill =  CPLGetXMLNode(psRoot, "Fill");
         if (psFill)
         {
-            initClass(&(psLayer->class[psLayer->numclasses]));
-            nClassId = psLayer->numclasses;
-            initStyle(&(psLayer->class[nClassId].styles[0]));
-            psLayer->class[nClassId].numstyles = 1;
-            psLayer->numclasses++;
-            msSLDParsePolygonFill(psFill, &psLayer->class[nClassId].styles[0],
+            if (bNewClass || psLayer->numclasses <= 0)
+            {
+                initClass(&(psLayer->class[psLayer->numclasses]));
+                nClassId = psLayer->numclasses;
+                psLayer->numclasses++;
+            }
+            else
+               nClassId = psLayer->numclasses-1;
+
+            iStyle = psLayer->class[nClassId].numstyles;
+            initStyle(&(psLayer->class[nClassId].styles[iStyle]));
+            psLayer->class[nClassId].numstyles++;
+            
+            msSLDParsePolygonFill(psFill, &psLayer->class[nClassId].styles[iStyle],
                                   psLayer->map);
         }
         //stroke wich corresponds to the outilne in mapserver
@@ -779,23 +883,34 @@ void msSLDParsePolygonSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
         psStroke =  CPLGetXMLNode(psRoot, "Stroke");
         if (psStroke)
         {
-            if (psLayer->numclasses == 0)
+/* -------------------------------------------------------------------- */
+/*      there was a fill so add a style to the last class created       */
+/*      by the fill                                                     */
+/* -------------------------------------------------------------------- */
+            if (psFill && psLayer->numclasses > 0) 
             {
-                initClass(&(psLayer->class[psLayer->numclasses]));
-                nClassId = psLayer->numclasses;
-                initStyle(&(psLayer->class[nClassId].styles[0]));
-                psLayer->class[nClassId].numstyles = 1;
-                psLayer->numclasses++;
-                nStyle = 0;
-            }
-            else //there was a fill
-            {
-                nClassId =0;
-                initStyle(&(psLayer->class[nClassId].styles[1]));
+                nClassId =psLayer->numclasses-1;
+                iStyle = psLayer->class[nClassId].numstyles;
+                initStyle(&(psLayer->class[nClassId].styles[iStyle]));
                 psLayer->class[nClassId].numstyles++;
-                nStyle = 1;
             }
-            msSLDParseStroke(psStroke, &psLayer->class[nClassId].styles[nStyle],
+            else
+            {
+                if (bNewClass || psLayer->numclasses <= 0)
+                {
+                    initClass(&(psLayer->class[psLayer->numclasses]));
+                    nClassId = psLayer->numclasses;
+                    psLayer->numclasses++;
+                }
+                else
+                  nClassId = psLayer->numclasses-1;
+
+                iStyle = psLayer->class[nClassId].numstyles;
+                initStyle(&(psLayer->class[nClassId].styles[iStyle]));
+                psLayer->class[nClassId].numstyles++;
+                
+            }
+            msSLDParseStroke(psStroke, &psLayer->class[nClassId].styles[iStyle],
                              psLayer->map, 1);
         }
     }
@@ -1448,18 +1563,29 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName)
 /*      </xs:complexType>                                               */
 /*      </xs:element>                                                   */
 /************************************************************************/
-void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
+void msSLDParsePointSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
+                               int bNewClass)
 {
     int nClassId = 0;
+    int iStyle = 0;
+
     if (psRoot && psLayer)
     {
-        initClass(&(psLayer->class[psLayer->numclasses]));
-        nClassId = psLayer->numclasses;
-        initStyle(&(psLayer->class[nClassId].styles[0]));
-        psLayer->class[nClassId].numstyles = 1;
-        psLayer->numclasses++;
+        if (bNewClass || psLayer->numclasses <= 0)
+        {
+            initClass(&(psLayer->class[psLayer->numclasses]));
+            nClassId = psLayer->numclasses;
+            psLayer->numclasses++;
+        }
+        else
+          nClassId = psLayer->numclasses-1;
+
+        iStyle = psLayer->class[nClassId].numstyles;
+        initStyle(&(psLayer->class[nClassId].styles[iStyle]));
+        psLayer->class[nClassId].numstyles++;
+        
         msSLDParseGraphicFillOrStroke(psRoot, NULL,
-                                      &psLayer->class[nClassId].styles[0],
+                                      &psLayer->class[nClassId].styles[iStyle],
                                       psLayer->map);
     }
 }
