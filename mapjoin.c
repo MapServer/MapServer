@@ -1,11 +1,13 @@
 #include "map.h"
 
+// DBF/XBase function prototypes
 int msDBFJoinConnect(layerObj *layer, joinObj *join);
 int msDBFJoinPrepare(joinObj *join, shapeObj *shape);
 int msDBFJoinNext(joinObj *join);
 int msDBFJoinClose(joinObj *join);
 int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
 
+// CSV (comma delimited text file) function prototypes
 int msCSVJoinConnect(layerObj *layer, joinObj *join);
 int msCSVJoinPrepare(joinObj *join, shapeObj *shape);
 int msCSVJoinNext(joinObj *join);
@@ -239,7 +241,6 @@ int msDBFJoinClose(joinObj *join)
 // CSV (comma separated value) join functions
 //
 typedef struct {
-  FILE *stream;
   int fromindex, toindex;
   char *target;
   int nextrecord;
@@ -248,6 +249,7 @@ typedef struct {
 int msCSVJoinConnect(layerObj *layer, joinObj *join) 
 {
   int i;
+  FILE *stream;
   char szPath[MS_MAXPATHLEN];
   msCSVJoinInfo *joininfo;
 
@@ -267,8 +269,8 @@ int msCSVJoinConnect(layerObj *layer, joinObj *join)
   join->joininfo = joininfo;
 
   // open the CSV file
-  if((joininfo->stream = fopen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "r" )) == NULL) {
-    if((joininfo->stream = fopen( msBuildPath(szPath, layer->map->mappath, join->table), "r" )) == NULL) {     
+  if((stream = fopen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "r" )) == NULL) {
+    if((stream = fopen( msBuildPath(szPath, layer->map->mappath, join->table), "r" )) == NULL) {     
       msSetError(MS_IOERR, "(%s)", "msCSVJoinConnect()", join->table);   
       return(MS_FAILURE);
     }
