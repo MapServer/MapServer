@@ -23,10 +23,10 @@ LDFLAGS=-L../.. -lmap -lgd -L/usr/local/lib -lgd -ljpeg -lttf -lpng -lz -ltiff -
 all: interface mapscript_so mapscript_csharp
 
 interface: ../mapscript.i
-	$(SWIG) -csharp -DNEXT_GENERATION_API -I.. mapscript.i
+	$(SWIG) -csharp -o mapscript_wrap.c ../mapscript.i
 
 mapscript_so: mapscript_wrap.c
-	$(CC) -fpic -c $(CCFLAGS) $(JAVA_INCLUDE) mapscript_wrap.c
+	$(CC) -fpic -c $(CCFLAGS) mapscript_wrap.c
 	$(CC) -fpic -shared mapscript_wrap.o -o libmapscript.so $(LDFLAGS)
 
 mapscript_csharp::
