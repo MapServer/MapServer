@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.49  2004/11/05 19:19:05  frank
+ * avoid casting warning i msDrawLegendIcon call
+ *
  * Revision 1.48  2004/11/04 21:33:08  frank
  * Removed unused variable.
  *
@@ -340,7 +343,7 @@ imageObj *msDrawLegend(mapObj *map, int scale_independent)
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
       //TODO
-      if (msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, pnt.y) != MS_SUCCESS)
+      if (msDrawLegendIcon(map, lp, &(lp->class[j]),  map->legend.keysizex,  map->legend.keysizey, image->img.gd, HMARGIN, (int) pnt.y) != MS_SUCCESS)
          return NULL;
 
       pnt.y += MS_MAX(map->legend.keysizey, maxheight);
