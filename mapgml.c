@@ -319,7 +319,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   shapeObj shape;
   FILE *stream=stdout; // defaults to stdout
   char szPath[MS_MAXPATHLEN];
-  char *value;
+  char *value, *encoded;
 
   msInitShape(&shape);
 
@@ -334,35 +334,55 @@ int msGMLWriteQuery(mapObj *map, char *filename)
   // charset encoding: lookup "gml_encoding" metadata first, then 
   // "wms_encoding", and if not found then use "ISO-8859-1" as default.
   if(msLookupHashTable(&(map->web.metadata), "gml_encoding")) 
-      msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                               "gml_encoding", OWS_NOERR, 
-                               "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", 
-                               NULL);
+  {
+      value = msLookupHashTable(&(map->web.metadata), "gml_encoding");
+      encoded = msEncodeHTMLEntities(value);
+      fprintf(stream, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", encoded);
+      msFree(encoded);
+  }
   else if(msLookupHashTable(&(map->web.metadata), "wms_encoding")) 
-      msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                               "wms_encoding", OWS_NOERR, 
-                               "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", 
-                               NULL);
+  {
+      value = msLookupHashTable(&(map->web.metadata), "wms_encoding");
+      encoded = msEncodeHTMLEntities(value);
+      fprintf(stream, "<?xml version=\"1.0\" encoding=\"%s\"?>\n\n", encoded);
+      msFree(encoded);
+  }
   else
       fprintf(stream, "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n\n");
 
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                           "gml_rootname", OWS_NOERR, "<%s ", "msGMLOutput");
+  if((value = msLookupHashTable(&(map->web.metadata), "gml_rootname")) != NULL)
+  {
+      encoded = msEncodeHTMLEntities(value);
+      fprintf( stream,"<%s ", encoded );
+      msFree(encoded);
+  }
+  else
+      fprintf( stream,"<msGMLOutput " );
 
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                           "gml_uri", OWS_NOERR, "xmlns=\"%s\"", NULL);
+  if((value = msLookupHashTable(&(map->web.metadata), "gml_uri")) != NULL)
+  {
+      encoded = msEncodeHTMLEntities(value);
+      fprintf( stream, "xmlns=\"%s\"", encoded );
+      msFree(encoded);
+  }
   fprintf(stream, "\n\t xmlns:gml=\"http://www.opengis.net/gml\"" );
   fprintf(stream, "\n\t xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
-  fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");  
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                           "gml_schema", OWS_NOERR, 
-                           "\n\t xsi:schemaLocation=\"%s\"", NULL);
+  fprintf(stream, "\n\t xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
+  if((value = msLookupHashTable(&(map->web.metadata), "gml_schema")) != NULL)
+  {
+      encoded = msEncodeHTMLEntities(value);
+      fprintf( stream, "\n\t xsi:schemaLocation=\"%s\"", encoded );
+      msFree(encoded);
+  }
   fprintf(stream, ">\n");
 
   // a schema *should* be required
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                           "gml_description", OWS_NOERR, 
-                           "\t<gml:description>%s</gml:description>\n", NULL);
+  if((value = msLookupHashTable(&(map->web.metadata), "gml_description")) != NULL)
+  {
+      encoded = msEncodeHTMLEntities(value);
+      fprintf( stream, "\t<gml:description>%s</gml:description>\n", encoded );
+      msFree(encoded);
+  }
 
   // step through the layers looking for query results
   for(i=0; i<map->numlayers; i++) {
@@ -371,11 +391,21 @@ int msGMLWriteQuery(mapObj *map, char *filename)
     if(lp->dump == MS_TRUE && lp->resultcache && lp->resultcache->numresults > 0) { // found results
 
       // start this collection (layer)
-      value = (char*) malloc(strlen(lp->name)+7);
-      sprintf(value, "%s_layer", lp->name);
-      msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                               "gml_layername", OWS_NOERR, "\t<%s>\n", value);
-      msFree(value);
+      if((value = msLookupHashTable(&(lp->metadata), "gml_layername")) != NULL)
+      {
+          encoded = msEncodeHTMLEntities(value);
+          fprintf( stream, "\t<%s>\n", encoded ); // specify a collection name
+          msFree(encoded);
+      }
+      else
+      {
+          value = (char*) malloc(strlen(lp->name)+7);
+          sprintf(value, "%s_layer", lp->name); // fall back on the layer name + "Layer"
+          encoded = msEncodeHTMLEntities(value);
+          fprintf( stream, "\t<%s>\n", encoded );
+          msFree(encoded);
+          msFree(value);
+      }
 
       // actually open the layer
       status = msLayerOpen(lp);
@@ -396,12 +426,24 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 #endif
 
 	// start this feature
-        value = (char*) malloc(strlen(lp->name)+9);
-        sprintf(value, "%s_feature", lp->name);
-        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                                "gml_featurename", OWS_NOERR, "\t\t<%s>\n", 
-                                 value);
-        msFree(value);
+        // specify a feature name
+	if((value =msLookupHashTable(&(lp->metadata), "gml_featurename")) != 
+           NULL)
+        {
+            encoded = msEncodeHTMLEntities(value);
+            fprintf(stream, "\t\t<%s>\n", encoded);
+            msFree(encoded);
+        }
+        // fall back on the layer name + "Feature"
+        else
+        {
+            value = (char*) malloc(strlen(lp->name)+9);
+            sprintf(value, "%s_feature", lp->name);
+            encoded = msEncodeHTMLEntities(value);
+            fprintf(stream, "\t\t<%s>\n", encoded);
+            msFree(encoded);
+            msFree(value);
+        }
 
 	// write the item/values
 	for(k=0; k<lp->numitems; k++)	
@@ -435,30 +477,62 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 #endif
 
 	// end this feature
-        value = (char*) malloc(strlen(lp->name)+9);
-        sprintf(value, "%s_feature", lp->name);
-        msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                                "gml_featurename", OWS_NOERR, "\t\t</%s>\n", 
-                                 value);
-        msFree(value);
+        // specify a feature name
+        if((value=msLookupHashTable(&(lp->metadata), "gml_featurename")) != 
+           NULL)
+        {
+            encoded = msEncodeHTMLEntities(value);
+            fprintf(stream, "\t\t</%s>\n", value);
+            msFree(encoded);
+        }
+        // fall back on the layer name + "Feature"
+        else
+        {
+            value = (char*) malloc(strlen(lp->name)+9);
+            sprintf(value, "%s_feature", lp->name);
+            encoded = msEncodeHTMLEntities(value);
+            fprintf(stream, "\t\t</%s>\n", value);
+            msFree(encoded);
+            msFree(value);
+        }
 
 	msFreeShape(&shape); // init too
       }
 
       // end this collection (layer)
-      value = (char*) malloc(strlen(lp->name)+7);
-      sprintf(value, "%s_layer", lp->name);
-      msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                               "gml_layername", OWS_NOERR, "\t</%s>\n", value);
-      msFree(value);
+      // specify a collection name
+      if((value=msLookupHashTable(&(lp->metadata), "gml_layername")) != NULL)
+      {
+          encoded = msEncodeHTMLEntities(value);
+          fprintf(stream, "\t</%s>\n", value);
+          msFree(encoded);
+      }
+      // fall back on the layer name + "Layer"
+      else
+      {
+          value = (char*) malloc(strlen(lp->name)+7);
+          sprintf(value, "%s_layer", lp->name);
+          encoded = msEncodeHTMLEntities(value);
+          fprintf(stream, "\t</%s>\n", value);
+          msFree(encoded);
+          msFree(value);
+      }
 
       msLayerClose(lp);
     }
   } // next layer
 
   // end this document
-  msOWSPrintEncodeMetadata(stream, &(map->web.metadata), NULL, 
-                           "gml_rootname", OWS_NOERR, "<%s ", "msGMLOutput");
+  if((value=msLookupHashTable(&(map->web.metadata), "gml_rootname")) != NULL)
+  {
+      encoded = msEncodeHTMLEntities(value);
+      fprintf(stream, "</%s>\n", encoded);
+      msFree(encoded);
+  }
+  else
+  {
+      fprintf(stream, "</msGMLOutput>\n"); // default
+  }
 
   if(filename && strlen(filename) > 0) fclose(stream);
 
