@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2005/03/08 18:08:01  frank
+ * fixed msProjectPoint() to return MS_FAILURE in missing case: bug 1273
+ *
  * Revision 1.38  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -135,6 +138,9 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
           }
       }
 
+      if( p.u == HUGE_VAL || p.v == HUGE_VAL )
+          return MS_FAILURE;
+
       point->x = p.u;
       point->y = p.v;
   }
@@ -208,6 +214,8 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 
   prj_point.x = rect->minx;
   prj_point.y = rect->miny;
+  prj_point.z = 0.0;
+  prj_point.m = 0.0;
 
   msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
                     &failure);
