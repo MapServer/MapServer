@@ -58,6 +58,20 @@ int strcasecmp(char *s1, char *s2)
 }
 #endif
 
+char *long2string(long value) {
+  static char buffer[256]; // plenty of space
+
+  sprintf(buffer, "%ld", value);
+  return(strdup(buffer));
+}
+
+char *double2string(double value) {
+  static char buffer[256]; // plenty of space
+
+  sprintf(buffer, "%g", value);
+  return(strdup(buffer));
+}
+
 char *chop(char *string) {  
   int n;
 

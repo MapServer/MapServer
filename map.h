@@ -669,6 +669,8 @@ char *stripPath(char *fn);
 char *getPath(char *fn);
 char **split(const char *string, char cd, int *num_tokens);
 int countChars(char *str, char ch);
+char *long2string(long value);
+char *double2string(double value);
 
 #ifdef NEED_STRDUP
 char *strdup(char *s);

@@ -176,47 +176,43 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     switch(itemdefs[i].sde_type) {
     case SE_SMALLINT_TYPE:
       status = SE_stream_get_smallint(sde->stream, i+1, (short *) &longval);
-      if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-	sprintf(shape->values[i], "%ld", longval);
-      } else if(status == SE_NULL_VALUE) {
+      if(status == SE_SUCCESS)
+	shape->values[i] = long2string(longval);
+      else if(status == SE_NULL_VALUE)
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      } else {
+      else {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_smallint()");
 	return(MS_FAILURE);
       }      
     case SE_INTEGER_TYPE:
       status = SE_stream_get_integer(sde->stream, i+1, &longval);
-      if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-	sprintf(shape->values[i], "%ld", longval);
-      } else if(status == SE_NULL_VALUE) {
+      if(status == SE_SUCCESS)
+	shape->values[i] = long2string(longval);
+      else if(status == SE_NULL_VALUE)
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      } else {
+      else {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_integer()");
 	return(MS_FAILURE);
       }      
       break;
     case SE_FLOAT_TYPE:
       status = SE_stream_get_float(sde->stream, i+1, (float *) &doubleval);
-      if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-	sprintf(shape->values[i], "%g", doubleval);
-      } else if(status == SE_NULL_VALUE) {
+      if(status == SE_SUCCESS)
+	shape->values[i] = double2string(doubleval);
+      else if(status == SE_NULL_VALUE)
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      } else {     
+      else {     
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_float()");
 	return(MS_FAILURE);
       }
       break;
     case SE_DOUBLE_TYPE:
       status = SE_stream_get_double(sde->stream, i+1, &doubleval);
-      if(status == SE_SUCCESS) {
-	shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-	sprintf(shape->values[i], "%g", doubleval);
-      } else if(status == SE_NULL_VALUE) {
+      if(status == SE_SUCCESS)
+	shape->values[i] = double2string(doubleval);
+      else if(status == SE_NULL_VALUE)
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      } else {     
+      else {     
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_double()");
 	return(MS_FAILURE);
       }
@@ -240,20 +236,20 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       if(status == SE_SUCCESS) {
 	shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
 	strftime(shape->values[i], MS_SDE_TIMEFMTSIZE, MS_SDE_TIMEFMT, &dateval);
-      } else if(status == SE_NULL_VALUE) {
+      } else if(status == SE_NULL_VALUE)
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      } else {     
+      else {     
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_date()");
 	return(MS_FAILURE);
       }
       break;
     case SE_SHAPE_TYPE:
       status = SE_stream_get_shape(sde->stream, i+1, shapeval);
-      if(status == SE_SUCCESS) {
+      if(status == SE_SUCCESS)
 	shape->values[i] = strdup(MS_SDE_SHAPESTRING);
-      } else if(status == SE_NULL_VALUE) {
+      else if(status == SE_NULL_VALUE)
 	shape->values[i] = strdup(MS_SDE_NULLSTRING);
-      } else {     
+      else {
 	sde_error(status, "sdeGetRecord()", "SE_stream_get_shape()");
 	return(MS_FAILURE);
       }
