@@ -28,6 +28,13 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2003/04/10 17:24:02  frank
+ * Use format extension for file created in the temp directory.  This is mostly
+ * intended to work around the fact that some GDAL drivers (such as ECW) will
+ * replace the supplied extension with their own preferred extension.  If we
+ * don't happen to use the preferred extension we will have a hard time opening
+ * the file that is created.
+ *
  * Revision 1.13  2002/12/16 18:59:58  assefa
  * Make sure map object is not null.
  *
@@ -150,14 +157,18 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
 /* -------------------------------------------------------------------- */
     if( filename == NULL )
     {
+        const char *pszExtension = format->extension;
+        if( pszExtension == NULL )
+            pszExtension = "img.tmp";
+
         if( map != NULL && map->web.imagepath != NULL )
-            filename = msTmpFile(map->web.imagepath, "img.tmp");
+            filename = msTmpFile(map->web.imagepath, pszExtension );
         else
         {
 #ifndef _WIN32
-            filename = msTmpFile("/tmp/", "img.tmp");
+            filename = msTmpFile("/tmp/", pszExtension );
 #else
-            filename = msTmpFile("C:\\", "img.tmp");
+            filename = msTmpFile("C:\\", pszExtension );
 #endif
         }
             
