@@ -388,6 +388,17 @@ and the MapServer Map File documentation at:
        Load and set a new fontset.
        
 
+   int selectOutputFormat(string type)
+        Selects the output format to be used in the map. Returns TRUE
+        on success or FALSE.
+       
+        Note : the type used should correspond to one of the output
+               formats declared in the map file.
+               The type argument passed is compared with the mimetype
+               parameter in the output format structure and then to
+               the name parameter in the structure. 
+
+
  LayerObj Class:
  ---------------
 
@@ -700,7 +711,13 @@ and the MapServer Map File documentation at:
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
 
-
+   int setcolor(string property_name, new_value)
+        Set the colors property of the object. 
+        property_name can be "color", or "backgroundcolor", or "outlinecolor",
+        or "backgroundshadowcolor" or "shadowcolor"
+        Returns -1 on error.
+        ex : o_style->setcolor("color", 0, 0, 0);
+        
  webObj Class
  -----------
 
@@ -1129,7 +1146,13 @@ styleObj Class
    int set(string property_name, new_value)
         Set object property to a new value. Returns -1 on error.
  
-                      --------------------------
+  int setcolor(string property_name, new_value)
+        Set the colors property of the object. 
+        property_name can be "color", or "backgroundcolor", or "outlinecolor"
+        Returns -1 on error.
+        ex : o_style->setcolor("color", 0, 0, 0);
+
+                     --------------------------
 
 
 
