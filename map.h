@@ -678,7 +678,7 @@ double msAdjustExtent(rectObj *rect, int width, int height);
 int msAdjustImage(rectObj rect, int *width, int *height);
 gdImagePtr msDrawMap(mapObj *map);
 #if defined USE_PDF
-PDF *msDrawMapPDF(mapObj *map, PDF *pdf); // mappdf.c
+PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash); // mappdf.c
 #endif
 gdImagePtr msDrawQueryMap(mapObj *map);
 int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, int overlay);

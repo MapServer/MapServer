@@ -2,7 +2,7 @@
  *	filename: mappdf.c
  *	created : Thu Oct  4 09:58:19 2001
  *	@author :  <jwall@webpeak.com> , <jspielberg@webpeak.com>
- *	LastEditDate Was "Thu Oct 11 18:25:45 2001"
+ *	LastEditDate Was "Tue Oct 16 13:24:52 2001"
  *
  * [$Author$ $Date$]
  * [$Revision$]
@@ -338,7 +338,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int s
             }
 
             if(symbol->filled) { /* if filled */
-                PDF_fill_stroke(pdf);
+                PDF_closepath_fill_stroke(pdf);
             } else  { /* NOT filled */
                 PDF_stroke(pdf);
             } /* end if-then-else */
@@ -1279,15 +1279,18 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
 
 
 
-PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
+PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash)
 {
     int i;
     layerObj *lp=NULL;
     int status;
-    hashTableObj fontHash;
+    int hashPassed;
 
-
-    fontHash = msCreateHashTable();
+    hashPassed = 1;
+    if(fontHash==NULL){
+        hashPassed = 0;
+        fontHash = msCreateHashTable();
+    }
     if(map->width == -1 && map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
         return(NULL);
@@ -1365,7 +1368,8 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
 //  if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
 //    msEmbedLegend(map, img);
 
-    msFreeHashTable(fontHash);
+    if (hashPassed == 0)
+        msFreeHashTable(fontHash);
 
     return(pdf);
 }
