@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/18 18:14:11  dan
+ * New patch to fix url strings broken by previous patch to bug 1238
+ *
  * Revision 1.7  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -152,11 +155,11 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
         e = -width/(map->extent.maxx-map->extent.minx) *map->extent.minx;
         f = height/(map->extent.maxy-map->extent.miny)*map->extent.maxy;
 
-        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http:/* www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:au=\"http://www.svgmovile.jp/2004/kddip\"  au:boundingBox=\"0 0 %d %d\">\n",  width, height, width, height);    */
+        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:au=\"http://www.svgmovile.jp/2004/kddip\"  au:boundingBox=\"0 0 %d %d\">\n",  width, height, width, height);
         msIO_fprintf(image->img.svg->stream, "<title>%s</title>\n", map->name);
         msIO_fprintf(image->img.svg->stream, "<metadata> \n");
-        msIO_fprintf(image->img.svg->stream,"<rdf:RDF xmlns:rdf = \"http:/* www.w3.org/1999/02/22-rdf-syntax-ns#\" \n"); */
-        msIO_fprintf(image->img.svg->stream, "xmlns:crs = \"http:/* www.ogc.org/crs\" xmlns:svg=\"http://wwww.w3.org/2000/svg\"> \n"); */
+        msIO_fprintf(image->img.svg->stream,"<rdf:RDF xmlns:rdf = \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \n");
+        msIO_fprintf(image->img.svg->stream, "xmlns:crs = \"http://www.ogc.org/crs\" xmlns:svg=\"http://wwww.w3.org/2000/svg\"> \n");
         msIO_fprintf(image->img.svg->stream, "<rdf:Description> \n");
         msIO_fprintf(image->img.svg->stream, "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f,%f,%f,%f,%f,%f)\" \n", a, b, c, d, e, f);
         
@@ -166,7 +169,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
             strlen(value) < 20) 
         {
             sprintf(epsgCode, "%s", value+10);
-            msIO_fprintf(image->img.svg->stream, "rdf:resource=\"http:/* www.opengis.net/gml/srs/epsg.xml#%s\"/> \n",epsgCode); */
+            msIO_fprintf(image->img.svg->stream, "rdf:resource=\"http://www.opengis.net/gml/srs/epsg.xml#%s\"/> \n",epsgCode);
         }
             
         msIO_fprintf(image->img.svg->stream, "</rdf:Description> \n </rdf:RDF> \n"); 
@@ -192,7 +195,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
     }
     else
     {
-        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http:/* www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n",  width, height);    */
+        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n",  width, height);
     }
     
     return image;
