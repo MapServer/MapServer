@@ -947,10 +947,6 @@ int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, in
 {
   imageObj *img;
   int i = 0;
-  char *sldbuf=NULL;
-  FILE *fp = NULL;               
-  int status = 0;
-  char *sldtmpfile = NULL;
 
 
   // __TODO__ msDrawMap() will try to adjust the extent of the map
@@ -971,33 +967,14 @@ int msWMSGetMap(mapObj *map, const char *wmtver, char **names, char **values, in
       if (strcasecmp(names[i], "SLD") == 0 && 
           values[i] && strlen(values[i]) > 0) 
       {
-          sldtmpfile = msTmpFile(map->web.imagepath, "sld.xml");
-          if (msHTTPGetFile(values[i], sldtmpfile, &status,-1, 0, 0) ==  MS_SUCCESS)
-          {
-              if ((fp = fopen(sldtmpfile, "r")) != NULL)
-              {
-                  int   bufsize=0;
-                  fseek(fp, 0, SEEK_END);
-                  bufsize = ftell(fp);
-                  rewind(fp);
-                  sldbuf = (char*)malloc((bufsize+1)*sizeof(char));
-                  fread(sldbuf, 1, bufsize, fp);
-                  sldbuf[bufsize] = '\0';
-              }
-          }
+          msSLDApplySLDURL(map, values[i]);
       }
       else if (strcasecmp(names[i], "SLD_BODY") == 0 &&
                values[i] && strlen(values[i]) > 0)
       {
-          sldbuf = strdup(values[i]);
+          msSLDApplySLD(map, values[i]);
       }
         
-  }
-
-  if (sldbuf)
-  {
-      msSLDApplySLD(map, wmtver, sldbuf);
-      free(sldbuf);
   }
 
 #endif
