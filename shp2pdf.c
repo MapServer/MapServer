@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2004/11/04 21:48:47  frank
+ * Removed unused variables.
+ *
  * Revision 1.4  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -73,20 +76,17 @@ int main(int argc, char *argv[])
   
   mapObj *map=NULL;
   outputFormatObj *format=NULL;
-  gdImagePtr       img=NULL;
+  //gdImagePtr       img=NULL;
 
   char **layers=NULL;
   int num_layers=0;
 
   char *outfile=NULL; // no -o sends image to STDOUT
 
-  PDF *pdf;
   /* A4 Portrait */
   int PagePixelWidth = 595;
   int PagePixelHeight = 842;
   int PagePixelMargin = 50;
-  int MapScaleFactor = 1;
-  int MapPixelSize = 500;
 
   if(argc > 1 && strcmp(argv[1], "-v") == 0) {
     printf("%s\n", msGetVersion());
