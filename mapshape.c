@@ -1276,7 +1276,7 @@ void msSHPCloseFile(shapefileObj *shpfile)
 }
 
 // status array lives in the shpfile, can return MS_SUCCESS/MS_FAILURE/MS_DONE
-int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
+int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, int debug)
 {
   int i;
   rectObj shaperect;
@@ -1308,7 +1308,7 @@ int msSHPWhichShapes(shapefileObj *shpfile, rectObj rect)
     }
     sprintf(filename, "%s%s", shpfile->source, MS_INDEX_EXTENSION);
     
-    shpfile->status = msSearchDiskTree(filename, rect);
+    shpfile->status = msSearchDiskTree(filename, rect, debug);
     free(filename);
 
     if(shpfile->status) // index 
@@ -1401,7 +1401,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 
   msSHPCloseFile(&(tSHP->shpfile)); // close previously opened files
 
-  status = msSHPWhichShapes(&(tSHP->tileshpfile), rect);
+  status = msSHPWhichShapes(&(tSHP->tileshpfile), rect, layer->debug);
   if(status != MS_SUCCESS) return(status); // could be MS_DONE or MS_FAILURE
 
   // position the source at the FIRST shapefile
@@ -1427,7 +1427,7 @@ int msTiledSHPWhichShapes(layerObj *layer, rectObj rect)
 	  continue; // check again
 #endif
 
-      status = msSHPWhichShapes(&(tSHP->shpfile), rect);
+      status = msSHPWhichShapes(&(tSHP->shpfile), rect, layer->debug);
       if(status == MS_DONE)
 	continue;
       else if(status != MS_SUCCESS)
@@ -1488,7 +1488,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
 	      continue; // check again
 #endif
 	  
-	  status = msSHPWhichShapes(&(tSHP->shpfile), tSHP->tileshpfile.statusbounds);
+	  status = msSHPWhichShapes(&(tSHP->shpfile), tSHP->tileshpfile.statusbounds, layer->debug);
 	  if(status == MS_DONE)
 	    continue;
 	  else if(status != MS_SUCCESS)

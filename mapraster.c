@@ -1305,7 +1305,7 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
       msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
 #endif
-    status = msSHPWhichShapes(&tilefile, searchrect);
+    status = msSHPWhichShapes(&tilefile, searchrect, layer->debug);
     if(status != MS_SUCCESS) 
       numtiles = 0; // could be MS_DONE or MS_FAILURE
     else

@@ -56,7 +56,7 @@ static treeNodeObj *treeNodeCreate(rectObj rect)
 }
 
 
-SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree)
+SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree, int debug)
 {
     char		*pszFullname, *pszBasename;
     SHPTreeHandle	psTree;
@@ -121,6 +121,12 @@ SHPTreeHandle msSHPDiskTreeOpen(const char * pszTree)
   /*     will be set to 0. So,we will test with the number of shapes (bytes */
   /*     1,2,3,4) that cannot be more than 65535 too.                       */
   /* ---------------------------------------------------------------------- */
+      if (debug)
+      {
+          msDebug("WARNING in msSHPDiskTreeOpen(): %s is in old index format "
+                  "which has been deprecated.  It is strongly recommended to "
+                  "regenerate it in new format.\n", pszTree);
+      }
       if((pabyBuf[4] == 0 && pabyBuf[5] == 0 && 
           pabyBuf[6] == 0 && pabyBuf[7] == 0))
       {
@@ -474,12 +480,12 @@ static void searchDiskTreeNode(SHPTreeHandle disktree, rectObj aoi, char *status
   return;
 }
 
-char *msSearchDiskTree(char *filename, rectObj aoi)
+char *msSearchDiskTree(char *filename, rectObj aoi, int debug)
 {
   SHPTreeHandle	disktree;
   char *status=NULL;
 
-  disktree = msSHPDiskTreeOpen (filename);
+  disktree = msSHPDiskTreeOpen (filename, debug);
   if(!disktree) {
     msSetError(MS_IOERR, "Unable to open spatial index for %s. In most cases you can safely ignore this message, otherwise check file names and permissions.", "msSearchDiskTree()", filename);
     return(NULL);
@@ -535,12 +541,12 @@ treeNodeObj *readTreeNode( SHPTreeHandle disktree )
   return node;
 }
 
-treeObj *msReadTree(char *filename)
+treeObj *msReadTree(char *filename, int debug)
 {
   treeObj *tree=NULL;
   SHPTreeHandle	disktree;
 
-  disktree = msSHPDiskTreeOpen( filename );
+  disktree = msSHPDiskTreeOpen( filename, debug );
   if(!disktree) {
     msSetError(MS_IOERR, NULL, "msReadTree()");
     return(NULL);

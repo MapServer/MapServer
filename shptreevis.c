@@ -90,7 +90,7 @@ int main( int argc, char ** argv )
       mBigEndian = 1;
 
 
-    qix = msSHPDiskTreeOpen (AddFileSuffix(argv[1],".qix"));
+    qix = msSHPDiskTreeOpen (AddFileSuffix(argv[1],".qix"), 0 /* no debug*/);
     if( qix == NULL )
     {
       printf("unable to open index file %s \n", argv[1]);

@@ -190,7 +190,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
       return(MS_FAILURE);
     }
 
-    status = msSHPWhichShapes(shpfile, rect);
+    status = msSHPWhichShapes(shpfile, rect, layer->debug);
     if(status != MS_SUCCESS) return(status);
 
     // now apply the maxshapes criteria
