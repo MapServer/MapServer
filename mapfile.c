@@ -2501,6 +2501,12 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
     msyystate = 2; msyystring = value;
     if((layer->transform = getSymbol(2, MS_TRUE,MS_FALSE)) == -1) return;
     break;
+  case (TRANSPARENCY):
+    /* Should we check if transparency is supported by outputformat or
+       if transparency for this layer is already set??? */
+    msyystate = 2; msyystring = value;
+    if(getInteger(&(layer->transparency)) == -1) return;
+    break;   
   case(TYPE):
     msyystate = 2; msyystring = value;
     if((layer->type = getSymbol(7, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_QUERY,MS_LAYER_CIRCLE)) == -1) return;
