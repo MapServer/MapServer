@@ -16,6 +16,22 @@ extern char *msyystring;
 
 static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
 
+/*
+ * Used to get red, green, blue integers separately based upon the color index
+ */
+int getRgbColor(mapObj *map,int i,int *r,int *g,int *b) {
+// check index range
+    int status=1;
+    *r=*g=*b=-1;
+    if ((i > 0 ) && (i <= map->palette.numcolors) ) {
+       *r=map->palette.colors[i-1].red;
+       *g=map->palette.colors[i-1].green;
+       *b=map->palette.colors[i-1].blue;
+       status=0;
+    }
+    return status;
+}
+
 int msEvalContext(mapObj *map, char *context)
 {
   int i, status;
@@ -38,13 +54,13 @@ int msEvalContext(mapObj *map, char *context)
       free(tmpstr2);
     }
   }
- 
+
   msyystate = 4; msyystring = tmpstr1;
   status = msyyparse();
   free(tmpstr1);
-  
+
   if(status != 0) return(MS_FALSE); // error in parse
-  return(msyyresult);  
+  return(msyyresult);
 }
 
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
@@ -64,7 +80,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     if(itemindex >= numitems) {
       msSetError(MS_MISCERR, "Invalid item index.", "msEvalExpression()");
       return(MS_FALSE);
-    }    
+    }
     if(strcmp(expression->string, items[itemindex]) == 0) return(MS_TRUE); // got a match
     break;
   case(MS_EXPRESSION):
@@ -76,7 +92,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     msyystate = 4; msyystring = tmpstr;
     status = msyyparse();
     free(tmpstr);
-	
+
     if(status != 0) return(MS_FALSE); // error in parse
     return(msyyresult);
     break;
@@ -91,7 +107,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     }
 
     if(!expression->compiled) {
-      if(regcomp(&(expression->regex), expression->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
+      if(regcomp(&(expression->regex), expression->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression
         msSetError(MS_REGEXERR, "Invalid regular expression.", "msEvalExpression()");
         return(MS_FALSE);
       }
@@ -110,7 +126,7 @@ int msShapeGetClass(layerObj *layer, shapeObj *shape)
   int i;
 
   for(i=0; i<layer->numclasses; i++) {
-    if(msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE) 
+    if(msEvalExpression(&(layer->class[i].expression), layer->classitemindex, shape->values, layer->numitems) == MS_TRUE)
       return(i);
   }
 
@@ -141,7 +157,7 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape)
   return(tmpstr);
 }
 
-/* 
+/*
 ** Adjusts an image size in one direction to fit an extent.
 */
 int msAdjustImage(rectObj rect, int *width, int *height)
@@ -150,7 +166,7 @@ int msAdjustImage(rectObj rect, int *width, int *height)
     msSetError(MS_MISCERR, "Cannot calculate both image height and width.", "msAdjustImage()");
     return(-1);
   }
-  
+
   if(*width > 0)
     *height = MS_NINT((rect.maxy - rect.miny)/((rect.maxx - rect.minx)/(*width)));
   else
@@ -159,10 +175,10 @@ int msAdjustImage(rectObj rect, int *width, int *height)
   return(0);
 }
 
-/* 
+/*
 ** Make sure extent fits image window to be created. Returns cellsize of output image.
 */
-double msAdjustExtent(rectObj *rect, int width, int height) 
+double msAdjustExtent(rectObj *rect, int width, int height)
 {
   double cellsize, ox, oy;
 
@@ -202,11 +218,11 @@ gdImagePtr msDrawMap(mapObj *map)
   if(!img) {
     msSetError(MS_GDERR, "Unable to initialize image.", "msDrawMap()");
     return(NULL);
-  }  
-  
+  }
+
   if(msLoadPalette(img, &(map->palette), map->imagecolor) == -1)
     return(NULL);
-  
+
   map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
   status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
   if(status != MS_SUCCESS) return(NULL);
@@ -214,7 +230,7 @@ gdImagePtr msDrawMap(mapObj *map)
   for(i=0; i<map->numlayers; i++) {
 
     lp = &(map->layers[i]);
-    
+
     if(lp->postlabelcache) // wait to draw
       continue;
 
@@ -228,14 +244,14 @@ gdImagePtr msDrawMap(mapObj *map)
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
     msEmbedLegend(map, img);
 
-  if(msDrawLabelCache(img, map) == -1) 
+  if(msDrawLabelCache(img, map) == -1)
     return(NULL);
 
   for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
 
     lp = &(map->layers[i]);
-    
-    if(!lp->postlabelcache) 
+
+    if(!lp->postlabelcache)
       continue;
 
     status = msDrawLayer(map, lp, img);
@@ -276,7 +292,7 @@ gdImagePtr msDrawQueryMap(mapObj *map)
     msSetError(MS_GDERR, "Unable to initialize image.", "msDrawQueryMap()");
     return(NULL);
   }
-  
+
   if(msLoadPalette(img, &(map->palette), map->imagecolor) == -1)
     return(NULL);
 
@@ -300,13 +316,13 @@ gdImagePtr msDrawQueryMap(mapObj *map)
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
     msEmbedLegend(map, img);
 
-  if(msDrawLabelCache(img, map) == -1) 
+  if(msDrawLabelCache(img, map) == -1)
     return(NULL);
-  
-  for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
-    lp = &(map->layers[i]);    
 
-    if(!lp->postlabelcache) 
+  for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
+    lp = &(map->layers[i]);
+
+    if(!lp->postlabelcache)
       continue;
 
     status = msDrawQueryLayer(map, lp, img);
@@ -330,14 +346,14 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
 {
   int c;
   double scalefactor=1.0;
-  
+
   c = classindex;
 
   if(layer->symbolscale > 0 && map->scale > 0) scalefactor = layer->symbolscale/map->scale;
 
   if(layer->sizeunits != MS_PIXELS) {
     layer->class[c].sizescaled = layer->class[c].size * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
-    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]); 
+    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
   } else {
     layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
     layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
@@ -349,27 +365,27 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
 
   if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
 
-#if defined (USE_GD_FT) || defined (USE_GD_TTF) 
-  if(layer->class[c].label.type == MS_TRUETYPE) { 
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+  if(layer->class[c].label.type == MS_TRUETYPE) {
     layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
     layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
     layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
   }
-#endif  
+#endif
 
 #ifdef USE_PROJ
     if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
       msProjectPoint(&layer->projection, &map->projection, point);
 #endif
 
-  switch(layer->type) {      
-  case MS_LAYER_ANNOTATION:    
+  switch(layer->type) {
+  case MS_LAYER_ANNOTATION:
     if(layer->transform) {
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
       point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
     }
-      
+
     if(labeltext) {
       if(layer->labelcache)
 	msAddLabel(map, layer->index, c, -1, -1, *point, labeltext, -1);
@@ -409,7 +425,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, i
 
 /*
 ** Function to render an individual shape, the overlay boolean variable enables/disables drawing of the
-** overlay symbology. This is necessary when drawing entire layers as proper overlay can only be achived 
+** overlay symbology. This is necessary when drawing entire layers as proper overlay can only be achived
 ** through caching.
 */
 int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, int overlay)
@@ -430,12 +446,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
   if(layer->sizeunits != MS_PIXELS) {
     layer->class[c].sizescaled = layer->class[c].size * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
-    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]); 
+    layer->class[c].overlaysizescaled = layer->class[c].overlaysize * (inchesPerUnit[layer->sizeunits]/inchesPerUnit[map->units]);
   } else {
     layer->class[c].sizescaled = MS_NINT(layer->class[c].size * scalefactor);
     layer->class[c].sizescaled = MS_MAX(layer->class[c].sizescaled, layer->class[c].minsize);
     layer->class[c].sizescaled = MS_MIN(layer->class[c].sizescaled, layer->class[c].maxsize);
-    layer->class[c].overlaysizescaled = layer->class[c].sizescaled - (layer->class[c].size - layer->class[c].overlaysize); // layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);    
+    layer->class[c].overlaysizescaled = layer->class[c].sizescaled - (layer->class[c].size - layer->class[c].overlaysize); // layer->class[c].overlaysizescaled = MS_NINT(layer->class[c].overlaysize * scalefactor);
     layer->class[c].overlaysizescaled = MS_MAX(layer->class[c].overlaysizescaled, layer->class[c].overlayminsize);
     layer->class[c].overlaysizescaled = MS_MIN(layer->class[c].overlaysizescaled, layer->class[c].overlaymaxsize);
   }
@@ -443,44 +459,44 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
 
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
-  if(layer->class[c].label.type == MS_TRUETYPE) { 
+  if(layer->class[c].label.type == MS_TRUETYPE) {
     layer->class[c].label.sizescaled = MS_NINT(layer->class[c].label.size * scalefactor);
     layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
     layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
   }
-#endif  
+#endif
 
 #ifdef USE_PROJ
   if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
     msProjectShape(&layer->projection, &map->projection, shape);
 #endif
-   
-  switch(layer->type) {      
-  case MS_LAYER_ANNOTATION:     
+
+  switch(layer->type) {
+  case MS_LAYER_ANNOTATION:
     if(!shape->text) return(MS_SUCCESS); // nothing to draw
 
     switch(shape->type) {
     case(MS_SHAPE_LINE):
-      if(layer->transform) {      
+      if(layer->transform) {
 	msClipPolylineRect(shape, cliprect);
 	if(shape->numlines == 0) return(MS_SUCCESS);
 	msTransformShape(shape, map->extent, map->cellsize);
       }
 
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
-	
-	if(layer->labelangleitemindex != -1) 
+
+	if(layer->labelangleitemindex != -1)
 	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	
+
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? (layer->symbolscale/map->scale):1);
 	  layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
 	  layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	}
-	
+
 	if(layer->class[c].label.autoangle)
 	  layer->class[c].label.angle = angle;
-		
+
 	if(layer->labelcache)
 	  msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, length);
 	else {
@@ -488,14 +504,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	    msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	    if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	  }
-	  msDrawLabel(img, annopnt, shape->text, &(layer->class[c].label), &map->fontset);	    
+	  msDrawLabel(img, annopnt, shape->text, &(layer->class[c].label), &map->fontset);
 	}
       }
 
       break;
     case(MS_SHAPE_POLYGON):
 
-      if(layer->transform) {      
+      if(layer->transform) {
 	msClipPolygonRect(shape, cliprect);
 	if(shape->numlines == 0) return(MS_SUCCESS);
 	msTransformShape(shape, map->extent, map->cellsize);
@@ -503,15 +519,15 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 
-	if(layer->labelangleitemindex != -1) 
+	if(layer->labelangleitemindex != -1)
 	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	
+
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
 	  layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
 	  layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	}
-			
+
 	if(layer->labelcache)
 	  msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, length);
 	else {
@@ -519,31 +535,31 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	    msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	    if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	  }
-	  msDrawLabel(img, annopnt, shape->text, &(layer->class[c].label), &map->fontset);	    
+	  msDrawLabel(img, annopnt, shape->text, &(layer->class[c].label), &map->fontset);
 	}
       }
       break;
     default: // points and anything with out a proper type
       for(j=0; j<shape->numlines;j++) {
 	for(i=0; i<shape->line[j].numpoints;i++) {
-	  
+
 	  point = &(shape->line[j].point[i]);
-	  
+
 	  if(layer->transform) {
 	    if(!msPointInRect(point, &map->extent)) return(MS_SUCCESS);
 	    point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
 	    point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
 	  }
-	  
-	  if(layer->labelangleitemindex != -1) 
+
+	  if(layer->labelangleitemindex != -1)
 	    layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	  
+
 	  if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	    layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
 	    layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
 	    layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	  }
-	  
+
 	  if(shape->text) {
 	    if(layer->labelcache)
 	      msAddLabel(map, layer->index, c, shape->tileindex, shape->index, *point, shape->text, -1);
@@ -564,9 +580,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
     for(j=0; j<shape->numlines;j++) {
       for(i=0; i<shape->line[j].numpoints;i++) {
-	  
+
 	point = &(shape->line[j].point[i]);
-	
+
 	if(layer->transform) {
 	  if(!msPointInRect(point, &map->extent)) return(MS_SUCCESS);
 	  point->x = MS_MAP2IMAGE_X(point->x, map->extent.minx, map->cellsize);
@@ -577,9 +593,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	if(overlay && layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 
 	if(shape->text) {
-	  if(layer->labelangleitemindex != -1) 
+	  if(layer->labelangleitemindex != -1)
 	    layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	  
+
 	  if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	    layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
 	    layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
@@ -591,12 +607,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	  else
 	    msDrawLabel(img, *point, shape->text, &layer->class[c].label, &map->fontset);
 	}
-      }    
+      }
     }
-    break;      
+    break;
 
   case MS_LAYER_LINE:
-    if(shape->type != MS_SHAPE_POLYGON && shape->type != MS_SHAPE_LINE){ 
+    if(shape->type != MS_SHAPE_POLYGON && shape->type != MS_SHAPE_LINE){
       msSetError(MS_MISCERR, "Only polygon or line shapes can be drawn using a line layer definition.", "msDrawShape()");
       return(MS_FAILURE);
     }
@@ -609,18 +625,18 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
     msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
     if(overlay && layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
-        
+
     if(shape->text) {
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
-	if(layer->labelangleitemindex != -1) 
+	if(layer->labelangleitemindex != -1)
 	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	
+
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
 	  layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
 	  layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	}
-	
+
 	if(layer->class[c].label.autoangle)
 	  layer->class[c].label.angle = angle;
 
@@ -633,31 +649,31 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     break;
 
   case MS_LAYER_POLYLINE:
-    if(shape->type != MS_SHAPE_POLYGON){ 
+    if(shape->type != MS_SHAPE_POLYGON){
       msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polyline layer definition.", "msDrawShape()");
       return(MS_FAILURE);
     }
 
-    if(layer->transform) {      
+    if(layer->transform) {
       msClipPolygonRect(shape, cliprect);
       if(shape->numlines == 0) return(MS_SUCCESS);
       msTransformShape(shape, map->extent, map->cellsize);
     }
-    
+
     msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
     if(overlay && layer->class[c].overlaysymbol >= 0) msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
-	
+
     if(shape->text) {
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
-	if(layer->labelangleitemindex != -1) 
+	if(layer->labelangleitemindex != -1)
 	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	
+
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
 	  layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
 	  layer->class[c].label.sizescaled = MS_MIN(layer->class[c].label.sizescaled, layer->class[c].label.maxsize);
 	}
-	
+
 	if(layer->labelcache)
 	  msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, -1);
 	else
@@ -666,7 +682,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     }
     break;
   case MS_LAYER_POLYGON:
-    if(shape->type != MS_SHAPE_POLYGON){ 
+    if(shape->type != MS_SHAPE_POLYGON){
       msSetError(MS_MISCERR, "Only polygon shapes can be drawn using a polygon layer definition.", "msDrawShape()");
       return(MS_FAILURE);
     }
@@ -679,12 +695,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
     msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
     if(overlay && layer->class[c].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
-      
+
     if(shape->text) {
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
-	if(layer->labelangleitemindex != -1) 
+	if(layer->labelangleitemindex != -1)
 	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
-	
+
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
 	  layer->class[c].label.sizescaled = MS_MAX(layer->class[c].label.sizescaled, layer->class[c].label.minsize);
@@ -697,7 +713,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	  msDrawLabel(img, annopnt, shape->text, &layer->class[c].label, &map->fontset);
       }
     }
-    break;      
+    break;
   default:
     msSetError(MS_MISCERR, "Unknown layer type.", "msDrawShape()");
     return(MS_FAILURE);
@@ -744,7 +760,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
       annotate = MS_FALSE;
   }
-  
+
   // if MS_HILITE, alter the first class (always at least 1 class)
   if(map->querymap.style == MS_HILITE) {
     for(i=0; i<layer->numclasses; i++) {
@@ -765,7 +781,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   if(layer->type == MS_LAYER_LINE || layer->type == MS_LAYER_POLYLINE) cache = MS_TRUE; // only line/polyline layers need to (potentially) be cached with overlayed symbols
 
-  for(i=0; i<layer->resultcache->numresults; i++) {    
+  for(i=0; i<layer->resultcache->numresults; i++) {
     status = msLayerGetShape(layer, &shape, layer->resultcache->results[i].tileindex, layer->resultcache->results[i].shapeindex);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
@@ -787,9 +803,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     }
 
     if(cache && layer->class[shape.classindex].overlaysymbol >= 0)
-      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); // problem adding to the cache    
+      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); // problem adding to the cache
 
-    msFreeShape(&shape);      
+    msFreeShape(&shape);
   }
 
   if(shpcache) {
@@ -805,7 +821,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   }
 
   // if MS_HILITE, restore values
-  if(map->querymap.style == MS_HILITE)    
+  if(map->querymap.style == MS_HILITE)
     for(i=0; i<layer->numclasses; i++) layer->class[i].color = colorbuffer[i]; // restore the color
 
   msLayerClose(layer);
@@ -871,7 +887,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   while((status = msLayerNextShape(layer, &shape)) == MS_SUCCESS) {
 
-    shape.classindex = msShapeGetClass(layer, &shape);    
+    shape.classindex = msShapeGetClass(layer, &shape);
     if((shape.classindex == -1) || (layer->class[shape.classindex].status == MS_OFF)) {
       msFreeShape(&shape);
       continue;
@@ -910,7 +926,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     }
 
     if(cache && layer->class[shape.classindex].overlaysymbol >= 0)
-      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); // problem adding to the cache    
+      if(insertFeatureList(&shpcache, &shape) == NULL) return(MS_FAILURE); // problem adding to the cache
 
     msFreeShape(&shape);
   }
@@ -945,11 +961,11 @@ int msSaveImage(gdImagePtr img, char *filename, int type, int transparent, int i
     stream = fopen(filename, "wb");
     if(!stream) {
        sprintf(ms_error.message, "(%s)", filename);
-      msSetError(MS_IOERR, ms_error.message, "msSaveImage()");     
+      msSetError(MS_IOERR, ms_error.message, "msSaveImage()");
       return(MS_FAILURE);
     }
   } else { /* use stdout */
-    
+
 #ifdef _WIN32
     /*
     ** Change stdout mode to binary on win32 platforms
@@ -1017,7 +1033,7 @@ void msFreeImage(gdImagePtr img)
 }
 
 /*
-** Return an array containing all the layer's index given a group name. 
+** Return an array containing all the layer's index given a group name.
 ** If nothing is found, NULL is returned. The nCount is initalized
 ** to the number of elements in the returned array.
 ** Note : the caller of the function should free the array.
@@ -1028,14 +1044,14 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
     int         iLayer = 0;
     int         *aiIndex;
 
-    if(!groupname || !map || !pnCount) 
+    if(!groupname || !map || !pnCount)
     {
         return NULL;
     }
 
     aiIndex = (int *)malloc(sizeof(int) * map->numlayers);
-    
-    for(i=0;i<map->numlayers; i++) 
+
+    for(i=0;i<map->numlayers; i++)
     {
         if(!map->layers[i].group) /* skip it */
             continue;
@@ -1045,7 +1061,7 @@ int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *pnCount)
             iLayer++;
         }
     }
-    
+
     if (iLayer == 0)
     {
         free(aiIndex);

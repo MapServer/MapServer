@@ -11,7 +11,7 @@
 
 // FIX: need to be handle the label wrapping
 
-#define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
+//#define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
 int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeidx, pointObj point, char *string, double featuresize)
 {
@@ -25,11 +25,11 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
     if(!map->labelcache.labels) {
       msSetError(MS_MEMERR, "Realloc() error.", "msAddLabel()");
       return(-1);
-    }   
+    }
     map->labelcache.cachesize += MS_LABELCACHEINCREMENT;
   }
 
-  i = map->labelcache.numlabels;  
+  i = map->labelcache.numlabels;
   map->labelcache.labels[i].layeridx = layeridx;
   map->labelcache.labels[i].classidx = classidx;
   map->labelcache.labels[i].tileidx = tileidx;
@@ -38,7 +38,7 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
   map->labelcache.labels[i].point = point;
   map->labelcache.labels[i].point.x = MS_NINT(map->labelcache.labels[i].point.x);
   map->labelcache.labels[i].point.y = MS_NINT(map->labelcache.labels[i].point.y);
-  
+
   map->labelcache.labels[i].string = strdup(string);
 
   // GD/Freetype recognizes \r\n as a true line wrap so we must turn the wrap character into that pattern
@@ -57,7 +57,7 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
 
   map->labelcache.labels[i].status = MS_FALSE;
 
-  if(map->layers[layeridx].type == MS_LAYER_POINT) { 
+  if(map->layers[layeridx].type == MS_LAYER_POINT) {
     rectObj rect;
     int w, h;
 
@@ -66,7 +66,7 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
       if(!map->labelcache.markers) {
 	msSetError(MS_MEMERR, "Realloc() error.", "msAddLabel()");
 	return(-1);
-      }   
+      }
       map->labelcache.markercachesize+=MS_LABELCACHEINCREMENT;
     }
 
@@ -74,7 +74,7 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
 
     map->labelcache.markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
     msInitShape(map->labelcache.markers[i].poly);
-   
+
     msGetMarkerSize(&map->symbolset, &(map->layers[layeridx].class[classidx]), &w, &h);
     rect.minx = MS_NINT(point.x - .5 * w);
     rect.miny = MS_NINT(point.y - .5 * h);
@@ -87,12 +87,12 @@ int msAddLabel(mapObj *map, int layeridx, int classidx, int tileidx, int shapeid
   }
 
   map->labelcache.numlabels++;
-  
+
   return(0);
 }
 
 
-int msLoadFontSet(fontSetObj *fontset) 
+int msLoadFontSet(fontSetObj *fontset)
 {
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
   FILE *stream;
@@ -109,7 +109,7 @@ int msLoadFontSet(fontSetObj *fontset)
 
   path = getPath(fontset->filename);
 
-  fontset->fonts = msCreateHashTable(); /* create font hash */  
+  fontset->fonts = msCreateHashTable(); /* create font hash */
   if(!fontset->fonts) {
     msSetError(MS_HASHERR, "Error initializing font hash.", "msLoadFontSet()");
     return(-1);
@@ -121,7 +121,7 @@ int msLoadFontSet(fontSetObj *fontset)
     msSetError(MS_IOERR, ms_error.message, "msLoadFontset()");
     return(-1);
   }
- 
+
   i = 0;
   while(fgets(buffer, MS_BUFFER_LENGTH, stream)) { /* while there's something to load */
 
@@ -130,10 +130,10 @@ int msLoadFontSet(fontSetObj *fontset)
 
     sscanf(buffer,"%s %s", alias,  file1);
 
-    if(file1[0] == '/') { /* already full path */      
+    if(file1[0] == '/') { /* already full path */
       msInsertHashTable(fontset->fonts, alias, file1);
     } else {
-      sprintf(file2, "%s%s", path, file1);      
+      sprintf(file2, "%s%s", path, file1);
       msInsertHashTable(fontset->fonts, alias, file2);
     }
 
@@ -179,8 +179,8 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     if(error) {
       msSetError(MS_TTFERR, error, "msGetLabelSize()");
       return(-1);
-    }    
-    
+    }
+
     rect->minx = bbox[0];
     rect->miny = bbox[5];
     rect->maxx = bbox[2];
@@ -203,7 +203,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
 
       for(t=0; t<num_tokens; t++) /* what's the longest token */
 	max_token_length = MS_MAX(max_token_length, strlen(token[t]));
-      
+
       rect->minx = 0;
       rect->miny = -(fontPtr->h * num_tokens);
       rect->maxx = fontPtr->w * max_token_length;
@@ -226,33 +226,34 @@ gdFontPtr msGetBitmapFont(int size)
   case MS_TINY:
     return(gdFontTiny);
     break;
-  case MS_SMALL:  
+  case MS_SMALL:
     return(gdFontSmall);
-    break; 
+    break;
   case MS_MEDIUM:
     return(gdFontMediumBold);
-    break; 
+    break;
   case MS_LARGE:
     return(gdFontLarge);
-    break;  
+    break;
   case MS_GIANT:
     return(gdFontGiant);
     break;
   default:
-    msSetError(MS_GDERR,"Invalid bitmap font. Must be one of tiny, small, medium, large or giant." , "msGetBitmapFont()");    
+    msSetError(MS_GDERR,"Invalid bitmap font. Must be one of tiny, small, medium, large or giant." , "msGetBitmapFont()");
     return(NULL);
   }
 }
 
 #define MARKER_SLOP 2
 
-static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly)
+//static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly)
+pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly)
 {
   pointObj q;
   double x1=0, y1=0, x2=0, y2=0;
   lineObj line={0,NULL};
   double sin_a,cos_a;
-  double w, h, x, y;  
+  double w, h, x, y;
 
   w = rect.maxx - rect.minx;
   h = rect.maxy - rect.miny;
@@ -302,7 +303,7 @@ static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int
   x = x1 - rect.minx;
   y = rect.maxy - y1;
   q.x = p->x + MS_NINT(x * cos_a - (y) * sin_a);
-  q.y = p->y - MS_NINT(x * sin_a + (y) * cos_a);  
+  q.y = p->y - MS_NINT(x * sin_a + (y) * cos_a);
 
   if(poly) {
     line.point = (pointObj *)malloc(sizeof(pointObj)*5);
@@ -312,25 +313,25 @@ static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int
     y2 = y1 + buffer;
     line.point[0].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
     line.point[0].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
-    
+
     x2 = x1 - buffer; /* ul */
     y2 = y1 - h - buffer;
     line.point[1].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
     line.point[1].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
-    
+
     x2 = x1 + w + buffer; /* ur */
     y2 = y1 - h - buffer;
     line.point[2].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
     line.point[2].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
-    
+
     x2 = x1 + w + buffer; /* lr */
     y2 = y1 + buffer;
     line.point[3].x = p->x + MS_NINT(x2 * cos_a - (-y2) * sin_a);
     line.point[3].y = p->y - MS_NINT(x2 * sin_a + (-y2) * cos_a);
-    
+
     line.point[4].x = line.point[0].x;
     line.point[4].y = line.point[0].y;
-    
+
     msAddLine(poly, &line);
     free(line.point);
   }
@@ -339,7 +340,7 @@ static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int
 }
 
 /*
-** Simply draws a label based on the label point and the supplied label object. 
+** Simply draws a label based on the label point and the supplied label object.
 */
 static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset)
 {
@@ -396,7 +397,7 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
       gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y+1, string);
       gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y+1, string);
       gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y-1, string);
-#endif      
+#endif
 
     }
 
@@ -427,14 +428,14 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     char **token=NULL;
     int t, num_tokens;
     gdFontPtr fontPtr;
-    
+
     if((fontPtr = msGetBitmapFont(label->size)) == NULL)
       return(-1);
 
     if(label->wrap != '\0') {
       if((token = split(string, label->wrap, &(num_tokens))) == NULL)
 	return(-1);
-      
+
       y -= fontPtr->h*num_tokens;
       for(t=0; t<num_tokens; t++) {
 	if(label->outlinecolor >= 0) {
@@ -443,16 +444,16 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
 	  gdImageString(img, fontPtr, x+1, y+1, token[t], label->outlinecolor);
 	  gdImageString(img, fontPtr, x+1, y-1, token[t], label->outlinecolor);
 	}
-	
+
 	if(label->shadowcolor >= 0)
 	  gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, token[t], label->shadowcolor);
-	
+
 	gdImageString(img, fontPtr, x, y, token[t], label->color);
 
 	y += fontPtr->h; /* shift down */
       }
-      
-      msFreeCharArray(token, num_tokens);  
+
+      msFreeCharArray(token, num_tokens);
     } else {
       y -= fontPtr->h;
 
@@ -465,7 +466,7 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
 
       if(label->shadowcolor >= 0)
 	gdImageString(img, fontPtr, x+label->shadowsizex, y+label->shadowsizey, string, label->shadowcolor);
-	
+
       gdImageString(img, fontPtr, x, y, string, label->color);
     }
   }
@@ -493,14 +494,15 @@ int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label
     labelPnt.y += label->offsety;
     draw_text(img, labelPnt, string, label, fontset); /* actually draw the label */
   }
-  
+
   return(0);
 }
 
 /*
 ** is a label completely in the image (excluding label buffer)
-*/ 
-static int labelInImage(int width, int height, shapeObj *lpoly, int buffer)
+*/
+//static int labelInImage(int width, int height, shapeObj *lpoly, int buffer)
+int labelInImage(int width, int height, shapeObj *lpoly, int buffer)
 {
   int i,j;
 
@@ -516,7 +518,8 @@ static int labelInImage(int width, int height, shapeObj *lpoly, int buffer)
   return(MS_TRUE);
 }
 
-static double dist(pointObj a, pointObj b)
+//static double dist(pointObj a, pointObj b)
+double dist(pointObj a, pointObj b)
 {
   double d;
 
@@ -524,13 +527,14 @@ static double dist(pointObj a, pointObj b)
   return(d);
 }
 
-/* 
+/*
 ** Variation on msIntersectPolygons. Label polygons aren't like shapefile polygons. They
 ** have no holes, and often do have overlapping parts (i.e. road symbols).
 */
 extern int intersectLines(pointObj a, pointObj b, pointObj c, pointObj d); // from mapsearch.c
 
-static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
+//static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
+int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
   int c1,v1,c2,v2;
   pointObj *point;
 
@@ -539,7 +543,7 @@ static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
     for(v1=1; v1<p1->line[c1].numpoints; v1++)
       for(c2=0; c2<p2->numlines; c2++)
 	for(v2=1; v2<p2->line[c2].numpoints; v2++)
-	  if(intersectLines(p1->line[c1].point[v1-1], p1->line[c1].point[v1], p2->line[c2].point[v2-1], p2->line[c2].point[v2]) ==  MS_TRUE)	    
+	  if(intersectLines(p1->line[c1].point[v1-1], p1->line[c1].point[v1], p2->line[c2].point[v2-1], p2->line[c2].point[v2]) ==  MS_TRUE)
 	    return(MS_TRUE);
 
   /* STEP 2: polygon one completely contains two (only need to check one point from each part) */
@@ -550,7 +554,7 @@ static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
 	return(MS_TRUE);
     }
   }
-  
+
   /* STEP 3: polygon two completely contains one (only need to check one point from each part) */
   for(c1=0; c1<p1->numlines; c1++) {
     point = &(p1->line[c1].point[0]);
@@ -563,7 +567,7 @@ static int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
   return(MS_FALSE);
 }
 
-void billboard(gdImagePtr img, shapeObj *shape, labelObj *label) 
+void billboard(gdImagePtr img, shapeObj *shape, labelObj *label)
 {
   int i;
   shapeObj temp;
@@ -584,10 +588,10 @@ void billboard(gdImagePtr img, shapeObj *shape, labelObj *label)
   }
 
   msImageFilledPolygon(img, &temp, label->backgroundcolor);
-  
+
   msFreeShape(&temp);
 }
- 
+
 int msDrawLabelCache(gdImagePtr img, mapObj *map)
 {
   pointObj p;
@@ -614,7 +618,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
     if(!cachePtr->string)
       continue; /* not an error, just don't want to do anything */
-    
+
     if(strlen(cachePtr->string) == 0)
       continue; /* not an error, just don't want to do anything */
 
@@ -642,7 +646,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
       if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
     }
-    
+
     if(label.position == MS_AUTO) {
 
       if(layerPtr->type == MS_LAYER_LINE) {
@@ -653,25 +657,25 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
 
-	  if(j == 1) {	   
-	    if(fabs(cos(label.angle)) < LINE_VERT_THRESHOLD)	      
+	  if(j == 1) {
+	    if(fabs(cos(label.angle)) < LINE_VERT_THRESHOLD)
 	      label.angle += 180.0;
 	    else
 	      position = MS_LC;
 	  }
 
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
-	  
-	  if(draw_marker) 
+
+	  if(draw_marker)
 	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
-	  
+
 	  if(!label.partials) { // check against image first
 	    if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
 	      cachePtr->status = MS_FALSE;
 	      continue; // next angle
 	    }
 	  }
-	  
+
 	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
 	    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
 	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
@@ -680,48 +684,48 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	      }
 	    }
 	  }
-	  
+
 	  if(!cachePtr->status)
 	    continue; // next angle
-	  
+
 	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
 	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-	      
+
 	      if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
-	      
+
 	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
 	    }
-	  }	
-	  
+	  }
+
 	  if(cachePtr->status) // found a suitable place for this label
 	    break;
 
 	} // next angle
 
       } else {
-	for(j=0; j<=7; j++) { /* loop through the outer label positions */	  
-	  
+	for(j=0; j<=7; j++) { /* loop through the outer label positions */
+
 	  msFreeShape(cachePtr->poly);
 	  cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-	  
+
 	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
-	  
-	  if(draw_marker) 
+
+	  if(draw_marker)
 	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
-	  
+
 	  if(!label.partials) { // check against image first
 	    if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
 	      cachePtr->status = MS_FALSE;
 	      continue; // next position
 	    }
 	  }
-	  
+
 	  for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
 	    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
 	      if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
@@ -730,28 +734,28 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	      }
 	    }
 	  }
-	  
+
 	  if(!cachePtr->status)
 	    continue; // next position
-	  
+
 	  for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
 	    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-	      
+
 	      if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
-	      
+
 	      if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 		cachePtr->status = MS_FALSE;
 		break;
 	      }
 	    }
-	  }	
-	  
+	  }
+
 	  if(cachePtr->status) // found a suitable place for this label
 	    break;
-	} // next position      
+	} // next position
       }
 
       if(label.force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
@@ -769,7 +773,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
       if(!label.force) { // no need to check anything else
-      
+
 	if(!label.partials) {
 	  if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE)
 	    cachePtr->status = MS_FALSE;
@@ -786,17 +790,17 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	    }
 	  }
 	}
-	
+
 	if(!cachePtr->status)
 	  continue; // next label
-	
+
 	for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
 	  if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 	    if((label.mindistance != -1) && (cachePtr->classidx == map->labelcache.labels[i].classidx) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= label.mindistance)) { /* label is a duplicate */
 	      cachePtr->status = MS_FALSE;
 	      break;
 	    }
-	    
+
 	    if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
 	      cachePtr->status = MS_FALSE;
 	      break;
@@ -879,12 +883,12 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
 	if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
 	  label.angle = -(90.0 - MS_RAD_TO_DEG*theta);
 	else
-	  label.angle = (90.0 - MS_RAD_TO_DEG*theta);      
+	  label.angle = (90.0 - MS_RAD_TO_DEG*theta);
       } else {
 	if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
 	  label.angle = (90.0 - MS_RAD_TO_DEG*theta);
 	else
-	  label.angle = -(90.0 - MS_RAD_TO_DEG*theta);      
+	  label.angle = -(90.0 - MS_RAD_TO_DEG*theta);
       }
 
       rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;

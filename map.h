@@ -27,11 +27,13 @@
 #include "mapshape.h"
 #include "mapsymbol.h"
 #include "maptree.h" // quadtree spatial index
-#include "maphash.h" 
+#include "maphash.h"
 
 #include "mapproject.h"
 
 #include <gd.h>
+
+#include <pdflib.h>
 
 #include <sys/types.h> /* regular expression support */
 #include <regex.h>
@@ -99,7 +101,7 @@ extern "C" {
 #define MS_RESULTCACHEINITSIZE 10
 #define MS_RESULTCACHEINCREMENT 10
 
-#define MS_FEATUREINITSIZE 10 /* how many points initially can a feature have */ 
+#define MS_FEATUREINITSIZE 10 /* how many points initially can a feature have */
 #define MS_FEATUREINCREMENT 10
 
 #define MS_EXPRESSION 2000
@@ -132,6 +134,9 @@ extern "C" {
 #define MS_MAP2IMAGE_Y(y,maxy,cy) (MS_NINT((maxy - y)/cy))
 #define MS_IMAGE2MAP_X(x,minx,cx) (minx + cx*x)
 #define MS_IMAGE2MAP_Y(y,maxy,cy) (maxy - cy*y)
+
+// For maplabel and mappdf
+#define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
 #endif
 
@@ -188,7 +193,7 @@ typedef struct {
 typedef struct {
   char *string;
   int type;
-  
+
   // logical expression options
   char **items;
   int *indexes;
@@ -202,7 +207,7 @@ typedef struct {
 
 #ifndef SWIG
 // JOIN OBJECT - simple way to access other XBase files, one-to-one or one-to-many supported
-typedef struct {  
+typedef struct {
   char *name;
 
   char **items; /* array of item names */
@@ -219,7 +224,7 @@ typedef struct {
   char *_template;
 #endif
   char *footer;
-  
+
   char *match;
 
   int type;
@@ -257,7 +262,7 @@ typedef struct {
   int offsetx, offsety;
 
   double angle;
-  int autoangle; // true or false 
+  int autoangle; // true or false
 
   int buffer; /* space to reserve around a label */
 
@@ -266,7 +271,7 @@ typedef struct {
   char wrap;
 
   int minfeaturesize; /* minimum feature size (in pixels) to label */
-  int autominfeaturesize; // true or false 
+  int autominfeaturesize; // true or false
 
   int mindistance;
   int partials; /* can labels run of an image */
@@ -283,7 +288,7 @@ typedef struct {
 #else
   char *_template;
 #endif
-  char *header, *footer;  
+  char *header, *footer;
   char *empty, *error; /* error handling */
   rectObj extent; /* clipping extent */
   double minscale, maxscale;
@@ -293,7 +298,7 @@ typedef struct {
 
 // CLASS OBJECT - basic symbolization and classification information
 typedef struct {
-#ifndef SWIG  
+#ifndef SWIG
   expressionObj expression; // the expression to be matched
 #endif
 
@@ -332,7 +337,7 @@ typedef struct {
 #endif
 
   joinObj *joins;
-  int numjoins;	
+  int numjoins;
 
   int type;
 
@@ -352,7 +357,7 @@ typedef struct {
   int shapeidx;
 
   pointObj point; /* label point */
-  shapeObj *poly; /* label bounding box */  
+  shapeObj *poly; /* label bounding box */
 
   int status; /* has this label been drawn or not */
 } labelCacheMemberObj;
@@ -364,7 +369,7 @@ typedef struct {
 
 typedef struct {
   labelCacheMemberObj *labels;
-  int numlabels;  
+  int numlabels;
   int cachesize;
   markerCacheMemberObj *markers;
   int nummarkers;
@@ -379,7 +384,7 @@ typedef struct {
 
 typedef struct {
   resultCacheMemberObj *results;
-  int numresults;  
+  int numresults;
   int cachesize;
   rectObj bounds;
 } resultCacheObj;
@@ -482,7 +487,7 @@ typedef struct {
   enum MS_LAYER_TYPE type;
 
   int annotate; // boolean flag for annotation
-  
+
   double tolerance; // search buffer for point and line queries (in toleranceunits)
   int toleranceunits;
 
@@ -500,7 +505,7 @@ typedef struct {
 
   int labelcache, postlabelcache; // on or off
 
-  char *labelitem, *labelsizeitem, *labelangleitem; 
+  char *labelitem, *labelsizeitem, *labelangleitem;
   int labelitemindex, labelsizeitemindex, labelangleitemindex;
 
   char *tileitem;
@@ -529,7 +534,7 @@ typedef struct {
   int numitems;
   void *iteminfo; // connection specific information necessary to retrieve values
 
-  #ifndef SWIG  
+  #ifndef SWIG
   expressionObj filter; // connection specific attribute filter
   #endif
 
@@ -543,7 +548,7 @@ typedef struct {
   char *labelrequires;
 
   hashTableObj metadata;
-  
+
   int dump;
 } layerObj;
 
@@ -617,7 +622,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapsde.c
 char *getString();
 int getDouble(double *d);
 int getInteger(int *i);
-int getSymbol(int n, ...); 
+int getSymbol(int n, ...);
 int getCharacter(char *c);
 
 void initSymbol(symbolObj *s);
@@ -637,11 +642,20 @@ void freeExpression(expressionObj *exp);
 
 int getClassIndex(layerObj *layer, char *str);
 
+// For maplabel and mappdf
+int labelInImage(int width, int height, shapeObj *lpoly, int buffer);
+int intersectLabelPolygons(shapeObj *p1, shapeObj *p2);
+pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int oy, double angle, int buffer, shapeObj *poly);
+double dist(pointObj a, pointObj b);
+
+// For mappdf
+int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); // maputil.c
+
 /*
 ** Main API Functions
 */
 int msGetLayerIndex(mapObj *map, char *name); /* in mapfile.c */
-int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);    
+int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
 int msGetSymbolIndex(symbolSetObj *set, char *name);
 mapObj *msLoadMap(char *filename);
 int msSaveMap(mapObj *map, char *filename);
@@ -660,6 +674,7 @@ char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 double msAdjustExtent(rectObj *rect, int width, int height);
 int msAdjustImage(rectObj rect, int *width, int *height);
 gdImagePtr msDrawMap(mapObj *map);
+PDF *msDrawMapPDF(mapObj *map, PDF *pdf); // mappdf.c
 gdImagePtr msDrawQueryMap(mapObj *map);
 int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, int overlay);
 int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, int classindex, char *text);
@@ -784,7 +799,7 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape);
 int msTiledSHPGetShape(layerObj *layer, shapeObj *shape, int tile, long record);
 void msTiledSHPClose(layerObj *layer);
 
-int msOGRLayerOpen(layerObj *layer);   // in mapogr.cpp 
+int msOGRLayerOpen(layerObj *layer);   // in mapogr.cpp
 int msOGRLayerClose(layerObj *layer);
 int msOGRLayerWhichShapes(layerObj *layer, rectObj rect);
 int msOGRLayerNextShape(layerObj *layer, shapeObj *shape);
@@ -828,14 +843,13 @@ int msOracleSpatialLayerGetShape(layerObj *layer, shapeObj *shape, long record);
 int msOracleSpatialLayerGetExtent(layerObj *layer, rectObj *extent);
 int msOracleSpatialLayerInitItemInfo(layerObj *layer);
 void msOracleSpatialLayerFreeItemInfo(layerObj *layer);
-int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);  
+int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);
 
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
 const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
                              int bReturnOnlyFirstOne);
 
 int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img); // mapwmslayer.c
-
 
 #endif
 
