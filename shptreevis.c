@@ -9,7 +9,9 @@
 
 #include "map.h"
 #include <string.h>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 #ifdef SHPT_POLYGON
@@ -174,11 +176,22 @@ int main( int argc, char ** argv )
 #ifdef  MAPSERVER
 	shape.numlines = 1;
 	shape.type = SHPT_POLYGON;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        //not sure why we need the casting in this code. In any ways It was not
+        //building properly on windows so I removed the cast for windows 
+        //but not modify the code for other platforms.
+	pts[0].x = node->rect.minx;     pts[0].y = node->rect.miny;
+	pts[1].x = node->rect.maxx;     pts[1].y = node->rect.miny;
+	pts[2].x = node->rect.maxx;     pts[2].y = node->rect.maxy;
+	pts[3].x = node->rect.minx;     pts[3].y = node->rect.maxy;
+        pts[4].x = node->rect.minx;     pts[4].y = node->rect.miny;
+#else
 	((pointObj) pts[0]).x = node->rect.minx;  ((pointObj) pts[0]).y = node->rect.miny;
 	((pointObj) pts[1]).x = node->rect.maxx;  ((pointObj) pts[1]).y = node->rect.miny;
 	((pointObj) pts[2]).x = node->rect.maxx;  ((pointObj) pts[2]).y = node->rect.maxy;
 	((pointObj) pts[3]).x = node->rect.minx;  ((pointObj) pts[3]).y = node->rect.maxy;
 	((pointObj) pts[4]).x = node->rect.minx;  ((pointObj) pts[4]).y = node->rect.miny;
+#endif
 	line[0].numpoints = 5;
 	line[0].point = &pts[0];
 	shape.line = &line[0];
