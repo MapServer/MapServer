@@ -56,7 +56,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
   // copy the styles (only if there is an accompanying marker)
   cachePtr->styles = NULL;
   cachePtr->numstyles = 0;
-  if(layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) {
+  if((layerPtr->type == MS_LAYER_ANNOTATION && classPtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) {
     cachePtr->styles = (styleObj *) malloc(sizeof(styleObj)*classPtr->numstyles);
     memcpy(cachePtr->styles, classPtr->styles, sizeof(styleObj)*classPtr->numstyles);
     cachePtr->numstyles = classPtr->numstyles;
@@ -87,7 +87,7 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
       map->labelcache.markers = (markerCacheMemberObj *) realloc(map->labelcache.markers, sizeof(markerCacheMemberObj)*(map->labelcache.cachesize+MS_LABELCACHEINCREMENT));
       if(!map->labelcache.markers) {
 	msSetError(MS_MEMERR, "Realloc() error.", "msAddLabel()");
-	return(-1);
+	return(MS_FAILURE);
       }
       map->labelcache.markercachesize+=MS_LABELCACHEINCREMENT;
     }
@@ -97,7 +97,9 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
     map->labelcache.markers[i].poly = (shapeObj *) malloc(sizeof(shapeObj));
     msInitShape(map->labelcache.markers[i].poly);
 
-    msGetMarkerSize(&map->symbolset, &(classPtr->styles), classPtr->numstyles, &w, &h, layerPtr->scalefactor);
+    // TO DO: at the moment only checks the bottom style, perhaps should check all of them
+    if(msGetMarkerSize(&map->symbolset, &(classPtr->styles[0]), &w, &h, layerPtr->scalefactor) != MS_SUCCESS)
+      return(MS_FAILURE);
 
     rect.minx = MS_NINT(point->x - .5 * w);
     rect.miny = MS_NINT(point->y - .5 * h);
@@ -113,8 +115,6 @@ int msAddLabel(mapObj *map, int layerindex, int classindex, int shapeindex, int 
 
   return(MS_SUCCESS);
 }
-
-
 
 int msInitFontSet(fontSetObj *fontset)
 {
@@ -137,7 +137,6 @@ int msFreeFontSet(fontSetObj *fontset)
 
     return( 0 );
 }
-
 
 int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 {

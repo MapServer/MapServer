@@ -542,7 +542,7 @@ DEBUG printf("msCircleDrawShadeSymbolIM<BR>\n");
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
-    if(getCharacterSize(symbol->character, size, font, &rect) == -1) return;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
     x = rect.maxx - rect.minx;
     y = rect.maxy - rect.miny;
 
@@ -779,7 +779,7 @@ DEBUG printf("T");
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
-    if(getCharacterSize(symbol->character, size, font, &rect) == -1) return;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
 
     x = p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx;
     y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
@@ -1225,7 +1225,7 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
-    if(getCharacterSize(symbol->character, size, font, &rect) == -1) return;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
     x = rect.maxx - rect.minx;
     y = rect.maxy - rect.miny;
 
@@ -1578,7 +1578,11 @@ DEBUG printf("msDrawLabelCacheIM\n<BR>");
 
     marker_offset_x = marker_offset_y = 0; // assume no marker //
     if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker      
-      msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, &marker_height);
+
+      // TO DO: at the moment only checks the bottom style, perhaps should check all of them
+      msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCESS)
+	return(-1);
+
       marker_width *= layerPtr->scalefactor;
       marker_height *= layerPtr->scalefactor;
 

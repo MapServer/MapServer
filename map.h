@@ -1023,8 +1023,8 @@ void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
 
-void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, int *width, int *height, double scalefactor);
-int getCharacterSize(char *character, int size, char *font, rectObj *rect);
+int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor);
+int msGetCharacterSize(char *character, int size, char *font, rectObj *rect);
 void freeImageCache(struct imageCacheObj *ic);
 
 imageObj *msDrawLegend(mapObj *map); // in maplegend.c

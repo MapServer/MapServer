@@ -439,8 +439,10 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         if(layerPtr->type == MS_LAYER_ANNOTATION || layerPtr->type == MS_LAYER_POINT)
         { /* there *is* a marker */
 
-            msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles,
-                            &marker_width, &marker_height, layerPtr->scalefactor);
+	    // TO DO: at the moment only checks the bottom style, perhaps should check all of them
+            if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
+	      return(-1);
+
             marker_offset_x = MS_NINT(marker_width/2.0);
             marker_offset_y = MS_NINT(marker_height/2.0);
 

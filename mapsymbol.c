@@ -25,8 +25,8 @@ void freeImageCache(struct imageCacheObj *ic)
   return;
 }
 
-int getCharacterSize(char *character, int size, char *font, rectObj *rect) {
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+int msGetCharacterSize(char *character, int size, char *font, rectObj *rect) {
+#ifdef USE_GD_FT
   int bbox[8];
   char *error=NULL;
 
@@ -34,8 +34,8 @@ int getCharacterSize(char *character, int size, char *font, rectObj *rect) {
   error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, character);
 
   if(error) {
-    msSetError(MS_TTFERR, error, "getCharacterSize()");
-    return(-1);
+    msSetError(MS_TTFERR, error, "msGetCharacterSize()");
+    return(MS_FAILURE);
   }    
   
   rect->minx = bbox[0];
@@ -43,10 +43,10 @@ int getCharacterSize(char *character, int size, char *font, rectObj *rect) {
   rect->maxx = bbox[2];
   rect->maxy = bbox[1];
 
-  return(0);
+  return(MS_SUCCESS);
 #else
-  msSetError(MS_TTFERR, "TrueType font support is not available.", "getCharacterSize()");
-  return(-1);
+  msSetError(MS_TTFERR, "TrueType font support is not available.", "msGetCharacterSize()");
+  return(MS_FAILURE);
 #endif
 }
 
@@ -254,7 +254,7 @@ int loadSymbol(symbolObj *s, char *symbolpath)
       if(getInteger(&(s->transparentcolor)) == -1) return(-1);
       break;
     case(TYPE):
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
       if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_TRUETYPE,MS_SYMBOL_CARTOLINE)) == -1)
 	return(-1);	
 #else
@@ -490,69 +490,67 @@ int msLoadSymbolSet(symbolSetObj *symbolset, mapObj *map)
 }
 
 /*
-** Returns the size, in pixels, of a marker symbol defined for a specific array of styles and scalefactor. Used for annotation
-** layer collision avoidance. A marker is made up of a number of styles.
+** Returns the size, in pixels, of a marker symbol defined by a specific style and scalefactor. Used for annotation
+** layer collision avoidance. A marker is made up of a number of styles so the calling code must either do the looping
+** itself or call this function for the bottom style which should be the largest.
 */
-void msGetMarkerSize(symbolSetObj *symbolset, styleObj **styles, int numstyles, int *width, int *height, double scalefactor)
-{
-  int i;
+int msGetMarkerSize(symbolSetObj *symbolset, styleObj *style, int *width, int *height, double scalefactor)
+{  
   rectObj rect;
   char *font=NULL;
-
   int size;
 
   *width = *height = 0; // set a starting value
 
-  for(i=0; i<numstyles; i++) {
+  if(style->symbol > symbolset->numsymbols || style->symbol < 0) return(MS_FAILURE); // no such symbol, 0 is OK
 
-    size = MS_NINT(styles[i]->size*scalefactor);
-    size = MS_MAX(size, styles[i]->minsize);
-    size = MS_MIN(size, styles[i]->maxsize);
-
-    if(styles[i]->symbol > symbolset->numsymbols || styles[i]->symbol == -1) return; /* no such symbol, 0 is OK */
-
-    if(styles[i]->symbol == 0) { /* single point */
-      *width = MS_MAX(*width, 1);
-      *height = MS_MAX(*height, 1);
-    }
-
-    switch(symbolset->symbol[styles[i]->symbol].type) {  
-   
-#if defined (USE_GD_FT) || defined (USE_GD_TTF) 
-    case(MS_SYMBOL_TRUETYPE):
-      font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[styles[i]->symbol].font);
-      if(!font) return;
-
-      if(getCharacterSize(symbolset->symbol[styles[i]->symbol].character, size, font, &rect) == -1) return;
-
-      *width = MS_MAX(*width, rect.maxx - rect.minx);
-      *height = MS_MAX(*height, rect.maxy - rect.miny);
-
-      break;
-#endif
-
-    case(MS_SYMBOL_PIXMAP):
-      if(size == 1) {        
-	*width = MS_MAX(*width, symbolset->symbol[styles[i]->symbol].img->sx);
-        *height = MS_MAX(*height, symbolset->symbol[styles[i]->symbol].img->sy);
-      } else {
-        *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[styles[i]->symbol].img->sy) * symbolset->symbol[styles[i]->symbol].img->sx));
-        *height = MS_MAX(*height, size);
-      }
-      break;
-    default: /* vector and ellipses, scalable */
-      if(styles[i]->size > 0) {
-        *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[styles[i]->symbol].sizey) * symbolset->symbol[styles[i]->symbol].sizex));
-        *height = MS_MAX(*height, size);
-      } else { /* use symbol defaults */
-        *width = MS_MAX(*width, symbolset->symbol[styles[i]->symbol].sizex);
-        *height = MS_MAX(*height, symbolset->symbol[styles[i]->symbol].sizey);
-      }
-      break;
-    }  
+  if(style->symbol == 0) { // single point
+    *width = 1;
+    *height = 1;
+    return(MS_SUCCESS);
   }
 
-  return;
+  size = MS_NINT(style->size*scalefactor);
+  size = MS_MAX(size, style->minsize);
+  size = MS_MIN(size, style->maxsize);
+
+  switch(symbolset->symbol[style->symbol].type) {  
+   
+#ifdef USE_GD_FT
+  case(MS_SYMBOL_TRUETYPE):
+    font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[style->symbol].font);
+    if(!font) return(MS_FAILURE);
+
+    if(msGetCharacterSize(symbolset->symbol[style->symbol].character, size, font, &rect) != MS_FAILURE) 
+      return(MS_FAILURE);
+
+    *width = MS_MAX(*width, rect.maxx - rect.minx);
+    *height = MS_MAX(*height, rect.maxy - rect.miny);
+
+    break;
+#endif
+
+  case(MS_SYMBOL_PIXMAP):
+    if(size == 1) {        
+      *width = MS_MAX(*width, symbolset->symbol[style->symbol].img->sx);
+      *height = MS_MAX(*height, symbolset->symbol[style->symbol].img->sy);
+    } else {
+      *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[style->symbol].img->sy) * symbolset->symbol[style->symbol].img->sx));
+      *height = MS_MAX(*height, size);
+    }
+    break;
+  default: /* vector and ellipses, scalable */
+    if(style->size > 0) {
+      *width = MS_MAX(*width, MS_NINT((size/symbolset->symbol[style->symbol].sizey) * symbolset->symbol[style->symbol].sizex));
+      *height = MS_MAX(*height, size);
+    } else { /* use symbol defaults */
+      *width = MS_MAX(*width, symbolset->symbol[style->symbol].sizex);
+      *height = MS_MAX(*height, symbolset->symbol[style->symbol].sizey);
+    }
+    break;
+  }  
+
+  return(MS_SUCCESS);
 }
 
 

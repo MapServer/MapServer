@@ -554,7 +554,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
-    if(getCharacterSize(symbol->character, size, font, &rect) == -1) return;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
     x = rect.maxx - rect.minx;
     y = rect.maxy - rect.miny;
 
@@ -713,13 +713,13 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   }  
 
   switch(symbol->type) {  
-  case(MS_SYMBOL_TRUETYPE):
+  case(MS_SYMBOL_TRUETYPE): // TODO: Need to leverage the image cache!
 
 #ifdef USE_GD_FT
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
-    if(getCharacterSize(symbol->character, size, font, &rect) == -1) return;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
 
     x = p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx;
     y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
@@ -754,7 +754,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
       gdImageCopyResized(img, symbol->img, offset_x, offset_y, 0, 0, symbol->img->sx*d, symbol->img->sy*d, symbol->img->sx, symbol->img->sy);
     }
     break;
-  case(MS_SYMBOL_ELLIPSE):
+  case(MS_SYMBOL_ELLIPSE): // TODO: Need to leverage the image cache!
     d = size/symbol->sizey;
     x = MS_NINT(symbol->sizex*d)+1;
     y = MS_NINT(symbol->sizey*d)+1;
@@ -792,7 +792,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     gdImageDestroy(tmp);
 
     break;
-  case(MS_SYMBOL_VECTOR):
+  case(MS_SYMBOL_VECTOR): // TODO: Need to leverage the image cache!
     d = size/symbol->sizey;
     offset_x = MS_NINT(p->x - d*.5*symbol->sizex + ox);
     offset_y = MS_NINT(p->y - d*.5*symbol->sizey + oy);
@@ -1050,7 +1050,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
-    if(getCharacterSize(symbol->character, size, font, &rect) == -1) return;
+    if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) return;
     x = rect.maxx - rect.minx;
     y = rect.maxy - rect.miny;
     
@@ -1356,6 +1356,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
   return(0);
 }
 
+// TO DO: fix returned values to be MS_SUCCESS/MS_FAILURE
 int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 {
   pointObj p;
@@ -1389,7 +1390,10 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 
     marker_offset_x = marker_offset_y = 0; /* assume no marker */
     if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker      
-      msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, &marker_height, layerPtr->scalefactor);
+
+      // TO DO: at the moment only checks the bottom style, perhaps should check all of them
+      if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCCESS)
+	return(-1);
 
       marker_offset_x = MS_NINT(marker_width/2.0);
       marker_offset_y = MS_NINT(marker_height/2.0);      

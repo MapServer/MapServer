@@ -96,7 +96,7 @@ gdImagePtr getTileImageFromSymbol(mapObj *map, symbolSetObj *symbolset,
           if(!font) 
               return NULL;
 
-          if(getCharacterSize(symbol->character, sz, font, &rect) == -1) 
+          if(msGetCharacterSize(symbol->character, sz, font, &rect) != MS_SUCCESS) 
               return NULL;
 
           x = rect.maxx - rect.minx;
@@ -1242,7 +1242,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
             if(!font) 
                 return;
             
-            if(getCharacterSize(symbol->character, size, font, &rect) == -1) 
+            if(msGetCharacterSize(symbol->character, size, font, &rect) != MS_SUCCESS) 
                 return;
             
             x = p->x - (rect.maxx - rect.minx)/2 - rect.minx;
@@ -2141,10 +2141,11 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
             continue; /* label too large relative to the feature */
 
         draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
-        if((layerPtr->type == MS_LAYER_ANNOTATION&&  cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker
+        if((layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker
 
-            msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, 
-                            &marker_height, layerPtr->scalefactor);
+	    // TO DO: at the moment only checks the bottom style, perhaps should check all of them
+            if(msGetMarkerSize(&map->symbolset, &(cachePtr->styles[0]), &marker_width, &marker_height, layerPtr->scalefactor) != MS_SUCESS)
+	      return(-1);
             
             marker_width = (int)(marker_width);
             marker_height = (int)(marker_height);
