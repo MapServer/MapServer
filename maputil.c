@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.173  2005/02/09 20:43:50  assefa
+ * Add SVG utility function msSaveImagetoFpSVG.
+ *
  * Revision 1.172  2005/02/08 17:34:46  sean
  * call msThreadInit in msSetup (bug 1223).
  *
@@ -565,6 +568,10 @@ void msFreeImage(imageObj *image)
 #ifdef USE_PDF
         else if( MS_RENDERER_PDF(image->format) )
             msFreeImagePDF(image);
+#endif
+#ifdef USE_SVG
+        else if( MS_RENDERER_SVG(image->format) )
+            msFreeImageSVG(image);
 #endif
         else
             msSetError(MS_MISCERR, "Unknown image type", 

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.394  2005/02/09 20:43:49  assefa
+ * Add SVG utility function msSaveImagetoFpSVG.
+ *
  * Revision 1.393  2005/02/06 19:31:32  sean
  * msSetup() function calls gdFontCacheSetup().  msSetup should be called immediately on mapscript module import to avoid race condition with font cache (bug 1203).
  *
@@ -1067,6 +1070,7 @@ typedef struct  {
   mapObj *map;
   FILE *stream;
   char *filename;
+  int streamclosed; //track if a save image is done
 } SVGObj;
 #endif
 
@@ -1741,6 +1745,7 @@ MS_DLL_EXPORT void msDrawLineSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 MS_DLL_EXPORT void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
                                        imageObj *image);
 MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename);
+MS_DLL_EXPORT int msSaveImagetoFpSVG(imageObj *image, FILE *fp);
 MS_DLL_EXPORT void msFreeImageSVG(imageObj *image);
 
 MS_DLL_EXPORT void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, 

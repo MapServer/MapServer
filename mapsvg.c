@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2005/02/09 20:43:49  assefa
+ * Add SVG utility function msSaveImagetoFpSVG.
+ *
  * Revision 1.4  2005/02/09 18:30:50  assefa
  * goSVG specific metadata added.
  *
@@ -93,6 +96,7 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
     image->img.svg = (SVGObj *)malloc(sizeof(SVGObj));
     image->img.svg->filename = NULL;
     image->img.svg->map = map;
+    image->img.svg->streamclosed = 0;
 
     if (! map->web.imagepath)
     {
@@ -1216,6 +1220,49 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
    
 }
 
+
+/************************************************************************/
+/*                            msSaveImagetoFpSVG                        */
+/*                                                                      */
+/*      Save SVG to file pointer. It is an utility function and is      */
+/*      now just used from php_mapscript.c                              */
+/************************************************************************/
+MS_DLL_EXPORT int msSaveImagetoFpSVG(imageObj *image, FILE *stream)
+{
+    unsigned char block[4000];
+    int bytes_read;
+    FILE *fp = NULL;
+
+    if (image && MS_DRIVER_SVG(image->format) && stream)
+    {
+        if (!image->img.svg->streamclosed)
+        {
+            msIO_fprintf(image->img.svg->stream, "</svg>\n"); 
+            fclose(image->img.svg->stream);
+            image->img.svg->streamclosed = 1;
+        }
+        fp = fopen(image->img.svg->filename, "rb" );
+        if( fp == NULL )
+        {
+            msSetError( MS_MISCERR, 
+                        "Failed to open %s for streaming to stdout.",
+                        "msSaveImagetoFpSVG()", image->img.svg->filename);
+            return MS_FAILURE;
+        }
+            
+        while( (bytes_read = fread(block, 1, sizeof(block), fp)) > 0 )
+          msIO_fwrite( block, 1, bytes_read, stream );
+
+        fclose( fp );
+
+        return MS_SUCCESS;
+    }	
+    
+    return MS_FAILURE;
+}
+
+      
+        
 /************************************************************************/
 /*                              msSaveImageSVG                          */
 /*                                                                      */
@@ -1229,14 +1276,17 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
 
     if (image && MS_DRIVER_SVG(image->format))// && filename)
     {
-        msIO_fprintf(image->img.svg->stream, "</svg>\n"); 
-        fclose(image->img.svg->stream);
-
-        //TODO : what about filename
+        if (!image->img.svg->streamclosed)
+        {
+            msIO_fprintf(image->img.svg->stream, "</svg>\n"); 
+            fclose(image->img.svg->stream);
+            image->img.svg->streamclosed = 1;
+        }
+        
         if (!filename)
         {
-          //if( msIO_needBinaryStdout() == MS_FAILURE )
-          //    return MS_FAILURE;
+            //if( msIO_needBinaryStdout() == MS_FAILURE )
+            //    return MS_FAILURE;
 
             fp = fopen(image->img.svg->filename, "rb" );
             if( fp == NULL )
@@ -1282,6 +1332,13 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
    
 }
 
+
+
+/************************************************************************/
+/*                           msDrawRasterLayerSVG                       */
+/*                                                                      */
+/*      Draw raster layers.                                             */
+/************************************************************************/
 int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
 {
     outputFormatObj *format = NULL;
