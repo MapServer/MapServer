@@ -33,7 +33,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
 // grab mapserver declarations to wrap
 %include "../../map.h"
-%include "../../maperror.h"
+// %include "../../maperror.h"
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
 %include "../../mapproject.h"
