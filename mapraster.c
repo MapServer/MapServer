@@ -66,26 +66,29 @@ double diffTime;
 #define RGB_LEVEL_INDEX(r,g,b) ((r)*GREEN_LEVELS*BLUE_LEVELS + (g)*BLUE_LEVELS+(b))
 #define RGB_INDEX(r,g,b) RGB_LEVEL_INDEX(((r)/RED_DIV),((g)/GREEN_DIV),((b)/BLUE_DIV))
 
-/* 
-** NEED TO FIX THIS, SPECIAL FOR RASTERS by passing a colorObj rather than a string!
+/*
+** Function to evaluate a color (RGB+pen) against a class expression.
 */
-static int getClass(layerObj *layer, char *str)
+static int getClass(layerObj *layer, colorObj *color)
 {
   int i;
-  char *tmpstr=NULL;
-
+  char *tmpstr1=NULL;
+  char tmpstr2[12]; // holds either a single color index or something like 'rrr ggg bbb'
+  
   if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
     return(0);
 
-  if(!str) return(-1);
+  if(!color) return(-1);
 
   for(i=0; i<layer->numclasses; i++) {
     if (layer->class[i].expression.string == NULL) /* Empty expression - always matches */
       return(i);
     switch(layer->class[i].expression.type) {
     case(MS_STRING):
-      if(strcmp(layer->class[i].expression.string, str) == 0) /* got a match */
-	return(i);
+      sprintf(tmpstr2, "%d %d %d", color->red, color->green, color->blue);
+      if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); // matched
+      sprintf(tmpstr2, "%d", color->pen);
+      if(strcmp(layer->class[i].expression.string, tmpstr2) == 0) return(i); // matched
       break;
     case(MS_REGEX):
       if(!layer->class[i].expression.compiled) {
@@ -95,21 +98,31 @@ static int getClass(layerObj *layer, char *str)
 	}
 	layer->class[i].expression.compiled = MS_TRUE;
       }
-      if(regexec(&(layer->class[i].expression.regex), str, 0, NULL, 0) == 0) /* got a match */
-	return(i);
+
+      sprintf(tmpstr2, "%d %d %d", color->red, color->green, color->blue);
+      if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); // got a match
+      sprintf(tmpstr2, "%d", color->pen);
+      if(regexec(&(layer->class[i].expression.regex), tmpstr2, 0, NULL, 0) == 0) return(i); // got a match
       break;
     case(MS_EXPRESSION):
-      tmpstr = strdup(layer->class[i].expression.string);
-      tmpstr = gsub(tmpstr, "[pixel]", str);
+      tmpstr1 = strdup(layer->class[i].expression.string);
 
-      msyystate = 4; msyystring = tmpstr;
-      if(msyyparse() != 0)
-	return(-1);
+      sprintf(tmpstr2, "%d", color->red);
+      tmpstr1 = gsub(tmpstr1, "[red]", tmpstr2);
+      sprintf(tmpstr2, "%d", color->green);
+      tmpstr1 = gsub(tmpstr1, "[green]", tmpstr2);
+      sprintf(tmpstr2, "%d", color->blue);
+      tmpstr1 = gsub(tmpstr1, "[blue]", tmpstr2);
 
-      free(tmpstr);
+      sprintf(tmpstr2, "%d", color->pen);
+      tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
 
-      if(msyyresult) /* got a match */
-	return(i);
+      msyystate = 4; msyystring = tmpstr1;
+      if(msyyparse() != 0) return(-1); // error parsing the expression
+
+      free(tmpstr1);
+
+      if(msyyresult) return(i); // got a match	
     }
   }
 
@@ -920,7 +933,6 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
   case(PHOTOMETRIC_PALETTE):    
     TIFFGetField(tif, TIFFTAG_COLORMAP, &red, &green, &blue);
     if(layer->numclasses > 0) {
-      char tmpstr[3];
       int c;
 
       for(i=0; i<MAXCOLORS; i++) {
@@ -931,8 +943,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 	pixel.pen = i;
 
 	if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {	  
-	  sprintf(tmpstr,"%d", i);
-	  c = getClass(layer, tmpstr);
+	  c = getClass(layer, &pixel);
 	  
 	  if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	    cmap[i] = -1;
@@ -1134,7 +1145,6 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   }
 
   if(layer->numclasses > 0) {
-    char tmpstr[3];
     int c;
 
     for(i=0; i<gdImageColorsTotal(png); i++) {
@@ -1144,9 +1154,8 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       pixel.blue = gdImageBlue(png,i);
       pixel.pen = i; 
 
-      if(!MS_COMPARE_COLORS(pixel, layer->offsite) && i != gdImageGetTransparent(png)) {
-	sprintf(tmpstr,"%d", i);
-	c = getClass(layer, tmpstr);
+      if(!MS_COMPARE_COLORS(pixel, layer->offsite) && i != gdImageGetTransparent(png)) {	
+	c = getClass(layer, &pixel);
 
 	if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
@@ -1251,7 +1260,6 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
   }
 
   if(layer->numclasses > 0) {
-    char tmpstr[3];
     int c;
 
     for(i=0; i<gdImageColorsTotal(gif); i++) {
@@ -1261,9 +1269,8 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       pixel.blue = gdImageBlue(gif,i);	
       pixel.pen = i;
 
-      if(!MS_COMPARE_COLORS(pixel, layer->offsite) && i != gdImageGetTransparent(gif)) {
-	sprintf(tmpstr,"%d", i);
-	c = getClass(layer, tmpstr);
+      if(!MS_COMPARE_COLORS(pixel, layer->offsite) && i != gdImageGetTransparent(gif)) {	
+	c = getClass(layer, &pixel);
 
         if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
@@ -1507,8 +1514,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       fread(rc,256,1,trl);
       fread(bc,256,1,trl);
 
-      if(layer->numclasses > 0) {
-	char tmpstr[3];
+      if(layer->numclasses > 0) {	
 	int c;
 
 	for(i=0; i<hd.nclass; i++) {
@@ -1518,9 +1524,8 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	  pixel.blue = bc[i];
           pixel.pen = i;
 
-	  if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {
-	    sprintf(tmpstr,"%d", i);
-	    c = getClass(layer, tmpstr);
+	  if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {	    
+	    c = getClass(layer, &pixel);
 	    
 	    if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	      cmap[i] = -1;
@@ -1653,7 +1658,6 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     }
   } else {
     if(layer->numclasses > 0) {
-      char tmpstr[3];
       int c;
       
       for (i=epp.minval; i<=epp.maxval; i++) {
@@ -1663,9 +1667,8 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	pixel.blue = color.blue;
 	pixel.pen = i;
 
-	if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {
-	  sprintf(tmpstr,"%d", i);
-	  c = getClass(layer, tmpstr);
+	if(!MS_COMPARE_COLORS(pixel, layer->offsite)) {	  
+	  c = getClass(layer, &pixel);
 	  
 	  if(c == -1) 
 	    cmap[i] = -1;
