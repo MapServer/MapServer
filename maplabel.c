@@ -155,7 +155,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
       msSetError(MS_TTFERR, NULL, "msGetLabelSize()");
-      sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
+      if(label->font) sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
       return(-1);
     }
 
@@ -341,7 +341,7 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
       msSetError(MS_TTFERR, NULL, "draw_text()");
-      sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
+      if(label->font) sprintf(ms_error.message, "Requested font (%s) not found.", label->font);
       return(-1);
     }
 
