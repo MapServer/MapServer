@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.50  2004/10/26 13:41:48  assefa
+ * Change gml outut to "missing" instead of "inaplicable" when no features
+ * are found after a query (Bug 597).
+ *
  * Revision 1.49  2004/10/25 18:35:07  assefa
  * Use wfs_maxfeatures metadata (Bug 798).
  *
@@ -1247,7 +1251,7 @@ ENAME=%s\">\n",
     if (i==map->numlayers)
     {
         msIO_printf("   <gml:boundedBy>\n"); 
-        msIO_printf("      <gml:null>inapplicable</gml:null>\n");
+        msIO_printf("      <gml:null>missing</gml:null>\n");
         msIO_printf("   </gml:boundedBy>\n"); 
     }
     /*
