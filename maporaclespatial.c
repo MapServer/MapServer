@@ -18,10 +18,13 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.12  $Date$
+ * Revision 1.13  $Date$
+ * Fixed declarations problems - Bug #1044
+ *
+ * Revision 1.12  2004/11/05 20:33:14 [CVS-TIME]
  * Added debug messages.
  *
- * Revision 1.11  $Date$
+ * Revision 1.11  2004/10/30 05:15:15 [CVS-TIME]
  * Connection Pool support.
  * New query item support.
  * New improve of performance.
@@ -168,7 +171,7 @@ typedef
   item_text_array_query[QUERY_SIZE];  
 
 typedef struct {
-/*Oracle handlers*/
+  /*Oracle handlers*/
   OCIEnv *envhp;
   OCIError *errhp;
   OCISvcCtx *svchp;
@@ -722,7 +725,7 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
   OCINumber *oci_number;
   double x, y;
   int success;
-  lineObj points;
+  lineObj points = {0, NULL};
   pointObj point5[5]; /* for quick access */
 
   msOracleSpatialHandler *hand = layerinfo->orahandlers;
@@ -781,7 +784,7 @@ static int osGetOrdinates(msOracleSpatialLayerInfo *layerinfo, shapeObj *shape, 
           }
           elem_type = (etype == 1 && interpretation > 1) ? 10 : ((etype%10)*10 + interpretation);
           switch (elem_type) {
-            case 10: /* point cluster with 'interpretation'-points */	      
+            case 10: /* point cluster with 'interpretation'-points */
               osPointCluster (layerinfo, shape, obj, ord_start, ord_end, points, interpretation);
               break;
             case 11: /* point type */
@@ -915,14 +918,14 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   char query_str[6000];
   char table_name[2000], geom_column_name[100], unique[100], srid[100];
   OCIDefine *adtp = NULL, *items[ARRAY_SIZE] = { NULL };
-
-  if (layer->debug)
-    msDebug("msOracleSpatialLayerWhichShapes was called.\n");
   
   /* get layerinfo */
   msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *)layer->layerinfo;      
   msOracleSpatialHandler *hand = layerinfo->orahandlers;
-  
+
+  if (layer->debug)
+    msDebug("msOracleSpatialLayerWhichShapes was called.\n");  
+    
   if (layerinfo == NULL) {
     msSetError( MS_ORACLESPATIALERR,
       "msOracleSpatialLayerWhichShapes called on unopened layer",
@@ -1108,6 +1111,7 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
      
     shape->numvalues = layer->numitems;
     shape->values = (char **)malloc( sizeof(char*) * shape->numvalues );
+    
     for( i=0; i < shape->numvalues; ++i )
       shape->values[i] = strdup( layerinfo->items[i+1][ layerinfo->row ] );
 
@@ -1133,13 +1137,13 @@ int msOracleSpatialLayerGetItems( layerObj *layer )
     int	count_item, flk_len, success, i;
     char query_str[6000], table_name[2000], geom_column_name[100], unique[100], srid[100];
     OCIParam *pard = (OCIParam *) 0;
-
-    if (layer->debug)
-      msDebug("msOracleSpatialLayerGetItems was called.\n");
     
     msOracleSpatialLayerInfo *layerinfo = (msOracleSpatialLayerInfo *) layer->layerinfo;         
     msOracleSpatialHandler *hand = layerinfo->orahandlers;
-    
+
+    if (layer->debug)
+      msDebug("msOracleSpatialLayerGetItems was called.\n");
+        
     if (layerinfo == NULL){
       msSetError( MS_ORACLESPATIALERR, "msOracleSpatialLayerGetItems called on unopened layer", "msOracleSpatialLayerGetItems()" );
       return MS_FAILURE;
@@ -1397,7 +1401,8 @@ int msOracleSpatialLayerGetAutoStyle( mapObj *map, layerObj *layer, classObj *c,
   return MS_FAILURE; 
 }
 
-#else // OracleSpatial "not-supported" procedures
+#else
+/* OracleSpatial "not-supported" procedures */
 
 int msOracleSpatialLayerOpen(layerObj *layer)
 { 
