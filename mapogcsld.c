@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2004/02/09 21:42:02  assefa
+ * Add RasterSymbolizer support.
+ *
  * Revision 1.18  2004/02/06 02:23:01  assefa
  * Make sure that point symbolizers always initialize the color
  * parameter of the style.
@@ -160,6 +163,7 @@ int msSLDApplySLDURL(mapObj *map, char *szURL, int iLayer,
           nStatus = msSLDApplySLD(map, pszSLDbuf, iLayer, pszStyleLayerName);
     }
 
+    msSaveMap(map, "c:/msapps/world_testdata/map/raster_sld.map");
     return nStatus;
 
 #else
@@ -2033,13 +2037,126 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /************************************************************************/
 void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
+    CPLXMLNode  *psColorMap = NULL, *psColorEntry = NULL;
+    char *pszColor=NULL, *pszQuantity=NULL;
+    char *pszPreviousColor=NULL, *pszPreviousQuality=NULL;
+    colorObj sColor;
+    char szExpression[100];
+    int nClassId = 0;
+    
+    if (!psRoot || !psLayer)
+      return;
+
+    psColorMap = CPLGetXMLNode(psRoot, "ColorMap");
+    if (psColorMap)
+    {
+        psColorEntry = CPLGetXMLNode(psColorMap, "ColorMapEntry");
+        while (psColorEntry && psColorEntry->pszValue &&
+               strcasecmp(psColorEntry->pszValue, "ColorMapEntry") == 0)
+        {
+            pszColor = (char *)CPLGetXMLValue(psColorEntry, "color", NULL);
+            pszQuantity = (char *)CPLGetXMLValue(psColorEntry, "quantity", NULL);
+
+            if (pszColor && pszQuantity)
+            {
+                if (pszPreviousColor && pszPreviousQuality)
+                {
+                    if (strlen(pszPreviousColor) == 7 && 
+                        pszPreviousColor[0] == '#' &&
+                        strlen(pszColor) == 7 && pszColor[0] == '#')
+                    {
+                        sColor.red = hex2int(pszPreviousColor+1);
+                        sColor.green= hex2int(pszPreviousColor+3);
+                        sColor.blue = hex2int(pszPreviousColor+5);
+
+                        //?? Test if pszPreviousQuality < pszQuantity
+                        sprintf(szExpression, 
+                                "([pixel] >= %d AND [pixel] < %d)",
+                                atoi(pszPreviousQuality), 
+                                atoi(pszQuantity));
+                        if (psLayer->numclasses < MS_MAXCLASSES)
+                        {
+                            initClass(&(psLayer->class[psLayer->numclasses]));
+                            psLayer->numclasses++;
+                            nClassId = psLayer->numclasses-1;
+                            initStyle(&(psLayer->class[nClassId].styles[0]));
+                            psLayer->class[nClassId].numstyles = 1;
+
+                            psLayer->class[nClassId].styles[0].color.red = 
+                              sColor.red;
+                            psLayer->class[nClassId].styles[0].color.green = 
+                              sColor.green;
+                            psLayer->class[nClassId].styles[0].color.blue = 
+                              sColor.blue;
+
+                            if (psLayer->classitem && 
+                                strcasecmp(psLayer->classitem, "[pixel]") != 0)
+                              free(psLayer->classitem);
+                            psLayer->classitem = strdup("[pixel]");
+
+                            loadExpressionString(&psLayer->class[nClassId].expression,
+                                                 szExpression);
+                            
+                            
+                        }
+                    }
+                    else
+                    {
+                        msSetError(MS_WMSERR, 
+                                   "Invalid ColorMap Entry.", 
+                                   "msSLDParseRasterSymbolizer()");
+                    }
+
+                }
+               
+                pszPreviousColor = pszColor;
+                pszPreviousQuality = pszQuantity;
+                
+            }
+            psColorEntry = psColorEntry->psNext;
+        }
+        //do the last Color Map Entry
+        if (pszColor && pszQuantity)
+        {
+            if (strlen(pszColor) == 7 && pszColor[0] == '#')
+            {
+                sColor.red = hex2int(pszColor+1);
+                sColor.green= hex2int(pszColor+3);
+                sColor.blue = hex2int(pszColor+5);
+                sprintf(szExpression, "([pixel] = %d)", atoi(pszQuantity));
+                if (psLayer->numclasses < MS_MAXCLASSES)
+                {
+                    initClass(&(psLayer->class[psLayer->numclasses]));
+                    psLayer->numclasses++;
+                    nClassId = psLayer->numclasses-1;
+                    initStyle(&(psLayer->class[nClassId].styles[0]));
+                    psLayer->class[nClassId].numstyles = 1;
+                    psLayer->class[nClassId].styles[0].color.red = 
+                      sColor.red;
+                    psLayer->class[nClassId].styles[0].color.green = 
+                              sColor.green;
+                    psLayer->class[nClassId].styles[0].color.blue = 
+                      sColor.blue;
+
+                    if (psLayer->classitem && 
+                        strcasecmp(psLayer->classitem, "[pixel]") != 0)
+                      free(psLayer->classitem);
+                    psLayer->classitem = strdup("[pixel]");
+
+                    loadExpressionString(&psLayer->class[nClassId].expression,
+                                         szExpression);
+                }
+            }
+        }
+    }
 }
 /************************************************************************/
 /*                           msSLDParseTextParams                       */
 /*                                                                      */
 /*      Parse text paramaters like font, placement and color.           */
 /************************************************************************/
-void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, classObj *psClass)
+void msSLDParseTextParams(CPLXMLNode *psRoot, layerObj *psLayer, 
+                          classObj *psClass)
 {
     char szFontName[100];
     int  nFontSize = 10;
@@ -2479,8 +2596,6 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
                    
                     if (pszSymbolName)
                     {
-                        char *sttt = NULL;
-                        //strlen(sttt);
                         colorObj sTmpColor;
 
                         sprintf(szTmp, "%s\n", "<Graphic>");
@@ -3164,7 +3279,9 @@ char *msSLDGenerateSLDLayer(layerObj *psLayer)
     char *pszFinalSLD = NULL;
     char *pszSLD = NULL;
 
-    if (psLayer)
+    if (psLayer && (psLayer->type == MS_LAYER_POINT ||
+                    psLayer->type == MS_LAYER_LINE ||
+                    psLayer->type == MS_LAYER_POLYGON))
     {
         sprintf(szTmp, "%s\n",  "<NamedLayer>");
         pszFinalSLD = strcatalloc(pszFinalSLD, szTmp);
