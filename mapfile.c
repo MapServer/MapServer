@@ -1333,8 +1333,11 @@ int loadExpressionString(expressionObj *exp, char *value)
   freeExpression(exp); // we're totally replacing the old expression so free then init to start over
   // initExpression(exp);
 
-  if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) return(-1);
-  exp->string = strdup(msyytext);
+  if((exp->type = getSymbol(3, MS_STRING,MS_EXPRESSION,MS_REGEX)) == -1) {
+    exp->type = MS_STRING; // take the whole value as a string expression
+    exp->string = strdup(value);
+  } else
+    exp->string = strdup(msyytext);
   
   // if(exp->type == MS_REGEX) {
   //   if(regcomp(&(exp->regex), exp->string, REG_EXTENDED|REG_NOSUB) != 0) { // compile the expression 
