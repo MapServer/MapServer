@@ -18,6 +18,7 @@ extern int msyystate;
 extern char *msyystring;
 
 extern int loadSymbol(symbolObj *s); // in mapsymbol.c
+extern int writeSymbol(symbolObj *s, FILE *stream); // in mapsymbol.c
 
 /*
 ** Symbol to string static arrays needed for writing map files.
@@ -26,7 +27,7 @@ extern int loadSymbol(symbolObj *s); // in mapsymbol.c
 static char *msOutputImageType[5]={"GIF", "PNG", "JPEG", "WBMP", "GML"};
 static char *msUnits[7]={"INCHES", "FEET", "MILES", "METERS", "KILOMETERS", "DD", "PIXELS"};
 static char *msLayerTypes[7]={"POINT", "LINE", "POLYGON", "RASTER", "ANNOTATION", "QUERY", "CIRCLE"};
-static char *msLabelPositions[10]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO"};
+static char *msLabelPositions[11]={"UL", "LR", "UR", "LL", "CR", "CL", "UC", "LC", "CC", "AUTO", "XY"};
 static char *msBitmapFontSizes[5]={"TINY", "SMALL", "MEDIUM", "LARGE", "GIANT"};
 static char *msQueryMapStyles[4]={"NORMAL", "HILITE", "SELECTED", "INVERTED"};
 static char *msStatus[5]={"OFF", "ON", "DEFAULT", "QUERYONLY", "EMBED"};
@@ -1011,7 +1012,8 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
   fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
   if(label->outlinecolor > -1) fprintf(stream, "  %sOUTLINECOLOR %d %d %d\n", tab, map->palette.colors[label->outlinecolor-1].red, map->palette.colors[label->outlinecolor-1].green, map->palette.colors[label->outlinecolor-1].blue);
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
-  fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
+  if (label->position != MS_XY)   // MS_XY is an internal value used only for legend labels... never write it
+    fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
   if(label->shadowcolor > -1) {
     fprintf(stream, "  %sSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->shadowcolor-1].red, map->palette.colors[label->shadowcolor-1].green, map->palette.colors[label->shadowcolor-1].blue);
     fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
@@ -2481,7 +2483,7 @@ static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
   if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
   fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[legend->transparent]);
-  if (legend->template) fprintf(stream, "    TEMPLATE %s\n", legend->template);
+  if (legend->template) fprintf(stream, "    TEMPLATE \"%s\"\n", legend->template);
   fprintf(stream, "  END\n\n");
 }
 
@@ -3077,8 +3079,7 @@ void msFreeMap(mapObj *map) {
   }
   msFree(map->labelcache.markers);
 
-  if(map->fontset.fonts) msFreeHashTable(map->fontset.fonts);
-  msFree(map->fontset.filename);
+  msFreeFontSet(&(map->fontset));
 
   freeWeb(&(map->web));
 
@@ -3135,6 +3136,12 @@ int msSaveMap(mapObj *map, char *filename)
   fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
+
+  // write symbol with INLINE tag in mapfile
+  for(i=0; i<map->symbolset.numsymbols; i++)
+  {
+      writeSymbol(&(map->symbolset.symbol[i]), stream);
+  }
 
   writeProjection(&(map->projection), stream, "  ");
   
@@ -3356,6 +3363,7 @@ static mapObj *loadMapInternal(char *filename, char *new_map_path)
 	return(NULL);
       }
       if((loadSymbol(&(map->symbolset.symbol[map->symbolset.numsymbols])) == -1)) return(NULL);
+      map->symbolset.symbol[map->symbolset.numsymbols].inmapfile = MS_TRUE;
       map->symbolset.numsymbols++;
       break;
     case(SYMBOLSET):
@@ -3508,3 +3516,127 @@ int msLoadMapString(mapObj *map, char *object, char *value)
 
   return(0);
 }
+
+
+/*
+** Returns an array with one entry per mapfile token.  Useful to manipulate
+** mapfiles in MapScript.
+**
+** The returned array should be freed using msFreeCharArray()
+*/
+static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
+{
+  regex_t re;
+  char   **tokens = NULL;
+  int    numtokens=0, numtokens_allocated=0;
+
+  *ret_numtokens = 0;
+
+  if(!filename) {
+    msSetError(MS_MISCERR, "Filename is undefined.", "msTokenizeMap()");
+    return NULL;
+  }
+  
+  /*
+  ** Check map filename to make sure it's legal
+  */
+  if(regcomp(&re, MS_MAPFILE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
+   msSetError(MS_REGEXERR, "(%s)", "msTokenizeMap()", MS_MAPFILE_EXPR);   
+   return NULL;
+  }
+  if(regexec(&re, filename, 0, NULL, 0) != 0) { /* no match */
+    regfree(&re);
+    msSetError(MS_IOERR, "Illegal mapfile name.", "msTokenizeMap()");
+    return NULL;
+  }
+  regfree(&re);
+  
+  if((msyyin = fopen(filename,"r")) == NULL) {
+    msSetError(MS_IOERR, "(%s)", "msTokenizeMap()", filename);
+    return NULL;
+  }
+
+  msyystate = 6; // restore lexer state to INITIAL, and do return comments
+  msyylex();
+  msyyrestart(msyyin);
+  msyylineno = 0;
+
+  // we start with room for 256 tokens and will double size of the array 
+  // every time we reach the limit
+  numtokens = 0;
+  numtokens_allocated = 256; 
+  tokens = (char **)malloc(numtokens_allocated*sizeof(char*));
+  if (tokens == NULL)
+  {
+      msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
+      return NULL;
+  }
+
+  for(;;) {
+
+    if (numtokens_allocated <= numtokens)
+    {
+        // double size of the array every time we reach the limit
+        numtokens_allocated *= 2; 
+        tokens = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
+        if (tokens == NULL)
+        {
+            msSetError(MS_MEMERR, "Realloc() error.", "msTokenizeMap()");
+            return NULL;
+        }
+    }
+ 
+    switch(msyylex()) {   
+      case(EOF):
+        // This is the normal way out... cleanup and exit
+        fclose(msyyin);      
+        *ret_numtokens = numtokens;
+        return(tokens);
+        break;
+      case(MS_STRING):
+        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
+        if (tokens[numtokens])
+            sprintf(tokens[numtokens], "\"%s\"", msyytext);
+        break;
+      case(MS_EXPRESSION):
+        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
+        if (tokens[numtokens])
+            sprintf(tokens[numtokens], "(%s)", msyytext);
+        break;
+      case(MS_REGEX):
+        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
+        if (tokens[numtokens])
+            sprintf(tokens[numtokens], "/%s/", msyytext);
+        break;
+      default:
+        tokens[numtokens] = strdup(msyytext);
+        break;
+    }
+
+    if (tokens[numtokens] == NULL)
+    {
+        msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
+        return NULL;
+    }
+
+    numtokens++;
+  }
+
+  // We should never get here.
+  return NULL;
+}
+
+//
+// Wraps tokenizeMapInternal
+//
+char **msTokenizeMap(char *filename, int *numtokens)
+{
+    char **tokens;
+
+    msAcquireLock( TLOCK_PARSER );
+    tokens = tokenizeMapInternal( filename, numtokens );
+    msReleaseLock( TLOCK_PARSER );
+
+    return tokens;
+}
+

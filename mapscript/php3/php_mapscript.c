@@ -30,6 +30,18 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.4  2002/07/08 20:04:58  dan
+ * Added symbolsetfilename and fontsetfilename in PHP MapScript's mapObj
+ *
+ * Revision 1.104.2.3  2002/07/08 17:28:16  dan
+ * Added map->setFontSet() to MapScript
+ *
+ * Revision 1.104.2.2  2002/06/27 19:10:39  dan
+ * Added msTokenizeMap() in MapServer and PHP MapScript (3.6 branch)
+ *
+ * Revision 1.104.2.1  2002/06/03 14:19:53  dan
+ * Added $layer->styleitem to 3.6 branch
+ *
  * Revision 1.104  2002/04/24 20:37:32  assefa
  * Correct compiling error on Windows.
  *
@@ -216,6 +228,8 @@ DLEXPORT void php3_ms_free_projection(projectionObj *pProj);
 
 DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
@@ -265,6 +279,7 @@ DLEXPORT void php3_ms_map_processQueryTemplate(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -478,6 +493,7 @@ function_entry php3_ms_functions[] = {
     {"ms_getpid",       php3_ms_getpid,         NULL},
     {"ms_getscale",     php3_ms_getscale,       NULL},
     {"ms_newprojectionobj",   php3_ms_projection_new,       NULL},
+    {"ms_tokenizemap",  php3_ms_tokenizeMap,    NULL},
     {NULL, NULL, NULL}
 };
 
@@ -552,6 +568,7 @@ function_entry php_map_class_functions[] = {
     {"processquerytemplate",   php3_ms_map_processQueryTemplate,  NULL},
     {"setsymbolset",   php3_ms_map_setSymbolSet,  NULL},
     {"getnumsymbols",   php3_ms_map_getNumSymbols,  NULL},
+    {"setfontset",      php3_ms_map_setFontSet,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -1075,7 +1092,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * should really do is make all of MapServer use the V_* macros and
      * avoid calling setcwd() from anywhere.
      */
-    if (IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
+    if (strlen(pFname->value.str.val) == 0 ||
+        IS_ABSOLUTE_PATH(pFname->value.str.val, pFname->value.str.len))
         pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
     else
     {
@@ -1135,6 +1153,10 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     add_property_long(return_value, "keyspacingx",pNewObj->legend.keyspacingx);
     add_property_long(return_value, "keyspacingy",pNewObj->legend.keyspacingy);
 
+    PHPMS_ADD_PROP_STR(return_value, "symbolsetfilename", 
+                                                  pNewObj->symbolset.filename);
+    PHPMS_ADD_PROP_STR(return_value, "fontsetfilename", 
+                                                  pNewObj->fontset.filename);
 
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
@@ -1228,7 +1250,9 @@ DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "keyspacingx", self->legend.keyspacingx)
     else IF_SET_LONG(  "keyspacingy", self->legend.keyspacingy)
     else if (strcmp( "numlayers", pPropertyName->value.str.val) == 0 ||
-             strcmp( "extent", pPropertyName->value.str.val) == 0)
+             strcmp( "extent", pPropertyName->value.str.val) == 0 ||
+             strcmp( "symbolsetfilename", pPropertyName->value.str.val) == 0 ||
+             strcmp( "fontsetfilename", pPropertyName->value.str.val) == 0)
     {
         php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
                             pPropertyName->value.str.val);
@@ -4474,8 +4498,7 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
         RETURN_FALSE;
     }
 
-    if (ZEND_NUM_ARGS() != 1 ||
-        getParameters(ht,1,&pParamFileName)==FAILURE)
+    if (getParameters(ht,1,&pParamFileName) == FAILURE)
     {
         WRONG_PARAM_COUNT;
     }
@@ -4486,9 +4509,11 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
     if (self == NULL)
         RETURN_FALSE;
 
-    if(pParamFileName->value.str.val != NULL && strlen(pParamFileName->value.str.val) > 0)
+    if(pParamFileName->value.str.val != NULL && 
+       strlen(pParamFileName->value.str.val) > 0)
     {
-        if ((retVal = mapObj_setSymbolSet(self, pParamFileName->value.str.val)) != 0)
+        if ((retVal = mapObj_setSymbolSet(self, 
+                                          pParamFileName->value.str.val)) != 0)
         {
             _phpms_report_mapserver_error(E_WARNING);
             php3_error(E_ERROR, "Failed loading symbolset from %s",
@@ -4496,9 +4521,15 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS)
         }
     }
 
+    if (self->symbolset.filename)
+        _phpms_set_property_string(pThis, "symbolsetfilename", 
+                                   self->symbolset.filename?
+                                       self->symbolset.filename:"", E_ERROR); 
+
     RETURN_LONG(retVal);
 #endif
 }
+
 
 /**********************************************************************
  *                        map->getNumSymbols()
@@ -4536,6 +4567,75 @@ DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /* }}} */
+
+/**********************************************************************
+ *                        map->setFontSet(szFileName)
+ *
+ * Load a new fontset
+ **********************************************************************/
+
+/* {{{ proto int map.php3_ms_map_setFontSet(fileName)*/
+
+DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
+{
+#ifdef PHP4
+    pval        *pThis;
+    pval        *pParamFileName;
+    mapObj      *self=NULL;
+    int         retVal=0;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+
+#else
+    pval        *pValue = NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (getParameters(ht,1,&pParamFileName) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pParamFileName);
+   
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+        RETURN_FALSE;
+
+    if(pParamFileName->value.str.val != NULL && 
+       strlen(pParamFileName->value.str.val) > 0)
+    {
+        if ((retVal = mapObj_setFontSet(self, 
+                                        pParamFileName->value.str.val)) != 0)
+        {
+            _phpms_report_mapserver_error(E_WARNING);
+            php3_error(E_ERROR, "Failed loading fontset from %s",
+                       pParamFileName->value.str.val);
+        }
+    }
+
+    if (self->fontset.filename)
+        _phpms_set_property_string(pThis, "fontsetfilename", 
+                                   self->fontset.filename?
+                                       self->fontset.filename:"", E_ERROR);
+
+    RETURN_LONG(retVal);
+#endif
+}
+/* }}} */
+
 
 /*=====================================================================
  *                 PHP function wrappers - image class
@@ -5016,6 +5116,7 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "filteritem", player->filteritem);
     PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
     add_property_long(return_value,   "transparency",player->transparency);
+    PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
 
     return layer_id;
 }
@@ -5134,6 +5235,7 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("filteritem", self->filteritem)
     else IF_SET_STRING("template",   self->template)
     else IF_SET_LONG(  "transparency", self->transparency)
+    else IF_SET_STRING("styleitem",  self->styleitem)
     else if (strcmp( "numclasses", pPropertyName->value.str.val) == 0 ||
              strcmp( "index",      pPropertyName->value.str.val) == 0 )
     {
@@ -10080,3 +10182,51 @@ static double GetDeltaExtentsUsingScale(double dfScale, int nUnits,
     return dfDelta;
 }
 
+/**********************************************************************
+ *                        ms_tokenizeMap()
+ *
+ * Preparse mapfile and return an array containg one item for each 
+ * token in the map.
+ **********************************************************************/
+
+/* {{{ proto array ms_tokenizeMap(string filename)
+   Preparse mapfile and return an array containg one item for each token in the map.*/
+
+DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pFname;
+    char        **tokens;
+    int         i, numtokens=0;
+
+    if (getParameters(ht, 1, &pFname) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pFname);
+
+    if ((tokens = msTokenizeMap(pFname->value.str.val, &numtokens)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed tokenizing map file %s", 
+                            pFname->value.str.val);
+        RETURN_FALSE;
+    }
+    else
+    {
+        if (array_init(return_value) == FAILURE) 
+        {
+            RETURN_FALSE;
+        }
+
+        for (i=0; i<numtokens; i++)
+        {
+            add_next_index_string(return_value,  tokens[i], 1);
+        }
+
+        msFreeCharArray(tokens, numtokens);
+    }
+
+
+}
+/* }}} */
