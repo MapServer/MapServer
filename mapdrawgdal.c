@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.41  2005/01/23 20:40:23  frank
+ * LoadGDALImage() should return int, not CPLErr.
+ *
  * Revision 1.40  2005/01/19 21:20:13  frank
  * improve autoscaling - add small amount to scaling range - bug 1168
  *
@@ -141,7 +144,7 @@ extern int InvGeoTransform( double *gt_in, double *gt_out );
 #include "gdal_alg.h"
 #endif
 
-static CPLErr 
+static int
 LoadGDALImage( GDALRasterBandH hBand, int iColorIndex, 
                layerObj *layer, 
                int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
@@ -993,7 +996,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 /*      buffer.  The processing options include scaling.                */
 /************************************************************************/
 
-static CPLErr 
+static int
 LoadGDALImage( GDALRasterBandH hBand, int iColorIndex,  layerObj *layer, 
                int src_xoff, int src_yoff, int src_xsize, int src_ysize, 
                GByte *pabyBuffer, int dst_xsize, int dst_ysize )
