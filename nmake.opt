@@ -262,6 +262,11 @@ WFSCLIENT= -DUSE_WFS_LYR
 # Use -DUSE_WCS_SVR to compile with WCS server support
 #WCS=-DUSE_WCS_SVR
 
+#libiconv support is used for to support double bytes (see bug 911).
+#uncomment the following to build with libiconv support.
+#ICONV=-DUSE_ICONV
+#
+
 
 # Reprojecting.
 # If you would like mapserver to be able to reproject data from one
@@ -476,6 +481,11 @@ ORACLE_INC=-I$(ORACLE_DIR)/oci/include
 ORACLE_LIB=$(ORACLE_DIR)/oci/lib/msvc/oci.lib
 !ENDIF
 
+#libiconv support
+!IFDEF ICONV
+ICONV_LIB=c:\usr\lib\iconv.lib
+ICONV_INC= -Ic:\usr\include
+!ENDIF
 
 
 ########################################################################
@@ -509,7 +519,7 @@ EXTERNAL_LIBS=$(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
      $(PROJ_LIB) $(OGR_LIB) $(GDAL_LIB)\
      $(CURL_LIB)  $(MING_LIB) $(PDF_LIB) \
      $(WINSOCK_LIB) $(POSTGIS_LIB) $(IMGGEN_LIB) $(ERR_LIB) \
-     $(XERCES_LIB) $(ECW_LIB) $(ORACLE_LIB) $(OGDI_LIB) $(ODBC_LIB) $(SDE_LIB)
+     $(XERCES_LIB) $(ECW_LIB) $(ORACLE_LIB) $(OGDI_LIB) $(ODBC_LIB) $(SDE_LIB) $(ICONV_LIB)
 
 LIBS=$(MS_LIB) $(EXTERNAL_LIBS)
 LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
@@ -517,14 +527,16 @@ LIBS_DLL=$(MS_LIB_DLL) $(EXTERNAL_LIBS)
 INCLUDES=$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
          $(PROJ_INC) $(REGEX_INC) $(GDAL_INC) $(OGR_INC) \
          $(CURL_INC) $(MING_INC) $(PDF_INC) $(POSTGIS_INC) \
-		 $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)
+         $(IMGGEN_INC) $(ERR_INC) $(ORACLE_INC) $(SDE_INC)\
+         $(ICONV_INC)
+        
 
 MS_DEFS = $(REGEX_OPT) $(STRINGS) $(POSTGIS) \
           $(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS) \
           $(WMSCLIENT) $(MING) $(IGNORE_MISSING_DATA) $(NEED_NONBLOCKING_STDERR) $(ENABLE_STDERR_DEBUG) \
           $(GDAL)  \
           $(WFS) $(WFSCLIENT) $(WCS) $(PDF) $(EGIS) \
-        $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) $(SDE_OPT)
+        $(USE_GD_ANTIALIAS) $(ORACLE) $(MING_VERSION) $(SDE_OPT) $(ICONV)
 
 MS_CFLAGS=$(INCLUDES) $(MS_DEFS)
 
