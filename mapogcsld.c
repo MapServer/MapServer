@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2003/12/17 04:16:15  frank
+ * added ifdef USE_OGR around include of cpl_string.h
+ *
  * Revision 1.12  2003/12/11 05:12:27  assefa
  * Remove unused variables.
  *
@@ -74,7 +77,10 @@
 #include "mapogcsld.h"
 #include "mapogcfilter.h"
 #include "map.h"
+
+#ifdef USE_OGR
 #include "cpl_string.h"
+#endif
 
 
 #define SLD_LINE_SYMBOL_NAME "sld_line_symbol"
