@@ -1410,3 +1410,74 @@ memory.") const char * {
 	return msDBFGetFieldInfo(self, iField, NULL, NULL, NULL);
     }    
 }
+
+// extension to colorObj
+
+%extend colorObj {
+  
+    colorObj(int red=0, int green=0, int blue=0) {
+        colorObj *color;
+        
+        // Check colors
+        if (red > 255 || green > 255 || blue > 255) {
+            msSetError(MS_MISCERR, "Invalid color index.", "colorObj()");
+            return NULL;
+        }
+    
+        color = (colorObj *)calloc(1, sizeof(colorObj));
+        if (!color)
+            return(NULL);
+    
+        color->red = red;
+        color->green = green;
+        color->blue = blue;
+
+        return(color);    	
+    }
+
+    ~colorObj() {
+        free(self);
+    }
+ 
+    int setRGB(int red, int green, int blue) {
+        // Check colors
+        if (red > 255 || green > 255 || blue > 255) {
+            msSetError(MS_MISCERR, "Invalid color index.", "setRGB()");
+            return MS_FAILURE;
+        }
+    
+        self->red = red;
+        self->green = green;
+        self->blue = blue;
+        return MS_SUCCESS;
+    }
+
+    int setHex(char *psHexColor) {
+        int red, green, blue;
+        if (psHexColor && strlen(psHexColor)== 7 && psHexColor[0] == '#') {
+            red = hex2int(psHexColor+1);
+            green = hex2int(psHexColor+3);
+            blue= hex2int(psHexColor+5);
+            if (red > 255 || green > 255 || blue > 255) {
+                msSetError(MS_MISCERR, "Invalid color index.", "setHex()");
+                return MS_FAILURE;
+            }
+            self->red = red;
+            self->green = green;
+            self->blue = blue;
+            return MS_SUCCESS;
+        }
+        else {
+            msSetError(MS_MISCERR, "Invalid hex color.", "setHex()");
+            return MS_FAILURE;
+        }
+    }   
+    
+    %newobject toHex;
+    char *toHex() {
+        char hexcolor[7];
+        sprintf(hexcolor, "#%02x%02x%02x", self->red, self->green, self->blue);
+        return strdup(hexcolor);
+    }
+}
+

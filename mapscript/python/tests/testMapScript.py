@@ -626,6 +626,31 @@ class PointObjTestCase(unittest.TestCase):
 
 # colorObj constructor tests
 
+class ColorObjTestCase(unittest.TestCase):
+    def testColorObjConstructorNoArgs(self):
+        c = colorObj()
+        assert (c.red, c.green, c.blue) == (0, 0, 0)
+    def testColorObjConstructorArgs(self):
+        c = colorObj(1, 2, 3)
+        assert (c.red, c.green, c.blue) == (1, 2, 3)
+    def testColorObjToHex(self):
+        c = colorObj(255, 255, 255)
+        assert c.toHex() == '#ffffff'
+    def testColorObjSetRGB(self):
+        c = colorObj()
+        c.setRGB(255, 255, 255)
+        assert (c.red, c.green, c.blue) == (255, 255, 255)
+    def testColorObjSetHexLower(self):
+        c = colorObj()
+        c.setHex('#ffffff')
+        assert (c.red, c.green, c.blue) == (255, 255, 255)
+    def testColorObjSetHexUpper(self):
+        c = colorObj()
+        c.setHex('#FFFFFF')
+        assert (c.red, c.green, c.blue) == (255, 255, 255)
+    def testColorObjSetHexBadly(self):
+        c = colorObj()
+        self.assertRaises(MapServerError, c.setHex, '#fffffg')
 
 if __name__ == '__main__':
     unittest.main()
