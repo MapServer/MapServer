@@ -642,7 +642,7 @@ void loadForm()
 
       layers = split(msObj->ParamValues[i], ' ', &(num_layers));
       for(l=0; l<num_layers; l++)
-	msObj->Layers[msObj->NumLayers+l] = strdup(msObj->Layers[l]);
+	msObj->Layers[msObj->NumLayers+l] = strdup(layers[l]);
       msObj->NumLayers += l;
 
       msFreeCharArray(layers, num_layers);
