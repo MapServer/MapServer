@@ -322,8 +322,10 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
     map->layers[l].name = strdup("__embed__scalebar");
     map->layers[l].type = MS_LAYER_ANNOTATION;
 
-    if(initClass(&(map->layers[l].class[0])) == -1) return(-1);    
-      //Update the layer order list with the layer's index.
+    if(initClass(&(map->layers[l].class[0])) == -1) return(-1);
+    map->layers[l].numclasses = 1; // so we make sure to free it
+    
+    // update the layer order list with the layer's index.
     map->layerorder[l] = l;
   }
 
