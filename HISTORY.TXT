@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- Add support for SVG output. See Bug 1281 for details. 
+
 - Bug 1231: use mimetype "image/png; mode=24bits" for 24bit png format.
   This makes it seperately selectable by WMS.
 
