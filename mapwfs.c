@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.22  2003/09/30 03:15:31  assefa
+ * Add namespace ogc in Filter capabilities.
+ *
  * Revision 1.21  2003/09/29 20:43:09  assefa
  * Query all layers only when filter is not set.
  *
@@ -429,23 +432,23 @@ int msWFSGetCapabilities(mapObj *map, const char *wmtver)
   ** OGC Filter Capabilities ... for now we support only BBOX
   */
 
-  printf("<Filter_Capabilities>\n");
-  printf("  <Spatial_Capabilities>\n");
-  printf("    <Spatial_Operators>\n");
-  printf("      <BBOX/>\n");
-  printf("    </Spatial_Operators>\n");
-  printf("  </Spatial_Capabilities>\n");
+  printf("<ogc:Filter_Capabilities>\n");
+  printf("  <ogc:Spatial_Capabilities>\n");
+  printf("    <ogc:Spatial_Operators>\n");
+  printf("      <ogc:BBOX/>\n");
+  printf("    </ogc:Spatial_Operators>\n");
+  printf("  </ogc:Spatial_Capabilities>\n");
 
-  printf("  <Scalar_Capabilities>\n");
-  printf("    <Logical_Operators />\n");
-  printf("    <Comparison_Operators>\n");
-  printf("      <Simple_Comparisons />\n");
-  printf("      <Like />\n");
-  printf("      <Between />\n");
-  printf("    </Comparison_Operators>\n");
-  printf("  </Scalar_Capabilities>\n");
+  printf("  <ogc:Scalar_Capabilities>\n");
+  printf("    <ogc:Logical_Operators />\n");
+  printf("    <ogc:Comparison_Operators>\n");
+  printf("      <ogc:Simple_Comparisons />\n");
+  printf("      <ogc:Like />\n");
+  printf("      <ogc:Between />\n");
+  printf("    </ogc:Comparison_Operators>\n");
+  printf("  </ogc:Scalar_Capabilities>\n");
 
-  printf("</Filter_Capabilities>\n\n");
+  printf("</ogc:Filter_Capabilities>\n\n");
 
   /*
   ** Done!
