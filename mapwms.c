@@ -1175,46 +1175,13 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
 
   } else if (strncasecmp(info_format, "GML", 3) == 0 ||  // accept GML.1 or GML
              strcasecmp(info_format, "application/vnd.ogc.gml") == 0) {
-    int numresults=0;
 
     if (strcasecmp(wmtver, "1.0.7") <= 0) 
         printf("Content-type: text/xml%c%c", 10,10);
     else
         printf("Content-type: application/vnd.ogc.gml%c%c", 10,10);
     
-    msGMLStart(stdout, "2.0", map->name, NULL, NULL); // fix the NULL values, 2.0 is the GML version
-
-    for(i=0; i<map->numlayers && numresults<feature_count; i++) {
-      int j;
-      layerObj *lp;
-      lp = &(map->layers[i]);
-
-      if(lp->status != MS_ON || lp->resultcache==NULL || lp->resultcache->numresults == 0)
-        continue;
-
-      if(msLayerOpen(lp, map->shapepath) != MS_SUCCESS || msLayerGetItems(lp) != MS_SUCCESS)
-        return msWMSException(map, wmtver);
-
-      for(j=0; j<lp->resultcache->numresults && numresults<feature_count; j++) {
-        shapeObj shape;
-        msInitShape(&shape);
-
-        if(msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
-          return msWMSException(map, wmtver);
-
-	if(msGMLWriteShape(stdout, &shape, NULL, NULL, NULL, NULL) != MS_SUCCESS)
-	  return msWMSException(map, wmtver);
-
-        msFreeShape(&shape);
-        numresults++;
-      }
-
-      msLayerClose(lp);
-    }
-
-    if (numresults == 0) printf("<!-- Search returned no results. -->\n");
-
-    msGMLFinish(stdout, map->name);
+    msGMLWriteQuery(map, NULL); // default is stdout
 
   } else {
     msSetError(MS_MISCERR, "Unsupported INFO_FORMAT value.", "msWMSFeatureInfo()");
