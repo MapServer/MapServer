@@ -2010,6 +2010,7 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->layerinfo = NULL;
   layer->ogrlayerinfo = NULL;
+  layer->wfslayerinfo = NULL;
 
   layer->items = NULL;
   layer->iteminfo = NULL;
