@@ -619,12 +619,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
   char *text=NULL;
   pointObj *pnt;
 
-  /* Set clipping rectangle */
-  if(layer->transform) {
-    cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
-    cliprect.miny = map->extent.miny - 2*map->cellsize;
-    cliprect.maxx = map->extent.maxx + 2*map->cellsize;
-    cliprect.maxy = map->extent.maxy + 2*map->cellsize;
+  /* Set clipping rectangle (used by certain layer types only) */
+  if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
+      cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
+      cliprect.miny = map->extent.miny - 2*map->cellsize;
+      cliprect.maxx = map->extent.maxx + 2*map->cellsize;
+      cliprect.maxy = map->extent.maxy + 2*map->cellsize;
   }
     
   switch(layer->type) {      
@@ -745,7 +745,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 #endif
      
     if(layer->transform) {
-      msClipPolylineRect(shape, cliprect, shape);
+      msClipPolylineRect(shape, map->extent, shape);
       if(shape->numlines == 0) return(0);
       msTransformPolygon(map->extent, map->cellsize, shape);
     }
@@ -825,12 +825,12 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
 
-  /* Set clipping rectangle */
-  if(layer->transform) {
-    cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
-    cliprect.miny = map->extent.miny - 2*map->cellsize;
-    cliprect.maxx = map->extent.maxx + 2*map->cellsize;
-    cliprect.maxy = map->extent.maxy + 2*map->cellsize;
+  /* Set clipping rectangle (used by certain layer types only) */
+  if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
+      cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
+      cliprect.miny = map->extent.miny - 2*map->cellsize;
+      cliprect.maxx = map->extent.maxx + 2*map->cellsize;
+      cliprect.maxy = map->extent.maxy + 2*map->cellsize;
   }
     
   switch(layer->type) {      
@@ -962,7 +962,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 #endif
      
       if(layer->transform) {
-	msClipPolylineRect(&fptr->shape, cliprect, &fptr->shape);
+	msClipPolylineRect(&fptr->shape, map->extent, &fptr->shape);
 	if(fptr->shape.numlines == 0) continue;
 	msTransformPolygon(map->extent, map->cellsize, &fptr->shape);
       }
@@ -1072,13 +1072,14 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
 
-  if(layer->transform) {
+  /* Set clipping rectangle (used by certain layer types only) */
+  if(layer->transform && (layer->type == MS_POLYGON || layer->type == MS_POLYLINE)) {
     cliprect.minx = map->extent.minx - 2*map->cellsize; /* just a bit larger than the map extent */
     cliprect.miny = map->extent.miny - 2*map->cellsize;
     cliprect.maxx = map->extent.maxx + 2*map->cellsize;
     cliprect.maxy = map->extent.maxy + 2*map->cellsize;
   }
-  
+
   classItemIndex = labelItemIndex = labelAngleItemIndex = labelSizeItemIndex = -1;
    
   if(layer->tileindex) { /* we have in index file */
@@ -1235,9 +1236,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 #endif
 	  
 	  if(layer->transform) {
-	    if(msRectContained(&shape.bounds, &cliprect) == MS_FALSE) {
-	      if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
-	      msClipPolylineRect(&shape, cliprect, &shape);
+	    if(msRectContained(&shape.bounds, &map->extent) == MS_FALSE) {
+	      if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
+	      msClipPolylineRect(&shape, map->extent, &shape);
 	      if(shape.numlines == 0) continue;
 	    }
 	    msTransformPolygon(map->extent, map->cellsize, &shape);	      
@@ -1289,9 +1290,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 #endif
 
 	  if(layer->transform) {
-	    if(msRectContained(&shape.bounds, &cliprect) == MS_FALSE) {
-	      if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
-	      msClipPolygonRect(&shape, cliprect, &shape);
+	    if(msRectContained(&shape.bounds, &map->extent) == MS_FALSE) {
+	      if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
+	      msClipPolygonRect(&shape, map->extent, &shape);
 	      if(shape.numlines == 0) continue;
 	    }	      
 	    msTransformPolygon(map->extent, map->cellsize, &shape);	      
@@ -1459,9 +1460,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 #endif
 
 	if(layer->transform) {
-	  if(!msRectContained(&shape.bounds, &cliprect)) {
-	    if(msRectOverlap(&shape.bounds, &cliprect) == MS_FALSE) continue;
-	    msClipPolylineRect(&shape, cliprect, &shape);
+	  if(!msRectContained(&shape.bounds, &map->extent)) {
+	    if(msRectOverlap(&shape.bounds, &map->extent) == MS_FALSE) continue;
+	    msClipPolylineRect(&shape, map->extent, &shape);
 	    if(shape.numlines == 0) continue;
 	  }
 	  msTransformPolygon(map->extent, map->cellsize, &shape);
