@@ -64,6 +64,10 @@ Here is the list of available options as returned by "./configure --help":
                           on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the
                           Apache apxs tool; defaults to apxs.
+  --with-apache=DIR       Use this option only if building the PHP MapScript
+                          on a system where PHP was built as an Apache
+                          module statically linked into the httpd executable.
+                          DIR is the path to the apache include files.
   --enable-runpath        Include runtime library path flags (-Wl,-R) in link.
                           Required on *BSD systems.
   --disable-runpath       Do not link with runtime lib path (the default).
@@ -251,6 +255,10 @@ PHP/MapScript module:
                           on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the
                           Apache apxs tool; defaults to apxs.
+  --with-apache=DIR       Use this option only if building the PHP MapScript
+                          on a system where PHP was built as an Apache
+                          module statically linked into the httpd executable.
+                          DIR is the path to the apache include files.
 
   The --with-php option will trigger the compilation of the PHP MapScript
   module in the ./mapscript/php3/ directory.
@@ -279,8 +287,13 @@ PHP/MapScript module:
   system by looking at the "Configuration" section of the output of the
   PHP phpinfo() command.
 
+  If PHP was compiled as an Apache module statically linked into the httpd
+  executable then you have to use --with-apache=DIR to specify the location
+  of the apache include files, likely /usr/local/apache/include.
+
   If you get errors at compile time about missing headers (ap_*.h, httpd.h,
-  http*.h) then you need to enable apxs: re-run configure with --with-apxs.
+  http*.h) then you need to use --with-apxs or --with-apache to help
+  configure to find the location of the header files.
 
   Some libraries are used by both PHP and MapServer, and using different 
   versions of these libs will lead to potential crashes at runtime.  In most
