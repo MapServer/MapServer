@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.60  2001/10/19 19:26:36  assefa
+ * Bug:extents and unit in the php object where not set in
+ * map->setprojection.
+ *
  * Revision 1.59  2001/10/17 21:40:50  assefa
  * Add scalebar and legend objects.
  *
@@ -1183,6 +1187,11 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     int                 bSetNewExtents = 0; 
     int                 bSetUnitsAndExtents = 0;
     int                 nArgs = ARG_COUNT(ht);
+#ifdef PHP4
+    pval   **pExtent;
+#else
+    pval   *pExtent;
+#endif
     
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -1263,6 +1272,38 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
                                             self->height); 
             msCalculateScale(self->extent, self->units, self->width, self->height, 
                              self->resolution, &(self->scale));
+
+            _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
+            _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+            _phpms_set_property_long(pThis,"units", self->units, E_ERROR); 
+
+#ifdef PHP4
+            if (zend_hash_find(pThis->value.obj.properties, "extent", 
+                               sizeof("extent"),  (void **)&pExtent) == SUCCESS)
+            {
+                _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
+                                           E_ERROR);
+                _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
+                                           E_ERROR);
+                _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
+                                           E_ERROR);
+                _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
+                                           E_ERROR);
+            }
+#else
+            if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
+                                (void **)&pExtent) == SUCCESS)
+            {
+                _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
+                                           E_ERROR);
+                _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
+                                           E_ERROR);
+                _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
+                                           E_ERROR);
+                _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
+                                           E_ERROR);
+            }
+#endif
         }
     }   
     RETURN_LONG(nStatus);
