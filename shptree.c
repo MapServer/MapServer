@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  printf( "creating index of %s %s format\n",(byte_order < 1 ? "old" :"new"), 
+  printf( "creating index of %s %s format\n",(byte_order < 1 ? "old (deprecated)" :"new"), 
      ((byte_order == MS_NATIVE_ORDER) ? "native" : 
      ((byte_order == MS_LSB_ORDER) || (byte_order == MS_NEW_LSB_ORDER)? " LSB":"MSB")));
 
