@@ -311,6 +311,8 @@
   }
 
   int addFeature(shapeObj *shape) {
+    self->connectiontype = MS_INLINE; // set explicitly
+
     if(insertFeatureList(&(self->features), shape) == NULL) 
       return -1;
     else
