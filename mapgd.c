@@ -269,7 +269,10 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
       *bgcolor = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));          
       gdImageColorTransparent(brush,0);
     }
-    *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
+    if(style->color.pen >= 0)
+      *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
+    else // try outline color
+      *fgcolor = gdImageColorAllocate(brush, style->outlinecolor.red, style->outlinecolor.green, style->outlinecolor.blue); 
   } else {
     brush = gdImageCreateTrueColor(width, height);
     gdImageAlphaBlending(brush, 0);
@@ -278,7 +281,10 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
     else
       *bgcolor = -1;      
     gdImageFilledRectangle(brush, 0, 0, width, height, *bgcolor);
-    *fgcolor = gdTrueColor(style->color.red, style->color.green, style->color.blue);
+    if(style->color.pen >= 0)
+      *fgcolor = gdTrueColor(style->color.red, style->color.green, style->color.blue);
+    else // try outline color
+      *fgcolor = gdTrueColor(style->outlinecolor.red, style->outlinecolor.green, style->outlinecolor.blue);
   }
 #else
   brush = gdImageCreate(width, height);
@@ -288,7 +294,10 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
     *bgcolor = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));          
     gdImageColorTransparent(brush,0);
   }
-  *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
+  if(style->color.pen >= 0)
+    *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
+  else // try outline color
+    *fgcolor = gdImageColorAllocate(brush, style->outcolor.red, style->outcolor.green, style->outcolor.blue);
 #endif
 
   return(brush);
@@ -540,6 +549,11 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
 
   if(!p) return;
 
+  if(!MS_VALID_COLOR(style->color) && MS_VALID_COLOR(style->outlinecolor)) { // use msDrawLineSymbolGD() instead (POLYLINE)
+    msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
+    return;
+  }
+
   if(style->backgroundcolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->backgroundcolor));
   if(style->color.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->color));
   if(style->outlinecolor.pen == MS_PEN_UNSET) msImageSetPenGD(img, &(style->outlinecolor));
@@ -553,11 +567,6 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   size = MS_NINT(style->size*scalefactor);
   size = MS_MAX(size, style->minsize);
   size = MS_MIN(size, style->maxsize);
-
-  if(fc==-1 && oc!=-1) { // use msDrawLineSymbolGD() instead (POLYLINE)
-    msCircleDrawLineSymbolGD(symbolset, img, p, r, style, scalefactor);
-    return;
-  }
 
   if(style->symbol > symbolset->numsymbols || style->symbol < 0) return; // no such symbol, 0 is OK
   if(fc ) return; // invalid color, -1 is valid
