@@ -162,6 +162,39 @@ int getInteger(int *i) {
   return(-1);
 }
 
+/*
+** Try to load as an integer, then try as a named symbol.
+** Part of work on bug 490.
+*/
+int getIntegerOrSymbol(int *i, int n, ...) 
+{
+    int symbol;
+    va_list argp;
+    int j=0;
+    
+    symbol = msyylex();
+
+    if (symbol == MS_NUMBER) {
+        *i = (int)msyynumber;
+        return MS_SUCCESS; /* success */
+    }
+
+    va_start(argp, n);
+    while (j<n) { /* check each symbol in the list */
+        if(symbol == va_arg(argp, int)) {
+            va_end(argp);
+            *i = symbol;
+            return MS_SUCCESS;
+        }
+        j++;
+    }
+    va_end(argp);
+
+    msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)",
+               "getIntegerOrSymbol()", msyytext, msyylineno); 
+    return(-1);
+}
+
 int getCharacter(char *c) {
   if(msyylex() == MS_STRING) {
     *c = msyytext[0];
@@ -643,7 +676,7 @@ static void writeGrid( graticuleObj *pGraticule, FILE *stream)
 	fprintf( stream, "        MAXINTERVAL %f\n",		pGraticule->maxincrement		);
 	fprintf( stream, "        MINARCS %g\n",			pGraticule->maxarcs				);
 	fprintf( stream, "        MAXARCS %g\n",			pGraticule->maxarcs				);
-	fprintf( stream, "        LABELFORMAT %s\n",		pGraticule->labelformat			);
+	fprintf( stream, "        LABELFORMAT \"%s\"\n",		pGraticule->labelformat			);
 	fprintf( stream, "      END\n");
 }
 
@@ -1344,6 +1377,29 @@ int loadExpression(expressionObj *exp)
 
   return(0);
 }
+
+/* ---------------------------------------------------------------------------
+   msLoadExpressionString and loadExpressionString
+
+   msLoadExpressionString wraps calls to loadExpressionString with mutex 
+   acquisition and release.  It should be used everywhere outside the mapfile
+   loading phase of an application.  loadExpressionString should only be used
+   when a mutex exists.  It does not check for existence of a lock!
+
+   See bug 339 for more details -- SG.
+   ------------------------------------------------------------------------ */
+
+int msLoadExpressionString(expressionObj *exp, char *value)
+{
+    int retval = MS_FAILURE;
+    
+    msAcquireLock( TLOCK_PARSER );
+    retval = loadExpressionString(exp, value);
+    msReleaseLock( TLOCK_PARSER );
+
+    return retval;
+}
+
 
 int loadExpressionString(expressionObj *exp, char *value)
 {
@@ -2252,7 +2308,9 @@ int loadLayer(layerObj *layer, mapObj *map)
     }
     break;
     case(TRANSPARENCY):
-      if(getInteger(&(layer->transparency)) == -1) return(-1);         
+      /* layers can now specify ALPHA transparency */
+      if (getIntegerOrSymbol(&(layer->transparency), 1, MS_GD_ALPHA) == -1)
+        return(-1);
       break;
     case(POSTLABELCACHE):
       if((layer->postlabelcache = getSymbol(2, MS_TRUE, MS_FALSE)) == -1) return(-1);
@@ -2285,6 +2343,8 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->tileindex = getString()) == NULL) return(-1);
       break;
     case(TILEITEM):
+      free(layer->tileitem);
+      layer->tileitem = NULL;
       if((layer->tileitem = getString()) == NULL) return(-1);
       break;
     case(TOLERANCE):
@@ -4129,7 +4189,7 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       if( msPostMapParseOutputFormatSetup( map ) == MS_FAILURE )
           return NULL;
 
-      if(msLoadSymbolSet(&(map->symbolset), map) == -1) return(NULL);
+      if(loadSymbolSet(&(map->symbolset), map) == -1) return(NULL);
 
       // step through layers and classes to resolve symbol names
       for(i=0; i<map->numlayers; i++) {

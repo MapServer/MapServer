@@ -108,7 +108,8 @@ imageObj *msDrawMap(mapObj *map)
     imageObj *image = NULL;
     struct mstimeval mapstarttime, mapendtime;
     struct mstimeval starttime, endtime;
-
+    int oldAlphaBlending=0;
+    
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
     int numOWSRequests=0;
@@ -125,6 +126,9 @@ imageObj *msDrawMap(mapObj *map)
 
     if(map->width == -1 || map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
+#ifdef USE_WMS_LYR
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
 
@@ -133,6 +137,9 @@ imageObj *msDrawMap(mapObj *map)
 
     if(!map->outputformat) {
         msSetError(MS_GDERR, "Map outputformat not set!", "msDrawMap()");
+#ifdef USE_WMS_LYR
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
     else if( MS_RENDERER_GD(map->outputformat) )
@@ -176,13 +183,23 @@ imageObj *msDrawMap(mapObj *map)
   
     if(!image) {
         msSetError(MS_GDERR, "Unable to initialize image.", "msDrawMap()");
+#ifdef USE_WMS_LYR
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
         return(NULL);
     }
 
     map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
     status = msCalculateScale(map->extent, map->units, map->width, map->height,
                               map->resolution, &map->scale);
-    if(status != MS_SUCCESS) return(NULL);
+    if(status != MS_SUCCESS)
+    {
+#ifdef USE_WMS_LYR
+        msFreeWmsParamsObj(&sLastWMSParams);
+#endif
+        msFreeImage(image);
+        return(NULL);
+    }
 
     // compute layer scale factors now
     for(i=0;i<map->numlayers; i++) {
@@ -213,6 +230,8 @@ imageObj *msDrawMap(mapObj *map)
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
+                msFreeWmsParamsObj(&sLastWMSParams);
+                msFreeImage(image);
                 return NULL;
             }
         }
@@ -224,6 +243,8 @@ imageObj *msDrawMap(mapObj *map)
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
+                msFreeWmsParamsObj(&sLastWMSParams);
+                msFreeImage(image);
                 return NULL;
             }
         }
@@ -238,6 +259,7 @@ imageObj *msDrawMap(mapObj *map)
     if (numOWSRequests && 
         msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE)
     {
+        msFreeImage(image);
         return NULL;
     }
 #endif /* USE_WMS_LYR || USE_WFS_LYR */
@@ -296,6 +318,7 @@ imageObj *msDrawMap(mapObj *map)
             if(status == MS_FAILURE) {
                 msSetError(MS_IMGERR, "Failed to draw layer named '%s'.",
                            "msDrawMap()", lp->name);
+                msFreeImage(image);
                 return(NULL);
             }
         }
@@ -312,8 +335,16 @@ imageObj *msDrawMap(mapObj *map)
 
     
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
+  {
+    /* fix for bug 490 - turn on alpha blending for embedded scalebar */
+    oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+    gdImageAlphaBlending(image->img.gd, 1);
+      
     msEmbedScalebar(map, image->img.gd); //TODO  
 
+    /* restore original alpha blending */
+    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
+  }
   if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
     msEmbedLegend(map, image->img.gd); //TODO  
 
@@ -321,7 +352,10 @@ imageObj *msDrawMap(mapObj *map)
       msGettimeofday(&starttime, NULL);
 
   if(msDrawLabelCache(image, map) == -1)
+  {
+    msFreeImage(image);
     return(NULL);
+  }
 
   if (map->debug)
   {
@@ -373,7 +407,11 @@ imageObj *msDrawMap(mapObj *map)
     }
     else 
         status = msDrawLayer(map, lp, image);
-    if(status == MS_FAILURE) return(NULL);
+    if(status == MS_FAILURE)
+    {
+      msFreeImage(image);
+      return(NULL);
+    }
 
     if (map->debug)
     {
@@ -387,8 +425,16 @@ imageObj *msDrawMap(mapObj *map)
   }
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
-      msEmbedScalebar(map, image->img.gd); //TODO
+  {
+    /* fix for bug 490 - turn on alpha blending for embedded scalebar */
+    oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+    gdImageAlphaBlending(image->img.gd, 1);
+      
+    msEmbedScalebar(map, image->img.gd); //TODO  
 
+    /* restore original alpha blending */
+    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
+  }
   if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
       msEmbedLegend(map, image->img.gd); //TODO
 
@@ -539,6 +585,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
   imageObj *image_draw = image;
   outputFormatObj *transFormat = NULL;
   int retcode=MS_SUCCESS;
+  int oldAlphaBlending=0;
 
   if (!msLayerIsVisible(map, layer))
       return MS_SUCCESS;  // Nothing to do, layer is either turned off, out of
@@ -549,7 +596,7 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   if ( MS_RENDERER_GD(image_draw->format) ) {
     // Create a temp image for this layer tranparency
-    if (layer->transparency > 0) {
+    if (layer->transparency > 0 && layer->transparency <= 100) {
       msApplyOutputFormat( &transFormat, image->format, 
                            MS_TRUE, MS_NOOVERRIDE, MS_NOOVERRIDE );
       /* really we need an image format with transparency enabled, right? */
@@ -565,6 +612,13 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
       if( image_draw->format->imagemode == MS_IMAGEMODE_PC256 )
           gdImageColorTransparent(image_draw->img.gd, 0);
     }
+
+    /* Bug 490 - switch alpha blending on for a layer that requires it */
+    else if (layer->transparency == MS_GD_ALPHA) {
+        oldAlphaBlending = (image->img.gd)->alphaBlendingFlag;
+        gdImageAlphaBlending(image->img.gd, 1);
+    }
+
   }
 
   // Redirect procesing of some layer types.
@@ -585,7 +639,8 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
       retcode = msDrawVectorLayer(map, layer, image_draw);
 
   // Destroy the temp image for this layer tranparency
-  if( MS_RENDERER_GD(image_draw->format) && layer->transparency > 0 ) {
+  if( MS_RENDERER_GD(image_draw->format) && layer->transparency > 0 
+  &&  layer->transparency <= 100) {
 #if GD2_VERS > 1 
     msImageCopyMerge(image->img.gd, image_draw->img.gd, 
                      0, 0, 0, 0, image->img.gd->sx, image->img.gd->sy, 
@@ -600,6 +655,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, imageObj *image)
     // deref and possibly free temporary transparent output format. 
     msApplyOutputFormat( &transFormat, NULL, 
                          MS_NOOVERRIDE, MS_NOOVERRIDE, MS_NOOVERRIDE );
+  }
+  /* restore original alpha blending */
+  else if (layer->transparency == MS_GD_ALPHA) {
+    gdImageAlphaBlending(image->img.gd, oldAlphaBlending);
   }
   else
   {
@@ -851,7 +910,11 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     shape.classindex = layer->resultcache->results[i].classindex;
-    if(layer->class[shape.classindex].status == MS_OFF) {
+    /* classindex may be -1 here if there was a template at the top level
+     * in this layer and the current shape selected even if it didn't
+     * match any class 
+     */
+    if(shape.classindex==-1 || layer->class[shape.classindex].status == MS_OFF) {
       msFreeShape(&shape);
       continue;
     }

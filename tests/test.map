@@ -5,7 +5,7 @@ MAP
   IMAGECOLOR 255 255 255
   STATUS ON
   SIZE 200 200
-  #FONTSET "fonts.txt"
+  FONTSET "fonts.txt"
   SYMBOLSET "symbols.txt"
 
   WEB
@@ -87,8 +87,15 @@ MAP
     STATUS DEFAULT
     DATA "point"
     CLASSITEM "FNAME"
+    LABELITEM "FNAME"
     CLASS
       NAME "0"
+      EXPRESSION ("[FNAME]" == "Foo")
+      LABEL
+        TYPE BITMAP
+        COLOR 0 0 0
+        SIZE SMALL
+      END
       STYLE
         COLOR 0 0 0
         SYMBOL 1

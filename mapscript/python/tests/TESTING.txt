@@ -5,6 +5,7 @@ Python MapScript Unit Tests
 To run the tests, execute 
 
    python tests/testMapScript.py -v
+   python tests/testCloneMap.py -v
 
 from the mapscript/python directory of the mapserver distribution.  The
 tests cannot be run properly from another path.  By default, the unit

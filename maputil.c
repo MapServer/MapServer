@@ -3,6 +3,7 @@
 
 #include "map.h"
 #include "mapparser.h"
+#include "mapthread.h"
 
 #ifdef _WIN32
 #include <fcntl.h>
@@ -43,7 +44,8 @@ int msEvalContext(mapObj *map, char *context)
   int i, status;
   char *tmpstr1=NULL, *tmpstr2=NULL;
   int raster=MS_FALSE;
-
+  int retval;
+  
   if(!context) return(MS_TRUE); // no context requirements
 
   tmpstr1 = strdup(context);
@@ -71,12 +73,20 @@ int msEvalContext(mapObj *map, char *context)
   else
     tmpstr1 = gsub(tmpstr1, "[raster]", "0");
 
+  msAcquireLock( TLOCK_PARSER );
   msyystate = 4; msyystring = tmpstr1;
   status = msyyparse();
+  retval = msyyresult;
+  msReleaseLock( TLOCK_PARSER );
   free(tmpstr1);
 
-  if(status != 0) return(MS_FALSE); // error in parse
-  return(msyyresult);
+  if(status != 0)
+  {
+    msSetError(MS_PARSEERR, "msyyparse returned false", "msEvalContext");
+    return(MS_FALSE); // error in parse
+  }
+
+  return retval;
 }
 
 int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems)
@@ -84,6 +94,7 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
   int i;
   char *tmpstr=NULL;
   int status;
+  int retval;
 
   if(!expression->string) return(MS_TRUE); // empty expressions are ALWAYS true
 
@@ -105,13 +116,20 @@ int msEvalExpression(expressionObj *expression, int itemindex, char **items, int
     for(i=0; i<expression->numitems; i++)      
       tmpstr = gsub(tmpstr, expression->items[i], items[expression->indexes[i]]);
 
+    msAcquireLock( TLOCK_PARSER );
     msyystate = 4; msyystring = tmpstr; // set lexer state to EXPRESSION_STRING
     status = msyyparse();
+    retval = msyyresult;
+    msReleaseLock( TLOCK_PARSER );
     free(tmpstr);
 
-    if(status != 0) return(MS_FALSE); // error in parse (TO DO: we should generate an error here!)
+    if(status != 0) 
+    {
+        msSetError(MS_PARSEERR, "msyyparse returned false", "msEvalExpression");
+        return(MS_FALSE); // error in parse
+    }
 
-    return(msyyresult);
+    return retval;
     break;
   case(MS_REGEX):
     if(itemindex == -1) {
@@ -661,6 +679,7 @@ int msMoveStyleDown(classObj *class, int nStyleIndex)
  * Returns the index at which the style was inserted
  *
  */
+
 int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
     int i;
     // Possible to add another style?
@@ -707,9 +726,14 @@ styleObj *msRemoveStyle(classObj *class, int nStyleIndex) {
     }
     else {
         style = (styleObj *)malloc(sizeof(styleObj));
+        if (!style) {
+            msSetError(MS_MEMERR, "Failed to allocate styleObj to return as removed style", "msRemoveStyle");
+            return NULL;
+        }
         msCopyStyle(style, &(class->styles[nStyleIndex]));
-        for (i=nStyleIndex+1; i<class->numstyles; i++) {
-            class->styles[i-1] = class->styles[i];
+        style->isachild = MS_FALSE;
+        for (i=nStyleIndex; i<class->numstyles-1; i++) {
+             msCopyStyle(&class->styles[i], &class->styles[i+1]);
         }
         class->numstyles--;
         return style;

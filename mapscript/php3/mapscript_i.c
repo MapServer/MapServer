@@ -7,6 +7,12 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.78.2.2  2004/10/10 17:22:41  sean
+ * bring in thread safety fixes committed to 4.3 and described in bug 339
+ *
+ * Revision 1.78.2.1  2004/05/28 15:50:02  dan
+ * Fixed layer->drawQuery() for PHP and SWIG MapScript (bug 695)
+ *
  * Revision 1.78  2004/04/16 20:19:39  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -690,7 +696,7 @@ int layerObj_draw(layerObj *self, mapObj *map, imageObj *img) {
   }
 
 int layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img) {
-    return msDrawLayer(map, self, img);    
+    return msDrawQueryLayer(map, self, img);    
   }
 
 int layerObj_queryByAttributes(layerObj *self, mapObj *map, char *qitem, char *qstring, int mode) {
@@ -715,7 +721,7 @@ int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
   }
 
 int layerObj_setFilter(layerObj *self, char *string) {
-    return loadExpressionString(&self->filter, string);
+    return msLoadExpressionString(&self->filter, string);
 
   }
 
@@ -829,7 +835,7 @@ int classObj_setExpression(classObj *self, char *string) {
         freeExpression(&self->expression);
         return MS_SUCCESS;
     }
-    else return loadExpressionString(&self->expression, string);
+    else return msLoadExpressionString(&self->expression, string);
   }
 
 char *classObj_getExpressionString(classObj *self) {
@@ -852,7 +858,7 @@ char *classObj_getExpressionString(classObj *self) {
 
 
 int classObj_setText(classObj *self, layerObj *layer, char *string) {
-    return loadExpressionString(&self->text, string);
+    return msLoadExpressionString(&self->text, string);
   }
 
 int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height, gdImagePtr dstImg, int dstX, int dstY) {

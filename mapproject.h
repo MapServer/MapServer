@@ -58,10 +58,10 @@ MS_DLL_EXPORT void msSetPROJ_LIB( const char * );
 #ifndef PJ_VERSION
 #  define pj_is_latlong(x)	((x)->is_latlong)
 #endif
-#endif
 
 /*utility functions */
 MS_DLL_EXPORT int GetMapserverUnitUsingProj(projectionObj *psProj);
+#endif
 
 #ifdef __cplusplus
 }

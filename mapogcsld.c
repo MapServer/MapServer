@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.28.2.1  2004/10/10 17:22:40  sean
+ * bring in thread safety fixes committed to 4.3 and described in bug 339
+ *
  * Revision 1.28  2004/04/16 20:19:38  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -544,7 +547,7 @@ void msSLDParseNamedLayer(CPLXMLNode *psRoot, layerObj *psLayer)
                                     nNewClasses = nClassAfterFilter - nClassBeforeFilter;
                                     for (i=0; i<nNewClasses; i++)
                                     {
-                                        loadExpressionString(&psLayer->
+                                        msLoadExpressionString(&psLayer->
                                                              class[psLayer->numclasses-1-i].
                                                              expression, szExpression);
                                     }
@@ -2125,7 +2128,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                               free(psLayer->classitem);
                             psLayer->classitem = strdup("[pixel]");
 
-                            loadExpressionString(&psLayer->class[nClassId].expression,
+                            msLoadExpressionString(&psLayer->class[nClassId].expression,
                                                  szExpression);
                             
                             
@@ -2174,7 +2177,7 @@ void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
                       free(psLayer->classitem);
                     psLayer->classitem = strdup("[pixel]");
 
-                    loadExpressionString(&psLayer->class[nClassId].expression,
+                    msLoadExpressionString(&psLayer->class[nClassId].expression,
                                          szExpression);
                 }
             }

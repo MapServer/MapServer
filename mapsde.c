@@ -466,18 +466,25 @@ int msSDELayerOpen(layerObj *layer) {
 
 void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
+	long status=-1;
   msSDELayerInfo *sde=NULL;
 
   sde = layer->layerinfo;
   if (sde == NULL) return;  // Silently return if layer not opened.
 
   if(layer->debug) msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
-
-  SE_stream_free(sde->stream);
-  SE_layerinfo_free(sde->layerinfo);
-  SE_coordref_free(sde->coordref);
-  SE_connection_free(sde->connection);
-
+	
+  if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
+  if (sde->coordref) SE_coordref_free(sde->coordref);
+  if (sde->connection) { 
+  	//We need to provoke SDE into telling us whether or 
+  	//not the connection object is valid.  
+  	status= SE_connection_free_all_locks (sde->connection);
+  	if (status == SE_SUCCESS) {
+  		if (sde->stream) SE_stream_free(sde->stream);
+  		SE_connection_free(sde->connection);
+  	}
+}
   if(sde->table) free(sde->table);
   if(sde->column) free(sde->column);
   if(sde->row_id_column) free(sde->row_id_column);
@@ -926,6 +933,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
   }   
   
   if (sde->state_id == SE_DEFAULT_STATE_ID) {
+    if(layer->debug) msDebug("msSDELayerGetRowIDColumn(): State ID was SE_DEFAULT_STATE_ID, reverting to %s.\n", MS_SDE_ROW_ID_COLUMN);
   	return(strdup(MS_SDE_ROW_ID_COLUMN));
   }
   else 
@@ -947,12 +955,18 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
 	    sde_error(status, "msSDELayerGetRowIDColumn()", "SE_reginfo_get_rowid_column()");
 	    return(NULL);
 	  }
+	  if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
+	    if(layer->debug) msDebug("msSDELayerGetRowIDColumn(): Table was not registered, returning %s.\n", MS_SDE_ROW_ID_COLUMN);
+	    return (MS_SDE_ROW_ID_COLUMN);
+	  }
 
 	  SE_reginfo_free(registration);
 	  if (row_id_column){
+	    if(layer->debug) msDebug("msSDELayerGetRowIDColumn(): Had row_id_column...setting to , %s.\n", row_id_column);
 	    return (strdup(row_id_column)); 
 	  }
 	  else {
+	    if(layer->debug) msDebug("msSDELayerGetRowIDColumn(): Didn't have row_id_column...setting to , %s.\n", MS_SDE_ROW_ID_COLUMN);
 	    return(strdup(MS_SDE_ROW_ID_COLUMN));
 	  }
 }
