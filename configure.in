@@ -865,7 +865,7 @@ if test "$with_mpatrol" = "yes" ; then
       AC_MSG_WARN([        MPATROL not found in system libs... use --with-mpatrol=DIR.])
   fi
 
-elif test -n "$with_mpatrol" -a "$with_patrol" != "no" ; then
+elif test -n "$with_mpatrol" -a "$with_mpatrol" != "no" ; then
 
   AC_EXPAND_PATH($with_mpatrol, MPATROL_DIR)
 

@@ -7479,7 +7479,7 @@ echo "${ECHO_T}        using MPATROL from system libs." >&6
 echo "$as_me: WARNING:         MPATROL not found in system libs... use --with-mpatrol=DIR." >&2;}
   fi
 
-elif test -n "$with_mpatrol" -a "$with_patrol" != "no" ; then
+elif test -n "$with_mpatrol" -a "$with_mpatrol" != "no" ; then
 
 
   if test -z "$with_mpatrol" || echo "$with_mpatrol" | grep '^/' >/dev/null ; then
