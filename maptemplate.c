@@ -2304,7 +2304,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 	outstr = gsub(outstr, substr, msObj->ResultShape.values[i]);
     }
     
-    
+    //
+    // handle joins in this next section
+    //
     for(i=0; i<msObj->ResultLayer->numjoins; i++) {
       if(msObj->ResultLayer->joins[i].values) { // join has data
         for(j=0;j<msObj->ResultLayer->joins[i].numitems;j++) {
@@ -2343,6 +2345,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
         }
       }
     } // next join
+
   } // end query mode specific substitutions
 
   for(i=0;i<msObj->request->NumParams;i++) {
