@@ -29,6 +29,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.118  2004/06/15 16:08:52  dan
+ * Fixed problem with tiled raster layers if there is no tile in the current
+ * view (bug 729).
+ *
  * Revision 1.117  2004/06/01 14:33:43  frank
  * Fixed bug 698 - filename from tileindex freed before use.
  *
@@ -1317,7 +1321,17 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
     if((map->projection.numargs > 0) && (layer->projection.numargs > 0)) msProjectRect(&map->projection, &layer->projection, &searchrect);
 #endif
     status = msLayerWhichShapes(tlp, searchrect);
-    if(status != MS_SUCCESS) return(MS_FAILURE); // TODO: probably need more clean up here
+    if (status != MS_SUCCESS) {
+        // Can be either MS_DONE or MS_FAILURE
+        msLayerClose(tlp);
+        if(tilelayerindex == -1) {
+            freeLayer(tlp);  // cleanup temporary tile layer
+            free(tlp);
+        }
+        if (status == MS_DONE) 
+            return MS_SUCCESS;
+        return MS_FAILURE;
+    }
   }
 
   done = MS_FALSE;
@@ -1508,13 +1522,13 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
   if(layer->tileindex) { // tiling clean-up
     msLayerClose(tlp);
-    if(tileitemindex == -1) {
+    if(tilelayerindex == -1) {
       freeLayer(tlp);
       free(tlp);
     }
   }
 
-  return 0;
+  return MS_SUCCESS;
 }
 
 /************************************************************************/
