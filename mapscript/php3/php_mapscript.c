@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.101  2002/04/01 17:42:26  dan
+ * Added template member in legend object (P.Spencer)
+ *
  * Revision 1.100  2002/03/22 04:48:50  dan
  * Fixed PHP4.1 problems: missing register_list_destructors() calls for
  * legend and scalebar resources.  Also started the move away from PHP3.
@@ -9814,6 +9817,7 @@ static long _phpms_build_legend_object(legendObj *plegend,
     add_property_long(return_value,  "interlace",       plegend->interlace);
     add_property_long(return_value,  "postlabelcache",  
                       plegend->postlabelcache);
+    PHPMS_ADD_PROP_STR(return_value, "template", plegend->template);
     
     
 #ifdef PHP4
@@ -9877,21 +9881,22 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_string(pPropertyName);
 
     
-    IF_SET_LONG(       "height",         self->height)
-    else IF_SET_LONG(  "width",   self->width)
-    else IF_SET_LONG(  "keysizex",   self->keysizex)
-    else IF_SET_LONG(  "keysizey",   self->keysizey)
+    IF_SET_LONG(       "height",        self->height)
+    else IF_SET_LONG(  "width",         self->width)
+    else IF_SET_LONG(  "keysizex",      self->keysizex)
+    else IF_SET_LONG(  "keysizey",      self->keysizey)
     else IF_SET_LONG(  "keyspacingx",   self->keyspacingx)
     else IF_SET_LONG(  "keyspacingy",   self->keyspacingy)
-    else IF_SET_LONG(  "outlinecolor",   self->outlinecolor)
-    else IF_SET_LONG(  "status",   self->status)
-    else IF_SET_LONG(  "position",   self->position)
+    else IF_SET_LONG(  "outlinecolor",  self->outlinecolor)
+    else IF_SET_LONG(  "status",        self->status)
+    else IF_SET_LONG(  "position",      self->position)
     else IF_SET_LONG(  "transparent",   self->transparent)
-    else IF_SET_LONG(  "interlace",   self->interlace)
-    else IF_SET_LONG(  "postlabelcache",   self->postlabelcache)
+    else IF_SET_LONG(  "interlace",     self->interlace)
+    else IF_SET_LONG(  "postlabelcache",self->postlabelcache)
+    else IF_SET_STRING( "template",     self->template)
     else
     {
-        php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
+        php3_error(E_ERROR,"Property '%s' does not exist in legend object.", 
                    pPropertyName->value.str.val);
         RETURN_LONG(-1);
     }
