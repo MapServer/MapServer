@@ -86,6 +86,8 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
         {
 #if GD2_VERS > 1
             image->img.gd = gdImageCreateTrueColor(width, height);
+            if( image->img.gd != NULL )
+                gdImageAlphaBlending( image->img.gd, 0 );
 #else
             msSetError(MS_IMGERR, 
                        "Attempt to use RGB or RGBA IMAGEMODE with GD 1.x, please upgrade to GD 2.x.", "msImageCreateGD()" );
@@ -890,11 +892,27 @@ void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, st
     
     // create the brush image
     if((brush = searchImageCache(symbolset->imagecache, style->symbol, fc, size)) == NULL) { // not in cache, create
-      brush = gdImageCreate(x, y);
-      brush_bc = gdImageColorAllocate(brush,gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));    
-      gdImageColorTransparent(brush,0);
-      brush_fc = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
-      
+      if( !gdImageTrueColor(img) )
+      {
+          brush = gdImageCreate(x, y);
+          brush_bc = gdImageColorAllocate(brush,gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));    
+          
+          gdImageColorTransparent(brush,0);
+          brush_fc = gdImageColorAllocate(brush, style->color.red, 
+                                        style->color.green, style->color.blue);
+      }
+#if GD2_VERS > 1
+      else
+      {
+          brush = gdImageCreateTrueColor(x,y);
+          gdImageAlphaBlending( brush, 0 );
+          gdImageFilledRectangle( brush, 0, 0, x, y, -1 );
+          brush_bc = -1;
+          brush_fc = gdTrueColor( style->color.red, style->color.green, 
+                                  style->color.blue );
+      }
+#endif
+
       x = MS_NINT(brush->sx/2); // center the ellipse
       y = MS_NINT(brush->sy/2);
       
@@ -1756,10 +1774,7 @@ msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
                 continue;
 
             /* Adjust dst alpha according to percentages */
-            if( src_alpha == 127 )
-                dst_alpha = dst_alpha * pct / 100;
-            else
-                dst_alpha = dst_alpha * (pct*src_alpha/127) / 100;
+            dst_alpha = dst_alpha * (pct*src_alpha/127) / 100;
 
             /* adjust source according to transparency percentage */
             src_alpha = src_alpha * (100-pct) / 100;
