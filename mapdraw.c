@@ -37,7 +37,7 @@ void msClearPenValues(mapObj *map) {
   int i;
 
   for(i=0; i<map->numlayers; i++)
-    msClearLayerPenValues(&(map->layer[i]));
+    msClearLayerPenValues(&(map->layers[i]));
 
   return;
 }
@@ -503,6 +503,9 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale)) annotate = MS_FALSE;
   }
 
+  // reset layer pen values just in case the map has been previously processed
+  msClearLayerPenValues(layer);
+  
   // open this layer
   status = msLayerOpen(layer);
   if(status != MS_SUCCESS) return MS_FAILURE;
@@ -634,7 +637,7 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
 
   colorObj colorbuffer[MS_MAXCLASSES];
 
-  if(!layer->resultcache || map->querymap.style == MS_NORMAL) 
+  if(!layer->resultcache || map->querymap.style == MS_NORMAL)
     return(msDrawLayer(map, layer, image));
 
   if(!layer->data && !layer->tileindex && !layer->connection && !layer->features) 
@@ -659,6 +662,9 @@ int msDrawQueryLayer(mapObj *map, layerObj *layer, imageObj *image)
     if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale)) annotate = MS_FALSE;
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale)) annotate = MS_FALSE;
   }
+
+  // reset layer pen values just in case the map has been previously processed
+  msClearLayerPenValues(layer);
 
   // if MS_HILITE, alter the first class (always at least 1 class)
   if(map->querymap.style == MS_HILITE) {
