@@ -8,29 +8,36 @@
 
 static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
 
+
+
 /*
- * Function to reset any pen (color index) values previously set. Used primarily to reset things when
+ * Functions to reset any pen (color index) values previously set. Used primarily to reset things when
  * using MapScript to create multiple images. How the pen values are set is irrelevant (definitely output
  * format type specific) which is why this function is here instead of the GD, PDF or SWF source files.
 */
-void msClearPenValues(mapObj *map) {
-  int i,j,k;
+void msClearLayerPenValues(layerObj *layer) {
+  int i, j;
 
-  for(i=0; i<map->numlayers; i++) {
-    for(j=0; j<map->layers[i].numclasses; j++) {
-      map->layers[i].class[j].label.backgroundcolor.pen = MS_PEN_UNSET; // set in billboardXX function
-      map->layers[i].class[j].label.backgroundshadowcolor.pen = MS_PEN_UNSET;
-      map->layers[i].class[j].label.color.pen = MS_PEN_UNSET; // set in MSXXDrawText function
-      map->layers[i].class[j].label.outlinecolor.pen = MS_PEN_UNSET;
-      map->layers[i].class[j].label.shadowcolor.pen = MS_PEN_UNSET;      
+  for(i=0; i<layer->numclasses; i++) {
+      layer->class[i].label.backgroundcolor.pen = MS_PEN_UNSET; // set in billboardXX function
+      layer->class[i].label.backgroundshadowcolor.pen = MS_PEN_UNSET;
+      layer->class[i].label.color.pen = MS_PEN_UNSET; // set in MSXXDrawText function
+      layer->class[i].label.outlinecolor.pen = MS_PEN_UNSET;
+      layer->class[i].label.shadowcolor.pen = MS_PEN_UNSET;      
 
-      for(k=0; k<map->layers[i].class[j].numstyles; k++) {
-        map->layers[i].class[j].styles[k].backgroundcolor.pen = MS_PEN_UNSET; // set in various symbol drawing functions
-	map->layers[i].class[j].styles[k].color.pen = MS_PEN_UNSET;
-        map->layers[i].class[j].styles[k].outlinecolor.pen = MS_PEN_UNSET; 
+      for(j=0; j<layer->class[i].numstyles; j++) {
+        layer->class[i].styles[j].backgroundcolor.pen = MS_PEN_UNSET; // set in various symbol drawing functions
+	layer->class[i].styles[j].color.pen = MS_PEN_UNSET;
+        layer->class[i].styles[j].outlinecolor.pen = MS_PEN_UNSET; 
       }
     }
-  }
+}
+
+void msClearPenValues(mapObj *map) {
+  int i;
+
+  for(i=0; i<map->numlayers; i++)
+    msClearLayerPenValues(&(map->layer[i]));
 
   return;
 }

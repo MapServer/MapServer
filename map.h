@@ -1118,6 +1118,7 @@ int msGraticuleLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int 
 /* ==================================================================== */
 /*      Prototypes for functions in mapdraw.c                           */
 /* ==================================================================== */
+void msClearLayerPenValues(layerObj *layer);
 void msClearPenValues(mapObj *map);
 imageObj *msDrawMap(mapObj *map);
 imageObj *msDrawQueryMap(mapObj *map);

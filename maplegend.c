@@ -84,7 +84,6 @@ int msDrawLegendIcon(mapObj *map, layerObj *lp, classObj *class, int width, int 
   return MS_SUCCESS;
 }
 
-
 imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int width, int height)
 {
   imageObj *image;
@@ -120,6 +119,8 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 
   // allocate the background color
   msImageInitGD( image, &(map->legend.imagecolor));
+
+  msClearLayerPenValues(lp); // just in case the mapfile has already been processed
 
   // Call drawLegendIcon with destination (0, 0)
   // Return an empty image if lp==NULL || class=NULL
@@ -223,7 +224,7 @@ imageObj *msDrawLegend(mapObj *map)
   if(image != NULL)
     msImageInitGD(image, &(map->legend.imagecolor));
 
-  msClearPenValues(map); // just in case the mapfile has already been screwed with
+  msClearPenValues(map); // just in case the mapfile has already been processed
 
   pnt.y = VMARGIN;
     
@@ -244,8 +245,7 @@ imageObj *msDrawLegend(mapObj *map)
 
     for(j=0; j<lp->numclasses; j++) { /* always at least 1 class */
 
-      if(!lp->class[j].name)
-	continue; /* skip it */
+      if(!lp->class[j].name) continue; /* skip it */
       
       pnt.x = HMARGIN + map->legend.keysizex + map->legend.keyspacingx;
       
