@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.44  2004/09/29 17:50:18  frank
+ * Ifdef out unused msWFSGetGeomType() function to avoid warnings.
+ *
  * Revision 1.43  2004/09/25 23:33:38  frank
  * Quick fix to two compile problems presumably committed recently by Julien.
  * My fixes seem obvious, but I haven't tested them.  Will refer Julien to
@@ -306,6 +309,7 @@ const char *msWFSGetGeomElementName(mapObj *map, layerObj *lp)
 ** This is based on MapServer geometry type and layers with mixed geometries
 ** may not return the right feature type.
 */
+#ifdef notdef /* not currently used */
 static const char *msWFSGetGeomType(layerObj *lp)
 {
 
@@ -323,6 +327,7 @@ static const char *msWFSGetGeomType(layerObj *lp)
 
     return "???unknown???";
 }
+#endif /* def notdef */
 
 /*
 ** msWFSDumpLayer()
