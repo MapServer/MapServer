@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.92  2004/12/13 03:21:06  frank
+ * fixed msFreeFileCtx() to call free instead of gdFree as per bug 1125
+ *
  * Revision 1.91  2004/12/07 06:32:28  sdlime
  * Fixed hatch symbol function so that the size is consistent regardless of angle.
  *
@@ -3362,7 +3365,7 @@ static int fileGetchar (gdIOCtx * ctx);
 
 static int fileSeek (struct gdIOCtx *, const int);
 static long fileTell (struct gdIOCtx *);
-static void gdFreeFileCtx (gdIOCtx * ctx);
+static void msFreeFileCtx (gdIOCtx * ctx);
 
 /* return data as a dynamic pointer */
 gdIOCtx *msNewGDFileCtx (FILE * f)
@@ -3386,15 +3389,15 @@ gdIOCtx *msNewGDFileCtx (FILE * f)
   ctx->ctx.tell = fileTell;
   ctx->ctx.seek = fileSeek;
 
-  ctx->ctx.gd_free = gdFreeFileCtx;
+  ctx->ctx.gd_free = msFreeFileCtx;
 
   return (gdIOCtx *) ctx;
 }
 
 static void
-gdFreeFileCtx (gdIOCtx * ctx)
+msFreeFileCtx (gdIOCtx * ctx)
 {
-  gdFree (ctx);
+  free(ctx);
 }
 
 

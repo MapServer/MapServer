@@ -21,6 +21,10 @@ Version 4.5
 
 - Delete temporary sld file created on disk (Bug 1123)
 
+- Fixed msFreeFileCtx() to call free() instead of gdFree() as per bug 1125. 
+  Also renamed gdFreeFileCtx() to msFreeFileCtx(). 
+
+
 Version 4.4.0 (2004-11-29)
 --------------------------
 
