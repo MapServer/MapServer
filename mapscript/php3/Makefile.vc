@@ -85,6 +85,17 @@ GDAL_DIR= ../../../gdal
 #ECW_LIB=$(ECWDIR)\lib\NCSEcw.lib $(ECWDIR)\lib\NCSEcwC.lib \
 #        $(ECWDIR)\lib\NCSUtil.lib
 
+
+#xerces
+#XERCES_DIR =	C:\projects\xerces-c1_6_0-win32
+#XERCES_LIB = $(XERCES_DIR)/lib/xerces-c_1.lib
+
+
+#Use thses flags to compile with libcurl
+#CURL_INC = -I../curl-7.10.2/include
+#CURL_LIB = ../../../curl-7.10.2/lib/Debug/libcurl.lib
+#WINSOCK_LIB = "C:\Program Files\Microsoft Visual Studio\VC98\Lib\WSOCK32.LIB"
+
 #
 # If you want to ignore missing datafile errors uncomment the following
 # line. This is especially useful with large tiled datasets that may not
@@ -109,7 +120,10 @@ MS_LIBS = ../../mapserver.lib \
         $(LIBWWW_LIB) \
         $(ECW_LIB) \
         $(MING_LIB) \
-        $(PDF_LIB)
+        $(PDF_LIB) \
+        $(XERCES_LIB) \
+        $(CURL_LIB) \
+        $(WINSOCK_LIB)
                 
 
 
