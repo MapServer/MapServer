@@ -12,6 +12,10 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
+Version 4.4.0-beta4?
+--------------------
+
+- Check that we have vsnprintf in mapimagemap.c before using it. 
 
 Version 4.4.0-beta3 (2004-11-22)
 --------------------------------

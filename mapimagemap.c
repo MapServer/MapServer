@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.19  2004/11/23 17:09:05  frank
+ * check if we have vsnprintf before using it
+ *
  * Revision 1.18  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -165,8 +168,12 @@ static void im_iprintf(pString *ps, const char *fmt, ...) {
 	do {
 		remaining = *(ps->alloc_size) - ps->string_len;
 		va_start(ap, fmt);
+#if defined(HAVE_VSNPRINTF)
 		n = vsnprintf((*(ps->string)) + ps->string_len, 
 			      remaining, fmt, ap);
+#else
+		n = vsprintf((*(ps->string)) + ps->string_len, fmt, ap);
+#endif
 		va_end(ap);
 		/* if that worked, we're done! */
 		if (-1<n && n<remaining) {
