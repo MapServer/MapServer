@@ -25,6 +25,18 @@ void returnURL(char *);
 
 void writeVersion() {
   printf("<!-- MapServer Version %s", MS_VERSION);
+#ifdef USE_GD_1_2
+    printf(" -GD_1_2");
+#endif
+#ifdef USE_GD_1_3
+    printf(" -GD_1_3");
+#endif
+#ifdef USE_GD_1_6
+    printf(" -GD_1_6");
+#endif
+#ifdef USE_GD_1_8
+    printf(" -GD_1_8");
+#endif
 #ifdef USE_PROJ
   printf(" -PROJ.4");
 #endif
@@ -39,6 +51,12 @@ void writeVersion() {
 #endif
 #ifdef USE_JPEG
   printf(" -JPEG");
+#endif
+#ifdef USE_SDE
+    printf(" -SDE");
+#endif
+#ifdef USE_OGR
+    printf(" -OGR");
 #endif
 #ifdef USE_EGIS
   printf(" -EGIS");
@@ -1682,6 +1700,13 @@ int main(int argc, char *argv[]) {
     writeErrLog("ErrorLogfile is initialized\n");
     fflush(fpErrLog);
 #endif
+
+    if (argc > 1 && strcmp(argv[1], "-v") == 0)
+    {
+        writeVersion();
+        fflush(stdout);
+        exit(0);
+    }
 
     NumEntries = loadEntries(Entries);
 
