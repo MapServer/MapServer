@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25  2002/08/14 14:10:07  frank
+ * changes for 'colorObj' offsite values
+ *
  * Revision 1.24  2002/06/21 18:32:48  frank
  * Added support for IMAGEMODE INT16 and FLOAT.
  * Added support for resampling truecolor images.
@@ -890,12 +893,13 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      temporary image with this color otherwise applying the          */
 /*      offsite twice results in a solid color in the offsite area      */
 /* -------------------------------------------------------------------- */
-    if (layer->offsite >=0
+    if( MS_VALID_COLOR(&(layer->offsite))
         && MS_RENDERER_GD(srcImage->format) )
     {
+        RESOLVE_PEN_GD( srcImage->img.gd, layer->offsite );
         gdImageFilledRectangle(srcImage->img.gd, 0, 0, 
                                srcImage->width, srcImage->height,
-                               layer->offsite);
+                               layer->offsite.pen );
     }
 
 /* -------------------------------------------------------------------- */
@@ -964,7 +968,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /* -------------------------------------------------------------------- */
 /*      Perform the resampling.                                         */
 /* -------------------------------------------------------------------- */
-    result = msSimpleRasterResampler( srcImage, layer->offsite, image, 
+    result = msSimpleRasterResampler( srcImage, layer->offsite.red, image, 
                                       msApproxTransformer, pACBData );
 
 /* -------------------------------------------------------------------- */
