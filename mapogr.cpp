@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/09/06 18:40:45  dan
+ * getClassIndex() changed name to msGetClassIndex()
+ *
  * Revision 1.2  2000/08/28 02:00:25  dan
  * Fixed compile problem when OGR not enabled
  *
@@ -480,7 +483,7 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
 /* ------------------------------------------------------------------
  * Establish class to which feature belongs
- * __TODO__ With getClassIndex(), logical expressions work only with a
+ * __TODO__ With msGetClassIndex(), logical expressions work only with a
  *   variable "[value]" in the expression and that will be replaced with
  *   the value of the classitem attribute.
  *   We need to support any field name in expressions like with DBF files.
@@ -490,7 +493,7 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       {
           const char *pszValue = poFeature->GetFieldAsString(nClassItem);
 
-          if ( (nClassId = getClassIndex(layer, (char*)pszValue)) == -1 )
+          if ( (nClassId = msGetClassIndex(layer, (char*)pszValue)) == -1 )
           {
               /* Feature does not belong to any class */
               delete poFeature;
