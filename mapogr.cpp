@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.45  2002/02/20 22:28:23  frank
+ * fixed some problems with 3D geometry support
+ *
  * Revision 1.44  2002/02/20 19:49:22  frank
  * fixed memory leak of OGRFeatures under some circumstanes
  *
@@ -262,20 +265,23 @@ static int ogrGeomPoints(OGRGeometry *poGeom, shapeObj *outshp)
       return(-1);
   }
    
-  if (poGeom->getGeometryType() == wkbPoint)
+  if (poGeom->getGeometryType() == wkbPoint
+      || poGeom->getGeometryType() == wkbPoint25D )
   {
       OGRPoint *poPoint = (OGRPoint *)poGeom;
       ogrPointsAddPoint(&line, poPoint->getX(), poPoint->getY(), 
                         outshp->numlines, &(outshp->bounds));
   }
-  else if (poGeom->getGeometryType() == wkbLineString)
+  else if (poGeom->getGeometryType() == wkbLineString
+           || poGeom->getGeometryType() == wkbLineString25D)
   {
       OGRLineString *poLine = (OGRLineString *)poGeom;
       for(i=0; i<numpoints; i++)
           ogrPointsAddPoint(&line, poLine->getX(i), poLine->getY(i),
                             outshp->numlines, &(outshp->bounds));
   }
-  else if (poGeom->getGeometryType() == wkbPolygon)
+  else if (poGeom->getGeometryType() == wkbPolygon
+           || poGeom->getGeometryType() == wkbPolygon25D)
   {
       OGRPolygon *poPoly = (OGRPolygon *)poGeom;
       OGRLinearRing *poRing;
@@ -344,7 +350,8 @@ static int ogrGeomLine(OGRGeometry *poGeom, shapeObj *outshp,
   }
   else if (poGeom->getGeometryType() == wkbGeometryCollection ||
            poGeom->getGeometryType() == wkbMultiLineString ||
-           poGeom->getGeometryType() == wkbMultiPolygon )
+           poGeom->getGeometryType() == wkbMultiPolygon ||
+           poGeom->getGeometryType() == wkbMultiPolygon25D )
   {
       OGRGeometryCollection *poColl = (OGRGeometryCollection *)poGeom;
 
@@ -502,7 +509,9 @@ static int ogrConvertGeometry(OGRGeometry *poGeom, shapeObj *outshp,
       switch(poGeom->getGeometryType())
       {
         case wkbPoint:
+        case wkbPoint25D:
         case wkbMultiPoint:
+        case wkbMultiPoint25D:
           if(ogrGeomPoints(poGeom, outshp) == -1)
           {
               nStatus = MS_FAILURE; // Error message already produced.
