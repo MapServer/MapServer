@@ -136,7 +136,7 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
 		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
 		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
-		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj \
+		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj maplayer.obj \
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
@@ -163,6 +163,7 @@ all:		$(MAKE_GD) $(TTF_GD) $(MS_LIB) $(MS_EXE)
 $(MS_OBJS):	$(MS_HDRS)
 
 $(MS_LIB):	$(MS_OBJS)
+	copy $(GDAL_DIR)/gdal.pdb .
 	lib /out:$(MS_LIB) $(MS_OBJS)
 
 $(MS_EXE):	$(LIBS)
@@ -185,7 +186,7 @@ gdft::
 
 .c.exe:
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
-	$(CC) $*.obj $(LIBS)
+	$(CC) $(CFLAGS) $*.obj $(LIBS)
 
 .cpp.exe:
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
