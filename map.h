@@ -87,6 +87,8 @@ extern "C" {
 #define MS_SINGLE 0 /* modes for searching (spatial/database) */
 #define MS_MULTIPLE 1
 
+#define MS_GD_ALPHA 1000
+
 // General defines, not wrapable
 #ifndef SWIG
 #define MS_DEFAULT_MAPFILE_PATTERN "\\.map$"

@@ -162,6 +162,39 @@ int getInteger(int *i) {
   return(-1);
 }
 
+/*
+** Try to load as an integer, then try as a named symbol.
+** Part of work on bug 490.
+*/
+int getIntegerOrSymbol(int *i, int n, ...) 
+{
+    int symbol;
+    va_list argp;
+    int j=0;
+    
+    symbol = msyylex();
+
+    if (symbol == MS_NUMBER) {
+        *i = (int)msyynumber;
+        return MS_SUCCESS; /* success */
+    }
+
+    va_start(argp, n);
+    while (j<n) { /* check each symbol in the list */
+        if(symbol == va_arg(argp, int)) {
+            va_end(argp);
+            *i = symbol;
+            return MS_SUCCESS;
+        }
+        j++;
+    }
+    va_end(argp);
+
+    msSetError(MS_SYMERR, "Parsing error near (%s):(line %d)",
+               "getIntegerOrSymbol()", msyytext, msyylineno); 
+    return(-1);
+}
+
 int getCharacter(char *c) {
   if(msyylex() == MS_STRING) {
     *c = msyytext[0];
@@ -2252,7 +2285,9 @@ int loadLayer(layerObj *layer, mapObj *map)
     }
     break;
     case(TRANSPARENCY):
-      if(getInteger(&(layer->transparency)) == -1) return(-1);         
+      /* layers can now specify ALPHA transparency */
+      if (getIntegerOrSymbol(&(layer->transparency), 1, MS_GD_ALPHA) == -1)
+        return(-1);
       break;
     case(POSTLABELCACHE):
       if((layer->postlabelcache = getSymbol(2, MS_TRUE, MS_FALSE)) == -1) return(-1);
@@ -2285,6 +2320,11 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->tileindex = getString()) == NULL) return(-1);
       break;
     case(TILEITEM):
+      if (layer->tileitem)
+      {
+        free(layer->tileitem);
+        layer->tileitem = NULL;
+      }
       if((layer->tileitem = getString()) == NULL) return(-1);
       break;
     case(TOLERANCE):
