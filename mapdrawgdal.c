@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.7  2003/02/24 21:20:54  frank
+ * Added RAW_WINDOW support for use my mapresample.c
+ *
  * Revision 1.6  2003/01/31 18:57:12  frank
  * fixed offsite support from pseudocolored or greyscale input: bug 274
  *
@@ -149,14 +152,52 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
 #endif
   }
 
+  src_xsize = GDALGetRasterXSize( hDS );
+  src_ysize = GDALGetRasterYSize( hDS );
+
+  /*
+   * If the RAW_WINDOW attribute is set, use that to establish what to
+   * load.  This is normally just set by the mapresample.c module to avoid
+   * problems with rotated maps.
+   */
+
+  if( CSLFetchNameValue( layer->processing, "RAW_WINDOW" ) != NULL )
+  {
+      char **papszTokens = 
+          CSLTokenizeString( 
+              CSLFetchNameValue( layer->processing, "RAW_WINDOW" ) );
+      
+      if( layer->debug )
+          msDebug( "msDrawGDAL(%s): using RAW_WINDOW=%s\n",
+                   layer->name,
+                   CSLFetchNameValue( layer->processing, "RAW_WINDOW" ) );
+
+      if( CSLCount(papszTokens) != 4 )
+      {
+          CSLDestroy( papszTokens );
+          msSetError( MS_IMGERR, "RAW_WINDOW PROCESSING directive corrupt.",
+                      "msDrawGDAL()" );
+          return -1;
+      }
+
+      src_xoff = atoi(papszTokens[0]);
+      src_yoff = atoi(papszTokens[1]);
+      src_xsize = atoi(papszTokens[2]);
+      src_ysize = atoi(papszTokens[3]);
+
+      dst_xoff = 0;
+      dst_yoff = 0;
+      dst_xsize = image->width;
+      dst_ysize = image->height;
+
+      CSLDestroy( papszTokens );
+  }
+
   /*
    * Compute the georeferenced window of overlap, and do nothing if there
    * is no overlap between the map extents, and the file we are operating on.
    */
-  src_xsize = GDALGetRasterXSize( hDS );
-  src_ysize = GDALGetRasterYSize( hDS );
-
-  if( layer->transform )
+  else if( layer->transform )
   {
       if (GDALGetGeoTransform( hDS, adfGeoTransform ) != CE_None)
           GDALReadWorldFile((char *)GDALGetDescription(hDS),
