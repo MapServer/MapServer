@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.171  2003/06/27 15:35:16  assefa
+ * Modify test in _phpms_build_shape_object (Bug 316).
+ *
  * Revision 1.170  2003/06/26 18:32:45  assefa
  * Add layer processing string related function/memeber/doc.
  *
@@ -6947,7 +6950,6 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
-
     if (pThis == NULL ||
         getParameters(ht, 2, &pTileId, &pShapeId) != SUCCESS) 
     {
@@ -8882,7 +8884,9 @@ static long _phpms_build_shape_object(shapeObj *pshape, int handle_type,
      * For now we do this only for shapes returned from map layers, and not
      * for those from shapefileObj.
      */
-    if (pLayer && pshape->numvalues && pshape->numvalues == pLayer->numitems)
+    if (pLayer && 
+        ((pshape->numvalues == pLayer->numitems) ||
+         (pshape->numvalues == 0 && pLayer->numitems == -1)))
     {
         int i;
 #ifdef PHP4
