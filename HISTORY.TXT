@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- Fixed Bug 866 : problem when generating an sld on a pplygon layer
+
 - SWIG mapscript: map's output image width and height should be set 
   simultaneously using new mapObj::setSize() method.  This performs
   necessary map geotransform computation.  Direct setting of map width
