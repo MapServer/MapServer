@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.33  2004/05/11 19:13:46  sean
+ * Changes to function prototypes to reduce number of SWIG-mapscript build warnings (bug 568) and committed changes to fix bug 650, WMS layer drawing
+ *
  * Revision 1.32  2004/05/03 03:45:42  dan
  * Include map= param in default onlineresource of GetCapabilties if it
  * was explicitly set in QUERY_STRING (bug 643)
@@ -136,8 +139,8 @@ typedef  struct
   int          numparams;
 } wmsParamsObj;
 
-int msHTTPInit();
-void msHTTPCleanup();
+int msHTTPInit(void);
+void msHTTPCleanup(void);
 
 void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
 void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
@@ -248,7 +251,7 @@ MS_DLL_EXPORT char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
  *====================================================================*/
 int msWFSDispatch(mapObj *map, cgiRequestObj *requestobj);
 void msWFSParseRequest(cgiRequestObj *, wfsParamsObj *);
-wfsParamsObj *msWFSCreateParamsObj();
+wfsParamsObj *msWFSCreateParamsObj(void);
 void msWFSFreeParamsObj(wfsParamsObj *wfsparams);
 
 #ifdef USE_WFS_SVR

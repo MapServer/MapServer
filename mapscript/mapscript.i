@@ -28,6 +28,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %{
 #include "../../map.h"
 #include "../../maptemplate.h"
+#include "../../mapogcsld.h"
 %}
 
 %include typemaps.i
@@ -128,6 +129,9 @@ memory.") const char * {
 
 // Python-specific module code included here
 #ifdef SWIGPYTHON
+%{
+#include "pygdioctx/pygdioctx.h"
+%}
 %include "pymodule.i"
 #endif // SWIGPYTHON
 
@@ -502,7 +506,17 @@ memory.") const char * {
   }
 
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->web.metadata, name));
+    char *value = NULL;
+    if (!name) {
+      msSetError(MS_HASHERR, "NULL key", "getMetaData");
+    }
+     
+    value = (char *) msLookupHashTable(self->web.metadata, name);
+    if (!value) {
+      msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
+      return NULL;
+    }
+    return value;
   }
 
   int setMetaData(char *name, char *value) {
@@ -518,11 +532,11 @@ memory.") const char * {
   }
 
   char *getFirstMetaDataKey() {
-    return msFirstKeyFromHashTable(self->web.metadata);
+    return (char *) msFirstKeyFromHashTable(self->web.metadata);
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return msNextKeyFromHashTable(self->web.metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(self->web.metadata, lastkey);
   }
   
   int setSymbolSet(char *szFileName) {
@@ -585,8 +599,8 @@ memory.") const char * {
     msSetConfigOption(self,key,value);
   }
 
-  const char *getConfigOption(char *key) {
-    return msGetConfigOption(self,key);
+  char *getConfigOption(char *key) {
+    return (char *) msGetConfigOption(self,key);
   }
 
   void applyConfigOptions() {
@@ -605,7 +619,7 @@ memory.") const char * {
     
     %newobject generateSLD;
     char *generateSLD() {
-        return msSLDGenerateSLD(self, -1);
+        return (char *) msSLDGenerateSLD(self, -1);
     }
 
 
@@ -747,7 +761,7 @@ memory.") const char * {
  
     %newobject removeSymbol;
     symbolObj *removeSymbol(int index) {
-        return msRemoveSymbol(self, index);
+        return (symbolObj *) msRemoveSymbol(self, index);
     }
 
     int save(const char *filename) {
@@ -853,7 +867,7 @@ memory.") const char * {
 
   char *getItem(int i) { // returns an EXISTING item
     if(i >= 0 && i < self->numitems)
-      return (self->items[i]);
+      return (char *) (self->items[i]);
     else
       return NULL;
   }
@@ -931,7 +945,7 @@ memory.") const char * {
 
   %newobject getProjection;
   char *getProjection() {    
-    return msGetProjectionString(&(self->projection));
+    return (char *) msGetProjectionString(&(self->projection));
   }
 
   int setProjection(char *string) {
@@ -963,8 +977,21 @@ memory.") const char * {
       return extent;
   }
 
+  //char *getMetaData(char *name) {
+  //  return(msLookupHashTable(self->metadata, name));
+  //}
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->metadata, name));
+    char *value = NULL;
+    if (!name) {
+      msSetError(MS_HASHERR, "NULL key", "getMetaData");
+    }
+     
+    value = (char *) msLookupHashTable(self->metadata, name);
+    if (!value) {
+      msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
+      return NULL;
+    }
+    return value;
   }
 
   int setMetaData(char *name, char *value) {
@@ -980,24 +1007,24 @@ memory.") const char * {
   }
 
   char *getFirstMetaDataKey() {
-      return msFirstKeyFromHashTable(self->metadata);
+      return (char *) msFirstKeyFromHashTable(self->metadata);
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return msNextKeyFromHashTable(self->metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(self->metadata, lastkey);
   }
   
     %newobject getWMSFeatureInfoURL;
     char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y,
                                int feature_count, char *info_format)
     {
-        return(msWMSGetFeatureInfoURL(map, self, click_x, click_y,
-               feature_count, info_format));
+        return (char *) msWMSGetFeatureInfoURL(map, self, click_x, click_y,
+               feature_count, info_format);
     }
  
     %newobject executeWFSGetFeature;
     char *executeWFSGetFeature(layerObj *layer) {
-        return (msWFSExecuteGetFeature(layer));
+        return (char *) msWFSExecuteGetFeature(layer);
     }
 
     int applySLD(char *sld, char *stylelayer) {
@@ -1010,7 +1037,7 @@ memory.") const char * {
 
     %newobject generateSLD; 
     char *generateSLD() {
-        return msSLDGenerateSLD(self->map, self->index);
+        return (char *) msSLDGenerateSLD(self->map, self->index);
     }
 
     int moveClassUp(int index) {
@@ -1036,7 +1063,7 @@ memory.") const char * {
     }
 
     char *getProcessing(int index) {
-        return msLayerGetProcessing(self, index);
+        return (char *) msLayerGetProcessing(self, index);
     }
 
     int clearProcessing() {
@@ -1135,8 +1162,21 @@ memory.") const char * {
     return loadExpressionString(&self->text, string);
   }
 
+//  char *getMetaData(char *name) {
+//    return(msLookupHashTable(self->metadata, name));
+//  }
   char *getMetaData(char *name) {
-    return(msLookupHashTable(self->metadata, name));
+    char *value = NULL;
+    if (!name) {
+      msSetError(MS_HASHERR, "NULL key", "getMetaData");
+    }
+     
+    value = (char *) msLookupHashTable(self->metadata, name);
+    if (!value) {
+      msSetError(MS_HASHERR, "Key %s does not exist", "getMetaData", name);
+      return NULL;
+    }
+    return value;
   }
 
   int setMetaData(char *name, char *value) {
@@ -1148,11 +1188,11 @@ memory.") const char * {
   }
 
   char *getFirstMetaDataKey() {
-    return msFirstKeyFromHashTable(self->metadata);
+    return (char *) msFirstKeyFromHashTable(self->metadata);
   }
  
   char *getNextMetaDataKey(char *lastkey) {
-    return msNextKeyFromHashTable(self->metadata, lastkey);
+    return (char *) msNextKeyFromHashTable(self->metadata, lastkey);
   }
   
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
@@ -1181,7 +1221,7 @@ memory.") const char * {
 
     %newobject removeStyle;
     styleObj *removeStyle(int index) {
-        return msRemoveStyle(self, index);
+        return (styleObj *) msRemoveStyle(self, index);
     }
 
     int moveStyleUp(int index) {
@@ -1616,7 +1656,7 @@ memory.") const char * {
         outputFormatObj *format;
 
         if (file) {
-            return msImageLoadGD(file);
+            return (imageObj *) msImageLoadGD(file);
         }
         else {
             if (driver) {
@@ -1921,11 +1961,11 @@ memory.") const char * {
 %extend fontSetObj {
    
   char *getFirstFont() {
-    return msFirstKeyFromHashTable(self->fonts);
+    return (char *) msFirstKeyFromHashTable(self->fonts);
   }
  
   char *getNextFont(char *font) {
-    return msNextKeyFromHashTable(self->fonts, font);
+    return (char *) msNextKeyFromHashTable(self->fonts, font);
   }
   
 }

@@ -64,13 +64,12 @@ char *msLookupHashTable(hashTableObj table, const char *string)
 {
   struct hashObj *tp;
 
-  if(!table || !string) {
-    msSetError(MS_HASHERR, "Invalid hash table or key", "msLookupHashTable");
+  if (!table || !string) {
     return(NULL);
   }
 
-  for(tp=table[hash(string)]; tp!=NULL; tp=tp->next)
-    if(strcasecmp(string, tp->key) == 0)
+  for (tp=table[hash(string)]; tp!=NULL; tp=tp->next)
+    if (strcasecmp(string, tp->key) == 0)
       return(tp->data);
 
   return(NULL);

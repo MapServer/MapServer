@@ -155,7 +155,6 @@ MS_DLL_EXPORT int msSHPWriteShape( SHPHandle psSHP, shapeObj *shape );
 MS_DLL_EXPORT int msSHPWritePoint(SHPHandle psSHP, pointObj *point );
 
 // tiledShapefileObj function prototypes are in map.h
-#endif
 
 // XBase function prototypes
 MS_DLL_EXPORT DBFHandle msDBFOpen( const char * pszDBFFile, const char * pszAccess );
@@ -181,6 +180,8 @@ MS_DLL_EXPORT char **msDBFGetValues(DBFHandle dbffile, int record);
 MS_DLL_EXPORT char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int numitems);
 MS_DLL_EXPORT int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems);
 MS_DLL_EXPORT int msDBFGetItemIndex(DBFHandle dbffile, char *name);
+
+#endif
 
 #ifdef __cplusplus
 }

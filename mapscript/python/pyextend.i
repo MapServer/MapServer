@@ -120,11 +120,11 @@
         }
         // Is file a filename?
         else if (PyString_Check(file)) {
-            return msImageLoadGD((char *) PyString_AsString(file));
+            return (imageObj *) msImageLoadGD((char *) PyString_AsString(file));
         }
         // Is a file-like object
         else if (file && driver) {
-            return createImageObjFromPyFile(width, height, file, driver);
+            return (imageObj *) createImageObjFromPyFile(width, height, file, driver);
         }
         else {
             msSetError(MS_IMGERR, "Failed to create image (%s, %s)", "imageObj()", file, driver);
@@ -162,7 +162,7 @@
 %#else
             msSetError(MS_IMGERR, "GIF output is not available.", 
                        "saveToString()");
-            return(MS_FAILURE);
+            return NULL;
 %#endif
         } else if (strcasecmp(self->format->driver, "gd/png") == 0) {
 %#ifdef USE_GD_PNG
@@ -170,7 +170,7 @@
 %#else
             msSetError(MS_IMGERR, "PNG output is not available.", 
                        "saveToString()");
-            return(MS_FAILURE);
+            return NULL;
 %#endif
         } else if (strcasecmp(self->format->driver, "gd/jpeg") == 0) {
 %#ifdef USE_GD_JPEG
@@ -179,7 +179,7 @@
 %#else
             msSetError(MS_IMGERR, "JPEG output is not available.", 
                        "saveToString()");
-            return(MS_FAILURE);
+            return NULL;
 %#endif
         } else if (strcasecmp(self->format->driver, "gd/wbmp") == 0) {
 %#ifdef USE_GD_WBMP
@@ -187,12 +187,12 @@
 %#else
             msSetError(MS_IMGERR, "WBMP output is not available.", 
                       "saveToString()");
-            return(MS_FAILURE);
+            return NULL;
 %#endif
         } else {
             msSetError(MS_IMGERR, "Unknown output image type driver: %s.", 
                        "saveToString()", self->format->driver );
-            return(MS_FAILURE);
+            return NULL;
         } 
         
         imgstring = PyString_FromStringAndSize(imgbytes, size); 
