@@ -95,6 +95,7 @@ char *msyystring=NULL;
 <INITIAL>extent		                       { return(EXTENT); }
 <INITIAL,OBJECT_STRING>feature                 { return(FEATURE); }
 <INITIAL>filled                                { return(FILLED); }
+<INITIAL,OBJECT_STRING>filter                   { return(FILTER); }
 <INITIAL,OBJECT_STRING>footer		       { return(FOOTER); }
 <INITIAL,OBJECT_STRING>font		       { return(FONT); }
 <INITIAL>fontset		               { return(FONTSET); }

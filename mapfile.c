@@ -1364,6 +1364,8 @@ int initLayer(layerObj *layer)
   layer->numitems = 0;
 
   layer->resultcache= NULL;
+
+  initExpression(&(layer->filter));
   
   return(0);
 }
@@ -1402,6 +1404,8 @@ void freeLayer(layerObj *layer) {
     free(layer->resultcache->results);
     free(layer->resultcache);
   }
+
+  freeExpression(&(layer->filter));
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
@@ -1467,6 +1471,9 @@ int loadLayer(layerObj *layer, mapObj *map)
 
       if(loadFeature(&(layer->features), type) == -1) return(-1);      
       layer->connectiontype = MS_INLINE;
+      break;
+    case(FILTER):
+      if(loadExpression(&(layer->filter)) == -1) return(-1);
       break;
     case(FOOTER):
       if((layer->footer = getString()) == NULL) return(-1);
@@ -1646,6 +1653,9 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
       break;
     }
 
+    break;
+  case(EXPRESSION):    
+    loadExpressionString(&(layer->filter), value);
     break;
   case(FOOTER):
     free(layer->footer);

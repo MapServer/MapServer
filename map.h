@@ -496,6 +496,10 @@ typedef struct {
   int numitems;
   int *itemindexes;
 
+  #ifndef SWIG  
+  expressionObj filter; // connection specific attribute filter
+  #endif
+
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
