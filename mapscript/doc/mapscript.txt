@@ -1078,6 +1078,8 @@ getSymbolByName(string name) : symbolObj_
 removeSymbol(int index) : symbolObj_
     Remove the symbol at *index* and return a copy of the symbol.
 
+save(string filename) : int
+    Save symbol set to a file.  Returns MS_SUCCESS or MS_FAILURE.
 
 ..  [1] This **really** needs to be changed in the future.  In fact a layer
     is much more re-useable than a map.  We don't keep redundant street

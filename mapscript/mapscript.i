@@ -687,6 +687,10 @@ memory.") const char * {
         return msRemoveSymbol(self, index);
     }
 
+    int save(const char *filename) {
+        return msSaveSymbolSet(self, filename);
+    }
+
 }
 
 //

@@ -634,4 +634,30 @@ symbolObj *msRemoveSymbol(symbolSetObj *symbolset, int nSymbolIndex) {
     }
 }
 
+int msSaveSymbolSet(symbolSetObj *symbolset, const char *filename) {
+    FILE *stream;
+    int retval;
+    if (!filename || strlen(filename) == 0) {
+        msSetError(MS_SYMERR, "Invalid filename.", "msSaveSymbolSet()");
+        return MS_FAILURE;
+    }
+    stream = fopen(filename, "w");
+    retval = msSaveSymbolSetStream(symbolset, stream);
+    return retval;
+}
+
+int msSaveSymbolSetStream(symbolSetObj *symbolset, FILE *stream) {
+    int i;
+    if (!symbolset || !stream) {
+        msSetError(MS_SYMERR, "Cannot save symbolset.", "msSaveSymbolSetStream()");
+        return MS_FAILURE;
+    }
+    // Don't ever write out the default symbol at index 0
+    for (i=1; i<symbolset->numsymbols; i++) {
+        symbolset->symbol[i].inmapfile = MS_TRUE;
+        writeSymbol(&(symbolset->symbol[i]), stream);
+    }
+    return MS_SUCCESS;
+}
+
 
