@@ -2254,15 +2254,19 @@ int main(int argc, char *argv[]) {
 	if(msSaveImage(img, buffer, Map->transparent, Map->interlace) == -1) writeError();
 	gdImageDestroy(img);
       }
-      
-      if(TEMPLATE_TYPE(Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
-	printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
-	writeVersion();
-	fflush(stdout);
-	returnHTML(Map->web.template);
-      } else {	
-	returnURL(Map->web.template);
-      } 
+
+      if(QueryFile) {
+	returnQuery();
+      } else {
+	if(TEMPLATE_TYPE(Map->web.template) == MS_FILE) { /* if thers's an html template, then use it */
+	  printf("Content-type: text/html%c%c", 10, 10); /* write MIME header */
+	  writeVersion();
+	  fflush(stdout);
+	  returnHTML(Map->web.template);
+	} else {	
+	  returnURL(Map->web.template);
+	} 
+      }
      
       break;
       
