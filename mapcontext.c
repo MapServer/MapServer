@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2002/10/31 18:57:35  sacha
+ * Fill layerorder and layer.index in msLoadMapContext
+ *
  * Revision 1.2  2002/10/28 22:31:09  dan
  * Added map arg to initLayer() call
  *
@@ -353,6 +356,9 @@ int msLoadMapContext(mapObj *map, char *filename)
               layer = &(map->layers[map->numlayers]);
               initLayer(layer, map);
               layer->map = (mapObj *)map;
+              /* save the index */
+              map->layers[map->numlayers].index = map->numlayers;
+              map->layerorder[map->numlayers] = map->numlayers;
               map->numlayers++;
               if(layer->metadata == NULL)
                   layer->metadata =  msCreateHashTable();
@@ -972,3 +978,4 @@ int msSaveMapContext(mapObj *map, char *filename)
   return MS_FAILURE;
 #endif
 }
+
