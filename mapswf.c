@@ -2084,7 +2084,6 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
     //int         nTmp = -1;
     SWFShape    oShape;
 
-
 /* -------------------------------------------------------------------- */
 /*      test for driver.                                                */
 /* -------------------------------------------------------------------- */
@@ -2102,7 +2101,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                   "SINGLE") == 0)
     {
         imagetmp = (imageObj *)image->img.swf->imagetmp;
-        msImageInitGD( imagetmp, &map->imagecolor );
+        msImageInitGD( imagetmp, &map->imagecolor);
         msDrawLabelCacheGD(imagetmp->img.gd, map);
         oShape = gdImage2Shape(imagetmp->img.gd);
         //nTmp = image->img.swf->nCurrentMovie;
@@ -2410,6 +2409,12 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
 
 }
 
+/************************************************************************/
+/*                          int msDrawWMSLayerSWF                       */
+/*                                                                      */
+/*      Use low level gd functions to draw a wms layer in a gd          */
+/*      images and then save it in the movie,                           */
+/************************************************************************/
 int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, mapObj *map, layerObj *layer, imageObj *image)
 {
@@ -2417,26 +2422,68 @@ int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo,
     outputFormatObj     *format = NULL;
     imageObj            *image_tmp = NULL;
     SWFShape            oShape;
+    int                 iReq = -1;
+    char        *driver = strdup("GD/GIF");
+    int         bFreeImage = 0;
+
+#ifdef USE_GD_GIF
+    driver = strdup("GD/GIF");
+#else  
+
+#ifdef USE_GD_PNG
+     driver = strdup("GD/PNG");
+#else
+
+#ifdef USE_GD_JPEG
+     driver = strdup("GD/JPEG");
+#else
+
+#ifdef USE_GD_WBMP
+     driver = strdup("GD/WBMP");
+#endif 
+
+#endif
+#endif
+#endif
+
 
     if (!image || !MS_DRIVER_SWF(image->format) || image->width <= 0 ||
         image->height <= 0)
-        return -1;
-    
+      return -1;
+
+/* ==================================================================== */
+/*      WMS requests are done simultaniously for all WMS layer.         */
+/* ==================================================================== */
+    for(iReq=0; iReq<numRequests; iReq++)
+    {
+        if (pasReqInfo[iReq].nLayerId == nLayerId)
+          break;
+    }
+    if (iReq == numRequests)
+      return MS_SUCCESS;     
 /* -------------------------------------------------------------------- */
 /*      create a temprary GD image and render in it.                    */
 /* -------------------------------------------------------------------- */
-    format = msCreateDefaultOutputFormat( NULL, "GD/PC256" );
-    if( format == NULL )
-        return -1;
+    if (strcasecmp(msGetOutputFormatOption(image->format,
+                                           "OUTPUT_MOVIE","MULTIPLE"), 
+                      "MULTIPLE") == 0)
+    {
+        image_tmp = msImageCreateGD(map->width, map->height,  
+                                    msCreateDefaultOutputFormat(map, driver),
+                                    map->web.imagepath, map->web.imageurl);
+        bFreeImage = 1;
+    }
+    else
+      image_tmp = (imageObj *)image->img.swf->imagetmp;
 
-    image_tmp = msImageCreate( image->width, image->height, format, 
-                               NULL, NULL );
-    if( image_tmp == NULL )
-        return -1;
 
-    gdImageColorAllocate(image_tmp->img.gd, 
-                         map->imagecolor.red, map->imagecolor.green, 
-                         map->imagecolor.blue);
+    
+    //gdImageColorAllocate(image_tmp->img.gd, 
+    //                    map->imagecolor.red, map->imagecolor.green, 
+    //                    map->imagecolor.blue);
+
+    
+    msImageInitGD( image_tmp, &map->imagecolor );
 
     if (msDrawWMSLayerLow(nLayerId, pasReqInfo, numRequests, map, layer, 
                           image_tmp) != -1)
@@ -2444,10 +2491,12 @@ int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo,
         oShape = gdImage2Shape(image_tmp->img.gd);
         //nTmp = image->img.swf->nCurrentMovie;
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
-        msFreeImage( image_tmp );
+        
+        if (bFreeImage)
+          msFreeImage( image_tmp );
     }
 
-    return 0;
+    return MS_SUCCESS;
 
 }
 
@@ -2774,7 +2823,7 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
 
    
     if (strcasecmp(msGetOutputFormatOption(image->format,
-                                              "OUTPUT_MOVIE","MULTIPLE"), 
+                                           "OUTPUT_MOVIE","MULTIPLE"), 
                       "MULTIPLE") == 0)
     {
         imagetmp = msImageCreateGD(map->width, map->height,  
