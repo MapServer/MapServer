@@ -708,7 +708,7 @@ static int loadLabel(labelObj *label, mapObj *map)
 	return(-1);
 
       if(symbol == MS_NUMBER)
-	label->angle = MS_DEG_TO_RAD*msyynumber;
+	label->angle = msyynumber;
       else
 	label->autoangle = MS_TRUE;
       break;
@@ -841,7 +841,7 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
       return;
     
     if(symbol == MS_NUMBER)
-      label->angle = MS_DEG_TO_RAD*msyynumber;
+      label->angle = msyynumber;
     else
       label->autoangle = MS_TRUE;
     break;
@@ -981,7 +981,7 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
     if(label->autoangle)
       fprintf(stream, "  %sANGLE AUTO\n", tab);
     else
-      fprintf(stream, "  %sANGLE %f\n", tab, label->angle*MS_RAD_TO_DEG);
+      fprintf(stream, "  %sANGLE %f\n", tab, label->angle);
     if(label->antialias) fprintf(stream, "  %sANTIALIAS\n", tab);
     fprintf(stream, "  %sFONT %s\n", tab, label->font);
     fprintf(stream, "  %sMAXSIZE %d\n", tab, label->maxsize);

@@ -280,8 +280,8 @@ static pointObj get_metrics(pointObj *p, int position, rectObj rect, int ox, int
     break;
   }
 
-  sin_a = sin(angle);
-  cos_a = cos(angle);
+  sin_a = sin(MS_DEG_TO_RAD*angle);
+  cos_a = cos(MS_DEG_TO_RAD*angle);
 
   x = x1 - rect.minx;
   y = rect.maxy - y1;
@@ -341,6 +341,7 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
   if(label->type == MS_TRUETYPE) {
     char *error=NULL, *font=NULL;
     int bbox[8];
+    double angle_radians = MS_DEG_TO_RAD*label->angle;
 
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
     if(!fontset) {
@@ -362,9 +363,9 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
 
     if(label->outlinecolor >= 0) { /* handle the outline color */
 #ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y-1, string);
+      error = gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y-1, string);
 #else
-      error = gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y-1, string);
+      error = gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y-1, string);
 #endif
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
@@ -372,22 +373,22 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
       }
 
 #ifdef USE_GD_TTF
-      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y+1, string);
-      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y+1, string);
-      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y-1, string);
+      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y+1, string);
+      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y+1, string);
+      gdImageStringTTF(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y-1, string);
 #else
-      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x-1, y+1, string);
-      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y+1, string);
-      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, label->angle, x+1, y-1, string);
+      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x-1, y+1, string);
+      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y+1, string);
+      gdImageStringFT(img, bbox, label->antialias*label->outlinecolor, font, label->sizescaled, angle_radians, x+1, y-1, string);
 #endif      
 
     }
 
     if(label->shadowcolor >= 0) { /* handle the shadow color */
 #ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, label->angle, x+label->shadowsizex, y+label->shadowsizey, string);
+      error = gdImageStringTTF(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
 #else
-      error = gdImageStringFT(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, label->angle, x+label->shadowsizex, y+label->shadowsizey, string);
+      error = gdImageStringFT(img, bbox, label->antialias*label->shadowcolor, font, label->sizescaled, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
 #endif
       if(error) {
 	msSetError(MS_TTFERR, error, "draw_text()");
@@ -396,9 +397,9 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     }
 
 #ifdef USE_GD_TTF
-    gdImageStringTTF(img, bbox, label->antialias*label->color, font, label->sizescaled, label->angle, x, y, string);
+    gdImageStringTTF(img, bbox, label->antialias*label->color, font, label->sizescaled, angle_radians, x, y, string);
 #else
-    gdImageStringFT(img, bbox, label->antialias*label->color, font, label->sizescaled, label->angle, x, y, string);
+    gdImageStringFT(img, bbox, label->antialias*label->color, font, label->sizescaled, angle_radians, x, y, string);
 #endif
 
 #else
@@ -622,7 +623,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
 	  if(j == 1) {	   
 	    if(fabs(cos(label.angle)) < LINE_VERT_THRESHOLD)	      
-	      label.angle += MS_DEG_TO_RAD*180.0;
+	      label.angle += 180.0;
 	    else
 	      position = MS_LC;
 	  }
@@ -844,14 +845,14 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
 
       if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
 	if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
-	  label.angle = -MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);
+	  label.angle = -(90.0 - MS_RAD_TO_DEG*theta);
 	else
-	  label.angle = MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);      
+	  label.angle = (90.0 - MS_RAD_TO_DEG*theta);      
       } else {
 	if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
-	  label.angle = MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);
+	  label.angle = (90.0 - MS_RAD_TO_DEG*theta);
 	else
-	  label.angle = -MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);      
+	  label.angle = -(90.0 - MS_RAD_TO_DEG*theta);      
       }
 
       rx = (p->line[i].point[j].x - p->line[i].point[j-1].x)/length;
@@ -862,7 +863,7 @@ int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color
         point.x = MS_NINT(p->line[i].point[j-1].x + current_length*rx);
 	point.y = MS_NINT(p->line[i].point[j-1].y + current_length*ry);
 
-  	label_point = get_metrics(&point, MS_CC, label_rect, 0, 0, label.angle, 0, &label_poly);
+  	label_point = get_metrics(&point, MS_CC, label_rect, 0, 0, MS_DEG_TO_RAD*label.angle, 0, &label_poly);
         draw_text(img, label_point, s->character, &label, fontset);
 
   	// gdImageSetPixel(img, (int)point.x, (int)point.y, yellow);

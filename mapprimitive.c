@@ -972,14 +972,14 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
 
   if(p->line[i].point[j-1].x < p->line[i].point[j].x) { /* i.e. to the left */
     if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
-      *angle = -MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);
+      *angle = -(90.0 - MS_RAD_TO_DEG*theta);
     else
-      *angle = MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);      
+      *angle = (90.0 - MS_RAD_TO_DEG*theta);      
   } else {
     if(p->line[i].point[j-1].y < p->line[i].point[j].y) /* i.e. below */
-      *angle = MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);
+      *angle = (90.0 - MS_RAD_TO_DEG*theta);
     else
-      *angle = -MS_DEG_TO_RAD*(90 - MS_RAD_TO_DEG*theta);      
+      *angle = -(90.0 - MS_RAD_TO_DEG*theta);      
   }
 
   return(MS_SUCCESS);

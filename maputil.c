@@ -459,7 +459,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
 	
 	if(layer->labelangleitemindex != -1) 
-	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex])*MS_DEG_TO_RAD;
+	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
 	
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? (layer->symbolscale/map->scale):1);
@@ -493,7 +493,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 
 	if(layer->labelangleitemindex != -1) 
-	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex])*MS_DEG_TO_RAD;
+	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
 	
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
@@ -525,7 +525,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 	  }
 	  
 	  if(layer->labelangleitemindex != -1) 
-	    layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex])*MS_DEG_TO_RAD;
+	    layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
 	  
 	  if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	    layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
@@ -567,7 +567,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
 	if(shape->text) {
 	  if(layer->labelangleitemindex != -1) 
-	    layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex])*MS_DEG_TO_RAD;
+	    layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
 	  
 	  if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	    layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
@@ -602,7 +602,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     if(shape->text) {
       if(msPolylineLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) == MS_SUCCESS) {
 	if(layer->labelangleitemindex != -1) 
-	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex])*MS_DEG_TO_RAD;
+	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
 	
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
@@ -639,7 +639,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     if(shape->text) {
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 	if(layer->labelangleitemindex != -1) 
-	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex])*MS_DEG_TO_RAD;
+	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
 	
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
@@ -672,7 +672,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     if(shape->text) {
       if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) == MS_SUCCESS) {
 	if(layer->labelangleitemindex != -1) 
-	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex])*MS_DEG_TO_RAD;
+	  layer->class[c].label.angle = atof(shape->values[layer->labelangleitemindex]);
 	
 	if((layer->labelsizeitemindex != -1) && (layer->class[c].label.type == MS_TRUETYPE)) {
 	  layer->class[c].label.sizescaled = atoi(shape->values[layer->labelsizeitemindex])*((layer->symbolscale > 0) ? scalefactor:1);
