@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.35  2004/10/22 15:39:18  assefa
+ * Correct PropertyIsLike bug (Bug 987).
+ *
  * Revision 1.34  2004/10/21 04:30:56  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -2524,10 +2527,10 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 /*      classitem.                                                      */
 /* -------------------------------------------------------------------- */
     szBuffer[0] = '/';
-    szBuffer[1] = '^';
+    //   szBuffer[1] = '^';
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
-    iBuffer = 2;
+    iBuffer = 1;
     for (i=0; i<nLength; i++)
     {
         if (pszValue[i] != pszWild[0] && 
@@ -2559,8 +2562,8 @@ char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
         }
         else if (pszValue[i] == pszWild[0])
         {
-            strcat(szBuffer, "[a-z,A-Z]*");
-            iBuffer+=10;
+            strcat(szBuffer, "[0-9,a-z,A-Z,\\s]*");
+            iBuffer+=17;
             szBuffer[iBuffer] = '\0';
         }
     }   
