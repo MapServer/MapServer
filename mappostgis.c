@@ -595,20 +595,22 @@ int msPOSTGISLayerClose(layerObj *layer)
 
 	if (layerinfo != NULL)
 	{
-			PQclear(layerinfo->query_result);
-			layerinfo->query_result = NULL;
+            PQclear(layerinfo->query_result);
+            layerinfo->query_result = NULL;
 
-			PQfinish(layerinfo->conn);
-			layerinfo->conn = NULL;
+            PQfinish(layerinfo->conn);
+            layerinfo->conn = NULL;
 
-			if (layerinfo->urid_name != NULL)
-				free(layerinfo->urid_name );
+            if (layerinfo->urid_name != NULL)
+              free(layerinfo->urid_name );
+            layerinfo->urid_name = NULL;
 
-			if (layerinfo->sql != NULL)
-				free (layerinfo->sql);
-			
-		free(layerinfo);
-		setPostGISLayerInfo(layer, NULL);
+            if (layerinfo->sql != NULL)
+              free (layerinfo->sql);
+            layerinfo->sql = NULL;
+
+            free(layerinfo);
+            setPostGISLayerInfo(layer, NULL);
 	}
 
 	return(MS_SUCCESS);
