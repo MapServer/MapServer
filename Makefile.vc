@@ -39,6 +39,9 @@ PROJ_LIB=../proj/src/proj.lib
 PROJ_INC=-I../proj/src
 PROJ=-DUSE_PROJ
 
+#Use this flag to compile with WMS support
+WMS=-DUSE_WMS
+
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
 #   - Version 1.2 is included and writes LZW GIF (-DUSE_GD_GIF -DUSE_GD_SWAP_XY).
@@ -123,7 +126,7 @@ REGEX_INC=-I./regex-0.12
 # compiled with:
 #
 #PHP_REGEX=..\php-3.0.14\regex
-PHP_REGEX=..\php-4.0.5\regex
+PHP_REGEX=..\php-4.0.6\regex
 REGEX_OBJ=$(PHP_REGEX)\regcomp.obj $(PHP_REGEX)\regerror.obj \
           $(PHP_REGEX)\regexec.obj $(PHP_REGEX)\regfree.obj
 REGEX_INC=-I$(PHP_REGEX) -DPHP_NO_ALIASES
@@ -146,7 +149,8 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 		mapsearch.obj mapstring.obj mapsymbol.obj mapfile.obj \
 		maplegend.obj maputil.obj mapscale.obj mapquery.obj \
 		maplabel.obj maperror.obj mapprimitive.obj mapproject.obj\
-		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj maplayer.obj \
+		mapraster.obj cgiutil.obj mapsde.obj mapogr.obj \
+                mappostgis.obj maplayer.obj mapresample.obj mapwms.obj mapgml.obj\
 		$(EPPL_OBJ) $(REGEX_OBJ)
 
 MS_HDRS = 	map.h mapfile.h
@@ -164,7 +168,7 @@ INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR)
+		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR) $(WMS)
 
 default: 	all
 
