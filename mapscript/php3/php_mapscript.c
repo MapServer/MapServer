@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.132  2003/01/08 01:16:05  assefa
+ * Correct bugs on Windows related to paths.
+ *
  * Revision 1.131  2002/12/24 05:19:23  dan
  * Produce a warning in selectOutputFormat() if it fails.
  *
@@ -1162,6 +1165,10 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     new_obj_ptr = &new_obj_param;
 #endif
 
+#if defined(PHP4) && defined(WIN32)
+    char        szPath[MS_MAXPATHLEN], szFname[MS_MAXPATHLEN];
+    char        szNewPath[MS_MAXPATHLEN];
+#endif
 
 #if defined(PHP4)
     /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
@@ -1207,13 +1214,18 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * should really do is make all of MapServer use the V_* macros and
      * avoid calling setcwd() from anywhere.
      */
-    char        szPath[MS_MAXPATHLEN], szFname[MS_MAXPATHLEN];
-    char        szNewPath[MS_MAXPATHLEN];
 
     virtual_getcwd(szFname, MS_MAXPATHLEN TSRMLS_CC);
     msBuildPath(szPath, szFname, pFname->value.str.val);
-    msBuildPath(szNewPath, szFname, pszNewPath);
-    pNewObj = mapObj_new(szPath, szNewPath);
+
+    if (pszNewPath)
+    {
+        msBuildPath(szNewPath, szFname, pszNewPath);
+        pNewObj = mapObj_new(szPath, szNewPath);
+    }
+    else
+       pNewObj = mapObj_new(szPath, pszNewPath);
+   
 #else
     pNewObj = mapObj_new(pFname->value.str.val, pszNewPath);
 #endif
