@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2002/06/11 20:45:22  frank
+ * add renderer copy to output format clone function
+ *
  * Revision 1.1  2002/06/11 13:49:52  frank
  * New
  *
@@ -445,6 +448,7 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *src )
         dst->extension = NULL;
 
     dst->imagemode = src->imagemode;
+    dst->renderer = src->renderer;
 
     dst->transparent = src->transparent;
 
