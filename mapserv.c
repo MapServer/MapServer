@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.133  2004/10/28 20:12:31  frank
+ * added win32/fastcgi support using atexit()
+ *
  * Revision 1.132  2004/10/28 19:12:51  frank
  * Implemented signal catching on unix (non-win32) platforms.  The signal
  * catcher calls msCleanup() which most importantly will close database
@@ -1001,6 +1004,23 @@ void msCleanupOnSignal( int nInData )
 }
 #endif
 
+#ifdef WIN32
+void msCleanupOnExit( void )
+{
+    // note that stderr and stdout seem to be non-functional in the
+    // fastcgi/win32 case.  If you really want to check functioning do
+    // some sort of hack logging like below ... otherwise just trust it!
+       
+#ifdef notdef
+    FILE *fp_out = fopen( "D:\\temp\\mapserv.log", "w" );
+    
+    fprintf( fp_out, "In msCleanupOnExit\n" );
+    fclose( fp_out );
+#endif    
+    msCleanup();
+}
+#endif
+
 // FIX: need to consider 5% shape extent expansion
 
 /*
@@ -1054,6 +1074,10 @@ int main(int argc, char *argv[]) {
 
 #ifdef USE_FASTCGI
     msIO_installFastCGIRedirect();
+
+#ifdef WIN32
+    atexit( msCleanupOnExit );
+#endif    
 
     while( FCGI_Accept() >= 0 )
     {
