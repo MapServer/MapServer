@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.153  2003/04/16 15:04:55  assefa
+ * the outputformat is now available through the map object.
+ *
  * Revision 1.152  2003/04/02 22:36:54  dan
  * Change map->resolution to be of type double instead of integer
  *
@@ -441,6 +444,10 @@ static long _phpms_build_style_object(styleObj *pstyle, int parent_map_id,
                                       HashTable *list, 
                                       pval *return_value TSRMLS_DC);
 
+static long _phpms_build_outputformat_object(outputFormatObj *poutputformat,
+                                             HashTable *list, 
+                                             pval *return_value);
+
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
 /* ==================================================================== */
@@ -479,6 +486,7 @@ static int le_msprojection_ref;
 static int le_msscalebar;
 static int le_mslegend;
 static int le_msstyle;
+static int le_msoutputformat;
 
 static char tmpId[128] = "ttt"; /* big enough for time + pid */
 static int  tmpCount = 0;
@@ -504,6 +512,7 @@ static zend_class_entry *projection_class_entry_ptr;
 static zend_class_entry *scalebar_class_entry_ptr;
 static zend_class_entry *legend_class_entry_ptr;
 static zend_class_entry *style_class_entry_ptr;
+static zend_class_entry *outputformat_class_entry_ptr;
 
 #endif
 
@@ -744,6 +753,10 @@ function_entry php_projection_class_functions[] = {
 
 function_entry php_style_class_functions[] = {
     {"set",              php3_ms_style_setProperty,      NULL},    
+    {NULL, NULL, NULL}
+};
+
+function_entry php_outputformat_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
@@ -997,6 +1010,9 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
 
      INIT_CLASS_ENTRY(tmp_class_entry, "style", php_style_class_functions);
     style_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
+     INIT_CLASS_ENTRY(tmp_class_entry, "outputformat", php_outputformat_class_functions);
+     outputformat_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 #endif
 
     return SUCCESS;
@@ -1129,12 +1145,13 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
     add_property_long(return_value,  "keysizey",  pMap->legend.keysizey);
     add_property_long(return_value, "keyspacingx",pMap->legend.keyspacingx);
     add_property_long(return_value, "keyspacingy",pMap->legend.keyspacingy);
-
+    
     PHPMS_ADD_PROP_STR(return_value, "symbolsetfilename", 
                                                   pMap->symbolset.filename);
     PHPMS_ADD_PROP_STR(return_value, "fontsetfilename", 
                                                   pMap->fontset.filename);
-
+    PHPMS_ADD_PROP_STR(return_value, "mappath",      pMap->mappath);
+    
 #ifdef PHP4
     MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
 #endif
@@ -1173,6 +1190,11 @@ static long _phpms_build_map_object(mapObj *pMap, HashTable *list,
                                    list,  new_obj_ptr);
     _phpms_add_property_object(return_value, "latlon", new_obj_ptr, E_ERROR);
 
+    #ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_outputformat_object(pMap->outputformat, list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "outputformat", new_obj_ptr, E_ERROR);
     return map_id;
 }
 
@@ -1261,7 +1283,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     if (pNewMap == NULL)
     {
         _phpms_report_mapserver_error(E_WARNING);
-        php3_error(E_ERROR, "Failed to open map file %s", 
+        php3_error(E_WARNING, "Failed to open map file %s", 
                             pFname->value.str.val);
         RETURN_FALSE;
     }
@@ -2889,7 +2911,6 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
-
 
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
@@ -5042,6 +5063,7 @@ DLEXPORT void php3_ms_map_loadMapContext(INTERNAL_FUNCTION_PARAMETERS)
     pval        *pParamFileName;
     mapObj      *self=NULL;
     int         retVal=0;
+
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -10921,6 +10943,40 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(0);
 }
 /* }}} */
+
+
+
+/*=====================================================================
+ *                 PHP function wrappers - outputformat class
+ *====================================================================*/
+/**********************************************************************
+ *                     _phpms_build_outputformat_object()
+ **********************************************************************/
+static long _phpms_build_outputformat_object(outputFormatObj *poutputformat, 
+                                             HashTable *list, 
+                                             pval *return_value)
+{
+    int         outputformat_id;
+
+    if (poutputformat == NULL)
+        return 0;
+
+    outputformat_id = 
+      php3_list_insert(poutputformat, PHPMS_GLOBAL(le_msoutputformat));
+
+    _phpms_object_init(return_value, outputformat_id, 
+                       php_outputformat_class_functions,
+                       PHP4_CLASS_ENTRY(outputformat_class_entry_ptr));
+
+    PHPMS_ADD_PROP_STR(return_value, "name", poutputformat->name);
+    PHPMS_ADD_PROP_STR(return_value, "mimetype", poutputformat->mimetype);
+    PHPMS_ADD_PROP_STR(return_value, "driver", poutputformat->driver);
+    PHPMS_ADD_PROP_STR(return_value, "extension", poutputformat->extension);
+    add_property_long(return_value,  "renderer", poutputformat->renderer);
+    add_property_long(return_value,  "imagemode", poutputformat->imagemode);
+
+    return outputformat_id;
+}
 
 /* ==================================================================== */
 /*      utility functions                                               */
