@@ -116,11 +116,11 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
 
   dnl Check for Freetype 2 support
   GD_FT_FOUND=no 
-  AC_CHECK_LIB(gd, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT"; GD_LIB="$GD_LIB -lfreetype",, $GD_LIB -lfreetype)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT"; GD_LIB="$GD_LIB -lfreetype",, $GD_STATIC $GD_LIB -lfreetype)
 
   dnl If we can't find Freetype 2 in GD then check for Freetype 1
   if test "$GD_FT_FOUND" = "no" ; then
-    AC_CHECK_LIB(gd, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_LIB -lttf)
+    AC_CHECK_LIB($GD_CHECKLIB, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF"; GD_LIB="$GD_LIB -lttf",, $GD_STATIC $GD_LIB -lttf)
   fi
 
   dnl For GD 1.2, x/y in buffers are swapped.

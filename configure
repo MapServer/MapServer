@@ -1829,14 +1829,14 @@ fi
 
 
     GD_FT_FOUND=no 
-  echo $ac_n "checking for gdImageStringFT in -lgd""... $ac_c" 1>&6
-echo "configure:1834: checking for gdImageStringFT in -lgd" >&5
-ac_lib_var=`echo gd'_'gdImageStringFT | sed 'y%./+-%__p_%'`
+  echo $ac_n "checking for gdImageStringFT in -l$GD_CHECKLIB""... $ac_c" 1>&6
+echo "configure:1834: checking for gdImageStringFT in -l$GD_CHECKLIB" >&5
+ac_lib_var=`echo $GD_CHECKLIB'_'gdImageStringFT | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-lgd $GD_LIB -lfreetype $LIBS"
+LIBS="-l$GD_CHECKLIB $GD_STATIC $GD_LIB -lfreetype $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 1842 "configure"
 #include "confdefs.h"
@@ -1871,14 +1871,14 @@ fi
 
 
     if test "$GD_FT_FOUND" = "no" ; then
-    echo $ac_n "checking for gdImageStringTTF in -lgd""... $ac_c" 1>&6
-echo "configure:1876: checking for gdImageStringTTF in -lgd" >&5
-ac_lib_var=`echo gd'_'gdImageStringTTF | sed 'y%./+-%__p_%'`
+    echo $ac_n "checking for gdImageStringTTF in -l$GD_CHECKLIB""... $ac_c" 1>&6
+echo "configure:1876: checking for gdImageStringTTF in -l$GD_CHECKLIB" >&5
+ac_lib_var=`echo $GD_CHECKLIB'_'gdImageStringTTF | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-lgd $GD_LIB -lttf $LIBS"
+LIBS="-l$GD_CHECKLIB $GD_STATIC $GD_LIB -lttf $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 1884 "configure"
 #include "confdefs.h"
