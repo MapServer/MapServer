@@ -4,6 +4,8 @@
 #include "mapthread.h"
 #include "cpl_string.h"
 
+#ifdef USE_WCS_SVR
+
 typedef struct {
   // TODO: union?
 } rangeObj; 
@@ -178,6 +180,27 @@ static int msWCSGetCapabilities(mapObj *map, wcsParamsObj *params)
   return MS_SUCCESS;
 }
 
+/* Example RectifiedGrid from GML 3.0 spec 
+
+<gml:RectifiedGrid dimension="2"> 
+    <gml:limits> 
+      <gml:GridEnvelope> 
+        <gml:low>1 1</gml:low> 
+        <gml:high>3 3</gml:high> 
+      </gml:GridEnvelope> 
+    </gml:limits> 
+    <gml:axisName>u</gml:axisName> 
+    <gml:axisName>v</gml:axisName> 
+    <gml:origin> 
+      <gml:Point gml:id="palindrome"> 
+        <gml:coordinates>1.2,3.3,2.1</gml:coordinates> 
+      </gml:Point> 
+    </gml:origin> 
+    <gml:offsetVector>1,2,3</gml:offsetVector> 
+    <gml:offsetVector >2,1,0</gml:offsetVector> 
+  </gml:RectifiedGrid>   
+*/
+
 static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
 {
   return MS_SUCCESS;
@@ -313,6 +336,7 @@ static int msWCSGetCoverage(mapObj *map, wcsParamsObj *params)
 
     return status;
 }
+#endif /* def USE_WCS_SVR */
 
 // Entry point for WCS requests
 int msWCSDispatch(mapObj *map, cgiRequestObj *request)
@@ -355,31 +379,11 @@ int msWCSDispatch(mapObj *map, cgiRequestObj *request)
 #endif
 }
 
-/* Example RectifiedGrid from GML 3.0 spec 
-
-<gml:RectifiedGrid dimension="2"> 
-    <gml:limits> 
-      <gml:GridEnvelope> 
-        <gml:low>1 1</gml:low> 
-        <gml:high>3 3</gml:high> 
-      </gml:GridEnvelope> 
-    </gml:limits> 
-    <gml:axisName>u</gml:axisName> 
-    <gml:axisName>v</gml:axisName> 
-    <gml:origin> 
-      <gml:Point gml:id="palindrome"> 
-        <gml:coordinates>1.2,3.3,2.1</gml:coordinates> 
-      </gml:Point> 
-    </gml:origin> 
-    <gml:offsetVector>1,2,3</gml:offsetVector> 
-    <gml:offsetVector >2,1,0</gml:offsetVector> 
-  </gml:RectifiedGrid>   
-*/
-
 /************************************************************************/
 /*                      msWCSGetCoverageDomain()                        */
 /************************************************************************/
 
+#ifdef USE_WCS_SVR
 static int 
 msWCSGetCoverageDomain( mapObj *map, layerObj *layer, 
                         double *padfGeoTransform, 
@@ -588,3 +592,4 @@ msWCSGetCoverageDomain( mapObj *map, layerObj *layer,
         return MS_SUCCESS;
     }
 }
+#endif
