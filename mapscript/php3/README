@@ -836,13 +836,16 @@ and the MapServer Map File documentation at:
    void free()
         Destroys resources used by an image object.
 
-   int saveImage(string filename)
+   int saveImage(string filename, MapObj oMap)
         Writes image object to specifed filename.
         Passing an empty filename sends output to stdout.  In this case,
         the PHP header() function should be used to set the documents's
         content-type prior to calling saveImage().
         The output format is the one that is currently selected in the 
         map file.
+        The second argument oMap is not manadatory. It is usful when 
+        saving to formats like GTIFF that needs georeference informations
+        contained in the map file.
         The function returns -1 on error.  On success, it returns either 0
         if writing to an external file, or the number of bytes written if 
         output is sent to stdout.

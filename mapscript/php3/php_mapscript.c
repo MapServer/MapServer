@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.205  2004/07/14 15:19:34  assefa
+ * Modify SvaeImage function on the image object to take a map object as
+ * 2nd argument. (Bug 772).
+ *
  * Revision 1.204  2004/07/07 16:43:45  assefa
  * Correct bug in Zoomscale : setting the maxextents. (Bug 75)
  *
@@ -5890,14 +5894,17 @@ static long _phpms_build_img_object(imageObj *im, webObj *pweb,
  *       saveImage(string filename)
  **********************************************************************/
 
-/* {{{ proto int img.saveImage(string filename, int type, int transparent, int interlace, int quality)
-   Writes image object to specifed filename.  If filename is empty then write to stdout.  Returns -1 on error. */
+/* {{{ proto int img.saveImage(string filename, Map $oMap)
+   Writes image object to specifed filename.  If filename is empty then write to stdout.  Returns -1 on error. Second aregument oMap is not manadatory. It 
+ is usful when saving to other formats like GTIFF to get georeference infos.*/
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval   *pFname, *pThis;
-    imageObj *im = NULL;
-    int retVal = 0;
+    pval        *pFname, *pThis, *pMapObj;
+    imageObj    *im = NULL;
+    int         retVal = 0;
+    int         nArgs;
+    mapObj      *poMap = NULL;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -5909,20 +5916,28 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
-    if (pThis == NULL ||
-        getParameters(ht, 1, &pFname) != SUCCESS  )
+    nArgs = ARG_COUNT(ht);
+    if (pThis == NULL || (nArgs != 1 && nArgs != 2) ||
+        getParameters(ht, nArgs, &pFname, &pMapObj) != SUCCESS  )
     {
         WRONG_PARAM_COUNT;
     }
 
     convert_to_string(pFname);
+    if (nArgs == 2)
+    {
+        poMap = (mapObj*)_phpms_fetch_handle(pMapObj, 
+                                             PHPMS_GLOBAL(le_msmap),
+                                             list TSRMLS_CC);
+    }
+
 
     im = (imageObj *)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
 
     if(pFname->value.str.val != NULL && strlen(pFname->value.str.val) > 0)
     {
         if (im == NULL ||
-            (retVal = msSaveImage(NULL, im, pFname->value.str.val) != 0))
+            (retVal = msSaveImage(poMap, im, pFname->value.str.val) != 0))
         {
           _phpms_report_mapserver_error(E_WARNING);
           php3_error(E_ERROR, "Failed writing image to %s", 
