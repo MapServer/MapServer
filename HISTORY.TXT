@@ -19,6 +19,11 @@ Version 4.2.2 (cvs)
 - Fix a buffer overflow when building post request for WFS layers with 
   long wfs_filter (Bug 775).
 
+- Fixed problem with [layers] replacement in HTML templates (bug 738).
+
+- A few fixes to allow php_mapscript to work with both PHP4 and PHP5.
+  PHP5 support should still be considered experimental. (bug 718)
+
 
 Version 4.2.1 (2004-07-12)
 --------------------------
