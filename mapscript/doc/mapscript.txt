@@ -1975,18 +1975,23 @@ pointObj Attributes
 -------------------
 
 m : float
-    Measure.  Meaningful only for measured shapefiles.
+    Measure.  Meaningful only for measured shapefiles.  Given value
+    -2e38 if not otherwise assigned to indicate "nodata".
 
 x : float
     Easting
     
 y : float
     Northing
+
+z : float
+    Elevation
     
 pointObj Methods
 ----------------
 
-new pointObj( [ float x=0.0, float y=0.0, float m=2e-38 ] ) : pointObj
+new pointObj( [ float x=0.0, float y=0.0, float z=0.0, 
+                float m=-2e38 ] ) : pointObj
     Create new instance.  Easting, northing, and measure arguments are
     optional.
 
@@ -2013,12 +2018,22 @@ setXY( float x, float y [, float m=2e-38 ] ) : int
     The measure will be set only if the value of *m* is greater than the
     ESRI measure no-data value of 1e-38.  Returns MS_SUCCESS or MS_FAILURE.
 
+setXYZ( float x, float y, float z[, float m=-2e38 ] ) : int
+    Set spatial coordinate and, optionally, measure values simultaneously.
+    The measure will be set only if the value of *m* is greater than the
+    ESRI measure no-data value of -1e38.  Returns MS_SUCCESS or MS_FAILURE.
+
+setXYZM( float x, float y, float z, float m ) : int
+    Set spatial coordinate and, optionally, measure values simultaneously.
+    The measure will be set only if the value of *m* is greater than the
+    ESRI measure no-data value of -1e38.  Returns MS_SUCCESS or MS_FAILURE.
+
 toString() : string
     Return a string formatted like
 
     ::
 
-        { 'x': %f , 'y': %f }
+        { 'x': %f , 'y': %f, 'z': %f }
 
     
     with the coordinate values substituted appropriately.  Python users can
@@ -2028,7 +2043,7 @@ toString() : string
 
         >>> p = mapscript.pointObj(1, 1)
         >>> str(p)
-        { 'x': 1.000000 , 'y': 1.000000 }
+        { 'x': 1.000000 , 'y': 1.000000, 'z': 1.000000 }
 
 
 ------------------------------------------------------------------------------
