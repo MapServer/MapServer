@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2001/03/21 04:02:56  frank
+ * use pj_is_latlong
+ *
  * Revision 1.3  2001/03/16 15:11:17  frank
  * fixed bugs for geographic, don't write interim.png
  *
@@ -137,12 +140,12 @@ void *msInitProjTransformer( projectionObj *psSrc,
     psPTInfo = (msProjTransformInfo *) malloc(sizeof(msProjTransformInfo));
 
     psPTInfo->psSrcProj = psSrc->proj;
-    psPTInfo->bSrcIsGeographic = psSrc->proj->is_latlong;
+    psPTInfo->bSrcIsGeographic = pj_is_latlong(psSrc->proj);
     memcpy( psPTInfo->adfSrcGeoTransform, padfSrcGeoTransform, 
             sizeof(double) * 6 );
 
     psPTInfo->psDstProj = psDst->proj;
-    psPTInfo->bDstIsGeographic = psDst->proj->is_latlong;
+    psPTInfo->bDstIsGeographic = pj_is_latlong(psDst->proj);
     memcpy( psPTInfo->adfDstGeoTransform, padfDstGeoTransform, 
             sizeof(double) * 6 );
 
@@ -329,7 +332,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
         z[i] = 0.0;
     }
 
-    if( map->projection.proj->is_latlong )
+    if( pj_is_latlong(map->projection.proj) )
     {
         for( i = 0; i < nSamples; i++ )
         {
@@ -352,7 +355,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
         return MS_PROJERR;
     }
 
-    if( layer->projection.proj->is_latlong )
+    if( pj_is_latlong(layer->projection.proj) )
     {
         for( i = 0; i < nSamples; i++ )
         {
