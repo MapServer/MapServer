@@ -31,9 +31,9 @@ class LayerOrderTestCase(unittest.TestCase):
     def testPromoteLayer1(self):
         self.mapobj1.getLayer(1).promote()
         order = self.mapobj1.getLayerOrder()
-        assert order == (1, 0) + tuple(range(2,10)), order
-    def testDemoteLayer0(self):
-        self.mapobj1.getLayer(0).demote()
+        assert order == (0, 2, 1) + tuple(range(3,10)), order
+    def testDemoteLayer1(self):
+        self.mapobj1.getLayer(1).demote()
         order = self.mapobj1.getLayerOrder()
         assert order == (1, 0) + tuple(range(2,10)), order
     def testSetLayerOrder(self):
@@ -187,7 +187,8 @@ class ExpressionTestCase(unittest.TestCase):
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '"(null)"', fs
     def testSetExpression(self):
-        self.mapobj1.getLayer(0).setFilter('"foo"')
+        #self.mapobj1.getLayer(0).setFilter('"foo"')
+        self.mapobj1.getLayer(0).setFilter('foo')
         fs = self.mapobj1.getLayer(0).getFilterString()
         assert fs == '"foo"', fs
        

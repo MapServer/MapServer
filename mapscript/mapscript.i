@@ -630,11 +630,11 @@ memory.") const char * {
    */
 
   int promote() {
-    return msMoveLayerUp(self->map, self->index);
+    return msMoveLayerDown(self->map, self->index);
   }
 
   int demote() {
-    return msMoveLayerDown(self->map, self->index);
+    return msMoveLayerUp(self->map, self->index);
   }
   
   int draw(mapObj *map, imageObj *image) {
