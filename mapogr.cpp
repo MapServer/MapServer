@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.62  2003/05/25 18:48:06  dan
+ * Fixed test on connection value in msOGRFileOpen()
+ *
  * Revision 1.61  2003/03/26 17:04:34  frank
  * check layer->debug before reporting debug output
  *
@@ -734,7 +737,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
  * ------------------------------------------------------------------ */
   char *pszDSName = NULL, *pszLayerDef = NULL;
 
-  if( layer->connection == NULL )
+  if( connection == NULL )
   {
       /* we don't have anything */
   }
@@ -762,7 +765,7 @@ msOGRFileOpen(layerObj *layer, const char *connection )
       msSetError(MS_OGRERR, 
                  "Error parsing OGR connection information:%s", 
                  "msOGRFileOpen()",
-                 connection );
+                 (connection?connection:"(null)") );
       return NULL;
   }
 
