@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 -----------------
 
+- support for reading 3d shape file (z) : Bug 869.
+
+- add php mapscript functions to expose the z element : Bug 870
+
 - imageObj::write() method for SWIG mapscript (bug 941).
 
 - Protect users from 3 potential sources of threading problems: parsing
