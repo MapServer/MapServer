@@ -29,6 +29,8 @@ Version 3.6.5 (2003--3-18)
   $point->project(), etc... in php_mapscript.  Note that the project() 
   methods return MS_SUCCESS/MS_FAILURE and operate on the object itself.
 
+- Do not produce an error if SAPI is 'cgi-fcgi', required for PHP 4.3.x
+
 
 Version 3.6.4 (2003-01-08)
 --------------------------
