@@ -127,10 +127,14 @@ memory.") const char * {
 #endif // __cplusplus
 
 // Python-specific module code included here
-
 #ifdef SWIGPYTHON
 %include "pymodule.i"
 #endif // SWIGPYTHON
+
+// Ruby-specific module code included here
+#ifdef SWIGRUBY
+%include "rbmodule.i"
+#endif
 
 //%rename (_class) class;
 
@@ -157,6 +161,10 @@ memory.") const char * {
 #ifdef SWIGPYTHON
 %include "pyextend.i"
 #endif //SWIGPYTHON
+
+#ifdef SWIGRUBY
+%include "rbextend.i"
+#endif
 
 // A few things neccessary for automatically wrapped functions
 %newobject msGetErrorString;
