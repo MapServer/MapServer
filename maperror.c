@@ -74,3 +74,50 @@ void msWriteError(FILE *stream)
 {
   fprintf(stream, "%s: %s %s\n", ms_error.routine, ms_errorCodes[ms_error.code], ms_error.message);
 }
+
+char *msGetVersion() {
+  char *version;
+
+  version = (char *)malloc(sizeof(char)*128);
+
+  strcpy(version, MS_VERSION);
+
+#ifdef USE_GD_1_2
+  strcat(version, " -GD_1_2");
+#endif
+#ifdef USE_GD_1_3
+  strcat(version, " -GD_1_3");
+#endif
+#ifdef USE_GD_1_6
+  strcat(version, " -GD_1_6");
+#endif
+#ifdef USE_GD_1_8
+  strcat(version, " -GD_1_8");
+#endif
+#ifdef USE_PROJ
+  strcat(version, " -PROJ.4");
+#endif
+#ifdef USE_TTF
+  strcat(version, " -FreeType");
+#endif
+#ifdef USE_TIFF
+  strcat(version, " -TIFF");
+#endif
+#ifdef USE_EPPL
+  strcat(version, " -EPPL7");
+#endif
+#ifdef USE_JPEG
+  strcat(version, " -JPEG");
+#endif
+#ifdef USE_SDE
+  strcat(version, " -SDE");
+#endif
+#ifdef USE_OGR
+  strcat(version, " -OGR");
+#endif
+#ifdef USE_EGIS
+  strcat(version, " -EGIS");
+#endif
+
+  return(version);
+}

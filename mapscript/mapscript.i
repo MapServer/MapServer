@@ -585,14 +585,14 @@
       return NULL;
 
     if(type == -1)
-      status = msOpenSHPFile(shapefile, "rb", NULL, NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb", NULL, NULL, filename);
     else if(type == -2)
-      status = msOpenSHPFile(shapefile, "rb+", NULL, NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb+", NULL, NULL, filename);
     else
-      status = msCreateSHPFile(shapefile, filename, type);
+      status = msSHPCreateFile(shapefile, filename, type);
 
     if(status == -1) {
-      msCloseSHPFile(shapefile);
+      msSHPCloseFile(shapefile);
       free(shapefile);
       return NULL;
     }
@@ -601,7 +601,7 @@
   }
 
   ~shapefileObj() {
-    msCloseSHPFile(self);
+    msSHPCloseFile(self);
     free(self);  
   }
 
@@ -610,7 +610,7 @@
       return -1;
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
-    SHPReadShape(self->hSHP, i, shape);
+    msSHPReadShape(self->hSHP, i, shape);
 
     return 0;
   }
@@ -620,18 +620,18 @@
       return -1;
 
     msFreeShape(shape); /* frees all lines and points before re-filling */
-    SHPReadShape(self->hSHP, i, shape);
+    msSHPReadShape(self->hSHP, i, shape);
     msTransformPolygon(map->extent, map->cellsize, shape);
 
     return 0;
   }
 
   void getExtent(int i, rectObj *rect) {
-    SHPReadBounds(self->hSHP, i, rect);
+    msSHPReadBounds(self->hSHP, i, rect);
   }
 
   int add(shapeObj *shape) {
-    return SHPWriteShape(self->hSHP, shape);	
+    return msSHPWriteShape(self->hSHP, shape);	
   }	
 }
 
@@ -661,7 +661,7 @@
         static char pszFieldName[1000];
 	int pnWidth;
 	int pnDecimals;
-	DBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	msDBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
 	return pszFieldName;
     }
 
@@ -669,7 +669,7 @@
         char pszFieldName[1000];
 	int pnWidth;
 	int pnDecimals;
-	DBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	msDBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
 	return pnWidth;
     }
 
@@ -677,11 +677,11 @@
         char pszFieldName[1000];
 	int pnWidth;
 	int pnDecimals;
-	DBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
+	msDBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
 	return pnDecimals;
     }
     
     DBFFieldType getFieldType(int iField) {
-	return DBFGetFieldInfo(self, iField, NULL, NULL, NULL);
+	return msDBFGetFieldInfo(self, iField, NULL, NULL, NULL);
     }    
 }

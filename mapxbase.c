@@ -27,14 +27,14 @@ static void * SfRealloc( void * pMem, int nNewSize )
 }
 
 /************************************************************************/
-/*                           DBFWriteHeader()                           */
+/*                           writeHeader()                              */
 /*                                                                      */
 /*      This is called to write out the file header, and field          */
 /*      descriptions before writing any actual data records.  This      */
 /*      also computes all the DBFDataSet field offset/size/decimals     */
 /*      and so forth values.                                            */
 /************************************************************************/
-static void DBFWriteHeader(DBFHandle psDBF)
+static void writeHeader(DBFHandle psDBF)
 
 {
     uchar	abyHeader[32];
@@ -82,11 +82,11 @@ static void DBFWriteHeader(DBFHandle psDBF)
 }
 
 /************************************************************************/
-/*                           DBFFlushRecord()                           */
+/*                           flushRecord()                              */
 /*                                                                      */
 /*      Write out the current record if there is one.                   */
 /************************************************************************/
-static void DBFFlushRecord( DBFHandle psDBF )
+static void flushRecord( DBFHandle psDBF )
 
 {
     int		nRecordOffset;
@@ -104,11 +104,11 @@ static void DBFFlushRecord( DBFHandle psDBF )
 }
 
 /************************************************************************/
-/*                              DBFOpen()                               */
+/*                              msDBFOpen()                             */
 /*                                                                      */
 /*      Open a .dbf file.                                               */
 /************************************************************************/   
-DBFHandle DBFOpen( const char * pszFilename, const char * pszAccess )
+DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
 
 {
     DBFHandle		psDBF;
@@ -214,18 +214,18 @@ DBFHandle DBFOpen( const char * pszFilename, const char * pszAccess )
 }
 
 /************************************************************************/
-/*                              DBFClose()                              */
+/*                              msDBFClose()                            */
 /************************************************************************/
 
-void	DBFClose(DBFHandle psDBF)
+void  msDBFClose(DBFHandle psDBF)
 {
   /* -------------------------------------------------------------------- */
   /*      Write out header if not already written.                        */
   /* -------------------------------------------------------------------- */
     if( psDBF->bNoHeader )
-        DBFWriteHeader( psDBF );
+        writeHeader( psDBF );
 
-    DBFFlushRecord( psDBF );
+    flushRecord( psDBF );
 
     /* -------------------------------------------------------------------- */
     /*      Update last access date, and number of records if we have       */
@@ -271,11 +271,11 @@ void	DBFClose(DBFHandle psDBF)
 }
 
 /************************************************************************/
-/*                             DBFCreate()                              */
+/*                             msDBFCreate()                            */
 /*                                                                      */
 /*      Create a new .dbf file.                                         */
 /************************************************************************/
-DBFHandle DBFCreate( const char * pszFilename )
+DBFHandle msDBFCreate( const char * pszFilename )
 
 {
     DBFHandle	psDBF;
@@ -322,12 +322,12 @@ DBFHandle DBFCreate( const char * pszFilename )
 }
 
 /************************************************************************/
-/*                            DBFAddField()                             */
+/*                            msDBFAddField()                           */
 /*                                                                      */
 /*      Add a field to a newly created .dbf file before any records     */
 /*      are written.                                                    */
 /************************************************************************/
-int	DBFAddField(DBFHandle psDBF, const char * pszFieldName, DBFFieldType eType, int nWidth, int nDecimals )
+int	msDBFAddField(DBFHandle psDBF, const char * pszFieldName, DBFFieldType eType, int nWidth, int nDecimals )
 {
     char	*pszFInfo;
     int		i;
@@ -416,11 +416,11 @@ int	DBFAddField(DBFHandle psDBF, const char * pszFieldName, DBFFieldType eType, 
 }
 
 /************************************************************************/
-/*                          DBFReadAttribute()                          */
+/*                          msDBFReadAttribute()                        */
 /*                                                                      */
 /*      Read one of the attribute fields of a record.                   */
 /************************************************************************/
-static char *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
+static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
 
 {
     int	       	nRecordOffset, i;
@@ -444,7 +444,7 @@ static char *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     /* -------------------------------------------------------------------- */
     if( psDBF->nCurrentRecord != hEntity )
     {
-	DBFFlushRecord( psDBF );
+	flushRecord( psDBF );
 
 	nRecordOffset = psDBF->nRecordLength * hEntity + psDBF->nHeaderLength;
 
@@ -494,62 +494,62 @@ static char *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
 }
 
 /************************************************************************/
-/*                        DBFReadIntAttribute()                         */
+/*                        msDBFReadIntAttribute()                       */
 /*                                                                      */
 /*      Read an integer attribute.                                      */
 /************************************************************************/
-int	DBFReadIntegerAttribute( DBFHandle psDBF, int iRecord, int iField )
+int	msDBFReadIntegerAttribute( DBFHandle psDBF, int iRecord, int iField )
 
 {
-  return(atoi(DBFReadAttribute( psDBF, iRecord, iField )));
+  return(atoi(msDBFReadAttribute( psDBF, iRecord, iField )));
 }
 
 /************************************************************************/
-/*                        DBFReadDoubleAttribute()                      */
+/*                        msDBFReadDoubleAttribute()                    */
 /*                                                                      */
 /*      Read a double attribute.                                        */
 /************************************************************************/
-double	DBFReadDoubleAttribute( DBFHandle psDBF, int iRecord, int iField )
+double	msDBFReadDoubleAttribute( DBFHandle psDBF, int iRecord, int iField )
 {
-  return(atof(DBFReadAttribute( psDBF, iRecord, iField )));
+  return(atof(msDBFReadAttribute( psDBF, iRecord, iField )));
 }
 
 /************************************************************************/
-/*                        DBFReadStringAttribute()                      */
+/*                        msDBFReadStringAttribute()                      */
 /*                                                                      */
 /*      Read a string attribute.                                        */
 /************************************************************************/
-const char *DBFReadStringAttribute( DBFHandle psDBF, int iRecord, int iField )
+const char *msDBFReadStringAttribute( DBFHandle psDBF, int iRecord, int iField )
 {
-  return( DBFReadAttribute( psDBF, iRecord, iField ) );  
+  return( msDBFReadAttribute( psDBF, iRecord, iField ) );  
 }
 
 /************************************************************************/
-/*                          DBFGetFieldCount()                          */
+/*                          msDBFGetFieldCount()                        */
 /*                                                                      */
 /*      Return the number of fields in this table.                      */
 /************************************************************************/
-int	DBFGetFieldCount( DBFHandle psDBF )
+int	msDBFGetFieldCount( DBFHandle psDBF )
 {
   return( psDBF->nFields );
 }
 
 /************************************************************************/
-/*                         DBFGetRecordCount()                          */
+/*                         msDBFGetRecordCount()                        */
 /*                                                                      */
 /*      Return the number of records in this table.                     */
 /************************************************************************/
-int	DBFGetRecordCount( DBFHandle psDBF )
+int	msDBFGetRecordCount( DBFHandle psDBF )
 {
   return( psDBF->nRecords );
 }
 
 /************************************************************************/
-/*                          DBFGetFieldInfo()                           */
+/*                          msDBFGetFieldInfo()                         */
 /*                                                                      */
 /*      Return any requested information about the field.               */
 /************************************************************************/
-DBFFieldType DBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName, int * pnWidth, int * pnDecimals )
+DBFFieldType msDBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName, int * pnWidth, int * pnDecimals )
 {
   if( iField < 0 || iField >= psDBF->nFields )
     return( FTInvalid );
@@ -586,11 +586,11 @@ DBFFieldType DBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName, 
 }
 
 /************************************************************************/
-/*                         DBFWriteAttribute()                          */
+/*                         msDBFWriteAttribute()                        */
 /*									*/
 /*	Write an attribute record to the file.				*/
 /************************************************************************/
-static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * pValue )
+static int msDBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * pValue )
 {
   int	       	nRecordOffset, i, j;
   uchar	*pabyRec;
@@ -603,14 +603,14 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * pV
     return( MS_FALSE );
   
   if( psDBF->bNoHeader )
-    DBFWriteHeader(psDBF);
+    writeHeader(psDBF);
   
   /* -------------------------------------------------------------------- */
   /*      Is this a brand new record?                                     */
   /* -------------------------------------------------------------------- */
   if( hEntity == psDBF->nRecords )
     {
-      DBFFlushRecord( psDBF );
+      flushRecord( psDBF );
       
       psDBF->nRecords++;
       for( i = 0; i < psDBF->nRecordLength; i++ )
@@ -625,7 +625,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * pV
   /* -------------------------------------------------------------------- */
   if( psDBF->nCurrentRecord != hEntity )
     {
-      DBFFlushRecord( psDBF );
+      flushRecord( psDBF );
       
       nRecordOffset = psDBF->nRecordLength * hEntity + psDBF->nHeaderLength;
       
@@ -676,34 +676,143 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField, void * pV
 }
 
 /************************************************************************/
-/*                      DBFWriteDoubleAttribute()                       */
+/*                      msDBFWriteDoubleAttribute()                     */
 /*                                                                      */
 /*      Write a double attribute.                                       */
 /************************************************************************/
-int DBFWriteDoubleAttribute( DBFHandle psDBF, int iRecord, int iField, double dValue )
+int msDBFWriteDoubleAttribute( DBFHandle psDBF, int iRecord, int iField, double dValue )
 {
-  return( DBFWriteAttribute( psDBF, iRecord, iField, (void *) &dValue ) );
+  return( msDBFWriteAttribute( psDBF, iRecord, iField, (void *) &dValue ) );
 }
 
 /************************************************************************/
-/*                      DBFWriteIntegerAttribute()                      */
+/*                      msDBFWriteIntegerAttribute()                    */
 /*                                                                      */
 /*      Write a integer attribute.                                      */
 /************************************************************************/
 
-int DBFWriteIntegerAttribute( DBFHandle psDBF, int iRecord, int iField,	int nValue )
+int msDBFWriteIntegerAttribute( DBFHandle psDBF, int iRecord, int iField,	int nValue )
 {
   double	dValue = nValue;
   
-  return( DBFWriteAttribute( psDBF, iRecord, iField, (void *) &dValue ) );
+  return( msDBFWriteAttribute( psDBF, iRecord, iField, (void *) &dValue ) );
 }
 
 /************************************************************************/
-/*                      DBFWriteStringAttribute()                       */
+/*                      msDBFWriteStringAttribute()                     */
 /*                                                                      */
 /*      Write a string attribute.                                       */
 /************************************************************************/
-int DBFWriteStringAttribute( DBFHandle psDBF, int iRecord, int iField, const char * pszValue )
+int msDBFWriteStringAttribute( DBFHandle psDBF, int iRecord, int iField, const char * pszValue )
 {
-  return( DBFWriteAttribute( psDBF, iRecord, iField, (void *) pszValue ) );
+  return( msDBFWriteAttribute( psDBF, iRecord, iField, (void *) pszValue ) );
+}
+
+/*
+** Which column number in the .DBF file does the item correspond to
+*/
+int msDBFGetItemIndex(DBFHandle dbffile, char *name)
+{
+  int i;
+  DBFFieldType dbfField;
+  int fWidth,fnDecimals; /* field width and number of decimals */    
+  char fName[32]; /* field name */
+
+  if(!name) {
+    msSetError(MS_MISCERR, "NULL item name passed.", "msGetItemIndex()");    
+    return(-1);
+  }
+
+  /* does name exist as a field? */
+  for(i=0;i<msDBFGetFieldCount(dbffile);i++) {
+    dbfField = msDBFGetFieldInfo(dbffile,i,fName,&fWidth,&fnDecimals);
+    if(strcasecmp(name,fName) == 0) /* found it */
+      return(i);
+  }
+
+  sprintf(ms_error.message, "Item %s not found.", name);
+  msSetError(MS_DBFERR, ms_error.message, "msFindRecords()");  
+  return(-1); /* item not found */
+}
+
+/*
+** Load item names into a character array
+*/
+char **msDBFGetItems(DBFHandle dbffile)
+{
+  char **items;
+  int i, nFields;
+  char fName[32];
+
+  if((nFields = msDBFGetFieldCount(dbffile)) == 0) {
+    msSetError(MS_DBFERR, "File contains no data.", "msGetDBFItems()");
+    return(NULL);
+  }
+
+  if((items = (char **)malloc(sizeof(char *)*nFields)) == NULL) {
+    msSetError(MS_MEMERR, NULL, "msGetDBFItems()");
+    return(NULL);
+  }
+
+  for(i=0;i<nFields;i++) {
+    msDBFGetFieldInfo(dbffile, i, fName, NULL, NULL);
+    items[i] = strdup(fName);
+  }
+
+  return(items);
+}
+
+/*
+** Load item values into a character array
+*/
+char **msDBFGetValues(DBFHandle dbffile, int record)
+{
+  char **values;
+  int i, nFields;
+
+  if((nFields = msDBFGetFieldCount(dbffile)) == 0) {
+    msSetError(MS_DBFERR, "File contains no data.", "msGetDBFValues()");
+    return(NULL);
+  }
+
+  if((values = (char **)malloc(sizeof(char *)*nFields)) == NULL) {
+    msSetError(MS_MEMERR, NULL, "msGetAllDBFValues()");
+    return(NULL);
+  }
+
+  for(i=0;i<nFields;i++)
+    values[i] = strdup(msDBFReadStringAttribute(dbffile, record, i));
+
+  return(values);
+}
+
+char **msDBFGetValueList(DBFHandle dbffile, int record, char **items, int **itemindexes, int numitems)
+{
+  char **values;
+  int i;
+
+  if(numitems == 0) return(NULL);
+
+  if(!(*itemindexes)) { // build the list
+    (*itemindexes) = (int *)malloc(sizeof(int)*numitems);
+    if(!(*itemindexes)) {
+      msSetError(MS_MEMERR, NULL, "msGetSomeDBFValues()");
+      return(NULL);
+    }
+
+    for(i=0;i<numitems;i++) {
+      (*itemindexes)[i] = msDBFGetItemIndex(dbffile, items[i]);
+      if((*itemindexes)[i] == -1) return(NULL);
+    }
+  }
+
+  if((values = (char **)malloc(sizeof(char *)*numitems)) == NULL) {
+    msSetError(MS_MEMERR, NULL, "msGetSomeDBFValues()");
+    return(NULL);
+  }
+
+  for(i=0;i<numitems;i++)
+    values[i] = strdup(msDBFReadStringAttribute(dbffile, record, (*itemindexes)[i]));
+
+  return(values);
 }

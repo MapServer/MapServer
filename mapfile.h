@@ -91,7 +91,7 @@
 #define TEMPLATE 1084
 #define TEXT 1085
 #define TEXTITEM 1086
-#define TILE 1087
+
 #define TILEINDEX 1088
 #define TILEITEM 1089
 #define TOLERANCE 1090

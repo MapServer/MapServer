@@ -1,5 +1,13 @@
 #include "map.h"
 
+extern int msyyparse();
+extern int msyylex();
+extern char *msyytext;
+
+extern int msyyresult; // result of parsing, true/false
+extern int msyystate;
+extern char *msyystring;
+
 #ifdef USE_EGIS
 #include <errLog.h>
 #include <imgLib.h>
@@ -35,6 +43,49 @@ unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
 struct timeval stTime, endTime;
 double diffTime;
 #endif
+
+/* 
+** NEED TO FIX THIS, SPECIAL FOR RASTERS!
+*/
+static int getClass(layerObj *layer, char *str)
+{
+  int i;
+  char *tmpstr=NULL;
+
+  if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
+    return(0);
+
+  if(!str) return(-1);
+
+  for(i=0; i<layer->numclasses; i++) {
+    if (layer->class[i].expression.string == NULL) /* Empty expression - always matches */
+      return(i);
+    switch(layer->class[i].expression.type) {
+    case(MS_STRING):
+      if(strcmp(layer->class[i].expression.string, str) == 0) /* got a match */
+	return(i);
+      break;
+    case(MS_REGEX):
+      if(regexec(&(layer->class[i].expression.regex), str, 0, NULL, 0) == 0) /* got a match */
+	return(i);
+      break;
+    case(MS_EXPRESSION):
+      tmpstr = strdup(layer->class[i].expression.string);
+      tmpstr = gsub(tmpstr, "[pixel]", str);
+
+      msyystate = 4; msyystring = tmpstr;
+      if(msyyparse() != 0)
+	return(-1);
+
+      free(tmpstr);
+
+      if(msyyresult) /* got a match */
+	return(i);
+    }
+  }
+
+  return(-1); /* not found */
+}
 
 /*
 ** Function to add a color to an existing color map. It first looks for
@@ -256,7 +307,7 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
       for(i=0; i<MAXCOLORS; i++) {
 	if(i != layer->offsite) {
 	  sprintf(tmpstr,"%d", i);
-	  c = msGetClassIndex(layer, tmpstr);
+	  c = getClass(layer, tmpstr);
 	  
 	  if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	    cmap[i] = -1;
@@ -473,7 +524,7 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     for(i=0; i<gdImageColorsTotal(png); i++) {
       if(i != layer->offsite) {
 	sprintf(tmpstr,"%d", i);
-	c = msGetClassIndex(layer, tmpstr);
+	c = getClass(layer, tmpstr);
 
 	if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
@@ -576,7 +627,7 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
     for(i=0; i<gdImageColorsTotal(gif); i++) {
       if(i != layer->offsite) {
 	sprintf(tmpstr,"%d", i);
-	c = msGetClassIndex(layer, tmpstr);
+	c = getClass(layer, tmpstr);
 
 	if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	  cmap[i] = -1;
@@ -828,7 +879,7 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 	for(i=0; i<hd.nclass; i++) {
 	  if(i != layer->offsite) {
 	    sprintf(tmpstr,"%d", i);
-	    c = msGetClassIndex(layer, tmpstr);
+	    c = getClass(layer, tmpstr);
 	    
 	    if(c == -1) /* doesn't belong to any class, so handle like offsite */
 	      cmap[i] = -1;
@@ -962,7 +1013,7 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       for (i=epp.minval; i<=epp.maxval; i++) {
 	if(i != layer->offsite) {
 	  sprintf(tmpstr,"%d", i);
-	  c = msGetClassIndex(layer, tmpstr);
+	  c = getClass(layer, tmpstr);
 	  
 	  if(c != -1) {
 	    if(layer->class[c].color == -1) { /* use raster color */
@@ -1243,12 +1294,11 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   char old_path[MS_PATH_LENGTH];
 
-  int tileItemIndex=-1;
   int t;
+  int tileitemindex=-1;
   shapefileObj tilefile;
   char tilename[MS_PATH_LENGTH];
-  int nTiles=1; /* always at least one tile */
-  char *tileStatus=NULL;
+  int numtiles=1; /* always at least one tile */
 
 #ifdef USE_EGIS
   char *ext; // OV -egis- temp variable
@@ -1269,31 +1319,22 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
   if(map->shapepath) chdir(map->shapepath);
-  if(map->tile) chdir(map->tile);
 
   if(layer->tileindex) { /* we have in index file */
-
-    if(msOpenSHPFile(&tilefile, "rb", map->shapepath, map->tile, layer->tileindex) == -1) return(-1);
-    
-    if((tileItemIndex = msGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
-
-#ifdef USE_PROJ
-    tileStatus = msWhichShapesProj(&tilefile, map->extent, &(layer->projection), &(map->projection));
-#else
-    tileStatus = msWhichShapes(&tilefile, map->extent);
-#endif
-
-    nTiles = tilefile.numshapes;
+    if(msSHPOpenFile(&tilefile, "rb", map->shapepath, layer->tileindex) == -1) return(-1);    
+    if((tileitemindex = msDBFGetItemIndex(tilefile.hDBF, layer->tileitem)) == -1) return(-1);
+    tilefile.status = msSHPWhichShapes(&tilefile, map->extent, &(layer->projection), &(map->projection));
+    numtiles = tilefile.numshapes;
   }
 
-  for(t=0;t<nTiles;t++) { /* for each tile, always at least 1 tile */
+  for(t=0;t<numtiles;t++) { /* for each tile, always at least 1 tile */
 
     if(layer->tileindex) {
-      if(!msGetBit(tileStatus,t)) continue; /* on to next tile */
+      if(!msGetBit(tilefile.status,t)) continue; /* on to next tile */
       if(layer->data == NULL) /* assume whole filename is in attribute field */
-	filename = DBFReadStringAttribute(tilefile.hDBF, t, tileItemIndex);
+	filename = msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex);
       else {  
-	sprintf(tilename,"%s/%s", DBFReadStringAttribute(tilefile.hDBF, t, tileItemIndex) , layer->data);
+	sprintf(tilename,"%s/%s", msDBFReadStringAttribute(tilefile.hDBF, t, tileitemindex) , layer->data);
 	filename = tilename;
       }
     } else {
@@ -1390,10 +1431,8 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
     continue;
   } // next tile
 
-  if(layer->tileindex) { /* tiling clean-up */
-    msCloseSHPFile(&tilefile);
-    free(tileStatus);
-  }
+  if(layer->tileindex) /* tiling clean-up */
+    msSHPCloseFile(&tilefile);    
 
   chdir(old_path); /* restore old cwd */
   return 0;

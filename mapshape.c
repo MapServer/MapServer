@@ -53,7 +53,7 @@ static void * SfRealloc( void * pMem, int nNewSize )
 }
 
 /************************************************************************/
-/*                          SHPWriteHeader()                            */
+/*                          writeHeader()                               */
 /*                                                                      */
 /*      Write out a header for the .shp and .shx files as well as the	*/
 /*	contents of the index (.shx) file.				*/
@@ -137,12 +137,12 @@ static void writeHeader( SHPHandle psSHP )
 }
 
 /************************************************************************/
-/*                              SHPOpen()                               */
+/*                              msSHPOpen()                             */
 /*                                                                      */
 /*      Open the .shp and .shx files based on the basename of the       */
 /*      files or either file name.                                      */
 /************************************************************************/   
-SHPHandle SHPOpen( const char * pszLayer, const char * pszAccess )
+SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
 {
   char		*pszFullname, *pszBasename;
   SHPHandle		psSHP;
@@ -290,11 +290,11 @@ SHPHandle SHPOpen( const char * pszLayer, const char * pszAccess )
 }
 
 /************************************************************************/
-/*                              SHPClose()                              */
+/*                              msSHPClose()                            */
 /*								       	*/
 /*	Close the .shp and .shx files.					*/
 /************************************************************************/
-void SHPClose(SHPHandle psSHP )
+void msSHPClose(SHPHandle psSHP )
 {
   /* -------------------------------------------------------------------- */
   /*	Update the header if we have modified anything.		    	  */
@@ -315,11 +315,11 @@ void SHPClose(SHPHandle psSHP )
 }
 
 /************************************************************************/
-/*                             SHPGetInfo()                             */
+/*                             msSHPGetInfo()                           */
 /*                                                                      */
 /*      Fetch general information about the shape file.                 */
 /************************************************************************/
-void SHPGetInfo(SHPHandle psSHP, int * pnEntities, int * pnShapeType )
+void msSHPGetInfo(SHPHandle psSHP, int * pnEntities, int * pnShapeType )
 {
   if( pnEntities )
     *pnEntities = psSHP->nRecords;
@@ -329,12 +329,12 @@ void SHPGetInfo(SHPHandle psSHP, int * pnEntities, int * pnShapeType )
 }
 
 /************************************************************************/
-/*                             SHPCreate()                              */
+/*                             msSHPCreate()                            */
 /*                                                                      */
 /*      Create a new shape file and return a handle to the open         */
 /*      shape file with read/write access.                              */
 /************************************************************************/
-SHPHandle SHPCreate( const char * pszLayer, int nShapeType )
+SHPHandle msSHPCreate( const char * pszLayer, int nShapeType )
 {
   char	*pszBasename, *pszFullname;
   int		i;
@@ -429,7 +429,7 @@ SHPHandle SHPCreate( const char * pszLayer, int nShapeType )
   fclose( fpSHP );
   fclose( fpSHX );
   
-  return( SHPOpen( pszLayer, "rb+" ) );
+  return( msSHPOpen( pszLayer, "rb+" ) );
 }
 
 /************************************************************************/
@@ -472,7 +472,7 @@ static void writeBounds( uchar * pabyRec, shapeObj *shape, int nVCount )
   ByteCopy( &dYMax, pabyRec + 24, 8 );
 }
 
-int SHPWriteShape(SHPHandle psSHP, shapeObj *shape )
+int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 {
   int	       	nRecordOffset, i, j, k, nRecordSize=0;
   uchar	*pabyRec;
@@ -644,9 +644,9 @@ int SHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 }
 
 /*
-** SHPReadShape() - Reads the vertices for one shape from a shape file.
+** msSHPReadShape() - Reads the vertices for one shape from a shape file.
 */
-void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
+void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 {
     int	       		i, j, k;
     static uchar	*pabyRec = NULL;   
@@ -846,244 +846,11 @@ void SHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       shape->type = MS_POINT;
     }
 
+    shape->index = hEntity;
     return;
 }
 
-#ifdef USE_PROJ
-/*
-** SHPReadShapeProj() - Reads the vertices for one shape from a shape file. 
-** Projection is done as points are moved into the polygon/polyline stucture.
-*/
-void SHPReadShapeProj( SHPHandle psSHP, int hEntity, shapeObj *shape, projectionObj *in, projectionObj *out )
-{
-    int	       		i, j, k;
-    static uchar	*pabyRec = NULL;   
-    static int		nPartMax = 0, *panParts = NULL;
-    static int		nBufSize = 0;
-
-    if((in->numargs == 0) || (out->numargs == 0)) { /* projection not needed */
-      SHPReadShape(psSHP, hEntity, shape);
-      return;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*      Validate the record/entity number.                              */
-    /* -------------------------------------------------------------------- */
-    if( hEntity < 0 || hEntity >= psSHP->nRecords )
-      return;
-    
-    if( psSHP->panRecSize[hEntity] == 4 )
-      return;
-    
-    /* -------------------------------------------------------------------- */
-    /*      Ensure our record buffer is large enough.                       */
-    /* -------------------------------------------------------------------- */
-    if( psSHP->panRecSize[hEntity]+8 > nBufSize )
-    {
-	nBufSize = psSHP->panRecSize[hEntity]+8;
-	pabyRec = (uchar *) SfRealloc(pabyRec,nBufSize);
-    }    
-
-    /* -------------------------------------------------------------------- */
-    /*      Read the record.                                                */
-    /* -------------------------------------------------------------------- */
-    fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 );
-    fread( pabyRec, psSHP->panRecSize[hEntity]+8, 1, psSHP->fpSHP );
-
-    msInitShape(shape); /* initialize the shape */
-
-    /* -------------------------------------------------------------------- */
-    /*  Extract vertices for a Polygon or Arc.				*/
-    /* -------------------------------------------------------------------- */
-    if( psSHP->nShapeType == MS_SHP_POLYGON || psSHP->nShapeType == MS_SHP_ARC )
-    {
-      int32		nPoints, nParts;
-      pointObj          tmp;
-
-      memcpy( &nPoints, pabyRec + 40 + 8, 4 );
-      memcpy( &nParts, pabyRec + 36 + 8, 4 );
-      
-      if( bBigEndian ) {
-	SwapWord( 4, &nPoints );
-        SwapWord( 4, &nParts );
-      }
-
-      /* -------------------------------------------------------------------- */
-      /*      Copy out the part array from the record.                        */
-      /* -------------------------------------------------------------------- */
-      if( nPartMax < nParts )
-      {
-	nPartMax = nParts;
-	panParts = (int *) SfRealloc(panParts, nPartMax * sizeof(int) );
-      }
-      
-      memcpy( panParts, pabyRec + 44 + 8, 4 * nParts );
-      for( i = 0; i < nParts; i++ )
-      {
-	if( bBigEndian ) SwapWord( 4, panParts+i );
-      }
-      
-      /* -------------------------------------------------------------------- */
-      /*      Fill the shape structure.                                       */
-      /* -------------------------------------------------------------------- */
-      if( (shape->line = (lineObj *)malloc(sizeof(lineObj)*nParts)) == NULL ) {
-	msSetError(MS_MEMERR, NULL, "SHPReadShapeProj()");
-	return;
-      }
-
-      shape->numlines = nParts;
-      
-      k = 0; /* overall point counter */
-
-      // initalize the bounding box
-      memcpy(&(tmp.x), pabyRec + 44 + 4*nParts + 8 + 0 * 16, 8 );
-      memcpy(&(tmp.y), pabyRec + 44 + 4*nParts + 8 + 0 * 16 + 8, 8 );
-
-      if( bBigEndian ) {
-	SwapWord( 8, &(tmp.x) );
-	SwapWord( 8, &(tmp.y) );
-      }
-
-      msProjectPoint(in->proj, out->proj, &tmp);
-
-      shape->bounds.maxx = shape->bounds.minx = tmp.x;
-      shape->bounds.maxy = shape->bounds.miny = tmp.y;
-
-      for( i = 0; i < nParts; i++) {
-	if( i == nParts-1)
-	  shape->line[i].numpoints = nPoints - panParts[i];
-	else
-	  shape->line[i].numpoints = panParts[i+1] - panParts[i];
-	
-	if( (shape->line[i].point = (pointObj *)malloc(sizeof(pointObj)*shape->line[i].numpoints)) == NULL ) {
-	  shape->line = NULL;
-	  shape->numlines = 0;
-	  return;
-	}
-	
-	for( j = 0; j < shape->line[i].numpoints; j++ ) {
-	  memcpy(&(shape->line[i].point[j].x), pabyRec + 44 + 4*nParts + 8 + k * 16, 8 );
-	  memcpy(&(shape->line[i].point[j].y), pabyRec + 44 + 4*nParts + 8 + k * 16 + 8, 8 );
-	  
-	  if( bBigEndian ) {
-	    SwapWord( 8, &(shape->line[i].point[j].x) );
-	    SwapWord( 8, &(shape->line[i].point[j].y) );
-	  }
-	  
-	  msProjectPoint(in->proj, out->proj, &(shape->line[i].point[j]));
-
-	  shape->bounds.minx = MS_MIN(shape->bounds.minx, shape->line[i].point[j].x);
-	  shape->bounds.miny = MS_MIN(shape->bounds.miny, shape->line[i].point[j].y);
-	  shape->bounds.maxx = MS_MAX(shape->bounds.maxx, shape->line[i].point[j].x);
-	  shape->bounds.maxy = MS_MAX(shape->bounds.maxy, shape->line[i].point[j].y);
-	  
-	  k++;
-	}
-      }       
-
-      if(psSHP->nShapeType == MS_SHP_POLYGON)
-	shape->type = MS_POLYGON;
-      else
-	shape->type = MS_LINE;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*  Extract a MultiPoint.   			                    */
-    /* -------------------------------------------------------------------- */
-    else if( psSHP->nShapeType == MS_SHP_MULTIPOINT)
-    {
-      int32		nPoints;
-      pointObj          tmp;
-      
-      memcpy( &nPoints, pabyRec + 44, 4 );
-      if( bBigEndian ) SwapWord( 4, &nPoints );
-    
-      /* -------------------------------------------------------------------- */
-      /*      Fill the shape structure.                                       */
-      /* -------------------------------------------------------------------- */
-      if( (shape->line = (lineObj *)malloc(sizeof(lineObj))) == NULL ) {
-	msSetError(MS_MEMERR, NULL, "SHPReadShapeProj()");
-	return;
-      }
-
-      shape->numlines = 1;
-      shape->line[0].numpoints = nPoints;
-      shape->line[0].point = (pointObj *) malloc( nPoints * sizeof(pointObj) );
-
-      // initalize the bounding box
-      memcpy(&(tmp.x), pabyRec + 48 + 16 * 0, 8 );
-      memcpy(&(tmp.y), pabyRec + 48 + 16 * 0 + 8, 8 );
-
-      if( bBigEndian ) {
-	SwapWord( 8, &(tmp.x) );
-	SwapWord( 8, &(tmp.y) );
-      }
-
-      msProjectPoint(in->proj, out->proj, &tmp);
-
-      shape->bounds.maxx = shape->bounds.minx = tmp.x;
-      shape->bounds.maxy = shape->bounds.miny = tmp.y;
-      
-      for( i = 0; i < nPoints; i++ ) {
-	memcpy(&(shape->line[0].point[i].x), pabyRec + 48 + 16 * i, 8 );
-	memcpy(&(shape->line[0].point[i].y), pabyRec + 48 + 16 * i + 8, 8 );
-	
-	if( bBigEndian ) {
-	  SwapWord( 8, &(shape->line[0].point[i].x) );
-	  SwapWord( 8, &(shape->line[0].point[i].y) );
-	}
-	
-	msProjectPoint(in->proj, out->proj, &shape->line[0].point[i]);
-
-	shape->bounds.minx = MS_MIN(shape->bounds.minx, shape->line[0].point[i].x);
-	shape->bounds.miny = MS_MIN(shape->bounds.miny, shape->line[0].point[i].y);
-	shape->bounds.maxx = MS_MAX(shape->bounds.maxx, shape->line[0].point[i].x);
-	shape->bounds.maxy = MS_MAX(shape->bounds.maxy, shape->line[0].point[i].y);
-      }
-
-      shape->type = MS_POINT;
-    }
-
-    /* -------------------------------------------------------------------- */
-    /*  Extract a Point.   			                    */
-    /* -------------------------------------------------------------------- */
-    else if( psSHP->nShapeType == MS_SHP_POINT )
-    {    
-
-      /* -------------------------------------------------------------------- */
-      /*      Fill the shape structure.                                       */
-      /* -------------------------------------------------------------------- */
-      if( (shape->line = (lineObj *)malloc(sizeof(lineObj))) == NULL ) {
-	msSetError(MS_MEMERR, NULL, "SHPReadShapeProj()");
-	return;
-      }
-
-      shape->numlines = 1;
-      shape->line[0].numpoints = 1;
-      shape->line[0].point = (pointObj *) malloc(sizeof(pointObj));
-
-      memcpy( &(shape->line[0].point[0].x), pabyRec + 12, 8 );
-      memcpy( &(shape->line[0].point[0].y), pabyRec + 20, 8 );
-      
-      if( bBigEndian ) {
-	SwapWord( 8, &(shape->line[0].point[0].x));
-	SwapWord( 8, &(shape->line[0].point[0].y));
-      }
-      
-      msProjectPoint(in->proj, out->proj, &shape->line[0].point[0]);
-
-      // set the bounding box to the point
-      shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;
-      shape->bounds.miny = shape->bounds.maxy = shape->line[0].point[0].y;
-
-      shape->type = MS_POINT;
-    }
-
-    return;
-}
-#endif
-
-int SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
+int msSHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
 {
   /* -------------------------------------------------------------------- */
   /*      Validate the record/entity number.                              */
@@ -1094,7 +861,7 @@ int SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   }
 
   /* -------------------------------------------------------------------- */
-  /*	If the entity is -1 we fetch the bounds for the whole file.	    */
+  /*	If the entity is -1 we fetch the bounds for the whole file.	  */
   /* -------------------------------------------------------------------- */
   if( hEntity == -1 ) {
     padBounds->minx = psSHP->adBoundsMin[0];
@@ -1139,7 +906,7 @@ int SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
   return(0);
 }
 
-int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, char *filename)
+int msSHPOpenFile(shapefileObj *shpfile, char *mode, char *shapepath, char *filename)
 {
   int i;
   char *dbfFilename;
@@ -1147,14 +914,17 @@ int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, cha
   char old_path[MS_PATH_LENGTH];
 
   getcwd(old_path, MS_PATH_LENGTH); /* save old working directory */
-  if(path) chdir(path);
-  if(tile) chdir(tile);
+  if(shapepath) chdir(shapepath);
+
+  /* initialize a few things */
+  shpfile->status = NULL;
+  shpfile->lastshape = -1;
 
   /* open the shapefile file (appending ok) and get basic info */
   if(!mode) 	
-    shpfile->hSHP = SHPOpen(filename, "rb");
+    shpfile->hSHP = msSHPOpen(filename, "rb");
   else
-    shpfile->hSHP = SHPOpen(filename, mode);
+    shpfile->hSHP = msSHPOpen(filename, mode);
 
   if(!shpfile->hSHP) {
     sprintf(ms_error.message, "(%s)", filename);
@@ -1172,8 +942,8 @@ int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, cha
   }
 
   /* load some information about this shapefile */
-  SHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
-  SHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
+  msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
+  msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
   
   dbfFilename = (char *)malloc(strlen(filename)+5);
   strcpy(dbfFilename, filename);
@@ -1188,7 +958,7 @@ int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, cha
   
   strcat(dbfFilename, ".dbf");
 
-  shpfile->hDBF = DBFOpen(dbfFilename, "rb");
+  shpfile->hDBF = msDBFOpen(dbfFilename, "rb");
   free(dbfFilename);
 
   if(!shpfile->hDBF) {
@@ -1204,7 +974,7 @@ int msOpenSHPFile(shapefileObj *shpfile, char *mode, char *path, char *tile, cha
 }
 
 // Creates a new shapefile
-int msCreateSHPFile(shapefileObj *shpfile, char *filename, int type)
+int msSHPCreateFile(shapefileObj *shpfile, char *filename, int type)
 {
   if(type != MS_SHP_POINT && type != MS_SHP_MULTIPOINT && type != MS_SHP_ARC && type != MS_SHP_POLYGON) {
     msSetError(MS_SHPERR, "Invalid shape type.", "msNewSHPFile()");
@@ -1212,7 +982,7 @@ int msCreateSHPFile(shapefileObj *shpfile, char *filename, int type)
   }
 
   // create the spatial portion
-  shpfile->hSHP = SHPCreate(filename, type);
+  shpfile->hSHP = msSHPCreate(filename, type);
   if(!shpfile->hSHP) {
     sprintf(ms_error.message, "(%s)", filename);
     msSetError(MS_IOERR, NULL, "msNewSHPFile()");    
@@ -1220,15 +990,197 @@ int msCreateSHPFile(shapefileObj *shpfile, char *filename, int type)
   }
 
   // retrieve a few things about this shapefile
-  SHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
-  SHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
+  msSHPGetInfo( shpfile->hSHP, &shpfile->numshapes, &shpfile->type);
+  msSHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
 
   shpfile->hDBF = NULL; // XBase file is NOT created here...
   return(0);
 }
 
-void msCloseSHPFile(shapefileObj *shpfile)
+void msSHPCloseFile(shapefileObj *shpfile)
 {
-  if(shpfile->hSHP) SHPClose(shpfile->hSHP);
-  if(shpfile->hDBF) DBFClose(shpfile->hDBF);
+  if(shpfile->hSHP) msSHPClose(shpfile->hSHP);
+  if(shpfile->hDBF) msDBFClose(shpfile->hDBF);
+  if(shpfile->status) free(shpfile->status);
+}
+
+char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, projectionObj *in, projectionObj *out)
+{
+  int i;
+  rectObj shape_rect, search_rect;
+  char *status=NULL;
+  char *filename;
+
+  search_rect = rect;
+
+#ifdef USE_PROJ     
+  if((in->numargs > 0) && (out->numargs > 0))
+    msProjectRect(out->proj, in->proj, &search_rect); // project the search_rect to shapefile coords
+#endif
+
+  // FIX: need an overlap test here...
+
+  if(msRectContained(&shpfile->bounds, &search_rect) == MS_TRUE) {
+    status = msAllocBitArray(shpfile->numshapes);
+    if(!status) {
+      msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");
+      return(NULL);
+    }
+    for(i=0;i<shpfile->numshapes;i++) 
+      msSetBit(status, i, 1);
+  } else {
+    if((filename = (char *)malloc(strlen(shpfile->source)+strlen(MS_INDEX_EXTENSION)+1)) == NULL) {
+      msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");    
+      return(NULL);
+    }
+    sprintf(filename, "%s%s", shpfile->source, MS_INDEX_EXTENSION);
+    
+    status = msSearchDiskTree(filename, search_rect);
+    free(filename);
+
+    if(status) // index 
+      msFilterTreeSearch(shpfile, status, search_rect);
+    else { // no index 
+      status = msAllocBitArray(shpfile->numshapes);
+      if(!status) {
+	msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");       
+	return(NULL);
+      }
+      
+      for(i=0;i<shpfile->numshapes;i++) {
+	if(!msSHPReadBounds(shpfile->hSHP, i, &shape_rect))
+	  if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
+	    msSetBit(status, i, 1);
+      }
+    }   
+  }
+ 
+  return(status); /* success */
+}
+
+int msTiledSHPOpenFile(layerObj *layer, char *shapepath)
+{
+  if(msSHPOpenFile(&(layer->tileshpfile), "rb", shapepath, layer->tileindex) == -1) return(MS_FAILURE);
+  if((layer->tileitemindex = msDBFGetItemIndex(layer->tileshpfile.hDBF, layer->tileitem)) == -1) return(MS_FAILURE);
+ 
+  return(MS_SUCCESS);
+}
+
+int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj)
+{
+  int i;
+  char *filename, tilename[MS_PATH_LENGTH];
+
+  layer->tileshpfile.status = msSHPWhichShapes(&(layer->tileshpfile), rect, &(layer->projection), proj);
+  if(!(layer->tileshpfile.status)) return(MS_FAILURE);
+
+  // position the source at the FIRST shapefile
+  for(i=0; i<layer->tileshpfile.numshapes; i++) {
+    if(msGetBit(layer->tileshpfile.status,i)) {
+      if(!layer->data) // assume whole filename is in attribute field
+	filename = msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex);
+      else {  
+	sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
+	filename = tilename;
+      }
+      
+      if(strlen(filename) == 0) continue; // check again
+      
+      // open the shapefile
+#ifndef IGNORE_MISSING_DATA
+      if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) return(MS_FAILURE);
+#else
+      if(msSHPOpenFile(&(layer->shpfile), "rb", shapepath, filename) == -1) continue; // check again
+#endif
+      
+      layer->tileshpfile.lastshape = i;
+      break;
+    }
+  }
+
+  layer->shpfile.status = msSHPWhichShapes(&(layer->shpfile), rect, &(layer->projection), proj);
+  if(!(layer->shpfile.status)) return(MS_FAILURE);
+
+  return(MS_SUCCESS);
+}
+
+int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attributes) 
+{
+  int i;
+  
+  i = layer->shpfile.lastshape + 1;
+  while(i<layer->shpfile.numshapes && !msGetBit(layer->shpfile.status,i)) i++; // next "in" shape
+
+  if(i == layer->shpfile.numshapes) { // next tile
+    layer->shpfile.lastshape = -1;    
+    msSHPCloseFile(&(layer->shpfile));
+
+    i = layer->tileshpfile.lastshape + 1;    
+    while(i<layer->tileshpfile.numshapes && !msGetBit(layer->tileshpfile.status,i)) i++; // next "in" tile
+    if(i == layer->tileshpfile.numshapes) return(MS_DONE); // no more tiles
+
+    layer->tileshpfile.lastshape = i;
+    
+    // more to it here!
+    
+    return(msTiledSHPNextShape(layer, shapepath, shape, attributes)); // next shape      
+  }
+	    
+  msSHPReadShape(layer->shpfile.hSHP, i, shape);
+  layer->shpfile.lastshape = i;
+
+  if(attributes && layer->numitems > 0) {
+    shape->attributes = msDBFGetValueList(layer->shpfile.hDBF, i, layer->items, &(layer->itemindexes), layer->numitems);
+    if(!shape->attributes) return(MS_FAILURE);
+  } else if(attributes == MS_ALLITEMS) {
+    if(!layer->items) { // fill the items layer variable if not already filled
+      layer->numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
+      layer->items = msDBFGetItems(layer->shpfile.hDBF);
+      if(!layer->items) return(MS_FAILURE);
+    }
+    shape->attributes = msDBFGetValues(layer->shpfile.hDBF, i);
+    if(!shape->attributes) return(MS_FAILURE);
+  }
+
+  shape->tileindex = layer->tileshpfile.lastshape;
+
+  return(MS_SUCCESS);
+}
+
+int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int attributes) 
+{
+  if((tile < 0) || (tile >= layer->tileshpfile.numshapes)) return(MS_FAILURE);
+  if(tile != layer->tileshpfile.lastshape) { // open the correct tile
+    msSHPCloseFile(&(layer->shpfile));
+    
+    // more to it here!
+    
+  }
+
+  if((record < 0) || (record >= layer->shpfile.numshapes)) return(MS_FAILURE);
+
+  msSHPReadShape(layer->shpfile.hSHP, record, shape);
+  layer->shpfile.lastshape = record;
+
+  if(attributes == MS_ALLITEMS) {
+    if(!layer->items) { // fill the items layer variable if not already filled
+      layer->numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
+      layer->items = msDBFGetItems(layer->shpfile.hDBF);
+      if(!layer->items) return(MS_FAILURE);
+    }
+    shape->attributes = msDBFGetValues(layer->shpfile.hDBF, i);
+    if(!shape->attributes) return(MS_FAILURE);
+  } else if(attributes && layer->numitems > 0) {
+    shape->attributes = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
+    if(!shape->attributes) return(MS_FAILURE);
+  }
+
+  shape->tileindex = tile;
+
+  return(MS_SUCCESS);
+}
+
+void msTiledSHPClose(layerObj *layer) 
+{  
+  msSHPCloseFile(&(layer->tileshpfile));
 }

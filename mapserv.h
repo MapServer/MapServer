@@ -35,9 +35,9 @@ static char *outputImageType[4]={"gif", "png", "jpg", "wbmp"};
 #define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
 
 /*
-** Enumerated types (PROCESSING is a EGIS mode only)
+** Enumerated types (PROCESSING is a EGIS mode only), keep the query modes in sequence and at the end of the enumeration
 */
-enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, REFERENCE, SCALEBAR, COORDINATE, QUERY, QUERYMAP, ITEMQUERY, ITEMQUERYMAP, NQUERY, NQUERYMAP, ITEMNQUERY, ITEMNQUERYMAP, FEATUREQUERY, FEATUREQUERYMAP, FEATURENQUERY, FEATURENQUERYMAP, PROCESSING};
+enum modes {BROWSE, ZOOMIN, ZOOMOUT, MAP, LEGEND, REFERENCE, SCALEBAR, COORDINATE, PROCESSING, QUERY, QUERYMAP, ITEMQUERY, ITEMQUERYMAP, NQUERY, NQUERYMAP, ITEMNQUERY, ITEMNQUERYMAP, FEATUREQUERY, FEATUREQUERYMAP, FEATURENQUERY, FEATURENQUERYMAP};
 enum coordSources {NONE, FROMIMGPNT, FROMIMGBOX, FROMIMGSHAPE, FROMREFPNT, FROMUSERPNT, FROMUSERBOX, FROMUSERSHAPE, FROMBUF, FROMSCALE};
 
 /*
@@ -61,7 +61,6 @@ int ShpIdx;
 
 char *QueryFile=NULL;
 char *QueryLayer=NULL, *SelectLayer=NULL;
-queryResultObj *QueryResults=NULL;
 char *Item=NULL, *Value=NULL;
 
 shapeObj SelectShape={0,NULL,{-1,-1,-1,-1},MS_NULL};

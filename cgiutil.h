@@ -30,6 +30,5 @@ void send_fd(FILE *, FILE *);
 int ind(char *, char);
 void escape_shell_cmd(char *);
 char *encode_url(char *);
-void redirect(char *);
 
 #endif /* CGIUTIL_H */

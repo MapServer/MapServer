@@ -40,7 +40,7 @@ void msInitShape(shapeObj *shape)
 
   // bookkeeping component
   shape->classindex = 0; // default class
-  shape->queryindex = -1;
+  shape->tileindex = shape->index = -1;
 }
 
 int msCopyShape(shapeObj *from, shapeObj *to) {
@@ -61,7 +61,8 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
   if(from->text) to->text = strdup(from->text);
 
   to->classindex = from->classindex;
-  to->queryindex = from->queryindex;
+  to->index = from->index;
+  to->tileindex = from->tileindex;
 
   return(0);
 }
@@ -77,6 +78,26 @@ void msFreeShape(shapeObj *shape)
   free(shape->text);
   
   msInitShape(shape); // now reset
+}
+
+void msComputeBounds(shapeObj *shape)
+{
+  int i, j;
+
+  if(shape->numlines <= 0) return;
+  if(shape->line[0].numpoints <= 0) return;
+
+  shape->bounds.minx = shape->bounds.maxx = shape->line[0].point[0].x;
+  shape->bounds.miny = shape->bounds.maxy = shape->line[0].point[0].y;
+    
+  for( i=0; i<shape->numlines; i++ ) {
+    for( j=0; j<shape->line[i].numpoints; j++ ) {
+      shape->bounds.minx = MS_MIN(shape->bounds.minx, shape->line[i].point[j].x);
+      shape->bounds.maxx = MS_MAX(shape->bounds.maxx, shape->line[i].point[j].x);
+      shape->bounds.miny = MS_MIN(shape->bounds.miny, shape->line[i].point[j].y);
+      shape->bounds.maxy = MS_MAX(shape->bounds.maxy, shape->line[i].point[j].y);
+    }
+  }
 }
 
 int msAddLine(shapeObj *p, lineObj *new_line)
@@ -123,7 +144,7 @@ int msAddLine(shapeObj *p, lineObj *new_line)
 ** that calculates direction assumes min y = lower left, this way it'll still work. Drawing
 ** functions are independent of direction. Orientation problems can cause some nasty bugs.
 */
-void msRect2Polygon(rectObj rect, shapeObj *poly)
+void msRectToPolygon(rectObj rect, shapeObj *poly)
 {
   lineObj line={0,NULL};
 

@@ -23,10 +23,13 @@ typedef struct {
 
   int type;
 
+  int index;
+  int tileindex;
+
   int classindex;
-  int queryindex;
 
   char *text;
+  char **attributes;
 } shapeObj;
 
 typedef lineObj multipointObj;

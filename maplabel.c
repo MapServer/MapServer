@@ -80,7 +80,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
     rect.miny = MS_NINT(point.y - .5 * h);
     rect.maxx = rect.minx + (w-1);
     rect.maxy = rect.miny + (h-1);
-    msRect2Polygon(rect, map->labelcache.markers[i].poly);
+    msRectToPolygon(rect, map->labelcache.markers[i].poly);
     map->labelcache.markers[i].id = map->labelcache.numlabels;
 
     map->labelcache.nummarkers++;
@@ -614,7 +614,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	  p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
 	  
 	  if(draw_marker) 
-	    msRect2Polygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 	  
 	  if(!label.partials) { // check against image first
 	    if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
@@ -664,7 +664,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 	  p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
 	  
 	  if(draw_marker) 
-	    msRect2Polygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+	    msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
 	  
 	  if(!label.partials) { // check against image first
 	    if(labelInImage(img->sx, img->sy, cachePtr->poly, label.buffer) == MS_FALSE) {
@@ -717,7 +717,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
         p = get_metrics(&(cachePtr->point), label.position, r, (marker_offset_x + label.offsetx), (marker_offset_y + label.offsety), label.angle, label.buffer, cachePtr->poly);
 
       if(draw_marker)
-	msRect2Polygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
+	msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
 
       if(!label.force) { // no need to check anything else
       

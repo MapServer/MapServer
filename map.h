@@ -42,7 +42,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "3.4"
+#define MS_VERSION "3.5 (pre-alpha)"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
@@ -99,6 +99,9 @@ extern "C" {
 #define MS_LABELCACHEINITSIZE 100
 #define MS_LABELCACHEINCREMENT 10
 
+#define MS_RESULTCACHEINITSIZE 10
+#define MS_RESULTCACHEINCREMENT 10
+
 #define MS_FEATUREINITSIZE 10 /* how many points initially can a feature have */ 
 #define MS_FEATUREINCREMENT 10
 
@@ -106,6 +109,8 @@ extern "C" {
 #define MS_REGEX 2001
 #define MS_STRING 2002
 #define MS_NUMBER 2003
+
+#define MS_ALLITEMS 12120
 
 // General macro definitions
 #define MS_MIN(a,b)     (((a)<(b))?(a):(b))
@@ -120,11 +125,13 @@ enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS};
 enum MS_FEATURE_TYPE {MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER, MS_ANNOTATION, MS_NULL};
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
-enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement */
+enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED};
-enum MS_CONNECTION_TYPE {MS_LOCAL, MS_SDE, MS_OGR};
+enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_TILED_OGR};
 enum MS_OUTPUT_IMAGE_TYPE {MS_GIF, MS_PNG, MS_JPEG, MS_WBMP};
+
+enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
 #define MS_FILE_DEFAULT MS_FILE_MAP
 
@@ -201,52 +208,6 @@ typedef struct {
   int type;
 } joinObj;
 #endif
-
-// QUERY OBJECT - dictates how the query results for a particular layer should be handled
-typedef struct {
-  expressionObj expression; // the expression to be matched  
-#ifndef __cplusplus
-  char *template;
-#else
-  char *_template;
-#endif
-
-#ifndef SWIG
-  joinObj *joins;
-  int numjoins;	
-
-  char **items; /* array of item names */
-  char numitems;
-  char **data; /* array of data for 1 record */
-#endif
-} queryObj;
-
-
-// SHAPE RESULT OBJECT - used to return an individual shape, primarily for scripting interface
-typedef struct {
-  int layer, tile, shape, query;
-} shapeResultObj;
-
-// LAYER RESULT OBJECT - stores the results of a spatial or item based query for a SINGLE layer
-#ifndef SWIG
-typedef struct {
-  char *status;
-  char *index;
-  int numresults;
-  int numshapes;
-} layerResultObj;
-#endif
-
-// QUERY RESULT OBJECT - stores the results of a spatial or item based query across all layers
-typedef struct {
-#ifndef SWIG
-  layerResultObj *layers;
-#endif
-  int numlayers;
-  int numresults;
-  int numquerylayers;
-  int currentlayer, currenttile, currentshape; // allows for cursors-like access to results
-} queryResultObj;
 
 // QUERY MAP OBJECT - used to visualize query results
 typedef struct {
@@ -343,6 +304,15 @@ typedef struct {
 #ifndef SWIG
   expressionObj text;
 #endif
+
+#ifndef __cplusplus
+  char *template;
+#else
+  char *_template;
+#endif
+
+  joinObj *joins;
+  int numjoins;	
 } classObj;
 
 // LABELCACHE OBJECTS - structures to implement label caching and collision avoidance etc
@@ -376,6 +346,19 @@ typedef struct {
   int nummarkers;
   int markercachesize;
 } labelCacheObj;
+
+typedef struct {
+  int shapeindex;
+  int tileindex;
+  char classindex;
+} resultCacheMemberObj;
+
+typedef struct {
+  resultCacheMemberObj *results;
+  int numresults;  
+  int cachesize;
+  rectObj bounds;
+} resultCacheObj;
 
 // SYMBOLSET OBJECT
 typedef struct {
@@ -441,6 +424,8 @@ typedef struct {
   int index;
 
   char *classitem; /* .DBF item to be used for symbol lookup */
+  int classitemindex;
+
 #ifndef __cplusplus
   classObj *class; /* always at least 1 class */
 #else
@@ -456,53 +441,60 @@ typedef struct {
 #endif
 
 #ifndef SWIG
-  char *queryitem;  /* .DBF item to be used for query lookup */
-  queryObj *query;
-  int numqueries;
-
-  char *header; /* only used with multi result queries */
-  char *footer;
+  char *header, *footer; // only used with multi result queries
 #endif
 
-  char *name; /* layer name, must be unique */
-  char *group;
-  char *description; /* layer title or description */ 
-  char *legend; /* legend graphic */
-  int status; /* layer status, either ON or OFF */
-  char *data; /* layer data filename, including path */
+  resultCacheObj *resultcache; // holds the results of a query against this layer
+
+  char *name; // should be unique
+  char *group; // shouldn't be unique it's supposed to be a group right?
+
+  char *description; // layer title or description
+  char *legend; // legend graphic text
+
+  int status; // on or off
+  char *data; // filename, can be relative or full path
   enum MS_FEATURE_TYPE type;
   
-  double tolerance; /* search buffer for point and line queries (in toleranceunits) */
+  double tolerance; // search buffer for point and line queries (in toleranceunits)
   int toleranceunits;
 
-  double symbolscale; /* scale at which symbols are default size */
-  double maxscale; /* layer is active only BELOW this scale value (<=) */
-  double minscale; /* layer is active only ABOVE this scale value (>) */
-  double labelminscale; /* annotation is active only BELOW this scale value (<=) */
-  double labelmaxscale; /* annotation is active only ABOVE this scale value (>) */
+  double symbolscale; // scale at which symbols are default size
+  double minscale, maxscale;
+  double labelminscale, labelmaxscale;
 
   int maxfeatures;
 
-  int offsite; /* offsite value for raster images */
+  int offsite; // transparent pixel value for raster images
 
-  int transform; /* does this layer have to be transformed to file coordinates */
+  int transform; // does this layer have to be transformed to file coordinates
 
-  int labelcache; /* on or off */
-  int postlabelcache;
+  int labelcache, postlabelcache; // on or off
 
-  char *labelitem; /* .DBF item to be used for text */
-  char *labelsizeitem;
-  char *labelangleitem;
+  char *labelitem, *labelsizeitem, *labelangleitem; 
+  int labelitemindex, labelsizeitemindex, labelangleitemindex;
 
   char *tileitem;
+  int tileitemindex;
   char *tileindex; /* layer index file for tiling support */
 
   projectionObj projection; /* projection information for the layer */
 
-  featureListNodeObjPtr features; /* linked list so we don't need a counter */
+  featureListNodeObjPtr features; // linked list so we don't need a counter
+  featureListNodeObjPtr currentfeature; // pointer to the current feature
 
   char *connection;
   enum MS_CONNECTION_TYPE connectiontype;
+
+  // a variety of data connection objects (probably should be pointers!)
+  shapefileObj shpfile;
+  shapefileObj tileshpfile;
+
+  // attribute handling components
+  char **items;
+  int numitems;
+  int *itemindexes;
+
 } layerObj;
 
 // MAP OBJECT - encompasses everything used in an Internet mapping application
@@ -538,7 +530,6 @@ typedef struct { /* structure for a map */
   double scale; /* scale of the output image */
 
   char *shapepath; /* where are the shape files located */
-  char *tile; /* an optional tile name to use as well */
 
   paletteObj palette; /* holds a map palette */
   colorObj imagecolor; /* holds the initial image color value */
@@ -586,7 +577,6 @@ int getCharacter(char *c);
 int initMap(mapObj *map);
 int initLayer(layerObj *layer);
 int initClass(classObj *_class);
-int initQuery(queryObj *query);
 void initLabel(labelObj *label);
 
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
@@ -610,25 +600,22 @@ int msLoadPalette(gdImagePtr img, paletteObj *palette, colorObj color);
 int msAddColor(mapObj *map, int red, int green, int blue);
 int msLoadMapString(mapObj *map, char *object, char *value);
 
-double msAdjustExtent(rectObj *rect, int width, int height); /* in maputil.c */
+int msShapeGetClass(layerObj *layer, shapeObj *shape); // in maputil.c
+char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
+double msAdjustExtent(rectObj *rect, int width, int height);
 int msAdjustImage(rectObj rect, int *width, int *height);
 gdImagePtr msDrawMap(mapObj *map);
-gdImagePtr msDrawQueryMap(mapObj *map, queryResultObj *query);
-int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *ext_status);
-int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img);
-int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, char *class_string, char *label_string);
-int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, char *class_string, char *label_string);
-int msGetItemIndex(DBFHandle dbffile, char *name);
-int msGetClassIndex(layerObj *layer, char *str);
-char **msGetDBFItems(DBFHandle dbffile);
-char **msGetDBFValues(DBFHandle dbffile, int record);
-void msApplyScale(mapObj *map);
+gdImagePtr msDrawQueryMap(mapObj *map);
+int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, int overlay);
+int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, int classindex, char *text);
+int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img);
+int msDrawQueryLayer(mapObj *map, layerObj *layer, gdImagePtr img);
 
-gdImagePtr msDrawScalebar(mapObj *map); /* in mapscale.c */
+gdImagePtr msDrawScalebar(mapObj *map); // in mapscale.c
 double msCalculateScale(rectObj extent, int units, int width, int height);
 int msEmbedScalebar(mapObj *map, gdImagePtr img);
 
-int msPointInRect(pointObj *p, rectObj *rect); /* in mapsearch.c */
+int msPointInRect(pointObj *p, rectObj *rect); // in mapsearch.c
 int msRectOverlap(rectObj *a, rectObj *b);
 int msRectContained(rectObj *a, rectObj *b);
 void msMergeRect(rectObj *a, rectObj *b);
@@ -644,22 +631,16 @@ int msIntersectPolylinePolygon(shapeObj *line, shapeObj *poly);
 int msIntersectPolygons(shapeObj *p1, shapeObj *p2);
 int msIntersectPolylines(shapeObj *line1, shapeObj *line2);
 
-#ifdef USE_PROJ
-char *msWhichShapesProj(shapefileObj *shp, rectObj window, projectionObj *in, projectionObj *out);
-#endif
-char *msWhichShapes(shapefileObj *shp, rectObj window);
-
-int msSaveQuery(queryResultObj *results, char *filename);
-queryResultObj * msLoadQuery(char *filename);
-queryResultObj *msQueryUsingItem(mapObj *map, char *layer, int mode, char *item, char *value); /* in mapquery.c */
-queryResultObj *msQueryUsingPoint(mapObj *map, char *layer, int mode, pointObj p, double buffer);
-queryResultObj *msQueryUsingRect(mapObj *map, char *layer, rectObj *rect); /* these functions imply multiple results */
-int msQueryUsingFeatures(mapObj *map, char *layer, queryResultObj *results);
-queryResultObj *msQueryUsingShape(mapObj *map, char *layer, shapeObj *search_shape);
+int msSaveQuery(mapObj *map, char *filename); // in mapquery.c
+int msLoadQuery(mapObj *map, char *filename);
+int msQueryUsingItem(mapObj *map, char *layer, int mode, char *item, char *value);
+int msQueryByPoint(mapObj *map, char *layer, int mode, pointObj p, double buffer);
+int msQueryByRect(mapObj *map, char *layer, rectObj rect);
+int msQueryByFeatures(mapObj *map, char *layer);
+int msQueryByShape(mapObj *map, char *layer, shapeObj *search_shape);
 int msJoinDBFTables(joinObj *join, char *path, char *tile);
-void msFreeQueryResults(queryResultObj *results);
 
-void trimBlanks(char *string); /* in mapstring.c */
+void trimBlanks(char *string); // in mapstring.c
 char *chop(char *string);
 void trimEOL(char *string);
 char *gsub(char *str, const char *old, const char *sznew);
@@ -680,7 +661,7 @@ int strncasecmp(char *s1, char *s2, int len);
 int strcasecmp(char *s1, char *s2);
 #endif
 
-int msLoadSymbolSet(symbolSetObj *symbolset); /* in mapsymbol.c */
+int msLoadSymbolSet(symbolSetObj *symbolset); // in mapsymbol.c
 void msInitSymbolSet(symbolSetObj *symbolset);
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
@@ -689,23 +670,23 @@ void msGetMarkerSize(symbolSetObj *symbolset, classObj *_class, int *width, int 
 void msDrawMarkerSymbol(symbolSetObj *symbolset,gdImagePtr img, pointObj *p,  int sy, int fc, int bc, int oc, double sz);
 void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);
 
-gdImagePtr msDrawLegend(mapObj *map); /* in maplegend.c */
+gdImagePtr msDrawLegend(mapObj *map); // in maplegend.c
 int msEmbedLegend(mapObj *map, gdImagePtr img);
 
-int msLoadFontSet(fontSetObj *fontSet); /* in maplabel.c */
+int msLoadFontSet(fontSetObj *fontSet); // in maplabel.c
 int msDrawLabel(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset);
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontSet);
 int msAddLabel(mapObj *map, int layer, int nclass, int tile, int shape, pointObj point, char *string, double featuresize);
 int msDrawLabelCache(gdImagePtr img, mapObj *map);
 gdFontPtr msGetBitmapFont(int size);
-
 int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
 int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset);
 
-void msFreeShape(shapeObj *shape); /* in mapprimative.c */
+  void msFreeShape(shapeObj *shape); // in mapprimative.c
 void msInitShape(shapeObj *shape);
 int msCopyShape(shapeObj *from, shapeObj *to);
-void msRect2Polygon(rectObj rect, shapeObj *poly);
+void msComputeBounds(shapeObj *shape);
+void msRectToPolygon(rectObj rect, shapeObj *poly);
 void msClipPolylineRect(shapeObj *in, rectObj rect, shapeObj *out);
 void msClipPolygonRect(shapeObj *in, rectObj rect, shapeObj *out);
 void msTransformPolygon(rectObj extent, double cellsize, shapeObj *p);
@@ -716,14 +697,28 @@ int msPolylineLabelPoint(shapeObj *p, pointObj *lp, int min_length, double *angl
 int msPolygonLabelPoint(shapeObj *p, pointObj *lp, int min_dimension);
 int msAddLine(shapeObj *p, lineObj *new_line);
 
-int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img); /* in mapraster.c */
+int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img); // in mapraster.c
 gdImagePtr msDrawReferenceMap(mapObj *map);
 
-size_t msGetBitArraySize(int numbits); /* in mapbits.c */
+size_t msGetBitArraySize(int numbits); // in mapbits.c
 char *msAllocBitArray(int numbits);
 int msGetBit(char *array, int index);
 void msSetBit(char *array, int index, int value);
 void msFlipBit(char *array, int index);
+
+int msLayerOpen(layerObj *layer, char *shapepath); // in maplayer.c
+void msLayerClose(layerObj *layer);
+int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *out);
+int msLayerWhichItems(layerObj *layer, int annotate);
+int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attributes);
+int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int attributes);
+
+int msTiledSHPOpenFile(layerObj *layer, char *shapepath); // in mapshape.c
+int msTiledSHPWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj);
+int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape, int attributes);
+int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile, int record, int attributes);
+void msTiledSHPClose(layerObj *layer);
+
 #endif
 
 #ifdef __cplusplus

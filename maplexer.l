@@ -169,7 +169,6 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>table                   { return(TABLE); }
 <INITIAL,OBJECT_STRING>template		       { return(TEMPLATE); }
 <INITIAL,OBJECT_STRING>text		       { return(TEXT); }
-<INITIAL,OBJECT_STRING>tile		       { return(TILE); }
 <INITIAL,OBJECT_STRING>tileindex	       { return(TILEINDEX); }
 <INITIAL,OBJECT_STRING>tileitem		       { return(TILEITEM); }
 <INITIAL,OBJECT_STRING>to                      { return(TO); }
@@ -204,7 +203,6 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>lc                       { return(MS_LC); }
 <INITIAL,VALUE_STRING>line		       { return(MS_LINE); }
 <INITIAL,VALUE_STRING>ll                       { return(MS_LL); }
-<INITIAL,VALUE_STRING>local                    { return(MS_LOCAL); }
 <INITIAL,VALUE_STRING>lr                       { return(MS_LR); }
 <INITIAL,VALUE_STRING>medium		       { return(MS_MEDIUM); }
 <INITIAL,VALUE_STRING>meters		       { return(MS_METERS); }

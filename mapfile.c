@@ -226,6 +226,120 @@ int msGetLayerIndex(mapObj *map, char *name)
   return(-1);
 }
 
+/*
+** Initialize, load and free a single join
+*/
+void initJoin(joinObj *join)
+{
+  join->numitems = 0;
+
+  join->name = NULL; /* unique join name, used for variable substitution */
+
+  join->items = NULL; /* array to hold item names for the joined table */
+  join->data = NULL; /* arrays of strings to holds 1 or more records worth of data */
+  join->numrecords = 0;
+
+  join->table = NULL;
+
+  join->match = NULL;
+
+  join->from = NULL; /* join items */
+  join->to = NULL;
+
+  join->header = NULL;
+  join->template = NULL; /* only html type templates are supported */
+  join->footer = NULL;
+
+  join->type = MS_SINGLE; /* one-to-one */
+}
+
+void freeJoin(joinObj *join) 
+{
+  int i;
+
+  free(join->name);
+
+  free(join->table);
+
+  free(join->from);
+  free(join->to);
+
+  free(join->match);
+
+  free(join->header);
+  free(join->template);
+  free(join->footer);
+
+  msFreeCharArray(join->items, join->numitems); /* these may have been free'd elsewhere */
+  for(i=0; i<join->numrecords; i++)
+    msFreeCharArray(join->data[i], join->numitems);
+  free(join->data);
+}
+
+int loadJoin(joinObj *join)
+{
+  initJoin(join);
+
+  for(;;) {
+    switch(msyylex()) {
+    case(EOF):
+      msSetError(MS_EOFERR, NULL, "loadJoin()");
+      return(-1);
+    case(END):      
+      if((join->from == NULL) || (join->to == NULL) || (join->table == NULL)) {
+	msSetError(MS_EOFERR, "Join must define table, name, from and to properties.", "loadJoin()");
+	return(-1);
+      }
+      if((join->type == MS_MULTIPLE) && ((join->template == NULL) || (join->name == NULL))) {
+	msSetError(MS_EOFERR, "One-to-many joins must define template and name properties.", "loadJoin()");
+	return(-1);
+      }
+      return(0);
+    case(FOOTER):
+      if((join->footer = getString()) == NULL) return(-1);
+      break;
+    case(FROM):
+      if((join->from = getString()) == NULL) return(-1);
+      break;      
+    case(HEADER):
+      if((join->header = getString()) == NULL) return(-1);
+      break;
+    case(NAME):
+      if((join->name = getString()) == NULL) return(-1);
+      break;
+    case(TABLE):
+      if((join->table = getString()) == NULL) return(-1);
+      break;
+    case(TEMPLATE):
+      if((join->template = getString()) == NULL) return(-1);
+      break;
+    case(TO):
+      if((join->to = getString()) == NULL) return(-1);
+      break;
+    case(TYPE):
+      if((join->type = getSymbol(2, MS_SINGLE, MS_MULTIPLE)) == -1) return(-1);
+      break;
+    default:
+      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
+      msSetError(MS_IDENTERR, ms_error.message, "loadJoin()");
+      return(-1);
+    }
+  } /* next token */
+}
+
+static void writeJoin(joinObj *join, FILE *stream) 
+{
+  fprintf(stream, "      JOIN\n");
+  if(join->footer) fprintf(stream, "        FOOTER \"%s\"\n", join->footer);
+  if(join->from) fprintf(stream, "        FROM \"%s\"\n", join->from);
+  if(join->header) fprintf(stream, "        HEADER \"%s\"\n", join->header);
+  if(join->name) fprintf(stream, "        NAME \"%s\"\n", join->name);
+  if(join->table) fprintf(stream, "        TABLE \"%s\"\n", join->table);
+  if(join->to) fprintf(stream, "        TO \"%s\"\n", join->to);
+  fprintf(stream, "        TYPE %s\n", msJoinType[join->type]);
+  fprintf(stream, "      END\n");
+}
+
 /* inserts a feature at the end of the list, can create a new list */
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape)
 {
@@ -925,17 +1039,30 @@ int initClass(classObj *class)
   initLabel(&(class->label));
   class->symbolname = NULL;
 
+  class->numjoins = 0;
+  class->template = NULL;
+  if((class->joins = (joinObj *)malloc(MS_MAXJOINS*sizeof(joinObj))) == NULL) {
+    msSetError(MS_MEMERR, NULL, "initClass()");
+    return(-1);
+  }
+
   return(0);
 }
 
 void freeClass(classObj *class)
 {
+  int i;
+
   freeLabel(&(class->label));
   freeExpression(&(class->expression));
   freeExpression(&(class->text));
   free(class->name);
   free(class->symbolname);
   free(class->overlaysymbolname);
+  free(class->template);
+  for(i=0;i<class->numjoins;i++) /* each join */    
+    freeJoin(&(class->joins[i]));
+  free(class->joins);
 }
 
 int loadClass(classObj *class, mapObj *map)
@@ -967,6 +1094,10 @@ int loadClass(classObj *class, mapObj *map)
       break;
     case(EXPRESSION):
       if(loadExpression(&(class->expression)) == -1) return(-1);
+      break;
+    case(JOIN):
+      if(loadJoin(&(class->joins[class->numjoins])) == -1) return(-1);
+      class->numjoins++;
       break;
     case(LABEL):
       if(loadLabel(&(class->label), map) == -1) return(-1);
@@ -1033,6 +1164,9 @@ int loadClass(classObj *class, mapObj *map)
 	class->symbol = (int) msyynumber;
       else
 	class->symbolname = strdup(msyytext);
+      break;
+    case(TEMPLATE):      
+      if((class->template = getString()) == NULL) return(-1);
       break;
     case(TEXT):
       if(loadExpression(&(class->text)) == -1) return(-1);
@@ -1109,6 +1243,10 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
       }      
     }
     break;
+  case(TEMPLATE):
+    free(class->template);
+    class->template = strdup(value);
+    break;
   case(TEXT):
     if(loadExpressionString(&(class->text), value) == -1) return;
     if((class->text.type != MS_STRING) && (class->text.type != MS_EXPRESSION)) msSetError(MS_MISCERR, "Text expressions support constant or replacement strings." , "loadClass()");
@@ -1121,6 +1259,8 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
 
 static void writeClass(mapObj *map, classObj *class, FILE *stream)
 {
+  int i;
+
   fprintf(stream, "    CLASS\n");
   if(class->backgroundcolor > -1) fprintf(stream, "      BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[class->backgroundcolor-1].red, map->palette.colors[class->backgroundcolor-1].green, map->palette.colors[class->backgroundcolor-1].blue);
   if(class->color > -1) fprintf(stream, "      COLOR %d %d %d\n", map->palette.colors[class->color-1].red, map->palette.colors[class->color-1].green, map->palette.colors[class->color-1].blue);
@@ -1129,237 +1269,31 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
     writeExpression(&(class->expression), stream);
     fprintf(stream, "\n");
   }
+  for(i=0; i<class->numjoins; i++)
+    writeJoin(&(class->joins[i]), stream);  
   writeLabel(map, &(class->label), stream, "      ");
   if(class->maxsize > -1) fprintf(stream, "      MAXSIZE %d\n", class->maxsize);
   if(class->minsize > -1) fprintf(stream, "      MINSIZE %d\n", class->minsize);
   if(class->outlinecolor > -1) fprintf(stream, "      OUTLINECOLOR %d %d %d\n", map->palette.colors[class->outlinecolor-1].red, map->palette.colors[class->outlinecolor-1].green, map->palette.colors[class->outlinecolor-1].blue);
+  if(class->overlaycolor > -1) {
+    fprintf(stream, "      OVERLAYCOLOR %d %d %d\n", map->palette.colors[class->overlaycolor-1].red, map->palette.colors[class->overlaycolor-1].green, map->palette.colors[class->overlaycolor-1].blue);
+    fprintf(stream, "      OVERLAYSIZE %d\n", class->overlaysize);
+    if(class->overlaysymbolname)
+      fprintf(stream, "      OVERLAYSYMBOL \"%s\"\n", class->overlaysymbolname);
+    else
+      fprintf(stream, "      OVERLAYSYMBOL %d\n", class->overlaysymbol);
+  }
   fprintf(stream, "      SIZE %d\n", class->size);
   if(class->symbolname)
     fprintf(stream, "      SYMBOL \"%s\"\n", class->symbolname);
   else
     fprintf(stream, "      SYMBOL %d\n", class->symbol);
+  if(class->template) fprintf(stream, "      TEMPLATE \"%s\"\n", class->template);
   if(class->text.string) {
     fprintf(stream, "      TEXT ");
     writeExpression(&(class->text), stream);
     fprintf(stream, "\n");
-  }
-  fprintf(stream, "    END\n");
-}
-
-/*
-** Initialize, load and free a single join
-*/
-void initJoin(joinObj *join)
-{
-  join->numitems = 0;
-
-  join->name = NULL; /* unique join name, used for variable substitution */
-
-  join->items = NULL; /* array to hold item names for the joined table */
-  join->data = NULL; /* arrays of strings to holds 1 or more records worth of data */
-  join->numrecords = 0;
-
-  join->table = NULL;
-
-  join->match = NULL;
-
-  join->from = NULL; /* join items */
-  join->to = NULL;
-
-  join->header = NULL;
-  join->template = NULL; /* only html type templates are supported */
-  join->footer = NULL;
-
-  join->type = MS_SINGLE; /* one-to-one */
-}
-
-void freeJoin(joinObj *join) 
-{
-  int i;
-
-  free(join->name);
-
-  free(join->table);
-
-  free(join->from);
-  free(join->to);
-
-  free(join->match);
-
-  free(join->header);
-  free(join->template);
-  free(join->footer);
-
-  msFreeCharArray(join->items, join->numitems); /* these may have been free'd elsewhere */
-  for(i=0; i<join->numrecords; i++)
-    msFreeCharArray(join->data[i], join->numitems);
-  free(join->data);
-}
-
-int loadJoin(joinObj *join)
-{
-  initJoin(join);
-
-  for(;;) {
-    switch(msyylex()) {
-    case(EOF):
-      msSetError(MS_EOFERR, NULL, "loadJoin()");
-      return(-1);
-    case(END):      
-      if((join->from == NULL) || (join->to == NULL) || (join->table == NULL)) {
-	msSetError(MS_EOFERR, "Join must define table, name, from and to properties.", "loadJoin()");
-	return(-1);
-      }
-      if((join->type == MS_MULTIPLE) && ((join->template == NULL) || (join->name == NULL))) {
-	msSetError(MS_EOFERR, "One-to-many joins must define template and name properties.", "loadJoin()");
-	return(-1);
-      }
-      return(0);
-    case(FOOTER):
-      if((join->footer = getString()) == NULL) return(-1);
-      break;
-    case(FROM):
-      if((join->from = getString()) == NULL) return(-1);
-      break;      
-    case(HEADER):
-      if((join->header = getString()) == NULL) return(-1);
-      break;
-    case(NAME):
-      if((join->name = getString()) == NULL) return(-1);
-      break;
-    case(TABLE):
-      if((join->table = getString()) == NULL) return(-1);
-      break;
-    case(TEMPLATE):
-      if((join->template = getString()) == NULL) return(-1);
-      break;
-    case(TO):
-      if((join->to = getString()) == NULL) return(-1);
-      break;
-    case(TYPE):
-      if((join->type = getSymbol(2, MS_SINGLE, MS_MULTIPLE)) == -1) return(-1);
-      break;
-    default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadJoin()");
-      return(-1);
-    }
-  } /* next token */
-}
-
-static void writeJoin(joinObj *join, FILE *stream) 
-{
-  fprintf(stream, "      JOIN\n");
-  if(join->footer) fprintf(stream, "        FOOTER \"%s\"\n", join->footer);
-  if(join->from) fprintf(stream, "        FROM \"%s\"\n", join->from);
-  if(join->header) fprintf(stream, "        HEADER \"%s\"\n", join->header);
-  if(join->name) fprintf(stream, "        NAME \"%s\"\n", join->name);
-  if(join->table) fprintf(stream, "        TABLE \"%s\"\n", join->table);
-  if(join->to) fprintf(stream, "        TO \"%s\"\n", join->to);
-  fprintf(stream, "        TYPE %s\n", msJoinType[join->type]);
-  fprintf(stream, "      END\n");
-}
-
-/*
-** Initialize, load and free a single query
-*/
-int initQuery(queryObj *query)
-{
-  initExpression(&(query->expression));
-  query->numjoins = 0;
-  query->template = NULL;
-  if((query->joins = (joinObj *)malloc(MS_MAXJOINS*sizeof(joinObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initQuery()");
-    return(-1);
-  }
-
-  query->items = NULL;
-  query->numitems = 0;
-  query->data = NULL;
-
-  return(0);
-}
-
-void freeQuery(queryObj *query) 
-{
-  int i;
-  
-  freeExpression(&(query->expression));
-  free(query->template);
-  for(i=0;i<query->numjoins;i++) /* each join */    
-    freeJoin(&(query->joins[i]));
-  free(query->joins);
-
-  msFreeCharArray(query->items, query->numitems); /* these may have been free'd elsewhere */
-  msFreeCharArray(query->data, query->numitems);
-}
-
-int loadQuery(queryObj *query)
-{
-  int j=0;
-
-  if(initQuery(query) == -1)
-    return(-1);
-
-  for(;;) {
-    switch(msyylex()) {
-    case(EOF):
-      msSetError(MS_EOFERR, NULL, "loadQuery()");
-      return(-1);
-    case(END):
-      if(query->template == NULL) {
-	msSetError(MS_MISCERR, "No query template specified.", "loadQuery()");
-	return(-1);
-      }
-      query->numjoins = j;
-      return(0);
-      break;
-    case(EXPRESSION):
-      if(loadExpression(&(query->expression)) == -1) return(-1);
-      break;
-    case(JOIN):
-      if(loadJoin(&(query->joins[j])) == -1) return(-1);
-      j++;
-      break;
-    case(TEMPLATE):      
-      if((query->template = getString()) == NULL) return(-1);
-      break;    
-    default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadQuery()");    
-      return(-1);
-    }
-  } /* next token */
-}
-
-void loadQueryString(queryObj *query, char *value)
-{
-  switch(msyylex()) {
-  case(EXPRESSION):
-    loadExpressionString(&(query->expression), value);
-    break;
-  case(TEMPLATE):
-    free(query->template);
-    query->template = strdup(value);
-    break;
-  }
-
-  return;
-}
-
-static void writeQuery(queryObj *query, FILE *stream) 
-{
-  int i;
-
-  fprintf(stream, "    QUERY\n");
-  if(query->expression.string) {
-    fprintf(stream, "      EXPRESSION ");
-    writeExpression(&(query->expression), stream);
-    fprintf(stream, "\n");
-  }
-  for(i=0; i<query->numjoins; i++)
-    writeJoin(&(query->joins[i]), stream);
-  if(query->template) fprintf(stream, "      TEMPLATE \"%s\"\n", query->template);
+  }  
   fprintf(stream, "    END\n");
 }
 
@@ -1373,11 +1307,7 @@ int initLayer(layerObj *layer)
     msSetError(MS_MEMERR, NULL, "initLayer()");
     return(-1);
   }
-  if((layer->query = (queryObj *)malloc(sizeof(queryObj)*MS_MAXQUERIES)) == NULL) {
-    msSetError(MS_MEMERR, NULL, "initLayer()");
-    return(-1);
-  }
-
+  
   layer->name = NULL;
   layer->group = NULL;
   layer->description = NULL;
@@ -1395,15 +1325,13 @@ int initLayer(layerObj *layer)
 
   layer->maxfeatures = -1; /* no quota */
 
-  layer->queryitem = NULL;
-  layer->numqueries = 0;
-
   layer->header = NULL;  
   layer->footer = NULL;
 
   layer->transform = MS_TRUE;
 
   layer->classitem = NULL;
+  layer->classitemindex = -1;
   layer->numclasses = 0;
 
   if(initProjection(&(layer->projection)) == -1)
@@ -1414,20 +1342,26 @@ int initLayer(layerObj *layer)
   layer->labelcache = MS_ON;
   layer->postlabelcache = MS_FALSE;
 
-  layer->labelitem = NULL;  
-  layer->labelsizeitem = NULL;  
-  layer->labelangleitem = NULL;  
+  layer->labelitem = layer->labelsizeitem = layer->labelangleitem = NULL;
+  layer->labelitemindex = layer->labelsizeitemindex = layer->labelangleitemindex = -1;
+
   layer->labelmaxscale = -1;
   layer->labelminscale = -1;
 
   layer->tileitem = strdup("location");
   layer->tileindex = NULL;
 
-  layer->features = NULL;
+  layer->currentfeature = layer->features = NULL;
 
   layer->connection = NULL;
-  layer->connectiontype = MS_LOCAL;
+  layer->connectiontype = MS_SHAPEFILE;
 
+  layer->items = NULL;
+  layer->itemindexes = NULL;
+  layer->numitems = 0;
+
+  layer->resultcache= NULL;
+  
   return(0);
 }
 
@@ -1443,7 +1377,6 @@ void freeLayer(layerObj *layer) {
   free(layer->labelitem);
   free(layer->labelsizeitem);
   free(layer->labelangleitem);
-  free(layer->queryitem);
   free(layer->header);
   free(layer->footer);
   free(layer->tileindex);
@@ -1452,21 +1385,25 @@ void freeLayer(layerObj *layer) {
 
   freeProjection(&(layer->projection));
 
-  for(i=0;i<layer->numqueries;i++)
-    freeQuery(&(layer->query[i]));
-  free(layer->query);
-
   for(i=0;i<layer->numclasses;i++)
     freeClass(&(layer->class[i]));
   free(layer->class);
 
   if(layer->features)
     freeFeatureList(layer->features);
+
+  if(layer->items) msFreeCharArray(layer->items, layer->numitems);
+  if(layer->itemindexes) free(layer->itemindexes);
+  
+  if(layer->resultcache) {    
+    free(layer->resultcache->results);
+    free(layer->resultcache);
+  }
 }
 
 int loadLayer(layerObj *layer, mapObj *map)
 {
-  int q=0, c=0; /* query and class counters */
+  int c=0; // class counter
 
   if(initLayer(layer) == -1)
     return(-1);
@@ -1484,7 +1421,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->connection = getString()) == NULL) return(-1);
       break;
     case(CONNECTIONTYPE):
-      if((layer->connectiontype = getSymbol(3, MS_LOCAL, MS_SDE, MS_OGR)) == -1) return(-1);
+      if((layer->connectiontype = getSymbol(2, MS_SDE, MS_OGR)) == -1) return(-1);
       break;
     case(DATA):
       if((layer->data = getString()) == NULL) return(-1);
@@ -1498,17 +1435,17 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(END):
       layer->numclasses = c;
-      layer->numqueries = q;
-
+ 
       if(!layer->connection && layer->data && layer->numclasses > 1 && !layer->classitem) {
 	msSetError(MS_MISCERR, "Multiple classes defined but no classitem?", "loadLayer()");      
 	return(-1);
-      }
+      }      
 
       return(0);
       break;
     case(FEATURE):
       if(loadFeature(&(layer->features)) == -1) return(-1);      
+      layer->connectiontype = MS_INLINE;
       break;
     case(FOOTER):
       if((layer->footer = getString()) == NULL) return(-1);
@@ -1562,13 +1499,6 @@ int loadLayer(layerObj *layer, mapObj *map)
       break;
     case(PROJECTION):
       if(loadProjection(&(layer->projection)) == -1) return(-1);
-      break;
-    case(QUERY):
-      if(loadQuery(&(layer->query[q])) == -1) return(-1);
-      q++;
-      break;
-    case(QUERYITEM):
-      if((layer->queryitem = getString()) == NULL) return(-1);
       break;
     case(STATUS):
       if((layer->status = getSymbol(4, MS_ON,MS_OFF,MS_QUERY,MS_DEFAULT)) == -1) return(-1);
@@ -1753,14 +1683,6 @@ static void loadLayerString(mapObj *map, layerObj *layer, char *value)
   case(PROJECTION):
     loadProjectionString(&(layer->projection), value);
     break;
-  case(QUERY):
-    if(layer->numqueries != 1) { /* if only 1 query no need for index */
-      if(getInteger(&i) == -1) break;
-      if((i < 0) || (i >= layer->numqueries))
-        break;
-    }
-    loadQueryString(&(layer->query[i]), value);
-    break;
   case(MS_STRING):    
     for(i=0;i<layer->numclasses; i++) {
       if(!layer->class[i].name) /* skip it */
@@ -1828,8 +1750,6 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   if(layer->offsite > -1) fprintf(stream, "    OFFSITE %d\n", layer->offsite);
   if(layer->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   writeProjection(&(layer->projection), stream, "    ");
-  for(i=0; i<layer->numqueries; i++) writeQuery(&(layer->query[i]), stream);
-  if(layer->queryitem) fprintf(stream, "    QUERYITEM \"%s\"\n", layer->queryitem);
   fprintf(stream, "    STATUS %s\n", msStatus[layer->status]);
   if(layer->symbolscale > -1) fprintf(stream, "    SYMBOLSCALE %g\n", layer->symbolscale);
   if(layer->tileindex) {
@@ -2573,7 +2493,6 @@ int initMap(mapObj *map)
   map->units = MS_METERS;
   map->cellsize = 0;
   map->shapepath = NULL;
-  map->tile = NULL;
   map->imagecolor.red = 255;
   map->imagecolor.green = 255;
   map->imagecolor.blue = 255;
@@ -2632,7 +2551,6 @@ void msFreeMap(mapObj *map) {
   if(!map) return;
 
   free(map->name);
-  free(map->tile);
   free(map->shapepath);
 
   msFreeSymbolSet(&map->symbolset); // free symbols
@@ -2709,7 +2627,6 @@ int msSaveMap(mapObj *map, char *filename)
   if(map->shapepath) fprintf(stream, "  SHAPEPATH \"%s\"\n", map->shapepath);
   fprintf(stream, "  SIZE %d %d\n", map->width, map->height);
   fprintf(stream, "  STATUS %s\n", msStatus[map->status]);
-  if(map->tile) fprintf(stream, "  TILE \"%s\"\n", map->tile);
   fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
@@ -2904,9 +2821,6 @@ mapObj *msLoadMap(char *filename)
     case(SYMBOLSET):
       if((map->symbolset.filename = getString()) == NULL) return(NULL);
       break;
-    case(TILE):
-      if((map->tile = getString()) == NULL) return(NULL);
-      break; 
     case(TRANSPARENT):
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(NULL);
       break;
@@ -2993,10 +2907,6 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       i = msGetLayerIndex(map, msyytext);
       if(i>=map->numlayers || i<0) break;
       loadLayerString(map, &(map->layers[i]), value);
-    case(TILE):
-      free(map->tile);
-      map->tile = strdup(value);
-      break; 
     case(TRANSPARENT):
       msyystate = 2; msyystring = value;
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) break;

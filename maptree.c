@@ -183,7 +183,7 @@ treeObj *msCreateTree(shapefileObj *shapefile, int maxdepth)
   tree->root = treeNodeCreate(shapefile->bounds);
 
   for(i=0; i<shapefile->numshapes; i++) {
-    if ( !SHPReadBounds(shapefile->hSHP, i, &bounds))
+    if ( !msSHPReadBounds(shapefile->hSHP, i, &bounds))
       treeAddShapeId(tree, i, bounds);
   }
 
@@ -716,7 +716,7 @@ void msFilterTreeSearch(shapefileObj *shp, char *status, rectObj search_rect)
 
   for(i=0;i<shp->numshapes;i++) { /* for each shape */
     if(msGetBit(status, i)) {
-      if(!SHPReadBounds(shp->hSHP, i, &shape_rect))
+      if(!msSHPReadBounds(shp->hSHP, i, &shape_rect))
 	if(msRectOverlap(&shape_rect, &search_rect) != MS_TRUE)
 	  msSetBit(status, i, 0);
     }
