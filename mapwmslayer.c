@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.49  2003/01/30 15:53:48  assefa
+ * Windows compilation error.
+ *
  * Revision 1.48  2003/01/23 21:42:10  dan
  * Support SLD in GetMap requests when wms_style_..._sld metadata is set
  *
@@ -137,6 +140,7 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <process.h>
+#include <stdio.h>
 #endif
 
 #define WMS_V_1_0_0  100
@@ -504,8 +508,13 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         msProjectPoint(&(map->projection), &(map->latlon), &oPoint);
 
         pszNewEPSG = (char*)malloc(101*sizeof(char));
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        sprintf(pszNewEPSG, "%s,9001,%.16g,%.16g", 
+                pszEPSG, oPoint.x, oPoint.y);
+#else
         snprintf(pszNewEPSG, 100, "%s,9001,%.16g,%.16g", 
                  pszEPSG, oPoint.x, oPoint.y);
+#endif        
         pszNewEPSG[100]='\0';
         free(pszEPSG);
         pszEPSG=pszNewEPSG;
