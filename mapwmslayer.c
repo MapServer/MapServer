@@ -27,8 +27,12 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2001/08/17 20:08:07  dan
+ * A few more fixes... we're able to load layers from cubeserv in GMap... cool!
+ *
  * Revision 1.2  2001/08/17 17:54:32  dan
- * Handle SRS and BBOX properly.  Still have to reproject image received from server.
+ * Handle SRS and BBOX properly.  Still have to reproject image received 
+ * from server.
  *
  * Revision 1.1  2001/08/14 21:26:54  dan
  * Initial revision - only loads and draws WMS CONNECTION URL for now.
@@ -226,6 +230,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     char *pszURL = NULL, *pszEPSG = NULL;
     const char *pszTmp;
     rectObj bbox;
+    int status = MS_SUCCESS;
     
     if (lp->connectiontype != MS_WMS || lp->connection == NULL)
         return MS_FAILURE;
@@ -314,24 +319,50 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
         return MS_FAILURE;
     }
 
+    // __TODO__ We have to urlencode each value... especially the BBOX values
+    // because if they end up in exponent format (123e+06) the + will be seen
+    // as a space by the remote server.
     sprintf(pszURL, 
-            "%s&REQUEST=GetMap&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%g,%g,%g,%g",
+            "%s&REQUEST=GetMap&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f",
             lp->connection, map->width, map->height, 
             pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
 
+    msDebug("WMS GET %s\n", pszURL);
     if (msWMSGetImage(pszURL, lp->data) != MS_SUCCESS)
+    {
+        msDebug("WMS GET failed.\n", pszURL);
         return MS_FAILURE;
+    }
+    msDebug("WMS GET completed OK.\n");
 
-
-    // Prepare layer for drawing and render the image directly into the map
-    // without any transformation.
-    // __TODO__ we may have to reproject the image in some cases
-
+/* ------------------------------------------------------------------
+ * Prepare layer for drawing, reprojecting the image received from the
+ * server if needed...
+ * ------------------------------------------------------------------ */
     lp->type = MS_LAYER_RASTER;
-    lp->transform = MS_FALSE;
 
-    if (msDrawRasterLayer(map, lp, img) != 0)
-        return MS_FAILURE;
+    if (!msProjectionsDiffer(&(map->projection), &(lp->projection)))
+    {
+        // The simple case... no reprojection needed... render layer directly.
+        lp->transform = MS_FALSE;
+        if (msDrawRasterLayer(map, lp, img) != 0)
+            status = MS_FAILURE;
+    }
+    else
+    {
+        // OK, we have to resample the raster to map projection...
+        lp->transform = MS_TRUE;
+
+        // Create a world file with raster extents
+        // One line per value, in this order: cx, 0, 0, cy, ulx, uly
+
+
+        // __TODO__ not implemented yet!
+        msSetError(MS_MISCERR, 
+                   "WMS Layer reprojection not implemented yet.", 
+                   "msDrawWMSLayer()");
+        status = MS_FAILURE;
+    } 
 
     // We're done with the remote server's response... delete it.
     //unlink(lp->data);
@@ -342,7 +373,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img)
     free(pszEPSG);
     free(pszURL);
 
-    return MS_SUCCESS;
+    return status;
 
 #else
 /* ------------------------------------------------------------------
