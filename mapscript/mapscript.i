@@ -484,8 +484,8 @@ memory.") const char * {
     return msQueryByShape(self, -1, shape);
   }
 
-  int setWKTProjection(char *string) {
-    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
+  int setWKTProjection(char *wkt) {
+    return msOGCWKT2ProjectionObj(wkt, &(self->projection), self->debug);
   }
 
   %newobject getProjection;
@@ -493,8 +493,8 @@ memory.") const char * {
     return (char *) msGetProjectionString(&(self->projection));
   }
 
-  int setProjection(char *string) {
-    return msLoadProjectionString(&(self->projection), string);
+  int setProjection(char *proj4) {
+    return msLoadProjectionString(&(self->projection), proj4);
   }
 
   int save(char *filename) {
@@ -917,12 +917,12 @@ memory.") const char * {
     return msQueryByShape(map, self->index, shape);
   }
 
-  int setFilter(char *string) {
-      if (!string || strlen(string) == 0) {
+  int setFilter(char *filter) {
+      if (!filter || strlen(filter) == 0) {
           freeExpression(&self->filter);
           return MS_SUCCESS;
       }
-      else return loadExpressionString(&self->filter, string);
+      else return loadExpressionString(&self->filter, filter);
   }
 
   %newobject getFilterString;
@@ -942,9 +942,9 @@ memory.") const char * {
     return NULL;
   }
 
-  int setWKTProjection(char *string) {
+  int setWKTProjection(char *wkt) {
     self->project = MS_TRUE;
-    return msOGCWKT2ProjectionObj(string, &(self->projection), self->debug);
+    return msOGCWKT2ProjectionObj(wkt, &(self->projection), self->debug);
   }
 
   %newobject getProjection;
@@ -952,9 +952,9 @@ memory.") const char * {
     return (char *) msGetProjectionString(&(self->projection));
   }
 
-  int setProjection(char *string) {
+  int setProjection(char *proj4) {
     self->project = MS_TRUE;
-    return msLoadProjectionString(&(self->projection), string);
+    return msLoadProjectionString(&(self->projection), proj4);
   }
 
   int addFeature(shapeObj *shape) {    
@@ -1123,12 +1123,12 @@ memory.") const char * {
     return; // do nothing, map deconstrutor takes care of it all
   }
 
-  int setExpression(char *string) {
-      if (!string || strlen(string) == 0) {
+  int setExpression(char *expression) {
+      if (!expression || strlen(expression) == 0) {
           freeExpression(&self->expression);
           return MS_SUCCESS;
       }
-      else return loadExpressionString(&self->expression, string);
+      else return loadExpressionString(&self->expression, expression);
   }
 
   %newobject getExpressionString;
@@ -1149,8 +1149,8 @@ memory.") const char * {
   }
 
   // Should be deprecated!  Completely bogus layer argument.  SG.
-  int setText(layerObj *layer, char *string) {
-    return loadExpressionString(&self->text, string);
+  int setText(layerObj *layer, char *text) {
+    return loadExpressionString(&self->text, text);
   }
 
   char *getMetaData(char *name) {
@@ -1240,8 +1240,8 @@ memory.") const char * {
     free(self);
   }
 
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectPoint(in, out, self);
+  int project(projectionObj *projin, projectionObj *projout) {
+    return msProjectPoint(projin, projout, self);
   }	
 
   int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, char *text) {
@@ -1291,8 +1291,8 @@ memory.") const char * {
     free(self);		
   }
 
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectLine(in, out, self);
+  int project(projectionObj *projin, projectionObj *projout) {
+    return msProjectLine(projin, projout, self);
   }
 
 #ifdef NEXT_GENERATION_API
@@ -1364,8 +1364,8 @@ memory.") const char * {
     free(self);		
   }
 
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectShape(in, out, self);
+  int project(projectionObj *projin, projectionObj *projout) {
+    return msProjectShape(projin, projout, self);
   }
 
 #ifdef NEXT_GENERATION_API
@@ -1503,8 +1503,8 @@ memory.") const char * {
     free(self);
   }
 
-  int project(projectionObj *in, projectionObj *out) {
-    return msProjectRect(in, out, self);
+  int project(projectionObj *projin, projectionObj *projout) {
+    return msProjectRect(projin, projout, self);
   }
 
   double fit(int width, int height) {
@@ -1825,7 +1825,7 @@ memory.") const char * {
 // class extensions for projectionObj
 //
 %extend projectionObj {
-  projectionObj(char *string) {
+  projectionObj(char *proj4) {
     int status;
     projectionObj *proj=NULL;
 
@@ -1833,7 +1833,7 @@ memory.") const char * {
     if(!proj) return NULL;
     msInitProjection(proj);
 
-    status = msLoadProjectionString(proj, string);
+    status = msLoadProjectionString(proj, proj4);
     if(status == -1) {
       msFreeProjection(proj);
       free(proj);
