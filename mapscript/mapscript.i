@@ -1,3 +1,4 @@
+// $Id$
 //
 // mapscript.i: SWIG interface file for MapServer scripting extension called MapScript.
 //
@@ -590,21 +591,21 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return loadExpressionString(&self->expression, string);
   }
 
-  %newobject getExpression;
-  char *getExpression() {
+  %newobject getExpressionString;
+  char *getExpressionString() {
     char exprstring[256];
     switch(self->expression.type) {
     case(MS_REGEX):
       snprintf(exprstring, 255, "/%s/", self->expression.string);
-      break;
+      return strdup(exprstring);
     case(MS_STRING):
       snprintf(exprstring, 255, "\"%s\"", self->expression.string);
-      break;
+      return strdup(exprstring);
     case(MS_EXPRESSION):
       snprintf(exprstring, 255, "(%s)", self->expression.string);
-      break;
+      return strdup(exprstring);
     }
-    return strdup(exprstring);
+    return NULL;
   }
 
   int setText(layerObj *layer, char *string) {
