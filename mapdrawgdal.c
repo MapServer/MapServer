@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.33  2004/10/18 13:05:14  frank
+ * Fixed typos in alpha handling cleanup.
+ *
  * Revision 1.32  2004/10/17 03:39:03  frank
  * added greyscale+alpha support - bug 965
  *
@@ -960,7 +963,10 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
                   }
                   else if( pabyRawAlpha[k] != 0 )
                   {
-                      int gd_color = gdTrueColorAlpha(
+                      int gd_color;
+                      int gd_alpha = 127 - (pabyRawAlpha[k] >> 1);
+
+                      gd_color = gdTrueColorAlpha(
                           pabyRaw1[k], pabyRaw2[k], pabyRaw3[k], gd_alpha );
 
                       /* NOTE: GD versions prior to 2.0.12 didn't take
