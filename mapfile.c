@@ -3872,9 +3872,6 @@ void msFreeMap(mapObj *map) {
   msFree(map->shapepath);
   msFree(map->mappath);
 
-  msFreeSymbolSet(&map->symbolset); // free symbols
-  msFree(map->symbolset.filename);
-
   msFreeProjection(&(map->projection));
   msFreeProjection(&(map->latlon));
 
@@ -3893,6 +3890,9 @@ void msFreeMap(mapObj *map) {
   msFree( map->imagetype );
 
   msFreeFontSet(&(map->fontset));
+
+  msFreeSymbolSet(&map->symbolset); // free symbols
+  msFree(map->symbolset.filename);
 
   freeWeb(&(map->web));
 

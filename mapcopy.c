@@ -59,7 +59,7 @@ void copyProperty(void *dst, void *src, int size) {
  **********************************************************************/
 
 char *copyStringProperty(char **dst, char *src) {
-  if (src == NULL || strlen(src) <= 0) *dst = NULL; 
+  if (src == NULL) *dst = NULL; 
   else {
     if (*dst == NULL) *dst = strdup(src);
     else strcpy(*dst, src);
@@ -75,14 +75,14 @@ char *copyStringProperty(char **dst, char *src) {
 
 int msCopyProjection(projectionObj *dst, projectionObj *src) {
   int i;
-  if (msInitProjection(dst) != MS_SUCCESS) return(MS_FAILURE);
+#ifdef USE_PROJ
   copyProperty(&(dst->numargs), &(src->numargs), sizeof(int));
   for (i = 0; i < dst->numargs; i++) {
     dst->args[i] = strdup(src->args[i]);
   }
   if (dst->numargs != 0)
     if (msProcessProjection(dst) != MS_SUCCESS) return(MS_FAILURE);
-
+#endif
   return(MS_SUCCESS);
 }
 
@@ -160,7 +160,7 @@ int msCopyShapeObj(shapeObj *dst, shapeObj *src) {
 }
 */
 
-/***********************************************************************
+/**********************************************************************
  * msCopyItem()                                                        *
  *                                                                     *
  * Copy an itemObj                                                     *
@@ -182,16 +182,16 @@ int msCopyItem(itemObj *dst, itemObj *src) {
  * Copy a hashTableObj, using msInsertHashTable()                      *
  **********************************************************************/
 
-int msCopyHashTable(hashTableObj dst, hashTableObj src){
-  struct hashObj *tp;
-  int i;
-  for (i=0;i<MS_HASHSIZE; i++) {
-    if (src[i] != NULL) {
-      for (tp=src[i]; tp!=NULL; tp=tp->next)
-        msInsertHashTable(dst, tp->key, tp->data);
+int msCopyHashTable(hashTableObj dst, hashTableObj src) {
+    char *key=NULL;
+    while (1) {
+        key = msNextKeyFromHashTable(src, key);
+        if (!key) 
+            break;
+        else 
+            msInsertHashTable(dst, key, msLookupHashTable(src, key));
     }
-  }
-  return(MS_SUCCESS);
+    return(MS_SUCCESS);
 }
 
 /***********************************************************************
@@ -201,11 +201,14 @@ int msCopyHashTable(hashTableObj dst, hashTableObj src){
  **********************************************************************/
 
 int msCopyFontSet(fontSetObj *dst, fontSetObj *src, mapObj *map) {
-  if (src->filename != NULL) dst->filename = strdup(src->filename);
+  if (src->filename != NULL) {
+      if (dst->filename) free(dst->filename);
+      dst->filename = strdup(src->filename);
+  }
   copyProperty(&(dst->numfonts), &(src->numfonts), sizeof(int));
   if (src->fonts) {
-    dst->fonts = msCreateHashTable();
-    if (msCopyHashTable((dst->fonts), (src->fonts)) != MS_SUCCESS)
+    if (!dst->fonts) dst->fonts = msCreateHashTable();
+    if (msCopyHashTable(dst->fonts, src->fonts) != MS_SUCCESS)
       return(MS_FAILURE);
   }
 
@@ -513,10 +516,10 @@ int msCopyClass(classObj *dst, classObj *src, layerObj *layer) {
 #endif
   copyProperty(&(dst->type), &(src->type), sizeof(int));
 
-  if (src->metadata)
+  if (src->metadata != NULL)
   {
     dst->metadata = msCreateHashTable();
-    msCopyHashTable((dst->metadata), (src->metadata));
+    msCopyHashTable(dst->metadata, src->metadata);
   }
 
   copyProperty(&(dst->minscale), &(src->minscale), sizeof(double));
@@ -997,7 +1000,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
  * msCopyMap()                                                         *
  *                                                                     *
  * Copy a mapObj, using mapfile.c:initLayer(), msCopyLayer(),          *
- * msCopySymbolSet(), msCopyRect(), msCopyColor(), msCopyQueryMap()    *
+
  * msCopyLegend(), msCopyScalebar(), msCopyProjection()                *
  * msCopyOutputFormat(), msCopyWeb(), msCopyReferenceMap()             *
  **********************************************************************/
@@ -1022,16 +1025,16 @@ int msCopyMap(mapObj *dst, mapObj *src)
       return(MS_FAILURE);
     }
   }
+
+  if (msCopyFontSet(&(dst->fontset), &(src->fontset), dst) != MS_SUCCESS) {
+    msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopyMap()");
+    return(MS_FAILURE);
+  }
   
   return_value = msCopySymbolSet(&(dst->symbolset), &(src->symbolset),
                                  dst);
   if(return_value != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy symbolset.", "msCopyMap()");
-    return(MS_FAILURE);
-  }
-  
-  if (msCopyFontSet(&(dst->fontset), &(src->fontset), dst) != MS_SUCCESS) {
-    msSetError(MS_MEMERR, "Failed to copy fontset.", "msCopyMap()");
     return(MS_FAILURE);
   }
   
@@ -1095,11 +1098,11 @@ int msCopyMap(mapObj *dst, mapObj *src)
     return(MS_FAILURE);
   }
   
-  return_value = msCopyProjection(&(dst->latlon), &(src->latlon));
+  /*return_value = msCopyProjection(&(dst->latlon), &(src->latlon));
   if (return_value != MS_SUCCESS) {
     msSetError(MS_MEMERR, "Failed to copy latlon.", "msCopyMap()");
     return(MS_FAILURE);
-  }
+  }*/
   
   return_value = msCopyReferenceMap(&(dst->reference),&(src->reference),
                                     dst);

@@ -68,7 +68,7 @@ char *msLookupHashTable(hashTableObj table, const char *string)
     msSetError(MS_HASHERR, "Invalid hash table or key", "msLookupHashTable");
     return(NULL);
   }
-  
+
   for(tp=table[hash(string)]; tp!=NULL; tp=tp->next)
     if(strcasecmp(string, tp->key) == 0)
       return(tp->data);
@@ -87,8 +87,8 @@ void msFreeHashTable(hashTableObj table)
   for (i=0;i<MS_HASHSIZE; i++) {
     if (table[i] != NULL) {
       for (tp=table[i]; tp!=NULL; prev_tp=tp,tp=tp->next,free(prev_tp)) {
-	free(tp->key);
-	free(tp->data);
+	    free(tp->key);
+	    free(tp->data);
       }
     }
     if(tp) free(tp);

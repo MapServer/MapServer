@@ -783,10 +783,12 @@ int msCopySymbolSet(symbolSetObj *dst, symbolSetObj *src, mapObj *map)
   copyStringProperty(&(dst->filename), src->filename);
   copyProperty(&(dst->map), &map, sizeof(mapObj *));
 
-  if (msCopyFontSet(dst->fontset, src->fontset, map) != MS_SUCCESS) {
+  dst->fontset = &(map->fontset);
+  
+  /*if (msCopyFontSet(dst->fontset, src->fontset, map) != MS_SUCCESS) {
     msSetError(MS_MEMERR,"Failed to copy fontset.","msCopySymbolSet()");
     return(MS_FAILURE);
-  }
+  }*/
   
   copyProperty(&(dst->numsymbols), &(src->numsymbols), sizeof(int));
   
