@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.28  2003/01/08 15:00:16  assefa
+ * Add setsymbolbyname in the style class.
+ *
  * Revision 1.27  2002/10/28 20:31:22  dan
  * New support for WMS Map Context (from Julien)
  *
@@ -318,5 +321,7 @@ DBFFieldType    DBFInfo_getFieldType(DBFInfo *self, int iField);
 
 styleObj       *styleObj_new(classObj *class);
 void            styleObj_destroy(styleObj* self);
+int             styleObj_setSymbolByName(styleObj *self, mapObj *map, 
+                                         char* pszSymbolName);
 
 #endif /* _PHP_MAPSCRIPT_H_INCLUDED_ */

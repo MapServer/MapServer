@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.55  2003/01/08 15:00:16  assefa
+ * Add setsymbolbyname in the style class.
+ *
  * Revision 1.54  2002/12/24 03:26:24  dan
  * Make msCreateLegendIcon() return imageObj + properly handle format (bug 227)
  *
@@ -1087,3 +1090,8 @@ void  styleObj_destroy(styleObj *self) {
     return; /* do nothing, map deconstrutor takes care of it all */
   }
 
+
+int styleObj_setSymbolByName(styleObj *self, mapObj *map, char* pszSymbolName) {
+    self->symbol = msGetSymbolIndex(&map->symbolset, pszSymbolName);
+    return self->symbol;
+}

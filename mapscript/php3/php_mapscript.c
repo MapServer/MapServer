@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.133  2003/01/08 15:00:16  assefa
+ * Add setsymbolbyname in the style class.
+ *
  * Revision 1.132  2003/01/08 01:16:05  assefa
  * Correct bugs on Windows related to paths.
  *
@@ -10654,10 +10657,20 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else
     {
         php3_error(E_ERROR,"Property '%s' does not exist in this object.",
-                            pPropertyName->value.str.val);
+                   pPropertyName->value.str.val);
         RETURN_LONG(-1);
     }
 
+    if (strcmp(pPropertyName->value.str.val, "symbolname") == 0)
+    {
+        if (styleObj_setSymbolByName(self,
+                                     parent_map,
+                                     self->symbolname) == -1)
+        {
+            RETURN_LONG(-1);
+        }
+        _phpms_set_property_long(pThis,"symbol", self->symbol, E_ERROR); 
+    }
 
     RETURN_LONG(0);
 }
