@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.67  2001/11/05 18:25:46  dan
+ * Added #ifdef USE_PROJ in map->setProjection()
+ *
  * Revision 1.66  2001/11/01 21:10:09  assefa
  * Add getProjection on map and layer object.
  *
@@ -140,7 +143,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Oct 31, 2001)"
+#define PHP3_MS_VERSION "(Nov 5, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -1212,6 +1215,7 @@ DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS)
 
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
 {
+#ifdef USE_PROJ
     mapObj              *self;
     pval                *pProjString, *pSetUnitsAndExtents;
     pval                *pThis;
@@ -1343,6 +1347,10 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
         }
     }   
     RETURN_LONG(nStatus);
+#else
+    php3_error(E_ERROR, 
+               "setProjection() available only with PROJ.4 support.");
+#endif
 }
 /* }}} */
 
