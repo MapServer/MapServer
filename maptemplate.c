@@ -615,6 +615,8 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    char *pszOptFlag;
    char *pszClassImg;
 
+   pszTemp = NULL;
+   
    if (!pszLayerTemplate || 
        !map || 
        nIdxLayer > map->numlayers ||
@@ -941,6 +943,7 @@ char *generateLegendTemplate(mapObj *map)
                  // concatenate to final result
                  pszResult = strcatalloc(pszResult, legLayerHtmlCopy);
 
+/*                 
                  if (!pszResult)
                  {
                     if (pszResult)
@@ -948,7 +951,7 @@ char *generateLegendTemplate(mapObj *map)
                     pszResult=NULL;
                     goto error;
                  }
-            
+*/            
                   
                  if (legLayerHtmlCopy)
                  {
@@ -975,7 +978,8 @@ char *generateLegendTemplate(mapObj *map)
                
                        // concatenate to final result
                        pszResult = strcatalloc(pszResult, legClassHtmlCopy);
-                     
+
+/*                       
                        if (!pszResult)
                        {
                           if (pszResult)
@@ -983,7 +987,7 @@ char *generateLegendTemplate(mapObj *map)
                           pszResult=NULL;
                           goto error;
                        }
-               
+*/               
 
                        if (legClassHtmlCopy) {
                          free(legClassHtmlCopy);
@@ -1025,7 +1029,8 @@ char *generateLegendTemplate(mapObj *map)
               
             // concatenate to final result
             pszResult = strcatalloc(pszResult, legLayerHtmlCopy);
-            
+
+/*            
             if (!pszResult)
             {
                if (pszResult)
@@ -1033,7 +1038,7 @@ char *generateLegendTemplate(mapObj *map)
                pszResult=NULL;
                goto error;
             }
-  
+*/  
 
             if (legLayerHtmlCopy) {
                free(legLayerHtmlCopy);
@@ -1058,7 +1063,8 @@ char *generateLegendTemplate(mapObj *map)
                
                   // concatenate to final result
                   pszResult = strcatalloc(pszResult, legClassHtmlCopy);
-                  
+  
+/*                  
                   if (!pszResult)
                   {
                      if (pszResult)
@@ -1066,7 +1072,7 @@ char *generateLegendTemplate(mapObj *map)
                      pszResult=NULL;
                      goto error;
                   }
-              
+*/              
                
                   if (legClassHtmlCopy) {
                     free(legClassHtmlCopy);
@@ -1107,7 +1113,8 @@ char *generateLegendTemplate(mapObj *map)
       
                
                   pszResult = strcatalloc(pszResult, legClassHtmlCopy);
-               
+
+/*                  
                   if (!pszResult)
                   {
                      if (pszResult)
@@ -1115,7 +1122,7 @@ char *generateLegendTemplate(mapObj *map)
                      pszResult=NULL;
                      goto error;
                   }
-
+*/
                   if (legClassHtmlCopy) {
                     free(legClassHtmlCopy);
                     legClassHtmlCopy = NULL;
