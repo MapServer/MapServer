@@ -603,8 +603,8 @@ static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj 
   printf("          <gml:origin>\n");
   printf("            <gml:pos>%g %g</gml:pos>\n", cm.geotransform[0], cm.geotransform[3]);
   printf("          </gml:origin>\n");
-  printf("          <gml:offsetVector>%g,%g</gml:offsetVector>\n", cm.geotransform[1], cm.geotransform[2]); // offset vector in X direction
-  printf("          <gml:offsetVector>%g,%g</gml:offsetVector>\n", cm.geotransform[4], cm.geotransform[5]); // offset vector in Y direction
+  printf("          <gml:offsetVector>%g %g</gml:offsetVector>\n", cm.geotransform[1], cm.geotransform[2]); // offset vector in X direction
+  printf("          <gml:offsetVector>%g %g</gml:offsetVector>\n", cm.geotransform[4], cm.geotransform[5]); // offset vector in Y direction
   printf("        </gml:RectifiedGrid>\n");
 
   printf("      </spatialDomain>\n");
