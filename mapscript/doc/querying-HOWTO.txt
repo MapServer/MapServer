@@ -1,0 +1,148 @@
+..  $Id$
+    
+    This is the mapscript querying HOWTO for mapserver 4.4.
+    
+    ***************************************************************
+    RULE #1: No tabs in this document!
+    RULE #2: Indent is 4 characters.
+    RULE #3: There is no rule 3.
+
+    Thank you.
+    ***************************************************************
+    
+    reStructured Text is part of the Python docutils module
+    
+        http://docutils.sourceforge.net/
+    
+    Documentation on reStructured Text is found at
+
+        http://docutils.sourceforge.net/rst.html
+
+    First reST note is about comments: a double period begins a comment
+    block (like a /* in C) and a double period on a line all by itself
+    closes the comment block.
+..
+
+..  Below is our main heading (becomes H1).  Note that we require empty
+    lines between every different reST element such as the empty line
+    between the end of this comment and the begining of the heading.
+..
+
+*****************************************************************************
+ Mapscript Query HowTo
+*****************************************************************************
+
+:Author: Sean Gillies
+:Contact: sgillies@frii.com
+:Revision: $Revision$
+:Date: $Date$
+
+..  The next heading encountered becomes our H2
+..
+
+.. sectnum::
+
+.. contents::
+    :depth: 2
+    :backlinks: top
+
+
+Introduction
+============
+
+All examples in this document refer to the mapfile and testing layers
+distributed with MapServer 4.2+ and found under mapserver/tests.
+
+Pseudocode
+----------
+
+All examples will use a pseudocode that is consistent with the language
+independent API reference.  Each line is a statement. For object attributes
+and methods we use the dot, '.', operator.  Creation and deletion of objects
+will be indicated by 'new' and 'del' keywords.  Other than that, the 
+pseudocode looks a lot like Python.
+
+Querying Overview
+=================
+
+The Query Result Set
+--------------------
+
+Map layers can be queried to select features using spatial query methods
+or the attribute query method.  Ignoring for the moment whether we are 
+executing a spatial or attribute query, results are obtained like so::
+
+    layer.query()                                 # not an actual method!
+    results = layer.getResults()
+
+In the case of a failed query or query with zero results, 'getResults'
+returns NULL.
+
+Result Set Members
+------------------
+
+Individual members of the query results are obtained like::
+
+    ...                                           # continued
+    
+    if results:
+        for i in range(results.numresults):       # iterate over results
+            result = results.getResult(i)
+
+This result object is a handle, of sorts, for a feature of the layer,
+having 'shapeindex' and 'tileindex' attributes that can be used as
+arguments to 'getFeature'.
+
+Resulting Features
+-------------------
+
+The previous example code can now be extended to the case of obtaining all
+queried features::
+
+    layer.query()
+    results = layer.getResults()
+    if results:
+        # open layer in preparation of reading shapes
+        layer.open()
+
+        for i in range(results.numresults):
+            result = results.getResult(i)
+            
+            layer.getFeature(result.shapeindex, result.tileindex)
+            
+            ...  # do something with this feature
+
+        # Close when done
+        layer.close()
+
+Attribute Queries
+=================
+
+By Attributes
+-------------
+
+queryByAttributes()
+
+Spatial Queries
+===============
+
+By Rectangle
+------------
+
+queryByRect()
+
+By Point
+--------
+
+queryByRect()
+
+By Shape
+--------
+
+queryByShape()
+
+By Selection
+------------
+
+queryByFeatures()
+
