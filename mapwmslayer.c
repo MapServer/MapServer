@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.16  2001/12/12 00:55:58  dan
+ * Took out the old version of msWMSGetImage() that didn't have an event
+ * loop as we are relying on the event loop now for timeouts.
+ *
  * Revision 1.15  2001/12/11 18:41:44  dan
  * Fixed a typo in vnd.ogc.se_* MIME type for exceptions (was vnd.odc_*)
  *
@@ -112,115 +116,6 @@ static int tracer (const char * fmt, va_list pArgs)
 #endif
 }
 
-
-#ifdef PREEMPTIVE_MODE
-
-/* Preemptive version: no event loop ... does noe work on Windows.
- * we should take that version out eventually
- */
-
-/*
-**  We get called here from the event loop when we are done
-**  loading.
-*/
-static int terminate_handler (HTRequest * request, HTResponse * response,
-                              void * param, int status)
-{
-
-    if (status != 200)
-    {
-        static char errmsg[100];
-        msDebug("HTTP GET request returned status %d\n", status);
-
-        sprintf(errmsg, "HTTP GET request failed with status %d", status);
-        msSetError(MS_WMSCONNERR, errmsg, "msGetImage()");
-    }
-
-    if (param) 
-        *((int*)param) = status;
-
-    return 0;
-}
-
-
-/**********************************************************************
- *                          msWMSGetImage()
- *
- * Fetch a map slide via HTTP request and save to specified temp file.
- *
- * Based on sample code from http://www.w3.org/Library/Examples/LoadToFile.c
- **********************************************************************/
-int msWMSGetImage(const char *geturl, const char *outputfile)
-{
-    HTRequest * request;
-    int nHTTPStatus = 0;
-
-    int nStatus = MS_SUCCESS;
-
-    if (geturl == NULL || outputfile == NULL)
-    {
-        msSetError(MS_WMSCONNERR, "URL or output file parameter missing.", 
-                   "msGetImage()");
-        return(MS_FAILURE);
-    }
-
-    request = HTRequest_new();
-    HTProfile_newPreemptiveClient("MapServer WMS Client", "1.0");
-
-    /* Add our own after filter to return HTTP status */
-    HTNet_addAfter(terminate_handler, NULL, &nHTTPStatus, 
-                   HT_ALL, HT_FILTER_LAST);
-
-    HTPrint_setCallback(tracer);
-    HTTrace_setCallback(tracer);
-
-    if (HTLoadToFile(geturl, request, outputfile) != YES)
-    {
-        msDebug("HTLoadFile() != YES\n");
-        msSetError(MS_WMSCONNERR, "HTLoadToFile Error.", "msWMSGetImage()");
-        nStatus = MS_FAILURE;
-    }
-
-    if (nHTTPStatus != 200)
-    {
-        // msSetError() already called in terminate_handler
-        nStatus = MS_FAILURE;
-    }
-
-
-#ifdef __TODO__
-    HTResponse *response;
-    const char * mimetype;  // Should be HTFormat
-
-    response = HTRequest_response(request);
-    mimetype = HTResponse_format(response);
-    msDebug("Content-type: %s\n",  mimetype?mimetype:"(null)");
-    if (mimetype == NULL)
-    {
-        msSetError(MS_WMSCONNERR, "Remote server error or invalid response.", 
-                   "msWMSGetImage()");
-        nStatus = MS_FAILURE;
-    }
-    else if (strcmp(mimetype, "image/gif") != 0 ||
-             strcmp(mimetype, "image/png") != 0 ||
-             strcmp(mimetype, "image/jpeg") != 0 ||
-             strcmp(mimetype, "image/wbmp") != 0   )
-    {
-        char err[256];
-        sprintf(err, "Unsupported image format: %s", mimetype);
-        msSetError(MS_WMSCONNERR, err, "msWMSGetImage()");
-        nStatus = MS_FAILURE;
-    }
-#endif
-
-    HTRequest_delete(request);                  /* Delete the request object */
-    HTProfile_delete();
-
-    return nStatus;
-}
-
-
-#else
 
 /* Non-preemptive version: uses an event loop.  
  * Works on both Linux and Windows.
@@ -328,8 +223,6 @@ int msWMSGetImage(const char *geturl, const char *outputfile, int nTimeout)
 
 
 #endif /* USE_WMS_LYR */
-
-#endif /* PREEMPTIVE_MODE */
 
 
 /**********************************************************************
