@@ -1127,7 +1127,7 @@ Constructor:
    int     classindex
    int     type      (read-only)
    int     numlines  (read-only)
-   int     index     (read-only)
+   int     index     
    int     tileindex (read-only)
    rectObj bounds    (read-only)
    int     numvalues (read-only)
