@@ -381,34 +381,6 @@ Very important note: Constant names and class member variable names are
         message in case nothing was found can be avoided in PHP using 
         the '@' control operator).
 
-   queryResultObj queryUsingPoint(pointObj point, int type, double buffer)
-        Query layer at point location specified in georeferenced map 
-        coordinates (i.e. not pixels).
-        Returns a queryResultObj on success, or 0 if nothing was found.
-        Type is MS_SINGLE or MS_MULTIPLE depending on number of results
-        you want. 
-        Passing buffer <=0 defaults to tolerances set in the map file 
-        (in pixels) but you can use a constant buffer (specified in 
-        ground units) instead.
-        Note that to be queryable a layer must have a QUERYITEM and at least
-        one QUERY object.
-
-   queryResultObj queryUsingRect(rectObj rect)
-        Query layer using a rectangle specified in georeferenced map 
-        coordinates (i.e. not pixels).
-        Returns a queryResultObj on success, or 0 if nothing was found.
-        Note that to be queryable a layer must have a QUERYITEM and at least
-        one QUERY object.
-
-   int queryUsingFeatures(queryResultObj pQuery) 
-       Generates a result set based on a previous set of results. At present 
-        the results MUST be based on a polygon layer. Holes and disjoint 
-        polygons should now be handled correctly.
-
-   queryresultObj queryUsingShape(shapeObj shape)
-      Generates a result set based on a single shape, the shape is assumed 
-      to be a polygon at this point.
-
    int setFilter(string expression)
         Set layer filter expression.
 
