@@ -29,9 +29,10 @@
     between the end of this comment and the begining of the heading.
 ..
 
-=============================================================================
+*****************************************************************************
  Python Appendix
-=============================================================================
+*****************************************************************************
+
 :Author: Sean Gillies
 :Contact: sgillies@frii.com
 :Revision: $Revision$
@@ -40,12 +41,17 @@
 ..  The next heading encountered becomes our H2
 ..
 
------------------------------------------------------------------------------
+=============================================================================
  Introduction
------------------------------------------------------------------------------
+=============================================================================
 
 The Python mapscript module contains some class extension methods that have
 not yet been implemented for other languages.
+
+=============================================================================
+ Classes
+=============================================================================
+
 
 -----------------------------------------------------------------------------
  imageObj
@@ -60,7 +66,7 @@ Methods
 
 .. _new imageObj:
 
-imageObj(int width, int height [, string driver [, PyObject file]]): imageObj_
+imageObj(int width, int height [, string driver [, PyObject file]]) : imageObj_
     Create a new instance which is either empty or read from a Python
     file-like object.  If *file* is provided, the size of the
     file's image override any other parameters passed to the method.  
