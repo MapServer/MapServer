@@ -76,12 +76,13 @@ imageObj *msDrawMap(mapObj *map)
 				map->web.imagepath, map->web.imageurl);        
         if( image != NULL ) msImageInitGD( image, &map->imagecolor );
     }
-    else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
+/*    else if( MS_RENDERER_IMAGEMAP(map->outputformat) )
     {
         image = msImageCreateIM(map->width, map->height, map->outputformat, 
 				map->web.imagepath, map->web.imageurl);        
         if( image != NULL ) msImageInitIM( image );
     }
+*/
     else if( MS_RENDERER_RAWDATA(map->outputformat) )
     {
         image = msImageCreate(map->width, map->height, map->outputformat,
@@ -207,7 +208,11 @@ imageObj *msDrawMap(mapObj *map)
             }        
             else 
                 status = msDrawLayer(map, lp, image);
-            if(status == MS_FAILURE) return(NULL);
+            if(status == MS_FAILURE) {
+                msSetError(MS_IMGERR, "Failed to draw layer named '%s'.",
+                           "msDrawMap()", lp->name);
+                return(NULL);
+            }
         }
     }
 
