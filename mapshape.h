@@ -67,9 +67,13 @@ typedef	struct {
     int		bUpdated;
 } SHPInfo;
 typedef SHPInfo * SHPHandle;
+#endif
 
 typedef	struct
 {
+#ifdef SWIG
+%readonly
+#endif
     FILE	*fp;
 
     int         nRecords;
@@ -90,11 +94,13 @@ typedef	struct
     
     int		bNoHeader;
     int		bUpdated;
+#ifdef SWIG
+%readwrite
+#endif
 } DBFInfo;
 typedef DBFInfo * DBFHandle;
 
 typedef enum {FTString, FTInteger, FTDouble, FTInvalid} DBFFieldType;
-#endif
 
 // Shapefile object, no write access via scripts                               
 typedef struct {

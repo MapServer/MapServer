@@ -54,6 +54,9 @@ extern "C" {
 #define MS_YES 1
 #define MS_NO 0
 
+#define MS_SINGLE 0 /* modes for searching (spatial/database) */
+#define MS_MULTIPLE 1
+
 // General defines, not wrapable
 #ifndef SWIG
 #define MS_MAPFILE_EXPR "\\.map$"
@@ -86,9 +89,6 @@ extern "C" {
 
 #define MS_MINSYMBOLSIZE 1   // in pixels
 #define MS_MAXSYMBOLSIZE 100
-
-#define MS_SINGLE 0 /* modes for searching (spatial/database) */
-#define MS_MULTIPLE 1
 
 #define MS_URL 0 /* template types */
 #define MS_FILE 1
@@ -368,7 +368,6 @@ typedef struct {
   shapeObj *poly; // marker bounding box (POINT layers only)
 } markerCacheMemberObj;
 
-#ifndef SWIG
 typedef struct {
   labelCacheMemberObj *labels;
   int numlabels;  
@@ -377,7 +376,6 @@ typedef struct {
   int nummarkers;
   int markercachesize;
 } labelCacheObj;
-#endif
 
 // SYMBOLSET OBJECT
 typedef struct {
