@@ -28,6 +28,16 @@ Version 4.3 (CVS)
   used to be omitted and is now included in the default onlineresource if
   it was explicitly set in QUERY_STRING (bug 643)
 
+- Fixed possible crash when producing WMS errors INIMAGE (bug 644)
+
+- Fixed automated generation of onlineresource in OWS GetCapabilities
+  when the xxx_onlineresource metadata is not specified: the map= parameter
+  used to be omitted and is now included in the default onlineresource if
+  it was explicitly set in QUERY_STRING (bug 643)
+
+- Fixed an issue with annotation label overlap. There was an issue with
+  the way msRectToPolygon was computing it's bounding box. (bug 618)
+
 
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
