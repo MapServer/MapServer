@@ -4572,7 +4572,10 @@ char **msTokenizeMap(char *filename, int *numtokens)
 }
 
 /*
-** Functions for persistent database connections. Code by Jan Hartman (jhart@frw.uva.nl).
+** Functions for persistent database connections. Code by Jan Hartman 
+** (jhart@frw.uva.nl).
+**
+** See also mappool.c for the "new" connection pooling API.
 */
 int msCheckConnection(layerObj * layer) {
   int i;
