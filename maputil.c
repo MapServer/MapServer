@@ -1630,12 +1630,12 @@ int msSaveImage(gdImagePtr img, char *filename, int transparent, int interlace)
     gdImageColorTransparent(img, 0);
 
 #ifndef USE_GD_1_6 
-      gdImageGif(img, stream);
+  gdImageGif(img, stream);
 #else	
-      gdImagePng(img, stream);
+  gdImagePng(img, stream);
 #endif
-
-  fclose(stream);
+  
+  if(filename != NULL && strlen(filename) > 0) fclose(stream);
 
   return(0);
 }
