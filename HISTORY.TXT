@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.0-dev (CVS)
 ------------------------------
 
+- Fixed problem with truncated expressions (bugs 242 and 340)
+
 - Attempt at fixing GD vs libiconv dependency problems (bug 348)
 
 - Fixed problem with invalid BoundingBox tag in WMS capabilities (bug 34)
@@ -157,20 +159,19 @@ Version 4.0-beta1 (2003-06-06)
 - Major changes to support vector output (PDF, SWF, GML, ...):
    - imageObj is used by all rendering functions instead of gdImagePtr
    - New msSaveImage() prototype
-  *** Full details still have to be documented here...
 
-- Support for GD-2.0, including 24 bits output
-  *** Full details still have to be documented here...
+- Support for GD-2.0, including 24 bits output.  Dropped support for GD 1.x
 
-- Support for output to any GDAL-supported format.
-  *** Full details still have to be documented here...
+- Support for output to any GDAL-supported format via the new OUTPUTFORMAT
+  object.
 
-- New styleObj
-  *** Full details still have to be documented here...
+- New styleObj to replace the OVERLAY* parameter in classes.
 
 - PostGIS: Added Sean Gillies <sgillies@i3.com>'s patch for "using unique 
   <column name>". Added "using SRID=#" to specify a spatial reference 
   for an arbitrary sql query.
+
+- ... and nuerous fixes not listed here...
 
 
 Version 3.6.0-beta1 (2002-04-30)
