@@ -2,7 +2,8 @@
  *  filename: mappdf.c
  *  created : Thu Oct  4 09:58:19 2001
  *  @author :  <jwall@webpeak.com> , <jspielberg@webpeak.com>
- *  LastEditDate Was "Thu May  9 13:24:31 2002"
+ *  3.7 support: <zak-ms@aiya.dhs.org>
+ * 
  *
  * [$Author$ $Date$]
  * [$Revision$]
@@ -51,21 +52,26 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
     FILE *stream;
     char buffer[MS_BUFFER_LENGTH];
     char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
-    char *path, *fullPath;
+    char *path, *fullPath, szPath[MS_MAXPATHLEN];
     int i;
 
     if(fontset == NULL) return(0);
     if(fontset->filename == NULL) return(0);
-    path = getPath(fontset->filename);
-
-    stream = fopen(fontset->filename, "r");
-    if(!stream) {
-        msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontsetPDF()",
+    
+    stream = 
+      fopen(msBuildPath(szPath, fontset->map->mappath, fontset->filename), "r");
+    
+    
+    if(!stream)
+    {
+        msSetError(MS_IOERR, "Error opening fontset %s.", "msLoadFontSetPDF()",
                    fontset->filename);
         return(-1);
     }
 
     i = 0;
+    path = getPath(fontset->filename);
+
     while(fgets(buffer, MS_BUFFER_LENGTH, stream))
     { /* while there's something to load */
         char *fontParam;
@@ -80,22 +86,31 @@ int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
         sscanf(buffer,"%s %s", alias,  file1);
 
         fullPath = file1;
-        if(file1[0] != '/')
-        { /* already full path */
-            sprintf(file2, "%s%s", path, file1);
-            fullPath = file2;
-        }
 
-/*ok we have the alias and the full name*/
-fontParam = (char *)malloc(sizeof(char)*(strlen(fullPath)+strlen(alias)+3));
-sprintf(fontParam,"%s==%s",alias,fullPath);
-PDF_set_parameter(pdf, "FontOutline", fontParam);
-free(fontParam);
-i++;
+#if defined(_WIN32) && !defined(__CYGWIN__)
+        if(strlen(file1) <= 1 || (file1[0] != '\\' && file1[1] != ':'))
+        { /* not a full path */
+            sprintf(file2, "%s%s", path, file1);
+            fullPath = msBuildPath(szPath, fontset->map->mappath, file2);
+        }
+#else
+       if(file1[0] != '/')
+        { /* not full path */
+            sprintf(file2, "%s%s", path, file1);
+            fullPath = msBuildPath(szPath, fontset->map->mappath, file2);
+        }
+#endif
+ 
+        /*ok we have the alias and the full name*/
+        fontParam = (char *)malloc(sizeof(char)*(strlen(fullPath)+strlen(alias)+3));
+        sprintf(fontParam,"%s==%s",alias,fullPath);
+        PDF_set_parameter(pdf, "FontOutline", fontParam);
+        free(fontParam);
+        i++;
     }
 
 fclose(stream); /* close the file */
-free(path);
+//free(path);
 
 return(0);
 }
@@ -203,7 +218,7 @@ void drawPolylinePDF(PDF *pdf, shapeObj *p, colorObj  *c, double width)
 /*                                                                      */
 /*  Draw a line symbol of the specified size and color                  */
 /************************************************************************/
-void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
+void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
                          styleObj *style, double scalefactor)
 {
     int size;
@@ -211,7 +226,7 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p,
 
     size = MS_NINT(style->size*scalefactor);
     pdf = image->img.pdf->pdf;
-    
+
     if(p->numlines <= 0)
         return;
 
@@ -288,7 +303,7 @@ void billboardPDF(PDF *pdf, shapeObj *shape, labelObj *label)
 /*                                                                      */
 /*  draws a single label at the specified position                      */
 /************************************************************************/
-int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string, 
+int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string,
                    labelObj *label, fontSetObj *fontset, double scalefactor)
 {
     if(!string)
@@ -307,12 +322,12 @@ int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string,
                                    label->offsety,
                                    label->angle,
                                    0, NULL);
-        msDrawTextPDF(image, p, string, 
+        msDrawTextPDF(image, p, string,
                  label, fontset, scalefactor);
     } else {
         labelPnt.x += label->offsetx;
         labelPnt.y += label->offsety;
-        msDrawTextPDF(image,labelPnt, string, 
+        msDrawTextPDF(image,labelPnt, string,
                  label, fontset, scalefactor);
     }
 
@@ -342,10 +357,10 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
     for(l=map->labelcache.numlabels-1; l>=0; l--)
     {
         /* point to right spot in cache */
-        cachePtr = &(map->labelcache.labels[l]); 
+        cachePtr = &(map->labelcache.labels[l]);
 
         /* set a couple of other pointers, avoids nasty references */
-        layerPtr = &(map->layers[cachePtr->layerindex]); 
+        layerPtr = &(map->layers[cachePtr->layerindex]);
         //classPtr = &(cachePtr->class);
         labelPtr = &(cachePtr->label);
 
@@ -375,95 +390,158 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
             marker_rect.maxx = marker_rect.minx + (marker_width-1);
             marker_rect.maxy = marker_rect.miny + (marker_height-1);
 
-            if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1; /* actually draw the marker */
+            /* actually draw the marker */
+            if(layerPtr->type == MS_LAYER_ANNOTATION) draw_marker = 1;
         }
 
         if(labelPtr->position == MS_AUTO) {
 
             if(layerPtr->type == MS_LAYER_LINE) {
                 int position = MS_UC;
-
-                for(j=0; j<2; j++) { /* Two angles or two positions, depending on angle. Steep angles will use the angle approach, otherwise we'll rotate between UC and LC. */
-
+            
+                /* Two angles or two positions, depending on angle. Steep angles */
+                /* will use the angle approach, otherwise we'll rotate between*/
+                /* UC and LC. */
+                for(j=0; j<2; j++)
+                {
                     msFreeShape(cachePtr->poly);
-                    cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+                    /* assume label *can* be drawn */
+                    cachePtr->status = MS_TRUE;
 
-                    if(j == 1) {
+                    if(j == 1)
+                    {
                         if(fabs(cos(labelPtr->angle)) < LINE_VERT_THRESHOLD)
                             labelPtr->angle += 180.0;
                         else
                             position = MS_LC;
                     }
 
-                    p = get_metrics(&(cachePtr->point), position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                    p = get_metrics(&(cachePtr->point),
+                                     position,
+                                     r,
+                                     (marker_offset_x + labelPtr->offsetx),
+                                     (marker_offset_y + labelPtr->offsety),
+                                     labelPtr->angle,
+                                     labelPtr->buffer,
+                                     cachePtr->poly);
 
+                    /*save marker bounding polygon*/
                     if(draw_marker)
-                        msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+                        msRectToPolygon(marker_rect, cachePtr->poly);
 
-                    if(!labelPtr->partials) { // check against image first
-                        if(labelInImage(map->width, map->width, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
+                    /*check against image first*/
+                    if(!labelPtr->partials)
+                    {
+                        if(labelInImage(map->width,
+                                        map->width,
+                                        cachePtr->poly,
+                                        labelPtr->buffer) == MS_FALSE)
+                        {
                             cachePtr->status = MS_FALSE;
-                            continue; // next angle
+                            /*go to next angle*/
+                            continue;
                         }
                     }
 
-                    for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-                        if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
-                            if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                    /* compare against points already drawn*/
+                    for(i=0; i<map->labelcache.nummarkers; i++)
+                    {
+                        /* labels can overlap their own marker*/
+                        if(l != map->labelcache.markers[i].id)
+                        {
+                            /* see if polys intersect */
+                            if(intersectLabelPolygons(map->labelcache.markers[i].poly,
+                                                      cachePtr->poly) == MS_TRUE)
+                            {
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
                         }
                     }
 
+                    /*go to next angle*/
                     if(!cachePtr->status)
-                        continue; // next angle
+                        continue;
 
-                    for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
-                        if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-
+                    /* compare against rendered labels*/
+                    for(i=l+1; i<map->labelcache.numlabels; i++)
+                    {
+                        /* compare bounding polygons and check for duplicates */
+                        if(map->labelcache.labels[i].status == MS_TRUE)
+                        {
+                            /* check if label is a duplicate */
                             if((labelPtr->mindistance != -1) &&
                                 (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
                                 (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) &&
                                 (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance))
-                            { /* label is a duplicate */
+                            {
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
 
-                            if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                            /* see if polys intersect */
+                            if(intersectLabelPolygons(map->labelcache.labels[i].poly,
+                                                      cachePtr->poly) == MS_TRUE)
+                            {
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
                         }
                     }
 
-                    if(cachePtr->status) // found a suitable place for this label
+                    /*found a suitable place for this label*/
+                    if(cachePtr->status)
                         break;
 
-                } // next angle
+                }  /*next angle*/
 
-            } else {
-                for(j=0; j<=7; j++) { /* loop through the outer label positions */
-
+            }
+            else
+            {
+                /* loop through the outer label positions */
+                for(j=0; j<=7; j++)
+                {
                     msFreeShape(cachePtr->poly);
-                    cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
+                    /* assume label *can* be drawn */
+                    cachePtr->status = MS_TRUE;
 
-                    p = get_metrics(&(cachePtr->point), j, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+                    p = get_metrics(&(cachePtr->point),
+                                    j,
+                                    r,
+                                    (marker_offset_x + labelPtr->offsetx),
+                                    (marker_offset_y + labelPtr->offsety),
+                                    labelPtr->angle,
+                                    labelPtr->buffer,
+                                    cachePtr->poly);
 
+                    /* save marker bounding polygon*/
                     if(draw_marker)
-                        msRectToPolygon(marker_rect, cachePtr->poly); // save marker bounding polygon
+                        msRectToPolygon(marker_rect, cachePtr->poly);
 
-                    if(!labelPtr->partials) { // check against image first
-                        if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE) {
+                    /*check against image first*/
+                    if(!labelPtr->partials)
+                    {
+                        if(labelInImage(map->width,
+                                        map->height,
+                                        cachePtr->poly,
+                                        labelPtr->buffer) == MS_FALSE)
+                        {
                             cachePtr->status = MS_FALSE;
-                            continue; // next position
+                            /*next position*/
+                            continue;
                         }
                     }
 
-                    for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-                        if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
-                            if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                    /* compare against points already drawn*/
+                    for(i=0; i<map->labelcache.nummarkers; i++)
+                    {
+                        /* labels can overlap their own marker*/
+                        if(l != map->labelcache.markers[i].id)
+                        {
+                            /* test if polys intersect */
+                            if(intersectLabelPolygons(map->labelcache.markers[i].poly,
+                                                      cachePtr->poly) == MS_TRUE)
+                            {
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -471,59 +549,102 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                     }
 
                     if(!cachePtr->status)
-                        continue; // next position
+                        continue; /*go to next position*/
 
-                    for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
-                        if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
+                    /* compare against rendered labels*/
+                    for(i=l+1; i<map->labelcache.numlabels; i++)
+                    {
+                        /* compare bounding polygons and check for duplicates */
+                        if(map->labelcache.labels[i].status == MS_TRUE)
+                        {
 
+                            /* check if label is a duplicate */
                             if((labelPtr->mindistance != -1) &&
                                (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
                                (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) &&
                                (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance))
-                            { /* label is a duplicate */
+                            {
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
 
-                            if(intersectLabelPolygons(map->labelcache.labels[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                            /* polys intersect? */
+                            if(intersectLabelPolygons(map->labelcache.labels[i].poly,
+                                                      cachePtr->poly) == MS_TRUE)
+                            {
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
                         }
                     }
 
-                    if(cachePtr->status) // found a suitable place for this label
+                    /* found a suitable place for this label*/
+                    if(cachePtr->status)
                         break;
-                } // next position
+                } /*next position*/
             }
 
-            if(labelPtr->force) cachePtr->status = MS_TRUE; /* draw in spite of collisions based on last position, need a *best* position */
+            /* draw in spite of collisions based on last position, need a *best* position */
+            if(labelPtr->force) cachePtr->status = MS_TRUE;
+        }
+        else
+        {
+            /* assume label *can* be drawn */
+            cachePtr->status = MS_TRUE;
 
-        } else {
-
-            cachePtr->status = MS_TRUE; /* assume label *can* be drawn */
-
-            if(labelPtr->position == MS_CC) // don't need the marker_offset
-                p = get_metrics(&(cachePtr->point), labelPtr->position, r, labelPtr->offsetx, labelPtr->offsety, labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+            /*don't need the marker_offset*/
+            if(labelPtr->position == MS_CC)
+            {
+                p = get_metrics(&(cachePtr->point),
+                                labelPtr->position,
+                                r,
+                                labelPtr->offsetx,
+                                labelPtr->offsety,
+                                labelPtr->angle,
+                                labelPtr->buffer,
+                                cachePtr->poly);
+            }
             else
-                p = get_metrics(&(cachePtr->point), labelPtr->position, r, (marker_offset_x + labelPtr->offsetx), (marker_offset_y + labelPtr->offsety), labelPtr->angle, labelPtr->buffer, cachePtr->poly);
+            {
+                p = get_metrics(&(cachePtr->point),
+                                labelPtr->position,
+                                r,
+                                (marker_offset_x + labelPtr->offsetx),
+                                (marker_offset_y + labelPtr->offsety),
+                                labelPtr->angle,
+                                labelPtr->buffer,
+                                cachePtr->poly);
+             }
 
+            /* save marker bounding polygon, part of overlap tests */
             if(draw_marker)
-                msRectToPolygon(marker_rect, cachePtr->poly); /* save marker bounding polygon, part of overlap tests */
+                msRectToPolygon(marker_rect, cachePtr->poly);
 
-            if(!labelPtr->force) { // no need to check anything else
+            if(!labelPtr->force)
+            { /* no need to check anything else*/
 
-                if(!labelPtr->partials) {
-                    if(labelInImage(map->width, map->height, cachePtr->poly, labelPtr->buffer) == MS_FALSE)
+                if(!labelPtr->partials)
+                {
+                    if(labelInImage(map->width,
+                                    map->height,
+                                    cachePtr->poly,
+                                    labelPtr->buffer) == MS_FALSE)
                         cachePtr->status = MS_FALSE;
                 }
 
                 if(!cachePtr->status)
-                    continue; // next label
+                    continue; /*goto next label*/
 
-                for(i=0; i<map->labelcache.nummarkers; i++) { // compare against points already drawn
-                    if(l != map->labelcache.markers[i].id) { // labels can overlap their own marker
-                        if(intersectLabelPolygons(map->labelcache.markers[i].poly, cachePtr->poly) == MS_TRUE) { /* polys intersect */
+                /*compare against points already drawn*/
+                for(i=0; i<map->labelcache.nummarkers; i++)
+                {
+                    /* labels can overlap their own marker*/
+                    if(l != map->labelcache.markers[i].id)
+                    {
+                        /* check if polys intersect */
+                        if(intersectLabelPolygons(map->labelcache.markers[i].poly,
+                                                  cachePtr->poly) == MS_TRUE)
+                        {
                             cachePtr->status = MS_FALSE;
                             break;
                         }
@@ -531,18 +652,28 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
                 }
 
                 if(!cachePtr->status)
-                    continue; // next label
+                    continue; /*goto next label*/
 
-                for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
-                    if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-                        if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                /* compare against rendered label*/
+                for(i=l+1; i<map->labelcache.numlabels; i++)
+                {
+                    /* compare bounding polygons and check for duplicates */
+                    if(map->labelcache.labels[i].status == MS_TRUE)
+                    {
+                        /* check if label is a duplicate */
+                        if((labelPtr->mindistance != -1) &&
+                           (cachePtr->classindex == map->labelcache.labels[i].classindex) &&
+                           (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) &&
+                           (dist(cachePtr->point, map->labelcache.labels[i].point)
+                                                        <= labelPtr->mindistance))
+                        {
                             cachePtr->status = MS_FALSE;
                             break;
                         }
 
                         if(intersectLabelPolygons(map->labelcache.labels[i].poly,
-                                                  cachePtr->poly) == MS_TRUE) 
-                        { /* polys intersect */
+                                                  cachePtr->poly) == MS_TRUE)
+                        {
                             cachePtr->status = MS_FALSE;
                             break;
                         }
@@ -552,21 +683,26 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
         } /* end position if-then-else */
 
 
+        /* next label */
         if(!cachePtr->status)
-            continue; /* next label */
+            continue;
 
-        if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0){ /* need to draw a marker */
+        /* need to draw a marker */
+        if(layerPtr->type == MS_LAYER_ANNOTATION && cachePtr->numstyles > 0)
+        {
             for(i=0; i<cachePtr->numstyles; i++)
-              msDrawMarkerSymbolPDF(&map->symbolset, image, &(cachePtr->point), 
+            {
+              msDrawMarkerSymbolPDF(&map->symbolset, image, &(cachePtr->point),
                                     &(cachePtr->styles[i]), layerPtr->scalefactor);
+            }
         }
 
-/*handle a filled label background*/
-//TODO
-//if(labelPtr->backgroundcolor >= 0)
-//    billboardPDF(img, cachePtr->poly, labelPtr);
+        /*handle a filled label background*/
+        //TODO
+        //if(labelPtr->backgroundcolor >= 0)
+        //    billboardPDF(img, cachePtr->poly, labelPtr);
 
-        msDrawTextPDF(image, p, cachePtr->string, 
+        msDrawTextPDF(image, p, cachePtr->string,
                       labelPtr, &(map->fontset), layerPtr->scalefactor);
 
     } /* next in cache */
@@ -578,7 +714,7 @@ int msDrawLabelCachePDF(imageObj *image, mapObj *map)
 /*                                                                      */
 /*  Draw a shade symbol of the specified size and color                 */
 /************************************************************************/
-void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image, 
+void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image,
                           shapeObj *p, styleObj *style, double scalefactor)
 {
     int size;
@@ -586,11 +722,11 @@ void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 
     size = MS_NINT(style->size*scalefactor);
     pdf = image->img.pdf->pdf;
-    
+
     if(p->numlines <= 0)
         return;
     /* no such symbol, 0 is OK */
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) 
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0)
       return;
 
     if(size < 1) /* size too small */
@@ -610,7 +746,7 @@ void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 /*                                                                      */
 /*  Draw a single marker symbol of the specified size and color         */
 /************************************************************************/
-void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image, 
+void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
                            pointObj *p, styleObj *style, double scalefactor)
 {
     symbolObj *symbol;
@@ -619,14 +755,14 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
     int j,font_id;
     char symbolBuffer[2];
     int size;
-    double scale=1.0;
-    
+    double scale = 1.0;
+
     pdf = image->img.pdf->pdf;
 
     /* set the colors */
     // if no outline color, make the stroke and fill the same
     if (!(MS_VALID_COLOR(style->outlinecolor))) style->outlinecolor=style->color;
-    
+
     PDF_setrgbcolor_stroke(pdf,(float)(style->outlinecolor.red/255),
                                 (float)(style->outlinecolor.green/255),
                                 (float)(style->outlinecolor.blue/255));
@@ -639,9 +775,9 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
     size = MS_NINT(style->size*scalefactor);
     size = MS_MAX(size, style->minsize);
     size = MS_MIN(size, style->maxsize);
-    
+
     /* no such symbol, 0 is OK */
-    if(style->symbol > symbolset->numsymbols || style->symbol < 0) 
+    if(style->symbol > symbolset->numsymbols || style->symbol < 0)
         return;
     if(size < 1) /* size too small */
         return;
@@ -693,7 +829,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
             int length;
             char *data;
             int result;
-            float imageScale = 1;
+            float imageScale = 1.0;
 
 /*                FILE *pngOut;
             char tempFile[32];
@@ -708,7 +844,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 */
             if (size>10 && symbol->img->sx > size)
             {
-                imageScale = size/symbol->img->sx;
+                imageScale = (float)((float)size/(float)symbol->img->sx);
             }
 
             length = 0;
@@ -727,7 +863,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
             PDF_scale(pdf,1,-1);
 
             PDF_close_image(pdf,result);
-            
+        
 
         }
         break;
@@ -737,6 +873,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
         case(MS_SYMBOL_ELLIPSE):
                 // ok, this is going to be just a circle
 
+            scale = size/symbol->sizey;
             x = MS_NINT(symbol->sizex*scale);
             y = MS_NINT(symbol->sizey*scale);
 
@@ -753,9 +890,10 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
 /* -------------------------------------------------------------------- */
         case(MS_SYMBOL_VECTOR):
 
-        //set the joins to be mitered - better for small shapes
-        PDF_setlinejoin(pdf, 0);
-        
+            scale = size/symbol->sizey;
+            //set the joins to be mitered - better for small shapes
+            PDF_setlinejoin(pdf, 0);
+
             offset_x = MS_NINT(p->x - scale*.5*symbol->sizex);
             offset_y = MS_NINT(p->y - scale*.5*symbol->sizey);
 
@@ -763,7 +901,7 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
                        MS_NINT(scale*symbol->points[0].x + offset_x),
                        MS_NINT((scale*symbol->points[0].y + offset_y)));
             for(j=0;j < symbol->numpoints;j++)
-            {  
+            {
                 if (MS_NINT(symbol->points[j].x >= 0) &&
                     MS_NINT(symbol->points[j].y) >= 0)
                 {
@@ -771,29 +909,29 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image,
                         MS_NINT(symbol->points[j-1].y < 0))
                     {
                         PDF_moveto(pdf,
-                            MS_NINT(scale*symbol->points[j].x + offset_x),
-                            MS_NINT((scale*symbol->points[j].y + offset_y)));
+                                   MS_NINT(scale*symbol->points[j].x + offset_x),
+                                   MS_NINT((scale*symbol->points[j].y + offset_y)));
                     }
                     else
                     {
                         PDF_lineto(pdf,
-                            MS_NINT(scale*symbol->points[j].x + offset_x),
-                            MS_NINT((scale*symbol->points[j].y + offset_y)));
+                                   MS_NINT(scale*symbol->points[j].x + offset_x),
+                                   MS_NINT((scale*symbol->points[j].y + offset_y)));
                     }
                 }
             }
 
-            if(symbol->filled) 
+            if(symbol->filled)
             { /* if filled */
                 PDF_closepath_fill_stroke(pdf);
             }
-            else  
+            else
             { /* NOT filled */
                 PDF_stroke(pdf);
             }
-        //set the joins back to rounded
-        PDF_setlinejoin(pdf, 1);
-
+            //set the joins back to rounded
+            PDF_setlinejoin(pdf, 1);
+        
             break;
         default:
             break;
@@ -814,10 +952,10 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
     PDF *pdf = NULL;
     char *jpeg = NULL;
     int nLength = 0, nResult = 0;
-    
+
     assert( strcasecmp(map->outputformat->driver,"PDF") == 0 );
     pdf = image->img.pdf->pdf;
-    
+
 /* -------------------------------------------------------------------- */
 /*      create a temporary GD image and render in it.                   */
 /* -------------------------------------------------------------------- */
@@ -830,12 +968,12 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
     if( format == NULL )
         return -1;
 
-    image_tmp = msImageCreate( image->width, image->height, format, 
+    image_tmp = msImageCreate( image->width, image->height, format,
                                       NULL, NULL );
 
     if( image_tmp == NULL )
       return -1;
-      
+  
     if (msDrawRasterLayerLow(map, layer, image_tmp) != -1)
     {
         /*kludge: this should really be a raw image or png. jpeg is not good*/
@@ -846,12 +984,12 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
                                 map->width, map->height,
                                 3, 8, NULL);
         gdFree(jpeg);
-        
+    
         PDF_save(pdf); /* save the original coordinate system */
         PDF_scale(pdf, 1, -1); /* flip the coordinates, and therefore the image */
         PDF_place_image(pdf,nResult, 0, -(map->height), 1.0);
         PDF_restore(pdf); /* restore the original coordinate system */
-     
+ 
         PDF_close_image(pdf,nResult);
         msFreeImage( image_tmp );
 
@@ -864,7 +1002,7 @@ int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image)
         msFreeImage( image_tmp );
         return -1;
     }
-        
+    
     return 0;
 }
 
@@ -887,22 +1025,22 @@ int msDrawVectorLayerAsRasterPDF(mapObj *map, layerObj *layer, imageObj*image)
 /************************************************************************/
 void msTransformShapePDF(shapeObj *shape, rectObj extent, double cellsize)
 {
-    int i,j; 
+    int i,j;
 
-    if(shape->numlines == 0) return; 
+    if(shape->numlines == 0) return;
 
-    if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON) 
-    { 
-        for(i=0; i<shape->numlines; i++) 
+    if(shape->type == MS_SHAPE_LINE || shape->type == MS_SHAPE_POLYGON)
+    {
+        for(i=0; i<shape->numlines; i++)
         {
-            for(j=0; j < shape->line[i].numpoints; j++ ) 
+            for(j=0; j < shape->line[i].numpoints; j++ )
             {
-                shape->line[i].point[j].x = 
+                shape->line[i].point[j].x =
                     (shape->line[i].point[j].x - extent.minx)/cellsize;
-                shape->line[i].point[j].y = 
+                shape->line[i].point[j].y =
                     (extent.maxy - shape->line[i].point[j].y)/cellsize;
             }
-        }      
+        }  
         return;
     }
 }
@@ -919,7 +1057,7 @@ int msSaveImagePDF(imageObj *image, char *filename)
         FILE *stream;
         long size;
         const char *pdfBuffer;
-        
+    
         /*finish the page and put the entire pdf into a buffer*/
         PDF_end_page(image->img.pdf->pdf);
         PDF_close(image->img.pdf->pdf);
@@ -932,7 +1070,7 @@ int msSaveImagePDF(imageObj *image, char *filename)
                 msSetError(MS_IOERR, "(%s)", "msSaveImagePDF()", filename);
                 return(MS_FAILURE);
             }
-        } 
+        }
         else
         { /* use stdout */
             #ifdef _WIN32
@@ -945,11 +1083,11 @@ int msSaveImagePDF(imageObj *image, char *filename)
             #endif
             stream = stdout;
         }
-      
+  
       /*-----------------------------------------------
       /send the active buffer to disk
       /-----------------------------------------------*/
-      
+  
       fwrite(pdfBuffer, sizeof(char), size, stream);
       if(filename != NULL && strlen(filename) > 0)
          fclose(stream);
@@ -957,7 +1095,7 @@ int msSaveImagePDF(imageObj *image, char *filename)
 
       return(MS_SUCCESS);
     }
-    msSetError(MS_MISCERR, "Incorrect driver passed as pdf: %s.", 
+    msSetError(MS_MISCERR, "Incorrect driver passed as pdf: %s.",
                      "msSaveImagePDF()", image->format );
     return MS_FAILURE;
 }
@@ -981,7 +1119,7 @@ void msFreeImagePDF(imageObj *image)
 /*                                                                      */
 /*  creates a text element in the pdf                                   */
 /************************************************************************/
-int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, 
+int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
                  labelObj *label, fontSetObj *fontset, double scalefactor)
 {
     int x, y, x1, y1;
@@ -997,7 +1135,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
 /* -------------------------------------------------------------------- */
     if (image == NULL || !MS_DRIVER_PDF(image->format))
         return 0;
-        
+    
 /* -------------------------------------------------------------------- */
 /*      validate arguments.                                             */
 /* -------------------------------------------------------------------- */
@@ -1012,13 +1150,13 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
 
     size = label->size*scalefactor;
 
-    if(!fontset) 
+    if(!fontset)
     {
         msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextPDF()");
         return(-1);
     }
 
-    if(!label->font) 
+    if(!label->font)
     {
         msSetError(MS_TTFERR, "No font defined.", "msDrawTextPDF()");
         return(-1);
@@ -1026,13 +1164,13 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
 
     font = msLookupHashTable(fontset->fonts, label->font);
 
-    if(!font) 
+    if(!font)
     {
         msSetError(MS_TTFERR, "Requested font (%s) not found.", "msDrawTextPDF()",
                    label->font);
         return(-1);
     }
-    
+
     pdf = image->img.pdf->pdf;
 
 /* -------------------------------------------------------------------- */
@@ -1047,7 +1185,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
         sColor.red = label->color.red;
         sColor.green = label->color.green;
         sColor.blue = label->color.blue;
-    }  
+    }
     else if (MS_VALID_COLOR(label->outlinecolor))
     {
         sColor.red = label->outlinecolor.red;
@@ -1083,7 +1221,7 @@ int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string,
                              (float)sColor.green/255,
                              (float)sColor.blue/255);
     PDF_setlinewidth(pdf,.3);
-    
+
 /*set up font handling*/
     fontKey = label->font;
 
