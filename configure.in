@@ -542,6 +542,7 @@ unset ac_cv_lib_pdf_PDF_setlinewidth
 unset ac_cv_lib_pdf_PDF_setrgbcolor
 unset ac_cv_lib_pdf_PDF_moveto
 unset ac_cv_lib_pdf_PDF_curveto
+unset ac_cv_lib_pdf_PDF_show_xy
 
 AC_CHECKING(whether we should include PDF support...)
 AC_ARG_WITH(pdf,
@@ -567,7 +568,7 @@ elif test -n "$with_pdf" -a "$with_pdf" != "yes" ; then
 
   if test -n "$PDF_INCLUDE" -a -n "$PDF_LIBDIR" ; then
 
-      PDF_LIB="-L$PDF_LIBDIR -lPDF"
+      PDF_LIB="-L$PDF_LIBDIR -lpdf"
       PDF_INC=-I$PDF_INCLUDE
       AC_ADD_RUNPATH("$PDF_LIBDIR")
   else
@@ -586,7 +587,6 @@ else
   AC_CHECK_LIB(pdf,PDF_show_xy,PDF_LIB="-lpdf",,)
   if test -n "$PDF_LIB" ; then
       PDF_ENABLED=-DUSE_PDF
-	  PDF_OBJ="mappdf.o"
       AC_MSG_RESULT([        using libpdf from system libs.])
   else
       AC_MSG_RESULT([        libpdf not found... PDF support not included.])
