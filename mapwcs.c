@@ -474,7 +474,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *id)
 
 static int msWCSDescribeCoverage_CoverageOffering(layerObj *layer, wcsParamsObj *params) 
 {
-  static char *value; 
+  const char *value; 
   coverageMetadataObj cm;
   int status;
 
@@ -646,12 +646,10 @@ static int msWCSDescribeCoverage(mapObj *map, wcsParamsObj *params)
          "   xsi:schemaLocation=\"http://www.opengis.net/wcs http://schemas.opengis.net/wcs/%s/describeCoverage.xsd\">\n", params->version, params->version);
   
   if(params->coverages) { // use the list
-    j = 0;
-    while(params->coverages[j]) {
+    for( j = 0; params->coverages[j]; j++ ) {
       i = msGetLayerIndex(map, params->coverages[j]);
       if(i == -1) continue; // skip this layer, could/should generate an error
       msWCSDescribeCoverage_CoverageOffering(&(map->layers[i]), params);
-      j++;
     }
   } else { // return all layers
     for(i=0; i<map->numlayers; i++)
@@ -1089,10 +1087,19 @@ static int msWCSGetCoverageMetadata( layerObj *layer, coverageMetadataObj *cm )
  
   // we must have the bounding box in lat/lon [WGS84(DD)/EPSG:4326]
   cm->llextent = cm->extent;
-  if (layer->projection.numargs > 0 && !pj_is_latlong(layer->projection.proj)) // check the layer projection
+
+  // Already in latlong .. use directly.
+  if( layer->projection.proj != NULL && pj_is_latlong(layer->projection.proj))
+  {
+      /* no change */
+  }
+
+  else if (layer->projection.numargs > 0 && !pj_is_latlong(layer->projection.proj)) // check the layer projection
     msProjectRect(&(layer->projection), NULL, &(cm->llextent));
+
   else if (layer->map->projection.numargs > 0 && !pj_is_latlong(layer->map->projection.proj)) // check the map projection
     msProjectRect(&(layer->map->projection), NULL, &(cm->llextent));
+
   else { // projection was specified in the metadata only (EPSG:... only at the moment) 
     projectionObj proj;
     char projstring[32];
