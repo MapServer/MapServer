@@ -755,7 +755,6 @@ int processIf(char** pszInstr, hashTableObj *ht, int bLastPass)
 ** Function to process a [shpxy ...] tag: line contains the tag, shape holds the coordinates. 
 **
 ** TODO's: 
-**   - Probably need a seperator for coordinate pairs. 
 **   - May need to change attribute names.
 **   - Need generalization routines (not here, but in mapprimative.c).
 **   - Try to avoid all the realloc calls.
@@ -777,7 +776,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
   char *xh="", *xf=" ";
   char *yh="", *yf="";
   char *cs=","; // coordinate
-  char *ph="", *pf=""; // part
+  char *ph="", *pf="", *ps=""; // part
   char *sh="", *sf=""; // shape 
 
   int precision=0;
@@ -827,6 +826,8 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       if(argValue) ph = argValue;
       argValue = msLookupHashTable(tagArgs, "pf");
       if(argValue) pf = argValue;
+      argValue = msLookupHashTable(tagArgs, "ps");
+      if(argValue) ps = argValue;
 
       argValue = msLookupHashTable(tagArgs, "sh");
       if(argValue) sh = argValue;
@@ -892,7 +893,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       
     // build the coordinate string
     if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
-    for(i=0; i<tShape.numlines; i++) {      
+    for(i=0; i<tShape.numlines; i++) { // e.g. part      
       if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
       for(j=0; j<tShape.line[i].numpoints-1; j++) {
         snprintf(point, 128, pointFormat1, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
@@ -901,6 +902,7 @@ static int processCoords(layerObj *layer, char **line, shapeObj *shape)
       snprintf(point, 128, pointFormat2, tShape.line[i].point[j].x, tShape.line[i].point[j].y);
       coords = strcatalloc(coords, point);  
       if(strlen(pf) > 0) coords = strcatalloc(coords, pf);
+      if((i < tShape.numlines-1) && (strlen(ps) > 0)) coords = strcatalloc(coords, ps);
     }
     if(strlen(sf) > 0) coords = strcatalloc(coords, sf);
 
