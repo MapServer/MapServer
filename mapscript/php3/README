@@ -307,6 +307,9 @@ Very important note: Constant names and class member variable names are
         Draw a single layer, add labels to cache if required. 
         Returns -1 on error.
 
+   int getClass(int classIndex)
+        Returns a classObj from the layer given an index value (0=first class)
+
    queryResultObj queryUsingPoint(pointObj point, int type, double buffer)
         Query layer at point location specified in georeferenced map 
         coordinates (i.e. not pixels).
