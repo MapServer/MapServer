@@ -3323,7 +3323,7 @@ mapObj *msLoadMap(char *filename)
     mapObj *map;
 
     msAcquireLock( TLOCK_PARSER );
-    map = msLoadMapInternal( filename );
+    map = loadMapInternal( filename );
     msReleaseLock( TLOCK_PARSER );
 
     return map;
