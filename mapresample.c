@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2004/09/03 15:35:02  frank
+ * pass correct map into msImageCreate()
+ *
  * Revision 1.49  2004/07/28 21:44:21  assefa
  * Function msImageCreate has an additional argument (map object).
  *
@@ -1165,17 +1168,11 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      raster, with the newly established extents, and resolution.     */
 /* -------------------------------------------------------------------- */
     srcImage = msImageCreate( nLoadImgXSize, nLoadImgYSize,
-                              sDummyMap.outputformat, NULL, NULL, map );
+                              sDummyMap.outputformat, NULL, NULL, 
+                              &sDummyMap );
 
     if (srcImage == NULL)
         return -1; /* msSetError() should have been called already */
-
-/* -------------------------------------------------------------------- */
-/*      If this is a GD image, ensure we have things initialized to     */
-/*      transparent.                                                    */
-/* -------------------------------------------------------------------- */
-    if( MS_RENDERER_GD(srcImage->format) )
-        msImageInitGD( srcImage, &(sDummyMap.imagecolor) );
 
 /* -------------------------------------------------------------------- */
 /*      Draw into the temporary image.  Temporarily replace the         */
