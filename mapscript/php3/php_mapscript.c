@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.172  2003/07/01 03:08:33  dan
+ * Use imageObj instead of gdImagePtr in php3_ms_img_free()
+ *
  * Revision 1.171  2003/06/27 15:35:16  assefa
  * Modify test in _phpms_build_shape_object (Bug 316).
  *
@@ -5794,8 +5797,7 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
-    gdImagePtr self;
-
+    imageObj *self;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -5814,7 +5816,7 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    self = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
+    self = (imageObj*)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
     if (self)
     {
         /* Note: we do not have to call the object destructor...
