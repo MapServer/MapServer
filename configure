@@ -818,6 +818,7 @@ Optional Features:
                           msDebug() output to stderr (i.e. server log file).
   --disable-debug         Do not include "-g" in CFLAGS and disable msDebug()
                           output (the default).
+  --enable-coverage       Enable coverage testing
   --enable-perlv-ld-detect (applies to --with-php only)
                           Use perl -V output to figure the command to use to
                           link php_mapscript.so.  Try this only if the default
@@ -10147,6 +10148,15 @@ fi
 DEBUG_FLAGS=$DEBUG_FLAGS
 
 ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
+
+
+
+# Check whether --enable-coverage or --disable-coverage was given.
+if test "${enable_coverage+set}" = set; then
+  enableval="$enable_coverage"
+  CFLAGS="$CFLAGS -fprofile-arcs -ftest-coverage"
+fi;
+
 
 
 { echo "$as_me:$LINENO: checking for PHP/MapScript module options..." >&5
