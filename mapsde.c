@@ -417,7 +417,7 @@ int msSDELayerOpen(layerObj *layer) {
   sde->table = params[0]; // no need to free params
   sde->column = params[1];
 
-  SE_layerinfo_create(NULL, &(sde->layerinfo));
+  status = SE_layerinfo_create(NULL, &(sde->layerinfo));
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerOpen()", "SE_layerinfo_create()");
     return(MS_FAILURE);
