@@ -67,6 +67,7 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   dnl
   AC_EXPAND_PATH($with_gd, GD_DIR)
   test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
+  test -f $GD_DIR/include/gd/gd.h && GD_INCLUDE="$GD_DIR/include/gd"
   test -f $GD_DIR/gd.h && GD_INCLUDE="$GD_DIR"
   test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
   test -f $GD_DIR/libgd.a && GD_LIBDIR="$GD_DIR"
@@ -400,6 +401,7 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
 
   AC_EXPAND_PATH($with_proj, PROJ_DIR)
   test -f $PROJ_DIR/include/projects.h && PROJ_INCLUDE="$PROJ_DIR/include"
+  test -f $PROJ_DIR/include/proj/projects.h && PROJ_INCLUDE="$PROJ_DIR/include/proj"
   test -f $PROJ_DIR/src/projects.h && PROJ_INCLUDE="$PROJ_DIR/src"
   test -f $PROJ_DIR/projects.h && PROJ_INCLUDE="$PROJ_DIR"
   test -f $PROJ_DIR/src/.libs/libproj.a && PROJ_LIBDIR="$PROJ_DIR/src/.libs"
@@ -432,8 +434,6 @@ ALL_LIB="$PROJ_LIB $ALL_LIB"
 dnl ---------------------------------------------------------------------
 dnl Find ESRI SDE ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
-
-unset ac_cv_lib_proj_pj_init
 
 AC_CHECKING(whether we should include ESRI SDE support...)
 AC_ARG_WITH(sde,
