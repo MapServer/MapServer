@@ -4118,6 +4118,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     case(INTERLACE):
       msyystate = 2; msyystring = value;
       if((map->interlace = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
+      msPostMapParseOutputFormatSetup( map );
       break;
     case(IMAGECOLOR):
       msyystate = 2; msyystring = value;
@@ -4128,10 +4129,12 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     case(IMAGEQUALITY):
       msyystate = 2; msyystring = value;
       if(getInteger(&(map->imagequality)) == -1) break;
+      msPostMapParseOutputFormatSetup( map );
       break;
     case(IMAGETYPE):
       msyystate = 2; msyystring = value;
       map->imagetype = getToken();
+      msPostMapParseOutputFormatSetup( map );
       break;
     case(LAYER):      
       if(getInteger(&i) == -1) break;
@@ -4184,6 +4187,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     case(TRANSPARENT):
       msyystate = 2; msyystring = value;
       if((map->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) break;
+      msPostMapParseOutputFormatSetup( map );
       break;
     case(UNITS):
       msyystate = 2; msyystring = value;
