@@ -84,11 +84,37 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     msFreeMap(self);
   }
 
-  mapObj *copy() {
+  mapObj *clone() {
     mapObj *dstMap;
     dstMap = msNewMapObj();
     msCopyMap(dstMap, self);
     return dstMap;
+  }
+
+  /* removeLayer() adjusts the layers array, the indices of
+   * the remaining layers, the layersdrawing order, and numlayers
+   */
+  int removeLayer(int index) {
+    int i, drawindex = MS_MAXLAYERS + 1;
+    if ((index < 0) || (index >= self->numlayers)) {
+      return MS_FAILURE;
+    }
+    for (i = index + 1; i < self->numlayers; i++) {
+      self->layers[i].index--;
+      self->layers[i-1] = self->layers[i];
+    }
+    for (i = 0; i < self->numlayers; i++) {
+      if (self->layerorder[i] == index) {
+        drawindex = i;
+        break;
+      }
+      if (i > drawindex) {
+        self->layerorder[i-1] = self->layerorder[i];
+      }
+    }
+    self->numlayers--;
+    self->layerorder[self->numlayers] = 0;
+    return MS_SUCCESS;
   }
 
   layerObj *getLayer(int i) {
@@ -327,7 +353,32 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   int *getLayersDrawingOrder() {
     return  self->layerorder;
   }
-  
+
+#ifdef SWIGPYTHON 
+  /* getLayerOrder() extension returns the map layerorder as a native
+   * sequence
+   */
+   PyObject *getLayerOrder() {
+     int i;
+     PyObject *order;
+     order = PyTuple_New(self->numlayers);
+     for (i = 0; i < self->numlayers; i++) {
+       PyTuple_SetItem(order, i, PyInt_FromLong((long)self->layerorder[i]));
+     }
+     return order;
+   } 
+
+  /* setLayerOrder() extension */
+  int setLayerOrder(PyObject *order) {
+    int i, size;
+    size = PyTuple_Size(order);
+    for (i = 0; i < size; i++) {
+      self->layerorder[i] = (int)PyInt_AsLong(PyTuple_GetItem(order, i));
+    }
+    return MS_SUCCESS;
+  }
+#endif
+
   int setLayersDrawingOrder(int *panIndexes) {
     return  msSetLayersdrawingOrder(self, panIndexes); 
   }
@@ -365,6 +416,20 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 
   ~layerObj() {
     return; // map deconstructor takes care of it
+  }
+
+  /* removeClass()
+   */
+  void removeClass(int index) {
+    int i;
+    for (i = index + 1; i < self->numclasses; i++) {
+#ifndef __cplusplus
+      self->class[i-1] = self->class[i];
+#else
+      self->_class[i-1] = self->_class[i];
+#endif
+    }
+    self->numclasses--;
   }
 
   int open() {
@@ -407,6 +472,20 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
   }
 
+  /* raise and lower extensions have the same sense as the underlying
+   * ms* functions.  'Raise' means to raise the layer within the virtual
+   * stack, and draw it later.
+   */
+
+  int promote() {
+    return msMoveLayerUp(self->map, self->index);
+
+  }
+
+  int demote() {
+    return msMoveLayerDown(self->map, self->index);
+  }
+  
   int draw(mapObj *map, imageObj *image) {
     return msDrawLayer(map, self, image);    
   }
