@@ -744,6 +744,7 @@ typedef struct { /* structure for a map */
 
 //SWF Object structure
 #ifdef USE_MING_FLASH
+
 typedef struct 
 {
     mapObj *map;
@@ -753,6 +754,8 @@ typedef struct
     int nCurrentMovie;
     int nCurrentLayerIdx;
     int nCurrentShapeIdx;
+    void    *imagetmp;  //used when the output format is SINGLE 
+                           //(one movie for the whole map)
     
 } SWFObj; 
 

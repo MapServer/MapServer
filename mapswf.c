@@ -829,7 +829,8 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
                            char *imagepath, char *imageurl, mapObj *map)
 {
 
-    imageObj *image = NULL;
+    imageObj    *image = NULL;
+    char        *driver = strdup("GD/GIF");
 
     assert( strcasecmp(format->driver,"SWF") == 0 );
     image = (imageObj *)calloc(1,sizeof(imageObj));
@@ -866,6 +867,42 @@ imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
     SWFMovie_setDimension(image->img.swf->sMainMovie, (float)width, 
                           (float)height);
 
+/* -------------------------------------------------------------------- */
+/*      if the output is a single movie, we crate a GD image that       */
+/*      will be used to conating the rendering of al the layers.        */
+/* -------------------------------------------------------------------- */
+    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE","MULTIPLE"), 
+                   "MULTIPLE") == 0)
+    {
+        image->img.swf->imagetmp = NULL;
+    }
+    else
+    {
+#ifdef USE_GD_GIF
+        driver = strdup("GD/GIF");
+#else  
+
+#ifdef USE_GD_PNG
+        driver = strdup("GD/PNG");
+#else
+
+#ifdef USE_GD_JPEG
+        driver = strdup("GD/JPEG");
+#else
+
+#ifdef USE_GD_WBMP
+        driver = strdup("GD/WBMP");
+#endif 
+
+#endif
+#endif
+#endif
+     
+        image->img.swf->imagetmp = (imageObj *) 
+          msImageCreateGD(map->width, map->height,  
+                          msCreateDefaultOutputFormat(map, driver),
+                          map->web.imagepath, map->web.imageurl);
+    }
     return image;
 }
     
@@ -885,8 +922,16 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
     char        **tokens;
     char        *metadata;
 
-    if (image && MS_DRIVER_SWF(image->format) )
+    if (image && MS_DRIVER_SWF(image->format))
     {
+/* -------------------------------------------------------------------- */
+/*      If the output is not multiple layers, do nothing.               */
+/* -------------------------------------------------------------------- */
+        if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE",
+                                               "MULTIPLE"), 
+                       "MULTIPLE") != 0)
+          return;
+
         image->img.swf->nLayerMovies++;
         nTmp = image->img.swf->nLayerMovies;
         if (!image->img.swf->pasMovies)
@@ -941,6 +986,7 @@ void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
             }
         }
     }
+        
 }
 
 
@@ -2390,6 +2436,7 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
     SWFShape    oShape;
     outputFormatObj *format = NULL;
     imageObj    *image_tmp = NULL;
+    int         bFreeImage = 0;
 
     if (!image || !MS_DRIVER_SWF(image->format) || image->width <= 0 ||
         image->height <= 0)
@@ -2402,17 +2449,27 @@ int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image)
     if( format == NULL )
         return -1;
 
-    image_tmp = msImageCreate( image->width, image->height, format, 
-                               NULL, NULL );
+       if (strcasecmp(msGetOutputFormatOption(image->format,
+                                              "OUTPUT_MOVIE","MULTIPLE"), 
+                      "MULTIPLE") == 0)
+       {
+           image_tmp = msImageCreate( image->width, image->height, format, 
+                                      NULL, NULL );
+           bFreeImage = 1;
+       }
+       else
+         image_tmp = (imageObj *)image->img.swf->imagetmp;
+
     if( image_tmp == NULL )
-        return -1;
+      return -1;
 
     if (msDrawRasterLayerLow(map, layer, image_tmp) != -1)
     {
         oShape = gdImage2Shape(image_tmp->img.gd);
         //nTmp = image->img.swf->nCurrentMovie;
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
-        msFreeImage( image_tmp );
+        if (bFreeImage)
+          msFreeImage( image_tmp );
     }
 
     return 0;
@@ -2439,6 +2496,23 @@ int msSaveImageSWF(imageObj *image, char *filename)
 
     if (image && MS_DRIVER_SWF(image->format) && filename)
     {
+
+/* ==================================================================== */
+/*      if the output is single movie, save the main movie and exit.    */
+/* ==================================================================== */
+        if (strcasecmp(msGetOutputFormatOption(image->format,
+                                               "OUTPUT_MOVIE","MULTIPLE"), 
+                       "MULTIPLE") != 0)
+        {
+            SWFMovie_save(image->img.swf->sMainMovie, filename);  
+            return(MS_SUCCESS);
+        }
+
+/* -------------------------------------------------------------------- */
+/*      If the output is MULTIPLE save individula movies as well as     */
+/*      the main movie.                                                 */
+/* -------------------------------------------------------------------- */
+
         map = image->img.swf->map;
 /* -------------------------------------------------------------------- */
 /*      write some AS related to the map file.                          */
@@ -2644,6 +2718,7 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
     //int         nTmp = -1;
     SWFShape    oShape;
     char        *driver = strdup("GD/GIF");
+    int         bFreeImage = 0;
 
 #ifdef USE_GD_GIF
     driver = strdup("GD/GIF");
@@ -2670,9 +2745,17 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
       return MS_FAILURE;
 
    
-    imagetmp = msImageCreateGD(map->width, map->height,  
-                               msCreateDefaultOutputFormat(map, driver),
-                               map->web.imagepath, map->web.imageurl);
+    if (strcasecmp(msGetOutputFormatOption(image->format,
+                                              "OUTPUT_MOVIE","MULTIPLE"), 
+                      "MULTIPLE") == 0)
+    {
+        imagetmp = msImageCreateGD(map->width, map->height,  
+                                   msCreateDefaultOutputFormat(map, driver),
+                                   map->web.imagepath, map->web.imageurl);
+        bFreeImage = 1;
+    }
+    else
+      imagetmp = (imageObj *)image->img.swf->imagetmp;
 
     if (imagetmp)
     {
@@ -2684,7 +2767,9 @@ int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj *image)
         //nTmp = image->img.swf->nCurrentMovie;
         SWFMovie_add(GetCurrentMovie(map, image), oShape);
         
-        msFreeImage(imagetmp);
+        if (bFreeImage)
+          msFreeImage(imagetmp);
+
         return MS_SUCCESS;
     }
 
@@ -2707,14 +2792,14 @@ SWFMovie GetCurrentMovie(mapObj *map, imageObj *image)
     if (!image || !map || !MS_DRIVER_SWF(image->format) )
       return NULL;
 
-    if (strcmp(msGetOutputFormatOption(image->format, "OUTPUT_MOVIE", "MULTIPLE"), "MULTIPLE") == 0)
+    if (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE","MULTIPLE"), 
+                   "MULTIPLE") == 0)
     {
-      nTmp = image->img.swf->nCurrentMovie;
-      return image->img.swf->pasMovies[nTmp];
+        nTmp = image->img.swf->nCurrentMovie;
+        return image->img.swf->pasMovies[nTmp];
     }
     else
       return image->img.swf->sMainMovie;
 }
 
 #endif
-

@@ -363,12 +363,17 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 
 /* ==================================================================== */
 /*      For Flash, we use a metadata called SWFOUTPUT that              */
-/*      is used to render vector layers as rasters.                     */
+/*      is used to render vector layers as rasters. It is also true     */
+/*      if  the output movie  format indicated in the map file is       */
+/*      SINGLE.                                                         */
 /* ==================================================================== */
 #ifdef USE_MING_FLASH
   if(image &&  MS_RENDERER_SWF(image->format) && 
-     msLookupHashTable(layer->metadata, "SWFOUTPUT") &&
-     strcasecmp(msLookupHashTable(layer->metadata, "SWFOUTPUT"), "RASTER")==0)
+     (msLookupHashTable(layer->metadata, "SWFOUTPUT") &&
+      strcasecmp(msLookupHashTable(layer->metadata, "SWFOUTPUT"),"RASTER")==0)||
+     (strcasecmp(msGetOutputFormatOption(image->format,"OUTPUT_MOVIE",
+                                         "MULTIPLE"), 
+                 "MULTIPLE") != 0))
     return msDrawVectorLayerAsRasterSWF(map, layer, image);
 #endif
 
