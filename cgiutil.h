@@ -45,6 +45,6 @@ void send_fd(FILE *, FILE *);
 int ind(char *, char);
 void escape_shell_cmd(char *);
 
-cgiRequestObj *msAllocCgiObj();
+cgiRequestObj *msAllocCgiObj(void);
 
 #endif /* CGIUTIL_H */

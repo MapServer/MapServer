@@ -271,7 +271,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP STRINGS FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS C_PIC LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP STRINGS FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS C_PIC LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -861,7 +861,6 @@ Optional Packages:
                           directory)
   --without-wms           Disable OGC WMS Compatibility (enabled by default).
   --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).
-  --with-wcs              Enable OGC WCS Server Support (GDAL+PROJ4 required).
   --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
                           required).
   --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
@@ -3794,8 +3793,85 @@ else
   STRINGS="-DNEED_STRDUP $STRINGS"
 fi
 
-STRINGS=$STRINGS
+echo "$as_me:$LINENO: checking for strlcat" >&5
+echo $ECHO_N "checking for strlcat... $ECHO_C" >&6
+if test "${ac_cv_func_strlcat+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char strlcat (); below.
+    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+    <limits.h> exists even on freestanding compilers.  */
+#ifdef __STDC__
+# include <limits.h>
+#else
+# include <assert.h>
+#endif
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char strlcat ();
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_strlcat) || defined (__stub___strlcat)
+choke me
+#else
+char (*f) () = strlcat;
+#endif
+#ifdef __cplusplus
+}
+#endif
 
+int
+main ()
+{
+return f != strlcat;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_func_strlcat=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_func_strlcat=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $ac_cv_func_strlcat" >&5
+echo "${ECHO_T}$ac_cv_func_strlcat" >&6
+if test $ac_cv_func_strlcat = yes; then
+  :
+else
+  STRINGS="-DNEED_STRLCAT $STRINGS"
+fi
+
+STRINGS=$STRINGS
 
 
 
@@ -8267,38 +8343,6 @@ ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
 
 
 
-{ echo "$as_me:$LINENO: checking whether we should include WCS Server support......" >&5
-echo "$as_me: checking whether we should include WCS Server support......" >&6;}
-
-# Check whether --with-wcs or --without-wcs was given.
-if test "${with_wcs+set}" = set; then
-  withval="$with_wcs"
-
-fi;
-
-if test "$with_wcs" != "yes" ; then
-  echo "$as_me:$LINENO: result:         OGC WCS Server support not requested." >&5
-echo "${ECHO_T}        OGC WCS Server support not requested." >&6
-elif test -z "$GDAL_ENABLED" ; then
-  { { echo "$as_me:$LINENO: error: OGC WCS Server support cannot be enabled: missing GDAL which is required)." >&5
-echo "$as_me: error: OGC WCS Server support cannot be enabled: missing GDAL which is required)." >&2;}
-   { (exit 1); exit 1; }; }
-elif test -z "$PROJ_ENABLED" ; then
-  { { echo "$as_me:$LINENO: error: OGC WCS Server support cannot be enabled: missing PROJ4 which is required)." >&5
-echo "$as_me: error: OGC WCS Server support cannot be enabled: missing PROJ4 which is required)." >&2;}
-   { (exit 1); exit 1; }; }
-elif test "$with_wcs" = "yes" ; then
-  WCS_SVR_ENABLED="-DUSE_WCS_SVR"
-  echo "$as_me:$LINENO: result:         OGC WCS Server support enabled ($WCS_SVR_ENABLED)." >&5
-echo "${ECHO_T}        OGC WCS Server support enabled ($WCS_SVR_ENABLED)." >&6
-fi
-
-WCS_SVR_ENABLED=$WCS_SVR_ENABLED
-
-ALL_ENABLED="$WCS_SVR_ENABLED $ALL_ENABLED"
-
-
-
 { echo "$as_me:$LINENO: checking whether we should include WMS Client Connections support......" >&5
 echo "$as_me: checking whether we should include WMS Client Connections support......" >&6;}
 
@@ -8941,14 +8985,24 @@ echo "${ECHO_T}yes" >&6
 !!! The current version of PHP MapScript has some problems with       !!!
 !!! PHP4's bundled regex.  Until we figure the solution to the        !!!
 !!! problem, the workaround is to compile PHP4 with the system regex  !!!
-!!! Please re-configure and re-compile PHP4 with --with-regex=system  !!!
-!!! and then re-configure and re-compile MapServer.                   !!!" >&5
+!!! Please re-configure and re-compile PHP4 using --with-regex=system !!!
+!!! and then re-configure and re-compile MapServer.                   !!!
+!!! Note that PHP's --with-regex=system works only when PHP is        !!!
+!!! is configured as a CGI (that is without the --with-apxs and       !!!
+!!! --with-httpd options). So if you configured your PHP using        !!!
+!!! --with-regex=system and still get this error then make sure you   !!!
+!!! configured PHP as a CGI.                                          !!!" >&5
 echo "$as_me: error:
 !!! The current version of PHP MapScript has some problems with       !!!
 !!! PHP4's bundled regex.  Until we figure the solution to the        !!!
 !!! problem, the workaround is to compile PHP4 with the system regex  !!!
-!!! Please re-configure and re-compile PHP4 with --with-regex=system  !!!
-!!! and then re-configure and re-compile MapServer.                   !!!" >&2;}
+!!! Please re-configure and re-compile PHP4 using --with-regex=system !!!
+!!! and then re-configure and re-compile MapServer.                   !!!
+!!! Note that PHP's --with-regex=system works only when PHP is        !!!
+!!! is configured as a CGI (that is without the --with-apxs and       !!!
+!!! --with-httpd options). So if you configured your PHP using        !!!
+!!! --with-regex=system and still get this error then make sure you   !!!
+!!! configured PHP as a CGI.                                          !!!" >&2;}
    { (exit 1); exit 1; }; }
     fi
 
@@ -9824,7 +9878,6 @@ s,@MING_INC@,$MING_INC,;t t
 s,@MING_LIB@,$MING_LIB,;t t
 s,@WMS_SVR_ENABLED@,$WMS_SVR_ENABLED,;t t
 s,@WFS_SVR_ENABLED@,$WFS_SVR_ENABLED,;t t
-s,@WCS_SVR_ENABLED@,$WCS_SVR_ENABLED,;t t
 s,@LIBCURL_CONFIG@,$LIBCURL_CONFIG,;t t
 s,@WMS_LYR_ENABLED@,$WMS_LYR_ENABLED,;t t
 s,@WFS_LYR_ENABLED@,$WFS_LYR_ENABLED,;t t

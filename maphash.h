@@ -24,6 +24,7 @@ typedef struct hashObj **  hashTableObj;
 MS_DLL_EXPORT hashTableObj msCreateHashTable(void);
 MS_DLL_EXPORT struct hashObj *msInsertHashTable(hashTableObj, const char *, const char *);
 MS_DLL_EXPORT char *msLookupHashTable(hashTableObj, const char *);
+MS_DLL_EXPORT char *msGetHashTableValue(hashTableObj, const char *);
 MS_DLL_EXPORT void msFreeHashTable(hashTableObj);
 MS_DLL_EXPORT int msRemoveHashTable(hashTableObj table, const char *string);
 MS_DLL_EXPORT const char *msFirstKeyFromHashTable( hashTableObj table );

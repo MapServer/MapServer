@@ -38,8 +38,8 @@ dnl ---------------------------------------------------------------------
 AC_CHECK_FUNC(strcasecmp, ,  STRINGS="-DNEED_STRCASECMP $STRINGS")
 AC_CHECK_FUNC(strncasecmp, , STRINGS="-DNEED_STRNCASECMP $STRINGS")
 AC_CHECK_FUNC(strdup, ,      STRINGS="-DNEED_STRDUP $STRINGS")
+AC_CHECK_FUNC(strlcat, ,      STRINGS="-DNEED_STRLCAT $STRINGS")
 AC_SUBST(STRINGS, $STRINGS)
-
 
 dnl ---------------------------------------------------------------------
 dnl Several libraries might be needed for GD: png, zlib, freetype,
@@ -1309,28 +1309,6 @@ ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
-dnl WCS Server support - Requires GDAL and PROJ
-dnl ---------------------------------------------------------------------
-
-AC_CHECKING(whether we should include WCS Server support...)
-AC_ARG_WITH(wcs,[  --with-wcs              Enable OGC WCS Server Support (GDAL+PROJ4 required).],,)
-
-if test "$with_wcs" != "yes" ; then
-  AC_MSG_RESULT([        OGC WCS Server support not requested.])  
-elif test -z "$GDAL_ENABLED" ; then
-  AC_MSG_ERROR([OGC WCS Server support cannot be enabled: missing GDAL which is required).])
-elif test -z "$PROJ_ENABLED" ; then
-  AC_MSG_ERROR([OGC WCS Server support cannot be enabled: missing PROJ4 which is required).])
-elif test "$with_wcs" = "yes" ; then
-  WCS_SVR_ENABLED="-DUSE_WCS_SVR"
-  AC_MSG_RESULT([        OGC WCS Server support enabled ($WCS_SVR_ENABLED).])
-fi
-
-AC_SUBST(WCS_SVR_ENABLED,$WCS_SVR_ENABLED)
-ALL_ENABLED="$WCS_SVR_ENABLED $ALL_ENABLED"
-
-
-dnl ---------------------------------------------------------------------
 dnl WMS and WFS Client support - Requires PROJ.4 and libcurl.
 dnl OGR recommended for WMS and required for WFS
 dnl ---------------------------------------------------------------------
@@ -1649,8 +1627,13 @@ if test -n "$with_php" -a -d "$with_php" ; then
 !!! The current version of PHP MapScript has some problems with       !!!
 !!! PHP4's bundled regex.  Until we figure the solution to the        !!!
 !!! problem, the workaround is to compile PHP4 with the system regex  !!!
-!!! Please re-configure and re-compile PHP4 with --with-regex=system  !!!
-!!! and then re-configure and re-compile MapServer.                   !!!])
+!!! Please re-configure and re-compile PHP4 using --with-regex=system !!!
+!!! and then re-configure and re-compile MapServer.                   !!!
+!!! Note that PHP's --with-regex=system works only when PHP is        !!!
+!!! is configured as a CGI (that is without the --with-apxs and       !!!
+!!! --with-httpd options). So if you configured your PHP using        !!!
+!!! --with-regex=system and still get this error then make sure you   !!!
+!!! configured PHP as a CGI.                                          !!!])
     fi
 
     PHP_REGEX_DIR="$PHP_SRC_DIR/regex"

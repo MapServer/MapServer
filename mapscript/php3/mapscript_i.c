@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.78.2.1  2004/05/28 15:50:02  dan
+ * Fixed layer->drawQuery() for PHP and SWIG MapScript (bug 695)
+ *
  * Revision 1.78  2004/04/16 20:19:39  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -690,7 +693,7 @@ int layerObj_draw(layerObj *self, mapObj *map, imageObj *img) {
   }
 
 int layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img) {
-    return msDrawLayer(map, self, img);    
+    return msDrawQueryLayer(map, self, img);    
   }
 
 int layerObj_queryByAttributes(layerObj *self, mapObj *map, char *qitem, char *qstring, int mode) {
