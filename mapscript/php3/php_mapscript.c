@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.7  2003/02/26 20:53:47  assefa
+ * Add test on module name 'cgi-fcgi'. Needed for php 4.3.X.
+ *
  * Revision 1.104.2.6  2003/02/09 01:40:37  dan
  * Removed stray strcat() argument in Windows-specific map open code.
  *
@@ -1064,7 +1067,8 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
      * Hopefully we'll be able to get rid of that limitation soon, but for
      * now we'll produce an error of PHP is not running as a CGI.
      */
-    if (sapi_module.name && strcmp(sapi_module.name, "cgi") != 0)
+    if (sapi_module.name && (strcmp(sapi_module.name, "cgi") != 0) &&
+       (strcmp(sapi_module.name, "cgi-fcgi") != 0))
     {
         php3_error(E_ERROR, 
              "Due to thread-safety problems, php_mapscript cannot be used "
