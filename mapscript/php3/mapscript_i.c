@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.28  2001/11/01 21:10:09  assefa
+ * Add getProjection on map and layer object.
+ *
  * Revision 1.27  2001/11/01 02:47:06  dan
  * Added layerObj->getWMSFeatureInfoURL()
  *
@@ -270,6 +273,10 @@ int mapObj_queryByShape(mapObj *self, shapeObj *shape) {
     return msQueryByShape(self, -1, shape);
   }
 
+char *mapObj_getProjection(mapObj* self) {
+    return msGetProjectionString(&self->projection);
+ }
+
 int mapObj_setProjection(mapObj* self, char *string) {
     return(msLoadProjectionString(&(self->projection), string));
   }
@@ -375,6 +382,10 @@ int layerObj_queryByShape(layerObj *self, mapObj *map, shapeObj *shape) {
 int layerObj_setFilter(layerObj *self, char *string) {    
     return loadExpressionString(&self->filter, string);
   }
+
+char *layerObj_getProjection(layerObj* self) {
+    return msGetProjectionString(&self->projection);
+ }
 
 int layerObj_setProjection(layerObj *self, char *string) {
     return(msLoadProjectionString(&(self->projection), string));

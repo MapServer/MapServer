@@ -279,6 +279,10 @@ and the MapServer Map File documentation at:
    int save(string filename)
         Save current map object state to a file. Returns -1 on error.
 
+   char getProjection()
+        Returns a string represenation of the projection. If no 
+        projection is set, MS_FALSE is returned.
+
    int setProjection(string proj_params, boolean bSetUnitsAndExtents)
         Set map projection and coordinate system.  Parameters are given as 
         a single string of comma-delimited PROJ.4 parameters.
@@ -427,6 +431,10 @@ and the MapServer Map File documentation at:
 
    int setFilter(string expression)
         Set layer filter expression.
+
+   char getProjection()
+        Returns a string represenation of the projection. If no 
+        projection is set, MS_FALSE is returned.
 
    int setProjection(string proj_params)
         Set layer projection and coordinate system.  Parameters are given as 

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.66  2001/11/01 21:10:09  assefa
+ * Add getProjection on map and layer object.
+ *
  * Revision 1.65  2001/11/01 02:47:06  dan
  * Added layerObj->getWMSFeatureInfoURL()
  *
@@ -175,6 +178,7 @@ DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_addColor(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS);
@@ -229,6 +233,7 @@ DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByFeatures(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_queryByShape(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getNumResults(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS);
@@ -443,6 +448,7 @@ DLEXPORT php3_module_entry *get_module(void) { return &php3_ms_module_entry; }
 function_entry php_map_class_functions[] = {
     {"set",             php3_ms_map_setProperty,        NULL},
     {"setprojection",   php3_ms_map_setProjection,      NULL},
+    {"getprojection",   php3_ms_map_getProjection,      NULL},
     {"addcolor",        php3_ms_map_addColor,           NULL},
     {"getsymbolbyname", php3_ms_map_getSymbolByName,    NULL},
     {"draw",            php3_ms_map_draw,               NULL},
@@ -532,6 +538,7 @@ function_entry php_layer_class_functions[] = {
     {"querybyfeatures", php3_ms_lyr_queryByFeatures,    NULL},    
     {"querybyshape",    php3_ms_lyr_queryByShape,       NULL},    
     {"setprojection",   php3_ms_lyr_setProjection,      NULL},
+    {"getprojection",   php3_ms_lyr_getProjection,      NULL},
     {"addfeature",      php3_ms_lyr_addFeature,         NULL},
     {"getnumresults",   php3_ms_lyr_getNumResults,      NULL},
     {"getresult",       php3_ms_lyr_getResult,          NULL},
@@ -1339,6 +1346,52 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+/**********************************************************************
+ *                        map->getProjection()
+ **********************************************************************/
+
+/* {{{ proto int map.getProjection()
+   Return the projection string of the map. Returns FALSE on error. */
+DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj      *self;
+    pval        *pThis = NULL;
+    char        *pszPojString = NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    if (self == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    pszPojString = mapObj_getProjection(self);
+    if (pszPojString == NULL)
+    {
+        RETURN_FALSE;
+    }
+    else
+    {
+        RETVAL_STRING(pszPojString, 1);
+        free(pszPojString);
+    }
+}
+    
 /* ==================================================================== */
 /*      Zoom related functions.                                         */
 /* ==================================================================== */
@@ -4784,6 +4837,58 @@ DLEXPORT void php3_ms_lyr_setProjection(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(nStatus);
 }
 /* }}} */
+
+/**********************************************************************
+ *                        layer->getProjection()
+ **********************************************************************/
+
+/* {{{ proto int layer.getProjection()
+    Return the projection string of the layer. Returns FALSE on error. */
+
+DLEXPORT void php3_ms_lyr_getProjection(INTERNAL_FUNCTION_PARAMETERS)
+{
+    layerObj    *self;
+    pval        *pThis = NULL;
+    char        *pszPojString = NULL;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list);
+    if (self == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (self == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    pszPojString = layerObj_getProjection(self);
+    if (pszPojString == NULL)
+    {
+        RETURN_FALSE;
+    }
+    else
+    {
+        RETVAL_STRING(pszPojString, 1);
+        free(pszPojString);
+    }
+}
 
 /************************************************************************/
 /*                        layer->addFeature                             */

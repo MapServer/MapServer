@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2001/11/01 21:10:09  assefa
+ * Add getProjection on map and layer object.
+ *
  * Revision 1.13  2001/11/01 02:47:06  dan
  * Added layerObj->getWMSFeatureInfoURL()
  *
@@ -117,6 +120,7 @@ int             mapObj_queryByPoint(mapObj* self, pointObj *point,
 int             mapObj_queryByRect(mapObj* self, rectObj rect);
 int             mapObj_queryByFeatures(mapObj* self, int slayer);
 int             mapObj_queryByShape(mapObj *self, shapeObj *shape);
+char*           mapObj_getProjection(mapObj* self);
 int             mapObj_setProjection(mapObj* self, char *string);
 int             mapObj_save(mapObj* self, char *filename);
 char            *mapObj_getMetaData(mapObj *self, char *name);
@@ -143,6 +147,7 @@ int             layerObj_queryByFeatures(layerObj *self, mapObj *map,
 int             layerObj_queryByShape(layerObj *self, mapObj *map, 
                                       shapeObj *shape);
 int             layerObj_setFilter(layerObj *self, char *string);
+char*           layerObj_getProjection(layerObj *self);
 int             layerObj_setProjection(layerObj *self, char *string);
 int             layerObj_addFeature(layerObj *self, shapeObj *shape);
 char            *layerObj_getMetaData(layerObj *self, char *name);
