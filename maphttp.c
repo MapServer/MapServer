@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2002/12/16 21:32:59  dan
+ * Made CURLOPT_NOSIGNAL setting optional for now to work with libcurl 7.9.6+
+ *
  * Revision 1.2  2002/12/16 20:34:59  dan
  * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
  *
@@ -274,7 +277,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests)
          * environments on Unix, requires libcurl 7.10 or more recent.
          * (this force avoiding the use of sgnal handlers)
          */
+#ifdef CURLOPT_NOSIGNAL
         curl_easy_setopt(http_handle, CURLOPT_NOSIGNAL, 1 );
+#endif
 
         /* Open output file and set write handler */
         if ( (fp = fopen(pasReqInfo[i].pszOutputFile, "wb")) == NULL)
