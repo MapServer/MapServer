@@ -1337,7 +1337,7 @@ int msPOSTGISLayerParseData(char *data, char *geom_column_name,
 		msSetError(MS_QUERYERR, "Error parsing POSTGIS data variable.  Must contain 'geometry_column from table_name' or 'geom from (subselect) as foo'.", "msPOSTGISLayerParseData()");
 		return(MS_FAILURE);
 	}
-printf("unique column = %s, srid='%s'\n", urid_name,user_srid);
+//printf("unique column = %s, srid='%s'\n", urid_name,user_srid);
 	return(MS_SUCCESS);
 }
 
