@@ -525,6 +525,7 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       }
       break;
     case MS_LINE:
+
       while(status == SE_SUCCESS) {
 	status = SE_stream_fetch(stream);
 	if(status == SE_SUCCESS) {

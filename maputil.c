@@ -628,7 +628,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
   cliprect.maxx = map->extent.maxx + 2*map->cellsize;
   cliprect.maxy = map->extent.maxy + 2*map->cellsize;
 
-  if((c = getClassIndex(layer, class_string)) == -1) return(0);
+  if((c = getClassIndex(layer, class_string)) == -1) return(0);  
 
   // apply scaling to symbols and fonts
   if(layer->symbolscale > 0 && map->scale > 0) {
@@ -795,14 +795,12 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   int i,j,c;
   featureListNodeObjPtr current=NULL;
   rectObj cliprect;
-  short annotate=MS_TRUE;
+  short annotate=MS_TRUE, overlay = MS_FALSE;
   pointObj annopnt;
   double angle, length;
   char *text;
   pointObj *pnt;
   double scalefactor=1;
-
-  int overlay = MS_FALSE;
 
   if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
     return(0);
@@ -822,7 +820,6 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(layer->symbolscale > 0) {
     scalefactor = layer->symbolscale/map->scale;
     for(i=0; i<layer->numclasses; i++) {
-      if(layer->class[i].overlaysymbol >= 0) overlay = MS_TRUE;
       layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
       layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
       layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
@@ -932,6 +929,9 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     break;      
    
   case MS_LINE:
+    for(i=0; i<layer->numclasses; i++) // are there some overlayed symbols
+      if(layer->class[i].overlaysymbol >= 0) overlay = MS_TRUE;
+    
     for(current=layer->features; current; current=current->next) {
 
       c = current->shape.classindex; // features *must* be pre-classified
@@ -966,17 +966,24 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       }
     }   
 
+    printf("done main loop %d\n", overlay);
+
     if(overlay) {
+      printf("in overlay loop...\n");
       for(current=layer->features; current; current=current->next) {
 	c = current->shape.classindex;
-	if(layer->class[c].overlaysymbol >= 0)
+	if(layer->class[c].overlaysymbol >= 0) {	  
 	  msDrawLineSymbol(&map->symbolset, img, &current->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+	}
       }
     }
 
     break;
 
-  case MS_POLYLINE:
+  case MS_POLYLINE:    
+    for(i=0; i<layer->numclasses; i++) // are there some overlayed symbols
+      if(layer->class[i].overlaysymbol >= 0) overlay = MS_TRUE;
+
     for(current=layer->features; current; current=current->next) {
 
       c = current->shape.classindex; // features *must* be pre-classified
@@ -1099,6 +1106,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 
   double scalefactor=1;
 
+  short overlay=MS_FALSE;
+  featureListNodeObjPtr shpcache;
+
   if(!layer->data && !layer->tileindex)
     return(0);
 
@@ -1115,7 +1125,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
       annotate = MS_FALSE;
   }  
-
+  
   // apply scaling to symbols and fonts
   if(layer->symbolscale > 0) {
     scalefactor = layer->symbolscale/map->scale;
@@ -1462,6 +1472,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	msSetError(MS_MISCERR, "LINE layers must be ARC or POLYGON shapefiles.", "msDrawShapefileLayer()");
 	return(-1);
       }
+
+      for(i=0; i<layer->numclasses; i++) // are there some overlayed symbols
+	if(layer->class[i].overlaysymbol >= 0) overlay = MS_TRUE;
       
       for(i=start_feature;i<shpfile.numshapes;i++) {
 
@@ -1522,6 +1535,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	return(-1);
       }
       
+      for(i=0; i<layer->numclasses; i++) // are there some overlayed symbols
+	if(layer->class[i].overlaysymbol >= 0) overlay = MS_TRUE;
+
       for(i=start_feature;i<shpfile.numshapes;i++) {
 	
 	if(!msGetBit(status,i)) continue; /* next shape */
