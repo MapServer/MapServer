@@ -148,5 +148,10 @@ imageObj *createImageObjFromPyFile(int width, int height,
         free_PyFileIfaceObj_IOCtx(pctx);
         return image;
     }
+    else {
+        msSetError(MS_IMGERR, "Failed to create image", "createImageObjFromPyFile()");
+        return NULL;
+    }
+    
 }
 
