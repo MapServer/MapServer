@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group
+ * Copyright (c) 2000-2002, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.10  2002/01/11 17:30:47  dan
+ * Replace global ms_error with thread-safe msGetErrorObj() call
+ *
  * Revision 1.9  2001/09/13 20:56:04  dan
  * Fixed _phpms_add_property_object() for PHP4 (thanks to Zeev Suraski) and
  * added _phpms_fetch_property_resource().  (See bug#30 and #40)
@@ -74,14 +77,18 @@
  **********************************************************************/
 void _phpms_report_mapserver_error(int php_err_type)
 {
-    if (ms_error.code != MS_NOERR)
+    errorObj *ms_error;
+
+    ms_error = msGetErrorObj();
+
+    if (ms_error->code != MS_NOERR)
     {
         php3_error(php_err_type, 
                    "MapServer Error in %s: %s\n", 
-                   ms_error.routine, ms_error.message);
-        ms_error.code = -1;
-        strcpy(ms_error.message, "");
-        strcpy(ms_error.routine, "");
+                   ms_error->routine, ms_error->message);
+        ms_error->code = -1;
+        strcpy(ms_error->message, "");
+        strcpy(ms_error->routine, "");
     }
 }
 
