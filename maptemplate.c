@@ -1331,11 +1331,16 @@ char *generateLegendTemplate(mapservObj *msObj)
               pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
               if (pszOrderMetadata) {
                  pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
-                 if (pszOrderValue)
-                   nLegendOrder = atoi(pszOrderValue);
+                 if (pszOrderValue) {
+                    nLegendOrder = atoi(pszOrderValue);
+                    if (nLegendOrder < 0)
+                      continue;
+                 }
+                 else
+                    nLegendOrder = 0;
               }
 
-              if (nLegendOrder >= 0 && msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
+              if (msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
                  // process all layer tags
                  if (generateLayerTemplate(legLayerHtml, msObj->Map, msObj->Map->layerorder[j], layerArgs, &legLayerHtmlCopy, pszPrefix) != MS_SUCCESS)
                  {
@@ -1404,6 +1409,71 @@ char *generateLegendTemplate(mapservObj *msObj)
               }
            }
          }
+         else
+         if (legClassHtml){
+           for (j=0; j<msObj->Map->numlayers; j++) {
+              /*
+               * if order_metadata is set and the order
+               * value is less than 0, dont display it
+               */
+              pszOrderMetadata = msLookupHashTable(layerArgs, "order_metadata");
+              if (pszOrderMetadata) {
+                 pszOrderValue = msLookupHashTable(msObj->Map->layers[msObj->Map->layerorder[j]].metadata, pszOrderMetadata);
+                 if (pszOrderValue) {
+                    nLegendOrder = atoi(pszOrderValue);
+                    if (nLegendOrder < 0)
+                      continue;
+                 }
+                 else
+                    nLegendOrder = 0;
+              }
+
+              if (msObj->Map->layers[msObj->Map->layerorder[j]].group && strcmp(msObj->Map->layers[msObj->Map->layerorder[j]].group, papszGroups[i]) == 0) {
+                 if (legLayerHtmlCopy)
+                 {
+                    free(legLayerHtmlCopy);
+                    legLayerHtmlCopy = NULL;
+                 }
+                 
+            
+                 // for all classes in layer
+                 if (legClassHtml) {
+                    for (k=0; k<msObj->Map->layers[msObj->Map->layerorder[j]].numclasses; k++) {
+                       // process all class tags
+                       if (!msObj->Map->layers[msObj->Map->layerorder[j]].class[k].name)
+                         continue;
+
+                       if (generateClassTemplate(legClassHtml, msObj->Map, msObj->Map->layerorder[j], k, classArgs, &legClassHtmlCopy, pszPrefix) != MS_SUCCESS)
+                       {
+                          if (pszResult)
+                            free(pszResult);
+                          pszResult=NULL;
+                          goto error;
+                       }
+                 
+               
+                       // concatenate to final result
+                       pszResult = strcatalloc(pszResult, legClassHtmlCopy);
+
+/*                       
+                       if (!pszResult)
+                       {
+                          if (pszResult)
+                            free(pszResult);
+                          pszResult=NULL;
+                          goto error;
+                       }
+*/               
+
+                       if (legClassHtmlCopy) {
+                         free(legClassHtmlCopy);
+                         legClassHtmlCopy = NULL;
+                       }
+                    }
+                 }
+              }
+           }
+         }
       }
    }
    else {
@@ -1422,6 +1492,8 @@ char *generateLegendTemplate(mapservObj *msObj)
                   if (nLegendOrder < 0)
                     continue;
                }
+               else
+                  nLegendOrder=0;
             }
 
             // process a layer tags
