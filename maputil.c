@@ -1578,7 +1578,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       break;
       
     default:
-      msSetError(MS_MISCERR, "Unknown layer type.", "msDrawShapefileLayer()");
+      msSetError(MS_MISCERR, "Unknown or unsupported layer type.", "msDrawShapefileLayer()");
       return(-1);
     }		
     
