@@ -389,9 +389,7 @@ typedef struct {
 
   char *queryformat; // what format is the query to be returned, given as a MIME type
 
-#ifndef SWIG
   hashTableObj metadata;
-#endif
 
 } webObj;
 
@@ -454,9 +452,7 @@ typedef struct class_obj{
 
   int type;
 
-#ifndef SWIG
   hashTableObj metadata;
-#endif
 
   double minscale, maxscale;
   struct layer_obj *layer;
@@ -751,9 +747,7 @@ typedef struct layer_obj {
   char *requires; // context expressions, simple enough to not use expressionObj
   char *labelrequires;
 
-#ifndef SWIG
   hashTableObj metadata;
-#endif
   
   int transparency; // transparency value 0-100 
   rectObj extent;

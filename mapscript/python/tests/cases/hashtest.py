@@ -36,69 +36,42 @@ import os, sys
 import unittest
 
 # the testing module helps us import the pre-installed mapscript
-from testing import mapscript
+from testing import mapscript, MapTestCase
 
 # ===========================================================================
-# HashTable test case
-#
-# tests: 10
-#
+# Base class for hashtable tests.  Derived classes use these tests, but
+# defined different values for self.table.
 
-class HashTableTestCase(unittest.TestCase):
-    """Tests of the MapServer HashTable object"""
+class HashTableBaseTestCase:
 
-    def setUp(self):
-        "our fixture is a HashTable with two items"
-        self.keys = ['key1', 'key2']
-        self.values = ['value1', 'value2']
-        self.table = mapscript.hashTableObj()
-        for key, value in zip(self.keys, self.values):
-            self.table.set(key, value)
-
-    def tearDown(self):
-        self.table = None
-
-    def testConstructor(self):
-        """HashTableTestCase.testConstructor: ensure that instance is proper type"""
-        table = mapscript.hashTableObj()
-        tabletype = type(table)
-        assert str(tabletype) == "<class 'mapscript.hashTableObj'>", tabletype
-
-    def testSanity(self):
-        """HashTableTestCase.testSanity: sanity check"""
-        self.table.set('foo', 'bar')
-        assert self.table.get('foo') == 'bar'
-
+    keys = ['key1', 'key2', 'key3', 'key4']
+    values = ['value1', 'value2', 'value3', 'value4']
+        
     def testUseNonExistentKey(self):
-        """HashTableTestCase.testUseNonExistentKey: accessing non-existent key should raise exception"""
         self.assertRaises(mapscript.MapServerError, self.table.get, 'bogus')
 
     def testGetValue(self):
-        """HashTableTestCase.testGetValue: get value at a key using either case"""
         for key, value in zip(self.keys, self.values):
             assert self.table.get(key) == value
             assert self.table.get(key.upper()) == value
             assert self.table.get(key.capitalize()) == value
 
     def testClear(self):
-        """HashTableTestCase.testClear: clear table, expect exceptions"""
         self.table.clear()
         for key in self.keys:
             self.assertRaises(mapscript.MapServerError, self.table.get, key)
 
     def testRemoveItem(self):
-        """HashTableTestCase.testRemoveItem: remove item and expect expection on access"""
         key = self.keys[0]
         self.table.remove(key)
         self.assertRaises(mapscript.MapServerError, self.table.get, key)
 
     def testNextKey(self):
-        """HashTableTestCase"""
         key = self.table.nextKey()
         assert key == self.keys[0], key
         for i in range(1, len(self.keys)):
             key = self.table.nextKey(key)
-            assert key == self.keys[1], key
+            assert key == self.keys[i], key
         # We're at the end, next should be None
         key = self.table.nextKey(key)
         assert key == None, key
@@ -113,6 +86,60 @@ class HashTableTestCase(unittest.TestCase):
 #        "get sequence of values"
 #        values = self.table.values()
 #        assert values == self.values, values
+
+
+# ===========================================================================
+# Test begins now
+
+# ===========================================================================
+# HashTable test case
+#
+
+class HashTableTestCase(unittest.TestCase, HashTableBaseTestCase):
+    """Tests of the MapServer HashTable object"""
+
+    def setUp(self):
+        "our fixture is a HashTable with two items"
+        self.table = mapscript.hashTableObj()
+        for key, value in zip(self.keys, self.values):
+            self.table.set(key, value)
+
+    def tearDown(self):
+        self.table = None
+
+    def testConstructor(self):
+        table = mapscript.hashTableObj()
+        tabletype = type(table)
+        assert str(tabletype) == "<class 'mapscript.hashTableObj'>", tabletype
+
+
+# ==============================================================================
+# following tests use the tests/test.map fixture
+
+class WebMetadataTestCase(MapTestCase, HashTableBaseTestCase):
+
+    def setUp(self):
+        MapTestCase.setUp(self)
+        self.table = self.map.web.metadata
+        
+    def tearDown(self):
+        MapTestCase.tearDown(self)
+        self.table = None
+
+
+class LayerMetadataTestCase(WebMetadataTestCase):
+
+    def setUp(self):
+        MapTestCase.setUp(self)
+        self.table = self.map.getLayer(0).metadata
+       
+
+class ClassMetadataTestCase(WebMetadataTestCase):
+
+    def setUp(self):
+        MapTestCase.setUp(self)
+        self.table = self.map.getLayer(0).getClass(0).metadata        
+
 
 # ===========================================================================
 # Run the tests outside of the main suite

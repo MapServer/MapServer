@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.3 (CVS)
 ----------------- 
 
+- Map.web, layer, and class metadata are exposed in SWIG mapscript as
+  first-class objects (bug 737).
+
 - Add support for spatial filters in the SLD (Bug 782)
 
 - A few fixes to allow php_mapscript to work with both PHP4 and PHP5.

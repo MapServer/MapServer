@@ -38,7 +38,10 @@ import unittest
 import cases
 
 from cases.recttest import RectObjTestCase
-from cases.hashtest import HashTableTestCase
+
+from cases.hashtest import HashTableTestCase, WebMetadataTestCase
+from cases.hashtest import LayerMetadataTestCase, ClassMetadataTestCase
+
 from cases.owstest import OWSRequestTestCase
 from cases.clonetest import MapCloningTestCase
 
@@ -85,7 +88,10 @@ suite = unittest.TestSuite()
 
 # Add tests to the suite
 suite.addTests([RectObjTestCase])
-suite.addTests([HashTableTestCase])
+
+suite.addTests([HashTableTestCase, WebMetadataTestCase,
+                LayerMetadataTestCase, ClassMetadataTestCase])
+
 suite.addTests([MapCloningTestCase])
 suite.addTests([OWSRequestTestCase])
 
