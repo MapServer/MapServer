@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/09/08 21:27:54  dan
+ * Added _phpms_object_init()
+ *
  * Revision 1.1  2000/09/06 19:44:07  dan
  * Ported module to PHP4
  *
@@ -575,4 +578,33 @@ int _phpms_add_property_object(pval *pObj,
 }
 #endif
 
+
+/**********************************************************************
+ *                     _phpms_object_init()
+ **********************************************************************/
+int _phpms_object_init(pval *return_value, int  handle_id,
+                       function_entry *class_functions,
+                       void           *zend_class_entry_ptr )
+{
+#ifdef PHP4
+    zend_class_entry *new_class_entry_ptr;
+    new_class_entry_ptr = (zend_class_entry *)zend_class_entry_ptr;
+
+    object_init_ex(return_value, new_class_entry_ptr);
+    add_property_resource(return_value, "_handle_", handle_id);
+#else
+    object_init(return_value);
+    add_property_long(return_value, "_handle_", handle_id);
+
+    while(class_functions && class_functions->fname != NULL)
+    {
+        add_method(return_value, 
+                   class_functions->fname, class_functions->handler );
+
+        class_functions++;
+    }
+#endif
+
+    return 0;
+}
 

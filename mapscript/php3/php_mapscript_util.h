@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.2  2000/09/08 21:27:54  dan
+ * Added _phpms_object_init()
+ *
  * Revision 1.1  2000/09/06 19:44:07  dan
  * Ported module to PHP4
  *
@@ -84,6 +87,21 @@
 
 #define PHPMS_ADD_PROP_STR(ret_val, name, value) \
   add_property_string(ret_val, name, (value)?(value):"", 1)
+
+
+/* -------------------------------------------------------------------- */
+/*      _phpms_object_init() and PHP4_CLASS_ENTRY() provide a common    */
+/*      method to create PHP3/PHP4 obects.                              */
+/* -------------------------------------------------------------------- */
+int _phpms_object_init(pval *return_value, int  handle_id,
+                       function_entry *class_functions,
+                       void           *zend_class_entry_ptr );
+#ifdef PHP4
+#  define PHP4_CLASS_ENTRY(a) a
+#else
+#  define PHP4_CLASS_ENTRY(a) NULL
+#endif
+
 
 /* -------------------------------------------------------------------- */
 /*      prototypes                                                      */
