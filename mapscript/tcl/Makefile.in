@@ -21,6 +21,7 @@ TCL_SHLIB_LD        = @TCL_SHLIB_LD@
 TCL_LIB_SPEC        = @TCL_LIB_SPEC@
 TCL_STUB_LIB_SPEC   = @TCL_STUB_LIB_SPEC@
 TCL_LIBS            = @TCL_LIBS@
+LIBS                = @TCL_LIBS@
 TCL_DBGX            = @TCL_DBGX@
 LIB_RUNTIME_DIR     = @TCL_EXEC_PREFIX@/lib:@TCL_EXEC_PREFIX@/lib/$(PACKAGEDIR):@TCL_PREFIX@/lib:@MAPSERVERHOME@
 
@@ -29,13 +30,18 @@ MAPSERVERDEFS       = @MAPSERVERDEFS@
 MAPSERVERINCS       = @MAPSERVERINCS@
 MAPSERVERLIBS       = @MAPSERVERLIBS@
 
+# ugly alert!
+# see the README for this hack
+SWIG_STUB_HACK = -DUSE_TCL_STUBS -DITCL_NAMESPACES -DItcl_Namespace=int \
+		 -D"spaceId=spcid;Tcl_InitStubs(interp,\"8.1\",0)"
 
 all: stublib
 
 stublib: mapscript_wrap.c
-	$(TCL_CC) -c -DUSE_TCL_STUBS $(TCL_DEFS) $(TCL_SHLIB_CFLAGS) \
+	$(TCL_CC) -c $(TCL_DEFS) $(TCL_SHLIB_CFLAGS) \
 		-I$(TCL_PREFIX)/include \
 		$(MAPSERVERDEFS) $(MAPSERVERINCS) \
+		$(SWIG_STUB_HACK) \
 		mapscript_wrap.c
 	$(TCL_SHLIB_LD) -o $(DLTARGET)$(TCL_SHLIB_SUFFIX) mapscript_wrap.o \
 		$(TCL_LD_SEARCH_FLAGS) \
@@ -44,7 +50,7 @@ stublib: mapscript_wrap.c
 		-L$(MAPSERVERHOME) $(MAPSERVERLIBS)
 
 mapscript_wrap.c:
-	swig -tcl8 -dnone -namespace $(MAPSERVERDEFS) $(MAPSERVERINCS) \
+	swig -tcl8 -dhtml -namespace $(MAPSERVERDEFS) $(MAPSERVERINCS) \
 		mapscript.i
 
 nostublib: mapscript_wrap.c
@@ -71,7 +77,7 @@ install: $(DLTARGET)$(TCL_SHLIB_SUFFIX)
 
 
 useprebuilt:
-	gzip -df mapscript_wrap.c.gz >mapscript_wrap.c
+	gunzip -c mapscript_wrap.c.gz >mapscript_wrap.c
 
 tar:
 	if test ! -f mapscript_wrap.c.gz ; then \

@@ -14,9 +14,16 @@ MAPSERVERDEFS=`head -2 ../../perlvars | tail -1`
 MAPSERVERINCS=`head -3 ../../perlvars | tail -1`
 MAPSERVERLIBS=`head -4 ../../perlvars | tail -1`
 
+# make sure link to mapscript.i exists
+
+if [ ! -f mapscript.i ] ; then
+    ln -s ../mapscript.i mapscript.i
+fi
+
 # check for --with-tcl= and/or --with-swig=
 with_tcl=/usr/local
 with_swig=/usr/local
+with_linker_cc=no
 for arg in $*
 do
     case $arg in
@@ -24,6 +31,8 @@ do
 		echo "mapscript tcl configure options:"
 		echo "--with-tcl=dir   where to find tcl  (lib/tclConfig.sh)"
 		echo "--with-swig=dir  where to find swig (include/swig.h)"
+		echo "--with-linker-cc use the compiler as linker front-end \
+				(see README)"
 		exit	
 		;;
         --with-tcl=*)
@@ -39,6 +48,9 @@ do
 		set -- $arg
 		with_swig=$2
 		IFS=$save_ifs
+		;;
+	--with-linker-cc)
+		with_linker_cc=yes
 		;;
     esac
 done
@@ -72,10 +84,24 @@ SWIGDIR=$with_swig
 echo "tcl version = $TCL_VERSION"
 
 
+# if --with-linker-cc option set, then change ld command to use TCL_CC
+
+if test "$with_linker_cc" = "yes" ; then
+    # get cc command, without any options that may be present
+    eval set -- $TCL_CC
+    cc="$1"
+    # get any linker command options
+    eval set -- $TCL_SHLIB_LD
+    shift
+    # build the new command using cc and linker options
+    TCL_SHLIB_LD="$cc $*"
+fi
+
+
 # ugh.  Tcl's tclConfig.sh only provides TCL_LD_SEARCH_FLAGS appropriate for
 #       use with 'cc'.  if 'ld' is the shared library loader, the flags
-#       might be wrong.  try to fix.  this problem is often found on 
-#       HP-UX, IRIX, {Free,Open,Net}BSD, OSF, and Solaris
+#       might be wrong, try to fix.  this problem is often found on 
+#       Solaris, HP-UX, IRIX, {Free,Open,Net}BSD, OSF, Dec/Compaq Unix
 
 # first, get the shared lib loader command, should be ld or *cc
 
@@ -83,32 +109,39 @@ eval set -- $TCL_SHLIB_LD
 ldcmd=`basename $1`
 if test "$ldcmd" = "ld" ; then
 
-    # this machine uses ld, now see if the flags begin with -Wl
+    # this machine uses ld, now see if a flag begins with -Wl
 
-    newarg="$TCL_LD_SEARCH_FLAGS"
-    case $TCL_LD_SEARCH_FLAGS in
-	-Wl*)
-
-	    # yep, here's our problem child
-	    # strip off first arg, change "," to " " via sh set hack
-
-            IFSsave="$IFS"
-	    IFS=","
-	    set -- $TCL_LD_SEARCH_FLAGS
-	    IFS="$IFSsave"
-	    shift
-	    newarg="$*"
-	    ;;
-    esac
+    newarg=""
+    eval set -- $TCL_LD_SEARCH_FLAGS
+    space=""
+    for arg in $*
+    do
+        case $TCL_LD_SEARCH_FLAGS in
+	    -Wl*)
+	        # yep, here's our problem child
+	        # strip off first arg, change "," to " " via sh set hack
+                IFSsave="$IFS"
+	        IFS=","
+	        eval set -- $arg
+	        IFS="$IFSsave"
+	        shift
+	        arg="$*"
+	        ;;
+	    *)
+		newarg="$newarg$space$arg"
+		;;
+        esac
+	space=" "
+    done
     TCL_LD_SEARCH_FLAGS="$newarg"
-
-    # also check for Solaris loader flags '-z text', which causes unresolved
-    # link error, because we're mixing -fPIC code (mapscript_wrap.o) with 
-    # non -fPIC code (libmap.a, etc.)  the resulting libMapscript.so will be
-    # mixed, so don't cause link to fail.
-
-    TCL_SHLIB_LD=`echo $TCL_SHLIB_LD | sed -e 's/-z text//'` 
 fi
+
+# also check for Solaris loader flags '-z text', which causes unresolved
+# link errors, because we're mixing -fPIC code (mapscript_wrap.o) with 
+# non -fPIC code (libmap.a, etc.)  the resulting libMapscript.so will be
+# mixed, so don't cause the link to fail.
+
+TCL_SHLIB_LD=`echo $TCL_SHLIB_LD | sed -e 's/-z text//'` 
 
 
 # fix up LIB_RUNTIME_DIR for those systems that leave it out
