@@ -24,6 +24,13 @@ for o, a in opts:
 # The shapefileObj
 shpfile = mapscript.shapefileObj('timing.shp', mapscript.MS_SHAPEFILE_POLYGON)
 
+# Inline feature layer
+ilayer = mapscript.layerObj()
+ilayer.type = mapscript.MS_LAYER_POLYGON
+ilayer.setProjection('init=epsg:4326')
+ilayer.status = mapscript.MS_DEFAULT
+ilayer.connectiontype = mapscript.MS_INLINE
+
 print numshapes, "shapes"
 
 i = 0
@@ -33,7 +40,13 @@ while i < numshapes:
     yc = 4.0*(random() - 0.5)
     r = mapscript.rectObj(xc-0.25, yc-0.25, xc+0.25, yc+0.25)
     s = r.toPolygon()
+
+    # Add to shapefile
     shpfile.add(s)
+
+    # Add to inline feature layer
+    ilayer.addFeature(s)
+    
     i = i + 1
 
 del shpfile # closes up the file
@@ -43,7 +56,7 @@ m = mapscript.mapObj('tests/timing/timing.map')
 l = m.getLayerByName('POLYGON')
 l.data = os.path.join(os.getcwd(), 'timing')
 
-# Save two map images to check afterwards
+# Save three map images to check afterwards
 img = m.draw()
 img.save('timing.png')
 
@@ -54,6 +67,12 @@ for i in range(shpfile.numshapes):
     s.classindex = 0
     s.draw(m, l, img)
 img.save('timing-shapes.png')
+
+class0 = mapscript.classObj(ilayer)
+class0.insertStyle(l.getClass(0).getStyle(0))
+img = m.prepareImage()
+ilayer.draw(m, img)
+img.save('timing-inline.png')
 
 # =========================================================================
 # Test 1A: Draw all shapes at once using map.draw()
@@ -77,7 +96,18 @@ for i in range(shpfile.numshapes):
     s.classindex = 0
     s.draw(m, l, img)
 """
-t = timeit.Timer(stmt=s, setup='from __main__ import mapscript, m, l, shpfile')
+t = timeit.Timer(stmt=s, setup='from __main__ import m, l, shpfile')
 print "%.2f usec/pass" % (1000000 * t.timeit(number=100)/100)
 
+
+# =========================================================================
+# Test 1C: Draw shapes after pushing them into an inline layer
+
+print "Test 1C: draw inline layer shapes"
+s = """\
+img = m.prepareImage()
+ilayer.draw(m, img)
+"""
+t = timeit.Timer(stmt=s, setup='from __main__ import m, ilayer')
+print "%.2f usec/pass" % (1000000 * t.timeit(number=100)/100)
 
