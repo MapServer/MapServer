@@ -10,6 +10,14 @@
 #include <io.h>
 #endif
 
+#if GD2_VERS > 1
+static void
+msFixedImageCopy (gdImagePtr dst, gdImagePtr src, 
+                  int dstX, int dstY, int srcX, int srcY, int w, int h);
+#else
+#define msFixedImageCopy gdImageCopy
+#endif
+
 static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
 static unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
 
@@ -761,7 +769,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     /* paste the tmp image in the main image */
     offset_x = MS_NINT(p->x - .5*tmp->sx + ox);
     offset_y = MS_NINT(p->y - .5*tmp->sx + oy);
-    gdImageCopy(img, tmp, offset_x, offset_y, 0, 0, tmp->sx, tmp->sy);
+    msFixedImageCopy(img, tmp, offset_x, offset_y, 0, 0, tmp->sx, tmp->sy);
 
     gdImageDestroy(tmp);
 
@@ -1672,3 +1680,43 @@ void msFreeImageGD(gdImagePtr img)
 {
   gdImageDestroy(img);
 }
+
+
+#if GD2_VERS > 1
+static void
+msFixedImageCopy (gdImagePtr dst, gdImagePtr src, 
+                  int dstX, int dstY, int srcX, int srcY, int w, int h)
+{
+    int x, y;
+
+    /* for most cases the GD copy is fine */
+    if( !gdImageTrueColor(dst) || gdImageTrueColor(src) )
+        return gdImageCopy( dst, src, dstX, dstY, srcX, srcY, w, h );
+
+    /* But for copying 8bit to 24bit the GD 2.0.1 copy has a bug with
+       transparency */
+
+    for (y = 0; (y < h); y++)
+    {
+        for (x = 0; (x < w); x++)
+        {
+            int c_8 = gdImageGetPixel (src, srcX + x, srcY + y);
+
+            if (c_8 != src->transparent)
+            {
+                int c;
+
+                c = gdTrueColorAlpha (src->red[c_8], 
+                                      src->green[c_8], 
+                                      src->blue[c_8],
+                                      gdAlphaOpaque );
+                gdImageSetPixel (dst,
+                                 dstX + x,
+                                 dstY + y,
+                                 c);
+            }
+        }
+    }
+    return;
+}
+#endif /* if GD2_VERS > 1 */
