@@ -5,6 +5,7 @@
  *           implementation of non-GDAL raster layer renderers.
  * Author:   Steve Lime 
  *           Frank Warmerdam, warmerdam@pobox.com
+ *
  ******************************************************************************
  * Copyright (c) 1996-2004 Regents of the University of Minnesota.
  *
@@ -28,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.126  2005/03/08 18:24:50  frank
+ * lock parser for evaluating parser expressions
+ *
  * Revision 1.125  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -132,6 +136,8 @@ int msGetClass(layerObj *layer, colorObj *color)
   int i;
   char *tmpstr1=NULL;
   char tmpstr2[12]; /* holds either a single color index or something like 'rrr ggg bbb' */
+  int status;
+  int expresult;
   
   if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
     return(0);
@@ -175,12 +181,16 @@ int msGetClass(layerObj *layer, colorObj *color)
       sprintf(tmpstr2, "%d", color->pen);
       tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
 
+      msAcquireLock( TLOCK_PARSER );
       msyystate = 4; msyystring = tmpstr1;
-      if(msyyparse() != 0) return(-1); /* error parsing the expression */
+      status = msyyparse();
+      expresult = msyyresult;
+      msReleaseLock( TLOCK_PARSER );
 
       free(tmpstr1);
 
-      if(msyyresult) return(i); /* got a match	 */
+      if( status != 0 ) return -1; /* error parsing expression. */
+      if( expresult ) return i;    /* got a match? */
     }
   }
 
@@ -199,6 +209,7 @@ int msGetClass_Float(layerObj *layer, float fValue)
     int i;
     char *tmpstr1=NULL;
     char tmpstr2[100];
+    int status, expresult;
   
     if((layer->numclasses == 1) && !(layer->class[0].expression.string)) /* no need to do lookup */
         return(0);
@@ -232,12 +243,16 @@ int msGetClass_Float(layerObj *layer, float fValue)
             sprintf(tmpstr2, "%18g", fValue);
             tmpstr1 = gsub(tmpstr1, "[pixel]", tmpstr2);
 
+            msAcquireLock( TLOCK_PARSER );
             msyystate = 4; msyystring = tmpstr1;
-            if(msyyparse() != 0) return(-1); /* error parsing the expression */
+            status = msyyparse();
+            expresult = msyyresult;
+            msReleaseLock( TLOCK_PARSER );
 
             free(tmpstr1);
 
-            if(msyyresult) return(i); /* got a match	 */
+            if( status != 0 ) return -1;
+            if( expresult ) return i;
         }
     }
 
