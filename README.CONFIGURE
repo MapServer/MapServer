@@ -116,8 +116,8 @@ GD and Support Libraries:
                           install dir).
 
 
-  The GD library is the only component that is not optional.  Version 2.0.12 or
-  more recent is required, see http://www.boutell.com/gd/ .
+  The GD library is the only component that is not optional.  
+  Version 2.0.12 or more recent is required, see http://www.boutell.com/gd/ .
 
   By default, configure tries to locate it on your system and uses the
   system copy if found.   
@@ -259,7 +259,8 @@ GDAL Support:
   use --with-gdal=/usr/local/bin/gdal-config, or whatever path is is required
   to get the gdal-config script. 
 
-  Note that it is possible to compile GDAL/OGR independently or not in MapServer:
+  Note that it is possible to compile GDAL/OGR independently or not in 
+  MapServer:
 
   1- GDAL only using libgdal.so installed in system lib dirs, this assumes
      you have previously run 'make install' as root in your GDAL source
@@ -269,9 +270,9 @@ GDAL Support:
       ./configure --with-gdal=/usr/local/bin/gdal-config
      (or whatever the path to the installed gdal-config script is.)
 
-  2- OGR only, using libgdal.so installed in system lib dirs, once again this
-     assumes you have previously run 'make install' as root in your GDAL source
-     tree:
+  2- OGR only, using libgdal.so installed in system lib dirs, once again
+     this assumes you have previously run 'make install' as root in your 
+     GDAL source tree:
       ./configure --with-ogr
      or 
       ./configure --with-ogr=/usr/local/bin/gdal-config
@@ -313,8 +314,8 @@ MyGIS (MySQL v3.xx SFSQL) Support:
 
   --with-mygis[=ARG]      Include MyGIS Support (ARG=yes/path to my_config)
 
-  MyGIS provides OGC SFSQL support using MySQl v3.xx.  This option is disabled by
-  default and can be enabled using the --with-mygis option.
+  MyGIS provides OGC SFSQL support using MySQl v3.xx.  This option is 
+  disabled by default and can be enabled using the --with-mygis option.
 
   For more details see the MapServer Wiki at:
   http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?MySQL
@@ -355,25 +356,26 @@ PDF output support:
   --without-pdf           Disable PDF support.
   --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).
 
-  Support for generating PDF output using PDFLib (http://www.pdflib.com/pdflib/)
+  Support for PDF output using PDFLib (http://www.pdflib.com/pdflib/)
   is disabled by default and can be enabled using the --with-pdf option.
 
-  If PDFLib is installed in the default system directories then using --with-pdf
-  with no argument should be enough.  If not then pass the full path to the
-  PDFLib installation directory.
+  If PDFLib is installed in the default system directories then using 
+  --with-pdf with no argument should be enough.  If not then pass the 
+  full path to the PDFLib installation directory.
   e.g.
       ./configure ..... --with-pdf=/usr/local
 
   For more informations, see the MapServrer Wiki at
   http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?MapserverPDF
 
-  IMPORTANT NOTE: PDFLib comes bundled with and is built by default using its own
-  copy of libpng and zlib.  The PDFLib internal copy of those libpng and zlib are
-  very likely of different versions from the ones used by the GD library.
-  Loading both versions could lead to intermittent crashes of your MapServer or
-  MapScript installation.  For this reason you should make sure that your PDFLib 
-  is configured using '--with-pnglib --with-zlib' which will force PDFLib to use
-  the system verison of libpng and zlib.
+  IMPORTANT NOTE: PDFLib comes bundled with and is built by default using
+  its own internal copy of libpng and zlib.  The PDFLib internal copy of
+  those libpng and zlib are very likely of different versions from the
+  ones used by the GD library.  Loading both versions could lead to 
+  crashes or instability of your MapServer or MapScript installation.  
+  For this reason you should make sure that your PDFLib is configured 
+  using '--with-pnglib --with-zlib' which will force PDFLib to use the 
+  system verison of libpng and zlib.
 
 
 OGC WMS Server Compatibility:
@@ -399,8 +401,8 @@ OGC WMS Client Support:
 
   This option enables MapServer's 'CONNECTIONTYPE WMS' to include layers
   from remote WMS servers in MapServer applications.
-  It requires PROJ4 and libcurl 7.10.1 or more recent, see the --with-curl-config
-  option below.  GDAL is optional but highly recommended in order to support 
+  It requires PROJ4 and libcurl (see  --with-curl-config option below).
+  GDAL is optional but highly recommended in order to support 
   reprojection of layers obtained from remote WMS servers.
 
   See the MapServer WMS Client HOWTO for more details at 
@@ -412,8 +414,8 @@ OGC WFS Server Compatibility:
 
   --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).
 
-  This option is used to enable the OGC WFS server extension.  It requires the OGR
-  and PROJ4 options as well.
+  This option is used to enable the OGC WFS server extension.  It requires
+  the OGR and PROJ4 options as well.
 
   See the MapServer WFS Server HOWTO at 
   http://mapserver.gis.umn.edu/doc/wms-server-howto.html
@@ -440,14 +442,16 @@ Curl Support:
 
   --with-curl-config=PATH Specify path to curl-config.
 
-  The Curl library (http://curl.haxx.se/libcurl/) is used by the WMS Client and 
-  WFS client options to connect to remote servers via HTTP.
+  The Curl library (http://curl.haxx.se/libcurl/) is used by the WMS 
+  Client and WFS client options to connect to remote servers via HTTP.
 
-  LibCurl 7.10.1 or more recent is required with the current version of MapServer.
+  LibCurl 7.10.1 or more recent is required with the current version 
+  of MapServer.
 
-  If libcurl is installed in the default system directories then it should 
-  automatically be detected by configure.  Otherwise use the --with-curl-config
-  option to specify the path where the curl-config script is located.
+  If libcurl is installed in the default system directories then it 
+  should automatically be detected by configure.  Otherwise use the
+  --with-curl-config option to specify the path where the curl-config
+  script is located.
   e.g.
      ./configure .... --with-curl-config=/usr/local/bin/curl-config
 
