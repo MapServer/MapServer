@@ -1229,6 +1229,7 @@ MS_DLL_EXPORT int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long 
 MS_DLL_EXPORT int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent);
 MS_DLL_EXPORT int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
 MS_DLL_EXPORT int msPOSTGISLayerGetItems(layerObj *layer);
+MS_DLL_EXPORT int msPOSTGISLayerResultClose(layerObj *layer);
 
 MS_DLL_EXPORT int msMYGISLayerOpen(layerObj *layer); // in mapmygis.c
 MS_DLL_EXPORT void msMYGISLayerFreeItemInfo(layerObj *layer);
