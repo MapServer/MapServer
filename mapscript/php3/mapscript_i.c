@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.39  2002/04/22 20:23:56  dan
+ * Fixed map->setSymbolSet(): reference to map->fontset was left NULL and
+ * TTF symbols were causing a crash.
+ *
  * Revision 1.38  2002/04/22 19:31:57  dan
  * Added optional new_map_path arg to msLoadMap()
  *
@@ -382,6 +386,9 @@ int mapObj_setSymbolSet(mapObj *self,
    
     // Set symbolset filename
     self->symbolset.filename = strdup(szFileName);
+
+    // Symbolset shares same fontset as main mapfile
+    self->symbolset.fontset = &(self->fontset);
 
     return msLoadSymbolSet(&self->symbolset);
 }

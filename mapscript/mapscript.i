@@ -394,6 +394,9 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     // Set symbolset filename
     self->symbolset.filename = strdup(szFileName);
 
+    // Symbolset shares same fontset as main mapfile
+    self->symbolset.fontset = &(self->fontset);
+
     return msLoadSymbolSet(&self->symbolset);
   }
 
