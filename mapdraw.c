@@ -104,6 +104,7 @@ imageObj *msDrawMap(mapObj *map)
     int i;
     layerObj *lp=NULL;
     int status;
+    enum MS_CONNECTION_TYPE lastconnectiontype;
     imageObj *image = NULL;
     struct mstimeval mapstarttime, mapendtime;
     struct mstimeval starttime, endtime;
@@ -111,13 +112,15 @@ imageObj *msDrawMap(mapObj *map)
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     httpRequestObj asOWSReqInfo[MS_MAXLAYERS+1];
     int numOWSRequests=0;
+    wmsParamsObj sLastWMSParams;
 
     msHTTPInitRequestObj(asOWSReqInfo, MS_MAXLAYERS+1);
+    msInitWmsParamsObj(&sLastWMSParams);
 #endif
 
     if (map->debug)
     {
-        gettimeofday(&mapstarttime, NULL);
+        msGettimeofday(&mapstarttime, NULL);
     }
 
     if(map->width == -1 || map->height == -1) {
@@ -193,15 +196,20 @@ imageObj *msDrawMap(mapObj *map)
 
 #if defined(USE_WMS_LYR) || defined(USE_WFS_LYR)
     // Pre-download all WMS/WFS layers in parallel before starting to draw map
+    lastconnectiontype = MS_SHAPEFILE;
     for(i=0; i<map->numlayers; i++) 
     {
-        // layerorder doesn't matter at this point
+        if (map->layerorder[i] == -1 || 
+            !msLayerIsVisible(map, &(map->layers[map->layerorder[i]])))
+            continue;
+
+        lp = &(map->layers[ map->layerorder[i]]);
+
 #ifdef USE_WMS_LYR
-        if (map->layers[map->layerorder[i]].connectiontype == MS_WMS)  
+        if (lp->connectiontype == MS_WMS)
         {
-            if ( msLayerIsVisible(map, &(map->layers[map->layerorder[i]])) &&
-                 msPrepareWMSLayerRequest(map->layerorder[i], map, 
-                                          &(map->layers[map->layerorder[i]]),
+            if ( msPrepareWMSLayerRequest(map->layerorder[i], map, lp,
+                                          lastconnectiontype, &sLastWMSParams,
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
@@ -210,11 +218,9 @@ imageObj *msDrawMap(mapObj *map)
         }
 #endif
 #ifdef USE_WFS_LYR
-        if (map->layers[map->layerorder[i]].connectiontype == MS_WFS)  
+        if (lp->connectiontype == MS_WFS)
         {
-            if ( msLayerIsVisible(map, &(map->layers[map->layerorder[i]])) &&
-                 msPrepareWFSLayerRequest(map->layerorder[i], map, 
-                                          &(map->layers[map->layerorder[i]]),
+            if ( msPrepareWFSLayerRequest(map->layerorder[i], map, lp,
                                           asOWSReqInfo, 
                                           &numOWSRequests) == MS_FAILURE)
             {
@@ -222,7 +228,13 @@ imageObj *msDrawMap(mapObj *map)
             }
         }
 #endif
+        lastconnectiontype = lp->connectiontype;
     }
+
+#ifdef USE_WMS_LYR
+    msFreeWmsParamsObj(&sLastWMSParams);
+#endif
+
     if (numOWSRequests && 
         msOWSExecuteRequests(asOWSReqInfo, numOWSRequests, map, MS_TRUE) == MS_FAILURE)
     {
@@ -235,7 +247,7 @@ imageObj *msDrawMap(mapObj *map)
     for(i=0; i<map->numlayers; i++) {
 
         if (map->debug)
-            gettimeofday(&starttime, NULL);
+            msGettimeofday(&starttime, NULL);
 
         if (map->layerorder[i] != -1) {
             lp = &(map->layers[ map->layerorder[i]]);
@@ -290,7 +302,7 @@ imageObj *msDrawMap(mapObj *map)
 
         if (map->debug)
         {
-            gettimeofday(&endtime, NULL);
+            msGettimeofday(&endtime, NULL);
             msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
                     map->layerorder[i], lp->name?lp->name:"(null)",
                     (endtime.tv_sec+endtime.tv_usec/1.0e6)-
@@ -306,14 +318,14 @@ imageObj *msDrawMap(mapObj *map)
     msEmbedLegend(map, image->img.gd); //TODO  
 
   if (map->debug)
-      gettimeofday(&starttime, NULL);
+      msGettimeofday(&starttime, NULL);
 
   if(msDrawLabelCache(image, map) == -1)
     return(NULL);
 
   if (map->debug)
   {
-      gettimeofday(&endtime, NULL);
+      msGettimeofday(&endtime, NULL);
       msDebug("msDrawMap(): Drawing Label Cache, %.3fs\n", 
               (endtime.tv_sec+endtime.tv_usec/1.0e6)-
               (starttime.tv_sec+starttime.tv_usec/1.0e6) );
@@ -331,7 +343,7 @@ imageObj *msDrawMap(mapObj *map)
       continue;
 
     if (map->debug)
-        gettimeofday(&starttime, NULL);
+        msGettimeofday(&starttime, NULL);
 
     if (lp->connectiontype == MS_WMS)  
     { 
@@ -365,7 +377,7 @@ imageObj *msDrawMap(mapObj *map)
 
     if (map->debug)
     {
-        gettimeofday(&endtime, NULL);
+        msGettimeofday(&endtime, NULL);
         msDebug("msDrawMap(): Layer %d (%s), %.3fs\n", 
                 map->layerorder[i], lp->name?lp->name:"(null)",
                 (endtime.tv_sec+endtime.tv_usec/1.0e6)-
@@ -387,7 +399,7 @@ imageObj *msDrawMap(mapObj *map)
 
   if (map->debug)
   {
-      gettimeofday(&mapendtime, NULL);
+      msGettimeofday(&mapendtime, NULL);
       msDebug("msDrawMap() total time: %.3fs\n", 
               (mapendtime.tv_sec+mapendtime.tv_usec/1.0e6)-
               (mapstarttime.tv_sec+mapstarttime.tv_usec/1.0e6) );
@@ -951,6 +963,7 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
         msHTTPInitRequestObj(asReqInfo, 2);
 
         if ( msPrepareWMSLayerRequest(1, map, layer,
+                                      0, NULL,
                                       asReqInfo, &numReq) == MS_FAILURE  ||
              msOWSExecuteRequests(asReqInfo, numReq, map, MS_TRUE) == MS_FAILURE )
         {

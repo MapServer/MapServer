@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.61  2004/03/30 00:12:28  dan
+ * Added ability to combine multiple WMS connections to the same server
+ * into a single request when the layers are adjacent and compatible.(bug 116)
+ *
  * Revision 1.60  2004/03/25 21:59:23  sean
  * Undoing accidental changes to mapwmslayer.c
  *
@@ -44,119 +48,8 @@
  * Add #ifdef for windows to be able to use snprintf.
  *
  * Revision 1.54  2003/11/03 15:45:29  assefa
- * Do not delete the temporary file comming from the server if we are in debug mode.
- * (DEBUG ON on the layer)
- *
- * Revision 1.53  2003/04/23 19:49:41  dan
- * Use ',' as delimiter for wms_formatlist.  Use lp->connection in priority
- * over wms_onlineresource metadata in msBuildWMSLayerURLBase()
- *
- * Revision 1.52  2003/04/23 15:06:14  dan
- * Better formatted error message in msDrawWMSLayerLow()
- *
- * Revision 1.51  2003/04/23 14:21:18  dan
- * Log an error in msDrawWMSLayerLow() if a GetMap request failed.
- *
- * Revision 1.50  2003/03/26 20:24:38  dan
- * Do not call msDebug() unless debug flag is turned on
- *
- * Revision 1.49  2003/01/30 15:53:48  assefa
- * Windows compilation error.
- *
- * Revision 1.48  2003/01/23 21:42:10  dan
- * Support SLD in GetMap requests when wms_style_..._sld metadata is set
- *
- * Revision 1.47  2003/01/15 19:15:18  dan
- * Do not set TIME= parameter in GetMap URL if wms_time metadata is empty
- *
- * Revision 1.46  2003/01/15 19:05:54  dan
- * Fixed the fix from v1.39 - the test on pszFormatsList had been removed
- * instead of the test on pszStylesList
- *
- * Revision 1.45  2003/01/14 04:13:45  dan
- * Added support for WMS AUTO projections
- *
- * Revision 1.44  2002/12/20 16:34:59  dan
- * Added support for wms_time metadata to pass TIME= parameter in WMS requests
- *
- * Revision 1.43  2002/12/17 21:33:54  dan
- * Enable following redirections with libcurl (requires libcurl 7.10.1+)
- *
- * Revision 1.42  2002/12/17 05:30:17  dan
- * Fixed HTTP timeout value (in secs, not msecs) for WMS/WFS requests
- *
- * Revision 1.41  2002/12/16 20:35:00  dan
- * Flush libwww and use libcurl instead for HTTP requests in WMS/WFS client
- *
- * Revision 1.40  2002/12/13 00:57:31  dan
- * Modified WFS implementation to behave more as a real vector data source
- *
- * Revision 1.39  2002/11/27 20:13:49  julien
- * valid only the style (not stylelist) to build the base url
- *
- * Revision 1.38  2002/11/26 00:06:52  dan
- * Removed offsite hack for bug 214.  Not needed any more since bug is fixed.
- *
- * Revision 1.37  2002/11/25 21:50:29  julien
- * add \0 in the isspace validation for epsg in msBuildWMSLayerURL
- *
- * Revision 1.36  2002/11/25 18:41:26  dan
- * Do not overwrite lp->connection in msBuildWMSLayerURL()
- *
- * Revision 1.35  2002/11/21 00:59:31  dan
- * Added msBuildWMSLayerURLBase() to build WMS connection URL from metadata
- *
- * Revision 1.34  2002/11/15 16:32:36  dan
- * Works more often with offiste=RGB:210,220,230 for bug 214 workaround
- *
- * Revision 1.33  2002/11/15 06:15:29  dan
- * Temporary patch for bug 214 (WMS transparency issue)
- *
- * Revision 1.32  2002/10/28 23:07:38  dan
- * Fixed crash in msDrawWMSLayerLow(): free(wldfile) not needed
- *
- * Revision 1.31  2002/10/09 02:29:03  dan
- * Initial implementation of WFS client support.
- *
- * Revision 1.30  2002/09/20 03:44:07  sdlime
- * Swapped map_path for mappath for consistency.
- *
- * Revision 1.29  2002/09/17 13:08:30  julien
- * Remove all chdir() function and replace them with the new msBuildPath function.
- * This have been done to make MapServer thread safe. (Bug 152)
- *
- * Revision 1.28  2002/07/08 03:46:42  dan
- * Finished changes to download WMS layers in parallel when drawing map
- *
- * Revision 1.27  2002/06/26 03:10:43  dan
- * Modified msGetImages() in preparation for support of multiple requests
- * in parrallel
- *
- * Revision 1.26  2002/06/21 18:33:15  frank
- * added support for IMAGEMODE INT16 and FLOAT
- *
- * Revision 1.25  2002/06/11 13:54:08  frank
- * avoid warning
- *
- * Revision 1.24  2002/05/14 14:07:32  assefa
- * Use of ImageObj to be able to output Vector/Raster beside GD.
- *
- * Revision 1.23  2002/03/13 23:45:22  sdlime
- * Added projection support to the GML output code. Re-shuffled the code 
- * to extract the EPSG values for a layer or map into mapproject.c.
- *
- * Revision 1.22  2002/02/08 21:07:27  sacha
- * Added template support to WMS.
- *
- * Revision 1.21  2002/02/01 00:08:36  sacha
- * Move msTmpFile function from mapwmslayer.c to maputil.c
- *
- * Revision 1.20  2002/01/24 18:31:14  dan
- * Use REQUEST=map instead of REQUEST=Map for WMS 1.0.0 requests.
- *
- * Revision 1.19  2002/01/22 23:00:04  dan
- * Added -DENABLE_STDERR_DEBUG in --enable-debug config option to
- * enable/disable msDebug() output to stderr.  Default is disabled.
+ * Do not delete the temporary file comming from the server if we are in debug
+ * mode. (DEBUG ON on the layer)
  *
  * ...
  *
@@ -182,6 +75,134 @@
 #define WMS_V_1_1_0  110
 
 
+/**********************************************************************
+ *                          msInitWmsParamsObj()
+ *
+ **********************************************************************/
+int msInitWmsParamsObj(wmsParamsObj *wmsparams) 
+{
+    wmsparams->onlineresource = NULL;
+    wmsparams->params = msCreateHashTable();
+    wmsparams->numparams=0;
+
+    return MS_SUCCESS;
+}
+
+/**********************************************************************
+ *                          msFreeWmsParamsObj()
+ *
+ * Frees the contents of the object, but not the object itself.
+ **********************************************************************/
+void msFreeWmsParamsObj(wmsParamsObj *wmsparams) 
+{
+    msFree(wmsparams->onlineresource);
+    wmsparams->onlineresource = NULL;
+
+    msFreeHashTable(wmsparams->params);
+    wmsparams->params = NULL;
+
+    wmsparams->numparams=0;
+}
+
+/**********************************************************************
+ *                          msSetWMSParamString()
+ *
+ **********************************************************************/
+static int msSetWMSParamString(wmsParamsObj *psWMSParams, 
+                               const char *name, const char * value,
+                               int urlencode) 
+{
+    if (urlencode)
+    {
+        char *pszTmp;
+        pszTmp = msEncodeUrl(value);
+        msInsertHashTable(psWMSParams->params, name, pszTmp);
+        msFree(pszTmp);
+    }
+    else
+    {
+        msInsertHashTable(psWMSParams->params, name, value);
+    }
+    psWMSParams->numparams++;
+
+    return MS_SUCCESS;
+}
+
+/**********************************************************************
+ *                          msSetWMSParamInt()
+ *
+ **********************************************************************/
+static int msSetWMSParamInt(wmsParamsObj *wmsparams, 
+                            const char *name, int value) 
+{
+    char szBuf[100];
+
+    snprintf(szBuf, 100, "%d", value);
+    msInsertHashTable(wmsparams->params, name, szBuf);
+    wmsparams->numparams++;
+
+    return MS_SUCCESS;
+}
+
+/**********************************************************************
+ *                          msBuildWMSParamsUrl()
+ *
+ **********************************************************************/
+static char *msBuildURLFromWMSParams(wmsParamsObj *wmsparams) 
+{
+    const char *key, *value;
+    int nLen;
+    char *pszURL;
+
+    /* Compute size required for URL buffer 
+     */
+    nLen = strlen(wmsparams->onlineresource) + 3;
+
+    key = msFirstKeyFromHashTable(wmsparams->params);
+    while (key != NULL)
+    {
+        value = msLookupHashTable(wmsparams->params, key);
+        nLen += strlen(key) + strlen(value) + 2;
+
+        key = msNextKeyFromHashTable(wmsparams->params, key);
+    }
+
+    pszURL = (char*)malloc((nLen+1)*sizeof(char*));
+
+    /* Start with the onlineresource value and append trailing '?' or '&' 
+     * if missing.
+     */
+    strcpy(pszURL, wmsparams->onlineresource);
+    if (strchr(pszURL, '?') == NULL)
+        strcat(pszURL, "?");
+    else
+    {
+        char *c;
+        c = pszURL+strlen(pszURL)-1;
+        if (*c != '?' && *c != '&')
+            strcpy(c+1, "&");
+    }
+
+    /* Now add all the parameters 
+     */
+    nLen = strlen(pszURL);
+    key = msFirstKeyFromHashTable(wmsparams->params);
+    while (key != NULL)
+    {
+        value = msLookupHashTable(wmsparams->params, key);
+        sprintf(pszURL+nLen, "%s=%s&", key, value);
+        nLen += strlen(key) + strlen(value) + 2;
+        key = msNextKeyFromHashTable(wmsparams->params, key);
+    }
+
+    /* Get rid of trailing '&'*/
+    pszURL[nLen-1] = '\0';
+
+    return pszURL;
+}
+
+
+
 
 #ifdef USE_WMS_LYR
 /**********************************************************************
@@ -199,17 +220,14 @@
  * Returns a reference to a newly allocated string that should be freed 
  * by the caller.
  **********************************************************************/
-static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp) 
+static int msBuildWMSLayerURLBase(mapObj *map, layerObj *lp,
+                                  wmsParamsObj *psWMSParams) 
 {
-    char *pszURL = NULL, *pszNameEnc=NULL, *pszFormatEnc=NULL;
-    char *pszStyleEnc=NULL, *pszSLDEnc=NULL, *pszTimeEnc=NULL;
     const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
     const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
     const char *pszSLD=NULL, *pszVersionKeyword=NULL;
     const char *pszSLDBody=NULL;
-    char *pszSLDGenerated = NULL, *pszSLDBodyEnc=NULL;
-    char *pszSLDURLEnc= NULL, *pszSLDURL = NULL;
-    int nLen;
+    char *pszSLDGenerated = NULL, *pszSLDURL = NULL;
 
     /* If lp->connection is not set then use wms_onlineresource metadata */
     pszOnlineResource = lp->connection;
@@ -223,8 +241,8 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     pszStyle =          msLookupHashTable(lp->metadata, "wms_style");
     pszStyleList =      msLookupHashTable(lp->metadata, "wms_stylelist");
     pszTime =           msLookupHashTable(lp->metadata, "wms_time");
-    pszSLDBody =       msLookupHashTable(lp->metadata, "wms_sld_body");
-    pszSLDURL =       msLookupHashTable(lp->metadata, "wms_sld_url");
+    pszSLDBody =        msLookupHashTable(lp->metadata, "wms_sld_body");
+    pszSLDURL =         msLookupHashTable(lp->metadata, "wms_sld_url");
 
     if (pszOnlineResource==NULL || pszVersion==NULL || pszName==NULL)
     {
@@ -234,8 +252,87 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
                    "Please either provide a valid CONNECTION URL, or provide "
                    "those values in the layer's metadata.\n", 
                    "msBuildWMSLayerURLBase()", lp->name);
-        return NULL;
+        return MS_FAILURE;
     }
+
+    psWMSParams->onlineresource = strdup(pszOnlineResource);
+
+    if (strncmp(pszVersion, "1.0.7", 5) < 0)
+        pszVersionKeyword = "WMTVER";
+    else
+        pszVersionKeyword = "VERSION";
+
+    msSetWMSParamString(psWMSParams, pszVersionKeyword, pszVersion, MS_FALSE);
+    msSetWMSParamString(psWMSParams, "SERVICE", "WMS",     MS_FALSE);
+    msSetWMSParamString(psWMSParams, "LAYERS",  pszName,   MS_TRUE);
+    msSetWMSParamString(psWMSParams, "TRANSPARENT", "TRUE",MS_FALSE);
+
+
+    if (pszFormat==NULL && pszFormatList==NULL)
+    {
+        msSetError(MS_WMSCONNERR, 
+                   "At least wms_format or wms_formatlist is required for "
+                   "layer %s.  "
+                   "Please either provide a valid CONNECTION URL, or provide "
+                   "those values in the layer's metadata.\n", 
+                   "msBuildWMSLayerURLBase()", lp->name);
+        return MS_FAILURE;
+    }
+
+    if (pszFormat != NULL)
+    {
+        msSetWMSParamString(psWMSParams, "FORMAT",  pszFormat, MS_TRUE);
+    }
+    else
+    {
+        /* Look for the first format in list that matches */
+        char **papszTok;
+        int i, n;
+        papszTok = split(pszFormatList, ',', &n);
+
+        for(i=0; pszFormat==NULL && i<n; i++)
+        {
+            if (0 
+#ifdef USE_GD_GIF
+                || strcasecmp(papszTok[i], "GIF")
+                || strcasecmp(papszTok[i], "image/gif")
+#endif
+#ifdef USE_GD_PNG
+                || strcasecmp(papszTok[i], "PNG")
+                || strcasecmp(papszTok[i], "image/png")
+#endif
+#ifdef USE_GD_JPEG
+                || strcasecmp(papszTok[i], "JPEG")
+                || strcasecmp(papszTok[i], "image/jpeg")
+#endif
+#ifdef USE_GD_WBMP
+                || strcasecmp(papszTok[i], "WBMP")
+                || strcasecmp(papszTok[i], "image/wbmp")
+#endif
+                )
+            {
+                pszFormat = papszTok[i];
+            }
+        }
+
+        if (pszFormat)
+        {
+            msSetWMSParamString(psWMSParams, "FORMAT",  pszFormat, MS_TRUE);
+            msFreeCharArray(papszTok, n);
+        }
+        else
+        {
+            msSetError(MS_WMSCONNERR, 
+                       "Could not find a format that matches supported input "
+                       "formats in wms_formatlist metdata in layer %s.  "
+                       "Please either provide a valid CONNECTION URL, or "
+                       "provide the required layer metadata.\n", 
+                       "msBuildWMSLayerURLBase()", lp->name);
+            msFreeCharArray(papszTok, n);
+            return MS_FAILURE;
+        }
+    }
+
 
     if (pszStyle==NULL)
     {
@@ -259,88 +356,36 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         }
     }
 
-    if (pszFormat==NULL && pszFormatList==NULL)
+    if (pszSLD == NULL)
     {
-        msSetError(MS_WMSCONNERR, 
-                   "At least wms_format or wms_formatlist is required for "
-                   "layer %s.  "
-                   "Please either provide a valid CONNECTION URL, or provide "
-                   "those values in the layer's metadata.\n", 
-                   "msBuildWMSLayerURLBase()", lp->name);
-        return NULL;
+        // STYLES is mandatory if SLD not set
+        msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
     }
-
-    if (pszFormat != NULL)
+    else if (strlen(pszStyle) > 0)
     {
-        pszFormatEnc = msEncodeUrl(pszFormat);
+        // Both STYLES and SLD are set
+        msSetWMSParamString(psWMSParams, "STYLES", pszStyle, MS_TRUE);
+        msSetWMSParamString(psWMSParams, "SLD",    pszSLD,   MS_TRUE);
     }
     else
     {
-        /* Look for the first format in list that matches */
-        char **papszTok;
-        int i, n;
-        papszTok = split(pszFormatList, ',', &n);
-
-        for(i=0; pszFormatEnc==NULL && i<n; i++)
-        {
-            if (0 
-#ifdef USE_GD_GIF
-                || strcasecmp(papszTok[i], "GIF")
-                || strcasecmp(papszTok[i], "image/gif")
-#endif
-#ifdef USE_GD_PNG
-                || strcasecmp(papszTok[i], "PNG")
-                || strcasecmp(papszTok[i], "image/png")
-#endif
-#ifdef USE_GD_JPEG
-                || strcasecmp(papszTok[i], "JPEG")
-                || strcasecmp(papszTok[i], "image/jpeg")
-#endif
-#ifdef USE_GD_WBMP
-                || strcasecmp(papszTok[i], "WBMP")
-                || strcasecmp(papszTok[i], "image/wbmp")
-#endif
-                )
-            {
-                pszFormatEnc = msEncodeUrl(papszTok[i]);
-            }
-        }
-        msFreeCharArray(papszTok, n);
-
-        if (pszFormatEnc == NULL)
-        {
-            msSetError(MS_WMSCONNERR, 
-                       "Could not find a format that matches supported input "
-                       "formats in wms_formatlist metdata in layer %s.  "
-                       "Please either provide a valid CONNECTION URL, or "
-                       "provide the required layer metadata.\n", 
-                       "msBuildWMSLayerURLBase()", lp->name);
-            return NULL;
-        }
+        // Only SLD is set
+        msSetWMSParamString(psWMSParams, "SLD",    pszSLD,   MS_TRUE);
     }
 
-
-    // Encode some values and alloc a buffer large enough and build the URL
-    pszNameEnc = msEncodeUrl(pszName);
-    pszStyleEnc = msEncodeUrl(pszStyle);
-
-    nLen = 200 + strlen(pszOnlineResource) + strlen(pszVersion) + 
-        strlen(pszNameEnc)*2 + strlen(pszFormatEnc) + strlen(pszStyleEnc);
-    if (pszTime)
+    if (msIsLayerQueryable(lp))
     {
-        pszTimeEnc = msEncodeUrl(pszTime);
-        nLen += strlen(pszTimeEnc)+6;
+        msSetWMSParamString(psWMSParams, "QUERY_LAYERS", pszName, MS_TRUE);
     }
-    if (pszSLD)
+    if (pszTime && strlen(pszTime) > 0)
     {
-        pszSLDEnc = msEncodeUrl(pszSLD);
-        nLen += strlen(pszSLDEnc)+5;
+        msSetWMSParamString(psWMSParams, "TIME",   pszTime,  MS_TRUE);
     }
-    
-    /* if  the metadat wms_sld_body is set to AUTO, we generate
-       the sld based on classes found in the map file and send
-       it in the URL. If diffrent from AUTO, we are assuming that
-       it is a valid sld.
+
+    /* if  the metadata wms_sld_body is set to AUTO, we generate
+     * the sld based on classes found in the map file and send
+     * it in the URL. If diffrent from AUTO, we are assuming that
+     * it is a valid sld.
      */
     if (pszSLDBody)
     {
@@ -349,96 +394,24 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
             pszSLDGenerated = msSLDGenerateSLD(map, lp->index);
             if (pszSLDGenerated)
             {
-                pszSLDBodyEnc =  msEncodeUrl(pszSLDGenerated);
-                nLen += strlen(pszSLDBodyEnc)+5;
+                msSetWMSParamString(psWMSParams, "SLD_BODY", 
+                                    pszSLDGenerated, MS_TRUE);
                 free(pszSLDGenerated);
             }
         }
         else
         {
-            pszSLDBodyEnc =  msEncodeUrl(pszSLDBody);
-            nLen += strlen(pszSLDBodyEnc)+5;
+            msSetWMSParamString(psWMSParams, "SLD_BODY", pszSLDBody, MS_TRUE);
         }
 
     }
     
     if (pszSLDURL)
     {
-        pszSLDURLEnc = msEncodeUrl(pszSLDURL);
-        nLen += strlen(pszSLDURLEnc)+5;
-    }
-
-
-    pszURL = (char*)malloc((nLen+1)*sizeof(char*));
-
-    // Start with the onlineresource value and append trailing '?' or '&' 
-    // if missing.
-    strcpy(pszURL, pszOnlineResource);
-    if (strchr(pszURL, '?') == NULL)
-        strcat(pszURL, "?");
-    else
-    {
-        char *c;
-        c = pszURL+strlen(pszURL)-1;
-        if (*c != '?' && *c != '&')
-            strcpy(c+1, "&");
-    }
-
-    if (strncmp(pszVersion, "1.0.7", 5) < 0)
-        pszVersionKeyword = "WMTVER";
-    else
-        pszVersionKeyword = "VERSION";
-
-    sprintf(pszURL + strlen(pszURL),
-            "SERVICE=WMS&%s=%s&LAYERS=%s&FORMAT=%s&TRANSPARENT=TRUE",
-            pszVersionKeyword, pszVersion, pszNameEnc, pszFormatEnc);
-
-    if (pszSLD == NULL)
-    {
-        // STYLES is mandatory if SLD not set
-        sprintf(pszURL + strlen(pszURL), "&STYLES=%s", pszStyleEnc);
-    }
-    else if (strlen(pszStyle) > 0)
-    {
-        // Both STYLES and SLD are set
-        sprintf(pszURL + strlen(pszURL), "&STYLES=%s&SLD=%s", 
-                pszStyleEnc, pszSLDEnc);
-    }
-    else
-    {
-        // Only SLD is set
-        sprintf(pszURL + strlen(pszURL), "&SLD=%s", pszSLDEnc);
-    }
-
-    if (msIsLayerQueryable(lp))
-    {
-        sprintf(pszURL + strlen(pszURL), "&QUERY_LAYERS=%s", pszNameEnc);
-    }
-    if (pszTime && strlen(pszTime) > 0)
-    {
-        sprintf(pszURL + strlen(pszURL), "&TIME=%s", pszTimeEnc);
-    }
-
-    if (pszSLDBodyEnc)
-    {
-        sprintf(pszURL + strlen(pszURL), "&SLD_BODY=%s", pszSLDBodyEnc);
+        msSetWMSParamString(psWMSParams, "SLD", pszSLDURL, MS_TRUE);
     }	
 
-    if (pszSLDURLEnc)
-    {
-        sprintf(pszURL + strlen(pszURL), "&SLD=%s", pszSLDURLEnc);
-    }	
-
-
-    msFree(pszNameEnc);
-    msFree(pszFormatEnc);
-    msFree(pszStyleEnc);
-    msFree(pszSLDEnc);
-    msFree(pszTimeEnc);
-    if (pszSLDBodyEnc)
-      msFree(pszSLDBodyEnc);
-
-    return pszURL;
+    return MS_SUCCESS;
 }
 
 #endif /* USE_WMS_LYR */
@@ -455,12 +428,13 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
 #define WMS_GETMAP         1
 #define WMS_GETFEATUREINFO 2
 
-char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
-                         int nClickX, int nClickY, int nFeatureCount,
-                         const char *pszInfoFormat, rectObj *bbox_ret) 
+int msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
+                       int nClickX, int nClickY, int nFeatureCount,
+                       const char *pszInfoFormat, rectObj *bbox_ret,
+                       wmsParamsObj *psWMSParams)
 {
 #ifdef USE_WMS_LYR
-    char *pszURL = NULL, *pszEPSG = NULL;
+    char *pszEPSG = NULL;
     const char *pszVersion, *pszTmp, *pszRequestParam, *pszExceptionsParam;
     rectObj bbox;
     int nVersion;
@@ -469,7 +443,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     {
         msSetError(MS_WMSCONNERR, "Call supported only for CONNECTIONTYPE WMS",
                    "msBuildWMSLayerURL()");
-        return NULL;
+        return MS_FAILURE;
     }
 
 
@@ -483,25 +457,22 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
          (pszVersion = strstr(lp->connection, "wmtver=")) == NULL ) )
     {
         // CONNECTION missing or seems incomplete... try to build from metadata
-        pszURL = msBuildWMSLayerURLBase(map, lp);
-        if (pszURL == NULL)
-            return NULL;  // An error already produced.
+        if (msBuildWMSLayerURLBase(map, lp, psWMSParams) != MS_SUCCESS)
+            return MS_FAILURE;  // An error already produced.
+
+        // If we received MS_SUCCESS then version must have been set
+        pszVersion = msLookupHashTable(psWMSParams->params, "VERSION");
+        if (pszVersion ==NULL)
+            pszVersion = msLookupHashTable(psWMSParams->params, "WMTVER");
+
     }
     else
     {
         // CONNECTION string seems complete, start with that.
-        pszURL = strdup(lp->connection);
+        psWMSParams->onlineresource = strdup(lp->connection);
+        pszVersion = strchr(pszVersion, '=')+1;
     }
 
-    if ((pszVersion = strstr(pszURL, "VERSION=")) == NULL &&
-        (pszVersion = strstr(pszURL, "version=")) == NULL &&
-        (pszVersion = strstr(pszURL, "WMTVER=")) == NULL &&
-        (pszVersion = strstr(pszURL, "wmtver=")) == NULL ) 
-    {
-        msSetError(MS_WMSCONNERR, "WMS Connection String must contain the VERSION or WMTVER parameter (with name in uppercase).", "msBuildWMSLayerURL()");
-        return NULL;
-    }
-    pszVersion = strchr(pszVersion, '=')+1;
     if (strncmp(pszVersion, "1.0.8", 5) >= 0)    /* 1.0.8 == 1.1.0 */
         nVersion = WMS_V_1_1_0;
     else if (strncmp(pszVersion, "1.0.7", 5) >= 0)
@@ -511,7 +482,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     else
     {
         msSetError(MS_WMSCONNERR, "MapServer supports only WMS 1.0.0 to 1.1.0 (please verify the VERSION parameter in the connection string).", "msBuildWMSLayerURL()");
-        return NULL;
+        return MS_FAILURE;
     }
 
 
@@ -519,11 +490,12 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * For GetFeatureInfo requests, make sure QUERY_LAYERS is included
  * ------------------------------------------------------------------ */
     if  (nRequestType == WMS_GETFEATUREINFO &&
-         strstr(pszURL, "QUERY_LAYERS=") == NULL &&
-         strstr(pszURL, "query_layers=") == NULL )
+         strstr(psWMSParams->onlineresource, "QUERY_LAYERS=") == NULL &&
+         strstr(psWMSParams->onlineresource, "query_layers=") == NULL &&
+         msLookupHashTable(psWMSParams->params, "QUERY_LAYERS") == NULL)
     {
         msSetError(MS_WMSCONNERR, "WMS Connection String must contain the QUERY_LAYERS parameter to support GetFeatureInfo requests (with name in uppercase).", "msBuildWMSLayerURL()");
-        return NULL;
+        return MS_FAILURE;
     }
 
 
@@ -578,7 +550,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     {
         msSetError(MS_WMSCONNERR, "Layer must have an EPSG or AUTO projection code (in its PROJECTION object or wms_srs metadata)", "msBuildWMSLayerURL()");
         if (pszEPSG) free(pszEPSG);
-        return NULL;
+        return MS_FAILURE;
     }
 
 /* ------------------------------------------------------------------
@@ -616,12 +588,12 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
             char szProj[20];
             sprintf(szProj, "init=epsg:%s", pszEPSG+5);
             if (msLoadProjectionString(&(lp->projection), szProj) != 0)
-                return NULL;
+                return MS_FAILURE;
         }
         else
         {
             if (msLoadProjectionString(&(lp->projection), pszEPSG) != 0)
-                return NULL;
+                return MS_FAILURE;
         }
     }
 
@@ -656,20 +628,10 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  *   STYLES
  *   QUERY_LAYERS (for queriable layers only)
  * ------------------------------------------------------------------ */
-    // Make sure we have a big enough buffer for the URL
-    if(!(pszURL = (char *)realloc(pszURL, (strlen(pszURL)+512)*sizeof(char)))) 
-    {
-        msSetError(MS_MEMERR, NULL, "msBuildWMSLayerURL()");
-        return NULL;
-    }
-
-    // __TODO__ We have to urlencode each value... especially the BBOX values
-    // because if they end up in exponent format (123e+06) the + will be seen
-    // as a space by the remote server.
 
     if (nRequestType == WMS_GETFEATUREINFO)
     {
-        char szFeatureCount[30] = "";
+        char szBuf[100] = "";
 
         if (nVersion >= WMS_V_1_0_7)
             pszRequestParam = "GetFeatureInfo";
@@ -683,24 +645,34 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         else
             pszExceptionsParam = "WMS_XML";
 
+        msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
+        msSetWMSParamInt(   psWMSParams, "WIDTH",   map->width);
+        msSetWMSParamInt(   psWMSParams, "HEIGHT",  map->height);
+        msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
+
+        snprintf(szBuf, 100, "%f,%f,%f,%f", 
+                 bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
+        msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
+ 
+        msSetWMSParamInt(   psWMSParams, "X",       nClickX);
+        msSetWMSParamInt(   psWMSParams, "Y",       nClickY);
+ 
+        msSetWMSParamString(psWMSParams, "EXCEPTIONS", pszExceptionsParam, MS_FALSE);
+        msSetWMSParamString(psWMSParams, "INFO_FORMAT",pszInfoFormat, MS_TRUE);
+
         // If FEATURE_COUNT <= 0 then don't pass this parameter
         // The spec states that FEATURE_COUNT must be greater than zero
         // and if not passed then the behavior is up to the server
         if (nFeatureCount > 0)
         {
-            sprintf(szFeatureCount, "&FEATURE_COUNT=%d", nFeatureCount);
+            msSetWMSParamInt(psWMSParams, "FEATURECOUNT", nFeatureCount);
         }
 
-        sprintf(pszURL + strlen(pszURL), 
-                "&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
-                "&EXCEPTIONS=%s&X=%d&Y=%d&INFO_FORMAT=%s%s",
-                pszRequestParam, map->width, map->height, 
-                pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
-                pszExceptionsParam,
-                nClickX, nClickY, pszInfoFormat, szFeatureCount);
     }
     else /* if (nRequestType == WMS_GETMAP) */
     {
+        char szBuf[100] = "";
+
         if (nVersion >= WMS_V_1_0_7)
             pszRequestParam = "GetMap";
         else
@@ -711,17 +683,20 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         else
             pszExceptionsParam = "INIMAGE";
 
-        sprintf(pszURL + strlen(pszURL), 
-                "&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
-                "&EXCEPTIONS=%s",
-                pszRequestParam, map->width, map->height, 
-                pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
-                pszExceptionsParam);
+        msSetWMSParamString(psWMSParams, "REQUEST", pszRequestParam, MS_FALSE);
+        msSetWMSParamInt(   psWMSParams, "WIDTH",   map->width);
+        msSetWMSParamInt(   psWMSParams, "HEIGHT",  map->height);
+        msSetWMSParamString(psWMSParams, "SRS",     pszEPSG, MS_FALSE);
+
+        snprintf(szBuf, 100, "%f,%f,%f,%f", 
+                 bbox.minx, bbox.miny, bbox.maxx, bbox.maxy);
+        msSetWMSParamString(psWMSParams, "BBOX",    szBuf, MS_TRUE);
+        msSetWMSParamString(psWMSParams, "EXCEPTIONS",  pszExceptionsParam, MS_FALSE);
     }
 
     free(pszEPSG);
 
-    return pszURL;
+    return MS_SUCCESS;
 
 #else
 /* ------------------------------------------------------------------
@@ -729,7 +704,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * ------------------------------------------------------------------ */
   msSetError(MS_WMSCONNERR, "WMS CLIENT CONNECTION support is not available.", 
              "msBuildWMSLayerURL()");
-  return NULL;
+  return MS_FAILURE;
 
 #endif /* USE_WMS_LYR */
 
@@ -748,9 +723,22 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
                              int nClickX, int nClickY, int nFeatureCount,
                              const char *pszInfoFormat) 
 {
-    return msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
-                              nClickX, nClickY, nFeatureCount,
-                              pszInfoFormat, NULL);
+    wmsParamsObj sThisWMSParams;
+    char *pszURL;
+
+    msInitWmsParamsObj(&sThisWMSParams);
+
+    if (msBuildWMSLayerURL(map, lp, WMS_GETFEATUREINFO,
+                           nClickX, nClickY, nFeatureCount,
+                           pszInfoFormat, NULL, NULL)!= MS_SUCCESS)
+    {
+        return NULL;
+    }
+
+    pszURL = msBuildURLFromWMSParams(&sThisWMSParams);
+    msFreeWmsParamsObj(&sThisWMSParams);
+
+    return pszURL;
 }
 
 
@@ -760,25 +748,32 @@ char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,
  **********************************************************************/
 
 int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
+                             enum MS_CONNECTION_TYPE lastconnectiontype,
+                             wmsParamsObj *psLastWMSParams,
                              httpRequestObj *pasReqInfo, int *numRequests) 
 {
 #ifdef USE_WMS_LYR
     char *pszURL = NULL;
     const char *pszTmp;
     rectObj bbox;
-    int nTimeout;
+    int nTimeout, bOkToMerge;
+    wmsParamsObj sThisWMSParams;
 
     if (lp->connectiontype != MS_WMS)
         return MS_FAILURE;
+
+    msInitWmsParamsObj(&sThisWMSParams);
 
 /* ------------------------------------------------------------------
  * Build the request URL, this will also set layer projection and
  * compute BBOX in that projection.
  * ------------------------------------------------------------------ */
-    if ((pszURL = msBuildWMSLayerURL(map, lp, WMS_GETMAP,
-                                     0, 0, 0, NULL, &bbox)) == NULL)
+    if ( msBuildWMSLayerURL(map, lp, WMS_GETMAP,
+                            0, 0, 0, NULL, &bbox, 
+                            &sThisWMSParams) != MS_SUCCESS)
     {
         /* an error was already reported. */
+        msFreeWmsParamsObj(&sThisWMSParams);
         return MS_FAILURE;
     }
 
@@ -796,7 +791,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         if (tokens==NULL || n != 4) {
             msSetError(MS_WMSCONNERR, "Wrong number of arguments for 'wms_latlonboundingbox' metadata.",
                        "msDrawWMSLayer()");
-            free(pszURL);
+            msFreeWmsParamsObj(&sThisWMSParams);
             return MS_FAILURE;
         }
 
@@ -814,8 +809,8 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
         if (!msRectOverlap(&bbox, &ext))
         {
             // No overlap... nothing to do
-            free(pszURL);
 
+            msFreeWmsParamsObj(&sThisWMSParams);
             return MS_SUCCESS;  // No overlap.
         }
     }
@@ -838,20 +833,128 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     }
 
 /* ------------------------------------------------------------------
+ * Check if layer can be merged with previous WMS layer requests
+ * ------------------------------------------------------------------ */
+    bOkToMerge = MS_FALSE;
+    if (lastconnectiontype == MS_WMS &&
+        psLastWMSParams != NULL &&
+        sThisWMSParams.numparams == psLastWMSParams->numparams &&
+        strcmp(sThisWMSParams.onlineresource, 
+               psLastWMSParams->onlineresource) == 0)
+    {
+        const char *key, *value1, *value2;
+        bOkToMerge = MS_TRUE;
+
+        key = msFirstKeyFromHashTable(sThisWMSParams.params);
+        while (key != NULL && bOkToMerge == MS_TRUE)
+        {
+            // Skip parameters whose values can be different
+            if (!(strcmp(key, "LAYERS") == 0 ||
+                  strcmp(key, "QUERY_LAYERS") == 0 ||
+                  strcmp(key, "STYLES") == 0) )
+            {
+                value1 = msLookupHashTable(psLastWMSParams->params, key);
+                value2 = msLookupHashTable(sThisWMSParams.params, key);
+
+                if (value1==NULL || value2==NULL ||
+                    strcmp(value1, value2) != 0)
+                {
+                    bOkToMerge = MS_FALSE;
+                    break;
+                }
+            }
+            key = msNextKeyFromHashTable(sThisWMSParams.params, key);
+        }
+    }
+
+    if (bOkToMerge)
+    {
+        /* Merge both requests into sThisWMSParams
+         */
+        const char *value1, *value2;
+        char *keys[] = {"LAYERS", "QUERY_LAYERS", "STYLES"};
+        int i;
+
+        for(i=0; i<3; i++)
+        {
+            value1 = msLookupHashTable(psLastWMSParams->params, keys[i]);
+            value2 = msLookupHashTable(sThisWMSParams.params, keys[i]);
+            if (value1 && value2)
+            {
+                char *pszBuf;
+                int nLen;
+
+                nLen = strlen(value1) + strlen(value2) +2;
+                pszBuf = malloc(nLen * sizeof(char));
+                if (pszBuf == NULL)
+                {
+                    msSetError(MS_MEMERR, NULL, "msPrepareWMSLayerRequest()");
+                    return MS_FAILURE;
+                }
+
+                sprintf(pszBuf, "%s,%s", value1, value2);
+                msSetWMSParamString(&sThisWMSParams, keys[i], pszBuf,MS_FALSE);
+
+                /* This key existed already, we don't want it counted twice */
+                sThisWMSParams.numparams--;
+
+                msFree(pszBuf);
+            }
+        }
+    }
+
+        
+/* ------------------------------------------------------------------
+ * Build new request URL
+ * ------------------------------------------------------------------ */
+    pszURL = msBuildURLFromWMSParams(&sThisWMSParams);
+
+
+    if (bOkToMerge && (*numRequests)>0)
+    {
+/* ------------------------------------------------------------------
+ * Update the last request in the array
+ * ------------------------------------------------------------------ */
+        msFree(pasReqInfo[(*numRequests)].pszGetUrl);
+        pasReqInfo[(*numRequests)-1].pszGetUrl = pszURL;
+        pszURL = NULL;
+        pasReqInfo[(*numRequests)].debug |= lp->debug;
+        if (nTimeout > pasReqInfo[(*numRequests)].nTimeout)
+            pasReqInfo[(*numRequests)].nTimeout = nTimeout;
+    }
+    else
+    {
+/* ------------------------------------------------------------------
  * Add a request to the array (already preallocated)
  * ------------------------------------------------------------------ */
-    pasReqInfo[(*numRequests)].nLayerId = nLayerId;
-    pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
-    pszURL = NULL;
-    // We'll store the remote server's response to a tmp file.
-    pasReqInfo[(*numRequests)].pszOutputFile = msTmpFile(map->web.imagepath, 
-                                                         "img.tmp");
-    pasReqInfo[(*numRequests)].nStatus = 0;
-    pasReqInfo[(*numRequests)].nTimeout = nTimeout;
-    pasReqInfo[(*numRequests)].bbox = bbox;
-    pasReqInfo[(*numRequests)].debug = lp->debug;
+        pasReqInfo[(*numRequests)].nLayerId = nLayerId;
+        pasReqInfo[(*numRequests)].pszGetUrl = pszURL;
+        pszURL = NULL;
+        // We'll store the remote server's response to a tmp file.
+        pasReqInfo[(*numRequests)].pszOutputFile =msTmpFile(map->web.imagepath,
+                                                            "img.tmp");
+        pasReqInfo[(*numRequests)].nStatus = 0;
+        pasReqInfo[(*numRequests)].nTimeout = nTimeout;
+        pasReqInfo[(*numRequests)].bbox = bbox;
+        pasReqInfo[(*numRequests)].debug = lp->debug;
 
-    (*numRequests)++;
+        (*numRequests)++;
+    }
+
+
+/* ------------------------------------------------------------------
+ * Replace contents of psLastWMSParams with sThisWMSParams 
+ * ------------------------------------------------------------------ */
+    if (psLastWMSParams)
+    {
+        msFreeWmsParamsObj(psLastWMSParams);
+        *psLastWMSParams = sThisWMSParams;
+    }
+    else
+    {
+        /* Can't copy it, so we just free it */
+        msFreeWmsParamsObj(&sThisWMSParams);
+    }
 
     return MS_SUCCESS;
 
@@ -892,7 +995,12 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
     }
 
     if (iReq == numRequests)
-        return MS_SUCCESS;  // This layer was skipped... nothing to do.
+    {
+        /* This layer was skipped or was included in a multi-layers 
+         * request ... nothing to do.
+         */
+        return MS_SUCCESS;  
+    }
 
     if ( !MS_HTTP_SUCCESS( pasReqInfo[iReq].nStatus ) )
     {

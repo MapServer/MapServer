@@ -5,6 +5,10 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.26  2004/03/30 00:12:28  dan
+ * Added ability to combine multiple WMS connections to the same server
+ * into a single request when the layers are adjacent and compatible.(bug 116)
+ *
  * Revision 1.25  2004/03/29 18:34:25  assefa
  * Windows compilation problem : gettimeofday and timval struct (Bug 602)
  *
@@ -98,6 +102,18 @@ typedef  struct
 } wfsParamsObj;
 
 
+/* wmsParamsObj
+ *
+ * Used to preprocess WMS request parameters and combine layers that can
+ * be comined in a GetMap request.
+ */
+typedef  struct
+{
+  char        *onlineresource;
+  hashTableObj params;
+  int          numparams;
+} wmsParamsObj;
+
 int msHTTPInit();
 void msHTTPCleanup();
 
@@ -184,7 +200,12 @@ int msWMSDispatch(mapObj *map, char **names, char **values, int numentries);
  *   mapwmslayer.c
  *====================================================================*/
 
+int msInitWmsParamsObj(wmsParamsObj *wmsparams);
+void msFreeWmsParamsObj(wmsParamsObj *wmsparams);
+
 int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
+                             enum MS_CONNECTION_TYPE lastconnectiontype,
+                             wmsParamsObj *psLastWMSParams,
                              httpRequestObj *pasReqInfo, int *numRequests);
 int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo, 
                       int numRequests, mapObj *map, layerObj *lp, 
