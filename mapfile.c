@@ -478,7 +478,7 @@ static int loadLabel(labelObj *label, mapObj *map)
       break;
     case(ANTIALIAS):
       label->antialias = 1;
-      break;    
+      break;
     case(BUFFER):
       if(getInteger(&(label->buffer)) == -1) return(-1);
       break;
@@ -2230,8 +2230,6 @@ int initMap(mapObj *map)
   }
   map->labelcache.markercachesize = MS_LABELCACHEINITSIZE;
   map->labelcache.nummarkers = 0;
-
-  /* THIS IS WHERE ENVIROMENT VARIABLE HANDLING HAS TO HAPPEN */
 
   map->markerset.filename = NULL;
   map->markerset.numsymbols = 0;

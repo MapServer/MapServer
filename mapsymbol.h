@@ -6,7 +6,7 @@
 enum ms_symbolfile {MS_MARKERSET, MS_LINESET, MS_SHADESET}; // all we need for scripting
 
 #ifndef SWIG
-enum ms_symbol {MS_VECTOR, MS_ELLIPSE, MS_PIXMAP, MS_STYLED};
+enum MS_SYMBOL_TYPE {MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE, MS_SYMBOL_PIXMAP, MS_SYMBOL_STYLED, MS_SYMBOL_TRUETYPE};
 
 #define MS_MAXSYMBOLS 32            // maximum number of symbols in a symbol file
 #define MS_MAXVECTORPOINTS 100      // shade, marker and line symbol parameters
@@ -17,15 +17,15 @@ typedef struct {
   int type;                         // Type of the marker symbol (i.e. symboltypes)
 
   /*
-  ** MS_STYLED options
+  ** MS_SYMBOL_STYLED options
   */
   int numarcs;                      // Number of arcs in the line symbol
-  int numon[MS_MAXSTYLESIZE];    // number of pixels on - a bit finer control
-  int numoff[MS_MAXSTYLESIZE];   // number of pixels off
+  int numon[MS_MAXSTYLESIZE];       // number of pixels on - a bit finer control
+  int numoff[MS_MAXSTYLESIZE];      // number of pixels off
   int offset[MS_MAXSTYLESIZE];      // Offset from a non-offseted line
 
   /*
-  ** MS_VECTOR and MS_ELLIPSE options
+  ** MS_SYMBOL_VECTOR and MS_SYMBOL_ELLIPSE options
   */
   double sizex, sizey;
   pointObj points[MS_MAXVECTORPOINTS];
@@ -33,11 +33,19 @@ typedef struct {
   int filled;
 
   /*
-  ** MS_PIXMAP options
+  ** MS_SYMBOL_PIXMAP options
   */
-  gdImagePtr img;           
+  gdImagePtr img;
   int transparent;
   int transparentcolor;
+
+  /*
+  ** MS_SYMBOL_TRUETYPE options
+  */
+  char *character;
+  int antialias;
+  char *font;
+
 } symbolObj;
 
 typedef struct {

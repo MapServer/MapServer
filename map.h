@@ -114,12 +114,15 @@
 #endif
 
 // General enumerated types - needed by scripts
+enum MS_FILE_TYPE {MS_FILE_MAP, MS_FILE_SYMBOL};
 enum MS_UNITS {MS_INCHES, MS_FEET, MS_MILES, MS_METERS, MS_KILOMETERS, MS_DD, MS_PIXELS};
 enum MS_FEATURE_TYPE {MS_POINT, MS_LINE, MS_POLYGON, MS_POLYLINE, MS_RASTER, MS_ANNOTATION, MS_NULL};
 enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; /* arrangement matters for auto placement */
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED, MS_INVERTED};
+
+#define MS_FILE_DEFAULT MS_FILE_MAP
 
 #ifndef SWIG
 // FONTSET OBJECT - used to hold aliases for TRUETYPE fonts
@@ -519,6 +522,7 @@ char *getString();
 int getDouble(double *d);
 int getInteger(int *i);
 int getSymbol(int n, ...); 
+int getCharacter(char *c);
 
 int initMap(mapObj *map);
 int initLayer(layerObj *layer);
@@ -611,10 +615,10 @@ int strcasecmp(char *s1, char *s2);
 #endif
 
 int msLoadSymbolFile(symbolSetObj *symbolset); /* in mapsymbol.c */
-void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, classObj *class);
-void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *height);
-void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, classObj *class);
-void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classObj *class);
+void msDrawShadeSymbol(mapObj *map, gdImagePtr img, shapeObj *p, classObj *class);
+void msGetMarkerSize(mapObj *map, classObj *class, int *width, int *height);
+void msDrawMarkerSymbol(mapObj *map, gdImagePtr img, pointObj *p, classObj *class);
+void msDrawLineSymbol(mapObj *map, gdImagePtr img, shapeObj *p, classObj *class);
 
 gdImagePtr msDrawLegend(mapObj *map); /* in maplegend.c */
 int msEmbedLegend(mapObj *map, gdImagePtr img);

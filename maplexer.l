@@ -8,10 +8,12 @@
 
 #include "map.h"
 #include "mapfile.h"
+#include "mapsymbol.h"
 #include "mapparser.h"
 
 double yynumber;
 int yylineno = 1;
+int yyfiletype = MS_FILE_DEFAULT;
 
 int yystate=0;
 char *yystring=NULL;
@@ -72,6 +74,7 @@ char *yystring=NULL;
 <INITIAL,OBJECT_STRING>antialias               { return(ANTIALIAS); }
 <INITIAL,OBJECT_STRING>backgroundcolor	       { return(BACKGROUNDCOLOR); }
 <INITIAL,OBJECT_STRING>buffer                  { return(BUFFER); }
+<INITIAL>character		               { return(CHARACTER); }
 <INITIAL,OBJECT_STRING>class		       { return(CLASS); }
 <INITIAL,OBJECT_STRING>classitem               { return(CLASSITEM); }
 <INITIAL,OBJECT_STRING>color		       { return(COLOR); }
@@ -172,7 +175,7 @@ char *yystring=NULL;
 <INITIAL,VALUE_STRING>cr                       { return(MS_CR); }
 <INITIAL,VALUE_STRING>default		       { return(MS_DEFAULT); }
 <INITIAL,VALUE_STRING>dd                       { return(MS_DD); }
-<INITIAL>ellipse                               { return(MS_ELLIPSE); }
+<INITIAL>ellipse                               { return(MS_SYMBOL_ELLIPSE); }
 <INITIAL,OBJECT_STRING>embed		       { return(MS_EMBED); }
 <INITIAL,VALUE_STRING>false                    { return(MS_FALSE); }
 <INITIAL,VALUE_STRING>feet		       { return(MS_FEET); }
@@ -192,7 +195,7 @@ char *yystring=NULL;
 <INITIAL,VALUE_STRING>normal                   { return(MS_NORMAL); }
 <INITIAL,VALUE_STRING>off		       { return(MS_OFF); }
 <INITIAL,VALUE_STRING>on		       { return(MS_ON); }
-<INITIAL>pixmap                                { return(MS_PIXMAP); }
+<INITIAL>pixmap                                { return(MS_SYMBOL_PIXMAP); }
 <INITIAL,VALUE_STRING>point		       { return(MS_POINT); }
 <INITIAL,VALUE_STRING>polygon 		       { return(MS_POLYGON); }
 <INITIAL,VALUE_STRING>polyline		       { return(MS_POLYLINE); }
@@ -201,14 +204,14 @@ char *yystring=NULL;
 <INITIAL,VALUE_STRING>selected		       { return(MS_SELECTED); }
 <INITIAL,VALUE_STRING>single                   { return(MS_SINGLE); }
 <INITIAL,VALUE_STRING>small		       { return(MS_SMALL); }
-<INITIAL>styled                                { return(MS_STYLED); }
+<INITIAL>styled                                { return(MS_SYMBOL_STYLED); }
 <INITIAL,VALUE_STRING>tiny		       { return(MS_TINY); }
 <INITIAL,VALUE_STRING>true                     { return(MS_TRUE); }
-<INITIAL,VALUE_STRING>truetype		       { return(MS_TRUETYPE); }
+<INITIAL,VALUE_STRING>truetype		       { if(yyfiletype == MS_FILE_SYMBOL) return(MS_SYMBOL_TRUETYPE); else return(MS_TRUETYPE); }
 <INITIAL,VALUE_STRING>uc                       { return(MS_UC); }
 <INITIAL,VALUE_STRING>ul                       { return(MS_UL); }
 <INITIAL,VALUE_STRING>ur                       { return(MS_UR); }
-<INITIAL>vector                                { return(MS_VECTOR); }
+<INITIAL>vector                                { return(MS_SYMBOL_VECTOR); }
 
 <OBJECT_STRING>[0-9]+                          {
                                                  yynumber = atof(yytext);

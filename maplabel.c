@@ -67,7 +67,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
     map->labelcache.markers[i].poly->numlines = 0;
     map->labelcache.markers[i].poly->line = NULL;
     
-    msGetMarkerSize(&(map->markerset), &(map->layers[layer].class[class]), &w, &h);
+    msGetMarkerSize(map, &(map->layers[layer].class[class]), &w, &h);
     rect.minx = point.x - MS_NINT(.5 * w);
     rect.miny = point.y - MS_NINT(.5 * h);
     rect.maxx = point.x + MS_NINT(.5 * w);
@@ -538,7 +538,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
     draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
     if((layerPtr->type == MS_ANNOTATION || layerPtr->type == MS_POINT) && (classPtr->color >= 0 || classPtr->outlinecolor > 0)) { /* there *is* a marker */
 
-      msGetMarkerSize(&(map->markerset), classPtr, &marker_width, &marker_height);
+      msGetMarkerSize(map, classPtr, &marker_width, &marker_height);
       marker_offset_x = MS_NINT(marker_width/2.0);
       marker_offset_y = MS_NINT(marker_height/2.0);
 
@@ -658,7 +658,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       continue; /* next label */
 
     if(draw_marker) /* need to draw a marker */
-      msDrawMarkerSymbol(&(map->markerset), img, &(cachePtr->point), classPtr);
+      msDrawMarkerSymbol(map, img, &(cachePtr->point), classPtr);
 
     draw_text(img, p, cachePtr->string, &label, &(map->fontset)); /* actually draw the label */
 

@@ -205,7 +205,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->markerset.symbol[s].img = msDrawScalebar(map);
   if(!map->markerset.symbol[s].img) return(-1); // something went wrong creating scalebar
 
-  map->markerset.symbol[s].type = MS_PIXMAP;
+  map->markerset.symbol[s].type = MS_SYMBOL_PIXMAP;
   map->markerset.symbol[s].name = strdup("scalebar");  
 
   if(map->scalebar.transparent)
@@ -256,7 +256,7 @@ int msEmbedScalebar(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].label.force = MS_TRUE;
 
   if(map->scalebar.postlabelcache) // add it directly to the image
-    msDrawMarkerSymbol(&map->markerset, img, &point, &(map->layers[l].class[0]));
+    msDrawMarkerSymbol(map, img, &point, &(map->layers[l].class[0]));
   else
     msAddLabel(map, l, 0, -1, -1, point, " ", -1);
 

@@ -105,5 +105,6 @@
 
 #define FORCE 1098
 #define TOLERANCEUNITS 1099
+#define CHARACTER 1100
 
 #endif /* MAPFILE_H */

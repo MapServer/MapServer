@@ -4,16 +4,23 @@
 #include "mapfile.h"
 #include "mapparser.h"
 
+#ifdef USE_TTF
+#include <gdcache.h>
+#include <gdttf.h>
+#include "freetype.h"
+#endif
+
 extern int yylex(); /* lexer globals */
 extern void yyrestart();
 extern double yynumber;
 extern char *yytext;
 extern int yylineno;
 extern FILE *yyin;
+extern int yyfiletype;
 
 static void initSymbol(symbolObj *s)
 {
-  s->type = MS_VECTOR;
+  s->type = MS_SYMBOL_VECTOR;
   s->transparent = MS_FALSE;
   s->transparentcolor = 0;
   s->numarcs = 1; // always at least 1 arc
@@ -25,12 +32,17 @@ static void initSymbol(symbolObj *s)
   s->numpoints=0;
   s->img = NULL;
   s->name = NULL;
+
+  s->antialias = -1;
+  s->font = NULL;
+  s->character = '\0';
 }
 
 static void freeSymbol(symbolObj *s) {
   if(!s) return;
   free(s->name);
   if(s->img) gdImageDestroy(s->img);
+  free(s->font);
 }
 
 static int loadSymbol(symbolObj *s)
@@ -43,17 +55,23 @@ static int loadSymbol(symbolObj *s)
 
   for(;;) {
     switch(yylex()) {
+    case(ANTIALIAS):
+      s->antialias = 1;
+      break;
+    case(CHARACTER):
+      if((s->character = getString()) == NULL) return(-1);
+      break;
     case(END): /* do some error checking */
 
-      if((s->type == MS_PIXMAP) && (s->img == NULL)) {
+      if((s->type == MS_SYMBOL_PIXMAP) && (s->img == NULL)) {
 	msSetError(MS_SYMERR, "Symbol of type PIXMAP has no image data.", "loadSymbol()"); 
 	return(-1);
       }
-      if(((s->type == MS_ELLIPSE) || (s->type == MS_VECTOR))  && (s->numpoints == 0)) {
+      if(((s->type == MS_SYMBOL_ELLIPSE) || (s->type == MS_SYMBOL_VECTOR))  && (s->numpoints == 0)) {
 	msSetError(MS_SYMERR, "Symbol of type VECTOR or ELLIPSE has no point data.", "loadSymbol()"); 
 	return(-1);
       }
-      if(s->type == MS_PIXMAP && s->transparent)
+      if(s->type == MS_SYMBOL_PIXMAP && s->transparent)
 	gdImageColorTransparent(s->img, s->transparentcolor);
 
       return(0);
@@ -65,6 +83,9 @@ static int loadSymbol(symbolObj *s)
     case(FILLED):
       s->filled = MS_TRUE;
       break;
+    case(FONT):
+      if((s->font = getString()) == NULL) return(-1);
+      break;  
     case(IMAGE):
       if(yylex() != MS_STRING) { /* get image location from next token */
 	msSetError(MS_TYPEERR, NULL, "loadSymbol()"); 
@@ -153,8 +174,13 @@ static int loadSymbol(symbolObj *s)
       if(getInteger(&(s->transparentcolor)) == -1) return(-1);
       break;
     case(TYPE):
-      if((s->type = getSymbol(5,MS_VECTOR,MS_ELLIPSE,MS_PIXMAP,MS_STYLED)) == -1)
+#ifdef USE_TTF
+      if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_STYLED,MS_SYMBOL_TRUETYPE)) == -1)
 	return(-1);	
+#else
+      if((s->type = getSymbol(5,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_STYLED)) == -1)
+	return(-1);
+#endif
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "loadSymbol()");
@@ -173,6 +199,7 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
   int n=1;
   char old_path[MS_PATH_LENGTH];
   char *symbol_path;
+  int status=1;
 
   if(!symbolset) {
     msSetError(MS_SYMERR, "Symbol structure unallocated.", "msLoadSymbolFile()");
@@ -201,6 +228,7 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
 
   yylineno = 0; /* reset line counter */
   yyrestart(yyin); /* flush the scanner - there's a better way but this works for now */
+  yyfiletype = MS_FILE_SYMBOL;
 
   /*
   ** Read the symbol file
@@ -208,30 +236,26 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
   for(;;) {
     switch(yylex()) {
     case(END):      
-      fclose(yyin);
       symbolset->numsymbols = n;
-      chdir(old_path);
-      return(0);
+      status = 0;
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "msLoadSymbolFile()");      
-      fclose(yyin);
-      chdir(old_path);
-      return(-1);
+      status = -1;
       break;
     case(LINESET):
       symbolset->type = MS_LINESET;
-      symbolset->symbol[0].type = MS_STYLED; /* a simple line */
+      symbolset->symbol[0].type = MS_SYMBOL_STYLED; /* a simple line */
       break;
     case(MARKERSET):
       symbolset->type = MS_MARKERSET;
-      symbolset->symbol[0].type = MS_VECTOR; /* a simple point */
+      symbolset->symbol[0].type = MS_SYMBOL_VECTOR; /* a simple point */
       symbolset->symbol[0].sizex = 1.0;
       symbolset->symbol[0].sizey = 1.0;
       break;
     case(SHADESET):
       symbolset->type = MS_SHADESET;
-      symbolset->symbol[0].type = MS_VECTOR; /* a solid fill */
+      symbolset->symbol[0].type = MS_SYMBOL_VECTOR; /* a solid fill */
       symbolset->symbol[0].sizex = 1.0;
       symbolset->symbol[0].sizey = 1.0;      
       break;
@@ -239,30 +263,54 @@ int msLoadSymbolFile(symbolSetObj *symbolset)
       if(symbolset->type == -1) {
 	msSetError(MS_MISCERR, NULL, "msLoadSymbolFile()");
 	sprintf(ms_error.message, "Symbol type not set for %s.", symbolset->filename);
-	fclose(yyin);
-	chdir(old_path);
-	return(-1);
+	status = -1;
       }
-      if((loadSymbol(&(symbolset->symbol[n])) == -1)) {
-	chdir(old_path);
-	return(-1);      
-      }
+      if((loadSymbol(&(symbolset->symbol[n])) == -1)) 
+	status = -1;
       n++;
       break;
     default:
       msSetError(MS_IDENTERR, NULL, "msLoadSymbolFile()");
       sprintf(ms_error.message, "(%s):(%d)", yytext, yylineno);
-      fclose(yyin);
-      chdir(old_path);
-      return(-1);
+      status = -1;
     } /* end switch */
+
+    if(status != 1) break;
   } /* end for */
+
+  yyfiletype = MS_FILE_DEFAULT;
+  fclose(yyin);
+  chdir(old_path);
+  return(status);
+}
+
+static int getCharacterSize(char *character, int size, char *font, rectObj *rect) {
+  int bbox[8];
+  char *error=NULL;
+
+#ifdef USE_TTF
+  error = imageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, character, '\n');
+  if(error) {
+    msSetError(MS_TTFERR, error, "getCharacterSize()");
+    return(-1);
+  }    
+  
+  rect->minx = bbox[0];
+  rect->miny = bbox[5];
+  rect->maxx = bbox[2];
+  rect->maxy = bbox[1];
+
+  return(0);
+#else
+  msSetError(MS_TTFERR, "TrueType font support is not available.", "getCharacterSize()");
+  return(-1);
+#endif
 }
 
 /* ------------------------------------------------------------------------------- */
 /*       Draw a shade symbol of the specified size and color                       */
 /* ------------------------------------------------------------------------------- */
-void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, classObj *class)
+void msDrawShadeSymbol(mapObj *map, gdImagePtr img, shapeObj *p, classObj *class)
 {
   int i;
   gdPoint oldpnt,newpnt;
@@ -274,6 +322,14 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, clas
   int oc,bc,fc;
   int s;
   double sz,scale=1.0;
+  
+  int bbox[8];
+  rectObj rect;
+  char *font=NULL;
+  
+  symbolSetObj *shadeset;
+
+  shadeset = &(map->shadeset);
 
   if(class->symbol > shadeset->numsymbols) /* no such symbol, 0 is OK */
     return;
@@ -307,21 +363,49 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, clas
     return;
   }
 
-  switch(shadeset->symbol[s].type) {  
-  case(MS_PIXMAP):
+  switch(shadeset->symbol[s].type) {
+  case(MS_SYMBOL_TRUETYPE):    
     
-    /*
-    ** Fill the polygon in the main image
-    */
+#ifdef USE_TTF
+    font = msLookupHashTable(map->fontset.fonts, shadeset->symbol[s].font);
+    if(!font) return;
+
+    if(getCharacterSize(shadeset->symbol[s].character, sz, font, &rect) == -1) return;
+    x = rect.maxx - rect.minx;
+    y = rect.maxy - rect.miny;
+
+    tile = gdImageCreate(x, y);
+    if(bc >= 0)
+      tile_bg = gdImageColorAllocate(tile, gdImageRed(img, bc), gdImageGreen(img, bc), gdImageBlue(img, bc));
+    else {
+      tile_bg = gdImageColorAllocate(tile, gdImageRed(img, 0), gdImageGreen(img, 0), gdImageBlue(img, 0));
+      gdImageColorTransparent(tile,0);
+    }    
+    tile_fg = gdImageColorAllocate(tile, gdImageRed(img, fc), gdImageGreen(img, fc), gdImageBlue(img, fc));
+
+    x = -rect.minx;
+    y = -rect.miny;
+    imageStringTTF(tile, bbox, shadeset->symbol[s].antialias*tile_fg, font, sz, 0, x, y, shadeset->symbol[s].character, '\n');
+    
+    gdImageSetTile(img, tile);
+    msImageFilledPolygon(img,p,gdTiled);
+    if(oc>-1)
+      msImagePolyline(img, p, oc);
+    gdImageDestroy(tile);
+#endif
+
+    break;
+  case(MS_SYMBOL_PIXMAP):
+    
     gdImageSetTile(img, shadeset->symbol[s].img);
     msImageFilledPolygon(img, p, gdTiled);
     if(oc>-1)
       msImagePolyline(img, p, oc);
 
     break;
-  case(MS_ELLIPSE):    
+  case(MS_SYMBOL_ELLIPSE):    
    
-    scale = sz/shadeset->symbol[s].sizey;
+    scale = sz/shadeset->symbol[s].sizey; // sz ~ height in pixels
     x = MS_NINT(shadeset->symbol[s].sizex*scale)+1;
     y = MS_NINT(shadeset->symbol[s].sizey*scale)+1;
 
@@ -332,9 +416,6 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, clas
       return;
     }
 
-    /*
-    ** create tile image
-    */
     tile = gdImageCreate(x, y);
     if(bc >= 0)
       tile_bg = gdImageColorAllocate(tile, gdImageRed(img, bc), gdImageGreen(img, bc), gdImageBlue(img, bc));
@@ -364,12 +445,12 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, clas
     gdImageDestroy(tile);
 
     break;
-  case(MS_VECTOR):
+  case(MS_SYMBOL_VECTOR):
 
     if(fc < 0)
       return;
 
-    scale = sz/shadeset->symbol[s].sizey;
+    scale = sz/shadeset->symbol[s].sizey; // sz ~ height in pixels
     x = MS_NINT(shadeset->symbol[s].sizex*scale)+1;    
     y = MS_NINT(shadeset->symbol[s].sizey*scale)+1;
 
@@ -447,8 +528,14 @@ void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, clas
 ** Returns the size, in pixels, of a marker symbol defined for a specific class. Use for annotation
 ** layer collision avoidance.
 */
-void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *height)
-{ 
+void msGetMarkerSize(mapObj *map, classObj *class, int *width, int *height)
+{
+  rectObj rect;
+  char *font=NULL;
+
+  symbolSetObj *markerset;
+  
+  markerset = &(map->markerset);
 
   if(class->symbol > markerset->numsymbols) { /* no such symbol, 0 is OK */
     *width = 0;
@@ -463,7 +550,23 @@ void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *
   }
 
   switch(markerset->symbol[class->symbol].type) {  
-  case(MS_PIXMAP):
+  case(MS_SYMBOL_TRUETYPE):
+
+#ifdef USE_TTF
+    font = msLookupHashTable(map->fontset.fonts, markerset->symbol[class->symbol].font);
+    if(!font) return;
+
+    if(getCharacterSize(markerset->symbol[class->symbol].character, class->size, font, &rect) == -1) return;
+
+    *width = rect.maxx - rect.minx;
+    *height = rect.maxy - rect.miny;
+#else
+    *width = 0;
+    *height = 0;
+#endif
+    break;
+
+  case(MS_SYMBOL_PIXMAP):
     *width = markerset->symbol[class->symbol].img->sx;
     *height = markerset->symbol[class->symbol].img->sy;
     break;
@@ -484,7 +587,7 @@ void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *
 /* ------------------------------------------------------------------------------- */
 /*       Draw a single marker symbol of the specified size and color               */
 /* ------------------------------------------------------------------------------- */
-void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, classObj *class)
+void msDrawMarkerSymbol(mapObj *map, gdImagePtr img, pointObj *p, classObj *class)
 {
   int offset_x, offset_y, x, y;
   int j;
@@ -497,6 +600,14 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, cl
   int oc,fc;
   int s;
   double sz,scale=1.0;
+
+  int bbox[8];
+  rectObj rect;
+  char *font=NULL;
+
+  symbolSetObj *markerset;
+  
+  markerset = &(map->markerset);
 
   if(class->symbol > markerset->numsymbols) /* no such symbol, 0 is OK */
     return;
@@ -518,12 +629,27 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, cl
   }
 
   switch(markerset->symbol[s].type) {  
-  case(MS_PIXMAP):
+  case(MS_SYMBOL_TRUETYPE):    
+
+#ifdef USE_TTF
+    font = msLookupHashTable(map->fontset.fonts, markerset->symbol[s].font);
+    if(!font) return;
+
+    if(getCharacterSize(markerset->symbol[s].character, sz, font, &rect) == -1) return;
+
+    x = p->x - (rect.maxx - rect.minx)/2 - rect.minx;
+    y = p->y - rect.maxy + (rect.maxy - rect.miny)/2;  
+
+    imageStringTTF(img, bbox, markerset->symbol[s].antialias*fc, font, sz, 0, x, y, markerset->symbol[s].character, '\n');
+#endif
+
+    break;
+  case(MS_SYMBOL_PIXMAP):
     offset_x = MS_NINT(p->x - .5*markerset->symbol[s].img->sx);
     offset_y = MS_NINT(p->y - .5*markerset->symbol[s].img->sy);
     gdImageCopy(img, markerset->symbol[s].img, offset_x, offset_y, 0, 0, markerset->symbol[s].img->sx, markerset->symbol[s].img->sy);
     break;
-  case(MS_ELLIPSE):
+  case(MS_SYMBOL_ELLIPSE):
  
     scale = sz/markerset->symbol[s].sizey;
     x = MS_NINT(markerset->symbol[s].sizex*scale)+1;
@@ -562,7 +688,7 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, cl
     gdImageDestroy(tmp);
 
     break;
-  case(MS_VECTOR):
+  case(MS_SYMBOL_VECTOR):
 
     scale = sz/markerset->symbol[s].sizey;
 
@@ -614,7 +740,7 @@ void msDrawMarkerSymbol(symbolSetObj *markerset, gdImagePtr img, pointObj *p, cl
 /* ------------------------------------------------------------------------------- */
 /*       Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------------- */
-void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classObj *class)
+void msDrawLineSymbol(mapObj *map, gdImagePtr img, shapeObj *p, classObj *class)
 {
   int i, j;
   symbolObj *sym;
@@ -625,6 +751,10 @@ void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classO
   gdPoint points[MS_MAXVECTORPOINTS];
   int fc, bc, size;
   double scale=1.0;
+  
+  symbolSetObj *lineset;
+  
+  lineset = &(map->lineset);
 
   if(p->numlines <= 0)
     return;
@@ -650,10 +780,10 @@ void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classO
   sym = &(lineset->symbol[class->symbol]);
 
   switch(sym->type) {
-  case(MS_STYLED):
+  case(MS_SYMBOL_STYLED):
     if(bc == -1) bc = gdTransparent;
     break;
-  case(MS_ELLIPSE):
+  case(MS_SYMBOL_ELLIPSE):
      
     scale = (size)/sym->sizey;
     x = MS_NINT(sym->sizex*scale);    
@@ -678,11 +808,11 @@ void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classO
     gdImageSetBrush(img, brush);
     fc = 1; bc = 0;
     break;
-  case(MS_PIXMAP):
+  case(MS_SYMBOL_PIXMAP):
     gdImageSetBrush(img, sym->img);
     fc = 1; bc = 0;
     break;
-  case(MS_VECTOR):
+  case(MS_SYMBOL_VECTOR):
     scale = size/sym->sizey;
     x = MS_NINT(sym->sizex*scale);    
     y = MS_NINT(sym->sizey*scale);
