@@ -213,20 +213,59 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 {
   int i;
   char *value=NULL;
+  const char *dtd_url = NULL;
+  char *script_url=NULL;
 
   layerObj *lp=NULL;
+
+  // Decide which version we're going to return.  Either 1.0.0 or 1.0.7
+  if (wmtver && strcasecmp(wmtver, "1.0.7") < 0) {
+    wmtver = "1.0.0";
+    dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_0_0.dtd";
+  }
+  else {
+    wmtver = "1.0.7";
+    dtd_url = "http://www.digitalearth.gov/wmt/xml/capabilities_1_0_7.dtd";
+  }
+
+  // We need this script's URL, including hostname.
+  // Default to use the value of the "onlineresource" metadata, and if not
+  // set then build it: "http://$(SERVER_NAME):$(SERVER_PORT)$(SCRIPT_NAME)"
+  if ((value = msLookupHashTable(map->web.metadata, "onlineresource"))) {
+    script_url = strdup(value);
+  }
+  else {
+    const char *hostname, *port, *script;
+    hostname = getenv("SERVER_NAME");
+    port = getenv("SERVER_PORT");
+    script = getenv("SCRIPT_NAME");
+
+    if (hostname && port && script) {
+      script_url = (char*)malloc(sizeof(char)*(strlen(hostname)+strlen(port)+strlen(script)+10));
+      if (script_url) sprintf(script_url, "http://%s:%s%s", hostname, port, script);
+    }
+    else {
+      msSetError(MS_CGIERR, "Impossible to establish server URL.  Please set \"onlineresource\" metadata.", "msWMSCapabilities()");
+      return msWMSException(map, wmtver);
+    }
+  }
+  if (script_url == NULL) {
+      msSetError(MS_MEMERR, NULL, "msWMSCapabilities");
+      return msWMSException(map, wmtver);
+  }
+
 
   printf("Content-type: text/xml%c%c",10,10);
 
   printf("<?xml version='1.0' encoding=\"UTF-8\" standalone=\"no\" ?>\n");
-  printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"http://www.digitalearth.gov/wmt/xml/capabilities_1_0_7.dtd\"\n");
+  printf("<!DOCTYPE WMT_MS_Capabilities SYSTEM \"%s\"\n", dtd_url);
   printf(" [\n");
 
   // some mapserver specific declarations will go here
 
   printf(" ]>  <!-- end of DOCTYPE declaration -->\n\n");
 
-  printf("<WMT_MS_Capabilities version=\"1.0.7\" updateSequence=\"0\">\n");
+  printf("<WMT_MS_Capabilities version=\"%s\" updateSequence=\"0\">\n",wmtver);
 
   // WMS definition
   printf("<Service> <!-- a service IS a MapServer mapfile -->\n");
@@ -235,7 +274,10 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   // the majority of this section is dependent on appropriately named metadata in the WEB object
   if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "title"))) printf("  <Title>%s</Title>\n", value);
   if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "abstract"))) printf("  <Abstract>%s</Abstract>\n", value);
-  if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "onlineresource"))) printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", value);
+  if (strcasecmp(wmtver, "1.0.0") == 0)
+    printf("  <OnlineResource>%s</OnlineResource>\n", script_url);
+  else
+    printf("  <OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/>\n", script_url);
   if(map->web.metadata && (value = msLookupHashTable(map->web.metadata, "keywordlist"))) {
     char **keywords;
     int numkeywords;
@@ -275,8 +317,16 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf("      </Format>\n");
   printf("      <DCPType>\n");
   printf("        <HTTP>\n");
-  printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", getenv("SCRIPT_NAME"));
-  printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", getenv("SCRIPT_NAME"));
+
+  if (strcasecmp(wmtver, "1.0.0") == 0) {
+    printf("          <Get onlineResource=\"%s\" />\n", script_url);
+    printf("          <Post onlineResource=\"%s\" />\n", script_url);
+  }
+  else {
+    printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", script_url);
+    printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", script_url);
+  }
+
   printf("        </HTTP>\n");
   printf("      </DCPType>\n");
   printf("    </Map>\n");
@@ -285,31 +335,44 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   printf("      <Format><WMS_XML /></Format>\n");
   printf("      <DCPType>\n");
   printf("        <HTTP>\n");
-  printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", getenv("SCRIPT_NAME"));
-  printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", getenv("SCRIPT_NAME"));
+
+  if (strcasecmp(wmtver, "1.0.0") == 0) {
+    printf("          <Get onlineResource=\"%s\" />\n", script_url);
+    printf("          <Post onlineResource=\"%s\" />\n", script_url);
+  }
+  else {
+    printf("          <Get><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Get>\n", script_url);
+    printf("          <Post><OnlineResource xmlns:xlink=\"http://www.w3.org/1999/xlink\" xlink:href=\"%s\"/></Post>\n", script_url);
+  }
+
   printf("        </HTTP>\n");
   printf("      </DCPType>\n");
   printf("    </Capabilities>\n");
 
   printf("  </Request>\n");
 
-  printf("    <Exception>\n");
-  printf("      <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
-  printf("    </Exception>\n");
+  printf("  <Exception>\n");
+  printf("    <Format><BLANK /><INIMAGE /><WMS_XML /></Format>\n");
+  printf("  </Exception>\n");
 
   // need to add query (featureInfo) support
 
-  printf("    <VendorSpecificCapabilities />\n"); // nothing yet
+  printf("  <VendorSpecificCapabilities />\n"); // nothing yet
+
+  // Top-level layer with map extents and SRS, encloses all map layers
+  printf("  <Layer>\n"); 
+  if((value = msLookupHashTable(map->web.metadata, "title"))) printf("    <Title>%s</Title>\n", value);
+  if((value = msLookupHashTable(map->web.metadata, "wms_all_proj"))) printf("    <SRS>%s</SRS>\n", value);
+
+// __TODO__ This version assumes that map extents are in lat/lon
+  printf("    <LatLonBoundingBox minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy); // hint look a Frank's changes to mapserv.c
+  if((value = msLookupHashTable(map->web.metadata, "wms_map_proj"))) printf("    <BoundingBox SRS=\"%s\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", value, map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy);
 
   for(i=0; i<map->numlayers; i++) {
     lp = &(map->layers[i]);
 
     printf("    <Layer queryable=\"0\">\n"); // no featureInfo support yet
     printf("      <Name>%s</Name>\n", lp->name);
-
-    printf("      <SRS>coming...</SRS>\n");
-    printf("      <LatLonBoundingBox>coming...</LatLonBoundingBox>\n"); // hint look a Frank's changes to mapserv.c
-    printf("      <BoundingBox>coming...</BoundingBox>\n"); // hint add a layer EXTENT field, if not there then open and extract an extent
 
     // the majority of this section is dependent on appropriately named metadata in the LAYER object
     if(lp->metadata && (value = msLookupHashTable(lp->metadata, "title"))) printf("      <Title>%s</Title>\n", value);
@@ -326,12 +389,24 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
 	msFreeCharArray(keywords, numkeywords);
       }    
     }
+
+#ifdef __TODO__  // For now all layers inherit the SRS and MBR of the map
+
+    printf("      <SRS>EPSG:4326</SRS>\n");  // __TODO__ for now, any layer can be served in lat/lon
+    printf("      <LatLonBoundingBox minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy); // hint look a Frank's changes to mapserv.c
+    printf("      <BoundingBox SRS=\"EPSG:4326\" minx=\"%g\" miny=\"%g\" maxx=\"%g\" maxy=\"%g\" />\n", map->extent.minx, map->extent.miny, map->extent.maxx, map->extent.maxy); // hint add a layer EXTENT field, if not there then open and extract an extent
+
+#endif
     
     printf("    </Layer>\n");
   }
 
+  printf("  </Layer>\n");
+
   printf("</Capability>\n");
   printf("</WMT_MS_Capabilities>\n");
+
+  free(script_url);
 
   return(MS_SUCCESS);
 }
