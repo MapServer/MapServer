@@ -20,6 +20,8 @@ extern char *msyystring;
 extern int loadSymbol(symbolObj *s, char *symbolpath); // in mapsymbol.c
 extern void writeSymbol(symbolObj *s, FILE *stream); // in mapsymbol.c
 
+static void msCloseConnections(mapObj *map);
+
 /*
 ** Symbol to string static arrays needed for writing map files.
 ** Must be kept in sync with enumerations and defines found in map.h.
@@ -3959,7 +3961,7 @@ layerObj *msCheckConnection(layerObj * layer) {
   return(NULL);
 }
 
-void msCloseConnections(mapObj *map) {
+static void msCloseConnections(mapObj *map) {
   int i;
   layerObj *l;
 
