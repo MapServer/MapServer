@@ -55,7 +55,7 @@ char *msyystring=NULL;
          break;
        }
 
-<INITIAL,VALUE_STRING,EXPRESSION_STRING>[ \t]+             ;
+<INITIAL,VALUE_STRING,EXPRESSION_STRING>[ \t\r]+             ;
 
 <INITIAL>#.*                                               ;
 
@@ -281,7 +281,7 @@ char *msyystring=NULL;
 
 <INITIAL><<EOF>>                               { return(EOF); }
 
-<EXPRESSION_STRING,VALUE_STRING,OBJECT_STRING>[\n|\0]          { return(0); }
+<EXPRESSION_STRING,VALUE_STRING,OBJECT_STRING>[\r|\n|\0]          { return(0); }
 
 <INITIAL,OBJECT_STRING,VALUE_STRING>.          { return(0); }
 <EXPRESSION_STRING>.                           { return(msyytext[0]); }

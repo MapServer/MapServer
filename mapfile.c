@@ -805,15 +805,15 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
   }  
 
   if(label->backgroundcolor > -1) {
-    fprintf(stream, "  %sBACKGROUNDCOLOR %d %d %d\n", tab, map->palette.colors[label->backgroundcolor].red, map->palette.colors[label->backgroundcolor].green, map->palette.colors[label->backgroundcolor].blue);
+    fprintf(stream, "  %sBACKGROUNDCOLOR %d %d %d\n", tab, map->palette.colors[label->backgroundcolor-1].red, map->palette.colors[label->backgroundcolor-1].green, map->palette.colors[label->backgroundcolor-1].blue);
     if(label->backgroundshadowcolor > -1) {
-      fprintf(stream, "  %sBACKGROUNDSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->backgroundshadowcolor].red, map->palette.colors[label->backgroundshadowcolor].green, map->palette.colors[label->backgroundshadowcolor].blue);
+      fprintf(stream, "  %sBACKGROUNDSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->backgroundshadowcolor-1].red, map->palette.colors[label->backgroundshadowcolor-1].green, map->palette.colors[label->backgroundshadowcolor-1].blue);
       fprintf(stream, "  %sBACKGROUNDSHADOWSIZE %d %d\n", tab, label->backgroundshadowsizex, label->backgroundshadowsizey);
     }
   }
 
   fprintf(stream, "  %sBUFFER %d\n", tab, label->buffer);
-  if(label->color > -1) fprintf(stream, "  %sCOLOR %d %d %d\n", tab, map->palette.colors[label->color].red, map->palette.colors[label->color].green, map->palette.colors[label->color].blue);
+  if(label->color > -1) fprintf(stream, "  %sCOLOR %d %d %d\n", tab, map->palette.colors[label->color-1].red, map->palette.colors[label->color-1].green, map->palette.colors[label->color-1].blue);
   fprintf(stream, "  %sFORCE %s\n", tab, msTrueFalse[label->force]);
   fprintf(stream, "  %sMINDISTANCE %d\n", tab, label->mindistance);
   if(label->autominfeaturesize)
@@ -821,14 +821,14 @@ static void writeLabel(mapObj *map, labelObj *label, FILE *stream, char *tab)
   else
     fprintf(stream, "  %sMINFEATURESIZE %d\n", tab, label->minfeaturesize);
   fprintf(stream, "  %sOFFSET %d %d\n", tab, label->offsetx, label->offsety);
-  if(label->outlinecolor > -1) fprintf(stream, "  %sOUTLINECOLOR %d %d %d\n", tab, map->palette.colors[label->outlinecolor].red, map->palette.colors[label->outlinecolor].green, map->palette.colors[label->outlinecolor].blue);
+  if(label->outlinecolor > -1) fprintf(stream, "  %sOUTLINECOLOR %d %d %d\n", tab, map->palette.colors[label->outlinecolor-1].red, map->palette.colors[label->outlinecolor-1].green, map->palette.colors[label->outlinecolor-1].blue);
   fprintf(stream, "  %sPARTIALS %s\n", tab, msTrueFalse[label->partials]);
   fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
   if(label->shadowcolor > -1) {
-    fprintf(stream, "  %sSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->shadowcolor].red, map->palette.colors[label->shadowcolor].green, map->palette.colors[label->shadowcolor].blue);
+    fprintf(stream, "  %sSHADOWCOLOR %d %d %d\n", tab, map->palette.colors[label->shadowcolor-1].red, map->palette.colors[label->shadowcolor-1].green, map->palette.colors[label->shadowcolor-1].blue);
     fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
   }
-  fprintf(stream, "  %sWRAP %c\n", tab, label->wrap);
+  if(label->wrap != '\n') fprintf(stream, "  %sWRAP %c\n", tab, label->wrap);
   fprintf(stream, "%sEND\n", tab);  
 }
 
@@ -1094,8 +1094,8 @@ static void loadClassString(mapObj *map, classObj *class, char *value, int type)
 static void writeClass(mapObj *map, classObj *class, FILE *stream)
 {
   fprintf(stream, "    CLASS\n");
-  if(class->backgroundcolor > -1) fprintf(stream, "      BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[class->backgroundcolor].red, map->palette.colors[class->backgroundcolor].green, map->palette.colors[class->backgroundcolor].blue);
-  if(class->color > -1) fprintf(stream, "      COLOR %d %d %d\n", map->palette.colors[class->color].red, map->palette.colors[class->color].green, map->palette.colors[class->color].blue);
+  if(class->backgroundcolor > -1) fprintf(stream, "      BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[class->backgroundcolor-1].red, map->palette.colors[class->backgroundcolor-1].green, map->palette.colors[class->backgroundcolor-1].blue);
+  if(class->color > -1) fprintf(stream, "      COLOR %d %d %d\n", map->palette.colors[class->color-1].red, map->palette.colors[class->color-1].green, map->palette.colors[class->color-1].blue);
   if(class->expression.string) {
     fprintf(stream, "      EXPRESSION ");
     writeExpression(&(class->expression), stream);
@@ -1104,7 +1104,7 @@ static void writeClass(mapObj *map, classObj *class, FILE *stream)
   writeLabel(map, &(class->label), stream, "      ");
   if(class->maxsize > -1) fprintf(stream, "      MAXSIZE %d\n", class->maxsize);
   if(class->minsize > -1) fprintf(stream, "      MINSIZE %d\n", class->minsize);
-  if(class->outlinecolor > -1) fprintf(stream, "      OUTLINECOLOR %d %d %d\n", map->palette.colors[class->outlinecolor].red, map->palette.colors[class->outlinecolor].green, map->palette.colors[class->outlinecolor].blue);
+  if(class->outlinecolor > -1) fprintf(stream, "      OUTLINECOLOR %d %d %d\n", map->palette.colors[class->outlinecolor-1].red, map->palette.colors[class->outlinecolor-1].green, map->palette.colors[class->outlinecolor-1].blue);
   fprintf(stream, "      SIZE %d\n", class->size);
   if(class->symbolname)
     fprintf(stream, "      SYMBOL \"%s\"\n", class->symbolname);
@@ -1804,8 +1804,8 @@ static void writeLayer(mapObj *map, layerObj *layer, FILE *stream)
   fprintf(stream, "    TOLERANCE %g\n", layer->tolerance);
   fprintf(stream, "    TOLERANCEUNITS %s\n", msUnits[layer->toleranceunits]);
   if(!layer->transform) fprintf(stream, "    TRANSFORM FALSE\n");
-  fprintf(stream, "    TYPES %s\n", msLayerTypes[layer->type]);
-  fprintf(stream, "  END\n");
+  fprintf(stream, "    TYPE %s\n", msLayerTypes[layer->type]);
+  fprintf(stream, "  END\n\n");
 }
 
 /*
@@ -1935,7 +1935,7 @@ static void writeReferenceMap(referenceMapObj *ref, FILE *stream)
   fprintf(stream, "    OUTLINECOLOR %d %d %d\n", ref->outlinecolor.red, ref->outlinecolor.green, ref->outlinecolor.blue);
   fprintf(stream, "    SIZE %d %d\n", ref->width, ref->height);
   fprintf(stream, "    STATUS %s\n", msStatus[ref->status]);
-  fprintf(stream, "  END\n");
+  fprintf(stream, "  END\n\n");
 }
 
 /*
@@ -2083,12 +2083,12 @@ static void writeLegend(mapObj *map, legendObj *legend, FILE *stream)
   fprintf(stream, "    KEYSIZE %d %d\n", legend->keysizex, legend->keysizey);
   fprintf(stream, "    KEYSPACING %d %d\n", legend->keyspacingx, legend->keyspacingy);
   writeLabel(map, &(legend->label), stream, "    ");
-  if(legend->outlinecolor > -1) fprintf(stream, "    OUTLINECOLOR %d %d %d\n", map->palette.colors[legend->outlinecolor].red, map->palette.colors[legend->outlinecolor].green, map->palette.colors[legend->outlinecolor].blue);
+  if(legend->outlinecolor > -1) fprintf(stream, "    OUTLINECOLOR %d %d %d\n", map->palette.colors[legend->outlinecolor-1].red, map->palette.colors[legend->outlinecolor-1].green, map->palette.colors[legend->outlinecolor-1].blue);
   fprintf(stream, "    POSITION %s\n", msLabelPositions[legend->position]);
   if(legend->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    STATUS %s\n", msStatus[legend->status]);
   fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[legend->transparent]);
-  fprintf(stream, "  END\n");
+  fprintf(stream, "  END\n\n");
 }
 
 /*
@@ -2105,8 +2105,8 @@ void initScalebar(scalebarObj *scalebar)
   scalebar->intervals = 4;
   initLabel(&scalebar->label);
   scalebar->label.position = MS_XY; /*  override */
-  scalebar->backgroundcolor = 0;
-  scalebar->color = 1;
+  scalebar->backgroundcolor = -1;
+  scalebar->color = -1;
   scalebar->outlinecolor = -1; /* no outline */
   scalebar->units = MS_MILES;
   scalebar->status = MS_OFF;
@@ -2279,14 +2279,14 @@ static void loadScalebarString(mapObj *map, scalebarObj *scalebar, char *value)
 
 static void writeScalebar(mapObj *map, scalebarObj *scalebar, FILE *stream)
 {
-  fprintf(stream, "  LEGEND\n");
-  if(scalebar->backgroundcolor > -1) fprintf(stream, "    BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[scalebar->backgroundcolor].red, map->palette.colors[scalebar->backgroundcolor].green, map->palette.colors[scalebar->backgroundcolor].blue);
-  if(scalebar->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[scalebar->color].red, map->palette.colors[scalebar->color].green, map->palette.colors[scalebar->color].blue);
+  fprintf(stream, "  SCALEBAR\n");
+  if(scalebar->backgroundcolor > -1) fprintf(stream, "    BACKGROUNDCOLOR %d %d %d\n", map->palette.colors[scalebar->backgroundcolor-1].red, map->palette.colors[scalebar->backgroundcolor-1].green, map->palette.colors[scalebar->backgroundcolor-1].blue);
+  if(scalebar->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[scalebar->color-1].red, map->palette.colors[scalebar->color-1].green, map->palette.colors[scalebar->color-1].blue);
   fprintf(stream, "    IMAGECOLOR %d %d %d\n", scalebar->imagecolor.red, scalebar->imagecolor.green, scalebar->imagecolor.blue);
   fprintf(stream, "    INTERLACE %s\n", msTrueFalse[scalebar->interlace]);
   fprintf(stream, "    INTERVALS %d\n", scalebar->intervals);
   writeLabel(map, &(scalebar->label), stream, "    ");
-  if(scalebar->outlinecolor > -1) fprintf(stream, "    OUTLINECOLOR %d %d %d\n", map->palette.colors[scalebar->outlinecolor].red, map->palette.colors[scalebar->outlinecolor].green, map->palette.colors[scalebar->outlinecolor].blue);
+  if(scalebar->outlinecolor > -1) fprintf(stream, "    OUTLINECOLOR %d %d %d\n", map->palette.colors[scalebar->outlinecolor-1].red, map->palette.colors[scalebar->outlinecolor-1].green, map->palette.colors[scalebar->outlinecolor-1].blue);
   fprintf(stream, "    POSITION %s\n", msLabelPositions[scalebar->position]);
   if(scalebar->postlabelcache) fprintf(stream, "    POSTLABELCACHE TRUE\n");
   fprintf(stream, "    SIZE %d %d\n", scalebar->width, scalebar->height);
@@ -2294,7 +2294,7 @@ static void writeScalebar(mapObj *map, scalebarObj *scalebar, FILE *stream)
   fprintf(stream, "    STYLE %d\n", scalebar->style);
   fprintf(stream, "    TRANSPARENT %s\n", msTrueFalse[scalebar->transparent]);
   fprintf(stream, "    UNITS %s\n", msUnits[scalebar->units]);
-  fprintf(stream, "  END\n");
+  fprintf(stream, "  END\n\n");
 }
 
 /*
@@ -2344,11 +2344,11 @@ int loadQueryMap(queryMapObj *querymap, mapObj *map)
 static void writeQueryMap(mapObj *map, queryMapObj *querymap, FILE *stream)
 {
   fprintf(stream, "  QUERYMAP\n");
-  if(querymap->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[querymap->color].red, map->palette.colors[querymap->color].green, map->palette.colors[querymap->color].blue);
+  if(querymap->color > -1) fprintf(stream, "    COLOR %d %d %d\n", map->palette.colors[querymap->color-1].red, map->palette.colors[querymap->color-1].green, map->palette.colors[querymap->color-1].blue);
   fprintf(stream, "    SIZE %d %d\n", querymap->width, querymap->height);
   fprintf(stream, "    STATUS %s\n", msStatus[querymap->status]);
   fprintf(stream, "    STYLE %s\n", msQueryMapStyles[querymap->style]);  
-  fprintf(stream, "  END\n");
+  fprintf(stream, "  END\n\n");
 }
 
 /*
@@ -2397,7 +2397,7 @@ static void writeWeb(webObj *web, FILE *stream)
   if(web->minscale > -1) fprintf(stream, "    MINSCALE %g", web->minscale);
   if(web->mintemplate) fprintf(stream, "    MINTEMPLATE \"%s\"\n", web->mintemplate);
   if(web->template) fprintf(stream, "    TEMPLATE \"%s\"\n", web->template);
-  fprintf(stream, "  END\n");
+  fprintf(stream, "  END\n\n");
 }
 
 int loadWeb(webObj *web)
@@ -2665,23 +2665,27 @@ int msSaveMap(mapObj *map, char *filename)
   if(map->fontset.filename) fprintf(stream, "  FONTSET \"%s\"\n", map->fontset.filename);
   fprintf(stream, "  IMAGECOLOR %d %d %d\n", map->imagecolor.red, map->imagecolor.green, map->imagecolor.blue);
   fprintf(stream, "  INTERLACE %s\n", msTrueFalse[map->interlace]);
-  for(i=0; i<map->numlayers; i++) writeLayer(map, &(map->layers[i]), stream);
-  writeLegend(map, &(map->legend), stream);
-  if(map->lineset.filename) fprintf(stream, "  LINESET \"%s\"\n", map->lineset.filename);
-  if(map->markerset.filename) fprintf(stream, "  MARKERSET \"%s\"\n", map->markerset.filename);
-  fprintf(stream, "  NAME \"%s\"\n", map->name);
-  writeProjection(&(map->projection), stream, "  ");
-  writeQueryMap(map, &(map->querymap), stream);
-  writeReferenceMap(&(map->reference), stream);
-  writeScalebar(map, &(map->scalebar), stream);
   if(map->shadeset.filename) fprintf(stream, "  SHADESET \"%s\"\n", map->shadeset.filename);
   if(map->shapepath) fprintf(stream, "  SHAPEPATH \"%s\"\n", map->shapepath);
-  fprintf(stream, "    SIZE %d %d\n", map->width, map->height);
-  fprintf(stream, "    STATUS %s\n", msStatus[map->status]);
+  fprintf(stream, "  SIZE %d %d\n", map->width, map->height);
+  fprintf(stream, "  STATUS %s\n", msStatus[map->status]);
   if(map->tile) fprintf(stream, "  TILE \"%s\"\n", map->tile);
   fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
+  if(map->lineset.filename) fprintf(stream, "  LINESET \"%s\"\n", map->lineset.filename);
+  if(map->markerset.filename) fprintf(stream, "  MARKERSET \"%s\"\n", map->markerset.filename);
+  fprintf(stream, "  NAME \"%s\"\n\n", map->name);
+
+  writeProjection(&(map->projection), stream, "  ");
+  
+  writeLegend(map, &(map->legend), stream);
+  writeQueryMap(map, &(map->querymap), stream);
+  writeReferenceMap(&(map->reference), stream);
+  writeScalebar(map, &(map->scalebar), stream);
   writeWeb(&(map->web), stream);
+
+  for(i=0; i<map->numlayers; i++) writeLayer(map, &(map->layers[i]), stream);
+
   fprintf(stream, "END\n");
 
   return(0);

@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 
       switch(symbolSet.type) {
       case(MS_MARKERSET):
-	class.size = RATIO*CELLSIZE;
+	class.sizescaled = RATIO*CELLSIZE;
 	p.line[0].point[0].x = MS_NINT(j + CELLSIZE/2);
 	p.line[0].point[0].y = MS_NINT(i + CELLSIZE/2);
 	p.line[0].numpoints = 1;
@@ -88,8 +88,7 @@ int main(int argc, char *argv[])
 	break;
 
       case(MS_LINESET):
-	class.size = 1;
-
+	class.sizescaled = 1;
 	p.line[0].point[0].x = j;
         p.line[0].point[0].y = i + (CELLSIZE-LBUF) - 1;
 	p.line[0].point[1].x = j + MS_NINT((CELLSIZE-LBUF)/3.0) - 1;
@@ -103,8 +102,7 @@ int main(int argc, char *argv[])
 	break;
 
       case(MS_SHADESET):
-	class.size = 5;
-
+	class.sizescaled = 5;
 	p.line[0].point[0].x = j;
 	p.line[0].point[0].y = i;
 	p.line[0].point[1].x = j + CELLSIZE-1;
