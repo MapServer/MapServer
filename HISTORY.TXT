@@ -33,6 +33,9 @@ Version 3.6.4-dev
   where the last SRS in the string was never used even if it would have
   been a best match.  Causing unnecessary WMS reprojections in several cases.
 
+- Fixed configure script to produce an error if --with-gdal does not point
+  to a valid gdal-config file.
+
 
 Version 3.6.3 (2002-10-07)
 --------------------------
