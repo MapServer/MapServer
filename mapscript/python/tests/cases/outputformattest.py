@@ -85,10 +85,10 @@ class MapOutputFormatTestCase(MapTestCase):
     def testBuiltInPNG24Format(self):
         """test built in PNG RGB format"""
         self.map.selectOutputFormat('PNG24')
-        assert self.map.outputformat.mimetype == 'image/png'
+        assert self.map.outputformat.mimetype == 'image/png; mode=24bit'
         self.map.getLayerByName('INLINE-PIXMAP-RGBA').status = mapscript.MS_ON
         img = self.map.draw()
-        assert img.format.mimetype == 'image/png'
+        assert img.format.mimetype == 'image/png; mode=24bit'
         filename = 'testBuiltInPNG24Format.png'
         img.save(filename)
 
