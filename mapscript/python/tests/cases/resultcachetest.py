@@ -52,6 +52,10 @@ class LayerQueryTestCase(MapTestCase):
         self.layer.queryByPoint(self.map, p, mapscript.MS_MULTIPLE, -1)
         return self.layer.getResults()
 
+    def indexquery(self):
+        self.layer.queryByIndex(self.map, -1, 0, mapscript.MS_TRUE)
+        return self.layer.getResults()
+
 
 # ===========================================================================
 # Test begins now
@@ -133,7 +137,23 @@ class DumpAndLoadTestCase(LayerQueryTestCase):
         self.map.loadQuery('test.qry')
         results = self.layer.getResults()
         assert results is not None
-       
+      
+class LayerOffQueryTestCase(LayerQueryTestCase):
+
+    def testPointQueryOffLayer(self):
+        """simple point query returns one result, even if layer is off"""
+        self.layer.status = mapscript.MS_OFF
+        results = self.pointquery()
+        assert results.numresults == 1
+
+    def testIndexQueryOffLayer(self):
+        """simple index query returns one result, even if layer is off"""
+        self.layer.status = mapscript.MS_OFF
+        results = self.indexquery()
+        assert results.numresults == 1
+
+
+
 # ===========================================================================
 # Run the tests outside of the main suite
 

@@ -175,38 +175,83 @@
         return msDrawQueryLayer(map, self, image);    
     }
 
+    /* For querying, we switch layer status ON and then back to original
+       value before returning. */
+
     int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) 
     {
-        return msQueryByAttributes(map, self->index, qitem, qstring, mode);
+        int status;
+        int retval;
+        
+        status = self->status;
+        self->status = MS_ON;
+        retval = msQueryByAttributes(map, self->index, qitem, qstring, mode);
+        self->status = status;
+        return retval;
     }
 
     int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) 
     {
-        return msQueryByPoint(map, self->index, mode, *point, buffer);
+        int status;
+        int retval;
+        
+        status = self->status;
+        self->status = MS_ON;
+        retval = msQueryByPoint(map, self->index, mode, *point, buffer);
+        self->status = status;
+        return retval;
     }
 
     int queryByRect(mapObj *map, rectObj rect) 
     {
-        return msQueryByRect(map, self->index, rect);
+        int status;
+        int retval;
+        
+        status = self->status;
+        self->status = MS_ON;
+        retval = msQueryByRect(map, self->index, rect);
+        self->status = status;
+        return retval;
     }
 
     int queryByFeatures(mapObj *map, int slayer) 
     {
-        return msQueryByFeatures(map, self->index, slayer);
+        int status;
+        int retval;
+        
+        status = self->status;
+        self->status = MS_ON;
+        retval = msQueryByFeatures(map, self->index, slayer);
+        self->status = status;
+        return retval;
     }
 
     int queryByShape(mapObj *map, shapeObj *shape) 
     {
-        return msQueryByShape(map, self->index, shape);
+        int status;
+        int retval;
+        
+        status = self->status;
+        self->status = MS_ON;
+        retval = msQueryByShape(map, self->index, shape);
+        self->status = status;
+        return retval;
     }
 
     int queryByIndex(mapObj *map, int tileindex, int shapeindex,
                      int bAddToQuery=MS_FALSE)
     {
+        int status;
+        int retval;
+        
+        status = self->status;
+        self->status = MS_ON;
         if (bAddToQuery == MS_FALSE)
-            return msQueryByIndex(map, self->index, tileindex, shapeindex);
+            retval = msQueryByIndex(map, self->index, tileindex, shapeindex);
         else
-            return msQueryByIndexAdd(map, self->index, tileindex, shapeindex);
+            retval = msQueryByIndexAdd(map, self->index, tileindex, shapeindex);
+        self->status = status;
+        return retval;
     }
     
     resultCacheObj *getResults(void)
