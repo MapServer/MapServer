@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2003/12/10 20:56:17  assefa
+ * Generate default symbol (square) when having an "invalid" symbol.
+ *
  * Revision 1.10  2003/12/10 17:36:03  assefa
  * Add partly support for Expressions.
  * Correct bug with symbol outline.
@@ -2284,6 +2287,7 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
     char szFormat[4];
     int i = 0, nLength = 0;
     int bColorAvailable = 0;
+    int bGenerateDefaultSymbol = 0;
 
     if (psStyle && psLayer && psLayer->map)
     {
@@ -2294,7 +2298,12 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
           nSymbol = msGetSymbolIndex(&psLayer->map->symbolset,
                                      psStyle->symbolname);
 
-        if (nSymbol > 0 && psLayer->map->symbolset.numsymbols)
+        bGenerateDefaultSymbol = 0;
+
+        if (nSymbol <=0 || nSymbol >=  psLayer->map->symbolset.numsymbols)
+          bGenerateDefaultSymbol = 1;
+
+        if (nSymbol > 0 && nSymbol < psLayer->map->symbolset.numsymbols)
         {
             psSymbol =  &psLayer->map->symbolset.symbol[nSymbol];
             if (psSymbol->type == MS_SYMBOL_VECTOR || 
@@ -2368,6 +2377,8 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
                     pszSLD = strcatalloc(pszSLD, szTmp);
                     
                 }
+                else
+                  bGenerateDefaultSymbol =1;
             }
             else if (psSymbol->type == MS_SYMBOL_PIXMAP)
             {
@@ -2419,6 +2430,70 @@ char *msSLDGetGraphicSLD(styleObj *psStyle, layerObj *psLayer)
                 }
                     
             }
+        }
+        if (bGenerateDefaultSymbol) //genrate a default square symbol
+        {
+            sprintf(szTmp, "%s\n", "<Graphic>");
+            pszSLD = strcatalloc(pszSLD, szTmp);
+
+            if (psStyle->size > 0)
+              sprintf(szTmp, "<Size>%d</Size>\n", psStyle->size);
+            else
+              sprintf(szTmp, "<Size>%d</Size>\n", 1);
+            pszSLD = strcatalloc(pszSLD, szTmp);
+
+            sprintf(szTmp, "%s\n", "<Mark>");
+            pszSLD = strcatalloc(pszSLD, szTmp);
+
+            sprintf(szTmp, "<WellKnownName>%s</WellKnownName>\n",
+                    "square");
+            pszSLD = strcatalloc(pszSLD, szTmp);
+
+            bColorAvailable = 0;
+            if (psStyle->color.red != -1 && 
+                psStyle->color.green != -1 &&
+                psStyle->color.blue != -1)
+            {
+                sprintf(szTmp, "%s\n", "<Fill>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+                sprintf(szTmp, "<CssParameter name=\"fill\">#%02x%02x%02x</CssParameter>\n",
+                        psStyle->color.red,
+                        psStyle->color.green,
+                        psStyle->color.blue);
+                pszSLD = strcatalloc(pszSLD, szTmp);
+                sprintf(szTmp, "%s\n", "</Fill>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+                bColorAvailable = 1;
+            }
+            if (psStyle->outlinecolor.red != -1 && 
+                psStyle->outlinecolor.green != -1 &&
+                psStyle->outlinecolor.blue != -1)    
+            {
+                sprintf(szTmp, "%s\n", "<Stroke>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+                sprintf(szTmp, "<CssParameter name=\"Stroke\">#%02x%02x%02x</CssParameter>\n",
+                        psStyle->outlinecolor.red,
+                        psStyle->outlinecolor.green,
+                        psStyle->outlinecolor.blue);
+                pszSLD = strcatalloc(pszSLD, szTmp);
+                sprintf(szTmp, "%s\n", "</Stroke>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+                bColorAvailable = 1;
+            }
+            if (!bColorAvailable)
+            {       
+                //default color
+                sprintf(szTmp, 
+                        "<CssParameter name=\"fill\">%s</CssParameter>\n",
+                        "#808080");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+                sprintf(szTmp, "%s\n", "</Fill>");
+                pszSLD = strcatalloc(pszSLD, szTmp);
+            }
+
+            sprintf(szTmp, "%s\n%s\n", "</Mark>", "</Graphic>");
+            pszSLD = strcatalloc(pszSLD, szTmp);
+        
         }
     }
 
@@ -2630,7 +2705,7 @@ char *msSLDGeneratePointSLD(styleObj *psStyle, layerObj *psLayer)
 {
     char *pszSLD = NULL;
     char *pszGraphicSLD = NULL;
-     char szTmp[100];
+    char szTmp[100];
 
     sprintf(szTmp, "%s\n",  "<PointSymbolizer>");
     pszSLD = strcatalloc(pszSLD, szTmp);
