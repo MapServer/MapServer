@@ -494,6 +494,13 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   else
     sql->where = strdup(layer->filter.string);
 
+  // reset the stream
+  status = SE_stream_close(sde->stream, 1);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_close()");
+    return(MS_FAILURE);
+  }
+
   status = SE_stream_query(sde->stream, layer->numitems, (const char **)layer->items, sql);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_stream_query()");
