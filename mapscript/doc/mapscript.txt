@@ -1194,6 +1194,13 @@ setMetaData( string key, string value ) : int
     Assign *value* to the web.metadata hash at *key*.  Return MS_SUCCESS
     or MS_FAILURE.
 
+setRotation(double rotation_angle) : rotation
+    Set map rotation angle. The map view rectangle (specified in 
+    EXTENTS) will be rotated by the indicated angle in the counter-
+    clockwise direction. Note that this implies the rendered map 
+    will be rotated by the angle in the clockwise direction.
+    Returns MS_SUCCESS or MS_FAILURE.
+
 -----------------------------------------------------------------------------
  outputFormatObj
 -----------------------------------------------------------------------------
