@@ -404,8 +404,8 @@ static void imageFilledCircle(gdImagePtr im, pointObj *p, int r, int c)
 static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
   int i, j, first;
-  int dx, dy, dx0, dy0,  ox, oy, limit;
-  double x, y, x0, y0, k, k0, q, q0;
+  int dx, dy, dx0=0, dy0=0,  ox=0, oy=0, limit;
+  double x, y, x0=0.0, y0=0.0, k=0.0, k0=0.0, q=0.0, q0=0.0;
   float par=0.71;
 
   if(offsety == -99) {
@@ -1488,7 +1488,7 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
 {
   double an, bn, da_pxn, db_pxn, d_size, a, b;
   double d_step_coef, da_pxn_coef, db_pxn_coef, da_px_coef, db_px_coef;
-  int db_line, s, first, drawpoly;
+  int db_line, first, drawpoly=0;
   gdPoint poly_points[4];
   static double last_style_size;
 
@@ -1783,7 +1783,7 @@ void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, s
   static double styleSize=0, styleCoef=0, last_style_size=-1;
   static int last_style_c=-1, last_style_stylelength=-1, last_styleVis=0;
 
-  char buffer[256];
+//  char buffer[256];
 
   gdPoint points[4], last_points[4];
   gdPoint cap_join_points[6];
@@ -2061,7 +2061,7 @@ static void billboardGD(gdImagePtr img, shapeObj *shape, labelObj *label)
 int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor)
 {
   int x, y;
-  int oldAlphaBlending;
+  int oldAlphaBlending=0;
 
   if(!string) return(0); /* not errors, just don't want to do anything */
   if(strlen(string) == 0) return(0);

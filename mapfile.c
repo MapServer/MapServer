@@ -19,7 +19,6 @@ extern char *msyystring;
 
 extern int loadSymbol(symbolObj *s, char *symbolpath); // in mapsymbol.c
 extern void writeSymbol(symbolObj *s, FILE *stream); // in mapsymbol.c
-void initGrid( graticuleObj *pGraticule );
 static int loadGrid( layerObj *pLayer );
 
 /*

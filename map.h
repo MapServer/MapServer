@@ -895,6 +895,7 @@ void resetClassStyle(classObj *_class);
 int initStyle(styleObj *style);
 void initReferenceMap(referenceMapObj *ref);
 void initScalebar(scalebarObj *scalebar);
+void initGrid( graticuleObj *pGraticule );
 
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape);
 void freeFeatureList(featureListNodeObjPtr list);

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.177  2003/07/30 19:01:31  dan
+ * Fixed compile warnings
+ *
  * Revision 1.176  2003/07/21 16:55:58  assefa
  * Correct bug in function drawLegendIcon (Bug 369).
  *
@@ -11436,7 +11439,7 @@ DLEXPORT void php_ms_outputformat_setOutputformatoption(INTERNAL_FUNCTION_PARAME
 DLEXPORT void php_ms_outputformat_getOutputformatoption(INTERNAL_FUNCTION_PARAMETERS)
 {
     outputFormatObj *self;
-    char *szRetrun = NULL;
+    const char *szRetrun = NULL;
     pval   *pPropertyName, *pThis;
     HashTable   *list=NULL;
 
@@ -11460,7 +11463,7 @@ DLEXPORT void php_ms_outputformat_getOutputformatoption(INTERNAL_FUNCTION_PARAME
 
     szRetrun = msGetOutputFormatOption(self, pPropertyName->value.str.val, "");
 
-    RETVAL_STRING(szRetrun, 1);
+    RETVAL_STRING((char*)szRetrun, 1);
 
     //RETURN_STRING("", 0);  
 

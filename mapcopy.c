@@ -913,7 +913,7 @@ int msCopyLayer(layerObj *dst, layerObj *src)
 {
   int i, return_value;
   featureListNodeObjPtr current;
-  char szPath[MS_MAXPATHLEN];
+//  char szPath[MS_MAXPATHLEN];
 
   copyProperty(&(dst->index), &(src->index), sizeof(int));
   copyStringProperty(&(dst->classitem), src->classitem);
