@@ -480,8 +480,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     r = MS_ABS(center.x - shape->line[0].point[0].x);
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection))
-      msProjectPoint(&layer->projection, &map->projection, center);
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
+        msProjectPoint(&layer->projection, &map->projection, &center);
 #endif
 
     if(layer->transform) {
@@ -507,7 +507,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     if(!shape->text) return(MS_SUCCESS); // nothing to draw
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection)) msProjectShape(&layer->projection, &map->projection, shape);
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
+       msProjectShape(&layer->projection, &map->projection, shape);
 #endif
 
     switch(shape->type) {
@@ -614,7 +615,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   case MS_LAYER_POINT:
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection)) msProjectShape(&layer->projection, &map->projection, shape);
+      if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
+          msProjectShape(&layer->projection, &map->projection, shape);
 #endif
 
     for(j=0; j<shape->numlines;j++) {
@@ -657,7 +659,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     }
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection)) msProjectShape(&layer->projection, &map->projection, shape);
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection)))
+        msProjectShape(&layer->projection, &map->projection, shape);
 #endif
 
     if(layer->transform) {
@@ -698,7 +701,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
     }
 
 #ifdef USE_PROJ
-    if(msProjectionsDiffer(&(layer->projection), &(map->projection)) msProjectShape(&layer->projection, &map->projection, shape);
+    if(msProjectionsDiffer(&(layer->projection), &(map->projection))) 
+        msProjectShape(&layer->projection, &map->projection, shape);
 #endif
 
     if(layer->transform) {
