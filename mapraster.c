@@ -2322,16 +2322,21 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
             {
                 status = drawGDAL(map, layer, image, hDS );
             }
-            msReleaseLock( TLOCK_GDAL );
 
             if( status == -1 )
             {
                 GDALClose( hDS );
+                msReleaseLock( TLOCK_GDAL );
                 return -1;
             }
 
             GDALClose( hDS );
+            msReleaseLock( TLOCK_GDAL );
             continue;
+        }
+        else
+        {
+            msReleaseLock( TLOCK_GDAL );
         }
     }
 #endif
@@ -2341,9 +2346,18 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     */
     if( !f ) {
       msSetError(MS_IOERR, "(%s)", "msDrawRaster()", filename);
+
 #ifndef IGNORE_MISSING_DATA
+      if( layer->debug || map->debug )
+          msDebug( "Unable to open file %s for layer %s ... fatal error.\n", 
+                   filename, layer->name );
+
       return(-1);
 #else
+      if( layer->debug || map->debug )
+          msDebug( "Unable to open file %s for layer %s ... ignoring this missing data.\n", 
+                   filename, layer->name );
+
       continue; // skip it, next tile
 #endif
     }
