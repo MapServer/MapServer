@@ -14,7 +14,11 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.4   $Date$
+ * Revision 1.5   $Date$
+ * Added support for 2D circle geometries (gtype/etype/interpretation):
+ * - (2003/[?00]3/4)
+ *
+ * Revision 1.4   2001/10/22 17:09:03 [CVS-TIME]
  * Added support for mapfile items.
  *
  * Revision 1.3   2001/10/18 11:39:04 [CVS-TIME]
@@ -54,7 +58,7 @@
 #include <oci.h>
 #include <ctype.h>
 
-#define ARRAY_SIZE                 64
+#define ARRAY_SIZE                 1
 #define TEXT_SIZE                  256
 #define TYPE_OWNER                 "MDSYS"
 #define SDO_GEOMETRY               TYPE_OWNER".SDO_GEOMETRY"
@@ -110,9 +114,7 @@ typedef struct {
   /* oracle handles */
   OCIEnv           *envhp;
   OCIError         *errhp;
-  OCIServer        *srvhp;
   OCISvcCtx        *svchp;
-  OCISession       *usrhp;
   /* query data */
   OCIStmt          *stmthp;
   OCIDescribe      *dschp;
@@ -131,9 +133,11 @@ msOracleSpatialLayerInfo;
 static int TRY( msOracleSpatialLayerInfo *layerinfo, sword status );
 static int ERROR( char *routine, msOracleSpatialLayerInfo *layerinfo );
 static void msSplitLogin( char *connection, char *username, char *password, char *dblink );
+static int msSplitData( char *data, char *geometry_column_name, char *table_name );
 static msOracleSpatialLayerInfo *msOCIConnect( char *username, char *password, char *dblink );
 static void msOCIDisconnect( msOracleSpatialLayerInfo *layerinfo );
 static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt );
+static int msOCIConvertCircle( pointObj *pt );
 
 /* local status */
 static int last_oci_call_ms_status = MS_FAILURE;
@@ -244,35 +248,11 @@ static msOracleSpatialLayerInfo *msOCIConnect( char *username, char *password, c
     /* allocate envhp */
     OCIEnvCreate( &layerinfo->envhp, OCI_OBJECT, (dvoid *)0, 0, 0, 0, (size_t) 0, (dvoid **)0 ) )
   && TRY( layerinfo,
-    /* allocate srvhp */
-    OCIHandleAlloc( (dvoid *)layerinfo->envhp, (dvoid **)&layerinfo->srvhp, (ub4)OCI_HTYPE_SERVER, (size_t)0, (dvoid **)0 ) )
-  && TRY( layerinfo,
     /* allocate errhp */
     OCIHandleAlloc( (dvoid *)layerinfo->envhp, (dvoid **)&layerinfo->errhp, (ub4)OCI_HTYPE_ERROR, (size_t)0, (dvoid **)0 ) )
   && TRY( layerinfo,
-    /* attach srvhp to dblink (database) */
-     OCIServerAttach( layerinfo->srvhp, layerinfo->errhp, (text *)dblink, strlen(dblink), (ub4)OCI_DEFAULT ) )
-  && TRY( layerinfo,
-    /* allocate svchp */
-    OCIHandleAlloc( (dvoid *)layerinfo->envhp, (dvoid **)&layerinfo->svchp, (ub4)OCI_HTYPE_SVCCTX, (size_t)0, (dvoid **)0) )
-  && TRY( layerinfo,
-    /* set server (srvhp) for service context (svchp) */
-    OCIAttrSet( (dvoid *)layerinfo->svchp, (ub4)OCI_HTYPE_SVCCTX, (dvoid *)layerinfo->srvhp, (ub4)0, (ub4)OCI_ATTR_SERVER, layerinfo->errhp ) )
-  && TRY( layerinfo,
-    /* allocate usrhp */
-    OCIHandleAlloc( (dvoid *)layerinfo->envhp, (dvoid **)&layerinfo->usrhp, (ub4)OCI_HTYPE_SESSION, (size_t)0, (dvoid **)0) )
-  && TRY( layerinfo,
-    /* define username in usrhp */
-    OCIAttrSet( (dvoid *)layerinfo->usrhp, (ub4)OCI_HTYPE_SESSION, (dvoid *)username, (ub4)strlen(username), (ub4)OCI_ATTR_USERNAME, layerinfo->errhp ) )
-  && TRY( layerinfo,
-    /* define password in usrhp */
-    OCIAttrSet( (dvoid *)layerinfo->usrhp, (ub4)OCI_HTYPE_SESSION, (dvoid *)password, (ub4)strlen(password), (ub4)OCI_ATTR_PASSWORD, layerinfo->errhp ) )
-  && TRY( layerinfo,
-    /* begin session */
-    OCISessionBegin( layerinfo->svchp, layerinfo->errhp, layerinfo->usrhp, OCI_CRED_RDBMS, OCI_DEFAULT ) )
-  && TRY( layerinfo,
-    /* set user (usrhp) for service context (svchp) */
-    OCIAttrSet( (dvoid *)layerinfo->svchp, (ub4)OCI_HTYPE_SVCCTX, (dvoid *)layerinfo->usrhp, (ub4)0, (ub4)OCI_ATTR_SESSION, layerinfo->errhp ) )
+    /* logon */
+    OCILogon( layerinfo->envhp, layerinfo->errhp, &layerinfo->svchp, username, strlen(username), password, strlen(password), dblink, strlen(dblink) ) )
   && TRY( layerinfo,
     /* allocate stmthp */
     OCIHandleAlloc( (dvoid *)layerinfo->envhp, (dvoid **)&layerinfo->stmthp, (ub4)OCI_HTYPE_STMT, (size_t)0, (dvoid **)0 ) )
@@ -307,16 +287,8 @@ static void msOCIDisconnect( msOracleSpatialLayerInfo *layerinfo )
     OCIHandleFree( (dvoid *)layerinfo->dschp, (ub4)OCI_HTYPE_DESCRIBE );
   if (layerinfo->stmthp != NULL)
     OCIHandleFree( (dvoid *)layerinfo->stmthp, (ub4)OCI_HTYPE_STMT );
-  if (layerinfo->svchp != NULL && layerinfo->errhp != NULL && layerinfo->usrhp != NULL)
-    OCISessionEnd( layerinfo->svchp, layerinfo->errhp, layerinfo->usrhp, (ub4)OCI_DEFAULT );
-  if (layerinfo->usrhp != NULL)
-    OCIHandleFree( (dvoid *)layerinfo->usrhp, (ub4)OCI_HTYPE_SESSION );
-  if (layerinfo->srvhp != NULL && layerinfo->errhp != NULL)  
-    OCIServerDetach( layerinfo->srvhp, layerinfo->errhp, (ub4)OCI_DEFAULT );
   if (layerinfo->svchp != NULL)
-    OCIHandleFree( (dvoid *)layerinfo->svchp, (ub4)OCI_HTYPE_SVCCTX );
-  if (layerinfo->srvhp != NULL)
-    OCIHandleFree( (dvoid *)layerinfo->srvhp, (ub4)OCI_HTYPE_SERVER );
+    OCILogoff( layerinfo->svchp, layerinfo->errhp );
   if (layerinfo->errhp != NULL)
     OCIHandleFree( (dvoid *)layerinfo->errhp, (ub4)OCI_HTYPE_ERROR );
   if (layerinfo->envhp != NULL)
@@ -328,6 +300,7 @@ static void msOCIDisconnect( msOracleSpatialLayerInfo *layerinfo )
   memset( layerinfo, 0, sizeof( msOracleSpatialLayerInfo ) ); 
 }
 
+/* get ordinates from SDO buffer */
 static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryObj *obj, int s, int e, pointObj *pt )
 {
   double x, y;
@@ -353,6 +326,65 @@ static int msOCIGetOrdinates( msOracleSpatialLayerInfo *layerinfo, SDOGeometryOb
   }
 
   return success ? n : 0;
+}
+
+/* convert three-point circle to two-point rectangular bounds */
+static int msOCIConvertCircle( pointObj *pt )
+{
+  pointObj ptaux;
+  double dXa, dXb;
+  double ma, mb;
+  double cx, cy, r;
+  int success;
+
+  dXa = pt[1].x - pt[0].x;
+  success = (fabs( dXa ) > 1e-8);
+  if (!success) { // switch points 1 & 2
+    ptaux = pt[1];
+    pt[1] = pt[2];
+    pt[2] = ptaux;
+    dXa = pt[1].x - pt[0].x;
+    success = (fabs( dXa ) > 1e-8);
+  }
+  if (success) {
+    dXb = pt[2].x - pt[1].x;
+    success = (fabs( dXb ) > 1e-8);
+    if (!success) { // insert point 2 before point 0
+      ptaux = pt[2];
+      pt[2] = pt[1];
+      pt[1] = pt[0];
+      pt[0] = ptaux;
+      dXb = dXa; // segment A has become B
+      dXa = pt[1].x - pt[0].x; // recalculate new segment A
+      success = (fabs( dXa ) > 1e-8);
+    }
+  }
+  if (success) {
+    ma = (pt[1].y - pt[0].y)/dXa;
+    mb = (pt[2].y - pt[1].y)/dXb;
+    success = (fabs( mb - ma ) > 1e-8);
+  }
+  if (!success) {
+    strcpy( last_oci_call_ms_error, "Points in circle object are colinear" );
+    last_oci_call_ms_status = MS_FAILURE;
+    return 0;
+  }
+
+  /* calculate center and radius */
+  cx = (ma*mb*(pt[0].y - pt[2].y) + mb*(pt[0].x + pt[1].x) - ma*(pt[1].x + pt[2].x))
+       /(2*(mb - ma));
+  cy = (fabs( ma ) > 1e-8)
+       ? ((pt[0].y + pt[1].y)/2 - (cx - (pt[0].x + pt[1].x)/2)/ma)
+       : ((pt[1].y + pt[2].y)/2 - (cx - (pt[1].x + pt[2].x)/2)/mb);
+  r  = sqrt( pow( pt[0].x - cx, 2 ) + pow( pt[0].y - cy, 2 ) );
+
+  /* update pt buffer with rectangular bounds */
+  pt[0].x = cx - r;
+  pt[0].y = cy - r;
+  pt[1].x = cx + r;
+  pt[1].y = cy + r;
+
+  return 1;
 }
 
 /* opens a layer by connecting to db with username/password@database stored in layer->connection */
@@ -386,6 +418,7 @@ int msOracleSpatialLayerClose( layerObj *layer )
     free( layerinfo );
     layer->oraclespatiallayerinfo = NULL;
   }
+
   return MS_SUCCESS;
 }
 
@@ -668,6 +701,20 @@ int msOracleSpatialLayerNextShape( layerObj *layer, shapeObj *shape )
                 point5[3].y = point5[0].y;
                 point5[4] = point5[0]; 
                 msAddLine( shape, &points );
+              }
+              break;
+            case 34: /* circle defined by 3 points */
+              n = msOCIGetOrdinates( layerinfo, obj, ord_start, ord_end, point5 ); /* n must be < 5 */
+              if (n == 3) {
+                if (msOCIConvertCircle( point5 )) {
+                  shape->type = MS_SHAPE_POINT;
+                  points.numpoints = 2;
+                  points.point = point5;
+                  msAddLine( shape, &points );
+//sprintf( last_oci_call_ms_error, "circulo: %g %g %g %g", point5[0].x, point5[0].y, point5[1].x, point5[1].y );
+//msSetError( 0, last_oci_call_ms_error, "" );
+//return MS_FAILURE;
+                }
               }
               break;
           }
