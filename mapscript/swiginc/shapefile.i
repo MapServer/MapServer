@@ -116,6 +116,18 @@
 
     int add(shapeObj *shape) 
     {
+        /* Trap NULL or empty shapes -- bug 1201 */
+        if (!shape) 
+        {
+            msSetError(MS_SHPERR, "Can't add NULL shape", "shapefileObj::add");
+            return MS_FAILURE;
+        }
+        else if (!shape->line)
+        {
+            msSetError(MS_SHPERR, "Can't add empty shape", "shapefileObj::add");
+            return MS_FAILURE;
+        }
+
         return msSHPWriteShape(self->hSHP, shape);	
     }	
 
