@@ -54,6 +54,7 @@ char *msGetVersion();
 
 #ifndef SWIG
 void msDebug( const char * pszFormat, ... );
+void msWebDebug( const char * pszFormat, ... );
 #endif
 
 #ifdef __cplusplus
