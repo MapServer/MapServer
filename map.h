@@ -630,12 +630,9 @@ typedef struct {
 
 #ifndef SWIG
   hashTableObj metadata;
-<<<<<<< map.h
 #endif
-=======
   
   int transparency; // transparency value 0-100 
->>>>>>> 1.138
 
   int dump;
 } layerObj;
