@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104.2.8  2003/03/05 03:36:53  dan
+ * Backport fix for bug 186 from version 3.7 (point->project() etc. problems)
+ *
  * Revision 1.104.2.7  2003/02/26 20:53:47  assefa
  * Add test on module name 'cgi-fcgi'. Needed for php 4.3.X.
  *
@@ -7149,6 +7152,7 @@ DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
     pointObj            *self;
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
+    int                 status=MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -7180,14 +7184,18 @@ DLEXPORT void php3_ms_point_project(INTERNAL_FUNCTION_PARAMETERS)
                                             list TSRMLS_CC);
 
     if (self && poInProj && poOutProj &&
-        (pointObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+        (status = pointObj_project(self, poInProj, poOutProj)) != MS_SUCCESS)
     {
-        RETURN_FALSE;
+        _phpms_report_mapserver_error(E_WARNING);
     }
-    /* Return point object */
-    _phpms_build_point_object(self, PHPMS_GLOBAL(le_mspoint_ref),
-                              list, return_value);
+    else
+    {
+        // Update the members of the PHP wrapper object.
+        _phpms_set_property_double(pThis, "x", self->x, E_ERROR);
+        _phpms_set_property_double(pThis, "y", self->y, E_ERROR);
+    }
 
+    RETURN_LONG(status);
 }
 /* }}} */
 
@@ -7528,6 +7536,7 @@ DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS)
     lineObj             *self;
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
+    int                 status=MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -7564,9 +7573,13 @@ DLEXPORT void php3_ms_line_project(INTERNAL_FUNCTION_PARAMETERS)
          RETURN_FALSE;
     }
 
-    /* Return line object */
-    _phpms_build_line_object(self, PHPMS_GLOBAL(le_msline_ref),
-                             list, return_value);
+    if (self && poInProj && poOutProj &&
+        (status = lineObj_project(self, poInProj, poOutProj)) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+
+    RETURN_LONG(status);
 }
 /* }}} */
 
@@ -7982,9 +7995,11 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
     shapeObj            *self;
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
+    int                 status=MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
+    pval   **pBounds;
 #endif
 
 #ifdef PHP4
@@ -8012,16 +8027,44 @@ DLEXPORT void php3_ms_shape_project(INTERNAL_FUNCTION_PARAMETERS)
                                             PHPMS_GLOBAL(le_msprojection_new), 
                                             list TSRMLS_CC);
 
+
     if (self && poInProj && poOutProj &&
-        (shapeObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+        (status = shapeObj_project(self, poInProj, poOutProj)) != MS_SUCCESS)
     {
-         RETURN_FALSE;
+        _phpms_report_mapserver_error(E_WARNING);
+    }
+    else
+    {
+#ifdef PHP4
+         if (zend_hash_find(pThis->value.obj.properties, "bounds", 
+                            sizeof("bounds"), (void **)&pBounds) == SUCCESS)
+         {
+             _phpms_set_property_double((*pBounds),"minx", self->bounds.minx, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pBounds),"miny", self->bounds.miny, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pBounds),"maxx", self->bounds.maxx, 
+                                        E_ERROR);
+             _phpms_set_property_double((*pBounds),"maxy", self->bounds.maxy, 
+                                        E_ERROR);
+         }
+#else
+         if (_php3_hash_find(pThis->value.ht, "bounds", sizeof("bounds"), 
+                             (void **)&pBounds) == SUCCESS)
+         {
+             _phpms_set_property_double(pBounds,"minx", self->bounds.minx, 
+                                        E_ERROR);
+             _phpms_set_property_double(pBounds,"miny", self->bounds.miny, 
+                                        E_ERROR);
+             _phpms_set_property_double(pBounds,"maxx", self->bounds.maxx, 
+                                        E_ERROR);
+             _phpms_set_property_double(pBounds,"maxy", self->bounds.maxy, 
+                                        E_ERROR);
+         }
+#endif
     }
 
-    /* Return shape object */
-    _phpms_build_shape_object(self, PHPMS_GLOBAL(le_msshape_ref), NULL,
-                              list, return_value);
-
+    RETURN_LONG(status);
 }
 /* }}} */
 
@@ -8672,6 +8715,7 @@ DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS)
     rectObj             *self;
     projectionObj       *poInProj;
     projectionObj       *poOutProj;
+    int                 status=MS_FAILURE;
 
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -8701,15 +8745,20 @@ DLEXPORT void php3_ms_rect_project(INTERNAL_FUNCTION_PARAMETERS)
                                             list TSRMLS_CC);
 
     if (self && poInProj && poOutProj &&
-        (rectObj_project(self, poInProj, poOutProj) != MS_SUCCESS))
+        (status = rectObj_project(self, poInProj, poOutProj)) != MS_SUCCESS)
     {
-        RETURN_FALSE;
+        _phpms_report_mapserver_error(E_WARNING);
     }
-    
-    /* Return rect object */
-    _phpms_build_rect_object(self, PHPMS_GLOBAL(le_msrect_ref),
-                             list, return_value);
+    else
+    {
+        // Update the members of the PHP wrapper object.
+        _phpms_set_property_double(pThis, "minx", self->minx, E_ERROR);
+        _phpms_set_property_double(pThis, "miny", self->miny, E_ERROR);
+        _phpms_set_property_double(pThis, "maxx", self->maxx, E_ERROR);
+        _phpms_set_property_double(pThis, "maxy", self->maxy, E_ERROR);
+    }
 
+    RETURN_LONG(status);
 }
 /* }}} */
 
