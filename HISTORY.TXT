@@ -16,10 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta2 ()
 ----------------------
 
-- Genrate a RULE <Name> tag when generating an SLD. (Bug 1010)
+- Generate a RULE <Name> tag when generating an SLD. (Bug 1010)
 
--  WMS GetLegendGraphic uses now the RULE value to return an icon for
-   a class that has the same name as the RULE value (Bug 843)
+- WMS GetLegendGraphic uses now the RULE value to return an icon for
+  a class that has the same name as the RULE value (Bug 843)
  
 - Add msOWSPrintURLType: This funciton is a generic URL printing fuction for 
   OGC specification metadata (WMS, WFS, WCS, WMC, etc.) (Bug 944).
@@ -36,6 +36,17 @@ Version 4.4.0-beta2 ()
   when requested layer was out of scale (bug 1006).
 
 - Fixed maplexer.l to work with flex 2.5.31 (bug 975).
+
+- WMS GetMap requests now have MS_NONSQUARE enabled by default. This means
+  that if the width/height ratio doesn't match the extent's x/y ratio then
+  the map is stretched as stated in the WMS specification (bug 862)
+
+- In WMS, layers with no explicit projection defined will receive a copy
+  of the map's projectionObj if a new SRS is specified in the GetMap request
+  or if MS_NONSQUARE is enabled. This will prevent the problem with layers 
+  that don't show up in WMS request when the server administrator forgets
+  to explicitly set projections on all the layers in a WMS mapfile. (bug 947)
+
 
 Version 4.4.0-beta1 (2004-10-21)
 --------------------------------
