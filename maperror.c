@@ -1,6 +1,9 @@
 #include "map.h"
 #include "maperror.h"
+#include <time.h>
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 #include <stdarg.h>
 
 static char *ms_errorCodes[MS_NUMERRORCODES]={"",

@@ -13,9 +13,12 @@
 #
 
 #OPTFLAGS =	/nologo /Zi /W3 /DDEBUG
-OPTFLAGS =	/nologo /Zi
+OPTFLAGS =	/nologo /Zi 
 BASE_CFLAGS = 	$(OPTFLAGS) 
+LDFLAGS =	/NODEFAULTLIB:libcd
 
+CC=     cl
+LINK=   link
 
 #
 # If you want to ignore missing datafile errors uncomment the following
@@ -31,12 +34,6 @@ BASE_CFLAGS = 	$(OPTFLAGS)
 #STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP -DNEED_STRDUP
 STRINGS=-DNEED_STRCASECMP -DNEED_STRNCASECMP
 
-# Freetype distribution (TrueType font support). Available at http://www.freetype.org/. (RECOMMENDED)
-TTF_INC=-I../freetype/lib -I./gdft
-TTF_LIB=../freetype/lib/freetype.lib ./gdft/gdft.lib
-TTF=-DUSE_TTF
-TTF_GD=gdft
-
 # Proj.4 distribution (cartographic projection routines). Not required for normal use. (EXPERIMENTAL)
 PROJ_LIB=../proj/src/proj.lib
 PROJ_INC=-I../proj/src
@@ -44,15 +41,28 @@ PROJ=-DUSE_PROJ
 
 # GD distribution (graphics library GIF and/or PNG support). (REQUIRED)
 #
-#   - Version 1.2 is included and writes LZW GIF (-DUSE_GD_1_2).
-#   - Versions 1.3 to 1.5 write non-LZW GIF (-DUSE_GD_1_3).
-#   - Versions 1.6 and greater write PNG (-DUSE_GD_1_6). Add -lpng -lz to GD_LIB line.
+#   - Version 1.2 is included and writes LZW GIF (-DUSE_GD_GIF -DUSE_GD_SWAP_XY).
+#   - Versions 1.3 to 1.5 write non-LZW GIF (-DUSE_GD_GIF).
+#   - Versions 1.6 and greater write PNG (-DUSE_GD_PNG). Add -lpng -lz to GD_LIB line.
+#   - Versions 1.8 (or was it 1.7?) also supports JPEG and WBMP (-DUSE_GD_JPEG -DUSE_GD_WBMP)
 #
-GDFONT_OBJ=	gd-1.2/gdfontt.obj gd-1.2/gdfonts.obj gd-1.2/gdfontmb.obj \
-		gd-1.2/gdfontl.obj gd-1.2/gdfontg.obj
-GD_INC=	-I./gd-1.2
-GD_LIB=	gd-1.2/gd.lib
-GD= -DUSE_GD_1_2
+# The following lines will compile GD 1.2:
+#GDFONT_OBJ=	gd-1.2/gdfontt.obj gd-1.2/gdfonts.obj gd-1.2/gdfontmb.obj \
+#		gd-1.2/gdfontl.obj gd-1.2/gdfontg.obj
+#GD_INC=	-I./gd-1.2
+#GD_LIB=	gd-1.2/gd.lib
+#GD= -DUSE_GD_GIF -DUSE_GD_SWAP_XY
+#MAKE_GD=gd
+
+# A patched version of GD that supports GIF, JPEG, PNG and WBMP can be 
+# downloaded from http://www.rime.com.au/gd/.
+# The following defns will include the patched GD 1.8.4 with TTF:
+GDFONT_OBJ=
+GD_INC=	-I../gd-1.8.4
+GD_LIB=	../gd-1.8.4/gd.lib ../jpeg-6b/libjpeg.lib ../libpng-1.0.8/libpng.lib \
+	../zlib-1.1.3/zlibstat.lib ../freetype/lib/freetype.lib
+GD=     -DUSE_GD_GIF -DUSE_GD_PNG -DUSE_GD_JPEG -DUSE_GD_WBMP -DUSE_GD_TTF \
+	-DUSE_GD_TTF -DGD_HAS_GDIMAGEGIFPTR
 MAKE_GD=gd
 
 # TIFF distribution (raster support for TIFF and GEOTIFF imagery).(RECOMMENDED)
@@ -141,24 +151,24 @@ MS_OBJS = 	mapbits.obj maphash.obj mapshape.obj mapxbase.obj \
 
 MS_HDRS = 	map.h mapfile.h
 
-MS_EXE = 	mapserv.exe shp2img.exe legend.exe shpindex.exe \
+MS_EXE = 	mapserv.exe shp2img.exe legend.exe  \
 		shptree.exe scalebar.exe sortshp.exe
 
 #
 #
 #
-LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) $(TTF_LIB) \
+LIBS	=	$(MS_LIB) $(GD_LIB) $(TIFF_LIB) $(JPEG_LIB) \
 		$(PROJ_LIB) $(ERR_LIB) $(IMGGEN_LIB) $(OGR_LIB)
 
-INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) $(TTF_INC) \
+INCLUDES =	$(GD_INC) $(TIFF_INC) $(JPEG_INC) \
 		$(PROJ_INC) $(ERR_INC) $(IMGGEN_INC) $(REGEX_INC) $(OGR_INC)
 
 CFLAGS =	$(BASE_CFLAGS) $(INCLUDES) $(REGEX_OPT) $(STRINGS)  \
-		$(EPPL) $(PROJ) $(TTF) $(TIFF) $(JPEG) $(GD) $(OGR)
+		$(EPPL) $(PROJ) $(TIFF) $(JPEG) $(GD) $(OGR)
 
 default: 	all
 
-all:		$(MAKE_GD) $(TTF_GD) $(MS_LIB) $(MS_EXE)
+all:		$(MAKE_GD) $(MS_LIB) $(MS_EXE)
 
 $(MS_OBJS):	$(MS_HDRS)
 
@@ -173,11 +183,6 @@ gd::
 	nmake /f makefile.nt OPTFLAGS="$(OPTFLAGS)"
 	cd ..
 
-gdft::
-	cd gdft
-	nmake /f makefile.vc OPTFLAGS="$(OPTFLAGS)"
-	cd ..
-
 .c.obj:	
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
 
@@ -186,11 +191,11 @@ gdft::
 
 .c.exe:
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
-	$(CC) $(CFLAGS) $*.obj $(LIBS)
+	$(LINK) $(LDFLAGS) $*.obj $(LIBS)
 
 .cpp.exe:
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
-	$(CC) $*.obj $(LIBS)
+	$(LINK) $(LDFLAGS) $*.obj $(LIBS)
 
 
 clean:

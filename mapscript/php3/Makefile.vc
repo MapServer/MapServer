@@ -16,15 +16,15 @@
 PHP4 = 1
 
 !ifdef PHP4
-OPTFLAGS =	/nologo /Zi /W3 
+OPTFLAGS =	/nologo /Zi /W3 /Fdphpms.pdb
 BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DPHP4 /DZTS
 !else
 OPTFLAGS =	/nologo /Zi /W3
 BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32
 !endif
 
+#LINK_OPT =	/dll /debug
 LINK_OPT =	/dll /debug
-#LINK_OPT =	/dll
 
 #
 # Set PHP_SOURCE_DIR to point to the root of the PHP source tree
@@ -43,7 +43,7 @@ PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/dl
 # Where do you want php3_mapscript.dll to be installed?
 #
 !ifdef PHP4
-PHP_INSTALL_DIR =  \Apache\php4
+PHP_INSTALL_DIR =  \Apache\php4\extensions
 !else
 PHP_INSTALL_DIR =  \Apache\php3
 !endif
@@ -60,14 +60,17 @@ MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF -DUSE_OGR
 !ifdef PHP4
 MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -DPHP_NO_ALIASES -I../../gd-1.2 -I../../../proj/src
 !else
-MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../gd-1.2 -I../../../proj/src
+MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../../gd-1.8.4 -I../../../proj/src
 !endif
 GDAL_DIR= ../../../gdal
 
-MS_LIBS = ../../mapserver.lib ../../gd-1.2/gd.lib \
+MS_LIBS = ../../mapserver.lib \
+        ../../../gd-1.8.4/gd.lib \
+        ../../../jpeg-6b/libjpeg.lib \
+        ../../../libpng-1.0.8/libpng.lib \
+	../../../zlib-1.1.3/zlibstat.lib \
+        ../../../freetype/lib/freetype.lib \
 	../../../tiff-v3.5.4/libtiff/libtiff.lib \
-	../../gdft/gdft.lib \
-	../../../freetype/lib/freetype.lib \
         ../../../proj/src/proj.lib \
         $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts.lib \
         $(GDAL_DIR)/ogr/ogrsf_frmts/ogrsf_frmts_sup.lib \
