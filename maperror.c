@@ -368,8 +368,8 @@ char *msGetVersion() {
 #ifdef USE_PROJ
   strcat(version, " SUPPORTS=PROJ");
 #endif
-#if defined (USE_GD_TTF) || defined (USE_GD_FT)
-  strcat(version, " SUPPORTS=TTF");
+#ifdef USE_GD_FT
+  strcat(version, " SUPPORTS=FREETYPE");
 #endif
 #ifdef USE_WMS_SVR
   strcat(version, " SUPPORTS=WMS_SERVER");
@@ -382,9 +382,6 @@ char *msGetVersion() {
 #endif
 #ifdef USE_WFS_LYR
   strcat(version, " SUPPORTS=WFS_CLIENT");
-#endif
-#if GD2_VERS > 1 
-  strcat(version, " SUPPORTS=GD2_RGB");
 #endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");

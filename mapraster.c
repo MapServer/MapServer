@@ -118,10 +118,8 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
   long rd, gd, bd, dist;
   long mindist = 3*255*255;  /* init to max poss dist */
 
-#if GD2_VERS > 1
   if( gdImageTrueColor( img ) )
       return gdTrueColor( r, g, b );
-#endif
   
   /*
   ** We want to avoid using a color that matches a transparent background
@@ -1198,13 +1196,8 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
       for (j=startj; j<endj; j++) {
         vv=epp.rptr[(int)MS_NINT(x)+1];
 
-#ifndef USE_GD_1_2
-	if(cmap[vv] != -1) 
-	  img->pixels[i][j] = cmap[vv];
-#else
 	if(cmap[vv] != -1)
 	  img->pixels[j][i] = cmap[vv];
-#endif
 
         x+=skipx;
       }
@@ -1276,7 +1269,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
   }
 
   // Only GDAL supports 24bit GD output.
-#if GD2_VERS > 1
   if(gdImageTrueColor(img)){
 #ifndef USE_GDAL
     msSetError(MS_MISCERR, "Attempt to render raster layer to IMAGEMODE RGB or RGBA but\nwithout GDAL available.  24bit output requires GDAL.", "msDrawRasterLayer()" );
@@ -1285,7 +1277,6 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
     force_gdal = MS_TRUE;
 #endif
   }
-#endif /* def GD2_VERS */
 
   // Only GDAL support image warping.
   if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {

@@ -11,13 +11,7 @@
 #include <io.h>
 #endif
 
-#if GD2_VERS > 1
-static void
-msFixedImageCopy (gdImagePtr dst, gdImagePtr src, 
-                  int dstX, int dstY, int srcX, int srcY, int w, int h);
-#else
-#define msFixedImageCopy gdImageCopy
-#endif
+static void msFixedImageCopy (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h);
 
 static unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
 static unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
@@ -81,17 +75,9 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
     {
         image = (imageObj *)calloc(1,sizeof(imageObj));
 
-        if( format->imagemode == MS_IMAGEMODE_RGB 
-            || format->imagemode == MS_IMAGEMODE_RGBA )
-        {
-#if GD2_VERS > 1
+        if( format->imagemode == MS_IMAGEMODE_RGB || format->imagemode == MS_IMAGEMODE_RGBA ) {
             image->img.gd = gdImageCreateTrueColor(width, height);
-#else
-            msSetError(MS_IMGERR, 
-                       "Attempt to use RGB or RGBA IMAGEMODE with GD 1.x, please upgrade to GD 2.x.", "msImageCreateGD()" );
-#endif
-        }
-        else
+        } else
             image->img.gd = gdImageCreate(width, height);
     
         if (image->img.gd)
@@ -136,14 +122,12 @@ imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
  */  
 
 void msImageInitGD( imageObj *image, colorObj *background )
-
 {
     if( image->format->imagemode == MS_IMAGEMODE_PC256 ) {
         gdImageColorAllocate(image->img.gd, background->red, background->green, background->blue);
         return;
     }
 
-#if GD2_VERS > 1
     {
         int		pen, pixels, line;
         int             *tpixels;
@@ -167,7 +151,6 @@ void msImageInitGD( imageObj *image, colorObj *background )
                 *(tpixels++) = pen;
         }
     }
-#endif
 }
 
 /**
@@ -260,7 +243,6 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
 {
   gdImagePtr brush;
 
-#if GD2_VERS > 1
   if(!gdImageTrueColor(img)) {
     brush = gdImageCreate(width, height);
     if(style->backgroundcolor.pen >= 0)
@@ -286,19 +268,6 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
     else // try outline color
       *fgcolor = gdTrueColor(style->outlinecolor.red, style->outlinecolor.green, style->outlinecolor.blue);
   }
-#else
-  brush = gdImageCreate(width, height);
-  if(style->backgroundcolor.pen >= 0)
-    *bgcolor = gdImageColorAllocate(brush, style->backgroundcolor.red, style->backgroundcolor.green, style->backgroundcolor.blue);
-  else {
-    *bgcolor = gdImageColorAllocate(brush, gdImageRed(img,0), gdImageGreen(img, 0), gdImageBlue(img, 0));          
-    gdImageColorTransparent(brush,0);
-  }
-  if(style->color.pen >= 0)
-    *fgcolor = gdImageColorAllocate(brush, style->color.red, style->color.green, style->color.blue);
-  else // try outline color
-    *fgcolor = gdImageColorAllocate(brush, style->outlinecolor.red, style->outlinecolor.green, style->outlinecolor.blue);
-#endif
 
   return(brush);
 }
@@ -581,7 +550,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
   switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE):    
     
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
@@ -594,12 +563,7 @@ void msCircleDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img,
     x = -rect.minx; // center the glyph
     y = -rect.miny;
 
-#ifdef USE_GD_TTF
-    msGDImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
-#else
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
-#endif    
-
     gdImageSetTile(img, tile);
 #endif
 
@@ -751,7 +715,7 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
   switch(symbol->type) {  
   case(MS_SYMBOL_TRUETYPE):
 
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
@@ -760,36 +724,21 @@ void msDrawMarkerSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, 
     x = p->x + ox - (rect.maxx - rect.minx)/2 - rect.minx;
     y = p->y + oy - rect.maxy + (rect.maxy - rect.miny)/2;  
 
-   // ============== MOD BY DHC MAR 14, 2003 -- Can we get outline color (and rotation) for truetype symbols?
-   if( oc >= 0 ) {
-#ifdef USE_GD_TTF
-      error = gdImageStringTTF(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y-1, symbol->character);
-#else
+    // ============== MOD BY DHC MAR 14, 2003 -- Can we get outline color (and rotation) for truetype symbols?
+    if( oc >= 0 ) {
       error = gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y-1, symbol->character);
-#endif
       if(error) {
 	msSetError(MS_TTFERR, error, "msDrawMarkerSymbolGD()");
 	return;
       }
 
-#ifdef USE_GD_TTF
-      gdImageStringTTF(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y+1, symbol->character);
-      gdImageStringTTF(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y+1, symbol->character);
-      gdImageStringTTF(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y-1, symbol->character);
-#else
       gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x-1, y+1, symbol->character);
       gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y+1, symbol->character);
       gdImageStringFT(img, bbox, ((symbol->antialias)?(oc):-(oc)), font, size, 0, x+1, y-1, symbol->character);
-#endif
-   }
-   // END OF DHC MOD
+    }
+    // END OF DHC MOD
 
-#ifdef USE_GD_TTF
-    msGDImageStringTTF(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
-#else
     gdImageStringFT(img, bbox, ((symbol->antialias)?(fc):-(fc)), font, size, 0, x, y, symbol->character);
-#endif
-
 #endif
 
     break;
@@ -1084,7 +1033,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE):    
     
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 
@@ -1099,11 +1048,7 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
     x = -rect.minx;
     y = -rect.miny;
 
-#ifdef USE_GD_TTF
-    msGDImageStringTTF(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
-#else
     gdImageStringFT(tile, bbox, ((symbol->antialias)?(tile_fc):-(tile_fc)), font, size, 0, x, y, symbol->character);
-#endif    
 
     gdImageSetTile(img, tile);
     msImageFilledPolygon(img,p,gdTiled);
@@ -1265,7 +1210,7 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     size = MS_MAX(size, label->minsize);
     size = MS_MIN(size, label->maxsize);
 
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
     if(!fontset) {
       msSetError(MS_TTFERR, "No fontset defined.", "msDrawTextGD()");
       return(-1);
@@ -1284,46 +1229,26 @@ int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *labe
     }
 
     if(label->outlinecolor.pen >= 0) { /* handle the outline color */
-#ifdef USE_GD_TTF
-      error = msGDImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);
-#else
       error = gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y-1, string);
-#endif
       if(error) {
 	msSetError(MS_TTFERR, error, "msDrawTextGD()");
 	return(-1);
       }
 
-#ifdef USE_GD_TTF
-      msGDImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
-      msGDImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
-      msGDImageStringTTF(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
-#else
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x-1, y+1, string);
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y+1, string);
       gdImageStringFT(img, bbox, ((label->antialias)?(label->outlinecolor.pen):-(label->outlinecolor.pen)), font, size, angle_radians, x+1, y-1, string);
-#endif
-
     }
 
     if(label->shadowcolor.pen >= 0) { /* handle the shadow color */
-#ifdef USE_GD_TTF
-      error = msGDImageStringTTF(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
-#else
       error = gdImageStringFT(img, bbox, ((label->antialias)?(label->shadowcolor.pen):-(label->shadowcolor.pen)), font, size, angle_radians, x+label->shadowsizex, y+label->shadowsizey, string);
-#endif
       if(error) {
 	msSetError(MS_TTFERR, error, "msDrawTextGD()");
 	return(-1);
       }
     }
 
-#ifdef USE_GD_TTF
-    msGDImageStringTTF(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
-#else
     gdImageStringFT(img, bbox, ((label->antialias)?(label->color.pen):-(label->color.pen)), font, size, angle_radians, x, y, string);
-#endif
-
 #else
     msSetError(MS_TTFERR, "TrueType font support is not available.", "msDrawTextGD()");
     return(-1);
@@ -1609,16 +1534,13 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map)
 */
 
 int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format )
-
 {
-    FILE *stream;
+  FILE *stream;
 
-#if GD2_VERS > 1
-    if( format->imagemode == MS_IMAGEMODE_RGBA )
-        gdImageSaveAlpha( img, 1 );
-    else if( format->imagemode == MS_IMAGEMODE_RGB )
-        gdImageSaveAlpha( img, 0 );
-#endif
+  if( format->imagemode == MS_IMAGEMODE_RGBA )
+    gdImageSaveAlpha( img, 1 );
+  else if( format->imagemode == MS_IMAGEMODE_RGB )
+    gdImageSaveAlpha( img, 0 );
 
   if(filename != NULL && strlen(filename) > 0) {
     stream = fopen(filename, "wb");
@@ -1705,30 +1627,7 @@ void msFreeImageGD(gdImagePtr img)
   gdImageDestroy(img);
 }
 
-/**
- * This is a cover version of gdImageStringTTF() used to ensure locking
- * is used.  It seems something in this function is *not* threadsafe.
- */
-
-char *msGDImageStringTTF(gdImage *im, int *brect, int fg, char *fontlist,
-                         double ptsize, double angle, int x, int y, 
-                         char *string)
-
-{
-    char *result;
-
-    msAcquireLock( TLOCK_TTF );
-    result = gdImageStringTTF( im, brect, fg, fontlist, ptsize, angle,
-                               x, y, string );
-    msReleaseLock( TLOCK_TTF );
-
-    return result;
-}
-
-#if GD2_VERS > 1
-static void
-msFixedImageCopy (gdImagePtr dst, gdImagePtr src, 
-                  int dstX, int dstY, int srcX, int srcY, int w, int h)
+static void msFixedImageCopy (gdImagePtr dst, gdImagePtr src,  int dstX, int dstY, int srcX, int srcY, int w, int h)
 {
     int x, y;
 
@@ -1763,11 +1662,7 @@ msFixedImageCopy (gdImagePtr dst, gdImagePtr src,
     return;
 }
 
-void
-msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
-                  int dstX, int dstY, int srcX, int srcY, int w, int h,
-                  int pct)
-
+void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct)
 {
     int x, y;
 
@@ -1830,4 +1725,3 @@ msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
     gdImageAlphaBlending( dst, 0 );
 }
 
-#endif /* if GD2_VERS > 1 */

@@ -129,6 +129,7 @@ dnl We don't want LIBS updated by all the GD stuff, so we save it and
 dnl restore later.
 
 ms_saved_LIBS="$LIBS"
+IS_GD2="false";
 
 dnl Clear some cache variables
 unset ac_cv_lib_gd_gdImageCreate
@@ -137,7 +138,6 @@ unset ac_cv_lib_gd_gdImageGif
 unset ac_cv_lib_gd_gdImagePng
 unset ac_cv_lib_gd_gdImageJpeg
 unset ac_cv_lib_gd_gdImageWBMP
-unset ac_cv_lib_gd_gdImageStringTTF
 unset ac_cv_lib_gd_gdImageStringFT
 unset ac_cv_lib_gd_gdImageGifPtr
 unset ac_cv_lib_c_gdImageCreate
@@ -146,21 +146,17 @@ unset ac_cv_lib_c_gdImageGif
 unset ac_cv_lib_c_gdImagePng
 unset ac_cv_lib_c_gdImageJpeg
 unset ac_cv_lib_c_gdImageWBMP
-unset ac_cv_lib_c_gdImageStringTTF
 unset ac_cv_lib_c_gdImageStringFT
 unset ac_cv_lib_c_gdImageGifPtr
 
-AC_CHECKING(which version of GD to use...)
+AC_CHECKING(for GD 2.x...)
 AC_ARG_WITH(gd,
 [  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
                           install dir).],,)
 
 if test "$with_gd" = "no" ; then
-
-  AC_MSG_ERROR(gd library cannot be disabled)
-
+  AC_MSG_ERROR(GD library cannot be disabled)
 elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
-
   dnl
   dnl --with-gd was specified explicitly... try to establish which version
   dnl           of GD this is
@@ -181,34 +177,42 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   test -f $GD_DIR/_libs/libgd.so -o -f $GD_DIR/_libs/libgd.sl && GD_LIBDIR="$GD_DIR/_libs"
   test -f $GD_DIR/libgd.so -o -f $GD_DIR/libgd.sl && GD_LIBDIR="$GD_DIR"
 
-  if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then
+  dnl make sure it is GD 2.x
+  AC_CHECK_LIB(gd, gdImageCreateTrueColor,IS_GD2="true")
+
+  if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
-      AC_MSG_RESULT([        using libgd from $GD_LIB])
+      AC_MSG_RESULT([        using libgd 2.x from $GD_LIB])
       AC_ADD_RUNPATH("$GD_LIBDIR")
   else
-      AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure gd is compiled before calling configure.")
+      AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.x is compiled before calling configure.")
   fi
-
 else
-
-  dnl  --with-gd specified without a DIR, look for gd in system dirs
-  dnl  /usr or /usr/local
+  dnl  --with-gd specified without a DIR, look for gd in system dirs /usr or /usr/local
+  FOUND_GD="false"
   for GD_DIR in /usr /usr/local
   do
     test -f $GD_DIR/include/gd.h && GD_INCLUDE="$GD_DIR/include"
     test -f $GD_DIR/lib/libgd.a && GD_LIBDIR="$GD_DIR/lib"
     test -f $GD_DIR/lib/libgd.so -o -f $GD_DIR/lib/libgd.sl && GD_LIBDIR="$GD_DIR/lib"
 
-    if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" ; then
+    dnl make sure it is GD 2.x
+    AC_CHECK_LIB(gd, gdImageCreateTrueColor, IS_GD2="true")
+
+    if test -n "$GD_INCLUDE" -a -n "$GD_LIBDIR" -a "$IS_GD2" = "true"; then
       GD_INC=-I$GD_INCLUDE
       GD_LIB="-L$GD_LIBDIR -lgd"
-      AC_MSG_RESULT([        using libgd from system libs.])
+      AC_MSG_RESULT([        using libgd 2.x from system libs.])
       AC_ADD_RUNPATH("$GD_LIBDIR")
-      break
+      FOUND_GD="true"
+      break;
     fi
   done
 
+  if test "$FOUND_GD" = "false" ; then
+    AC_MSG_ERROR("Could not find gd.h or libgd.a/libgd.so in $GD_DIR.  Make sure GD 2.x is compiled before calling configure.")
+  fi
 fi
 
 dnl ---------------------------------------------------------------------
@@ -224,19 +228,12 @@ unset ac_cv_lib_freetype_FT_Init_FreeType
 unset ac_cv_lib_ttf_TT_Init_FreeType
 
 AC_ARG_WITH(freetype,
-[  --with-freetype=DIR     GD: Specify where FreeType is installed (DIR is path
-                              to FreeType 2.x freetype-config program or 
-                              FreeType 1.x/2.x install dir).],
+[  --with-freetype=DIR     GD: Specify where FreeType 2.x is installed (DIR is path
+                              to freetype-config program or install dir).],
     FT_DIR=$withval,FT_DIR='')
 
-AC_ARG_ENABLE(force-freetype1,
-[  --enable-force-freetype1 GD: Use this to force detection of freetype1 over 
-                              freetype2 on systems which have both versions
-                              installed in system libs such as RH7.1
-                              (By default, freetype2 is detected first)],,)
- 
 AC_EXPAND_PATH($FT_DIR, FT_DIR)
-AC_CHECKING(where FreeType is installed...)
+AC_CHECKING(where FreeType 2.x is installed...)
 FT_LIB=''
 FT_BIN=''
 FT_TYPE=''
@@ -257,50 +254,28 @@ if test -n "$FT_BIN" ; then
   AC_ADD_RUNPATH("$FT_LIBDIR")
 
 else
-
   dnl try freetype 2.x install lib name
   test -f $FT_DIR/lib/libfreetype.a -o -f $FT_DIR/lib/libfreetype.so -o -f $FT_DIR/lib/libfreetype.sl && FT_LIBDIR="$FT_DIR/lib"
   test -f $FT_DIR/libfreetype.a -o -f $FT_DIR/libfreetype.so -o -f $FT_DIR/libfreetype.sl && FT_LIBDIR="$FT_DIR"
 
   if test -n "$FT_LIBDIR" ; then
-     FT_TYPE="-lfreetype"
-  else
-
-    dnl try freetype 1.x install lib name
-    test -f $FT_DIR/lib/libttf.a -o -f $FT_DIR/lib/libttf.so -o -f $FT_DIR/lib/libttf.sl && FT_LIBDIR="$FT_DIR/lib"
-    test -f $FT_DIR/libttf.a -o -f $FT_DIR/libttf.so -o -f $FT_DIR/libttf.sl && FT_LIBDIR="$FT_DIR"
-    if test -n "$FT_LIBDIR" ; then
-        FT_TYPE="-lttf"
-    fi
+     FT_TYPE="-lfreetype"  
   fi
 fi
 
 if test -n "$FT_LIBDIR" -a -z "$FT_BIN" ; then
-
   FT_LIB="-L$FT_LIBDIR $FT_TYPE"
   AC_MSG_RESULT([        using libfreetype from $FT_LIB])
   AC_ADD_RUNPATH("$FT_LIBDIR")
-
 else
-
-  dnl check for lib in system libs
-
-  if test "$enable_force_freetype1" = "yes" ; then
-    dnl check for freetype1 first
-    AC_CHECK_LIB(ttf, TT_Init_FreeType, FT_LIB="-lttf",
-        AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",,) )
-  else
-    dnl check for freetype2 first
-    AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",
-        AC_CHECK_LIB(ttf, TT_Init_FreeType, FT_LIB="-lttf",,) )
-  fi
+  dnl check for lib in system libs  
+  AC_CHECK_LIB(freetype, FT_Init_FreeType, FT_LIB="-lfreetype",,)
 
   if test -n "$FT_LIB" ; then
     AC_MSG_RESULT([        using libfreetype $FT_LIB from system libs.])
   else
     AC_MSG_RESULT([        freetype-config or libfreetype cannot be found, possibly needed for GD])
   fi
-
 fi
 
 
@@ -452,27 +427,21 @@ if test -n "$with_gd" -a "$with_gd" != "yes" ; then
   AC_CHECK_LIB($GD_CHECKLIB, gdImageJpeg, GD_DEF="$GD_DEF -DUSE_GD_JPEG",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
   AC_CHECK_LIB($GD_CHECKLIB, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
-  dnl Check for Freetype 2 support
-  GD_FT_FOUND=no
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-
-  dnl If we can't find Freetype 2 in GD then check for Freetype 1
-  if test "$GD_FT_FOUND" = "no" ; then
-    AC_CHECK_LIB($GD_CHECKLIB, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
-  fi
-
-  dnl For GD 1.2, x/y in buffers are swapped.
-  AC_CHECK_LIB($GD_CHECKLIB, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY" , $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+  dnl check for Freetype 2.x support  
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageStringFT, GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   dnl gdImageGifPtr is there only in GIF-patched GD versions
   AC_CHECK_LIB($GD_CHECKLIB, gdImageGifPtr,GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
+
+  dnl check for antialiased drawing (gd 2.0.12 and higher)
+  AC_CHECK_LIB($GD_CHECKLIB, gdImageSetAntiAliased, GD_DEF="$GD_DEF -DGD_USE_ANTIALIAS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
 
 else
 
   dnl
-  dnl --width-gd was not given... then look in system libs
+  dnl --with-gd was not given... then look in system libs
   dnl
 
   dnl Make sure GD is at least there!
@@ -488,25 +457,18 @@ else
   AC_CHECK_LIB(gd, gdImageWBMP, GD_DEF="$GD_DEF -DUSE_GD_WBMP",, $GD_LIB $GD_XTRA_LIBS)
 
   dnl Check for Freetype 2 support
-  GD_FT_FOUND=no
-  AC_CHECK_LIB(gd, gdImageStringFT, GD_FT_FOUND="yes";GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_LIB $GD_XTRA_LIBS)
-
-  dnl If we can't find Freetype 2 in GD then check for Freetype 1
-  if test "$GD_FT_FOUND" = "no" ; then
-    AC_CHECK_LIB(gd, gdImageStringTTF, GD_DEF="$GD_DEF -DUSE_GD_TTF",, $GD_LIB $GD_XTRA_LIBS)
-  fi
-
-  dnl For GD 1.2, x/y in buffers are swapped.
-  AC_CHECK_LIB(gd, gdImageString16, , GD_DEF="$GD_DEF -DUSE_GD_SWAP_XY", $GD_LIB $GD_XTRA_LIBS)
+  AC_CHECK_LIB(gd, gdImageStringFT, GD_DEF="$GD_DEF -DUSE_GD_FT",, $GD_LIB $GD_XTRA_LIBS)
 
   dnl gdImageGifPtr is there only in GIF-patched GD versions
   AC_CHECK_LIB(gd, gdImageGifPtr, GD_DEF="$GD_DEF -DGD_HAS_GDIMAGEGIFPTR",, $GD_LIB $GD_XTRA_LIBS)
+
+  dnl check for antialiased drawing (gd 2.0.12 and higher)
+  AC_CHECK_LIB(gd, gdImageSetAntiAliased, GD_DEF="$GD_DEF -DGD_USE_ANTIALIAS",, $GD_STATIC $GD_LIB $GD_XTRA_LIBS)
 
   if test -n "$GD_DEF" ; then
       GD_LIB="-lgd $GD_LIB"
       AC_MSG_RESULT([        using GD ($GD_DEF) from system libs.])
   fi
-
 fi
 
 GD_LIB="$GD_LIB $GD_XTRA_LIBS"

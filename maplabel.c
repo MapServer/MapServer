@@ -141,7 +141,7 @@ int msFreeFontSet(fontSetObj *fontset)
 
 int msLoadFontSet(fontSetObj *fontset, mapObj *map)
 {
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH];
   char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
@@ -234,7 +234,7 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
   int size;
 
   if(label->type == MS_TRUETYPE) {
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
     int bbox[8];
     char *error=NULL, *font=NULL;
 
@@ -245,21 +245,16 @@ int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fon
     font = msLookupHashTable(fontset->fonts, label->font);
     if(!font) {
       if(label->font) 
-          msSetError(MS_TTFERR, "Requested font (%s) not found.", 
-                     "msGetLabelSize()", label->font);
+        msSetError(MS_TTFERR, "Requested font (%s) not found.", "msGetLabelSize()", label->font);
       else
-          msSetError(MS_TTFERR, "Requested font (NULL) not found.", 
-                     "msGetLabelSize()" );
+        msSetError(MS_TTFERR, "Requested font (NULL) not found.", "msGetLabelSize()");
       return(-1);
     }
 
-#ifdef USE_GD_TTF
-    error = msGDImageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, string);
-#else
+
     error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, string);
-#endif
     if(error) {
-        msSetError(MS_TTFERR, error, "msGetLabelSize()");
+      msSetError(MS_TTFERR, error, "msGetLabelSize()");
       return(-1);
     }
 
@@ -482,7 +477,7 @@ int intersectLabelPolygons(shapeObj *p1, shapeObj *p2) {
 
 int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
   return(0);
 #else
   msSetError(MS_TTFERR, "TrueType font support is not available.", "msImageTruetypeArrow()");
@@ -492,7 +487,7 @@ int msImageTruetypeArrow(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
 
 int msImageTruetypePolyline(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor)
 {
-#if defined (USE_GD_FT) || defined (USE_GD_TTF)
+#ifdef USE_GD_FT
   int i,j;
   double theta, length, current_length;
   labelObj label;

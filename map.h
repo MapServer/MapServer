@@ -56,7 +56,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "3.7 (development)"
+#define MS_VERSION "4.0 (development)"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
@@ -1225,9 +1225,6 @@ int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
                        int dstX, int dstY, int srcX, int srcY, int w, int h,
                        int pct);
-char *msGDImageStringTTF(gdImage *im, int *brect, int fg, char *fontlist,
-                         double ptsize, double angle, int x, int y, 
-                         char *string);
 
 // various JOIN functions (in mapjoin.c)
 int msJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
