@@ -1431,7 +1431,7 @@ int initLayer(layerObj *layer)
   layer->ogrlayerinfo = layer->sdelayer = NULL;
 
   layer->items = NULL;
-  layer->itemindexes = NULL;
+  layer->iteminfo = NULL;
   layer->numitems = 0;
 
   layer->resultcache= NULL;
@@ -1472,9 +1472,6 @@ void freeLayer(layerObj *layer) {
   if(layer->features)
     freeFeatureList(layer->features);
 
-  if(layer->items) msFreeCharArray(layer->items, layer->numitems);
-  if(layer->itemindexes) free(layer->itemindexes);
-  
   if(layer->resultcache) {    
     free(layer->resultcache->results);
     free(layer->resultcache);

@@ -495,7 +495,7 @@ typedef struct {
   // attribute/classification handling components
   char **items;
   int numitems;
-  int *itemindexes;
+  void *iteminfo; // connection specific information necessary to retrieve values
 
   #ifndef SWIG  
   expressionObj filter; // connection specific attribute filter
