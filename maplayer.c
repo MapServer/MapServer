@@ -101,6 +101,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
       layer->shpfile.lastshape = i;
 
       if(i == layer->shpfile.numshapes) return(MS_DONE); // nothing else to read
+
       filter_passed = MS_TRUE;  // By default accept ANY shape
       if(layer->numitems > 0 && layer->iteminfo) {
         values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);

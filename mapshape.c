@@ -1120,63 +1120,69 @@ int msTiledSHPNextShape(layerObj *layer, shapeObj *shape)
   int i, status, filter_passed;
   char *filename, tilename[MS_PATH_LENGTH];
   char **values=NULL;
- 
-  i = layer->shpfile.lastshape + 1;
-  while(i<layer->shpfile.numshapes && !msGetBit(layer->shpfile.status,i)) i++; // next "in" shape
 
-  if(i == layer->shpfile.numshapes) { // next tile
-    msSHPCloseFile(&(layer->shpfile));
-
-    // position the source to the NEXT shapefile
-    for(i=(layer->tileshpfile.lastshape + 1); i<layer->tileshpfile.numshapes; i++) {
-      if(msGetBit(layer->tileshpfile.status,i)) {
-	if(!layer->data) // assume whole filename is in attribute field
-	  filename = (char*)msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex);
-	else {  
-	  sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
-	  filename = tilename;
-	}
-	
-	if(strlen(filename) == 0) continue; // check again
-		
-	// open the shapefile
+  do {
+    i = layer->shpfile.lastshape + 1;
+    while(i<layer->shpfile.numshapes && !msGetBit(layer->shpfile.status,i)) i++; // next "in" shape
+    
+    if(i == layer->shpfile.numshapes) { // next tile
+      msSHPCloseFile(&(layer->shpfile));
+      
+      // position the source to the NEXT shapefile
+      for(i=(layer->tileshpfile.lastshape + 1); i<layer->tileshpfile.numshapes; i++) {
+	if(msGetBit(layer->tileshpfile.status,i)) {
+	  if(!layer->data) // assume whole filename is in attribute field
+	    filename = (char*)msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex);
+	  else {  
+	    sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
+	    filename = tilename;
+	  }
+	  
+	  if(strlen(filename) == 0) continue; // check again
+	  
+	  // open the shapefile
 #ifndef IGNORE_MISSING_DATA
-	if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
+	  if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) return(MS_FAILURE);
 #else
-	if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) continue; // check again
+	  if(msSHPOpenFile(&(layer->shpfile), "rb", layer->tileshpfile.shapepath, filename) == -1) continue; // check again
 #endif
-	
-	status = msSHPWhichShapes(&(layer->shpfile), layer->tileshpfile.statusbounds);
-	if(status == MS_DONE)
-	  continue;
-	else if(status != MS_SUCCESS)
-	  return(MS_FAILURE);
+	  
+	  status = msSHPWhichShapes(&(layer->shpfile), layer->tileshpfile.statusbounds);
+	  if(status == MS_DONE)
+	    continue;
+	  else if(status != MS_SUCCESS)
+	    return(MS_FAILURE);
+	  
+	  msDebug("next tile is %s (%d shapes)\n", filename, layer->shpfile.numshapes);
+	  layer->tileshpfile.lastshape = i;
+	  break;
+	}
+      }
+      
+      if(i == layer->tileshpfile.numshapes) 
+	return(MS_DONE); // no more tiles
+      else
+	continue; // back to top of the do-while loop
+    }
+    
+    layer->shpfile.lastshape = i;
 
-	msDebug("next tile is %s (%d shapes)\n", filename, layer->shpfile.numshapes);
-	layer->tileshpfile.lastshape = i;
-	break;
+    filter_passed = MS_TRUE;  // By default accept ANY shape
+    if(layer->numitems > 0 && layer->iteminfo) {
+      values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
+      if(!values) return(MS_FAILURE);      
+      if ((filter_passed = msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems)) != MS_TRUE) {
+	msFreeCharArray(values, layer->numitems);
+	values = NULL;
       }
     }
-
-    if(i == layer->tileshpfile.numshapes) 
-      return(MS_DONE); // no more tiles
-    else
-      return(msTiledSHPNextShape(layer, shape)); // next shape
-  }
-
-  layer->shpfile.lastshape = i;
-
-  if(layer->numitems > 0 && layer->iteminfo) {
+    
+    shape->tileindex = layer->tileshpfile.lastshape;
+    
+    msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
+    shape->values = values;
     shape->numvalues = layer->numitems;
-    shape->values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->iteminfo, layer->numitems);
-    if(!shape->values) return(MS_FAILURE);
-
-    if(msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems) != MS_TRUE) return(msTiledSHPNextShape(layer, shape)); // next shape
-  }
-
-  shape->tileindex = layer->tileshpfile.lastshape;
-
-  msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
+  } while(!filter_passed);  // Loop until both spatial and attribute filters match 
 
   return(MS_SUCCESS);
 }
