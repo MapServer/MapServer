@@ -763,7 +763,8 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record);
 int msSDELayerGetExtent(layerObj *layer, rectObj *extent);
 int msSDELayerInitItemInfo(layerObj *layer);
 void msSDELayerFreeItemInfo(layerObj *layer);
-
+char *msSDELayerGetSpatialColumn(layerObj *layer);
+char *msSDELayerGetRowIDColumn();
 
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
 

@@ -178,8 +178,6 @@ gdImagePtr msDrawMap(mapObj *map)
   layerObj *lp=NULL;
   int status;
 
-  msDebug("Drawing map...\n");
-
   if(map->width == -1 && map->height == -1) {
     msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
     return(NULL);
@@ -797,8 +795,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 
   featureListNodeObjPtr shpcache=NULL, current=NULL;
 
-  msDebug("Running msDrawLayer... (%s)\n", layer->name);
-
   if(layer->type == MS_LAYER_RASTER) return(msDrawRasterLayer(map, layer, img));
   if(layer->type == MS_LAYER_QUERY) return(MS_SUCCESS);
 
@@ -818,19 +814,13 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       annotate = MS_FALSE;
   }
 
-  msDebug("Working on layer %s.\n", layer->name);
-  
   // open this layer
   status = msLayerOpen(layer, map->shapepath);
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
-  msDebug("Layer opened.\n");
-
   // build item list
   status = msLayerWhichItems(layer, MS_TRUE, annotate);
   if(status != MS_SUCCESS) return(MS_FAILURE);
-
-  msDebug("Item list built.\n");
 
   // identify target shapes
   searchrect = map->extent;
@@ -840,13 +830,10 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 #endif
   status = msLayerWhichShapes(layer, searchrect);
   if(status == MS_DONE) { // no overlap
-    msDebug("Oops, no overlap.\n");
     msLayerClose(layer);
     return(MS_SUCCESS);
   } else if(status != MS_SUCCESS)
     return(MS_FAILURE);
-
-  msDebug("Which shapes completed.\n");
 
   // step through the target shapes
   msInitShape(&shape);
@@ -896,9 +883,6 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   }
 
   msLayerClose(layer);
-
-  msDebug("Done msDrawLayer... (%s)\n", layer->name);
-
   return(MS_SUCCESS);
 }
 

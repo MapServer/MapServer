@@ -1800,14 +1800,12 @@ int main(int argc, char *argv[]) {
       case QUERYMAP:
 	switch(QueryCoordSource) {
 	case FROMIMGPNT:
-	  fprintf(stderr, "here (1) in mapserv...\n");
 	  setCoordinate();
 	  Map->extent = ImgExt; // use the existing image parameters
 	  Map->width = ImgCols;
 	  Map->height = ImgRows;
 	  Map->scale = msCalculateScale(Map->extent, Map->units, Map->width, Map->height);	 	  
 	  if((status = msQueryByPoint(Map, QueryLayerIndex, MS_SINGLE, MapPnt, 0)) != MS_SUCCESS) writeError();
-	  fprintf(stderr, "here (2) in mapserv...\n");
 	  break;
 	  
 	case FROMUSERPNT: /* only a buffer makes sense, DOES IT? */	
@@ -1827,8 +1825,6 @@ int main(int argc, char *argv[]) {
 	break;
       } // end mode switch
 
-      fprintf(stderr, "here (3) in mapserv...\n");
-      
       if(UseShapes)
 	setExtentFromShapes();
 
@@ -1875,7 +1871,7 @@ int main(int argc, char *argv[]) {
 	  }
 	}
       }
-      
+
       returnQuery();
 
       if(SaveQuery) {

@@ -429,14 +429,24 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
     }
   }
 
-  if(nt == 0) return(MS_SUCCESS);
-
-  layer->items = (char **)calloc(nt, sizeof(char *)); // should be more than enough space
-  if(!layer->items) {
-    msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
-    return(MS_FAILURE);
+  if(layer->connectiontype == MS_SDE) {
+    layer->items = (char **)calloc(nt+2, sizeof(char *)); // should be more than enough space, SDE always needs a couple of additional items
+    if(!layer->items) {
+      msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+      return(MS_FAILURE);
+    }
+    layer->items[0] = msSDELayerGetRowIDColumn(); // row id
+    layer->items[1] = msSDELayerGetSpatialColumn(layer);
+    layer->numitems = 2;
+  } else {
+    if(nt == 0) return(MS_SUCCESS);
+    layer->items = (char **)calloc(nt, sizeof(char *)); // should be more than enough space
+    if(!layer->items) {
+      msSetError(MS_MEMERR, NULL, "msLayerWhichItems()");
+      return(MS_FAILURE);
+    }
+    layer->numitems = 0;
   }
-  layer->numitems = 0;
 
   if(classify && layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
   if(classify && layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
@@ -445,7 +455,7 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
   if(annotate && layer->labelangleitem) layer->labelangleitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
   
   if(classify && layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));
-   
+
   for(i=0; i<layer->numclasses; i++) {
     if(classify && layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
     if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].text));

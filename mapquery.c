@@ -402,7 +402,6 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
     if(lp->status == MS_OFF) continue;
 
-    msDebug("layer %d, scale=%g, minscale=%g, maxscale=%g\n",l,map->scale, lp->minscale, lp->maxscale);
     if(map->scale > 0) {
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
@@ -523,16 +522,12 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   rectObj rect, searchrect;
   shapeObj shape;
 
-  msDebug("in msQueryByPoint()...\n");
-
   msInitShape(&shape);
 
   if(qlayer < 0 || qlayer >= map->numlayers)
     start = map->numlayers-1;
   else
     start = stop = qlayer;
-
-  msDebug("start = %d, stop = %d\n", start, stop);
 
   for(l=start; l>=stop; l--) {
     lp = &(map->layers[l]);
@@ -552,8 +547,6 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
       }
     }
     if(status != MS_SUCCESS) continue;
-
-    msDebug("working on %s\n", lp->name);
 
     if(buffer <= 0) { // use layer tolerance
       if(lp->toleranceunits == MS_PIXELS)
@@ -645,8 +638,6 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     if((lp->resultcache->numresults > 0) && (mode == MS_SINGLE)) // no need to search any further
       break;
   } // next layer
-
-  msDebug("done searching\n");
 
   // was anything found?
   for(l=start; l>=stop; l--) {    
