@@ -411,6 +411,20 @@ class SaveToStringTestCase(unittest.TestCase):
         else:
             assert 1
 
+class DrawLargeJPEGTestCase(unittest.TestCase):
+    def setUp(self):
+        self.mapobj1 = mapscript.mapObj(testMapfile)
+    def tearDown(self):
+        self.mapobj1 = None
+    def testDrawLargeJPEG(self):
+        self.mapobj1.width = 1000
+        self.mapobj1.height = 800
+        self.mapobj1.setImageType('JPEG')
+        image = self.mapobj1.draw()
+        assert image.height == 800
+        assert image.width == 1000
+        image.save('testLargeJPEG.jpg')
+
 class NoFontSetTestCase(unittest.TestCase):
     def setUp(self):
         self.mapobj1 = mapscript.mapObj('')
