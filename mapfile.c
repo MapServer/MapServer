@@ -414,8 +414,7 @@ static void writeJoin(joinObj *join, FILE *stream)
 /* inserts a feature at the end of the list, can create a new list */
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *shape)
 {
-  featureListNodeObjPtr node, current, previous;
-  int i=0;
+  featureListNodeObjPtr node;
 
   if((node = (featureListNodeObjPtr) malloc(sizeof(featureListNodeObj))) == NULL) {
     msSetError(MS_MEMERR, NULL, "insertFeature()");
@@ -425,21 +424,25 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *s
   msInitShape(&(node->shape));
   if(msCopyShape(shape, &(node->shape)) == -1) return(NULL);
 
+  /* AJS - alans@wunderground.com O(n^2) -> O(n) conversion, keep a pointer to the end */
+
+  // set the tailifhead to NULL, since it is only set for the head of the list
+  node->tailifhead = NULL;
   node->next = NULL;
 
-  previous = NULL;
-  current = *list;
-  while(current != NULL) {
-    previous = current;
-    current = current->next;
-    i++;
+  // if we are at the head of the list, we need to set the list to node, before pointing tailifhead somewhere 
+  if(*list == NULL) {
+    *list=node;
+  } else {      
+    if((*list)->tailifhead!=NULL) // this should never be NULL, but just in case
+      (*list)->tailifhead->next=node; // put the node at the end of the list
   }
- 
-  if(previous == NULL) {
-    *list = node;
-  } else
-    previous->next = node;
 
+  /* repoint the head of the list to the end  - our new element
+     this causes a loop if we are at the head, be careful not to 
+     walk in a loop */
+  (*list)->tailifhead = node;
+ 
   return(node); // a pointer to last object in the list
 }
 

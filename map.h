@@ -227,6 +227,7 @@ typedef struct {
 typedef struct listNode {
   shapeObj shape;
   struct listNode *next;
+  struct listNode *tailifhead; // this is the tail node in the list, if this is the head element, otherwise NULL
 } featureListNodeObj;
 
 typedef featureListNodeObj * featureListNodeObjPtr;
