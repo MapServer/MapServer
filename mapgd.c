@@ -260,9 +260,7 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
 {
   gdImagePtr brush;
 
-// this was checking for > 1, however I think this should be >= 1, since GD2_VERS = 1 also means GD2 usage
-  
-#if GD2_VERS >= 1
+#if GD2_VERS > 1
   if(!gdImageTrueColor(img)) {
     brush = gdImageCreate(width, height);
     if(style->backgroundcolor.pen >= 0)
