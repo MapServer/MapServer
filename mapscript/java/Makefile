@@ -17,7 +17,7 @@ CC=gcc
 # Set these to the values appropriate for your MapServer build- cut & paste from ../../perlvars
 #
 CCFLAGS=-DIGNORE_MISSING_DATA -DUSE_EPPL -DUSE_TIFF -DUSE_JPEG -DUSE_GD_TTF -DUSE_GD_GIF -DUSE_GD_PNG -DUSE_GD_JPEG -DUSE_GD_WBMP -DGD_HAS_GDIMAGEGIFPTR
-LDFLAGS=-L../.. -lmap -lgd -L/usr/local/lib -lgd -ljpeg -lttf -lpng -lz -ltiff -ljpeg -lfreetype -lpng -lz -ljpeg -lm
+LDFLAGS=-L../.. -lmap -lgd -L/usr/local/lib -lgd -ljpeg -lttf -lpng -lz -ltiff -ljpeg -lpng -lz -ljpeg -lm
 
 #
 # --- You shouldn't have to edit anything else. ---

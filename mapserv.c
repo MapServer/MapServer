@@ -656,6 +656,16 @@ void loadForm()
       continue;
     }
 
+    if(strcasecmp(msObj->ParamNames[i],"qitem") == 0) { // attribute to query on (optional)
+      QueryItem = strdup(msObj->ParamValues[i]);
+      continue;
+    }
+
+    if(strcasecmp(msObj->ParamNames[i],"qstring") == 0) { // attribute query string
+      QueryString = strdup(msObj->ParamValues[i]);
+      continue;
+    }
+
     if(strcasecmp(msObj->ParamNames[i],"slayer") == 0) { // layer to select (for feature based search)
       SelectLayer = strdup(msObj->ParamValues[i]);
       continue;
@@ -1092,9 +1102,9 @@ int main(int argc, char *argv[]) {
 	    setExtent(msObj); /* set user area of interest */
 
 	  if(msObj->Mode == ITEMFEATUREQUERY || msObj->Mode == ITEMFEATUREQUERYMAP) {
-	    if((status = msQueryByAttributes(msObj->Map, SelectLayerIndex, MS_SINGLE)) != MS_SUCCESS) writeError();
+	    if((status = msQueryByAttributes(msObj->Map, SelectLayerIndex, QueryItem, QueryString, MS_SINGLE)) != MS_SUCCESS) writeError();
 	  } else {
-	    if((status = msQueryByAttributes(msObj->Map, SelectLayerIndex, MS_MULTIPLE)) != MS_SUCCESS) writeError();
+	    if((status = msQueryByAttributes(msObj->Map, SelectLayerIndex, QueryItem, QueryString, MS_MULTIPLE)) != MS_SUCCESS) writeError();
 	  }
 
 	  if(msQueryByFeatures(msObj->Map, QueryLayerIndex, SelectLayerIndex) != MS_SUCCESS) writeError();
@@ -1159,9 +1169,9 @@ int main(int argc, char *argv[]) {
 	    setExtent(msObj); /* set user area of interest */
 
 	  if(msObj->Mode == ITEMQUERY || msObj->Mode == ITEMQUERYMAP) {
-	    if((status = msQueryByAttributes(msObj->Map, QueryLayerIndex, MS_SINGLE)) != MS_SUCCESS) writeError();
+	    if((status = msQueryByAttributes(msObj->Map, QueryLayerIndex, QueryItem, QueryString, MS_SINGLE)) != MS_SUCCESS) writeError();
 	  } else {
-	    if((status = msQueryByAttributes(msObj->Map, QueryLayerIndex, MS_MULTIPLE)) != MS_SUCCESS) writeError();
+	    if((status = msQueryByAttributes(msObj->Map, QueryLayerIndex, QueryItem, QueryString, MS_MULTIPLE)) != MS_SUCCESS) writeError();
           }
 
 	  break;
@@ -1219,7 +1229,7 @@ int main(int argc, char *argv[]) {
 	    for(i=0; i<msObj->SelectShape.numlines; i++) {
 	      for(j=0; j<msObj->SelectShape.line[i].numpoints; j++) {
 	        msObj->SelectShape.line[i].point[j].x = MS_IMAGE2MAP_X(msObj->SelectShape.line[i].point[j].x, msObj->Map->extent.minx, msObj->Map->cellsize);
-	        msObj->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_X(msObj->SelectShape.line[i].point[j].y, msObj->Map->extent.maxy, msObj->Map->cellsize);
+	        msObj->SelectShape.line[i].point[j].y = MS_IMAGE2MAP_Y(msObj->SelectShape.line[i].point[j].y, msObj->Map->extent.maxy, msObj->Map->cellsize);
 	      }
 	    }
 	  

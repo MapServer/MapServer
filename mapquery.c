@@ -336,11 +336,14 @@ int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex)
   return(MS_SUCCESS);
 }
 
-int msQueryByAttributes(mapObj *map, int qlayer, int mode)
+int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int mode)
 {
   layerObj *lp;
   int status;
   
+  int old_filtertype=-1;
+  char *old_filterstring=NULL, *old_filteritem=NULL;
+
   rectObj searchrect;
 
   shapeObj shape;
@@ -357,10 +360,21 @@ int msQueryByAttributes(mapObj *map, int qlayer, int mode)
     return(MS_FAILURE);
   }
 
-  if(!lp->filter.string) {
-    msSetError(MS_QUERYERR, "Requested layer has no filter defined.", "msQueryByAttributes()"); 
+  if(!qstring) {
+    msSetError(MS_QUERYERR, "No query expression defined.", "msQueryByAttributes()"); 
     return(MS_FAILURE);
   }
+
+  // save any previously defined filter
+  if(lp->filter.string) {
+    old_filtertype = lp->filter.type;
+    old_filterstring = strdup(lp->filter.string);
+    old_filteritem = strdup(lp->filteritem);
+  }
+
+  // apply the passed query parameters
+  lp->filteritem = strdup(qitem);
+  loadExpressionString(&(lp->filter), qstring);
 
   msInitShape(&shape);
 
@@ -435,7 +449,7 @@ int msQueryByAttributes(mapObj *map, int qlayer, int mode)
 
   if(status != MS_DONE) return(MS_FAILURE);
 
-  // the FILTER is just temporary and needs to be cleared here
+  // the FILTER set was just temporary, clean up here
   freeExpression(&(lp->filter));
   if(lp->filteritem) {
     free(lp->filteritem);
@@ -443,6 +457,17 @@ int msQueryByAttributes(mapObj *map, int qlayer, int mode)
     lp->filteritemindex = -1;
   }
   
+  // restore any previously defined filter
+  if(old_filterstring) {
+    lp->filter.type = old_filtertype;
+    lp->filter.string = strdup(old_filterstring);
+    free(old_filterstring);
+    if(old_filteritem) { 
+      lp->filteritem = strdup(old_filteritem);
+      free(old_filteritem);
+    }
+  }
+
   msLayerClose(lp);
 
   // was anything found? 

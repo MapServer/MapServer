@@ -65,7 +65,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 #endif // SWIGPYTHON
 
 //
-// class extensions for mapObj
+// class extensions for mapObj, need to figure out how to deal with Dan's extension to msLoadMap()...
 //
 %addmethods mapObj {
   mapObj(char *filename) {
@@ -456,8 +456,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msDrawLayer(map, self, image);    
   }
 
-  int queryByAttributes(mapObj *map, int mode) {
-    return msQueryByAttributes(map, self->index, mode);
+  int queryByAttributes(mapObj *map, char *qitem, char *qstring, int mode) {
+    return msQueryByAttributes(map, self->index, qitem, qstring, mode);
   }
 
   int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) {

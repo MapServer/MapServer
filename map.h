@@ -828,7 +828,7 @@ int msIntersectPolylines(shapeObj *line1, shapeObj *line2);
 int msSaveQuery(mapObj *map, char *filename); // in mapquery.c
 int msLoadQuery(mapObj *map, char *filename);
 int msQueryByIndex(mapObj *map, int qlayer, int tileindex, int shapeindex);
-int msQueryByAttributes(mapObj *map, int qlayer, int mode);
+int msQueryByAttributes(mapObj *map, int qlayer, char *qitem, char *qstring, int mode);
 int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer);
 int msQueryByRect(mapObj *map, int qlayer, rectObj rect);
 int msQueryByFeatures(mapObj *map, int qlayer, int slayer);

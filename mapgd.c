@@ -86,7 +86,6 @@ imageObj *msImageCreateGD(int width, int height, int imagetype,
     return NULL;
 }
 
-
 /* ---------------------------------------------------------------------------*/
 /*       Stroke an ellipse with a line symbol of the specified size and color */
 /* ---------------------------------------------------------------------------*/

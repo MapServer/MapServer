@@ -43,11 +43,12 @@ char *QueryLayer=NULL, *SelectLayer=NULL;
 int QueryLayerIndex=-1, SelectLayerIndex=-1;
 char *Item=NULL, *Value=NULL;
 
+char *QueryItem=NULL, *QueryString=NULL;
+
 int ShapeIndex=-1, TileIndex=-1;
 
 int QueryCoordSource=NONE;
 
 int ZoomSize=0; /* zoom absolute magnitude (i.e. > 0) */
-
 
 #endif /* MAPSERV_H */
