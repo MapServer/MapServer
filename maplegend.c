@@ -364,12 +364,13 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
     if(initLayer(&(map->layers[l]), map) == -1) return(-1);
     map->layers[l].name = strdup("__embed__legend");
     map->layers[l].type = MS_LAYER_ANNOTATION;
-    map->layers[l].status = MS_ON;
 
     if(initClass(&(map->layers[l].class[0])) == -1) return(-1);    
       //Update the layer order list with the layer's index.
     map->layerorder[l] = l;
   }
+
+  map->layers[l].status = MS_ON;
 
   map->layers[l].class[0].numstyles = 1;
   map->layers[l].class[0].styles[0].symbol = s;
@@ -381,6 +382,10 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
     msDrawMarkerSymbolGD(&map->symbolset, img, &point, &(map->layers[l].class[0].styles[0]), 1.0);
   else
     msAddLabel(map, l, 0, -1, -1, &point, " ", 1.0);
+
+  // Mark layer as deleted so that it doesn't interfere with html legends or
+  // with saving maps
+  map->layers[l].status = MS_DELETE;
 
   return(0);
 }
