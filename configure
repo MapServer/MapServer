@@ -1740,7 +1740,7 @@ fi
   fi
 
       GD_INC=-I$GD_DIR
-      GD_LIB="-L $GD_DIR -lgd"
+      GD_LIB="-L$GD_DIR -lgd"
       
   if test ""$GD_DIR"" != "/usr/lib"; then
     

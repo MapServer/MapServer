@@ -103,7 +103,7 @@ else
       MAKE_GD_CLEAN=gd_clean
       AC_EXPAND_PATH(gd-1.2, GD_DIR)
       GD_INC=-I$GD_DIR
-      GD_LIB="-L $GD_DIR -lgd"
+      GD_LIB="-L$GD_DIR -lgd"
       AC_ADD_RUNPATH("$GD_DIR")
       test -f $GD_DIR/Makefile.in && GD_MAKEFILE="$GD_DIR/Makefile"
       AC_MSG_RESULT([        using GD ($GD_DEF) from $GD_DIR.])
