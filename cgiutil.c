@@ -215,6 +215,7 @@ char *encode_url(char *data)
   char *hex = "0123456789ABCDEF";
   char *i, *j, *code;
   int   inc;
+  unsigned char ch;
 
   for (inc=0, i=data; *i!='\0'; i++)
     if (!isalnum(*i))
@@ -230,9 +231,10 @@ char *encode_url(char *data)
       else
       if (!isalnum(*i))
 	{
+	  ch = *i;
 	  *j++ = '%';
-	  *j++ = hex[*i/16];
-	  *j   = hex[*i%16];
+	  *j++ = hex[ch/16];
+	  *j   = hex[ch%16];
 	}
       else
 	*j = *i;
