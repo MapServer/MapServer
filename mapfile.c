@@ -1375,7 +1375,7 @@ int initLayer(layerObj *layer)
   layer->filteritem = NULL;
   layer->filteritemindex = -1;
 
-  layer->requires = label->labelrequires = NULL;
+  layer->requires = layer->labelrequires = NULL;
 
   return(0);
 }

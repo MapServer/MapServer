@@ -1148,9 +1148,9 @@ int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int ti
     msSHPCloseFile(&(layer->shpfile)); // close current tile
 
     if(!layer->data) // assume whole filename is in attribute field
-      filename = msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex);
+      filename = msDBFReadStringAttribute(layer->tileshpfile.hDBF, tile, layer->tileitemindex);
     else {  
-      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, i, layer->tileitemindex) , layer->data);
+      sprintf(tilename,"%s/%s", msDBFReadStringAttribute(layer->tileshpfile.hDBF, tile, layer->tileitemindex) , layer->data);
       filename = tilename;
     }
       
