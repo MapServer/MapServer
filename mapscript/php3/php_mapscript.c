@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.102  2002/04/09 14:49:53  assefa
+ * Add minscale/maxscale in the class object.
+ *
  * Revision 1.101  2002/04/01 17:42:26  dan
  * Added template member in legend object (P.Spencer)
  *
@@ -6390,6 +6393,9 @@ static long _phpms_build_class_object(classObj *pclass, int parent_map_id,
     _phpms_build_label_object(&(pclass->label), list, new_obj_ptr);
     _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR);
 
+    add_property_double(return_value,  "minscale", pclass->minscale);
+    add_property_double(return_value,  "maxscale", pclass->maxscale);
+    
     return class_id;
 }
 
@@ -6508,6 +6514,8 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_LONG(  "overlayminsize", self->overlayminsize)
     else IF_SET_LONG(  "overlaymaxsize", self->overlaymaxsize)
     else IF_SET_STRING("overlaysymbolname", self->overlaysymbolname)
+    else IF_SET_DOUBLE("minscale", self->minscale)
+    else IF_SET_DOUBLE("maxscale", self->maxscale)
     else IF_SET_STRING("template",      self->template)
     else
     {
