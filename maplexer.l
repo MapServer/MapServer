@@ -250,6 +250,7 @@ int msyyreturncomments = 0;
 <INITIAL,VALUE_STRING>circle                   { return(MS_LAYER_CIRCLE); }
 <INITIAL,VALUE_STRING>cl                       { return(MS_CL); }
 <INITIAL,VALUE_STRING>cr                       { return(MS_CR); }
+<INITIAL,VALUE_STRING>csv                      { return(MS_DB_CSV); }
 <INITIAL,VALUE_STRING>default		       { return(MS_DEFAULT); }
 <INITIAL,VALUE_STRING>dd                       { return(MS_DD); }
 <INITIAL>ellipse                               { return(MS_SYMBOL_ELLIPSE); }

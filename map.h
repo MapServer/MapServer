@@ -192,7 +192,7 @@ enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC,
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
 enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS };
-enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
+enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_CSV, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
 enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_MITER, MS_CJC_ROUND, MS_CJC_SQUARE, MS_CJC_TRIANGLE}; 
@@ -1265,11 +1265,6 @@ int msJoinConnect(layerObj *layer, joinObj *join);
 int msJoinPrepare(joinObj *join, shapeObj *shape);
 int msJoinNext(joinObj *join);
 int msJoinClose(joinObj *join);
-int msDBFJoinConnect(layerObj *layer, joinObj *join);
-int msDBFJoinPrepare(joinObj *join, shapeObj *shape);
-int msDBFJoinNext(joinObj *join);
-int msDBFJoinClose(joinObj *join);
-int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
 
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);

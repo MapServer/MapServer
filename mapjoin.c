@@ -1,11 +1,26 @@
 #include "map.h"
 
+int msDBFJoinConnect(layerObj *layer, joinObj *join);
+int msDBFJoinPrepare(joinObj *join, shapeObj *shape);
+int msDBFJoinNext(joinObj *join);
+int msDBFJoinClose(joinObj *join);
+int msDBFJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
+
+int msCSVJoinConnect(layerObj *layer, joinObj *join);
+int msCSVJoinPrepare(joinObj *join, shapeObj *shape);
+int msCSVJoinNext(joinObj *join);
+int msCSVJoinClose(joinObj *join);
+int msCSVJoinTable(layerObj *layer, joinObj *join, shapeObj *shape);
+
 // wrapper function for DB specific join functions
 int msJoinConnect(layerObj *layer, joinObj *join) 
 {
   switch(join->connectiontype) {
   case(MS_DB_XBASE):
     return msDBFJoinConnect(layer, join);
+    break;
+  case(MS_DB_CSV):
+    return msCSVJoinConnect(layer, join);
     break;
   default:
     break;
@@ -21,6 +36,9 @@ int msJoinPrepare(joinObj *join, shapeObj *shape)
   case(MS_DB_XBASE):
     return msDBFJoinPrepare(join, shape);
     break;
+  case(MS_DB_CSV):
+    return msCSVJoinPrepare(join, shape);
+    break;
   default:
     break;
   }
@@ -35,6 +53,9 @@ int msJoinNext(joinObj *join)
   case(MS_DB_XBASE):
     return msDBFJoinNext(join);
     break;
+  case(MS_DB_CSV):
+    return msCSVJoinNext(join);
+    break;
   default:
     break;
   }
@@ -48,6 +69,9 @@ int msJoinClose(joinObj *join)
   switch(join->connectiontype) {
   case(MS_DB_XBASE):
     return msDBFJoinClose(join);
+    break;
+  case(MS_DB_CSV):
+    return msCSVJoinClose(join);
     break;
   default:
     break;
@@ -207,6 +231,109 @@ int msDBFJoinClose(joinObj *join)
   if(joininfo->target) free(joininfo->target);
   free(joininfo);
   joininfo = NULL;
+
+  return(MS_SUCCESS);
+}
+
+//
+// CSV (comma separated value) join functions
+//
+typedef struct {
+  FILE *stream;
+  int fromindex, toindex;
+  char *target;
+  int nextrecord;
+} msCSVJoinInfo;
+
+int msCSVJoinConnect(layerObj *layer, joinObj *join) 
+{
+  int i;
+  char szPath[MS_MAXPATHLEN];
+  msCSVJoinInfo *joininfo;
+
+  if(join->joininfo) return(MS_SUCCESS); // already open
+    
+  // allocate a msCSVJoinInfo struct
+  joininfo = (msCSVJoinInfo *) malloc(sizeof(msCSVJoinInfo));
+  if(!joininfo) {
+    msSetError(MS_MEMERR, "Error allocating CSV table info structure.", "msCSVJoinConnect()");
+    return(MS_FAILURE);
+  }
+
+  // initialize any members that won't get set later on in this function
+  joininfo->target = NULL;
+  joininfo->nextrecord = 0;
+
+  join->joininfo = joininfo;
+
+  // open the CSV file
+  if((joininfo->stream = fopen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "r" )) == NULL) {
+    if((joininfo->stream = fopen( msBuildPath(szPath, layer->map->mappath, join->table), "r" )) == NULL) {     
+      msSetError(MS_IOERR, "(%s)", "msCSVJoinConnect()", join->table);   
+      return(MS_FAILURE);
+    }
+  }
+
+  // get "from" item index  
+  for(i=0; i<layer->numitems; i++) {
+    if(strcasecmp(layer->items[i],join->from) == 0) { // found it
+      joininfo->fromindex = i;
+      break;
+    }
+  }
+
+  if(i == layer->numitems) {
+    msSetError(MS_JOINERR, "Item %s not found in layer %s.", "msCSVJoinConnect()", join->from, layer->name); 
+    return(MS_FAILURE);
+  }
+
+  return(MS_SUCCESS);
+}
+
+int msCSVJoinPrepare(joinObj *join, shapeObj *shape) 
+{
+  msCSVJoinInfo *joininfo = join->joininfo;
+
+  if(!joininfo) {
+    msSetError(MS_JOINERR, "Join connection has not be created.", "msCSVJoinPrepare()"); 
+    return(MS_FAILURE);
+  }
+
+  if(!shape) {
+    msSetError(MS_JOINERR, "Shape to be joined is empty.", "msCSVJoinPrepare()"); 
+    return(MS_FAILURE);
+  }
+
+  if(!shape->values) {
+    msSetError(MS_JOINERR, "Shape to be joined has no attributes.", "msCSVJoinPrepare()"); 
+    return(MS_FAILURE);
+  }
+
+  joininfo->nextrecord = 0; // starting with the first record
+
+  if(joininfo->target) free(joininfo->target); // clear last target
+  joininfo->target = strdup(shape->values[joininfo->fromindex]);
+
+  return(MS_SUCCESS);
+}
+
+int msCSVJoinNext(joinObj *join) 
+{
+  msCSVJoinInfo *joininfo = join->joininfo;
+
+  if(!joininfo) {
+    msSetError(MS_JOINERR, "Join connection has not be created.", "msCSVJoinNext()"); 
+    return(MS_FAILURE);
+  }
+
+  return(MS_SUCCESS);
+}
+
+int msCSVJoinClose(joinObj *join) 
+{ 
+  msCSVJoinInfo *joininfo = join->joininfo;
+
+  if(!joininfo) return(MS_SUCCESS); // already closed
 
   return(MS_SUCCESS);
 }

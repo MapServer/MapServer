@@ -352,7 +352,7 @@ int loadJoin(joinObj *join)
       if((join->connection = getString()) == NULL) return(-1);
       break;
     case(CONNECTIONTYPE):
-      if((join->connectiontype = getSymbol(4, MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES)) == -1) return(-1);
+      if((join->connectiontype = getSymbol(5, MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES, MS_DB_CSV)) == -1) return(-1);
       break;
     case(EOF):
       msSetError(MS_EOFERR, NULL, "loadJoin()");
