@@ -139,22 +139,22 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
 	if (layer->numitems ==0)
 	{
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
-			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR'),text(oid)", geom_column);
+			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'NDR'),oid::text", geom_column);
 		else
-			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR'),text(oid)", geom_column);	
+			sprintf(columns_wanted,"asbinary(force_collection(force_2d(%s)),'XDR'),oid::text", geom_column);	
 	}
 	else
 	{
 		columns_wanted[0] = 0; //len=0
 		for (t=0;t<layer->numitems; t++)
 		{
-			sprintf(temp,"text(%s),",layer->items[t]);
+			sprintf(temp,"%s::text,",layer->items[t]);
 			strcat(columns_wanted,temp);
 		}
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
-			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),text(oid)", geom_column);
+			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'NDR'),oid::text", geom_column);
 		else
-			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),text(oid)", geom_column);
+			sprintf(temp,"asbinary(force_collection(force_2d(%s)),'XDR'),oid::text", geom_column);
 	
 		strcat(columns_wanted,temp);
 	}
@@ -238,7 +238,7 @@ int prep_DB(char	*geom_table,char  *geom_column,layerObj *layer, PGresult **sql_
     }
 
     PQclear(result);
-fprintf (stderr,"query_string_0_5:%s\n",query_string_0_5);
+//fprintf (stderr,"query_string_0_5:%s\n",query_string_0_5);
 
 
     result = PQexec(layerinfo->conn, query_string_0_5 );
@@ -813,7 +813,7 @@ int msPOSTGISLayerGetShape(layerObj *layer, shapeObj *shape, long record)
 	int				result,t,size;
 	char				*temp1,*temp2;
 
-fprintf(stderr,"msPOSTGISLayerGetShape called for record = %ld\n",record);
+//fprintf(stderr,"msPOSTGISLayerGetShape called for record = %i\n",record);
 
 	layerinfo = (msPOSTGISLayerInfo *) layer->postgislayerinfo;
 	if (layerinfo == NULL)
@@ -849,7 +849,7 @@ fprintf(stderr,"msPOSTGISLayerGetShape called for record = %ld\n",record);
 		columns_wanted[0] = 0; //len=0
 		for (t=0;t<layer->numitems; t++)
 		{
-			sprintf(temp,"text(%s),",layer->items[t]);
+			sprintf(temp,"%s::text,",layer->items[t]);
 			strcat(columns_wanted,temp);
 		}
 		if (gBYTE_ORDER == LITTLE_ENDIAN)
@@ -960,6 +960,9 @@ fprintf(stderr,"msPOSTGISLayerGetShape called for record = %ld\n",record);
 				shape->values = (char **) malloc(sizeof(char *) * layer->numitems);
 				for (t=0;t<layer->numitems;t++)
 				{
+//fprintf(stderr,"msPOSTGISLayerGetShape: finding attribute info for '%s'\n",layer->items[t]);
+
+
 					 temp1= (char *) PQgetvalue(query_result, 0, t);
 					 size = PQgetlength(query_result,0, t ) ; 
 					 temp2 = (char *) malloc(size+1 );
@@ -967,6 +970,8 @@ fprintf(stderr,"msPOSTGISLayerGetShape called for record = %ld\n",record);
 					 temp2[size] = 0; //null terminate it
 					 
 					 shape->values[t] = temp2;
+//fprintf(stderr,"msPOSTGISLayerGetShape: shape->values[%i] has value '%s'\n",t,shape->values[t]);
+
 				}
 				shape->index = record;
 				shape->numvalues = layer->numitems;
