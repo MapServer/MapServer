@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.56  2004/08/03 22:12:34  dan
+ * Cleanup OWS version tests in the code, started with mapcontext.c (bug 799)
+ *
  * Revision 1.55  2004/06/22 20:55:20  sean
  * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
  *
@@ -447,13 +450,13 @@ int msLoadMapContext(mapObj *map, char *filename)
 #if defined(USE_WMS_LYR) && defined(USE_OGR)
   char *pszWholeText, *pszMapProj=NULL, *pszProj=NULL;
   char *pszValue, *pszValue1, *pszValue2;
-  char *pszHash, *pszStyle=NULL, *pszStyleName, *pszVersion, *pszName=NULL;
+  char *pszHash, *pszStyle=NULL, *pszStyleName, *pszName=NULL;
   CPLXMLNode *psRoot, *psContactInfo, *psMapContext, *psLayer, *psLayerList;
   CPLXMLNode *psFormatList, *psFormat, *psStyleList, *psStyle, *psChild, *psKeyword, 
     *psKeywordList;
   CPLXMLNode *psLegendURL, *psSRS;
   char szPath[MS_MAXPATHLEN];
-  int nStyle;
+  int nStyle, nVersion=-1;
   layerObj *layer;
 
   //
@@ -521,22 +524,32 @@ int msLoadMapContext(mapObj *map, char *filename)
       return MS_FAILURE;
   }
 
-  // Valid the version number (Only 0.1.4 is supported)
+  // Fetch document version number
   pszValue = (char*)CPLGetXMLValue(psMapContext, 
                                    "version", NULL);
   if( !pszValue )
   {
-      msDebug( "msLoadMapContext(): Mandatory data version missing in %s.",
+      msDebug( "msLoadMapContext(): Mandatory data version missing in %s, assuming 0.1.4.",
                filename );
       pszValue = "0.1.4";
   }
 
-  pszVersion = strdup(pszValue);
-  if( strcasecmp(pszVersion, "0.1.2") < 0 )
+  nVersion = msOWSParseVersionString(pszValue);
+
+  // Make sure this is a supported version
+  switch (nVersion)
   {
-      msSetError( MS_MAPCONTEXTERR, 
-                  "Wrong version number (%s). Must be at least 0.1.2 (%s)",
-                  "msLoadMapContext()", pszValue, filename );
+    case OWS_0_1_2:
+    case OWS_0_1_4:
+    case OWS_0_1_7:
+    case OWS_1_0_0:
+      // All is good, this is a supported version.
+      break;
+    default:
+      // Not a supported version
+      msSetError(MS_MAPCONTEXTERR, 
+                 "This version of Map Context is not supported (%s).",
+                 "msLoadMapContext()", pszValue);
       CPLDestroyXMLNode(psRoot);
       return MS_FAILURE;
   }
@@ -545,16 +558,17 @@ int msLoadMapContext(mapObj *map, char *filename)
   //if(map->web.metadata == NULL)
   //    &(map->web.metadata) =  msCreateHashTable();
 
-  // Version
-  msInsertHashTable( &(map->web.metadata), "wms_context_version", pszVersion );
+  // Reformat and save Version in metadata
+  pszValue = msOWSGetVersionString(nVersion);
+  msInsertHashTable( &(map->web.metadata), "wms_context_version", pszValue );
+  free(pszValue);
 
-  if( strcasecmp(pszVersion, "0.1.7") >= 0 && 
-      strcasecmp(pszVersion, "1.0.0") < 0)
+  if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0)
   {
       if( msGetMapContextXMLHashValue(psMapContext, "fid", 
                            &(map->web.metadata), "wms_context_fid") == MS_FAILURE )
       {
-          msDebug("Mandatory data fid in %s.", filename);
+          msDebug("Mandatory data fid missing in %s.", filename);
       }
   }
 
@@ -626,14 +640,14 @@ int msLoadMapContext(mapObj *map, char *filename)
   if( msGetMapContextXMLHashValue(psMapContext, "General.Title", 
                               &(map->web.metadata), "wms_title") == MS_FAILURE)
   {
-      if (strcasecmp(pszVersion, "1.0.0") >= 0)
+      if ( nVersion >= OWS_1_0_0 )
          msDebug("Mandatory data General.Title missing in %s.", filename);
       else
       {
           if( msGetMapContextXMLHashValue(psMapContext, "General.gml:name", 
                              &(map->web.metadata), "wms_title") == MS_FAILURE )
           {
-              if(strcasecmp(pszVersion, "0.1.7") < 0)
+              if( nVersion < OWS_0_1_7 )
                 msDebug("Mandatory data General.Title missing in %s.", filename);
               else
                 msDebug("Mandatory data General.gml:name missing in %s.", 
@@ -643,7 +657,7 @@ int msLoadMapContext(mapObj *map, char *filename)
   }
 
   // Name
-  if( strcasecmp(pszVersion, "1.0.0") >= 0)
+  if( nVersion >= OWS_1_0_0 )
   {
       pszValue = (char*)CPLGetXMLValue(psMapContext, 
                                        "id", NULL);
@@ -660,7 +674,7 @@ int msLoadMapContext(mapObj *map, char *filename)
       }
   }
   // Keyword
-  if( strcasecmp(pszVersion, "1.0.0") >= 0)
+  if( nVersion >= OWS_1_0_0 )
   {
       psKeywordList = CPLGetXMLNode(psMapContext, "General.KeywordList");
       if (psKeywordList)
@@ -845,7 +859,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                                           &(layer->metadata), "wms_abstract");
 
               // DataURL
-              if(strcasecmp(pszVersion, "0.1.4") <= 0)
+              if(nVersion <= OWS_0_1_4)
               {
                   msGetMapContextXMLHashValueDecode(psLayer, 
                                                     "DataURL.OnlineResource.xlink:href",
@@ -887,7 +901,7 @@ int msLoadMapContext(mapObj *map, char *filename)
 
 
               // Server
-              if(strcasecmp(pszVersion, "0.1.4") >= 0)
+              if(nVersion >= OWS_0_1_4)
               {
                   if(msGetMapContextXMLStringValueDecode(psLayer, 
                                            "Server.OnlineResource.xlink:href", 
@@ -928,7 +942,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                   }
               }
 
-              if(strcasecmp(pszVersion, "0.1.4") >= 0)
+              if(nVersion >= OWS_0_1_4)
               {
                   if(msGetMapContextXMLHashValue(psLayer, "Server.version", 
                        &(layer->metadata), "wms_server_version") == MS_FAILURE)
@@ -1006,7 +1020,7 @@ int msLoadMapContext(mapObj *map, char *filename)
               }
 
               // Format
-              if( strcasecmp(pszVersion, "0.1.4") >= 0 )
+              if( nVersion >= OWS_0_1_4 )
               {
                   psFormatList = CPLGetXMLNode(psLayer, "FormatList");
               }
@@ -1119,7 +1133,7 @@ int msLoadMapContext(mapObj *map, char *filename)
               } /* end FormatList parsing */
 
               // Style
-              if( strcasecmp(pszVersion, "0.1.4") >= 0 )
+              if( nVersion >= OWS_0_1_4 )
               {
                   psStyleList = CPLGetXMLNode(psLayer, "StyleList");
               }
@@ -1198,7 +1212,7 @@ int msLoadMapContext(mapObj *map, char *filename)
                           free(pszStyle);
                       }
                       // LegendURL
-                      if( strcasecmp(pszVersion, "0.1.4") >= 0 )
+                      if( nVersion >= OWS_0_1_4 )
                       {
                           pszValue=(char*)CPLGetXMLValue(psStyle,
                                    "LegendURL.OnlineResource.xlink:href",NULL);
@@ -1365,12 +1379,33 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
   char *pszStyle, *pszCurrent, *pszStyleItem;
   char *pszEncodedVal;
-  int i, nValue;
+  int i, nValue, nVersion=-1;
 
   // Decide which version we're going to return...
   version = msLookupHashTable(&(map->web.metadata), "wms_context_version");
   if(version == NULL)
     version = "1.0.0";
+
+  nVersion = msOWSParseVersionString(version);
+  if (nVersion < 0)
+      return MS_FAILURE;  // msSetError() already called.
+
+  // Make sure this is a supported version
+  // Note that we don't write 0.1.2 even if we read it.
+  switch (nVersion)
+  {
+    case OWS_0_1_4:
+    case OWS_0_1_7:
+    case OWS_1_0_0:
+      // All is good, this is a supported version.
+      break;
+    default:
+      // Not a supported version
+      msSetError(MS_MAPCONTEXTERR, 
+                 "This version of Map Context is not supported (%s).",
+                 "msSaveMapContext()", version);
+      return MS_FAILURE;
+  }
 
   // file header
   msOWSPrintMetadata(stream, &(map->web.metadata), 
@@ -1379,22 +1414,21 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                     "ISO-8859-1");
 
   // set the WMS_Viewer_Context information
-  if(strcasecmp(version, "1.0.0") >= 0)
+  if(nVersion >= OWS_1_0_0)
   {
       fprintf( stream, "<ViewContext version=\"%s\"", version );
   }
-  else if(strcasecmp(version, "0.1.7") >= 0)
+  else if(nVersion >= OWS_0_1_7)
   {
       fprintf( stream, "<View_Context version=\"%s\"", version );
       
   }
-  else
+  else // 0.1.4
   {
       fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
   }
 
-  if (strcasecmp(version, "0.1.7") >= 0 &&
-      strcasecmp(version, "1.0.0") < 0)
+  if ( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0 )
   {
       pszValue = msLookupHashTable(&(map->web.metadata), "wms_context_fid");
       if(pszValue != NULL)
@@ -1402,17 +1436,16 @@ int msWriteMapContext(mapObj *map, FILE *stream)
       else
           fprintf( stream, " fid=\"0\"");
   }
-  if (strcasecmp(version, "1.0.0") >= 0)
+  if ( nVersion >= OWS_1_0_0 )
         fprintf( stream, " id=\"%s\"", map->name);
 
   fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
 
-  if(strcasecmp(version, "0.1.7") >= 0 &&
-     strcasecmp(version, "1.0.0") < 0 )
+  if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0 )
   {
       fprintf( stream, " xmlns:gml=\"http://www.opengis.net/gml\"");
   }
-  if(strcasecmp(version, "1.0.0") >= 0)
+  if( nVersion >= OWS_1_0_0 )
   {
       fprintf( stream, " xmlns:xlink=\"http://www.w3.org/1999/xlink\"");
       fprintf( stream, " xmlns=\"http://www.opengis.net/context\"");
@@ -1453,14 +1486,13 @@ int msWriteMapContext(mapObj *map, FILE *stream)
            map->extent.maxx, map->extent.maxy );
 
   // Title, name
-  if(strcasecmp(version, "0.1.7") >= 0 && 
-     strcasecmp(version, "1.0.0") < 0)
+  if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0 )
   {
       fprintf( stream, "%s<gml:name>%s</gml:name>\n", tabspace, map->name );
   }
   else 
   {
-      if (strcasecmp(version, "0.1.7") < 0)
+      if (nVersion < OWS_0_1_7)
         fprintf( stream, "%s<Name>%s</Name>\n", tabspace, map->name );
 
       fprintf( stream, "%s<!-- Title of Context -->\n", tabspace );
@@ -1470,7 +1502,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   }
 
   //keyword
-  if (strcasecmp(version, "1.0.0") >= 0)
+  if (nVersion >= OWS_1_0_0)
   {
       if (msLookupHashTable(&(map->web.metadata),"wms_keywordlist")!=NULL)
       {
@@ -1498,8 +1530,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
                            "      %s\n", NULL);
 
   //abstract
-  if(strcasecmp(version, "0.1.7") >= 0 &&
-     strcasecmp(version, "1.0.0") < 0)
+  if( nVersion >= OWS_0_1_7 && nVersion < OWS_1_0_0 )
   {
       msOWSPrintMetadata(stream, &(map->web.metadata), 
                          NULL, "wms_abstract", OWS_NOERR,
@@ -1544,7 +1575,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   // The DescriptionURL have a width, height, format and an URL
   // The metadata is structured like this: "width height format url"
   pszURL = msLookupHashTable(&(map->web.metadata), "wms_descriptionurl_href");
-  if(pszURL != NULL && strcasecmp(version, "1.0.0") >= 0)
+  if(pszURL != NULL &&  nVersion >= OWS_1_0_0)
   {
       fprintf( stream, "    <DescriptionURL");
       msOWSPrintEncodeMetadata(stream, &(map->web.metadata),
@@ -1572,12 +1603,6 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   free(tabspace);
 
   // Set the layer list
-  fprintf(stream, "  <!-- LayerList of Layer elements\n");
-  fprintf(stream, "       - implied order: bottom To Top\n");
-  fprintf(stream, 
-          "       first Layer element is bottom most layer in map view\n");
-  fprintf(stream, "       last Layer elements is op most layer in map view\n");
-  fprintf(stream, "  -->\n");
   fprintf(stream, "  <LayerList>\n");
 
   // Loop on all layer  
@@ -1650,7 +1675,7 @@ int msWriteMapContext(mapObj *map, FILE *stream)
               fprintf(stream, "      <SRS>%s</SRS>\n", pszValue);
 
           // DataURL
-          if(strcasecmp(version, "0.1.4") <= 0)
+          if(nVersion <= OWS_0_1_4)
           {
               msOWSPrintMetadata(stream, &(map->layers[i].metadata), 
                                  NULL, "wms_dataurl", OWS_NOERR, 
@@ -1952,15 +1977,15 @@ int msWriteMapContext(mapObj *map, FILE *stream)
   fprintf(stream, "  </LayerList>\n");
   // Close Map Context
 
-  if(strcasecmp(version, "1.0.0") >= 0)
+  if(nVersion >= OWS_1_0_0)
   {
       fprintf(stream, "</ViewContext>\n");
   }
-  else if(strcasecmp(version, "0.1.7") >= 0)
+  else if(nVersion >= OWS_0_1_7)
   {
       fprintf(stream, "</View_Context>\n");
   }
-  else
+  else // 0.1.4
   {
       fprintf(stream, "</WMS_Viewer_Context>\n");
   }

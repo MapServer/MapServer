@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.37  2004/08/03 22:12:34  dan
+ * Cleanup OWS version tests in the code, started with mapcontext.c (bug 799)
+ *
  * Revision 1.36  2004/06/22 22:22:16  sean
  * set MS_DLL_EXPORT for msWMSLoadGetMapParams
  *
@@ -169,6 +172,21 @@ MS_DLL_EXPORT int msOWSDispatch(mapObj *map, cgiRequestObj *request);
 MS_DLL_EXPORT int msOWSMakeAllLayersUnique(mapObj *map);
 MS_DLL_EXPORT char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name, cgiRequestObj *req);
 MS_DLL_EXPORT const char *msOWSGetSchemasLocation(mapObj *map);
+
+// Constants for OWS Service version numbers
+#define OWS_0_1_2   0x000102
+#define OWS_0_1_4   0x000104
+#define OWS_0_1_6   0x000106
+#define OWS_0_1_7   0x000107
+#define OWS_1_0_0   0x010000
+#define OWS_1_0_6   0x010006
+#define OWS_1_0_7   0x010007
+#define OWS_1_1_0   0x010100
+#define OWS_1_1_1   0x010101
+
+MS_DLL_EXPORT int msOWSParseVersionString(const char *pszVersion);
+MS_DLL_EXPORT char *msOWSGetVersionString(int nVersion);
+
 
 // OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata()
 #define OWS_NOERR   0

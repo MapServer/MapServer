@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.35  2004/08/03 22:12:34  dan
+ * Cleanup OWS version tests in the code, started with mapcontext.c (bug 799)
+ *
  * Revision 1.34  2004/06/22 20:55:20  sean
  * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
  *
@@ -339,6 +342,60 @@ const char *msOWSGetSchemasLocation(mapObj *map)
 
     return schemas_location;
 }
+
+/* msOWSParseVersionString()
+**
+** Parse a version string in the format "a.b.c" or "a.b" and return an
+** integer in the format 0x0a0b0c suitable for regular integer comparisons.
+**
+** Returns -1 if version could not be parsed.
+*/
+int msOWSParseVersionString(const char *pszVersion)
+{
+    char **digits = NULL;
+    int numDigits = 0;
+
+    if (pszVersion)
+    {
+        int nVersion = 0;
+        digits = split(pszVersion, '.', &numDigits);
+        if (digits == NULL || numDigits < 2 || numDigits > 3)
+        {
+            msSetError(MS_WMSERR, 
+                       "Invalid version (%s). OWS version must be in the "
+                       "format 'x.y' or 'x.y.z'",
+                       "msOWSParseVersionString()", pszVersion);
+            return -1;
+        }
+
+        nVersion = atoi(digits[0])*0x010000;
+        nVersion += atoi(digits[1])*0x0100;
+        if (numDigits > 2)
+            nVersion += atoi(digits[2]);
+
+        return nVersion;
+    }
+
+    return -1;
+}
+
+/* msOWSGetVersionString()
+**
+** Returns a OWS version string in the format a.b.c from the integer
+** version value passed as argument (0x0a0b0c)
+**
+** Returns a newly allocated buffer that should be freed by the caller.
+*/
+char *msOWSGetVersionString(int nVersion)
+{
+    char szVersion[30];
+
+    sprintf(szVersion, "%d.%d.%d", 
+            (nVersion/0x10000)%0x100, (nVersion/0x100)%0x100, nVersion%0x100);
+
+    return strdup(szVersion);
+}
+
 
 /*
 ** msOWSLookupMetadata()
@@ -1029,7 +1086,7 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
   return NULL;
 }
 
-#endif /* USE_WMS_SVR || USE_WFS_SVR */
+#endif /* USE_WMS_SVR || USE_WFS_SVR  || USE_WCS_SVR */
 
 
 
