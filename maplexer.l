@@ -87,6 +87,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>backgroundshadowsize    { return(BACKGROUNDSHADOWSIZE); }
 
 <INITIAL,OBJECT_STRING>buffer                  { return(BUFFER); }
+<INITIAL>cap                                   { return(CAP); }
 <INITIAL>character		               { return(CHARACTER); }
 <INITIAL,OBJECT_STRING>class		       { return(CLASS); }
 <INITIAL,OBJECT_STRING>classitem               { return(CLASSITEM); }
@@ -107,9 +108,9 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>footer		       { return(FOOTER); }
 <INITIAL,OBJECT_STRING>font		       { return(FONT); }
 <INITIAL>fontset		               { return(FONTSET); }
-<INITIAL>force		                       { return(FORCE); }
+<INITIAL,OBJECT_STRING>force		       { return(FORCE); }
 <INITIAL,OBJECT_STRING>from                    { return(FROM); }
-<INITIAL,OBJECT_STRING>gap                     { return(GAP); }
+<INITIAL>gap                                   { return(GAP); }
 <INITIAL,OBJECT_STRING>group                   { return(GROUP); }
 <INITIAL,OBJECT_STRING>header		       { return(HEADER); }
 <INITIAL>image			               { return(IMAGE); }
@@ -122,6 +123,7 @@ char *msyystring=NULL;
 <INITIAL,OBJECT_STRING>interlace               { return(INTERLACE); }
 <INITIAL,OBJECT_STRING>intervals               { return(INTERVALS); } 
 <INITIAL,OBJECT_STRING>join                    { return(JOIN); }
+<INITIAL>joinmaxsize                           { return(JOINMAXSIZE); }
 <INITIAL,OBJECT_STRING>keysize                 { return(KEYSIZE); }
 <INITIAL,OBJECT_STRING>keyspacing              { return(KEYSPACING); }
 <INITIAL,OBJECT_STRING>label		       { return(LABEL); }
@@ -198,9 +200,10 @@ char *msyystring=NULL;
 
 <INITIAL,VALUE_STRING>annotation	       { return(MS_LAYER_ANNOTATION); }
 <INITIAL,VALUE_STRING>auto                     { return(MS_AUTO); }
-<INITIAL,VALUE_STRING>bevel                    { return(MS_BEVEL); }
+<INITIAL>bevel                                 { return(MS_BEVEL); }
 <INITIAL>bitmap			               { return(MS_BITMAP); }
-<INITIAL,VALUE_STRING>butt                     { return(MS_BUTT); }
+<INITIAL>butt                                  { return(MS_BUTT); }
+<INITIAL>carto                                 { return(MS_SYMBOL_CARTO); }
 <INITIAL,VALUE_STRING>cc                       { return(MS_CC); }
 <INITIAL,VALUE_STRING>circle                   { return(MS_LAYER_CIRCLE); }
 <INITIAL,VALUE_STRING>cl                       { return(MS_CL); }
