@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.11  2003/10/07 14:34:56  frank
+ * added (untested) nodata support for greyscale/colormapped images
+ *
  * Revision 1.10  2003/09/30 13:08:57  frank
  * ensure only 128 colors are normally used in greyscale mode
  *
@@ -470,6 +473,26 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
               }
                   
               GDALSetColorEntry( hColorMap, i, &sEntry );
+          }
+      }
+
+      /* 
+      ** If we have a known NODATA value, mark it now as transparent. 
+      */
+      {
+          int    bGotNoData;
+          double dfNoDataValue = GDALGetRasterNoDataValue(hBand1,&bGotNoData);
+
+          if( bGotNoData && dfNoDataValue >= 0 && dfNoDataValue <= 255.0 )
+          {
+              GDALColorEntry sEntry;
+              
+              memcpy( &sEntry, 
+                      GDALGetColorEntry( hColorMap, (int) dfNoDataValue ),
+                      sizeof(GDALColorEntry) );
+
+              sEntry.c4 = 0;
+              GDALSetColorEntry( hColorMap, (int) dfNoDataValue, &sEntry );
           }
       }
   }
