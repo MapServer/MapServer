@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.25.2.3  2004/05/12 19:42:51  frank
+ * Fixed last fix of the cracking fix.
+ *
  * Revision 1.25.2.2  2004/05/11 22:36:37  frank
  * fix the Bug493 raster cracking fix
  *
@@ -337,7 +340,7 @@ int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image,
       dst_lrx = (int) ((copyRect.maxx - mapRect.minx) / map->cellsize + 0.5);
       dst_lry = (int) ((mapRect.maxy - copyRect.miny) / map->cellsize + 0.5);
       dst_lrx = MAX(0,MIN(image->width,dst_lrx));
-      dst_lrx = MAX(0,MIN(image->height,dst_lry));
+      dst_lry = MAX(0,MIN(image->height,dst_lry));
       
       dst_xsize = MAX(0,MIN(image->width,dst_lrx - dst_xoff));
       dst_ysize = MAX(0,MIN(image->height,dst_lry - dst_yoff));
