@@ -276,6 +276,9 @@
         return extent;
     }
 
+    int setExtent(double minx, double miny, double maxx, double maxy) {	
+	    return msLayerSetExtent( self, minx, miny, maxx, maxy );
+    }
     /* 
     The following metadata methods are no longer needed since we have
     promoted the metadata member of layerObj to a first-class mapscript
