@@ -51,7 +51,10 @@ extern errorObj ms_error;
 void msSetError(int code, char *message, char *routine);
 void msWriteError(FILE *stream);
 char *msGetVersion();
+
+#ifndef SWIG
 void msDebug( const char * pszFormat, ... );
+#endif
 
 #ifdef __cplusplus
 }

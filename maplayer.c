@@ -90,9 +90,11 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
 	layer->items = msDBFGetItems(layer->shpfile.hDBF);
 	if(!layer->items) return(MS_FAILURE);
       }
-      shape->attributes = msDBFGetValues(layer->shpfile.hDBF, record);
-      if(!shape->attributes) return(MS_FAILURE);
+      shape->numattributes = layer->numitems;
+      shape->attributes = msDBFGetValues(layer->shpfile.hDBF, record);      
+      if(!shape->attributes) return(MS_FAILURE);      
     } else if(layer->numitems > 0) {
+      shape->numattributes = layer->numitems;
       shape->attributes = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
       if(!shape->attributes) return(MS_FAILURE);
     }

@@ -35,6 +35,7 @@ void msInitShape(shapeObj *shape)
   
   // attribute component
   shape->attributes = NULL;
+  shape->numattributes = 0;
 
   // annotation component
   shape->text = NULL;
@@ -66,6 +67,12 @@ int msCopyShape(shapeObj *from, shapeObj *to) {
   to->tileindex = from->tileindex;
 
   // FIX: Need to duplicate attributes
+  if(from->attributes) {    
+    to->attributes = (char **)malloc(sizeof(char *)*from->numattributes);
+    for(i=0; i<from->numattributes; i++)
+      to->attributes[i] = strdup(from->attributes[i]);
+    to->numattributes = from->numattributes;
+  }
 
   return(0);
 }
@@ -77,6 +84,8 @@ void msFreeShape(shapeObj *shape)
   for (c= 0; c < shape->numlines; c++)
     free(shape->line[c].point);
   free(shape->line);
+
+  if(shape->attributes) msFreeCharArray(shape->attributes, shape->numattributes);
 
   free(shape->text);
   

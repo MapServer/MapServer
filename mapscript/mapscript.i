@@ -124,8 +124,8 @@
     return msDrawMap(self);
   }
 
-  gdImagePtr drawQueryMap(queryResultObj *results) {
-    return msDrawQueryMap(self, results);
+  gdImagePtr drawQueryMap() {
+    return msDrawQueryMap(self);
   }
 
   gdImagePtr drawLegend() {
@@ -161,20 +161,20 @@
       return NULL;	
   }
 
-  queryResultObj *queryUsingPoint(pointObj *point, int mode, double buffer) {
-    return msQueryUsingPoint(self, NULL, mode, *point, buffer);
+  int queryByPoint(pointObj *point, int mode, double buffer) {
+    return msQueryByPoint(self, -1, mode, *point, buffer);
   }
 
-  queryResultObj *queryUsingRect(rectObj *rect) {
-    return msQueryUsingRect(self, NULL, rect);
+  int queryByRect(rectObj rect) {
+    return msQueryByRect(self, -1, rect);
   }
 
-  int queryUsingFeatures(queryResultObj *results) {
-    return msQueryUsingFeatures(self, NULL, results);
+  int queryByFeatures(int slayer) {
+    return msQueryByFeatures(self, -1, slayer);
   }
 
-  queryResultObj *queryUsingShape(mapObj *map, shapeObj *shape) {
-    return msQueryUsingShape(map, NULL, shape);
+  int queryByShape(mapObj *map, shapeObj *shape) {
+    return msQueryByShape(map, -1, shape);
   }
 
   int setProjection(char *string) {
@@ -183,56 +183,6 @@
 
   int save(char *filename) {
     return msSaveMap(self, filename);
-  }
-}
-
-//
-// class extentions for queryResultObj
-//
-%addmethods queryResultObj {
-  queryResultObj(char *filename) {
-    return msLoadQuery(filename);
-  }
-
-  ~queryResultObj() {
-    if(self) msFreeQueryResults(self);
-  }
-
-  void free() {	
-    if(self) msFreeQueryResults(self);
-  }
-
-  int save(char *filename) {
-    return msSaveQuery(self, filename);
-  }
-
-  shapeResultObj next() {    
-    int i, j;
-    shapeResultObj result;	
-
-    result.tile = -1;
-
-    for(i=self->currentlayer; i<self->numlayers; i++) {
-      for(j=self->currentshape; j<self->layers[i].numshapes; j++) {
-	if(msGetBit(self->layers[i].status,j)) {
-
-	  self->currentlayer = i;     // defines where to start searching on
-	  self->currentshape = j + 1; // next call to next() for this result set
-
-	  result.layer = i;
-	  result.shape = j;
-	  result.query = self->layers[i].index[j];
-
-          return result;
-        }
-      }
-    }
-
-    result.layer = -1; // no more results
-    result.shape = -1;
-    result.query = -1;
-
-    return result;
   }
 }
 
@@ -257,11 +207,32 @@
     return; // map deconstructor takes care of it
   }
 
+  int open(char *path) {
+    return msLayerOpen(self, path);
+  }
+
+  void close() {
+    msLayerClose(self);
+  }
+
+  int getShape(char *path, shapeObj *shape, int tileindex, int shapeindex, int allitems) {
+    return msLayerGetShape(self, path, shape, tileindex, shapeindex, allitems);
+  }
+
+  resultCacheMemberObj *getResult(int i) {
+    if(!self->resultcache) return NULL;
+
+    if(i >= 0 && i < self->resultcache->numresults)
+      return &self->resultcache->results[i]; 
+    else
+      return NULL;
+  }
+
   classObj *getClass(int i) { // returns an EXISTING class
     if(i >= 0 && i < self->numclasses)
       return &(self->class[i]); 
     else
-      return(NULL);
+      return NULL;
   }
 
   int prepare() {
@@ -280,20 +251,24 @@
     }
   }
 
-  queryResultObj *queryUsingPoint(mapObj *map, pointObj *point, int mode, double buffer) {
-    return msQueryUsingPoint(map, self->name, mode, *point, buffer);
+  int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) {
+    return msQueryByPoint(map, self->index, mode, *point, buffer);
   }
 
-  queryResultObj *queryUsingRect(mapObj *map, rectObj *rect) {
-    return msQueryUsingRect(map, self->name, rect);
+  int queryByRect(mapObj *map, rectObj rect) {
+    return msQueryByRect(map, self->index, rect);
   }
 
-  int queryUsingFeatures(mapObj *map, queryResultObj *results) {
-    return msQueryUsingFeatures(map, self->name, results);
+  int queryByFeatures(mapObj *map, int slayer) {
+    return msQueryByFeatures(map, self->index, slayer);
   }
 
-  queryResultObj *queryUsingShape(mapObj *map, shapeObj *shape) {
-    return msQueryUsingShape(map, self->name, shape);
+  int queryByShape(mapObj *map, shapeObj *shape) {
+    return msQueryByShape(map, self->index, shape);
+  }
+
+  int setFilter(char *string) {    
+    return loadExpressionString(&self->filter, string);
   }
 
   int setProjection(char *string) {
@@ -306,11 +281,6 @@
     else
       return 0;
   }
-
-  int classify(char *string) {
-    return msGetClassIndex(self, string);
-  }
-
 }
 
 //
@@ -343,31 +313,6 @@
 }
 
 //
-// class extensions for queryObj, always within the context of a layer
-//
-%addmethods queryObj {
-  queryObj(layerObj *layer) {
-    if(layer->numqueries == MS_MAXQUERIES) /* no room */
-      return NULL;
-
-    if(initQuery(&(layer->query[layer->numqueries])) == -1)
-      return NULL;
-
-    layer->numqueries++;
-
-    return &(layer->query[layer->numqueries-1]);
-  }
-
-  ~queryObj() {
-    return; /* do nothing, map deconstrutor takes care of it all */
-  }
-
-  int setExpression(char *string) {    
-    return loadExpressionString(&self->expression, string);
-  }
-}
-
-//
 // class extensions for pointObj, useful many places
 //
 %addmethods pointObj {
@@ -379,8 +324,8 @@
     free(self);
   }
 
-  int draw(mapObj *map, layerObj *layer, gdImagePtr img, char *class_string, char *label_string) {
-    return msDrawPoint(map, layer, self, img, class_string, label_string);
+  int draw(mapObj *map, layerObj *layer, gdImagePtr img, int classindex, char *text) {
+    return msDrawPoint(map, layer, self, img, classindex, text);
   }
 
   double distanceToPoint(pointObj *point) {
@@ -485,8 +430,8 @@
     return msAddLine(self, line);
   }
 
-  int draw(mapObj *map, layerObj *layer, gdImagePtr img, char *class_string, char *label_string) {
-    return msDrawShape(map, layer, self, img, class_string, label_string);
+  int draw(mapObj *map, layerObj *layer, gdImagePtr img) {
+    return msDrawShape(map, layer, self, img, MS_TRUE);
   }
 
   void setBounds() {
@@ -564,12 +509,16 @@
     return  msAdjustExtent(self, width, height);
   } 
 
-  int draw(mapObj *map, layerObj *layer, gdImagePtr img, char *class_string, char *label_string) {
+  int draw(mapObj *map, layerObj *layer, gdImagePtr img, int classindex, char *text) {
     shapeObj shape;
 
     msInitShape(&shape);
     msRect2Polygon(*self, &shape);
-    msDrawShape(map, layer, &shape, img, class_string, label_string);
+    shape.classindex = classindex;
+    shape.text = strdup(text);
+
+    msDrawShape(map, layer, &shape, img, MS_TRUE);
+
     msFreeShape(&shape);
     
     return 0;
@@ -589,9 +538,9 @@
       return NULL;
 
     if(type == -1)
-      status = msSHPOpenFile(shapefile, "rb", NULL, NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb", NULL, filename);
     else if(type == -2)
-      status = msSHPOpenFile(shapefile, "rb+", NULL, NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb+", NULL, filename);
     else
       status = msSHPCreateFile(shapefile, filename, type);
 

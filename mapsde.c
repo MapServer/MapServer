@@ -167,6 +167,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape, int skip) {
   msDebug("layer->numitems = %d\n", layer->numitems);
 
   if(layer->numitems > 0) {
+    shape->numattributes = layer->numitems;
     shape->attributes = (char **)malloc(sizeof(char *)*layer->numitems);
     if(!shape->attributes) {
       msSetError(MS_MEMERR, "Error allocation shape attribute array.", "sdeGetRecord()");

@@ -29,7 +29,10 @@ typedef struct {
   int classindex;
 
   char *text;
+
   char **attributes;
+  int numattributes;
+
 } shapeObj;
 
 typedef lineObj multipointObj;

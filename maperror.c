@@ -121,7 +121,6 @@ char *msGetVersion() {
   return(version);
 }
 
-
 void msDebug( const char * pszFormat, ... )
 {
 #ifndef _WIN32
@@ -135,3 +134,4 @@ void msDebug( const char * pszFormat, ... )
     va_end(args);
 #endif
 }
+
