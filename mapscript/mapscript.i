@@ -1881,7 +1881,7 @@ memory.") const char * {
 
 %extend colorObj {
   
-    colorObj(int red=0, int green=0, int blue=0) {
+    colorObj(int red=0, int green=0, int blue=0, int pen=MS_PEN_UNSET) {
         colorObj *color;
         
         // Check colors
@@ -1897,6 +1897,7 @@ memory.") const char * {
         color->red = red;
         color->green = green;
         color->blue = blue;
+        color->pen = pen;
 
         return(color);    	
     }
@@ -1915,6 +1916,8 @@ memory.") const char * {
         self->red = red;
         self->green = green;
         self->blue = blue;
+        self->pen = MS_PEN_UNSET;
+        
         return MS_SUCCESS;
     }
 
@@ -1931,6 +1934,8 @@ memory.") const char * {
             self->red = red;
             self->green = green;
             self->blue = blue;
+            self->pen = MS_PEN_UNSET;
+            
             return MS_SUCCESS;
         }
         else {
