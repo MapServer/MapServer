@@ -484,6 +484,10 @@ memory.") const char * {
     return MS_SUCCESS;
   }
   
+  int removeMetaData(char *name) {
+    return(msRemoveHashTable(self->web.metadata, name));
+  }
+
   int setSymbolSet(char *szFileName) {
     msFreeSymbolSet(&self->symbolset);
     msInitSymbolSet(&self->symbolset);
@@ -754,6 +758,10 @@ memory.") const char * {
     if (msInsertHashTable(self->metadata, name, value) == NULL)
 	return MS_FAILURE;
     return MS_SUCCESS;
+  }
+
+  int removeMetaData(char *name) {
+    return(msRemoveHashTable(self->metadata, name));
   }
 
   %newobject getWMSFeatureInfoURL;
