@@ -1025,7 +1025,7 @@ void returnOneToManyJoin(int j)
 
 }
 
-char *processLine(char *instr, int escape) 
+char *processLine(char *instr, int escape, int mode) 
 {
   int i,j;
   char repstr[1024], substr[1024], *outstr; // repstr = replace string, substr = sub string
@@ -1248,7 +1248,7 @@ char *processLine(char *instr, int escape)
   /*
   ** If query mode, need to do a bit more
   */
-  if(Mode == QUERY) {	
+  if(mode == QUERY) {	
     
     sprintf(repstr, "%f %f", (ShpExt.maxx+ShpExt.minx)/2, (ShpExt.maxy+ShpExt.miny)/2); 
     outstr = gsub(outstr, "[shpmid]", repstr);
@@ -1315,7 +1315,7 @@ char *processLine(char *instr, int escape)
   return(outstr);
 }
 
-void returnPage(char *html)
+void returnPage(char *html, int mode)
 {
   FILE *stream;
   char line[MS_BUFFER_LENGTH], *tmpline;
@@ -1342,7 +1342,7 @@ void returnPage(char *html)
   while(fgets(line, MS_BUFFER_LENGTH, stream) != NULL) { /* now on to the end of the file */
 
     if(strchr(line, '[') != NULL) {
-      tmpline = processLine(line, MS_FALSE);
+      tmpline = processLine(line, MS_FALSE, mode);
       printf("%s", tmpline);
       free(tmpline);
     } else
@@ -1354,7 +1354,7 @@ void returnPage(char *html)
   fclose(stream);
 }
 
-void returnURL(char *url)
+void returnURL(char *url, int mode)
 {
   char *tmpurl;
 
@@ -1363,7 +1363,7 @@ void returnURL(char *url)
     writeError();
   }
 
-  tmpurl = processLine(url, MS_TRUE);
+  tmpurl = processLine(url, MS_TRUE, mode);
 
   printf("Status: 302 Found\n");
   printf("Uri: %s\n", tmpurl);
@@ -1376,13 +1376,45 @@ void returnURL(char *url)
 
 void returnQuery()
 {
+  int status;
   int i,j,k;
   double dx,dy;
 
-  shapeObj shape;
+  layerObj *lp;
   int item;
 
-  msInitShape(&shape);
+  msInitShape(&ResultShape); // Shape is a global var define in mapserv.h
+
+  NR = NL = 0;
+  for(i=0; i<Map->numlayers; i++) { // compute some totals
+    lp = &(Map->layers[i]);
+
+    if(!lp->resultcache) break;
+
+    NL++;
+    NR += lp->resultcache->numresults;
+  }
+
+  for(i=(Map->numlayers-1); i>=0; i--) {
+    lp = &(Map->layers[i]);
+
+    if(!lp->resultcache) break;
+    if(!lp->resultcache->numresults == 0) break;
+
+    // open this layer
+    status = msLayerOpen(lp, Map->shapepath);
+    if(status != MS_SUCCESS) writeError();
+
+
+    for(j=0; j<lp->resultcache->numresults; j++) {
+
+      status = msLayerGetShape(lp, Map->shapepath, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex, MS_ALLITEMS);
+      if(status != MS_SUCCESS) writeError();
+
+    }
+  }
+
+  // OLD CODE BELOOOOOOOOW
 
   if((Mode == ITEMQUERY) || (Mode == QUERY)) { // may need to handle a URL result set
 

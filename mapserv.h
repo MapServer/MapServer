@@ -63,7 +63,7 @@ char *QueryFile=NULL;
 char *QueryLayer=NULL, *SelectLayer=NULL;
 char *Item=NULL, *Value=NULL;
 
-shapeObj SelectShape={0,NULL,{-1,-1,-1,-1},MS_NULL};
+shapeObj SelectShape, ResultShape;
 
 rectObj RawExt={-1.0,-1.0,-1.0,-1.0};
 
