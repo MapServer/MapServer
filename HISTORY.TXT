@@ -13,6 +13,12 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 4.2.1 (CVS)
+--------------------------
+
+- Fixed layer->drawQuery() for PHP and SWIG MapScript (bug 695)
+
+
 Version 4.2.0 (2004-05-25)
 --------------------------
 
