@@ -3480,13 +3480,13 @@ echo "configure:3462: checking whether we should use PHP's regex" >&5
     echo "$ac_t""no" 1>&6
   fi
 
-          if test -n "$TTF_ENABLED" ; then
-    echo $ac_n "checking whether PHP was compiled with TTF support""... $ac_c" 1>&6
-echo "configure:3486: checking whether PHP was compiled with TTF support" >&5
+          if test -n "$TTF_ENABLED" -a "$PHP_VERSION_FLAG" = "-DPHP4" ; then
+    echo $ac_n "checking whether PHP4 was compiled with TTF support""... $ac_c" 1>&6
+echo "configure:3486: checking whether PHP4 was compiled with TTF support" >&5
     if test -n "`grep 'define HAVE_LIBTTF 1' $PHP_CONFIG_H`"  ; then
       echo "$ac_t""yes" 1>&6
       { echo "configure: error: 
-!!! Cannot have both PHP and MapScript compiled with Freetype support.    !!!
+!!! Cannot have both PHP4 and MapScript compiled with Freetype support.   !!!
 !!! You have to configure either PHP or MapServer using the --without-ttf !!!
 !!! switch to avoid conflicts at runtime.                                 !!!" 1>&2; exit 1; }
     else

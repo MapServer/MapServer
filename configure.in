@@ -745,12 +745,12 @@ if test -n "$with_php" -a -d "$with_php" ; then
   dnl Because of a conflict with gdttf.c/gdcache.c, we cannot have both
   dnl PHP and MapScript compiled with TTF support.
   dnl
-  if test -n "$TTF_ENABLED" ; then
-    AC_MSG_CHECKING([whether PHP was compiled with TTF support])
+  if test -n "$TTF_ENABLED" -a "$PHP_VERSION_FLAG" = "-DPHP4" ; then
+    AC_MSG_CHECKING([whether PHP4 was compiled with TTF support])
     if test -n "`grep 'define HAVE_LIBTTF 1' $PHP_CONFIG_H`"  ; then
       AC_MSG_RESULT(yes)
       AC_MSG_ERROR([
-!!! Cannot have both PHP and MapScript compiled with Freetype support.    !!!
+!!! Cannot have both PHP4 and MapScript compiled with Freetype support.   !!!
 !!! You have to configure either PHP or MapServer using the --without-ttf !!!
 !!! switch to avoid conflicts at runtime.                                 !!!])
     else
