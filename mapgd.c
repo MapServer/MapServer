@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.90.2.1  2004/12/13 03:39:03  frank
+ * fixed msFreeFileCtx() to use free per bug 1125
+ *
  * Revision 1.90  2004/11/19 23:11:42  sean
  * in msImageLoadGD, call msImageLoadGDCtx with a const char string rather than a pointer
  *
@@ -3351,7 +3354,7 @@ static int fileGetchar (gdIOCtx * ctx);
 
 static int fileSeek (struct gdIOCtx *, const int);
 static long fileTell (struct gdIOCtx *);
-static void gdFreeFileCtx (gdIOCtx * ctx);
+static void msFreeFileCtx (gdIOCtx * ctx);
 
 /* return data as a dynamic pointer */
 gdIOCtx *msNewGDFileCtx (FILE * f)
@@ -3375,15 +3378,15 @@ gdIOCtx *msNewGDFileCtx (FILE * f)
   ctx->ctx.tell = fileTell;
   ctx->ctx.seek = fileSeek;
 
-  ctx->ctx.gd_free = gdFreeFileCtx;
+  ctx->ctx.gd_free = msFreeFileCtx;
 
   return (gdIOCtx *) ctx;
 }
 
 static void
-gdFreeFileCtx (gdIOCtx * ctx)
+msFreeFileCtx (gdIOCtx * ctx)
 {
-  gdFree (ctx);
+  free (ctx);
 }
 
 
