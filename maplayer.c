@@ -177,7 +177,7 @@ int msLayerGetItems(layerObj *layer, char ***items, int *numitems) {
     break;
   }
 
-  return(MS_FAILURE);
+  return(MS_SUCCESS);
 }
 
 int msLayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect)

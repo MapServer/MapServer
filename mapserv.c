@@ -1588,7 +1588,7 @@ int main(int argc, char *argv[]) {
 
 	if(QueryCoordSource == NONE) { // use values
 
-	  if((status = msQueryByAttributes(Map, SelectLayerIndex)) != MS_SUCCESS) writeError();	  
+	  if((status = msQueryByAttributes(Map, SelectLayerIndex)) != MS_SUCCESS) writeError();
 
 	} else { /* use coordinates */
 	  
