@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.15  2004/01/13 19:33:10  assefa
+ * Correct in bug when builing expression for the IsLIke operator.
+ *
  * Revision 1.14  2004/01/05 21:16:26  assefa
  * Correct bug with PropertyIsLike and a BBOX filters.
  *
@@ -1060,7 +1063,7 @@ char *FLTGetMapserverExpression(FilterEncodingNode *psFilterNode)
             else if (strcasecmp(psFilterNode->pszValue, 
                                 "PropertyIsLike") == 0)
             {
-                 pszExpression = FLTGetIsLikeComparisonExpresssion(psFilterNode);
+                 pszExpression = FLTGetIsLikeComparisonExpression(psFilterNode);
             }
         }
     }
@@ -1104,7 +1107,7 @@ char *FLTGetNodeExpression(FilterEncodingNode *psFilterNode)
         else if (strcasecmp(psFilterNode->pszValue, "PropertyIsBetween") == 0)
           pszExpression = FLTGetIsBetweenComparisonExpresssion(psFilterNode);
         else if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
-          pszExpression = FLTGetIsLikeComparisonExpresssion(psFilterNode);
+          pszExpression = FLTGetIsLikeComparisonExpression(psFilterNode);
     }
 
     return pszExpression;
@@ -1403,11 +1406,11 @@ char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode)
 }
     
 /************************************************************************/
-/*                      FLTGetIsLikeComparisonExpresssion               */
+/*                      FLTGetIsLikeComparisonExpression               */
 /*                                                                      */
 /*      Build expression for IsLike filter.                             */
 /************************************************************************/
-char *FLTGetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode)
+char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode)
 {
     char szBuffer[512];
     char *pszValue = NULL;
@@ -1438,9 +1441,10 @@ char *FLTGetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode)
 /*      classitem.                                                      */
 /* -------------------------------------------------------------------- */
     szBuffer[0] = '/';
+    szBuffer[1] = '^';
     pszValue = psFilterNode->psRightNode->pszValue;
     nLength = strlen(pszValue);
-    iBuffer = 1;
+    iBuffer = 2;
     for (i=0; i<nLength; i++)
     {
         if (pszValue[i] != pszWild[0] && 
@@ -1459,12 +1463,16 @@ char *FLTGetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode)
         }
         else if  (pszValue[i] == pszEscape[0])
         {
-            if (i<nLength-1)
+            szBuffer[iBuffer] = '\\';
+            iBuffer++;
+            szBuffer[iBuffer] = '\0';
+            /*if (i<nLength-1)
             {
                 szBuffer[iBuffer] = pszValue[i+1];
                 iBuffer++;
                 szBuffer[iBuffer] = '\0';
             }
+            */
         }
         else if (pszValue[i] == pszWild[0])
         {

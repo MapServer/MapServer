@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.5  2004/01/13 19:33:10  assefa
+ * Correct in bug when builing expression for the IsLIke operator.
+ *
  * Revision 1.4  2003/10/07 23:54:24  assefa
  * Additional Validation for propertyislike.
  *
@@ -131,5 +134,5 @@ char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect);
 char *FLTGetLogicalComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetBinaryComparisonExpresssion(FilterEncodingNode *psFilterNode);
 char *FLTGetIsBetweenComparisonExpresssion(FilterEncodingNode *psFilterNode);
-char *FLTGetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode);
+char *FLTGetIsLikeComparisonExpression(FilterEncodingNode *psFilterNode);
 #endif
