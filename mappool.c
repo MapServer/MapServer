@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2005/02/22 00:26:52  frank
+ * fixed some lock acquisition flaws
+ *
  * Revision 1.7  2005/02/18 03:06:46  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -400,7 +403,8 @@ void *msConnPoolRequest( layerObj *layer )
 /*                                                                      */
 /*      Release the passed connection for the given layer.              */
 /*      Internally the reference count is dropped, and the              */
-/*      connection may be closed.                                       */
+/*      connection may be closed.  We assume the caller has already     */
+/*      acquired the pool lock.                                         */
 /************************************************************************/
 
 void msConnPoolRelease( layerObj *layer, void *conn_handle )
@@ -414,8 +418,6 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
 
     if( layer->connection == NULL )
         return;
-
-    msAcquireLock( TLOCK_POOL );
 
     for( i = 0; i < connectionCount; i++ )
     {
@@ -449,13 +451,9 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
 
             if( conn->ref_count == 0 && conn->lifespan == MS_LIFE_ZEROREF )
                 msConnPoolClose( i );
-
-            msReleaseLock( TLOCK_POOL );
             return;
         }
     }
-
-    msReleaseLock( TLOCK_POOL );
 
     msDebug( "%s: Unable to find handle for layer '%s'.\n",
              "msConnPoolRelease()",
@@ -490,9 +488,7 @@ void msConnPoolCloseUnreferenced()
         {
             /* for now we don't assume the locks are re-entrant, so release */
             /* it so msConnPoolClose() can get it.  */
-            msReleaseLock( TLOCK_POOL );
             msConnPoolClose( i );
-            msAcquireLock( TLOCK_POOL );
         }
     }
     msReleaseLock( TLOCK_POOL );
@@ -511,6 +507,8 @@ void msConnPoolFinalCleanup()
     /* this really needs to be commented out before commiting.  */
     /* msDebug( "msConnPoolFinalCleanup()\n" ); */
 
+    msAcquireLock( TLOCK_POOL );
     while( connectionCount > 0 )
         msConnPoolClose( 0 );
+    msReleaseLock( TLOCK_POOL );
 }
