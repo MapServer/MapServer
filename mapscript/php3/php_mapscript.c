@@ -8,7 +8,7 @@
  * Author:   Daniel Morissette, morissette@dmsolutions.ca
  *
  **********************************************************************
- * Copyright (c) 2000, 2001, Daniel Morissette, DM Solutions Group
+ * Copyright (c) 2000-2002, DM Solutions Group
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.71  2002/01/17 01:39:01  dan
+ * Added class->status, and include CVS Revision/Date in PHP3_MS_VERSION
+ *
  * Revision 1.70  2002/01/10 23:16:29  assefa
  * Correct a bug in php3_ms_map_getAllGroupNames.
  *
@@ -152,7 +155,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Nov 27, 2001)"
+#define PHP3_MS_VERSION "($Revision$ $Date$)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -5521,6 +5524,7 @@ static long _phpms_build_class_object(classObj *pclass, int parent_layer_id,
     /* editable properties */
     PHPMS_ADD_PROP_STR(return_value,  "name",       pclass->name);
     add_property_long(return_value,   "type",       pclass->type);
+    add_property_long(return_value,   "status",     pclass->status);
     add_property_long(return_value,   "color",      pclass->color);
     add_property_long(return_value, "backgroundcolor",pclass->backgroundcolor);
     add_property_long(return_value,   "outlinecolor", pclass->outlinecolor);
@@ -5634,6 +5638,7 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     IF_SET_STRING(     "name",         self->name)
     else IF_SET_LONG(  "type",         self->type)
+    else IF_SET_LONG(  "status",       self->status)
     else IF_SET_LONG(  "color",        self->color)
     else IF_SET_LONG(  "backgroundcolor",self->backgroundcolor)
     else IF_SET_LONG(  "outlinecolor", self->outlinecolor)
