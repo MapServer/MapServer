@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/09/10 13:47:46  sean
+ * msMapSetSize returns value returned from msMapComputeGeotransform, just as msMapSetRotation
+ *
  * Revision 1.13  2004/07/29 16:35:31  hobu
  * drop msRectIsValid and use MS_VALID_EXTENT
  *
@@ -292,9 +295,7 @@ int msMapSetSize( mapObj *map, int width, int height )
     map->width = width;
     map->height = height;
 
-    msMapComputeGeotransform( map );
-
-    return MS_TRUE;
+    return msMapComputeGeotransform( map ); // like SetRotation -- sean
 }
 
 /************************************************************************/
