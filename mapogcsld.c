@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.29  2004/06/14 17:26:13  assefa
+ * Add opacity support for raster symbolizer.
+ *
  * Revision 1.28  2004/04/16 20:19:38  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -295,6 +298,11 @@ int msSLDApplySLD(mapObj *map, char *psSLDXML, int iLayer,
 
                         map->layers[i].classitem = strdup(pasLayers[j].classitem);
                     }
+                    
+                    //transparency for sld raster (opacity parameter)
+                    if (map->layers[i].type == MS_LAYER_RASTER && 
+                        pasLayers[j].transparency != -1)
+                      map->layers[i].transparency = pasLayers[j].transparency;
 
                     /* mark as auto-generate SLD */
                     if (map->layers[i].connectiontype == MS_WMS)
@@ -2068,16 +2076,39 @@ void msSLDParseTextSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer,
 /************************************************************************/
 void msSLDParseRasterSymbolizer(CPLXMLNode *psRoot, layerObj *psLayer)
 {
-    CPLXMLNode  *psColorMap = NULL, *psColorEntry = NULL;
+    CPLXMLNode  *psColorMap = NULL, *psColorEntry = NULL, *psOpacity=NULL;
     char *pszColor=NULL, *pszQuantity=NULL;
     char *pszPreviousColor=NULL, *pszPreviousQuality=NULL;
     colorObj sColor;
     char szExpression[100];
     int nClassId = 0;
-    
+    double dfOpacity = 1.0;
+
     if (!psRoot || !psLayer)
       return;
 
+/* ==================================================================== */
+/*      The defulat transparency value is 0 : we set it here to -1      */
+/*      so that when testing the values in msSLDApplySLD (to be         */
+/*      applied on the layer), we can assume that a value of 0 comes    */
+/*      from the sld.                                                   */
+/* ==================================================================== */
+    psLayer->transparency = -1;
+
+    psOpacity = CPLGetXMLNode(psRoot, "Opacity");
+    if (psOpacity)
+    {
+        if (psOpacity->psChild && psOpacity->psChild->pszValue)
+          dfOpacity = atof(psOpacity->psChild->pszValue);
+        
+        //values in sld goes from 0.0 (for transparent) to 1.0 (for full opacity);
+        if (dfOpacity >=0.0 && dfOpacity <=1.0)
+          psLayer->transparency = (int)(dfOpacity * 100);
+        else
+        {
+            msSetError(MS_WMSERR, "Invalid opacity value. Values should be between 0.0 and 1.0", "msSLDParseRasterSymbolizer()");
+        }
+    }
     psColorMap = CPLGetXMLNode(psRoot, "ColorMap");
     if (psColorMap)
     {
