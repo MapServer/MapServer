@@ -70,8 +70,8 @@
   int getSymbolByName(int type, char *name) {
     int symbol;
 
-    if((symbol = msGetSymbolIndex(&self->markerset, name)) == -1)
-      if((symbol = msAddImageSymbol(&self->markerset, name)) == -1)
+    if((symbol = msGetSymbolIndex(&self->symbolset, name)) == -1)
+      if((symbol = msAddImageSymbol(&self->symbolset, name)) == -1)
 	return -1;
 
     return symbol;

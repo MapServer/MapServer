@@ -409,7 +409,7 @@ static int getCharacterSize(char *character, int size, char *font, rectObj *rect
 /* ------------------------------------------------------------------------------- */
 /*       Draw a shade symbol of the specified size and color                       */
 /* ------------------------------------------------------------------------------- */
-void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, classObj *class, int overlay)
+void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz)
 {
   symbolObj *symbol;
   int i;
@@ -419,9 +419,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, cla
   int x,y;
   int tile_bg=-1, tile_fg=-1; /* colors (background and foreground) */
   
-  int oc,bc,fc;
-  int sy;
-  double sz,scale=1.0;
+  double scale=1.0;
   
   int bbox[8];
   rectObj rect;
@@ -429,20 +427,6 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, cla
 
   if(p->numlines <= 0)
     return;
-
-  if(overlay) {
-    oc = class->overlayoutlinecolor;
-    bc = class->overlaybackgroundcolor;
-    fc = class->overlaycolor;
-    sy = class->overlaysymbol;
-    sz = class->overlaysizescaled;
-  } else {
-    oc = class->outlinecolor;
-    bc = class->backgroundcolor;
-    fc = class->color;
-    sy = class->symbol;
-    sz = class->sizescaled;
-  }
 
   if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
     return;
@@ -691,7 +675,7 @@ void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *
 /* ------------------------------------------------------------------------------- */
 /*       Draw a single marker symbol of the specified size and color               */
 /* ------------------------------------------------------------------------------- */
-void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, classObj *class, int overlay)
+void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, int sy, int fc, int bc, int oc, double sz)
 {
   symbolObj *symbol;
   int offset_x, offset_y, x, y;
@@ -702,25 +686,11 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, cl
   gdImagePtr tmp;
   int tmp_fc=-1, tmp_bc, tmp_oc=-1;
 
-  int oc,fc;
-  int sy;
-  double sz,scale=1.0;
+  double scale=1.0;
 
   int bbox[8];
   rectObj rect;
   char *font=NULL;
-
-  if(overlay) {
-    oc = class->overlayoutlinecolor;
-    fc = class->overlaycolor;
-    sy = class->overlaysymbol;
-    sz = class->overlaysizescaled;
-  } else {
-    oc = class->outlinecolor;
-    fc = class->color;
-    sy = class->symbol;
-    sz = class->sizescaled;
-  } 
 
   if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
     return;
@@ -850,7 +820,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, cl
 /* ------------------------------------------------------------------------------- */
 /*       Draw a line symbol of the specified size and color                        */
 /* ------------------------------------------------------------------------------- */
-void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, classObj *class, int overlay)
+void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, , int sy, int fc, int bc, int oc, double sz)
 {
   int i, j;
   symbolObj *symbol;
@@ -859,23 +829,11 @@ void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, clas
   int brush_bc, brush_fc;
   gdImagePtr brush=NULL;
   gdPoint points[MS_MAXVECTORPOINTS];
-  int fc, bc, sz, sy;
+
   double scale=1.0;
   
   if(p->numlines <= 0)
     return;
-
-  if(overlay) {
-    bc = class->overlaybackgroundcolor;
-    fc = class->overlaycolor;
-    sy = class->overlaysymbol;
-    sz = class->overlaysizescaled;
-  } else {
-    bc = class->backgroundcolor;
-    fc = class->color;
-    sy = class->symbol;
-    sz = class->sizescaled;
-  } 
 
   if(sy > symbolset->numsymbols || sy < 0) /* no such symbol, 0 is OK */
     return;

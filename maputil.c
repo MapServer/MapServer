@@ -561,7 +561,7 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
 	msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
       else {
 	if(layer->class[c].color == -1)
-	  msDrawMarkerSymbol(&map->symbolset, img, point, &layer->class[c], MS_FALSE);
+	  msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	msDrawLabel(img, map, *point, text, &layer->class[c].label);
       }
     }
@@ -572,9 +572,9 @@ int msDrawPoint(mapObj *map, layerObj *layer, pointObj *point, gdImagePtr img, c
       if(!msPointInRect(point, &map->extent)) return(0);
       point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
       point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
-      msDrawMarkerSymbol(&map->symbolset, img, point, &layer->class[c], MS_FALSE);
+      msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
     } else {
-      msDrawMarkerSymbol(&map->symbolset, img, point, &layer->class[c], MS_FALSE);
+      msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
     }
 
     if(label_string) text = label_string; 
@@ -658,7 +658,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	    msAddLabel(map, layer->index, c, -1, -1, *point, text, -1);
 	  else {
 	    if(layer->class[c].color == -1)
-	      msDrawMarkerSymbol(&map->symbolset, img, point, &layer->class[c], MS_FALSE);
+	      msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	    msDrawLabel(img, map, *point, text, &layer->class[c].label);
 	  }
 	}
@@ -676,10 +676,9 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
 	  if(!msPointInRect(point, &map->extent)) return(0);
 	  point->x = MS_NINT((point->x - map->extent.minx)/map->cellsize); 
 	  point->y = MS_NINT((map->extent.maxy - point->y)/map->cellsize);
-	  msDrawMarkerSymbol(&map->symbolset, img, point, &layer->class[c], MS_FALSE);
-	} else {
-	  msDrawMarkerSymbol(&map->symbolset, img, point, &layer->class[c], MS_FALSE);
 	}
+
+	msDrawMarkerSymbol(&map->symbolset, img, point, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 
 	if(label_string) text = label_string; 
 	else text = layer->class[c].text.string;
@@ -718,7 +717,27 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
     }
     break;
 
-  case MS_POLYLINE:    
+  case MS_POLYLINE:
+   if(layer->transform) {      
+      msClipPolygonRect(shape, cliprect, shape);
+      if(shape->numlines == 0) return(0);
+      msTransformPolygon(map->extent, map->cellsize, shape);
+    }
+
+   msDrawLineSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+
+    if(label_string) text = label_string; 
+    else text = layer->class[c].text.string;
+
+    if(text) {
+      if(msPolygonLabelPoint(shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	if(layer->labelcache)
+	  msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
+	else
+	  msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+      }
+    }
+    break;
   case MS_POLYGON: 
     if(layer->transform) {      
       msClipPolygonRect(shape, cliprect, shape);
@@ -726,11 +745,8 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, c
       msTransformPolygon(map->extent, map->cellsize, shape);
     }
 
-    if(layer->type == MS_POLYGON)
-      msDrawShadeSymbol(&map->symbolset, img, shape, &layer->class[c], MS_FALSE);
-    else
-      msDrawShadeSymbol(&map->symbolset, img, shape, &layer->class[c], MS_FALSE);
-
+    msDrawShadeSymbol(&map->symbolset, img, shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+      
     if(label_string) text = label_string; 
     else text = layer->class[c].text.string;
 
@@ -836,7 +852,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	    msAddLabel(map, layer->index, c, -1, -1, *pnt, text, -1);
 	  else {
 	    if(layer->class[c].color == -1)
-	      msDrawMarkerSymbol(&map->symbolset, img, pnt, &layer->class[c], MS_FALSE);
+	      msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	    msDrawLabel(img, map, *pnt, text, &layer->class[c].label);
 	  }
 	}    
@@ -865,9 +881,9 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	    if(!msPointInRect(pnt, &map->extent)) continue;
 	    pnt->x = MS_NINT((pnt->x - map->extent.minx)/map->cellsize); 
 	    pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);
-	    msDrawMarkerSymbol(&map->symbolset, img, pnt, &layer->class[c], MS_FALSE);
+	    msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	  } else {
-	    msDrawMarkerSymbol(&map->symbolset, img, pnt, &layer->class[c], MS_FALSE);
+	    msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	  }
 	  
 	  if(annotate) {
@@ -915,7 +931,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, length);
 	  } else {
 	    if(layer->class[c].color == -1)
-	      msDrawMarkerSymbol(&map->symbolset, img, &annopnt, &layer->class[c], MS_FALSE);
+	      msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
 	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
 	  }
 	}
@@ -924,6 +940,37 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     break;
 
   case MS_POLYLINE:
+    for(fptr=layer->features; fptr; fptr=fptr->next) {
+    
+      if((c = getClassIndex(layer, fptr->class)) == -1) continue; /* next feature */
+
+#ifdef USE_PROJ
+      if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
+	msProjectPolyline(layer->projection.proj, map->projection.proj, &(fptr->shape));
+#endif
+      
+      if(layer->transform) {      
+	msClipPolygonRect(&fptr->shape, cliprect, &fptr->shape);
+	if(fptr->shape.numlines == 0) continue;
+	msTransformPolygon(map->extent, map->cellsize, &fptr->shape);
+      }
+
+      msDrawLineSymbol(&map->symbolset, img, &fptr->shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+
+      if(annotate) {
+	if(fptr->text) text = fptr->text; 
+	else if(layer->class[c].text.string) text = layer->class[c].text.string;
+	else continue;
+
+	if(msPolygonLabelPoint(&fptr->shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {
+	  if(layer->labelcache)
+	    msAddLabel(map, layer->index, c, -1, -1, annopnt, text, -1);
+	  else
+	    msDrawLabel(img, map, annopnt, text, &layer->class[c].label);
+	}
+      }
+    }    
+    break;
   case MS_POLYGON:
     for(fptr=layer->features; fptr; fptr=fptr->next) {
     
@@ -940,11 +987,10 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
 	msTransformPolygon(map->extent, map->cellsize, &fptr->shape);
       }
 
-      if(layer->type == MS_POLYGON)
-	msDrawShadeSymbol(&map->symbolset, img, &fptr->shape, &layer->class[c], MS_FALSE);
-      else
-	msDrawLineSymbol(&map->symbolset, img, &fptr->shape, &layer->class[c], MS_FALSE);
-
+      msDrawShadeSymbol(&map->symbolset, img, &fptr->shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+      if(layer->class[c].overlaysymbol >= 0) 
+	msDrawShadeSymbol(&map->symbolset, img, &fptr->shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
+      
       if(annotate) {
 	if(fptr->text) text = fptr->text; 
 	else if(layer->class[c].text.string) text = layer->class[c].text.string;
@@ -973,18 +1019,11 @@ struct shapeCacheObj {
   struct shapeCacheObj *next;
 };
 
-static int addShapeCache(struct shapeCacheObj *sc) {
+static int addShapeCache(struct shapeCacheObj *sc, shapeObj *shape, int classindex) {
   struct shapeCacheObj *scp;
-
-  if((scp = (struct shapeCacheObj *)malloc(sizeof(struct shapeCacheObj))) == NULL) {
-    msSetError(MS_MEMERR, NULL, "addShapeCache()");
-    return(-1);
-  }
   
-  scp->next = NULL;
+  /* add to the END of the list */
 
-  sc->next = scp; // insert at the beginning
- 
   return(0);
 }
 
@@ -1215,8 +1254,8 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      msAddLabel(map, layer->index, c, t, i, *pnt, annotxt, -1);
 	    else {
 	      if(layer->class[c].color != -1) {
-		msDrawMarkerSymbol(&map->symbolset, img, pnt, &(layer->class[c]), MS_FALSE);
-		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, &(layer->class[c]), MS_TRUE);
+		msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	      }
 	      msDrawLabel(img, map, *pnt, annotxt, &(layer->class[c].label));
 	    }
@@ -1271,8 +1310,8 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, length);
 	    else {
 	      if(layer->class[c].color != -1) {
-		msDrawMarkerSymbol(&map->symbolset, img, &annopnt, &(layer->class[c]), MS_FALSE);
-		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &annopnt, &(layer->class[c]), MS_TRUE);
+		msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	      }
 	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));	    
 	    }
@@ -1324,8 +1363,8 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      msAddLabel(map, layer->index, c, t, i, annopnt, annotxt, -1);
 	    else {
 	      if(layer->class[c].color != -1) {
-		msDrawMarkerSymbol(&map->symbolset, img, &annopnt, &(layer->class[c]), MS_FALSE);
-		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &annopnt, &(layer->class[c]), MS_TRUE);
+		msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+		if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, &annopnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	      }
 	      msDrawLabel(img, map, annopnt, annotxt, &(layer->class[c].label));	    
 	    }
@@ -1366,8 +1405,8 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	      pnt->y = MS_NINT((map->extent.maxy - pnt->y)/map->cellsize);	      
 	    } 
 
-	    msDrawMarkerSymbol(&map->symbolset, img, pnt, &layer->class[c], MS_FALSE);
-	    if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, &layer->class[c], MS_TRUE);
+	    msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+	    if(layer->class[c].overlaysymbol >= 0) msDrawMarkerSymbol(&map->symbolset, img, pnt, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 
 	    if(annotate && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	      
@@ -1397,6 +1436,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       break;
             
     case MS_LINE:
+
       if((shpfile.type != MS_SHP_ARC) && (shpfile.type != MS_SHP_POLYGON)) { /* wrong shapefile type */
 	msSetError(MS_MISCERR, "LINE layers must be ARC or POLYGON shapefiles.", "msDrawShapefileLayer()");
 	return(-1);
@@ -1422,8 +1462,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  }
 	  msTransformPolygon(map->extent, map->cellsize, &shape);
 	}
+
 	msDrawLineSymbol(&map->symbolset, img, &shape, &(layer->class[c]), MS_FALSE);	
-	
+		
 	if(annotate && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	  if(msPolylineLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize, &angle, &length) != -1) {
 
@@ -1454,6 +1495,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
       break;
 
     case MS_POLYLINE:
+
       if(shpfile.type != MS_SHP_POLYGON) { /* wrong shapefile type */
 	msSetError(MS_MISCERR, "POLYGON layers must be POLYGON shapefiles.", "msDrawShapefileLayer()");
 	return(-1);
@@ -1535,8 +1577,9 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	  msTransformPolygon(map->extent, map->cellsize, &shape);
 	}
 
-	msDrawShadeSymbol(&map->symbolset, img, &shape, &(layer->class[c]), MS_FALSE);
-	if(layer->class[c].overlaysymbol >= 0) msDrawShadeSymbol(&map->symbolset, img, &shape, &(layer->class[c]), MS_TRUE);
+	msDrawShadeSymbol(&map->symbolset, img, &shape, layer->class[c].symbol, layer->class[c].color, layer->class[c].backgroundcolor, layer->class[c].outlinecolor, layer->class[c].sizescaled);
+	if(layer->class[c].overlaysymbol >= 0) 
+	  msDrawShadeSymbol(&map->symbolset, img, &shape, layer->class[c].overlaysymbol, layer->class[c].overlaycolor, layer->class[c].overlaybackgroundcolor, layer->class[c].overlayoutlinecolor, layer->class[c].overlaysizescaled);
 	
 	if(annotate  && (annotxt = shpGetAnnotation(shpfile.hDBF, &(layer->class[c]), i, labelItemIndex))) {
 	  if(msPolygonLabelPoint(&shape, &annopnt, layer->class[c].label.minfeaturesize) != -1) {

@@ -649,10 +649,10 @@ int strcasecmp(char *s1, char *s2);
 int msLoadSymbolSet(symbolSetObj *symbolset); /* in mapsymbol.c */
 int msAddImageSymbol(symbolSetObj *symbolset, char *filename);
 void msFreeSymbolSet(symbolSetObj *symbolset);
-void msDrawShadeSymbol(symbolSetObj *shadeset, gdImagePtr img, shapeObj *p, classObj *class, int overlay);
-void msGetMarkerSize(symbolSetObj *markerset, classObj *class, int *width, int *height);
-void msDrawMarkerSymbol(symbolSetObj *markerset,gdImagePtr img, pointObj *p, classObj *class, int overlay);
-void msDrawLineSymbol(symbolSetObj *lineset, gdImagePtr img, shapeObj *p, classObj *class, int overlay);
+void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);
+void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *height);
+void msDrawMarkerSymbol(symbolSetObj *symbolset,gdImagePtr img, pointObj *p,  int sy, int fc, int bc, int oc, double sz);
+void msDrawLineSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int sy, int fc, int bc, int oc, double sz);
 
 gdImagePtr msDrawLegend(mapObj *map); /* in maplegend.c */
 int msEmbedLegend(mapObj *map, gdImagePtr img);
