@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.79.2.2  2005/04/06 21:43:55  frank
+ * ensure msOGRLayerInitItemInfo restarts read to get template feature
+ *
  * Revision 1.79.2.1  2005/04/06 21:39:55  frank
  * use proper polygon for spatial filter
  *
@@ -1319,6 +1322,16 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
     }
 
 /* -------------------------------------------------------------------- */
+/*      If -2 is passed, then seek reset reading of the tileindex.      */
+/*      We want to start from the beginning even if this file is        */
+/*      shared between layers or renders.                               */
+/* -------------------------------------------------------------------- */
+    if( targetTile == -2 )
+    {
+        psInfo->poLayer->ResetReading();
+    }
+        
+/* -------------------------------------------------------------------- */
 /*      Get the name (connection string really) of the next tile.       */
 /* -------------------------------------------------------------------- */
     OGRFeature *poFeature;
@@ -1330,7 +1343,7 @@ int msOGRFileReadTile( layerObj *layer, msOGRFileInfo *psInfo,
   NextFile:
 #endif
     
-    if( targetTile == -1 )
+    if( targetTile < 0 )
         poFeature = psInfo->poLayer->GetNextFeature();
     
     else
@@ -1676,7 +1689,7 @@ int msOGRLayerInitItemInfo(layerObj *layer)
   if( layer->tileindex != NULL )
   {
       if( psInfo->poCurTile == NULL 
-          && msOGRFileReadTile( layer, psInfo ) != MS_SUCCESS )
+          && msOGRFileReadTile( layer, psInfo, -2 ) != MS_SUCCESS )
           return MS_FAILURE;
       
       psInfo = psInfo->poCurTile;

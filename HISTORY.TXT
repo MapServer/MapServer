@@ -15,6 +15,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.2
 --------------------------
 
+- mapogr.c: Insure that tile index reading is restarted in 
+  msOGRLayerInitItemInfo() or else fastcgi repeat requests for a layer may 
+  fail on subsequent renders.
+
 - Construct proper polygon spatial filters.  Otherwise no features will be
   returned by OGR for GEOS enabled builds of OGR.
 
