@@ -89,6 +89,15 @@ Version 4.1 (CVS)
   means you can only build with OGR when *installed* as part of GDAL,
   but that's what everyone is doing these days anyway.
 
+- Mapscript outputFormatObj: extended constructor to allow format names,
+  and mapObj methods to append and remove output formats from the 
+  outputformatlist (bug 511).
+
+- New SWIG mapscript development documentation in the spirit of the
+  PHP-Mapscript readme file, but using reST (bug 576).
+
+- Paving way for future changes to SWIG mapscript API with new features
+  enabled by NEXT_GENERATION_API symbol (bug 586).
 
 Version 4.0 (2003-08-01)
 ------------------------
