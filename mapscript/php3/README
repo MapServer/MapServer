@@ -127,7 +127,9 @@ and the MapServer Map File documentation at:
    int    	keyspacingy
    webObj 	web
    referenceMapObj reference
-   colorObj     imagecolor	
+   colorObj     imagecolor
+   scalebarObj  scalebar
+   legendObj    legend          	
 
  Methods:
 
@@ -905,6 +907,67 @@ Constructor:
         $poPoint = ms_newpointobj();
         $poPoint->setXY(-92.0, 62.0);         
         $poPoint = $poPoint->project($projInObj, $projOutObj);
+
+
+ scalebarObj Class
+ -----------
+
+ Constructor:
+
+   Instances of scalebarObj are always are always embedded inside the mapObj.
+
+ Members:
+
+   int height;
+   int width;
+   int style;      
+   int intervals;
+   int color;
+   int backgroundcolor;            
+   int outlinecolor;
+   int units;
+   int status; //MS_ON, MS_OFF, MS_EMBED
+   int position; //for embeded scalebars, MS_UL, MS_UC, ...
+   int transparent;
+   int interlace;
+   int postlabelcache;
+   labelObj label;
+   colorObj inagecolor;
+     
+ Methods:
+
+      int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
+
+
+ legendObj Class
+ -----------
+
+ Constructor:
+
+   Instances of legendObj are always are always embedded inside the mapObj.
+
+ Members:
+
+   int height;
+   int width;
+   int keysizex;      
+   int keysizey;
+   int keyspacingx;
+   int keyspacingy;
+   int outlinecolor; //Color of outline of box, -1 for no outline
+   int status; //MS_ON, MS_OFF, MS_EMBED
+   int position; //for embeded legends, MS_UL, MS_UC, ...
+   int transparent;
+   int interlace;
+   int postlabelcache; //MS_TRUE, MS_FALSE
+   labelObj label;
+   colorObj inagecolor;
+     
+ Methods:
+
+      int set(string property_name, new_value)
+        Set object property to a new value. Returns -1 on error.
 
 
 To compile/install the module on Linux:

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.59  2001/10/17 21:40:50  assefa
+ * Add scalebar and legend objects.
+ *
  * Revision 1.58  2001/10/17 13:14:50  assefa
  * Change setProjection to be able to set the map units and extents.
  *
@@ -272,6 +275,10 @@ DLEXPORT void php3_ms_referenceMap_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_projection_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+
 static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
@@ -301,6 +308,10 @@ static long _phpms_build_resultcachemember_object(resultCacheMemberObj *pRes,
 static long _phpms_build_projection_object(projectionObj *pproj, 
                                            int handle_type, HashTable *list, 
                                            pval *return_value);
+static long _phpms_build_scalebar_object(scalebarObj *pscalebar,
+                                         HashTable *list, pval *return_value);
+static long _phpms_build_legend_object(legendObj *plegend,
+                                       HashTable *list, pval *return_value);
 
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
@@ -336,6 +347,8 @@ static int le_msshapefile;
 static int le_msweb;
 static int le_msrefmap;
 static int le_msprojection_new;
+static int le_msscalebar;
+static int le_mslegend;
 
 static char tmpId[128]; /* big enough for time + pid */
 static int  tmpCount;
@@ -358,6 +371,8 @@ static zend_class_entry *line_class_entry_ptr;
 static zend_class_entry *shape_class_entry_ptr;
 static zend_class_entry *shapefile_class_entry_ptr;
 static zend_class_entry *projection_class_entry_ptr;
+static zend_class_entry *scalebar_class_entry_ptr;
+static zend_class_entry *legend_class_entry_ptr;
 
 #endif
 
@@ -465,6 +480,16 @@ function_entry php_web_class_functions[] = {
 
 function_entry php_reference_class_functions[] = {
     {"set",             php3_ms_referenceMap_setProperty,NULL},    
+    {NULL, NULL, NULL}
+};
+
+function_entry php_scalebar_class_functions[] = {
+    {"set",             php3_ms_scalebar_setProperty,        NULL},    
+    {NULL, NULL, NULL}
+};
+
+function_entry php_legend_class_functions[] = {
+    {"set",             php3_ms_legend_setProperty,        NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -733,6 +758,12 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
                      php_reference_class_functions);
     reference_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
     
+    INIT_CLASS_ENTRY(tmp_class_entry, "scalebar", php_scalebar_class_functions);
+    scalebar_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+
+    INIT_CLASS_ENTRY(tmp_class_entry, "legend", php_legend_class_functions);
+    legend_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
+
     INIT_CLASS_ENTRY(tmp_class_entry, "layer", php_layer_class_functions);
     layer_class_entry_ptr = zend_register_internal_class(&tmp_class_entry);
 
@@ -951,6 +982,18 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     _phpms_build_referenceMap_object(&(pNewObj->reference), list, 
                                      new_obj_ptr);
     _phpms_add_property_object(return_value, "reference", new_obj_ptr,E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_scalebar_object(&(pNewObj->scalebar), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "scalebar", new_obj_ptr, E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_legend_object(&(pNewObj->legend), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "legend", new_obj_ptr, E_ERROR);
 
     return;
 }
@@ -7970,6 +8013,258 @@ DLEXPORT void php3_ms_projection_free(INTERNAL_FUNCTION_PARAMETERS)
 }
 /* }}} */
 
+
+/*=====================================================================
+ *                 PHP function wrappers - scalebarObj class
+ *====================================================================*/
+/**********************************************************************
+ *                     _phpms_build_scalebar_object()
+ **********************************************************************/
+static long _phpms_build_scalebar_object(scalebarObj *pscalebar, 
+                                         HashTable *list, pval *return_value)
+{
+    int         scalebar_id;
+#ifdef PHP4
+    pval        *new_obj_ptr;
+#else
+    pval        new_obj_param;  /* No, it's not a pval * !!! */
+    pval        *new_obj_ptr;
+    new_obj_ptr = &new_obj_param;
+#endif
+
+    if (pscalebar == NULL)
+        return 0;
+
+    scalebar_id = php3_list_insert(pscalebar, PHPMS_GLOBAL(le_msscalebar));
+
+    _phpms_object_init(return_value, scalebar_id, php_scalebar_class_functions,
+                       PHP4_CLASS_ENTRY(scalebar_class_entry_ptr));
+
+    add_property_long(return_value,  "height",          pscalebar->height);
+    add_property_long(return_value,  "width",           pscalebar->width);
+    add_property_long(return_value,  "style",           pscalebar->style);
+    add_property_long(return_value,  "intervals",       pscalebar->intervals);
+    add_property_long(return_value,  "color",           pscalebar->color);
+    add_property_long(return_value,  "backgroundcolor",   
+                      pscalebar->backgroundcolor);
+    add_property_long(return_value,  "outlinecolor",      
+                      pscalebar->outlinecolor);
+    add_property_long(return_value,  "units",           pscalebar->units);
+    add_property_long(return_value,  "status",          pscalebar->status);
+    add_property_long(return_value,  "position",        pscalebar->position);
+    add_property_long(return_value,  "transparent",     pscalebar->transparent);
+    add_property_long(return_value,  "interlace",       pscalebar->interlace);
+    add_property_long(return_value,  "postlabelcache",  
+                      pscalebar->postlabelcache);
+    
+    
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
+    _phpms_build_label_object(&(pscalebar->label), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_color_object(&(pscalebar->imagecolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
+
+    return scalebar_id;
+}
+
+/**********************************************************************
+ *                        scalebar->set()
+ **********************************************************************/
+
+/* {{{ proto int scalebar.set(string property_name, new_value)
+   Set object property to a new value. Returns -1 on error. */
+
+
+DLEXPORT void php3_ms_scalebar_setProperty(INTERNAL_FUNCTION_PARAMETERS)
+{
+    scalebarObj *self;
+    pval   *pPropertyName, *pNewValue, *pThis;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = 
+        (scalebarObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msscalebar),
+                                         list);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    
+    IF_SET_LONG(       "height",         self->height)
+    else IF_SET_LONG(  "width",   self->width)
+    else IF_SET_LONG(  "style",   self->style)
+    else IF_SET_LONG(  "intervals",   self->intervals)
+    else IF_SET_LONG(  "color",   self->color)
+    else IF_SET_LONG(  "backgroundcolor",   self->backgroundcolor)
+    else IF_SET_LONG(  "outlinecolor",   self->outlinecolor)
+    else IF_SET_LONG(  "units",   self->units)
+    else IF_SET_LONG(  "status",   self->status)
+    else IF_SET_LONG(  "position",   self->position)
+    else IF_SET_LONG(  "transparent",   self->transparent)
+    else IF_SET_LONG(  "interlace",   self->interlace)
+    else IF_SET_LONG(  "postlabelcache",   self->postlabelcache)
+    else
+    {
+        php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
+                   pPropertyName->value.str.val);
+        RETURN_LONG(-1);
+    }
+
+    RETURN_LONG(0);
+}           
+
+/*=====================================================================
+ *                 PHP function wrappers - legendObj class
+ *====================================================================*/
+/**********************************************************************
+ *                     _phpms_build_legend_object()
+ **********************************************************************/
+static long _phpms_build_legend_object(legendObj *plegend, 
+                                       HashTable *list, pval *return_value)
+{
+    int         legend_id;
+#ifdef PHP4
+    pval        *new_obj_ptr;
+#else
+    pval        new_obj_param;  /* No, it's not a pval * !!! */
+    pval        *new_obj_ptr;
+    new_obj_ptr = &new_obj_param;
+#endif
+
+    if (plegend == NULL)
+        return 0;
+
+    legend_id = php3_list_insert(plegend, PHPMS_GLOBAL(le_mslegend));
+
+    _phpms_object_init(return_value, legend_id, php_legend_class_functions,
+                       PHP4_CLASS_ENTRY(legend_class_entry_ptr));
+
+    add_property_long(return_value,  "height",          plegend->height);
+    add_property_long(return_value,  "width",           plegend->width);
+    add_property_long(return_value,  "keysizex",        plegend->keysizex);
+    add_property_long(return_value,  "keysizey",        plegend->keysizey);
+    add_property_long(return_value,  "keyspacingx",     plegend->keyspacingx);
+    add_property_long(return_value,  "keyspacingy",     plegend->keyspacingy);
+    add_property_long(return_value,  "outlinecolor",    plegend->outlinecolor);
+    add_property_long(return_value,  "status",          plegend->status);
+    add_property_long(return_value,  "position",        plegend->position);
+    add_property_long(return_value,  "transparent",     plegend->transparent);
+    add_property_long(return_value,  "interlace",       plegend->interlace);
+    add_property_long(return_value,  "postlabelcache",  
+                      plegend->postlabelcache);
+    
+    
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);
+#endif
+    _phpms_build_label_object(&(plegend->label), list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "label", new_obj_ptr,E_ERROR);
+
+#ifdef PHP4
+    MAKE_STD_ZVAL(new_obj_ptr);  /* Alloc and Init a ZVAL for new object */
+#endif
+    _phpms_build_color_object(&(plegend->imagecolor),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "imagecolor",new_obj_ptr,E_ERROR);
+
+    return legend_id;
+}
+
+/**********************************************************************
+ *                        legend->set()
+ **********************************************************************/
+
+/* {{{ proto int legend.set(string property_name, new_value)
+   Set object property to a new value. Returns -1 on error. */
+
+
+DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS)
+{
+    legendObj *self;
+    pval   *pPropertyName, *pNewValue, *pThis;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = 
+        (legendObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslegend),
+                                         list);
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    
+    IF_SET_LONG(       "height",         self->height)
+    else IF_SET_LONG(  "width",   self->width)
+    else IF_SET_LONG(  "keysizex",   self->keysizex)
+    else IF_SET_LONG(  "keysizey",   self->keysizey)
+    else IF_SET_LONG(  "keyspacingx",   self->keyspacingx)
+    else IF_SET_LONG(  "keyspacingy",   self->keyspacingy)
+    else IF_SET_LONG(  "outlinecolor",   self->outlinecolor)
+    else IF_SET_LONG(  "status",   self->status)
+    else IF_SET_LONG(  "position",   self->position)
+    else IF_SET_LONG(  "transparent",   self->transparent)
+    else IF_SET_LONG(  "interlace",   self->interlace)
+    else IF_SET_LONG(  "postlabelcache",   self->postlabelcache)
+    else
+    {
+        php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
+                   pPropertyName->value.str.val);
+        RETURN_LONG(-1);
+    }
+
+    RETURN_LONG(0);
+}           
 
 
 /* ==================================================================== */
