@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.10  2002/11/07 15:53:14  julien
+ * Put duplicated code in a single function
+ * Fix many typo error
+ *
  * Revision 1.9  2002/11/05 21:56:13  julien
  * Remove fatal write mistake in msSaveMapContext
  *
@@ -121,7 +125,103 @@ char * msGetMapContextFileText(char *filename)
 }
 
 
-/* msGetMapContext()
+/*
+**msGetMapContextXMLHashValue()
+**
+**Get the xml value and put it in the hash table
+**
+*/
+int msGetMapContextXMLHashValue( CPLXMLNode *psRoot, const char *pszXMLPath, 
+                                 hashTableObj *metadata, char *pszMetadata )
+{
+  char *pszValue;
+
+  pszValue = (char*)CPLGetXMLValue( psRoot, pszXMLPath, NULL);
+  if(pszValue != NULL)
+  {
+      if( metadata != NULL )
+      {
+          msInsertHashTable( *metadata, pszMetadata, pszValue );
+      }
+      else
+      {
+          return MS_FAILURE;
+      }
+  }
+  else
+  {
+      return MS_FAILURE;
+  }
+
+  return MS_SUCCESS;
+}
+
+
+/*
+**msGetMapContextXMLStringValue()
+**
+**Get the xml value and put it in the string field
+**
+*/
+int msGetMapContextXMLStringValue( CPLXMLNode *psRoot, char *pszXMLPath, 
+                                   char **pszField)
+{
+  char *pszValue;
+
+  pszValue = (char*)CPLGetXMLValue( psRoot, pszXMLPath, NULL);
+  if(pszValue != NULL)
+  {
+      if( pszField != NULL )
+      {
+           *pszField = strdup(pszValue);
+      }
+      else
+      {
+          return MS_FAILURE;
+      }
+  }
+  else
+  {
+      return MS_FAILURE;
+  }
+
+  return MS_SUCCESS;
+}
+
+
+/*
+**msGetMapContextXMLFloatValue()
+**
+**Get the xml value and put it in the string field
+**
+*/
+int msGetMapContextXMLFloatValue( CPLXMLNode *psRoot, char *pszXMLPath, 
+                                  double *pszField)
+{
+  char *pszValue;
+
+  pszValue = (char*)CPLGetXMLValue( psRoot, pszXMLPath, NULL);
+  if(pszValue != NULL)
+  {
+      if( pszField != NULL )
+      {
+           *pszField = atof(pszValue);
+      }
+      else
+      {
+          return MS_FAILURE;
+      }
+  }
+  else
+  {
+      return MS_FAILURE;
+  }
+
+  return MS_SUCCESS;
+}
+
+
+/* msLoadMapContext()
 **
 ** Get a mapfile from a OGC Web Map Context format
 **
@@ -179,12 +279,13 @@ int msLoadMapContext(mapObj *map, char *filename)
   }
   psMapContext = psRoot->psNext;
 
+  // Load the metadata of the WEB obj
+  if(map->web.metadata == NULL)
+      map->web.metadata =  msCreateHashTable();
+
   // Schema Location
-  pszValue = (char*)CPLGetXMLValue(psMapContext,
-                                   "xsi:noNamespaceSchemaLocation",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata,"wfs_schemas_location", pszValue);
-  else
+  if(msGetMapContextXMLHashValue(psMapContext, "xsi:noNamespaceSchemaLocation",
+                   &map->web.metadata, "wfs_schemas_location") == MS_FAILURE)
   {
       CPLDestroyXMLNode(psRoot);
       msSetError(MS_MAPCONTEXTERR, 
@@ -215,11 +316,8 @@ int msLoadMapContext(mapObj *map, char *filename)
   }
 
   // Extent
-  pszValue = (char*)CPLGetXMLValue(psMapContext, 
-                                   "General.BoundingBox.minx", NULL);
-  if(pszValue != NULL)
-      map->extent.minx = atof(pszValue);
-  else
+  if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.minx",
+                                   &(map->extent.minx)) == MS_FAILURE)
   {
       CPLDestroyXMLNode(psRoot);
       msSetError(MS_MAPCONTEXTERR, 
@@ -227,11 +325,8 @@ int msLoadMapContext(mapObj *map, char *filename)
                  "msLoadMapContext()", filename);
       return MS_FAILURE;
   }
-  pszValue = (char*)CPLGetXMLValue(psMapContext, 
-                                   "General.BoundingBox.miny", NULL);
-  if(pszValue != NULL)
-      map->extent.miny = atof(pszValue);
-  else
+  if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.miny",
+                               &(map->extent.miny)) == MS_FAILURE)
   {
       CPLDestroyXMLNode(psRoot);
       msSetError(MS_MAPCONTEXTERR, 
@@ -239,11 +334,8 @@ int msLoadMapContext(mapObj *map, char *filename)
                  "msLoadMapContext()", filename);
       return MS_FAILURE;
   }
-  pszValue = (char*)CPLGetXMLValue(psMapContext, 
-                                   "General.BoundingBox.maxx", NULL);
-  if(pszValue != NULL)
-      map->extent.maxx = atof(pszValue);
-  else
+  if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.maxx",
+                               &(map->extent.maxx)) == MS_FAILURE)
   {
       CPLDestroyXMLNode(psRoot);
       msSetError(MS_MAPCONTEXTERR, 
@@ -251,11 +343,8 @@ int msLoadMapContext(mapObj *map, char *filename)
                  "msLoadMapContext()", filename);
       return MS_FAILURE;
   }
-  pszValue = (char*)CPLGetXMLValue(psMapContext, 
-                                   "General.BoundingBox.maxy", NULL);
-  if(pszValue != NULL)
-      map->extent.maxy = atof(pszValue);
-  else
+  if( msGetMapContextXMLFloatValue(psMapContext, "General.BoundingBox.maxy",
+                               &(map->extent.maxy)) == MS_FAILURE)
   {
       CPLDestroyXMLNode(psRoot);
       msSetError(MS_MAPCONTEXTERR, 
@@ -265,10 +354,8 @@ int msLoadMapContext(mapObj *map, char *filename)
   }
 
   // Title
-  pszValue = (char*)CPLGetXMLValue(psMapContext,"General.Title",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_title", pszValue);
-  else
+  if( msGetMapContextXMLHashValue(psMapContext, "General.Title", 
+                              &(map->web.metadata), "wms_title") == MS_FAILURE)
   {
       CPLDestroyXMLNode(psRoot);
       msSetError(MS_MAPCONTEXTERR, 
@@ -278,87 +365,61 @@ int msLoadMapContext(mapObj *map, char *filename)
   }
 
   // Name
-  pszValue = (char*)CPLGetXMLValue(psMapContext,"General.Name",NULL);
-  if(pszValue != NULL)
-      map->name = strdup(pszValue);
+  msGetMapContextXMLStringValue(psMapContext, "General.Name", 
+                                &(map->name));
 
   // Keyword
-  pszValue = (char*)CPLGetXMLValue(psMapContext,"General.Keyword",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_keywordlist", pszValue);
+  msGetMapContextXMLHashValue(psMapContext, "General.Keywords", 
+                              &(map->web.metadata), "wms_keywordlist");
 
   // Window
   pszValue1 = (char*)CPLGetXMLValue(psMapContext,"General.Window.width",NULL);
   pszValue2 = (char*)CPLGetXMLValue(psMapContext,"General.Window.height",NULL);
-  if(pszValue != NULL && pszValue != NULL)
+  if(pszValue1 != NULL && pszValue2 != NULL)
   {
       map->width = atoi(pszValue1);
       map->height = atoi(pszValue2);
   }
 
   // Abstract
-  pszValue = (char*)CPLGetXMLValue(psMapContext,"General.Abstract",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_abstract", pszValue);
+  msGetMapContextXMLHashValue(psMapContext, "General.Abstract", 
+                              &(map->web.metadata), "wms_abstract");
 
   // Contact Info
   psContactInfo = CPLGetXMLNode(psMapContext, "General.ContactInformation");
 
   // Contact Person primary
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                                   "ContactPersonPrimary.ContactPerson",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_contactperson", pszValue);
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                              "ContactPersonPrimary.ContactOrganisation",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata,"wms_contactorganisation", pszValue);
-
+  msGetMapContextXMLHashValue(psContactInfo, 
+                              "ContactPersonPrimary.ContactPerson", 
+                              &(map->web.metadata), "wms_contactperson");
+  msGetMapContextXMLHashValue(psContactInfo, 
+                              "ContactPersonPrimary.ContactOrganization", 
+                              &(map->web.metadata), "wms_contactorganization");
   // Contact Position
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,"ContactPosition",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_contactposition", pszValue);
-
+  msGetMapContextXMLHashValue(psContactInfo, 
+                              "ContactPosition", 
+                              &(map->web.metadata), "wms_contactposition");
   // Contact Address
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                                   "ContactAddress.AddressType",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_addresstype", pszValue);
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                                   "ContactAddress.Address",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_address", pszValue);
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,"ContactAddress.City",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_city", pszValue);
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                                   "ContactAddress.StateOrProvince",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_stateorprovince", pszValue);
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                                   "ContactAddress.PostCode",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_postcode", pszValue);
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                                   "ContactAddress.Country",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_country", pszValue);
+  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.AddressType", 
+                              &(map->web.metadata), "wms_addresstype");
+  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.Address", 
+                              &(map->web.metadata), "wms_address");
+  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.City", 
+                              &(map->web.metadata), "wms_city");
+  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.StateOrProvince", 
+                              &(map->web.metadata), "wms_stateorprovince");
+  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.PostCode", 
+                              &(map->web.metadata), "wms_postcode");
+  msGetMapContextXMLHashValue(psContactInfo, "ContactAddress.Country", 
+                              &(map->web.metadata), "wms_country");
 
   // Others
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,"ContactVoiceTelephone",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, "wms_contactvoicetelephone", 
-                        pszValue);
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                                   "ContactFascimileTelephone",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, 
-                        "wms_contactfascimiletelephone", pszValue);
-  pszValue = (char*)CPLGetXMLValue(psContactInfo,
-                                   "ContactElectronicMailAddress",NULL);
-  if(pszValue != NULL)
-      msInsertHashTable(map->web.metadata, 
-                        "wms_contactelectronicmailaddress", pszValue);
+  msGetMapContextXMLHashValue(psContactInfo, "ContactVoiceTelephone", 
+                            &(map->web.metadata), "wms_contactvoicetelephone");
+  msGetMapContextXMLHashValue(psContactInfo, "ContactFascimileTelephone", 
+                        &(map->web.metadata), "wms_contactfacsimiletelephone");
+  msGetMapContextXMLHashValue(psContactInfo, "ContactElectronicMailAddress", 
+                     &(map->web.metadata), "wms_contactelectronicmailaddress");
 
   // LayerList
   psLayerList = CPLGetXMLNode(psMapContext, "LayerList");
@@ -394,10 +455,8 @@ int msLoadMapContext(mapObj *map, char *filename)
                   layer->template = strdup("ttt");
 
               // Others
-              pszValue =  (char*)CPLGetXMLValue(psLayer, "Name", NULL);
-              if(pszValue != NULL)
-                  layer->name = strdup(pszValue);
-              else
+              if(msGetMapContextXMLStringValue(psLayer, "Name", 
+                                             &(layer->name)) == MS_FAILURE)
               {
                   CPLDestroyXMLNode(psRoot);
                   msSetError(MS_MAPCONTEXTERR, 
@@ -405,15 +464,12 @@ int msLoadMapContext(mapObj *map, char *filename)
                              "msLoadMapContext()", filename);
                   return MS_FAILURE;
               }
-              pszValue = (char*)CPLGetXMLValue(psLayer, "Title", NULL);
-              if(pszValue != NULL)
-                  msInsertHashTable(layer->metadata, "wms_title", pszValue);
-              else
+
+              if(msGetMapContextXMLHashValue(psLayer, "Title", 
+                                &(layer->metadata), "wms_title") == MS_FAILURE)
               {
-                  pszValue=(char*)CPLGetXMLValue(psLayer,"Server.title",NULL);
-                  if(pszValue != NULL)
-                      msInsertHashTable(layer->metadata,"wms_title",pszValue);
-                  else
+                  if(msGetMapContextXMLHashValue(psLayer, "Server.title", 
+                                &(layer->metadata), "wms_title") == MS_FAILURE)
                   {
                       CPLDestroyXMLNode(psRoot);
                       msSetError(MS_MAPCONTEXTERR, 
@@ -422,21 +478,14 @@ int msLoadMapContext(mapObj *map, char *filename)
                       return MS_FAILURE;
                   }
               }
-              pszValue =  (char*)CPLGetXMLValue(psLayer, "Abstract", NULL);
-              if(pszValue != NULL)
-                  msInsertHashTable(layer->metadata, "wms_abstract", pszValue);
+
+              msGetMapContextXMLHashValue(psLayer, "Abstract", 
+                                          &(layer->metadata), "wms_abstract");
 
               // Server
-              pszValue = (char*)CPLGetXMLValue(psLayer, 
-                               "Server.OnlineResource.xlink:href", NULL);
-              if(pszValue != NULL)
-              {
-                  msInsertHashTable(layer->metadata, "wms_onlineresource", 
-                                    pszValue);
-                  layer->connection = strdup(pszValue);
-                  layer->connectiontype = MS_WMS;
-              }
-              else
+              if(msGetMapContextXMLStringValue(psLayer, 
+                                     "Server.OnlineResource.xlink:href", 
+                                     &(layer->connection)) == MS_FAILURE)
               {
                   CPLDestroyXMLNode(psRoot);
                   msSetError(MS_MAPCONTEXTERR, 
@@ -444,11 +493,16 @@ int msLoadMapContext(mapObj *map, char *filename)
                              "msLoadMapContext()", filename);
                   return MS_FAILURE;
               }
-              pszValue =(char*)CPLGetXMLValue(psLayer, "Server.version", NULL);
-              if(pszValue != NULL)
-                  msInsertHashTable(layer->metadata, "wms_server_version", 
-                                    pszValue);
               else
+              {
+                  msGetMapContextXMLHashValue(psLayer, 
+                                     "Server.OnlineResource.xlink:href", 
+                                     &(layer->metadata), "wms_onlineresource");
+                  layer->connectiontype = MS_WMS;
+              }
+
+              if(msGetMapContextXMLHashValue(psLayer, "Server.version", 
+                       &(layer->metadata), "wms_server_version") == MS_FAILURE)
               {
                   CPLDestroyXMLNode(psRoot);
                   msSetError(MS_MAPCONTEXTERR, 
@@ -724,7 +778,7 @@ int msSaveMapContext(mapObj *map, char *filename)
                 "    <Abstract>%s</Abstract>\n", NULL);
 
   // Window
-  fprintf( stream, "    <Window width=%d height=%d/>", 
+  fprintf( stream, "    <Window width=%d height=%d/>\n", 
            map->width, map->height );
 
   // Contact Info
