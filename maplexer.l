@@ -198,7 +198,9 @@ char *msyystring=NULL;
 
 <INITIAL,VALUE_STRING>annotation	       { return(MS_LAYER_ANNOTATION); }
 <INITIAL,VALUE_STRING>auto                     { return(MS_AUTO); }
+<INITIAL,VALUE_STRING>bevel                    { return(MS_BEVEL); }
 <INITIAL>bitmap			               { return(MS_BITMAP); }
+<INITIAL,VALUE_STRING>butt                     { return(MS_BUTT); }
 <INITIAL,VALUE_STRING>cc                       { return(MS_CC); }
 <INITIAL,VALUE_STRING>circle                   { return(MS_LAYER_CIRCLE); }
 <INITIAL,VALUE_STRING>cl                       { return(MS_CL); }
@@ -224,6 +226,7 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>medium		       { return(MS_MEDIUM); }
 <INITIAL,VALUE_STRING>meters		       { return(MS_METERS); }
 <INITIAL,VALUE_STRING>miles		       { return(MS_MILES); }
+<INITIAL,VALUE_STRING>miter		       { return(MS_MITER); }
 <INITIAL,VALUE_STRING>multiple                 { return(MS_MULTIPLE); }
 <INITIAL,VALUE_STRING>normal                   { return(MS_NORMAL); }
 <INITIAL,VALUE_STRING>off		       { return(MS_OFF); }
@@ -238,12 +241,15 @@ char *msyystring=NULL;
 <INITIAL,VALUE_STRING>postgis		       { return(MS_POSTGIS); }
 <INITIAL,VALUE_STRING>query                    { return(MS_LAYER_QUERY); }
 <INITIAL,VALUE_STRING>raster		       { return(MS_LAYER_RASTER); }
+<INITIAL,VALUE_STRING>round		       { return(MS_ROUND); }
 <INITIAL,VALUE_STRING>sde		       { return(MS_SDE); }
 <INITIAL,VALUE_STRING>selected		       { return(MS_SELECTED); }
 <INITIAL>simple                                { return(MS_SYMBOL_SIMPLE); }
 <INITIAL,VALUE_STRING>single                   { return(MS_SINGLE); }
 <INITIAL,VALUE_STRING>small		       { return(MS_SMALL); }
+<INITIAL,VALUE_STRING>square		       { return(MS_SQUARE); }
 <INITIAL,VALUE_STRING>tiny		       { return(MS_TINY); }
+<INITIAL,VALUE_STRING>triangle		       { return(MS_TRIANGLE); }
 <INITIAL,VALUE_STRING>true                     { return(MS_TRUE); }
 <INITIAL,VALUE_STRING>truetype		       { if(msyyfiletype == MS_FILE_SYMBOL) return(MS_SYMBOL_TRUETYPE); else return(MS_TRUETYPE); }
 <INITIAL,VALUE_STRING>uc                       { return(MS_UC); }
