@@ -1410,8 +1410,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) {
 
                 if( pszWKT != NULL && strlen(pszWKT) > 0 )
                 {
-                    if (msOGCWKT2ProjectionObj(pszWKT,
-                                     &(layer->projection)) != MS_SUCCESS)
+                    if( msOGCWKT2ProjectionObj(pszWKT, &(layer->projection),
+                                               layer->debug ) != MS_SUCCESS )
                     {
                         char	szLongMsg[MESSAGELENGTH*2];
                         errorObj *ms_error = msGetErrorObj();
