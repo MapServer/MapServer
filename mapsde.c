@@ -1,3 +1,12 @@
+/******************************************************************************
+ * $Id$
+ *
+ * $Log$
+ * Revision 1.77  2004/10/04 20:11:00  hobu
+ * Rework of the style to fit code in under 80 columns and add visual breaks between the start and end of functions.  Normalized tabs to spaces wherever I found them, but it is still possible I missed a few
+ *
+*/
+
 #include <time.h>
 
 #include "map.h"
@@ -23,8 +32,18 @@ typedef struct {
   char *table, *column, *row_id_column;
 } msSDELayerInfo;
 
-static void msSDECloseConnection( void *conn_handle )
+/************************************************************************/
+/*       Start SDE/MapServer helper functions.                          */
+/*                                                                      */
+/************************************************************************/
 
+/* -------------------------------------------------------------------- */
+/* msSDECloseConnection
+/* -------------------------------------------------------------------- */
+/*     Closes the SDE connection handle, which is given as a callback   */
+/*     function to the connection pooling API                           */
+/* -------------------------------------------------------------------- */
+static void msSDECloseConnection( void *conn_handle )
 {
   long status;
   
@@ -34,21 +53,33 @@ static void msSDECloseConnection( void *conn_handle )
   }
 }
 
-
-/*
-** Start SDE/MapServer helper functions.
-*/
-static void sde_error(long error_code, char *routine, char *sde_routine) {
+/* -------------------------------------------------------------------- */
+/* sde_error
+/* -------------------------------------------------------------------- */
+/*     Reports more detailed error information from SDE                 */
+/* -------------------------------------------------------------------- */
+static void sde_error(long error_code, char *routine, char *sde_routine) 
+{
   char error_string[SE_MAX_MESSAGE_LENGTH];
 
   error_string[0] = '\0';
   SE_error_get_string(error_code, error_string);
 
-  msSetError(MS_SDEERR, "%s: %s. (%ld)", routine, sde_routine, error_string, error_code);
+  msSetError( MS_SDEERR, 
+              "%s: %s. (%ld)", 
+              routine, 
+              sde_routine, 
+              error_string, 
+              error_code);
 
   return;
 }
 
+/* -------------------------------------------------------------------- */
+/* sdeShapeCopy
+/* -------------------------------------------------------------------- */
+/*     Copies a SDE shape into a MapServer shapeObj                     */
+/* -------------------------------------------------------------------- */
 static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 	
   long numparts, numsubparts, numpoints;
@@ -63,7 +94,9 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 
   status = SE_shape_get_type(inshp, &type);
   if(status != SE_SUCCESS) {
-    sde_error(status, "sdeCopyShape()", "SE_shape_get_type()");
+    sde_error(status, 
+              "sdeCopyShape()", 
+              "SE_shape_get_type()");
     return(MS_FAILURE);
   }
   
@@ -86,7 +119,10 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
     outshp->type = MS_SHAPE_POLYGON;
     break;  
   default:
-    msSetError(MS_SDEERR, "Unsupported SDE shape type (%ld).", "sdeCopyShape()", type);
+    msSetError( MS_SDEERR, 
+                "Unsupported SDE shape type (%ld).", 
+                "sdeCopyShape()", 
+                type);
     return(MS_FAILURE);
   }
 
@@ -96,19 +132,28 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   if(numsubparts > 0) {
     subparts = (long *)malloc(numsubparts*sizeof(long));
     if(!subparts) {
-      msSetError(MS_MEMERR, "Unable to allocate parts array.", "sdeCopyShape()");
+      msSetError( MS_MEMERR, 
+                  "Unable to allocate parts array.", 
+                  "sdeCopyShape()");
       return(MS_FAILURE);
     }
-    
   }
 
   points = (SE_POINT *)malloc(numpoints*sizeof(SE_POINT));
   if(!points) {
-    msSetError(MS_MEMERR, "Unable to allocate points array.", "sdeCopyShape()");
+    msSetError( MS_MEMERR, 
+                "Unable to allocate points array.", 
+                "sdeCopyShape()");
     return(MS_FAILURE);
   }
 
-  status = SE_shape_get_all_points(inshp, SE_DEFAULT_ROTATION, NULL, subparts, points, NULL, NULL);
+  status = SE_shape_get_all_points( inshp, 
+                                    SE_DEFAULT_ROTATION, 
+                                    NULL, 
+                                    subparts, 
+                                    points, 
+                                    NULL, 
+                                    NULL);
   if(status != SE_SUCCESS) {
     sde_error(status, "sdeCopyShape()", "SE_shape_get_all_points()");
     return(MS_FAILURE);
@@ -124,7 +169,9 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
 
     line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
     if(!line.point) {
-      msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", "sdeShapeCopy()");
+      msSetError( MS_MEMERR, 
+                  "Unable to allocate temporary point cache.", 
+                  "sdeShapeCopy()");
       return(MS_FAILURE);
     }
      
@@ -151,9 +198,12 @@ static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   return(MS_SUCCESS);
 }
 
-/*
-** Retrieves the current row as setup via the SDE stream query or row fetch routines.
-*/
+/* -------------------------------------------------------------------- */
+/* sdeGetRecord
+/* -------------------------------------------------------------------- */
+/*     Retrieves the current row as setup via the SDE stream query      */
+/*     or row fetch routines.                                           */
+/* -------------------------------------------------------------------- */
 static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
   int i;
   long status;
@@ -176,7 +226,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     shape->numvalues = layer->numitems;
     shape->values = (char **)malloc(sizeof(char *)*layer->numitems);
     if(!shape->values) {
-      msSetError(MS_MEMERR, "Error allocation shape attribute array.", "sdeGetRecord()");
+      msSetError( MS_MEMERR, 
+                  "Error allocation shape attribute array.", 
+                  "sdeGetRecord()");
       return(MS_FAILURE);
     }
   }
@@ -204,7 +256,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
     
     switch(itemdefs[i].sde_type) {
     case SE_SMALLINT_TYPE:
-      status = SE_stream_get_smallint(sde->stream, (short)(i+1), &shortval); // changed by gdv
+      // changed by gdv
+      status = SE_stream_get_smallint(sde->stream, (short)(i+1), &shortval); 
       if(status == SE_SUCCESS)
         shape->values[i] = long2string(shortval);
       else if(status == SE_NULL_VALUE)
@@ -226,7 +279,8 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }      
       break;
     case SE_FLOAT_TYPE:
-      status = SE_stream_get_float(sde->stream, (short)(i+1), &floatval); // changed by gdv
+      // changed by gdv
+      status = SE_stream_get_float(sde->stream, (short)(i+1), &floatval); 
       if(status == SE_SUCCESS)
         shape->values[i] = double2string(floatval);
       else if(status == SE_NULL_VALUE)
@@ -237,7 +291,7 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       }
       break;
     case SE_DOUBLE_TYPE:
-      status = SE_stream_get_double(sde->stream, (short)(i+1), &doubleval);
+      status = SE_stream_get_double(sde->stream, (short) (i+1), &doubleval);
       if(status == SE_SUCCESS)
         shape->values[i] = double2string(doubleval);
       else if(status == SE_NULL_VALUE)
@@ -249,7 +303,9 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       break;
     case SE_STRING_TYPE:
       shape->values[i] = (char *)malloc(itemdefs[i].size+1);
-      status = SE_stream_get_string(sde->stream, (short)(i+1), shape->values[i]);
+      status = SE_stream_get_string(sde->stream, 
+                                    (short) (i+1), 
+                                    shape->values[i]);
       if(status == SE_NULL_VALUE)
         shape->values[i][0] = '\0'; // empty string
       else if(status != SE_SUCCESS) {
@@ -259,13 +315,18 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
       break;
     case SE_BLOB_TYPE:
       shape->values[i] = strdup("<blob>");
-      msSetError(MS_SDEERR, "Retrieval of BLOBs is not yet supported.", "sdeGetRecord()");
+      msSetError( MS_SDEERR, 
+                  "Retrieval of BLOBs is not yet supported.", 
+                  "sdeGetRecord()");
       break;
     case SE_DATE_TYPE:
       status = SE_stream_get_date(sde->stream, (short)(i+1), &dateval);
       if(status == SE_SUCCESS) {
         shape->values[i] = (char *)malloc(sizeof(char)*MS_SDE_TIMEFMTSIZE);
-        strftime(shape->values[i], MS_SDE_TIMEFMTSIZE, MS_SDE_TIMEFMT, &dateval);
+        strftime( shape->values[i], 
+                  MS_SDE_TIMEFMTSIZE, 
+                  MS_SDE_TIMEFMT, 
+                  &dateval);
       } else if(status == SE_NULL_VALUE)
         shape->values[i] = strdup(MS_SDE_NULLSTRING);
       else {     
@@ -304,11 +365,23 @@ static int sdeGetRecord(layerObj *layer, shapeObj *shape) {
 }
 #endif
 
-/*
-** Start SDE/MapServer library functions.
-*/
+/************************************************************************/
+/*       Start SDE/MapServer library functions.                         */
+/*                                                                      */
+/************************************************************************/
 
-// connects, gets basic information and opens a stream
+/* -------------------------------------------------------------------- */
+/* msSDELayerOpen
+/* -------------------------------------------------------------------- */
+/*     Connects to SDE using the SDE C API.  Connections are pooled     */
+/*     using the MapServer pooling API.  After a connection is made,    */
+/*     a query stream is created, using the SDE version specified in    */
+/*     the DATA string, or SDE.DEFAULT if not specified.  It is         */
+/*     important to note that the SE_CONNECTION is shared across data   */
+/*     layers, but the state_id for a layer's version is different,     */
+/*     even for layers with the same version name.  These are *not*     */
+/*     shared across layers.                                            */
+/* -------------------------------------------------------------------- */
 int msSDELayerOpen(layerObj *layer) {
 #ifdef USE_SDE
   long status=-1;
@@ -320,64 +393,99 @@ int msSDELayerOpen(layerObj *layer) {
 
   msSDELayerInfo *sde;
 
-  if(layer->layerinfo) return(MS_SUCCESS); // layer already open, silently return
+  // layer already open, silently return
+  if(layer->layerinfo) return(MS_SUCCESS); 
 
   // allocate space for SDE structures
   sde = (msSDELayerInfo *) malloc(sizeof(msSDELayerInfo));
   if(!sde) {
-    msSetError(MS_MEMERR, "Error allocating SDE layer structure.", "msSDELayerOpen()");
+    msSetError( MS_MEMERR, 
+                "Error allocating SDE layer structure.", 
+                "msSDELayerOpen()");
     return(MS_FAILURE);
   }
  
-  // initialize a few things
+  // initialize the table and spatial column names
   sde->table = sde->column = NULL;
- 
-  // status = MS_FAILURE;
-//  status = msCheckConnection(layer);  
+  
+  // initialize the connection using the connection pooling API
   sde->connection = (SE_CONNECTION) msConnPoolRequest( layer );
+  
+  // If we weren't returned a connection, initialize a new one
   if (!(sde->connection)) {
+    if (layer->debug) 
+      msDebug("msSDELayerOpen(): "
+              "Layer %s opened from scratch.\n", layer->name);
 
-  //if(status != MS_SUCCESS) { // no existing connection to use, open a new one    
-    if(layer->debug) msDebug("msSDELayerOpen(): Layer %s opened from scratch.\n", layer->name);
-
+    // Split the connection parameters and make sure we have enough of them
     params = split(layer->connection, ',', &numparams);
     if(!params) {
-      msSetError(MS_MEMERR, "Error spliting SDE connection information.", "msSDELayerOpen()");
+      msSetError( MS_MEMERR, 
+                  "Error spliting SDE connection information.", 
+                  "msSDELayerOpen()");
       return(MS_FAILURE);
     }
-
     if(numparams < 5) {
-      msSetError(MS_SDEERR, "Not enough SDE connection parameters specified.", "msSDELayerOpen()");
+      msSetError( MS_SDEERR, 
+                  "Not enough SDE connection parameters specified.", 
+                  "msSDELayerOpen()");
       return(MS_FAILURE);
     }
   
-    status = SE_connection_create(params[0], params[1], params[2], params[3], params[4], &error, &(sde->connection));
+    // Create the connection handle and put into the sde->connection
+    status = SE_connection_create(params[0], 
+                                  params[1], 
+                                  params[2], 
+                                  params[3], 
+                                  params[4], 
+                                  &error, 
+                                  &(sde->connection));
     if(status != SE_SUCCESS) {
       sde_error(status, "msSDELayerOpen()", "SE_connection_create()");
       return(MS_FAILURE);
     }
+/* ------------------------------------------------------------------------- */
+/* Set the concurrency for the connection.  This is to support threading.    */
+/* Below is a relevant portion of the SDE C API documentation outlining      */
+/* the implications of this mode of concurrency.                             */
+/*                                                                           */
+/*  SE_LOCK_POLICY Similar to SE_TRYLOCK_POLICY, but instead of failing      */
+/*  if the connection is currently in use, the call hangs until the          */
+/*  thread which has the connection currently locked returns from its        */
+/*  ArcSDE function call. If multiple threads are waiting on the             */
+/*  connection, it is impossible to predict which thread will get the        */
+/*  lock next.                                                               */
+/* ------------------------------------------------------------------------- */
     status = SE_connection_set_concurrency(sde->connection, SE_LOCK_POLICY);
     if(status != SE_SUCCESS) {
       sde_error(status, "msSDELayerOpen()", "SE_connection_set_concurrency()");
       return(MS_FAILURE);
-    }    
-		msConnPoolRegister( layer, sde->connection, msSDECloseConnection );
-	  msFreeCharArray(params, numparams); // done with parameter list
+    }
+    
+    // Register the connection with the connection pooling API.  Give 
+    // msSDECloseConnection as the function to call when we run out of layer 
+    // instances using it
+    msConnPoolRegister(layer, sde->connection, msSDECloseConnection);
+    msFreeCharArray(params, numparams); // done with parameter list
   }
   
- 
+  // Split the DATA member into its parameters using the comma
+  // Periods (.) are use to denote table names and schemas in SDE, 
+  // as are underscores (_).
   params = split(layer->data, ',', &numparams);
   if(!params) {
-    msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msSDELayerOpen()");
+    msSetError(MS_MEMERR, 
+        "Error spliting SDE layer information.", "msSDELayerOpen()");
     return(MS_FAILURE);
   }
 
   if(numparams < 2) {
-    msSetError(MS_SDEERR, "Not enough SDE layer parameters specified.", "msSDELayerOpen()");
+    msSetError(MS_SDEERR, 
+    "Not enough SDE layer parameters specified.", "msSDELayerOpen()");
     return(MS_FAILURE);
   }
 
-  sde->table = params[0]; // no need to free params
+  sde->table = params[0]; 
   sde->column = params[1];
 
   status = SE_versioninfo_create (&(version));
@@ -386,61 +494,71 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
   if (numparams < 3){ 
-  	//User didn't specify a version, we'll use SDE.DEFAULT
-  	if (layer->debug) msDebug("msSDELayerOpen(): Layer %s did not have a specified version.  Using SDE.DEFAULT.\n", layer->name);
-    status = SE_version_get_info(sde->connection, "SDE.DEFAULT", version);
-    
+    // User didn't specify a version, we'll use SDE.DEFAULT
+    if (layer->debug) 
+      msDebug("msSDELayerOpen(): Layer %s did not have a" 
+              "specified version.  Using SDE.DEFAULT.\n", layer->name);
+      status = SE_version_get_info(sde->connection, "SDE.DEFAULT", version);
   } 
   else {
-    if (layer->debug) msDebug("msSDELayerOpen(): Layer %s specified version %s.\n", layer->name, params[2]);
+    if (layer->debug) 
+      msDebug("msSDELayerOpen(): Layer %s specified version %s.\n", 
+              layer->name, 
+              params[2]);
     status = SE_version_get_info(sde->connection, params[2], version);
   }
    
   if(status != SE_SUCCESS) {
-  	  if (status == SE_INVALID_RELEASE) {
-  	    // The user has incongruent versions of SDE, ie 8.2 client and 8.3 server
-  		  // set the state_id to SE_DEFAULT_STATE_ID, which means no version queries are done
-  		  sde->state_id = SE_DEFAULT_STATE_ID;
-
-  	  }
-  	  else {
-  	  	sde_error(status, "msSDELayerOpen()", "SE_version_get_info()");
-        return(MS_FAILURE);
-      }
-  }
+    if (status == SE_INVALID_RELEASE) {
+      // The user has incongruent versions of SDE, ie 8.2 client and 
+      // 8.3 server set the state_id to SE_DEFAULT_STATE_ID, which means 
+      // no version queries are done
+      sde->state_id = SE_DEFAULT_STATE_ID;
+    }
+    else {
+      sde_error(status, "msSDELayerOpen()", "SE_version_get_info()");
+      return(MS_FAILURE);
+    }
+  } 
+  // Get the STATEID from the given version and set the stream to 
+  // that if we didn't already set it to SE_DEFAULT_STATE_ID.  
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
-	  //Get the STATEID from the given version and set the stream to 
-	  //that if we didn't already set it to SE_DEFAULT_STATE_ID.
-	  status = SE_versioninfo_get_state_id(version, &sde->state_id);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerOpen()", "SE_versioninfo_get_state_id()");
-	    return(MS_FAILURE);
-	  }
-	  status = SE_stateinfo_create (&state);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerOpen()", "SE_stateinfo_create()");
-	    return(MS_FAILURE);
-	  }    
-	  status = SE_state_get_info(sde->connection, sde->state_id, state);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerOpen()", "SE_state_get_info()");
-	    return(MS_FAILURE);
-	  }  
-	  if (SE_stateinfo_is_open (state)) {
-	  	//If the state is open for edits, we shouldn't be querying from it
-	    sde_error(status, "msSDELayerOpen()", "SE_stateinfo_is_open() -- State for version is open");
-	    return(MS_FAILURE);
-	  }
-	  SE_stateinfo_free (state); 
-	  SE_versioninfo_free(version);
-  }
+    status = SE_versioninfo_get_state_id(version, &sde->state_id);
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_versioninfo_get_state_id()");
+      return(MS_FAILURE);
+    }
+    status = SE_stateinfo_create (&state);
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_stateinfo_create()");
+      return(MS_FAILURE);
+    }    
+    status = SE_state_get_info(sde->connection, sde->state_id, state);
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_state_get_info()");
+      return(MS_FAILURE);
+    }  
+    if (SE_stateinfo_is_open (state)) {
+      // If the state is open for edits, we shouldn't be querying from it
+      sde_error(status, 
+                "msSDELayerOpen()", 
+                "SE_stateinfo_is_open() -- State for version is open");
+      return(MS_FAILURE);
+    }
+    SE_stateinfo_free (state); 
+    SE_versioninfo_free(version);
+  } // if (!(sde->state_id == SE_DEFAULT_STATE_ID))
+  
   status = SE_layerinfo_create(NULL, &(sde->layerinfo));
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerOpen()", "SE_layerinfo_create()");
     return(MS_FAILURE);
   }
 
-  status = SE_layer_get_info(sde->connection, params[0], params[1], sde->layerinfo);
+  status = SE_layer_get_info( sde->connection, 
+                              params[0], 
+                              params[1], 
+                              sde->layerinfo);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerOpen()", "SE_layer_get_info()");
     return(MS_FAILURE);
@@ -464,13 +582,18 @@ int msSDELayerOpen(layerObj *layer) {
     return(MS_FAILURE);
   }
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
-	  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
-	    return(MS_FAILURE);
-	  }  
-	}  
-  layer->layerinfo = sde; // point to the SDE layer information (note this might actually be in another layer)
+    status =  SE_stream_set_state(sde->stream, 
+                                  sde->state_id, 
+                                  sde->state_id, 
+                                  SE_STATE_DIFF_NOCHECK); 
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
+      return(MS_FAILURE);
+      }  
+  }
+  // point to the SDE layer information 
+  // (note this might actually be in another layer)
+  layer->layerinfo = sde; 
 
   return(MS_SUCCESS);
 #else
@@ -479,6 +602,12 @@ int msSDELayerOpen(layerObj *layer) {
 #endif
 }
 
+/* -------------------------------------------------------------------- */
+/* msSDELayerClose
+/* -------------------------------------------------------------------- */
+/*     Closes the MapServer layer.  This doesn't necessarily close the  */
+/*     connection to the layer.                                         */
+/* -------------------------------------------------------------------- */
 void msSDELayerClose(layerObj *layer) {
 #ifdef USE_SDE
 
@@ -487,7 +616,8 @@ void msSDELayerClose(layerObj *layer) {
   sde = layer->layerinfo;
   if (sde == NULL) return;  // Silently return if layer not opened.
 
-  if(layer->debug) msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
+  if(layer->debug) 
+    msDebug("msSDELayerClose(): Closing layer %s.\n", layer->name);
 	
   if (sde->layerinfo) SE_layerinfo_free(sde->layerinfo);
   if (sde->coordref) SE_coordref_free(sde->coordref);
@@ -500,12 +630,19 @@ void msSDELayerClose(layerObj *layer) {
   layer->layerinfo = NULL;
   sde->connection = NULL;
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerClose()");
   return;
 #endif
 }
 
-// starts a stream query using spatial filter (and optionally values)
+/* -------------------------------------------------------------------- */
+/* msSDELayerWhichShapes
+/* -------------------------------------------------------------------- */
+/*     starts a stream query using spatial filter.  Also limits the     */
+/*     query by the layer's FILTER item as well.                        */
+/* -------------------------------------------------------------------- */
 int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 #ifdef USE_SDE
   long status;
@@ -518,7 +655,9 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   sde = layer->layerinfo;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerWhichShapes()");
+    msSetError( MS_SDEERR, 
+                "SDE layer has not been opened.", 
+                "msSDELayerWhichShapes()");
     return(MS_FAILURE);
   }
 
@@ -530,24 +669,31 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_layerinfo_get_envelope()");
+    sde_error(status, 
+              "msSDELayerWhichShapes()", 
+              "SE_layerinfo_get_envelope()");
     return(MS_FAILURE);
   }
-
-  if(envelope.minx > rect.maxx) return(MS_DONE); // there is NO overlap, return MS_DONE (FIX: use this in ALL which shapes functions)
+  
+  // there is NO overlap, return MS_DONE
+  // (FIX: use this in ALL which shapes functions)
+  if(envelope.minx > rect.maxx) return(MS_DONE); 
   if(envelope.maxx < rect.minx) return(MS_DONE);
   if(envelope.miny > rect.maxy) return(MS_DONE);
   if(envelope.maxy < rect.miny) return(MS_DONE);
 
   // set spatial constraint search shape
-  envelope.minx = MS_MAX(rect.minx, envelope.minx); // crop against SDE layer extent *argh*
+  // crop against SDE layer extent *argh*
+  envelope.minx = MS_MAX(rect.minx, envelope.minx); 
   envelope.miny = MS_MAX(rect.miny, envelope.miny);
   envelope.maxx = MS_MIN(rect.maxx, envelope.maxx);
   envelope.maxy = MS_MIN(rect.maxy, envelope.maxy);
 
   status = SE_shape_generate_rectangle(&envelope, shape);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_shape_generate_rectangle()");
+    sde_error(status, 
+              "msSDELayerWhichShapes()", 
+              "SE_shape_generate_rectangle()");
     return(MS_FAILURE);
   }
   constraint.filter.shape = shape;
@@ -562,8 +708,8 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   constraint.truth = TRUE;
 
   // See http://forums.esri.com/Thread.asp?c=2&f=59&t=108929&mc=4#msgid310273
-  // SE_queryinfo is a new SDE struct in ArcSDE 8.x that is a bit easier (and faster) to
-  // use and will allow us to support joins in the future.  HCB 
+  // SE_queryinfo is a new SDE struct in ArcSDE 8.x that is a bit easier 
+  // (and faster) to use and will allow us to support joins in the future.  HCB
   status = SE_queryinfo_create (&query_info);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_queryinfo_create()");
@@ -571,7 +717,10 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   }
 
   // set the tables -- just one at this point
-  status = SE_queryinfo_set_tables (query_info, 1, (const CHAR **) &(sde->table), NULL);
+  status = SE_queryinfo_set_tables (query_info, 
+                                    1, 
+                                    (const CHAR **) &(sde->table),
+                                    NULL);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_queryinfo_create()");
     return(MS_FAILURE);
@@ -579,17 +728,23 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
 
   // set the "where" clause
   if(!(layer->filter.string))
-  	// set to empty string
-    status = SE_queryinfo_set_where_clause (query_info, (const CHAR * ) strdup(""));
+    // set to empty string
+    status = SE_queryinfo_set_where_clause (query_info, 
+                                            (const CHAR * ) strdup(""));
   else
-  	// set to the layer's filter.string
-    status = SE_queryinfo_set_where_clause (query_info, (const CHAR * ) strdup(layer->filter.string));
+    // set to the layer's filter.string
+    status = SE_queryinfo_set_where_clause (query_info, 
+                                 (const CHAR * ) strdup(layer->filter.string));
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_queryinfo_set_where_clause()");
+    sde_error(status, 
+              "msSDELayerWhichShapes()", 
+              "SE_queryinfo_set_where_clause()");
     return(MS_FAILURE);
   }
 
-	status = SE_queryinfo_set_columns(query_info, layer->numitems, (const char **)layer->items);
+  status = SE_queryinfo_set_columns(query_info, 
+                                    layer->numitems, 
+                                    (const char **)layer->items);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_queryinfo_set_columns()");
     return(MS_FAILURE);
@@ -599,7 +754,9 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   // we'll query faster than querying all tables individually (old method)
   status = SE_queryinfo_set_query_type (query_info,SE_QUERYTYPE_JSF);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_queryinfo_set_query_type()");
+    sde_error(status, 
+              "msSDELayerWhichShapes()", 
+              "SE_queryinfo_set_query_type()");
     return(MS_FAILURE);
   }
 
@@ -610,28 +767,40 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
     return(MS_FAILURE);
   }
   
-	//Set the stream state back to the state_id of our user-specified version
+  //Set the stream state back to the state_id of our user-specified version
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
-	  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
-	    return(MS_FAILURE);
-	  }  
-	} 
+    status =  SE_stream_set_state(sde->stream, 
+                                  sde->state_id, 
+                                  sde->state_id, 
+                                  SE_STATE_DIFF_NOCHECK); 
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
+      return(MS_FAILURE);
+    }  
+  } 
 
   status = SE_stream_query_with_info(sde->stream, query_info);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_query_with_info()");
+    sde_error(status, 
+              "msSDELayerWhichShapes()", 
+              "SE_stream_query_with_info()");
     return(MS_FAILURE);
   }
 
-  status = SE_stream_set_spatial_constraints(sde->stream, SE_SPATIAL_FIRST, FALSE, 1, &constraint);
+  status = SE_stream_set_spatial_constraints( sde->stream, 
+                                              SE_SPATIAL_FIRST, 
+                                              FALSE, 
+                                              1, 
+                                              &constraint);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerWhichShapes()", "SE_stream_set_spatial_constraints()");
+    sde_error(status, 
+              "msSDELayerWhichShapes()", 
+              "SE_stream_set_spatial_constraints()");
     return(MS_FAILURE);
   }
-
-  status = SE_stream_execute(sde->stream); // *should* be ready to step through shapes now
+  
+  // *should* be ready to step through shapes now
+  status = SE_stream_execute(sde->stream); 
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerWhichShapes()", "SE_stream_execute()");
     return(MS_FAILURE);
@@ -643,11 +812,18 @@ int msSDELayerWhichShapes(layerObj *layer, rectObj rect) {
   
   return(MS_SUCCESS);
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerWhichShapes()");
+  msSetError(MS_MISCERR, 
+             "SDE support is not available.", 
+             "msSDELayerWhichShapes()");
   return(MS_FAILURE);
 #endif
 }
 
+/* -------------------------------------------------------------------- */
+/* msSDELayerNextShape
+/* -------------------------------------------------------------------- */
+/*     Recursively gets the shapes for the SDE layer                    */
+/* -------------------------------------------------------------------- */
 int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 #ifdef USE_SDE
   long status;
@@ -656,7 +832,9 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
   
   sde = layer->layerinfo;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerNextShape()");
+    msSetError( MS_SDEERR, 
+                "SDE layer has not been opened.", 
+                "msSDELayerNextShape()");
     return(MS_FAILURE);
   }
 
@@ -670,7 +848,8 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
     return(MS_FAILURE);
   }
 
-  // get the shape and values (first column is the shape id, second is the shape itself)
+  // get the shape and values (first column is the shape id, 
+  // second is the shape itself)
   status = sdeGetRecord(layer, shape);
   if(status != MS_SUCCESS)
     return(MS_FAILURE); // something went wrong fetching the record/shape
@@ -680,11 +859,18 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 
   return(MS_SUCCESS);
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerNextShape()");
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerNextShape()");
   return(MS_FAILURE);
 #endif
 }
 
+/* -------------------------------------------------------------------- */
+/* msSDELayerGetItems
+/* -------------------------------------------------------------------- */
+/*     Queries the SDE table's column names into layer->iteminfo        */
+/* -------------------------------------------------------------------- */
 int msSDELayerGetItems(layerObj *layer) {
 #ifdef USE_SDE
   int i,j;
@@ -697,7 +883,9 @@ int msSDELayerGetItems(layerObj *layer) {
 
   sde = layer->layerinfo;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetItems()");
+    msSetError( MS_SDEERR, 
+                "SDE layer has not been opened.", 
+                "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
 
@@ -714,16 +902,21 @@ int msSDELayerGetItems(layerObj *layer) {
 
   layer->items = (char **)malloc(layer->numitems*sizeof(char *));
   if(!layer->items) {
-    msSetError(MS_MEMERR, "Error allocating layer items array.", "msSDELayerGetItems()");
+    msSetError( MS_MEMERR, 
+                "Error allocating layer items array.", 
+                "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
 
   for(i=0; i<n; i++) layer->items[i] = strdup(itemdefs[i].column_name);
   layer->items[n] = strdup(sde->row_id_column); // row id
 
-  layer->iteminfo = (SE_COLUMN_DEF *) calloc(layer->numitems, sizeof(SE_COLUMN_DEF));
+  layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, 
+                                              sizeof(SE_COLUMN_DEF));
   if(!layer->iteminfo) {
-    msSetError(MS_MEMERR, "Error allocating SDE item information.", "msSDELayerGetItems()");
+    msSetError( MS_MEMERR, 
+                "Error allocating SDE item information.", 
+                "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
 
@@ -734,7 +927,8 @@ int msSDELayerGetItems(layerObj *layer) {
       continue;
 
     for(j=0; j<n; j++) { // all columns
-      if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { // found it
+      if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { 
+        // found it
         ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = itemdefs[j];
         break;
       }
@@ -745,11 +939,18 @@ int msSDELayerGetItems(layerObj *layer) {
 
   return(MS_SUCCESS);
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetItems()");
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerGetItems()");
   return(MS_FAILURE);
 #endif
 }
 
+/* -------------------------------------------------------------------- */
+/* msSDELayerGetExtent
+/* -------------------------------------------------------------------- */
+/*     Returns the extent of the SDE layer                              */
+/* -------------------------------------------------------------------- */
 int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 #ifdef USE_SDE
   long status;
@@ -760,13 +961,17 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 
   sde = layer->layerinfo;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    msSetError(MS_SDEERR,
+               "SDE layer has not been opened.", 
+               "msSDELayerGetExtent()");
     return(MS_FAILURE);
   }
 
   status = SE_layerinfo_get_envelope(sde->layerinfo, &envelope);
   if(status != SE_SUCCESS) {
-    sde_error(status, "msSDELayerGetExtent()", "SE_layerinfo_get_envelope()");
+    sde_error(status, 
+              "msSDELayerGetExtent()", 
+              "SE_layerinfo_get_envelope()");
     return(MS_FAILURE);
   }
   
@@ -777,11 +982,19 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
 
   return(MS_SUCCESS);
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetExtent()");
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerGetExtent()");
   return(MS_FAILURE);
 #endif
 }
 
+/* -------------------------------------------------------------------- */
+/* msSDELayerGetShape
+/* -------------------------------------------------------------------- */
+/*     Queries SDE for a shape (and its attributes, if requested)       */
+/*     given the ID (which is the MS_SDE_ROW_ID_COLUMN column           */
+/* -------------------------------------------------------------------- */
 int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 	
 #ifdef USE_SDE
@@ -790,12 +1003,17 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 
   sde = layer->layerinfo;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetExtent()");
+    msSetError( MS_SDEERR, 
+                "SDE layer has not been opened.", 
+                "msSDELayerGetExtent()");
     return(MS_FAILURE);
   }
 
-  if(layer->numitems < 1) { // must be at least one thing to retrieve (i.e. spatial column)
-    msSetError(MS_MISCERR, "No items requested, SDE requires at least one item.", "msSDELayerGetShape()");
+  // must be at least one thing to retrieve (i.e. spatial column)
+  if(layer->numitems < 1) { 
+    msSetError( MS_MISCERR, 
+                "No items requested, SDE requires at least one item.", 
+                "msSDELayerGetShape()");
     return(MS_FAILURE);
   }
 
@@ -806,16 +1024,23 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
     return(MS_FAILURE);
   }
 
-	//Set the stream state back to the state_id of our user-specified version
+  // Set the stream state back to the state_id of our user-specified version
   if (!(sde->state_id == SE_DEFAULT_STATE_ID)){
-	  status =  SE_stream_set_state(sde->stream, sde->state_id, sde->state_id, SE_STATE_DIFF_NOCHECK); 
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
-	    return(MS_FAILURE);
-	  }  
-	}  
+  status =  SE_stream_set_state(sde->stream, 
+                                sde->state_id, 
+                                sde->state_id, 
+                                SE_STATE_DIFF_NOCHECK); 
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_stream_set_state()");
+      return(MS_FAILURE);
+    }  
+  }  
 
-  status = SE_stream_fetch_row(sde->stream, sde->table, record, (short)(layer->numitems), (const char **)layer->items);
+  status = SE_stream_fetch_row( sde->stream, 
+                                sde->table, 
+                                record, 
+                                (short)(layer->numitems), 
+                                (const char **)layer->items);
   if(status != SE_SUCCESS) {
     sde_error(status, "msSDELayerGetShape()", "SE_stream_fetch_row()");
     return(MS_FAILURE);
@@ -827,11 +1052,18 @@ int msSDELayerGetShape(layerObj *layer, shapeObj *shape, long record) {
 
   return(MS_SUCCESS);
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetShape()");
+  msSetError( MS_MISCERR,  
+              "SDE support is not available.", 
+              "msSDELayerGetShape()");
   return(MS_FAILURE);
 #endif
 }
 
+/* -------------------------------------------------------------------- */
+/* msSDELayerInitItemInfo
+/* -------------------------------------------------------------------- */
+/*     Inits the stuff we'll be querying from SDE                       */
+/* -------------------------------------------------------------------- */
 int msSDELayerInitItemInfo(layerObj *layer)
 {
 #ifdef USE_SDE
@@ -849,7 +1081,9 @@ int msSDELayerInitItemInfo(layerObj *layer)
   sde->row_id_column = msSDELayerGetRowIDColumn(layer);
 
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerInitItemInfo()");
+    msSetError( MS_SDEERR, 
+                "SDE layer has not been opened.", 
+                "msSDELayerInitItemInfo()");
     return(MS_FAILURE);
   }
 
@@ -860,9 +1094,12 @@ int msSDELayerInitItemInfo(layerObj *layer)
     return(MS_FAILURE);
   }
 
-  layer->iteminfo = (SE_COLUMN_DEF *) calloc(layer->numitems, sizeof(SE_COLUMN_DEF));
+  layer->iteminfo = (SE_COLUMN_DEF *) calloc( layer->numitems, 
+                                              sizeof(SE_COLUMN_DEF));
   if(!layer->iteminfo) {
-    msSetError(MS_MEMERR, "Error allocating SDE item information.", "msSDELayerInitItemInfo()");
+    msSetError( MS_MEMERR,
+                "Error allocating SDE item information.", 
+                "msSDELayerInitItemInfo()");
     return(MS_FAILURE);
   }
 
@@ -871,14 +1108,17 @@ int msSDELayerInitItemInfo(layerObj *layer)
       continue;
 
     for(j=0; j<n; j++) { // all columns
-      if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { // found it
+      if(strcasecmp(layer->items[i], itemdefs[j].column_name) == 0) { 
+        // found it
         ((SE_COLUMN_DEF *)(layer->iteminfo))[i] = itemdefs[j];
         break;
       }
     }
 
     if(j == n) {
-      msSetError(MS_MISCERR, "Item not found in SDE table.", "msSDELayerInitItemInfo()");
+      msSetError( MS_MISCERR, 
+                  "Item not found in SDE table.", 
+                  "msSDELayerInitItemInfo()");
       return(MS_FAILURE);
     }
   }
@@ -887,11 +1127,16 @@ int msSDELayerInitItemInfo(layerObj *layer)
 
   return(MS_SUCCESS);
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerInitItemInfo()");
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerInitItemInfo()");
   return(MS_FAILURE);
 #endif
 }
 
+/* -------------------------------------------------------------------- */
+/* msSDELayerFreeItemInfo
+/* -------------------------------------------------------------------- */
 void msSDELayerFreeItemInfo(layerObj *layer)
 {
 #ifdef USE_SDE
@@ -900,11 +1145,18 @@ void msSDELayerFreeItemInfo(layerObj *layer)
     layer->iteminfo = NULL;
   }
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerFreeItemInfo()");
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerFreeItemInfo()");
 #endif
 }
 
-// helper function to return the spatial column for an opened SDE layer
+/* -------------------------------------------------------------------- */
+/* msSDELayerGetSpatialColumn
+/* -------------------------------------------------------------------- */
+/*     A helper function to return the spatial column for               */ 
+/*     an opened SDE layer                                              */
+/* -------------------------------------------------------------------- */
 char *msSDELayerGetSpatialColumn(layerObj *layer)
 {
 #ifdef USE_SDE
@@ -912,18 +1164,27 @@ char *msSDELayerGetSpatialColumn(layerObj *layer)
 
   sde = layer->layerinfo;
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetSpatialColumn()");
+    msSetError( MS_SDEERR, 
+                "SDE layer has not been opened.", 
+                "msSDELayerGetSpatialColumn()");
     return(NULL);
   }
 
   return(strdup(sde->column));
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetSpatialColumn()");
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerGetSpatialColumn()");
   return(NULL);
 #endif
 }
 
-// helper function to return the unique row ID column
+/* -------------------------------------------------------------------- */
+/* msSDELayerGetRowIDColumn
+/* -------------------------------------------------------------------- */
+/*     A helper function to return unique row ID column for             */ 
+/*     an opened SDE layer                                              */
+/* -------------------------------------------------------------------- */
 char *msSDELayerGetRowIDColumn(layerObj *layer)
 {
 #ifdef USE_SDE
@@ -935,48 +1196,68 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
   sde = layer->layerinfo;
   row_id_column = (char*) malloc(SE_MAX_COLUMN_LEN);
   if(!sde) {
-    msSetError(MS_SDEERR, "SDE layer has not been opened.", "msSDELayerGetSpatialColumn()");
+    msSetError( MS_SDEERR, 
+                "SDE layer has not been opened.", 
+                "msSDELayerGetSpatialColumn()");
     return(NULL);
   }   
   
   if (sde->state_id == SE_DEFAULT_STATE_ID) {
-    if(layer->debug) msDebug("msSDELayerGetRowIDColumn(): State ID was SE_DEFAULT_STATE_ID, reverting to %s.\n", MS_SDE_ROW_ID_COLUMN);
-  	return(strdup(MS_SDE_ROW_ID_COLUMN));
+    if(layer->debug) 
+      msDebug("msSDELayerGetRowIDColumn(): State ID was SE_DEFAULT_STATE_ID, "
+              "reverting to %s.\n", 
+              MS_SDE_ROW_ID_COLUMN);
+      return(strdup(MS_SDE_ROW_ID_COLUMN));
   }
   else 
   {
-	  status = SE_reginfo_create (&registration);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerGetRowIDColumn()", "SE_reginfo_create()");
-	    return(NULL);
-	  }
-	  
-	  status = SE_registration_get_info (sde->connection, strdup(sde->table), registration);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerGetRowIDColumn()", "SE_registration_get_info()");
-	    return(NULL);
-	  }
-	  
-	  status= SE_reginfo_get_rowid_column (registration, row_id_column, &column_type);
-	  if(status != SE_SUCCESS) {
-	    sde_error(status, "msSDELayerGetRowIDColumn()", "SE_reginfo_get_rowid_column()");
-	    return(NULL);
-	  }
-	  if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
-	    if(layer->debug) msDebug("msSDELayerGetRowIDColumn(): Table was not registered, returning %s.\n", MS_SDE_ROW_ID_COLUMN);
-	    return (MS_SDE_ROW_ID_COLUMN);
-	  }
-
-	  SE_reginfo_free(registration);
-	  if (row_id_column){
-	    return (strdup(row_id_column)); 
-	  }
-	  else {
-	    return(strdup(MS_SDE_ROW_ID_COLUMN));
-	  }
+    status = SE_reginfo_create (&registration);
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerGetRowIDColumn()", "SE_reginfo_create()");
+      return(NULL);
+    }
+    
+    status = SE_registration_get_info ( sde->connection, 
+                                        strdup(sde->table), 
+                                        registration);
+    if(status != SE_SUCCESS) {
+      sde_error(status, 
+                "msSDELayerGetRowIDColumn()", 
+                "SE_registration_get_info()");
+      return(NULL);
+    }
+    
+    status= SE_reginfo_get_rowid_column ( registration, 
+                                          row_id_column, 
+                                          &column_type);
+    if(status != SE_SUCCESS) {
+      sde_error(status, 
+                "msSDELayerGetRowIDColumn()", 
+                "SE_reginfo_get_rowid_column()");
+      return(NULL);
+    }
+    if (column_type == SE_REGISTRATION_ROW_ID_COLUMN_TYPE_NONE){
+      if(layer->debug) {
+        msDebug("msSDELayerGetRowIDColumn(): Table was not registered, "
+        "returning %s.\n", 
+        MS_SDE_ROW_ID_COLUMN);
+      }
+      SE_reginfo_free(registration);
+      return (MS_SDE_ROW_ID_COLUMN);
+    }
+    
+    SE_reginfo_free(registration);
+    if (row_id_column){
+      return (strdup(row_id_column)); 
+    }
+    else {
+      return(strdup(MS_SDE_ROW_ID_COLUMN));
+    }
 }
 #else
-  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetRowIDColumn()");
+  msSetError( MS_MISCERR, 
+              "SDE support is not available.", 
+              "msSDELayerGetRowIDColumn()");
   return(NULL);
 #endif
 }
