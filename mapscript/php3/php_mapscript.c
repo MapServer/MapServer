@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.192  2004/03/08 17:10:00  dan
+ * Added optional angle parameter to pasteImage()
+ *
  * Revision 1.191  2004/02/26 15:10:44  assefa
  * Add symbolobject support.
  *
@@ -6037,20 +6040,23 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
  *                        image->pasteImage()
  **********************************************************************/
 
-/* {{{ proto void img.pasteImage(imageObj Src, int transparentColor [,int dstx, int dsty])
+/* {{{ proto void img.pasteImage(imageObj Src, int transparentColor [[,int dstx, int dsty], int angle])
    Pastes another imageObj on top of this imageObj. transparentColor is
    the color (0xrrggbb) from srcImg that should be considered transparent.
    Pass transparentColor=-1 if you don't want any transparent color.
    If optional dstx,dsty are provided then they define the position where the
    image should be copied (dstx,dsty = top-left corner position).
+   The optional angle is a value between 0 and 360 degrees to rotate the
+   source image counterclockwise.  Note that if a rotation is requested then
+   the dstx and dsty coordinates specify the CENTER of the destination area.
    NOTE : this function only works for 8 bits GD images.
 */
 
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval   *pSrcImg, *pTransparent, *pThis, *pDstX, *pDstY;
+    pval   *pSrcImg, *pTransparent, *pThis, *pDstX, *pDstY, *pAngle;
     imageObj *imgDst = NULL, *imgSrc = NULL;
-    int         nDstX=0, nDstY=0;
+    int         nDstX=0, nDstY=0, nAngle=0;
     int         nArgs = ARG_COUNT(ht);
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -6063,13 +6069,13 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        (nArgs != 2 && nArgs != 4))
+        (nArgs != 2 && nArgs != 4 && nArgs != 5))
     {
         WRONG_PARAM_COUNT;
     }
     if (pThis == NULL ||
         getParameters(ht, nArgs, &pSrcImg, &pTransparent, 
-                      &pDstX, &pDstY) != SUCCESS)
+                      &pDstX, &pDstY, &pAngle) != SUCCESS)
     {
         WRONG_PARAM_COUNT;
     }
@@ -6087,12 +6093,18 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
       
     convert_to_long(pTransparent);
 
-    if (nArgs == 4)
+    if (nArgs >= 4)
     {
         convert_to_long(pDstX);
         convert_to_long(pDstY);
         nDstX = pDstX->value.lval;
         nDstY = pDstY->value.lval;
+    }
+
+    if (nArgs == 5)
+    {
+        convert_to_long(pAngle);
+        nAngle = pAngle->value.lval;
     }
 
     if (imgSrc != NULL && imgDst != NULL)
@@ -6114,8 +6126,13 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
         nOldTransparentColor = gdImageGetTransparent(imgSrc->img.gd);
         gdImageColorTransparent(imgSrc->img.gd, nNewTransparentColor);
 
-        gdImageCopy(imgDst->img.gd, imgSrc->img.gd, nDstX, nDstY, 
-                    0, 0, imgSrc->img.gd->sx, imgSrc->img.gd->sy);
+        if (nAngle == 0)
+            gdImageCopy(imgDst->img.gd, imgSrc->img.gd, nDstX, nDstY, 
+                        0, 0, imgSrc->img.gd->sx, imgSrc->img.gd->sy);
+        else
+            gdImageCopyRotated(imgDst->img.gd, imgSrc->img.gd, nDstX, nDstY, 
+                               0, 0, imgSrc->img.gd->sx, imgSrc->img.gd->sy,
+                               nAngle);
 
         gdImageColorTransparent(imgSrc->img.gd, nOldTransparentColor);
     }
