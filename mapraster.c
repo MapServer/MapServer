@@ -32,6 +32,8 @@ extern char *msyystring;
 #include "jpeglib.h"
 #endif
 
+extern int InvGeoTransform( double *gt_in, double *gt_out );
+
 #define MAXCOLORS 256
 #define BUFLEN 1024
 #define HDRLEN 8
@@ -146,15 +148,19 @@ static int add_color(gdImagePtr img, int r, int g, int b)
 /*
 ** GDAL Support.
 */
+
+#define GEO_TRANS(tr,x,y)  ((tr)[0]+(tr)[1]*(x)+(tr)[2]*(y))
+
 int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img, 
              GDALDatasetH hDS )
 
 {
   int i,j, k; /* loop counters */
   int cmap[MAXCOLORS];
-  double adfGeoTransform[6];
+  double adfGeoTransform[6], adfInvGeoTransform[6];
   int	dst_xoff, dst_yoff, dst_xsize, dst_ysize;
   int	src_xoff, src_yoff, src_xsize, src_ysize;
+  double llx, lly, urx, ury;
   rectObj copyRect;
   unsigned char *pabyRaw;
 
@@ -169,18 +175,19 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   src_ysize = GDALGetRasterYSize( hDS );
 
   GDALGetGeoTransform( hDS, adfGeoTransform );
+  InvGeoTransform( adfGeoTransform, adfInvGeoTransform );
 
   copyRect = map->extent;
 
-  if( copyRect.minx < adfGeoTransform[0] )
-      copyRect.minx = adfGeoTransform[0];
-  if( copyRect.maxx > adfGeoTransform[0] + adfGeoTransform[1] * src_xsize )
-      copyRect.maxx = adfGeoTransform[0] + adfGeoTransform[1] * src_xsize;
+  if( copyRect.minx < GEO_TRANS(adfGeoTransform,0,src_ysize) )
+      copyRect.minx = GEO_TRANS(adfGeoTransform,0,src_ysize);
+  if( copyRect.maxx > GEO_TRANS(adfGeoTransform,src_xsize,0) )
+      copyRect.maxx = GEO_TRANS(adfGeoTransform,src_xsize,0);
 
-  if( copyRect.miny < adfGeoTransform[3] + adfGeoTransform[5] * src_ysize )
-      copyRect.miny = adfGeoTransform[3] + adfGeoTransform[5] * src_ysize;
-  if( copyRect.maxy > adfGeoTransform[3] )
-      copyRect.maxy = adfGeoTransform[3];
+  if( copyRect.miny < GEO_TRANS(adfGeoTransform+3,0,src_ysize) )
+      copyRect.miny = GEO_TRANS(adfGeoTransform+3,0,src_ysize);
+  if( copyRect.maxy > GEO_TRANS(adfGeoTransform+3,src_xsize,0) )
+      copyRect.maxy = GEO_TRANS(adfGeoTransform+3,src_xsize,0);
 
   if( copyRect.minx >= copyRect.maxx || copyRect.miny >= copyRect.maxy )
       return 0;
@@ -188,12 +195,17 @@ int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img,
   /*
    * Copy the source and destination raster coordinates.
    */
-  src_xoff = (int) ((copyRect.minx - adfGeoTransform[0]) / adfGeoTransform[1]);
-  src_yoff = (int) ((copyRect.maxy - adfGeoTransform[3]) / adfGeoTransform[5]);
-  src_xsize = (int) ((copyRect.maxx - copyRect.minx) / adfGeoTransform[1]);
-  src_xsize = MIN(MAX(1,src_xsize),GDALGetRasterXSize(hDS) - src_xoff);
-  src_ysize = (int) ((copyRect.miny - copyRect.maxy) / adfGeoTransform[5]);
-  src_ysize = MIN(MAX(1,src_ysize),GDALGetRasterYSize(hDS) - src_yoff);
+  llx = GEO_TRANS(adfInvGeoTransform+0,copyRect.minx,copyRect.miny);
+  lly = GEO_TRANS(adfInvGeoTransform+3,copyRect.minx,copyRect.miny);
+  urx = GEO_TRANS(adfInvGeoTransform+0,copyRect.maxx,copyRect.maxy);
+  ury = GEO_TRANS(adfInvGeoTransform+3,copyRect.maxx,copyRect.maxy);
+
+  src_xoff = MAX(0,(int) llx);
+  src_yoff = MAX(0,(int) ury);
+  src_xsize = MIN(MAX(0,(int) (urx - llx + 0.5)),
+                  GDALGetRasterXSize(hDS) - src_xoff);
+  src_ysize = MIN(MAX(0,(int) (lly - ury + 0.5)),
+                  GDALGetRasterYSize(hDS) - src_yoff);
 
   if( src_xsize == 0 || src_ysize == 0 )
       return 0;

@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.8  2001/04/09 13:27:34  frank
+ * implemented limited support for rotated GDAL data sources
+ *
  * Revision 1.7  2001/04/07 17:32:38  frank
  * Fixed up quirk in sizing of srcImg.
  * Added true inverse geotransform support, and support for rotated source.
@@ -127,26 +130,14 @@ int msSimpleRasterResampler( gdImagePtr psSrcImage, int nOffsite,
     return 0;
 }
 
-#ifdef USE_PROJ
-typedef struct 
-{
-    projPJ psSrcProj;
-    int bSrcIsGeographic;
-    double adfInvSrcGeoTransform[6];
-
-    projPJ psDstProj;
-    int bDstIsGeographic;
-    double adfDstGeoTransform[6];
-} msProjTransformInfo;
-
 /************************************************************************/
-/*                          InvGeotransform()                           */
+/*                          InvGeoTransform()                           */
 /*                                                                      */
 /*      Invert a standard 3x2 "GeoTransform" style matrix with an       */
 /*      implicit [1 0 0] final row.                                     */
 /************************************************************************/
 
-static int InvGeotransform( double *gt_in, double *gt_out )
+int InvGeoTransform( double *gt_in, double *gt_out )
 
 {
     double	det, inv_det;
@@ -176,6 +167,18 @@ static int InvGeotransform( double *gt_in, double *gt_out )
     return 1;
 }
 
+#ifdef USE_PROJ
+typedef struct 
+{
+    projPJ psSrcProj;
+    int bSrcIsGeographic;
+    double adfInvSrcGeoTransform[6];
+
+    projPJ psDstProj;
+    int bDstIsGeographic;
+    double adfDstGeoTransform[6];
+} msProjTransformInfo;
+
 /************************************************************************/
 /*                       msInitProjTransformer()                        */
 /************************************************************************/
@@ -198,7 +201,7 @@ void *msInitProjTransformer( projectionObj *psSrc,
     psPTInfo->psSrcProj = psSrc->proj;
     psPTInfo->bSrcIsGeographic = pj_is_latlong(psSrc->proj);
     
-    if( !InvGeotransform(padfSrcGeoTransform, 
+    if( !InvGeoTransform(padfSrcGeoTransform, 
                          psPTInfo->adfInvSrcGeoTransform) )
         return NULL;
 
@@ -364,7 +367,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     nSrcXSize = GDALGetRasterXSize( hDS );
     nSrcYSize = GDALGetRasterYSize( hDS );
 
-    InvGeotransform( adfSrcGeoTransform, adfInvSrcGeoTransform );
+    InvGeoTransform( adfSrcGeoTransform, adfInvSrcGeoTransform );
 
 /* -------------------------------------------------------------------- */
 /*      We need to find the extents in the source layer projection      */
@@ -459,7 +462,7 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
     }
 
 /* -------------------------------------------------------------------- */
-/*      Project desired extents out by 2 pixels, and then trip to       */
+/*      Project desired extents out by 2 pixels, and then strip to      */
 /*      available data.                                                 */
 /* -------------------------------------------------------------------- */
     sSrcExtent.minx = floor(sSrcExtent.minx-1.0);
@@ -492,14 +495,18 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, gdImagePtr img,
 
     msDebug( "cellsize = %f\n", sDummyMap.cellsize );
 
-    sDummyMap.extent.minx = sSrcExtent.minx * adfSrcGeoTransform[1]
-        + adfSrcGeoTransform[0];
-    sDummyMap.extent.maxx = sSrcExtent.maxx * adfSrcGeoTransform[1]
-        + adfSrcGeoTransform[0];
-    sDummyMap.extent.maxy = sSrcExtent.miny * adfSrcGeoTransform[5]
-        + adfSrcGeoTransform[3];
-    sDummyMap.extent.miny = sSrcExtent.maxy * adfSrcGeoTransform[5]
-        + adfSrcGeoTransform[3];
+    sDummyMap.extent.minx = adfSrcGeoTransform[0]
+        + sSrcExtent.minx * adfSrcGeoTransform[1]
+        + sSrcExtent.maxy * adfSrcGeoTransform[2];
+    sDummyMap.extent.maxx = adfSrcGeoTransform[0]
+        + sSrcExtent.maxx * adfSrcGeoTransform[1]
+        + sSrcExtent.miny * adfSrcGeoTransform[2];
+    sDummyMap.extent.miny = adfSrcGeoTransform[3]
+        + sSrcExtent.minx * adfSrcGeoTransform[4]
+        + sSrcExtent.maxy * adfSrcGeoTransform[5];
+    sDummyMap.extent.maxy = adfSrcGeoTransform[3]
+        + sSrcExtent.maxx * adfSrcGeoTransform[4]
+        + sSrcExtent.miny * adfSrcGeoTransform[5];
     
 /* -------------------------------------------------------------------- */
 /*      Setup a dummy map object we can use to read from the source     */
