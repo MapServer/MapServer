@@ -138,7 +138,7 @@ static int gmlWriteGeometry(FILE *stream, shapeObj *shape, char *srsname, char *
         fprintf(stream, "%s\t\t<gml:coordinates>\n", tab);
         fprintf(stream, "%s\t\t\t", tab);
         for(j=0; j<shape->line[0].numpoints; j++)
-	  fprintf(stream, "%f,%f ", shape->line[i].point[j].x, shape->line[i].point[j].y);
+	  fprintf(stream, "%f,%f", shape->line[i].point[j].x, shape->line[i].point[j].y);
         fprintf(stream, "\n");
         fprintf(stream, "%s\t\t</gml:coordinates>\n", tab);
         fprintf(stream, "%s\t</gml:LineString>\n", tab);
@@ -318,9 +318,9 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
       // start this collection (layer)
       if(msLookupHashTable(lp->metadata, "gml_layername")) // specify a collection name
-	fprintf(stream, "\t<%s>", msLookupHashTable(lp->metadata, "gml_layername"));
+	fprintf(stream, "\t<%s>\n", msLookupHashTable(lp->metadata, "gml_layername"));
       else
-	fprintf(stream, "\t<%sLayer>", lp->name); // fall back on the layer name + "Layer"
+	fprintf(stream, "\t<%s_layer>\n", lp->name); // fall back on the layer name + "Layer"
 
       // actually open the layer
       status = msLayerOpen(lp, map->shapepath);
@@ -336,9 +336,9 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
 	// start this feature
 	if(msLookupHashTable(lp->metadata, "gml_featurename")) // specify a feature name
-	  fprintf(stream, "\t\t<%s>", msLookupHashTable(lp->metadata, "gml_featurename"));
+	  fprintf(stream, "\t\t<%s>\n", msLookupHashTable(lp->metadata, "gml_featurename"));
         else
-	  fprintf(stream, "\t\t<%sFeature>", lp->name); // fall back on the layer name + "Feature"
+	  fprintf(stream, "\t\t<%s_feature>\n", lp->name); // fall back on the layer name + "Feature"
 
 	// write the item/values
 	for(k=0; k<lp->numitems; k++)	
@@ -352,28 +352,28 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 
 	// end this feature
         if(msLookupHashTable(lp->metadata, "gml_featurename")) // specify a feature name
-	  fprintf(stream, "\t\t</%s>", msLookupHashTable(lp->metadata, "gml_featurename"));
+	  fprintf(stream, "\t\t</%s>\n", msLookupHashTable(lp->metadata, "gml_featurename"));
         else
-	  fprintf(stream, "\t\t</%sFeature>", lp->name); // fall back on the layer name + "Feature"
+	  fprintf(stream, "\t\t</%s_feature>\n", lp->name); // fall back on the layer name + "Feature"
 
 	msFreeShape(&shape); // init too
       }
 
       // end this collection (layer)
       if(msLookupHashTable(lp->metadata, "gml_layername")) // specify a collection name
-	fprintf(stream, "\t</%s>", msLookupHashTable(lp->metadata, "gml_layername"));
+        fprintf(stream, "\t</%s>\n", msLookupHashTable(lp->metadata, "gml_layername"));
       else
-	fprintf(stream, "\t</%sLayer>", lp->name); // fall back on the layer name + "Layer"
-    }
+        fprintf(stream, "\t</%s_layer>\n", lp->name); // fall back on the layer name + "Layer"
 
-    msLayerClose(lp);
-  }
+      msLayerClose(lp);
+    }
+  } // next layer
 
   // end this document
   if(msLookupHashTable(map->web.metadata, "gml_rootname")) 
-    fprintf(stream, "</%s>", msLookupHashTable(map->web.metadata, "gml_rootname"));
+    fprintf(stream, "</%s>\n", msLookupHashTable(map->web.metadata, "gml_rootname"));
   else
-    fprintf(stream, "</msGMLOutput>"); // default
+    fprintf(stream, "</msGMLOutput>\n"); // default
 
   if(filename && strlen(filename) > 0) fclose(stream);
 
