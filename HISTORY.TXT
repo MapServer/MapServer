@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Advertize only gd and gdal formats for wms capabilities (Bug 455).
+
 - Pass config option GML_FIELDTYPES=ALWAYS_STRING to OGR so that all GML
   attributes are returned as strings to MapServer. This is most efficient
   and prevents problems with autodetection of some attribute types. (bug1043)
