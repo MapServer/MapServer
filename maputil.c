@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.172  2005/02/08 17:34:46  sean
+ * call msThreadInit in msSetup (bug 1223).
+ *
  * Revision 1.171  2005/02/06 19:31:32  sean
  * msSetup() function calls gdFontCacheSetup().  msSetup should be called immediately on mapscript module import to avoid race condition with font cache (bug 1203).
  *
@@ -1181,6 +1184,10 @@ void  msTransformShape(shapeObj *shape, rectObj extent, double cellsize,
 
 int msSetup()
 {
+#ifdef USE_THREAD
+    msThreadInit();
+#endif
+
 #ifdef USE_GD_FT
     if (gdFontCacheSetup() != 0) 
     {

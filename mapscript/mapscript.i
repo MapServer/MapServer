@@ -174,7 +174,11 @@ typedef struct {
 
 /* See bug 1203 for discussion of race condition with GD font cache */
 %init %{
-	msSetup();
+	if (msSetup() != MS_SUCCESS)
+    {
+        msSetError(MS_MISCERR, "Failed to set up threads and font cache",
+                   "msSetup()");
+    }
 %}
 
 /* 
