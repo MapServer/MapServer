@@ -42,6 +42,16 @@ MAP
   PROJECTION
     "init=epsg:4326"
   END
+ 
+  LAYER
+    NAME "RASTER"
+    TYPE RASTER
+    PROJECTION
+      "init=epsg:4326"
+    END
+    DATA "raster.tif"
+    STATUS DEFAULT
+  END
   
   LAYER
     NAME "POLYGON"
@@ -200,7 +210,7 @@ LAYER
     PROJECTION
       "init=epsg:4326"
     END
-    STATUS OFF
+    STATUS DEFAULT
     FEATURE
       POINTS 0.2 51.2 END
     END
