@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.114.2.1  2004/05/28 19:38:57  dan
+ * Disable drawERD() (ERDAS formats) when GDAL is available (bug 691)
+ *
  * Revision 1.114  2004/04/16 20:19:39  dan
  * Added try_addimage_if_notfound to msGetSymbolIndex() (bug 612)
  *
@@ -1543,6 +1546,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       continue;
     }
 
+#ifndef USE_GDAL
+/* Let GDAL handle ERDAS files, see bug 691*/
     if (memcmp(dd,"HEAD",4)==0) {
       if(layer->transform && msProjectionsDiffer(&(map->projection), &(layer->projection))) {
         msSetError(MS_MISCERR, "Raster reprojection supported only with the GDAL library, but it does not support Erdas 7.x files.", "msDrawRasterLayer( ERD )");
@@ -1554,7 +1559,8 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
       }
       continue;
     }
-    
+#endif
+
 #ifdef USE_GDAL
     {
       GDALDatasetH  hDS;

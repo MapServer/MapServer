@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.2.1 (CVS)
 --------------------------
 
+- Disable drawERD() (ERDAS formats) when GDAL is available (bug 691)
+
 - Fixed layer->drawQuery() for PHP and SWIG MapScript (bug 695)
 
 
