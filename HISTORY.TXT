@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 4.2.2 (2004-07-28)
 --------------------------
 
+- mapscript setup.py now builds a higher performance module for
+  Python versions 2.2+ while maintaining support for Python 2.1 and
+  older.
+
 - Fix a buffer overflow when building post request for WFS layers with 
   long wfs_filter (Bug 775).
 
