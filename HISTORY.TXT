@@ -16,6 +16,12 @@ the CVS logs is updated daily at the following URL:
 Version 4.5
 -----------
 
+- mapogr.c: Set a real OGRPolygon spatial filter, not just an OGRLinearRing.
+            Otherwise GEOS enabled OGR builds will do expensive, and 
+            incorrect Intersects() tests.
+
+- mapogr.cpp / mapprimitive.c: Optimize msAddLine() and add msAddLineDirectly()
+
 - mapprimitive.c: Optimizations in msTransformShapeToPixel() (avoid division)
 
 - map.h: Made MS_NINT inline assembly for win32, linux/i86.  
