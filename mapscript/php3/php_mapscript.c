@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.146  2003/02/19 19:37:12  assefa
+ * Add an additional argument to function  ms_newLayerObj to be
+ * able to create a new layer based on an existing layer.
+ *
  * Revision 1.145  2003/02/14 20:17:26  assefa
  * Add savequery and loadquery functions.
  *
@@ -3264,6 +3268,7 @@ DLEXPORT void php3_ms_map_getLayerByName(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *self=NULL;
     layerObj *newLayer=NULL;
     int map_id;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -3634,6 +3639,7 @@ DLEXPORT void php3_ms_map_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
+
     if (pThis == NULL ||
         getParameters(ht, 1, &pRect) == FAILURE) 
     {
@@ -3847,6 +3853,7 @@ DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS)
     pval  *pThis, *pFname;
     mapObj *self;
     int    retVal=0;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -3856,6 +3863,7 @@ DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
+
 
     if (pThis == NULL ||
         getParameters(ht, 1, &pFname) == FAILURE) 
@@ -5467,15 +5475,21 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
 
 DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
 {
-    pval  *pMapObj;
-    mapObj *parent_map;
-    layerObj *pNewLayer;
-    int map_id;
+    pval        *pMapObj, *pSrcLayer;
+    mapObj      *parent_map;
+    layerObj    *pNewLayer;
+    layerObj    *poSrcLayer = NULL;
+    int         map_id;
+    int         nArgs;
+    int         nOrigIndex = 0;
+
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
 
-    if (getParameters(ht, 1, &pMapObj) == FAILURE) 
+    nArgs = ARG_COUNT(ht);
+    if ((nArgs != 1 && nArgs != 2) ||
+        getParameters(ht, nArgs, &pMapObj, &pSrcLayer) == FAILURE) 
     {
         WRONG_PARAM_COUNT;
     }
@@ -5484,11 +5498,26 @@ DLEXPORT void php3_ms_lyr_new(INTERNAL_FUNCTION_PARAMETERS)
                                               PHPMS_GLOBAL(le_msmap),
                                               list TSRMLS_CC);
 
+    if (nArgs == 2)
+    {
+        poSrcLayer = (layerObj *)_phpms_fetch_handle(pSrcLayer, 
+                                                     PHPMS_GLOBAL(le_mslayer),
+                                                     list TSRMLS_CC);
+    }
+        
     if (parent_map == NULL ||
         (pNewLayer = layerObj_new(parent_map)) == NULL)
     {
         _phpms_report_mapserver_error(E_ERROR);
         RETURN_FALSE;
+    }
+    /* if a layer is passed as argument, copy the layer into
+       the new one */
+    if (poSrcLayer)
+    {
+        nOrigIndex = pNewLayer->index;
+        msCopyLayer(pNewLayer, poSrcLayer);
+        pNewLayer->index = nOrigIndex;
     }
 
     /* Update mapObj members */
@@ -5876,6 +5905,7 @@ DLEXPORT void php3_ms_lyr_queryByRect(INTERNAL_FUNCTION_PARAMETERS)
     mapObj   *parent_map;
     rectObj *poRect=NULL;
     int      nStatus = MS_FAILURE;
+    
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif

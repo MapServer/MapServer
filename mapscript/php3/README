@@ -431,7 +431,12 @@ and the MapServer Map File documentation at:
    Layer Objects can be returned by the MapObj class, or can be created
    using:
 
-   layerObj ms_newLayerObj(MapObj map)
+   layerObj ms_newLayerObj(MapObj map, layerObj layer)
+
+   A second argument (which is not manadatory) can be given to the  ms_newLayerObj
+   to be able to create a new layer based on an existing layer. If a layer is 
+   given as argument, all members of a this layer will be copied in the new
+   layer created.
 
  Members:
    int    numclasses  (read-only)
