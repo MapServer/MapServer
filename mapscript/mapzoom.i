@@ -44,7 +44,7 @@
             poPixPos == NULL )
         {
             msSetError(MS_MISCERR, "Incorrect arguments", 
-                       "mapscript::mapObj::zoomRectangle");
+                       "mapscript::mapObj::zoomPoint()");
             return MS_FAILURE;
         }
 
@@ -54,13 +54,13 @@
         if (poGeorefExt->minx >= poGeorefExt->maxx)
         {
             msSetError(MS_MISCERR, "Georeferenced coordinates minx >= maxx",
-                       "mapscript::mapObj::zoomRectangle()");
+                       "mapscript::mapObj::zoomPoint()");
             return MS_FAILURE;
         }
         if (poGeorefExt->miny >= poGeorefExt->maxy)
         {
             msSetError(MS_MISCERR, "Georeferenced coordinates miny >= maxy",
-                       "mapscript::mapObj::zoomRectangle()");
+                       "mapscript::mapObj::zoomPoint()");
             return MS_FAILURE;
         }
         if (bMaxExtSet == 1)
@@ -330,7 +330,7 @@
         oNewGeorefExt.maxx = poGeorefExt->minx
                            + dX * (double)poPixRect->maxx;
         oNewGeorefExt.maxy = poGeorefExt->maxy
-                           + dY * (double)poPixRect->maxy;
+                           - dY * (double)poPixRect->maxy;
 
         msAdjustExtent(&oNewGeorefExt, self->width, self->height);
 

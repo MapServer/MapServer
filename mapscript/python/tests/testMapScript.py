@@ -314,14 +314,14 @@ class ZoomRectangleTestCase(unittest.TestCase):
     def testZoomRectangle(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         r = rectObj()
-        r.minx, r.miny, r.maxx, r.maxy = (0, 25, 25, 0)
+        r.minx, r.miny, r.maxx, r.maxy = (1, 26, 26, 1)
         extent = self.mapobj1.extent
         self.mapobj1.zoomRectangle(r, w, h, extent, None)
         new_extent = self.mapobj1.extent
-        assert new_extent.minx == -50.0, new_extent.minx
-        assert new_extent.miny == 25.0, new_extent.miny
-        assert new_extent.maxx == -25.0, new_extent.maxx
-        assert new_extent.maxy == 50.0, new_extent.maxy
+        assert new_extent.minx == -49.0, new_extent.minx
+        assert new_extent.miny == 24.0, new_extent.miny
+        assert new_extent.maxx == -24.0, new_extent.maxx
+        assert new_extent.maxy == 49.0, new_extent.maxy
     def testZoomRectangleConstrained(self):
         w, h = (self.mapobj1.width, self.mapobj1.height)
         max = rectObj()
