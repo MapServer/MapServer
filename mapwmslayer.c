@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.38  2002/11/26 00:06:52  dan
+ * Removed offsite hack for bug 214.  Not needed any more since bug is fixed.
+ *
  * Revision 1.37  2002/11/25 21:50:29  julien
  * add \0 in the isspace validation for epsg in msBuildWMSLayerURL
  *
@@ -693,14 +696,6 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
 
     if (lp->data) free(lp->data);
     lp->data =  strdup(pasReqInfo[iReq].pszOutputFile);
-
-// Temporary hack for bug 214
-// In order for layter transparency to work we need to force the presence of
-// an offsite color value.  We should remove this once bug 214 is fixed.
-    if( !MS_VALID_COLOR(lp->offsite) )
-    {
-        MS_INIT_COLOR(lp->offsite, 210, 220, 230);// Any not too common RGB would do
-    }
 
     if (!msProjectionsDiffer(&(map->projection), &(lp->projection)))
     {
