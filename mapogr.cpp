@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.46  2002/02/22 22:56:26  dan
+ * Avoid filling an object with a pen and no brush in layers of type POLYGON
+ * when using auto styling.
+ *
  * Revision 1.45  2002/02/20 22:28:23  frank
  * fixed some problems with 3D geometry support
  *
@@ -1590,7 +1594,7 @@ int msOGRLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c,
                   }
               }
 
-              if (bIsBrush)
+              if (bIsBrush || layer->type == MS_LAYER_POLYGON)
               {
                   // This is a multipart symbology, so pen defn goes in the
                   // overlaysymbol params (also set outlinecolor just in case)
