@@ -5,6 +5,7 @@
 #include "map.h"
 #include "mapfile.h"
 #include "mapparser.h"
+#include "mapthread.h"
 
 extern int msyylex();
 extern void msyyrestart();
@@ -160,8 +161,7 @@ int getSymbol(int n, ...) {
 
   va_end(argp);
 
-  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-  msSetError(MS_SYMERR, ms_error.message, "getSymbol()");   
+  msSetError(MS_SYMERR, "(%s):(%d)", "getSymbol()", msyytext, msyylineno);
   return(-1);
 }
 
@@ -174,8 +174,7 @@ char *getString() {
   if(msyylex() == MS_STRING)
     return(strdup(msyytext));
 
-  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-  msSetError(MS_SYMERR, ms_error.message, "getString()");   
+  msSetError(MS_SYMERR, "(%s):(%d)", "getString()", msyytext, msyylineno);   
   return(NULL);
 }
 
@@ -189,8 +188,7 @@ int getDouble(double *d) {
     return(0); /* success */
   }
 
-  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-  msSetError(MS_SYMERR, ms_error.message, "getDouble()"); 
+  msSetError(MS_SYMERR, "(%s):(%d)", "getDouble()", msyytext, msyylineno); 
   return(-1);
 }
 
@@ -204,8 +202,7 @@ int getInteger(int *i) {
     return(0); /* success */
   }
 
-  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-  msSetError(MS_SYMERR, ms_error.message, "getInteger()"); 
+  msSetError(MS_SYMERR, "(%s):(%d)", "getInteger()", msyytext, msyylineno); 
   return(-1);
 }
 
@@ -215,8 +212,7 @@ int getCharacter(char *c) {
     return(0);
   }
 
-  sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno); 
-  msSetError(MS_SYMERR, ms_error.message, "getCharacter()"); 
+  msSetError(MS_SYMERR, "(%s):(%d)", "getCharacter()", msyytext, msyylineno); 
   return(-1);
 }
 
@@ -345,8 +341,7 @@ int loadJoin(joinObj *join)
       if((join->type = getSymbol(2, MS_SINGLE, MS_MULTIPLE)) == -1) return(-1);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadJoin()");
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadJoin()", msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -442,8 +437,8 @@ static int loadFeaturePoints(lineObj *points)
       points->numpoints++;
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadFeaturePoints()");          
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadFeaturePoints()", 
+                 msyytext, msyylineno);          
       return(-1);      
     }
   }
@@ -476,8 +471,8 @@ static int loadFeature(featureListNodeObjPtr *list, int type)
       if((shape.text = getString()) == NULL) return(-1);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadfeature()");
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadfeature()",
+                 msyytext, msyylineno);
       return(-1);
     }
   } /* next token */  
@@ -551,12 +546,16 @@ int msProcessProjection(projectionObj *p)
         return 0;
     }
 
+    msAcquireLock( TLOCK_PROJ );
     if( !(p->proj = pj_init(p->numargs, p->args)) ) {
+        msReleaseLock( TLOCK_PROJ );
         msSetError(MS_PROJERR, pj_strerrno(pj_errno), 
                    "msProcessProjection()");	  
         return(-1);
     }
     
+    msReleaseLock( TLOCK_PROJ );
+
     return(0);
 #else
   msSetError(MS_PROJERR, "Projection support is not available.", 
@@ -586,8 +585,8 @@ static int loadProjection(projectionObj *p)
       break;
 
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadProjection()");
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadProjection()",
+                 msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -824,8 +823,8 @@ static int loadLabel(labelObj *label, mapObj *map)
       if(getCharacter(&(label->wrap)) == -1) return(-1);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadlabel()");
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadlabel()", 
+                 msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -888,8 +887,8 @@ static void loadLabelString(mapObj *map, labelObj *label, char *value)
     label->font = strdup(value);
     
     if(!(msLookupHashTable(map->fontset.fonts, label->font))) {
-      sprintf(ms_error.message, "Unknown font alias. (%s)", msyytext);
-      msSetError(MS_IDENTERR, ms_error.message, "loadLabelString()");      
+      msSetError(MS_IDENTERR, "Unknown font alias. (%s)", "loadLabelString()",
+                 msyytext);      
       return;
     }
 #else
@@ -1120,8 +1119,8 @@ int loadHashTable(hashTableObj *ptable)
       free(data);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadHashTable()");
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadHashTable()",
+                 msyytext, msyylineno);
       return(MS_FAILURE);
     }
   }
@@ -1368,8 +1367,8 @@ int loadClass(classObj *class, mapObj *map)
       if((class->type = getSymbol(6, MS_LAYER_POINT,MS_LAYER_LINE,MS_LAYER_RASTER,MS_LAYER_POLYGON,MS_LAYER_ANNOTATION,MS_LAYER_CIRCLE)) == -1) return(-1);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadClass()");
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadClass()",
+                 msyytext, msyylineno);
       return(-1);
     }
   }
@@ -1794,8 +1793,8 @@ int loadLayer(layerObj *layer, mapObj *map)
       if((layer->units = getSymbol(7, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS,MS_DD,MS_PIXELS)) == -1) return(-1);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadLayer()");      
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadLayer()",
+                 msyytext, msyylineno);      
       return(-1);
     }
   } /* next token */
@@ -2166,8 +2165,8 @@ int loadReferenceMap(referenceMapObj *ref)
       if((ref->status = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;   
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadReferenceMap()");      
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadReferenceMap()", 
+                 msyytext, msyylineno);
       return(-1);
     }
   } /* next token */
@@ -2309,8 +2308,8 @@ int loadLegend(legendObj *legend, mapObj *map)
       if((legend->transparent = getSymbol(2, MS_ON,MS_OFF)) == -1) return(-1);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadLegend()");      
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadLegend()", 
+                 msyytext, msyylineno);      
       return(-1);
     }
   } /* next token */
@@ -2486,8 +2485,8 @@ int loadScalebar(scalebarObj *scalebar, mapObj *map)
       if((scalebar->units = getSymbol(5, MS_INCHES,MS_FEET,MS_MILES,MS_METERS,MS_KILOMETERS)) == -1) return(-1);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadScalebar()");      
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadScalebar()",
+                 msyytext, msyylineno);      
       return(-1);
     }
   } /* next token */
@@ -2787,8 +2786,7 @@ int loadWeb(webObj *web)
       if((web->template = getString()) == NULL) return(-1);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "loadWeb()");
+      msSetError(MS_IDENTERR, "(%s):(%d)", "loadWeb()", msyytext, msyylineno);
       return(-1);
     }
   }
@@ -3014,8 +3012,7 @@ int msSaveMap(mapObj *map, char *filename)
 
   stream = fopen(filename, "w");
   if(!stream) {
-    sprintf(ms_error.message, "(%s)", filename);
-    msSetError(MS_IOERR, ms_error.message, "msSaveMap()");    
+    msSetError(MS_IOERR, "(%s)", "msSaveMap()", filename);    
     return(-1);
   }
 
@@ -3059,7 +3056,7 @@ int msSaveMap(mapObj *map, char *filename)
   return(0);
 }
 
-mapObj *msLoadMap(char *filename)
+static mapObj *msLoadMapInternal(char *filename)
 {
   regex_t re;
   mapObj *map=NULL;
@@ -3075,8 +3072,7 @@ mapObj *msLoadMap(char *filename)
   ** Check map filename to make sure it's legal
   */
   if(regcomp(&re, MS_MAPFILE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
-   sprintf(ms_error.message, "(%s)", MS_MAPFILE_EXPR);
-   msSetError(MS_REGEXERR, ms_error.message, "msLoadMap()");   
+   msSetError(MS_REGEXERR, "(%s)", "msLoadMap()", MS_MAPFILE_EXPR);   
    return(NULL);
   }
   if(regexec(&re, filename, 0, NULL, 0) != 0) { /* no match */
@@ -3087,8 +3083,7 @@ mapObj *msLoadMap(char *filename)
   regfree(&re);
   
   if((msyyin = fopen(filename,"r")) == NULL) {
-    sprintf(ms_error.message, "(%s)", filename);
-    msSetError(MS_IOERR, ms_error.message, "msLoadMap()");    
+    msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
     return(NULL);
   }
 
@@ -3129,8 +3124,11 @@ mapObj *msLoadMap(char *filename)
 	  if(map->layers[i].class[j].overlaysymbolname) {
 	    if((map->layers[i].class[j].overlaysymbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
 	      if((map->layers[i].class[j].overlaysymbol = msAddImageSymbol(&(map->symbolset), map->layers[i].class[j].overlaysymbolname)) == -1) {
-		sprintf(ms_error.message, "Undefined overlay symbol \"%s\" in class %d of layer %s.", map->layers[i].class[j].overlaysymbolname, j, map->layers[i].name);
-		msSetError(MS_MISCERR, ms_error.message, "msLoadMap()");
+		msSetError(MS_MISCERR, 
+                    "Undefined overlay symbol \"%s\" in class %d of layer %s.",
+                           "msLoadMap()",
+                           map->layers[i].class[j].overlaysymbolname, 
+                           j, map->layers[i].name);
 		return(NULL);
 	      }
 	    }
@@ -3139,8 +3137,11 @@ mapObj *msLoadMap(char *filename)
 	  if(map->layers[i].class[j].symbolname) {
 	    if((map->layers[i].class[j].symbol = msGetSymbolIndex(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1) {
 	      if((map->layers[i].class[j].symbol = msAddImageSymbol(&(map->symbolset), map->layers[i].class[j].symbolname)) == -1) {
-		sprintf(ms_error.message, "Undefined symbol \"%s\" in class %d of layer %s.", map->layers[i].class[j].symbolname, j, map->layers[i].name);
-		msSetError(MS_MISCERR, ms_error.message, "msLoadMap()");
+		msSetError(MS_MISCERR, 
+                           "Undefined symbol \"%s\" in class %d of layer %s.", 
+                           "msLoadMap()", 
+                           map->layers[i].class[j].symbolname, 
+                           j, map->layers[i].name);
 		return(NULL);
 	      }
 	    }
@@ -3253,11 +3254,22 @@ mapObj *msLoadMap(char *filename)
       if(loadWeb(&map->web) == -1) return(NULL);
       break;
     default:
-      sprintf(ms_error.message, "(%s):(%d)", msyytext, msyylineno);
-      msSetError(MS_IDENTERR, ms_error.message, "msLoadMap()");
+      msSetError(MS_IDENTERR, "(%s):(%d)", "msLoadMap()", 
+                 msyytext, msyylineno);
       return(NULL);
     }
   } /* next token */
+}
+
+mapObj *msLoadMap(char *filename)
+{
+    mapObj *map;
+
+    msAcquireLock( TLOCK_PARSER );
+    map = msLoadMapInternal( filename );
+    msReleaseLock( TLOCK_PARSER );
+
+    return map;
 }
 
 /*
@@ -3266,11 +3278,13 @@ mapObj *msLoadMap(char *filename)
 int msLoadMapString(mapObj *map, char *object, char *value)
 {
   int i;
+  errorObj *ms_error;
 
   msyystate = 1; /* set lexer state */
   msyystring = object;
 
-  ms_error.code = MS_NOERR; /* init error code */
+  ms_error = msGetErrorObj();
+  ms_error->code = MS_NOERR; /* init error code */
 
   switch(msyylex()) {
   case(MAP):
@@ -3370,7 +3384,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
   msyystate = 3; /* restore lexer state */
   msyylex();
 
-  if(ms_error.code != MS_NOERR) return(-1);
+  if(ms_error->code != MS_NOERR) return(-1);
 
   return(0);
 }
