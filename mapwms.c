@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.143  2004/11/05 16:57:26  assefa
+ * Add test for supported formats in getLegendGraphic (Bug 1030).
+ *
  * Revision 1.142  2004/11/05 16:27:01  assefa
  * GetLenendGraphic only advertize GD formats.
  *
@@ -2496,7 +2499,8 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
 
      //validate format
      psFormat = msSelectOutputFormat( map, pszFormat);
-     if( psFormat == NULL )
+     if( psFormat == NULL || 
+         psFormat->renderer != MS_RENDER_WITH_GD)
      {
          msSetError(MS_IMGERR,
                     "Unsupported output format (%s).",
