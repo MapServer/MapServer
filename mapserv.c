@@ -1263,15 +1263,23 @@ int main(int argc, char *argv[]) {
 	      setExtent(msObj);
 	    } else {
 	      setExtent(msObj);
+	      if(SearchMap) { // the extent should be tied to a map, so we need to "adjust" it
+		if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();
+		msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); 
+	      }
 	      if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
 	    }
 	    break;
 	  case FROMUSERSHAPE:
-	    setExtent(msObj);
+	    setExtent(msObj);	    
 	    if((status = msQueryByShape(msObj->Map, QueryLayerIndex, &msObj->SelectShape)) != MS_SUCCESS) writeError();
 	    break;	  
 	  default: // from an extent of some sort
 	    setExtent(msObj);
+	    if(SearchMap) { // the extent should be tied to a map, so we need to "adjust" it
+	      if((status = msCalculateScale(msObj->Map->extent, msObj->Map->units, msObj->Map->width, msObj->Map->height, msObj->Map->resolution, &msObj->Map->scale)) != MS_SUCCESS) writeError();
+	      msObj->Map->cellsize = msAdjustExtent(&(msObj->Map->extent), msObj->Map->width, msObj->Map->height); 
+	    }	    
 	    if((status = msQueryByRect(msObj->Map, QueryLayerIndex, msObj->Map->extent)) != MS_SUCCESS) writeError();
 	    break;
 	  }      
