@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.50  2005/03/07 14:55:37  assefa
+ * Correct problems when building on Windows.
+ *
  * Revision 1.49  2005/03/04 21:54:21  pramsey
  * Provided masking of passwords in the error reporting (bug 703).
  *
@@ -1601,8 +1604,9 @@ int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int 
     query_result = PQexec(layerinfo->conn, sql);
     if(!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK) {
         char tmp1[63]; 
+        char *tmp2 = NULL;
         strcat(tmp1, "Error executing POSTGIS statement (msPOSTGISLayerRetrievePGVersion():");
-        char tmp2[strlen(tmp1) + strlen(sql)];
+        tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql)));
         strcat(tmp2, tmp1);
         strcat(tmp2, sql);
         msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePGVersion()");
@@ -1711,8 +1715,9 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
     if(!(query_result) || PQresultStatus(query_result) != PGRES_TUPLES_OK) 
     {
       char tmp1[63]; 
+      char *tmp2 = NULL;
       strcat(tmp1, "Error executing POSTGIS statement (msPOSTGISLayerRetrievePK():");
-      char tmp2[strlen(tmp1) + strlen(sql)];
+      tmp2 = (char *)malloc(sizeof(char)*(strlen(tmp1) + strlen(sql)));
       strcat(tmp2, tmp1);
       strcat(tmp2, sql);
       msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
