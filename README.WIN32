@@ -41,8 +41,8 @@ To build the package using the Makefile.vc and NMAKE:
      nmake /f Makefile.vc 
 
 This will create "mapserv.exe" (the main MapServer CGI program), the
-other command-line utilities, and "mapserver.lib" that is used by the
-MapScript modules.
+other command-line utilities, "mapserver.lib" and "libmap.dll" that is 
+used by theMapScript modules.
 
 
 --------------------------------------------------------------------
@@ -51,7 +51,8 @@ MapScript modules.
 
 To compile the various versions of MapScript (Perl, PHP, etc) first compile
 the main mapserver directory and then see the README files in the 
-mapscript/perl or mapscript/php3 directory for specific instructions.
+mapscript/perl, mapscript/php3 or mapscript/python directory for specific 
+instructions.
 
 
 --------------------------------------------------------------------
@@ -59,19 +60,21 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
 -------------------------------------------------------------------- 
 
 - MapServer uses the GD library from http://boutell.com/ and the Win32
-  makefiles are set by default to work with GD version 1.8.4 with the
-  GIF support patch (see http://www.rime.com.au/gd/)
+  makefiles are set by default to work with the pre-built GD version 2.0.33 
+  provided by Boutell.com.  These predefine "gdwin32" binaries include
+  freetype2, libpng, libjpeg, libz, and libgif built-in.  This is very
+  convenient to get a mapserver build going quickly.
 
-  If you are using a different version of GD, then it is very important
-  to make sure that you update the -DUSE_GD_* flags in the nmake.opt.
-
-  You'll have to compile your own GD library with the options you want,
-  including Freetype since starting with MapServer version 3.5, Freetype
-  is supported through the GD library.
+  If you are building GD and it's supporting libraries (libpng, libjpeg, 
+  libgif, and freetype) from source then it is very important to make sure 
+  that you update the -DUSE_GD_* flags and various subcomponent paths in the 
+  nmake.opt.  You will also have to take great care to build the various
+  components in a way that is compatible with MapServer.  For instance, if
+  the various components are statically linked into MapServer you will need
+  to use the same build options (ie. /MT or /MT) for all components.
 
   Here are some useful pointers:
    - The original GD library: http://boutell.com/gd/
-   - Patched GD library: http://www.rime.com.au/gd/
    - libpng:    http://www.libpng.org/pub/png/libpng.html
    - zlib:      http://www.info-zip.org/pub/infozip/zlib/
    - libjpeg:   ftp://ftp.uu.net/graphics/jpeg/
@@ -95,24 +98,6 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
   is important to make sure that the main Makefile.vc creates MAPSERVER.LIB
   with the same version of REGEX that PHP uses.
   See the notes in the main Makefile.vc about that.
-
---------------------------------------------------------------------
-      Notes on libtiff build.
--------------------------------------------------------------------- 
-
- - LibTiff comes with a makefile.vc in the libtiff directory, so building
-   it should be as simple as:
-
-       cd tiff-v3.5.4/libtiff
-       nmake /f makefile.vc
-
- - see also the libtiff installation procedures (tiff-v3.5.4/html/build.html)
-
- - the makefile refers to file fax3sm_winnt.obj. This file is not in the
-   ./libtiff directory. To be able to build sucessfully, copy the file from 
-   the ./contrib/winnt directory (file is fax3sm.c) to your libtiff directory 
-   and rename it to  fax3sm_winnt.c
-
 
 --------------------------------------------------------------------
       Notes on Freetype build.
@@ -172,9 +157,10 @@ mapscript/perl or mapscript/php3 directory for specific instructions.
 ------------------------------------------------------------
         Notes on GDAL
 ------------------------------------------------------------
-- If you are compiling the GDAL library (http://gdal.velocet.ca/projects/opengis/)
-with the PNG support, make sure that the libpng that you use in mapserver is the
-same as the one used in GDAL.
+
+- If you are compiling the GDAL library (http://www.gdal.org/)
+   with the PNG support, make sure that the libpng that you use in mapserver 
+   is the same as the one used in GDAL.
 
 ------------------------------------------------------------
         Notes on PDF suuport
