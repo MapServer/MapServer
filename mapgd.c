@@ -297,23 +297,58 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
 static void imageOffsetPolyline(gdImagePtr img, shapeObj *p, int color, int offsetx, int offsety)
 {
   int i, j;
-  double dx, dy;
-  int ox=0, oy=0;
+  int dx, dy, dx0, dy0, x, y, x0, y0, ox, oy;
+  double k, k0, q, q0;
+  float par=0.71;
 
   if(offsety == -99) { // old-style offset (version 3.3 and earlier)
     for (i = 0; i < p->numlines; i++) {
       for(j=1; j<p->line[i].numpoints; j++) {        
-	dx = abs(p->line[i].point[j-1].x - p->line[i].point[j].x);
-	dy = abs(p->line[i].point[j-1].y - p->line[i].point[j].y);
-	if(dx<=dy)
-	  ox=offsetx;
-	else
-	  oy=offsetx;
-        
-        gdImageLine(img, (int)p->line[i].point[j-1].x+ox, (int)p->line[i].point[j-1].y+oy, (int)p->line[i].point[j].x+ox, (int)p->line[i].point[j].y+oy, color);
-        ox=0;
-        oy=0;
+        ox=0; oy=0;
+        dx = p->line[i].point[j].x - p->line[i].point[j-1].x;
+        dy = p->line[i].point[j].y - p->line[i].point[j-1].y;
+        //offset setting - quick approximation, may be changed with goniometric functions
+        if(dx==0) { //vertical line
+          k = -1;
+          if(dy==0) continue; //checking unique points
+          ox=(dy>0) ? -offsetx : offsetx;
+        } else {
+          k = (float)dy/dx;
+          if(abs(k)<0.5) {
+            oy = (dx>0) ? offsetx : -offsetx;
+          } else {
+            if (abs(k)<2.1) {
+              oy = (dx>0) ? offsetx*par : -offsetx*par;
+              ox = (dy>0) ? -offsetx*par : offsetx*par;
+            } else
+              ox = (dy>0) ? -offsetx : offsetx;
+          }
+          q = p->line[i].point[j-1].y+oy - k*(p->line[i].point[j-1].x+ox);
+        }
+        //offset line points computation
+        if(j==1) { // first point
+          x = p->line[i].point[j-1].x+ox;
+          y = p->line[i].point[j-1].y+oy;
+        } else { //middle points
+          if(k==k0) continue; //checking equal direction
+          if(dx0==0) { //checking verticals
+            x = x0;
+            y = k*x + q;
+          } else {
+            if(dx==0) {
+              x = p->line[i].point[j-1].x+ox;
+              y = k0*x + q0;
+            } else {
+              x = (int)((q-q0)/(k0-k));
+              y = (int)(k*x+q);
+            }
+          }
+          gdImageLine(img, x0, y0, x, y, color);
+        }
+        dx0 = dx; dy0 = dy; x0 = x, y0 = y; k0 = k; q0=q;
       }
+      //last point
+      gdImageLine(img, x0, y0, p->line[i].point[p->line[i].numpoints-1].x+ox, p->line[i].point[p->line[i].numpoints-1].y+oy, color);
     }
   } else { // normal offset (eg. drop shadow)
     for (i = 0; i < p->numlines; i++)
