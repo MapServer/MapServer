@@ -22,6 +22,8 @@ Version 3.6.3-dev
   of type float and string.  The param value was not forced to the right
   type and this could lead to unexpected values being set or crashes.
 
+- Fixed bug 174 - improperly terminated string buffer in msWMSException()
+
 
 Version 3.6.2 (2002-07-08)
 --------------------------
