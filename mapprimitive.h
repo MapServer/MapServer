@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.14  2004/11/29 15:09:34  sean
+ * hide itemObj and geotransformObj from swig, these are not ready for use
+ *
  * Revision 1.13  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -90,6 +93,7 @@ typedef struct {
 
 typedef lineObj multipointObj;
 
+#ifndef SWIG
 /* attribute primatives */
 typedef struct {
   char *name;
@@ -98,12 +102,15 @@ typedef struct {
   int size;
   short numdecimals;
 } itemObj;
+#endif
 
+#ifndef SWIG
 typedef struct {
   int  need_geotransform;
   double rotation_angle;  
   double geotransform[6];    // Pixel/line to georef.
   double invgeotransform[6]; // georef to pixel/line  
 } geotransformObj;
+#endif
 
 #endif /* MAPPRIMITIVE_H */
