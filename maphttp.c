@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.9  2003/03/26 20:24:38  dan
+ * Do not call msDebug() unless debug flag is turned on
+ *
  * Revision 1.8  2003/01/10 19:23:22  dan
  * Do not produce a fatal error if WMS layer download fails, just like in 3.6
  *
@@ -148,6 +151,7 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests)
         pasReqInfo[i].nStatus = 0;
         pasReqInfo[i].pszContentType = NULL;
         pasReqInfo[i].pszErrBuf = NULL;
+        pasReqInfo[i].debug = MS_FALSE;
 
         pasReqInfo[i].curl_handle = NULL;
         pasReqInfo[i].fp = NULL;
@@ -203,8 +207,9 @@ static size_t msHTTPWriteFct(void *buffer, size_t size, size_t nmemb,
 
     psReq = (httpRequestObj *)reqInfo;
 
-    msDebug("msHTTPWriteFct(id=%d, %d bytes)\n",
-            psReq->nLayerId, size*nmemb);
+    if (psReq->debug)
+        msDebug("msHTTPWriteFct(id=%d, %d bytes)\n",
+                psReq->nLayerId, size*nmemb);
 
     return fwrite(buffer, size, nmemb, psReq->fp);
 }
@@ -229,6 +234,7 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
     int     i, nStatus = MS_SUCCESS, nTimeout, still_running=0, num_msgs=0;
     CURLM   *multi_handle;
     CURLMsg *curl_msg;
+    char     debug = MS_FALSE;
 
     if (numRequests == 0)
         return MS_SUCCESS;  /* Nothing to do */
@@ -271,8 +277,12 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             return(MS_FAILURE);
         }
 
-        msDebug("HTTP request: id=%d, %s\n", 
-                pasReqInfo[i].nLayerId, pasReqInfo[i].pszGetUrl);
+        if (pasReqInfo[i].debug)
+        {
+            msDebug("HTTP request: id=%d, %s\n", 
+                    pasReqInfo[i].nLayerId, pasReqInfo[i].pszGetUrl);
+            debug = MS_TRUE;  /* For the download loop */
+        }
 
         /* Reset some members */
         pasReqInfo[i].nStatus = 0;
@@ -287,8 +297,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             if (fp)
             {
                 // File already there, don't download again.
-                msDebug("HTTP request: id=%d, found in cache, skipping.\n", 
-                        pasReqInfo[i].nLayerId);
+                if (pasReqInfo[i].debug)
+                    msDebug("HTTP request: id=%d, found in cache, skipping.\n",
+                            pasReqInfo[i].nLayerId);
                 fclose(fp);
                 pasReqInfo[i].nStatus = 242;
                 pasReqInfo[i].pszContentType = strdup("unknown/cached");
@@ -351,7 +362,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         curl_multi_add_handle(multi_handle, http_handle);
 
     }
-    msDebug("HTTP: Before download loop\n");
+
+    if (debug)
+        msDebug("HTTP: Before download loop\n");
 
     /* DOWNLOAD LOOP ... inspired from multi-double.c example */
 
@@ -405,7 +418,8 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
         }
     }
 
-    msDebug("HTTP: After download loop\n");
+    if (debug)
+        msDebug("HTTP: After download loop\n");
 
     /* Scan message stack from CURL and report fatal errors*/
 
@@ -439,14 +453,16 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                 switch(curl_msg->data.result)
                 {
                   case CURLE_OPERATION_TIMEOUTED:
-                    msDebug("HTTP: TIMEOUT of %d seconds execeeded for %s\n",
-                            nTimeout, psReq->pszGetUrl );
+                    if (psReq->debug)
+                      msDebug("HTTP: TIMEOUT of %d seconds execeeded for %s\n",
+                              nTimeout, psReq->pszGetUrl );
                     break;
                   default:
-                    msDebug("HTTP: request failed with curl error "
-                            "code %d (%s) for %s\n",
-                            curl_msg->data.result, psReq->pszErrBuf, 
-                            psReq->pszGetUrl);
+                    if (psReq->debug)
+                        msDebug("HTTP: request failed with curl error "
+                                "code %d (%s) for %s\n",
+                                curl_msg->data.result, psReq->pszErrBuf, 
+                                psReq->pszGetUrl);
 
                     msSetError(MS_HTTPERR, 
                                "HTTP: request failed with curl error "
@@ -492,10 +508,11 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
             }
             else if (pasReqInfo[i].nStatus > 0)
             {
-                msDebug("HTTP: HTTP GET request failed with status %d (%s) "
-                        "for %s\n",
-                        pasReqInfo[i].nStatus, pasReqInfo[i].pszErrBuf, 
-                        pasReqInfo[i].pszGetUrl);
+                if (pasReqInfo[i].debug)
+                    msDebug("HTTP: HTTP GET request failed with status %d (%s)"
+                            " for %s\n",
+                            pasReqInfo[i].nStatus, pasReqInfo[i].pszErrBuf, 
+                            pasReqInfo[i].pszGetUrl);
 
                 msSetError(MS_HTTPERR, 
                            "HTTP GET request failed with status %d (%s) "
@@ -530,8 +547,9 @@ int msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
  *
  * Wrapper to call msHTTPExecuteRequests() for a single file.
  **********************************************************************/
-int msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
-                  int nTimeout, int bCheckLocalCache)
+int msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile, 
+                  int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
+                  int bDebug)
 {
     httpRequestObj *pasReqInfo;
 
@@ -545,12 +563,13 @@ int msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
 
     pasReqInfo[0].pszGetUrl = strdup(pszGetUrl);
     pasReqInfo[0].pszOutputFile = strdup(pszOutputFile);
-    
+    pasReqInfo[0].debug = (char)bDebug;
+
     if (msHTTPExecuteRequests(pasReqInfo, 1, bCheckLocalCache) != MS_SUCCESS)
     {
         *pnHTTPStatus = pasReqInfo[0].nStatus;
-        msDebug("HTTP request failed.\n", pszGetUrl);
-        free(pszGetUrl);
+        if (pasReqInfo[0].debug)
+            msDebug("HTTP request failed for %s.\n", pszGetUrl);
         return MS_FAILURE;
     }
 

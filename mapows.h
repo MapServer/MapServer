@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.15  2003/03/26 20:24:38  dan
+ * Do not call msDebug() unless debug flag is turned on
+ *
  * Revision 1.14  2003/01/10 06:39:06  sdlime
  * Moved msEncodeHTMLEntities() and msDecodeHTMLEntities() from mapows.c to mapstring.c so they can be used a bit more freely.
  *
@@ -73,6 +76,7 @@ typedef struct http_request_info
     int         nStatus;       /* 200=success, value < 0 if request failed */
     char      * pszContentType;
     char      * pszErrBuf;     /* Buffer where curl can write errors */
+    int         debug;         /* Debug mode?  MS_TRUE/MS_FALSE */
 
     /* Private members */
     void      * curl_handle;   /* CURLM * handle */
@@ -86,8 +90,9 @@ void msHTTPInitRequestObj(httpRequestObj *pasReqInfo, int numRequests);
 void msHTTPFreeRequestObj(httpRequestObj *pasReqInfo, int numRequests);
 int  msHTTPExecuteRequests(httpRequestObj *pasReqInfo, int numRequests,
                            int bCheckLocalCache);
-int  msHTTPGetFile(char *pszGetUrl, char *pszOutputFile, int *pnHTTPStatus,
-                   int nTimeout, int bCheckLocalCache);
+int  msHTTPGetFile(const char *pszGetUrl, const char *pszOutputFile, 
+                   int *pnHTTPStatus, int nTimeout, int bCheckLocalCache,
+                   int bDebug);
 
 
 /*====================================================================

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.50  2003/03/26 20:24:38  dan
+ * Do not call msDebug() unless debug flag is turned on
+ *
  * Revision 1.49  2003/01/30 15:53:48  assefa
  * Windows compilation error.
  *
@@ -765,6 +768,7 @@ int msPrepareWMSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].nStatus = 0;
     pasReqInfo[(*numRequests)].nTimeout = nTimeout;
     pasReqInfo[(*numRequests)].bbox = bbox;
+    pasReqInfo[(*numRequests)].debug = lp->debug;
 
     (*numRequests)++;
 

@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2003/03/26 20:24:38  dan
+ * Do not call msDebug() unless debug flag is turned on
+ *
  * Revision 1.11  2003/02/19 14:19:02  frank
  * cleanup warnings
  *
@@ -323,6 +326,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
     pasReqInfo[(*numRequests)].nStatus = 0;
     pasReqInfo[(*numRequests)].nTimeout = nTimeout;
     pasReqInfo[(*numRequests)].bbox = bbox;
+    pasReqInfo[(*numRequests)].debug = lp->debug;
 
 /* ------------------------------------------------------------------
  * Pre-Open the layer now, (i.e. alloc and fill msWFSLayerInfo inside 
@@ -423,8 +427,9 @@ int msWFSLayerOpen(layerObj *lp,
         {
             // Hmmm... should we produce a fatal error?
             // For now we'll just close the layer and reopen it.
-            msDebug("msWFSLayerOpen(): Layer already opened (%s)\n",
-                    lp->name?lp->name:"(null)" );
+            if (lp->debug)
+                msDebug("msWFSLayerOpen(): Layer already opened (%s)\n",
+                        lp->name?lp->name:"(null)" );
             msWFSLayerClose(lp);
         }
     }
