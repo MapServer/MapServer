@@ -179,12 +179,12 @@ mapObj *loadMap()
     tmpstr = (char *)malloc(sizeof(char)*strlen(msObj->ParamNames[i]) + 3);
     sprintf(tmpstr,"%%%s%%", msObj->ParamNames[i]);
     
-    for(j=0; j<msObj->Map->numlayers; j++) {
-      if(msObj->Map->layers[j].data && (strstr(msObj->Map->layers[j].data, tmpstr) != NULL)) msObj->Map->layers[j].data = gsub(msObj->Map->layers[j].data, tmpstr, msObj->ParamValues[i]);
-      if(msObj->Map->layers[j].connection && (strstr(msObj->Map->layers[j].connection, tmpstr) != NULL)) msObj->Map->layers[j].connection = gsub(msObj->Map->layers[j].connection, tmpstr, msObj->ParamValues[i]);
-      if(msObj->Map->layers[j].filter.string && (strstr(msObj->Map->layers[j].filter.string, tmpstr) != NULL)) msObj->Map->layers[j].filter.string = gsub(msObj->Map->layers[j].filter.string, tmpstr, msObj->ParamValues[i]);
-      for(k=0; k<msObj->Map->layers[j].numclasses; k++)
-	if(msObj->Map->layers[j].class[k].expression.string && (strstr(msObj->Map->layers[j].class[k].expression.string, tmpstr) != NULL)) msObj->Map->layers[j].class[k].expression.string = gsub(msObj->Map->layers[j].class[k].expression.string, tmpstr, msObj->ParamValues[i]);
+    for(j=0; j<map->numlayers; j++) {
+      if(map->layers[j].data && (strstr(map->layers[j].data, tmpstr) != NULL)) map->layers[j].data = gsub(map->layers[j].data, tmpstr, msObj->ParamValues[i]);
+      if(map->layers[j].connection && (strstr(map->layers[j].connection, tmpstr) != NULL)) map->layers[j].connection = gsub(map->layers[j].connection, tmpstr, msObj->ParamValues[i]);
+      if(map->layers[j].filter.string && (strstr(map->layers[j].filter.string, tmpstr) != NULL)) map->layers[j].filter.string = gsub(map->layers[j].filter.string, tmpstr, msObj->ParamValues[i]);
+      for(k=0; k<map->layers[j].numclasses; k++)
+	if(map->layers[j].class[k].expression.string && (strstr(map->layers[j].class[k].expression.string, tmpstr) != NULL)) map->layers[j].class[k].expression.string = gsub(map->layers[j].class[k].expression.string, tmpstr, msObj->ParamValues[i]);
     }
     
     free(tmpstr);
