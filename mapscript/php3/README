@@ -1076,8 +1076,9 @@ Constructor:
    int interlace;
    int postlabelcache; //MS_TRUE, MS_FALSE
    labelObj label;
-   colorObj inagecolor;
-     
+   colorObj imagecolor;
+   string   template
+
  Methods:
 
       int set(string property_name, new_value)
