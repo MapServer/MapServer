@@ -12,15 +12,23 @@
  = and CEPSUL/IBAMA (www.ibama.gov.br). This is a typical open source
  = initiative. Feel free to use it.
  *****************************************************************************
+ * $Id$
  *
- * Revision 1.0   2001/09/28 10:42:29 (GMT-03:00)
+ * Revision 1.3   $Date$
+ * Added support for the following 2D geometries:
+ * - 2001/1/1         point
+ * - 2001/1/n         multipoint
+ * - 2002/2/1         line string
+ *
+ * Revision 1.2   2001/09/28 10:42:29 [GMT-03:00]
  * Added OracleSpatial "partial" support. Displaying only the following
  * 2D geometries (gtype/etype/interpretation):
- * - 2001/NULL/NULL       point
- * - 2003/[?00]3/1        simple polygon
- * - 2003/[?00]3/3        rectangle
- * Note: Items should be soon supported. Don't use classitem or other *item
- * statements in mapfiles.
+ * - 2001/NULL/NULL   point
+ * - 2003/[?00]3/1    simple polygon
+ * - 2003/[?00]3/3    rectangle
+ *
+ * Revisions 1.0/1.1
+ * OracleSpatial support stubbed in by sdlime.
  *
  *****************************************************************************
  *
