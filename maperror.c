@@ -115,6 +115,9 @@ char *msGetVersion() {
 #ifdef USE_SDE
   strcat(version, " INPUT=SDE");
 #endif
+#ifdef USE_POSTGIS
+  strcat(version, " INPUT=POSTGIS");
+#endif
 #ifdef USE_OGR
   strcat(version, " INPUT=OGR");
 #endif
