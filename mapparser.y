@@ -305,7 +305,7 @@ math_exp: NUMBER
        | math_exp '*' math_exp   { $$ = $1 * $3; }
        | math_exp '/' math_exp   {
 	                           if($3 == 0.0) {
-				     msyyerror("Division by Zero");
+				     msyyerror("division by zero");
 				     return(-1);
 				   } else
 	                             $$ = $1 / $3; 
