@@ -13,6 +13,10 @@
 
 #define LINE_VERT_THRESHOLD .17 // max absolute value of cos of line angle, the closer to zero the more vertical the line must be
 
+#ifdef GD_USE_TTF
+#define gdImageStringFT gdImageStringTTF // old versions of GD don't have the gdImageStringTTF function
+#endif
+
 int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj point, char *string, double featuresize)
 {
   int i;
@@ -85,7 +89,7 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
 
 int msLoadFontSet(fontSetObj *fontset) 
 {
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
   FILE *stream;
   char buffer[MS_BUFFER_LENGTH];
   char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
@@ -151,7 +155,7 @@ int msLoadFontSet(fontSetObj *fontset)
 int msGetLabelSize(char *string, labelObj *label, rectObj *rect, fontSetObj *fontset) /* assumes an angle of 0 */
 {
   if(label->type == MS_TRUETYPE) {
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
     int bbox[8];
     char *error=NULL, *font=NULL;
 
@@ -338,7 +342,7 @@ static int draw_text(gdImagePtr img, pointObj labelPnt, char *string, labelObj *
     char *error=NULL, *font=NULL;
     int bbox[8];
 
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
     if(!fontset) {
       msSetError(MS_TTFERR, "No fontset defined.", "draw_text()");
       return(-1);
@@ -771,7 +775,7 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
 
 int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset)
 {
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
   return(0);
 #else
   msSetError(MS_TTFERR, "TrueType font support is not available.", "msImageTruetypeArrow()");
@@ -781,7 +785,7 @@ int msImageTruetypeArrow(gdImagePtr img, shapeObj *p, symbolObj *s, int color, i
 
 int msImageTruetypePolyline(gdImagePtr img, shapeObj *p, symbolObj *s, int color, int size, fontSetObj *fontset)
 {
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
   int i,j;
   double theta, length, current_length;
   labelObj label;

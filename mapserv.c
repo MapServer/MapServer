@@ -1311,7 +1311,7 @@ void returnQuery()
       if(status != MS_SUCCESS) writeError();
 
       // retrieve all the item names
-      status = msLayerGetItems(lp, &lp->items, &lp->numitems);
+      status = msLayerGetItems(lp);
       if(status != MS_SUCCESS) writeError();
 
       status = msLayerGetShape(lp, Map->shapepath, &ResultShape, lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
@@ -1361,7 +1361,7 @@ void returnQuery()
     if(status != MS_SUCCESS) writeError();
 
     // retrieve all the item names
-    status = msLayerGetItems(lp, &lp->items, &lp->numitems);
+    status = msLayerGetItems(lp);
     if(status != MS_SUCCESS) writeError();
 
     LRN = 1; // layer result number

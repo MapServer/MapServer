@@ -1161,9 +1161,9 @@ int msTiledSHPNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
 
   layer->shpfile.lastshape = i;
 
-  if(layer->numitems > 0) {
+  if(layer->numitems > 0 && layer->itemindexes) {
     shape->numvalues = layer->numitems;
-    shape->values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->items, &(layer->itemindexes), layer->numitems);
+    shape->values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->itemindexes, layer->numitems);
     if(!shape->values) return(MS_FAILURE);
 
     if(msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems) != MS_TRUE) return(msTiledSHPNextShape(layer, shapepath, shape)); // next shape
@@ -1202,9 +1202,9 @@ int msTiledSHPGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int ti
   msSHPReadShape(layer->shpfile.hSHP, record, shape);
   layer->shpfile.lastshape = record;
 
-  if(layer->numitems > 0) {
+  if(layer->numitems > 0 && layer->itemindexes) {
     shape->numvalues = layer->numitems;
-    shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
+    shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->itemindexes, layer->numitems);
     if(!shape->values) return(MS_FAILURE);
   }
 

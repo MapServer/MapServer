@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.29  2001/03/21 04:40:49  sdlime
+ * Fixed setting of itemindexes. Fixed TTF/FT preprocessor settings.
+ *
  * Revision 1.28  2001/03/21 04:01:32  frank
  * added msOGCWKT2ProjectionObj(), update for other proj changes
  *
@@ -938,7 +941,7 @@ int msOGRLayerWhichShapes(layerObj *layer, rectObj rect)
  *
  * Load item (i.e. field) names in a char array.
  **********************************************************************/
-int msOGRLayerGetItems(layerObj *layer, char ***items, int *numitems)
+int msOGRLayerGetItems(layerObj *layer)
 {
 #ifdef USE_OGR
   msOGRLayerInfo *psInfo =(msOGRLayerInfo*)layer->ogrlayerinfo;
@@ -946,22 +949,22 @@ int msOGRLayerGetItems(layerObj *layer, char ***items, int *numitems)
   OGRFeatureDefn *poDefn;
 
   if((poDefn = psInfo->poLayer->GetLayerDefn()) == NULL ||
-     (*numitems = poDefn->GetFieldCount()) == 0) 
+     (layer->numitems = poDefn->GetFieldCount()) == 0) 
   {
     msSetError(MS_OGRERR, "Layer contains no fields.", "msOGRLayerGetItems()");
     return(MS_FAILURE);
   }
 
-  if((*items = (char **)malloc(sizeof(char *)*(*numitems))) == NULL) 
+  if((layer->items = (char **)malloc(sizeof(char *)*(layer->numitems))) == NULL) 
   {
     msSetError(MS_MEMERR, NULL, "msOGRLayerGetItems()");
     return(MS_FAILURE);
   }
 
-  for(i=0;i<*numitems;i++) 
+  for(i=0;i<layer->numitems;i++) 
   {
       OGRFieldDefn *poField = poDefn->GetFieldDefn(i);
-      (*items)[i] = strdup(poField->GetNameRef());
+      layer->items[i] = strdup(poField->GetNameRef());
   }
 
   return(MS_SUCCESS);

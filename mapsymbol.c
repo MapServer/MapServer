@@ -236,7 +236,7 @@ int loadSymbol(symbolObj *s)
       if(getInteger(&(s->transparentcolor)) == -1) return(-1);
       break;
     case(TYPE):
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
       if((s->type = getSymbol(6,MS_SYMBOL_VECTOR,MS_SYMBOL_ELLIPSE,MS_SYMBOL_PIXMAP,MS_SYMBOL_SIMPLE,MS_SYMBOL_TRUETYPE)) == -1)
 	return(-1);	
 #else
@@ -409,7 +409,7 @@ int msLoadSymbolSet(symbolSetObj *symbolset)
 }
 
 static int getCharacterSize(char *character, int size, char *font, rectObj *rect) {
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
   int bbox[8];
   char *error=NULL;
 
@@ -481,7 +481,7 @@ void msDrawShadeSymbol(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, int
   switch(symbol->type) {
   case(MS_SYMBOL_TRUETYPE):    
     
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
     font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[sy].font);
     if(!font) return;
 
@@ -663,7 +663,7 @@ void msGetMarkerSize(symbolSetObj *symbolset, classObj *class, int *width, int *
   switch(symbolset->symbol[class->symbol].type) {  
   case(MS_SYMBOL_TRUETYPE):
 
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
     font = msLookupHashTable(symbolset->fontset->fonts, symbolset->symbol[class->symbol].font);
     if(!font) return;
 
@@ -734,7 +734,7 @@ void msDrawMarkerSymbol(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, in
   switch(symbol->type) {  
   case(MS_SYMBOL_TRUETYPE):
 
-#ifdef USE_GD_TTF
+#if defined (USE_GD_FT) || defined (USE_GD_TTF)
     font = msLookupHashTable(symbolset->fontset->fonts, symbol->font);
     if(!font) return;
 

@@ -563,7 +563,7 @@ int msSDELayerNextShape(layerObj *layer, shapeObj *shape) {
 #endif
 }
 
-int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems) {
+int msSDELayerGetItems(layerObj *layer) {
 #ifdef USE_SDE
   int i;
   short n;
@@ -583,15 +583,15 @@ int msSDELayerGetItems(layerObj *layer, char ***items, int *numitems) {
     return(MS_FAILURE);
   }
 
-  *items = (char **)malloc(n*sizeof(char *));
-  if(!(*items)) {
+  layer->items = (char **)malloc(n*sizeof(char *));
+  if(!layer->items) {
     msSetError(MS_MEMERR, "Error allocating layer items array.", "msSDELayerGetItems()");
     return(MS_FAILURE);
   }
-
+  
   for(i=0; i<n; i++) 
-    (*items)[i] = strdup(sde->itemdefs[i].column_name);    
-  *numitems = n;
+    layer->items[i] = strdup(sde->itemdefs[i].column_name);    
+  layer->numitems = n;
 
   return(MS_SUCCESS);
 #else

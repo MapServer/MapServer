@@ -46,10 +46,9 @@ int msLayerNextShape(layerObj *layer, char *shapepath, shapeObj *shape)
 
     if(i == layer->shpfile.numshapes) return(MS_DONE); // nothing else to read
 
-    if(layer->numitems > 0) {
-      values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->items, &(layer->itemindexes), layer->numitems);
+    if(layer->numitems > 0 && layer->itemindexes) {
+      values = msDBFGetValueList(layer->shpfile.hDBF, i, layer->itemindexes, layer->numitems);
       if(!values) return(MS_FAILURE);
-
       if(msEvalExpression(&(layer->filter), layer->filteritemindex, values, layer->numitems) != MS_TRUE) return(msLayerNextShape(layer, shapepath, shape));
     }
 
@@ -82,13 +81,12 @@ int msLayerGetShape(layerObj *layer, char *shapepath, shapeObj *shape, int tile,
 {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
-    msSHPReadShape(layer->shpfile.hSHP, record, shape);
-
-    if(layer->numitems > 0) {
+    if(layer->numitems > 0 && layer->itemindexes) {
       shape->numvalues = layer->numitems;
-      shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->items, &(layer->itemindexes), layer->numitems);
+      shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->itemindexes, layer->numitems);
       if(!shape->values) return(MS_FAILURE);
     }
+    msSHPReadShape(layer->shpfile.hSHP, record, shape);
     break;
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPGetShape(layer, shapepath, shape, tile, record));
@@ -146,25 +144,40 @@ void msLayerClose(layerObj *layer)
   }
 }
 
-int msLayerGetItems(layerObj *layer, char ***items, int *numitems) 
+int msLayerGetItems(layerObj *layer) 
 {
+  int i;
+
+  // clean up any previously allocated instances
+  if(layer->items) {
+    msFreeCharArray(layer->items, layer->numitems);
+    layer->items = NULL;
+    layer->numitems = 0;
+  }
+  if (layer->itemindexes) {
+    free(layer->itemindexes);
+    layer->itemindexes = NULL;
+  }
+
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
   case(MS_TILED_SHAPEFILE):    
-    *numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
-    *items = msDBFGetItems(layer->shpfile.hDBF);
-    if(!(*items)) return(MS_FAILURE);
+    layer->numitems = msDBFGetFieldCount(layer->shpfile.hDBF);
+    layer->items = msDBFGetItems(layer->shpfile.hDBF);    
+    if(!layer->items) return(MS_FAILURE);
+    layer->itemindexes = (int *)malloc(sizeof(int)*layer->numitems);
+    for(i=0; i<layer->numitems; i++) layer->itemindexes[i] = i;
     break;
   case(MS_INLINE):
     return(MS_SUCCESS); // inline shapes have no items
     break;
   case(MS_OGR):
-    return(msOGRLayerGetItems(layer, items, numitems));
+    return(msOGRLayerGetItems(layer));
     break;
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
-    return(msSDELayerGetItems(layer, items, numitems));
+    return(msSDELayerGetItems(layer));
     break;
   default:
     break;
@@ -239,7 +252,8 @@ static int string2list(char **list, int *listsize, char *string)
   return(i);
 }
 
-static void expression2list(char **list, int *listsize, expressionObj *expression) {
+static void expression2list(char **list, int *listsize, expressionObj *expression) 
+{
   int i, j, l;
   char tmpstr1[1024], tmpstr2[1024];
   short in=MS_FALSE;
@@ -376,6 +390,19 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
   for(i=0; i<layer->numclasses; i++) {
     if(classify && layer->class[i].expression.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].expression));
     if(annotate && layer->class[i].text.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->class[i].text));
+  }
+
+  // some connection types need to set the itemindexes variable, SDE does not use that parameter
+  switch(layer->connectiontype) {
+  case(MS_SHAPEFILE):
+  case(MS_TILED_SHAPEFILE):
+    layer->itemindexes = msDBFGetItemIndexes(layer->shpfile.hDBF, layer->items, layer->numitems);
+    if(!layer->itemindexes) return(MS_FAILURE);
+    break;
+  case(MS_OGR):
+    break;
+  default:
+    break;
   }
 
   return(MS_SUCCESS);

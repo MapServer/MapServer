@@ -134,7 +134,8 @@ int msDBFWriteStringAttribute( DBFHandle hDBF, int iShape, int iField, const cha
 
 char **msDBFGetItems(DBFHandle dbffile);
 char **msDBFGetValues(DBFHandle dbffile, int record);
-char **msDBFGetValueList(DBFHandle dbffile, int record, char **items, int **itemindexes, int numitems);
+char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int numitems);
+int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems);
 int msDBFGetItemIndex(DBFHandle dbffile, char *name);
 
 #ifdef __cplusplus

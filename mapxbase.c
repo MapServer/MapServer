@@ -786,25 +786,32 @@ char **msDBFGetValues(DBFHandle dbffile, int record)
   return(values);
 }
 
-char **msDBFGetValueList(DBFHandle dbffile, int record, char **items, int **itemindexes, int numitems)
+int *msDBFGetItemIndexes(DBFHandle dbffile, char **items, int numitems)
 {
-  char **values;
-  int i;
+  int *itemindexes=NULL, i;
 
   if(numitems == 0) return(NULL);
 
-  if(!(*itemindexes)) { // build the list
-    (*itemindexes) = (int *)malloc(sizeof(int)*numitems);
-    if(!(*itemindexes)) {
-      msSetError(MS_MEMERR, NULL, "msGetSomeDBFValues()");
-      return(NULL);
-    }
-
-    for(i=0;i<numitems;i++) {
-      (*itemindexes)[i] = msDBFGetItemIndex(dbffile, items[i]);
-      if((*itemindexes)[i] == -1) return(NULL);
-    }
+  itemindexes = (int *)malloc(sizeof(int)*numitems);
+  if(!itemindexes) {
+    msSetError(MS_MEMERR, NULL, "msGetItemIndexes()");
+    return(NULL);
   }
+
+  for(i=0;i<numitems;i++) {
+    itemindexes[i] = msDBFGetItemIndex(dbffile, items[i]);
+    if(itemindexes[i] == -1) return(NULL); // item not found
+  }
+
+  return(itemindexes);
+}
+
+char **msDBFGetValueList(DBFHandle dbffile, int record, int *itemindexes, int numitems)
+{
+  char **values=NULL;
+  int i;
+
+  if(numitems == 0) return(NULL);
 
   if((values = (char **)malloc(sizeof(char *)*numitems)) == NULL) {
     msSetError(MS_MEMERR, NULL, "msGetSomeDBFValues()");
@@ -812,7 +819,7 @@ char **msDBFGetValueList(DBFHandle dbffile, int record, char **items, int **item
   }
 
   for(i=0;i<numitems;i++)
-    values[i] = strdup(msDBFReadStringAttribute(dbffile, record, (*itemindexes)[i]));
+    values[i] = strdup(msDBFReadStringAttribute(dbffile, record, itemindexes[i]));
 
   return(values);
 }
