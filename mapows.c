@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.6  2002/11/19 02:27:04  dan
+ * Fixed unterminated buffer in msEncodeHTMLEntities()
+ *
  * Revision 1.5  2002/11/07 21:16:45  julien
  * Fix warning in ContactInfo
  *
@@ -558,6 +561,8 @@ char *msEncodeHTMLEntities(const char *string)
             newstring[i++] = *c;
         }
     }
+
+    newstring[i++] = '\0';
 
     return newstring;
 }
