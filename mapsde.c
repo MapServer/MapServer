@@ -209,14 +209,6 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 
   msFreeCharArray(params, numparams);
 
-  status = SE_stream_create(connection, &stream);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_stream_create()");
-    return(-1);
-  }
-
-  fprintf(stderr, "SDE stream created...\n");
-
   /*
   ** Get some basic information about the layer (error checking)
   */
@@ -348,6 +340,14 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   ** each class is a SQL statement, no expression means all features
   */
   for(i=0; i<layer->numclasses; i++) {
+
+    status = SE_stream_create(connection, &stream);
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msDrawSDELayer()", "SE_stream_create()");
+      return(-1);
+    }
+    
+    fprintf(stderr, "SDE stream created...\n");
     
     if(!(layer->class[i].expression.string))
       sql->where = strdup("");
@@ -441,20 +441,20 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 	    return(-1);
           }
 	}
-      }
+      }      
       break;
     default:
       msSetError(MS_MISCERR, "Unknown or unsupported layer type.", "msDrawSDELayer()");
       return(-1);
-    }
+    }    
     
     free(sql->where);
+    SE_stream_free(stream);   
   }
 
   SE_shape_free(shape);
   SE_shape_free(clippedshape);  
   SE_shape_free(filtershape);
-  SE_stream_free(stream);
   SE_connection_free(connection);
 
   return(0);
