@@ -145,8 +145,8 @@ static int add_color(gdImagePtr img, int r, int g, int b)
 /*
 ** GDAL Support.
 */
-static int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img, 
-                    GDALDatasetH hDS )
+int drawGDAL(mapObj *map, layerObj *layer, gdImagePtr img, 
+             GDALDatasetH hDS )
 
 {
   int i,j, k; /* loop counters */
