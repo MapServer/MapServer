@@ -2,7 +2,7 @@
  *	filename: mappdf.c
  *	created : Thu Oct  4 09:58:19 2001
  *	@author :  <jwall@webpeak.com> , <jspielberg@webpeak.com>
- *	LastEditDate Was "Tue Oct 16 13:24:52 2001"
+ *	LastEditDate Was "Wed Oct 17 16:03:58 2001"
  *
  * [$Author$ $Date$]
  * [$Revision$]
@@ -303,7 +303,9 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int s
                 data = gdImageJpegPtr(symbol->img, &length, 90);
                 result = PDF_open_image(pdf, "jpeg", "memory", data, (long)length, symbol->img->sx, symbol->img->sy, 3, 8, NULL);
                 gdFree(data);
-                PDF_place_image(pdf,result,p->x-symbol->img->sx/2,p->y-symbol->img->sy/2,1);
+                PDF_scale(pdf,1,-1);
+                PDF_place_image(pdf,result,p->x-symbol->img->sx/2,-p->y-symbol->img->sy/2,1);
+                PDF_scale(pdf,1,-1);
                 PDF_close_image(pdf,result);
 //            gdImageSetTile(img, symbol->img);
 //            msImageFilledPolygon(img, p, gdTiled);
