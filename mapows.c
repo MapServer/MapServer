@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.4  2002/11/07 15:46:45  julien
+ * Print ContactInfo just if necessary
+ *
  * Revision 1.3  2002/10/28 20:31:20  dan
  * New support for WMS Map Context (from Julien)
  *
@@ -363,31 +366,47 @@ void msOWSPrintBoundingBox(FILE *stream, const char *tabspace,
 void msOWSPrintContactInfo( FILE *stream, const char *tabspace, 
                            const char *wmtver, hashTableObj metadata )
 {
+  int bEnableContact = 0;
+
   // contact information is a required element in 1.0.7 but the
   // sub-elements such as ContactPersonPrimary, etc. are not!
   // In 1.1.0, ContactInformation becomes optional.
   if (strcasecmp(wmtver, "1.0.0") > 0) 
   {
-    fprintf(stream, "%s<ContactInformation>\n", tabspace);
     if(msLookupHashTable(metadata, "wms_contactperson") ||
        msLookupHashTable(metadata, "wms_contactorganization")) 
     {
+      if(bEnableContact == 0)
+      {
+          fprintf(stream, "%s<ContactInformation>\n", tabspace);
+          bEnableContact = 1;
+      }
+
       // ContactPersonPrimary is optional, but when present then all its 
       // sub-elements are mandatory
       fprintf(stream, "%s  <ContactPersonPrimary>\n", tabspace);
-      fprintf(stream, "%s", tabspace);
       msOWSPrintMetadata(stream, metadata, "wms_contactperson", 
-                  OWS_WARN, "    <ContactPerson>%s</ContactPerson>\n", NULL);
-      fprintf(stream, "%s", tabspace);
+                  OWS_WARN, "      <ContactPerson>%s</ContactPerson>\n", NULL);
       msOWSPrintMetadata(stream, metadata, "wms_contactorganization", 
-             OWS_WARN, "    <ContactOrganization>%s</ContactOrganization>\n",
+             OWS_WARN, "      <ContactOrganization>%s</ContactOrganization>\n",
              NULL);
       fprintf(stream, "%s  </ContactPersonPrimary>\n", tabspace);
     }
 
-    fprintf(stream, "%s", tabspace);
-    msOWSPrintMetadata(stream, metadata, "wms_contactposition", 
-               OWS_NOERR, "  <ContactPosition>%s</ContactPosition>\n", NULL);
+    if(bEnableContact == 0)
+    {
+        if(msOWSPrintMetadata(stream, metadata, "wms_contactposition", 
+                           OWS_NOERR, 
+     "    <ContactInformation>\n      <ContactPosition>%s</ContactPosition>\n",
+                              NULL) != NULL)
+            bEnableContact = 1;
+    }
+    else
+    {
+        msOWSPrintMetadata(stream, metadata, "wms_contactposition", 
+                    OWS_NOERR, "      <ContactPosition>%s</ContactPosition>\n",
+                           NULL);
+    }
 
     if(msLookupHashTable( metadata, "wms_addresstype" ) || 
        msLookupHashTable( metadata, "wms_address" ) || 
@@ -396,44 +415,80 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
        msLookupHashTable( metadata, "wms_postcode" ) ||
        msLookupHashTable( metadata, "wms_country" )) 
     {
+      if(bEnableContact == 0)
+      {
+          fprintf(stream, "%s<ContactInformation>\n", tabspace);
+          bEnableContact = 1;
+      }
+
       // ContactAdress is optional, but when present then all its 
       // sub-elements are mandatory
       fprintf(stream, "%s  <ContactAddress>\n", tabspace);
-      fprintf(stream, "%s", tabspace);
       msOWSPrintMetadata(stream, metadata, "wms_addresstype", OWS_WARN,
-                    "    <AddressType>%s</AddressType>\n", NULL);
-      fprintf(stream, "%s", tabspace);
+                    "        <AddressType>%s</AddressType>\n", NULL);
       msOWSPrintMetadata(stream, metadata, "wms_address", OWS_WARN,
-                    "    <Address>%s</Address>\n", NULL);
-      fprintf(stream, "%s", tabspace);
+                    "        <Address>%s</Address>\n", NULL);
       msOWSPrintMetadata(stream, metadata, "wms_city", OWS_WARN,
-                    "    <City>%s</City>\n", NULL);
-      fprintf(stream, "%s", tabspace);
+                    "        <City>%s</City>\n", NULL);
       msOWSPrintMetadata(stream, metadata, "wms_stateorprovince", 
-           OWS_WARN,"    <StateOrProvince>%s</StateOrProvince>\n", NULL);
-      fprintf(stream, "%s", tabspace);
+           OWS_WARN,"        <StateOrProvince>%s</StateOrProvince>\n", NULL);
       msOWSPrintMetadata(stream, metadata, "wms_postcode", OWS_WARN,
-                    "    <PostCode>%s</PostCode>\n", NULL);
-      fprintf(stream, "%s", tabspace);
+                    "        <PostCode>%s</PostCode>\n", NULL);
       msOWSPrintMetadata(stream, metadata, "wms_country", OWS_WARN,
-                    "    <Country>%s</Country>\n", NULL);
+                    "        <Country>%s</Country>\n", NULL);
       fprintf(stream, "%s  </ContactAddress>\n", tabspace);
     }
 
-    fprintf(stream, "%s", tabspace);
-    msOWSPrintMetadata(stream, metadata, "wms_contactvoicetelephone", 
-           OWS_NOERR,"  <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
-           NULL);
-    fprintf(stream, "%s", tabspace);
-    msOWSPrintMetadata(stream, metadata, 
-                  "wms_contactfacsimiletelephone", OWS_NOERR,
-                  "  <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL);
-    fprintf(stream, "%s", tabspace);
-    msOWSPrintMetadata(stream, metadata, 
-                  "wms_contactelectronicmailaddress", OWS_NOERR,
-                  "  <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL);
 
-    fprintf(stream, "%s</ContactInformation>\n", tabspace);
+    if(bEnableContact == 0)
+    {
+        if(msOWSPrintMetadata(stream, metadata, "wms_contactvoicetelephone", 
+                           OWS_NOERR,
+                           "    <ContactInformation>\n      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
+                              NULL) != NULL)
+            bEnableContact = 1;
+    }
+    else
+    {
+        msOWSPrintMetadata(stream, metadata, "wms_contactvoicetelephone", 
+                           OWS_NOERR,
+                   "      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
+                           NULL);
+    }
+
+    if(bEnableContact == 0)
+    {
+        if(msOWSPrintMetadata(stream, metadata, 
+                           "wms_contactfacsimiletelephone", OWS_NOERR,
+                              "    <ContactInformation>\n     <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL) != NULL)
+            bEnableContact = 1;
+    }
+    else
+    {
+        msOWSPrintMetadata(stream, metadata, 
+                           "wms_contactfacsimiletelephone", OWS_NOERR,
+                           "      <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL);
+    }
+
+    if(bEnableContact == 0)
+    {
+        if(msOWSPrintMetadata(stream, metadata, 
+                           "wms_contactelectronicmailaddress", OWS_NOERR,
+                              "    <ContactInformation>\n     <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL) != NULL)
+            bEnableContact = 1;
+    }
+    else
+    {
+        msOWSPrintMetadata(stream, metadata, 
+                           "wms_contactelectronicmailaddress", OWS_NOERR,
+                           "  <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL);
+    }
+
+
+    if(bEnableContact == 1)
+    {
+        fprintf(stream, "%s</ContactInformation>\n", tabspace);
+    }
   }
 }
 
