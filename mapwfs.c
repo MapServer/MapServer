@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.27  2003/10/08 14:01:50  assefa
+ * Write properly the geomelement.
+ *
  * Revision 1.26  2003/10/08 13:10:17  assefa
  * Modify msWFSGetGeomElementName to return the gml propertytype.
  *
@@ -640,14 +643,15 @@ int msWFSDescribeFeatureType(mapObj *map, wfsParamsObj *paramsObj)
             printf("      <extension base=\"gml:AbstractFeatureType\">\n");
             printf("        <sequence>\n");
 
-            //printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n",
-            //      msWFSGetGeomElementName(map, lp));
+            printf("          <element ref=\"gml:%s\" minOccurs=\"0\" />\n",
+                   msWFSGetGeomElementName(map, lp));
+            /*
              printf("          <element name=\"%s\" \n"
                    "                   type=\"gml:%s\" \n"
                    "                   nillable=\"false\" />\n",
                    msWFSGetGeomElementName(map, lp),
                    msWFSGetGeomType(lp) );
-
+            */
 
             if (msLayerOpen(lp) == MS_SUCCESS)
             {
