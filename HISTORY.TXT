@@ -72,6 +72,8 @@ Version 4.3 (CVS)
 - Mapscript: styles member of classObj structure is no longer exposed to
   SWIG (bug 611).
 
+- Implementation geotransform/rotation support in cgi core, and mapscript.i.
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 
