@@ -463,7 +463,7 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
 
   if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
 
-  csz = MS_NINT(layer->class[c].sizescaled/2.0); // changed when Tomas added CARTO symbols
+  csz = MS_NINT(layer->class[c].sizescaled/2.0); // changed when Tomas added CARTOLINE symbols
   cliprect.minx = map->extent.minx - csz*map->cellsize;
   cliprect.miny = map->extent.miny - csz*map->cellsize;
   cliprect.maxx = map->extent.maxx + csz*map->cellsize;
