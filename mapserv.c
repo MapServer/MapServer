@@ -1199,6 +1199,8 @@ char *processLine(char *instr, int mode)
     
     sprintf(repstr, "%f %f %f %f", ResultShape.bounds.minx, ResultShape.bounds.miny,  ResultShape.bounds.maxx, ResultShape.bounds.maxy);
     outstr = gsub(outstr, "[shpext]", repstr);
+    outstr = gsub(outstr, "[shpext_esc]", (char *)encode_url(repstr));
+
     sprintf(repstr, "%f", ResultShape.bounds.minx);
     outstr = gsub(outstr, "[shpminx]", repstr);
     sprintf(repstr, "%f", ResultShape.bounds.miny);
