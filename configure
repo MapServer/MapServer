@@ -10098,7 +10098,7 @@ _ACEOF
 
     DEBUG_FLAGS="-DENABLE_STDERR_DEBUG"
 
-  if test -n $APACHE_VERSION -a `expr $APACHE_VERSION \>= "2000000"` = 1 ; then
+  if test -n "$APACHE_VERSION" -a `expr "$APACHE_VERSION" \>= "2000000"` = 1 ; then
     echo "$as_me:$LINENO: result:         You requested msDebug() output on a system apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030)." >&5
 echo "${ECHO_T}        You requested msDebug() output on a system apparently running $HTTPD_VERSION_STRING.  Setting stderr to non-blocking due to Apache 2.x bug (see MapServer bug 458 or Apache bug 22030)." >&6
     DEBUG_FLAGS="$DEBUG_FLAGS -DNEED_NONBLOCKING_STDERR"
