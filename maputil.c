@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.176  2005/02/18 05:07:26  frank
+ * fixed return from msForceTmpFileBase
+ *
  * Revision 1.175  2005/02/18 03:06:47  dan
  * Turned all C++ (//) comments into C comments (bug 1238)
  *
@@ -1027,7 +1030,7 @@ void msForceTmpFileBase( const char *new_base )
     tmpCount = -1;
 
     if( new_base == NULL )
-        return NULL;
+        return;
 
 /* -------------------------------------------------------------------- */
 /*      Record new base.                                                */
