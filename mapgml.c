@@ -53,7 +53,7 @@ static int *getInnerList(shapeObj *shape, int r, int *outerlist) {
 }
 
 // function that writes the feature boundary geometry (i.e. a rectObj)
-static int gmlWriteBounds(FILE *stream, rectObj *rect, char *srsname, char *tab)
+static int gmlWriteBounds(FILE *stream, rectObj *rect, const char *srsname, char *tab)
 { 
 
   if(!stream) return(MS_FAILURE);
@@ -74,7 +74,7 @@ static int gmlWriteBounds(FILE *stream, rectObj *rect, char *srsname, char *tab)
 }
 
 // function only writes the feature geometry for a shapeObj
-static int gmlWriteGeometry(FILE *stream, shapeObj *shape, char *srsname, char *tab) 
+static int gmlWriteGeometry(FILE *stream, shapeObj *shape, const char *srsname, char *tab) 
 {
   int i, j, k;
   int *innerlist, *outerlist, numouters;
@@ -346,7 +346,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 #ifdef USE_PROJ
 	// project the shape into the map projection (if necessary), note that this projects the bounds as well
         if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
-          msProjectShape(&lp->projection, &map->projection, shape);
+          msProjectShape(&lp->projection, &map->projection, &shape);
 #endif
 
 	// start this feature
