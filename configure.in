@@ -636,7 +636,9 @@ if test -n "$with_php3" -a -d "$with_php3" ; then
   dnl use the same version to compile MapServer.
   dnl
   AC_MSG_CHECKING([whether we should use PHP's regex])
-  if test -n "`grep 'define REGEX 1' $PHP_SRC_DIR/config.h`" ; then
+  test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
+  test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
+  if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     AC_MSG_RESULT(yes)
     PHP_REGEX_DIR="$PHP_SRC_DIR/regex"
     PHP_REGEX_INC="-I$PHP_REGEX_DIR"

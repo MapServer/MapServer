@@ -3236,7 +3236,9 @@ rm -f perl.out
 
           echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
 echo "configure:3239: checking whether we should use PHP's regex" >&5
-  if test -n "`grep 'define REGEX 1' $PHP_SRC_DIR/config.h`" ; then
+  test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
+  test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
+  if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
     PHP_REGEX_DIR="$PHP_SRC_DIR/regex"
     PHP_REGEX_INC="-I$PHP_REGEX_DIR"
@@ -3279,7 +3281,7 @@ fi
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:3283: checking for location of Apache headers using apxs" >&5
+echo "configure:3285: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
     { echo "configure: error: --with-apxs applies only if --with-php3 is used." 1>&2; exit 1; }
 
