@@ -16,12 +16,14 @@ char *processLine(mapservObj* msObj, char* instr, int mode);
 */
 int msRedirect(char *url)
 {
-  printf("Status: 302 Found\n");
-  printf("Uri: %s\n", url);
-  printf("Location: %s\n", url);
-  printf("Content-type: text/html%c%c",10,10);
-  fflush(stdout);
-  return MS_SUCCESS;
+    msIO_printf("Status: 302 Found\n");
+    msIO_printf("Uri: %s\n", url);
+    msIO_printf("Location: %s\n", url);
+    msIO_printf("Content-type: text/html%c%c",10,10);
+
+    // the following may be an issue for fastcgi/msIO_. 
+    fflush(stdout);
+    return MS_SUCCESS;
 }
 
 /*
@@ -2592,7 +2594,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
          
       }
       else
-          printf("%s", tmpline);
+          msIO_printf("%s", tmpline);
       free(tmpline);
     } 
     else
@@ -2613,7 +2615,7 @@ int msReturnPage(mapservObj* msObj, char* html, int mode, char **papszBuffer)
             nCurrentSize += strlen(line);
         }
         else 
-            printf("%s", line);
+            msIO_printf("%s", line);
     }
     if (!papszBuffer)
         fflush(stdout);
@@ -2759,7 +2761,7 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType, char **papszBuffer)
     strcat((*papszBuffer), buffer);
     nCurrentSize += strlen(buffer);
   } else if(pszMimeType) {
-    printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
+      msIO_printf("Content-type: %s%c%c", pszMimeType, 10, 10); // write MIME header
     // printf("<!-- %s -->\n", msGetVersion());
     fflush(stdout);
   }
