@@ -640,7 +640,9 @@ if test -n "$with_php" -a -d "$with_php" ; then
   if test -n "$PHP_CONFIG_H" ; then
     AC_MSG_RESULT([$PHP_CONFIG_H])
   else
-    AC_MSG_ERROR([Could not find config.h or php_config.h in $PHP_SRC_DIR.  Has PHP been configured yet?])
+    AC_MSG_ERROR([
+!!! Could not find config.h or php_config.h in $PHP_SRC_DIR.          !!!
+!!! Has PHP been configured yet?                                      !!!])
   fi
 
   dnl
@@ -662,6 +664,20 @@ if test -n "$with_php" -a -d "$with_php" ; then
   AC_MSG_CHECKING([whether we should use PHP's regex])
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     AC_MSG_RESULT(yes)
+
+    dnl __TODO__
+    dnl This is a temporary error messgae until we figure the problem with
+    dnl PHP4's regex
+    dnl
+    if test "$PHP_VERSION_FLAG" = "-DPHP4" ; then
+      AC_MSG_ERROR([
+!!! The current version of PHP MapScript has some problems with       !!!
+!!! PHP4's bundled regex.  Until we figure the solution to the        !!!
+!!! problem, the workaround is to compile PHP4 with the system regex  !!!
+!!! Please re-configure and re-compile PHP4 with --with-system-regex  !!!
+!!! and then re-configure and re-compile MapServer.                   !!!])
+    fi
+
     PHP_REGEX_DIR="$PHP_SRC_DIR/regex"
     PHP_REGEX_INC="-I$PHP_REGEX_DIR"
     PHP_REGEX_OBJ="$PHP_REGEX_DIR/regcomp.o $PHP_REGEX_DIR/regerror.o \
@@ -669,6 +685,23 @@ if test -n "$with_php" -a -d "$with_php" ; then
     ALL_INC="$PHP_REGEX_INC $ALL_INC"
   else
     AC_MSG_RESULT(no)
+  fi
+
+  dnl
+  dnl Because of a conflict with gdttf.c/gdcache.c, we cannot have both
+  dnl PHP and MapScript compiled with TTF support.
+  dnl
+  if test -n "$TTF_ENABLED" ; then
+    AC_MSG_CHECKING([whether PHP was compiled with TTF support])
+    if test -n "`grep 'define HAVE_LIBTTF 1' $PHP_CONFIG_H`"  ; then
+      AC_MSG_RESULT(yes)
+      AC_MSG_ERROR([
+!!! Cannot have both PHP and MapScript compiled with Freetype support.    !!!
+!!! You have to configure either PHP or MapServer using the --without-ttf !!!
+!!! switch to avoid conflicts at runtime.                                 !!!])
+    else
+      AC_MSG_RESULT(no)
+    fi
   fi
 
   PHPMS_MAKEFILE=mapscript/php3/Makefile

@@ -41,12 +41,12 @@ ac_help="$ac_help
   --enable-debug          Include "-g" in CFLAGS for debugging.
   --disable-debug         Do not include "-g" in CFLAGS (the default)."
 ac_help="$ac_help
-  --with-php3=DIR         Specify directory where PHP3 source tree is 
+  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is 
                           installed. Required in order to compile the 
-                          PHP3/MapScript module."
+                          PHP/MapScript module."
 ac_help="$ac_help
-  --with-apxs[=FILE]      Use this option only if building the PHP3 MapScript
-                          on a system where PHP3 was built as a shared Apache
+  --with-apxs[=FILE]      Use this option only if building the PHP MapScript
+                          on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the 
                           Apache apxs tool; defaults to apxs."
 ac_help="$ac_help
@@ -3075,26 +3075,25 @@ EOF
 fi
 
 
-
-echo "checking for PHP3/MapScript module options..." 1>&6
-echo "configure:3081: checking for PHP3/MapScript module options..." >&5
-# Check whether --with-php3 or --without-php3 was given.
-if test "${with_php3+set}" = set; then
-  withval="$with_php3"
+echo "checking for PHP/MapScript module options..." 1>&6
+echo "configure:3080: checking for PHP/MapScript module options..." >&5
+# Check whether --with-php or --without-php was given.
+if test "${with_php+set}" = set; then
+  withval="$with_php"
   :
 fi
 
 
-if test -n "$with_php3" -a -d "$with_php3" ; then
+if test -n "$with_php" -a -d "$with_php" ; then
   
-  if test -z "$with_php3" || echo "$with_php3" | grep '^/' >/dev/null ; then
-    PHP_SRC_DIR="$with_php3"
+  if test -z "$with_php" || echo "$with_php" | grep '^/' >/dev/null ; then
+    PHP_SRC_DIR="$with_php"
   else
-    PHP_SRC_DIR="`pwd`/$with_php3"
+    PHP_SRC_DIR="`pwd`/$with_php"
   fi
 
               echo $ac_n "checking whether 'perl -V' works""... $ac_c" 1>&6
-echo "configure:3098: checking whether 'perl -V' works" >&5
+echo "configure:3097: checking whether 'perl -V' works" >&5
   if  (perl -V > /dev/null 2>&1)  ; then
     echo "$ac_t""yes" 1>&6
     
@@ -3234,12 +3233,41 @@ rm -f perl.out
     PHP_LD="$LD_SHARED"
   fi
 
-          echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
-echo "configure:3239: checking whether we should use PHP's regex" >&5
+          echo $ac_n "checking for location of config.h or php_config.h""... $ac_c" 1>&6
+echo "configure:3238: checking for location of config.h or php_config.h" >&5
   test -f "$PHP_SRC_DIR/config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/config.h"
   test -f "$PHP_SRC_DIR/php_config.h" && PHP_CONFIG_H="$PHP_SRC_DIR/php_config.h"
+  if test -n "$PHP_CONFIG_H" ; then
+    echo "$ac_t""$PHP_CONFIG_H" 1>&6
+  else
+    { echo "configure: error: 
+!!! Could not find config.h or php_config.h in $PHP_SRC_DIR.          !!!
+!!! Has PHP been configured yet?                                      !!!" 1>&2; exit 1; }
+  fi
+
+          echo $ac_n "checking whether we have PHP3 or PHP4""... $ac_c" 1>&6
+echo "configure:3250: checking whether we have PHP3 or PHP4" >&5
+  if test -n "`grep 'ZEND_API' $PHP_CONFIG_H`"  ; then
+    PHP_VERSION_FLAG="-DPHP4"
+  else
+    PHP_VERSION_FLAG="-DPHP3"
+  fi
+  echo "$ac_t""$PHP_VERSION_FLAG" 1>&6
+
+          echo $ac_n "checking whether we should use PHP's regex""... $ac_c" 1>&6
+echo "configure:3259: checking whether we should use PHP's regex" >&5
   if test -n "`grep 'define REGEX 1' $PHP_CONFIG_H`"  ; then
     echo "$ac_t""yes" 1>&6
+
+                    if test "$PHP_VERSION_FLAG" = "-DPHP4" ; then
+      { echo "configure: error: 
+!!! The current version of PHP MapScript has some problems with       !!!
+!!! PHP4's bundled regex.  Until we figure the solution to the        !!!
+!!! problem, the workaround is to compile PHP4 with the system regex  !!!
+!!! Please re-configure and re-compile PHP4 with --with-system-regex  !!!
+!!! and then re-configure and re-compile MapServer.                   !!!" 1>&2; exit 1; }
+    fi
+
     PHP_REGEX_DIR="$PHP_SRC_DIR/regex"
     PHP_REGEX_INC="-I$PHP_REGEX_DIR"
     PHP_REGEX_OBJ="$PHP_REGEX_DIR/regcomp.o $PHP_REGEX_DIR/regerror.o \
@@ -3247,6 +3275,20 @@ echo "configure:3239: checking whether we should use PHP's regex" >&5
     ALL_INC="$PHP_REGEX_INC $ALL_INC"
   else
     echo "$ac_t""no" 1>&6
+  fi
+
+          if test -n "$TTF_ENABLED" ; then
+    echo $ac_n "checking whether PHP was compiled with TTF support""... $ac_c" 1>&6
+echo "configure:3283: checking whether PHP was compiled with TTF support" >&5
+    if test -n "`grep 'define HAVE_LIBTTF 1' $PHP_CONFIG_H`"  ; then
+      echo "$ac_t""yes" 1>&6
+      { echo "configure: error: 
+!!! Cannot have both PHP and MapScript compiled with Freetype support.    !!!
+!!! You have to configure either PHP or MapServer using the --without-ttf !!!
+!!! switch to avoid conflicts at runtime.                                 !!!" 1>&2; exit 1; }
+    else
+      echo "$ac_t""no" 1>&6
+    fi
   fi
 
   PHPMS_MAKEFILE=mapscript/php3/Makefile
@@ -3258,12 +3300,13 @@ echo "configure:3239: checking whether we should use PHP's regex" >&5
   
   
   
+  
 
-  echo "$ac_t""        PHP3/MapScript module configured." 1>&6
-elif test -n "$with_php3" -a "$with_php3" != "no" ; then
-  { echo "configure: error: Missing or invalid PHP3 source directory in --with-php3=DIR." 1>&2; exit 1; }
+  echo "$ac_t""        PHP/MapScript module configured." 1>&6
+elif test -n "$with_php" -a "$with_php" != "no" ; then
+  { echo "configure: error: Missing or invalid PHP source directory in --with-php=DIR." 1>&2; exit 1; }
 else
-  echo "$ac_t""        PHP3/MapScript module not configured." 1>&6
+  echo "$ac_t""        PHP/MapScript module not configured." 1>&6
 fi
 
 
@@ -3271,9 +3314,9 @@ fi
 
 
 
-# Check whether --with-php3 or --without-php3 was given.
-if test "${with_php3+set}" = set; then
-  withval="$with_php3"
+# Check whether --with-apxs or --without-apxs was given.
+if test "${with_apxs+set}" = set; then
+  withval="$with_apxs"
   :
 fi
 
@@ -3281,9 +3324,9 @@ fi
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
 
   echo $ac_n "checking for location of Apache headers using apxs""... $ac_c" 1>&6
-echo "configure:3285: checking for location of Apache headers using apxs" >&5
+echo "configure:3328: checking for location of Apache headers using apxs" >&5
   if test -z "$MAKE_PHPMS" ; then
-    { echo "configure: error: --with-apxs applies only if --with-php3 is used." 1>&2; exit 1; }
+    { echo "configure: error: --with-apxs applies only if --with-php is used." 1>&2; exit 1; }
 
   elif test "$with_apxs" = "yes" ; then
     APXS=apxs
@@ -3504,6 +3547,7 @@ s%@CXX_WFLAGS@%$CXX_WFLAGS%g
 s%@C_WFLAGS@%$C_WFLAGS%g
 s%@C_PIC@%$C_PIC%g
 s%@LD_SHARED@%$LD_SHARED%g
+s%@PHP_VERSION_FLAG@%$PHP_VERSION_FLAG%g
 s%@PHP_SRC_DIR@%$PHP_SRC_DIR%g
 s%@PHP_CC@%$PHP_CC%g
 s%@PHP_LD@%$PHP_LD%g
