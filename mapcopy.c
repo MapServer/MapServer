@@ -1107,6 +1107,7 @@ int msCopyMap(mapObj *dst, mapObj *src)
   copyProperty(&(dst->status), &(src->status), sizeof(int)); 
   copyProperty(&(dst->height), &(src->height), sizeof(int));
   copyProperty(&(dst->width), &(src->width), sizeof(int));
+  copyProperty(&(dst->maxsize), &(src->maxsize), sizeof(int));
   copyProperty(&(dst->numlayers), &(src->numlayers), sizeof(int)); 
 
   for (i = 0; i < dst->numlayers; i++) {

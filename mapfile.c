@@ -3724,6 +3724,7 @@ int initMap(mapObj *map)
   map->resolution = 72.0; // pixels per inch
  
   map->height = map->width = -1;
+  map->maxsize = MS_MAXIMAGESIZE_DEFAULT; // default limit is 1024x1024
 
   map->units = MS_METERS;
   map->cellsize = 0;
@@ -3943,6 +3944,7 @@ int msSaveMap(mapObj *map, char *filename)
   if(map->symbolset.filename) fprintf(stream, "  SYMBOLSET \"%s\"\n", map->symbolset.filename);
   if(map->shapepath) fprintf(stream, "  SHAPEPATH \"%s\"\n", map->shapepath);
   fprintf(stream, "  SIZE %d %d\n", map->width, map->height);
+  if(map->maxsize != MS_MAXIMAGESIZE_DEFAULT) fprintf(stream, "  MAXSIZE %d\n", map->maxsize);
   fprintf(stream, "  STATUS %s\n", msStatus[map->status]);
   if( map->transparent != MS_NOOVERRIDE )
       fprintf(stream, "  TRANSPARENT %s\n", msTrueFalse[map->transparent]);
@@ -4149,6 +4151,9 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
       break;
     case(MAP):
       break;   
+    case(MAXSIZE):
+      if(getInteger(&(map->maxsize)) == -1) return(NULL);
+      break;
     case(NAME):
       msFree(map->name); /* erase default */
       if((map->name = getString()) == NULL) return(NULL);
@@ -4278,6 +4283,8 @@ int msLoadMapString(mapObj *map, char *object, char *value)
     case(LEGEND):
       loadLegendString(map, &(map->legend), value);
       break;
+    case(MAXSIZE):
+      break; // not allowed to change this via a string
     case(PROJECTION):
       msLoadProjectionString(&(map->projection), value);
       break;
@@ -4299,7 +4306,7 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if(getInteger(&(map->width)) == -1) break;
       if(getInteger(&(map->height)) == -1) break;
 
-      if(map->width > MS_MAXIMGSIZE || map->height > MS_MAXIMGSIZE || map->width < 0 || map->height < 0) {
+      if(map->width > map->maxsize || map->height > map->maxsize || map->width < 0 || map->height < 0) {
 	msSetError(MS_WEBERR, "Image size out of range.", "msLoadMapString()");
 	break;
       }

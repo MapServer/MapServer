@@ -92,7 +92,7 @@ extern "C" {
 #define MS_URL_LENGTH 1024
 #define MS_MAXPATHLEN 1024
 
-#define MS_MAXIMGSIZE 2048
+#define MS_MAXIMAGESIZE_DEFAULT 2048
 
 #define MS_MAXCLASSES 250
 #define MS_MAXSTYLES 5
@@ -745,6 +745,7 @@ typedef struct map_obj{ /* structure for a map */
   char *name; /* small identifier for naming etc. */
   int status; /* is map creation on or off */
   int height, width;
+  int maxsize;
 
   layerObj *layers;
 
