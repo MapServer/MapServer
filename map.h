@@ -1163,8 +1163,8 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src,
                        int pct);
 
 // various JOIN functions (in mapjoin.c)
-int msJoinTable(joinObj *join, char *path, char *tile);
-int msDBFJoinTable(joinObj *join, char *path, char *tile);
+int msJoinTable(layerObj *layer, joinObj *join);
+int msDBFJoinTable(layerObj *layer, joinObj *join);
 
 //in mapraster.c
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);

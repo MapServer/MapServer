@@ -1,43 +1,34 @@
 #include "map.h"
 
 // wrapper function for DB specific join functions
-int msJoinTable(joinObj *join, char *path, char *tile) {
-  switch(join->type) {
+int msJoinTable(layerObj *layer, joinObj *join) {
+  switch(join->connectiontype) {
   case(MS_DB_XBASE):
-    return msDBFJoinTable(join, path, tile);
+    return msDBFJoinTable(layer, join);
+    break;
+  default:
     break;
   }
 
-  msSetError(MS_JOINERR, "Unsupported join type.", "msDBFJoinTable()");
+  msSetError(MS_JOINERR, "Unsupported join connection type.", "msDBFJoinTable()");
   return MS_FAILURE;
 }
 
 // XBASE join function
-int msDBFJoinTable(joinObj *join, char *path, char *tile) {
+int msDBFJoinTable(layerObj *layer, joinObj *join) {
   int i, j, idx;
   DBFHandle hDBF;
   int nrecs, *ids=NULL;
-  char *cwd_path=NULL;
+
   char szPath[MS_MAXPATHLEN];
 
-  if(tile)
-    cwd_path = strdup(tile);
-  else {
-    if(path)
-      cwd_path = strdup(path);
-    else
-      cwd_path = strdup("");
+  /* first open the lookup table file, check shapepath and then mappath */
+  if((hDBF = msDBFOpen( msBuildPath3(szPath, layer->map->mappath, layer->map->shapepath, join->table), "rb" )) == NULL) {
+    if((hDBF = msDBFOpen( msBuildPath(szPath, layer->map->mappath, join->table), "rb" )) == NULL) {
+      msSetError(MS_IOERR, "(%s)", "msDBFJoinTable()", join->table);   
+      return(MS_FAILURE);
+    }
   }
-
-  /* first open the lookup table file */
-  if((hDBF = msDBFOpen( msBuildPath(szPath, cwd_path, join->table), "rb" )) == NULL) {
-    msSetError(MS_IOERR, "(%s)", "msDBFJoinTable()", join->table);
-    if(cwd_path)
-        free(cwd_path);
-    return(MS_FAILURE);
-  }
-  if(cwd_path)
-      free(cwd_path);
 
   if((idx = msDBFGetItemIndex(hDBF, join->to)) == -1) { 
     msSetError(MS_DBFERR, "Item %s not found.", "msDBFJoinTable()", join->to);
