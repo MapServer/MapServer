@@ -121,6 +121,7 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 {
   imageObj *image;
   outputFormatObj *format = NULL;
+  int i = 0;
 
   if(!map->outputformat || !MS_RENDERER_GD(map->outputformat) ) 
   {
@@ -148,10 +149,19 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
   msImageInitGD( image, &(map->legend.imagecolor));
 
   // Call drawLegendIcon with destination (0, 0)
-  // Return an empty image if lp==NULL || class=NULL
-  if (lp && class) {
+  // Return an empty image if lp==NULL || class=NULL 
+  //(If class is NULL draw the legend for all classes. Modifications done
+  // Fev 2004 by AY)
+  if (lp) {
     msClearLayerPenValues(lp); // just in case the mapfile has already been processed
-    msDrawLegendIcon(map, lp, class, width, height, image->img.gd, 0, 0);
+    if (class) {
+      msDrawLegendIcon(map, lp, class, width, height, image->img.gd, 0, 0);
+    }
+    else {
+      for (i=0; i<lp->numclasses; i++) {
+        msDrawLegendIcon(map, lp, &lp->class[i], width, height, image->img.gd, 0, 0);
+      }
+    }
   }
 
   return image;
