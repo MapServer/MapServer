@@ -97,7 +97,7 @@ typedef struct
  * Allocate memory for all variables in strusture
  * and initiate default values
 */
-mapservObj* msAllocMapServObj();
+mapservObj* msAllocMapServObj(void);
 
 /*! \fn msFreeMapServObj
  * free all variables in structure
