@@ -8,7 +8,11 @@
 
 %extend cgiRequestObj {
 
-    cgiRequestObj(void) 
+#ifdef SWIGJAVA
+    cgiRequestObj()
+#else
+    cgiRequestObj(void)
+#endif
     {
         cgiRequestObj *request;
         
@@ -27,7 +31,11 @@
         return request;
     }
 
-    ~cgiRequestObj(void) 
+#ifdef SWIGJAVA
+    ~cgiRequestObj()
+#else
+    ~cgiRequestObj(void)
+#endif
     {
         msFreeCharArray(self->ParamNames, self->NumParams);
         msFreeCharArray(self->ParamValues, self->NumParams);

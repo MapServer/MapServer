@@ -25,7 +25,11 @@
 %extend hashTableObj {
     
     // New instance
+#ifdef SWIGJAVA
+    hashTableObj() {
+#else
     hashTableObj(void) {
+#endif
         return msCreateHashTable();
     }
 

@@ -46,13 +46,13 @@
         msFreeMap(self);
     }
 
-#ifdef SWIGJAVA
+/*#ifdef SWIGJAVA
     %newobject clone_;
     mapObj *clone_() 
-#else
+#else*/
     %newobject clone;
     mapObj *clone() 
-#endif
+/*#endif*/
     {
         mapObj *dstMap;
         dstMap = msNewMapObj();
