@@ -24,6 +24,7 @@ typedef struct {
 #endif
 } projectionObj;
 
+#ifndef SWIG
 int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point);
 int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape);
 int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line);
@@ -40,7 +41,7 @@ int msLoadProjectionString(projectionObj *p, char *value);
 #ifndef PJ_VERSION
 #  define pj_is_latlong(x)	((x)->is_latlong)
 #endif
-
+#endif
 
 #ifdef __cplusplus
 }
