@@ -436,11 +436,14 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
  
   pointObj center; // circle origin
   double r; // circle radius
+  int csz; // clip over size
 
+/* Steve's original code
   cliprect.minx = map->extent.minx - 2*map->cellsize; // set clipping rectangle just a bit larger than the map extent
   cliprect.miny = map->extent.miny - 2*map->cellsize;
   cliprect.maxx = map->extent.maxx + 2*map->cellsize;
   cliprect.maxy = map->extent.maxy + 2*map->cellsize;
+*/
 
   c = shape->classindex;
 
@@ -459,6 +462,12 @@ int msDrawShape(mapObj *map, layerObj *layer, shapeObj *shape, gdImagePtr img, i
   }
 
   if(layer->class[c].sizescaled == 0) return(MS_SUCCESS);
+
+  csz = MS_NINT(layer->class[c].sizescaled/2.0); // changed when Tomas added CARTO symbols
+  cliprect.minx = map->extent.minx - csz*map->cellsize;
+  cliprect.miny = map->extent.miny - csz*map->cellsize;
+  cliprect.maxx = map->extent.maxx + csz*map->cellsize;
+  cliprect.maxy = map->extent.maxy + csz*map->cellsize;
 
 #if defined (USE_GD_FT) || defined (USE_GD_TTF)
   if(layer->class[c].label.type == MS_TRUETYPE) {
