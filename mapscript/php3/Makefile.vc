@@ -13,11 +13,11 @@
 
 # To use PHP4 (instead of PHP3) uncomment the following line
 # The default when PHP4=1 is not set is to build for PHP3
-PHP4 = 1
+#PHP4 = 1
 
 !ifdef PHP4
 OPTFLAGS =	/nologo /Zi /W3 
-BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DPHP4
+BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32 /DZEND_WIN32 /DPHP_WIN32 /DPHP4 /DZTS
 !else
 OPTFLAGS =	/nologo /Zi /W3
 BASE_CFLAGS = 	$(OPTFLAGS) /DWIN32
@@ -30,8 +30,8 @@ LINK_OPT =	/dll /debug
 #
 
 !ifdef PHP4
-PHP_SOURCE_DIR = ../../../php-4.0.1pl2
-PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/main -I$(PHP_SOURCE_DIR)/zend -I$(PHP_SOURCE_DIR)/include
+PHP_SOURCE_DIR = ../../../php-4.0.3pl1
+PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/main -I$(PHP_SOURCE_DIR)/zend -I$(PHP_SOURCE_DIR)/include -I$(PHP_SOURCE_DIR)/tsrm
 !else
 PHP_SOURCE_DIR = ../../../php-3.0.14
 PHP_INC = -I$(PHP_SOURCE_DIR) -I$(PHP_SOURCE_DIR)/dl
@@ -56,11 +56,11 @@ PHP_INSTALL_DIR =  d:\Apache\php3
 # MS_LIBS = -L../.. -lmap -L../../gdft -lgdft -ltiff -lttf -L../../gd-1.2 -lgd
 #
 MS_DEFINE = -DUSE_EPPL -DUSE_GD_1_2 -DUSE_PROJ -DUSE_TIFF -DUSE_TTF
-!ifdef PHP4
-MS_INC = -I../.. -I../../regex-0.12 -I../../gd-1.2 -I../../../proj/src
-!else
+#!ifdef PHP4
+#MS_INC = -I../.. -I../../regex-0.12 -I../../gd-1.2 -I../../../proj/src
+#!else
 MS_INC = -I../.. -I$(PHP_SOURCE_DIR)/regex -I../../gd-1.2 -I../../../proj/src
-!endif
+#!endif
 MS_LIBS = ../../mapserver.lib ../../gd-1.2/gd.lib \
 	../../../tiff-v3.5.4/libtiff/libtiff.lib \
 	../../gdft/gdft.lib \
@@ -88,7 +88,7 @@ CFLAGS = 	$(BASE_CFLAGS) $(MS_DEFINE) $(MS_INC) $(PHP_INC)
 
 default: 	all
 
-all:		$(PHPMS_DLL)
+all:		$(PHPMS_DLL) $(PHPPROJ_DLL)
 
 mapscript:      $(PHPMS_DLL)
 
@@ -100,11 +100,11 @@ install:	all
 !ifdef PHP4
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
-		$(PHP_SOURCE_DIR)\lib\php4nts.lib
+		$(PHP_SOURCE_DIR)\lib\php4ts.lib
 
 $(PHPPROJ_DLL):	$(PHPPROJ_OBJS)
 	link $(LINK_OPT) /out:$(PHPPROJ_DLL) $(PHPPROJ_OBJS) $(MS_LIBS) \
-		$(PHP_SOURCE_DIR)\lib\php4nts.lib
+		$(PHP_SOURCE_DIR)\lib\php4ts.lib
 !else
 $(PHPMS_DLL):	$(PHPMS_OBJS)
 	link $(LINK_OPT) /out:$(PHPMS_DLL) $(PHPMS_OBJS) $(MS_LIBS) \
