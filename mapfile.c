@@ -232,8 +232,9 @@ int msGetLayerIndex(mapObj *map, char *name)
 /* inserts a feature at the end of the list, can create a new list */
 featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj shape) {
   featureListNodeObjPtr node, current, previous;
+  int i=0;
 
-  if((node = (featureListNodeObjPtr)malloc(sizeof(featureListNodeObjPtr))) == NULL) {
+  if((node = (featureListNodeObjPtr) malloc(sizeof(featureListNodeObj))) == NULL) {
     msSetError(MS_MEMERR, NULL, "insertFeature()");
     return(NULL);
   }
@@ -246,14 +247,13 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj sh
   while(current != NULL) {
     previous = current;
     current = current->next;
+    i++;
   }
  
   if(previous == NULL) {
-    node->next = *list;
     *list = node;
-  } else {
+  } else
     previous->next = node;
-  }
 
   return(node); // a pointer to last object in the list
 }
@@ -310,7 +310,7 @@ static int loadFeaturePoints(lineObj *points)
   }
 }
 
-static int loadFeature(featureListNodeObjPtr list)
+static int loadFeature(featureListNodeObjPtr *list)
 {
   multipointObj points={0,NULL};
   shapeObj shape;
@@ -323,12 +323,11 @@ static int loadFeature(featureListNodeObjPtr list)
       msSetError(MS_EOFERR, NULL, "loadFeature()");      
       return(-1);
     case(END):
-      if(insertFeatureList(&list, shape) == NULL) return(-1);
+      if(insertFeatureList(list, shape) == NULL) return(-1);
       return(0);
     case(POINTS):
       if(loadFeaturePoints(&points) == -1) return(-1);
       if(msAddLine(&shape, &points) == -1) return(-1);
-
       free(points.point); /* reset */
       points.numpoints = 0;
       break;
@@ -1509,7 +1508,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       return(0);
       break;
     case(FEATURE):
-      if(loadFeature(layer->features) == -1) return(-1);
+      if(loadFeature(&(layer->features)) == -1) return(-1);      
       break;
     case(FOOTER):
       if((layer->footer = getString()) == NULL) return(-1);

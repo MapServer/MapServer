@@ -854,7 +854,8 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     for(current=layer->features; current; current=current->next) {
 
       c = current->shape.classindex; // features *must* be pre-classified
- 
+      if(c<0 || c>=layer->numclasses) continue;
+
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
 	msProjectPolyline(layer->projection.proj, map->projection.proj, &(current->shape));
@@ -894,6 +895,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     for(current=layer->features; current; current=current->next) {
 
       c = current->shape.classindex; // features *must* be pre-classified
+      if(c<0 || c>=layer->numclasses) continue;
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -933,6 +935,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     for(current=layer->features; current; current=current->next) {
 
       c = current->shape.classindex; // features *must* be pre-classified
+      if(c<0 || c>=layer->numclasses) continue;
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -977,6 +980,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     for(current=layer->features; current; current=current->next) {
 
       c = current->shape.classindex; // features *must* be pre-classified
+      if(c<0 || c>=layer->numclasses) continue;
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))
@@ -1018,6 +1022,7 @@ int msDrawInlineLayer(mapObj *map, layerObj *layer, gdImagePtr img)
     for(current=layer->features; current; current=current->next) {
     
       c = current->shape.classindex; // features *must* be pre-classified
+      if(c<0 || c>=layer->numclasses) continue;
 
 #ifdef USE_PROJ
       if((layer->projection.numargs > 0) && (map->projection.numargs > 0))

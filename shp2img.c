@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
       }
     }
   }
-
+  
   if(!map) {
     fprintf(stderr, "Mapfile (-m) option not specified.\n");
     exit(0);

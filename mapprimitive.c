@@ -39,7 +39,7 @@ void msInitShape(shapeObj *shape)
   shape->text = NULL;
 
   // bookkeeping component
-  shape->classindex = -1;
+  shape->classindex = 0; // default class
   shape->queryindex = -1;
 }
 
