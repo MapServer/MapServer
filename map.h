@@ -36,6 +36,7 @@
 #include "mapsymbol.h"
 #include "maptree.h" // quadtree spatial index
 #include "maphash.h"
+#include "mapio.h"
 
 #include "mapproject.h"
 #include "cgiutil.h"
@@ -921,7 +922,6 @@ typedef struct {
 // Function prototypes, wrapable
 MS_DLL_EXPORT int msSaveImage(mapObj *map, imageObj *img, char *filename);
 MS_DLL_EXPORT void msFreeImage(imageObj *img);
-MS_DLL_EXPORT void msCleanup(void);
 
 // Function prototypes, not wrapable
 
@@ -1184,6 +1184,7 @@ MS_DLL_EXPORT void msLayerAddProcessing( layerObj *layer, const char *directive 
 MS_DLL_EXPORT void msLayerSetProcessingKey( layerObj *layer, const char *key, 
                                             const char *value);
 MS_DLL_EXPORT char *msLayerGetProcessing( layerObj *layer, int proc_index);
+MS_DLL_EXPORT char *msLayerGetProcessingKey( layerObj *layer, const char *);
 MS_DLL_EXPORT int msLayerClearProcessing( layerObj *layer );
 MS_DLL_EXPORT char* msLayerGetFilterString( layerObj *layer );
 
@@ -1448,6 +1449,8 @@ MS_DLL_EXPORT char *msTmpFile(const char *mappath, const char *tmppath, const ch
 
 MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
 
+MS_DLL_EXPORT void msCleanup(void);
+
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
 /* ==================================================================== */
@@ -1552,6 +1555,17 @@ MS_DLL_EXPORT int msCopyStyle(styleObj *dst, styleObj *src);
 /* ==================================================================== */
 /*      end prototypes for functions in mapcopy                         */
 /* ==================================================================== */
+
+/* ==================================================================== */
+/*      mappool.c: connection pooling API.                              */
+/* ==================================================================== */
+void MS_DLL_EXPORT *msConnPoolRequest( layerObj *layer );
+void MS_DLL_EXPORT  msConnPoolRelease( layerObj *layer, void * );
+void MS_DLL_EXPORT  msConnPoolRegister( layerObj *layer,
+                                        void *conn_handle,
+                                        void (*close)( void * ) );
+void MS_DLL_EXPORT  msConnPoolCloseUnreferenced();
+void MS_DLL_EXPORT  msConnPoolFinalCleanup();
 
 /* ==================================================================== */
 /*      prototypes for functions in mapcpl.c                            */
