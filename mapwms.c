@@ -4,7 +4,7 @@
 /* 
 ** Future home of the MapServer OpenGIS WMS module.
 */
-int msWMSProcessForm(mapObj *map, char **entries, int numentries) {
+int msWMSDispatch(mapObj *map, char **entries, int numentries) {
   return(MS_SUCCESS);
 }
 
