@@ -76,11 +76,11 @@ static void layerFreeItemInfo(layerObj *layer)
 int msLayerOpen(layerObj *layer, char *shapepath)
 {
 
+  if(layer->features) 
+    layer->connectiontype = MS_INLINE;
+
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
     layer->connectiontype = MS_TILED_SHAPEFILE;
-
-  // if(layer->tileindex && layer->connectiontype == MS_OGR)
-  //   layer->connectiontype = MS_TILED_OGR;
 
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
