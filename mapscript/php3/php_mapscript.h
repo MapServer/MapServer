@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.30  2003/02/11 19:01:08  assefa
+ * Distnace points functions have changed names.
+ *
  * Revision 1.29  2003/01/11 00:06:40  dan
  * Added setWKTProjection() to mapObj and layerObj
  *
@@ -208,7 +211,7 @@ int             mapObj_selectOutputFormat(mapObj *self,
 
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
-int             layerObj_open(layerObj *self, char *path);
+int             layerObj_open(layerObj *self);
 void            layerObj_close(layerObj *self);
 int             layerObj_getShape(layerObj *self, shapeObj *shape,
                                   int tileindex, int shapeindex);

@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.57  2003/02/11 19:01:08  assefa
+ * Distnace points functions have changed names.
+ *
  * Revision 1.56  2003/01/11 00:06:40  dan
  * Added setWKTProjection() to mapObj and layerObj
  *
@@ -534,8 +537,8 @@ void layerObj_destroy(layerObj *self) {
     return; // map deconstructor takes care of it
   }
 
-int layerObj_open(layerObj *self, char *path) {
-    return msLayerOpen(self, path);
+int layerObj_open(layerObj *self) {
+    return msLayerOpen(self);
   }
 
 void layerObj_close(layerObj *self) {
@@ -712,24 +715,15 @@ int pointObj_draw(pointObj *self, mapObj *map, layerObj *layer,
   }
 
 double pointObj_distanceToPoint(pointObj *self, pointObj *point) {
-    return msDistanceBetweenPoints(self, point);
+    return msDistancePointToPoint(self, point);
   }
 
 double pointObj_distanceToLine(pointObj *self, pointObj *a, pointObj *b) {
-    return msDistanceFromPointToLine(self, a, b);
+    return msDistancePointToSegment(self, a, b);
   }
 
 double pointObj_distanceToShape(pointObj *self, shapeObj *shape) {
-    switch(shape->type) {
-    case(MS_SHAPE_POINT):
-      return msDistanceFromPointToMultipoint(self, &(shape->line[0]));
-    case(MS_SHAPE_LINE):
-      return msDistanceFromPointToPolyline(self, shape);
-    case(MS_SHAPE_POLYGON):
-      return msDistanceFromPointToPolygon(self, shape);
-    }
-
-    return -1;
+   return msDistancePointToShape(self, shape);
   }
 
 /**********************************************************************
@@ -946,9 +940,9 @@ shapefileObj *shapefileObj_new(char *filename, int type) {
       return NULL;
 
     if(type == -1)
-      status = msSHPOpenFile(shapefile, "rb", NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb", filename);
     else if (type == -2)
-      status = msSHPOpenFile(shapefile, "rb+", NULL, filename);
+      status = msSHPOpenFile(shapefile, "rb+", filename);
     else
       status = msSHPCreateFile(shapefile, filename, type);
 
