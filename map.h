@@ -1312,6 +1312,11 @@ int msMoveLayerUp(mapObj *map, int nLayerIndex);
 int msMoveLayerDown(mapObj *map, int nLayerIndex);
 int msSetLayersdrawingOrder(mapObj *self, int *panIndexes);
 
+//Defined in maputil.c
+int msMoveClassUp(layerObj *layer, int nClassIndex);
+int msMoveClassDown(layerObj *layer, int nClassIndex);
+
+
 char *msGetProjectionString(projectionObj *proj);
 
 // Measured shape utility functions.   
