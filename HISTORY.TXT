@@ -20,6 +20,8 @@ Version 4.4.1 (???)
 
 - Fixed segmentation fault when generating PDF output (bug 1105)
 
+- Fixed wms 1.1.1 capabilities issue : It points now to WMS_MS_Capabilities.dtd
+   instead of capabilities_1_1_1.dtd (Bug 1097)
 
 Version 4.4.0 (2004-11-29)
 --------------------------

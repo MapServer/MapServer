@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.157.2.1  2004/12/07 18:31:13  assefa
+ * Fixed wms 1.1.1 capabilities issue : It points now to WMS_MS_Capabilities.dtd
+ * instead of capabilities_1_1_1.dtd (Bug 1097)
+ *
  * Revision 1.157  2004/11/29 21:31:56  dan
  * Fixed WMS GetCapabilities 1.1.0 crash when wms_style_<...>_legendurl_*
  * metadata were used (bug 1096)
@@ -1646,7 +1650,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
   else {
     nVersion = OWS_1_1_1;
     dtd_url = strdup(schemalocation);
-    dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/capabilities_1_1_1.dtd");
+    dtd_url = strcatalloc(dtd_url, "/wms/1.1.1/WMS_MS_Capabilities.dtd");
   }
 
   // We need this server's onlineresource.
