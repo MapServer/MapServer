@@ -33,7 +33,7 @@
  Mapscript Development Documentation
 *****************************************************************************
 
-:Release: 4.2.1
+:Release: 4.2.2
 :Revision: $Revision$
 :Date: $Date$
 :Author: Sean Gillies

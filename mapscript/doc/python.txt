@@ -33,7 +33,7 @@
  Python Appendix
 *****************************************************************************
 
-:Release: 4.2
+:Release: 4.2.2
 :Revision: $Revision$
 :Date: $Date$
 :Author: Sean Gillies
