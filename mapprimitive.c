@@ -1127,7 +1127,7 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
 {
   double an, bn, da_pxn, db_pxn, d_size, a, b;
   double d_step_coef, da_pxn_coef, db_pxn_coef, da_px_coef, db_px_coef;
-  int db_line, s, aspx, bspx, first, tan1;
+  int db_line, s, first, tan1;
 
   /* Steps for one pixel */
   *da_px = da/MS_ABS(db);
@@ -1310,20 +1310,19 @@ static void RenderCartoLine(gdImagePtr img, int gox, double *acoord, double *bco
 /* ------------------------------------------------------------------------------- */
 void msImageCartographicPolyline(gdImagePtr img, shapeObj *p, styleObj *style, symbolObj *symbol, int c, double size, double scalefactor)
 {
-  int i, j, k, sc;
+  int i, j, k;
   double x, y, dx, dy, s, maxs, angle, angle_n, last_angle=0, angle_left_limit, angle_from, angle_to;
 
   int styleIndex, styleVis, last_styleVis=0;
   double styleSize, styleCoef, dy_px, dx_px, size_2;
 
-  char buffer[256];
+//  char buffer[256];
 
   gdPoint points[4], last_points[4];
   gdPoint cap_join_points[6];
 
   /* Style settings */
   if (symbol->stylelength > 0) {   
-    int k=0, sc=1;
     styleVis = 1;
     styleIndex = -1;
 

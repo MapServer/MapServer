@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.5  2003/02/19 14:13:38  frank
+ * cleanup warnings
+ *
  * Revision 1.4  2002/11/16 21:17:41  frank
  * added debugging support
  *
@@ -152,10 +155,12 @@ files instead.
 #include "map.h"
 #include "mapthread.h"
 
+#if defined(USE_THREAD)
 static int thread_debug = 0;
 
 static char *lock_names[] = 
 { NULL, "PARSER", "GDAL", "ERROROBJ", "PROJ", NULL };
+#endif
 
 /************************************************************************/
 /* ==================================================================== */

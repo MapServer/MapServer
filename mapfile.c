@@ -562,8 +562,6 @@ void initGrid( graticuleObj *pGraticule )
 
 static int loadGrid( layerObj *pLayer )
 {
-	int buffer_size		= MS_FEATUREINITSIZE;
-
 	for(;;) 
 	{
 		switch(msyylex()) 
@@ -633,8 +631,8 @@ static void writeGrid( graticuleObj *pGraticule, FILE *stream)
 	fprintf( stream, "        MAXSUBDIVIDE %d\n", (int)	pGraticule->maxsubdivides		);
 	fprintf( stream, "        MININCREMENT %f\n",		pGraticule->minincrement		);
 	fprintf( stream, "        MAXINCREMENT %f\n",		pGraticule->maxincrement		);
-	fprintf( stream, "        MINARCS %d\n",			pGraticule->maxarcs				);
-	fprintf( stream, "        MAXARCS %d\n",			pGraticule->maxarcs				);
+	fprintf( stream, "        MINARCS %g\n",		pGraticule->maxarcs				);
+	fprintf( stream, "        MAXARCS %g\n",		pGraticule->maxarcs				);
 	fprintf( stream, "        LABELFORMAT %s\n",		pGraticule->labelformat			);
 	fprintf( stream, "      END\n");
 	fprintf( stream, "    END\n");
