@@ -2,7 +2,7 @@
  *	filename: mappdf.c
  *	created : Thu Oct  4 09:58:19 2001
  *	@author :  <jwall@webpeak.com> , <jspielberg@webpeak.com>
- *	LastEditDate Was "Thu Oct  4 09:59:46 2001"
+ *	LastEditDate Was "Wed Oct 10 11:55:37 2001"
  *
  * [$Author$ $Date$]
  * [$Revision$]
@@ -12,45 +12,8 @@
 #include "map.h"
 
 static double inchesPerUnitPDF[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
-
+//int labelCount = 0;
 //#define MS_MAP2PDF_Y(y,miny,cy) (MS_NINT((y - miny)/cy))
-
-/**
- * These functions support highway shields and airports for PDF
- * as images do not look very good in vector format. We need a
- * way to use curves in symbols and a way for TrueType symbols to
- * work in both images and PDFs; then these will go away.
- *
- **/
-void draw_airport_symbolPDF(PDF *pdf, float center_x, float center_y){
-    float scale = 2.5;
-    PDF_setlinewidth(pdf,.2);
-    PDF_setrgbcolor_stroke(pdf,1,1,1);
-    PDF_setrgbcolor_fill(pdf,0,0,0);
-    PDF_moveto(pdf, center_x - 3    * scale, center_y);
-    PDF_lineto(pdf, center_x - 2.5  * scale, center_y - 0.5  * scale);
-    PDF_lineto(pdf, center_x - 0.5  * scale, center_y - 0.5  * scale);
-    PDF_lineto(pdf, center_x + 0.5  * scale, center_y - 3.5  * scale);
-    PDF_lineto(pdf, center_x + 1.0  * scale, center_y - 3.5  * scale);
-    PDF_lineto(pdf, center_x + 0.5  * scale, center_y - 0.5  * scale);
-    PDF_lineto(pdf, center_x + 2.0  * scale, center_y - 0.5  * scale);
-    PDF_lineto(pdf, center_x + 2.5  * scale, center_y - 2.0  * scale);
-    PDF_lineto(pdf, center_x + 2.75 * scale, center_y - 2.0  * scale);
-    PDF_lineto(pdf, center_x + 2.50 * scale, center_y - 0.05 * scale);
-    PDF_lineto(pdf, center_x + 2.625 * scale, center_y); // this is the middle
-    PDF_lineto(pdf, center_x + 2.50 * scale, center_y + 0.05 * scale);
-    PDF_lineto(pdf, center_x + 2.75 * scale, center_y + 2.0  * scale);
-    PDF_lineto(pdf, center_x + 2.5  * scale, center_y + 2.0  * scale);
-    PDF_lineto(pdf, center_x + 2.0  * scale, center_y + 0.5  * scale);
-    PDF_lineto(pdf, center_x + 0.5  * scale, center_y + 0.5  * scale);
-    PDF_lineto(pdf, center_x + 1.0  * scale, center_y + 3.5  * scale);
-    PDF_lineto(pdf, center_x + 0.5  * scale, center_y + 3.5  * scale);
-    PDF_lineto(pdf, center_x - 0.5  * scale, center_y + 0.5  * scale);
-    PDF_lineto(pdf, center_x - 2.5  * scale, center_y + 0.5  * scale);
-    PDF_lineto(pdf, center_x - 3    * scale, center_y);
-
-    PDF_fill_stroke(pdf);
-}
 
 void draw_highway_shieldPDF(PDF *pdf, float center_x, float center_y){
 
@@ -158,12 +121,14 @@ void draw_federal_shieldPDF(PDF *pdf, float center_x, float center_y){
 /*
 ** Simply draws a label based on the label point and the supplied label object.
 */
-static int draw_text_PDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, mapObj *map)
+static int draw_text_PDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, mapObj *map, hashTableObj fontHash)
 {
-    int x, y;
+    int x, y, x1, y1;
     int font;
     float phi = label->angle;
     colorObj  fc, oc;
+    char *wrappedString;
+    char *fontKey, *fontValue;
 
 /// Do color initialization stuff
     if (label->color != -1)
@@ -184,22 +149,76 @@ static int draw_text_PDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *la
 
     x = MS_NINT(labelPnt.x);
     y = MS_NINT(labelPnt.y);
+    x1 = x; y1 = y;
 
-
-    PDF_save(pdf);
 
     PDF_setrgbcolor_stroke(pdf,(float)oc.red/255,(float)oc.green/255,(float)oc.blue/255);
     PDF_setrgbcolor_fill(pdf,(float)fc.red/255,(float)fc.green/255,(float)fc.blue/255);
-
-    PDF_translate(pdf, x, y);
     PDF_setlinewidth(pdf,.3);
+    if (label->font){
+        fontKey = label->font;
+    }
+    else {
+        fontKey = "Helvetica";
+    }
 
-    font = PDF_findfont(pdf, label->font ,"winansi",0);
+    if ((fontValue = msLookupHashTable(fontHash, fontKey)) != NULL){
+            // we have a match.. set the fonthandle
+        font = atoi(fontValue);
+    }
+    else {
+            // there was no match so insert a key value pair into the table
+            // this is so that only one font is searched per file
+        char buffer[5];
+
+        font = PDF_findfont(pdf, fontKey, "winansi",0);
+        sprintf(buffer, "%d",font);
+        msInsertHashTable(fontHash, fontKey, buffer);
+    }
+
     PDF_setfont(pdf,font,label->sizescaled+2);
+
+    if (phi!=0){
+//        PDF_save(pdf);
+        PDF_translate(pdf, x, y);
+        PDF_rotate(pdf, -phi);
+        x = y = 0;
+    }
+
     PDF_scale(pdf,1,-1);
-    PDF_rotate(pdf, phi);
-    PDF_show_xy(pdf,string,0,0);
-    PDF_restore(pdf);
+    if ((wrappedString = index(string,'\r')) == NULL){
+        PDF_show_xy(pdf,string,x,-y);
+    }
+    else{
+        char *headPtr;
+        headPtr = string;
+            // break the string into pieces separated by \r\n
+        while(wrappedString){
+            char *piece;
+            int length = wrappedString - headPtr;
+            piece = malloc(length+1);bzero(piece,length+1);
+            strncpy(piece, headPtr, length);
+
+            if (headPtr == string){
+                PDF_show_xy(pdf,piece,x,-y);
+            }
+            else {
+                PDF_continue_text(pdf,piece);
+            }
+            free(piece);
+            headPtr = wrappedString+2;
+            wrappedString = index(headPtr,'\r');
+        }
+        PDF_continue_text(pdf,headPtr);
+    }
+    PDF_scale(pdf,1,-1);
+    if (phi!=0){
+        PDF_rotate(pdf, phi);
+        PDF_translate(pdf, -x1, -y1);
+//        PDF_restore(pdf);
+    }
+//    sprintf(ms_error.message, "(%d)", labelCount);
+//    msSetError(MS_MISCERR, ms_error.message, "drawText()");
     PDF_setlinewidth(pdf,1);
     return(0);
 }
@@ -207,12 +226,12 @@ static int draw_text_PDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *la
 /* ------------------------------------------------------------------------------- */
 /*       Draw a single marker symbol of the specified size and color               */
 /* ------------------------------------------------------------------------------- */
-void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int sy, colorObj *fc, colorObj *bc, colorObj *oc, double sz)
+void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int sy, colorObj *fc, colorObj *bc, colorObj *oc, double sz, hashTableObj fontHash)
 {
     symbolObj *symbol;
     int offset_x, offset_y, x, y;
     int j,font_id;
-    char *font,symbolBuffer[2];
+    char *font,symbolBuffer[2],*fontValue;
     double scale=1.0;
 
 
@@ -238,29 +257,28 @@ void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, PDF *pdf, pointObj *p, int s
                 //plot using pdf
             sprintf(symbolBuffer,"%c",(char)*symbol->character);
 
-                // Kludge for airports
-            if ((*(char *)symbol->character == 'e') &&
-                !strcmp(symbol->font  , "esri_9")){
-                draw_airport_symbolPDF(pdf, p->x, p->y);
+            if ((fontValue = msLookupHashTable(fontHash, font)) != NULL){
+                    // we have a match.. set the fonthandle
+                font_id = atoi(fontValue);
             }
-            else{
-                font_id = PDF_findfont(pdf, symbol->font ,"builtin",0);
+            else {
+                    // there was no match so insert a key value pair into the table
+                    // this is so that only one font is searched per file
+                char buffer[5];
 
-                PDF_setfont(pdf,font_id,sz);
-                x = p->x - (int)(.5*PDF_stringwidth(pdf,symbolBuffer,font_id,sz));
-                y = p->y;
-                PDF_save(pdf);
-                PDF_setlinewidth(pdf,.15);
-                PDF_translate(pdf, x,y);
-                PDF_scale(pdf,1,-1);
-                PDF_show_xy(pdf,symbolBuffer,(float)0, (float)0);
-                PDF_scale(pdf,1,-1);
-                PDF_restore(pdf);
+                font_id = PDF_findfont(pdf, symbol->font ,"winansi",1);
+                sprintf(buffer, "%d",font_id);
+                msInsertHashTable(fontHash, font, buffer);
             }
-//            x = p->x - (rect.maxx - rect.minx)/2 - rect.minx;
-//            y = p->y - rect.maxy - (rect.maxy - rect.miny)/2;
-//            gdImageStringTTF(img, bbox, symbol->antialias*fc, font, sz, 0, x, y, symbol->character);
-//            gdImageStringFT(img, bbox, symbol->antialias*fc, font, sz, 0, x, y, symbol->character);
+
+
+            PDF_setfont(pdf,font_id,sz+2);
+            x = p->x - (int)(.5*PDF_stringwidth(pdf,symbolBuffer,font_id,sz));
+            y = p->y;
+            PDF_setlinewidth(pdf,.15);
+            PDF_scale(pdf,1,-1);
+            PDF_show_xy(pdf,symbolBuffer,x,-y);
+            PDF_scale(pdf,1,-1);
 
             break;
         case(MS_SYMBOL_PIXMAP):
@@ -357,7 +375,7 @@ void billboardPDF(PDF *pdf, shapeObj *shape, labelObj *label)
   msFreeShape(&temp);
 }
 
-int msDrawLabelCachePDF(PDF *pdf, mapObj *map)
+int msDrawLabelCachePDF(PDF *pdf, mapObj *map, hashTableObj fontHash)
 {
     pointObj p;
     int i, j, l;
@@ -602,15 +620,15 @@ int msDrawLabelCachePDF(PDF *pdf, mapObj *map)
             if (classPtr->overlaybackgroundcolor!=-1)bcop = &bco;
             if (classPtr->overlayoutlinecolor!=-1)    ocop = &oco;
 /// end of color initialization
-            msDrawMarkerSymbolPDF(&map->symbolset, pdf, &(cachePtr->point), classPtr->symbol, fcp, bcp, ocp, classPtr->sizescaled);
+            msDrawMarkerSymbolPDF(&map->symbolset, pdf, &(cachePtr->point), classPtr->symbol, fcp, bcp, ocp, classPtr->sizescaled, fontHash);
             if(classPtr->overlaysymbol >= 0)
-                msDrawMarkerSymbolPDF(&map->symbolset, pdf, &(cachePtr->point), classPtr->overlaysymbol, fcop, bcop, ocop, classPtr->overlaysizescaled);
+                msDrawMarkerSymbolPDF(&map->symbolset, pdf, &(cachePtr->point), classPtr->overlaysymbol, fcop, bcop, ocop, classPtr->overlaysizescaled, fontHash);
         }
 
 //        if(label.backgroundcolor >= 0)
 //            billboard(img, cachePtr->poly, &label);
 
-        draw_text_PDF(pdf, p, cachePtr->string, &label, &(map->fontset), map); /* actually draw the label */
+        draw_text_PDF(pdf, p, cachePtr->string, &label, &(map->fontset), map, fontHash); /* actually draw the label */
 
     } /* next in cache */
 
@@ -627,7 +645,6 @@ initializeDocument()
     PDF_set_info  (pdf, "Creator", "pdfmaprequest");
     PDF_set_info  (pdf, "Author", "Market Insite Group");
     PDF_set_info  (pdf, "Title", "Market Insite PDF Map");
-    PDF_set_parameter(pdf,"resourcefile","/home/mapping/fonts/pdflib.upr");
     return pdf;
 }
 
@@ -696,9 +713,7 @@ void msDrawLineSymbolPDF(symbolSetObj *symbolset, PDF *pdf, shapeObj *p, int sy,
     return;
 }
 
-
-
-int msDrawLabelPDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, mapObj *map)
+int msDrawLabelPDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, mapObj *map, hashTableObj fontHash)
 {
 
     if(!string)
@@ -713,11 +728,11 @@ int msDrawLabelPDF(PDF *pdf, pointObj labelPnt, char *string, labelObj *label, f
 
         if(msGetLabelSize(string, label, &r, fontset) == -1) return(-1);
         p = get_metrics(&labelPnt, label->position, r, label->offsetx, label->offsety, label->angle, 0, NULL);
-        draw_text_PDF(pdf, p, string, label, fontset, map); /* actually draw the label */
+        draw_text_PDF(pdf, p, string, label, fontset, map, fontHash); /* actually draw the label */
     } else {
         labelPnt.x += label->offsetx;
         labelPnt.y += label->offsety;
-        draw_text_PDF(pdf, labelPnt, string, label, fontset, map); /* actually draw the label */
+        draw_text_PDF(pdf, labelPnt, string, label, fontset, map, fontHash); /* actually draw the label */
     }
 
     return(0);
@@ -746,7 +761,7 @@ void msDrawShadeSymbolPDF(symbolSetObj *symbolset, PDF *pdf, shapeObj *p, int sy
     return;
 }
 
-int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int overlay)
+int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int overlay, hashTableObj fontHash)
 {
     int i,j,c;
     rectObj cliprect;
@@ -842,14 +857,14 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                             msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, length);
                         else {
                             if(layer->class[c].color != -1) {
-                                 msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].symbol, fcp,bcp,ocp, layer->class[c].sizescaled);
+                                 msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].symbol, fcp,bcp,ocp, layer->class[c].sizescaled, fontHash);
                             }
                             else {
                                 if(layer->class[c].overlaysymbol >= 0){
-                                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].overlaysymbol,fcop,bcop,ocop, layer->class[c].overlaysizescaled);
+                                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].overlaysymbol,fcop,bcop,ocop, layer->class[c].overlaysizescaled, fontHash);
                                 }
                             }
-                            msDrawLabelPDF(pdf, annopnt, shape->text, &(layer->class[c].label), &map->fontset, map);
+                            msDrawLabelPDF(pdf, annopnt, shape->text, &(layer->class[c].label), &map->fontset, map, fontHash);
                         }
                     }
                     break;
@@ -876,12 +891,12 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                         }
                         else {
                             if(layer->class[c].color != -1) {
-                                msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].symbol,fcp,bcp,ocp, layer->class[c].sizescaled);
+                                msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].symbol,fcp,bcp,ocp, layer->class[c].sizescaled, fontHash);
                                 if(layer->class[c].overlaysymbol >= 0){
-                                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled);
+                                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, &annopnt, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled, fontHash);
                                 }
                             }
-                            msDrawLabelPDF(pdf, annopnt, shape->text, &(layer->class[c].label), &map->fontset, map);
+                            msDrawLabelPDF(pdf, annopnt, shape->text, &(layer->class[c].label), &map->fontset, map, fontHash);
                         }
                     }
                     break;
@@ -911,12 +926,12 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                                     msAddLabel(map, layer->index, c, shape->tileindex, shape->index, *point, shape->text, -1);
                                 else {
                                     if(layer->class[c].color != -1) {
-                                        msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].symbol,fcp,bcp,ocp, layer->class[c].sizescaled);
+                                        msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].symbol,fcp,bcp,ocp, layer->class[c].sizescaled, fontHash);
                                         if(layer->class[c].overlaysymbol >= 0){
-                                            msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled);
+                                            msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled, fontHash);
                                         }
                                     }
-                                    msDrawLabelPDF(pdf, *point, shape->text, &layer->class[c].label, &map->fontset, map);
+                                    msDrawLabelPDF(pdf, *point, shape->text, &layer->class[c].label, &map->fontset, map, fontHash);
                                 }
                             }
                         }
@@ -937,10 +952,10 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                         point->y = MS_MAP2IMAGE_Y(point->y, map->extent.maxy, map->cellsize);
                     }
 
-                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].symbol, fcp,bcp,ocp, layer->class[c].sizescaled);
+                    msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].symbol, fcp,bcp,ocp, layer->class[c].sizescaled, fontHash);
 
                     if(overlay && layer->class[c].overlaysymbol >= 0) {
-                        msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled);
+                        msDrawMarkerSymbolPDF(&map->symbolset, pdf, point, layer->class[c].overlaysymbol, fcop,bcop,ocop, layer->class[c].overlaysizescaled, fontHash);
                     }
 
                     if(shape->text) {
@@ -956,7 +971,7 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                         if(layer->labelcache)
                             msAddLabel(map, layer->index, c, shape->tileindex, shape->index, *point, shape->text, -1);
                         else
-                            msDrawLabelPDF(pdf, *point, shape->text, &layer->class[c].label, &map->fontset, map);
+                            msDrawLabelPDF(pdf, *point, shape->text, &layer->class[c].label, &map->fontset, map, fontHash);
                     }
                 }
             }
@@ -995,7 +1010,7 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                     if(layer->labelcache)
                         msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, length);
                     else
-                        msDrawLabelPDF(pdf, annopnt, shape->text, &layer->class[c].label, &map->fontset, map);
+                        msDrawLabelPDF(pdf, annopnt, shape->text, &layer->class[c].label, &map->fontset, map, fontHash);
                 }
             }
             break;
@@ -1030,7 +1045,7 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                     if(layer->labelcache)
                         msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, -1);
                     else
-                        msDrawLabelPDF(pdf, annopnt, shape->text, &layer->class[c].label, &map->fontset, map);
+                        msDrawLabelPDF(pdf, annopnt, shape->text, &layer->class[c].label, &map->fontset, map, fontHash);
                 }
             }
             break;
@@ -1064,7 +1079,7 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
                     if(layer->labelcache)
                         msAddLabel(map, layer->index, c, shape->tileindex, shape->index, annopnt, shape->text, -1);
                     else
-                        msDrawLabelPDF(pdf, annopnt, shape->text, &layer->class[c].label, &map->fontset, map);
+                        msDrawLabelPDF(pdf, annopnt, shape->text, &layer->class[c].label, &map->fontset, map, fontHash);
                 }
             }
             break;
@@ -1076,7 +1091,7 @@ int msDrawShapePDF(mapObj *map, layerObj *layer, shapeObj *shape, PDF *pdf, int 
     return(MS_SUCCESS);
 }
 
-int msDrawLayerPDF(mapObj *map, layerObj *layer, PDF *pdf)
+int msDrawLayerPDF(mapObj *map, layerObj *layer, PDF *pdf, hashTableObj fontHash)
 {
     int status;
     char annotate=MS_TRUE, cache=MS_FALSE;
@@ -1161,7 +1176,7 @@ int msDrawLayerPDF(mapObj *map, layerObj *layer, PDF *pdf)
         if(annotate && (layer->class[shape.classindex].text.string || layer->labelitem) && layer->class[shape.classindex].label.size != -1)
             shape.text = msShapeGetAnnotation(layer, &shape);
 
-        status = msDrawShapePDF(map, layer, &shape, pdf, !cache); // if caching we DON'T want to do overlays at this time
+        status = msDrawShapePDF(map, layer, &shape, pdf, !cache, fontHash); // if caching we DON'T want to do overlays at this time
         if(status != MS_SUCCESS) {
             msLayerClose(layer);
             return(MS_FAILURE);
@@ -1213,12 +1228,67 @@ int msDrawLayerPDF(mapObj *map, layerObj *layer, PDF *pdf)
     return(MS_SUCCESS);
 }
 
+
+int msLoadFontSetPDF(fontSetObj *fontset, PDF *pdf)
+{
+
+    FILE *stream;
+    char buffer[MS_BUFFER_LENGTH];
+    char alias[64], file1[MS_PATH_LENGTH], file2[MS_PATH_LENGTH];
+    char *path, *fullPath;
+    int i;
+
+    path = getPath(fontset->filename);
+
+    stream = fopen(fontset->filename, "r");
+    if(!stream) {
+        sprintf(ms_error.message, "Error opening fontset %s.", fontset->filename);
+        msSetError(MS_IOERR, ms_error.message, "msLoadFontsetPDF()");
+        return(-1);
+    }
+
+    i = 0;
+    while(fgets(buffer, MS_BUFFER_LENGTH, stream)) { /* while there's something to load */
+        char *fontParam;
+
+        if(buffer[0] == '#' || buffer[0] == '\n' || buffer[0] == '\r' || buffer[0] == ' ')
+            continue; /* skip comments and blank lines */
+
+        fullPath = NULL;
+        sscanf(buffer,"%s %s", alias,  file1);
+
+        fullPath = file1;
+        if(file1[0] != '/') { /* already full path */
+            sprintf(file2, "%s%s", path, file1);
+            fullPath = file2;
+        }
+
+            // ok we have the alias and the full name
+        fontParam = (char *)malloc(sizeof(char)*(strlen(fullPath)+strlen(alias)+3));
+        sprintf(fontParam,"%s==%s",alias,fullPath);
+        PDF_set_parameter(pdf, "FontOutline", fontParam);
+        free(fontParam);
+        i++;
+    }
+
+    fclose(stream); /* close the file */
+    free(path);
+
+    return(0);
+}
+
+
+
 PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
 {
     int i;
     layerObj *lp=NULL;
     int status;
+    hashTableObj fontHash;
 
+
+    fontHash = msCreateHashTable();
+    msLoadFontSetPDF((&(map->fontset)), pdf);
     if(map->width == -1 && map->height == -1) {
         msSetError(MS_MISCERR, "Image dimensions not specified.", "msDrawMap()");
         return(NULL);
@@ -1264,7 +1334,7 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
         if(lp->postlabelcache) // wait to draw
             continue;
 
-        status = msDrawLayerPDF(map, lp, pdf);
+        status = msDrawLayerPDF(map, lp, pdf,fontHash);
         if(status != MS_SUCCESS) return(NULL);
     }
 
@@ -1275,7 +1345,7 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
 //  if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
 //    msEmbedLegend(map, img);
 
-  if(msDrawLabelCachePDF(pdf, map) == -1)
+  if(msDrawLabelCachePDF(pdf, map, fontHash) == -1)
     return(NULL);
 
     for(i=0; i<map->numlayers; i++) { // for each layer, check for postlabelcache layers
@@ -1285,7 +1355,7 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
         if(!lp->postlabelcache)
             continue;
 
-        status = msDrawLayerPDF(map, lp, pdf);
+        status = msDrawLayerPDF(map, lp, pdf, fontHash);
         if(status != MS_SUCCESS) return(NULL);
     }
 
@@ -1294,6 +1364,8 @@ PDF *msDrawMapPDF(mapObj *map, PDF *pdf)
 
 //  if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
 //    msEmbedLegend(map, img);
+
+    msFreeHashTable(fontHash);
 
     return(pdf);
 }
