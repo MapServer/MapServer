@@ -923,20 +923,22 @@ static int msWCSGetCoverage(mapObj *map, cgiRequestObj *request, wcsParamsObj *p
     msSetError( MS_WCSERR, "A non-zero RESX/RESY or WIDTH/HEIGHT is required but neither was provided.", "msWCSGetCoverage()" );
     return msWCSException(params->version);
   }
-    
-  // apply region and size to map object. 
-  map->width = params->width;
-  map->height = params->height;
-  map->extent = params->bbox;
- 
-  map->cellsize = params->resx; // pick one, MapServer only supports square cells
 
   // should we compute a new extent, ala WMS?
   if( fabs(params->resx/params->resy - 1.0) > 0.001 ) {
     msSetError( MS_WCSERR,  "RESX and RESY don't match.  This is currently not a supported option for MapServer WCS.", "msWCSGetCoverage()" );
     return msWCSException(params->version);
   }
-     
+   
+  // apply region and size to map object. 
+  map->width = params->width;
+  map->height = params->height;
+  map->extent = params->bbox;
+ 
+  map->cellsize = params->resx; // pick one, MapServer only supports square cells (what about msAdjustExtent here!)
+
+  msMapComputeGeotransform(map);
+
   // check and make sure there is a format, and that it's valid (TODO: make sure in the layer metadata)
   if(!params->format) {
     msSetError( MS_WCSERR,  "Missing required FORMAT parameter.", "msWCSGetCoverage()" );
