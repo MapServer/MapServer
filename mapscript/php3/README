@@ -911,6 +911,7 @@ and the MapServer Map File documentation at:
    int    mindistance
    int    partials
    int    force
+   string encoding
 
  Methods:
 
