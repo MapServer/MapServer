@@ -894,11 +894,13 @@ getNumFeatures() : int
 getProcessing( int index) : string
     Return the raster processing directive at *index*.
 
+getNumResults() : int
+    Returns the number of entries in the query result cache for this layer.
+
 getResult( int i ) : resultCacheMemberObj_ 
     Fetches the requested query result cache entry, or NULL if the index is
     outside the range of available results.  This method would normally only
-    be used after issuing a query operation.  **TODO**: How do we get 
-    number of results? 
+    be used after issuing a query operation.
 
 getWMSFeatureInfoURL( mapObj_ map, int click_x, int click_y, int feature_count, string info_format ) : string
     Return a WMS GetFeatureInfo URL (works only for WMS layers)

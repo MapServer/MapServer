@@ -829,6 +829,12 @@ memory.") const char * {
     }
 #endif
   
+  int getNumResults() {
+    if (!self->resultcache) return 0;
+
+    return self->resultcache->numresults;
+  }
+
   resultCacheMemberObj *getResult(int i) {
     if(!self->resultcache) return NULL;
 
