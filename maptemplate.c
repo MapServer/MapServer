@@ -696,44 +696,46 @@ int processIf(char** pszInstr, hashTableObj ht, int bLastPass)
 }
 
 /*
-** Function to process a [coords ...] tag: line contains the tag, shape holds the coordinates. 
-** Syntax of the tag is [coords skip=n del=ch fmt=str].
+** Function to process a [shpxy ...] tag: line contains the tag, shape holds the coordinates. 
+**
+** TODO's: 
+**   - Probably need a seperator for coordinate pairs. 
+**   - May need to change attribute names.
+**   - Need generalization routines (not here, but in mapprimative.c).
+**   - Try to avoid all the realloc calls.
 */
 static int processCoords(char **line, shapeObj *shape) 
 {
+  int i,j;
+
   char *tag, *tagStart, *tagEnd;
   hashTableObj tagArgs=NULL;
   int tagOffset, tagLength;
 
   char *argValue;
   char *pointFormat;
+  int pointFormatLength;
 
   char *xh="", *xf=","; // various header and footers
-  char *yh="", *yf="";
-  char *ph="(", *pf=")"; // part
+  char *yh="", *yf="";  
+  char *ph="", *pf=""; // part
   char *sh="", *sf=""; // shape 
   int precision=0;
 
-  char *coords=NULL;  
-  int skip=1; // don't skip any points
-
-  int length;
-
+  char *coords=NULL, point[128];  
+  
   if(!*line) {
     msSetError(MS_WEBERR, "Invalid line pointer.", "processCoords()");
     return(MS_FAILURE);
   }
 
-  tagStart = findTag(*line, "coords");
+  tagStart = findTag(*line, "shpxy");
   while (tagStart) {  
     tagOffset = tagStart - *line;
     
     // check for any tag arguments
-    if(getTagArgs("coords", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
+    if(getTagArgs("shpxy", tagStart, &tagArgs) != MS_SUCCESS) return(MS_FAILURE);
     if(tagArgs) {
-      argValue = msLookupHashTable(tagArgs, "skip");
-      if(argValue) skip = atoi(argValue);
-
       argValue = msLookupHashTable(tagArgs, "xh");
       if(argValue) xh = argValue;
       argValue = msLookupHashTable(tagArgs, "xf");
@@ -759,11 +761,21 @@ static int processCoords(char **line, shapeObj *shape)
     }
     
     // build the per point format string
-    length = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + 10 + 1;
-    pointFormat = (char *) malloc(length);
-    snprintf(pointFormat, length, "%s%%lf.%d%s%s%%lf.%d%s", xh, precision, xf, yh, precision, yf); 
+    pointFormatLength = strlen("xh") + strlen("xf") + strlen("yh") + strlen("yf") + 10 + 1;
+    pointFormat = (char *) malloc(pointFormatLength);
+    snprintf(pointFormat, pointFormatLength, "%s%%.%dlf%s%s%%.%dlf%s", xh, precision, xf, yh, precision, yf); 
 
-    // build the coordinate string
+    // build the coordinate string    
+    if(strlen(sh) > 0) coords = strcatalloc(coords, sh);
+    for(i=0; i<shape->numlines; i++) {      
+      if(strlen(ph) > 0) coords = strcatalloc(coords, ph);
+      for(j=0; j<shape->line[i].numpoints; j++) {
+        snprintf(point, 128, pointFormat, shape->line[i].point[j].x, shape->line[i].point[j].y);
+        coords = strcatalloc(coords, point);  
+      }
+      if(strlen(pf) > 0) coords = strcatalloc(coords, pf);
+    }
+    if(strlen(sf) > 0) coords = strcatalloc(coords, sf);
 
     // find the end of the tag
     tagEnd = strchr(tagStart, ']');
@@ -782,9 +794,10 @@ static int processCoords(char **line, shapeObj *shape)
     free(tag); tag = NULL;
     msFreeHashTable(tagArgs); tagArgs=NULL;
     free(pointFormat);
+    free(coords);
 
     if((*line)[tagOffset] != '\0')
-      tagStart = findTag(*line+tagOffset+1, "coords");
+      tagStart = findTag(*line+tagOffset+1, "shpxy");
     else
       tagStart = NULL;  
   }
@@ -2247,6 +2260,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
     outstr = gsub(outstr, "[shpext_esc]", encodedstr);
     free(encodedstr);
      
+    if(processCoords(&outstr, &msObj->ResultShape) != MS_SUCCESS)
+      return(NULL);
+
     sprintf(repstr, "%f", msObj->ResultShape.bounds.minx);
     outstr = gsub(outstr, "[shpminx]", repstr);
     sprintf(repstr, "%f", msObj->ResultShape.bounds.miny);
