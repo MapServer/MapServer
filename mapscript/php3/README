@@ -85,7 +85,8 @@ and the MapServer Map File documentation at:
 
     Connection Types:
         MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, 
-        MS_TILED_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL
+        MS_TILED_OGR, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS,
+        MS_GRATICULE, MS_MYGIS
 
     Error codes:
         MS_NOERR, MS_IOERR, MS_MEMERR, MS_TYPEERR, MS_SYMERR, 
