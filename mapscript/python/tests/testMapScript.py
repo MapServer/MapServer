@@ -143,6 +143,26 @@ class SymbolTestCase(unittest.TestCase):
     def testConstructor(self):
         symbol = mapscript.symbolObj('test')
         assert symbol.name == 'test'
+    def testGetPoints(self):
+        symbol = self.mapobj1.symbolset.getSymbol(1)
+        assert symbol.name == 'line'
+        line = symbol.getPoints()
+        assert line.numpoints == 1, line.numpoints
+        pt = line.get(0)
+        assert pt.x == 1.0, pt.x
+        assert pt.y == 1.0, pt.y
+    def testSetPoints(self):
+        symbol = self.mapobj1.symbolset.getSymbol(1)
+        assert symbol.name == 'line'
+        line = mapscript.lineObj()
+        line.add(mapscript.pointObj(2.0, 2.0))
+        line.add(mapscript.pointObj(3.0, 3.0))
+        assert symbol.setPoints(line) == 2
+        line = symbol.getPoints()
+        assert line.numpoints == 2, line.numpoints
+        pt = line.get(1)
+        assert pt.x == 3.0, pt.x
+        assert pt.y == 3.0, pt.y
 
 # symbolset tests
 class SymbolSetTestCase(unittest.TestCase):

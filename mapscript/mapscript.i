@@ -636,6 +636,29 @@ memory.") const char * {
         if (self->font) free(self->font);
         if (self->imagepath) free(self->imagepath);
     }
+
+    int setPoints(lineObj *line) {
+        int i;
+        for (i=0; i<line->numpoints; i++) {
+            msCopyPoint(&(self->points[i]), &(line->point[i]));
+        }
+        self->numpoints = line->numpoints;
+        return self->numpoints;
+    }
+
+    %newobject getPoints;
+    lineObj *getPoints() {
+        int i;
+        lineObj *line;
+        line = (lineObj *) malloc(sizeof(lineObj));
+        line->point = (pointObj *) malloc(sizeof(pointObj)*(self->numpoints));
+        for (i=0; i<self->numpoints; i++) {
+            line->point[i].x = self->points[i].x;
+            line->point[i].y = self->points[i].y;
+        }
+        line->numpoints = self->numpoints;
+        return line;
+    }
 }
 
 %extend symbolSetObj {

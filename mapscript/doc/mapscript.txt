@@ -1031,6 +1031,12 @@ A symbolObj is associated with one symbolSetObj_.
 A styleObj_ will often refer to a symbolObj by name or index, but this is
 not really an object association, is it?
 
+Attributes
+----------
+
+numpoints : int
+    Number of points of a vector symbol.
+    
 Methods
 -------
 
@@ -1038,6 +1044,13 @@ Methods
 
 new symbolObj(string name) : symbolObj_
     Create new default symbol named *name*.
+
+getPoints() : lineObj_
+    Returns the symbol points as a lineObj.
+
+setPoints(lineObj_ line) : int
+    Sets the symbol points from the points of *line*.  Returns the updated
+    number of points.
 
 
 -----------------------------------------------------------------------------
