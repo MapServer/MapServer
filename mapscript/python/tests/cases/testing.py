@@ -47,15 +47,16 @@ TESTS_PATH = '../../tests'
 
 TESTMAPFILE = os.path.join(TESTS_PATH, 'test.map')
 
-# Put local build directory on python path
+# Put local build directory on head of python path
 platformdir = '-'.join((distutils.util.get_platform(), 
                         '.'.join(map(str, sys.version_info[0:2]))))
 sys.path.insert(0, os.path.join('build', 'lib.' + platformdir))
 
-# import module
+# import mapscript from the local build directory
 import mapscript
 
-# normalize names
+# normalize names, allows testing of module that uses the experimental
+# next generation names
 if 'mapObj' not in dir(mapscript):
     mapscript.mapObj = mapscript.Map
     mapscript.layerObj = mapscript.Layer
