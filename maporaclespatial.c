@@ -14,7 +14,10 @@
  *****************************************************************************
  * $Id$
  *
- * Revision 1.6   $Date$
+ * Revision 1.7   $Date$
+ * Fixed bug in SQL statement when using "FILTER" in mapfile
+ *
+ * Revision 1.6   2001/12/22 18:32:02 [CVS-TIME]
  * Fixed SRID mismatch error.
  *
  * Revision 1.5   2001/11/21 22:35:58 [CVS-TIME]
@@ -470,6 +473,7 @@ int msOracleSpatialLayerWhichShapes( layerObj *layer, rectObj rect )
   if (apply_window)
     sprintf( query_str + strlen(query_str), " %s_alias WHERE ", table_name );
   if (layer->filter.string != NULL) {
+    if (!apply_window) strcat( query_str, " WHERE " );
     strcat( query_str, layer->filter.string );
     if (apply_window) strcat( query_str, " AND " );
   }
