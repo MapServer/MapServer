@@ -96,7 +96,10 @@ and the MapServer Map File documentation at:
         MS_PARSEERR, MS_SDEERR, MS_OGRERR, MS_QUERYERR, MS_WMSERR, 
         MS_WMSCONNERR, MS_ORACLESPATIALERR, MS_WFSERR, MS_WFSCONNERR, 
         MS_MAPCONTEXTERR, MS_HTTPERR
- 
+
+    Symbol types:
+        MS_SYMBOL_SIMPLE,  MS_SYMBOL_VECTOR, MS_SYMBOL_ELLIPSE,
+        MS_SYMBOL_PIXMAP, MS_SYMBOL_TRUETYPE, MS_SYMBOL_CARTOLINE
 
  Functions:
  ----------
@@ -171,6 +174,10 @@ and the MapServer Map File documentation at:
 
    int getsymbolbyname(string symbol_name)  
         Returns the symbol index using the name.
+
+   symbol getsymbolobjectbyid(int symbolid)
+        Returns the symbol object using a symbol id. Refer to
+        the symbol object reference section for more details.
 
    void preparequery()
         Calculate the scale of the map and assign it to the map->scale.
@@ -1454,6 +1461,79 @@ Method:
         Free the label cache. Returns true on success or false if an error
         occurs.
         Ex : (map->labelcache->free();
+
+
+
+symbolObj class
+---------------
+
+  Constructor:
+        
+        symboldid = ms_newsymbolobj(mapObj map, string symbbolname);
+        
+        Creates a new symbol with default values in the symbolist. 
+        Returns the Id of the new symbol. If a symbol with the same
+        name exists, It's id will be returned.
+
+  To ge a symbol object, you need to use a function on the mapobject :
+        $oSymbol = $map->getsymbolobjectbyid($nId);
+
+  Members
+
+    string name;
+    type name;  //Please refer to symbol type constants
+    int inmapfile; If set to TRUE, the symbol will be saved inside
+                   the mapfile.
+    double sizex;
+    double sizey
+    int numpoints
+    int filled;
+    int stylelength;
+
+  Functions
+
+     int set(string property_name, new_value)
+        Set object property to a new value.
+
+     int setpoints(array double)
+        Set the points of the symbol. Note that the values passed if an
+        array containing the x and y values of the points. Example
+        array[0] = 1  : x value of the first point
+        array[1] = 0 : y values of the first point
+        array[2] = 1 : x value of the 2nd point
+        ....
+
+     int setstyle(array int)
+        Set the style of the symbol (used for dash patterns)
+
+      array getpointsarray()
+         Returns an array containing the points of the symbol. Refer
+         to setpoints to see how the array should be interpreted.
+
+      array getstylearray()  
+        Returns an array containing the style.
+            
+        
+    Example of usage : crete a symbol to be used as a dah line
+
+        $nId = ms_newsymbolobj($gpoMap, "mydash");
+        $oSymbol = $gpoMap->getsymbolobjectbyid($nId);
+        $oSymbol->set("filled", MS_TRUE);
+        $oSymbol->set("sizex", 1);
+        $oSymbol->set("sizey", 1);
+        $oSymbol->set("inmapfile", MS_TRUE);
+    
+        $aPoints[0] = 1;
+        $aPoints[1] = 1;
+        $oSymbol->setpoints($aPoints);
+    
+        $aStyle[0] = 10;
+        $aStyle[1] = 5;
+        $aStyle[2] = 5;
+        $aStyle[3] = 10;
+        $oSymbol->setstyle($aStyle);
+
+        $style->set("symbolname", "mydash");
 
 
                      --------------------------

@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.191  2004/02/26 15:10:44  assefa
+ * Add symbolobject support.
+ *
  * Revision 1.190  2004/01/30 17:01:12  assefa
  * Add function deletestyle on a class object.
  *
@@ -293,6 +296,7 @@ DLEXPORT void php3_ms_map_setProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setWKTProjection(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_getSymbolObjectById(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_embedScalebar(INTERNAL_FUNCTION_PARAMETERS);
@@ -485,6 +489,14 @@ DLEXPORT void php3_ms_reset_error_list(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_ms_outputformat_setOutputformatoption(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php_ms_outputformat_getOutputformatoption(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void php3_ms_symbol_new(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_symbol_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_symbol_getPoints(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS);
+
+
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
@@ -539,7 +551,13 @@ static long _phpms_build_labelcache_object(labelCacheObj *plabelcache,
                                            HashTable *list, 
                                            pval *return_value);
 
+static long _phpms_build_symbol_object(symbolObj *psSymbol, 
+                                       int parent_map_id, 
+                                       HashTable *list, 
+                                       pval *return_value TSRMLS_DC);
+
 DLEXPORT void php_ms_labelcache_free(INTERNAL_FUNCTION_PARAMETERS);
+
 
 /* ==================================================================== */
 /*      utility functions prototypes.                                   */
@@ -585,6 +603,7 @@ static int le_msoutputformat;
 static int le_msgrid;
 static int le_mserror_ref;
 static int le_mslabelcache;
+static int le_mssymbol;
 
 /* 
  * Declare any global variables you may need between the BEGIN
@@ -646,6 +665,7 @@ static zend_class_entry *outputformat_class_entry_ptr;
 static zend_class_entry *grid_class_entry_ptr;
 static zend_class_entry *error_class_entry_ptr;
 static zend_class_entry *labelcache_class_entry_ptr;
+static zend_class_entry *symbol_class_entry_ptr;
 
 static unsigned char one_arg_force_ref[] = 
   { 1, BYREF_FORCE};
@@ -673,6 +693,7 @@ function_entry phpms_functions[] = {
     {"ms_newgridobj",   php3_ms_grid_new,       one_arg_force_ref},
     {"ms_geterrorobj",  php3_ms_get_error_obj,  NULL},
     {"ms_reseterrorlist", php3_ms_reset_error_list, NULL},
+    {"ms_newsymbolobj", php3_ms_symbol_new, NULL},
     {NULL, NULL, NULL}
 };
 
@@ -716,6 +737,7 @@ function_entry php_map_class_functions[] = {
     {"getprojection",   php3_ms_map_getProjection,      NULL},
     {"setwktprojection",php3_ms_map_setWKTProjection,   NULL},
     {"getsymbolbyname", php3_ms_map_getSymbolByName,    NULL},
+    {"getsymbolobjectbyid", php3_ms_map_getSymbolObjectById,    NULL},
     {"draw",            php3_ms_map_draw,               NULL},
     {"drawquery",       php3_ms_map_drawQuery,          NULL},
     {"embedscalebar",   php3_ms_map_embedScalebar,      NULL},
@@ -948,6 +970,15 @@ function_entry php_labelcache_class_functions[] = {
     {NULL, NULL, NULL}
 };
 
+function_entry php_symbol_class_functions[] = {
+    {"set",             php3_ms_symbol_setProperty,      NULL},    
+    {"setpoints",             php3_ms_symbol_setPoints,      NULL},    
+    {"getpointsarray",             php3_ms_symbol_getPoints,      NULL},    
+    {"setstyle",             php3_ms_symbol_setStyle,      NULL},    
+    {"getstylearray",             php3_ms_symbol_getStyle,      NULL},    
+    {NULL, NULL, NULL}
+};
+
 PHP_MINFO_FUNCTION(mapscript)
 {
   php_info_print_table_start();
@@ -1039,6 +1070,9 @@ PHP_MINIT_FUNCTION(phpms)
 
     PHPMS_GLOBAL(le_mserror_ref)= register_list_destructors(php3_ms_free_stub,
                                                             NULL);
+
+    PHPMS_GLOBAL(le_mssymbol)= register_list_destructors(php3_ms_free_stub,
+                                                         NULL);
 
     PHPMS_GLOBAL(le_mslabelcache)= 
       register_list_destructors(php3_ms_free_stub, NULL);
@@ -1194,6 +1228,13 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_MAPCONTEXTERR", MS_MAPCONTEXTERR, const_flag);
     REGISTER_LONG_CONSTANT("MS_HTTPERR",    MS_HTTPERR,     const_flag);
  
+    /*symbol types */
+    REGISTER_LONG_CONSTANT("MS_SYMBOL_SIMPLE", MS_SYMBOL_SIMPLE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SYMBOL_VECTOR", MS_SYMBOL_VECTOR, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SYMBOL_ELLIPSE", MS_SYMBOL_ELLIPSE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SYMBOL_PIXMAP", MS_SYMBOL_PIXMAP, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SYMBOL_TRUETYPE", MS_SYMBOL_TRUETYPE, const_flag);
+    REGISTER_LONG_CONSTANT("MS_SYMBOL_CARTOLINE", MS_SYMBOL_CARTOLINE, const_flag);
 
 #ifdef PHP4
     INIT_CLASS_ENTRY(tmp_class_entry, "ms_map_obj", php_map_class_functions);
@@ -1275,6 +1316,10 @@ PHP_MINIT_FUNCTION(phpms)
      INIT_CLASS_ENTRY(tmp_class_entry, "ms_labelcache_obj", 
                       php_labelcache_class_functions);
      labelcache_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
+
+     INIT_CLASS_ENTRY(tmp_class_entry, "ms_symbol_obj", 
+                      php_symbol_class_functions);
+     symbol_class_entry_ptr = zend_register_internal_class(&tmp_class_entry TSRMLS_CC);
 
 #endif
 
@@ -3074,6 +3119,60 @@ DLEXPORT void php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS)
 
     RETURN_LONG(nSymbolId);
 }
+
+
+/************************************************************************/
+/*                              DLEXPORT void                           */
+/*        php3_ms_map_getSymbolByName(INTERNAL_FUNCTION_PARAMETERS)     */
+/*                                                                      */
+/*       Get the symbol id using it's name. Parameters are :            */
+/*                                                                      */
+/*        - symbol name                                                 */
+/************************************************************************/
+DLEXPORT void php3_ms_map_getSymbolObjectById(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pThis;
+    pval        *pSymId;
+    mapObj      *self=NULL;
+    symbolObj *psSymbol = NULL;
+    int map_id;
+
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pSymId) == FAILURE) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_long(pSymId);
+
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+
+    if (self == NULL)
+      php3_error(E_ERROR, "Invalid map object.");
+
+    if ( pSymId->value.lval < 0 ||  
+         pSymId->value.lval >= self->symbolset.numsymbols)
+      php3_error(E_ERROR, "Invalid symbol index.");
+
+    map_id = _phpms_fetch_property_resource(pThis, "_handle_", E_ERROR);
+
+    psSymbol = &self->symbolset.symbol[pSymId->value.lval];
+    /* Return style object */
+    _phpms_build_symbol_object(psSymbol, map_id,  list, return_value TSRMLS_CC);
+}
+
 /* }}} */
 
 
@@ -12507,6 +12606,350 @@ DLEXPORT void php_ms_labelcache_free(INTERNAL_FUNCTION_PARAMETERS)
 
      RETURN_TRUE;
 }
+
+
+/*=====================================================================
+ *                 PHP function wrappers - symbol object
+ *====================================================================*/
+
+DLEXPORT void php3_ms_symbol_new(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pMapObj, *pName;
+    mapObj      *parent_map;
+    HashTable   *list=NULL;
+    int         nReturn = -1;
+
+    if ( getParameters(ht, 2, &pMapObj, &pName) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    parent_map = (mapObj*)_phpms_fetch_handle(pMapObj, 
+                                              PHPMS_GLOBAL(le_msmap),
+                                              list TSRMLS_CC);
+    if (parent_map == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pName);
+
+    nReturn = msAddNewSymbol(parent_map, pName->value.str.val);
+
+    RETURN_LONG(nReturn);
+}
+ 
+
+/**********************************************************************
+ *                     _phpms_build_symbol_object()
+ **********************************************************************/
+static long _phpms_build_symbol_object(symbolObj *psSymbol, 
+                                       int parent_map_id, 
+                                       HashTable *list, 
+                                       pval *return_value TSRMLS_DC)
+{
+    int symbol_id;
+
+
+
+    if (psSymbol == NULL)
+        return 0;
+
+    symbol_id = php3_list_insert(psSymbol, PHPMS_GLOBAL(le_mssymbol));
+
+    _phpms_object_init(return_value, symbol_id, php_symbol_class_functions,
+                       PHP4_CLASS_ENTRY(symbol_class_entry_ptr));
+
+    add_property_resource(return_value, "_map_handle_", parent_map_id);
+    zend_list_addref(parent_map_id);
+
+    PHPMS_ADD_PROP_STR(return_value,  "name", psSymbol->name);
+    add_property_long(return_value,   "type",     psSymbol->type);
+    add_property_long(return_value,   "inmapfile",     psSymbol->inmapfile);
+    add_property_double(return_value,   "sizex",     psSymbol->sizex);
+    add_property_double(return_value,   "sizey",     psSymbol->sizey);
+    add_property_long(return_value,   "numpoints",     psSymbol->numpoints);
+    add_property_long(return_value,   "filled",     psSymbol->filled);
+    add_property_long(return_value,   "stylelength",     psSymbol->stylelength);
+    //PHPMS_ADD_PROP_STR(return_value,  "imagepath", psSymbol->imagepath);
+    //add_property_long(return_value,   "transparent",     psSymbol->transparent);
+    //add_property_long(return_value,   "transparentcolor", 
+    //                 psSymbol->transparentcolor);
+    //TODO : true type and cartoline parameters to add.
+
+    return symbol_id;
+}
+    
+/**********************************************************************
+ *                        symbol->set()
+ **********************************************************************/
+
+/* {{{ proto int symbol.set(string property_name, new_value)
+   Set object property to a new value. Returns -1 on error. */
+
+DLEXPORT void php3_ms_symbol_setProperty(INTERNAL_FUNCTION_PARAMETERS)
+{
+    symbolObj *self;
+    pval   *pPropertyName, *pNewValue, *pThis;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 2, &pPropertyName, &pNewValue) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (symbolObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mssymbol),
+                                            list TSRMLS_CC);
+    
+    if (self == NULL)
+      RETURN_FALSE;
+
+    convert_to_string(pPropertyName);
+
+    IF_SET_STRING( "name",   self->name)
+    else IF_SET_LONG(  "type",             self->type)
+    else IF_SET_LONG(  "inmapfile",             self->inmapfile)
+    else IF_SET_DOUBLE(  "sizex",             self->sizex)
+    else IF_SET_DOUBLE(  "sizey",             self->sizey)
+    else IF_SET_LONG(  "filled",             self->filled)
+    else if (strcmp( "numpoints", pPropertyName->value.str.val) == 0 ||
+             strcmp( "stylelength", pPropertyName->value.str.val) == 0)
+    {
+        php3_error(E_ERROR,"Property '%s' is read-only and cannot be set.", 
+                            pPropertyName->value.str.val);
+         RETURN_FALSE;
+    }
+    else
+    {
+        php3_error(E_ERROR,"Property '%s' does not exist in this object.",
+                   pPropertyName->value.str.val);
+         RETURN_FALSE;
+    }
+
+    RETURN_TRUE;
+}
+
+
+/**********************************************************************
+ *                        symbol->setpoints()
+ **********************************************************************/
+
+/* {{{ proto int symbol.setpoints(array points, int numpoints)
+   Set the points of the symbol ) */ 
+
+DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
+{
+    symbolObj *self;
+    pval   *pPoints, *pThis;
+    HashTable   *list=NULL;
+     pval        **pValue = NULL;
+    int i=0, nElements = 0, iSymbol=0;
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pPoints) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (symbolObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mssymbol),
+                                            list TSRMLS_CC);
+    
+    if (self == NULL)
+      RETURN_FALSE;
+
+    if (pPoints->type != IS_ARRAY) 
+    {
+        php_error(E_WARNING, 
+                  "symbol->setpoints : expected array as parameter");
+        RETURN_FALSE;
+    }
+
+    nElements = zend_hash_num_elements(pPoints->value.ht);
+
+    if (nElements <=0)
+    {
+        php_error(E_WARNING, 
+                  "symbol->setpoints : invalid array as parameter. Array sould have at least two points.");
+        RETURN_FALSE;
+    }
+    
+    i= 0;
+    iSymbol = 0;
+    while (i<nElements)
+    {
+        if (zend_hash_index_find(pPoints->value.ht, i, 
+                                 (void **)&pValue) == FAILURE)
+        {
+            RETURN_FALSE;
+        }
+        convert_to_long((*pValue));
+        self->points[iSymbol].x = (*pValue)->value.lval;
+        i++;
+
+         if (zend_hash_index_find(pPoints->value.ht, i, 
+                                 (void **)&pValue) == FAILURE)
+        {
+            RETURN_FALSE;
+        }
+        convert_to_long((*pValue));
+        self->points[iSymbol].y = (*pValue)->value.lval;
+        i++;
+
+        iSymbol++;
+    }
+    
+    self->numpoints = (nElements/2);
+
+    RETURN_TRUE;
+}
+
+/**********************************************************************
+ *                        symbol->getpointsarray()
+ **********************************************************************/
+DLEXPORT void php3_ms_symbol_getPoints(INTERNAL_FUNCTION_PARAMETERS)
+{
+    symbolObj *self;
+    pval        *pThis;
+    HashTable   *list=NULL;
+    int i=0;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+        RETURN_FALSE;
+
+     if (array_init(return_value) == FAILURE) 
+     {
+         RETURN_FALSE;
+     }
+
+     self = (symbolObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mssymbol), 
+                                             list TSRMLS_CC);
+
+     if (self == NULL)
+       RETURN_FALSE;
+
+     if (self->numpoints > 0)
+     {
+         for (i=0; i<self->numpoints; i++)
+         {
+             add_next_index_double(return_value, self->points[i].x);
+             add_next_index_double(return_value, self->points[i].y);
+         }
+     }
+     else
+       RETURN_FALSE;
+}
+
+
+/**********************************************************************
+ *                        symbol->getstylearray()
+ **********************************************************************/
+DLEXPORT void php3_ms_symbol_getStyle(INTERNAL_FUNCTION_PARAMETERS)
+{
+    symbolObj *self;
+    pval        *pThis;
+    HashTable   *list=NULL;
+    int i=0;
+
+     pThis = getThis();
+
+     if (pThis == NULL)
+        RETURN_FALSE;
+
+     if (array_init(return_value) == FAILURE) 
+     {
+         RETURN_FALSE;
+     }
+
+     self = (symbolObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mssymbol), 
+                                             list TSRMLS_CC);
+
+     if (self == NULL)
+       RETURN_FALSE;
+
+     if (self->stylelength > 0)
+     {
+         for (i=0; i<self->stylelength; i++)
+         {
+             add_next_index_double(return_value, self->style[i]);
+         }
+     }
+     else
+       RETURN_FALSE;
+}
+         
+         
+
+/**********************************************************************
+ *                        symbol->setstyle()
+ **********************************************************************/
+
+/* {{{ proto int symbol.setstyle(array points, int numpoints)
+   Set the style of the symbol ) */ 
+
+DLEXPORT void php3_ms_symbol_setStyle(INTERNAL_FUNCTION_PARAMETERS)
+{
+    symbolObj *self;
+    pval   *pPoints, *pThis;
+    HashTable   *list=NULL;
+     pval        **pValue = NULL;
+    int i=0, nElements = 0;
+ 
+
+    pThis = getThis();
+
+    if (pThis == NULL ||
+        getParameters(ht, 1, &pPoints) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (symbolObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mssymbol),
+                                            list TSRMLS_CC);
+    
+    if (self == NULL)
+      RETURN_FALSE;
+
+    if (pPoints->type != IS_ARRAY) 
+    {
+        php_error(E_WARNING, 
+                  "symbol->setstyle : expected array as parameter");
+        RETURN_FALSE;
+    }
+
+    nElements = zend_hash_num_elements(pPoints->value.ht);
+
+    if (nElements <=0)
+    {
+        php_error(E_WARNING, 
+                  "symbol->setpoints : invalid array as parameter. Array sould have at least two entries.");
+        RETURN_FALSE;
+    }
+    
+    i= 0;
+    while (i<nElements)
+    {
+        if (zend_hash_index_find(pPoints->value.ht, i, 
+                                 (void **)&pValue) == FAILURE)
+        {
+            RETURN_FALSE;
+        }
+        convert_to_long((*pValue));
+        self->style[i] = (*pValue)->value.lval;
+        i++;
+    }
+    
+    self->stylelength = nElements;
+
+    RETURN_TRUE;
+}
+
 
 /* ==================================================================== */
 /*      utility functions                                               */
