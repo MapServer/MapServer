@@ -8,24 +8,26 @@ static int layerInitItemInfo(layerObj *layer) {
   case(MS_TILED_SHAPEFILE):
     layer->iteminfo = (int *) msDBFGetItemIndexes(layer->shpfile.hDBF, layer->items, layer->numitems);
     if(!layer->iteminfo) return(MS_FAILURE);
+    return(MS_SUCCESS);
     break;
   case(MS_INLINE):
+    return(MS_SUCCESS); // inline shapes have no items
     break;
   case(MS_OGR):
-    status = msOGRLayerInitItemInfo(layer);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
+    return msOGRLayerInitItemInfo(layer);
     break;
   case(MS_TILED_OGR):
     break;
   case(MS_SDE):
     status = msSDELayerInitItemInfo(layer);
     if(status != MS_SUCCESS) return(MS_FAILURE);
+    return(MS_SUCCESS);
     break;
   default:
     break;
   }
 
-  return(MS_SUCCESS);
+  return(MS_FAILURE);
 }
 
 static void layerFreeItemInfo(layerObj *layer) 
@@ -116,6 +118,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     msSHPReadShape(layer->shpfile.hSHP, i, shape); // ok to read the data now
     shape->values = values;
     shape->numvalues = layer->numitems;
+    return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPNextShape(layer, shape));
@@ -123,6 +126,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     if(!(layer->currentfeature)) return(MS_DONE); // out of features    
     msCopyShape(&(layer->currentfeature->shape), shape);
     layer->currentfeature = layer->currentfeature->next;
+    return(MS_SUCCESS);
     break;
   case(MS_OGR):
     return msOGRLayerNextShape(layer, shape);
@@ -136,7 +140,7 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
     break;
   }
 
-  return(MS_SUCCESS);
+  return(MS_FAILURE);
 }
 
 int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
@@ -149,6 +153,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
       shape->values = msDBFGetValueList(layer->shpfile.hDBF, record, layer->iteminfo, layer->numitems);
       if(!shape->values) return(MS_FAILURE);
     }
+    return(MS_SUCCESS);
     break;
   case(MS_TILED_SHAPEFILE):
     return(msTiledSHPGetShape(layer, shape, tile, record));
@@ -168,7 +173,7 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
     break;
   }
 
-  return(MS_SUCCESS);
+  return(MS_FAILURE);
 }
 
 void msLayerClose(layerObj *layer) 
@@ -220,6 +225,7 @@ int msLayerGetItems(layerObj *layer)
     layer->items = msDBFGetItems(layer->shpfile.hDBF);    
     if(!layer->items) return(MS_FAILURE);
     layerInitItemInfo(layer);
+    return(MS_SUCCESS);
     break;
   case(MS_INLINE):
     return(MS_SUCCESS); // inline shapes have no items
@@ -236,7 +242,7 @@ int msLayerGetItems(layerObj *layer)
     break;
   }
 
-  return(MS_SUCCESS);
+  return(MS_FAILURE);
 }
 
 int msLayerWhichShapes(layerObj *layer, rectObj rect)
@@ -249,6 +255,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     return(msTiledSHPWhichShapes(layer, rect));
     break;
   case(MS_INLINE):
+    return(MS_SUCCESS);
     break;
   case(MS_OGR):
     return msOGRLayerWhichShapes(layer, rect);
@@ -262,7 +269,7 @@ int msLayerWhichShapes(layerObj *layer, rectObj rect)
     break;
   }
 
-  return(MS_SUCCESS);
+  return(MS_FAILURE);
 }
 
 int msLayerGetExtent(layerObj *layer, rectObj *extent) {
@@ -276,6 +283,8 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent) {
     return(MS_SUCCESS);
     break;
   case(MS_INLINE):
+    /* __TODO__ need to compute extents */
+    return(MS_FAILURE);
     break;
   case(MS_OGR):
     return(msOGRLayerGetExtent(layer, extent));
@@ -289,7 +298,7 @@ int msLayerGetExtent(layerObj *layer, rectObj *extent) {
     break;
   }
 
-  return(MS_SUCCESS);
+  return(MS_FAILURE);
 }
 
 static int string2list(char **list, int *listsize, char *string)
