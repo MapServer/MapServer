@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.17  2002/02/08 18:25:40  sacha
+ * let mapserv add a new symbol when we use the classobj setproperty function
+ * with "symbolname" and "overlaysymbolname" arg.
+ *
  * Revision 1.16  2002/01/22 21:19:02  sacha
  * Add two functions in maplegend.c
  * - msDrawLegendIcon that draw an class legend icon over an existing image.
@@ -171,8 +175,8 @@ classObj       *classObj_new(layerObj *layer);
 void            classObj_destroy(classObj* self);
 int             classObj_setExpression(classObj *self, char *string);
 int             classObj_setText(classObj *self,layerObj *layer,char *string);
-int             classObj_drawLegendIcon(classObj *self, 
-                                        mapObj *map, 
+int             classObj_drawLegendIcon(classObj *self,
+                                        mapObj *map,
                                         layerObj *layer, 
                                         int width, int height, 
                                         gdImagePtr im, 
@@ -181,7 +185,14 @@ gdImagePtr      classObj_createLegendIcon(classObj *self,
                                           mapObj *map, 
                                           layerObj *layer, 
                                           int width, int height);
-
+int             classObj_setSymbolByName(classObj *self,
+                                         mapObj *map,
+                                         layerObj *lp,
+                                         char *pszSymbolName);
+int             classObj_setOverlaySymbolByName(classObj *self,
+                                                mapObj *map,
+                                                layerObj *lp,
+                                                char *pszOverlaySymbolName);
 pointObj       *pointObj_new();
 void            pointObj_destroy(pointObj *self);
 int             pointObj_project(pointObj *self, projectionObj *in, 

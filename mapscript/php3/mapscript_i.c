@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.32  2002/02/08 18:25:39  sacha
+ * let mapserv add a new symbol when we use the classobj setproperty function
+ * with "symbolname" and "overlaysymbolname" arg.
+ *
  * Revision 1.31  2002/01/29 23:38:32  assefa
  * Add write support for measured shape files.
  *
@@ -467,6 +471,15 @@ gdImagePtr classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *laye
     return msCreateLegendIcon(map, layer, self, width, height);
 }
 
+int classObj_setSymbolByName(classObj *self, mapObj *map, layerObj *lp, char *pszSymbolName) {
+    self->symbol =  msGetSymbolIdByName(map, self, lp, pszSymbolName);
+    return self->symbol;
+}
+
+int classObj_setOverlaySymbolByName(classObj *self, mapObj *map, layerObj *lp, char *pszOverlaySymbolName) {
+    self->overlaysymbol =  msGetSymbolIdByName(map, self, lp, pszOverlaySymbolName);
+    return self->overlaysymbol;
+}
 /**********************************************************************
  * class extensions for pointObj, useful many places
  **********************************************************************/

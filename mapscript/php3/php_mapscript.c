@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.85  2002/02/08 18:25:39  sacha
+ * let mapserv add a new symbol when we use the classobj setproperty function
+ * with "symbolname" and "overlaysymbolname" arg.
+ *
  * Revision 1.84  2002/01/30 17:16:08  assefa
  * Add setimagecolor on the scalebar object.
  *
@@ -5845,6 +5849,8 @@ DLEXPORT void php3_ms_class_new(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 {
     classObj *self;
+    mapObj *parent_map;
+    layerObj *parent_layer;
     pval   *pPropertyName, *pNewValue, *pThis;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -5864,7 +5870,16 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (classObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msclass),
                                            list);
-    if (self == NULL)
+   
+    parent_layer = (layerObj*)_phpms_fetch_property_handle(pThis, "_layer_handle_",
+                                                           PHPMS_GLOBAL(le_mslayer),
+                                                           list, E_ERROR);
+   
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list, E_ERROR);
+
+    if (self == NULL || parent_map == NULL || parent_layer == NULL)
     {
         RETURN_LONG(-1);
     }
@@ -5893,9 +5908,27 @@ DLEXPORT void php3_ms_class_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_STRING("template",      self->template)
     else
     {
-        php3_error(E_ERROR,"Property '%s' does not exist in this object.", 
+        php3_error(E_ERROR,"Property '%s' does not exist in this object.",
                             pPropertyName->value.str.val);
         RETURN_LONG(-1);
+    }
+
+    if (strcmp(pPropertyName->value.str.val, "symbolname") == 0)
+    {
+        if (classObj_setSymbolByName(self,
+                                     parent_map,
+                                     parent_layer,
+                                     self->symbolname) != 0)
+            RETURN_LONG(-1);
+    }
+    else
+    if (strcmp(pPropertyName->value.str.val, "overlaysymbolname") == 0)
+    {
+        if (classObj_setOverlaySymbolByName(self,
+                                            parent_map,
+                                            parent_layer,
+                                            self->overlaysymbolname) != 0)
+            RETURN_LONG(-1);
     }
 
     RETURN_LONG(0);
@@ -5929,7 +5962,7 @@ DLEXPORT void php3_ms_class_setExpression(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 1, &pString) == FAILURE) 
+        getParameters(ht, 1, &pString) == FAILURE)
     {
         WRONG_PARAM_COUNT;
     }
@@ -5979,7 +6012,7 @@ DLEXPORT void php3_ms_class_setText(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 2, &pLayerObj, &pString) == FAILURE) 
+        getParameters(ht, 2, &pLayerObj, &pString) == FAILURE)
     {
         WRONG_PARAM_COUNT;
     }
@@ -6037,7 +6070,7 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
     if (pThis == NULL ||
-        getParameters(ht, 5, &pWidth, &pHeight, &imgObj, &pDstX, &pDstY) == FAILURE) 
+        getParameters(ht, 5, &pWidth, &pHeight, &imgObj, &pDstX, &pDstY) == FAILURE)
     {
         WRONG_PARAM_COUNT;
     }
