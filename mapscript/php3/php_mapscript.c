@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.78  2002/01/23 16:41:58  dan
+ * Fixed crash problem in getAllGroupNames()
+ *
  * Revision 1.77  2002/01/22 21:19:01  sacha
  * Add two functions in maplegend.c
  * - msDrawLegendIcon that draw an class legend icon over an existing image.
@@ -3243,11 +3246,10 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
                 }
                 if (!bFound)
                 {
-                    nLength = strlen(self->layers[i].group);
-                    papszGroups[nGroups] = (char *)emalloc(nLength+1);
-                    sprintf(papszGroups[nGroups], "%s", 
-                            self->layers[i].group);
+                    /* New group... add to the list of groups found */
+                    papszGroups[nGroups] = strdup(self->layers[i].group);
                     nGroups++;
+                    /* Also add a copy of the group name to the PHP array */
                     add_next_index_string(return_value,  
                                           self->layers[i].group, 1);
                 }
