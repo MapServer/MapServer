@@ -89,6 +89,11 @@ int setExtent(mapservObj *msObj)
    return MS_SUCCESS;
 }
 
+int checkWebExtent(mapservObj *msObj)
+{
+   return MS_SUCCESS;
+}
+
 int checkWebScale(mapservObj *msObj) 
 {
    int status;
@@ -1745,7 +1750,7 @@ int processOneToManyJoin(joinObj *join)
       for(l=0; l<join->numitems; l++) {	  
 	sprintf(substr, "[%s]", join->items[l]);
 	if(strstr(outstr, substr) != NULL) { /* do substitution */
-	  outstr = gsub(outstr, substr, join->data[k][l]);
+	  outstr = gsub(outstr, substr, join->records[k][l]);
 	}
       } /* next item */
       
