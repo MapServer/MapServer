@@ -123,6 +123,14 @@ extern "C" {
                                    (type)==MS_PNG?"png": \
                                    (type)==MS_JPEG?"jpg": \
                                    (type)==MS_WBMP?"wbmp":"unknown")
+
+// need some friggin graph paper to verify these equations
+#define MS_CELLSIZE(min, max, d)    ((maxx - minx)/d)
+#define MS_MAP2IMAGE_X(x, minx, cx) (MS_NINT((x - minx + cx/2.0)/cx))
+#define MS_MAP2IMAGE_Y(y, maxy, cy) (MS_NINT((maxy - cy/2.0 - y)/cy))
+#define MS_IMAGE2MAP_X(x, minx, cx) (minx + cx*(x + .5))
+#define MS_IMAGE2MAP_Y(y, maxy, cy) (maxy - cy*(y - .5))
+
 #endif
 
 // General enumerated types - needed by scripts
