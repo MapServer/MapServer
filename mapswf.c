@@ -1994,7 +1994,7 @@ int draw_textSWF(imageObj *image, pointObj labelPnt, char *string,
 /*      0 on sucess or -1.                                              */
 /************************************************************************/
 int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect, 
-                      fontSetObj *fontset)
+                      fontSetObj *fontset, double scalefactor)
 {
     SWFText    oText = NULL;
     SWFFont     oFont = NULL;
@@ -2039,7 +2039,7 @@ int msGetLabelSizeSWF(char *string, labelObj *label, rectObj *rect,
     rect->minx = 0;
     rect->miny = 0;
     rect->maxx = dfWidth;
-    rect->maxy = label->sizescaled;
+    rect->maxy = label->size*scalefactor;
     
     return(0);
 }
@@ -2157,7 +2157,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
             continue; /* not an error, just don't want to do anything */
 
         if(msGetLabelSizeSWF(cachePtr->string, labelPtr, &r, 
-                             &(map->fontset)) == -1)
+                             &(map->fontset), layerPtr->scalefactor) == -1)
             return(-1);
 
         if(labelPtr->autominfeaturesize && ((r.maxx-r.minx) > cachePtr->featuresize))
@@ -2166,10 +2166,11 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
         draw_marker = marker_offset_x = marker_offset_y = 0; /* assume no marker */
         if((layerPtr->type == MS_LAYER_ANNOTATION&&  cachePtr->numstyles > 0) || layerPtr->type == MS_LAYER_POINT) { // there *is* a marker
 
-            msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, &marker_height);
+            msGetMarkerSize(&map->symbolset, &cachePtr->styles, cachePtr->numstyles, &marker_width, 
+                            &marker_height, layerPtr->scalefactor);
             
-            marker_width = (int)(marker_width * layerPtr->scalefactor);
-            marker_height = (int)(marker_height * layerPtr->scalefactor);
+            marker_width = (int)(marker_width);
+            marker_height = (int)(marker_height);
 
             marker_offset_x = MS_NINT(marker_width/2.0);
             marker_offset_y = MS_NINT(marker_height/2.0);      
@@ -2400,7 +2401,7 @@ int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string,
     if(strlen(string) == 0)
         return(0); /* not an error, just don't want to do anything */
     
-    msGetLabelSizeSWF(string, label, &r, fontset);
+    msGetLabelSizeSWF(string, label, &r, fontset, scalefactor);
     p = get_metrics(&labelPnt, label->position, r, label->offsetx, 
                     label->offsety, label->angle, 0, NULL);
     //labelPnt.x += label->offsetx;
