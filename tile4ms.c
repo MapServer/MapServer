@@ -41,14 +41,14 @@ int process_shapefiles(char *metaFileNameP, char *tileFileNameP,
 {
 SHPHandle   hSHP, tileSHP;
 rectObj     extentRect;
-lineObj         line;
+lineObj     line;
 shapeObj    shapeRect;
 DBFHandle   tileDBF;
-DBFHandle       shpDBF;
+DBFHandle   shpDBF;
 
 typedef struct DBFFieldDef_struct {
   DBFFieldType  type;
-  char          name[256];
+  char          name[12];
   int           width;
   int           decimals;
 } DBFFieldDef;
