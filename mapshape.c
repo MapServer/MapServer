@@ -1007,20 +1007,20 @@ void msSHPCloseFile(shapefileObj *shpfile)
 char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, projectionObj *in, projectionObj *out)
 {
   int i;
-  rectObj shape_rect, search_rect;
+  rectObj shaperect, searchrect;
   char *status=NULL;
   char *filename;
 
-  search_rect = rect;
+  searchrect = rect;
 
 #ifdef USE_PROJ     
   if((in->numargs > 0) && (out->numargs > 0))
-    msProjectRect(out->proj, in->proj, &search_rect); // project the search_rect to shapefile coords
+    msProjectRect(out->proj, in->proj, &searchrect); // project the searchrect to shapefile coords
 #endif
 
-  // FIX: need an overlap test here...
+  // FIX: need an overlap test here (i.e. rect and shapefile DON"T overlap)...
 
-  if(msRectContained(&shpfile->bounds, &search_rect) == MS_TRUE) {
+  if(msRectContained(&shpfile->bounds, &searchrect) == MS_TRUE) {
     status = msAllocBitArray(shpfile->numshapes);
     if(!status) {
       msSetError(MS_MEMERR, NULL, "msSHPWhichShapes()");
@@ -1035,11 +1035,11 @@ char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, projectionObj *in, p
     }
     sprintf(filename, "%s%s", shpfile->source, MS_INDEX_EXTENSION);
     
-    status = msSearchDiskTree(filename, search_rect);
+    status = msSearchDiskTree(filename, searchrect);
     free(filename);
 
     if(status) // index 
-      msFilterTreeSearch(shpfile, status, search_rect);
+      msFilterTreeSearch(shpfile, status, searchrect);
     else { // no index 
       status = msAllocBitArray(shpfile->numshapes);
       if(!status) {
@@ -1048,8 +1048,8 @@ char *msSHPWhichShapes(shapefileObj *shpfile, rectObj rect, projectionObj *in, p
       }
       
       for(i=0;i<shpfile->numshapes;i++) {
-	if(!msSHPReadBounds(shpfile->hSHP, i, &shape_rect))
-	  if(msRectOverlap(&shape_rect, &search_rect) == MS_TRUE)
+	if(!msSHPReadBounds(shpfile->hSHP, i, &shaperect))
+	  if(msRectOverlap(&shaperect, &searchrect) == MS_TRUE)
 	    msSetBit(status, i, 1);
       }
     }   

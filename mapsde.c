@@ -1,11 +1,9 @@
 #include "map.h"
 #include "maperror.h"
 
-/* ESRI SDE Client Includes */
-#ifdef USE_SDE
-#include <sdetype.h>
-#include <sdeerno.h>
-#endif
+/*
+** Start SDE/MapServer helper functions.
+*/
 
 #ifdef USE_SDE
 static void sde_error(long error_code, char *routine, char *sde_routine) {
@@ -37,58 +35,7 @@ static int sdeRectContained(SE_ENVELOPE *a, SE_ENVELOPE *b)
   return(MS_FALSE);  
 }
 
-static int sdeTransformShapePoints(rectObj extent, double cellsize, SE_SHAPE inshp, shapeObj *outshp) 
-{
-  int i;
-  SE_POINT *points=NULL;
-  long type, status, numpoints;
-
-  lineObj line={0,NULL};
-
-  SE_shape_get_type(inshp, &type);
-
-  if(type == SG_NIL_SHAPE) return(0); // skip null shapes
-
-  SE_shape_get_num_points(inshp, 0, 0, &numpoints);
-
-  points = (SE_POINT *)malloc(numpoints*sizeof(SE_POINT));
-  if(!points) {
-    msSetError(MS_MEMERR, "Unable to allocate points array.", "sdeTransformShape()");
-    return(-1);
-  }
-
-  status = SE_shape_get_all_points(inshp, SE_DEFAULT_ROTATION, NULL, NULL, points, NULL, NULL);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "sdeTransformShape()", "SE_shape_get_all_points()");
-    return(-1);
-  }
-
-  line.point = (pointObj *)malloc(sizeof(pointObj)*numpoints);
-  if(!line.point) {
-    msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", "sdeTransformShape()");
-    return(-1);
-  }
-   
-  line.numpoints = 0;
-  for(i=0; i<numpoints; i++) {
-    if(points[i].x < extent.minx) continue;
-    if(points[i].x > extent.maxx) continue;
-    if(points[i].y < extent.miny) continue;
-    if(points[i].y > extent.maxy) continue;
-    
-    line.point[line.numpoints].x = MS_NINT((points[i].x - extent.minx)/cellsize);
-    line.point[line.numpoints].y = MS_NINT((extent.maxy - points[i].y)/cellsize);
-    line.numpoints++;
-  }
-
-  msAddLine(outshp, &line);
-  free(line.point);
-  free(points);
-
-  return(0);
-}
-
-static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, shapeObj *outshp) {
+static int sdeShapeCopy(SE_SHAPE inshp, shapeObj *outshp) {
   long numparts, numsubparts, numpoints;
   long *subparts=NULL;
   SE_POINT *points=NULL;
@@ -136,39 +83,17 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
 
     line.point = (pointObj *)malloc(sizeof(pointObj)*line.numpoints);
     if(!line.point) {
-      msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", "sdeTransformShape()");
+      msSetError(MS_MEMERR, "Unable to allocate temporary point cache.", "sdeShapeCopy()");
       return(-1);
     }
      
-    line.point[0].x = MS_NINT((points[l].x - extent.minx)/cellsize);
-    line.point[0].y = MS_NINT((extent.maxy - points[l].y)/cellsize);
-    l++;
-
-    for(j=1, k=1; j < line.numpoints; j++ ) {
-      
-      line.point[k].x = MS_NINT((points[l].x - extent.minx)/cellsize); 
-      line.point[k].y = MS_NINT((extent.maxy - points[l].y)/cellsize);
-      
-      if(k == 1) {
-	if((line.point[0].x != line.point[1].x) || (line.point[0].y != line.point[1].y))
-	  k++;
-      } else {
-	if((line.point[k-1].x != line.point[k].x) || (line.point[k-1].y != line.point[k].y)) {
-	  if(((line.point[k-2].y - line.point[k-1].y)*(line.point[k-1].x - line.point[k].x)) == ((line.point[k-2].x - line.point[k-1].x)*(line.point[k-1].y - line.point[k].y))) {	    
-	    line.point[k-1].x = line.point[k].x;
-	    line.point[k-1].y = line.point[k].y;	
-	  } else {
-	    k++;
-	  }
-	}
-      }
-
+    for(j=0; j < line.numpoints; j++) {
+      line.point[j].x = points[l].x; 
+      line.point[j].y = points[l].y;     
       l++;
     }
 
-    line.numpoints = k; /* save actual number kept */
     msAddLine(outshp, &line);
-
     free(line.point);
   }
 
@@ -179,27 +104,154 @@ static int sdeTransformShape(rectObj extent, double cellsize, SE_SHAPE inshp, sh
 }
 #endif
 
+/*
+** Start SDE/MapServer library functions.
+*/
+
+int msSDELayerOpen(layer) {
+#ifdef USE_SDE
+  long status;
+  char **params;
+  int numparams;
+
+  SE_ERROR error;
+  sdeLayerObj *sde;	
+
+  if (layer->sdelayerinfo) return MS_SUCCESS; // layer already open
+ 
+  params = split(layer->connection, ',', &numparams);
+  if(!params) {
+    msSetError(MS_MEMERR, "Error spliting SDE connection information.", "msSDELayerOpen()");
+    return(MS_FAILURE);
+  }
+
+  if(numparams < 5) {
+    msSetError(MS_SDEERR, "Not enough SDE connection parameters specified.", "msSDELayerOpen()");
+    return(MS_FAILURE);
+  }
+
+  sde = (sdeLayerObj *) malloc(sizeof(sdeLayerObj));
+  if(!sde) {
+    msSetError(MS_MEMERR, "Error allocating SDE layer structure.", "msSDELayerOpen()");
+    return(MS_FAILURE);
+  }
+  layer->sdelayerinfo = sde;
+
+  status = SE_connection_create(params[0], params[1], params[2], params[3], params[4], &error, &(sde->connection));
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_connection_create()");
+    return(MS_FAILURE);
+  }
+
+  msFreeCharArray(params, numparams);
+
+  SE_layerinfo_create(NULL, &(sde->layerinfo));
+
+  params = split(layer->data, ',', &numparams);
+  if(!params) {
+    msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msSDELayerOpen()");
+    return(MS_FAILURE);
+  }
+
+  if(numparams < 2) {
+    msSetError(MS_SDEERR, "Not enough SDE layer parameters specified.", "msSDELayerOpen()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_layer_get_info(connection, params[0], params[1], sde->layerinfo);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_layer_get_info()");
+    return(MS_FAILURE);
+  }
+
+  SE_coordref_create(&(sde->coordref));
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_coordref_create()");
+    return(MS_FAILURE);
+  }
+
+  status = SE_layerinfo_get_coordref(sde->layerinfo, sde->coordref);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerOpen()", "SE_layerinfo_get_coordref()");
+    return(MS_FAILURE);
+  }
+
+  return(MS_SUCCESS);
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerOpen()");
+  return(MS_FAILURE);
+#endif
+}
+
+void msSDELayerClose(layer) {
+#ifdef USE_SDE
+
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerClose()");
+  return;
+#endif
+}
+
+int msSDELayerNextShape(layer, shape) {
+#ifdef USE_SDE
+
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerNextShape()");
+  return(MS_FAILURE);
+#endif
+}
+
+int msSDELayerGetShape(layerObj *layer, shapeObj *shape, int record, int allitems) {
+#ifdef USE_SDE
+
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerGetShape()");
+  return(MS_FAILURE);
+#endif
+}
+
+int msSDELayerWhichShapes(layerObj *layer, char *shapepath, rectObj rect, projectionObj *proj)
+#ifdef USE_SDE
+  SE_ENVELOPE envelope;
+  SE_SHAPE shape=0;
+  SE_SQL_CONSTRUCT *sql;
+  SE_FILTER filter;
+
+  rectObj searchrect;
+
+  if(!layer->sdelayerinfo) {
+    msSetError(MS_MISCERR, "SDE layer has not been opened.", "msSDELayerWhichShapes()");
+    return(MS_FAILURE);
+  }
+
+  searchrect = rect; // copy search shape
+
+#ifdef USE_PROJ
+  if((in->numargs > 0) && (out->numargs > 0))
+    msProjectRect(out->proj, in->proj, &searchrect); // project the search_rect to layer coordinates
+#endif
+
+  status = SE_shape_create(coordref, &shape);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_shape_create()");
+    return(MS_FAILURE);
+  }
+
+   status = SE_layerinfo_get_envelope(layerinfo, &envelope);
+  if(status != SE_SUCCESS) {
+    sde_error(status, "msSDELayerWhichShapes()", "SE_layerinfo_get_envelope()");
+    return(MS_FAILURE);
+  }
+
+#else
+  msSetError(MS_MISCERR, "SDE support is not available.", "msSDELayerWhichShapes()");
+  return(MS_FAILURE);
+#endif
+}
+
 int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
 #ifdef USE_SDE
   int i,j;
-
-  double scalefactor=1;
-  double angle, length;
-
-  SE_CONNECTION connection=0;
-  SE_STREAM stream=0;
-  SE_ERROR error;
-  long status;
-
-  SE_COORDREF coordref=NULL;
-  SE_LAYERINFO layerinfo;
-
-  SE_ENVELOPE rect;
-  SE_SHAPE filtershape=0, shape=0, clippedshape=0;
-  short shape_is_null;
-
-  SE_SQL_CONSTRUCT *sql;
-  SE_FILTER filter;
 
   SE_COLUMN_DEF annotation_def;
   short annotate=MS_TRUE;
@@ -213,97 +265,6 @@ int msDrawSDELayer(mapObj *map, layerObj *layer, gdImagePtr img) {
   
   char **params;
   int numparams;
-
-  shapeObj transformedshape={0,NULL,{-1,-1,-1,-1},MS_NULL};
-  pointObj annopnt, *pnt;
-
-  featureListNodeObjPtr shpcache=NULL, current=NULL;           
-
-  if((layer->status != MS_ON) && (layer->status != MS_DEFAULT))
-    return(0);
-
-  if(map->scale > 0) {
-    if((layer->maxscale > 0) && (map->scale > layer->maxscale))
-      return(0);
-    if((layer->minscale > 0) && (map->scale <= layer->minscale))
-      return(0);
-    if((layer->labelmaxscale != -1) && (map->scale >= layer->labelmaxscale))
-      annotate = MS_FALSE;
-    if((layer->labelminscale != -1) && (map->scale < layer->labelminscale))
-      annotate = MS_FALSE;
-  }
-
-  if(layer->symbolscale > 0) scalefactor = layer->symbolscale/map->scale;
-
-  for(i=0; i<layer->numclasses; i++) {
-    layer->class[i].sizescaled = MS_NINT(layer->class[i].size * scalefactor);
-    layer->class[i].sizescaled = MS_MAX(layer->class[i].sizescaled, layer->class[i].minsize);
-    layer->class[i].sizescaled = MS_MIN(layer->class[i].sizescaled, layer->class[i].maxsize);
-    layer->class[i].overlaysizescaled = layer->class[i].sizescaled - (layer->class[i].size - layer->class[i].overlaysize);
-    // layer->class[i].overlaysizescaled = MS_NINT(layer->class[i].overlaysize * scalefactor);
-    layer->class[i].overlaysizescaled = MS_MAX(layer->class[i].overlaysizescaled, layer->class[i].overlayminsize);
-    layer->class[i].overlaysizescaled = MS_MIN(layer->class[i].overlaysizescaled, layer->class[i].overlaymaxsize);
-#ifdef USE_TTF
-    if(layer->class[i].label.type == MS_TRUETYPE) { 
-      layer->class[i].label.sizescaled = MS_NINT(layer->class[i].label.size * scalefactor);
-      layer->class[i].label.sizescaled = MS_MAX(layer->class[i].label.sizescaled, layer->class[i].label.minsize);
-      layer->class[i].label.sizescaled = MS_MIN(layer->class[i].label.sizescaled, layer->class[i].label.maxsize);
-    }
-#endif
-  }
-
-  params = split(layer->connection, ',', &numparams);
-  if(!params) {
-    msSetError(MS_MEMERR, "Error spliting SDE connection information.", "msDrawSDELayer()");
-    return(-1);
-  }
-
-  if(numparams < 5) {
-    msSetError(MS_SDEERR, "Not enough SDE connection parameters specified.", "msDrawSDELayer()");
-    return(-1);
-  }
-
-  status = SE_connection_create(params[0], params[1], params[2], params[3], params[4], &error, &connection);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_connection_create()");
-    return(-1);
-  }
-
-  msFreeCharArray(params, numparams);
-
-  /*
-  ** Get some basic information about the layer (error checking)
-  */
-  SE_layerinfo_create(NULL, &layerinfo);
-
-  params = split(layer->data, ',', &numparams);
-  if(!params) {
-    msSetError(MS_MEMERR, "Error spliting SDE layer information.", "msDrawSDELayer()");
-    return(-1);
-  }
-
-  if(numparams < 2) {
-    msSetError(MS_SDEERR, "Not enough SDE layer parameters specified.", "msDrawSDELayer()");
-    return(-1);
-  }
-
-  status = SE_layer_get_info(connection, params[0], params[1], layerinfo);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_layer_get_info()");
-    return(-1);
-  }
-
-  SE_coordref_create(&coordref);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_coordref_create()");
-    return(-1);
-  }
-
-  status = SE_layerinfo_get_coordref(layerinfo, coordref);
-  if(status != SE_SUCCESS) {
-    sde_error(status, "msDrawSDELayer()", "SE_layerinfo_get_coordref()");
-    return(-1);
-  }
 
   status = SE_layerinfo_get_envelope(layerinfo, &rect);
   if(status != SE_SUCCESS) {
