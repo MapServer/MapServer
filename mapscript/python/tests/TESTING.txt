@@ -18,10 +18,3 @@ you are using TrueType fonts, make the necessary edits to the fontset
 file.  If you are not using TrueType fonts, simply ignore the several
 resulting test failures.
 
-The testMapScriptCloning.py script is used only to test the clone
-method of mapObj and is not needed for normal testing or use.
-
-In MapServer 4.1+ the tests require Python2.3, specifically the 
-assertAlmostEqual method unavailable in Python 2.2.3 and lower which is
-used to test float values.
-

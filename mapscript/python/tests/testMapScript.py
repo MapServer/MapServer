@@ -42,17 +42,15 @@ if 'mapObj' not in dir(mapscript):
 
 # Base class for Primitives Tests -- no actual tests in this class
 
-class MapServerTestCase(unittest.TestCase):
+class MapscriptTestCase(unittest.TestCase):
 
-    def assertAlmostEqual(first, second, places=7):
-        if hasattr(unittest.TestCase, 'assertAlmostEqual'):
-            unittest.TestCase.assertAlmostEqual(first, second, places)
-        else:
-            if round(second-first, places) != 0:
-                raise AssertionError, \
-                    '%s != %s within %s places' % (`first`, `second`, `places`)
+    def assertAlmostEqual(self, first, second, places=7):
+        """Copied from unittest for use with Python 2.1 or 2.2"""
+        if round(second-first, places) != 0:
+            raise AssertionError, \
+                '%s != %s within %s places' % (`first`, `second`, `places`)
         
-class MapPrimitivesTestCase(MapServerTestCase):
+class MapPrimitivesTestCase(MapscriptTestCase):
     """Base class for testing primitives (points, lines, shapes)
     in stand-alone mode"""
 
@@ -120,7 +118,7 @@ class MapPrimitivesTestCase(MapServerTestCase):
         self.assertAlmostEqual(first.maxx, second.maxx)
         self.assertAlmostEqual(first.maxy, second.maxy)
 
-class MapTestCase(MapServerTestCase):
+class MapTestCase(MapscriptTestCase):
     """Base class for testing with a map fixture"""
     def setUp(self):
         self.mapobj1 = mapscript.mapObj(testMapfile)
@@ -708,7 +706,7 @@ class ShapePointTestCase(ShapeObjTestCase):
 
 # pointObj constructor tests
 
-class PointObjTestCase(unittest.TestCase):
+class PointObjTestCase(MapscriptTestCase):
     def testPointObjConstructorNoArgs(self):
         p = mapscript.pointObj()
         self.assertAlmostEqual(p.x, 0.0)
