@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.39  2003/02/24 21:22:52  frank
+ * Restructured the source window quite a bit so that input images with a rotated
+ * (or sheared) geotransform would work properly.  Pass RAW_WINDOW to draw func.
+ *
  * Revision 1.38  2003/01/21 04:25:44  frank
  * moved InvGeoTransform to top to predeclare
  *
@@ -802,13 +806,14 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
     int		nSrcXSize, nSrcYSize, nDstXSize, nDstYSize;
     int		result, bSuccess;
     double	adfSrcGeoTransform[6], adfDstGeoTransform[6];
-    double      adfInvSrcGeoTransform[6];
+    double      adfInvSrcGeoTransform[6], dfNominalCellSize;
     rectObj	sSrcExtent;
     mapObj	sDummyMap;
     imageObj   *srcImage;
     void	*pTCBData;
     void	*pACBData;
     int         anCMap[256];
+    char       **papszAlteredProcessing = NULL;
 
 /* -------------------------------------------------------------------- */
 /*      We will require source and destination to have a valid          */
@@ -907,31 +912,42 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      at near to full resolution.  Otherwise we will read the data    */
 /*      at twice the resolution of the eventual map.                    */
 /* -------------------------------------------------------------------- */
+    dfNominalCellSize = 
+        sqrt(adfSrcGeoTransform[1] * adfSrcGeoTransform[1]
+             + adfSrcGeoTransform[2] * adfSrcGeoTransform[2]);
     
     if( (sSrcExtent.maxx - sSrcExtent.minx) > RES_RATIO * nDstXSize )
         sDummyMap.cellsize = 
-            (adfSrcGeoTransform[1] * (sSrcExtent.maxx - sSrcExtent.minx))
+            (dfNominalCellSize * (sSrcExtent.maxx - sSrcExtent.minx))
             / (RES_RATIO * nDstXSize);
     else
-        sDummyMap.cellsize = adfSrcGeoTransform[1];
+        sDummyMap.cellsize = dfNominalCellSize;
 
     if( layer->debug )
         msDebug( "msResampleGDALToMap in effect: cellsize = %f\n", 
                  sDummyMap.cellsize );
 
-    sDummyMap.extent.minx = adfSrcGeoTransform[0]
-        + sSrcExtent.minx * adfSrcGeoTransform[1]
-        + sSrcExtent.maxy * adfSrcGeoTransform[2];
-    sDummyMap.extent.maxx = adfSrcGeoTransform[0]
-        + sSrcExtent.maxx * adfSrcGeoTransform[1]
-        + sSrcExtent.miny * adfSrcGeoTransform[2];
-    sDummyMap.extent.miny = adfSrcGeoTransform[3]
-        + sSrcExtent.minx * adfSrcGeoTransform[4]
-        + sSrcExtent.maxy * adfSrcGeoTransform[5];
-    sDummyMap.extent.maxy = adfSrcGeoTransform[3]
-        + sSrcExtent.maxx * adfSrcGeoTransform[4]
-        + sSrcExtent.miny * adfSrcGeoTransform[5];
+    adfSrcGeoTransform[0] += 
+            + adfSrcGeoTransform[1] * sSrcExtent.minx
+            + adfSrcGeoTransform[2] * sSrcExtent.miny;
+    adfSrcGeoTransform[1] *= (sDummyMap.cellsize / dfNominalCellSize);
+    adfSrcGeoTransform[2] *= (sDummyMap.cellsize / dfNominalCellSize);
 
+    adfSrcGeoTransform[3] += 
+            + adfSrcGeoTransform[4] * sSrcExtent.minx
+            + adfSrcGeoTransform[5] * sSrcExtent.miny;
+    adfSrcGeoTransform[4] *= (sDummyMap.cellsize / dfNominalCellSize);
+    adfSrcGeoTransform[5] *= (sDummyMap.cellsize / dfNominalCellSize);
+
+    papszAlteredProcessing = CSLDuplicate( layer->processing );
+    papszAlteredProcessing = 
+        CSLSetNameValue( papszAlteredProcessing, "RAW_WINDOW", 
+                      CPLSPrintf( "%d %d %d %d", 
+                                  (int) sSrcExtent.minx,
+                                  (int) sSrcExtent.miny, 
+                                  (int) (sSrcExtent.maxx - sSrcExtent.minx),
+                                  (int) (sSrcExtent.maxy - sSrcExtent.miny) ));
+    
 /* -------------------------------------------------------------------- */
 /*      We clone this without referencing it knowing that the           */
 /*      srcImage will take a reference on it.  The sDummyMap is         */
@@ -979,12 +995,9 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      Setup a dummy map object we can use to read from the source     */
 /*      raster, with the newly established extents, and resolution.     */
 /* -------------------------------------------------------------------- */
-    srcImage = msImageCreate( 
-        (int) ((sDummyMap.extent.maxx - 
-                sDummyMap.extent.minx)/sDummyMap.cellsize+0.01), 
-        (int) ((sDummyMap.extent.maxy - 
-                sDummyMap.extent.miny)/sDummyMap.cellsize+0.01),
-        sDummyMap.outputformat, NULL, NULL );
+    srcImage = msImageCreate( sSrcExtent.maxx - sSrcExtent.minx,
+                              sSrcExtent.maxy - sSrcExtent.miny,
+                              sDummyMap.outputformat, NULL, NULL );
 
     if (srcImage == NULL)
         return -1; /* msSetError() should have been called already */
@@ -997,13 +1010,24 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
         msImageInitGD( srcImage, &(sDummyMap.imagecolor) );
 
 /* -------------------------------------------------------------------- */
-/*      Draw into the temporary image.                                  */
+/*      Draw into the temporary image.  Temporarily replace the         */
+/*      layer processing directive so that we use our RAW_WINDOW.       */
 /* -------------------------------------------------------------------- */
-    result = msDrawRasterLayerGDAL( &sDummyMap, layer, srcImage, hDS );
-    if( result )
     {
-        msFreeImage( srcImage );
-        return result;
+        char **papszSavedProcessing = layer->processing;
+
+        layer->processing = papszAlteredProcessing;
+
+        result = msDrawRasterLayerGDAL( &sDummyMap, layer, srcImage, hDS );
+
+        layer->processing = papszSavedProcessing;
+        CSLDestroy( papszAlteredProcessing );
+
+        if( result )
+        {
+            msFreeImage( srcImage );
+            return result;
+        }
     }
 
 /* -------------------------------------------------------------------- */
@@ -1034,13 +1058,6 @@ int msResampleGDALToMap( mapObj *map, layerObj *layer, imageObj *image,
 /*      Setup transformations between our source image, and the         */
 /*      target map image.                                               */
 /* -------------------------------------------------------------------- */
-    adfSrcGeoTransform[0] = sDummyMap.extent.minx;
-    adfSrcGeoTransform[1] = sDummyMap.cellsize;
-    adfSrcGeoTransform[2] = 0.0;
-    adfSrcGeoTransform[3] = sDummyMap.extent.maxy;
-    adfSrcGeoTransform[4] = 0.0;
-    adfSrcGeoTransform[5] = -sDummyMap.cellsize;
-
     pTCBData = msInitProjTransformer( &(layer->projection), 
                                       adfSrcGeoTransform, 
                                       &(map->projection), 
