@@ -912,7 +912,14 @@ int msDrawLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   if(status != MS_SUCCESS) return(MS_FAILURE);
 
   // identify target shapes
-  searchrect = map->extent;
+  if(layer->transform == MS_TRUE)
+    searchrect = map->extent;
+  else {
+    searchrect.minx = searchrect.miny = 0;
+    searchrect.maxx = map->width-1;
+    searchrect.maxy = map->height-1;
+  }
+
 #ifdef USE_PROJ
   if((map->projection.numargs > 0) && (layer->projection.numargs > 0))
     msProjectRect(&map->projection, &layer->projection, &searchrect); // project the searchrect to source coords
