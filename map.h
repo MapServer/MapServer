@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.377  2004/11/17 23:53:07  assefa
+ * Advertize only gd and gdal formats for wms capabilities (Bug 455).
+ *
  * Revision 1.376  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -1655,6 +1658,7 @@ MS_DLL_EXPORT int msPostMapParseOutputFormatSetup( mapObj *map );
 MS_DLL_EXPORT void msSetOutputFormatOption( outputFormatObj *format, const char *key, const char *value );
 MS_DLL_EXPORT void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime );
 MS_DLL_EXPORT void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime );
+MS_DLL_EXPORT void msGetOutputFormatMimeListRaster( mapObj *map, char **mime_list, int max_mime );
 MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
 MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format );
 

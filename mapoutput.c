@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/11/17 23:53:07  assefa
+ * Advertize only gd and gdal formats for wms capabilities (Bug 455).
+ *
  * Revision 1.27  2004/11/05 23:04:50  assefa
  * Change a bit test in function msGetOutputFormatMimeListGD.
  *
@@ -873,6 +876,35 @@ void msGetOutputFormatMimeListGD( mapObj *map, char **mime_list, int max_mime )
         mime_list[mime_count] = NULL;
 }
 
+
+void msGetOutputFormatMimeListRaster( mapObj *map, char **mime_list, int max_mime )
+
+{
+    int mime_count = 0, i;
+
+    for( i = 0; i < map->numoutputformats && mime_count < max_mime; i++ )
+    {
+        int  j;
+        
+        if( map->outputformatlist[i]->mimetype == NULL )
+            continue;
+
+        for( j = 0; j < mime_count; j++ )
+        {
+            if( strcasecmp(mime_list[j],
+                           map->outputformatlist[i]->mimetype) == 0 )
+                break;
+        }
+
+        if( j == mime_count && map->outputformatlist[i]->driver &&
+            (strncasecmp(map->outputformatlist[i]->driver, "GD/", 3)==0 ||
+             strncasecmp(map->outputformatlist[i]->driver, "GDAL/", 5)==0))
+            mime_list[mime_count++] = map->outputformatlist[i]->mimetype;
+    }
+
+    if( mime_count < max_mime )
+        mime_list[mime_count] = NULL;
+}
 
 /************************************************************************/
 /*                       msOutputFormatValidate()                       */

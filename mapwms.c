@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.154  2004/11/17 23:53:07  assefa
+ * Advertize only gd and gdal formats for wms capabilities (Bug 455).
+ *
  * Revision 1.153  2004/11/17 17:29:18  dan
  * Fixed GetLegendGraphic in WMS Capabilities that were missing the '?'
  * or '&' separator if it was not included in wms_onlineresource (bug 1065)
@@ -722,8 +725,11 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
 
       format = msSelectOutputFormat( map, values[i] );
 
-      if( format == NULL ) {
-        msSetError(MS_IMGERR,
+      if( format == NULL || 
+          (strncasecmp(format->driver, "GD/", 3) != 0 &&
+           strncasecmp(format->driver, "GDAL/", 4) != 0))
+        {
+          msSetError(MS_IMGERR,
                    "Unsupported output format (%s).",
                    "msWMSLoadGetMapParams()",
                    values[i] );
@@ -1765,7 +1771,7 @@ int msWMSGetCapabilities(mapObj *map, int nVersion, cgiRequestObj *req)
                     "application/vnd.ogc.wms_xml",
                     NULL);
 
-    msGetOutputFormatMimeList(map,mime_list,sizeof(mime_list)/sizeof(char*));
+    msGetOutputFormatMimeListRaster(map,mime_list,sizeof(mime_list)/sizeof(char*));
     msWMSPrintRequestCap(nVersion, "GetMap", script_url_encoded,
                     mime_list[0], mime_list[1], mime_list[2], mime_list[3],
                     mime_list[4], mime_list[5], mime_list[6], mime_list[7],
