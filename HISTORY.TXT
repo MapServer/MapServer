@@ -12,6 +12,12 @@ the CVS logs is updated daily at the following URL:
 
   http://maptools.org/dl/mapserver_Changelog.txt
 
+Version 4.2.5 (2004-10-19)
+--------------------------
+
+- Repaired logical expression evaluation broken during work on bug 339
+  (bug 974).
+
 Version 4.2.4 (2004-10-10)
 --------------------------
 
