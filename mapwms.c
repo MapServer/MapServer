@@ -367,7 +367,7 @@ int msWMSLoadGetMapParams(mapObj *map, int nVersion,
      Validate first against epsg in the map and if no matching srs is found
      validate all layers requested.*/
 #ifdef OGC_STRICT_MODE
-  if (epsgbuf)
+  if (epsgbuf && strlen(epsgbuf) > 1)
   {
       epsgvalid = MS_FALSE;
       projstring = msGetEPSGProj(&(map->projection), &(map->web.metadata), 
