@@ -27,13 +27,20 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/22 18:33:37  dan
+ * Fixes to build without USE_GEOS
+ *
  * Revision 1.3  2005/02/22 07:40:27  sdlime
- * A bunch of updates to GEOS integration. Can move many primatives between MapServer and GEOS, still need to do collections (e.g. multi-point/line/polygon). Added buffer method to mapscript (mapscript/shape.i).
+ * A bunch of updates to GEOS integration. Can move many primatives between
+ * MapServer and GEOS, still need to do collections (e.g. multi-point/line/polygon).
+ * Added buffer method to mapscript (mapscript/shape.i).
  *
  * Revision 1.2  2004/10/28 02:23:35  frank
  * added standard header
  *
  */
+
+#include "map.h"
 
 #ifdef USE_GEOS
 #include <string>
@@ -41,7 +48,6 @@
 #include <fstream>
 
 #include "geos.h"
-#include "map.h"
 
 MS_CVSID("$Id$")
 
@@ -350,7 +356,7 @@ shapeObj *msGEOSBuffer(shapeObj *shape, double width)
     return NULL;
   }
 #else
-  msSetError(MS_GEOSERR, "GEOS support is not available.", msGEOSBuffer());
+  msSetError(MS_GEOSERR, "GEOS support is not available.", "msGEOSBuffer()");
   return NULL;
 #endif
 }
