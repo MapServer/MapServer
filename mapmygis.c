@@ -71,7 +71,7 @@ char *DATAERRORMESSAGE(char *dataString, char *preamble)
 		sprintf(tmp,"NOTE: for (2) 'using unique' and 'SRID=' are optional, but its highly recommended that you use them!!! <br><br>\n<br>\n");
 		strcat(message,tmp);
 
-		sprintf(tmp,"The most common problem with (1) is incorrectly uploading your data.  There must be an entry in the geometry_columns table.  This will be automatically done if you used the shp2pgsql program or created your geometry column with the AddGeometryColumn() MYGIS function. <br><br>\n<br>\n");
+		sprintf(tmp,"The most common problem with (1) is incorrectly uploading your data.  There must be an entry in the geometry_columns table.  This will be automatically done if you used the shp2mysql program or created your geometry column with the AddGeometryColumn() MYGIS function. <br><br>\n<br>\n");
 		strcat(message,tmp);
 
 		sprintf(tmp,"Another important thing to check is that the MYGIS user specified in the CONNECTION string does have SELECT permissions on the table(s) specified in your DATA string. <br><br>\n<br>\n");
@@ -229,16 +229,16 @@ int query(msMYGISLayerInfo *layer, char qbuf[]){
 if (SHOWQUERY || MYDEBUG) printf("%s<BR>\n", qbuf);
     if (mysql_query(layer->conn,qbuf) < 0){
       mysql_close(layer->conn);
-	msSetError(MS_QUERYERR, "bad mysql query",
-           "query()");
+	msSetError(MS_QUERYERR, " bad mysql query ",
+           qbuf);
 //printf("mysql query FAILED real bad...<br>\n");
         return MS_FAILURE;
     }
     if (!(layer->query_result=mysql_store_result(layer->conn)))    {
       mysql_close(layer->conn);
 //printf("mysql query FAILED...<br>\n");
-	msSetError(MS_QUERYERR, "mysql query failed",
-           "query()");
+	msSetError(MS_QUERYERR, " mysql query failed ",
+           qbuf);
         return MS_FAILURE;
     }
    layer->query = strdup(qbuf);
@@ -320,7 +320,6 @@ if (MYDEBUG)printf("New connection<BR>\n");
             return(MS_FAILURE);
         }
 	wkbdata = 1;
-if (MYDEBUG) printf("Parsing DB params...");
 	delim = strdup(":");
 	DB_HOST = strdup(strtok(layer->connection, delim));
 	DB_USER = strdup(strtok(NULL, delim));
@@ -340,7 +339,6 @@ if (MYDEBUG) printf("Parsing DB params...");
 		strcpy(DB_PASSWD, "");
 
 
-if (MYDEBUG)printf("msMYGISLayerOpen1 called<br>\n");
     if (!(layerinfo->conn = mysql_connect(&(layerinfo->mysql),DB_HOST,DB_USER,DB_PASSWD)))
     {
 //	  printf("Connection SQL server failed.");
@@ -1341,12 +1339,12 @@ int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record)
 if (MYDEBUG)					printf("%s<BR>\n", tmpstr);
 					    if (mysql_query(layerinfo->conn,tmpstr) < 0){
 					      mysql_close(layerinfo->conn);
-					printf("mysql query FAILED real bad...<br>\n");
+					printf("mysql query FAILED real bad...<br>\n%s\n",tmpstr);
 						return MS_FAILURE;
 					    }
 					    if (!(layerinfo->query2_result=mysql_store_result(layerinfo->conn)))    {
 					      mysql_close(layerinfo->conn);
-					printf("mysql query FAILED...<br>\n");
+					printf("mysql query FAILED...<br>\n%s\n",tmpstr);
 						return MS_FAILURE;
 					    }
 					   layerinfo->query2 = strdup(tmpstr);
