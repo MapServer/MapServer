@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.12  2002/11/07 21:50:19  julien
+ * Set the layer type to RASTER
+ *
  * Revision 1.11  2002/11/07 21:16:45  julien
  * Fix warning in ContactInfo
  *
@@ -438,6 +441,7 @@ int msLoadMapContext(mapObj *map, char *filename)
               layer = &(map->layers[map->numlayers]);
               initLayer(layer, map);
               layer->map = (mapObj *)map;
+              layer->type = MS_LAYER_RASTER;
               /* save the index */
               map->layers[map->numlayers].index = map->numlayers;
               map->layerorder[map->numlayers] = map->numlayers;
