@@ -20,10 +20,12 @@
 
 %extend pointObj {
 
-    %newobject __str__;
-    char *__str__() {
-        return pointObj_toString( self );
-    }
+%pythoncode {
+
+    def __str__(self):
+        return self.toString()
+
+}
     
 }
 
@@ -34,17 +36,12 @@
    
 %extend rectObj {
 
-    %newobject __str__;
-    char *__str__() {
-        char buffer[256];
-        char fmt[]="{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }";
-        msRectToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
-        return strdup(buffer);
-    }
-   
 // Extensions in Python
 %pythoncode {
 
+    def __str__(self):
+        return self.toString()
+        
     def __contains__(self, item):
         item_type = str(type(item))
         if item_type == "<class 'mapscript.pointObj'>":

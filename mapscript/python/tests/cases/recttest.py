@@ -90,9 +90,9 @@ class RectObjTestCase(MapPrimitivesTestCase):
 
     def testRect__str__(self):
         """__str__ returns properly formatted string"""
-        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
+        r = mapscript.rectObj(-1.0, -2.0, 3.0001, 4.0)
         r_str = str(r)
-        assert r_str == "{ 'minx': -1.000000 , 'miny': -2.000000 , 'maxx': 3.000000 , 'maxy': 4.000000 }", r_str
+        assert r_str == "{ 'minx': -1 , 'miny': -2 , 'maxx': 3.0001 , 'maxy': 4 }", r_str
         r2 = eval(r_str)
         self.assertAlmostEqual(r2['minx'], r.minx)
         self.assertAlmostEqual(r2['miny'], r.miny)
@@ -101,9 +101,9 @@ class RectObjTestCase(MapPrimitivesTestCase):
 
     def testRectToString(self):
         """return properly formatted string"""
-        r = mapscript.rectObj(-1.0, -2.0, 3.0, 4.0)
+        r = mapscript.rectObj(-1.0, -2.0, 3.0001, 4.0)
         r_str = r.toString()
-        assert r_str == "{ 'minx': -1.000000 , 'miny': -2.000000 , 'maxx': 3.000000 , 'maxy': 4.000000 }", r_str
+        assert r_str == "{ 'minx': -1 , 'miny': -2 , 'maxx': 3.0001 , 'maxy': 4 }", r_str
 
     def testRectContainsPoint(self):
         """point is contained (spatially) in rectangle"""

@@ -106,7 +106,7 @@
     char *toString()
     {
         char buffer[256];
-        char fmt[]="{ 'minx': %f , 'miny': %f , 'maxx': %f , 'maxy': %f }";
+        char fmt[]="{ 'minx': %.16g , 'miny': %.16g , 'maxx': %.16g , 'maxy': %.16g }";
         msRectToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
         return strdup(buffer);
     }
