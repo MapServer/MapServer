@@ -57,7 +57,7 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-ogr[=DIR]        Include OGR support (DIR is OGR's install dir)."
 ac_help="$ac_help
-  --with-gdal[=DIR]       Include GDAL support (DIR is path to gdal-config"
+  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config"
 ac_help="$ac_help
   --with-postgis[=ARG]    Include PostGIS Support (ARG=yes/path to pg_config)"
 ac_help="$ac_help

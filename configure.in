@@ -1034,7 +1034,7 @@ dnl ---------------------------------------------------------------------
 AC_MSG_CHECKING(if GDAL support requested)
 
 AC_ARG_WITH(gdal,
-[  --with-gdal[=DIR]       Include GDAL support (DIR is path to gdal-config],,)
+[  --with-gdal[=PATH]      Include GDAL support (PATH is path to gdal-config],,)
 
 if test "$with_gdal" = "yes" ; then
 
