@@ -171,7 +171,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType,
       img = msDrawQueryMap(msObj->Map);
       if(!img) return MS_FAILURE;
 
-      sprintf(buffer, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+      snprintf(buffer, 1024, "%s%s%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
 
       status = msSaveImage(msObj->Map, img, buffer);
       if(status != MS_SUCCESS) return status;
@@ -182,7 +182,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType,
       {
          img = msDrawLegend(msObj->Map);
          if(!img) return MS_FAILURE;
-         sprintf(buffer, "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         snprintf(buffer, 1024, "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
          status = msSaveImage(NULL, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
@@ -192,7 +192,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType,
       {
          img = msDrawScalebar(msObj->Map);
          if(!img) return MS_FAILURE;
-         sprintf(buffer, "%s%ssb%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         snprintf(buffer, 1024, "%s%ssb%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
          status = msSaveImage( NULL, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
@@ -202,7 +202,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType,
       {
          img = msDrawReferenceMap(msObj->Map);
          if(!img) return MS_FAILURE;
-         sprintf(buffer, "%s%sref%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+         snprintf(buffer, 1024, "%s%sref%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
          status = msSaveImage(NULL, img, buffer);
          if(status != MS_SUCCESS) return status;
          msFreeImage(img);
@@ -882,7 +882,7 @@ int processMetadata(char** pszInstr, hashTableObj ht)
 int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char* pszPrefix)
 {
    int nWidth, nHeight, nLen;
-   char pszImgFname[1024], *pszFullImgFname=NULL, *pszImgTag;
+   char szImgFname[1024], *pszFullImgFname=NULL, *pszImgTag;
    char szPath[MS_MAXPATHLEN];
    hashTableObj myHashTable=NULL;
    FILE *fIcon;
@@ -912,10 +912,10 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
          nHeight = atoi(msLookupHashTable(myHashTable, "height"));
       }
 
-      sprintf(pszImgFname, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->outputformat),'\0');
+      snprintf(szImgFname, 1024, "%s_%d_%d_%d_%d.%s%c", pszPrefix, nIdxLayer, nIdxClass, nWidth, nHeight, MS_IMAGE_EXTENSION(map->outputformat),'\0');
 
       pszFullImgFname = strdup(msBuildPath3(szPath, map->mappath, 
-                                            map->web.imagepath, pszImgFname));
+                                            map->web.imagepath, szImgFname));
       
       // check if icon already exist in cache
       if ((fIcon = fopen(pszFullImgFname, "r+")) != NULL)
@@ -984,9 +984,9 @@ int processIcon(mapObj *map, int nIdxLayer, int nIdxClass, char** pszInstr, char
             
          pszTag[nLen] = '\0';
 
-         pszFullImgFname = (char*)malloc(strlen(map->web.imageurl) + strlen(pszImgFname) + 1);
+         pszFullImgFname = (char*)malloc(strlen(map->web.imageurl) + strlen(szImgFname) + 1);
          strcpy(pszFullImgFname, map->web.imageurl);
-         strcat(pszFullImgFname, pszImgFname);
+         strcat(pszFullImgFname, szImgFname);
 
          *pszInstr = gsub(*pszInstr, pszTag, pszFullImgFname);
 
@@ -1119,8 +1119,8 @@ int generateGroupTemplate(char* pszGroupTemplate, mapObj *map, char* pszGroupNam
 int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, hashTableObj oLayerArgs, char **pszTemp, char* pszPrefix)
 {
    hashTableObj myHashTable;
-   char pszStatus[3];
-   char pszType[3];
+   char szStatus[10];
+   char szType[10];
    
    int nOptFlag=0;
    char *pszOptFlag = NULL;
@@ -1191,11 +1191,11 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
    /*
     * for now, only status and type is required by template
     */
-   sprintf(pszStatus, "%d", map->layers[nIdxLayer].status);
-   msInsertHashTable(myHashTable, "layer_status", pszStatus);
+   sprintf(szStatus, "%d", map->layers[nIdxLayer].status);
+   msInsertHashTable(myHashTable, "layer_status", szStatus);
 
-   sprintf(pszType, "%d", map->layers[nIdxLayer].type);
-   msInsertHashTable(myHashTable, "layer_type", pszType);
+   sprintf(szType, "%d", map->layers[nIdxLayer].type);
+   msInsertHashTable(myHashTable, "layer_type", szType);
 
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
@@ -1245,8 +1245,8 @@ int generateLayerTemplate(char *pszLayerTemplate, mapObj *map, int nIdxLayer, ha
 int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, int nIdxClass, hashTableObj oClassArgs, char **pszTemp, char* pszPrefix)
 {
    hashTableObj myHashTable;
-   char pszStatus[3];
-   char pszType[3];
+   char szStatus[10];
+   char szType[10];
    
    char *pszClassImg;
    int nOptFlag=0;
@@ -1322,11 +1322,11 @@ int generateClassTemplate(char* pszClassTemplate, mapObj *map, int nIdxLayer, in
    /*
     * for now, only status, type, name and group are  required by template
     */
-   sprintf(pszStatus, "%d", map->layers[nIdxLayer].status);
-   msInsertHashTable(myHashTable, "layer_status", pszStatus);
+   sprintf(szStatus, "%d", map->layers[nIdxLayer].status);
+   msInsertHashTable(myHashTable, "layer_status", szStatus);
 
-   sprintf(pszType, "%d", map->layers[nIdxLayer].type);
-   msInsertHashTable(myHashTable, "layer_type", pszType);   
+   sprintf(szType, "%d", map->layers[nIdxLayer].type);
+   msInsertHashTable(myHashTable, "layer_type", szType);   
    
    msInsertHashTable(myHashTable, "layer_name", map->layers[nIdxLayer].name);
    msInsertHashTable(myHashTable, "layer_group", map->layers[nIdxLayer].group);
@@ -1454,16 +1454,16 @@ char *generateLegendTemplate(mapservObj *msObj)
    {
        if (stat(pszMapFname, &tmpStat) != -1)
        {
-           char pszSize[5];
-           char pszTime[11];
-      
-           sprintf(pszSize, "%ld_", tmpStat.st_size);
-           sprintf(pszTime, "%ld", tmpStat.st_mtime);      
+           int nLen;
 
-           pszPrefix = strcatalloc(pszPrefix, msObj->Map->name);
-           pszPrefix = strcatalloc(pszPrefix, "_");
-           pszPrefix = strcatalloc(pszPrefix, pszSize);
-           pszPrefix = strcatalloc(pszPrefix, pszTime);
+           nLen = (msObj->Map->name?strlen(msObj->Map->name):0)  + 50;
+           pszPrefix = (char*)malloc((nLen+1) * sizeof(char));
+           if (pszPrefix == NULL) {
+
+           }
+           snprintf(pszPrefix, nLen, "%s_%ld_%ld", 
+                    msObj->Map->name, tmpStat.st_size, tmpStat.st_mtime);
+           pszPrefix[nLen] = '\0';
        }
    
        free(pszMapFname);
@@ -1475,9 +1475,9 @@ char *generateLegendTemplate(mapservObj *msObj)
 /*      map file name may not be avaible when the template functions    */
 /*      are called from mapscript. Use the time stamp as prefix.        */
 /* -------------------------------------------------------------------- */
-       char pszTime[11];
+       char pszTime[20];
        
-       sprintf(pszTime, "%ld", (long)time(NULL));      
+       snprintf(pszTime, 20, "%ld", (long)time(NULL));      
        pszPrefix = strcatalloc(pszPrefix, pszTime);
    }
 
@@ -1933,8 +1933,8 @@ char *processOneToManyJoin(mapservObj* msObj, joinObj *join)
 char *processLine(mapservObj* msObj, char* instr, int mode)
 {
   int i, j;
-  //char repstr[1024], substr[1024], *outstr; // repstr = replace string, substr = sub string
-  char repstr[5120], substr[5120], *outstr;
+#define PROCESSLINE_BUFLEN 5120
+  char repstr[PROCESSLINE_BUFLEN], substr[PROCESSLINE_BUFLEN], *outstr; // repstr = replace string, substr = sub string
   struct hashObj *tp=NULL;
   char *encodedstr;
    
@@ -1947,9 +1947,9 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   outstr = gsub(outstr, "[version]",  msGetVersion());
 
-  sprintf(repstr, "%s%s%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
   outstr = gsub(outstr, "[img]", repstr);
-  sprintf(repstr, "%s%sref%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sref%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
   outstr = gsub(outstr, "[ref]", repstr);
   
   if (strstr(outstr, "[legend]")) {
@@ -1967,40 +1967,40 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
           return NULL;
      }
      else { // if not display gif image with all legend icon
-        sprintf(repstr, "%s%sleg%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+        snprintf(repstr, PROCESSLINE_BUFLEN, "%s%sleg%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
         outstr = gsub(outstr, "[legend]", repstr);
      }
   }
    
-  sprintf(repstr, "%s%ssb%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s%ssb%s.%s", msObj->Map->web.imageurl, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
   outstr = gsub(outstr, "[scalebar]", repstr);
 
   if(msObj->SaveQuery) {
-    sprintf(repstr, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);
+    snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_QUERY_EXTENSION);
     outstr = gsub(outstr, "[queryfile]", repstr);
   }
   
   if(msObj->SaveMap) {
-    sprintf(repstr, "%s%s%s.map", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id);
+    snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s%s.map", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id);
     outstr = gsub(outstr, "[map]", repstr);
   }
 
-  sprintf(repstr, "%s", getenv("HTTP_HOST")); 
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("HTTP_HOST")); 
   outstr = gsub(outstr, "[host]", repstr);
-  sprintf(repstr, "%s", getenv("SERVER_PORT"));
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s", getenv("SERVER_PORT"));
   outstr = gsub(outstr, "[port]", repstr);
   
-  sprintf(repstr, "%s", msObj->Id);
+  snprintf(repstr, PROCESSLINE_BUFLEN, "%s", msObj->Id);
   outstr = gsub(outstr, "[id]", repstr);
   
   strcpy(repstr, ""); // Layer list for a "GET" request (obsolete, use [layers_esc] instead)
   for(i=0;i<msObj->NumLayers;i++)    
-    sprintf(repstr, "%s&layer=%s", repstr, msObj->Layers[i]);
+    snprintf(repstr, PROCESSLINE_BUFLEN, "%s&layer=%s", repstr, msObj->Layers[i]);
   outstr = gsub(outstr, "[get_layers]", repstr);
   
   strcpy(repstr, ""); // Layer list for a "POST" request
   for(i=0;i<msObj->NumLayers;i++)
-    sprintf(repstr, "%s%s ", repstr, msObj->Layers[i]);
+    snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s ", repstr, msObj->Layers[i]);
   trimBlanks(repstr);
   outstr = gsub(outstr, "[layers]", repstr);
 
@@ -2010,7 +2010,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
 
   strcpy(repstr, ""); // list of ALL layers that can be toggled
   for(i=0;i<msObj->Map->numlayers;i++)
-    if(msObj->Map->layers[i].status != MS_DEFAULT) sprintf(repstr, "%s%s ", repstr, msObj->Map->layers[i].name);
+    if(msObj->Map->layers[i].status != MS_DEFAULT) snprintf(repstr, PROCESSLINE_BUFLEN, "%s%s ", repstr, msObj->Map->layers[i].name);
   trimBlanks(repstr);
   outstr = gsub(outstr, "[toggle_layers]", repstr);
 
