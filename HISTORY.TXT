@@ -28,6 +28,9 @@ Version 3.6.1 (2002-06-20)
 
 - Postgis bug 165: fix dont_force() to allow for POINT shapes 
 
+- Make sure inline symbols (symbols defined in the mapfile) are saved 
+  when msSaveMap() is called.  They used to be lost.
+
 
 Version 3.6.0 (2002-05-28)
 --------------------------
