@@ -620,10 +620,10 @@ int msSDELayerGetExtent(layerObj *layer, rectObj *extent) {
     return(MS_FAILURE);
   }
   
-  rect->minx = envelope.minx;
-  rect->miny = envelope.miny;
-  rect->maxx = envelope.maxx;
-  rect->maxy = envelope.maxy;
+  extent->minx = envelope.minx;
+  extent->miny = envelope.miny;
+  extent->maxx = envelope.maxx;
+  extent->maxy = envelope.maxy;
 
   return(MS_SUCCESS);
 #else
