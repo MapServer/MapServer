@@ -95,6 +95,13 @@ int msMoveStyleDown(classObj *class, int nStyleIndex)
  */
 int msInsertStyle(classObj *class, styleObj *style, int nStyleIndex) {
     int i;
+
+    if (!style)
+    {
+        msSetError(MS_CHILDERR, "Can't insert a NULL Style", "msInsertStyle()");
+        return -1;
+    }
+
     // Possible to add another style?
     if (class->numstyles == MS_MAXSTYLES) {
         msSetError(MS_CHILDERR, "Maximum number of class styles, %d, has been reached", "insertStyle()", MS_MAXSTYLES);

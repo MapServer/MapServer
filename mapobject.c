@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.18  2004/10/12 21:43:00  sean
+ * check for NULL before inserting objects
+ *
  * Revision 1.17  2004/09/29 18:27:55  frank
  * comment formatting.
  *
@@ -446,6 +449,12 @@ int msMapRestoreRealExtent( mapObj *map )
 int msInsertLayer(mapObj *map, layerObj *layer, int nIndex) 
 {
     int i;
+
+    if (!layer)
+    {
+        msSetError(MS_CHILDERR, "Can't insert a NULL Layer", "msInsertLayer()");
+        return -1;
+    }
 
     // Possible to add another?
     if (map->numlayers == MS_MAXLAYERS) {
