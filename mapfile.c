@@ -1283,7 +1283,7 @@ static void writeLabel(labelObj *label, FILE *stream, char *tab)
     fprintf(stream, "  %sPOSITION %s\n", tab, msLabelPositions[label->position]);
   writeColor(&(label->shadowcolor), stream, "SHADOWCOLOR", tab);
   if(label->shadowsizex != 1 && label->shadowsizey != 1) fprintf(stream, "  %sSHADOWSIZE %d %d\n", tab, label->shadowsizex, label->shadowsizey);
-  if(label->wrap) fprintf(stream, "  %sWRAP %c\n", tab, label->wrap);
+  if(label->wrap) fprintf(stream, "  %sWRAP '%c'\n", tab, label->wrap);
 
   fprintf(stream, "%sEND\n", tab);  
 }
