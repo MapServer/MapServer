@@ -33,6 +33,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.45  2004/11/05 16:33:56  assefa
+ * set output to binary in saveimage (msIO_needBinaryStdout) : Bug 781.
+ *
  * Revision 1.44  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -2659,6 +2662,10 @@ int msSaveImageSWF(imageObj *image, char *filename)
     int         iSaveResult; 
     int         bFileIsTemporary = MS_FALSE;
     const char *pszExtension = NULL;
+    
+    FILE *fp; 
+    unsigned char block[4000];
+        int bytes_read;
 
     if (image && MS_DRIVER_SWF(image->format))// && filename)
     {
@@ -2704,6 +2711,26 @@ int msSaveImageSWF(imageObj *image, char *filename)
 /* -------------------------------------------------------------------- */
             if( bFileIsTemporary )
             {
+                if( msIO_needBinaryStdout() == MS_FAILURE )
+                  return MS_FAILURE;
+
+               fp = fopen( filename, "rb" );
+               if( fp == NULL )
+               {
+                   msSetError( MS_MISCERR, 
+                               "Failed to open %s for streaming to stdout.",
+                               "msSaveImageSWF()", filename );
+                   return MS_FAILURE;
+               }
+
+               while( (bytes_read = fread(block, 1, sizeof(block), fp)) > 0 )
+                 msIO_fwrite( block, 1, bytes_read, stdout );
+
+               fclose( fp );
+
+               unlink( filename );
+               free( filename );
+        /*
                 char *pszURL = (char *)malloc(sizeof(char)*(strlen(map->web.imageurl)+
                                                             strlen(filename)+
                                                             strlen(pszExtension)+2));
@@ -2715,7 +2742,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
               
                 //unlink( filename );
                 free( filename );
-                
+        */      
             }
  
             
@@ -2899,6 +2926,23 @@ int msSaveImageSWF(imageObj *image, char *filename)
   
         if( bFileIsTemporary )
         {
+          fp = fopen( filename, "rb" );
+               if( fp == NULL )
+                 {
+                   msSetError( MS_MISCERR, 
+                               "Failed to open %s for streaming to stdout.",
+                               "msSaveImageGDAL()", filename );
+                   return MS_FAILURE;
+                 }
+
+               while( (bytes_read = fread(block, 1, sizeof(block), fp)) > 0 )
+                 msIO_fwrite( block, 1, bytes_read, stdout );
+
+               fclose( fp );
+
+               //unlink( filename );
+               free( filename );
+               /*
             char *pszURL = (char *)malloc(sizeof(char)*(strlen(map->web.imageurl)+
                                                         strlen(filename)+
                                                         strlen(pszExtension)+2));
@@ -2910,6 +2954,7 @@ int msSaveImageSWF(imageObj *image, char *filename)
               
             //unlink( filename );
             free( filename );
+               */
                 
         }
         return(MS_SUCCESS);
