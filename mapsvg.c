@@ -31,6 +31,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2005/02/09 18:30:50  assefa
+ * goSVG specific metadata added.
+ *
  * Revision 1.3  2005/02/05 00:07:14  assefa
  * Add support for lables with encoding.
  *
@@ -63,8 +66,13 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
                                          char *imagepath, 
                                          char *imageurl, mapObj *map)
 {
-    double a, b , c, d, e, f;
+    double      a, b , c, d, e, f;
     imageObj    *image = NULL;
+    static char epsgCode[20] ="";
+    static char *value;
+    int         nZoomInTH, nZoomOutTH, nScrollTH;
+
+
     assert( strcasecmp(format->driver,"svg") == 0 );
     image = (imageObj *)calloc(1,sizeof(imageObj));
 
@@ -113,16 +121,20 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
     }
     
     //initialize it with the svg header
-    //TODO verify the encoding value (<?xml version="1.0" standalone="no"?>)
 
     msIO_fprintf(image->img.svg->stream, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     //TODO : seems to have a problem of dtd validation using IE (http://www.24help.info/printthread.php?t=52147)
     //msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
     msIO_fprintf(image->img.svg->stream, "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-flat.dtd\">\n");
 
-    if (strcasecmp(msGetOutputFormatOption(image->format, "USE_GEOGRAPHICAL_COORDINATES",""), 
+
+/* -------------------------------------------------------------------- */
+/*      Special output for goSVG support.                               */
+/* -------------------------------------------------------------------- */
+    if (strcasecmp(msGetOutputFormatOption(image->format, "GOSVG",""),
                    "TRUE") == 0)
     {
+        //transformation from geographical coordinates to pixel coordinates
         a = width/(map->extent.maxx-map->extent.minx);
         b = 0;
         c = 0;
@@ -130,12 +142,48 @@ MS_DLL_EXPORT imageObj *msImageCreateSVG(int width, int height,
         e = -width/(map->extent.maxx-map->extent.minx) *map->extent.minx;
         f = height/(map->extent.maxy-map->extent.miny)*map->extent.maxy;
 
-        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" transform=\"matrix(%f,%f,%f,%f,%f,%f>)\">\n", 
-                     width, height, a, b, c, d, e, f);
+        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns:au=\"http://www.svgmovile.jp/2004/kddip\"  au:boundingBox=\"0 0 %d %d\">\n",  width, height, width, height);   
+        msIO_fprintf(image->img.svg->stream, "<title>%s</title>\n", map->name);
+        msIO_fprintf(image->img.svg->stream, "<metadata> \n");
+        msIO_fprintf(image->img.svg->stream,"<rdf:RDF xmlns:rdf = \"http://www.w3.org/1999/02/22-rdf-syntax-ns#\" \n");
+        msIO_fprintf(image->img.svg->stream, "xmlns:crs = \"http://www.ogc.org/crs\" xmlns:svg=\"http://wwww.w3.org/2000/svg\"> \n");
+        msIO_fprintf(image->img.svg->stream, "<rdf:Description> \n");
+        msIO_fprintf(image->img.svg->stream, "<crs:CoordinateReferenceSystem svg:transform=\"matrix(%f,%f,%f,%f,%f,%f)\" \n", a, b, c, d, e, f);
+        
+        //get epsg code: TODO : test what if espg code is not set ?
+        if (map->projection.numargs > 0 && 
+            (value = strstr(map->projection.args[0], "init=epsg:")) != NULL && 
+            strlen(value) < 20) 
+        {
+            sprintf(epsgCode, "%s", value+10);
+            msIO_fprintf(image->img.svg->stream, "rdf:resource=\"http://www.opengis.net/gml/srs/epsg.xml#%s\"/> \n",epsgCode);
+        }
+            
+        msIO_fprintf(image->img.svg->stream, "</rdf:Description> \n </rdf:RDF> \n"); 
+        
+        nZoomInTH = 70;
+        nZoomOutTH = 100;
+        nScrollTH = 10;
+        
+        nZoomInTH = atoi(msGetOutputFormatOption(image->format, "GOSVG_ZoomInTH","70"));
+        nZoomOutTH = atoi(msGetOutputFormatOption(image->format, "GOSVG_ZoomOutTH","100"));
+        nScrollTH = atoi(msGetOutputFormatOption(image->format, "GOSVG_ScrollTH","10"));
+
+        msIO_fprintf(image->img.svg->stream, "<au:lbs protocol=\"maprequest\">\n");
+        msIO_fprintf(image->img.svg->stream, 
+                     "<au:zoomin th=\"%d\" xlink:href=\".\"/>\n", nZoomInTH);
+        msIO_fprintf(image->img.svg->stream, 
+                     "<au:zoomout th=\"%d\" xlink:href=\".\"/>\n", nZoomOutTH);
+        msIO_fprintf(image->img.svg->stream, 
+                     "<au:scroll th=\"%d\" xlink:href=\".\"/>\n", nScrollTH);
+        msIO_fprintf(image->img.svg->stream, "</au:lbs>\n");
+
+        msIO_fprintf(image->img.svg->stream,"</metadata>\n");
     }
     else
-      msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\">\n",  width, height);
-
+    {
+        msIO_fprintf(image->img.svg->stream, "<svg version=\"1.1\" width=\"%d\" height=\"%d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n",  width, height);   
+    }
     
     return image;
 }
@@ -180,16 +228,16 @@ void static imagePolyline(FILE *fp, shapeObj *p, colorObj *color, int size,
                     pszDashArray = strcatalloc(pszDashArray, szTmp);
                 }
             
-            msIO_fprintf(fp, "<polyline fill=\"none\" stroke=\"rgb(%d %d %d)\"  stroke-width=\"%d\" stroke-dasharray=\"%s\" points=\"",color->red, color->green, 
+            msIO_fprintf(fp, "<polyline fill=\"none\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" stroke-dasharray=\"%s\" points=\"",color->red, color->green, 
                          color->blue,size, pszDashArray);
             }
             else
-              msIO_fprintf(fp, "<polyline fill=\"none\" stroke=\"rgb(%d %d %d)\"  stroke-width=\"%d\" points=\"",color->red, color->green, color->blue,size);
+              msIO_fprintf(fp, "<polyline fill=\"none\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" points=\"",color->red, color->green, color->blue,size);
         
         }
         for(j=0; j<p->line[i].numpoints; j++)
         {
-             msIO_fprintf(fp, " %f,%f", p->line[i].point[j].x, p->line[i].point[j].y);
+             msIO_fprintf(fp, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
         }
         
          if (i == (p->numlines -1))
@@ -235,9 +283,10 @@ void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
       bFullRes = 0;
 
     bUseGeoCoord= 0;
-    if (strcasecmp(msGetOutputFormatOption(image->format, "USE_GEOGRAPHICAL_COORDINATES",""), 
-                   "TRUE") == 0)
-      bUseGeoCoord = 1;
+    
+    //if (strcasecmp(msGetOutputFormatOption(image->format, "USE_GEOGRAPHICAL_COORDINATES",""), 
+    //              "TRUE") == 0)
+    // bUseGeoCoord = 1;
 
     //if it is full resolution and we want geographical output
     //just return, no transformations needed.
@@ -260,10 +309,20 @@ void msTransformShapeSVG(shapeObj *shape, rectObj extent, double cellsize,
             {
                 for(j=0; j < shape->line[i].numpoints; j++ ) 
                 {
+                    /*
                     shape->line[i].point[j].x = 
                       (shape->line[i].point[j].x - extent.minx)/cellsize;
                     shape->line[i].point[j].y = 
                       (extent.maxy - shape->line[i].point[j].y)/cellsize;
+                    
+                    */
+                    shape->line[i].point[j].x = MS_MAP2IMAGE_X(shape->line[i].point[j].x,
+                                                               extent.minx, cellsize);
+                    shape->line[i].point[j].y = MS_MAP2IMAGE_Y( shape->line[i].point[j].y,
+                                                                extent.maxy,
+                                                                cellsize);
+                                                                
+                    
                 }
             }      
             return;
@@ -439,7 +498,7 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
                 }
             }
             if (psOutlineColor && psFillColor)
-              msIO_fprintf(fp, "<polygon fill=\"rgb(%d %d %d)\" stroke=\"rgb(%d %d %d)\"  stroke-width=\"%d\" %s points=\"",
+              msIO_fprintf(fp, "<polygon fill=\"#%02x%02x%02x\" stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" %s points=\"",
                            psFillColor->red, psFillColor->green, 
                            psFillColor->blue,
                            psOutlineColor->red, psOutlineColor->green, 
@@ -448,14 +507,14 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
             
             else if (psOutlineColor)
             {
-                msIO_fprintf(fp, "<polygon  stroke=\"rgb(%d %d %d)\"  stroke-width=\"%d\" %s points=\"",
+                msIO_fprintf(fp, "<polygon  stroke=\"#%02x%02x%02x\"  stroke-width=\"%d\" %s points=\"",
                            psOutlineColor->red, psOutlineColor->green, 
                            psOutlineColor->blue,
                            size, pszDashArray);
             }
             else //fill color valid 
             {
-                msIO_fprintf(fp, "<polygon fill=\"rgb(%d %d %d)\" points=\"",
+                msIO_fprintf(fp, "<polygon fill=\"#%02x%02x%02x\" points=\"",
                              psFillColor->red, psFillColor->green, 
                              psFillColor->blue);
                            
@@ -465,7 +524,7 @@ static void imageFillPolygon(FILE *fp, shapeObj *p, colorObj *psFillColor,
         }
         for(j=0; j<p->line[i].numpoints; j++)
         {
-            msIO_fprintf(fp, " %f,%f", p->line[i].point[j].x, p->line[i].point[j].y);
+            msIO_fprintf(fp, " %d,%d", (int)p->line[i].point[j].x, (int)p->line[i].point[j].y);
         }
         
         if (i == (p->numlines -1))
@@ -672,7 +731,7 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
     if (psColor)
     {
         if (MS_VALID_COLOR(*psColor))
-          sprintf(szTmp, "fill=\"rgb(%d %d %d)\"",
+          sprintf(szTmp, "fill=\"#%02x%02x%02x\"",
                   psColor->red, psColor->green  , psColor->blue);
         else
           sprintf(szTmp,"fill=\"none\"");
@@ -683,7 +742,7 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
     pszStrokeString =  strcatalloc(pszStrokeString, "");
     if (psOutlineColor && MS_VALID_COLOR(*psOutlineColor))
     {
-        sprintf(szTmp, "stroke=\"rgb(%d %d %d)\" stroke-width=\"0.5\"",
+        sprintf(szTmp, "stroke=\"#%02x%02x%02x\" stroke-width=\"0.5\"",
                 psOutlineColor->red, psOutlineColor->green  , psOutlineColor->blue);
         pszStrokeString = strcatalloc(pszStrokeString, szTmp);
     }
@@ -736,8 +795,8 @@ static void drawSVGText(FILE *fp, int x, int y, char *string, double size,
       pszFinalString = string;
 
     //TODO : font size set to unit pt
-    msIO_fprintf(fp, "<text  x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%fpt\" %s %s %s %s %s %s>%s</text>\n",
-                 x, y, pszFontFamilily, size, 
+    msIO_fprintf(fp, "<text  x=\"%d\" y=\"%d\" font-family=\"%s\" font-size=\"%dpt\" %s %s %s %s %s %s>%s</text>\n",
+                 x, y, pszFontFamilily, (int)size, 
                  pszFontStyleString, pszFontWeightString, 
                  pszFillString, pszStrokeString, pszAngleString, 
                  pszAngleAnchorString, pszFinalString);
@@ -1164,7 +1223,7 @@ void msDrawMarkerSymbolSVG(symbolSetObj *symbolset, imageObj *image,
 /************************************************************************/
 MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
 {
-    FILE *fp = NULL;
+    FILE *fp = NULL, *stream=NULL;
     unsigned char block[4000];
     int bytes_read;
 
@@ -1173,6 +1232,7 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
         msIO_fprintf(image->img.svg->stream, "</svg>\n"); 
         fclose(image->img.svg->stream);
 
+        //TODO : what about filename
         if (!filename)
         {
           //if( msIO_needBinaryStdout() == MS_FAILURE )
@@ -1192,9 +1252,34 @@ MS_DLL_EXPORT int msSaveImageSVG(imageObj *image, char *filename)
 
             fclose( fp );
         }
+        else
+        {
+            stream = fopen(filename, "wb");
+            if (!stream)
+            {
+                msSetError(MS_IOERR, "Unable to open file %s for writing",
+                           "msSaveImageSVG()", filename);
+                return MS_FAILURE;
+            }
+            fp = fopen(image->img.svg->filename, "rb" );
+            if( fp == NULL )
+            {
+                msSetError( MS_MISCERR, 
+                            "Failed to open %s for streaming to stdout.",
+                            "msSaveImageSVG()", image->img.svg->filename);
+                return MS_FAILURE;
+            }
 
+            while( (bytes_read = fread(block, 1, sizeof(block), fp)) > 0 )
+              msIO_fwrite( block, 1, bytes_read, stream );
+
+            fclose( fp );
+            fclose(stream);
+        }
+        return MS_SUCCESS;
     }
-    return MS_SUCCESS;
+    return MS_FAILURE;
+   
 }
 
 int msDrawRasterLayerSVG(mapObj *map, layerObj *layer, imageObj *image)
