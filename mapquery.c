@@ -741,7 +741,7 @@ int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
       return(MS_SUCCESS);
   }
 
-  msSetError("No matching record(s) found.", "msQueryByFeatures()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFeatures()"); 
   return(MS_FAILURE);
 }
 
@@ -888,7 +888,7 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
       return(MS_SUCCESS);
   }
  
-  msSetError("No matching record(s) found.", "msQueryByPoint()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByPoint()"); 
   return(MS_FAILURE);
 }
 
@@ -1055,7 +1055,7 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
       return(MS_SUCCESS);
   }
  
-  msSetError("No matching record(s) found.", "msQueryByShape()"); 
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByShape()"); 
   return(MS_FAILURE);
 }
 
