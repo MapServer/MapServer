@@ -160,10 +160,10 @@ class LayerTestCase(MapTestCase):
     def testGetLayerOrder(self):
         """LayerTestCase.testGetLayerOrder: get layer drawing order"""
         order = self.map.getLayerOrder()
-        assert order == tuple(range(4)), order
+        assert order == tuple(range(6)), order
     def testSetLayerOrder(self):
         """LayerTestCase.testSetLayerOrder: set layer drawing order"""
-        ord = (1, 0, 2, 3)
+        ord = (1, 0, 2, 3, 4, 5)
         self.map.setLayerOrder(ord)
         order = self.map.getLayerOrder()
         assert order == ord, order
@@ -174,7 +174,7 @@ class RemoveLayerTestCase(MapTestCase):
     def testRemoveLayer1NumLayers(self):
         """removing the first layer by index from the mapfile leaves three"""
         self.map.removeLayer(0)
-        assert self.map.numlayers == 3
+        assert self.map.numlayers == 5
     
     def testRemoveLayer1LayerName(self):
         """removing first layer reverts it to the second layer's name"""
@@ -185,7 +185,7 @@ class RemoveLayerTestCase(MapTestCase):
     def testRemoveLayer2NumLayers(self):
         """removing second layer by index from mapfile leaves three layers"""
         self.map.removeLayer(1)
-        assert self.map.numlayers == 3
+        assert self.map.numlayers == 5
     
     def testRemoveLayer2LayerName(self):
         """removing of the second layer reverts it to the first layer's name"""

@@ -14,3 +14,9 @@ SYMBOL
     IMAGE 'xmarks.png'
 END
 
+SYMBOL
+    NAME 'home-png'
+    TYPE PIXMAP
+    IMAGE 'home.png'
+END
+

@@ -100,9 +100,10 @@ class MapLayersTestCase(MapTestCase):
         assert index == n, index
         assert self.map.numlayers == n + 1
         names = [self.map.getLayer(i).name for i in range(self.map.numlayers)]
-        assert names == ['POLYGON', 'LINE', 'POINT', 'INLINE', 'new']
+        assert names == ['POLYGON', 'LINE', 'POINT', 'INLINE', 
+                         'INLINE-PIXMAP-RGBA', 'INLINE-PIXMAP-PCT', 'new']
         order = self.map.getLayerOrder()
-        assert order == (0, 1, 2, 3, 4), order
+        assert order == (0, 1, 2, 3, 4, 5, 6), order
         
     def testMapInsertLayerAtZero(self):
         """MapLayersTestCase.testMapInsertLayerAtZero: test insertion of a new layer at first index"""
@@ -113,15 +114,16 @@ class MapLayersTestCase(MapTestCase):
         assert index == 0, index
         assert self.map.numlayers == n + 1
         names = [self.map.getLayer(i).name for i in range(self.map.numlayers)]
-        assert names == ['new', 'POLYGON', 'LINE', 'POINT', 'INLINE'], names 
+        assert names == ['new', 'POLYGON', 'LINE', 'POINT', 'INLINE',
+                         'INLINE-PIXMAP-RGBA', 'INLINE-PIXMAP-PCT'], names 
         order = self.map.getLayerOrder()
-        assert order == (0, 1, 2, 3, 4), order
+        assert order == (0, 1, 2, 3, 4, 5, 6), order
 
     def testMapInsertLayerDrawingOrder(self):
         """MapLayersTestCase.testMapInsertLayerDrawingOrder: test affect of insertion of a new layer at index 1 on drawing order"""
         n = self.map.numlayers
         # reverse layer drawing order
-        o_start = (3, 2, 1, 0)
+        o_start = (5, 4, 3, 2, 1, 0)
         self.map.setLayerOrder(o_start)
         # insert Layer
         layer = mapscript.layerObj()
@@ -130,7 +132,7 @@ class MapLayersTestCase(MapTestCase):
         assert index == 1, index 
         # We expect our new layer to be at index 1 in drawing order as well
         order = self.map.getLayerOrder()
-        assert order == (4, 1, 3, 2, 0), order
+        assert order == (6, 1, 5, 4, 3, 2, 0), order
 
     def testMapInsertLayerBadIndex(self):
         """MapLayersTestCase.testMapInsertLayerBadIndex: expect an exception when index is too large"""
@@ -143,11 +145,11 @@ class MapLayersTestCase(MapTestCase):
         n = self.map.numlayers
         layer = self.map.removeLayer(n-1)
         assert self.map.numlayers == n-1
-        assert layer.name == 'INLINE'
+        assert layer.name == 'INLINE-PIXMAP-PCT'
         assert layer.thisown == 1
         del layer
         order = self.map.getLayerOrder()
-        assert order == (0, 1, 2), order
+        assert order == (0, 1, 2, 3, 4), order
 
     def testMapRemoveLayerAtZero(self):
         """removal of lowest index (0) layer"""
@@ -156,21 +158,22 @@ class MapLayersTestCase(MapTestCase):
         assert self.map.numlayers == n-1
         assert layer.name == 'POLYGON'
         order = self.map.getLayerOrder()
-        assert order == (0, 1, 2), order
+        assert order == (0, 1, 2, 3, 4), order
         
     def testMapRemoveLayerDrawingOrder(self):
         """test affect of layer removal on drawing order"""
         n = self.map.numlayers
         # reverse layer drawing order
-        o_start = (3, 2, 1, 0)
+        o_start = (5, 4, 3, 2, 1, 0)
         self.map.setLayerOrder(o_start)
         layer = self.map.removeLayer(1)
         assert self.map.numlayers == n-1
         assert layer.name == 'LINE'
         order = self.map.getLayerOrder()
-        assert order == (2, 1, 0), order
+        assert order == (4, 3, 2, 1, 0), order
         names = [self.map.getLayer(i).name for i in range(self.map.numlayers)]
-        assert names == ['POLYGON', 'POINT', 'INLINE'], names  
+        assert names == ['POLYGON', 'POINT', 'INLINE', 
+                         'INLINE-PIXMAP-RGBA', 'INLINE-PIXMAP-PCT'], names  
         
 class MapExceptionTestCase(MapTestCase):
     def testDrawBadData(self):

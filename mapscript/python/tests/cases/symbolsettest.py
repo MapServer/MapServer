@@ -53,7 +53,7 @@ class SymbolSetTestCase(unittest.TestCase):
         """SymbolSetTestCase.testConstructorFile: new instance of symbolSetObj from symbols.txt"""
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         num = symbolset.numsymbols
-        assert num == 2, num
+        assert num == 4, num
 
     def testAddSymbolToNewSymbolSet(self):
         """SymbolSetTestCase.testAddSymbolToNewSymbolSet: add two new symbols to a SymbolSet"""
@@ -63,8 +63,8 @@ class SymbolSetTestCase(unittest.TestCase):
         symbolset.appendSymbol(symbola) 
         symbolset.appendSymbol(symbolb) 
         num = symbolset.numsymbols
-        assert num == 4, num
-        names = [None, 'line', 'testa', 'testb']
+        assert num == 6, num
+        names = [None, 'line', 'xmarks-png', 'home-png', 'testa', 'testb']
         for i in range(symbolset.numsymbols):
             symbol = symbolset.getSymbol(i)
             assert symbol.name == names[i], symbol.name
@@ -74,7 +74,7 @@ class SymbolSetTestCase(unittest.TestCase):
         symbolset = mapscript.symbolSetObj('../../tests/symbols.txt')
         symbolset.removeSymbol(1)
         num = symbolset.numsymbols
-        assert num == 1, num
+        assert num == 3, num
         
     def testSaveNewSymbolSet(self):
         """SymbolSetTestCase.testSaveNewSymbolSet: save a new SymbolSet to disk"""
@@ -91,17 +91,17 @@ class MapSymbolSetTestCase(MapTestCase):
     def testGetNumSymbols(self):
         """MapSymbolSetTestCase.testGetNumSymbols: expect getNumSymbols == 2 from test fixture test.map"""
         num = self.map.getNumSymbols()
-        assert num == 2, num
+        assert num == 4, num
         
     def testSymbolSetNumsymbols(self):
         """MapSymbolSetTestCase.testSymbolSetNumsymbols: expect numsymbols == 2 from test fixture test.map"""
         num = self.map.symbolset.numsymbols
-        assert num == 2, num
+        assert num == 4, num
         
     def testSymbolSetSymbolNames(self):
         """MapSymbolSetTestCase.testSymbolSetSymbolNames: test names of symbols in test fixture's symbolset"""
         set = self.map.symbolset
-        names = [None, 'line', 'tie']
+        names = [None, 'line', 'xmarks-png', 'home-png']
         for i in range(set.numsymbols):
             symbol = set.getSymbol(i)
             assert symbol.name == names[i], symbol.name
@@ -115,13 +115,13 @@ class MapSymbolSetTestCase(MapTestCase):
         """MapSymbolSetTestCase.testDrawNewSymbol: draw using a new symbol added to the fixture"""
         symbol = mapscript.symbolObj('xmarks', XMARKS_IMAGE)
         symbol_index = self.map.symbolset.appendSymbol(symbol)
-        assert symbol_index == 2, symbol_index
+        assert symbol_index == 4, symbol_index
         num = self.map.symbolset.numsymbols
-        assert num == 3, num
+        assert num == 5, num
         inline_layer = self.map.getLayerByName('INLINE')
         s = inline_layer.getClass(0).getStyle(0)
         s.symbol = symbol_index
-        s.size = 24
+        #s.size = 24
         msimg = self.map.draw()
         assert msimg.thisown == 1
         data = msimg.saveToString()

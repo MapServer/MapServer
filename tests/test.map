@@ -1,6 +1,7 @@
 MAP
   NAME "Testing"
   EXTENT -0.5 50.977222 0.5 51.977222
+  #IMAGETYPE JPEG
   #IMAGETYPE PNG24
   IMAGETYPE PNG
   IMAGECOLOR 255 255 255
@@ -174,21 +175,39 @@ MAP
   END
 
   LAYER
-    NAME "INLINE-PIXMAP"
+    NAME "INLINE-PIXMAP-RGBA"
     TYPE POINT
     DEBUG ON
     PROJECTION
       "init=epsg:4326"
     END
-    STATUS DEFAULT
+    STATUS OFF
     FEATURE
-      POINTS 0.2 51.5 END
+      POINTS 0.2 51.7 END
     END
     CLASS
       NAME "0"
       STYLE
         SYMBOL 'xmarks-png'
-        SIZE 24
+      END
+    END
+  END
+
+LAYER
+    NAME "INLINE-PIXMAP-PCT"
+    TYPE POINT
+    DEBUG ON
+    PROJECTION
+      "init=epsg:4326"
+    END
+    STATUS OFF
+    FEATURE
+      POINTS 0.2 51.2 END
+    END
+    CLASS
+      NAME "0"
+      STYLE
+        SYMBOL 'home-png'
       END
     END
   END
