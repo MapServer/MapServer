@@ -264,6 +264,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
   map->layers[l].class[0].symbol = s;
   map->layers[l].class[0].color = 0;
   map->layers[l].class[0].label.force = MS_TRUE;
+  map->layers[l].class[0].label.size = map->layers[l].class[0].label.sizescaled = MS_MEDIUM; // must set a size to have a valid label definition
 
   if(map->legend.postlabelcache) // add it directly to the image
     msDrawMarkerSymbol(&map->symbolset, img, &point, map->layers[l].class[0].symbol, 0, -1, -1, 10);
