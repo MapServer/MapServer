@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.19  2002/01/22 23:00:04  dan
+ * Added -DENABLE_STDERR_DEBUG in --enable-debug config option to
+ * enable/disable msDebug() output to stderr.  Default is disabled.
+ *
  * Revision 1.18  2001/12/13 21:29:30  dan
  * Changed wms_connectiontimeout metadata value to be in seconds (was ms)
  *
@@ -117,7 +121,7 @@
 static int tracer (const char * fmt, va_list pArgs)
 {
 /* Do not write to stderr on windoze as this makes Apache hang. */
-#ifndef _WIN32
+#ifdef ENABLE_STDERR_DEBUG
     return (vfprintf(stderr, fmt, pArgs));
 #endif
 }

@@ -243,7 +243,7 @@ void msWebDebug( const char * pszFormat, ... )
 
 void msDebug( const char * pszFormat, ... )
 {
-#ifndef _WIN32
+#ifdef ENABLE_STDERR_DEBUG
     va_list args;
     struct timeval tv;
     gettimeofday(&tv, NULL);

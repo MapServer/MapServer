@@ -1246,15 +1246,26 @@ dnl ---------------------------------------------------------------------
 dnl Check --enable-debug option for "-g" compile flag. (OFF by default)
 dnl ---------------------------------------------------------------------
 
+AC_CHECKING(whether we should enable debug features...)
 AC_ARG_ENABLE(debug,
-[  --enable-debug          Include "-g" in CFLAGS for debugging.
-  --disable-debug         Do not include "-g" in CFLAGS (the default).],,)
+[  --enable-debug          Include "-g" in CFLAGS for debugging and enable
+                          msDebug() output to stderr (i.e. server log file).
+  --disable-debug         Do not include "-g" in CFLAGS and disable msDebug()
+                          output (the default).],,)
 
 if test "$enable_debug" = "yes" ; then
   AC_COMPILER_WFLAGS_DEBUG
+  dnl also enable output of msDebug() calls to stderr.
+  DEBUG_FLAGS="-DENABLE_STDERR_DEBUG"
+
+  AC_MSG_RESULT([        Enabling debug features: -g in CFLAGS and msDebug() to stderr.])
 else
   AC_COMPILER_WFLAGS
 fi
+
+AC_SUBST(DEBUG_FLAGS, $DEBUG_FLAGS)
+ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
+
 
 dnl ---------------------------------------------------------------------
 dnl PHP3/MapScript module options
