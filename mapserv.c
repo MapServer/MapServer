@@ -291,8 +291,12 @@ void loadForm()
 	msFreeCharArray(tokens, 4);
 	
 #ifdef USE_PROJ
-	if(Map->projection.proj && (Map->extent.minx >= -180.0 && Map->extent.minx <= 180.0) && (Map->extent.miny >= -90.0 && Map->extent.miny <= 90.0))
-	  msProjectRect(NULL, Map->projection.proj, &(Map->extent)); // extent is a in lat/lon
+	if(Map->projection.proj && !pj_is_latlong(Map->projection.proj)
+           && (Map->extent.minx >= -180.0 && Map->extent.minx <= 180.0) 
+           && (Map->extent.miny >= -90.0 && Map->extent.miny <= 90.0))
+	  msProjectRect(Map->io_projection.proj, 
+                        Map->projection.proj, 
+                        &(Map->extent)); // extent is a in lat/lon
 #endif
 
 	if((Map->extent.minx != Map->extent.maxx) && (Map->extent.miny != Map->extent.maxy)) { // extent seems ok
@@ -346,8 +350,12 @@ void loadForm()
 	msFreeCharArray(tokens, 2);
 
 #ifdef USE_PROJ
-	if(Map->projection.proj && (MapPnt.x >= -180.0 && MapPnt.x <= 180.0) && (MapPnt.y >= -90.0 && MapPnt.y <= 90.0))
-	  msProjectPoint(NULL, Map->projection.proj, &MapPnt); // point is a in lat/lon
+	if(Map->projection.proj && !pj_is_latlong(Map->projection.proj)
+           && (MapPnt.x >= -180.0 && MapPnt.x <= 180.0) 
+           && (MapPnt.y >= -90.0 && MapPnt.y <= 90.0))
+	  msProjectPoint(Map->projection.proj, 
+                         Map->projection.proj, 
+                         &MapPnt); // point is a in lat/lon
 #endif
 
 	if(CoordSource == NONE) { // don't override previous settings (i.e. buffer or scale )
@@ -376,8 +384,12 @@ void loadForm()
 	line.point[j].y = atof(tmp[2*j+1]);
 
 #ifdef USE_PROJ
-	if(Map->projection.proj && (line.point[j].x >= -180.0 && line.point[j].x <= 180.0) && (line.point[j].y >= -90.0 && line.point[j].y <= 90.0))
-	  msProjectPoint(NULL, Map->projection.proj, &line.point[j]); // point is a in lat/lon
+	if(Map->projection.proj && !pj_is_latlong(Map->projection.proj)
+           && (line.point[j].x >= -180.0 && line.point[j].x <= 180.0) 
+           && (line.point[j].y >= -90.0 && line.point[j].y <= 90.0))
+	  msProjectPoint(Map->io_projection.proj, 
+                         Map->projection.proj, 
+                         &line.point[j]); // point is a in lat/lon
 #endif
       }
 
@@ -951,9 +963,9 @@ void returnCoordinate()
   sprintf(ms_error.message, "Your \"<i>click</i>\" corresponds to (approximately): (%g, %g).\n", MapPnt.x, MapPnt.y);
 
 #ifdef USE_PROJ
-  if(Map->projection.proj != NULL) {
+  if(Map->projection.proj != NULL && !pj_is_latlong(Map->projection.proj) ) {
     pointObj p=MapPnt;
-    msProjectPoint(Map->projection.proj, NULL, &p);
+    msProjectPoint(Map->projection.proj, Map->io_projection.proj, &p);
     sprintf(ms_error.message, "%s Computed lat/lon value is (%g, %g).\n", ms_error.message, p.x, p.y);
   }
 #endif
@@ -1106,11 +1118,13 @@ char *processLine(char *instr, int mode)
   outstr = gsub(outstr, "[rawext_esc]", (char *)encode_url(repstr)); 
     
 #ifdef USE_PROJ
-  if((strstr(outstr, "lat]") || strstr(outstr, "lon]")) && Map->projection.proj != NULL) {
+  if((strstr(outstr, "lat]") || strstr(outstr, "lon]")) 
+     && Map->projection.proj != NULL
+     && !pj_is_latlong(Map->projection.proj) ) {
     llextent=Map->extent;
     llpoint=MapPnt;
-    msProjectRect(Map->projection.proj, NULL, &llextent);
-    msProjectPoint(Map->projection.proj, NULL, &llpoint);
+    msProjectRect(Map->projection.proj, Map->io_projection.proj, &llextent);
+    msProjectPoint(Map->projection.proj, Map->io_projection.proj, &llpoint);
 
     sprintf(repstr, "%f", llpoint.x);
     outstr = gsub(outstr, "[maplon]", repstr);
