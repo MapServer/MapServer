@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.14  2000/09/18 13:00:07  dan
+ * Display GD version in php3_info_mapscript()
+ *
  * Revision 1.13  2000/09/17 17:38:32  dan
  * Changes in img.saveImage() / saveWebImage() for GD 1.8
  *
@@ -155,7 +158,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Sep 17, 2000)"
+#define PHP3_MS_VERSION "(Sep 18, 2000)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -503,6 +506,18 @@ DLEXPORT void php3_info_mapscript(void)
     php3_printf("MapScript Version %s<br>\n", PHP3_MS_VERSION);
 
     php3_printf("MapServer Version %s ", MS_VERSION);
+#ifdef USE_GD_1_2
+    php3_printf(" -GD_1_2");
+#endif
+#ifdef USE_GD_1_3
+    php3_printf(" -GD_1_3");
+#endif
+#ifdef USE_GD_1_6
+    php3_printf(" -GD_1_6");
+#endif
+#ifdef USE_GD_1_8
+    php3_printf(" -GD_1_8");
+#endif
 #ifdef USE_PROJ
     php3_printf(" -PROJ.4");
 #endif
