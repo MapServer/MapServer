@@ -27,6 +27,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.28  2004/11/23 23:16:29  dan
+ * Fixed build error when WFS was not enabled (bug 1083)
+ *
  * Revision 1.27  2004/11/16 21:57:49  dan
  * Final pass at updating WMS/WFS client/server interfaces to lookup "ows_*"
  * metadata in addition to default "wms_*"/"wfs_*" metadata (bug 568)
@@ -130,6 +133,12 @@ MS_CVSID("$Id$")
 #define WFS_V_1_0_0  100
 
 
+/*====================================================================
+ *  Private (static) functions
+ *====================================================================*/
+
+#ifdef USE_WFS_LYR
+
 /************************************************************************/
 /*                           msBuildRequestParms                        */
 /*                                                                      */
@@ -142,8 +151,8 @@ MS_CVSID("$Id$")
 /*      projection.                                                     */
 /*                                                                      */
 /************************************************************************/
-wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp, 
-                                   rectObj *bbox_ret)
+static wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp, 
+                                          rectObj *bbox_ret)
 {
     wfsParamsObj *psParams = NULL;
     rectObj bbox;
@@ -284,6 +293,7 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
       *bbox_ret = bbox;
 
     return psParams;
+
 }
 
 /**********************************************************************
@@ -294,10 +304,9 @@ wfsParamsObj *msBuildRequestParams(mapObj *map, layerObj *lp,
  * Returns a reference to a newly allocated string that should be freed 
  * by the caller.
  **********************************************************************/
-char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp, 
-                                 rectObj *bbox, wfsParamsObj *psParams) 
+static char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp, 
+                                        rectObj *bbox, wfsParamsObj *psParams) 
 {
-#ifdef USE_WFS_LYR
     char *pszPostReq = NULL;
     char *pszFilter = NULL;
 
@@ -366,15 +375,6 @@ char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
 
 
     return pszPostReq; 
-#else
-/* ------------------------------------------------------------------
- * WFS CONNECTION Support not included...
- * ------------------------------------------------------------------ */
-  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
-             "msBuildWFSLayerPostURL()");
-  return NULL;
-
-#endif
 }
 
 /**********************************************************************
@@ -385,10 +385,9 @@ char *msBuildWFSLayerPostRequest(mapObj *map, layerObj *lp,
  * Returns a reference to a newly allocated string that should be freed 
  * by the caller.
  **********************************************************************/
-char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
-                            wfsParamsObj *psParams) 
+static char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
+                                   wfsParamsObj *psParams) 
 {
-#ifdef USE_WFS_LYR
     char *pszURL = NULL;
     const char *pszTmp; 
     char *pszVersion, *pszService, *pszTypename = NULL;
@@ -544,19 +543,12 @@ char *msBuildWFSLayerGetURL(mapObj *map, layerObj *lp, rectObj *bbox,
 
     return pszURL;
 
-#else
-/* ------------------------------------------------------------------
- * WFS CONNECTION Support not included...
- * ------------------------------------------------------------------ */
-  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
-             "msBuildWFSLayerGetURL()");
-  return NULL;
-
-#endif /* USE_WFS_LYR */
-
 }
 
-
+/**********************************************************************
+ *                          msWFSLayerInfo
+ *
+ **********************************************************************/
 typedef struct ms_wfs_layer_info_t
 {
     char        *pszGMLFilename;
@@ -566,7 +558,6 @@ typedef struct ms_wfs_layer_info_t
     int         bLayerOpened;      /* False until msWFSLayerOpen() is called*/
 } msWFSLayerInfo;
 
-#ifdef USE_WFS_LYR
 
 /**********************************************************************
  *                          msAllocWFSLayerInfo()
@@ -612,6 +603,10 @@ static void msFreeWFSLayerInfo(msWFSLayerInfo *psInfo)
 }
 
 #endif /* USE_WFS_LYR */
+
+/*====================================================================
+ *  Public functions
+ *====================================================================*/
 
 /**********************************************************************
  *                          msPrepareWFSLayerRequest()
@@ -800,6 +795,7 @@ int msPrepareWFSLayerRequest(int nLayerId, mapObj *map, layerObj *lp,
  **********************************************************************/
 void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo)
 {
+#ifdef USE_WFS_LYR
     if (lp->wfslayerinfo)
     {
         msWFSLayerInfo *psInfo = NULL;
@@ -811,6 +807,13 @@ void msWFSUpdateRequestInfo(layerObj *lp, httpRequestObj *pasReqInfo)
         // mime type and WFS exceptions information.
         psInfo->nStatus = pasReqInfo->nStatus;
     }
+#else
+/* ------------------------------------------------------------------
+ * WFS CONNECTION Support not included...
+ * ------------------------------------------------------------------ */
+  msSetError(MS_WFSCONNERR, "WFS CLIENT CONNECTION support is not available.", 
+             "msWFSUpdateRequestInfo()");
+#endif /* USE_WFS_LYR */
 }
 
 /**********************************************************************
