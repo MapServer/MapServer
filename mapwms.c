@@ -272,7 +272,7 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
       if (strcasecmp(tokens[0], "EPSG") == 0) {
         char buffer[20];
         tokens[1][10] = '\0'; // Just in case
-        sprintf(buffer, "+init=epsg:%s", tokens[1]);
+        sprintf(buffer, "init=epsg:%s", tokens[1]);
 
         if (msLoadProjectionString(&(map->projection), buffer) != 0)
           return msWMSException(map, wmtver);
