@@ -678,6 +678,9 @@ dump : int
     Switch to allow mapserver to return data in GML format.  MS_TRUE or
     MS_FALSE.  Default is MS_FALSE.
 
+extent : rectObj_
+    optional limiting extent for layer features.
+    
 filteritem : string
     Attribute defining filter.
     
@@ -1006,9 +1009,8 @@ removeMetaData( string key ) : int
     Delete the metadata hash at *key*.  Returns MS_SUCCESS or
     MS_FAILURE.
 
-setExtent(float minx, float miny, float maxx, float maxy) : int
-    Sets the extent of a layer.  Returns MS_SUCCSS or 
-    NULL on failure.
+setExtent( float minx, float miny, float maxx, float maxy ) : int
+    Sets the extent of a layer.  Returns MS_SUCCESS or MS_FAILURE.
     
 setFilter( string filter ) : int 
     Sets a filter expression similarly to the FILTER expression in a map 
@@ -1272,9 +1274,8 @@ setConfigOption( string key, string value ) : void
     Set the indicated key configuration option to the indicated value.  
     Equivalent to including a CONFIG keyword in a map file. 
 
-setExtent(float minx, float miny, float maxx, float maxy) : int
-    Sets the extent of a map.  Returns MS_SUCCSS or 
-    NULL on failure.
+setExtent( float minx, float miny, float maxx, float maxy ) : int
+    Sets the extent of a map.  Returns MS_SUCCESS or MS_FAILURE.
 
 setMetaData( string key, string value ) : int
     Assign *value* to the web.metadata hash at *key*.  Return MS_SUCCESS
