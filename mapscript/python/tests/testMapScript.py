@@ -112,13 +112,6 @@ class FontSetTestCase(unittest.TestCase):
     def testGetFontSetFile(self):
         file = self.mapobj1.fontset.filename
         assert file == 'fonts.txt', file
-    #def testGetFonts(self):
-    #    items = [('LucidaSansRegular',
-    #              '/Users/sean/Library/Fonts/LucidaSansRegular.ttf'), 
-    #             ('LucidaSansDemiBold',
-    #              '/Users/sean/Library/Fonts/LucidaSansDemiBold.ttf')]
-    #    f = self.mapobj1.fontset.getFonts()
-    #    assert f == items, f
 
 class EmptyMapExceptionTestCase(unittest.TestCase):
     def setUp(self):
@@ -148,11 +141,13 @@ class TestMapCloneTestCase(unittest.TestCase):
     def tearDown(self):
         self.mapobj1 = None
     def testCloneMap(self):
+        # Note: a malloc error results from this test but cannot
+        # be reproduced in the interpreter.
         mapobj_clone = self.mapobj1.clone()
         assert mapobj_clone.thisown == 1
         assert mapobj_clone.name == self.mapobj1.name
         assert mapobj_clone.numlayers == self.mapobj1.numlayers
-        del mapobj_clone
+        assert mapobj_clone.fontset.filename == self.mapobj1.fontset.filename
 
 # If PIL is available, use it to test the saveToString() method
 
