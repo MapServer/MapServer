@@ -1163,6 +1163,7 @@ void SHPReadBounds( SHPHandle psSHP, int hEntity, rectObj *padBounds)
 
 int msOpenSHPFile(shapefileObj *shpfile, char *path, char *tile, char *filename)
 {
+  int i;
   char *dbfFilename;
 
   char old_path[MS_PATH_LENGTH];
@@ -1194,7 +1195,18 @@ int msOpenSHPFile(shapefileObj *shpfile, char *path, char *tile, char *filename)
   SHPReadBounds( shpfile->hSHP, -1, &(shpfile->bounds));
   
   dbfFilename = (char *)malloc(strlen(filename)+5);
-  sprintf(dbfFilename, "%s.dbf", filename);
+  strcpy(dbfFilename, filename);
+  
+  /* clean off any extention the filename might have */
+  for (i = strlen(dbfFilename) - 1; 
+       i > 0 && dbfFilename[i] != '.' && dbfFilename[i] != '/' && dbfFilename[i] != '\\';
+       i-- ) {}
+
+  if( dbfFilename[i] == '.' )
+    dbfFilename[i] = '\0';
+  
+  strcat(dbfFilename, ".dbf");
+
   shpfile->hDBF = DBFOpen(dbfFilename, "rb");
   free(dbfFilename);
 
