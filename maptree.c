@@ -15,8 +15,6 @@
 /* -------------------------------------------------------------------- */
 #define SPLITRATIO  0.55
 
-typedef unsigned char uchar;
-
 static int treeAddShapeId(treeObj *tree, int id, rectObj rect);
 
 static void SwapWord( int length, void * wordP )

@@ -8,8 +8,6 @@
 #include "map.h"
 #include <limits.h>
 
-typedef unsigned char uchar;
-
 #if UINT_MAX == 65535
 typedef long          int32;
 #else
@@ -145,11 +143,11 @@ static void writeHeader( SHPHandle psSHP )
 SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
 {
   char		*pszFullname, *pszBasename;
-  SHPHandle		psSHP;
+  SHPHandle	psSHP;
   
   uchar		*pabyBuf;
-  int			i;
-  double		dValue;
+  int		i;
+  double	dValue;
   
   /* -------------------------------------------------------------------- */
   /*      Ensure the access string is one of the legal ones.  We          */
@@ -176,7 +174,11 @@ SHPHandle msSHPOpen( const char * pszLayer, const char * pszAccess )
   psSHP = (SHPHandle) malloc(sizeof(SHPInfo));
   
   psSHP->bUpdated = MS_FALSE;
-  
+
+  psSHP->pabyRec = NULL;
+  psSHP->panParts = NULL;
+  psSHP->nBufSize = psSHP->nPartMax = 0;
+
   /* -------------------------------------------------------------------- */
   /*	Compute the base (layer) name.  If there is any extension	    */
   /*	on the passed in filename we will strip it off.			    */
@@ -310,6 +312,9 @@ void msSHPClose(SHPHandle psSHP )
   free( psSHP->panRecOffset );
   free( psSHP->panRecSize );
   
+  if(psSHP->pabyRec) free(psSHP->pabyRec);
+  if(psSHP->panParts) free(psSHP->panParts);
+
   fclose( psSHP->fpSHX );
   fclose( psSHP->fpSHP );
   
@@ -740,8 +745,6 @@ int msSHPWriteShape(SHPHandle psSHP, shapeObj *shape )
 */
 int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 {
-    static uchar	*pabyRec = NULL;   
-    static int		nBufSize = 0;
 
     /* -------------------------------------------------------------------- */
     /*      Only valid for point shapefiles                                 */
@@ -767,19 +770,19 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
     /* -------------------------------------------------------------------- */
     /*      Ensure our record buffer is large enough.                       */
     /* -------------------------------------------------------------------- */
-    if( psSHP->panRecSize[hEntity]+8 > nBufSize ) {
-	nBufSize = psSHP->panRecSize[hEntity]+8;
-	pabyRec = (uchar *) SfRealloc(pabyRec,nBufSize);
+    if( psSHP->panRecSize[hEntity]+8 > psSHP->nBufSize ) {
+	psSHP->nBufSize = psSHP->panRecSize[hEntity]+8;
+	psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,psSHP->nBufSize);
     }    
 
     /* -------------------------------------------------------------------- */
     /*      Read the record.                                                */
     /* -------------------------------------------------------------------- */
     fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 );
-    fread( pabyRec, psSHP->panRecSize[hEntity]+8, 1, psSHP->fpSHP );
+    fread( psSHP->pabyRec, psSHP->panRecSize[hEntity]+8, 1, psSHP->fpSHP );
       
-    memcpy( &(point->x), pabyRec + 12, 8 );
-    memcpy( &(point->y), pabyRec + 20, 8 );
+    memcpy( &(point->x), psSHP->pabyRec + 12, 8 );
+    memcpy( &(point->y), psSHP->pabyRec + 20, 8 );
       
     if( bBigEndian ) {
       SwapWord( 8, &(point->x));
@@ -795,9 +798,6 @@ int msSHPReadPoint( SHPHandle psSHP, int hEntity, pointObj *point )
 void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 {
     int	       		i, j, k;
-    static uchar	*pabyRec = NULL;   
-    static int		nPartMax = 0, *panParts = NULL;
-    static int		nBufSize = 0;
     int nOffset = 0;
 
  
@@ -815,17 +815,17 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
     /* -------------------------------------------------------------------- */
     /*      Ensure our record buffer is large enough.                       */
     /* -------------------------------------------------------------------- */
-    if( psSHP->panRecSize[hEntity]+8 > nBufSize )
+    if( psSHP->panRecSize[hEntity]+8 > psSHP->nBufSize )
     {
-	nBufSize = psSHP->panRecSize[hEntity]+8;
-	pabyRec = (uchar *) SfRealloc(pabyRec,nBufSize);
+	psSHP->nBufSize = psSHP->panRecSize[hEntity]+8;
+	psSHP->pabyRec = (uchar *) SfRealloc(psSHP->pabyRec,psSHP->nBufSize);
     }    
 
     /* -------------------------------------------------------------------- */
     /*      Read the record.                                                */
     /* -------------------------------------------------------------------- */
     fseek( psSHP->fpSHP, psSHP->panRecOffset[hEntity], 0 );
-    fread( pabyRec, psSHP->panRecSize[hEntity]+8, 1, psSHP->fpSHP );
+    fread( psSHP->pabyRec, psSHP->panRecSize[hEntity]+8, 1, psSHP->fpSHP );
 
     /* -------------------------------------------------------------------- */
     /*  Extract vertices for a Polygon or Arc.				    */
@@ -836,10 +836,10 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       int32		nPoints, nParts;      
 
       // copy the bounding box
-      memcpy( &shape->bounds.minx, pabyRec + 8 + 4, 8 );
-      memcpy( &shape->bounds.miny, pabyRec + 8 + 12, 8 );
-      memcpy( &shape->bounds.maxx, pabyRec + 8 + 20, 8 );
-      memcpy( &shape->bounds.maxy, pabyRec + 8 + 28, 8 );
+      memcpy( &shape->bounds.minx, psSHP->pabyRec + 8 + 4, 8 );
+      memcpy( &shape->bounds.miny, psSHP->pabyRec + 8 + 12, 8 );
+      memcpy( &shape->bounds.maxx, psSHP->pabyRec + 8 + 20, 8 );
+      memcpy( &shape->bounds.maxy, psSHP->pabyRec + 8 + 28, 8 );
 
       if( bBigEndian ) {
 	SwapWord( 8, &shape->bounds.minx);
@@ -848,8 +848,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	SwapWord( 8, &shape->bounds.maxy);
       }
 
-      memcpy( &nPoints, pabyRec + 40 + 8, 4 );
-      memcpy( &nParts, pabyRec + 36 + 8, 4 );
+      memcpy( &nPoints, psSHP->pabyRec + 40 + 8, 4 );
+      memcpy( &nParts, psSHP->pabyRec + 36 + 8, 4 );
       
       if( bBigEndian ) {
 	SwapWord( 4, &nPoints );
@@ -859,15 +859,15 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       /* -------------------------------------------------------------------- */
       /*      Copy out the part array from the record.                        */
       /* -------------------------------------------------------------------- */
-      if( nPartMax < nParts )
+      if( psSHP->nPartMax < nParts )
       {
-	nPartMax = nParts;
-	panParts = (int *) SfRealloc(panParts, nPartMax * sizeof(int) );
+	psSHP->nPartMax = nParts;
+	psSHP->panParts = (int *) SfRealloc(psSHP->panParts, psSHP->nPartMax * sizeof(int) );
       }
       
-      memcpy( panParts, pabyRec + 44 + 8, 4 * nParts );
+      memcpy( psSHP->panParts, psSHP->pabyRec + 44 + 8, 4 * nParts );
       for( i = 0; i < nParts; i++ )
-	if( bBigEndian ) SwapWord( 4, panParts+i );
+	if( bBigEndian ) SwapWord( 4, psSHP->panParts+i );
       
       /* -------------------------------------------------------------------- */
       /*      Fill the shape structure.                                       */
@@ -883,9 +883,9 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       for( i = 0; i < nParts; i++) 
       { 	  
 	if( i == nParts-1)
-	  shape->line[i].numpoints = nPoints - panParts[i];
+	  shape->line[i].numpoints = nPoints - psSHP->panParts[i];
 	else
-	  shape->line[i].numpoints = panParts[i+1] - panParts[i];
+	  shape->line[i].numpoints = psSHP->panParts[i+1] - psSHP->panParts[i];
 	
 	if( (shape->line[i].point = (pointObj *)malloc(sizeof(pointObj)*shape->line[i].numpoints)) == NULL ) {
 	  free(shape->line);
@@ -896,8 +896,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         //nOffset = 44 + 8 + 4*nParts;
 	for( j = 0; j < shape->line[i].numpoints; j++ )
 	{
-	  memcpy(&(shape->line[i].point[j].x), pabyRec + 44 + 4*nParts + 8 + k * 16, 8 );
-	  memcpy(&(shape->line[i].point[j].y), pabyRec + 44 + 4*nParts + 8 + k * 16 + 8, 8 );
+	  memcpy(&(shape->line[i].point[j].x), psSHP->pabyRec + 44 + 4*nParts + 8 + k * 16, 8 );
+	  memcpy(&(shape->line[i].point[j].y), psSHP->pabyRec + 44 + 4*nParts + 8 + k * 16 + 8, 8 );
 	  
 	  if( bBigEndian ) {
 	    SwapWord( 8, &(shape->line[i].point[j].x) );
@@ -914,7 +914,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
               if( psSHP->panRecSize[hEntity]+8 >= nOffset + 16 + 8*nPoints )
               {
                    memcpy(&(shape->line[i].point[j].m), 
-                          pabyRec + nOffset + 16 + k*8, 8 );
+                          psSHP->pabyRec + nOffset + 16 + k*8, 8 );
                    if( bBigEndian ) 
                        SwapWord( 8, &(shape->line[i].point[j].m) );
               }   
@@ -938,10 +938,10 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       int32		nPoints;
 
       // copy the bounding box
-      memcpy( &shape->bounds.minx, pabyRec + 8 + 4, 8 );
-      memcpy( &shape->bounds.miny, pabyRec + 8 + 12, 8 );
-      memcpy( &shape->bounds.maxx, pabyRec + 8 + 20, 8 );
-      memcpy( &shape->bounds.maxy, pabyRec + 8 + 28, 8 );
+      memcpy( &shape->bounds.minx, psSHP->pabyRec + 8 + 4, 8 );
+      memcpy( &shape->bounds.miny, psSHP->pabyRec + 8 + 12, 8 );
+      memcpy( &shape->bounds.maxx, psSHP->pabyRec + 8 + 20, 8 );
+      memcpy( &shape->bounds.maxy, psSHP->pabyRec + 8 + 28, 8 );
 
       if( bBigEndian ) {
 	SwapWord( 8, &shape->bounds.minx);
@@ -950,7 +950,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
 	SwapWord( 8, &shape->bounds.maxy);
       }
 
-      memcpy( &nPoints, pabyRec + 44, 4 );
+      memcpy( &nPoints, psSHP->pabyRec + 44, 4 );
       if( bBigEndian ) SwapWord( 4, &nPoints );
     
       /* -------------------------------------------------------------------- */
@@ -966,8 +966,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       shape->line[0].point = (pointObj *) malloc( nPoints * sizeof(pointObj) );
       
       for( i = 0; i < nPoints; i++ ) {
-	memcpy(&(shape->line[0].point[i].x), pabyRec + 48 + 16 * i, 8 );
-	memcpy(&(shape->line[0].point[i].y), pabyRec + 48 + 16 * i + 8, 8 );
+	memcpy(&(shape->line[0].point[i].x), psSHP->pabyRec + 48 + 16 * i, 8 );
+	memcpy(&(shape->line[0].point[i].y), psSHP->pabyRec + 48 + 16 * i + 8, 8 );
 	
 	if( bBigEndian ) {
 	  SwapWord( 8, &(shape->line[0].point[i].x) );
@@ -981,7 +981,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
         if (psSHP->nShapeType == SHP_MULTIPOINTM)
         {
             nOffset = 48 + 16*nPoints;
-            memcpy(&(shape->line[0].point[i].m), pabyRec + nOffset + 16 + i*8, 8 );
+            memcpy(&(shape->line[0].point[i].m), psSHP->pabyRec + nOffset + 16 + i*8, 8 );
             if( bBigEndian ) 
               SwapWord( 8, &(shape->line[0].point[i].m));
         }
@@ -1008,8 +1008,8 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
       shape->line[0].numpoints = 1;
       shape->line[0].point = (pointObj *) malloc(sizeof(pointObj));
       
-      memcpy( &(shape->line[0].point[0].x), pabyRec + 12, 8 );
-      memcpy( &(shape->line[0].point[0].y), pabyRec + 20, 8 );
+      memcpy( &(shape->line[0].point[0].x), psSHP->pabyRec + 12, 8 );
+      memcpy( &(shape->line[0].point[0].y), psSHP->pabyRec + 20, 8 );
       
       if( bBigEndian ) {
 	SwapWord( 8, &(shape->line[0].point[0].x));
@@ -1025,7 +1025,7 @@ void msSHPReadShape( SHPHandle psSHP, int hEntity, shapeObj *shape )
           nOffset = 20 + 8;
           if( psSHP->panRecSize[hEntity]+8 >= nOffset + 8 )
           {
-              memcpy(&(shape->line[0].point[0].m), pabyRec + nOffset, 8 );
+              memcpy(&(shape->line[0].point[0].m), psSHP->pabyRec + nOffset, 8 );
         
               if( bBigEndian ) 
                 SwapWord( 8, &(shape->line[0].point[0].m));

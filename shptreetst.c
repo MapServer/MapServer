@@ -14,8 +14,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-typedef unsigned char uchar;
-
 #ifdef SHPT_POLYGON
    #undef MAPSERVER
 #else

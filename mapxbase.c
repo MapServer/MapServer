@@ -9,8 +9,6 @@
 #include <stdlib.h> /* for atof() and atoi() */
 #include <math.h>
 
-typedef unsigned char uchar;
-
 /************************************************************************/
 /*                             SfRealloc()                              */
 /*                                                                      */
@@ -153,6 +151,9 @@ DBFHandle msDBFOpen( const char * pszFilename, const char * pszAccess )
     psDBF->nCurrentRecord = -1;
     psDBF->bCurrentRecordModified = MS_FALSE;
 
+    psDBF->pszStringField = NULL;
+    psDBF->nStringFieldLen = 0;    
+
     free( pszDBFFilename );
 
     /* -------------------------------------------------------------------- */
@@ -266,6 +267,8 @@ void  msDBFClose(DBFHandle psDBF)
 
     free( psDBF->pszHeader );
     free( psDBF->pszCurrentRecord );
+
+    if(psDBF->pszStringField) free(psDBF->pszStringField);
 
     free( psDBF );
 }
@@ -427,9 +430,6 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     uchar	*pabyRec;
     char	*pReturnField = NULL;
 
-    static char * pszStringField = NULL;
-    static int	nStringFieldLen = 0;    
-
     /* -------------------------------------------------------------------- */
     /*	Is the request valid?                  				    */
     /* -------------------------------------------------------------------- */
@@ -459,24 +459,24 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     /* -------------------------------------------------------------------- */
     /*	Ensure our field buffer is large enough to hold this buffer.	    */
     /* -------------------------------------------------------------------- */
-    if( psDBF->panFieldSize[iField]+1 > nStringFieldLen )
+    if( psDBF->panFieldSize[iField]+1 > psDBF->nStringFieldLen )
     {
-	nStringFieldLen = psDBF->panFieldSize[iField]*2 + 10;
-	pszStringField = (char *) SfRealloc(pszStringField,nStringFieldLen);
+	psDBF->nStringFieldLen = psDBF->panFieldSize[iField]*2 + 10;
+	psDBF->pszStringField = (char *) SfRealloc(psDBF->pszStringField,psDBF->nStringFieldLen);
     }
 
     /* -------------------------------------------------------------------- */
     /*	Extract the requested field.					    */
     /* -------------------------------------------------------------------- */
-    strncpy( pszStringField, pabyRec+psDBF->panFieldOffset[iField], psDBF->panFieldSize[iField] );
-    pszStringField[psDBF->panFieldSize[iField]] = '\0';
+    strncpy( psDBF->pszStringField, pabyRec+psDBF->panFieldOffset[iField], psDBF->panFieldSize[iField] );
+    psDBF->pszStringField[psDBF->panFieldSize[iField]] = '\0';
 
     /*
     ** Trim trailing blanks (SDL Modification)
     */ 
-    for(i=strlen(pszStringField)-1;i>=0;i--) {
-      if(pszStringField[i] != ' ') { 
-	pszStringField[i+1] = '\0'; 
+    for(i=strlen(psDBF->pszStringField)-1;i>=0;i--) {
+      if(psDBF->pszStringField[i] != ' ') { 
+	psDBF->pszStringField[i+1] = '\0'; 
 	break;
       }
     }
@@ -484,11 +484,11 @@ static char *msDBFReadAttribute(DBFHandle psDBF, int hEntity, int iField )
     /*
     ** Trim/skip leading blanks (SDL Modification)
     */ 
-    for(i=0;i<strlen(pszStringField);i++) {
-	if(pszStringField[i] != ' ')
+    for(i=0;i<strlen(psDBF->pszStringField);i++) {
+	if(psDBF->pszStringField[i] != ' ')
 	  break;	
     }
-    pReturnField = pszStringField+i;
+    pReturnField = psDBF->pszStringField+i;
 
     return( pReturnField );
 }

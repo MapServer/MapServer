@@ -34,9 +34,9 @@ extern "C" {
 #define MS_SHP_POLYGONM 25
 #define MS_SHP_MULTIPOINTM 28
 
-
-
 #ifndef SWIG
+typedef unsigned char uchar;
+
 typedef	struct {
     FILE        *fpSHP;
     FILE	*fpSHX;
@@ -53,6 +53,12 @@ typedef	struct {
     double	adBoundsMax[2];
 
     int		bUpdated;
+
+    int         nBufSize; // these used static vars in shape readers, moved to be thread-safe
+    uchar       *pabyRec;
+    int         nPartMax;
+    int		*panParts;
+
 } SHPInfo;
 typedef SHPInfo * SHPHandle;
 #endif
@@ -82,6 +88,9 @@ typedef	struct
     
     int		bNoHeader;
     int		bUpdated;
+
+    char 	*pszStringField;
+    int		nStringFieldLen;    
 #ifdef SWIG
 %readwrite
 #endif
