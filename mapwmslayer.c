@@ -27,6 +27,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.27  2002/06/26 03:10:43  dan
+ * Modified msGetImages() in preparation for support of multiple requests
+ * in parrallel
+ *
  * Revision 1.26  2002/06/21 18:33:15  frank
  * added support for IMAGEMODE INT16 and FLOAT
  *
@@ -37,7 +41,8 @@
  * Use of ImageObj to be able to output Vector/Raster beside GD.
  *
  * Revision 1.23  2002/03/13 23:45:22  sdlime
- * Added projection support to the GML output code. Re-shuffled the code to extract the EPSG values for a layer or map into mapproject.c.
+ * Added projection support to the GML output code. Re-shuffled the code 
+ * to extract the EPSG values for a layer or map into mapproject.c.
  *
  * Revision 1.22  2002/02/08 21:07:27  sacha
  * Added template support to WMS.
@@ -139,6 +144,13 @@
 #include <WWWHTTP.h>
 #include <WWWInit.h>
 
+typedef struct wms_request_info
+{
+    HTRequest * request;
+    int         nStatus;
+} wmsRequestInfoObj;
+
+
 static int tracer (const char * fmt, va_list pArgs)
 {
 /* Do not write to stderr on windoze as this makes Apache hang. */
@@ -161,36 +173,55 @@ static int tracer (const char * fmt, va_list pArgs)
 static int terminate_handler (HTRequest * request, HTResponse * response,
                               void * param, int status)
 {
+    wmsRequestInfoObj *pasReqInfo = NULL;
+    int i, bAllDone=TRUE;
+    
+    if (param) 
+        pasReqInfo = (wmsRequestInfoObj *)param;
 
-    if (status != 200)
+    /* Record status information for this request */
+    for(i=0; pasReqInfo[i].request != NULL; i++)
     {
-        static char errmsg[100];
-        msDebug("HTTP GET request returned status %d\n", status);
-
-        sprintf(errmsg, "HTTP GET request failed with status %d", status);
-        msSetError(MS_WMSCONNERR, errmsg, "msGetImage()");
+        if (pasReqInfo[i].request == request)
+        {
+            pasReqInfo[i].nStatus = status;
+        }
+        else if (pasReqInfo[i].nStatus == 0)
+        {
+            bAllDone = FALSE; // At least one request is not done yet.
+        }
     }
 
-    if (param) 
-        *((int*)param) = status;
+   /* We are done with this request */
+    HTRequest_delete(request);
 
-    HTEventList_stopLoop();
+    msDebug("terminate_handler()\n");
+
+    /* Stop event loop once all requests are completed */
+    if (bAllDone)
+    {
+        msDebug("terminate_handler stopping event loop\n");
+        HTEventList_stopLoop();
+    }
+
     return 0;
 }
 
 
 /**********************************************************************
- *                          msWMSGetImage()
+ *                          msWMSGetImages()
  *
  * Fetch a map slide via HTTP request and save to specified temp file.
  *
  * Based on sample code from http://www.w3.org/Library/Examples/LoadToFile.c
  **********************************************************************/
-int msWMSGetImage(const char *geturl, const char *outputfile, int nTimeout)
+int msWMSGetImages(int numFiles, char **papszGetUrls, 
+                   char **papszOutputFiles, int *panHTTPStatus,
+                   int nTimeout)
 {
     HTRequest *         request = NULL;
-    int                 nHTTPStatus = 0;
-    int                 nStatus = MS_SUCCESS;
+    int                 i, nStatus = MS_SUCCESS;
+    wmsRequestInfoObj   *pasReqInfo = NULL;
 
     /* Initiate W3C Reference Library with a client profile */
     HTProfile_newNoCacheClient("MapServer WMS Client", "1.0");
@@ -204,8 +235,14 @@ int msWMSGetImage(const char *geturl, const char *outputfile, int nTimeout)
     HTPrint_setCallback(tracer);
     HTTrace_setCallback(tracer);
 
+    /* Alloc wmsRequestInfo structs through which status of each request 
+       will be returned. */
+    pasReqInfo = (wmsRequestInfoObj*)calloc(numFiles+1, 
+                                            sizeof(wmsRequestInfoObj));
+
     /* Add our own filter to terminate the application */
-    HTNet_addAfter(terminate_handler, NULL, &nHTTPStatus, HT_ALL, HT_FILTER_LAST);
+    HTNet_addAfter(terminate_handler, NULL, pasReqInfo, 
+                   HT_ALL, HT_FILTER_LAST);
 
     /* Set the timeout for how long we are going to wait for a response */
     if (nTimeout <= 0)
@@ -214,43 +251,75 @@ int msWMSGetImage(const char *geturl, const char *outputfile, int nTimeout)
     HTHost_setEventTimeout(nTimeout);
 
 
-    if (geturl == NULL || outputfile == NULL)
+    for (i=0; i<numFiles; i++)
     {
-        msSetError(MS_WMSCONNERR, "URL or output file parameter missing.", 
-                   "msGetImage()");
-        return(MS_FAILURE);
-    }
+        if (papszGetUrls[i] == NULL || papszOutputFiles[i] == NULL)
+        {
+            msSetError(MS_WMSCONNERR, "URL or output file parameter missing.", 
+                       "msGetImage()");
+            return(MS_FAILURE);
+        }
 
-    request = HTRequest_new();
+        request = HTRequest_new();
 
-    /* Start the load */
-    if (HTLoadToFile(geturl, request, outputfile) != YES) 
-    {
-        msSetError(MS_WMSCONNERR, "Can't open output file.", "msGetImage()");
-        HTProfile_delete();
-        return(MS_FAILURE);
+        pasReqInfo[i].request = request;
+
+        /* Start the load */
+        if (HTLoadToFile(papszGetUrls[i], request,
+                         papszOutputFiles[i]) != YES) 
+        {
+            msSetError(MS_WMSCONNERR, "Can't open output file %s.", 
+                       "msGetImage()", papszOutputFiles[i]);
+            HTProfile_delete();
+            return(MS_FAILURE);
+        }
+
     }
+    msDebug("WMS: Before eventloop\n");
 
     /* Go into the event loop... */
     HTEventList_loop(request);
+//    HTEventList_newLoop();
 
-    if (nHTTPStatus != 200)
+    msDebug("WMS: After eventloop\n");
+
+    /* Check status of all requests and report errors */
+    for (i=0; i<numFiles; i++)
     {
-        if (nHTTPStatus == HT_TIMEOUT)
+        if (panHTTPStatus)
+            panHTTPStatus[i] = pasReqInfo[i].nStatus;
+
+        if (pasReqInfo[i].nStatus != 200)
         {
-            char err[256];
-            sprintf(err, "TIMEOUT of %d millseconds execeeded", nTimeout);
-            msSetError(MS_WMSCONNERR, err, "msGetImage()");
+            if (pasReqInfo[i].nStatus == HT_TIMEOUT)
+            {
+                msDebug("WMS: TIMEOUT of %d millseconds execeeded for %s", 
+                        nTimeout, papszGetUrls[i] );
+
+                msSetError(MS_WMSCONNERR, 
+                           "TIMEOUT of %d millseconds execeeded for %s", 
+                           "msGetImage()", nTimeout, papszGetUrls[i] );
+            }
+            else
+            {
+                msDebug("WMS: HTTP GET request failed with status %d for %s",
+                        pasReqInfo[i].nStatus, papszGetUrls[i]);
+
+                msSetError(MS_WMSCONNERR, 
+                           "HTTP GET request failed with status %d for %s",
+                           "msGetImage()", pasReqInfo[i].nStatus, 
+                           papszGetUrls[i]);
+            }
+
+            nStatus = MS_FAILURE;
         }
-        // msSetError() already called in terminate_handler
-        nStatus = MS_FAILURE;
     }
 
-    HTRequest_delete(request);                  /* Delete the request object */
+    /* cleanup */
     HTProfile_delete();
 
-    /* If load failed then msSetError() will have been called */
-    //return (ms_error.code == 0) ? MS_SUCCESS : MS_FAILURE;
+    free(pasReqInfo);
+
     return nStatus;
 }
 
@@ -598,16 +667,38 @@ int msDrawWMSLayerLow(mapObj *map, layerObj *lp, imageObj *img)
     {
         nTimeout = atoi(pszTmp)*1000;
     }
-    if (msWMSGetImage(pszURL, lp->data, nTimeout) != MS_SUCCESS)
+
+/* ------------------------------------------------------------------
+ * Package layer info into an array and download
+ * ------------------------------------------------------------------ */
     {
-        msDebug("WMS GET failed.\n", pszURL);
-        free(pszURL);
-        //return MS_FAILURE;
+        char **papszGetUrls, **papszOutputFiles;
+        int panStatus[2] = {0, 0};
+
+        papszGetUrls = (char**)calloc(2, sizeof(char*));
+        papszOutputFiles = (char**)calloc(2, sizeof(char*));
+        
+        papszGetUrls[0] = strdup(pszURL);
+        papszOutputFiles[0] = strdup(lp->data);
+
+        if (msWMSGetImages(1, papszGetUrls, papszOutputFiles, 
+                           panStatus, nTimeout) != MS_SUCCESS)
+        {
+            msDebug("WMS GET failed.\n", pszURL);
+            free(pszURL);
+            //return MS_FAILURE;
 /* ==================================================================== 
       we still return SUCCESS here so that the layer is only          
       skipped intead of aborting the whole draw map.                   
  ==================================================================== */
-        return MS_SUCCESS;
+            return MS_SUCCESS;
+        }
+
+        free(papszGetUrls[0]);
+        free(papszGetUrls);
+        free(papszOutputFiles[0]);
+        free(papszOutputFiles);
+
     }
     msDebug("WMS GET completed OK.\n");
 
