@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.13  2001/11/08 15:26:10  dan
+ * Include FEATURE_COUNT in GetFeatureInfo URL only if greater than zero
+ *
  * Revision 1.12  2001/11/01 20:46:48  dan
  * Fixed msDrawWMSLayer(): reprojected layer bbox was not initialized.
  *
@@ -481,8 +484,8 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * And for GetFeatureInfo:
  *   X
  *   Y
- *   FEATURE_COUNT
  *   INFO_FORMAT
+ *   FEATURE_COUNT (only if nFeatureCount > 0)
  *
  * The connection string should contain all other required params, 
  * including:
@@ -506,6 +509,8 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
     if (nRequestType == WMS_GETFEATUREINFO)
     {
+        char szFeatureCount[30] = "";
+
         if (nVersion >= WMS_V_1_0_7)
             pszRequestParam = "GetFeatureInfo";
         else
@@ -518,13 +523,21 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
         else
             pszExceptionsParam = "WMS_XML";
 
+        // If FEATURE_COUNT <= 0 then don't pass this parameter
+        // The spec states that FEATURE_COUNT must be greater than zero
+        // and if not passed hten the behavior is up to the server
+        if (nFeatureCount > 0)
+        {
+            sprintf(szFeatureCount, "&FEATURE_COUNT=%d", nFeatureCount);
+        }
+
         sprintf(pszURL, 
                 "%s&REQUEST=%s&WIDTH=%d&HEIGHT=%d&SRS=%s&BBOX=%f,%f,%f,%f"
-                "&EXCEPTIONS=%s&X=%d&Y=%d&FEATURE_COUNT=%d&INFO_FORMAT=%s",
+                "&EXCEPTIONS=%s&X=%d&Y=%d&INFO_FORMAT=%s%s",
                 lp->connection, pszRequestParam, map->width, map->height, 
                 pszEPSG, bbox.minx, bbox.miny, bbox.maxx, bbox.maxy,
                 pszExceptionsParam,
-                nClickX, nClickY, nFeatureCount, pszInfoFormat);
+                nClickX, nClickY, pszInfoFormat, szFeatureCount);
     }
     else /* if (nRequestType == WMS_GETMAP) */
     {
