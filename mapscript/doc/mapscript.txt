@@ -508,9 +508,7 @@ width : int immutable
 Methods
 -------
 
-.. _new imageObj:
-
-new imageObj( int width, int height [, string driver=NULL [, string filename=NULL ] ] ) : imageObj_
+new imageObj( int width, int height [, string driver=NULL [, string filename=NULL ] ] ) : imageObj
     Create new instance of imageObj.  If *filename* is specified, an imageObj
     is created from the file and any specified *width*, *height*, and
     *driver* parameters will be overridden by values of the image in 
@@ -518,12 +516,15 @@ new imageObj( int width, int height [, string driver=NULL [, string filename=NUL
     using that driver.  See the *driver* attribute above for details.  If
     *filename* is not specified, then *width* and *height* should be specified.
 
-.. _imageObj.save:
-
 save( string filename [, mapObj parent_map=NULL ] ) : int
     Save image to *filename*.  The optional *parent_map* parameter must be
     specified if saving GeoTIFF images.
 
+.. note:: The free() method of imageObj has been deprecated.  In MapServer
+   revisions 4+ all instances of imageObj will be properly disposed of by
+   the interpreter's garabage collector.  If the application can't wait 
+   for garabage collection, then the instance can simply be deleted or
+   undef'd.
 
 -----------------------------------------------------------------------------
  labelObj
