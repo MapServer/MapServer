@@ -77,7 +77,7 @@ int msyyreturncomments = 0;
 
 <INITIAL,VALUE_STRING,EXPRESSION_STRING>[ \t\r]+             ;
 
-<INITIAL>#.*                                   { if (msyyreturncomments) return(STRING); }
+<INITIAL>#.*                                   { if (msyyreturncomments) return(MS_COMMENT); }
 
 <OBJECT_STRING>_+                                          ;
 

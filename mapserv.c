@@ -985,9 +985,22 @@ int main(int argc, char *argv[]) {
       fflush(stdout);
       exit(0);
     }
-    else if(argc > 2 && strcmp(argv[1], "-t") == 0) {
-        if (msTokenizeMap(argv[2]) != MS_SUCCESS)
+    else if(argc > 2 && strcmp(argv[1], "-t") == 0) 
+    {
+        char **tokens;
+        int numtokens=0;
+        if ((tokens=msTokenizeMap(argv[2], &numtokens)) != NULL)
+        {
+            int i;
+            for(i=0; i<numtokens; i++)
+                printf("%s\n", tokens[i]);
+            msFreeCharArray(tokens, numtokens);
+        }
+        else
+        {
             writeError();
+        }
+
       exit(0);
     }
     else if (argc > 1 && strncmp(argv[1], "QUERY_STRING=", 13) == 0) {

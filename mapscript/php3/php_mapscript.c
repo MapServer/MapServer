@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.111  2002/06/27 19:12:11  dan
+ * Added msTokenizeMap() in MapServer and PHP MapScript (3.7 branch)
+ *
  * Revision 1.110  2002/06/19 14:01:53  assefa
  * Correct compilation error in function saveimage.
  *
@@ -233,6 +236,8 @@ DLEXPORT void php3_ms_free_stub(void *ptr) ;
 DLEXPORT void php3_ms_free_projection(projectionObj *pProj);
 
 DLEXPORT void php3_ms_getversion(INTERNAL_FUNCTION_PARAMETERS);
+
+DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setProperty(INTERNAL_FUNCTION_PARAMETERS);
@@ -496,6 +501,7 @@ function_entry php3_ms_functions[] = {
     {"ms_getpid",       php3_ms_getpid,         NULL},
     {"ms_getscale",     php3_ms_getscale,       NULL},
     {"ms_newprojectionobj",   php3_ms_projection_new,       NULL},
+    {"ms_tokenizemap",  php3_ms_tokenizeMap,    NULL},
     {NULL, NULL, NULL}
 };
 
@@ -10100,3 +10106,51 @@ static double GetDeltaExtentsUsingScale(double dfScale, int nUnits,
     return dfDelta;
 }
 
+/**********************************************************************
+ *                        ms_tokenizeMap()
+ *
+ * Preparse mapfile and return an array containg one item for each 
+ * token in the map.
+ **********************************************************************/
+
+/* {{{ proto array ms_tokenizeMap(string filename)
+   Preparse mapfile and return an array containg one item for each token in the map.*/
+
+DLEXPORT void php3_ms_tokenizeMap(INTERNAL_FUNCTION_PARAMETERS)
+{ 
+    pval        *pFname;
+    char        **tokens;
+    int         i, numtokens=0;
+
+    if (getParameters(ht, 1, &pFname) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pFname);
+
+    if ((tokens = msTokenizeMap(pFname->value.str.val, &numtokens)) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed tokenizing map file %s", 
+                            pFname->value.str.val);
+        RETURN_FALSE;
+    }
+    else
+    {
+        if (array_init(return_value) == FAILURE) 
+        {
+            RETURN_FALSE;
+        }
+
+        for (i=0; i<numtokens; i++)
+        {
+            add_next_index_string(return_value,  tokens[i], 1);
+        }
+
+        msFreeCharArray(tokens, numtokens);
+    }
+
+
+}
+/* }}} */

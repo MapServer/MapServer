@@ -18,6 +18,7 @@ extern int msyystate;
 extern char *msyystring;
 
 extern int loadSymbol(symbolObj *s); // in mapsymbol.c
+extern void writeSymbol(symbolObj *s, FILE *stream); // in mapsymbol.c
 
 /*
 ** Symbol to string static arrays needed for writing map files.
@@ -3756,33 +3757,39 @@ int msLoadMapString(mapObj *map, char *object, char *value)
 /*
 ** Returns an array with one entry per mapfile token.  Useful to manipulate
 ** mapfiles in MapScript.
+**
+** The returned array should be freed using msFreeCharArray()
 */
-static int tokenizeMapInternal(char *filename)
+static char **tokenizeMapInternal(char *filename, int *ret_numtokens)
 {
   regex_t re;
+  char   **tokens = NULL;
+  int    numtokens=0, numtokens_allocated=0;
+
+  *ret_numtokens = 0;
 
   if(!filename) {
-    msSetError(MS_MISCERR, "Filename is undefined.", "msLoadMap()");
-    return MS_FAILURE;
+    msSetError(MS_MISCERR, "Filename is undefined.", "msTokenizeMap()");
+    return NULL;
   }
   
   /*
   ** Check map filename to make sure it's legal
   */
   if(regcomp(&re, MS_MAPFILE_EXPR, REG_EXTENDED|REG_NOSUB) != 0) {
-   msSetError(MS_REGEXERR, "(%s)", "msLoadMap()", MS_MAPFILE_EXPR);   
-   return MS_FAILURE;
+   msSetError(MS_REGEXERR, "(%s)", "msTokenizeMap()", MS_MAPFILE_EXPR);   
+   return NULL;
   }
   if(regexec(&re, filename, 0, NULL, 0) != 0) { /* no match */
     regfree(&re);
-    msSetError(MS_IOERR, "Illegal mapfile name.", "msLoadMap()");
-    return MS_FAILURE;
+    msSetError(MS_IOERR, "Illegal mapfile name.", "msTokenizeMap()");
+    return NULL;
   }
   regfree(&re);
   
   if((msyyin = fopen(filename,"r")) == NULL) {
-    msSetError(MS_IOERR, "(%s)", "msLoadMap()", filename);
-    return MS_FAILURE;
+    msSetError(MS_IOERR, "(%s)", "msTokenizeMap()", filename);
+    return NULL;
   }
 
   msyystate = 6; // restore lexer state to INITIAL, and do return comments
@@ -3790,34 +3797,82 @@ static int tokenizeMapInternal(char *filename)
   msyyrestart(msyyin);
   msyylineno = 0;
 
-  for(;;) {
-
-    switch(msyylex()) {   
-      case(EOF):
-        fclose(msyyin);      
-        return MS_SUCCESS;
-        break;
-      default:
-        printf("%s\n", msyytext);
-    }
-
+  // we start with room for 256 tokens and will double size of the array 
+  // every time we reach the limit
+  numtokens = 0;
+  numtokens_allocated = 256; 
+  tokens = (char **)malloc(numtokens_allocated*sizeof(char*));
+  if (tokens == NULL)
+  {
+      msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
+      return NULL;
   }
 
-  return MS_SUCCESS;
+  for(;;) {
 
+    if (numtokens_allocated <= numtokens)
+    {
+        // double size of the array every time we reach the limit
+        numtokens_allocated *= 2; 
+        tokens = (char **)realloc(tokens, numtokens_allocated*sizeof(char*));
+        if (tokens == NULL)
+        {
+            msSetError(MS_MEMERR, "Realloc() error.", "msTokenizeMap()");
+            return NULL;
+        }
+    }
+ 
+    switch(msyylex()) {   
+      case(EOF):
+        // This is the normal way out... cleanup and exit
+        fclose(msyyin);      
+        *ret_numtokens = numtokens;
+        return(tokens);
+        break;
+      case(MS_STRING):
+        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
+        if (tokens[numtokens])
+            sprintf(tokens[numtokens], "\"%s\"", msyytext);
+        break;
+      case(MS_EXPRESSION):
+        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
+        if (tokens[numtokens])
+            sprintf(tokens[numtokens], "(%s)", msyytext);
+        break;
+      case(MS_REGEX):
+        tokens[numtokens] = (char*)malloc((strlen(msyytext)+3)*sizeof(char));
+        if (tokens[numtokens])
+            sprintf(tokens[numtokens], "/%s/", msyytext);
+        break;
+      default:
+        tokens[numtokens] = strdup(msyytext);
+        break;
+    }
+
+    if (tokens[numtokens] == NULL)
+    {
+        msSetError(MS_MEMERR, NULL, "msTokenizeMap()");
+        return NULL;
+    }
+
+    numtokens++;
+  }
+
+  // We should never get here.
+  return NULL;
 }
 
 //
 // Wraps tokenizeMapInternal
 //
-int msTokenizeMap(char *filename)
+char **msTokenizeMap(char *filename, int *numtokens)
 {
-    int status;
+    char **tokens;
 
     msAcquireLock( TLOCK_PARSER );
-    status = tokenizeMapInternal( filename );
+    tokens = tokenizeMapInternal( filename, numtokens );
     msReleaseLock( TLOCK_PARSER );
 
-    return status;
+    return tokens;
 }
 

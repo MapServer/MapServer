@@ -122,6 +122,7 @@ extern "C" {
 #define MS_REGEX 2001
 #define MS_STRING 2002
 #define MS_NUMBER 2003
+#define MS_COMMENT 2004
 
 // General macro definitions
 #define MS_MIN(a,b)     (((a)<(b))?(a):(b))
@@ -858,7 +859,7 @@ int msAddColor(mapObj *map, int red, int green, int blue);
 int msLookupColor(mapObj *map, int color_index );
 int msLoadMapString(mapObj *map, char *object, char *value);
 void msFree(void *p);
-int msTokenizeMap(char *filename);
+char **msTokenizeMap(char *filename, int *numtokens);
 
 
 #if defined USE_PDF

@@ -97,6 +97,12 @@ and the MapServer Map File documentation at:
         Returns the MapServer version and options in a string.  This string
         can be parsed to find out which modules were compiled in, etc.
 
+   array ms_TokenizeMap(string map_file_name)
+        Preparses a mapfile through the MapServer parser and return an 
+        array with one item for each token from the mapfile.  Strings, 
+        logical expressions, regex expressions and comments are returned
+        as individual tokens.
+
 
  MapObj Class:
  -------------
