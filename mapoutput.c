@@ -28,8 +28,9 @@
  ******************************************************************************
  *
  * $Log$
- * Revision 1.12  2002/12/20 21:40:45  julien
- * Create default output format even if format are specified in mapfile
+ * Revision 1.13  2002/12/21 22:04:54  frank
+ * I regressed the changes Julien made, and reimplemented the same effect
+ * with the logic in msApplyDefaultOutputFormats().  Should be much safer now.
  *
  * Revision 1.11  2002/12/17 23:02:19  dan
  * I assigned the wrong value to map->imagetype.  Duh!
@@ -182,8 +183,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     }
 
 #ifdef USE_GD_GIF
-    if( ( strcasecmp(driver,"GD/GIF") == 0 ) && 
-        ( msSelectOutputFormat( map, "gif" ) == NULL ) )
+    if( strcasecmp(driver,"GD/GIF") == 0 )
     {
         format = msAllocOutputFormat( map, "gif", driver );
         format->mimetype = strdup("image/gif");
@@ -194,9 +194,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 #endif
 
 #ifdef USE_GD_PNG
-    if( ( ( strcasecmp(driver,"GD/PNG") == 0 ) || 
-          ( strcasecmp(driver,"GD/PNG8") == 0 ) ) && 
-        ( msSelectOutputFormat( map, "png" ) == NULL ) )
+    if( strcasecmp(driver,"GD/PNG") == 0 )
     {
         format = msAllocOutputFormat( map, "png", driver );
         format->mimetype = strdup("image/png");
@@ -206,21 +204,20 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     }
 #endif /* USE_GD_PNG */
 
-#if GD2_VERS > 1
-    if( ( strcasecmp(driver,"GD/PNG24") == 0 ) && 
-        ( msSelectOutputFormat( map, "png24" ) == NULL ) )
+
+#if defined(USE_GD_PNG) && GD2_VERS > 1
+    if( strcasecmp(driver,"GD/PNG24") == 0 )
     {
-        format = msAllocOutputFormat( map, "png24", driver );
+        format = msAllocOutputFormat( map, "png24", "GD/PNG" );
         format->mimetype = strdup("image/png");
         format->imagemode = MS_IMAGEMODE_RGB;
         format->extension = strdup("png");
         format->renderer = MS_RENDER_WITH_GD;
     }
-#endif /* GD2_VERS */
+#endif /* USE_GD_PNG */
 
 #ifdef USE_GD_JPEG
-    if( ( strcasecmp(driver,"GD/JPEG") == 0 ) && 
-        ( msSelectOutputFormat( map, "jpeg" ) == NULL ) )
+    if( strcasecmp(driver,"GD/JPEG") == 0 )
     {
         format = msAllocOutputFormat( map, "jpeg", driver );
         format->mimetype = strdup("image/jpeg");
@@ -230,8 +227,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     }
 #endif
 #ifdef USE_GD_WBMP
-    if( ( strcasecmp(driver,"GD/WBMP") == 0 ) && 
-        ( msSelectOutputFormat( map, "wbmp" ) == NULL ) )
+    if( strcasecmp(driver,"GD/WBMP") == 0 )
     {
         format = msAllocOutputFormat( map, "wbmp", driver );
         format->mimetype = strdup("image/wbmp");
@@ -241,8 +237,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     }
 #endif
 #ifdef USE_MING_FLASH
-    if( ( strcasecmp(driver,"swf") == 0 ) && 
-        ( msSelectOutputFormat( map, "swf" ) == NULL ) )
+    if( strcasecmp(driver,"swf") == 0 )
     {
         format = msAllocOutputFormat( map, "swf", driver );
         format->mimetype = strdup("application/x-shockwave-flash");
@@ -252,8 +247,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     }
 #endif
 #ifdef USE_PDF
-    if( ( strcasecmp(driver,"pdf") == 0 ) && 
-        ( msSelectOutputFormat( map, "pdf" ) == NULL ) )
+    if( strcasecmp(driver,"pdf") == 0 )
     {
         format = msAllocOutputFormat( map, "pdf", driver );
         format->mimetype = strdup("application/x-pdf");
@@ -263,8 +257,7 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
     }
 #endif
 #ifdef USE_GDAL
-    if( ( strncasecmp(driver,"gdal/",5) == 0 ) && 
-        ( msSelectOutputFormat( map, driver+5 ) == NULL ) )
+    if( strncasecmp(driver,"gdal/",5) == 0 )
     {
         format = msAllocOutputFormat( map, driver+5, driver );
         if( msInitDefaultGDALOutputFormat( format ) == MS_FAILURE )
@@ -291,17 +284,29 @@ outputFormatObj *msCreateDefaultOutputFormat( mapObj *map,
 void msApplyDefaultOutputFormats( mapObj *map )
 
 {
-    msCreateDefaultOutputFormat( map, "GD/GIF" );
-    msCreateDefaultOutputFormat( map, "GD/PNG" );
-    msCreateDefaultOutputFormat( map, "GD/PNG24" );
-    msCreateDefaultOutputFormat( map, "GD/JPEG" );
-    msCreateDefaultOutputFormat( map, "GD/WBMP" );
-    msCreateDefaultOutputFormat( map, "swf" );
-    msCreateDefaultOutputFormat( map, "pdf" );
+    if( msSelectOutputFormat( map, "gif" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GD/GIF" );
 
-#ifdef USE_GDAL
-    msCreateDefaultOutputFormat( map, "GDAL/GTiff" );
-#endif
+    if( msSelectOutputFormat( map, "png" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GD/PNG" );
+
+    if( msSelectOutputFormat( map, "png24" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GD/PNG24" );
+
+    if( msSelectOutputFormat( map, "jpeg" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GD/JPEG" );
+
+    if( msSelectOutputFormat( map, "wbmp" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GD/WBMP" );
+
+    if( msSelectOutputFormat( map, "swf" ) == NULL )
+        msCreateDefaultOutputFormat( map, "swf" );
+
+    if( msSelectOutputFormat( map, "pdf" ) == NULL )
+        msCreateDefaultOutputFormat( map, "pdf" );
+
+    if( msSelectOutputFormat( map, "GTiff" ) == NULL )
+        msCreateDefaultOutputFormat( map, "GDAL/GTiff" );
 
     assert( map->numoutputformats > 0 );
 }
