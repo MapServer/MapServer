@@ -8,7 +8,7 @@
 
 %extend cgiRequestObj {
 
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
     cgiRequestObj()
 #else
     cgiRequestObj(void)

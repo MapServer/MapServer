@@ -25,7 +25,7 @@
 %extend hashTableObj {
     
     // New instance
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
     hashTableObj() {
 #else
     hashTableObj(void) {
