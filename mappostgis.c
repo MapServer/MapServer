@@ -196,7 +196,7 @@ int msPOSTGISLayerOpen(layerObj *layer)
 	layerinfo->sql = NULL; //calc later
 	layerinfo->row_num=0;
 	layerinfo->query_result= NULL;
-
+	layerinfo->urid_name= NULL; 
 
 	layerinfo->conn = PQconnectdb( layer->connection );
 
