@@ -342,8 +342,14 @@
     return msMoveLayerDown(self, layerindex);
   }
 
-  int *getLayersDrawingOrder() {
-    return  self->layerorder;
+  %newobject getLayersDrawingOrder;
+  intarray *getLayersDrawingOrder() {
+    int i;
+    intarray *order;
+    order = new_intarray(self->numlayers);
+    for (i=0; i<self->numlayers; i++)
+        intarray_setitem(order, i, self->layerorder[i]);
+    return order;
   }
 
   int setLayersDrawingOrder(int *panIndexes) {
