@@ -144,7 +144,7 @@
     return msDrawMap(self);
   }
 
-  gdImagePtr drawQueryMap() {
+  gdImagePtr drawQuery() {
     return msDrawQueryMap(self);
   }
 
@@ -247,8 +247,8 @@
     msLayerClose(self);
   }
 
-  int getShape(shapeObj *shape, int tileindex, int shapeindex, int allitems) {
-    return msLayerGetShape(self, shape, tileindex, shapeindex, allitems);
+  int getShape(shapeObj *shape, int tileindex, int shapeindex) {
+    return msLayerGetShape(self, shape, tileindex, shapeindex);
   }
 
   resultCacheMemberObj *getResult(int i) {
@@ -267,20 +267,12 @@
       return NULL;
   }
 
-  int prepare() {
-    // do scaling
+  int draw(mapObj *map, gdImagePtr img) {
+    return msDrawLayer(map, self, img);    
   }
 
-  int draw(mapObj *map, gdImagePtr img) {
-    if(self->features) {
-      return msDrawInlineLayer(map, self, img);
-    } else {
-      if(self->type == MS_RASTER) {
-        return msDrawRasterLayer(map, self, img);
-      } else {
-	return msDrawShapefileLayer(map, self, img, NULL);
-      }
-    }
+  int drawQuery(mapObj *map, gdImagePtr img) {
+    return msDrawLayer(map, self, img);    
   }
 
   int queryByPoint(mapObj *map, pointObj *point, int mode, double buffer) {
@@ -304,7 +296,7 @@
   }
 
   int setProjection(char *string) {
-    return(loadProjectionString(&(self->projection), string));
+    return loadProjectionString(&(self->projection), string);
   }
 
   int addFeature(shapeObj *shape) {
@@ -369,6 +361,10 @@
     free(self);
   }
 
+  int project(projectionObj *in, projectionObj *out) {
+    return msProjectPoint(in, out, self);
+  }	
+
   int draw(mapObj *map, layerObj *layer, gdImagePtr img, int classindex, char *text) {
     return msDrawPoint(map, layer, self, img, classindex, text);
   }
@@ -383,11 +379,11 @@
 
   double distanceToShape(shapeObj *shape) {
     switch(shape->type) {
-    case(MS_POINT):
+    case(MS_SHAPE_POINT):
       return msDistanceFromPointToMultipoint(self, &(shape->line[0]));
-    case(MS_LINE):
+    case(MS_SHAPE_LINE):
       return msDistanceFromPointToPolyline(self, shape);
-    case(MS_POLYGON):
+    case(MS_SHAPE_POLYGON):
       return msDistanceFromPointToPolygon(self, shape);
     }
 
@@ -415,6 +411,10 @@
   ~lineObj() {
     free(self->point);
     free(self);		
+  }
+
+  int project(projectionObj *in, projectionObj *out) {
+    return msProjectLine(in, out, self);
   }
 
   pointObj *get(int i) {
@@ -464,6 +464,10 @@
     free(self);		
   }
 
+  int project(projectionObj *in, projectionObj *out) {
+    return msProjectShape(in, out, self);
+  }
+
   lineObj *get(int i) {
     if(i<0 || i>=self->numlines)
       return NULL;
@@ -502,7 +506,7 @@
   }
 
   int contains(pointObj *point) {
-    if(self->type == MS_POLYGON)
+    if(self->type == MS_SHAPE_POLYGON)
       return msIntersectPointPolygon(point, self);
 
     return -1;
@@ -510,19 +514,19 @@
 
   int intersects(shapeObj *shape) {
     switch(self->type) {
-    case(MS_LINE):
+    case(MS_SHAPE_LINE):
       switch(shape->type) {
-      case(MS_LINE):
+      case(MS_SHAPE_LINE):
 	return msIntersectPolylines(self, shape);
-      case(MS_POLYGON):
+      case(MS_SHAPE_POLYGON):
 	return msIntersectPolylinePolygon(self, shape);
       }
       break;
-    case(MS_POLYGON):
+    case(MS_SHAPE_POLYGON):
       switch(shape->type) {
-      case(MS_LINE):
+      case(MS_SHAPE_LINE):
 	return msIntersectPolylinePolygon(shape, self);
-      case(MS_POLYGON):
+      case(MS_SHAPE_POLYGON):
 	return msIntersectPolylines(self, shape);
       }
       break;
@@ -548,6 +552,10 @@
 
   ~rectObj() {
     free(self);
+  }
+
+  int project(projectionObj *in, projectionObj *out) {
+    return msProjectRect(in, out, self);
   }
 
   double fit(int width, int height) {
