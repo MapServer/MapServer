@@ -1,5 +1,13 @@
 #include "map.h"
 
+/*
+** Iteminfo is a layer parameter that holds information necessary to retrieve an individual item for
+** a particular source. It is an array built from a list of items. The type of iteminfo will vary by
+** source. For shapefiles and OGR it is simply an array of integers where each value is an index for
+** the item. For SDE it's a ESRI specific type that contains index and column type information. Two
+** helper functions below initialize and free that structure member which is used locally by layer
+** specific functions.
+*/
 static int layerInitItemInfo(layerObj *layer) {
   int status;
 
@@ -55,6 +63,9 @@ static void layerFreeItemInfo(layerObj *layer)
   return;
 }
 
+/*
+** Does exactly what it implies, readies a layer for processing.
+*/
 int msLayerOpen(layerObj *layer, char *shapepath)
 {
   if(layer->tileindex && layer->connectiontype == MS_SHAPEFILE)
@@ -90,6 +101,44 @@ int msLayerOpen(layerObj *layer, char *shapepath)
   return(MS_FAILURE);
 }
 
+/*
+** Performs a spatial, and optionally an attribute based feature search. The function basically
+** prepares things so that candidate features can be accessed by query or drawing functions. For
+** OGR and shapefiles this sets an internal bit vector that indicates whether a particular feature
+** is to processed. For SDE it executes an SQL statement on the SDE server. Once run the msLayerNextShape
+** function should be called to actually access the shapes.
+*/
+int msLayerWhichShapes(layerObj *layer, rectObj rect)
+{
+  switch(layer->connectiontype) {
+  case(MS_SHAPEFILE):
+    return(msSHPWhichShapes(&(layer->shpfile), rect));
+    break;
+  case(MS_TILED_SHAPEFILE):
+    return(msTiledSHPWhichShapes(layer, rect));
+    break;
+  case(MS_INLINE):
+    return(MS_SUCCESS);
+    break;
+  case(MS_OGR):
+    return msOGRLayerWhichShapes(layer, rect);
+    break;
+  case(MS_TILED_OGR):
+    break;
+  case(MS_SDE):
+    return(msSDELayerWhichShapes(layer, rect));
+    break;
+  default:
+    break;
+  }
+
+  return(MS_FAILURE);
+}
+
+/*
+** Called after msWhichShapes has been called to actually retrieve shapes within a given area
+** and matching a vendor specific filter (i.e. layer FILTER attribute).
+*/
 int msLayerNextShape(layerObj *layer, shapeObj *shape) 
 {
   int i, filter_passed;
@@ -143,6 +192,10 @@ int msLayerNextShape(layerObj *layer, shapeObj *shape)
   return(MS_FAILURE);
 }
 
+/*
+** Used to retrieve a shape by index. All data sources must be capable of random access using
+** a record number of some sort.
+*/
 int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
 {
   switch(layer->connectiontype) {
@@ -176,6 +229,9 @@ int msLayerGetShape(layerObj *layer, shapeObj *shape, int tile, long record)
   return(MS_FAILURE);
 }
 
+/*
+** Closes resources used by a particular layer.
+*/
 void msLayerClose(layerObj *layer) 
 {
   // no need for items once the layer is closed
@@ -208,6 +264,11 @@ void msLayerClose(layerObj *layer)
   }
 }
 
+/*
+** Retrieves a list of attributes available for this layer. Most sources also set the iteminfo array
+** at this point. This function is used when processing query results to expose attributes to query
+** templates. At that point all attributes are fair game.
+*/
 int msLayerGetItems(layerObj *layer) 
 {
   // clean up any previously allocated instances
@@ -245,33 +306,9 @@ int msLayerGetItems(layerObj *layer)
   return(MS_FAILURE);
 }
 
-int msLayerWhichShapes(layerObj *layer, rectObj rect)
-{
-  switch(layer->connectiontype) {
-  case(MS_SHAPEFILE):
-    return(msSHPWhichShapes(&(layer->shpfile), rect));
-    break;
-  case(MS_TILED_SHAPEFILE):
-    return(msTiledSHPWhichShapes(layer, rect));
-    break;
-  case(MS_INLINE):
-    return(MS_SUCCESS);
-    break;
-  case(MS_OGR):
-    return msOGRLayerWhichShapes(layer, rect);
-    break;
-  case(MS_TILED_OGR):
-    break;
-  case(MS_SDE):
-    return(msSDELayerWhichShapes(layer, rect));
-    break;
-  default:
-    break;
-  }
-
-  return(MS_FAILURE);
-}
-
+/*
+** Returns extent of spatial coverage for a layer. Used for WMS compatability.
+*/
 int msLayerGetExtent(layerObj *layer, rectObj *extent) {
   switch(layer->connectiontype) {
   case(MS_SHAPEFILE):
@@ -352,6 +389,13 @@ static void expression2list(char **list, int *listsize, expressionObj *expressio
   }
 }
 
+/*
+** This function builds a list of items necessary to draw or query a particular layer by
+** examining the contents of the various xxxxitem parameters and expressions. That list is
+** then used to set the iteminfo variable. SDE is kinda special, we always need to retrieve
+** the shape column and a virtual record number column. Most sources should not have to 
+** modify this function.
+*/
 int msLayerWhichItems(layerObj *layer, int classify, int annotate) 
 {
   int i, nt=0, ne=0;
@@ -467,6 +511,10 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
   return(MS_SUCCESS);
 }
 
+/*
+** A helper function to set the items to be retrieved with a particular shape. Unused at the moment but will be used
+** from within MapScript. Should not need modification.
+*/
 int msLayerSetItems(layerObj *layer, char **items, int numitems)
 {
   int i;
