@@ -109,6 +109,9 @@ classObj_, colorObj_, pointObj_, rectObj_, shapeObj_, styleObj_
 An instance of classObj is a child of a layerObj instance and controls a
 particular classification of the layer's data.
 
+Multiple class styles are now supported in 4.1.  See the styleObj_ section
+for details on use of multiple class styles.
+
 Attributes
 ----------
 
@@ -183,6 +186,8 @@ getMetaData(string key) : string
 
 getStyle(int index) : styleObj_
     Return a reference to the styleObj at *index* in the styles array.
+
+    See the styleObj_ section for more details on multiple class styles.
 
 .. _insertStyle:
 
