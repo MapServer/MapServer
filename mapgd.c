@@ -135,14 +135,14 @@ void msImageInitGD( imageObj *image, colorObj *background )
         int             *tpixels;
 
         if( image->format->imagemode == MS_IMAGEMODE_RGBA )
-            pen = gdTrueColorAlpha( background.red, 
-                                    background.green, 
-                                    background.blue,
+            pen = gdTrueColorAlpha( background->red, 
+                                    background->green, 
+                                    background->blue,
                                     image->format->transparent ? 127 : 0 );
         else
-            pen = gdTrueColor( background.red, 
-                               background.green, 
-                               background.blue );
+            pen = gdTrueColor( background->red, 
+                               background->green, 
+                               background->blue );
 
         for( line = 0; line < image->img.gd->sy; line++ )
         {
