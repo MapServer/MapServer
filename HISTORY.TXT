@@ -21,6 +21,8 @@ Current Version (CVS)
 
 - Fixed MIME type of GetStyles response (bug 677)
 
+- Ported $layer->getExtent() from SWIG to PHP MapScript (bug 826)
+
 
 Version 4.2.2 (2004-07-28)
 --------------------------

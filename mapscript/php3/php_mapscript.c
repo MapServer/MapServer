@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.194.2.6  2004/08/25 16:27:43  dan
+ * Ported $layer->getExtent() from SWIG to PHP MapScript (bug 826)
+ *
  * Revision 1.194.2.5  2004/07/26 14:56:39  dan
  * Fixed php_mapscript to work with PHP5 (bug 718, patch from Sylvain Pasche)
  *
@@ -408,6 +411,7 @@ DLEXPORT void php3_ms_lyr_getResult(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_open(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_close(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_lyr_getExtent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_getMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_setMetaData(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_lyr_removeMetaData(INTERNAL_FUNCTION_PARAMETERS);
@@ -889,6 +893,7 @@ function_entry php_layer_class_functions[] = {
     {"open",            php3_ms_lyr_open,               NULL},
     {"close",           php3_ms_lyr_close,              NULL},
     {"getshape",        php3_ms_lyr_getShape,           NULL},
+    {"getextent",       php3_ms_lyr_getExtent,          NULL},
     {"getmetadata",     php3_ms_lyr_getMetaData,        NULL},
     {"setmetadata",     php3_ms_lyr_setMetaData,        NULL},
     {"removemetadata",     php3_ms_lyr_removeMetaData,        NULL},
@@ -7367,6 +7372,61 @@ DLEXPORT void php3_ms_lyr_getShape(INTERNAL_FUNCTION_PARAMETERS)
 
     /* Return valid object */
     _phpms_build_shape_object(poShape, PHPMS_GLOBAL(le_msshape_new), self,
+                              list, return_value);
+}
+/* }}} */
+
+
+/**********************************************************************
+ *                        layer->getExtent()
+ **********************************************************************/
+
+/* {{{ proto int shapefile.getExtent()
+   Retrieve or calculate a layer's extents. */
+
+DLEXPORT void php3_ms_lyr_getExtent(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval  *pThis;
+    layerObj *self=NULL;
+    rectObj  *poRect=NULL;
+    HashTable   *list=NULL;
+    pThis = getThis();
+
+    if (pThis == NULL || ARG_COUNT(ht) > 0) 
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (layerObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslayer),
+                                           list TSRMLS_CC);
+
+    if (self == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    /* Create a new rectObj to hold the result */
+    if ((poRect = rectObj_new()) == NULL)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Failed creating new rectObj (out of memory?)");
+        RETURN_FALSE;
+    }
+
+    /* Read from the file 
+     * shapefileObj_getExtent() has no return value!  How do we catch errors?
+     */
+    msLayerOpen(self);
+    if (msLayerGetExtent(self, poRect) != MS_SUCCESS)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        msLayerClose(self);
+        RETURN_FALSE;
+    }
+    msLayerClose(self);
+
+    /* Return rectObj */
+    _phpms_build_rect_object(poRect, PHPMS_GLOBAL(le_msrect_new), 
                               list, return_value);
 }
 /* }}} */
