@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.42  2004/11/12 20:23:16  frank
+ * include z and m in formatted pointObj, fmt is const!
+ *
  * Revision 1.41  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -923,9 +926,9 @@ void msRectToFormattedString(rectObj *rect, char *format, char *buffer,
              rect->minx, rect->miny, rect->maxx, rect->maxy);
 }
 
-void msPointToFormattedString(pointObj *point, char *format, char *buffer, 
-                             int buffer_length) 
+void msPointToFormattedString(pointObj *point, const char *format, 
+                              char *buffer, int buffer_length) 
 {
-    snprintf(buffer, buffer_length, format, point->x, point->y);
+    snprintf(buffer, buffer_length, format, point->x, point->y, point->z, point->m);
 }
 

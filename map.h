@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.372  2004/11/12 20:23:16  frank
+ * include z and m in formatted pointObj, fmt is const!
+ *
  * Revision 1.371  2004/11/10 19:22:23  sean
  * Comment out msImageLoadGDStream and pipe all gd image input through existing
  * msImageLoadGDCtx function.  Moved Frank's recent transparency and interlacing
@@ -1123,7 +1126,7 @@ MS_DLL_EXPORT int msRectContained(rectObj *a, rectObj *b);
 
 MS_DLL_EXPORT void msRectToFormattedString(rectObj *rect, char *format,
                                            char *buffer, int buffer_length);
-MS_DLL_EXPORT void msPointToFormattedString(pointObj *point, char *format,
+MS_DLL_EXPORT void msPointToFormattedString(pointObj *point, const char*format,
                                            char *buffer, int buffer_length);
 
 MS_DLL_EXPORT void msMergeRect(rectObj *a, rectObj *b);
