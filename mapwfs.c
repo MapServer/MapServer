@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2002/12/18 22:36:22  dan
+ * Sorted out projection handling in GetCapabilities and Getfeature
+ *
  * Revision 1.10  2002/12/18 16:45:49  dan
  * Fixed WFS capabilities to validate against schema
  *
@@ -239,18 +242,27 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
 
    // In WFS, every layer must have exactly one SRS and there is none at
    // the top level contrary to WMS
-   if (msGetEPSGProj(&(lp->projection),lp->metadata, MS_FALSE) != NULL)
+   //
+   // So here is the way we'll deal with SRS:
+   // 1- If a top-level map projection (or wfs_srs metadata) is set then
+   //    all layers are advertized in the map's projection and they will
+   //    be reprojected on the fly in the GetFeature request.
+   // 2- If there is no top-level map projection (or wfs_srs metadata) then
+   //    each layer is advertized in its own projection as defined in the
+   //    layer's projection object or wfs_srs metadata.
+   //
+   if (msGetEPSGProj(&(map->projection),map->web.metadata, MS_TRUE) != NULL)
    {
-       // If layer has a srs then try using it
+       // Map has a SRS.  Use it for all layers.
        msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
-                  msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
+                  msGetEPSGProj(&(map->projection),map->web.metadata,MS_TRUE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
    else
    {
-       // Layer has no SRS, try using map SRS or produce warning
+       // Map has no SRS.  Use layer SRS or produce a warning.
        msOWSPrintParam(stdout, "(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wfs_srs metadata", 
-                  msGetEPSGProj(&(map->projection), map->web.metadata, MS_FALSE),
+                  msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE),
                   OWS_WARN, "        <SRS>%s</SRS>\n", NULL);
    }
 
@@ -270,7 +282,7 @@ int msWFSDumpLayer(mapObj *map, layerObj *lp)
    }
    else
    {
-       printf("<!-- WARNING: Mandatory LatLonBoundingBox could not be established for this layer.  Consider setting wfs_extent metadata. -->\n");
+       printf("<!-- WARNING: Mandatory LatLongBoundingBox could not be established for this layer.  Consider setting wfs_extent metadata. -->\n");
    }
 
    printf("    </FeatureType>\n");
@@ -567,6 +579,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
     const char *typename="", *myns_uri;
     char       *script_url=NULL, *script_url_encoded;
     rectObj     bbox;
+    const char  *pszOutputSRS = NULL;
 
     // Default filter is map extents
     bbox = map->extent;
@@ -581,6 +594,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
         {
             char **layers;
             int numlayers, j, k;
+            const char *pszMapSRS = NULL;
 
             // keep a ref for layer use.
             typename = values[i];
@@ -598,6 +612,10 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
                 return msWFSException(map, wmtver);
             }
 
+            pszMapSRS = msGetEPSGProj(&(map->projection),
+                                      map->web.metadata, 
+                                      MS_TRUE);
+
             for(j=0; j<map->numlayers; j++) 
             {
                 layerObj *lp;
@@ -612,11 +630,46 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
                     if (msWFSIsLayerSupported(lp) && lp->name && 
                         strcasecmp(lp->name, layers[k]) == 0)
                     {
+                        const char *pszThisLayerSRS;
+
                         lp->status = MS_ON;
                         if (lp->template == NULL)
                         {
                             // Force setting a template to enable query.
                             lp->template = strdup("ttt.html");
+                        }
+
+                        // See comments in msWFSGetCapabilities() about the
+                        // rules for SRS.
+                        if ((pszThisLayerSRS = pszMapSRS) == NULL)
+                        {
+                            pszThisLayerSRS = msGetEPSGProj(&(lp->projection),
+                                                            lp->metadata, 
+                                                            MS_TRUE);
+                        }
+
+                        if (pszThisLayerSRS == NULL)
+                        {
+                            msSetError(MS_WFSERR, 
+                                       "Server config error: SRS must be set at least at the map or at the layer level.",
+                                       "msWFSGetFeature()");
+                            return msWFSException(map, wmtver);
+                        }
+
+                        // Keep track of output SRS.  If different from value
+                        // from previous layers then this is an invalid request
+                        // i.e. all layers in a single request must be in the
+                        // same SRS.
+                        if (pszOutputSRS == NULL)
+                        {
+                            pszOutputSRS = pszThisLayerSRS;
+                        }
+                        else if (strcasecmp(pszThisLayerSRS,pszOutputSRS) != 0)
+                        {
+                            msSetError(MS_WFSERR, 
+                                       "Invalid GetFeature Request: All TYPENAMES in a single GetFeature request must have been advertized in the same SRS.  Please check the capabilities and reformulate your request.",
+                                       "msWFSGetFeature()");
+                            return msWFSException(map, wmtver);
                         }
                     }
                 }
@@ -657,9 +710,8 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
             bbox.maxy = atof(tokens[3]);
             msFreeCharArray(tokens, n);
 
-            // __TODO__ SRS is implicit: the SRS of selected feature types
-            // Need to handle that better in case layers and maps SRS differ
-
+            // Note: BBOX SRS is implicit, it is the SRS of the selected
+            // feature types, see pszOutputSRS in TYPENAMES above.
         }
 
     }
@@ -670,6 +722,16 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
                    "Required TYPENAME parameter missing for GetFeature.", 
                    "msWFSGetFeature()");
         return msWFSException(map, wmtver);
+    }
+
+    // Set map output projection to which output features should be reprojected
+    if (pszOutputSRS && strncasecmp(pszOutputSRS, "EPSG:", 5) == 0)
+    {
+        char szBuf[32];
+        sprintf(szBuf, "init=epsg:%.10s", pszOutputSRS+5);
+
+        if (msLoadProjectionString(&(map->projection), szBuf) != 0)
+          return msWMSException(map, wmtver);
     }
 
     /*
