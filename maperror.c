@@ -13,7 +13,9 @@
 #include <stdarg.h>
 
 #ifdef NEED_NONBLOCKING_STDERR
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #endif
 
