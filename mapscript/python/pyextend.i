@@ -206,14 +206,14 @@
         {
             //if ( msIO_needBinaryStdout() == MS_FAILURE )
             //    return MS_FAILURE;
-            ctx = gdNewFileCtx(stdout);
+            ctx = msNewGDFileCtx(stdout);
             retval = msSaveImageGDCtx(self->img.gd, ctx, self->format);
             ctx->gd_free(ctx);
         }
         else if (PyFile_Check(file)) /* a Python (C) file */
         {
             stream = PyFile_AsFile(file);
-            ctx = gdNewFileCtx(stream);
+            ctx = msNewGDFileCtx(stream);
             retval = msSaveImageGDCtx(self->img.gd, ctx, self->format);
             ctx->gd_free(ctx);
         }

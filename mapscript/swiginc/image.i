@@ -98,13 +98,13 @@
             {
                 /* gdNewFileCtx is a semi-documented function from 
                    gd_io_file.c */
-                ctx = gdNewFileCtx(file);
+                ctx = msNewGDFileCtx(file);
             }
             else /* create a gdIOCtx interface to stdout */
             {
                 //if ( msIO_needBinaryStdout() == MS_FAILURE )
                 //    return MS_FAILURE;
-                ctx = gdNewFileCtx(stdout);
+                ctx = msNewGDFileCtx(stdout);
             }
             
             /* we wrap msSaveImageGDCtx in the same way that 

@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.84  2004/11/10 17:51:50  sean
+ * copy fileIOCtx code from gd_io_file.c to end of mapgd.c, renaming the struct
+ * allocation function to msNewGDFileCtx (bug 1047).
+ *
  * Revision 1.83  2004/11/10 16:40:33  sean
  * eliminate msSaveImageStreamGD and instead pipe GD output through new
  * msSaveImageGDCtx function.  This avoids passing a FILE* to GD (bug 1047).
@@ -2873,7 +2877,7 @@ int msSaveImageGD( gdImagePtr img, char *filename, outputFormatObj *format )
         /* we wrap msSaveImageGDCtx in the same way that 
            gdImageJpeg() wraps gdImageJpegCtx()  (bug 1047). */
         /* gdNewFileCtx is a semi-documented function from gd_io_file.c */
-        ctx = gdNewFileCtx(stream);
+        ctx = (gdIOCtx *) msNewGDFileCtx(stream);
         retval = msSaveImageGDCtx( img, ctx, format );
         ctx->gd_free(ctx);
         fclose(stream);
@@ -2884,7 +2888,7 @@ int msSaveImageGD( gdImagePtr img, char *filename, outputFormatObj *format )
         if ( msIO_needBinaryStdout() == MS_FAILURE )
             return MS_FAILURE;
         stream = stdout;
-        ctx = gdNewFileCtx(stream);
+        ctx = (gdIOCtx *) msNewGDFileCtx(stream);
 #ifdef USE_MAPIO
         ctx = msIO_getGDIOCtx( stream );
 #endif
@@ -3153,4 +3157,150 @@ void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int s
     */
     //gdImageAlphaBlending( dst, 0 );
     gdImageAlphaBlending( dst, oldAlphaBlending );
+}
+
+/* Code from gd_io_file.c has been brought into mapserver itself so that we
+   can avoid the issue of passing a FILE* from mapserver to the bgd.dll on
+   windows (bug 1047).  See the file mapserver/GD-COPYING for full credits and
+   copyright of the GD authors. */
+
+/*
+   * io_file.c
+   *
+   * Implements the file interface.
+   *
+   * As will all I/O modules, most functions are for local use only (called
+   * via function pointers in the I/O context).
+   *
+   * Most functions are just 'wrappers' for standard file functions.
+   *
+   * Written/Modified 1999, Philip Warner.
+   *
+ */
+
+//#ifdef HAVE_CONFIG_H
+//#include "config.h"
+//#endif
+
+/* For platforms with incomplete ANSI defines. Fortunately,
+   SEEK_SET is defined to be zero by the standard. */
+
+#ifndef SEEK_SET
+#define SEEK_SET 0
+#endif /* SEEK_SET */
+
+//#include <math.h>
+//#include <string.h>
+//#include <stdlib.h>
+#include "gd.h"
+
+/* this is used for creating images in main memory */
+
+typedef struct fileIOCtx
+{
+  gdIOCtx ctx;
+  FILE *f;
+}
+fileIOCtx;
+
+static int fileGetbuf (gdIOCtx *, void *, int);
+static int filePutbuf (gdIOCtx *, const void *, int);
+static void filePutchar (gdIOCtx *, int);
+static int fileGetchar (gdIOCtx * ctx);
+
+static int fileSeek (struct gdIOCtx *, const int);
+static long fileTell (struct gdIOCtx *);
+static void gdFreeFileCtx (gdIOCtx * ctx);
+
+/* return data as a dynamic pointer */
+gdIOCtx *msNewGDFileCtx (FILE * f)
+{
+  fileIOCtx *ctx;
+
+  ctx = (fileIOCtx *) malloc (sizeof (fileIOCtx));
+  if (ctx == NULL)
+    {
+      return NULL;
+    }
+
+  ctx->f = f;
+
+  ctx->ctx.getC = fileGetchar;
+  ctx->ctx.putC = filePutchar;
+
+  ctx->ctx.getBuf = fileGetbuf;
+  ctx->ctx.putBuf = filePutbuf;
+
+  ctx->ctx.tell = fileTell;
+  ctx->ctx.seek = fileSeek;
+
+  ctx->ctx.gd_free = gdFreeFileCtx;
+
+  return (gdIOCtx *) ctx;
+}
+
+static void
+gdFreeFileCtx (gdIOCtx * ctx)
+{
+  gdFree (ctx);
+}
+
+
+static int
+filePutbuf (gdIOCtx * ctx, const void *buf, int size)
+{
+  fileIOCtx *fctx;
+  fctx = (fileIOCtx *) ctx;
+
+  return fwrite (buf, 1, size, fctx->f);
+
+}
+
+static int
+fileGetbuf (gdIOCtx * ctx, void *buf, int size)
+{
+  fileIOCtx *fctx;
+  fctx = (fileIOCtx *) ctx;
+
+  return (fread (buf, 1, size, fctx->f));
+
+}
+
+static void
+filePutchar (gdIOCtx * ctx, int a)
+{
+  unsigned char b;
+  fileIOCtx *fctx;
+  fctx = (fileIOCtx *) ctx;
+
+  b = a;
+
+  putc (b, fctx->f);
+}
+
+static int
+fileGetchar (gdIOCtx * ctx)
+{
+  fileIOCtx *fctx;
+  fctx = (fileIOCtx *) ctx;
+
+  return getc (fctx->f);
+}
+
+
+static int
+fileSeek (struct gdIOCtx *ctx, const int pos)
+{
+  fileIOCtx *fctx;
+  fctx = (fileIOCtx *) ctx;
+  return (fseek (fctx->f, pos, SEEK_SET) == 0);
+}
+
+static long
+fileTell (struct gdIOCtx *ctx)
+{
+  fileIOCtx *fctx;
+  fctx = (fileIOCtx *) ctx;
+
+  return ftell (fctx->f);
 }

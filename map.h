@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.370  2004/11/10 17:51:50  sean
+ * copy fileIOCtx code from gd_io_file.c to end of mapgd.c, renaming the struct
+ * allocation function to msNewGDFileCtx (bug 1047).
+ *
  * Revision 1.369  2004/11/10 16:40:33  sean
  * eliminate msSaveImageStreamGD and instead pipe GD output through new
  * msSaveImageGDCtx function.  This avoids passing a FILE* to GD (bug 1047).
@@ -1451,6 +1455,7 @@ MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 #define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
 
+MS_DLL_EXPORT gdIOCtx *msNewGDFileCtx(FILE *file);
 MS_DLL_EXPORT int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
 MS_DLL_EXPORT unsigned char *msSaveImageBufferGD(gdImagePtr img, int *bufsize, outputFormatObj *format);
 MS_DLL_EXPORT int msSaveImageGDCtx(gdImagePtr img, gdIOCtx* ctx, outputFormatObj *format);
