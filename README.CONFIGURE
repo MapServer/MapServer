@@ -20,7 +20,7 @@ For the impatient:
 To build the "mapserv" CGI program with the default options, go to the
 directory where you extracted the MapServer source code package and...
 
- $ cd ms_3.3.x
+ $ cd ms_3.5.x
  $ ./configure
  $ make
 
@@ -44,6 +44,9 @@ Here is the list of available options as returned by "./configure --help":
   --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).
   --without-jpeg          Disable JPEG support.
   --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).
+  --with-zlib[=DIR]       Specify where to find ZLIB, if needed by GD.
+  --with-png[=DIR]        Specify where to find PNG, if needed by GD.
+  --with-freetype[=DIR]   Specify where to find Freetype, if needed by GD.
   --without-eppl          Disable EPPL7 support.
   --with-eppl             Include EPPL7 support.
   --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).
@@ -85,12 +88,21 @@ GD Library:
   The GD library is the only component that is not optional.
 
   By default, configure tries to locate it on your system and uses the
-  system copy if found.   If it is not found then it uses "gd-1.2" that
-  is included in the source code distribution.
+  system copy if found.   
 
   You can use the --with-gd=DIR option to use a copy of GD installed in
   directory "DIR".  Make sure that this copy of GD is compiled before
   using this option.
+
+  Newer versions of GD generate JPEG, PNG, and WBMP image formats instead
+  of GIF, and may use FreeType for fonts.  This may require GD linking with 
+  those libraries.  Use specific --with-jpeg=DIR, --with-freetype=DIR, 
+  --with-png=DIR, --with-zlib=DIR options as noted below to find those 
+  libraries if required, configure checks in standard locations for defaults.
+
+  Note:  If libraries required by GD are not found, it may cause configure
+  to not accurately detect which image formats are supported by GD, and may
+  cause configure and building to fail.
 
 
 TIFF Support:
@@ -108,7 +120,10 @@ TIFF Support:
   directory "DIR".  Make sure that this copy of LibTiff is compiled before
   using this option.
 
-    e.g.  $ ./configure --with-tiff=../tiff-v.3.5.4 
+  Note:  Your version of libtiff may have been compiled with JPEG or ZLIB
+  support.  If so, you may need to specify --with-jpeg=DIR or --with-zlib=DIR
+  to resolve these libraries for linking.  Failure to resolve dependent
+  libraries may cause linking to fail.
 
 
 JPEG Support:
@@ -126,6 +141,28 @@ JPEG Support:
   directory "DIR".  Make sure that this copy of LibJPEG is compiled before
   using this option.
 
+  Also use this option if your version of GD produces images in JPEG format.
+
+
+PNG Support:
+------------
+
+  --with-png[=DIR]       Specify where to find PNG libraries.
+
+  Your GD library may produce images in PNG format.  Use this option to
+  specify a specific PNG installation directory.  The default location is
+  the system library.
+
+
+ZLIB Support:
+-------------
+
+  --with-zlib[=DIR]      Specify where to find ZLIB (libz) libraries.
+
+  Your GD library may produce images in PNG format.  Use this option to
+  specify a specific ZLIB installation directory, as PNG and/or TIFF may 
+  depend on this library.  
+
 
 EPPL7 Support:
 --------------
@@ -142,29 +179,32 @@ EPPL7 Support:
 Freetype Support:
 -----------------
 
-  --without-ttf           Disable Freetype (TTF) support.
-  --with-ttf[=DIR]        Include Freetype (TTF) support (DIR is Freetype's
+  --without-freetype      Disable Freetype (TTF) support.
+  --with-freetype[=DIR]   Include Freetype (TTF) support (DIR is Freetype's
                           install dir).
 
   Freetype support is optional, but it will be included by default if 
-  configure finds libttf on your system.
+  configure finds libfreetype (or libttf) on your system.
 
-  Use --without-ttf to explicitly disable Freetype support.
-
-  Use the --with-ttf=DIR option to use a copy of Freetype installed in
+  Use the --with-freetype=DIR option to use a copy of Freetype installed in
   directory "DIR".  Make sure that this copy of Freetype is compiled before
   using this option.
 
-  IMPORTANT NOTE IF YOU USE "--with-ttf=DIR":
+  Beginning with FreeType 2.x+, FreeType installs 'freetype-config' into 
+  the installation directory as ./bin/freetype-config.  You may specify the
+  pathname to freetype-config as the DIR argument.  E.g.:
+		--with-freetype=/usr/local/bin/freetype-config
 
-  Since the Freetype distribution (freetype-1.3.1) is built as a shared 
-  library by default, then you have to make sure that libttf.so is located
-  in a directory that is part of the system's runtime library path for 
+  IMPORTANT NOTE IF YOU USE "--with-freetype=DIR":
+
+  Since the Freetype distribution is built as a shared 
+  library by default, then you have to make sure that libfreetype.so is 
+  located in a directory that is part of the system's runtime library path for 
   your executables to work.
 
-  If libttf cannot be installed in the system lib directories, then the
-  best option is probably to add the directory where libttf.so lives to the 
-  LD_LIBRARY_PATH environment variable and make sure that its value gets 
+  If libfreetype cannot be installed in the system lib directories, then the
+  best option is probably to add the directory where libfrretype.so lives to 
+  the LD_LIBRARY_PATH environment variable and make sure that its value gets 
   passed to CGI programs.  With Apache, this is done with the PassEnv or
   the SetEnv directives in the httpd.conf file.
 
@@ -408,6 +448,18 @@ Perl MapScript Module:
   The Perl MapScript module is not yet handled by the configure script.
 
   See the file ./mapscript/perl/README for compilation instructions.
+
+
+Tcl MapScript Module:
+---------------------
+
+  The Tcl MapScript module is not yet handled by the configure script.
+
+  See the file ./mapscript/tcl/README for compilation instructions.
+
+  Mapserver must first be configured and build before building Tcl
+  MapScript.
+
 
 
 ----------------
