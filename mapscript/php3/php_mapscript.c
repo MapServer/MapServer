@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.104  2002/04/24 20:37:32  assefa
+ * Correct compiling error on Windows.
+ *
  * Revision 1.103  2002/04/22 19:31:57  dan
  * Added optional new_map_path arg to msLoadMap()
  *
@@ -1081,7 +1084,7 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
         {
             strcat(szFname, "\\");
             strcat(szFname, pFname->value.str.val, pszNewPath);
-            pNewObj = mapObj_new(szFname);
+            pNewObj = mapObj_new(szFname, pszNewPath);
         }
     }
 #else
@@ -4240,6 +4243,7 @@ DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
     char        **papszName = NULL;
     char        **papszValue = NULL;
 
+    
 #ifdef PHP4
     HashTable   *list=NULL;
 
@@ -4252,6 +4256,7 @@ DLEXPORT void php3_ms_map_processLegendTemplate(INTERNAL_FUNCTION_PARAMETERS)
 #else
     getThis(&pThis);
 #endif
+
 
     if (pThis == NULL)
     {
