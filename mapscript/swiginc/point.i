@@ -32,15 +32,15 @@
 %extend pointObj 
 {
   
-    pointObj(double x=0.0, double y=0.0, double m=2e-38) 
+    pointObj(double x=0.0, double y=0.0, double z=0.0, double m=-2e38) 
     {
         pointObj *p;
-        p = (pointObj *)malloc(sizeof(pointObj));
+        p = (pointObj *)calloc(1,sizeof(pointObj));
         if (!p) return NULL;
         p->x = x;
         p->y = y;
-        if (m > 1e-38)
-            p->m = m;
+	p->z = z;
+        p->m = m;
         return p;
     }
 
@@ -75,12 +75,31 @@
         return msDistancePointToShape(self, shape);
     }
 
-    int setXY(double x, double y, double m=2e-38) 
+    int setXY(double x, double y, double m=-2e38) 
     {
         self->x = x;
         self->y = y;
-        if (m > 1e-38)
+	self->z = 0.0;
         self->m = m;
+	
+        return MS_SUCCESS;
+    }
+
+    int setXYZ(double x, double y, double z, double m=-2e38) 
+    {
+        self->x = x;
+        self->y = y;
+	self->z = z;
+        self->m = m;
+        return MS_SUCCESS;
+    }
+
+    int setXYZM(double x, double y, double z, double m) 
+    {
+        self->x = x;
+        self->y = y;
+	self->z = z;
+	self->m = m;
         return MS_SUCCESS;
     }
 
@@ -88,8 +107,14 @@
     char *toString() 
     {
         char buffer[256];
-        char fmt[]="{ 'x': %f , 'y': %f }";
-        msPointToFormattedString(self, (char *) &fmt, (char *) &buffer, 256);
+        const char *fmt;
+
+	if( self->m < -1e38 )
+	    fmt = "{ 'x': %.16g , 'y': %.16g, 'z': %.16g }";
+	else
+	    fmt = "{ 'x': %.16g , 'y': %.16g, 'z': %.16g, 'm': %.16g }";
+	
+        msPointToFormattedString(self, fmt, (char *) &buffer, 256);
         return strdup(buffer);
     }
 }
