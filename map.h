@@ -113,7 +113,7 @@ extern "C" {
 #define MS_MAXCLASSES 250
 #define MS_MAXSTYLES 5
 #define MS_MAXPROJARGS 20
-#define MS_MAXLAYERS 100 /* maximum number of layers in a map file */
+#define MS_MAXLAYERS 200 /* maximum number of layers in a map file */
 #define MS_MAXJOINS 5
 #define MS_ITEMNAMELEN 32
 #define MS_NAMELEN 20
@@ -1074,6 +1074,7 @@ MS_DLL_EXPORT char *msEncodeUrl(const char*);
 MS_DLL_EXPORT char *msEncodeHTMLEntities(const char *string);
 MS_DLL_EXPORT void msDecodeHTMLEntities(const char *string);
 MS_DLL_EXPORT char *strcatalloc(char *pszDest, char *pszSrc);
+MS_DLL_EXPORT char *msJoinStrings(char **array, int arrayLength, const char *delimeter);
 MS_DLL_EXPORT char *msHashString(const char *pszStr);
 
 #ifdef NEED_STRDUP

@@ -645,6 +645,31 @@ char *strcatalloc(char *pszDest, char *pszSrc)
    return pszDest;
 }
 
+char *msJoinStrings(char **array, int arrayLength, const char *delimeter) 
+{
+  char *string;
+  int stringLength=0;
+  int delimeterLength;
+  int i;
+
+  if(!array || arrayLength <= 0 || !delimeter) return NULL;
+
+  delimeterLength = strlen(delimeter);
+
+  for(i=0; i<arrayLength; i++)
+    stringLength += strlen(array[i]) + delimeterLength;
+
+  string = (char *)calloc(stringLength+1, sizeof(char));
+  if(!string) return NULL;
+
+  for(i=0; i<arrayLength-1; i++) {
+    strcat(string, array[i]);
+    strcat(string, delimeter);
+  }
+  strcat(string, array[i]); // add last element, no delimiter
+
+  return string;
+}
 
 #define HASH_SIZE  16
 /*
