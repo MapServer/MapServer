@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.52  2001/09/24 15:59:03  assefa
+ * Modify GetDeltaExtentsUsingScale to fit with msCalculateScale (mapscale.c) :
+ * this corrects the zoomscale bug (#46).
+ *
  * Revision 1.51  2001/09/13 20:58:01  dan
  * Fixed handling of objects and refcounts vs PHP4.0.6... thanks to Zeev Suraski
  * for his help.  See bug#30 and #40.
@@ -7744,7 +7748,7 @@ static double GetDeltaExtentsUsingScale(double dfScale, int nUnits,
       case(MS_MILES):
       case(MS_INCHES):  
       case(MS_FEET):
-        md = (nWidth-1)/(resolution*inchesPerUnit[nUnits]);
+        md = nWidth/(resolution*inchesPerUnit[nUnits]);
         dfDelta = md * dfScale;
         break;
           
