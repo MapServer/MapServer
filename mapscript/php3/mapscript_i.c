@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.52  2002/12/12 19:30:49  assefa
+ * Correct call to msDrawShape function.
+ *
  * Revision 1.51  2002/10/28 20:31:21  dan
  * New support for WMS Map Context (from Julien)
  *
@@ -819,7 +822,7 @@ int shapeObj_add(shapeObj *self, lineObj *line) {
 
 int shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer, 
                   imageObj *img) {
-    return msDrawShape(map, layer, self, img, MS_TRUE);
+    return msDrawShape(map, layer, self, img, -1);
   }
 
 void shapeObj_setBounds(shapeObj *self) {
@@ -924,7 +927,7 @@ int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
     shape.classindex = classindex;
     shape.text = strdup(text);
 
-    msDrawShape(map, layer, &shape, img, MS_TRUE);
+    msDrawShape(map, layer, &shape, img, -1);
 
     msFreeShape(&shape);
     
