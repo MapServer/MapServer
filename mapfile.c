@@ -3839,8 +3839,11 @@ int msFreeLabelCache(labelCacheObj *cache) {
 
 /* This is intended to be a function to cleanup anything that "hangs around"
    when all maps are destroyed, like Registered GDAL drivers, and so forth. */
+extern void lexer_cleanup();
+
 void msCleanup()
 {
+    lexer_cleanup();
 #ifdef USE_OGR
     msOGRCleanup();
 #endif    

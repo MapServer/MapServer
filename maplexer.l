@@ -20,6 +20,14 @@ int msyystate=0;
 char *msyystring=NULL;
 
 int msyyreturncomments = 0;
+
+void lexer_cleanup() {
+    if( yy_current_buffer != NULL )
+    {
+        yy_delete_buffer( yy_current_buffer );
+        yy_current_buffer = 0;
+    }
+}
 %}
 
 %s OBJECT_STRING
