@@ -48,6 +48,7 @@ typedef struct {
   int antialias;
   char *font;
   int gap;
+  int position;
 
   /*
   ** MS_SYMBOL_CARTOLINE options

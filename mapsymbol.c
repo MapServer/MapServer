@@ -79,6 +79,7 @@ void initSymbol(symbolObj *s)
   s->antialias = MS_FALSE;
   s->font = NULL;
   s->character = '\0';
+  s->position = MS_CC;
 
   s->linecap = MS_CJC_BUTT;
   s->linejoin = MS_CJC_ROUND;
@@ -137,7 +138,11 @@ int loadSymbol(symbolObj *s)
       break;  
     case(GAP):
       if((getInteger(&s->gap)) == -1) return(-1);
-      break; 
+      break;
+    case(POSITION):
+      if((s->position = getSymbol(3, MS_UC,MS_CC,MS_LC)) == -1) 
+	return(-1);
+      break;
     case(IMAGE):
       if(msyylex() != MS_STRING) { /* get image location from next token */
 	msSetError(MS_TYPEERR, "(%s):(%d)", "loadSymbol()", msyylineno);
