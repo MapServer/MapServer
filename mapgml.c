@@ -403,7 +403,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
         sprintf(value, "%s_feature", lp->name);
         msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
                                    "gml_featurename", MS_NOERR, 
-                                   "\t\t<%s>\n", NULL);
+                                   "\t\t<%s>\n", value);
         msFree(value);
 
 	// write the item/values
@@ -448,7 +448,7 @@ int msGMLWriteQuery(mapObj *map, char *filename)
         sprintf(value, "%s_feature", lp->name);
         msOWSPrintValidateMetadata(stream, &(lp->metadata), NULL, 
                                    "gml_featurename", MS_NOERR, 
-                                   "\t\t</%s>\n", NULL);
+                                   "\t\t</%s>\n", value);
         msFree(value);
 
 	msFreeShape(&shape); // init too
