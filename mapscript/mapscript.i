@@ -768,6 +768,11 @@ memory.") const char * {
   char *getWMSFeatureInfoURL(mapObj *map, int click_x, int click_y, int feature_count, char *info_format) {
     return(msWMSGetFeatureInfoURL(map, self, click_x, click_y, feature_count, info_format));
   }
+ 
+  char *executeWFSGetFeature(layerObj *layer) {
+        return (msWFSExecuteGetFeature(layer));
+}
+
 }
 
 //
