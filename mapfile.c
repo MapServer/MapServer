@@ -2078,6 +2078,11 @@ int initLayer(layerObj *layer, mapObj *map)
 
   layer->sameconnection = NULL;
 
+	layer->extent.minx = -1.0;
+	layer->extent.miny = -1.0;
+	layer->extent.maxx = -1.0;
+	layer->extent.maxy = -1.0;
+	
   return(0);
 }
 
@@ -2098,6 +2103,7 @@ void freeLayer(layerObj *layer) {
   msFree(layer->tileitem);
   msFree(layer->bandsitem);
   msFree(layer->connection);
+
 
   msFreeProjection(&(layer->projection));
 
@@ -2179,16 +2185,28 @@ int loadLayer(layerObj *layer, mapObj *map)
       // }
 
       if(layer->type == -1) {
-	msSetError(MS_MISCERR, "Layer type not set.", "loadLayer()");      
-	return(-1);
+				msSetError(MS_MISCERR, "Layer type not set.", "loadLayer()");      
+				return(-1);
       }
 
       return(0);
       break;
+    case(EXTENT):
+    {
+        if(getDouble(&(layer->extent.minx)) == -1) return(NULL);
+        if(getDouble(&(layer->extent.miny)) == -1) return(NULL);
+        if(getDouble(&(layer->extent.maxx)) == -1) return(NULL);
+        if(getDouble(&(layer->extent.maxy)) == -1) return(NULL);
+        if (!msRectIsValid(&(layer->extent))) {
+        	msSetError(MS_MISCERR, "Given layer extent is invalid.", "loadLayer()"); 
+        	return(NULL);
+        }
+        break;
+    }
     case(FEATURE):
       if(layer->type == -1) {
-	msSetError(MS_MISCERR, "Layer type must be set before defining inline features.", "loadLayer()");      
-	return(-1);
+				msSetError(MS_MISCERR, "Layer type must be set before defining inline features.", "loadLayer()");      
+				return(-1);
       }
 
       if(layer->type == MS_LAYER_POLYGON)
@@ -2765,6 +2783,10 @@ int loadReferenceMap(referenceMapObj *ref, mapObj *map)
       if(getDouble(&(ref->extent.miny)) == -1) return(-1);
       if(getDouble(&(ref->extent.maxx)) == -1) return(-1);
       if(getDouble(&(ref->extent.maxy)) == -1) return(-1);
+      if (!msRectIsValid(&(ref->extent))) {
+      	msSetError(MS_MISCERR, "Given reference extent is invalid.", "loadReferenceMap()"); 
+        return(NULL);
+      	}
       break;  
     case(IMAGE):
       if(getString(&ref->image) == MS_FAILURE) return(-1);
@@ -2833,6 +2855,10 @@ static void loadReferenceMapString(mapObj *map, referenceMapObj *ref, char *valu
     if(getDouble(&(ref->extent.miny)) == -1) return;
     if(getDouble(&(ref->extent.maxx)) == -1) return;
     if(getDouble(&(ref->extent.maxy)) == -1) return;
+    if (!msRectIsValid(&(ref->extent))) {
+    	msSetError(MS_MISCERR, "Given reference extent is invalid.", "loadReferenceMapString()"); 
+      return(NULL);
+    	}
     break;  
   case(IMAGE):
     msFree(ref->image); ref->image = NULL;
@@ -3634,6 +3660,10 @@ int loadWeb(webObj *web, mapObj *map)
       if(getDouble(&(web->extent.miny)) == -1) return(-1);
       if(getDouble(&(web->extent.maxx)) == -1) return(-1);
       if(getDouble(&(web->extent.maxy)) == -1) return(-1);
+	    if (!msRectIsValid(&(web->extent))) {
+	    	msSetError(MS_MISCERR, "Given web extent is invalid.", "loadWeb()"); 
+	      return(NULL);
+	    	}
       break;
     case(FOOTER):
       if(getString(&web->footer) == MS_FAILURE) return(-1);
@@ -3698,6 +3728,10 @@ static void loadWebString(mapObj *map, webObj *web, char *value)
     if(getDouble(&(web->extent.miny)) == -1) return;
     if(getDouble(&(web->extent.maxx)) == -1) return;
     if(getDouble(&(web->extent.maxy)) == -1) return;
+    if (!msRectIsValid(&(web->extent))) {
+    	msSetError(MS_MISCERR, "Given web extent is invalid.", "loadWeb()"); 
+      return(NULL);
+    	}
     break;
   case(FOOTER):
     if(msEvalRegex(map->templatepattern, value) != MS_TRUE) return;
@@ -4106,8 +4140,12 @@ static mapObj *loadMapInternal(char *filename, char *new_mappath)
         if(getDouble(&(map->extent.miny)) == -1) return(NULL);
         if(getDouble(&(map->extent.maxx)) == -1) return(NULL);
         if(getDouble(&(map->extent.maxy)) == -1) return(NULL);
+        if (!msRectIsValid(&(map->extent))) {
+    			msSetError(MS_MISCERR, "Given map extent is invalid.", "loadMapInternal()"); 
+      		return(NULL);
+    			}
     }
-    break;
+	    break;
     case(ANGLE):
     {
         double rotation_angle;
@@ -4272,6 +4310,10 @@ int msLoadMapString(mapObj *map, char *object, char *value)
       if(getDouble(&(map->extent.miny)) == -1) break;
       if(getDouble(&(map->extent.maxx)) == -1) break;
       if(getDouble(&(map->extent.maxy)) == -1) break;
+      if (!msRectIsValid(&(map->extent))) {
+  			msSetError(MS_MISCERR, "Given map extent is invalid.", "msLoadMapString()"); 
+    		return(NULL);
+  			}
       msMapComputeGeotransform( map );
       break;
     case(ANGLE):
