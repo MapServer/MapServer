@@ -54,6 +54,7 @@ from cases.maptest import MapExtentTestCase
 from cases.maptest import MapExceptionTestCase
 from cases.maptest import EmptyMapExceptionTestCase
 from cases.maptest import MapMetaDataTestCase
+from cases.maptest import MapSizeTestCase
 
 from cases.layertest import LayerConstructorTestCase
 from cases.layertest import LayerExtentTestCase
