@@ -16,6 +16,9 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Expose only GD formats for GetLegendGraphic in the capabilities (Bug 1011)
+  Check for supported formats when process a GetLegendGraphic request (Bug 1030)
+
 - mapraster.c: fixed problem with leaks in tileindexed case where the
   tile index is missing.  (bug 713)
 
