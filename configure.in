@@ -1067,6 +1067,10 @@ AC_SUBST(POSTGIS_ENABLED,$POSTGIS_ENABLED)
 AC_SUBST(POSTGIS_INC,$POSTGIS_INC)
 AC_SUBST(POSTGIS_LIB,$POSTGIS_LIB)
 
+ALL_ENABLED="$POSTGIS_ENABLED $ALL_ENABLED"
+ALL_INC="$POSTGIS_INC $ALL_INC"
+ALL_LIB="$POSTGIS_LIB $ALL_LIB"
+
 dnl ---------------------------------------------------------------------------
 dnl Try to find out if OracleSpatial support requested.
 dnl ---------------------------------------------------------------------------
@@ -1161,13 +1165,15 @@ elif test "$with_wmsclient" = "yes" ; then
   fi
 
   WWW_VER=`$LIBWWW_CONFIG --version`
-
+  
+  AC_MSG_RESULT([        found libwww version $WWW_VER])
+  
   dnl Need libwww 5.3.2 or more because of an infinite loop in older versions
   dnl __TODO__ How can we do a '-lt' (lower than) test on strings???
-  if test -z "$WWW_VER" -o "$WWW_VER" != "5.3.2" ; then
+  if test -z "$WWW_VER" -o `expr "$WWW_VER" \< "5.3.2"` = 1; then
     AC_MSG_ERROR([libwww version 5.3.2 or more recent is required.])
   fi
-  AC_MSG_RESULT([        found libwww version $WWW_VER])
+
 
   WMS_LYR_ENABLED="-DUSE_WMS_LYR"
 
@@ -1268,14 +1274,22 @@ ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
 
 
 dnl ---------------------------------------------------------------------
-dnl PHP3/MapScript module options
+dnl PHP/MapScript module options
 dnl ---------------------------------------------------------------------
 
 AC_CHECKING(for PHP/MapScript module options...)
 AC_ARG_WITH(php,
-[  --with-php=DIR          Specify directory where PHP3/PHP4 source tree is
+[  --with-php=DIR          Specify directory where PHP4 source tree is
                           installed. Required in order to compile the
                           PHP/MapScript module.],,)
+
+AC_ARG_ENABLE(internal-ld-detect,
+[  --enable-internal-ld-detect (applies to --with-php only) 
+                          Use internal configure macro to figure the command to
+                          use to link php_mapscript.so instead of using perl -V
+                          which is the default and may not work well on some 
+                          systems such as FreeBSD.],,)
+
 
 if test -n "$with_php" -a -d "$with_php" ; then
   AC_EXPAND_PATH($with_php, PHP_SRC_DIR)
@@ -1283,20 +1297,30 @@ if test -n "$with_php" -a -d "$with_php" ; then
   dnl Checks for shared library linking.
   dnl
   dnl Try to use the perl-based macro if perl is available...
+  dnl Unless internal detection explicitly requested...
   dnl
-  dnl if test -n "`which perl`" ; then
-  AC_MSG_CHECKING([whether 'perl -V' works])
-  if  (perl -V > /dev/null 2>&1)  ; then
-    AC_MSG_RESULT(yes)
-    AC_LD_SHARED_FROM_PERL
-    PHP_CC="$PERL_CC"
-    PHP_LD="$PERL_LD"
+
+  if test "$enable_internal_ld_detect" = "yes" ; then
+      AC_MSG_RESULT(Using internal macro to figure ld command to link php_mapscript.so)
+      AC_COMPILER_PIC
+      AC_LD_SHARED
+      PHP_CC="$CC $C_PIC"
+      PHP_LD="$LD_SHARED"
   else
-    AC_MSG_RESULT(no)
-    AC_COMPILER_PIC
-    AC_LD_SHARED
-    PHP_CC="$CC $C_PIC"
-    PHP_LD="$LD_SHARED"
+    dnl if test -n "`which perl`" ; then
+    AC_MSG_CHECKING([whether 'perl -V' works])
+    if  (perl -V > /dev/null 2>&1)  ; then
+      AC_MSG_RESULT(yes)
+      AC_LD_SHARED_FROM_PERL
+      PHP_CC="$PERL_CC"
+      PHP_LD="$PERL_LD"
+    else
+      AC_MSG_RESULT(no)
+      AC_COMPILER_PIC
+      AC_LD_SHARED
+      PHP_CC="$CC $C_PIC"
+      PHP_LD="$LD_SHARED"
+    fi
   fi
 
   dnl
@@ -1327,6 +1351,9 @@ if test -n "$with_php" -a -d "$with_php" ; then
     PHP_VERSION_FLAG="-DPHP4"
   else
     PHP_VERSION_FLAG="-DPHP3"
+    AC_MSG_ERROR([
+!!! PHP MapScript now requires PHP 4.1.2 or more recent.              !!!
+!!! Support for PHP3 has been dropped after MapServer version 3.5.    !!!])
   fi
   AC_MSG_RESULT([$PHP_VERSION_FLAG])
 
@@ -1394,12 +1421,20 @@ dnl The APXS variable also affects the way AC_ADD_RUNPATH() works
 dnl ---------------------------------------------------------------------
 
 AC_ARG_WITH(apxs,
-[  --with-apxs[=FILE]      Use this option only if building the PHP MapScript
+[  --with-apxs[=FILE]      (CURRENTLY DISABLED) 
+                          Use this option only if building the PHP MapScript
                           on a system where PHP was built as a shared Apache
                           module.  FILE is the optional pathname to the
                           Apache apxs tool; defaults to apxs.],,)
 
 if test -n "$with_apxs" -a "$with_apxs" != "no" ; then
+
+  AC_MSG_ERROR([
+!!! The current version of PHP MapScript requires PHP4 configured as  !!!
+!!! a CGI and cannot be used with PHP4 configured as an Apache module,!!!
+!!! so you cannot use the --with-apxs option.                         !!!
+!!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!])
+
 
   AC_MSG_CHECKING([for location of Apache headers using apxs])
   if test -z "$MAKE_PHPMS" ; then
@@ -1426,12 +1461,19 @@ dnl location of the apache include files.
 dnl ---------------------------------------------------------------------
 
 AC_ARG_WITH(apache,
-[  --with-apache=DIR       Use this option only if building the PHP MapScript
+[  --with-apache=DIR       (CURRENTLY DISABLED) 
+                          Use this option only if building the PHP MapScript
                           on a system where PHP was built as an Apache
                           module statically linked into the httpd executable.
                           DIR is the path to the apache include files.],,)
 
 if test -n "$with_apache" -a "$with_apache" != "no" ; then
+
+  AC_MSG_ERROR([
+!!! The current version of PHP MapScript requires PHP4 configured as  !!!
+!!! a CGI and cannot be used with PHP4 configured as an Apache module,!!!
+!!! so you cannot use the --with-apache option.                       !!!
+!!! See: http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PHPMapScriptCGI !!!])
 
   AC_MSG_CHECKING([for location of Apache headers])
   if test -z "$MAKE_PHPMS" ; then
