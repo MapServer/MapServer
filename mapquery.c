@@ -7,21 +7,19 @@
 */
 int msIsLayerQueryable(layerObj *lp)
 {
-  int i, is_queryable = MS_FALSE;
+  int i;
 
-  if ((lp->type == MS_LAYER_RASTER && lp->connectiontype != MS_WMS) || lp->type == MS_LAYER_TILEINDEX)
+  if ( lp->type == MS_LAYER_TILEINDEX )
     return MS_FALSE;
 
   if(lp->template && strlen(lp->template) > 0) return MS_TRUE;
 
   for(i=0; i<lp->numclasses; i++) {
-    if(lp->class[i].template && strlen(lp->class[i].template) > 0) {
-      is_queryable = MS_TRUE;
-      break;
-    }
+    if(lp->class[i].template && strlen(lp->class[i].template) > 0)
+        return MS_TRUE;
   }
 
-  return is_queryable;
+  return MS_FALSE;
 }
 
 static int addResult(resultCacheObj *cache, int classindex, int shapeindex, int tileindex)
@@ -384,12 +382,6 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
   shapeObj shape, searchshape;
   rectObj searchrect;
 
-  if( qlayer >= 0 && qlayer < map->numlayers 
-      && map->layers[qlayer].type == MS_LAYER_RASTER )
-  {
-      return msRasterQueryByRect( map, map->layers+qlayer, rect );
-  }
-
   msInitShape(&shape);
   msInitShape(&searchshape);
 
@@ -417,6 +409,15 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
     }    
+
+    // Raster layers are handled specially.
+    if( lp->type == MS_LAYER_RASTER )
+    {
+        if( msRasterQueryByRect( map, map->layers+qlayer, rect ) == MS_FAILURE)
+            return MS_FAILURE;
+
+        continue;
+    }
 
     // open this layer
     status = msLayerOpen(lp);
@@ -757,12 +758,6 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   rectObj rect, searchrect;
   shapeObj shape;
 
-  if( qlayer >= 0 && qlayer < map->numlayers 
-      && map->layers[qlayer].type == MS_LAYER_RASTER )
-  {
-      return msRasterQueryByPoint( map, map->layers+qlayer, mode, p, buffer );
-  }
-
   msInitShape(&shape);
 
   if(qlayer < 0 || qlayer >= map->numlayers)
@@ -774,7 +769,8 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     lp = &(map->layers[l]);    
     if(!msIsLayerQueryable(lp)) continue;
 
-    // free any previous search results, do it now in case one of the next few tests fail
+    // free any previous search results, do it now in case one of the next
+    // few tests fail
     if(lp->resultcache) {
       if(lp->resultcache->results) free(lp->resultcache->results);
       free(lp->resultcache);
@@ -786,6 +782,14 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     if(map->scale > 0) {
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+    }
+
+    // Raster layers are handled specially. 
+    if( lp->type == MS_LAYER_RASTER ) {
+        if( msRasterQueryByPoint( map, map->layers+qlayer, mode, p, buffer )
+            == MS_FAILURE )
+            return MS_FAILURE;
+        continue;
     }
 
     if(buffer <= 0) { // use layer tolerance
@@ -903,12 +907,6 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     return(MS_FAILURE);
   }
 
-  if( qlayer >= 0 && qlayer < map->numlayers 
-      && map->layers[qlayer].type == MS_LAYER_RASTER )
-  {
-      return msRasterQueryByShape( map, map->layers+qlayer, selectshape );
-  }
-
   if(qlayer < 0 || qlayer >= map->numlayers)
     start = map->numlayers-1;
   else
@@ -932,6 +930,16 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *selectshape)
     if(map->scale > 0) {
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+    }
+
+    // Raster layers are handled specially.
+    if( lp->type == MS_LAYER_RASTER )
+    {
+        if( msRasterQueryByShape( map, map->layers+qlayer, selectshape )
+            == MS_FAILURE )
+            return MS_FAILURE;
+
+        continue;
     }
 
     if(lp->toleranceunits == MS_PIXELS)
