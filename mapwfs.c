@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.58  2005/01/05 19:43:33  assefa
+ * Remove debug code.
+ *
  * Revision 1.57  2004/11/25 05:32:02  dan
  * Fixed problem with wfs_onlineresource used unencoded when
  * wfs_service_onlineresource was not defined (bug 1082)
@@ -1160,7 +1163,6 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                 return msWFSException(map, paramsObj->pszVersion);
             }
             FLTApplyFilterToLayer(psNode, map, iLayerIndex, MS_FALSE);
-            msSaveMap(map,"c:/msapps/wfs_filter/htdocs/ttt.map");
             
         }
         if (paszFilter)
