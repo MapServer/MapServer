@@ -126,27 +126,27 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     int status;
     imageObj *image=NULL;
 
-    image = (imageObj *)malloc(sizeof(imageObj));
-    if(!image) return NULL;
-
     if(self->width == -1 || self->height == -1) {
       msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
       return NULL;
     }
 
-    image->bytes = gdImageCreate(self->width, self->height);
-    if(!image->bytes) {
+    image = msImageCreate(self->width, self->height, self->imagetype,
+                          self->web.imagepath, self->web.imageurl);
+    if(!image) {
       msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
     }
 
-    image->width = self->width;
-    image->height = self->height;
-    image->imagepath = image->imageurl = NULL;
 
-    if(msLoadPalette(image->bytes, &(self->palette), self->imagecolor) == -1)
-      return NULL;
-  
+    if (self->imagetype == MS_GIF ||
+        self->imagetype == MS_PNG ||
+        self->imagetype == MS_JPEG ||
+        self->imagetype == MS_WBMP)
+    {    
+        if(msLoadPalette(image->img.gd, &(self->palette), self->imagecolor) == -1)
+          return NULL;
+    }
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
     status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
     if(status != MS_SUCCESS)
@@ -155,86 +155,37 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return image;
   }
 
+
   imageObj *draw() {
-    imageObj *image=NULL;
-
-    image = (imageObj *)malloc(sizeof(imageObj));
-    if(!image) return NULL;
-
-    image->bytes = msDrawMap(self);
-    image->width = gdImageSX(image->bytes);
-    image->height = gdImageSY(image->bytes);
-    image->imagepath = image->imageurl = NULL;
-   
-    return image;
+    return msDrawMap(self);
   }
 
   imageObj *drawQuery() {
-    imageObj *image=NULL;
-
-    image = (imageObj *)malloc(sizeof(imageObj));
-    if(!image) return NULL;
-
-    image->bytes = msDrawQueryMap(self);
-    image->width = gdImageSX(image->bytes);
-    image->height = gdImageSY(image->bytes);
-    image->imagepath = image->imageurl = NULL;
-   
-    return image;
+    return msDrawQueryMap(self);
   }
 
   imageObj *drawLegend() {
-    imageObj *image=NULL;
-
-    image = (imageObj *)malloc(sizeof(imageObj));
-    if(!image) return NULL;
-
-    image->bytes = msDrawLegend(self);
-    image->width = gdImageSX(image->bytes);
-    image->height = gdImageSY(image->bytes);
-    image->imagepath = image->imageurl = NULL;
-   
-    return image;
+    return msDrawLegend(self);
   }
 
   imageObj *drawScalebar() {
-    imageObj *image=NULL;
-
-    image = (imageObj *)malloc(sizeof(imageObj));
-    if(!image) return NULL;
-
-    image->bytes = msDrawScalebar(self);   
-    image->width = gdImageSX(image->bytes);
-    image->height = gdImageSY(image->bytes);
-    image->imagepath = image->imageurl = NULL;
-   
-    return image;
+    return msDrawScalebar(self);
   }
 
   imageObj *drawReferenceMap() {
-    imageObj *image=NULL;
-
-    image = (imageObj *)malloc(sizeof(imageObj));
-    if(!image) return NULL;
-
-    image->bytes = msDrawReferenceMap(self);
-    image->width = gdImageSX(image->bytes);
-    image->height = gdImageSY(image->bytes);
-    image->imagepath = image->imageurl = NULL;
-   
-    return image;
+    return msDrawReferenceMap(self);
   }
 
   int embedScalebar(imageObj *image) {	
-    return msEmbedScalebar(self, image->bytes);
+    return msEmbedScalebar(self, image->img.gd);
   }
 
   int embedLegend(imageObj *image) {	
-    return msEmbedLegend(self, image->bytes);
+    return msEmbedLegend(self, image->img.gd);
   }
 
   int drawLabelCache(imageObj *image) {
-    return msDrawLabelCache(image->bytes, self);
+    return msDrawLabelCache(image, self);
   }
 
   int getImageToVar(imageObj *image, char *varname) {
@@ -269,7 +220,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
         break;
       case(MS_PNG):
         #ifdef USE_GD_PNG
-          imgbytes = gdImagePngPtr(image->bytes, &size);
+          imgbytes = gdImagePngPtr(image->img.gd, &size);
         #else
           msSetError(MS_MISCERR, "PNG output is not available.",
                               "getImageToVar()");
@@ -278,7 +229,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
         break;
       case(MS_JPEG):
         #ifdef USE_GD_JPEG
-          imgbytes = gdImageJpegPtr(image->bytes, &size, self->imagequality);
+          imgbytes = gdImageJpegPtr(image->img.gd, &size, self->imagequality);
         #else
           msSetError(MS_MISCERR, "JPEG output is not available.",
                               "getImageToVar()");
@@ -287,7 +238,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
         break;
       case(MS_WBMP):
         #ifdef USE_GD_WBMP
-          imgbytes = gdImageWBMPPtr(image->bytes, &size, 1);
+          imgbytes = gdImageWBMPPtr(image->img.gd, &size, 1);
         #else
           msSetError(MS_MISCERR, "WBMP output is not available.",
                               "getImageToVar()");
@@ -498,11 +449,11 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   int draw(mapObj *map, imageObj *image) {
-    return msDrawLayer(map, self, image->bytes);    
+    return msDrawLayer(map, self, image);    
   }
 
   int drawQuery(mapObj *map, imageObj *image) {
-    return msDrawLayer(map, self, image->bytes);    
+    return msDrawLayer(map, self, image);    
   }
 
   int queryByAttributes(mapObj *map, int mode) {
@@ -612,7 +563,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
    
   int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
-    return msDrawLegendIcon(map, layer, self, width, height, dstImage->bytes, dstX, dstY);
+    return msDrawLegendIcon(map, layer, self, width, height, dstImage->img.gd, dstX, dstY);
   }
   
   imageObj *createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
@@ -621,11 +572,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     image = (imageObj *)malloc(sizeof(imageObj));
     if(!image) return NULL;
 
-    image->bytes = msCreateLegendIcon(map, layer, self, width, height);
-    image->width = gdImageSX(image->bytes);
-    image->height = gdImageSY(image->bytes);
+    image->img.gd = msCreateLegendIcon(map, layer, self, width, height);
+    image->width = gdImageSX(image->img.gd);
+    image->height = gdImageSY(image->img.gd);
     image->imagepath = image->imageurl = NULL;
-   
+    image->imagetype = map->imagetype;
+    
     return image;
   }  
 }
@@ -647,7 +599,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }	
 
   int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, char *text) {
-    return msDrawPoint(map, layer, self, image->bytes, classindex, text);
+    return msDrawPoint(map, layer, self, image, classindex, text);
   }
 
   double distanceToPoint(pointObj *point) {
@@ -762,7 +714,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
   }
 
   int draw(mapObj *map, layerObj *layer, imageObj *image) {
-    return msDrawShape(map, layer, self, image->bytes, MS_TRUE);
+    return msDrawShape(map, layer, self, image, MS_TRUE);
   }
 
   void setBounds() {
@@ -859,7 +811,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     shape.classindex = classindex;
     shape.text = strdup(text);
 
-    msDrawShape(map, layer, &shape, image->bytes, MS_TRUE);
+    msDrawShape(map, layer, &shape, image, MS_TRUE);
 
     msFreeShape(&shape);
     
@@ -945,37 +897,38 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 //
 // class extensions for imageObj
 //
+//TODO : should take image type as argument ??
 %addmethods imageObj {
   imageObj(int width, int height) {
     imageObj *image=NULL;
+    int imagetype = MS_GIF;
 
-    image = (imageObj *)malloc(sizeof(imageObj));
-    if(!image) return NULL;
-
-    image->bytes = gdImageCreate(width, height);
-    image->width = width;
-    image->height = height;
-    image->imagepath = image->imageurl = NULL;
- 
+#ifdef USE_GD_GIF
+  imagetype = MS_GIF;
+#elif USE_GD_PNG
+  imagetype = MS_PNG;
+#elif USE_GD_JPEG
+  imagetype = MS_JPEG;
+#elif USE_GD_WBMP
+  imagetype = MS_WBMP;
+#endif
+    
+    image = msImageCreate(width, height, imagetype, NULL, NULL);    
     return(image);
   }
 
   ~imageObj() {
-    gdImageDestroy(self->bytes);
-    free(self->imagepath);
-    free(self->imageurl);
+    msFreeImage(self);    
     free(self);		
   }
 
   void free() {
-    gdImageDestroy(self->bytes);
-    free(self->imagepath);
-    free(self->imageurl);
+    msFreeImage(self);    
     free(self);
   }
 
   void saveImage(char *filename, int type, int transparent, int interlace, int quality) {
-    msSaveImage(self->bytes, filename, type, transparent, interlace, quality);
+    msSaveImage(self, filename, transparent, interlace, quality);
   }
 
   

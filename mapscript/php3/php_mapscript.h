@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.22  2002/05/02 15:55:51  assefa
+ * Adapt code to support imageObj.
+ *
  * Revision 1.21  2002/04/22 19:31:57  dan
  * Added optional new_map_path arg to msLoadMap()
  *
@@ -134,15 +137,15 @@ int             *mapObj_getLayersIndexByGroup(mapObj* self, char *groupname,
 int             mapObj_addColor(mapObj* self, int r, int g, int b);
 int             mapObj_getSymbolByName(mapObj* self, char *name);
 void            mapObj_prepareQuery(mapObj* self);
-gdImagePtr      mapObj_prepareImage(mapObj* self);
-gdImagePtr      mapObj_draw(mapObj* self);
-gdImagePtr      mapObj_drawQuery(mapObj* self);
-gdImagePtr      mapObj_drawLegend(mapObj* self);
-gdImagePtr      mapObj_drawScalebar(mapObj* self);
-gdImagePtr      mapObj_drawReferenceMap(mapObj* self);
-int             mapObj_embedScalebar(mapObj* self, gdImagePtr img);
-int             mapObj_embedLegend(mapObj* self, gdImagePtr img);
-int             mapObj_drawLabelCache(mapObj* self, gdImagePtr img);
+imageObj        *mapObj_prepareImage(mapObj* self);
+imageObj        *mapObj_draw(mapObj* self);
+imageObj        *mapObj_drawQuery(mapObj* self);
+imageObj        *mapObj_drawLegend(mapObj* self);
+imageObj        *mapObj_drawScalebar(mapObj* self);
+imageObj        *mapObj_drawReferenceMap(mapObj* self);
+int             mapObj_embedScalebar(mapObj* self, imageObj *img);
+int             mapObj_embedLegend(mapObj* self, imageObj *img);
+int             mapObj_drawLabelCache(mapObj* self, imageObj *img);
 labelCacheMemberObj *mapObj_nextLabel(mapObj* self);
 int             mapObj_queryByPoint(mapObj* self, pointObj *point, 
                                     int mode, double buffer);
@@ -181,8 +184,8 @@ int             layerObj_getShape(layerObj *self, shapeObj *shape,
                                   int tileindex, int shapeindex);
 resultCacheMemberObj *layerObj_getResult(layerObj *self, int i);
 classObj       *layerObj_getClass(layerObj *self, int i);
-int             layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img);
-int             layerObj_drawQuery(layerObj *self, mapObj *map,gdImagePtr img);
+int             layerObj_draw(layerObj *self, mapObj *map, imageObj *img);
+int             layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img);
 int             layerObj_queryByAttributes(layerObj *self, mapObj *map, 
                                            int mode);
 int             layerObj_queryByPoint(layerObj *self, mapObj *map, 
@@ -213,7 +216,7 @@ int             classObj_drawLegendIcon(classObj *self,
                                         int width, int height, 
                                         gdImagePtr im, 
                                         int dstX, int dstY);
-gdImagePtr      classObj_createLegendIcon(classObj *self, 
+imageObj       *classObj_createLegendIcon(classObj *self, 
                                           mapObj *map, 
                                           layerObj *layer, 
                                           int width, int height);
@@ -228,7 +231,7 @@ void            pointObj_destroy(pointObj *self);
 int             pointObj_project(pointObj *self, projectionObj *in, 
                                  projectionObj *out);
 int             pointObj_draw(pointObj *self, mapObj *map, layerObj *layer, 
-                              gdImagePtr img, int class_index, 
+                              imageObj *img, int class_index, 
                               char *label_string);
 double          pointObj_distanceToPoint(pointObj *self, pointObj *point);
 double          pointObj_distanceToLine(pointObj *self, pointObj *a, 
@@ -251,7 +254,7 @@ int             shapeObj_project(shapeObj *self, projectionObj *in,
 lineObj        *shapeObj_get(shapeObj *self, int i);
 int             shapeObj_add(shapeObj *self, lineObj *line);
 int             shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer, 
-                              gdImagePtr img);
+                              imageObj *img);
 void            shapeObj_setBounds(shapeObj *self);
 int             shapeObj_copy(shapeObj *self, shapeObj *dest);
 int             shapeObj_contains(shapeObj *self, pointObj *point);
@@ -265,7 +268,7 @@ int             rectObj_project(rectObj *self, projectionObj *in,
                                 projectionObj *out);
 double          rectObj_fit(rectObj *self, int width, int height);
 int             rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
-                             gdImagePtr img, int classindex, char *text);
+                             imageObj *img, int classindex, char *text);
 
 
 shapefileObj   *shapefileObj_new(char *filename, int type);

@@ -7,6 +7,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.41  2002/05/02 15:55:51  assefa
+ * Adapt code to support imageObj.
+ *
  * Revision 1.40  2002/04/23 15:40:21  dan
  * Call msGetSymbolIndex() directly in mapObj_getSymbolByName()
  *
@@ -223,9 +226,10 @@ void mapObj_prepareQuery(mapObj* self) {
     if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
   }
 
-gdImagePtr mapObj_prepareImage(mapObj* self) {
+//TODO create for now GD image
+imageObj *mapObj_prepareImage(mapObj* self) {
     int status;
-    gdImagePtr img;
+    imageObj *img;
 
     if(self->width == -1 && self->height == -1) {
       msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
@@ -236,52 +240,63 @@ gdImagePtr mapObj_prepareImage(mapObj* self) {
       if(msAdjustImage(self->extent, &self->width, &self->height) == -1)
         return NULL;
 
-    img = gdImageCreate(self->width, self->height);
+    img = msImageCreate(self->width, self->height, self->imagetype,
+                        self->web.imagepath, self->web.imageurl);
     if(!img) {
       msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
     }
   
-    if(msLoadPalette(img, &(self->palette), self->imagecolor) == -1)
-      return NULL;
-  
+    if (self->imagetype == MS_GIF ||
+        self->imagetype == MS_PNG ||
+        self->imagetype == MS_JPEG ||
+        self->imagetype == MS_WBMP)
+    {
+        if(msLoadPalette(img->img.gd, &(self->palette), self->imagecolor) == -1)
+            return NULL;
+    }
+
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
-    status = msCalculateScale(self->extent, self->units, self->width, self->height, self->resolution, &self->scale);
+    status = msCalculateScale(self->extent, self->units, self->width, self->height, 
+                              self->resolution, &self->scale);
     if(status != MS_SUCCESS)
       return NULL;
 
     return img;
   }
 
-gdImagePtr mapObj_draw(mapObj* self) {
+imageObj *mapObj_draw(mapObj* self) {
     return msDrawMap(self);
   }
 
-gdImagePtr mapObj_drawQuery(mapObj* self) {
+imageObj *mapObj_drawQuery(mapObj* self) {
     return msDrawQueryMap(self);
   }
 
-gdImagePtr mapObj_drawLegend(mapObj* self) {
+imageObj *mapObj_drawLegend(mapObj* self) {
     return msDrawLegend(self);
   }
 
-gdImagePtr mapObj_drawScalebar(mapObj* self) {
+
+imageObj *mapObj_drawScalebar(mapObj* self) {
     return msDrawScalebar(self);
   }
 
-gdImagePtr mapObj_drawReferenceMap(mapObj* self) {
+imageObj *mapObj_drawReferenceMap(mapObj* self) {
     return msDrawReferenceMap(self);
   }
 
-int mapObj_embedScalebar(mapObj* self, gdImagePtr img) {	
-    return msEmbedScalebar(self, img);
+//TODO
+int mapObj_embedScalebar(mapObj* self, imageObj *img) {	
+    return msEmbedScalebar(self, img->img.gd);
   }
 
-int mapObj_embedLegend(mapObj* self, gdImagePtr img) {	
-    return msEmbedLegend(self, img);
+//TODO
+int mapObj_embedLegend(mapObj* self, imageObj *img) {	
+    return msEmbedLegend(self, img->img.gd);
   }
 
-int mapObj_drawLabelCache(mapObj* self, gdImagePtr img) {
+int mapObj_drawLabelCache(mapObj* self, imageObj *img) {
     return msDrawLabelCache(img, self);
   }
 
@@ -450,11 +465,11 @@ classObj *layerObj_getClass(layerObj *self, int i) { // returns an EXISTING clas
       return(NULL);
   }
 
-int layerObj_draw(layerObj *self, mapObj *map, gdImagePtr img) {
+int layerObj_draw(layerObj *self, mapObj *map, imageObj *img) {
     return msDrawLayer(map, self, img);
   }
 
-int layerObj_drawQuery(layerObj *self, mapObj *map, gdImagePtr img) {
+int layerObj_drawQuery(layerObj *self, mapObj *map, imageObj *img) {
     return msDrawLayer(map, self, img);    
   }
 
@@ -550,8 +565,17 @@ int classObj_drawLegendIcon(classObj *self, mapObj *map, layerObj *layer, int wi
     return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY);
 }
 
-gdImagePtr classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height) {
-    return msCreateLegendIcon(map, layer, self, width, height);
+//TODO
+imageObj *classObj_createLegendIcon(classObj *self, mapObj *map, layerObj *layer, int width, int height) {
+    imageObj *image=NULL;
+    image->img.gd = msCreateLegendIcon(map, layer, self, width, height);
+    image->imagetype = MS_GIF;
+    image->width = gdImageSX(image->img.gd);
+    image->height = gdImageSY(image->img.gd);
+    image->imagepath = NULL; 
+    image->imageurl = NULL;
+
+    return image;
   }
 
 
@@ -582,7 +606,7 @@ int pointObj_project(pointObj *self, projectionObj *in, projectionObj *out) {
   }	
 
 int pointObj_draw(pointObj *self, mapObj *map, layerObj *layer, 
-                  gdImagePtr img, int class_index, char *label_string) {
+                  imageObj *img, int class_index, char *label_string) {
     return msDrawPoint(map, layer, self, img, class_index, label_string);
   }
 
@@ -696,7 +720,7 @@ int shapeObj_add(shapeObj *self, lineObj *line) {
   }
 
 int shapeObj_draw(shapeObj *self, mapObj *map, layerObj *layer, 
-                  gdImagePtr img) {
+                  imageObj *img) {
     return msDrawShape(map, layer, self, img, MS_TRUE);
   }
 
@@ -794,7 +818,7 @@ double rectObj_fit(rectObj *self, int width, int height) {
   } 
 
 int rectObj_draw(rectObj *self, mapObj *map, layerObj *layer,
-                 gdImagePtr img, int classindex, char *text) {
+                 imageObj *img, int classindex, char *text) {
     shapeObj shape;
 
     msInitShape(&shape);

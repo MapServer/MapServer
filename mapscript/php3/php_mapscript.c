@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.105  2002/05/02 15:55:51  assefa
+ * Adapt code to support imageObj.
+ *
  * Revision 1.104  2002/04/24 20:37:32  assefa
  * Correct compiling error on Windows.
  *
@@ -366,7 +369,7 @@ DLEXPORT void php3_ms_scalebar_setImageColor(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 
-static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
+static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value);
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
                                       HashTable *list, pval *return_value TSRMLS_DC);
@@ -948,7 +951,12 @@ static void php_ms_free_map(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 
 static void php_ms_free_image(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
-    msFreeImage((gdImagePtr)rsrc->ptr);
+    imageObj *image = (imageObj *)rsrc->ptr;
+    if (image && (image->imagetype == MS_GIF ||
+                  image->imagetype == MS_PNG ||
+                  image->imagetype == MS_JPEG ||
+                  image->imagetype == MS_WBMP));
+    msFreeImageGD(image->img.gd);
 }
 
 DLEXPORT void php3_ms_free_rect(rectObj *pRect) 
@@ -2647,7 +2655,7 @@ DLEXPORT void php3_ms_map_prepareImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2716,7 +2724,7 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
 
 #ifdef PHP4
     pval   **pExtent;
@@ -2734,11 +2742,14 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
     getThis(&pThis);
 #endif
 
+ 
+
     if (pThis == NULL ||
         ARG_COUNT(ht) > 0)
     {
         WRONG_PARAM_COUNT;
     }
+    
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
     if (self == NULL || (im = mapObj_draw(self)) == NULL)
@@ -2789,10 +2800,12 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
          }
 #endif
          
-        _phpms_build_img_object(im, &(self->web), list, return_value);
+         _phpms_build_img_object(im, &(self->web), list, return_value);
     }
 }
 /* }}} */
+
+
 
 /**********************************************************************
  *                        map->drawQuery()
@@ -2804,7 +2817,7 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval        *pThis;
     mapObj      *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
 
 #ifdef PHP4
     pval   **pExtent;
@@ -2876,7 +2889,7 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
         /* Return an image object */
-        _phpms_build_img_object(im, &(self->web), list, return_value);
+         _phpms_build_img_object(im, &(self->web), list, return_value);
     }
 }
      
@@ -2893,7 +2906,7 @@ DLEXPORT void php3_ms_map_drawLegend(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2930,7 +2943,7 @@ DLEXPORT void php3_ms_map_drawReferenceMap(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2967,7 +2980,7 @@ DLEXPORT void php3_ms_map_drawScaleBar(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -3004,7 +3017,7 @@ DLEXPORT void php3_ms_map_embedScalebar(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval  *imgObj, *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
     int    retVal=0;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -3022,7 +3035,7 @@ DLEXPORT void php3_ms_map_embedScalebar(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
         
-    im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
+    im = (imageObj *)_phpms_fetch_handle(imgObj, 
                                          PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
@@ -3044,7 +3057,7 @@ DLEXPORT void php3_ms_map_embedLegend(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval  *imgObj, *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
     int    retVal=0;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -3062,7 +3075,7 @@ DLEXPORT void php3_ms_map_embedLegend(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
         
-    im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
+    im = (imageObj *)_phpms_fetch_handle(imgObj, 
                                          PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
@@ -3085,7 +3098,7 @@ DLEXPORT void php3_ms_map_drawLabelCache(INTERNAL_FUNCTION_PARAMETERS)
 { 
     pval  *imgObj, *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
     int    retVal=0;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -3103,7 +3116,7 @@ DLEXPORT void php3_ms_map_drawLabelCache(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
         
-    im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
+    im = (imageObj *)_phpms_fetch_handle(imgObj, 
                                          PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list TSRMLS_CC);
@@ -4549,7 +4562,7 @@ DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS)
 /**********************************************************************
  *                     _phpms_build_img_object()
  **********************************************************************/
-static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
+static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value)
 {
     int img_id;
@@ -4563,14 +4576,14 @@ static long _phpms_build_img_object(gdImagePtr im, webObj *pweb,
                        PHP4_CLASS_ENTRY(img_class_entry_ptr));
 
     /* width/height params are read-only */
-    add_property_long(return_value, "width", gdImageSX(im));
-    add_property_long(return_value, "height", gdImageSY(im));
+    add_property_long(return_value, "width", im->width);
+    add_property_long(return_value, "height", im->height);
     
-    if (pweb)
-    {
-        PHPMS_ADD_PROP_STR(return_value, "imagepath", pweb->imagepath);
-        PHPMS_ADD_PROP_STR(return_value, "imageurl", pweb->imageurl);
-    }
+    PHPMS_ADD_PROP_STR(return_value, "imagepath", im->imagepath);
+    PHPMS_ADD_PROP_STR(return_value, "imageurl", im->imageurl);
+    
+
+    add_property_long(return_value, "imagetype", im->imagetype);
 
 /* php3_printf("Create image: id=%d, ptr=0x%x<P>\n", img_id, im);*/
 
@@ -4591,8 +4604,9 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval   *pFname, *pTransparent, *pInterlace, *pThis;
     pval   *pType, *pQuality;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
     int retVal = 0;
+    int bCompatible = 0;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -4616,13 +4630,32 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pType);
     convert_to_long(pQuality);
 
-    im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
+    im = (imageObj *)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
+
+/* -------------------------------------------------------------------- */
+/*      Compare the image type passed as argument and the imagetype     */
+/*      used the imageObj to make that they are compatible .            */
+/*      This is temporary and the image type argument will be           */
+/*      removed.                                                        */
+/* -------------------------------------------------------------------- */
+    bCompatible = 0;
+    if (im)
+    {
+        //just test GD fdormats for now.
+        if (im->imagetype >= MS_GIF &&  im->imagetype <= MS_WBMP &&
+            pType->value.lval >= MS_GIF && pType->value.lval < MS_WBMP)
+            bCompatible = 1;
+    }
+    if (!bCompatible)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Image object type %d is not comaptible with type passed as argument %d", im->imagetype, pType->value.lval);
+    }
 
     if(pFname->value.str.val != NULL && strlen(pFname->value.str.val) > 0)
     {
         if (im == NULL ||
             (retVal = msSaveImage(im, pFname->value.str.val, 
-                                  pType->value.lval, 
                                   pTransparent->value.lval, 
                                   pInterlace->value.lval, 
                                   pQuality->value.lval) ) != 0  )
@@ -4651,37 +4684,39 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         php3_header();
 #endif
 
+        //TODO
         if(pInterlace->value.lval)
-            gdImageInterlace(im, 1);
+            gdImageInterlace(im->img.gd, 1);
 
+        //TODO
         if(pTransparent->value.lval)
-            gdImageColorTransparent(im, 0);
+            gdImageColorTransparent(im->img.gd, 0);
 
 #if !defined(USE_GD_GIF) || defined(GD_HAS_GDIMAGEGIFPTR)
 
 #ifdef USE_GD_GIF
-        if(pType->value.lval == MS_GIF)
-            iptr = gdImageGifPtr(im, &size);
+        if(im->imagetype == MS_GIF)
+            iptr = gdImageGifPtr(im->img.gd, &size); //TODO
         else
 #endif
 #ifdef USE_GD_PNG
-        if(pType->value.lval == MS_PNG)
-            iptr = gdImagePngPtr(im, &size);
+        if( im->imagetype == MS_PNG)
+            iptr = gdImagePngPtr(im->img.gd, &size); //TODO
         else
 #endif
 #ifdef USE_GD_JPEG
-        if(pType->value.lval == MS_JPEG)
-            iptr = gdImageJpegPtr(im, &size, pQuality->value.lval);
+        if(im->imagetype == MS_JPEG)
+            iptr = gdImageJpegPtr(im->img.gd, &size, pQuality->value.lval);//TODO
         else
 #endif
 #ifdef USE_GD_WBMP
-        if(pType->value.lval == MS_WBMP)
-            iptr = gdImageWBMPPtr(im, &size, 1);
+        if(im->imagetype == MS_WBMP)
+            iptr = gdImageWBMPPtr(im->img.gd, &size, 1); //TODO
         else
 #endif
         {
             php3_error(E_ERROR, "Output to '%s' not available", 
-                       MS_IMAGE_FORMAT_EXT(pType->value.lval) );
+                       MS_IMAGE_FORMAT_EXT(im->imagetype) );
         }
 
         if (size == 0) {
@@ -4712,7 +4747,7 @@ DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS)
         } 
         else
         {
-            gdImageGif (im, tmp);
+            gdImageGif (im->img.gd, tmp); //TODO
             size = ftell(tmp);
             fseek(tmp, 0, SEEK_SET);
 
@@ -4755,10 +4790,11 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     pval   *pTransparent, *pInterlace, *pThis;
     pval   *pType, *pQuality;
 
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
     char *pImagepath, *pImageurl, *pBuf;
     int nBufSize, nLen1, nLen2;
     const char *pszImageExt;
+    int bCompatible = 0;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -4781,11 +4817,12 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     convert_to_long(pType);
     convert_to_long(pQuality);
 
-    pszImageExt = MS_IMAGE_FORMAT_EXT(pType->value.lval);
 
-    im = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
+    im = (imageObj *)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
     pImagepath = _phpms_fetch_property_string(pThis, "imagepath", E_ERROR);
     pImageurl = _phpms_fetch_property_string(pThis, "imageurl", E_ERROR);
+
+    pszImageExt = MS_IMAGE_FORMAT_EXT(im->imagetype);
 
     /* Build a unique filename in the IMAGEPATH directory 
      */
@@ -4796,10 +4833,31 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
     tmpCount++;
     sprintf(pBuf, "%s%s%d.%s", pImagepath, tmpId, tmpCount, pszImageExt);
 
+/* -------------------------------------------------------------------- */
+/*      Compare the image type passed as argument and the imagetype     */
+/*      used the imageObj to make that they are compatible .            */
+/*      This is temporary and the image type argument will be           */
+/*      removed.                                                        */
+/* -------------------------------------------------------------------- */
+    bCompatible = 0;
+    if (im)
+    {
+        //just test GD fdormats for now.
+        if (im->imagetype >= MS_GIF &&  im->imagetype <= MS_WBMP &&
+            pType->value.lval >= MS_GIF && pType->value.lval < MS_WBMP)
+            bCompatible = 1;
+    }
+    if (!bCompatible)
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "Image object type %d is not comaptible with type passed as argument %d", im->imagetype, pType->value.lval);
+    }
+
+ 
     /* Save the image... 
      */
     if (im == NULL || 
-        msSaveImage(im, pBuf, pType->value.lval, pTransparent->value.lval, 
+        msSaveImage(im, pBuf, pTransparent->value.lval, 
                     pInterlace->value.lval, pQuality->value.lval) != 0 )
     {
         _phpms_report_mapserver_error(E_WARNING);
@@ -5164,7 +5222,7 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
     pval  *imgObj, *pThis;
     mapObj *parent_map;
     layerObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
     int    retVal=0;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -5182,7 +5240,7 @@ DLEXPORT void php3_ms_lyr_draw(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
+    im = (imageObj *)_phpms_fetch_handle(imgObj, 
                                          PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
    
     self = (layerObj *)_phpms_fetch_handle(pThis, 
@@ -5211,7 +5269,7 @@ DLEXPORT void php3_ms_lyr_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
     pval  *imgObj, *pThis;
     mapObj *parent_map;
     layerObj *self;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
     int    retVal=0;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -5229,7 +5287,7 @@ DLEXPORT void php3_ms_lyr_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    im = (gdImagePtr)_phpms_fetch_handle(imgObj, 
+    im = (imageObj *)_phpms_fetch_handle(imgObj, 
                                          PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
    
     self = (layerObj *)_phpms_fetch_handle(pThis, 
@@ -6762,7 +6820,7 @@ DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS)
     mapObj *parent_map;
     classObj *self;
     layerObj *parent_layer;
-    gdImagePtr im = NULL;
+    imageObj *im = NULL;
    
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -7091,7 +7149,7 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     pointObj    *self;
     mapObj      *poMap;
     layerObj    *poLayer;
-    gdImagePtr  im;
+    imageObj    *im;
     int         nRetVal=MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -7120,7 +7178,7 @@ DLEXPORT void php3_ms_point_draw(INTERNAL_FUNCTION_PARAMETERS)
     poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     poLayer = (layerObj*)_phpms_fetch_handle(pLayer, PHPMS_GLOBAL(le_mslayer),
                                              list TSRMLS_CC);
-    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
+    im = (imageObj *)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     if (self &&
         (nRetVal = pointObj_draw(self, poMap, poLayer, im, 
@@ -8020,7 +8078,7 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
     shapeObj    *self;
     mapObj      *poMap;
     layerObj    *poLayer;
-    gdImagePtr  im;
+    imageObj    *im;
     int         nRetVal=MS_FAILURE;
 
 #ifdef PHP4
@@ -8047,7 +8105,7 @@ DLEXPORT void php3_ms_shape_draw(INTERNAL_FUNCTION_PARAMETERS)
     poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     poLayer = (layerObj*)_phpms_fetch_handle(pLayer, PHPMS_GLOBAL(le_mslayer),
                                              list TSRMLS_CC);
-    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
+    im = (imageObj *)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     if (self && 
         (nRetVal = shapeObj_draw(self, poMap, poLayer, im)) != MS_SUCCESS)
@@ -8725,7 +8783,7 @@ DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
     rectObj    *self;
     mapObj      *poMap;
     layerObj    *poLayer;
-    gdImagePtr  im;
+    imageObj    *im;
     int         nRetVal=MS_FAILURE;
 #ifdef PHP4
     HashTable   *list=NULL;
@@ -8754,7 +8812,7 @@ DLEXPORT void php3_ms_rect_draw(INTERNAL_FUNCTION_PARAMETERS)
     poMap = (mapObj*)_phpms_fetch_handle(pMap, PHPMS_GLOBAL(le_msmap), list TSRMLS_CC);
     poLayer = (layerObj*)_phpms_fetch_handle(pLayer, PHPMS_GLOBAL(le_mslayer),
                                              list TSRMLS_CC);
-    im = (gdImagePtr)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
+    im = (imageObj *)_phpms_fetch_handle(pImg, PHPMS_GLOBAL(le_msimg), list TSRMLS_CC);
 
     if (self &&
         (nRetVal = rectObj_draw(self, poMap, poLayer, im, 
@@ -10051,7 +10109,7 @@ DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
 /*                                                                      */
 /*      Base on the function msCalculateScale (mapscale.c)              */
 /************************************************************************/
-//static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
+extern double inchesPerUnit[6];
 static double GetDeltaExtentsUsingScale(double dfScale, int nUnits, 
                                         int nWidth, int resolution)
 {
