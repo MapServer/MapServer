@@ -71,9 +71,14 @@ all: php_mapscript.so
 
 PHPMS_OBJS =  php_mapscript_util.o php_mapscript.o mapscript_i.o
 
+PHPPROJ_OBJS = php_mapscript_util.o php_proj.o
+
 
 php_mapscript.so: $(PHPMS_OBJS) ../../libmap.a
 	$(LD) -o $@ $(PHPMS_OBJS) $(MS_LIBS)
+
+php_proj.so:  $(PHPPROJ_OBJS)
+	$(LD) -o $@ $(PHPPROJ_OBJS) $(MS_LIBS)
 
 %.o: %.c php_mapscript_util.h php_mapscript.h
 	$(CC) $(CFLAGS) -c -o $@ $<
