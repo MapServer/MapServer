@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.2  2004/10/01 22:24:13  frank
+ * Added details to the handle confusion error.
+ *
  * Revision 1.1  2004/10/01 19:03:35  frank
  * New
  *
@@ -385,9 +388,11 @@ void msConnPoolRelease( layerObj *layer, void *conn_handle )
         {
             if( conn->conn_handle != conn_handle )
             {
-                msDebug( "%s: Handle confusion on layer %s.\n", 
+                msDebug( "%s: Handle confusion on layer %s, passed in %p, but expected %p.\n", 
                          "msConnPoolRelease()",
-                         layer->name );
+                         layer->name,
+                         conn_handle, 
+                         conn->conn_handle );
 
                 msSetError( MS_MISCERR, 
                             "Handle confusion on layer %s.", 
