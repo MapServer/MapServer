@@ -1300,6 +1300,8 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, gdImagePtr img) {
       filename = layer->data;
     }
 
+    if(strlen(filename) == 0) continue;
+
     f = fopen(filename,"rb");
     if (!f) {
       msSetError(MS_IOERR, NULL, "msDrawRaster()");

@@ -363,6 +363,9 @@ gdImagePtr msDrawMap(mapObj *map)
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
     msEmbedScalebar(map, img);
 
+  if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
+    msEmbedLegend(map, img);
+
   if(msDrawLabelCache(img, map) == -1) 
     return(NULL);
 
@@ -395,6 +398,9 @@ gdImagePtr msDrawMap(mapObj *map)
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
     msEmbedScalebar(map, img);
+
+  if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
+    msEmbedLegend(map, img);
 
   return(img);
 }
@@ -476,6 +482,9 @@ gdImagePtr msDrawQueryMap(mapObj *map, queryResultObj *results)
   if(map->scalebar.status == MS_EMBED && !map->scalebar.postlabelcache)
     msEmbedScalebar(map, img);
 
+  if(map->legend.status == MS_EMBED && !map->legend.postlabelcache)
+    msEmbedLegend(map, img);
+
   if(msDrawLabelCache(img, map) == -1)
     return(NULL);
   
@@ -498,6 +507,9 @@ gdImagePtr msDrawQueryMap(mapObj *map, queryResultObj *results)
 
   if(map->scalebar.status == MS_EMBED && map->scalebar.postlabelcache)
     msEmbedScalebar(map, img);
+
+  if(map->legend.status == MS_EMBED && map->legend.postlabelcache)
+    msEmbedLegend(map, img);
 
   return(img);
 }
@@ -1133,6 +1145,8 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
     } else {
       filename = layer->data;
     }
+
+    if(strlen(filename) == 0) continue;
 
 #ifndef IGNORE_MISSING_DATA
     if(msOpenSHPFile(&shpfile, map->shapepath, map->tile, filename) == -1) 

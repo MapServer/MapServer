@@ -1426,7 +1426,7 @@ int loadLayer(layerObj *layer, mapObj *map)
       layer->numclasses = c;
       layer->numqueries = q;
 
-      if(layer->numclasses > 1 && !layer->classitem) {
+      if(layer->data && layer->numclasses > 1 && !layer->classitem) {
 	msSetError(MS_MISCERR, "Multiple classes defined but no classitem?", "loadLayer()");      
 	return(-1);
       }
