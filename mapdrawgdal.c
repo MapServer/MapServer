@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.37  2004/11/15 21:28:48  frank
+ * Use GDALPrintPointer() to avoid pointer conversion errors on win32. Bug 722.
+ *
  * Revision 1.36  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -1223,6 +1226,20 @@ static int allocColorCube(mapObj *map, gdImagePtr img, int *panColorCube)
 
 #ifdef ENABLE_DITHER
 
+#if GDAL_VERSION_NUM <= 1240 
+static int GDALPrintPointer( char *buffer, void *pData, int nMax )
+
+{
+#ifdef WIN32
+    sprintf( buffer, "%ld", (long) pData );
+#else
+    sprintf( buffer, "%p", pData );
+#endif
+
+    return strlen( buffer );
+}
+#endif /* GDAL_VERSION_NUM <= 1240 */
+
 static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
                          GByte *pabyDithered, int xsize, int ysize, 
                          int bTransparent, colorObj transparent,
@@ -1248,25 +1265,29 @@ static void Dither24to8( GByte *pabyRed, GByte *pabyGreen, GByte *pabyBlue,
                       NULL );
 
     /* Add Red Band */
-    sprintf( szDataPointer, "%ld", (long) pabyRed );
+    memset( szDataPointer, 0, sizeof(szDataPointer) );
+    CPLPrintPointer( szDataPointer, pabyRed, sizeof(szDataPointer) );
     papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
                                         szDataPointer );
     GDALAddBand( hDS, GDT_Byte, papszBandOptions );
                                         
     /* Add Green Band */
-    sprintf( szDataPointer, "%ld", (long) pabyGreen );
+    memset( szDataPointer, 0, sizeof(szDataPointer) );
+    CPLPrintPointer( szDataPointer, pabyGreen, sizeof(szDataPointer) );
     papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
                                         szDataPointer );
     GDALAddBand( hDS, GDT_Byte, papszBandOptions );
                                         
     /* Add Blue Band */
-    sprintf( szDataPointer, "%ld", (long) pabyBlue );
+    memset( szDataPointer, 0, sizeof(szDataPointer) );
+    CPLPrintPointer( szDataPointer, pabyBlue, sizeof(szDataPointer) );
     papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
                                         szDataPointer );
     GDALAddBand( hDS, GDT_Byte, papszBandOptions );
                                         
     /* Add Dithered Band */
-    sprintf( szDataPointer, "%ld", (long) pabyDithered );
+    memset( szDataPointer, 0, sizeof(szDataPointer) );
+    CPLPrintPointer( szDataPointer, pabyDithered, sizeof(szDataPointer) );
     papszBandOptions = CSLSetNameValue( papszBandOptions, "DATAPOINTER", 
                                         szDataPointer );
     GDALAddBand( hDS, GDT_Byte, papszBandOptions );
