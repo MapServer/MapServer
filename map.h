@@ -28,8 +28,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.375  2004/11/16 14:34:26  frank
+ * Avoid warning caused by last comment.
+ *
  * Revision 1.374  2004/11/16 04:31:17  dan
- * Re-enabled building PHP MapScript using PHP's bundled regex/*.o. This is
+ * Re-enabled building PHP MapScript using PHP's bundled regex/ *.o. This is
  * needed to build in an environment with PHP configured as an Apache DSO
  * (bugs 990, 520)
  *
