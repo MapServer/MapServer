@@ -226,7 +226,8 @@ Very important note: Constant names and class member variable names are
         Query all selected layers in map at point location specified in 
         georeferenced map coordinates (i.e. not pixels).  
         The query is performed on all the shapes that are part of a CLASS 
-        that contains a TEMPLATE parameter.
+        that contains a TEMPLATE value or that match any class in a
+        layer that contains a LAYER TEMPLATE value.
         Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
@@ -241,7 +242,8 @@ Very important note: Constant names and class member variable names are
         Query all selected layers in map using a rectangle specified in 
         georeferenced map coordinates (i.e. not pixels).
         The query is performed on all the shapes that are part of a CLASS 
-        that contains a TEMPLATE parameter.
+        that contains a TEMPLATE value or that match any class in a
+        layer that contains a LAYER TEMPLATE value.
         Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
         was found or if some other error happened (note that the error 
         message in case nothing was found can be avoided in PHP using 
@@ -340,7 +342,8 @@ Very important note: Constant names and class member variable names are
         Query layer at point location specified in georeferenced map 
         coordinates (i.e. not pixels).  
         The query is performed on all the shapes that are part of a CLASS 
-        that contains a TEMPLATE parameter.
+        that contains a TEMPLATE value or that match any class in a
+        layer that contains a LAYER TEMPLATE value.
         Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Passing buffer <=0 defaults to tolerances set in the map file 
@@ -355,7 +358,8 @@ Very important note: Constant names and class member variable names are
         Query layer using a rectangle specified in georeferenced map 
         coordinates (i.e. not pixels).
         The query is performed on all the shapes that are part of a CLASS 
-        that contains a TEMPLATE parameter.
+        that contains a TEMPLATE value or that match any class in a
+        layer that contains a LAYER TEMPLATE value.
         Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
         was found or if some other error happened (note that the error 
         message in case nothing was found can be avoided in PHP using 
@@ -380,8 +384,9 @@ Very important note: Constant names and class member variable names are
 
    int queryByAttributes(int mode)
         Query layer for shapes that intersect current map extents.
-        The query is performed on all the shapes that intersect the current
-        map extent and are part of a CLASS that contains a TEMPLATE parameter.
+        The query is performed on all the shapes that are part of a CLASS 
+        that contains a TEMPLATE value or that match any class in a
+        layer that contains a LAYER TEMPLATE value.
         Mode is MS_SINGLE or MS_MULTIPLE depending on number of results
         you want. 
         Returns MS_SUCCESS if shapes were found or MS_FAILURE if nothing
