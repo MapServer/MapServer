@@ -1,6 +1,6 @@
 
 SYMBOL
-    NAME 'line' 
+    NAME 'circle' 
     TYPE ellipse 
     FILLED true 
     POINTS

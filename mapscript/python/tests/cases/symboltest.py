@@ -62,7 +62,7 @@ class MapSymbolTestCase(MapTestCase):
     def testGetPoints(self):
         """get symbol points as line and test coords"""
         symbol = self.map.symbolset.getSymbol(1)
-        assert symbol.name == 'line'
+        assert symbol.name == 'circle'
         line = symbol.getPoints()
         assert line.numpoints == 1, line.numpoints
         pt = self.getPointFromLine(line, 0)
@@ -71,7 +71,7 @@ class MapSymbolTestCase(MapTestCase):
     def testSetPoints(self):
         """add lines of points to an existing symbol"""
         symbol = self.map.symbolset.getSymbol(1)
-        assert symbol.name == 'line'
+        assert symbol.name == 'circle'
         line = mapscript.lineObj()
         self.addPointToLine(line, mapscript.pointObj(2.0, 2.0))
         self.addPointToLine(line, mapscript.pointObj(3.0, 3.0))

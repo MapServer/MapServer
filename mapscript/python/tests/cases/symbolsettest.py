@@ -66,7 +66,7 @@ class SymbolSetTestCase(unittest.TestCase):
         symbolset.appendSymbol(symbolb) 
         num = symbolset.numsymbols
         assert num == 6, num
-        names = [None, 'line', 'xmarks-png', 'home-png', 'testa', 'testb']
+        names = [None, 'circle', 'xmarks-png', 'home-png', 'testa', 'testb']
         for i in range(symbolset.numsymbols):
             symbol = symbolset.getSymbol(i)
             assert symbol.name == names[i], symbol.name
@@ -103,14 +103,14 @@ class MapSymbolSetTestCase(MapTestCase):
     def testSymbolSetSymbolNames(self):
         """test names of symbols in test fixture's symbolset"""
         set = self.map.symbolset
-        names = [None, 'line', 'xmarks-png', 'home-png']
+        names = [None, 'circle', 'xmarks-png', 'home-png']
         for i in range(set.numsymbols):
             symbol = set.getSymbol(i)
             assert symbol.name == names[i], symbol.name
             
     def testSymbolIndex(self):
-        """expect index of 'line' symbol to be 1 in test fixture symbolset"""
-        i = self.map.symbolset.index('line')
+        """expect index of 'circle' symbol to be 1 in test fixture symbolset"""
+        i = self.map.symbolset.index('circle')
         assert i == 1, i
         
     def testDrawNewSymbol(self):
