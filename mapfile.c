@@ -595,16 +595,12 @@ static int _msProcessAutoProjection(projectionObj *p)
                  dLon0, dLat0, pszUnits );
         break;
       case 42004: /** WGS 84 / Auto Equirectangular **/
-        // __TODO__ I suspect a problem with this one since the WMS spec
-        // version contains a "standard_parallel_1" value and it was lost in
-        // the conversion.  
-        // (And the docs at http://www.digitalearth.org/wmt/auto.html set
-        // only standard_parallel_1 = lat0 and force lon_0=0 ...)
-        //
+        // Note that we have to pass lon_0 as lon_ts for this one to
+        // work.  Either a PROJ4 bug or a PROJ4 documentation issue.
         sprintf( szProjBuf, 
-                 "+proj=eqc+lat_ts=0+lon_0=%.16g+x_0=0+y_0=0"
+                 "+proj=eqc+lon_ts=%.16g+lat_ts=%.16g+x_0=0+y_0=0"
                  "+ellps=WGS84+datum=WGS84+units=%s",
-                 dLon0, pszUnits);
+                 dLon0, dLat0, pszUnits);
         break;
       case 42005: /** WGS 84 / Auto Mollweide **/
         sprintf( szProjBuf, 
