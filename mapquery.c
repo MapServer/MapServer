@@ -266,14 +266,14 @@ int msQueryByAttributes(mapObj *map, int qlayer)
   lp = &(map->layers[qlayer]);
   msInitShape(&shape);
 
-  // build item list (no annotation)
-  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
-  if(status != MS_SUCCESS) return(MS_FAILURE);
-
   // open this layer
   status = msLayerOpen(lp, map->shapepath);
   if(status != MS_SUCCESS) return(MS_FAILURE);
   
+  // build item list (no annotation)
+  status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
   // identify target shapes
   searchrect = map->extent;
 #ifdef USE_PROJ     
@@ -352,6 +352,7 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
 
     if(lp->status == MS_OFF) continue;
 
+    msDebug("layer %d, scale=%g, minscale=%g, maxscale=%g\n",l,map->scale, lp->minscale, lp->maxscale);
     if(map->scale > 0) {
       if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
@@ -366,12 +367,12 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
     }
     if(status != MS_SUCCESS) continue;
 
-    // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
-
     // open this layer
     status = msLayerOpen(lp, map->shapepath);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+
+    // build item list (no annotation)
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
@@ -517,12 +518,12 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
     rect.miny = p.y - t;
     rect.maxy = p.y + t;
 
-    // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
-
     // open this layer
     status = msLayerOpen(lp, map->shapepath);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+
+    // build item list (no annotation)
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
@@ -652,12 +653,12 @@ int msQueryByShape(mapObj *map, int qlayer, shapeObj *searchshape)
     }
     if(status != MS_SUCCESS) continue;
 
-    // build item list (no annotation)
-    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
-    if(status != MS_SUCCESS) return(MS_FAILURE);
-
     // open this layer
     status = msLayerOpen(lp, map->shapepath);
+    if(status != MS_SUCCESS) return(MS_FAILURE);
+
+    // build item list (no annotation)
+    status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
     if(status != MS_SUCCESS) return(MS_FAILURE);
 
     // identify target shapes
