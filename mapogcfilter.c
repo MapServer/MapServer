@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.14  2004/01/05 21:16:26  assefa
+ * Correct bug with PropertyIsLike and a BBOX filters.
+ *
  * Revision 1.13  2003/10/22 13:19:51  assefa
  * Change delimiter from single quote to double quote when buidging expressions.
  *
@@ -805,13 +808,14 @@ int FLTValidForPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
     if (strcasecmp(psFilterNode->pszValue, "PropertyIsLike") == 0)
       return 1;
 
-    if (strcasecmp(psFilterNode->pszValue, "OR") == 0)
+    /*    if (strcasecmp(psFilterNode->pszValue, "OR") == 0)
     {
         if (strcasecmp(psFilterNode->psLeftNode->pszValue, "PropertyIsLike") ==0 ||
             strcasecmp(psFilterNode->psRightNode->pszValue, "PropertyIsLike") ==0)
           return 1;
     }
-    return 0;
+    */
+    return 1;
 }
 
 int FLTIsPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
@@ -833,12 +837,25 @@ int FLTIsPropertyIsLikeFilter(FilterEncodingNode *psFilterNode)
 }       
  
 
+/************************************************************************/
+/*                         FLTIsOnlyPropertyIsLike                      */
+/*                                                                      */
+/*      Check if the only expression expression in the node tree is     */
+/*      of type PropertyIsLIke. 2 cases :                               */
+/*        - one node with PropertyIsLike                                */
+/*        - or PropertyIsLike combined with BBOX                        */
+/************************************************************************/
 int FLTIsOnlyPropertyIsLike(FilterEncodingNode *psFilterNode)
 {
-    if (psFilterNode && psFilterNode->pszValue && 
-        strcmp(psFilterNode->pszValue, "PropertyIsLike") ==0)
-      return 1;
-
+    if (psFilterNode && psFilterNode->pszValue)
+    {
+        
+        if (strcmp(psFilterNode->pszValue, "PropertyIsLike") ==0)
+          return 1;
+        else if (FLTNumberOfFilterType(psFilterNode, "PropertyIsLike") == 1 &&
+                 FLTNumberOfFilterType(psFilterNode, "BBOX") == 1)
+          return 1;
+    }
     return 0;
 }
 
