@@ -13,6 +13,12 @@ the CVS logs is updated daily at the following URL:
   http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
 
 
+Version 3.6.2 (CVS)
+--------------------------
+
+- Added msTokenizeMap() in MapScript (and via 'mapserv -t test.map')
+
+
 Version 3.6.1 (2002-06-20)
 --------------------------
 
