@@ -89,6 +89,11 @@ Version 4.3 (CVS)
 
 - Mapscript: removing obsolete python/setup_wnone.py file.
 
+- CONFIG MS_NONSQUARE YES now enables non-square pixel mode (mostly for WMS). 
+  Changes in mapdraw.c (msDrawMap()) to use the geotransform "hack" to allow
+  non-square pixels.
+
+
 Version 4.2-beta1 (2004-04-17)
 ------------------------------
 
