@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.100  2004/11/12 21:31:11  sdlime
+ * Addressed bug 1032. HTML legends now support a [leg_header_html] and [leg_footer_html] tag.
+ *
  * Revision 1.99  2004/11/11 20:25:52  sdlime
  * Addressed bug 1057 by removing the [get_layers] template tag.
  *
@@ -1574,6 +1577,9 @@ char *generateLegendTemplate(mapservObj *msObj)
    char *legClassHtmlCopy = NULL;
    char *legGroupHtmlCopy = NULL;
    
+   char *legHeaderHtml = NULL;
+   char *legFooterHtml = NULL;
+
    char *pszPrefix = NULL;
    char *pszMapFname = NULL;
    
@@ -1703,12 +1709,14 @@ char *generateLegendTemplate(mapservObj *msObj)
    file[length] = '\0';
 
    /*
-    * Seperate groups, layers and class
+    * Seperate header/footer, groups, layers and class
     */
+   getInlineTag("leg_header_html", file, &legHeaderHtml);
+   getInlineTag("leg_footer_html", file, &legFooterHtml);
    getInlineTag("leg_group_html", file, &legGroupHtml);
    getInlineTag("leg_layer_html", file, &legLayerHtml);
    getInlineTag("leg_class_html", file, &legClassHtml);
-
+   
    /*
     * Retrieve arguments of all three parts
     */
@@ -1733,6 +1741,9 @@ char *generateLegendTemplate(mapservObj *msObj)
                        msObj->Map->resolution, &msObj->Map->scale) != MS_SUCCESS)
      return(NULL);
    
+   // start with the header if present
+   if(legHeaderHtml) pszResult = strcatalloc(pszResult, legHeaderHtml);
+
    /********************************************************************/
 
    /*
@@ -2009,6 +2020,9 @@ char *generateLegendTemplate(mapservObj *msObj)
       }
    }
    
+   // finish with the footer if present
+   if(legFooterHtml) pszResult = strcatalloc(pszResult, legFooterHtml);
+
    /*
     * if we reach this point, that mean no error was generated.
     * So check if template is null and initialize it to <space>.
