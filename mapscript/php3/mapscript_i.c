@@ -7,6 +7,11 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.49  2002/10/23 19:44:08  assefa
+ * Add setcolor functions for style and label objects.
+ * Add function to select the output format.
+ * Correct PrepareImage and PasteImage functions.
+ *
  * Revision 1.48  2002/09/17 13:08:30  julien
  * Remove all chdir() function and replace them with the new msBuildPath function.
  * This have been done to make MapServer thread safe. (Bug 152)
@@ -245,7 +250,6 @@ void mapObj_prepareQuery(mapObj* self) {
     if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
   }
 
-//TODO create for now GD image
 imageObj *mapObj_prepareImage(mapObj* self) {
     int status;
     imageObj *img = NULL;
@@ -270,7 +274,23 @@ imageObj *mapObj_prepareImage(mapObj* self) {
         img = msImageCreate(self->width, self->height, self->outputformat,
                             self->web.imagepath, self->web.imageurl);
     }
-
+#ifdef USE_MING_FLASH
+    else if( MS_RENDERER_SWF(self->outputformat) )
+    {
+        img = msImageCreateSWF(self->width, self->height, self->outputformat,
+                               self->web.imagepath, self->web.imageurl,
+                               self);
+    }
+#endif
+#ifdef USE_PDF
+    else if( MS_RENDERER_PDF(self->outputformat) )
+    {
+        img = msImageCreatePDF(self->width, self->height, self->outputformat,
+                               self->web.imagepath, self->web.imageurl,
+                               self);
+	}
+#endif
+    
     if(!img) {
       msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
@@ -442,7 +462,22 @@ int mapObj_setFontSet(mapObj *self, char *szFileName)
     return msLoadFontSet(&(self->fontset), self);
 }
 
-  
+int mapObj_selectOutputFormat(mapObj *self,
+                              const char *imagetype)
+{
+    outputFormatObj *format = NULL;
+    
+    format = msSelectOutputFormat(self, imagetype);
+    if (format)
+    {
+        msApplyOutputFormat( &(self->outputformat), format, 
+                             self->transparent, self->interlace, 
+                             self->imagequality );
+        return(MS_SUCCESS);
+    }
+    return(MS_FAILURE);
+    
+}
       
 /**********************************************************************
  * class extensions for layerObj, always within the context of a map

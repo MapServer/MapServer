@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.26  2002/10/23 19:44:08  assefa
+ * Add setcolor functions for style and label objects.
+ * Add function to select the output format.
+ * Correct PrepareImage and PasteImage functions.
+ *
  * Revision 1.25  2002/08/09 22:55:38  assefa
  * Update code to be in sync with mapserver addition of Styles.
  *
@@ -183,7 +188,8 @@ char            *mapObj_processQueryTemplate(mapObj *self,
 int             mapObj_setSymbolSet(mapObj *self, char *szFileName);
 int             mapObj_getNumSymbols(mapObj *self);
 int             mapObj_setFontSet(mapObj *self, char *szFileName);
-
+int             mapObj_selectOutputFormat(mapObj *self,
+                                          const char *imagetype);
 layerObj       *layerObj_new(mapObj *map);
 void            layerObj_destroy(layerObj* self);
 int             layerObj_open(layerObj *self, char *path);

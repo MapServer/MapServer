@@ -30,6 +30,11 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.116  2002/10/23 19:44:08  assefa
+ * Add setcolor functions for style and label objects.
+ * Add function to select the output format.
+ * Correct PrepareImage and PasteImage functions.
+ *
  * Revision 1.115  2002/08/14 20:13:08  assefa
  * Offset in the layer object changed type.
  *
@@ -301,6 +306,8 @@ DLEXPORT void php3_ms_map_setSymbolSet(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_getNumSymbols(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS);
 
+DLEXPORT void  php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS);
+
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -339,6 +346,7 @@ DLEXPORT void php3_ms_class_drawLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_class_createLegendIcon(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_label_setColor(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_color_setRGB(INTERNAL_FUNCTION_PARAMETERS);
 
@@ -402,6 +410,7 @@ DLEXPORT void php3_ms_legend_setProperty(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_style_new(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_style_setColor(INTERNAL_FUNCTION_PARAMETERS);
 
 static long _phpms_build_img_object(imageObj *im, webObj *pweb,
                                     HashTable *list, pval *return_value);
@@ -599,6 +608,7 @@ function_entry php_map_class_functions[] = {
     {"setsymbolset",   php3_ms_map_setSymbolSet,  NULL},
     {"getnumsymbols",   php3_ms_map_getNumSymbols,  NULL},
     {"setfontset",      php3_ms_map_setFontSet,  NULL},
+    {"selectoutputformat",      php3_ms_map_selectOutputFormat,  NULL},
     {NULL, NULL, NULL}
 };
 
@@ -674,6 +684,7 @@ function_entry php_layer_class_functions[] = {
 
 function_entry php_label_class_functions[] = {
     {"set",             php3_ms_label_setProperty,      NULL},    
+    {"setcolor",             php3_ms_label_setColor,      NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -739,6 +750,7 @@ function_entry php_projection_class_functions[] = {
 
 function_entry php_style_class_functions[] = {
     {"set",              php3_ms_style_setProperty,      NULL},    
+    {"setcolor",         php3_ms_style_setColor,      NULL},    
     {NULL, NULL, NULL}
 };
 
@@ -810,6 +822,8 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
         zend_register_list_destructors_ex(NULL, NULL,
                                           "legendObj", module_number);
 
+    PHPMS_GLOBAL(le_msstyle)= register_list_destructors(php3_ms_free_stub,
+                                                        NULL);
 
     /* boolean constants*/
     REGISTER_LONG_CONSTANT("MS_TRUE",       MS_TRUE,        const_flag);
@@ -1090,10 +1104,6 @@ DLEXPORT void php3_ms_map_new(INTERNAL_FUNCTION_PARAMETERS)
     new_obj_ptr = &new_obj_param;
 #endif
     
-    int nttt;
-    char *sttt = NULL;
-
-    //nttt = strlen(sttt);
 
 #if defined(PHP4)
     /* Due to thread-safety problems, php_mapscript.so/.dll cannot be used
@@ -4647,6 +4657,47 @@ DLEXPORT void php3_ms_map_setFontSet(INTERNAL_FUNCTION_PARAMETERS)
 /* }}} */
 
 
+/**********************************************************************
+ *                        map->selectoutputformat(type)
+ *
+ * Selects the output format (to be used in the map given) by giving
+ * the type.
+ **********************************************************************/
+DLEXPORT void php3_ms_map_selectOutputFormat(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pThis;
+    pval        *pImageType;
+    mapObj      *self=NULL;
+    int         retVal=0;
+    HashTable   *list=NULL;
+
+    pThis = getThis();
+
+    if (pThis == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (getParameters(ht,1,&pImageType) == FAILURE)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    convert_to_string(pImageType);
+   
+    self = (mapObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msmap), 
+                                         list TSRMLS_CC);
+    if (self == NULL)
+        RETURN_FALSE;
+
+    if (mapObj_selectOutputFormat(self, pImageType->value.str.val))
+      RETURN_TRUE;
+
+     RETURN_FALSE;
+}
+/* }}} */
+
+
 
 /*=====================================================================
  *                 PHP function wrappers - image class
@@ -4919,12 +4970,13 @@ DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS)
    Pass transparentColor=-1 if you don't want any transparent color.
    If optional dstx,dsty are provided then it defined the position where the
    image should be copied (dstx,dsty = top-left corner position).
+   NOTE : this function only works for GD images.
 */
 
 DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval   *pSrcImg, *pTransparent, *pThis, *pDstX, *pDstY;
-    gdImagePtr imgDst = NULL, imgSrc = NULL;
+    imageObj *imgDst = NULL, *imgSrc = NULL;
     int         nDstX=0, nDstY=0;
     int         nArgs = ARG_COUNT(ht);
 #ifdef PHP4
@@ -4949,11 +5001,17 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
         WRONG_PARAM_COUNT;
     }
 
-    imgDst = (gdImagePtr)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
+    imgDst = (imageObj *)_phpms_fetch_handle(pThis, le_msimg, list TSRMLS_CC);
 
-    imgSrc = (gdImagePtr)_phpms_fetch_handle(pSrcImg, PHPMS_GLOBAL(le_msimg), 
+    imgSrc = (imageObj *)_phpms_fetch_handle(pSrcImg, PHPMS_GLOBAL(le_msimg), 
                                              list TSRMLS_CC);
     
+    if( !MS_DRIVER_GD(imgSrc->format) || !MS_DRIVER_GD(imgDst->format))
+    {
+        php3_error(E_ERROR, "PasteImage function should only be used with GD images.");
+        RETURN_LONG(-1);
+    }
+      
     convert_to_long(pTransparent);
 
     if (nArgs == 4)
@@ -4968,19 +5026,20 @@ DLEXPORT void php3_ms_img_pasteImage(INTERNAL_FUNCTION_PARAMETERS)
     {
         int    nOldTransparentColor;
 
-        nOldTransparentColor = gdImageGetTransparent(imgSrc);
-        gdImageColorTransparent(imgSrc, pTransparent->value.lval);
+        nOldTransparentColor = gdImageGetTransparent(imgSrc->img.gd);
+        gdImageColorTransparent(imgSrc->img.gd, pTransparent->value.lval);
 
-        gdImageCopy(imgDst, imgSrc, nDstX, nDstY, 
-                    0, 0, imgSrc->sx, imgSrc->sy);
+        gdImageCopy(imgDst->img.gd, imgSrc->img.gd, nDstX, nDstY, 
+                    0, 0, imgSrc->img.gd->sx, imgSrc->img.gd->sy);
 
-        gdImageColorTransparent(imgSrc, nOldTransparentColor);
+        gdImageColorTransparent(imgSrc->img.gd, nOldTransparentColor);
     }
     else
     {
         php3_error(E_ERROR, "Source or destination image is invalid.");
     }
 
+    RETURN_LONG(0);
 }
 /* }}} */
 
@@ -6451,6 +6510,85 @@ DLEXPORT void php3_ms_label_setProperty(INTERNAL_FUNCTION_PARAMETERS)
 
     RETURN_LONG(0);
 }
+
+
+/**********************************************************************
+ *                        label->setcolor()
+ **********************************************************************/
+
+/* {{{ proto int style.setcolor(string property_name, r,g,b)
+   Set color property to a new value. Returns -1 on error. 
+    prperty_name can be color, backgroundcolor, backgroundshadowcolor ,
+    outlinecolor, shadowcolor*/
+
+DLEXPORT void php3_ms_label_setColor(INTERNAL_FUNCTION_PARAMETERS)
+{
+    labelObj *self;
+    pval   *pPropertyName, *pR, *pG, *pB, *pThis;
+
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        getParameters(ht, 4, &pPropertyName, &pR, &pG, &pB) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (labelObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_mslabel),
+                                           list TSRMLS_CC);
+   
+
+    if (self == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    convert_to_long(pR);
+    convert_to_long(pG);
+    convert_to_long(pB);
+
+    if (strcasecmp(pPropertyName->value.str.val, "color") == 0)
+    {        
+        self->color.red =   pR->value.lval;
+        self->color.green = pG->value.lval;
+        self->color.blue =  pB->value.lval;
+    }
+    else if (strcasecmp(pPropertyName->value.str.val, "backgroundcolor") == 0)
+    {
+        self->backgroundcolor.red =   pR->value.lval;
+        self->backgroundcolor.green = pG->value.lval;
+        self->backgroundcolor.blue =  pB->value.lval;
+    }
+    else if (strcasecmp(pPropertyName->value.str.val, "backgroundshadowcolor") == 0)
+    {
+        self->backgroundshadowcolor.red =   pR->value.lval;
+        self->backgroundshadowcolor.green = pG->value.lval;
+        self->backgroundshadowcolor.blue =  pB->value.lval;
+    }
+    else if (strcasecmp(pPropertyName->value.str.val, "outlinecolor") == 0)
+    {
+        self->outlinecolor.red =   pR->value.lval;
+        self->outlinecolor.green = pG->value.lval;
+        self->outlinecolor.blue =  pB->value.lval;
+    }
+    else if (strcasecmp(pPropertyName->value.str.val, "shadowcolor") == 0)
+    {
+        self->shadowcolor.red =   pR->value.lval;
+        self->shadowcolor.green = pG->value.lval;
+        self->shadowcolor.blue =  pB->value.lval;
+    }
+    else
+       RETURN_LONG(-1);
+
+    RETURN_LONG(0);
+}
+
 /* }}} */
 
 /*=====================================================================
@@ -10188,6 +10326,73 @@ DLEXPORT void php3_ms_style_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_LONG(0);
 }
 /* }}} */
+/**********************************************************************
+ *                        style->setcolor()
+ **********************************************************************/
+
+/* {{{ proto int style.setcolor(string property_name, r,g,b)
+   Set color property to a new value. Returns -1 on error. 
+    prperty_name can be color, backgroundcolor, outlinecolor*/
+
+DLEXPORT void php3_ms_style_setColor(INTERNAL_FUNCTION_PARAMETERS)
+{
+    styleObj *self;
+    mapObj *parent_map;
+    pval   *pPropertyName, *pR, *pG, *pB, *pThis;
+
+    HashTable   *list=NULL;
+
+
+    pThis = getThis();
+
+
+    if (pThis == NULL ||
+        getParameters(ht, 4, &pPropertyName, &pR, &pG, &pB) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (styleObj *)_phpms_fetch_handle(pThis, PHPMS_GLOBAL(le_msstyle),
+                                           list TSRMLS_CC);
+   
+    parent_map = (mapObj*)_phpms_fetch_property_handle(pThis, "_map_handle_",
+                                                       PHPMS_GLOBAL(le_msmap),
+                                                       list TSRMLS_CC, E_ERROR);
+
+    if (self == NULL || parent_map == NULL)
+    {
+        RETURN_LONG(-1);
+    }
+
+    convert_to_string(pPropertyName);
+
+    convert_to_long(pR);
+    convert_to_long(pG);
+    convert_to_long(pB);
+
+    if (strcasecmp(pPropertyName->value.str.val, "color") == 0)
+    {        
+        self->color.red =   pR->value.lval;
+        self->color.green = pG->value.lval;
+        self->color.blue =  pB->value.lval;
+    }
+    else if (strcasecmp(pPropertyName->value.str.val, "backgroundcolor") == 0)
+    {
+        self->backgroundcolor.red =   pR->value.lval;
+        self->backgroundcolor.green = pG->value.lval;
+        self->backgroundcolor.blue =  pB->value.lval;
+    }
+    else if (strcasecmp(pPropertyName->value.str.val, "outlinecolor") == 0)
+    {
+        self->outlinecolor.red =   pR->value.lval;
+        self->outlinecolor.green = pG->value.lval;
+        self->outlinecolor.blue =  pB->value.lval;
+    }
+    else
+       RETURN_LONG(-1);
+
+    RETURN_LONG(0);
+}
 
 /* ==================================================================== */
 /*      utility functions                                               */
