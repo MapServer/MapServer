@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.70  2002/01/10 23:16:29  assefa
+ * Correct a bug in php3_ms_map_getAllGroupNames.
+ *
  * Revision 1.69  2001/12/19 03:46:02  assefa
  * Support of Measured shpe files.
  *
@@ -3186,13 +3189,16 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
         nGroups = 0;
         papszGroups = (char **)malloc(sizeof(char *)*nCount);
         for (i=0; i<nCount; i++)
+            papszGroups[i] = NULL;
+        for (i=0; i<nCount; i++)
         {
             bFound = 0;
             if (self->layers[i].group)
             {
                 for (j=0; j<nGroups; j++)
                 {
-                    if (strcmp(self->layers[i].group, papszGroups[j]) == 0)
+                    if (papszGroups[j] && 
+                        strcmp(self->layers[i].group, papszGroups[j]) == 0)
                     {
                         bFound = 1;
                         break;
@@ -3214,7 +3220,7 @@ DLEXPORT void php3_ms_map_getAllGroupNames(INTERNAL_FUNCTION_PARAMETERS)
         {
             free(papszGroups[j]);
         }
-        free(papszGroups[j]);
+        free(papszGroups);
     }
     else
     {
