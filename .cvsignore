@@ -15,3 +15,8 @@ sortshp
 tile4ms
 perlvars
 config.cache
+*.lib
+*.pdb
+*.dll
+*.ilk
+*.exp
