@@ -53,62 +53,35 @@ if (MSExc_MapServerNotFoundError != NULL)
 
 %}
 
-/* the new msGetErrorString is causing segfaults for some users so
- * we're going back to the home-made error stack output.  With the
- * Python MapScript the error stack should be rather short as 
- * MapServer errors are translated to Python exceptions and halt
- * execution. */
 %{
     static void _raise_ms_exception(void) {
-        char errbuf[256];
-        char errmsg[2100]; // room for 8 * 256 byte messages + final notice
         int errcode;
         errorObj *ms_error;
-        int error_depth;
-        int max_error_depth = 8;
-        
-        strcpy(errmsg, "");
         ms_error = msGetErrorObj();
         errcode = ms_error->code;
         
-        // Step through the error list, appending to the output error
-        // message.
-        error_depth = 0;
-        while (ms_error && ms_error->code > 0) {
-            if (error_depth == max_error_depth) {
-                // Report that we've reached max error depth
-                strcat(errmsg, "Reached maximum error depth (4)\n");
-                break;
-            }
-            snprintf(errbuf, 255, "%s: %s %s\n", ms_error->routine,
-                     msGetErrorCodeString(ms_error->code), ms_error->message);
-            strcat(errmsg, errbuf);
-            ms_error = ms_error->next;
-            error_depth++;
-        }
-
         // Map MapServer errors to Python exceptions, will define
         // custom Python exceptions soon.  The exception we raise
         // is based on the error at the head of the MapServer error
         // list.  All other errors appear in the error message.
         switch (errcode) {
             case MS_IOERR:
-                PyErr_SetString(PyExc_IOError, errmsg);
+                PyErr_SetString(PyExc_IOError, msGetErrorString("\n"));
                 break;
             case MS_MEMERR:
-                PyErr_SetString(PyExc_MemoryError, errmsg);
+                PyErr_SetString(PyExc_MemoryError, msGetErrorString("\n"));
                 break;
             case MS_TYPEERR:
-                PyErr_SetString(PyExc_TypeError, errmsg);
+                PyErr_SetString(PyExc_TypeError, msGetErrorString("\n"));
                 break;
             case MS_EOFERR:
-                PyErr_SetString(PyExc_EOFError, errmsg);
+                PyErr_SetString(PyExc_EOFError, msGetErrorString("\n"));
                 break;
             case MS_NOTFOUND:
-                PyErr_SetString(MSExc_MapServerNotFoundError, errmsg);
+                PyErr_SetString(MSExc_MapServerNotFoundError, msGetErrorString("\n"));
                 break;
             default:
-                PyErr_SetString(MSExc_MapServerError, errmsg);
+                PyErr_SetString(MSExc_MapServerError, msGetErrorString("\n"));
                 break;
         }
     }
