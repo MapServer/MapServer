@@ -151,7 +151,7 @@ math_exp: NUMBER
        | '-' math_exp %prec NEG  { $$ = $2; }
        | math_exp '^' math_exp   { $$ = pow($1, $3); }
        | '(' math_exp ')'        { $$ = $2; }
-       | LENGTH '(' string_exp ')' { $$ = strlen($3) }
+       | LENGTH '(' string_exp ')' { $$ = strlen($3); }
 ;
 
 string_exp: STRING
