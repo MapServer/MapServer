@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.7  2003/09/29 12:52:45  assefa
+ * Correct string comparison for BBox.
+ *
  * Revision 1.6  2003/09/29 01:00:14  assefa
  * Look for string Filter instead of <Filter since namespaces can be used.
  *
@@ -815,10 +818,12 @@ int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
     if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
       return 1;
 
-    if (strcasecmp(psFilterNode->pszValue, "AND") &&
-        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0) ||
-         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)))
-      return 1;
+    if (strcasecmp(psFilterNode->pszValue, "AND") == 0)
+    {
+      if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0 ||
+          strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)
+        return 1;
+    }
 
     return 0;
 }       
@@ -833,10 +838,12 @@ int FLTIsBBoxFilter(FilterEncodingNode *psFilterNode)
     if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
       return 1;
 
-    if (strcasecmp(psFilterNode->pszValue, "AND") &&
-        ((strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0) ||
-         (strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)))
-      return 1;
+    if (strcasecmp(psFilterNode->pszValue, "AND") == 0)
+    {
+      if (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX") ==0 ||
+          strcasecmp(psFilterNode->psRightNode->pszValue, "BBOX") ==0)
+        return 1;
+    }
 
     return 0;
 }       
