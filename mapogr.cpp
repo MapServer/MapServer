@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.78  2004/11/16 20:36:24  frank
+ * msOGCWKT2ProjectionObj(): use SetFromUserInput() for addition capabilities
+ *
  * Revision 1.77  2004/11/15 20:35:02  dan
  * Added msLayerIsOpen() to all vector layer types (bug 1051)
  *
@@ -757,12 +760,21 @@ int msOGCWKT2ProjectionObj( const char *pszWKT,
 
     OGRSpatialReference		oSRS;
     char			*pszAltWKT = (char *) pszWKT;
+    OGRErr  eErr;
 
-    if( oSRS.importFromWkt( &pszAltWKT ) != OGRERR_NONE )
+    if( !EQUALN(pszWKT,"GEOGCS",6) 
+        && !EQUALN(pszWKT,"PROJCS",6)
+        && !EQUALN(pszWKT,"LOCAL_CS",8) )
+        eErr = oSRS.SetFromUserInput( pszWKT );
+    else
+        eErr = oSRS.importFromWkt( &pszAltWKT );
+
+    if( eErr != OGRERR_NONE )
     {
         msSetError(MS_OGRERR, 
-                   "Ingestion of WKT string failed.",
-                   "msOGCWKT2ProjectionObj()");
+                   "Ingestion of WKT string '%s' failed.",
+                   "msOGCWKT2ProjectionObj()",
+                   pszWKT );
         return MS_FAILURE;
     }
 
