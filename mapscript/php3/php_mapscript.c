@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.221  2004/12/17 20:16:44  assefa
+ * Use doubles instead of integers in function php3_ms_symbol_setPoints (Bug 1137).
+ *
  * Revision 1.220  2004/11/16 17:23:13  dan
  * Added map->setSize() to PHP MapScript (bug 1066)
  *
@@ -13049,8 +13052,8 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
         {
             RETURN_FALSE;
         }
-        convert_to_long((*pValue));
-        self->points[iSymbol].x = (*pValue)->value.lval;
+        convert_to_double((*pValue));
+        self->points[iSymbol].x = (*pValue)->value.dval;
         i++;
 
          if (zend_hash_index_find(pPoints->value.ht, i, 
@@ -13058,8 +13061,8 @@ DLEXPORT void php3_ms_symbol_setPoints(INTERNAL_FUNCTION_PARAMETERS)
         {
             RETURN_FALSE;
         }
-        convert_to_long((*pValue));
-        self->points[iSymbol].y = (*pValue)->value.lval;
+        convert_to_double((*pValue));
+        self->points[iSymbol].y = (*pValue)->value.dval;
         i++;
 
         iSymbol++;
