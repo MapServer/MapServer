@@ -303,8 +303,8 @@ int msLayerWhichItems(layerObj *layer, int classify, int annotate)
   if(classify && layer->classitem) layer->classitemindex = string2list(layer->items, &(layer->numitems), layer->classitem);
   if(classify && layer->filteritem) layer->filteritemindex = string2list(layer->items, &(layer->numitems), layer->filteritem);
   if(annotate && layer->labelitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelitem);
-  if(annotate && layer->labelsizeitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelsizeitem);
-  if(annotate && layer->labelangleitem) layer->labelitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
+  if(annotate && layer->labelsizeitem) layer->labelsizeitemindex = string2list(layer->items, &(layer->numitems), layer->labelsizeitem);
+  if(annotate && layer->labelangleitem) layer->labelangleitemindex = string2list(layer->items, &(layer->numitems), layer->labelangleitem);
   
   if(classify && layer->filter.type == MS_EXPRESSION) expression2list(layer->items, &(layer->numitems), &(layer->filter));
    
