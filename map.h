@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.382  2004/11/29 21:33:53  dan
+ * Update for v4.4.0
+ *
  * Revision 1.381  2004/11/22 15:51:52  dan
  * Updated MS_VERSION for 4.4.0-beta3
  *
@@ -201,7 +204,7 @@ extern "C" {
 
 // General defines, wrapable
 
-#define MS_VERSION "4.4.0-beta3"
+#define MS_VERSION "4.4.0"
 
 #define MS_TRUE 1 /* logical control variables */
 #define MS_FALSE 0
