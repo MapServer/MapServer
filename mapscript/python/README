@@ -48,10 +48,12 @@ and then proceed to the build step explained above.  If you are
 using Python 2.2 or 2.3, you should add a -modern option which
 produces a higher performance module.
 
-Users who would like to try the next generation API and next
-generation class names ('Map' instead of 'mapObj', &c), should
-add -DNEXT_GENERATION_NAMES and -DNEXT_GENERATION_API options
-to the swig statement.
+Users who would like to try the next generation API should add
+the -DNEXT_GENERATION_API option to the swig statement.
+
+::
+
+    swig -python -shadow -DNEXT_GENERATION_API -o mapscript_wrap.c ../mapscript.i
 
 
 Testing
@@ -61,7 +63,6 @@ directory and execute
 
 ::
 
-    python tests/testMapScript.py -v
     python tests/runtests.py -v
 
 The tests can (and should) be run before the module is installed.
