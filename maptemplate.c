@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.102.2.1  2005/03/04 13:38:42  dan
+ * Fixed crash in template generation with empty layer names (bug 1271)
+ *
  * Revision 1.102  2004/11/22 03:43:54  sdlime
  * Added tests to mimimize the threat of recursion problems when evaluating LAYER REQUIRES or LABELREQUIRES expressions. Note that via MapScript it is possible to circumvent that test by defining layers with problems after running prepareImage. Other things crop up in that case too (symbol scaling dies) so it should be considered bad programming practice.
  *
@@ -2241,7 +2244,7 @@ char *processLine(mapservObj* msObj, char* instr, int mode)
   strcpy(repstr, ""); // list of ALL layers that can be toggled
   repstr[0] = '\0';
   for(i=0;i<msObj->Map->numlayers;i++) {
-    if(msObj->Map->layers[i].status != MS_DEFAULT) {
+    if(msObj->Map->layers[i].status != MS_DEFAULT && msObj->Map->layers[i].name != NULL) {
       strlcat(repstr, msObj->Map->layers[i].name, sizeof(repstr));
       strlcat(repstr, " ", sizeof(repstr));
     }
