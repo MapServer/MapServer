@@ -31,14 +31,15 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 %include typemaps.i
 %include constraints.i
 
+%rename (_class) class;
+
 // grab mapserver declarations to wrap
-%include "../../map.h"
-// %include "../../maperror.h"
 %include "../../mapprimitive.h"
 %include "../../mapshape.h"
 %include "../../mapproject.h"
+%include "../../map.h"
+// %include "../../maperror.h"
 
-%apply Pointer NONNULL { gdImagePtr img };
 %apply Pointer NONNULL { mapObj *map };
 %apply Pointer NONNULL { layerObj *layer };
 
@@ -126,22 +127,29 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if(status != MS_SUCCESS) self->scale = -1; // degenerate extents ok here
   }
 
-  gdImagePtr prepareImage() {
+  imageObj *prepareImage() {
     int status;
-    gdImagePtr img;
+    imageObj *image=NULL;
+
+    image = (imageObj *)malloc(sizeof(imageObj));
+    if(!image) return NULL;
 
     if(self->width == -1 || self->height == -1) {
       msSetError(MS_MISCERR, "Image dimensions not specified.", "prepareImage()");
       return NULL;
     }
 
-    img = gdImageCreate(self->width, self->height);
-    if(!img) {
+    image->bytes = gdImageCreate(self->width, self->height);
+    if(!image->bytes) {
       msSetError(MS_GDERR, "Unable to initialize image.", "prepareImage()");
       return NULL;
     }
-  
-    if(msLoadPalette(img, &(self->palette), self->imagecolor) == -1)
+
+    image->width = self->width;
+    image->height = self->height;
+    image->imagepath = image->imageurl = NULL;
+
+    if(msLoadPalette(image->bytes, &(self->palette), self->imagecolor) == -1)
       return NULL;
   
     self->cellsize = msAdjustExtent(&(self->extent), self->width, self->height);
@@ -149,42 +157,92 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     if(status != MS_SUCCESS)
       return NULL;
 
-    return img;
+    return image;
   }
 
-  gdImagePtr draw() {
-    return msDrawMap(self);
+  imageObj *draw() {
+    imageObj *image=NULL;
+
+    image = (imageObj *)malloc(sizeof(imageObj));
+    if(!image) return NULL;
+
+    image->width = gdImageSX(image->bytes);
+    image->height = gdImageSY(image->bytes);
+    image->bytes = msDrawMap(self);
+    image->imagepath = image->imageurl = NULL;
+   
+    return image;
   }
 
-  gdImagePtr drawQuery() {
-    return msDrawQueryMap(self);
+  imageObj *drawQuery() {
+    imageObj *image=NULL;
+
+    image = (imageObj *)malloc(sizeof(imageObj));
+    if(!image) return NULL;
+
+    image->bytes = msDrawQueryMap(self);
+    image->width = gdImageSX(image->bytes);
+    image->height = gdImageSY(image->bytes);
+    image->imagepath = image->imageurl = NULL;
+   
+    return image;
   }
 
-  gdImagePtr drawLegend() {
-    return msDrawLegend(self);
+  imageObj *drawLegend() {
+    imageObj *image=NULL;
+
+    image = (imageObj *)malloc(sizeof(imageObj));
+    if(!image) return NULL;
+
+    image->bytes = msDrawLegend(self);
+    image->width = gdImageSX(image->bytes);
+    image->height = gdImageSY(image->bytes);
+    image->imagepath = image->imageurl = NULL;
+   
+    return image;
   }
 
-  gdImagePtr drawScalebar() {
-    return msDrawScalebar(self);
+  imageObj *drawScalebar() {
+    imageObj *image=NULL;
+
+    image = (imageObj *)malloc(sizeof(imageObj));
+    if(!image) return NULL;
+
+    image->bytes = msDrawScalebar(self);   
+    image->width = gdImageSX(image->bytes);
+    image->height = gdImageSY(image->bytes);
+    image->imagepath = image->imageurl = NULL;
+   
+    return image;
   }
 
-  gdImagePtr drawReferenceMap() {
-    return msDrawReferenceMap(self);
+  imageObj *drawReferenceMap() {
+    imageObj *image=NULL;
+
+    image = (imageObj *)malloc(sizeof(imageObj));
+    if(!image) return NULL;
+
+    image->bytes = msDrawReferenceMap(self);
+    image->width = gdImageSX(image->bytes);
+    image->height = gdImageSY(image->bytes);
+    image->imagepath = image->imageurl = NULL;
+   
+    return image;
   }
 
-  int embedScalebar(gdImagePtr img) {	
-    return msEmbedScalebar(self, img);
+  int embedScalebar(imageObj *image) {	
+    return msEmbedScalebar(self, image->bytes);
   }
 
-  int embedLegend(gdImagePtr img) {	
-    return msEmbedLegend(self, img);
+  int embedLegend(imageObj *image) {	
+    return msEmbedLegend(self, image->bytes);
   }
 
-  int drawLabelCache(gdImagePtr img) {
-    return msDrawLabelCache(img, self);
+  int drawLabelCache(imageObj *image) {
+    return msDrawLabelCache(image->bytes, self);
   }
 
-  int getImageToVar(gdImagePtr img, char *varname) {
+  int getImageToVar(imageObj *image, char *varname) {
     // set a scripting language variable by name with image data
     int size = 0;
     unsigned char *imgbytes;
@@ -225,7 +283,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
         break;
       case(MS_JPEG):
         #ifdef USE_GD_JPEG
-          imgbytes = gdImageJpegPtr(img, &size, self->imagequality);
+          imgbytes = gdImageJpegPtr(image->bytes, &size, self->imagequality);
         #else
           msSetError(MS_MISCERR, "JPEG output is not available.",
                               "getImageToVar()");
@@ -234,7 +292,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
         break;
       case(MS_WBMP):
         #ifdef USE_GD_WBMP
-          imgbytes = gdImageWBMPPtr(img, &size, 1);
+          imgbytes = gdImageWBMPPtr(image->bytes, &size, 1);
         #else
           msSetError(MS_MISCERR, "WBMP output is not available.",
                               "getImageToVar()");
@@ -301,9 +359,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msLoadWKTProjectionString(string, &(self->projection));
   }
 
-  char *getProjection() {
-    // NOTE: the returned string should be freed by the caller but right 
-    // now we're leaking it.    
+  %new char *getProjection() {
     return msGetProjectionString(&(self->projection));
   }
 
@@ -398,12 +454,12 @@ static Tcl_Interp *SWIG_TCL_INTERP;
       return NULL;
   }
 
-  int draw(mapObj *map, gdImagePtr img) {
-    return msDrawLayer(map, self, img);    
+  int draw(mapObj *map, imageObj *image) {
+    return msDrawLayer(map, self, image->bytes);    
   }
 
-  int drawQuery(mapObj *map, gdImagePtr img) {
-    return msDrawLayer(map, self, img);    
+  int drawQuery(mapObj *map, imageObj *image) {
+    return msDrawLayer(map, self, image->bytes);    
   }
 
   int queryByAttributes(mapObj *map, int mode) {
@@ -434,9 +490,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msLoadWKTProjectionString(string, &(self->projection));
   }
 
-  char *getProjection() {
-    // NOTE: the returned string should be freed by the caller but right 
-    // now we're leaking it.
+  %new char *getProjection() {    
     return msGetProjectionString(&(self->projection));
   }
 
@@ -514,12 +568,22 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return MS_SUCCESS;
   }
    
-  int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, gdImagePtr dstImg, int dstX, int dstY) {
-    return msDrawLegendIcon(map, layer, self, width, height, dstImg, dstX, dstY);
+  int drawLegendIcon(mapObj *map, layerObj *layer, int width, int height, imageObj *dstImage, int dstX, int dstY) {
+    return msDrawLegendIcon(map, layer, self, width, height, dstImage->bytes, dstX, dstY);
   }
   
-  gdImagePtr createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
-    return msCreateLegendIcon(map, layer, self, width, height);
+  imageObj *createLegendIcon(mapObj *map, layerObj *layer, int width, int height) {
+    imageObj *image=NULL;
+
+    image = (imageObj *)malloc(sizeof(imageObj));
+    if(!image) return NULL;
+
+    image->bytes = msCreateLegendIcon(map, layer, self, width, height);
+    image->width = gdImageSX(image->bytes);
+    image->height = gdImageSY(image->bytes);
+    image->imagepath = image->imageurl = NULL;
+   
+    return image;
   }
   
   int setSymbolByName(mapObj *map, char* pszSymbolName) {
@@ -550,8 +614,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msProjectPoint(in, out, self);
   }	
 
-  int draw(mapObj *map, layerObj *layer, gdImagePtr img, int classindex, char *text) {
-    return msDrawPoint(map, layer, self, img, classindex, text);
+  int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, char *text) {
+    return msDrawPoint(map, layer, self, image->bytes, classindex, text);
   }
 
   double distanceToPoint(pointObj *point) {
@@ -665,8 +729,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return msAddLine(self, line);
   }
 
-  int draw(mapObj *map, layerObj *layer, gdImagePtr img) {
-    return msDrawShape(map, layer, self, img, MS_TRUE);
+  int draw(mapObj *map, layerObj *layer, imageObj *image) {
+    return msDrawShape(map, layer, self, image->bytes, MS_TRUE);
   }
 
   void setBounds() {
@@ -755,7 +819,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     return  msAdjustExtent(self, width, height);
   } 
 
-  int draw(mapObj *map, layerObj *layer, gdImagePtr img, int classindex, char *text) {
+  int draw(mapObj *map, layerObj *layer, imageObj *image, int classindex, char *text) {
     shapeObj shape;
 
     msInitShape(&shape);
@@ -763,7 +827,7 @@ static Tcl_Interp *SWIG_TCL_INTERP;
     shape.classindex = classindex;
     shape.text = strdup(text);
 
-    msDrawShape(map, layer, &shape, img, MS_TRUE);
+    msDrawShape(map, layer, &shape, image->bytes, MS_TRUE);
 
     msFreeShape(&shape);
     
@@ -847,6 +911,44 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 }
 
 //
+// class extensions for imageObj
+//
+%addmethods imageObj {
+  imageObj(int width, int height) {
+    imageObj *image=NULL;
+
+    image = (imageObj *)malloc(sizeof(imageObj));
+    if(!image) return NULL;
+
+    image->bytes = gdImageCreate(width, height);
+    image->width = width;
+    image->height = height;
+    image->imagepath = image->imageurl = NULL;
+ 
+    return(image);
+  }
+
+  ~imageObj() {
+    gdImageDestroy(self->bytes);
+    free(self->imagepath);
+    free(self->imageurl);
+    free(self);		
+  }
+
+  void free() {
+    gdImageDestroy(self->bytes);
+    free(self->imagepath);
+    free(self->imageurl);
+    free(self);
+  }
+
+  void saveImage(char *filename, int type, int transparent, int interlace, int quality) {
+    msSaveImage(self->bytes, filename, type, transparent, interlace, quality);
+  }
+
+}
+
+//
 // class extensions for projectionObj
 //
 %addmethods projectionObj {
@@ -920,8 +1022,8 @@ static Tcl_Interp *SWIG_TCL_INTERP;
 	msDBFGetFieldInfo(self, iField, &pszFieldName[0], &pnWidth, &pnDecimals);
 	return pnDecimals;
     }
-    
-    DBFFieldType getFieldType(int iField) {
+
+    int getFieldType(int iField) {
 	return msDBFGetFieldInfo(self, iField, NULL, NULL, NULL);
     }    
 }
