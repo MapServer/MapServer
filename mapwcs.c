@@ -27,6 +27,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.61  2004/11/29 04:30:14  sdlime
+ * Fixed typo in ResponsibleParty, positionName tag.
+ *
  * Revision 1.60  2004/11/29 04:09:23  sdlime
  * Fixed bug 954, added ResponsibleParty output to the service block. Supports new wcs_responsibleparty_* metadata tags or tries to use WMS contact metadata.
  *
@@ -369,7 +372,7 @@ static void msWCSGetCapabilities_Service_ResponsibleParty(mapObj *map)
     msIO_printf("<responsibleParty>\n");
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_individualname", OWS_NOERR, "    <individualName>%s</individualName>\n", NULL);
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_organizationname", OWS_NOERR, "    <organisationName>%s</oranisationName>\n", NULL);
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_positionname", OWS_NOERR, "    <positiontionName>%s</positionName>\n", NULL);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "CO", "responsibleparty_positionname", OWS_NOERR, "    <positionName>%s</positionName>\n", NULL);
 
     if(msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_phone_voice") ||
        msOWSLookupMetadata(&(map->web.metadata), "CO", "responsibleparty_phone_facimile")) bEnableTelephone = MS_TRUE;
@@ -413,7 +416,7 @@ static void msWCSGetCapabilities_Service_ResponsibleParty(mapObj *map)
     msIO_printf("<responsibleParty>\n");
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactperson", OWS_NOERR, "    <individualName>%s</individualName>\n", NULL);
     msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactorganization", OWS_NOERR, "    <organisationName>%s</oranisationName>\n", NULL);
-    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactposition", OWS_NOERR, "    <positiontionName>%s</positionName>\n", NULL);
+    msOWSPrintEncodeMetadata(stdout, &(map->web.metadata), "COM", "contactposition", OWS_NOERR, "    <positionName>%s</positionName>\n", NULL);
 
     if(msOWSLookupMetadata(&(map->web.metadata), "COM", "contactvoicetelephone") ||
        msOWSLookupMetadata(&(map->web.metadata), "COM", "contactfacimiletelephone")) bEnableTelephone = MS_TRUE;
