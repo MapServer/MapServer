@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.32  2004/06/18 21:08:55  assefa
+ * Initialize symbol name in msSLDGetGraphicSymbol.
+ *
  * Revision 1.31  2004/06/18 16:13:33  assefa
  * Set Scale/Title/Name for Else filter (Bug 735)
  *
@@ -1880,6 +1883,7 @@ int msSLDGetGraphicSymbol(mapObj *map, char *pszFileName)
                 psSymbol->sizex = 1;
                 psSymbol->sizey = 1; 
                 psSymbol->type = MS_SYMBOL_PIXMAP;
+                psSymbol->name = strdup(pszFileName);
 
                 psSymbol->img = img;
             }
