@@ -28,8 +28,9 @@ extern "C" {
 #define MS_PARSEERR 20
 #define MS_SDEERR 21
 #define MS_OGRERR 22
+#define MS_QUERYERR 23
 
-#define MS_NUMERRORCODES 23
+#define MS_NUMERRORCODES 24
 
 #define MESSAGELENGTH 2048
 #define ROUTINELENGTH 64

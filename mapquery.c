@@ -535,6 +535,181 @@ int msQueryByRect(mapObj *map, int qlayer, rectObj rect)
   return(MS_FAILURE);
 }
 
+static int is_duplicate(resultCacheObj *resultcache, int shapeindex, int tileindex) {
+  int i;
+
+  for(i=0; i<resultcache->numresults; i++)    
+    if(resultcache->results[i].shapeindex == shapeindex && resultcache->results[i].tileindex == tileindex) return(MS_TRUE);
+
+  return(MS_FALSE);
+}
+
+int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
+{
+  int i, l;
+  int start, stop=0;
+  layerObj *lp, *slp;
+  char status;
+
+  rectObj searchrect;
+  shapeObj shape, selectshape;
+
+  msInitShape(&shape);
+  msInitShape(&selectshape);
+
+  // is the selection layer valid and has it been queried
+  if(slayer < 0 || slayer >= map->numlayers) {
+    msSetError(MS_QUERYERR, "Invalid selection layer index.", "msQueryByFeatures()");
+    return(MS_FAILURE);
+  }
+  slp = &(map->layers[slayer]);
+  if(!slp->resultcache) {
+    msSetError(MS_QUERYERR, "Selection layer has not been queried.", "msQueryByFeatures()");
+    return(MS_FAILURE);
+  }
+
+  if(qlayer < 0 || qlayer >= map->numlayers)
+    start = map->numlayers-1;
+  else
+    start = stop = qlayer;
+
+  status = msLayerOpen(slp, map->shapepath);
+  if(status != MS_SUCCESS) return(MS_FAILURE);
+
+  for(i=0; i<slp->resultcache->numresults; i++) {
+    status = msLayerGetShape(slp, &selectshape, slp->resultcache->results[i].tileindex, slp->resultcache->results[i].shapeindex);
+    if(status != MS_SUCCESS) {
+      msLayerClose(slp);
+      return(MS_FAILURE);
+    }
+
+    if(selectshape.type != MS_SHAPE_POLYGON) {
+      msLayerClose(slp);
+      msSetError(MS_QUERYERR, "Selection features MUST be polygons.", "msQueryByFeatures()");
+      return(MS_FAILURE);
+    }
+
+#ifdef USE_PROJ
+    if((slp->projection.numargs > 0) && (map->projection.numargs > 0)) {
+      msProjectShape(&(slp->projection), &(map->projection), &selectshape);
+      msComputeBounds(&selectshape); // recompute the bounding box AFTER projection
+    }
+#endif
+
+    for(l=start; l>=stop; l--) {
+      lp = &(map->layers[l]);
+
+      // free any previous search results, do it now in case one of the next few tests fail
+      if(lp->resultcache) {
+	if(lp->resultcache->results) free(lp->resultcache->results);
+	free(lp->resultcache);
+	lp->resultcache = NULL;
+      }
+      
+      if(lp->status == MS_OFF) continue;
+      
+      if(map->scale > 0) {
+	if((lp->maxscale > 0) && (map->scale > lp->maxscale)) continue;
+	if((lp->minscale > 0) && (map->scale <= lp->minscale)) continue;
+      }
+
+      // open this layer
+      status = msLayerOpen(lp, map->shapepath);
+      if(status != MS_SUCCESS) return(MS_FAILURE);
+
+      // build item list (no annotation)
+      status = msLayerWhichItems(lp, MS_TRUE, MS_FALSE);
+      if(status != MS_SUCCESS) return(MS_FAILURE);
+
+      // identify target shapes
+      searchrect = selectshape.bounds;
+#ifdef USE_PROJ
+      if((map->projection.numargs > 0) && (lp->projection.numargs > 0))
+	msProjectRect(&(map->projection), &(lp->projection), &searchrect); // project the searchrect to source coords
+#endif
+      status = msLayerWhichShapes(lp, searchrect);
+      if(status == MS_DONE) { // no overlap
+	msLayerClose(lp);
+	continue;
+      } else if(status != MS_SUCCESS) {
+	msLayerClose(lp);
+	msLayerClose(slp);
+	return(MS_FAILURE);
+      }
+
+      lp->resultcache = (resultCacheObj *)malloc(sizeof(resultCacheObj)); // allocate and initialize the result cache
+      lp->resultcache->results = NULL;
+      lp->resultcache->numresults = lp->resultcache->cachesize = 0;
+      lp->resultcache->bounds.minx = lp->resultcache->bounds.miny = lp->resultcache->bounds.maxx = lp->resultcache->bounds.maxy = -1;
+            
+      while((status = msLayerNextShape(lp, &shape)) == MS_SUCCESS) { // step through the shapes
+
+	// check for dups when there are multiple selection shapes
+	if(i > 0 && is_duplicate(lp->resultcache, shape.index, shape.tileindex)) continue;
+
+	shape.classindex = msShapeGetClass(lp, &shape);
+	if(shape.classindex == -1) { // not a valid shape
+	  msFreeShape(&shape);
+	  continue;
+	}
+	
+	if(!(lp->class[shape.classindex].template)) { // no valid template
+	  msFreeShape(&shape);
+	  continue;
+	}
+	
+#ifdef USE_PROJ
+	if((lp->projection.numargs > 0) && (map->projection.numargs > 0)) msProjectShape(&(lp->projection), &(map->projection), &shape);
+#endif
+ 
+	switch(selectshape.type) { // may eventually support types other than polygon
+	case MS_SHAPE_POLYGON:
+	  
+	  switch(shape.type) { // make sure shape actually intersects the rect (ADD FUNCTIONS SPECIFIC TO RECTOBJ)
+	  case MS_SHAPE_POINT:
+	    status = msIntersectMultipointPolygon(&shape.line[0], &selectshape);
+	    break;
+	  case MS_SHAPE_LINE:
+	    status = msIntersectPolylinePolygon(&shape, &selectshape);
+	    break;
+	  case MS_SHAPE_POLYGON:
+	    status = msIntersectPolygons(&shape, &selectshape);
+	    break;
+	  default:
+	    break;
+	  }
+	  
+	  if(status == MS_TRUE) {
+	    addResult(lp->resultcache, shape.classindex, shape.index, shape.tileindex);
+	    
+	    if(lp->resultcache->numresults == 1)
+	      lp->resultcache->bounds = shape.bounds;
+	    else
+	      msMergeRect(&(lp->resultcache->bounds), &shape.bounds);
+	  }
+
+	  break;
+	default:
+	  break;
+	}
+
+	msFreeShape(&shape);
+      } // next shape
+      
+      if(status != MS_DONE) return(MS_FAILURE);
+      
+      msLayerClose(lp);
+    } // next layer
+
+    msFreeShape(&selectshape);
+  } // next selection shape
+
+  msLayerClose(slp);
+
+  msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByFeatures()");
+  return(MS_FAILURE);
+}
+
 int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
 {
   int i, l;
@@ -679,11 +854,6 @@ int msQueryByPoint(mapObj *map, int qlayer, int mode, pointObj p, double buffer)
   }
  
   msSetError(MS_NOTFOUND, "No matching record(s) found.", "msQueryByPoint()"); 
-  return(MS_FAILURE);
-}
-
-int msQueryByFeatures(mapObj *map, int qlayer, int slayer)
-{
   return(MS_FAILURE);
 }
 
