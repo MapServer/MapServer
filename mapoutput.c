@@ -28,9 +28,12 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2002/10/05 16:32:40  zak
+ * updated e-mail address
+ *
  * Revision 1.5  2002/10/04 21:15:59  assefa
  * Add PDF support using the new output architecture. Work done
- * by Zak James (zak@aiya.dhs.org).
+ * by Zak James (zak-ms@aiya.dhs.org).
  *
  * Revision 1.4  2002/06/21 18:29:45  frank
  * Added support for GD/PC256 as a pseudo-driver
