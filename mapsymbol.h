@@ -25,6 +25,8 @@ typedef struct {
 #ifndef SWIG
 struct imageCacheObj {
   colorObj color;
+  colorObj outlinecolor;
+  colorObj backgroundcolor;
   int symbol;
   int size;
   gdImagePtr img;

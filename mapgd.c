@@ -37,7 +37,16 @@ static gdImagePtr searchImageCache(struct imageCacheObj *ic, styleObj *style, in
 
   icp = ic;
   while(icp) {
-    if(icp->symbol == style->symbol && msCompareColors(&icp->color, &style->color) == MS_TRUE && icp->size == size) return(icp->img);
+    /* Now checking all three colors -- SG (bug 868) */
+    if (icp->symbol == style->symbol 
+    && msCompareColors(&icp->color, &style->color) == MS_TRUE
+    && msCompareColors(&icp->outlinecolor, &style->outlinecolor)
+       == MS_TRUE
+    && msCompareColors(&icp->backgroundcolor, &style->backgroundcolor)
+       == MS_TRUE 
+    && icp->size == size) {
+        return(icp->img);
+    }
     icp = icp->next;
   }
 
