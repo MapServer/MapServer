@@ -129,8 +129,9 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
 
       for(j=0; j<map->numlayers; j++)
       {
-        // Should we force layers OFF by default or not???
-        // map->layers[j].status = MS_OFF;
+        // Keep only layers with status=DEFAULT by default
+        if (map->layers[j].status != MS_DEFAULT)
+           map->layers[j].status = MS_OFF;
 
         for(k=0; k<numlayers; k++)
         {
@@ -657,8 +658,7 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver,
       {
         shapeObj shape;
         msInitShape(&shape);
-        if (msLayerGetShape(lp, map->shapepath, &shape, 
-                            lp->resultcache->results[j].tileindex,
+        if (msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex,
                             lp->resultcache->results[j].shapeindex) != MS_SUCCESS)
           return msWMSException(map, wmtver);
 
