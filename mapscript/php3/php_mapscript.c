@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.34  2001/03/12 14:48:07  assefa
+ * Correct error in zoom rectangle.
+ *
  * Revision 1.33  2001/03/09 19:33:13  dan
  * Updated PHP MapScript... still a few methods missing, and needs testing.
  *
@@ -1326,7 +1329,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         if (self->extent.maxx > poMaxGeorefExt->maxx)
         {
             self->extent.maxx = poMaxGeorefExt->maxx;
-            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
         }
         if (self->extent.miny < poMaxGeorefExt->miny)
         {
@@ -1336,7 +1339,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
         if (self->extent.maxy > poMaxGeorefExt->maxy)
         {
             self->extent.miny = poMaxGeorefExt->maxy;
-            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
     
@@ -1555,7 +1558,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxx > poMaxGeorefExt->maxx)
         {
             oNewGeorefExt.maxx = poMaxGeorefExt->maxx;
-            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
         }
         if (oNewGeorefExt.miny < poMaxGeorefExt->miny)
         {
@@ -1565,7 +1568,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxy > poMaxGeorefExt->maxy)
         {
             oNewGeorefExt.maxy = poMaxGeorefExt->maxy;
-            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
 
@@ -1589,7 +1592,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         if (self->extent.maxx > poMaxGeorefExt->maxx)
         {
             self->extent.maxx = poMaxGeorefExt->maxx;
-            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
         }
         if (self->extent.miny < poMaxGeorefExt->miny)
         {
@@ -1599,7 +1602,7 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
         if (self->extent.maxy > poMaxGeorefExt->maxy)
         {
             self->extent.miny = poMaxGeorefExt->maxy;
-            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
     self->scale = msCalculateScale(*(&(self->extent)), self->units, 
@@ -1851,7 +1854,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxx > poMaxGeorefExt->maxx)
         {
             oNewGeorefExt.maxx = poMaxGeorefExt->maxx;
-            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
         }
         if (oNewGeorefExt.miny < poMaxGeorefExt->miny)
         {
@@ -1861,7 +1864,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         if (oNewGeorefExt.maxy > poMaxGeorefExt->maxy)
         {
             oNewGeorefExt.maxy = poMaxGeorefExt->maxy;
-            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
     
@@ -1889,7 +1892,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         if (self->extent.maxx > poMaxGeorefExt->maxx)
         {
             self->extent.maxx = poMaxGeorefExt->maxx;
-            //oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
         }
         if (self->extent.miny < poMaxGeorefExt->miny)
         {
@@ -1899,7 +1902,7 @@ DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
         if (self->extent.maxy > poMaxGeorefExt->maxy)
         {
             self->extent.miny = poMaxGeorefExt->maxy;
-            //oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
         }
     }
     
