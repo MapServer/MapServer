@@ -5,8 +5,8 @@
  *
  **********************************************************************
  * $Log$
- * Revision 1.27  2004/04/19 22:08:39  sdlime
- * Added msOWSGetEPSGProj() to mapows.h/.c and updated the original from mapproject.c to use Dan's namespaces.
+ * Revision 1.28  2004/04/20 05:41:20  sdlime
+ * Getting very close to a usable WCS implementation. Still need to add domain and range set to DescribeCoverage, and need to be able to interpret requests based on them. However, we'll keep it simple for now, operating on bands and some temporal subsetting.
  *
  * Revision 1.26  2004/04/14 07:31:40  dan
  * Removed msOWSGetMetadata(), replaced by msOWSLookupMetadata()
@@ -734,14 +734,13 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
 ** if not found then open layer to read extent.
 **
 ** __TODO__ Replace metadata with EXTENT param in layerObj???
+** __TODO__ Need to be able to pass in a namespace.
 */
 int msOWSGetLayerExtent(mapObj *map, layerObj *lp, rectObj *ext)
 {
   static char *value;
 
-  if ((value = msLookupHashTable(lp->metadata, "wms_extent")) != NULL ||
-      (value = msLookupHashTable(lp->metadata, "wfs_extent")) != NULL ||
-      (value = msLookupHashTable(lp->metadata, "wcs_extent")) != NULL )
+  if ((value = msOWSLookupMetadata(lp->metadata, "WFCO", "extent")) != NULL)
   {
     char **tokens;
     int n;
@@ -948,28 +947,21 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj metadata, const c
   static char epsgCode[20] ="";
   static char *value;
 
-  if (metadata && msOWSLookupMetadata(metadata, namespaces, "srs")) {
-    // Metadata value should already be in format "EPSG:n" or "AUTO:..."
-    if (!bReturnOnlyFirstOne)
-        return value;
+  // metadata value should already be in format "EPSG:n" or "AUTO:..."
+  if (metadata && ((value = msOWSLookupMetadata(metadata, namespaces, "srs")) != NULL)) {
+    
+    if (!bReturnOnlyFirstOne) return value;
 
-    // Caller requested only first projection code.
+    // caller requested only first projection code
     strncpy(epsgCode, value, 19);
     epsgCode[19] = '\0';
-    if ((value=strchr(epsgCode, ' ')) != NULL)
-        *value = '\0';
+    if ((value=strchr(epsgCode, ' ')) != NULL) *value = '\0';
+    
     return epsgCode;
-  }
-  else if (proj && proj->numargs > 0 && 
-           (value = strstr(proj->args[0], "init=epsg:")) != NULL &&
-           strlen(value) < 20)
-  {
+  } else if (proj && proj->numargs > 0 && (value = strstr(proj->args[0], "init=epsg:")) != NULL && strlen(value) < 20) {
     sprintf(epsgCode, "EPSG:%s", value+10);
     return epsgCode;
-  }
-  else if (proj && proj->numargs > 0 && 
-           strncasecmp(proj->args[0], "AUTO:", 5) == 0 )
-  {
+  } else if (proj && proj->numargs > 0 && strncasecmp(proj->args[0], "AUTO:", 5) == 0 ) {
     return proj->args[0];
   }
 
