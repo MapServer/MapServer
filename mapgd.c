@@ -329,15 +329,13 @@ static gdImagePtr createBrush(gdImagePtr img, int width, int height, styleObj *s
 }
 
 // Function to create a custom hatch symbol.
-static gdImagePtr createHatch(gdImagePtr img, int width, int height, styleObj *style)
+static gdImagePtr createHatch(gdImagePtr img, int width, int height, rectObj *clip, styleObj *style)
 {
   gdImagePtr hatch;
   int x1, x2, y1, y2;
   int size;
   double angle;
   int fg, bg;
-
-  // int green;
 
   hatch = createBrush(img, width, height, style, &fg, &bg);
 
@@ -354,56 +352,50 @@ static gdImagePtr createHatch(gdImagePtr img, int width, int height, styleObj *s
   if(angle >= 180) angle -= 180;
 
   if(angle >= 45 && angle <= 90) {
-    x2 = 0;
-    y2 = 0;
-    y1 = height-1;
+    x2 = (int)clip->minx; // 0
+    y2 = (int)clip->miny; // 0
+    y1 = (int)clip->maxy-1; // height-1 
     x1 = x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle);
 
-    while(x1 < width) {
+    while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       x1+=size;
       x2+=size; 
     }
   } else if(angle <= 135 && angle > 90) {
-    x2 = 0;
-    y2 = height-1;
-    y1 = 0;
+    x2 = (int)clip->minx; // 0
+    y2 = (int)clip->maxy-1; // height-1
+    y1 = (int)clip->miny; // 0
     x1 = x2 - (y2 - y1)/tan(-MS_DEG_TO_RAD*angle);
 
-    while(x1 < width) {
+    while(x1 < clip->maxx) { // width
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       x1+=size;
       x2+=size;
     }
   } else if(angle >= 0 && angle < 45) {    
-    x1 = 0;
-    y1 = 0;
-    x2 = width-1;
+    x1 = (int)clip->minx; // 0
+    y1 = (int)clip->miny; // 0
+    x2 = (int)clip->maxx-1; // width-1
     y2 = y1 + (x2 - x1)*tan(-MS_DEG_TO_RAD*angle);
 
-    while(y2 < height) {
+    while(y2 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       y1+=size;
       y2+=size;
     }
   } else if(angle < 180 && angle > 135) {
-    x2 = width-1;
-    y2 = 0;
-    x1 = 0;
+    x2 = (int)clip->maxx-1; // width-1
+    y2 = (int)clip->miny; // 0
+    x1 = (int)clip->minx; // 0
     y1 = y2 - (x2 - x1)*tan(-MS_DEG_TO_RAD*angle);
 
-    while(y1 < height) {
+    while(y1 < clip->maxy) { // height
       gdImageLine(hatch, x1, y1, x2, y2, fg);
       y1+=size;
       y2+=size;
     }
   }
-
-  // green = gdImageColorAllocate(hatch, 0, 255, 0);
-  // gdImageLine(hatch, 0, 0, width, 0, green);
-  // gdImageLine(hatch, width, 0, width, height, green);
-  // gdImageLine(hatch, width, height, 0, height, green);
-  // gdImageLine(hatch, 0, height, 0, 0, green);
 
   return(hatch);
 }
@@ -1462,9 +1454,9 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, s
   switch(symbol->type) {
   case(MS_SYMBOL_HATCH):
 
-    // msComputeBounds(p); // we need to know how big to make the tile
-    // tile = createHatch(img, (p->bounds.maxx-p->bounds.minx), (p->bounds.maxy-p->bounds.miny), style);
-    tile = createHatch(img, img->sx, img->sy, style);
+    msComputeBounds(p); // we need to know how big to make the tile
+    // tile = createHatch(img, (p->bounds.maxx-p->bounds.minx), (p->bounds.maxy-p->bounds.miny), style);    
+    tile = createHatch(img, img->sx, img->sy, &p->bounds, style);
 
     gdImageSetTile(img, tile);
     imageFilledPolygon(img, p, gdTiled, ox, oy);
