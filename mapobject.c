@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.6  2004/06/24 17:30:11  frank
+ * fixed typo in msTestConfigOption()
+ *
  * Revision 1.5  2004/06/22 20:55:20  sean
  * Towards resolving issue 737 changed hashTableObj to a structure which contains a hashObj **items.  Changed all hash table access functions to operate on the target table by reference.  msFreeHashTable should not be used on the hashTableObj type members of mapserver structures, use msFreeHashItems instead.
  *
@@ -185,7 +188,7 @@ int msTestConfigOption( mapObj *map, const char *key, int default_result )
         || strcasecmp(result,"TRUE") == 0 )
         return MS_TRUE;
     else
-        MS_FALSE;
+        return MS_FALSE;
 }
 
 /************************************************************************/
