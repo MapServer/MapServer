@@ -50,6 +50,7 @@ MS_DLL_EXPORT void msFreeProjection(projectionObj *p);
 MS_DLL_EXPORT int msInitProjection(projectionObj *p);
 MS_DLL_EXPORT int msProcessProjection(projectionObj *p);
 MS_DLL_EXPORT int msLoadProjectionString(projectionObj *p, char *value);
+MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
 
 MS_DLL_EXPORT const char *msGetEPSGProj(projectionObj *proj, hashTableObj *metadata, int bReturnOnlyFirstOne);
 

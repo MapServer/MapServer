@@ -1456,8 +1456,6 @@ MS_DLL_EXPORT int msInsertStyle(classObj *classo, styleObj *style,
                                 int nStyleIndex);
 MS_DLL_EXPORT styleObj *msRemoveStyle(classObj *classo, int index);
 
-MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
-
 // Measured shape utility functions.   
 MS_DLL_EXPORT pointObj *msGetPointUsingMeasure(shapeObj *shape, double m);
 MS_DLL_EXPORT pointObj *msGetMeasureUsingPoint(shapeObj *shape, pointObj *point);
