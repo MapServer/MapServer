@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.24  2000/11/06 17:05:54  dan
+ * Added ifdef USE_PROJ in getLatLongExtent() and removed some unused vars
+ *
  * Revision 1.23  2000/11/06 13:42:41  dan
  * Typo error for PHP4 compilation.
  *
@@ -2031,7 +2034,6 @@ DLEXPORT void php3_ms_map_prepareQuery(INTERNAL_FUNCTION_PARAMETERS)
 {
     pval *pThis;
     mapObj *self;
-    gdImagePtr im = NULL;
 #ifdef PHP4
     HashTable   *list=NULL;
 #endif
@@ -2812,14 +2814,17 @@ DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS)
 
 
 /************************************************************************/
-/* DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS)*/
+/*                    php3_ms_map_getLatLongExtent()                    */
 /*                                                                      */
 /*      Utility function (not documented) to get the lat/long           */
 /*      extents of the current map. We assume here that the map has     */
 /*      it's projection (ex LCC or UTM defined).                        */
+/*                                                                      */
+/*      Available only with PROJ support.                               */
 /************************************************************************/
 DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS)
 { 
+#ifdef USE_PROJ
     pval        *pThis;
     mapObj      *self=NULL;
     rectObj     oGeorefExt;
@@ -2856,6 +2861,10 @@ DLEXPORT void php3_ms_map_getLatLongExtent(INTERNAL_FUNCTION_PARAMETERS)
     /* Return rectObj */
     _phpms_build_rect_object(&oGeorefExt, PHPMS_GLOBAL(le_msrect_new), 
                              list, return_value);
+#else
+    php3_error(E_ERROR, 
+               "getLatLongExtent() available only with PROJ.4 support.");
+#endif
 }
 
 
@@ -3803,7 +3812,6 @@ DLEXPORT void php3_ms_lyr_addFeature(INTERNAL_FUNCTION_PARAMETERS)
     layerObj    *self=NULL;
     shapeObj    *poShape=NULL;
     int         nResult = -1;
-    shapeObj sShapeCopy={0,NULL,{-1,-1,-1,-1},MS_NULL};
 
 #ifdef PHP4
     HashTable   *list=NULL;
