@@ -331,10 +331,6 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
         return msWMSException(map, wmtver);
       }
 
-      if (map->layerorder)
-         free(map->layerorder);
-
-      map->layerorder = (int*)malloc(sizeof(int) * map->numlayers);
       for (iLayer=0; iLayer < map->numlayers; iLayer++)
           map->layerorder[iLayer] = iLayer;   
 
@@ -342,50 +338,34 @@ int msWMSLoadGetMapParams(mapObj *map, const char *wmtver,
        
       for(j=0; j<map->numlayers; j++) 
       {
-         map->layerorder[j] = -1;
-
         // Keep only layers with status=DEFAULT by default
+        // Layer with status DEFAULT is drawn first.
         if (map->layers[j].status != MS_DEFAULT)
            map->layers[j].status = MS_OFF;
+        else
+           map->layerorder[nLayerOrder++] = j;
       }
        
-      for(k=0; k<numlayers; k++)
-      {
-         for(j=0; j<map->numlayers; j++)
+      for (k=0; k<numlayers; k++)
+         for (j=0; j<map->numlayers; j++)
          {         
             // Turn on selected layers only.
-            if (strcasecmp(map->layers[j].name, layers[k]) == 0) 
+            if ((map->layers[j].name && strcasecmp(map->layers[j].name, layers[k]) == 0) ||
+                (map->name && strcasecmp(map->name, layers[k]) == 0) ||
+                (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0))
             {
-               map->layers[j].status = MS_DEFAULT;
-               map->layerorder[nLayerOrder] = j;
-               
-               nLayerOrder++;
+               map->layers[j].status = MS_ON;
+               map->layerorder[nLayerOrder++] = j;
             }
          }
-
-         for(j=0; j<map->numlayers; j++)
-         {         
-            // Note: map->name is the root layer.  If root layer is requested
-            // then all map layers should be turned on.
-            if (map->name && strcasecmp(map->name, layers[k]) == 0) 
-            {
-               map->layers[j].status = MS_DEFAULT;
-               map->layerorder[j] = j;
-            }
-         }
-
-         for(j=0; j<map->numlayers; j++)
-         {                  
-            // Look for group name
-            if (map->layers[j].group && strcasecmp(map->layers[j].group, layers[k]) == 0)
-            {
-               map->layers[j].status = MS_DEFAULT;
-               map->layerorder[nLayerOrder] = j;
-               
-               nLayerOrder++;
-            }
-         }
+       
+      // set all layers with status off at end of array
+      for (j=0; j<map->numlayers; j++)
+      {
+         if (map->layers[j].status == MS_OFF)
+           map->layerorder[nLayerOrder++] = j;
       }
+       
        
       if (papszGroups) {
          for (j=0; j<nGroupNames; j++)
@@ -1371,13 +1351,12 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
   double cellx, celly;
   errorObj *ms_error = msGetErrorObj();
   int status;
-  char *pszMimeType=NULL;
-  const char *szMimeType="text/html";
+  const char *pszMimeType=NULL;
    
   pszMimeType = msLookupHashTable(map->web.metadata, "WMS_FEATURE_INFO_MIME_TYPE");
   if (!pszMimeType)
   {
-     pszMimeType = szMimeType;
+     pszMimeType = "text/html";
   }
    
    
@@ -1477,14 +1456,14 @@ int msWMSFeatureInfo(mapObj *map, const char *wmtver, char **names, char **value
      msObj->MapPnt.x = point.x;
      msObj->MapPnt.y = point.y;
      
-     if ((status = msReturnTemplateQuery(msObj, pszMimeType)) != MS_SUCCESS)
+     if ((status = msReturnTemplateQuery(msObj, (char*)pszMimeType)) != MS_SUCCESS)
          return status;
 
      msFreeMapServObj(msObj);
   }
   else 
   {
-     msSetError(MS_MISCERR, "Unsupported INFO_FORMAT value.", "msWMSFeatureInfo()");
+     msSetError(MS_MISCERR, "Unsupported INFO_FORMAT value (%s).", "msWMSFeatureInfo()", info_format);
      return msWMSException(map, wmtver);
   }
 

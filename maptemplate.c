@@ -2008,37 +2008,41 @@ int msReturnQuery(mapservObj* msObj, char* pszMimeType)
       if(lp->resultcache->numresults > 0) break;
     }
 
-    if(lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
-      template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
-    else 
-      template = lp->template;
+    if (i >= 0) // at least if no result found, mapserver will display an empty template.
+    {
+       if(lp->class[(int)(lp->resultcache->results[0].classindex)].template) 
+         template = lp->class[(int)(lp->resultcache->results[0].classindex)].template;
+       else 
+         template = lp->template;
 
-    if(TEMPLATE_TYPE(template) == MS_URL) {
-      msObj->ResultLayer = lp;
+       if(TEMPLATE_TYPE(template) == MS_URL) {
+          msObj->ResultLayer = lp;
 
-      status = msLayerOpen(lp, msObj->Map->shapepath);
-      if(status != MS_SUCCESS)
-         return status;
+          status = msLayerOpen(lp, msObj->Map->shapepath);
+          if(status != MS_SUCCESS)
+            return status;
 
-      // retrieve all the item names
-      status = msLayerGetItems(lp);
-      if(status != MS_SUCCESS)
-         return status;
+          // retrieve all the item names
+          status = msLayerGetItems(lp);
+          if(status != MS_SUCCESS)
+            return status;
 
-      status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
-      if(status != MS_SUCCESS)
-         return status;
+          status = msLayerGetShape(lp, &(msObj->ResultShape), lp->resultcache->results[0].tileindex, lp->resultcache->results[0].shapeindex);
+          if(status != MS_SUCCESS)
+            return status;
 
-      if (msReturnURL(msObj, template, QUERY) != MS_SUCCESS)
-           return MS_FAILURE;
+          if (msReturnURL(msObj, template, QUERY) != MS_SUCCESS)
+            return MS_FAILURE;
       
-      msFreeShape(&(msObj->ResultShape));
-      msLayerClose(lp);
-      msObj->ResultLayer = NULL;
-
-      return MS_SUCCESS;
+          msFreeShape(&(msObj->ResultShape));
+          msLayerClose(lp);
+          msObj->ResultLayer = NULL;
+          
+          return MS_SUCCESS;
+       }
     }
   }
+   
 
   msObj->NR = msObj->NL = 0;
   for(i=0; i<msObj->Map->numlayers; i++) { // compute some totals
