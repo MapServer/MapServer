@@ -274,10 +274,11 @@ int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay)
 /*
 ** Generic function to save an image to a file.
 **
-** Note that map is NULL for images other than the main map, and it is 
-** intended to be used only to extract the georeferenced extents and coordinate
-** system of the map for writing out with the image when appropriate 
-** (primarily this means via msSaveImageGDAL() to something like GeoTIFF). 
+** Note that map may be NULL. If it is set, then it is used for two things:
+** - Deal with relative imagepaths (compute absolute path relative to map path)
+** - Extract the georeferenced extents and coordinate system
+**   of the map for writing out with the image when appropriate 
+**   (primarily this means via msSaveImageGDAL() to something like GeoTIFF). 
 **
 ** The filename is NULL when the image is supposed to be written to stdout. 
 */

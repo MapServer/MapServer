@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     exit(0);
   }
 
-  msSaveImage(NULL, image, argv[2]);
+  msSaveImage(map, image, argv[2]);
   msFreeImage(image);
 
   msFreeMap(map);  
