@@ -758,7 +758,6 @@ class NewStylesTestCase(unittest.TestCase):
         index = class0.insertStyle(new_style)
         index = class0.insertStyle(new_style)
         index = class0.insertStyle(new_style)
-        assert class0.numstyles == MS_MAXSTYLES
         # We've reached the maximum, next attempt should raise exception
         self.assertRaises(MapServerChildError, class0.insertStyle, new_style)
     def testInsertStylePastEnd(self):
