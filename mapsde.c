@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.93  2004/11/18 23:06:10  hobu
+ * allow bands and raster column for
+ * SDE rasters to be specified with
+ * PROCESSING directives
+ *
  * Revision 1.92  2004/11/17 17:16:16  hobu
  * define USE_SDERASTER to turn on experimental SDE
  * raster support
@@ -1596,7 +1601,7 @@ char *msSDELayerGetRowIDColumn(layerObj *layer)
 
 #define MAXCOLORS 256
 
-#ifdef USE_SDE
+#ifdef USE_SDERASTER
 void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDINFO rasterband, int cmap[]) { //FIXME: size check for cmap[] !
   LONG rc, cm_bottom, cm, num_cm_entries;
   SE_COLORMAP_TYPE colormap_type;
@@ -1679,10 +1684,12 @@ void msSDEGetColorMap(mapObj *map, layerObj *layer, gdImagePtr img, SE_RASBANDIN
 
 int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
 {
-#ifdef USE_SDE
+#ifdef USE_SDERASTER
   long status;
   msSDELayerInfo *sde=NULL;
-
+  char **params=NULL;
+  int numparams=0;
+  
   int i,j; /* loop counters */
   int cmap[MAXCOLORS];  
   gdImagePtr rgbimg;
@@ -1710,6 +1717,9 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
   LFLOAT coord_tile_width = 0, coord_tile_height = 0, coord_offset_x = 0, coord_offset_y = 0;
   LONG constrminx = 0, constrminy = 0, constrmaxx = 0, constrmaxy = 0;
 
+  char* proc_value;
+  int red_band=0, blue_band=0, green_band=0, alpha_band=0;
+  
   msSDELayerOpen(layer);
 
   sde = layer->layerinfo;
@@ -1720,7 +1730,7 @@ int drawSDE(mapObj *map, layerObj *layer, gdImagePtr img)
 
   if(layer->debug) msDebug("drawSDE(): Drawing layer %s.\n", layer->name);
 
-tpix = (int*) malloc(sizeof(int));
+  tpix = (int*) malloc(sizeof(int));
 
   /* Allocate an SE_SQL_CONSTRUCT */
   status = SE_sql_construct_alloc (1, &sqlc);
@@ -1735,11 +1745,48 @@ tpix = (int*) malloc(sizeof(int));
   strcpy (sqlc->tables[0], sde->table);
   strcpy (sqlc->where, "");
 
+  proc_value = NULL;
+  proc_value = msLayerGetProcessingKey(layer,"BANDS");
+  if (proc_value != NULL) {
+    params = split(proc_value, ',', &numparams);
+    if(!params) {
+      msSetError(MS_MEMERR, 
+          "Error spliting SDE raster bands PROCCESSING information.", "drawSDE()");
+      return(MS_FAILURE);
+    }
+  
+    if(numparams < 4) {
+      msSetError(MS_SDEERR, 
+      "Not enough SDE raster bands specified. Need 4 bands -- red,green,blue,alpha", "drawSDE()");
+      return(MS_FAILURE);
+    }
+  
+    red_band= atoi(params[0]); 
+    green_band = atoi(params[1]);
+    blue_band = atoi(params[2]);
+    alpha_band = atoi(params[3]);
+  }
+  
+  if (layer->debug) {
+     msDebug("our bands were specified: red=%d, green=%d, blue=%d, alpha=%d\n", 
+              red_band,green_band,blue_band,alpha_band);
+  }
   /* Define the number and names of the table columns to be returned */
+  
+  proc_value = NULL;
+  proc_value = msLayerGetProcessingKey(layer,"RASTERCOLUMN");
+  if (proc_value == NULL){
+          msSetError(MS_MEMERR, 
+          "Error spliting SDE raster column from PROCCESSING information.", "drawSDE()");
+      return(MS_FAILURE);
+  }
   num_cols = 1;
   attrs = (CHAR **) malloc (num_cols * sizeof(CHAR *));
-  attrs[0] = sde->column;
+  attrs[0] = proc_value;//sde->column;
 
+  proc_value = NULL;
+  free(proc_value);
+  
   /* Define the stream query */
   status = SE_stream_query (sde->stream, num_cols, (const CHAR **) attrs, sqlc);
   if(status != SE_SUCCESS) {
@@ -1955,15 +2002,24 @@ tpix = (int*) malloc(sizeof(int));
             col = cmap[pixels[i*tile_width+j]];
           } else {
             col = pixels[i*tile_width+j];
-            switch (rasterband_id) {
-              case 1: col <<= 16; break; //red
-              case 2: col <<= 8; break; //green
-              case 3: break; //blue
-              case 4: col = (col & 0x7F) << 24; break; //alpha
-              default: col = 0; //ignore bands > 4
+            if (rasterband_id == red_band){
+              col <<= 16;
+            }
+            else if (rasterband_id == green_band){
+              col <<= 8; 
+            }
+            else if (rasterband_id == blue_band){
+              col = col;
+            }
+            else if (rasterband_id == alpha_band){
+              col = (col & 0x7F) << 24;
+            }
+            else {
+              col = 0;
             }
           }
           tpix = &rgbimg->tpixels[(row-constrminy)*tile_height+i][(column-constrminx)*tile_width+j];
+
           if (rasterband_id == 1)
             *tpix = col;
           else
@@ -1978,6 +2034,7 @@ tpix = (int*) malloc(sizeof(int));
   SE_rasterattr_free(hAttr);
   free (attrs);
   free (sqlc->where);
+  free (&tpix);
   SE_sql_construct_free (sqlc);
   //ret = SE_stream_free (sde->stream);
 
