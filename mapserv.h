@@ -29,7 +29,7 @@ extern int enter_string;
 /*
 ** Macros
 */
-#define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
+#define TEMPLATE_TYPE(s)  (((strncmp("http://", s, 7) == 0) || (strncmp("https://", s, 8) == 0) || (strncmp("ftp://", s, 6)) == 0)  ? MS_URL : MS_FILE)
 
 /*
 ** Enumerated types (PROCESSING is a EGIS mode only), keep the query modes in sequence and at the end of the enumeration
