@@ -3004,7 +3004,7 @@ else
 PJ_TRANSFORM=no
 fi
 
-  if "$PJ_TRANSFORM" = "no"; then
+  if test "$PJ_TRANSFORM" = "no"; then
       { echo "configure: error: This version of PROJ is too old.  PROJ4.4.2 or later is required." 1>&2; exit 1; }
   fi
 

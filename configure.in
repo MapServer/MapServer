@@ -379,7 +379,7 @@ elif test -n "$with_proj" -a "$with_proj" != "no" ; then
   fi
 
   AC_CHECK_LIB(proj,pj_transform,PJ_TRANSFORM=yes,PJ_TRANSFORM=no,$PROJ_LIB)
-  if "$PJ_TRANSFORM" = "no"; then
+  if test "$PJ_TRANSFORM" = "no"; then
       AC_MSG_ERROR([This version of PROJ is too old.  PROJ4.4.2 or later is required.])
   fi
 
