@@ -477,10 +477,6 @@ char *msEncodeHTMLEntities(const char *string)
             strcpy(newstring+i, "&amp;");
             i += 5;
             break;
-          case '"':
-            strcpy(newstring+i, "&quot;");
-            i += 6;
-            break;
           case '<':
             strcpy(newstring+i, "&lt;");
             i += 4;
@@ -488,6 +484,14 @@ char *msEncodeHTMLEntities(const char *string)
           case '>':
             strcpy(newstring+i, "&gt;");
             i += 4;
+            break;
+          case '"':
+            strcpy(newstring+i, "&quot;");
+            i += 6;
+            break;
+          case '\'':
+            strcpy(newstring+i, "&apos;");
+            i += 6;
             break;
           default:
             newstring[i++] = *c;
@@ -541,12 +545,6 @@ void msDecodeHTMLEntities(const char *string)
             pszBuffer[pszAmp - pszBuffer + 1] = '\0';
             strcat(pszBuffer, pszEnd);
         }
-        else if(strcasecmp(pszReplace, "&quot;") == 0)
-        {
-            pszBuffer[pszAmp - pszBuffer] = '"';
-            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
-            strcat(pszBuffer, pszEnd);
-        }
         else if(strcasecmp(pszReplace, "&lt;") == 0)
         {
             pszBuffer[pszAmp - pszBuffer] = '<';
@@ -556,6 +554,18 @@ void msDecodeHTMLEntities(const char *string)
         else if(strcasecmp(pszReplace, "&gt;") == 0)
         {
             pszBuffer[pszAmp - pszBuffer] = '>';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+        else if(strcasecmp(pszReplace, "&quot;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '"';
+            pszBuffer[pszAmp - pszBuffer + 1] = '\0';
+            strcat(pszBuffer, pszEnd);
+        }
+        else if(strcasecmp(pszReplace, "&apos;") == 0)
+        {
+            pszBuffer[pszAmp - pszBuffer] = '\'';
             pszBuffer[pszAmp - pszBuffer + 1] = '\0';
             strcat(pszBuffer, pszEnd);
         }
