@@ -2231,7 +2231,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
                         if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
 
-                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -2281,7 +2281,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
                     for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered labels
                         if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
                             
-                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                            if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string,map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
                                 cachePtr->status = MS_FALSE;
                                 break;
                             }
@@ -2337,7 +2337,7 @@ int msDrawLabelCacheSWF(imageObj *image, mapObj *map)
 
                 for(i=l+1; i<map->labelcache.numlabels; i++) { // compare against rendered label
                     if(map->labelcache.labels[i].status == MS_TRUE) { /* compare bounding polygons and check for duplicates */
-                        if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (dist(cachePtr->point, map->labelcache.labels[i].point) <= labelPtr->mindistance)) { /* label is a duplicate */
+                        if((labelPtr->mindistance != -1) && (cachePtr->classindex == map->labelcache.labels[i].classindex) && (strcmp(cachePtr->string, map->labelcache.labels[i].string) == 0) && (msDistancePointToPoint(&(cachePtr->point), &(map->labelcache.labels[i].point)) <= labelPtr->mindistance)) { /* label is a duplicate */
                             cachePtr->status = MS_FALSE;
                             break;
                         }
