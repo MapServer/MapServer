@@ -1069,7 +1069,6 @@ memory.") const char * {
     if(initClass(&(layer->class[layer->numclasses])) == -1)
       return NULL;
     layer->class[layer->numclasses].type = layer->type;
-    layer->class[layer->numclasses].numstyles = 1;
 
     layer->numclasses++;
 

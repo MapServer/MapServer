@@ -116,8 +116,6 @@ Version 4.1 (CVS)
 - New key iterators for map, layer, and class metadata hash tables 
   (bug 434) and fontset fonts hash table (bug 439).
 
-- The classObj constructor now sets numstyles=1 in SWIG mapscript (bug 609)
-
 Version 4.0 (2003-08-01)
 ------------------------
 
