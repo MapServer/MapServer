@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.52  2003/04/23 15:06:14  dan
+ * Better formatted error message in msDrawWMSLayerLow()
+ *
  * Revision 1.51  2003/04/23 14:21:18  dan
  * Log an error in msDrawWMSLayerLow() if a GetMap request failed.
  *
@@ -822,9 +825,10 @@ int msDrawWMSLayerLow(int nLayerId, httpRequestObj *pasReqInfo,
       the whole draw map.
  ==================================================================== */
         msSetError(MS_WMSERR, 
-                   "WMS GetMap request failed with status %d for layer '%s'.",
+                   "WMS GetMap request failed for layer '%s' (Status %d: %s).",
                    "msDrawWMSLayerLow()", 
-                   pasReqInfo[iReq].nStatus, (lp->name?lp->name:"(null)") );
+                   (lp->name?lp->name:"(null)"), 
+                   pasReqInfo[iReq].nStatus, pasReqInfo[iReq].pszErrBuf );
 
         return MS_SUCCESS;
     }
