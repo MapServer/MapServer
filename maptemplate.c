@@ -477,6 +477,7 @@ int processIf(char** pszInstr, hashTableObj ht)
    char *pszIfTag;
    char *pszPatIn=NULL, *pszPatOut=NULL, *pszTmp;
    int nInst = 0;
+   int bEmpty = 0;
    int nLength;
 
    hashTableObj ifArgs=NULL;
@@ -536,7 +537,9 @@ int processIf(char** pszInstr, hashTableObj ht)
       pszName = msLookupHashTable(ifArgs, "name");
       pszValue = msLookupHashTable(ifArgs, "value");
       pszOperator = msLookupHashTable(ifArgs, "oper");
-
+      
+      bEmpty = 0;
+      
       if (pszName && pszValue && msLookupHashTable(ht, pszName)) {
          // build the complete if tag ([if all_args]then string[/if])
          // to replace if by then string if expression is true
@@ -546,26 +549,41 @@ int processIf(char** pszInstr, hashTableObj ht)
          strncpy(pszIfTag, pszStart, nLength);
          pszIfTag[nLength] = '\0';
          strcat(pszIfTag, "[/if]");
-
+         
          if (pszOperator) {
             if (strcmp(pszOperator, "neq") == 0) {
                if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) != 0)
-                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+               {
+                  *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+               }
                else
-                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+               {
+                  *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                  bEmpty = 1;
+               }
             }
             else {
                if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
-                 *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+               {
+                  *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+               }
                else
-                 *pszInstr = gsub(*pszInstr, pszIfTag, "");
+               {
+                  *pszInstr = gsub(*pszInstr, pszIfTag, "");
+                  bEmpty = 1;
+               }
             }                 
          }
          else {
             if (strcasecmp(pszValue, msLookupHashTable(ht, pszName)) == 0)
-              *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+            {
+               *pszInstr = gsub(*pszInstr, pszIfTag, pszThen);
+            }
             else
-              *pszInstr = gsub(*pszInstr, pszIfTag, "");
+            {
+               *pszInstr = gsub(*pszInstr, pszIfTag, "");
+               bEmpty = 1;
+            }
          }
          
          if (pszIfTag)
@@ -583,7 +601,10 @@ int processIf(char** pszInstr, hashTableObj ht)
       ifArgs=NULL;
       
       // find the if start tag
-      pszStart = findTag(pszStart + 1, "if");
+      if (bEmpty)
+        pszStart = findTag(pszStart, "if");
+      else
+        pszStart = findTag(pszStart + 1, "if");
    }
    
    return MS_SUCCESS;
