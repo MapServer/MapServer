@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.39  2004/09/08 14:33:30  sean
+ * declared MS_DLL_EXPORT for hex2int and msGMLWriteQuery (bug 851).
+ *
  * Revision 1.38  2004/08/03 23:26:24  dan
  * Cleanup OWS version tests in the code, mapwms.c (bug 799)
  *
@@ -246,7 +249,8 @@ const char *msOWSGetEPSGProj(projectionObj *proj, hashTableObj *metadata, const 
 /*====================================================================
  *   mapgml.c
  *====================================================================*/
-int msGMLWriteQuery(mapObj *map, char *filename);
+// export to fix bug 851
+MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename);
 
 #ifdef USE_WFS_SVR
 int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
