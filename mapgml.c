@@ -343,6 +343,12 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 	status = msLayerGetShape(lp, &shape, lp->resultcache->results[j].tileindex, lp->resultcache->results[j].shapeindex);
         if(status != MS_SUCCESS) return(status);
 
+#ifdef USE_PROJ
+	// project the shape into the map projection (if necessary), note that this projects the bounds as well
+        if(msProjectionsDiffer(&(lp->projection), &(map->projection)))
+          msProjectShape(&lp->projection, &map->projection, shape);
+#endif
+
 	// start this feature
 	if(msLookupHashTable(lp->metadata, "gml_featurename")) // specify a feature name
 	  fprintf(stream, "\t\t<%s>\n", msLookupHashTable(lp->metadata, "gml_featurename"));
@@ -354,10 +360,24 @@ int msGMLWriteQuery(mapObj *map, char *filename)
 	  fprintf(stream, "\t\t\t<%s>%s</%s>\n", lp->items[k], shape.values[k], lp->items[k]);
 
 	// write the bounding box
-	gmlWriteBounds(stream, &(shape.bounds), NULL, "\t\t\t");
+#ifdef USE_PROJ
+	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "\t\t\t");
+	else // then use the layer projection and/or metadata
+	  gmlWriteBounds(stream, &(shape.bounds), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "\t\t\t");	
+#else
+	gmlWriteBounds(stream, &(shape.bounds), NULL, "\t\t\t"); // no projection information
+#endif
 
 	// write the feature geometry
+#ifdef USE_PROJ
+	if(msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE)) // use the map projection first
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(map->projection), map->web.metadata, MS_TRUE), "\t\t\t");
+        else // then use the layer projection and/or metadata
+	  gmlWriteGeometry(stream, &(shape), msGetEPSGProj(&(lp->projection), lp->metadata, MS_TRUE), "\t\t\t");      
+#else
 	gmlWriteGeometry(stream, &(shape), NULL, "\t\t\t");
+#endif
 
 	// end this feature
         if(msLookupHashTable(lp->metadata, "gml_featurename")) // specify a feature name

@@ -40,6 +40,8 @@ int msInitProjection(projectionObj *p);
 int msProcessProjection(projectionObj *p);
 int msLoadProjectionString(projectionObj *p, char *value);
 
+const char *msGetEPSGProj(projectionObj *proj, hashTableObj metadata, int bReturnOnlyFirstOne);
+
 /* Provides compatiblity with PROJ.4 4.4.2 */
 #ifndef PJ_VERSION
 #  define pj_is_latlong(x)	((x)->is_latlong)

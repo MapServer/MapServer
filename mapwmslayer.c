@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.23  2002/03/13 23:45:22  sdlime
+ * Added projection support to the GML output code. Re-shuffled the code to extract the EPSG values for a layer or map into mapproject.c.
+ *
  * Revision 1.22  2002/02/08 21:07:27  sacha
  * Added template support to WMS.
  *
@@ -317,7 +320,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * - If map SRS is valid for this layer then use it
  * - Otherwise request layer in its default SRS and we'll reproject later
  * ------------------------------------------------------------------ */
-    if ((pszEPSG = (char*)msWMSGetEPSGProj(&(map->projection), 
+    if ((pszEPSG = (char*)msGetEPSGProj(&(map->projection), 
                                            NULL, TRUE)) != NULL &&
         (pszEPSG = strdup(pszEPSG)) != NULL &&
         strncasecmp(pszEPSG, "EPSG:", 5) == 0)
@@ -327,7 +330,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
 
         nLen = strlen(pszEPSG);
 
-        pszLyrEPSG = msWMSGetEPSGProj(&(lp->projection), lp->metadata, FALSE);
+        pszLyrEPSG = msGetEPSGProj(&(lp->projection), lp->metadata, FALSE);
 
         if (pszLyrEPSG == NULL ||
             (pszFound = strstr(pszLyrEPSG, pszEPSG)) == NULL ||
@@ -340,7 +343,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
     }
 
     if (pszEPSG == NULL &&
-        ((pszEPSG = (char*)msWMSGetEPSGProj(&(lp->projection), 
+        ((pszEPSG = (char*)msGetEPSGProj(&(lp->projection), 
                                             lp->metadata, TRUE)) == NULL ||
          (pszEPSG = strdup(pszEPSG)) == NULL ||
          strncasecmp(pszEPSG, "EPSG:", 5) != 0) )
@@ -358,7 +361,7 @@ char *msBuildWMSLayerURL(mapObj *map, layerObj *lp, int nRequestType,
  * Set layer SRS and reproject map extents to the layer's SRS
  * ------------------------------------------------------------------ */
     // No need to set lp->proj if it's already set to the right EPSG code
-    if ((pszTmp = msWMSGetEPSGProj(&(lp->projection), NULL, TRUE)) == NULL ||
+    if ((pszTmp = msGetEPSGProj(&(lp->projection), NULL, TRUE)) == NULL ||
         strcasecmp(pszEPSG, pszTmp) != 0)
     {
         char szProj[20];

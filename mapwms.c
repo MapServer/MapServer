@@ -11,54 +11,10 @@
 #include <time.h>
 #include <string.h>
 
-/* ==================================================================
- * Some functions shared by both mapwms.c and mapwmslayer.c
- * ================================================================== */
-#if (defined(USE_WMS) || defined (USE_WMS_LYR))
-
 /*
-** msWMSGetEPSGProj()
-**
-** Extract projection code for this layer/map.  
-** First look for a wms_srs metadata.  If not found then look for an EPSG
-** code in projectionObj, and if not found then return NULL.
-**
-** If bReturnOnlyFirstOne=TRUE and metadata contains multiple EPSG codes
-** then only the first one (which is assumed to be the layer's default
-** projection) is returned.
+** msWMSGetEPSGProj() moved to mapproject.c and renamed msGetEPSGProj(). This function turns
+** out to be generally useful outside of WMS context.
 */
-const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
-                             int bReturnOnlyFirstOne)
-{
-  static char epsgCode[20] ="";
-  static char *value;
-
-  if ((value = msLookupHashTable(metadata, "wms_srs")) != NULL)
-  {
-    // Metadata value should already be in format "EPSG:n" or "AUTO:..."
-    if (!bReturnOnlyFirstOne)
-        return value;
-
-    // Caller requested only first projection code.
-    strncpy(epsgCode, value, 19);
-    epsgCode[19] = '\0';
-    if ((value=strchr(epsgCode, ' ')) != NULL)
-        *value = '\0';
-    return epsgCode;
-  }
-  else if (proj && proj->numargs > 0 && 
-           (value = strstr(proj->args[0], "init=epsg:")) != NULL &&
-           strlen(value) < 20)
-  {
-    sprintf(epsgCode, "EPSG:%s", value+10);
-    return epsgCode;
-  }
-
-  return NULL;
-}
-
-#endif  /* USE_WMS || USE_WMS_LYR */
-
 
 /* ==================================================================
  * WMS Server stuff.
@@ -684,7 +640,7 @@ static void msWMSPrintBoundingBox(const char *tabspace,
 {
     const char	*value;
 
-    value = msWMSGetEPSGProj(srcproj, metadata, MS_TRUE);
+    value = msGetEPSGProj(srcproj, metadata, MS_TRUE);
     
     if( value != NULL )
     {
@@ -834,18 +790,18 @@ int msDumpLayersByGroup(mapObj *map, char *pszGroupName, const char* value, cons
                            "      <KeywordList>\n", "      </KeywordList>\n",
                            "        <Keyword>%s</Keyword>\n");
 
-         if (msWMSGetEPSGProj(&(map->projection),map->web.metadata,MS_FALSE) == NULL)
+         if (msGetEPSGProj(&(map->projection),map->web.metadata,MS_FALSE) == NULL)
          {
             // If map has no proj then every layer MUST have one or produce a warning
             printParam("(at least one of) MAP.PROJECTION, LAYER.PROJECTION or wms_srs metadata", 
-                       msWMSGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
+                       msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
                        WMS_WARN, "      <SRS>%s</SRS>\n", NULL);
          }
          else
          {
             // No warning required in this case since there's at least a map proj.
             printParam(" LAYER.PROJECTION (or wms_srs metadata)", 
-                       msWMSGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
+                       msGetEPSGProj(&(lp->projection), lp->metadata, MS_FALSE),
                        WMS_NOERR, "      <SRS>%s</SRS>\n", NULL);
          }
 
@@ -1143,7 +1099,7 @@ int msWMSCapabilities(mapObj *map, const char *wmtver)
   // is REQUIRED.  It also suggests that we use an empty SRS element if there
   // is no common SRS.
   printParam("MAP.PROJECTION (or wms_srs metadata)",
-             msWMSGetEPSGProj(&(map->projection), map->web.metadata, MS_FALSE),
+             msGetEPSGProj(&(map->projection), map->web.metadata, MS_FALSE),
              WMS_WARN, "    <SRS>%s</SRS>\n", "");
 
   msWMSPrintLatLonBoundingBox("    ", &(map->extent), &(map->projection));

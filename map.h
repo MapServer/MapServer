@@ -960,8 +960,6 @@ void msOracleSpatialLayerFreeItemInfo(layerObj *layer);
 int msOracleSpatialLayerGetAutoStyle(mapObj *map, layerObj *layer, classObj *c, int tile, long record);   
    
 int msWMSDispatch(mapObj *map, char **names, char **values, int numentries); // mapwms.c
-const char *msWMSGetEPSGProj(projectionObj *proj, hashTableObj metadata,
-                             int bReturnOnlyFirstOne);
 
 int msDrawWMSLayer(mapObj *map, layerObj *lp, gdImagePtr img); // mapwmslayer.c
 char *msWMSGetFeatureInfoURL(mapObj *map, layerObj *lp,

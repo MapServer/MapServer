@@ -243,7 +243,6 @@ int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 #endif
 }
 
-
 /*
 ** Compare two projections, and return MS_TRUE if they differ. 
 **
@@ -376,3 +375,60 @@ static int msTestNeedWrap( pointObj pt1, pointObj pt2, pointObj pt2_geo,
         return 0;
 }
 #endif /* def USE_PROJ */
+
+/*
+** msGetEPSGProj()
+**
+** Extract projection code for this layer/map.  
+** First look for a wms_srs metadata, then gml_srs.  If not found then look for an EPSG
+** code in projectionObj, and if not found then return NULL.
+**
+** If bReturnOnlyFirstOne=TRUE and metadata contains multiple EPSG codes
+** then only the first one (which is assumed to be the layer's default
+** projection) is returned.
+*/
+const char *msGetEPSGProj(projectionObj *proj, hashTableObj metadata, int bReturnOnlyFirstOne)
+{
+#ifdef USE_PROJ
+  static char epsgCode[20] ="";
+  static char *value;
+
+  if ((value = msLookupHashTable(metadata, "wms_srs")) != NULL)
+  {
+    // Metadata value should already be in format "EPSG:n" or "AUTO:..."
+    if (!bReturnOnlyFirstOne)
+        return value;
+
+    // Caller requested only first projection code.
+    strncpy(epsgCode, value, 19);
+    epsgCode[19] = '\0';
+    if ((value=strchr(epsgCode, ' ')) != NULL)
+        *value = '\0';
+    return epsgCode;
+  } else if ((value = msLookupHashTable(metadata, "gml_srs")) != NULL)
+  {
+    // Metadata value should already be in format "EPSG:n" or "AUTO:..."
+    if (!bReturnOnlyFirstOne)
+        return value;
+
+    // Caller requested only first projection code.
+    strncpy(epsgCode, value, 19);
+    epsgCode[19] = '\0';
+    if ((value=strchr(epsgCode, ' ')) != NULL)
+        *value = '\0';
+    return epsgCode;
+  }
+  else if (proj && proj->numargs > 0 && 
+           (value = strstr(proj->args[0], "init=epsg:")) != NULL &&
+           strlen(value) < 20)
+  {
+    sprintf(epsgCode, "EPSG:%s", value+10);
+    return epsgCode;
+  }
+
+  return NULL;
+#else
+  msSetError(MS_PROJERR, "Projection support is not available.", "msGetEPSGProj()");
+  return(MS_FAILURE);
+#endif
+}
