@@ -845,6 +845,7 @@ void loadForm()
     sprintf(tmpstr,"%%%s%%", msObj->ParamNames[i]);
     
     for(j=0; j<msObj->Map->numlayers; j++) {
+      if(msObj->Map->layers[j].connection && (strstr(msObj->Map->layers[j].connection, tmpstr) != NULL)) msObj->Map->layers[j].connection = gsub(msObj->Map->layers[j].connection, tmpstr, msObj->ParamValues[i]);
       if(msObj->Map->layers[j].filter.string && (strstr(msObj->Map->layers[j].filter.string, tmpstr) != NULL)) msObj->Map->layers[j].filter.string = gsub(msObj->Map->layers[j].filter.string, tmpstr, msObj->ParamValues[i]);
       for(k=0; k<msObj->Map->layers[j].numclasses; k++)
 	if(msObj->Map->layers[j].class[k].expression.string && (strstr(msObj->Map->layers[j].class[k].expression.string, tmpstr) != NULL)) msObj->Map->layers[j].class[k].expression.string = gsub(msObj->Map->layers[j].class[k].expression.string, tmpstr, msObj->ParamValues[i]);

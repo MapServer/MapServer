@@ -16,6 +16,10 @@ the CVS logs is updated daily at the following URL:
 Version 3.7-dev (CVS)
 ---------------------
 
+- Added CONNECTION to the list of mapfile parameters that can accept %variable% substitutions
+  when processed by the cgi version. This is useful for passing in username and/or passwords
+  to database data sources.
+
 - Added support for DATA and TEMPLATE (header/footer/etc...) filtering using an
   regex declared in the mapfile (DATAPATTERN and TEMPLATEPATTERN). Certain parameters
   in a mapfile cannot be changed via a URL without first being filtered.
