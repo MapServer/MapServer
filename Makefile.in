@@ -85,6 +85,7 @@ EPPL_OBJ= @EPPL_OBJ@
 # on your system someplace. The actual SDE server you wish to connect to can
 # be elsewhere.
 SDE=	  @SDE_ENABLED@
+SDERASTER= @SDERASTER_ENABLED@
 SDE_LIB=  @SDE_LIB@
 SDE_INC=  @SDE_INC@
 
@@ -187,8 +188,8 @@ RUNPATHS= @RPATHS@
 
 CFLAGS= @CFLAGS@ @DEBUG_FLAGS@ \
         $(IGNORE_MISSING_DATA) $(STRINGS) $(EPPL) $(PROJ) $(OWS) $(MING) \
-	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(OGR) $(GDAL) \
-	$(GEOS) $(ICONV) $(FASTCGI) $(PHP_REGEX) $(REGEX_INC) \
+	$(ORACLESPATIAL) $(TIFF) $(JPEG) $(GD) $(PDF) $(SDE) $(SDERASTER) \
+	$(OGR) $(GDAL) $(GEOS) $(ICONV) $(FASTCGI) $(PHP_REGEX) $(REGEX_INC) \
 	$(POSTGIS) $(MYGIS) $(MPATROL) $(THREAD) $(GD_INC) $(PDF_INC) \
 	$(PROJ_INC) $(TIFF_INC) $(JPEG_INC) $(EGIS_INC) $(SDE_INC) \
 	$(MPATROL_INC) $(GDAL_INC) $(POSTGIS_INC) $(MYGIS_INC) \

@@ -272,7 +272,7 @@ PACKAGE_STRING=
 PACKAGE_BUGREPORT=
 
 ac_unique_file="Makefile.in"
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CXX CXXFLAGS ac_ct_CXX RANLIB ac_ct_RANLIB LEX LEXLIB LEX_OUTPUT_ROOT YACC XTRALIBS CPP EGREP C_PIC STRINGS MS_VERSION FT_BIN JPEG_ENABLED JPEG_INC JPEG_LIB ICONV_ENABLED ICONV_INC ICONV_LIB GD_DEF GD_INC GD_LIB GD_STATIC MAKE_GD MAKE_GD_CLEAN PDF_ENABLED PDF_INC PDF_LIB PDF_OBJ EPPL_ENABLED EPPL_OBJ PROJ_ENABLED PROJ_INC PROJ_LIB THREAD_FLAG THREAD_LIB SDE_ENABLED SDE_INC SDE_LIB SDERASTER_ENABLED MPATROL_ENABLED MPATROL_INC MPATROL_LIB GEOS_CONFIG GEOS_ENABLED GEOS_INC GEOS_LIB GDAL_CONFIG GDAL_ENABLED OGR_ENABLED GDAL_INC GDAL_LIB TIFF_ENABLED TIFF_INC TIFF_LIB PG_CONFIG POSTGIS_ENABLED POSTGIS_INC POSTGIS_LIB MY_CONFIG MYGIS_ENABLED MYGIS_INC MYGIS_LIB ORACLESPATIAL_ENABLED ORACLESPATIAL_INC ORACLESPATIAL_LIB MING_ENABLED MING_INC MING_LIB WMS_SVR_ENABLED WFS_SVR_ENABLED WCS_SVR_ENABLED LIBCURL_CONFIG WMS_LYR_ENABLED WFS_LYR_ENABLED CURL_INC CURL_LIB FASTCGI_ENABLED FASTCGI_INC FASTCGI_LIB HTTPD MS_INC MS_LIB IGNORE_MISSING_DATA CXX_WFLAGS C_WFLAGS DEBUG_FLAGS LD_SHARED SO_EXT PHP_VERSION_FLAG PHP_SRC_DIR PHP_CC PHP_LD PHP_REGEX_INC PHP_REGEX_OBJ USE_PHP_REGEX MAKE_PHPMS MAKE_PHPMS_CLEAN APACHE_INC ALL_ENABLED ALL_INC ALL_LIB ALL_STATIC_LIB RPATHS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -844,17 +844,18 @@ Optional Packages:
                           install dir).
   --without-pdf           Disable PDF support.
   --with-pdf=DIR        Include PDF support (DIR is PDFlib's install dir).
-  --without-eppl          Disable EPPL7 support.
-  --with-eppl             Include EPPL7 support.
+  --without-eppl        Disable EPPL7 support.
+  --with-eppl           Include EPPL7 support.
   --with-proj=DIR       Include PROJ.4 support (DIR is PROJ.4's install dir).
   --with-threads=linkoptInclude thread safe support
   --with-sde=DIR        Include ESRI SDE support (DIR is SDE's install dir).
   --with-sde-version=VERSION NUMBER  Set ESRI SDE version number (Default is 80).
+  --with-sderaster      Include experimental ESRI SDE raster support.
   --with-mpatrol=DIR    Include MPATROL support (DIR is MPATROL's install dir).
   --with-geos=PATH      Include GEOS support (PATH is path to geos-config)
   --with-ogr=PATH       Include OGR support (PATH is path to gdal-config).
   --with-gdal=PATH      Include GDAL support (PATH is path to gdal-config)
-  --without-tiff          Disable TIFF support.
+  --without-tiff        Disable TIFF support.
   --with-tiff=DIR       Include TIFF support (DIR is LibTIFF's install dir).
   --with-postgis=ARG    Include PostGIS Support (ARG=yes/path to pg_config)
   --with-mygis=ARG      Include MyGIS Support (ARG=yes/path to my_config)
@@ -4211,8 +4212,8 @@ fi;
     FT_DIR="`pwd`/$FT_DIR"
   fi
 
-{ echo "$as_me:$LINENO: checking where FreeType 2.x is installed......" >&5
-echo "$as_me: checking where FreeType 2.x is installed......" >&6;}
+{ echo "$as_me:$LINENO: checking where FreeType 2.x is installed..." >&5
+echo "$as_me: checking where FreeType 2.x is installed..." >&6;}
 FT_LIB=''
 FT_BIN=''
 FT_TYPE=''
@@ -4427,8 +4428,8 @@ fi;
     ZL_DIR="`pwd`/$ZL_DIR"
   fi
 
-{ echo "$as_me:$LINENO: checking where Zlib is installed......" >&5
-echo "$as_me: checking where Zlib is installed......" >&6;}
+{ echo "$as_me:$LINENO: checking where Zlib is installed..." >&5
+echo "$as_me: checking where Zlib is installed..." >&6;}
 ZL_LIB=''
 
 test -f $ZL_DIR/lib/libz.a -o -f $ZL_DIR/lib/libz.so -o -f $ZL_DIR/lib/libz.sl && ZL_LIBDIR="$ZL_DIR/lib"
@@ -4565,8 +4566,8 @@ fi;
     PNG_DIR="`pwd`/$PNG_DIR"
   fi
 
-{ echo "$as_me:$LINENO: checking where PNG is installed......" >&5
-echo "$as_me: checking where PNG is installed......" >&6;}
+{ echo "$as_me:$LINENO: checking where PNG is installed..." >&5
+echo "$as_me: checking where PNG is installed..." >&6;}
 PNG_LIB=''
 
 test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl && PNG_LIBDIR="$PNG_DIR/lib"
@@ -4686,8 +4687,8 @@ fi
 
 unset ac_cv_lib_jpeg_jpeg_read_header
 
-{ echo "$as_me:$LINENO: checking whether we should include JPEG support......" >&5
-echo "$as_me: checking whether we should include JPEG support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include JPEG support..." >&5
+echo "$as_me: checking whether we should include JPEG support..." >&6;}
 
 # Check whether --with-jpeg or --without-jpeg was given.
 if test "${with_jpeg+set}" = set; then
@@ -4952,8 +4953,8 @@ if test "$with_xpm" != "no" ; then
     XPM_DIR="`pwd`/$XPM_DIR"
   fi
 
-  { echo "$as_me:$LINENO: checking where libXpm is installed......" >&5
-echo "$as_me: checking where libXpm is installed......" >&6;}
+  { echo "$as_me:$LINENO: checking where libXpm is installed..." >&5
+echo "$as_me: checking where libXpm is installed..." >&6;}
   XPM_LIB=''
 
   test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib"
@@ -5088,8 +5089,8 @@ else
   ICONV_DIR=''
 fi;
 
-{ echo "$as_me:$LINENO: checking where libiconv is installed......" >&5
-echo "$as_me: checking where libiconv is installed......" >&6;}
+{ echo "$as_me:$LINENO: checking where libiconv is installed..." >&5
+echo "$as_me: checking where libiconv is installed..." >&6;}
 
 ICONV_LIB=''
 
@@ -5469,8 +5470,8 @@ unset ac_cv_lib_c_gdImageGifPtr
 unset ac_cv_lib_c_gdFontGetTiny
 unset ac_cv_lib_gd_gdImageSetAntiAliased
 
-{ echo "$as_me:$LINENO: checking for GD 2.0.12 or higher......" >&5
-echo "$as_me: checking for GD 2.0.12 or higher......" >&6;}
+{ echo "$as_me:$LINENO: checking for GD 2.0.12 or higher..." >&5
+echo "$as_me: checking for GD 2.0.12 or higher..." >&6;}
 
 # Check whether --with-gd or --without-gd was given.
 if test "${with_gd+set}" = set; then
@@ -5586,8 +5587,8 @@ fi
 
   if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
         unset ac_cv_lib_gd_gdImageSetAntiAliased
-    { echo "$as_me:$LINENO: checking whether GD needs libiconv......" >&5
-echo "$as_me: checking whether GD needs libiconv......" >&6;}
+    { echo "$as_me:$LINENO: checking whether GD needs libiconv..." >&5
+echo "$as_me: checking whether GD needs libiconv..." >&6;}
     echo "$as_me:$LINENO: checking for gdImageSetAntiAliased in -lgd" >&5
 echo $ECHO_N "checking for gdImageSetAntiAliased in -lgd... $ECHO_C" >&6
 if test "${ac_cv_lib_gd_gdImageSetAntiAliased+set}" = set; then
@@ -5772,8 +5773,8 @@ fi
 
 
     if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
-            { echo "$as_me:$LINENO: checking whether GD needs libiconv......" >&5
-echo "$as_me: checking whether GD needs libiconv......" >&6;}
+            { echo "$as_me:$LINENO: checking whether GD needs libiconv..." >&5
+echo "$as_me: checking whether GD needs libiconv..." >&6;}
       unset ac_cv_lib_gd_gdImageSetAntiAliased
       echo "$as_me:$LINENO: checking for gdImageSetAntiAliased in -lgd" >&5
 echo $ECHO_N "checking for gdImageSetAntiAliased in -lgd... $ECHO_C" >&6
@@ -6988,8 +6989,8 @@ unset ac_cv_lib_pdf_PDF_moveto
 unset ac_cv_lib_pdf_PDF_curveto
 unset ac_cv_lib_pdf_PDF_show_xy
 
-{ echo "$as_me:$LINENO: checking whether we should include PDF support......" >&5
-echo "$as_me: checking whether we should include PDF support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include PDF support..." >&5
+echo "$as_me: checking whether we should include PDF support..." >&6;}
 
 # Check whether --with-pdf or --without-pdf was given.
 if test "${with_pdf+set}" = set; then
@@ -7428,8 +7429,8 @@ ALL_INC="$PDF_INC $ALL_INC"
 ALL_LIB="$PDF_LIB $ALL_LIB"
 
 
-{ echo "$as_me:$LINENO: checking whether we should include EPPL7 support......" >&5
-echo "$as_me: checking whether we should include EPPL7 support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include EPPL7 support..." >&5
+echo "$as_me: checking whether we should include EPPL7 support..." >&6;}
 
 # Check whether --with-eppl or --without-eppl was given.
 if test "${with_eppl+set}" = set; then
@@ -7461,8 +7462,8 @@ unset ac_cv_lib_proj_pj_init
 unset ac_cv_lib_proj_pj_transform
 unset ac_cv_lib_proj_pj_latlong_from_proj
 
-{ echo "$as_me:$LINENO: checking whether we should include PROJ.4 support......" >&5
-echo "$as_me: checking whether we should include PROJ.4 support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include PROJ.4 support..." >&5
+echo "$as_me: checking whether we should include PROJ.4 support..." >&6;}
 
 # Check whether --with-proj or --without-proj was given.
 if test "${with_proj+set}" = set; then
@@ -7924,8 +7925,8 @@ ALL_LIB="$PROJ_LIB $ALL_LIB"
 THREAD_LIB=""
 THREAD_FLAG=""
 
-{ echo "$as_me:$LINENO: checking whether we should include thread safe support......" >&5
-echo "$as_me: checking whether we should include thread safe support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include thread safe support..." >&5
+echo "$as_me: checking whether we should include thread safe support..." >&6;}
 
 # Check whether --with-threads or --without-threads was given.
 if test "${with_threads+set}" = set; then
@@ -8036,8 +8037,8 @@ ALL_ENABLED="$THREAD_FLAG $ALL_ENABLED"
 ALL_LIB="$THREAD_LIB $ALL_LIB"
 
 
-{ echo "$as_me:$LINENO: checking whether we should include ESRI SDE support......" >&5
-echo "$as_me: checking whether we should include ESRI SDE support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include ESRI SDE support..." >&5
+echo "$as_me: checking whether we should include ESRI SDE support..." >&6;}
 
 # Check whether --with-sde or --without-sde was given.
 if test "${with_sde+set}" = set; then
@@ -8582,8 +8583,42 @@ ALL_INC="$SDE_INC $ALL_INC"
 ALL_LIB="$SDE_LIB $ALL_LIB"
 
 
-{ echo "$as_me:$LINENO: checking whether we should compile in MPATROL support......" >&5
-echo "$as_me: checking whether we should compile in MPATROL support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include SDE raster support..." >&5
+echo "$as_me: checking whether we should include SDE raster support..." >&6;}
+
+# Check whether --with-sderaster or --without-sderaster was given.
+if test "${with_sderaster+set}" = set; then
+  withval="$with_sderaster"
+
+fi;
+
+if test "$with_sderaster" = "yes" ; then
+
+  if test "$SDE_ENABLED" != "-DUSE_SDE" ; then
+   { { echo "$as_me:$LINENO: error: --with-sderaster requested without SDE supported enabled." >&5
+echo "$as_me: error: --with-sderaster requested without SDE supported enabled." >&2;}
+   { (exit 1); exit 1; }; }
+  fi
+
+  SDERASTER_ENABLED=-DUSE_SDERASTER
+
+  echo "$as_me:$LINENO: result:         including experimental SDE raster support." >&5
+echo "${ECHO_T}        including experimental SDE raster support." >&6
+
+else
+
+  echo "$as_me:$LINENO: result:         not including experimental SDE raster support." >&5
+echo "${ECHO_T}        not including experimental SDE raster support." >&6
+fi
+
+SDERASTER_ENABLED=$SDERASTER_ENABLED
+
+
+ALL_ENABLED="$SDERASTER_ENABLED $ALL_ENABLED"
+
+
+{ echo "$as_me:$LINENO: checking whether we should compile in MPATROL support..." >&5
+echo "$as_me: checking whether we should compile in MPATROL support..." >&6;}
 
 # Check whether --with-mpatrol or --without-mpatrol was given.
 if test "${with_mpatrol+set}" = set; then
@@ -8864,8 +8899,8 @@ echo "${ECHO_T}no" >&6
 fi
 
 
-{ echo "$as_me:$LINENO: checking whether we should include OGR support......" >&5
-echo "$as_me: checking whether we should include OGR support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include OGR support..." >&5
+echo "$as_me: checking whether we should include OGR support..." >&6;}
 
 # Check whether --with-ogr or --without-ogr was given.
 if test "${with_ogr+set}" = set; then
@@ -9078,8 +9113,8 @@ fi
 
 unset ac_cv_lib_tiff_TIFFOpen
 
-{ echo "$as_me:$LINENO: checking whether we should include TIFF support......" >&5
-echo "$as_me: checking whether we should include TIFF support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include TIFF support..." >&5
+echo "$as_me: checking whether we should include TIFF support..." >&6;}
 
 # Check whether --with-tiff or --without-tiff was given.
 if test "${with_tiff+set}" = set; then
@@ -9515,8 +9550,8 @@ ALL_INC="$MING_INC $ALL_INC"
 ALL_LIB="$MING_LIB $ALL_LIB"
 
 
-{ echo "$as_me:$LINENO: checking whether we should include WMS Server support......" >&5
-echo "$as_me: checking whether we should include WMS Server support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include WMS Server support..." >&5
+echo "$as_me: checking whether we should include WMS Server support..." >&6;}
 
 # Check whether --with-wms or --without-wms was given.
 if test "${with_wms+set}" = set; then
@@ -9549,8 +9584,8 @@ ALL_ENABLED="$WMS_SVR_ENABLED $ALL_ENABLED"
 
 
 
-{ echo "$as_me:$LINENO: checking whether we should include WFS Server support......" >&5
-echo "$as_me: checking whether we should include WFS Server support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include WFS Server support..." >&5
+echo "$as_me: checking whether we should include WFS Server support..." >&6;}
 
 # Check whether --with-wfs or --without-wfs was given.
 if test "${with_wfs+set}" = set; then
@@ -9590,8 +9625,8 @@ ALL_ENABLED="$WFS_SVR_ENABLED $ALL_ENABLED"
 
 
 
-{ echo "$as_me:$LINENO: checking whether we should include WCS Server support......" >&5
-echo "$as_me: checking whether we should include WCS Server support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include WCS Server support..." >&5
+echo "$as_me: checking whether we should include WCS Server support..." >&6;}
 
 # Check whether --with-wcs or --without-wcs was given.
 if test "${with_wcs+set}" = set; then
@@ -9622,8 +9657,8 @@ ALL_ENABLED="$WCS_SVR_ENABLED $ALL_ENABLED"
 
 
 
-{ echo "$as_me:$LINENO: checking whether we should include WMS Client Connections support......" >&5
-echo "$as_me: checking whether we should include WMS Client Connections support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include WMS Client Connections support..." >&5
+echo "$as_me: checking whether we should include WMS Client Connections support..." >&6;}
 
 # Check whether --with-wmsclient or --without-wmsclient was given.
 if test "${with_wmsclient+set}" = set; then
@@ -9648,8 +9683,8 @@ elif test "$with_wmsclient" = "yes" ; then
 fi
 
 
-{ echo "$as_me:$LINENO: checking whether we should include WFS Client Connections support......" >&5
-echo "$as_me: checking whether we should include WFS Client Connections support......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should include WFS Client Connections support..." >&5
+echo "$as_me: checking whether we should include WFS Client Connections support..." >&6;}
 
 # Check whether --with-wfsclient or --without-wfsclient was given.
 if test "${with_wfsclient+set}" = set; then
@@ -10028,8 +10063,8 @@ IGNORE_MISSING_DATA=$IGNORE_MISSING_DATA
 
 
 
-{ echo "$as_me:$LINENO: checking whether we should enable debug features......" >&5
-echo "$as_me: checking whether we should enable debug features......" >&6;}
+{ echo "$as_me:$LINENO: checking whether we should enable debug features..." >&5
+echo "$as_me: checking whether we should enable debug features..." >&6;}
 # Check whether --enable-debug or --disable-debug was given.
 if test "${enable_debug+set}" = set; then
   enableval="$enable_debug"
@@ -10108,8 +10143,8 @@ ALL_ENABLED="$DEBUG_FLAGS $ALL_ENABLED"
 
 
 
-{ echo "$as_me:$LINENO: checking for PHP/MapScript module options......" >&5
-echo "$as_me: checking for PHP/MapScript module options......" >&6;}
+{ echo "$as_me:$LINENO: checking for PHP/MapScript module options..." >&5
+echo "$as_me: checking for PHP/MapScript module options..." >&6;}
 
 # Check whether --with-php or --without-php was given.
 if test "${with_php+set}" = set; then
@@ -11286,6 +11321,7 @@ s,@THREAD_LIB@,$THREAD_LIB,;t t
 s,@SDE_ENABLED@,$SDE_ENABLED,;t t
 s,@SDE_INC@,$SDE_INC,;t t
 s,@SDE_LIB@,$SDE_LIB,;t t
+s,@SDERASTER_ENABLED@,$SDERASTER_ENABLED,;t t
 s,@MPATROL_ENABLED@,$MPATROL_ENABLED,;t t
 s,@MPATROL_INC@,$MPATROL_INC,;t t
 s,@MPATROL_LIB@,$MPATROL_LIB,;t t

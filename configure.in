@@ -72,7 +72,7 @@ AC_ARG_WITH(freetype,
     FT_DIR=$withval,FT_DIR='')
 
 AC_EXPAND_PATH($FT_DIR, FT_DIR)
-AC_CHECKING(where FreeType 2.x is installed...)
+AC_CHECKING(where FreeType 2.x is installed)
 FT_LIB=''
 FT_BIN=''
 FT_TYPE=''
@@ -131,7 +131,7 @@ AC_ARG_WITH(zlib,
     ZL_DIR=$withval,ZL_DIR='')
 
 AC_EXPAND_PATH($ZL_DIR, ZL_DIR)
-AC_CHECKING(where Zlib is installed...)
+AC_CHECKING(where Zlib is installed)
 ZL_LIB=''
 
 test -f $ZL_DIR/lib/libz.a -o -f $ZL_DIR/lib/libz.so -o -f $ZL_DIR/lib/libz.sl && ZL_LIBDIR="$ZL_DIR/lib"
@@ -171,7 +171,7 @@ AC_ARG_WITH(png,
     PNG_DIR=$withval,PNG_DIR='')
 
 AC_EXPAND_PATH($PNG_DIR, PNG_DIR)
-AC_CHECKING(where PNG is installed...)
+AC_CHECKING(where PNG is installed)
 PNG_LIB=''
 
 test -f $PNG_DIR/lib/libpng.a -o -f $PNG_DIR/lib/libpng.so -o -f $PNG_DIR/lib/libpng.sl && PNG_LIBDIR="$PNG_DIR/lib"
@@ -204,7 +204,7 @@ dnl ---------------------------------------------------------------------
 
 unset ac_cv_lib_jpeg_jpeg_read_header
 
-AC_CHECKING(whether we should include JPEG support...)
+AC_CHECKING(whether we should include JPEG support)
 AC_ARG_WITH(jpeg,
 [  --with-jpeg[=DIR]       Include JPEG support (DIR is LibJPEG's install dir).],,)
 
@@ -289,7 +289,7 @@ AC_ARG_WITH(xpm,
 if test "$with_xpm" != "no" ; then
 
   AC_EXPAND_PATH($XPM_DIR, XPM_DIR)
-  AC_CHECKING(where libXpm is installed...)
+  AC_CHECKING(where libXpm is installed)
   XPM_LIB=''
 
   test -f $XPM_DIR/lib/libXpm.a -o -f $XPM_DIR/lib/libXpm.so -o -f $XPM_DIR/lib/libXpm.sl && XPM_LIBDIR="$XPM_DIR/lib"
@@ -337,7 +337,7 @@ AC_ARG_WITH(libiconv,
                           to libiconv install dir (prefix)).],
     ICONV_DIR=$withval,ICONV_DIR='')
 
-AC_CHECKING(where libiconv is installed...)
+AC_CHECKING(where libiconv is installed)
 
 ICONV_LIB=''
 
@@ -429,7 +429,7 @@ unset ac_cv_lib_c_gdImageGifPtr
 unset ac_cv_lib_c_gdFontGetTiny
 unset ac_cv_lib_gd_gdImageSetAntiAliased
 
-AC_CHECKING(for GD 2.0.12 or higher...)
+AC_CHECKING(for GD 2.0.12 or higher)
 AC_ARG_WITH(gd,
 [  --with-gd[=[static,]DIR] Specify which version of GD to use (DIR is GD's
                           install dir).],,)
@@ -464,7 +464,7 @@ elif test -n "$with_gd" -a "$with_gd" != "yes" ; then
   if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
     dnl try again including libiconv this time
     unset ac_cv_lib_gd_gdImageSetAntiAliased
-    AC_CHECKING(whether GD needs libiconv...)
+    AC_CHECKING(whether GD needs libiconv)
     AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,$GD_XTRA_LIBS -L$GD_LIBDIR $ICONV_LIB)
     GD_NEED_ICONV_LIB="$ICONV_LIB"
   fi
@@ -494,7 +494,7 @@ else
  
     if test "$IS_GD2" = "false" -a -n "$ICONV_LIB"; then
       dnl try again including libiconv this time
-      AC_CHECKING(whether GD needs libiconv...)
+      AC_CHECKING(whether GD needs libiconv)
       unset ac_cv_lib_gd_gdImageSetAntiAliased
       AC_CHECK_LIB(gd, gdImageSetAntiAliased,IS_GD2="true",,$GD_XTRA_LIBS $ICONV_LIB)
       GD_NEED_ICONV_LIB="$ICONV_LIB"
@@ -623,7 +623,7 @@ unset ac_cv_lib_pdf_PDF_moveto
 unset ac_cv_lib_pdf_PDF_curveto
 unset ac_cv_lib_pdf_PDF_show_xy
 
-AC_CHECKING(whether we should include PDF support...)
+AC_CHECKING(whether we should include PDF support)
 AC_ARG_WITH(pdf,
 [  --without-pdf           Disable PDF support.
   --with-pdf[=DIR]        Include PDF support (DIR is PDFlib's install dir).],,)
@@ -693,10 +693,10 @@ dnl ---------------------------------------------------------------------
 dnl EPPL7 support (included by default)
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include EPPL7 support...)
+AC_CHECKING(whether we should include EPPL7 support)
 AC_ARG_WITH(eppl,
-[  --without-eppl          Disable EPPL7 support.
-  --with-eppl             Include EPPL7 support.],,)
+[  --without-eppl        Disable EPPL7 support.
+  --with-eppl           Include EPPL7 support.],,)
 if test "$with_eppl" = "no" ; then
   AC_MSG_RESULT([        disabled by --without-eppl])
 else
@@ -722,7 +722,7 @@ unset ac_cv_lib_proj_pj_init
 unset ac_cv_lib_proj_pj_transform
 unset ac_cv_lib_proj_pj_latlong_from_proj
 
-AC_CHECKING(whether we should include PROJ.4 support...)
+AC_CHECKING(whether we should include PROJ.4 support)
 AC_ARG_WITH(proj,
 [  --with-proj[=DIR]       Include PROJ.4 support (DIR is PROJ.4's install dir).],,)
 
@@ -800,7 +800,7 @@ dnl ---------------------------------------------------------------------
 THREAD_LIB=""
 THREAD_FLAG=""
 
-AC_CHECKING(whether we should include thread safe support...)
+AC_CHECKING(whether we should include thread safe support)
 AC_ARG_WITH(threads,
 [  --with-threads[=linkopt]Include thread safe support],,)
 
@@ -836,7 +836,7 @@ dnl ---------------------------------------------------------------------
 dnl Find ESRI SDE ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include ESRI SDE support...)
+AC_CHECKING(whether we should include ESRI SDE support)
 AC_ARG_WITH(sde,
 [  --with-sde[=DIR]        Include ESRI SDE support (DIR is SDE's install dir).],,)
 
@@ -901,10 +901,37 @@ ALL_INC="$SDE_INC $ALL_INC"
 ALL_LIB="$SDE_LIB $ALL_LIB"
 
 dnl ---------------------------------------------------------------------
+dnl Should we include ESRI SDE support?
+dnl ---------------------------------------------------------------------
+
+AC_CHECKING(whether we should include SDE raster support)
+AC_ARG_WITH(sderaster,
+[  --with-sderaster      Include experimental ESRI SDE raster support.],,)
+
+if test "$with_sderaster" = "yes" ; then
+ 
+  if test "$SDE_ENABLED" != "-DUSE_SDE" ; then
+   AC_MSG_ERROR([--with-sderaster requested without SDE supported enabled.])
+  fi
+
+  SDERASTER_ENABLED=-DUSE_SDERASTER
+
+  AC_MSG_RESULT([        including experimental SDE raster support.])
+
+else
+
+  AC_MSG_RESULT([        not including experimental SDE raster support.])
+fi
+
+AC_SUBST(SDERASTER_ENABLED,$SDERASTER_ENABLED)
+
+ALL_ENABLED="$SDERASTER_ENABLED $ALL_ENABLED"
+
+dnl ---------------------------------------------------------------------
 dnl Use MPATROL ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should compile in MPATROL support...)
+AC_CHECKING(whether we should compile in MPATROL support)
 AC_ARG_WITH(mpatrol,[  --with-mpatrol[=DIR]    Include MPATROL support (DIR is MPATROL's install dir).],,)
 
 if test "$with_mpatrol" = "yes" ; then
@@ -1026,7 +1053,7 @@ dnl ---------------------------------------------------------------------
 dnl Find OGR ONLY IF REQUESTED.
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include OGR support...)
+AC_CHECKING(whether we should include OGR support)
 AC_ARG_WITH(ogr,
 [  --with-ogr[=PATH]       Include OGR support (PATH is path to gdal-config).],,)
 
@@ -1150,9 +1177,9 @@ dnl ---------------------------------------------------------------------
 dnl Clear some cache variables
 unset ac_cv_lib_tiff_TIFFOpen
 
-AC_CHECKING(whether we should include TIFF support...)
+AC_CHECKING(whether we should include TIFF support)
 AC_ARG_WITH(tiff,
-[  --without-tiff          Disable TIFF support.
+[  --without-tiff        Disable TIFF support.
   --with-tiff[=DIR]       Include TIFF support (DIR is LibTIFF's install dir).],,)
 if test -z "$with_tiff" -a -n "$GDAL_ENABLED" ; then
   AC_MSG_RESULT([        disabled since gdal is in use])
@@ -1373,7 +1400,7 @@ dnl WMS Server Compatibility - Enabled by default if PROJ.4 is there.
 dnl Can be explicitly disabled using --without-wms
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include WMS Server support...)
+AC_CHECKING(whether we should include WMS Server support)
 AC_ARG_WITH(wms,
 [  --without-wms           Disable OGC WMS Compatibility (enabled by default).],,)
 
@@ -1401,7 +1428,7 @@ dnl ---------------------------------------------------------------------
 dnl WFS Server support - Requires OGR and PROJ
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include WFS Server support...)
+AC_CHECKING(whether we should include WFS Server support)
 AC_ARG_WITH(wfs,
 [  --with-wfs              Enable OGC WFS Server Support (OGR+PROJ4 required).],,)
 
@@ -1433,7 +1460,7 @@ dnl ---------------------------------------------------------------------
 dnl WCS Server support - Requires GDAL and PROJ
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include WCS Server support...)
+AC_CHECKING(whether we should include WCS Server support)
 AC_ARG_WITH(wcs,[  --with-wcs              Enable OGC WCS Server Support (GDAL+PROJ4 required).],,)
 
 if test "$with_wcs" != "yes" ; then
@@ -1456,7 +1483,7 @@ dnl WMS and WFS Client support - Requires PROJ.4 and libcurl.
 dnl OGR recommended for WMS and required for WFS
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should include WMS Client Connections support...)
+AC_CHECKING(whether we should include WMS Client Connections support)
 AC_ARG_WITH(wmsclient,
 [  --with-wmsclient        Enable OGC WMS Client Connections (PROJ4 and libcurl
                           required).],,)
@@ -1477,7 +1504,7 @@ elif test "$with_wmsclient" = "yes" ; then
 fi
 
 
-AC_CHECKING(whether we should include WFS Client Connections support...)
+AC_CHECKING(whether we should include WFS Client Connections support)
 AC_ARG_WITH(wfsclient,
 [  --with-wfsclient        Enable OGC WFS Client Connections (PROJ4, libcurl and
                           OGR required).],,)
@@ -1670,7 +1697,7 @@ dnl ---------------------------------------------------------------------
 dnl Check --enable-debug option for "-g" compile flag. (OFF by default)
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(whether we should enable debug features...)
+AC_CHECKING(whether we should enable debug features)
 AC_ARG_ENABLE(debug,
 [  --enable-debug          Include "-g" in CFLAGS for debugging and enable
                           msDebug() output to stderr (i.e. server log file).
@@ -1700,7 +1727,7 @@ dnl ---------------------------------------------------------------------
 dnl PHP/MapScript module options
 dnl ---------------------------------------------------------------------
 
-AC_CHECKING(for PHP/MapScript module options...)
+AC_CHECKING(for PHP/MapScript module options)
 AC_ARG_WITH(php,
 [  --with-php=DIR          Specify directory where PHP4's include files are
                           installed (or a pointer to the full source tree)

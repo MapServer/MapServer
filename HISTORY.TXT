@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 4.4.0-beta3 ()
 ----------------------
 
+- Added --with-sderaster configure option. 
+
 - Make sure that msDrawWMSLayerLow calls msDrawLayer instead of 
   msDrawRasterLayerLow directly ensuring that some logic (transparency) that 
   are in msDrawLayer are applied (Bug 541).
