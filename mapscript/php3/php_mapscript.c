@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.115  2002/08/14 20:13:08  assefa
+ * Offset in the layer object changed type.
+ *
  * Revision 1.114  2002/08/09 22:55:38  assefa
  * Update code to be in sync with mapserver addition of Styles.
  *
@@ -5053,7 +5056,8 @@ DLEXPORT void php3_ms_img_free(INTERNAL_FUNCTION_PARAMETERS)
 static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
                                       HashTable *list, pval *return_value TSRMLS_DC)
 {
-    int layer_id;
+    int         layer_id;
+    pval        *new_obj_ptr;
 
     if (player == NULL)
     {
@@ -5091,7 +5095,6 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     add_property_double(return_value, "labelminscale",player->labelminscale);
     add_property_double(return_value, "labelmaxscale",player->labelmaxscale);
     add_property_long(return_value,   "maxfeatures",player->maxfeatures);
-    add_property_long(return_value,   "offsite",    player->offsite);
     add_property_long(return_value,   "transform",  player->transform);
     add_property_long(return_value,   "labelcache", player->labelcache);
     add_property_long(return_value,   "postlabelcache",player->postlabelcache);
@@ -5108,6 +5111,10 @@ static long _phpms_build_layer_object(layerObj *player, int parent_map_id,
     PHPMS_ADD_PROP_STR(return_value,  "template",   player->template);
     add_property_long(return_value,   "transparency",player->transparency);
     PHPMS_ADD_PROP_STR(return_value,  "styleitem",  player->styleitem);
+
+    MAKE_STD_ZVAL(new_obj_ptr);
+    _phpms_build_color_object(&(player->offsite),list, new_obj_ptr);
+    _phpms_add_property_object(return_value, "offsite", new_obj_ptr, E_ERROR);
 
     return layer_id;
 }
@@ -5210,7 +5217,6 @@ DLEXPORT void php3_ms_lyr_setProperty(INTERNAL_FUNCTION_PARAMETERS)
     else IF_SET_DOUBLE("labelminscale",self->labelminscale)
     else IF_SET_DOUBLE("labelmaxscale",self->labelmaxscale)
     else IF_SET_LONG(  "maxfeatures",self->maxfeatures)
-    else IF_SET_LONG(  "offsite",    self->offsite)
     else IF_SET_LONG(  "transform",  self->transform)
     else IF_SET_LONG(  "labelcache", self->labelcache)
     else IF_SET_LONG(  "postlabelcache", self->postlabelcache)
