@@ -75,7 +75,7 @@ int writeLog(int show_error)
   fprintf(stream,"%s,",Map->name);
   fprintf(stream,"%d,",Mode);
 
-  fprintf(stream,"%f %f %f %f,", Map->extent.minx, Map->extent.miny,Map->extent.maxx,Map->extent.maxy);
+  fprintf(stream,"%f %f %f %f,", Map->extent.minx, Map->extent.miny, Map->extent.maxx, Map->extent.maxy);
 
   fprintf(stream,"%f %f,", MapPnt.x, MapPnt.y);
 
@@ -112,7 +112,7 @@ void writeError()
   }
 
   if((ms_error.code == MS_NOTFOUND) && (Map->web.empty)) {
-    redirect(Map->web.empty);
+    returnURL(Map->web.empty);
   } else {
     if(Map->web.error) {      
       redirect(Map->web.error);

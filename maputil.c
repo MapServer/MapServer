@@ -1547,7 +1547,7 @@ int msDrawShapefileLayer(mapObj *map, layerObj *layer, gdImagePtr img, char *que
 	if(layer->class[c].overlaysymbol >= 0) { // cache shape
 	  shape.classindex = c;
 	  if(insertFeatureList(&shpcache, shape) == NULL) return(-1);
-	  msInitShape(&shape);
+	  msInitShape(&shape); // we init instead of free because we don't want to destroy in memory point list
 	} else
 	  msFreeShape(&shape);
       }
