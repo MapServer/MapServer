@@ -257,6 +257,9 @@
     rectObj *getExtent() 
     {
         rectObj *extent;
+        if (&(self->extent))
+          if (msRectIsValid(&(self->extent))) 
+            return (&(self->extent));
         extent = (rectObj *) malloc(sizeof(rectObj));
         msLayerOpen(self);
         msLayerGetExtent(self, extent);
