@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.8  2002/11/20 21:22:32  dan
+ * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
+ *
  * Revision 1.7  2002/11/20 17:17:21  julien
  * Support version 0.1.2 of MapContext
  * Remove warning from tags
@@ -185,6 +188,28 @@ char * msOWSGetOnlineResource(mapObj *map, const char *metadata_name)
     }
 
     return online_resource;
+}
+
+
+/* msOWSGetSchemasLocation()
+**
+** schemas location is the root of the web tree where all WFS-related 
+** schemas can be found on this server.  These URLs must exist in order 
+** to validate xml.
+**
+** Use value of "ows_schemas_location" metadata, if not set then
+** return ".." as a default
+*/
+const char *msOWSGetSchemasLocation(mapObj *map)
+{
+    const char *schemas_location;
+
+    schemas_location = msLookupHashTable(map->web.metadata, 
+                                         "ows_schemas_location");
+    if (schemas_location == NULL)
+        schemas_location = "..";
+
+    return schemas_location;
 }
 
 

@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.7  2002/11/20 21:22:32  dan
+ * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
+ *
  * Revision 1.6  2002/11/20 17:17:21  julien
  * Support version 0.1.2 of MapContext
  * Remove warning from tags
@@ -41,6 +44,7 @@
 int msOWSDispatch(mapObj *map, char **names, char **values, int numentries); 
 int msOWSMakeAllLayersUnique(mapObj *map);
 char *msOWSGetOnlineResource(mapObj *map, const char *metadata_name);
+const char *msOWSGetSchemasLocation(mapObj *map);
 
 // OWS_NOERR and OWS_WARN passed as action_if_not_found to printMetadata()
 #define OWS_NOERR   0

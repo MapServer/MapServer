@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.8  2002/11/20 21:22:32  dan
+ * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
+ *
  * Revision 1.7  2002/10/28 20:31:21  dan
  * New support for WMS Map Context (from Julien)
  *
@@ -157,26 +160,6 @@ static int msWFSIsLayerSupported(layerObj *lp)
     return 0; /* false */
 }
 
-
-/* msWFSGetSchemasLocation()
-**
-** schemas location is the root of the web tree where all WFS-related 
-** schemas can be found on this server.  These URLs must exist in order 
-** to validate xml.
-**
-** Use value of "wfs_schemas_location", otherwise return ".."
-*/
-static const char *msWFSGetSchemasLocation(mapObj *map)
-{
-    const char *schemas_location;
-
-    schemas_location = msLookupHashTable(map->web.metadata, 
-                                         "wfs_schemas_location");
-    if (schemas_location == NULL)
-        schemas_location = "..";
-
-    return schemas_location;
-}
 
 /* msWFSGetGeomElementName()
 **
@@ -478,7 +461,7 @@ int msWFSDescribeFeatureType(mapObj *map, const char *wmtver,
     printf("\n"
            "  <import namespace=\"http://www.opengis.net/gml\" \n"
            "          schemaLocation=\"%s/gml/2.1/feature.xsd\" />\n",
-           msWFSGetSchemasLocation(map));
+           msOWSGetSchemasLocation(map));
 
     /*
     ** loop through layers 
@@ -717,7 +700,7 @@ int msWFSGetFeature(mapObj *map, const char *wmtver,
            "   xsi:schemaLocation=\"http://www.opengis.net/wfs %s/wfs/%s/WFS-basic.xsd \n"
            "                       %s %sSERVICE=WFS&amp;VERSION=%s&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=%s\">\n", 
            myns_uri, 
-           msWFSGetSchemasLocation(map), wmtver, 
+           msOWSGetSchemasLocation(map), wmtver, 
            myns_uri, script_url_encoded, wmtver, typename);
 
 

@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.18  2002/11/20 21:22:32  dan
+ * Added msOWSGetSchemasLocation() for use by both WFS and WMS Map Context
+ *
  * Revision 1.17  2002/11/20 19:08:55  julien
  * Support onlineResource of version 0.1.2
  *
@@ -419,11 +422,6 @@ int msLoadMapContext(mapObj *map, char *filename)
   // Load the metadata of the WEB obj
   if(map->web.metadata == NULL)
       map->web.metadata =  msCreateHashTable();
-
-  // Schema Location
-  msGetMapContextXMLHashValueDecode(psMapContext, 
-                                    "xsi:noNamespaceSchemaLocation",
-                                    &map->web.metadata,"wfs_schemas_location");
 
   // Projection
   pszValue = (char*)CPLGetXMLValue(psMapContext, 
@@ -1041,7 +1039,7 @@ int msLoadMapContext(mapObj *map, char *filename)
 int msSaveMapContext(mapObj *map, char *filename)
 {
 #if defined(USE_WMS_LYR)
-  const char * version, *schemas_location, *value;
+  const char * version, *value;
   char * tabspace=NULL, *pszValue, *pszChar,*pszSLD=NULL,*pszURL,*pszSLD2=NULL;
   char *pszFormat, *pszStyle, *pszCurrent, *pszStyleItem, *pszLegendURL;
   char *pszLegendItem, *pszEncodedVal;
@@ -1071,19 +1069,12 @@ int msSaveMapContext(mapObj *map, char *filename)
          "<?xml version='1.0' encoding=\"ISO-8859-1\" standalone=\"no\" ?>\n");
 
   // set the WMS_Viewer_Context information
-  // Use value of "wfs_schemas_location", otherwise return ".."
-  schemas_location = msLookupHashTable(map->web.metadata, 
-                                       "wfs_schemas_location");
 
   fprintf( stream, "<WMS_Viewer_Context version=\"%s\"", version );
   fprintf( stream, " xmlns:xlink=\"http://www.w3.org/TR/xlink\"" );
   fprintf( stream, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-  if (schemas_location == NULL)
-      fprintf( stream," xsi:noNamespaceSchemaLocation=\"%s\">\n", "..");
-  else
-      fprintf( stream," xsi:noNamespaceSchemaLocation=\"%s\">\n",
-               msEncodeHTMLEntities(schemas_location) );
-      
+  fprintf( stream, " xsi:noNamespaceSchemaLocation=\"%s\">\n", 
+           msOWSGetSchemasLocation(map) );
 
   // set the General information
   fprintf( stream, "  <General>\n" );
