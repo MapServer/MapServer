@@ -19,7 +19,10 @@
 #define BIG_ENDIAN 2
 #endif
 
+#ifndef _mysql_h
 #include <mysql/mysql.h>
+#endif
+
 #include <string.h>
 
 #define ETYPE_POINT 1
