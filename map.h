@@ -94,10 +94,10 @@ extern "C" {
 
 #define MS_MAXIMGSIZE 2048
 
-#define MS_MAXCLASSES 50
-#define MS_MAXSTYLES 5
+#define MS_MAXCLASSES 500
+#define MS_MAXSTYLES 50
 #define MS_MAXPROJARGS 20
-#define MS_MAXLAYERS 100 /* maximum number of layers in a map file */
+#define MS_MAXLAYERS 1000 /* maximum number of layers in a map file */
 #define MS_MAXJOINS 5
 #define MS_ITEMNAMELEN 32
 #define MS_NAMELEN 20
@@ -150,16 +150,19 @@ extern "C" {
 #define MS_DRIVER_SWF(format)	(strncasecmp((format)->driver,"swf",3)==0)
 #define MS_DRIVER_GDAL(format)	(strncasecmp((format)->driver,"gdal/",5)==0)
 #define MS_DRIVER_PDF(format)	(strncasecmp((format)->driver,"pdf",3)==0)
+#define MS_DRIVER_IMAGEMAP(format)	(strncasecmp((format)->driver,"imagemap",8)==0)
 
 #define MS_RENDER_WITH_GD	1
 #define MS_RENDER_WITH_SWF    	2
 #define MS_RENDER_WITH_RAWDATA 	3
 #define MS_RENDER_WITH_PDF 	4
+#define MS_RENDER_WITH_IMAGEMAP 	5
 
 #define MS_RENDERER_GD(format)	((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format)	((format)->renderer == MS_RENDER_WITH_SWF)
 #define MS_RENDERER_RAWDATA(format) ((format)->renderer == MS_RENDER_WITH_RAWDATA)
 #define MS_RENDERER_PDF(format) ((format)->renderer == MS_RENDER_WITH_PDF)
+#define MS_RENDERER_IMAGEMAP(format) ((format)->renderer == MS_RENDER_WITH_IMAGEMAP)
 
 // ok, we'll switch to an UL cell model to make this work with WMS
 #define MS_CELLSIZE(min,max,d)    ((max - min)/d)
@@ -188,7 +191,7 @@ enum MS_FONT_TYPE {MS_TRUETYPE, MS_BITMAP};
 enum MS_LABEL_POSITIONS {MS_UL, MS_LR, MS_UR, MS_LL, MS_CR, MS_CL, MS_UC, MS_LC, MS_CC, MS_AUTO, MS_XY}; // arrangement matters for auto placement, don't change it
 enum MS_BITMAP_FONT_SIZES {MS_TINY , MS_SMALL, MS_MEDIUM, MS_LARGE, MS_GIANT};
 enum MS_QUERYMAP_STYLES {MS_NORMAL, MS_HILITE, MS_SELECTED};
-enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE };
+enum MS_CONNECTION_TYPE {MS_INLINE, MS_SHAPEFILE, MS_TILED_SHAPEFILE, MS_SDE, MS_OGR, MS_UNUSED_1, MS_POSTGIS, MS_WMS, MS_ORACLESPATIAL, MS_WFS, MS_GRATICULE, MS_MYGIS };
 enum MS_JOIN_CONNECTION_TYPE {MS_DB_XBASE, MS_DB_MYSQL, MS_DB_ORACLE, MS_DB_POSTGRES};
 enum MS_JOIN_TYPE {MS_JOIN_ONE_TO_ONE, MS_JOIN_ONE_TO_MANY};
 
@@ -689,6 +692,7 @@ typedef struct layer_obj {
   void *ogrlayerinfo; // For OGR layers, will contain a msOGRLayerInfo struct
   void *sdelayerinfo; // For SDE layers, will contain a sdeLayerObj struct
   void *postgislayerinfo; // For PostGIS layers, this will contain a msPOSTGISLayerInfo struct
+  void *mygislayerinfo; // mysql based layers & stuff...
   void *oraclespatiallayerinfo;
   void *wfslayerinfo; // For WFS layers, will contain a msWFSLayerInfo struct
   void *graticulelayerinfo;
@@ -836,6 +840,7 @@ typedef struct {
 
   outputFormatObj *format;
   int renderer;
+  int size;
 
 #ifndef SWIG
   union {
@@ -846,6 +851,7 @@ typedef struct {
 #ifdef USE_PDF
     PDFObj *pdf;
 #endif
+    char *imagemap;
     short *raw_16bit;
     float *raw_float;
   } img;
@@ -1084,6 +1090,17 @@ int msPOSTGISLayerGetExtent(layerObj *layer, rectObj *extent);
 int msPOSTGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
 int msPOSTGISLayerGetItems(layerObj *layer);
 
+int msMYGISLayerOpen(layerObj *layer); // in mapmygis.c
+void msMYGISLayerFreeItemInfo(layerObj *layer);
+int msMYGISLayerInitItemInfo(layerObj *layer);
+int msMYGISLayerWhichShapes(layerObj *layer, rectObj rect);
+int msMYGISLayerClose(layerObj *layer);
+int msMYGISLayerNextShape(layerObj *layer, shapeObj *shape);
+int msMYGISLayerGetShape(layerObj *layer, shapeObj *shape, long record);
+int msMYGISLayerGetExtent(layerObj *layer, rectObj *extent);
+int msMYGISLayerGetShapeRandom(layerObj *layer, shapeObj *shape, long *record);
+int msMYGISLayerGetItems(layerObj *layer);
+
 int msSDELayerOpen(layerObj *layer); // in mapsde.c
 void msSDELayerClose(layerObj *layer);
 int msSDELayerWhichShapes(layerObj *layer, rectObj rect);
@@ -1154,6 +1171,32 @@ void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image, shapeObj *sha
 /*      End of Prototypes for functions in mapdraw.c                    */
 /* ==================================================================== */
 
+/* ==================================================================== */
+/*      Prototypes for functions in mapimagemap.c                       */
+/* ==================================================================== */
+imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
+                          char *imagepath, char *imageurl);
+imageObj *msImageLoadIM( const char *filename );
+void      msImageInitIM( imageObj *image );
+
+int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
+int msSaveImageIM_LL(imageObj* img, char *filename, int type,
+                     int transparent, int interlace, int quality);
+
+void msFreeImagexsIM(imageObj* img);
+void msFreeImageIM(imageObj* img);
+
+void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, double r, styleObj *style, double scalefactor);
+void msCircleDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, double r, styleObj *style, double scalefactor);
+void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, styleObj *style, double scalefactor);
+void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
+void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
+
+int msDrawTextIM(gdImagePtr img, pointObj labelPnt, imageObj *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+int msDrawLabelCacheIM(char* img, mapObj *map);
+/* ==================================================================== */
+/*      End of Prototypes for functions in mapimagemap.c                */
+/* ==================================================================== */
 
 /* ==================================================================== */
 /*      Prototypes for functions in mapgd.c                             */
