@@ -5,6 +5,7 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 {
 #ifdef USE_PROJ
   projUV p;
+  int	 error;
 
   if( in && in->proj && out && out->proj )
   {
@@ -14,7 +15,11 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
           point->y *= DEG_TO_RAD;
       }
 
-      pj_transform( in->proj, out->proj, 1, 0, &(point->x), &(point->y), NULL );
+      error = pj_transform( in->proj, out->proj, 1, 0, 
+                            &(point->x), &(point->y), NULL );
+
+      if( error )
+          return MS_FAILURE;
 
       if( pj_is_latlong(out->proj) )
       {
@@ -52,6 +57,31 @@ int msProjectPoint(projectionObj *in, projectionObj *out, pointObj *point)
 #endif
 }
 
+static void msProjectGrowRect(projectionObj *in, projectionObj *out, 
+                              rectObj *prj_rect, int *rect_initialized, 
+                              pointObj *prj_point, int *failure )
+
+{
+    if( msProjectPoint(in, out, prj_point) == MS_SUCCESS )
+    {
+        if( *rect_initialized )
+        {
+            prj_rect->miny = MS_MIN(prj_rect->miny, prj_point->y);
+            prj_rect->maxy = MS_MAX(prj_rect->maxy, prj_point->y);
+            prj_rect->minx = MS_MIN(prj_rect->minx, prj_point->x);
+            prj_rect->maxx = MS_MAX(prj_rect->maxx, prj_point->x);
+        }
+        else
+        {
+            prj_rect->minx = prj_rect->maxx = prj_point->x;
+            prj_rect->miny = prj_rect->maxy = prj_point->y;
+            *rect_initialized = MS_TRUE;
+        }
+    }
+    else
+        (*failure)++;
+}
+
 #define NUMBER_OF_SAMPLE_POINTS 100
 
 int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect) 
@@ -59,6 +89,7 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
 #ifdef USE_PROJ
   pointObj prj_point;
   rectObj prj_rect;
+  int	  rect_initialized = MS_FALSE, failure=0;
 
   double dx, dy;
   double x, y;
@@ -66,50 +97,48 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   dx = (rect->maxx - rect->minx)/NUMBER_OF_SAMPLE_POINTS;
   dy = (rect->maxy - rect->miny)/NUMBER_OF_SAMPLE_POINTS;
 
-  prj_point.x = rect->minx;
-  prj_point.y = rect->miny;
-  msProjectPoint(in, out, &prj_point);
-  prj_rect.minx = prj_rect.maxx = prj_point.x;
-  prj_rect.miny = prj_rect.maxy = prj_point.y;
-
   if(dx > 0) {
-    for(x=rect->minx+dx; x<=rect->maxx; x+=dx) {
+    for(x=rect->minx; x<=rect->maxx; x+=dx) {
       prj_point.x = x;
       prj_point.y = rect->miny;
-      msProjectPoint(in, out, &prj_point);
-      prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
-      prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
-      prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
-      prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
+      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                        &failure);
       
       prj_point.x = x;
       prj_point.y = rect->maxy;
-      msProjectPoint(in, out, &prj_point);
-      prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
-      prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
-      prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
-      prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x); 
+      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                        &failure);
     }
   }
 
   if(dy > 0) {
-    for(y=rect->miny+dy; y<=rect->maxy; y+=dy) {
+    for(y=rect->miny; y<=rect->maxy; y+=dy) {
       prj_point.y = y;
       prj_point.x = rect->minx;    
-      msProjectPoint(in, out, &prj_point);
-      prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
-      prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
-      prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
-      prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
+      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                        &failure);
       
       prj_point.x = rect->maxx;
       prj_point.y = y;
-      msProjectPoint(in, out, &prj_point);
-      prj_rect.minx = MS_MIN(prj_rect.minx, prj_point.x);
-      prj_rect.maxx = MS_MAX(prj_rect.maxx, prj_point.x);
-      prj_rect.miny = MS_MIN(prj_rect.miny, prj_point.y);
-      prj_rect.maxy = MS_MAX(prj_rect.maxy, prj_point.y);
+      msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                        &failure);
     }
+  }
+
+  /*
+  ** If there have been any failures around the edges, then we had better
+  ** try and fill in the interior to get a close bounds. 
+  */
+  if( failure > 0 )
+  {
+      for(x=rect->minx + dx; x<=rect->maxx; x+=dx) {
+          for(y=rect->miny + dy; y<=rect->maxy; y+=dy) {
+              prj_point.x = x;
+              prj_point.y = y;
+              msProjectGrowRect(in,out,&prj_rect,&rect_initialized,&prj_point,
+                                &failure);
+          }
+      }
   }
 
   rect->minx = prj_rect.minx;
@@ -117,7 +146,10 @@ int msProjectRect(projectionObj *in, projectionObj *out, rectObj *rect)
   rect->maxx = prj_rect.maxx;
   rect->maxy = prj_rect.maxy;
 
-  return(MS_SUCCESS);
+  if( !rect_initialized )
+      return MS_FAILURE;
+  else
+      return(MS_SUCCESS);
 #else
   msSetError(MS_PROJERR, "Projection support is not available.", "msProjectRect()");
   return(MS_FAILURE);
@@ -129,6 +161,10 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 #ifdef USE_PROJ
   int i,j;
 
+#ifdef notdef
+  for(i=0; i<shape->numlines; i++)
+      msProjectLine(in, out, shape->line+i );
+#endif
   for(i=0; i<shape->numlines; i++)
     for(j=0; j<shape->line[i].numpoints; j++)
       msProjectPoint(in, out, &(shape->line[i].point[j]));
@@ -143,10 +179,37 @@ int msProjectShape(projectionObj *in, projectionObj *out, shapeObj *shape)
 int msProjectLine(projectionObj *in, projectionObj *out, lineObj *line)
 {
 #ifdef USE_PROJ
-  int i;
-  
-  for(i=0; i<line->numpoints; i++)
-    msProjectPoint(in, out, &(line->point[i]));
+  int i, be_careful = 0;
+
+  if( be_careful )
+      be_careful = pj_is_latlong(out->proj);
+
+  if( be_careful )
+  {
+      for(i=0; i<line->numpoints; i++)
+      {
+          double	dist;
+
+          msProjectPoint(in, out, &(line->point[i]));
+          if( i > 0 )
+          {
+              dist = line->point[i].x - line->point[i-1].x;
+              if( dist > 180 )
+              {
+                  line->point[i].x -= 360.0;
+              }
+              else if( dist < -180 )
+              {
+                  line->point[i].x += 360.0;
+              }
+          }
+      }
+  }
+  else
+  {
+      for(i=0; i<line->numpoints; i++)
+          msProjectPoint(in, out, &(line->point[i]));
+  }
 
   return(MS_SUCCESS);
 #else
