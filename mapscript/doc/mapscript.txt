@@ -1436,7 +1436,7 @@ clone() : layerObj
 close() : void
     Close the underlying layer.
 
-.. note:: demote() is removed in MapServer 4.3
+.. note:: demote() is removed in MapServer 4.4
 
 draw( mapObj_ map, imageObj_ image ) : int
     Renders this layer into the target image, adding labels to the cache if
@@ -1509,7 +1509,7 @@ getResult( int i ) : resultCacheMemberObj_
     outside the range of available results.  This method would normally only
     be used after issuing a query operation.
 
-.. note:: getNumResults() and getResult() are deprecated in MapServer 4.3/4.4.
+.. note:: getNumResults() and getResult() are deprecated in MapServer 4.4.
           Users should instead use the new querying API described in 
           querying-HOWTO.txt.  layerObj::getResults() is the entry point for
           the new API.
@@ -1562,7 +1562,7 @@ open() : void
     Opens the underlying layer.  This is required before operations like
     getFeature() will work, but is not required before a draw or query call.
 
-.. note:: promote() is eliminated in MapServer 4.3.
+.. note:: promote() is eliminated in MapServer 4.4.
 
 queryByAttributes( mapObj_ map, string qitem, string qstring, int mode ) : int
     Query layer for shapes that intersect current map extents.  qitem is the 
@@ -1821,7 +1821,7 @@ fontset : fontSetObj_
 height : int
     Map's output image height in pixels.
 
-.. note:: direct setting of *height* is deprecated in MapServer version 4.3.
+.. note:: direct setting of *height* is deprecated in MapServer version 4.4.
    Users should set width and height simultaneously using setSize().
    
 imagecolor : colorObj_
@@ -1830,7 +1830,7 @@ imagecolor : colorObj_
 imagequality : int
     JPEG image quality.
 
-.. note:: map imagequality is deprecated in MapServer 4.3/4.4 and should
+.. note:: map imagequality is deprecated in MapServer 4.4 and should
           instead be managed through map outputformats.
           
 imagetype : string immutable
@@ -1839,7 +1839,7 @@ imagetype : string immutable
 interlace : int
     Output image interlacing.
 
-.. note:: map interlace is deprecated in MapServer 4.3/4.4 and should
+.. note:: map interlace is deprecated in MapServer 4.4 and should
           instead be managed through map outputformats.
 
 lablecache : labelCacheObj_
@@ -1902,7 +1902,7 @@ templatepattern : string
 transparent : int
     MS_TRUE or MS_FALSE.
 
-.. note:: map transparent is deprecated in MapServer 4.3/4.4 and should
+.. note:: map transparent is deprecated in MapServer 4.4 and should
           instead be managed through map outputformats.
 
 units : int
@@ -1914,7 +1914,7 @@ web : webObj_
 width : int
     Map's output image width in pixels.
 
-.. note:: direct setting of *width* is deprecated in MapServer version 4.3.
+.. note:: direct setting of *width* is deprecated in MapServer version 4.4.
    Users should set width and height simultaneously using setSize().
    
 mapObj Methods
