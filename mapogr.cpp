@@ -31,6 +31,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.7  2000/09/18 19:45:25  dan
+ * Added support of overlaying symbols
+ *
  * Revision 1.6  2000/09/17 17:35:21  dan
  * Fixed label point generation for polygons
  *
@@ -338,6 +341,8 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
   shapeObj transformedshape={0,NULL,{-1,-1,-1,-1},MS_NULL};
   pointObj annopnt, *pnt;
 
+  featureListNodeObjPtr shpcache=NULL, current=NULL;           
+
 /* ------------------------------------------------------------------
  * Register OGR Drivers, only once per execution
  * ------------------------------------------------------------------ */
@@ -543,6 +548,13 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                                      layer->_class[nClassId].backgroundcolor,
                                      layer->_class[nClassId].outlinecolor, 
                                      layer->_class[nClassId].sizescaled);
+                  if (layer->_class[nClassId].overlaysymbol >= 0)
+                      msDrawMarkerSymbol(&map->symbolset, img, pnt,
+                                layer->_class[nClassId].overlaysymbol, 
+                                layer->_class[nClassId].overlaycolor, 
+                                layer->_class[nClassId].overlaybackgroundcolor,
+                                layer->_class[nClassId].overlayoutlinecolor, 
+                                layer->_class[nClassId].overlaysizescaled);
 
                   if(pszLabel) 
                   {
@@ -574,6 +586,8 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                                      layer->_class[nClassId].outlinecolor, 
                                      layer->_class[nClassId].sizescaled);
 
+              // Linear Overlaying Symbols are cached... see below
+
               if(pszLabel &&
                  msPolylineLabelPoint(&transformedshape, &annopnt, 
                                  layer->_class[nClassId].label.minfeaturesize, 
@@ -591,7 +605,17 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
               }
           }
 
-	  msFreeShape(&transformedshape);
+	  if(layer->_class[nClassId].overlaysymbol >= 0) // cache shape
+          {
+              transformedshape.classindex = nClassId;
+              if(insertFeatureList(&shpcache, transformedshape) == NULL) 
+                  return(-1);
+              msInitShape(&transformedshape);
+	  } 
+          else
+          {
+              msFreeShape(&transformedshape);
+          }
           break;
 /* ------------------------------------------------------------------
  *      MS_POLYGON / MS_POLYLINE
@@ -615,6 +639,14 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                                    layer->_class[nClassId].backgroundcolor,
                                    layer->_class[nClassId].outlinecolor, 
                                    layer->_class[nClassId].sizescaled);
+                  if (layer->_class[nClassId].overlaysymbol >= 0)
+                      msDrawShadeSymbol(&map->symbolset, img, 
+                                &transformedshape,
+                                layer->_class[nClassId].overlaysymbol, 
+                                layer->_class[nClassId].overlaycolor, 
+                                layer->_class[nClassId].overlaybackgroundcolor,
+                                layer->_class[nClassId].overlayoutlinecolor,
+                                layer->_class[nClassId].overlaysizescaled);
                   if(pszLabel)
                       nLabelStatus = msPolygonLabelPoint(&transformedshape, 
                                                           &annopnt, 
@@ -628,6 +660,8 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
                                    layer->_class[nClassId].backgroundcolor,
                                    layer->_class[nClassId].outlinecolor, 
                                    layer->_class[nClassId].sizescaled);
+
+                  // Linear Overlaying Symbols are cached... see below
 
                   if(pszLabel)
                       nLabelStatus = msPolylineLabelPoint(&transformedshape, 
@@ -650,7 +684,18 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
               }
           }
 
-	  msFreeShape(&transformedshape);
+	  if(layer->type == MS_POLYLINE &&
+             layer->_class[nClassId].overlaysymbol >= 0) // cache shape
+          {
+              transformedshape.classindex = nClassId;
+              if(insertFeatureList(&shpcache, transformedshape) == NULL) 
+                  return(-1);
+              msInitShape(&transformedshape);
+	  } 
+          else
+          {
+              msFreeShape(&transformedshape);
+          }
           break;
     default:
       msSetError(MS_MISCERR, "Unknown or unsupported layer type.", 
@@ -661,8 +706,25 @@ int msDrawOGRLayer(mapObj *map, layerObj *layer, gdImagePtr img)
       CPLFree(pszLabel);
       delete poFeature;
 
-
   } /* while GetNextFeature() */
+
+/* ------------------------------------------------------------------
+ * Display overlay symbols, LINE/POLYLINE only
+ * ------------------------------------------------------------------ */
+  if(shpcache) 
+  {
+      for(current=shpcache; current; current=current->next) 
+      {
+	  nClassId = current->shape.classindex;
+          msDrawLineSymbol(&map->symbolset, img, &current->shape,
+                           layer->_class[nClassId].overlaysymbol,
+                           layer->_class[nClassId].overlaycolor,
+                           layer->_class[nClassId].overlaybackgroundcolor,
+                           layer->_class[nClassId].overlayoutlinecolor,
+                           layer->_class[nClassId].overlaysizescaled);
+      }
+      freeFeatureList(shpcache);
+  }
 
 /* ------------------------------------------------------------------
  * OK, we're done ... cleanup
