@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.3  2000/06/30 14:27:23  dan
+ * Add a possibility to zoom in as much as possible using the minscale.
+ *
  * Revision 1.2  2000/06/28 20:25:16  dan
  * Fixed colorObj.setRGB(), added map.save() + sync with mapscript.i v1.9
  *
@@ -250,6 +253,10 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preferenceMap,
 /* ==================================================================== */
 DLEXPORT void php3_ms_getcwd(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_getpid(INTERNAL_FUNCTION_PARAMETERS);
+
+
+static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits, 
+                                        int nWidth);
 
 /*=====================================================================
  *               PHP Dynamically Loadable Library stuff
@@ -1156,6 +1163,7 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     double      dfNewScale = 0.0;
     int         bMaxExtSet = 0;
     int         nArgs = ARG_COUNT(ht);
+    double      dfDeltaExt = -1.0;
 
     if (getThis(&pThis) == FAILURE ||   
         (nArgs != 5 && nArgs != 6))
@@ -1227,8 +1235,8 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
 /* -------------------------------------------------------------------- */
     if (pZoomFactor->value.lval > 1)
     {
-         oNewGeorefExt.minx = 
-             dfGeoPosX - (dfDeltaX/(2*pZoomFactor->value.lval));        
+        oNewGeorefExt.minx = 
+            dfGeoPosX - (dfDeltaX/(2*pZoomFactor->value.lval));        
          oNewGeorefExt.miny = 
              dfGeoPosY - (dfDeltaY/(2*pZoomFactor->value.lval));        
          oNewGeorefExt.maxx = 
@@ -1263,13 +1271,33 @@ DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS)
     dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
                                    self->width, self->height);
 
-    if (self->web.minscale > 0 && self->web.maxscale > 0)
+    if (self->web.maxscale > 0)
     {
-        if ((pZoomFactor->value.lval > 1 && dfNewScale <  self->web.minscale) ||
-            (pZoomFactor->value.lval < 0 && dfNewScale >  self->web.maxscale))
+        if (pZoomFactor->value.lval < 0 && dfNewScale >  self->web.maxscale)
         {
             RETURN_FALSE;
         }
+    }
+
+/* ==================================================================== */
+/*      we do a spcial case for zoom in : we try to zoom as much as     */
+/*      possible using the mincale set in the .map.                     */
+/* ==================================================================== */
+    if (self->web.minscale > 0 && dfNewScale <  self->web.minscale &&
+        pZoomFactor->value.lval > 1)
+    {
+        dfDeltaExt = 
+            GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
+                                      self->width);
+        if (dfDeltaExt > 0.0)
+        {
+            oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
+            oNewGeorefExt.miny = dfGeoPosY - (dfDeltaExt/2);
+            oNewGeorefExt.maxx = dfGeoPosX + (dfDeltaExt/2);
+            oNewGeorefExt.maxy = dfGeoPosY + (dfDeltaExt/2);
+        }
+        else
+          RETURN_FALSE;
     }
 /* -------------------------------------------------------------------- */
 /*      If the buffer is set, make sure that the extents do not go      */
@@ -1364,6 +1392,9 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     rectObj     *poPixExt = NULL;
     double      dfNewScale = 0.0;
     rectObj     oNewGeorefExt;    
+    double      dfMiddleX =0.0;
+    double      dfMiddleY =0.0;
+    double      dfDeltaExt =0.0;
     
     if (getThis(&pThis) == FAILURE ||
         getParameters(ht, 4, &pPixelExt, &pWidth, &pHeight,
@@ -1428,13 +1459,31 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
                                    self->width, self->height);
 
-    if (self->web.minscale > 0 && self->web.maxscale > 0 && 
-        (dfNewScale <  self->web.minscale ||
-         dfNewScale >  self->web.maxscale))
+    if (self->web.maxscale > 0 &&  dfNewScale > self->web.maxscale)
     {
         RETURN_FALSE;
     }
 
+    if (self->web.minscale > 0 && dfNewScale <  self->web.minscale)
+    {
+        dfDeltaExt = 
+            GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
+                                      self->width);
+        dfMiddleX = oNewGeorefExt.minx + 
+            ((oNewGeorefExt.maxx - oNewGeorefExt.minx)/2);
+        dfMiddleY = oNewGeorefExt.miny + 
+            ((oNewGeorefExt.maxy - oNewGeorefExt.miny)/2);
+        
+        if (dfDeltaExt > 0.0)
+        {
+            oNewGeorefExt.minx = dfMiddleX - (dfDeltaExt/2);
+            oNewGeorefExt.miny = dfMiddleY - (dfDeltaExt/2);
+            oNewGeorefExt.maxx = dfMiddleX + (dfDeltaExt/2);
+            oNewGeorefExt.maxy = dfMiddleY + (dfDeltaExt/2);
+        }
+        else
+          RETURN_FALSE;
+    }
     self->extent.minx = oNewGeorefExt.minx;
     self->extent.miny = oNewGeorefExt.miny;
     self->extent.maxx = oNewGeorefExt.maxx;
@@ -1795,7 +1844,9 @@ DLEXPORT void php3_ms_map_getColorByIndex(INTERNAL_FUNCTION_PARAMETERS)
 
         if (pColorIndex->value.lval < palette.numcolors)
         {
-            oColor = palette.colors[(int)pColorIndex->value.lval];
+            oColor.red = palette.colors[(int)pColorIndex->value.lval].red;
+            oColor.green = palette.colors[(int)pColorIndex->value.lval].green;
+            oColor.blue = palette.colors[(int)pColorIndex->value.lval].blue;
         }
         else
         {
@@ -4536,5 +4587,45 @@ DLEXPORT void php3_ms_getcwd(INTERNAL_FUNCTION_PARAMETERS)
 DLEXPORT void php3_ms_getpid(INTERNAL_FUNCTION_PARAMETERS)
 {
     RETURN_LONG(getpid());
+}
+
+
+
+/************************************************************************/
+/*  static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits,*/
+/*                                              int nWidth)             */
+/*                                                                      */
+/*      Utility function to return the maximum extent using the         */
+/*      scale and the width of the image.                               */
+/*                                                                      */
+/*      Base on the function msCalculateScale (mapscale.c)              */
+/************************************************************************/
+static double inchesPerUnit[6]={1, 12, 63360.0, 39.3701, 39370.1, 4374754};
+static double GetDeltaExtentsUsingScale(double dfScale, int nUnits, 
+                                        int nWidth)
+{
+    double md = 0.0;
+    double dfDelta = -1.0;
+
+    if (dfScale <= 0 || nWidth <=0)
+      return -1;
+
+    switch (nUnits) 
+    {
+      case(MS_DD):
+      case(MS_METERS):    
+      case(MS_KILOMETERS):
+      case(MS_MILES):
+      case(MS_INCHES):  
+      case(MS_FEET):
+        md = (nWidth-1)/(MS_PPI*inchesPerUnit[nUnits]);
+        dfDelta = md * dfScale;
+        break;
+          
+      default:
+        break;
+    }
+
+    return dfDelta;
 }
 
