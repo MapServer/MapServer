@@ -245,6 +245,17 @@ MS_MYGIS              11
 ================== =====
 
 =============================================================================
+ Mapscript Functions
+=============================================================================
+
+msCleanup() : void
+  msCleanup() attempts to recover all dynamically allocated resources allocated
+  by MapServer code and dependent libraries.  It it used primarily for final
+  cleanup in scripts that need to do memory leak testing to get rid of "noise"
+  one-time allocations.  It should not normally be used by production code. 
+
+  
+=============================================================================
  Mapscript Classes
 =============================================================================
 
