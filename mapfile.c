@@ -237,9 +237,6 @@ featureListNodeObjPtr insertFeatureList(featureListNodeObjPtr *list, shapeObj *s
     return(NULL);
   }
 
-  sprintf(ms_error.message, "in insertFeatureList, input shape has %d lines", shape->numlines);
-  msSetError(MS_MISCERR, ms_error.message, "insertFeature()");
-
   msInitShape(&(node->shape));
   if(msCopyShape(shape, &(node->shape)) == -1) return(NULL);
 
