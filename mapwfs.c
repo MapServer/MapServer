@@ -29,6 +29,10 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.40  2004/08/18 12:53:51  dan
+ * Produce an exception if typename specified in request doesn't exist or
+ * cannot be served as a WFS layer (bug 824)
+ *
  * Revision 1.39  2004/07/28 22:16:17  assefa
  * Add support for spatial filters inside an SLD. (Bug 782).
  *
@@ -819,6 +823,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                                   &(map->web.metadata), 
                                   MS_TRUE);
 
+        // Keep only selected layers, set to OFF by default.
         for(j=0; j<map->numlayers; j++) 
         {
             layerObj *lp;
@@ -827,13 +832,24 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
 
             // Keep only selected layers, set to OFF by default.
             lp->status = MS_OFF;
-            
-            for (k=0; k<numlayers; k++)
+        }
+
+        for (k=0; k<numlayers; k++)
+        {
+            int bLayerFound = MS_FALSE; 
+
+            for(j=0; j<map->numlayers; j++) 
             {
-                if (msWFSIsLayerSupported(lp) && lp->name && 
-                    strcasecmp(lp->name, layers[k]) == 0)
+                layerObj *lp;
+
+                lp = &(map->layers[j]);
+
+                if (msWFSIsLayerSupported(lp) &&
+                    lp->name && strcasecmp(lp->name, layers[k]) == 0)
                 {
                     const char *pszThisLayerSRS;
+
+                    bLayerFound = MS_TRUE;
 
                     lp->status = MS_ON;
                     if (lp->template == NULL)
@@ -875,6 +891,18 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj, cgiRequestObj *req)
                         return msWFSException(map, paramsObj->pszVersion);
                     }
                 }
+
+            }
+
+            if (!bLayerFound)
+            {
+                /* Requested layer name was not in capabilities:
+                 * either it just doesn't exist, or it's missing DUMP TRUE
+                 */
+                msSetError(MS_WFSERR, 
+                           "TYPENAME '%s' doesn't exist in this server.  Please check the capabilities and reformulate your request.",
+                           "msWFSGetFeature()", layers[k]);
+                return msWFSException(map, paramsObj->pszVersion);
             }
         }
     }
