@@ -1,0 +1,65 @@
+MapServer Revision History
+==========================
+
+This is a human-readable revision history which will attempt to document
+required changes for users to migrate from one version of MapServer to the
+next.  Developers are strongly encouraged to document their changes and
+their impacts on the users here.  (Please add the most recent changes to the top of the list.)
+
+For a complete change history, please see the CVS log comments.  A copy of
+the CVS logs is updated daily at the following URL:
+
+  http://www2.dmsolutions.ca/mapserver/dl/mapserver_changelog.txt
+
+
+
+Version 3.6-dev (CVS)
+---------------------
+
+- Major changes to support vector output (PDF, SWF, GML, ...):
+   - imageObj is used by all rendering functions instead of gdImagePtr
+   - New msSaveImage() prototype
+  Full details still have to be documented...
+
+- MapScript: qitem and qstring params added to layer->queryByAttribute().
+  Instead of being driven by the layer's FILTER/FILTERITEM, the query by
+  attribute is now driven by the values passed via qitem,qstring, and the 
+  layer's FILTER/FILTERITEM are ignored.
+
+- Symbol and MapFile changes:
+   ANTIALIAS and FILLED keywords now take a boolean (TRUE/FALSE) argument
+   i.e.   ANTIALIAS becomes ANTIALIAS TRUE
+   and    FILLED    becomes FILLED TRUE
+
+- Reference Map:
+  Added options to show a different marker when the reference box becomes
+  too small.  See the mapfile reference docs for more details on the new 
+  reference object parameters (MARKER, MARKERSIZE, MAXBOXSIZE, MINBOXSIZE)
+
+- Added MINSCALE/MAXSCALE at the CLASS level.
+
+- Support for tiled OGR datasets.
+
+- PHP 4.1.2 and 4.2.0 support for PHP MapScript.
+
+- Added LAYER TRANSPARENCY, value between 1-100
+
+- Fixes to the SWIG interface for clean Java build.
+
+- New HTML legend templates for CGI and MapScript.  See HTML-Legend-HOWTO.
+
+- WMS server now supports query results using HTML query templates instead
+  of just plain/text.
+
+- Added support functions for thread safety (--with-thread).  Still not 
+  100% thread-safe.
+
+
+Version 3.5.0 (2002-12-18)
+--------------------------
+
+- No Revision history before version 3.5
+
+
+---------
+$Id$
