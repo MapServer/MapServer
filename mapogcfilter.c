@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.3  2003/09/22 22:53:20  assefa
+ * Add ifdef USE_OGR where the MiniMXL Parser is used.
+ *
  * Revision 1.2  2003/09/19 21:55:54  assefa
  * Strip namespaces.
  *
@@ -54,8 +57,11 @@
  *
  **********************************************************************/
 
+
 #include "mapogcfilter.h"
 #include "map.h"
+
+#ifdef USE_OGR
 
 /************************************************************************/
 /*            FilterNode *FLTPaserFilterEncoding(char *szXMLString)     */
@@ -131,6 +137,15 @@ FilterEncodingNode *FLTParseFilterEncoding(char *szXMLString)
 /* -------------------------------------------------------------------- */
     if (!FLTValidFilterNode(psFilterNode))
       return NULL;
+
+/* -------------------------------------------------------------------- */
+/*      validate for the BBox case :                                    */
+/*       - only one BBox filter is supported                            */
+/*       - a Bbox is only acceptable with an AND logical operator       */
+/* -------------------------------------------------------------------- */
+
+    //if (!FLTValidForBBoxFilter(psFilterNode)
+    //   return NULL;
 
     return psFilterNode;
 }
@@ -653,7 +668,27 @@ int FLTIsSupportedFilterType(CPLXMLNode *psXMLNode)
 
     return MS_FALSE;
 }
-            
+ 
+int FLTValidForBBoxFilter(FilterEncodingNode *psFilterNode)
+{
+    /*
+    if (!psFilterNode)
+      return 1;
+
+    if (FLTIsThereABBoxNode(psFilterNode))
+    {
+        if (FLTIsThereABBoxNode
+        if (strcasecmp(psFilterNode->pszValue, "BBOX") == 0)
+          return 1;
+        else
+        {
+            if (strcasecmp(psFilterNode->pszValue, "AND") &&
+                (strcasecmp(psFilterNode->psLeftNode->pszValue, "BBOX)
+    */
+
+    return 1;
+}       
+    
             
 char *FLTGetBBOX(FilterEncodingNode *psFilterNode, rectObj *psRect)
 {
@@ -1113,3 +1148,5 @@ char *FLTGetIsLikeComparisonExpresssion(FilterEncodingNode *psFilterNode)
         
     return strdup(szBuffer);
 }
+
+#endif

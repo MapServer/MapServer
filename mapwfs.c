@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.18  2003/09/22 22:53:20  assefa
+ * Add ifdef USE_OGR where the MiniMXL Parser is used.
+ *
  * Revision 1.17  2003/09/19 21:54:19  assefa
  * Add support fot the Post request.
  *
@@ -741,7 +744,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
 
 
 
-
+#ifdef USE_OGR
     if (bFilterSet && pszFilter && strlen(pszFilter) > 0)
     {
         char **tokens = NULL;
@@ -895,7 +898,7 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
         if (paszFilter)
           free(paszFilter);
     }//end if filter set
-
+#endif
     if(layers)
       msFreeCharArray(layers, numlayers);
 
@@ -1143,6 +1146,7 @@ void msWFSFreeParamsObj(wfsParamsObj *wfsparams)
 /************************************************************************/
 void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
 {
+#ifdef USE_WFS_SVR
     int i = 0;
         
     if (!request || !wfsparams)
@@ -1185,6 +1189,7 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
 /* -------------------------------------------------------------------- */
 /*      Parse the post request. It is assumed to be an XML document.    */
 /* -------------------------------------------------------------------- */
+#ifdef USE_OGR
     if (request->postrequest)
     {
         CPLXMLNode *psRoot, *psQuery, *psFilter, *psTypeName = NULL;
@@ -1434,5 +1439,7 @@ void msWFSParseRequest(cgiRequestObj *request, wfsParamsObj *wfsparams)
             }//end of DescibeFeatureType
         }
     }
+#endif
+#endif
 }
 
