@@ -6,7 +6,7 @@
  * Author:   Daniel Morissette, DM Solutions Group (morissette@dmsolutions.ca)
  *
  **********************************************************************
- * Copyright (c) 2001-2002, Daniel Morissette, DM Solutions Group Inc
+ * Copyright (c) 2001-2003, Daniel Morissette, DM Solutions Group Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.48  2003/01/23 21:42:10  dan
+ * Support SLD in GetMap requests when wms_style_..._sld metadata is set
+ *
  * Revision 1.47  2003/01/15 19:15:18  dan
  * Do not set TIME= parameter in GetMap URL if wms_time metadata is empty
  *
@@ -160,10 +163,11 @@
  **********************************************************************/
 static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp) 
 {
-    char *pszURL = NULL, *pszFormat;
-    const char *pszOnlineResource, *pszVersion, *pszName;
+    char *pszURL = NULL, *pszNameEnc=NULL, *pszFormatEnc=NULL;
+    char *pszStyleEnc=NULL, *pszSLDEnc=NULL, *pszTimeEnc=NULL;
+    const char *pszOnlineResource, *pszVersion, *pszName, *pszFormat;
     const char *pszFormatList, *pszStyle, *pszStyleList, *pszTime;
-    const char *pszVersionKeyword=NULL;
+    const char *pszSLD=NULL, *pszVersionKeyword=NULL;
     int nLen;
 
     pszOnlineResource = msLookupHashTable(lp->metadata, "wms_onlineresource");
@@ -188,8 +192,24 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
 
     if (pszStyle==NULL)
     {
-        // "" is a valid default for style.
+        // When no style is selected, use "" which is a valid default.
         pszStyle = "";
+    }
+    else
+    {
+        // Was a wms_style_..._sld URL provided?
+        char szBuf[100];
+        sprintf(szBuf, "wms_style_%.80s_sld", pszStyle);
+        pszSLD = msLookupHashTable(lp->metadata, szBuf);
+
+        if (pszSLD)
+        {
+            // SLD URL is set.  If this defn. came from a map context then
+            // the style name may just be an internal name: "Style{%d}" if
+            // that's the case then we should not pass this name via the URL
+            if (strncmp(pszStyle, "Style{", 6) == 0)
+                pszStyle = "";
+        }
     }
 
     if (pszFormat==NULL && pszFormatList==NULL)
@@ -205,7 +225,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
 
     if (pszFormat != NULL)
     {
-        pszFormat = strdup(pszFormat);
+        pszFormatEnc = msEncodeUrl(pszFormat);
     }
     else
     {
@@ -214,7 +234,7 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         int i, n;
         papszTok = split(pszFormatList, ' ', &n);
 
-        for(i=0; pszFormat==NULL && i<n; i++)
+        for(i=0; pszFormatEnc==NULL && i<n; i++)
         {
             if (0 
 #ifdef USE_GD_GIF
@@ -235,12 +255,12 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
 #endif
                 )
             {
-                pszFormat = strdup(papszTok[i]);
+                pszFormatEnc = msEncodeUrl(papszTok[i]);
             }
         }
         msFreeCharArray(papszTok, n);
 
-        if (pszFormat == NULL)
+        if (pszFormatEnc == NULL)
         {
             msSetError(MS_WMSCONNERR, 
                        "Could not find a format that matches supported input "
@@ -252,11 +272,23 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
         }
     }
 
-    // Alloc a buffer large enough and build the URL
+
+    // Encode some values and alloc a buffer large enough and build the URL
+    pszNameEnc = msEncodeUrl(pszName);
+    pszStyleEnc = msEncodeUrl(pszStyle);
+
     nLen = 200 + strlen(pszOnlineResource) + strlen(pszVersion) + 
-        strlen(pszName)*2 + strlen(pszFormat) + strlen(pszStyle);
+        strlen(pszNameEnc)*2 + strlen(pszFormatEnc) + strlen(pszStyleEnc);
     if (pszTime)
-        nLen += strlen(pszTime)+6;
+    {
+        pszTimeEnc = msEncodeUrl(pszTime);
+        nLen += strlen(pszTimeEnc)+6;
+    }
+    if (pszSLD)
+    {
+        pszSLDEnc = msEncodeUrl(pszSLD);
+        nLen += strlen(pszSLDEnc)+5;
+    }
 
     pszURL = (char*)malloc((nLen+1)*sizeof(char*));
 
@@ -278,20 +310,41 @@ static char *msBuildWMSLayerURLBase(mapObj *map, layerObj *lp)
     else
         pszVersionKeyword = "VERSION";
 
-    // TODO: We should urlencode all values.
     sprintf(pszURL + strlen(pszURL),
-            "SERVICE=WMS&%s=%s&LAYERS=%s&FORMAT=%s&STYLES=%s&TRANSPARENT=TRUE",
-            pszVersionKeyword, pszVersion, pszName, pszFormat, pszStyle);
+            "SERVICE=WMS&%s=%s&LAYERS=%s&FORMAT=%s&TRANSPARENT=TRUE",
+            pszVersionKeyword, pszVersion, pszNameEnc, pszFormatEnc);
+
+    if (pszSLD == NULL)
+    {
+        // STYLES is mandatory if SLD not set
+        sprintf(pszURL + strlen(pszURL), "&STYLES=%s", pszStyleEnc);
+    }
+    else if (strlen(pszStyle) > 0)
+    {
+        // Both STYLES and SLD are set
+        sprintf(pszURL + strlen(pszURL), "&STYLES=%s&SLD=%s", 
+                pszStyleEnc, pszSLDEnc);
+    }
+    else
+    {
+        // Only SLD is set
+        sprintf(pszURL + strlen(pszURL), "&SLD=%s", pszSLDEnc);
+    }
+
     if (msIsLayerQueryable(lp))
     {
-        sprintf(pszURL + strlen(pszURL), "&QUERY_LAYERS=%s", pszName);
+        sprintf(pszURL + strlen(pszURL), "&QUERY_LAYERS=%s", pszNameEnc);
     }
     if (pszTime && strlen(pszTime) > 0)
     {
-        sprintf(pszURL + strlen(pszURL), "&TIME=%s", pszTime);
+        sprintf(pszURL + strlen(pszURL), "&TIME=%s", pszTimeEnc);
     }
 
-    free(pszFormat);  // This one was alloc'd locally
+    msFree(pszNameEnc);
+    msFree(pszFormatEnc);
+    msFree(pszStyleEnc);
+    msFree(pszSLDEnc);
+    msFree(pszTimeEnc);
 
     return pszURL;
 }
