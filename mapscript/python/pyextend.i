@@ -92,7 +92,7 @@
      * omit width and height.  Work done as part of Bugzilla issue 550. */
 
     imageObj(int width, int height, const char *driver=NULL,
-             PyObject *file=Py_None)
+             PyObject *file=Py_None, mapObj *map=NULL)
     {
         imageObj *image=NULL;
         outputFormatObj *format;
@@ -115,7 +115,7 @@
                            "imageObj()", driver);
                 return NULL;
             }
-            image = msImageCreate(width, height, format, NULL, NULL);
+            image = msImageCreate(width, height, format, NULL, NULL, map);
             return image;
         }
         // Is file a filename?
