@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.5  2002/11/07 21:16:45  julien
+ * Fix warning in ContactInfo
+ *
  * Revision 1.4  2002/11/07 15:46:45  julien
  * Print ContactInfo just if necessary
  *
@@ -398,7 +401,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
         if(msOWSPrintMetadata(stream, metadata, "wms_contactposition", 
                            OWS_NOERR, 
      "    <ContactInformation>\n      <ContactPosition>%s</ContactPosition>\n",
-                              NULL) != NULL)
+                              NULL) != 0)
             bEnableContact = 1;
     }
     else
@@ -445,7 +448,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
         if(msOWSPrintMetadata(stream, metadata, "wms_contactvoicetelephone", 
                            OWS_NOERR,
                            "    <ContactInformation>\n      <ContactVoiceTelephone>%s</ContactVoiceTelephone>\n",
-                              NULL) != NULL)
+                              NULL) != 0)
             bEnableContact = 1;
     }
     else
@@ -460,7 +463,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     {
         if(msOWSPrintMetadata(stream, metadata, 
                            "wms_contactfacsimiletelephone", OWS_NOERR,
-                              "    <ContactInformation>\n     <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL) != NULL)
+                              "    <ContactInformation>\n     <ContactFacsimileTelephone>%s</ContactFacsimileTelephone>\n", NULL) != 0)
             bEnableContact = 1;
     }
     else
@@ -474,7 +477,7 @@ void msOWSPrintContactInfo( FILE *stream, const char *tabspace,
     {
         if(msOWSPrintMetadata(stream, metadata, 
                            "wms_contactelectronicmailaddress", OWS_NOERR,
-                              "    <ContactInformation>\n     <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL) != NULL)
+                              "    <ContactInformation>\n     <ContactElectronicMailAddress>%s</ContactElectronicMailAddress>\n", NULL) != 0)
             bEnableContact = 1;
     }
     else

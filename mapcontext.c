@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.11  2002/11/07 21:16:45  julien
+ * Fix warning in ContactInfo
+ *
  * Revision 1.10  2002/11/07 15:53:14  julien
  * Put duplicated code in a single function
  * Fix many typo error
@@ -532,10 +535,16 @@ int msLoadMapContext(mapObj *map, char *filename)
                       psFormat != NULL; 
                       psFormat = psFormat->psNext)
                   {
-                      if(psFormat->psChild->psNext == NULL)
-                          pszValue = psFormat->psChild->pszValue;
+                      if(psFormat->psChild != NULL)
+                      {
+                          if(psFormat->psChild->psNext == NULL)
+                              pszValue = psFormat->psChild->pszValue;
+                          else
+                              pszValue = psFormat->psChild->psNext->pszValue;
+                      }
                       else
-                          pszValue = psFormat->psChild->psNext->pszValue;
+                          pszValue = NULL;
+
                       if(pszValue != NULL)
                       {
                           // wms_format
@@ -559,14 +568,6 @@ int msLoadMapContext(mapObj *map, char *filename)
                           else
                               msInsertHashTable(layer->metadata, 
                                                 "wms_formatlist", pszValue);
-                      }
-                      else
-                      {
-                          CPLDestroyXMLNode(psRoot);
-                          msSetError(MS_MAPCONTEXTERR, 
-                             "Mandatory data FormatList.Format missing in %s.",
-                                     "msLoadMapContext()", filename);
-                          return MS_FAILURE;
                       }
                   }
               }
@@ -667,22 +668,32 @@ int msLoadMapContext(mapObj *map, char *filename)
                                        "wms_stylelist") == NULL)
                   {
                       pszValue = strdup(layer->connection);
-                      pszValue = strstr(pszValue, "STYLELIST=") + 10;
-                      pszValue1 = strchr(pszValue, '&');
-                      pszValue[pszValue1-pszValue] = '\0';
-                      msInsertHashTable(layer->metadata, "wms_stylelist",
-                                        pszValue);
-                      free(pszValue);
+                      pszValue = strstr(pszValue, "STYLELIST=");
+                      if(pszValue != NULL)
+                      {                          
+                          pszValue += 10;
+                          pszValue1 = strchr(pszValue, '&');
+                          if(pszValue1 != NULL)
+                              pszValue[pszValue1-pszValue] = '\0';
+                          msInsertHashTable(layer->metadata, "wms_stylelist",
+                                            pszValue);
+                          free(pszValue);
+                      }
                   }
                   if(msLookupHashTable(layer->metadata, "wms_style") == NULL)
                   {
                       pszValue = strdup(layer->connection);
-                      pszValue = strstr(pszValue, "STYLE=") + 6;
-                      pszValue1 = strchr(pszValue, '&');
-                      pszValue[pszValue1-pszValue] = '\0';
-                      msInsertHashTable(layer->metadata, "wms_style",
-                                        pszValue);
-                      free(pszValue);
+                      pszValue = strstr(pszValue, "STYLE=");
+                      if(pszValue != NULL)
+                      {                          
+                          pszValue += 6;
+                          pszValue1 = strchr(pszValue, '&');
+                          if(pszValue1 != NULL)
+                              pszValue[pszValue1-pszValue] = '\0';
+                          msInsertHashTable(layer->metadata, "wms_style",
+                                            pszValue);
+                          free(pszValue);
+                      }
                   }
               }
           }
@@ -873,7 +884,7 @@ int msSaveMapContext(mapObj *map, char *filename)
                   pszChar = strchr(pszFormat, ' ');
                   if(pszChar != NULL)
                       pszFormat[pszChar - pszFormat] = '\0';
-                  if(strcasecmp(pszFormat, pszCurrent) == 0)
+                  if(pszCurrent && (strcasecmp(pszFormat, pszCurrent) == 0))
                       fprintf(stream,"        <Format current=1>%s</Format>\n",
                                pszFormat);
                   else
@@ -951,7 +962,7 @@ int msSaveMapContext(mapObj *map, char *filename)
                   pszChar = strchr(pszStyle, ' ');
                   if(pszChar != NULL)
                       pszStyle[pszChar - pszStyle] = '\0';
-                  if(strcasecmp(pszStyle, pszCurrent) == 0)
+                  if(pszCurrent && (strcasecmp(pszStyle, pszCurrent) == 0))
                       fprintf( stream,"        <Style current=1>\n" );
                   else
                       fprintf( stream, "        <Style>\n" );
