@@ -56,6 +56,10 @@ Currently supported classes, properties and methods:
     Layer/Legend/Scalebar/Class Status:
         MS_ON, MS_OFF, MS_DEFAULT, MS_EMBED, MS_DELETE
 
+    Layer alpha transparency : allows alpha transparent pixmaps 
+    to be used with RGB map images
+        MS_GD_ALPHA
+    
     Font types:
         MS_TRUETYPE, MS_BITMAP
 

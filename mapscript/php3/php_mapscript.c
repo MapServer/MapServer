@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.224  2005/01/28 15:28:26  assefa
+ * Add constant MS_GD_ALPHA (Bug 1185).
+ *
  * Revision 1.223  2005/01/04 22:55:27  assefa
  * Add PHP5 support for windows (Bug 1100).
  *
@@ -1248,6 +1251,11 @@ PHP_MINIT_FUNCTION(phpms)
     REGISTER_LONG_CONSTANT("MS_DEFAULT",    MS_DEFAULT,     const_flag);
     REGISTER_LONG_CONSTANT("MS_EMBED",      MS_EMBED,       const_flag);
     REGISTER_LONG_CONSTANT("MS_DELETE",     MS_DELETE,       const_flag);
+
+    //For layer transparency, allows alpha transparent pixmaps to be used
+    // with RGB map images
+    //#define MS_GD_ALPHA 1000
+    REGISTER_LONG_CONSTANT("MS_GD_ALPHA",     MS_GD_ALPHA,       const_flag);
 
     /* font type constants*/
     REGISTER_LONG_CONSTANT("MS_TRUETYPE",   MS_TRUETYPE,    const_flag);
