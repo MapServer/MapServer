@@ -76,8 +76,8 @@ int msAddLabel(mapObj *map, int layer, int class, int tile, int shape, pointObj 
     map->labelcache.markers[i].poly->text = NULL;
     
     msGetMarkerSize(&map->symbolset, &(map->layers[layer].class[class]), &w, &h);
-    rect.minx = point.x - MS_NINT(.5 * w);
-    rect.miny = point.y - MS_NINT(.5 * h);
+    rect.minx = MS_NINT(point.x - .5 * w);
+    rect.miny = MS_NINT(point.y - .5 * h);
     rect.maxx = rect.minx + (w-1);
     rect.maxy = rect.miny + (h-1);
     msRect2Polygon(rect, map->labelcache.markers[i].poly);
@@ -586,8 +586,8 @@ int msDrawLabelCache(gdImagePtr img, mapObj *map)
       marker_offset_x = MS_NINT(marker_width/2.0);
       marker_offset_y = MS_NINT(marker_height/2.0);
 
-      marker_rect.minx = cachePtr->point.x - MS_NINT(.5 * marker_width);
-      marker_rect.miny = cachePtr->point.y - MS_NINT(.5 * marker_height);
+      marker_rect.minx = MS_NINT(cachePtr->point.x - .5 * marker_width);
+      marker_rect.miny = MS_NINT(cachePtr->point.y - .5 * marker_height);
       marker_rect.maxx = marker_rect.minx + (marker_width-1);
       marker_rect.maxy = marker_rect.miny + (marker_height-1);
 
