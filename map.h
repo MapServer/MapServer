@@ -28,6 +28,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.364  2004/10/28 18:16:16  dan
+ * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
+ * when requested layer was out of scale (bug 1006)
+ *
  * Revision 1.363  2004/10/28 04:59:15  sdlime
  * Increased MS_MAXSYMBOLSIZE constant from 100 to 500. This value is used as a default within styleObj structures. This allows for larger markers to be draw, particularly useful with reference maps where you want a image sized crosshair.
  *
@@ -1190,7 +1194,7 @@ MS_DLL_EXPORT int msGetCharacterSize(char *character, int size, char *font, rect
 MS_DLL_EXPORT double msSymbolGetDefaultSize(symbolObj *s);
 MS_DLL_EXPORT void freeImageCache(struct imageCacheObj *ic);
 
-MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map); // in maplegend.c
+MS_DLL_EXPORT imageObj *msDrawLegend(mapObj *map, int scale_independent); // in maplegend.c
 MS_DLL_EXPORT int msEmbedLegend(mapObj *map, gdImagePtr img);
 MS_DLL_EXPORT int msDrawLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height, gdImagePtr img, int dstX, int dstY);
 MS_DLL_EXPORT imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* myClass, int width, int height);

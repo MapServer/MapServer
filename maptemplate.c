@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.96  2004/10/28 18:16:17  dan
+ * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
+ * when requested layer was out of scale (bug 1006)
+ *
  * Revision 1.95  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -216,7 +220,7 @@ int msReturnTemplateQuery(mapservObj *msObj, char* pszMimeType,
 
       if((msObj->Map->legend.status == MS_ON || msObj->UseShapes) && msObj->Map->legend.template == NULL)
       {
-         img = msDrawLegend(msObj->Map);
+         img = msDrawLegend(msObj->Map, MS_FALSE);
          if(!img) return MS_FAILURE;
          snprintf(buffer, 1024, "%s%sleg%s.%s", msObj->Map->web.imagepath, msObj->Map->name, msObj->Id, MS_IMAGE_EXTENSION(msObj->Map->outputformat));
          status = msSaveImage(msObj->Map, img, buffer);
@@ -3013,7 +3017,7 @@ int msGenerateImages(mapservObj *msObj, char *szQuery, int bReturnOnError)
         if(msObj->Map->legend.status == MS_ON) 
         {
             imageObj    *image;
-            image = msDrawLegend(msObj->Map);
+            image = msDrawLegend(msObj->Map, MS_FALSE);
             if(image)
             { 
                 sprintf(buffer, "%s%sleg%s.%s", msObj->Map->web.imagepath, 

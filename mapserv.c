@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.131  2004/10/28 18:16:17  dan
+ * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
+ * when requested layer was out of scale (bug 1006)
+ *
  * Revision 1.130  2004/10/21 04:30:54  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -1190,7 +1194,7 @@ int main(int argc, char *argv[]) {
        }         
        else
        {
-          img = msDrawLegend(msObj->Map);
+          img = msDrawLegend(msObj->Map, MS_FALSE);
           if(!img) writeError();
 
           msIO_printf("Content-type: %s%c%c",MS_IMAGE_MIME_TYPE(msObj->Map->outputformat), 10,10);

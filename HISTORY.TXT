@@ -18,7 +18,10 @@ Version 4.4.0-beta2 ()
 
 - Implemented an intarray helper class for SWIG mapscript which allows for
   multi-language manipulation of layer drawing order (bugs 853, 1005).
-  
+
+- Fixed WMS GetLegendGraphic which was returning an exception (GD error)
+  when requested layer was out of scale (bug 1006)
+
 Version 4.4.0-beta1 (2004-10-21)
 --------------------------------
 

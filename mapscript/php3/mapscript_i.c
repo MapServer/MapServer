@@ -7,6 +7,10 @@
  * $Id$
  *
  * $Log$
+ * Revision 1.88  2004/10/28 18:16:17  dan
+ * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
+ * when requested layer was out of scale (bug 1006)
+ *
  * Revision 1.87  2004/10/26 17:42:48  dan
  * Temporarily force layer status to MS_ON in layer->query*() methods and
  * restore status before returning (bug 925)
@@ -160,7 +164,7 @@ imageObj *mapObj_drawQuery(mapObj* self) {
   }
 
 imageObj *mapObj_drawLegend(mapObj* self) {
-    return msDrawLegend(self);
+    return msDrawLegend(self, MS_FALSE);
   }
 
 

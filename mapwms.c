@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.132  2004/10/28 18:16:17  dan
+ * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
+ * when requested layer was out of scale (bug 1006)
+ *
  * Revision 1.131  2004/10/27 22:08:12  assefa
  * Add WCS tytpe in DescribeLayer (Bug 683).
  *
@@ -2276,11 +2280,19 @@ int msWMSGetLegendGraphic(mapObj *map, int nVersion, char **names,
              map->extent.miny = 0.0 - cellsize*map->height/2.0;
              map->extent.maxx = 0.0 + cellsize*map->width/2.0;
              map->extent.maxy = 0.0 + cellsize*map->height/2.0;
+
+             img = msDrawLegend(map, MS_FALSE);
          }
-         img = msDrawLegend(map);
+         else
+         {
+             // Scale-independent legend
+             img = msDrawLegend(map, MS_TRUE);
+         }
      }
      else
      {
+         // RULE was specified.
+
          //set the map legend parameters
          if (nWidth < 0)
          {

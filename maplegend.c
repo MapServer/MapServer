@@ -27,6 +27,10 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.47  2004/10/28 18:16:17  dan
+ * Fixed WMS GetLegendGraphic which was returning an exception (GD error)
+ * when requested layer was out of scale (bug 1006)
+ *
  * Revision 1.46  2004/10/21 04:30:55  frank
  * Added standardized headers.  Added MS_CVSID().
  *
@@ -206,8 +210,13 @@ imageObj *msCreateLegendIcon(mapObj* map, layerObj* lp, classObj* class, int wid
 ** Creates a GD image of a legend for a specific map. msDrawLegend()
 ** respects the current scale, and classes without a name are not
 ** added to the legend.
+**
+** scale_independent is used for WMS GetLegendGraphic. It should be set to
+** MS_FALSE in most cases. If it is set to MS_TRUE then the layers' minscale
+** and maxscale are ignored and layers that are currently out of scale still
+** show up in the legend.
 */
-imageObj *msDrawLegend(mapObj *map)
+imageObj *msDrawLegend(mapObj *map, int scale_independent)
 {
   int status;
 
@@ -221,10 +230,13 @@ imageObj *msDrawLegend(mapObj *map)
   rectObj rect;
   imageObj      *image = NULL;
   outputFormatObj *format = NULL;
+  int empty_legend = MS_FALSE;
 
-  map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
-  status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
-  if(status != MS_SUCCESS) return(NULL);
+  if (!scale_independent) {
+      map->cellsize = msAdjustExtent(&(map->extent), map->width, map->height);
+      status = msCalculateScale(map->extent, map->units, map->width, map->height, map->resolution, &map->scale);
+      if(status != MS_SUCCESS) return(NULL);
+  }
 
   /*
   ** allocate heights array
@@ -253,7 +265,7 @@ imageObj *msDrawLegend(mapObj *map)
     if((map->layers[i].status == MS_OFF) || (map->layers[i].type == MS_LAYER_QUERY)) /* skip it */
       continue;
 
-   if(map->scale > 0) {
+   if(!scale_independent && map->scale > 0) {
       if((map->layers[i].maxscale > 0) && (map->scale > map->layers[i].maxscale))
 	continue;
       if((map->layers[i].minscale > 0) && (map->scale <= map->layers[i].minscale))
@@ -312,7 +324,7 @@ imageObj *msDrawLegend(mapObj *map)
     if((lp->numclasses == 0) || (lp->status == MS_OFF) || (lp->type == MS_LAYER_QUERY))
       continue; /* skip this layer */
 
-    if(map->scale > 0) {
+    if(!scale_independent && map->scale > 0) {
       if((lp->maxscale > 0) && (map->scale > lp->maxscale))
 	continue;
       if((lp->minscale > 0) && (map->scale <= lp->minscale))
@@ -360,7 +372,7 @@ int msEmbedLegend(mapObj *map, gdImagePtr img)
       gdImageDestroy(map->symbolset.symbol[s].img);
   }
   
-  image = msDrawLegend(map);
+  image = msDrawLegend(map, MS_FALSE);
   map->symbolset.symbol[s].img = image->img.gd; //TODO 
   if(!map->symbolset.symbol[s].img) return(-1); // something went wrong creating scalebar
 
