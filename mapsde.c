@@ -356,12 +356,12 @@ int msSDELayerOpen(layerObj *layer) {
       sde_error(status, "msSDELayerOpen()", "SE_connection_create()");
       return(MS_FAILURE);
     }
-
-		  msConnPoolRegister( layer, sde->connection, msSDECloseConnection );
-		
-	  
-	  
-	     
+    status = SE_connection_set_concurrency(sde->connection, SE_LOCK_POLICY);
+    if(status != SE_SUCCESS) {
+      sde_error(status, "msSDELayerOpen()", "SE_connection_set_concurrency()");
+      return(MS_FAILURE);
+    }    
+		msConnPoolRegister( layer, sde->connection, msSDECloseConnection );
 	  msFreeCharArray(params, numparams); // done with parameter list
   }
   
