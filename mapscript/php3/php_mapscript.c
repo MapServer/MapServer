@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.56  2001/10/11 02:21:09  assefa
+ * Add missing connection types constants.
+ *
  * Revision 1.55  2001/10/10 16:06:28  dan
  * Added shapeObj->set()
  *
@@ -676,7 +679,10 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_SDE",        MS_SDE,         const_flag);
     REGISTER_LONG_CONSTANT("MS_OGR",        MS_OGR,         const_flag);
     REGISTER_LONG_CONSTANT("MS_TILED_OGR",  MS_TILED_OGR,   const_flag);
-
+    REGISTER_LONG_CONSTANT("MS_POSTGIS",    MS_POSTGIS,     const_flag);
+    REGISTER_LONG_CONSTANT("MS_WMS",        MS_WMS,         const_flag);
+    REGISTER_LONG_CONSTANT("MS_ORACLESPATIAL", MS_ORACLESPATIAL,const_flag);
+ 
     /* output image type constants*/
     REGISTER_LONG_CONSTANT("MS_GIF",        MS_GIF,         const_flag);
     REGISTER_LONG_CONSTANT("MS_PNG",        MS_PNG,         const_flag);
@@ -692,7 +698,7 @@ DLEXPORT int php3_init_mapscript(INIT_FUNC_ARGS)
     REGISTER_LONG_CONSTANT("MS_SUCCESS",    MS_SUCCESS,     const_flag);
     REGISTER_LONG_CONSTANT("MS_FAILURE",    MS_FAILURE,     const_flag);
     REGISTER_LONG_CONSTANT("MS_DONE",       MS_DONE,        const_flag);
-
+   
     /* We'll use tmpId and tmpCount to generate unique filenames */
     sprintf(PHPMS_GLOBAL(tmpId), "%ld%d",(long)time(NULL),(int)getpid());
     tmpCount = 0;
