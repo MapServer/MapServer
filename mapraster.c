@@ -29,6 +29,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.113  2004/04/06 18:49:37  frank
+ * add function comment blocks to split things up a bit
+ *
  * Revision 1.112  2004/04/06 06:44:59  sdlime
  * Working version of layer-based tiling for raster data. The layer does not have to be a shapefile.
  *
@@ -81,9 +84,10 @@ extern char *msyystring;
 unsigned char PNGsig[8] = {137, 80, 78, 71, 13, 10, 26, 10}; // 89 50 4E 47 0D 0A 1A 0A hex
 unsigned char JPEGsig[3] = {255, 216, 255}; // FF D8 FF hex
 
-/*
-** Function to evaluate a color (RGB+pen) against a class expression.
-*/
+/************************************************************************/
+/*                             msGetClass()                             */
+/************************************************************************/
+
 int msGetClass(layerObj *layer, colorObj *color)
 {
   int i;
@@ -201,11 +205,15 @@ int msGetClass_Float(layerObj *layer, float fValue)
     return(-1); /* not found */
 }
 
-/*
-** Function to add a color to an existing color map.  It first looks for
-** an exact match, then tries to add it to the end of the existing color map,
-** and if all else fails it finds the closest color.
-*/
+/************************************************************************/
+/*                            msAddColorGD()                            */
+/*                                                                      */
+/*      Function to add a color to an existing color map.  It first     */
+/*      looks for an exact match, then tries to add it to the end of    */
+/*      the existing color map, and if all else fails it finds the      */
+/*      closest color.                                                  */
+/************************************************************************/
+
 int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
 {
   int c; 
@@ -313,10 +321,13 @@ int msAddColorGD(mapObj *map, gdImagePtr img, int cmt, int r, int g, int b)
   return op; /* Return newly allocated color */  
 }
 
-/*
-** Function to read georeferencing information for an image from an
-** ESRI world file.
-*/
+/************************************************************************/
+/*                           readWorldFile()                            */
+/*                                                                      */
+/*      Function to read georeferencing information for an image        */
+/*      from an ESRI world file.                                        */
+/************************************************************************/
+
 static int readWorldFile(char *filename, double *ulx, double *uly, double *cx, double *cy) {
   FILE *stream;
   char *wld_filename;
@@ -372,7 +383,12 @@ static int readWorldFile(char *filename, double *ulx, double *uly, double *cx, d
   return(0);
 }
 
-/* read georeferencing info from geoTIFF header, if it exists */
+/************************************************************************/
+/*                            readGEOTiff()                             */
+/*                                                                      */
+/*      read georeferencing info from geoTIFF header, if it exists      */
+/************************************************************************/
+
 #ifdef USE_TIFF 
 static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *cy)
 {
@@ -420,6 +436,9 @@ static int readGEOTiff(TIFF *tif, double *ulx, double *uly, double *cx, double *
 }
 #endif  
   
+/************************************************************************/
+/*                              drawTIFF()                              */
+/************************************************************************/
 static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
 #ifdef USE_TIFF
@@ -651,6 +670,9 @@ static int drawTIFF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 #endif
 } 
 
+/************************************************************************/
+/*                              drawPNG()                               */
+/************************************************************************/
 static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
 #ifdef USE_GD_PNG
@@ -769,6 +791,9 @@ static int drawPNG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 #endif
 }
 
+/************************************************************************/
+/*                              drawGIF()                               */
+/************************************************************************/
 static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
 #ifdef USE_GD_GIF
@@ -887,6 +912,9 @@ static int drawGIF(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 #endif
 }
 
+/************************************************************************/
+/*                              drawJPEG()                              */
+/************************************************************************/
 
 static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
@@ -1016,6 +1044,9 @@ static int drawJPEG(mapObj *map, layerObj *layer, gdImagePtr img, char *filename
 #endif
 }
 
+/************************************************************************/
+/*                              drawERD()                               */
+/************************************************************************/
 typedef struct erdhead {
   char hdword[6];
   short pack,bands;
@@ -1181,6 +1212,10 @@ static int drawERD(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
    return(-1);
 #endif
 }
+
+/************************************************************************/
+/*                              drawEPP()                               */
+/************************************************************************/
   
 static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename) 
 {
@@ -1308,9 +1343,13 @@ static int drawEPP(mapObj *map, layerObj *layer, gdImagePtr img, char *filename)
 #endif  
 }
  
-/*
-** Check for various file types and act appropriately.
-*/
+/************************************************************************/
+/*                        msDrawRasterLayerLow()                        */
+/*                                                                      */
+/*      Check for various file types and act appropriately.  Handle     */
+/*      tile indexing.                                                  */
+/************************************************************************/
+
 int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image) 
 {
   int status, i, done;
@@ -1646,6 +1685,10 @@ int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image)
 
   return 0;
 }
+
+/************************************************************************/
+/*                         msDrawReferenceMap()                         */
+/************************************************************************/
 
 //TODO : this will msDrawReferenceMapGD
 imageObj *msDrawReferenceMap(mapObj *map) {
