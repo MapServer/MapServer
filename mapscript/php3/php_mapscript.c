@@ -30,6 +30,9 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.16  2000/09/22 13:39:46  dan
+ * Add zoomscale function.
+ *
  * Revision 1.15  2000/09/18 13:39:10  dan
  * Added missing params to msSaveImage() with USE_GD_1_8 in saveWebImage()
  *
@@ -214,6 +217,7 @@ DLEXPORT void php3_ms_map_save(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_setExtent(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomPoint(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS);
 
 DLEXPORT void php3_ms_img_saveImage(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_img_saveWebImage(INTERNAL_FUNCTION_PARAMETERS);
@@ -301,6 +305,7 @@ static long _phpms_build_referenceMap_object(referenceMapObj *preferenceMap,
 /* ==================================================================== */
 DLEXPORT void php3_ms_getcwd(INTERNAL_FUNCTION_PARAMETERS);
 DLEXPORT void php3_ms_getpid(INTERNAL_FUNCTION_PARAMETERS);
+DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS);
 
 
 static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits, 
@@ -365,6 +370,7 @@ function_entry php3_ms_functions[] = {
     {"ms_newrectobj",      php3_ms_rect_new,    NULL},
     {"ms_getcwd",       php3_ms_getcwd,         NULL},
     {"ms_getpid",       php3_ms_getpid,         NULL},
+    {"ms_getscale",       php3_ms_getscale,         NULL},
     {NULL, NULL, NULL}
 };
 
@@ -405,6 +411,7 @@ function_entry php_map_class_functions[] = {
     {"setextent",       php3_ms_map_setExtent,          NULL},
     {"zoompoint",       php3_ms_map_zoomPoint,          NULL},
     {"zoomrectangle",   php3_ms_map_zoomRectangle,      NULL},
+    {"zoomscale",       php3_ms_map_zoomScale,          NULL},
     {"queryusingpoint", php3_ms_map_queryUsingPoint,    NULL},
     {"queryusingrect",  php3_ms_map_queryUsingRect,     NULL},
     {"save",            php3_ms_map_save,               NULL},
@@ -1573,6 +1580,282 @@ DLEXPORT void php3_ms_map_zoomRectangle(INTERNAL_FUNCTION_PARAMETERS)
     RETURN_TRUE;
 }
 
+
+/************************************************************************/
+/*                             map->zoomScale()                         */
+/*                                                                      */
+/*      Parmeters are :                                                 */
+/*                                                                      */
+/*       - Scale : Scale at which to see the map. Must be a positive    */
+/*                 value. Ex : for a scale to 1/250000, the value of    */
+/*                 this parameter is 250000.                            */
+/*       - Pixel position (pointObj) : x, y coordinates of the click.   */
+/*       - Width : width in pixel of the current image.                 */
+/*       - Height : Height in pixel of the current image.               */
+/*       - Georef extent (rectObj) : current georef extents.            */
+/*       - MaxGeoref extent (rectObj) : (optional) maximum georef       */
+/*                                      extents.                        */
+/************************************************************************/
+DLEXPORT void php3_ms_map_zoomScale(INTERNAL_FUNCTION_PARAMETERS)
+{
+    mapObj      *self;
+    pval        *pThis;
+#ifdef PHP4
+    pval   **pExtent;
+#else
+    pval   *pExtent;
+#endif
+    pval        *pScale;
+    pval        *pPixelPos;
+    pval        *pWidth, *pHeight;
+    pval        *pGeorefExt;
+    pval        *pMaxGeorefExt;
+    rectObj     *poGeorefExt = NULL;
+    rectObj     *poMaxGeorefExt = NULL;
+    pointObj    *poPixPos = NULL;
+    double      dfGeoPosX, dfGeoPosY;
+    double      dfDeltaX, dfDeltaY;
+    rectObj     oNewGeorefExt;    
+    double      dfNewScale = 0.0;
+    int         bMaxExtSet = 0;
+    int         nArgs = ARG_COUNT(ht);
+    double      dfDeltaExt = -1.0;
+    double      dfCurrentScale = 0.0;
+    int         nTmp = 0;
+#ifdef PHP4
+    HashTable   *list=NULL;
+#endif
+
+#ifdef PHP4
+    pThis = getThis();
+#else
+    getThis(&pThis);
+#endif
+
+    if (pThis == NULL ||   
+        (nArgs != 5 && nArgs != 6))
+    {
+        WRONG_PARAM_COUNT;
+    }
+    
+    if (getParameters(ht, nArgs, 
+                      &pScale, &pPixelPos, &pWidth, &pHeight,
+                      &pGeorefExt, &pMaxGeorefExt) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+
+    self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
+    if (self == NULL)
+    {
+        RETURN_FALSE;
+    }
+
+    if (nArgs == 6)
+        bMaxExtSet =1;
+
+    convert_to_long(pScale);
+    convert_to_long(pWidth);
+    convert_to_long(pHeight);
+         
+    poGeorefExt = (rectObj *)_phpms_fetch_handle2(pGeorefExt, 
+                                                  PHPMS_GLOBAL(le_msrect_ref),
+                                                  PHPMS_GLOBAL(le_msrect_new),
+                                                  list);
+    poPixPos = (pointObj *)_phpms_fetch_handle2(pPixelPos, 
+                                                PHPMS_GLOBAL(le_mspoint_new), 
+                                                PHPMS_GLOBAL(le_mspoint_ref),
+                                                list);
+    
+    if (bMaxExtSet)
+        poMaxGeorefExt = 
+            (rectObj *)_phpms_fetch_handle2(pMaxGeorefExt, 
+                                            PHPMS_GLOBAL(le_msrect_ref),
+                                            PHPMS_GLOBAL(le_msrect_new),
+                                            list);
+
+/* -------------------------------------------------------------------- */
+/*      check the validity of the parameters.                           */
+/* -------------------------------------------------------------------- */
+    if (pScale->value.lval <= 0.0 || 
+        pWidth->value.lval <= 0 ||
+        pHeight->value.lval <= 0 ||
+        poGeorefExt == NULL ||
+        poPixPos == NULL ||
+        (bMaxExtSet && poMaxGeorefExt == NULL))
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        php3_error(E_ERROR, "zoomScale failed : incorrect parameters\n");
+        RETURN_FALSE;
+    }
+    
+    dfGeoPosX = Pix2Georef((int)poPixPos->x, 0, (int)pWidth->value.lval, 
+                           poGeorefExt->minx, poGeorefExt->maxx, 0); 
+    dfGeoPosY = Pix2Georef((int)poPixPos->y, 0, (int)pHeight->value.lval, 
+                           poGeorefExt->miny, poGeorefExt->maxy, 1); 
+    dfDeltaX = poGeorefExt->maxx - poGeorefExt->minx;
+    dfDeltaY = poGeorefExt->maxy - poGeorefExt->miny;
+
+   
+/* -------------------------------------------------------------------- */
+/*      Calculate new extents based on the sacle.                       */
+/* -------------------------------------------------------------------- */
+
+/* ==================================================================== */
+/*      make sure to take the smallest size because this is the one     */
+/*      that will be used to ajust the scale.                           */
+/* ==================================================================== */
+
+    if (self->width <  self->height)
+      nTmp = self->width;
+    else
+      nTmp = self->height;
+
+    dfDeltaExt = 
+        GetDeltaExtentsUsingScale(pScale->value.lval, self->units, nTmp);
+                                  
+    if (dfDeltaExt > 0.0)
+    {
+        oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
+        oNewGeorefExt.miny = dfGeoPosY - (dfDeltaExt/2);
+        oNewGeorefExt.maxx = dfGeoPosX + (dfDeltaExt/2);
+        oNewGeorefExt.maxy = dfGeoPosY + (dfDeltaExt/2);
+    }
+    else
+      RETURN_FALSE;
+
+/* -------------------------------------------------------------------- */
+/*      get current scale.                                              */
+/* -------------------------------------------------------------------- */
+    dfCurrentScale =  msCalculateScale(*poGeorefExt, self->units, 
+                                       self->width, self->height);
+
+/* -------------------------------------------------------------------- */
+/*      if the min and max scale are set in the map file, we will       */
+/*      use them to test before zooming.                                */
+/*                                                                      */
+/*       This function has the same effect as zoomin or zoom out. If    */
+/*      the current scale is > newscale we zoom in; else it is a        */
+/*      zoom out.                                                       */
+/* -------------------------------------------------------------------- */
+    dfNewScale =  msCalculateScale(oNewGeorefExt, self->units, 
+                                   self->width, self->height);
+
+    if (self->web.maxscale > 0)
+    {
+        if (dfCurrentScale < dfNewScale && dfNewScale >  self->web.maxscale)
+        {
+            RETURN_FALSE;
+        }
+    }
+
+/* ==================================================================== */
+/*      we do a special case for zoom in : we try to zoom as much as    */
+/*      possible using the mincale set in the .map.                     */
+/* ==================================================================== */
+    if (self->web.minscale > 0 && dfNewScale <  self->web.minscale &&
+        dfCurrentScale > dfNewScale)
+    {
+        dfDeltaExt = 
+            GetDeltaExtentsUsingScale(self->web.minscale, self->units, 
+                                      self->width);
+        if (dfDeltaExt > 0.0)
+        {
+            oNewGeorefExt.minx = dfGeoPosX - (dfDeltaExt/2);
+            oNewGeorefExt.miny = dfGeoPosY - (dfDeltaExt/2);
+            oNewGeorefExt.maxx = dfGeoPosX + (dfDeltaExt/2);
+            oNewGeorefExt.maxy = dfGeoPosY + (dfDeltaExt/2);
+        }
+        else
+          RETURN_FALSE;
+    }
+/* -------------------------------------------------------------------- */
+/*      If the buffer is set, make sure that the extents do not go      */
+/*      beyond the buffer.                                              */
+/* -------------------------------------------------------------------- */
+    if (bMaxExtSet)
+    {
+        dfDeltaX = oNewGeorefExt.maxx - oNewGeorefExt.minx;
+        dfDeltaY = oNewGeorefExt.maxy - oNewGeorefExt.miny;
+        
+        /* Make sure Current georef extents is not bigger than max extents */
+        if (dfDeltaX > (poMaxGeorefExt->maxx-poMaxGeorefExt->minx))
+            dfDeltaX = poMaxGeorefExt->maxx-poMaxGeorefExt->minx;
+        if (dfDeltaY > (poMaxGeorefExt->maxy-poMaxGeorefExt->miny))
+            dfDeltaY = poMaxGeorefExt->maxy-poMaxGeorefExt->miny;
+
+        if (oNewGeorefExt.minx < poMaxGeorefExt->minx)
+        {
+            oNewGeorefExt.minx = poMaxGeorefExt->minx;
+            oNewGeorefExt.maxx =  oNewGeorefExt.minx + dfDeltaX;
+        }
+        if (oNewGeorefExt.maxx > poMaxGeorefExt->maxx)
+        {
+            oNewGeorefExt.maxx = poMaxGeorefExt->maxx;
+            oNewGeorefExt.minx = oNewGeorefExt.maxx - dfDeltaX;
+        }
+        if (oNewGeorefExt.miny < poMaxGeorefExt->miny)
+        {
+            oNewGeorefExt.miny = poMaxGeorefExt->miny;
+            oNewGeorefExt.maxy =  oNewGeorefExt.miny + dfDeltaY;
+        }
+        if (oNewGeorefExt.maxy > poMaxGeorefExt->maxy)
+        {
+            oNewGeorefExt.maxy = poMaxGeorefExt->maxy;
+            oNewGeorefExt.miny = oNewGeorefExt.maxy - dfDeltaY;
+        }
+    }
+    
+/* -------------------------------------------------------------------- */
+/*      set the map extents with new values.                            */
+/* -------------------------------------------------------------------- */
+    self->extent.minx = oNewGeorefExt.minx;
+    self->extent.miny = oNewGeorefExt.miny;
+    self->extent.maxx = oNewGeorefExt.maxx;
+    self->extent.maxy = oNewGeorefExt.maxy;
+    
+
+    self->cellsize = msAdjustExtent(&(self->extent), self->width, 
+                                    self->height);      
+    self->scale = msCalculateScale(*(&(self->extent)), self->units, 
+                                   self->width, self->height);
+
+
+    _phpms_set_property_double(pThis,"cellsize", self->cellsize, E_ERROR); 
+    _phpms_set_property_double(pThis,"scale", self->scale, E_ERROR); 
+
+#ifdef PHP4
+    if (zend_hash_find(pThis->value.obj.properties, "extent", sizeof("extent"), 
+                       (void **)&pExtent) == SUCCESS)
+    {
+        _phpms_set_property_double((*pExtent),"minx", self->extent.minx, 
+                                   E_ERROR);
+        _phpms_set_property_double((*pExtent),"miny", self->extent.miny, 
+                                   E_ERROR);
+        _phpms_set_property_double((*pExtent),"maxx", self->extent.maxx, 
+                                   E_ERROR);
+        _phpms_set_property_double((*pExtent),"maxy", self->extent.maxy, 
+                                   E_ERROR);
+    }
+#else
+    if (_php3_hash_find(pThis->value.ht, "extent", sizeof("extent"), 
+                        (void **)&pExtent) == SUCCESS)
+    {
+        _phpms_set_property_double(pExtent,"minx", self->extent.minx, 
+                                   E_ERROR);
+        _phpms_set_property_double(pExtent,"miny", self->extent.miny, 
+                                   E_ERROR);
+        _phpms_set_property_double(pExtent,"maxx", self->extent.maxx, 
+                                   E_ERROR);
+        _phpms_set_property_double(pExtent,"maxy", self->extent.maxy, 
+                                   E_ERROR);
+    }
+#endif
+
+     RETURN_TRUE;
+
+}
+    
 /**********************************************************************
  *                        map->addColor()
  **********************************************************************/
@@ -5118,6 +5401,50 @@ DLEXPORT void php3_ms_getpid(INTERNAL_FUNCTION_PARAMETERS)
 }
 
 
+/************************************************************************/
+/*       DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)   */
+/*                                                                      */
+/*      Utility function to get the scale based on the width/height     */
+/*      of the pixmap, the georeference and the units of the data.      */
+/*                                                                      */
+/*       Parameters are :                                               */
+/*                                                                      */
+/*            - Georefernce extents (rectObj)                           */
+/*            - Width : width in pixel                                  */
+/*            - Height : Height in pixel                                */
+/*            - Units of the data (int)                                 */
+/*                                                                      */
+/*                                                                      */
+/************************************************************************/
+DLEXPORT void php3_ms_getscale(INTERNAL_FUNCTION_PARAMETERS)
+{
+    pval        *pGeorefExt = NULL;
+    pval        *pWidth = NULL;
+    pval        *pHeight;
+    pval        *pUnit;
+    rectObj     *poGeorefExt = NULL;
+    double      dfScale = 0.0;
+    if (getParameters(ht, 4, 
+                      &pGeorefExt, &pWidth, &pHeight, &pUnit) != SUCCESS)
+    {
+        WRONG_PARAM_COUNT;
+    }
+    
+    convert_to_long(pWidth);
+    convert_to_long(pHeight);
+    convert_to_long(pUnit);
+
+    poGeorefExt = 
+        (rectObj *)_phpms_fetch_handle2(pGeorefExt, 
+                                        PHPMS_GLOBAL(le_msrect_ref),
+                                        PHPMS_GLOBAL(le_msrect_new),
+                                        list);
+
+    dfScale =  msCalculateScale(*poGeorefExt, pUnit->value.lval, 
+                                pWidth->value.lval, pHeight->value.lval);
+    
+    RETURN_DOUBLE(dfScale);
+}
 
 /************************************************************************/
 /*  static double GetDeltaExtentsUsingScale(double dfMinscale, int nUnits,*/
