@@ -124,6 +124,10 @@ void writeError()
   exit(0); /* bail */
 }
 
+/*
+** Converts a string (e.g. form parameter) to a double, first checking the format against
+** a regular expression. Dumps an error immediately if the format test fails.
+*/
 static double getNumeric(regex_t re, char *s)
 {
   regmatch_t *match;
@@ -149,32 +153,36 @@ static double getNumeric(regex_t re, char *s)
   return(atof(s));
 }
 
-void loadForm() /* set variables as input from the user form */
+/*
+** Process CGI parameters.
+*/
+void loadForm()
 {
   int i, n;
   char **tokens, *tmpstr;
   regex_t re;
-  
-  /* FIND and LOAD mapfile first */
-  for(i=0;i<NumEntries;i++)
-    if(strcasecmp(Entries[i].name, "map") == 0)
-      break;
+
+  for(i=0;i<NumEntries;i++) // find the mapfile parameter first
+    if(strcasecmp(Entries[i].name, "map") == 0) break;
   
   if(i == NumEntries) {
-    msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "loadForm()"); 
-    writeError();
-  }
+    if(getenv("MS_MAPFILE")) // has a default mapfile has not been set
+      Map = msLoadMap(Entries[i].val);      
+    else {
+      msSetError(MS_WEBERR, "CGI variable \"map\" is not set.", "loadForm()"); // no default, outta here
+      writeError();
+    }
+  } else
+    Map = msLoadMap(Entries[i].val);
 
-  Map = msLoadMap(Entries[i].val);
-  if(!Map)
-    writeError();
+  if(!Map) writeError();
 
-  if(regcomp(&re, NUMEXP, REG_EXTENDED) != 0) {
+  if(regcomp(&re, NUMEXP, REG_EXTENDED) != 0) { // what is a number
     msSetError(MS_REGEXERR, NULL, "loadForm()"); 
     writeError();
   }
 
-  for(i=0;i<NumEntries;i++) { /* now process the rest of the form variables */
+  for(i=0;i<NumEntries;i++) { // now process the rest of the form variables
 
     if(strlen(Entries[i].val) == 0)
       continue;
@@ -194,7 +202,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"zoom") == 0) { /* zoom factor */
+    if(strcasecmp(Entries[i].name,"zoom") == 0) {
       Zoom = getNumeric(re, Entries[i].val);      
       if((Zoom > MAXZOOM) || (Zoom < MINZOOM)) {
 	msSetError(MS_WEBERR, "Zoom value out of range.", "loadForm()");
@@ -203,7 +211,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"zoomdir") == 0) { /* zoom direction */
+    if(strcasecmp(Entries[i].name,"zoomdir") == 0) {
       ZoomDirection = getNumeric(re, Entries[i].val);
       if((ZoomDirection != -1) && (ZoomDirection != 1) && (ZoomDirection != 0)) {
 	msSetError(MS_WEBERR, "Zoom direction must be 1, 0 or -1.", "loadForm()");
@@ -212,7 +220,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"zoomsize") == 0) { /* absolute zoom magnitude */
+    if(strcasecmp(Entries[i].name,"zoomsize") == 0) { // absolute zoom magnitude
       ZoomSize = getNumeric(re, Entries[i].val);      
       if((ZoomSize > MAXZOOM) || (ZoomSize < 1)) {
 	msSetError(MS_WEBERR, "Invalid zoom size.", "loadForm()");
@@ -221,7 +229,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
     
-    if(strcasecmp(Entries[i].name,"imgext") == 0) { /* extent of existing image */
+    if(strcasecmp(Entries[i].name,"imgext") == 0) { // extent of an existing image in a web application
       tokens = split(Entries[i].val, ' ', &n);
 
       if(!tokens) {
@@ -253,7 +261,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"mapext") == 0) { /* extent of the new map or query */
+    if(strcasecmp(Entries[i].name,"mapext") == 0) { // extent of the new map or query
 
       if(strncasecmp(Entries[i].val,"shape",5) == 0)
         UseShapes = MS_TRUE;
@@ -282,8 +290,8 @@ void loadForm() /* set variables as input from the user form */
 	  msProjectRect(NULL, Map->projection.proj, &(Map->extent)); // extent is a in lat/lon
 #endif
 
-	if((Map->extent.minx != Map->extent.maxx) && (Map->extent.miny != Map->extent.maxy)) {
-	  CoordSource = FROMUSERBOX; /* extent seems valid */
+	if((Map->extent.minx != Map->extent.maxx) && (Map->extent.miny != Map->extent.maxy)) { // extent seems ok
+	  CoordSource = FROMUSERBOX;
 	  QueryCoordSource = FROMUSERBOX;
 	}
       }
@@ -291,7 +299,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"minx") == 0) { /* extent of the new map */
+    if(strcasecmp(Entries[i].name,"minx") == 0) { // extent of the new map, in pieces
       Map->extent.minx = getNumeric(re, Entries[i].val);      
       continue;
     }
@@ -310,7 +318,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     } 
 
-    if(strcasecmp(Entries[i].name,"mapxy") == 0) { /* user map coordinate */
+    if(strcasecmp(Entries[i].name,"mapxy") == 0) { // user map coordinate
       
       if(strncasecmp(Entries[i].val,"shape",5) == 0) {
         UseShapes = MS_TRUE;	
@@ -337,7 +345,7 @@ void loadForm() /* set variables as input from the user form */
 	  msProjectPoint(NULL, Map->projection.proj, &MapPnt); // point is a in lat/lon
 #endif
 
-	if(CoordSource == NONE) { /* don't override previous settings (i.e. buffer or scale ) */
+	if(CoordSource == NONE) { // don't override previous settings (i.e. buffer or scale )
 	  CoordSource = FROMUSERPNT;
 	  QueryCoordSource = FROMUSERPNT;
 	}
@@ -345,7 +353,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"mapshape") == 0) { /* query shape */     
+    if(strcasecmp(Entries[i].name,"mapshape") == 0) { // query shape
       lineObj line={0,NULL};
       char **tmp=NULL;
       int n, j;
@@ -375,7 +383,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"img.x") == 0) { /* mouse click */
+    if(strcasecmp(Entries[i].name,"img.x") == 0) { // mouse click, in pieces
       ImgPnt.x = getNumeric(re, Entries[i].val);
       if((ImgPnt.x > MAXCLICK) || (ImgPnt.x < MINCLICK)) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
@@ -396,7 +404,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"imgxy") == 0) { /* mouse click, single variable */
+    if(strcasecmp(Entries[i].name,"imgxy") == 0) { // mouse click, single variable
       if(CoordSource == FROMIMGPNT)
 	continue;
 
@@ -422,14 +430,14 @@ void loadForm() /* set variables as input from the user form */
 	writeError();
       }
 
-      if(CoordSource == NONE) { /* override nothing */
+      if(CoordSource == NONE) { // override nothing since this parameter is usually used to hold a default value
 	CoordSource = FROMIMGPNT;
 	QueryCoordSource = FROMIMGPNT;
       }
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"imgbox") == 0) { /* mouse drag */
+    if(strcasecmp(Entries[i].name,"imgbox") == 0) { // selection box (eg. mouse drag)
       tokens = split(Entries[i].val, ' ', &n);
       
       if(!tokens) {
@@ -449,14 +457,14 @@ void loadForm() /* set variables as input from the user form */
       
       msFreeCharArray(tokens, 4);
 
-      if((ImgBox.minx != ImgBox.maxx) && (ImgBox.miny != ImgBox.maxy)) {
+      if((ImgBox.minx != ImgBox.maxx) && (ImgBox.miny != ImgBox.maxy)) { // must not degenerate into a point
 	CoordSource = FROMIMGBOX;
 	QueryCoordSource = FROMIMGBOX;
       }
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"imgshape") == 0) {
+    if(strcasecmp(Entries[i].name,"imgshape") == 0) { // shape given in image coordinates
       lineObj line={0,NULL};
       char **tmp=NULL;
       int n, j;
@@ -481,7 +489,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"ref.x") == 0) { /* mouse click: reference image */
+    if(strcasecmp(Entries[i].name,"ref.x") == 0) { // mouse click in reference image, in pieces
       RefPnt.x = getNumeric(re, Entries[i].val);      
       if((RefPnt.x > MAXCLICK) || (RefPnt.x < MINCLICK)) {
 	msSetError(MS_WEBERR, "Coordinate out of range.", "loadForm()");
@@ -500,7 +508,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"refxy") == 0) { /* mouse click: reference image, single variable */
+    if(strcasecmp(Entries[i].name,"refxy") == 0) { /* mouse click in reference image, single variable */
       tokens = split(Entries[i].val, ' ', &n);
 
       if(!tokens) {
@@ -527,14 +535,14 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"buffer") == 0) { /* radius (map units), actually 1/2 rectangle side */
+    if(strcasecmp(Entries[i].name,"buffer") == 0) { // radius (map units), actually 1/2 square side
       Buffer = getNumeric(re, Entries[i].val);      
       CoordSource = FROMBUF;
       QueryCoordSource = FROMUSERPNT;
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"scale") == 0) { /* scale for new map */
+    if(strcasecmp(Entries[i].name,"scale") == 0) { // scale for new map
       Map->scale = getNumeric(re, Entries[i].val);      
       if(Map->scale <= 0) {
 	msSetError(MS_WEBERR, "Scale out of range.", "loadForm()");
@@ -545,7 +553,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
     
-    if(strcasecmp(Entries[i].name,"imgsize") == 0) { /* size of existing image (pixels) */
+    if(strcasecmp(Entries[i].name,"imgsize") == 0) { // size of existing image (pixels)
       tokens = split(Entries[i].val, ' ', &n);
 
       if(!tokens) {
@@ -571,7 +579,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"mapsize") == 0) { /* size of new map (pixels) */
+    if(strcasecmp(Entries[i].name,"mapsize") == 0) { // size of new map (pixels)
       tokens = split(Entries[i].val, ' ', &n);
 
       if(!tokens) {
@@ -596,7 +604,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strncasecmp(Entries[i].name,"layers", 6) == 0) { /* turn a group of layers on */
+    if(strncasecmp(Entries[i].name,"layers", 6) == 0) { // turn a set of layers, delimited by spaces, on
       int num_layers=0, l;
       char **layers=NULL;
 
@@ -610,28 +618,28 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strncasecmp(Entries[i].name,"layer", 5) == 0) { /* turn a layer on */
+    if(strncasecmp(Entries[i].name,"layer", 5) == 0) { // turn a single layer/group on
       Layers[NumLayers] = strdup(Entries[i].val);
       NumLayers++;
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"qlayer") == 0) { /* layer to query (i.e search) */     
+    if(strcasecmp(Entries[i].name,"qlayer") == 0) { // layer to query (i.e search)
       QueryLayer = strdup(Entries[i].val);
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"slayer") == 0) { /* layer to select (for feature based search) */     
+    if(strcasecmp(Entries[i].name,"slayer") == 0) { // layer to select (for feature based search)
       SelectLayer = strdup(Entries[i].val);
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"item") == 0) { /* search item */
+    if(strcasecmp(Entries[i].name,"item") == 0) { // search item
       Item = strdup(Entries[i].val);
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"value") == 0) { /* search expression */
+    if(strcasecmp(Entries[i].name,"value") == 0) { // search expression
       if(!Value)
 	Value = strdup(Entries[i].val);
       else { /* need to append */
@@ -644,13 +652,7 @@ void loadForm() /* set variables as input from the user form */
       continue;
     }
 
-    if(strcasecmp(Entries[i].name,"tile") == 0) { /* shapefile tile directory */
-      free(Map->tile);
-      Map->tile = strdup(Entries[i].val);
-      continue;
-    }
-
-    if(strcasecmp(Entries[i].name,"template") == 0) { /* template file */
+    if(strcasecmp(Entries[i].name,"template") == 0) { // template file, common change hence the simple parameter
       free(Map->web.template);
       Map->web.template = strdup(Entries[i].val);      
       continue;
@@ -671,7 +673,7 @@ void loadForm() /* set variables as input from the user form */
     }
 #endif
 
-    if(strcasecmp(Entries[i].name,"mode") == 0) { /* set operation mode */
+    if(strcasecmp(Entries[i].name,"mode") == 0) { // set operation mode
       if(strcasecmp(Entries[i].val,"browse") == 0) {
         Mode = BROWSE;
         continue;
@@ -772,7 +774,7 @@ void loadForm() /* set variables as input from the user form */
       writeError();
     }
 
-    if(strncasecmp(Entries[i].name,"map_",4) == 0) {
+    if(strncasecmp(Entries[i].name,"map_",4) == 0) { // check to see if there are any additions to the mapfile
       if(msLoadMapString(Map, Entries[i].name, Entries[i].val) == -1)
 	writeError();
       continue;
@@ -781,7 +783,7 @@ void loadForm() /* set variables as input from the user form */
 
   regfree(&re);
 
-  if(ZoomSize != 0) { /* use direction and magnitude to calculate zoom */
+  if(ZoomSize != 0) { // use direction and magnitude to calculate zoom
     if(ZoomDirection == 0) {
       fZoom = 1;
     } else {
@@ -789,14 +791,14 @@ void loadForm() /* set variables as input from the user form */
       if(fZoom < 0)
 	fZoom = 1.0/MS_ABS(fZoom);
     }
-  } else { /* use single value for zoom */
+  } else { // use single value for zoom
     if((Zoom >= -1) && (Zoom <= 1)) {
-      fZoom = 1; /* pan */
+      fZoom = 1; // pan
     } else {
       if(Zoom < 0)
 	fZoom = 1.0/MS_ABS(Zoom);
       else
-	fZoom = Zoom;      
+	fZoom = Zoom;
     }
   }
 
@@ -807,7 +809,7 @@ void loadForm() /* set variables as input from the user form */
 }
 
 /*
-** is a particular layer on
+** Is a particular layer or group on, that is was it requested explicitly by the user.
 */
 int isOn(char *name, char *group)
 {
@@ -822,7 +824,7 @@ int isOn(char *name, char *group)
 }
 
 /*
-** sets the map extent under a variety of scenarios
+** Sets the map extent under a variety of scenarios.
 */
 void setExtent() 
 {
@@ -930,12 +932,12 @@ void setExtentFromShapes() {
 
   RawExt = Map->extent; /* save unaltered extent */
 
-  /* NEED TO ADD A COUPLE OF POINT BASED METHODS */
+  /* FIX: NEED TO ADD A COUPLE OF POINT BASED METHODS */
 
   return;
 }
 
-/* NEED ERROR CHECKING HERE FOR IMGPNT or MAPPNT */
+/* FIX: NEED ERROR CHECKING HERE FOR IMGPNT or MAPPNT */
 void setCoordinate()
 {
   double cellx,celly;
