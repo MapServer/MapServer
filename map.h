@@ -922,7 +922,9 @@ int getDouble(double *d);
 int getInteger(int *i);
 int getSymbol(int n, ...);
 int getCharacter(char *c);
-int  hex2int(char *hex);
+
+// exported to fix bug 851
+MS_DLL_EXPORT int  hex2int(char *hex);
 
 MS_DLL_EXPORT void initSymbol(symbolObj *s);
 MS_DLL_EXPORT int initMap(mapObj *map);

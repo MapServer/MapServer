@@ -5,6 +5,9 @@
  *
  **********************************************************************
  * $Log$
+ * Revision 1.30.2.3  2004/09/08 14:31:49  sean
+ * declared MS_DLL_EXPORT for hex2int and msGMLWriteQuery (bug 851).
+ *
  * Revision 1.30.2.2  2004/05/11 05:36:50  sean
  * Added prototypes to map.h, small changes to mapscript.i so that mapscript builds with very few warnings.  Also changed the getMetaData methods of several classes to use msLookupHashTable but raise their own errors.
  *
@@ -211,7 +214,8 @@ char *msOWSBuildURLFilename(const char *pszPath, const char *pszURL,
 /*====================================================================
  *   mapgml.c
  *====================================================================*/
-int msGMLWriteQuery(mapObj *map, char *filename);
+// exporting to fix bug 851
+MS_DLL_EXPORT int msGMLWriteQuery(mapObj *map, char *filename);
 
 #ifdef USE_WFS_SVR
 int msGMLWriteWFSQuery(mapObj *map, FILE *stream, int maxfeatures, char *);
