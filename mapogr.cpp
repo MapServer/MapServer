@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.32  2001/03/22 22:45:09  dan
+ * Forgot to change one instance of itemindexes to iteminfo
+ *
  * Revision 1.31  2001/03/22 17:12:28  dan
  * Added msOGRLayerInitItemInfo() and msOGRLayerFreeItemInfo()
  *
@@ -507,7 +510,7 @@ static char **msOGRGetValues(layerObj *layer, OGRFeature *poFeature)
   if(layer->numitems == 0) 
       return(NULL);
 
-  if(!layer->itemindexes)  // Should not happen... but just in case!
+  if(!layer->iteminfo)  // Should not happen... but just in case!
       if (msOGRLayerInitItemInfo(layer) != MS_SUCCESS)
           return NULL;
 
