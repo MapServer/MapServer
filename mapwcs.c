@@ -472,7 +472,8 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   const char *value;
   char tag[100]; // should be plenty of space
   
-  printf("        <axisDescription");
+  printf("        <axisDescription>\n");
+  printf("          <AxisDescription");
   snprintf(tag, 100, "%s_semantic",  name); // optional attributes follow (should escape?)
   msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
   snprintf(tag, 100, "%s_refsys", name);
@@ -484,16 +485,16 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   // TODO: add metadataLink (optional)
   
   snprintf(tag, 100, "%s_description", name);
-  msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, "          <description>%s</description>\n", NULL);
+  msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, "            <description>%s</description>\n", NULL);
   // snprintf(tag, 100, "%s_name", name);
-  // msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_WARN, "          <name>%s</name>\n", NULL);
-  printf("          <name>%s</name>\n", name);
+  // msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_WARN, "            <name>%s</name>\n", NULL);
+  printf("            <name>%s</name>\n", name);
  
   snprintf(tag, 100, "%s_label", name);
-  msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_WARN, "          <label>%s</label>\n", NULL);
+  msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_WARN, "            <label>%s</label>\n", NULL);
   
   // Values
-  printf("          <values");
+  printf("            <values");
   snprintf(tag, 100, "%s_values_semantic", name); // optional attributes follow (should escape?)
   msOWSPrintMetadata(stdout, &(layer->metadata), "COM", tag, OWS_NOERR, " semantic=\"%s\"", NULL);
   snprintf(tag, 100, "%s_values_type", name);
@@ -503,7 +504,7 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
   // single values, we do not support optional type and semantic attributes
   snprintf(tag, 100, "%s_values", name);
   if(msOWSLookupMetadata(&(layer->metadata), "COM", tag))
-    msOWSPrintMetadataList(stdout, &(layer->metadata), "COM", tag, NULL, NULL, "            <singleValue>%s</singleValue>\n", NULL);
+    msOWSPrintMetadataList(stdout, &(layer->metadata), "COM", tag, NULL, NULL, "              <singleValue>%s</singleValue>\n", NULL);
   
   // intervals, only one per axis for now, we do not support optional type, atomic and semantic attributes
   snprintf(tag, 100, "%s_interval", name);
@@ -513,20 +514,21 @@ static int msWCSDescribeCoverage_AxisDescription(layerObj *layer, char *name)
 
      tokens = split(value, '/', &numtokens);
      if(tokens && numtokens > 0) {
-       printf("          <interval>\n");
-       if(numtokens >= 1) printf("          <min>%s</min>\n", tokens[0]); // TODO: handle closure
-       if(numtokens >= 2) printf("          <max>%s</max>\n", tokens[1]);
-       if(numtokens >= 3) printf("          <res>%s</res>\n", tokens[2]);
-       printf("          </interval>\n"); 
+       printf("            <interval>\n");
+       if(numtokens >= 1) printf("            <min>%s</min>\n", tokens[0]); // TODO: handle closure
+       if(numtokens >= 2) printf("            <max>%s</max>\n", tokens[1]);
+       if(numtokens >= 3) printf("            <res>%s</res>\n", tokens[2]);
+       printf("            </interval>\n"); 
      }
   }
   
   // TODO: add default (optional)
   
-  printf("          </values>\n");
+  printf("            </values>\n");
   
   // TODO: add NullValues (optional)
   
+  printf("          </AxisDescription>\n");
   printf("        </axisDescription>\n");
   
   return MS_SUCCESS;
