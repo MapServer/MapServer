@@ -245,8 +245,7 @@ int msSaveImage(mapObj *map, imageObj *img, char *filename)
             nReturnVal =  msSaveImageGD(img->img.gd, filename, img->format );
 #ifdef USE_GDAL
         else if( MS_DRIVER_GDAL(img->format) )
-            nReturnVal = msSaveImageGDAL(map, img->img.gd, filename, 
-                                         img->format );
+            nReturnVal = msSaveImageGDAL(map, img, filename);
 #endif
 #ifdef USE_MING_FLASH
         else if( MS_DRIVER_SWF(img->format) )
@@ -270,6 +269,8 @@ void msFreeImage(imageObj *image)
         if( MS_RENDERER_GD(image->format) )
             msFreeImageGD(image->img.gd);
 
+        else if( MS_RENDERER_RAWDATA(image->format) )
+            msFree(image->img.raw_16bit);
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             msFreeImageSWF(image);
@@ -913,6 +914,59 @@ imageObj *msImageCreate(int width, int height, outputFormatObj *format,
     if( MS_RENDERER_GD(format) )
         image = msImageCreateGD(width, height, format,
                                 imagepath, imageurl);
+
+    else if( MS_RENDERER_RAWDATA(format) )
+    {
+        if( format->imagemode != MS_IMAGEMODE_INT16
+            && format->imagemode != MS_IMAGEMODE_FLOAT32 )
+        {
+            msSetError(MS_IMGERR, 
+                    "Attempt to use illegal imagemode with rawdata renderer.",
+                       "msImageCreate()" );
+            return NULL;
+        }
+
+        image = (imageObj *)calloc(1,sizeof(imageObj));
+
+        if( format->imagemode == MS_IMAGEMODE_INT16 )
+            image->img.raw_16bit = (short *) 
+                calloc(sizeof(short),width*height);
+        else if( format->imagemode == MS_IMAGEMODE_FLOAT32 )
+            image->img.raw_float = (float *) 
+                calloc(sizeof(float),width*height);
+
+        if( image->img.raw_16bit == NULL )
+        {
+            msFree( image );
+            msSetError(MS_IMGERR, 
+                       "Attempt to allocate raw image failed, out of memory.",
+                       "msImageCreate()" );
+            return NULL;
+        }
+            
+        image->format = format;
+        format->refcount++;
+
+        image->width = width;
+        image->height = height;
+        image->imagepath = NULL;
+        image->imageurl = NULL;
+            
+        if (imagepath)
+            image->imagepath = strdup(imagepath);
+        if (imageurl)
+            image->imageurl = strdup(imageurl);
+            
+        return image;
+    }
+    
+    else 
+    {
+        msSetError(MS_MISCERR, 
+               "Unsupported renderer requested, unable to initialize image.", 
+                   "msImageCreate()");
+        return NULL;
+    }
 
     if(!image) 
         msSetError(MS_GDERR, "Unable to initialize image.", "msImageCreate()");

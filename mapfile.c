@@ -2466,7 +2466,12 @@ static int loadOutputFormat(mapObj *map)
             format->mimetype = mimetype;
         }
         if( format->imagemode != MS_NOOVERRIDE )
+        {
             format->imagemode = imagemode;
+            if( format->imagemode == MS_IMAGEMODE_INT16 
+                || format->imagemode == MS_IMAGEMODE_FLOAT32 )
+                format->renderer = MS_RENDER_WITH_RAWDATA;
+        }
 
         format->numformatoptions = numformatoptions;
         if( numformatoptions > 0 )
@@ -2476,6 +2481,9 @@ static int loadOutputFormat(mapObj *map)
             memcpy( format->formatoptions, formatoptions, 
                     sizeof(char *)*numformatoptions );
         }
+
+        // We really needs some sort of generic and driver specific
+        // validation at this point.
 
         return(0);
     }
@@ -2504,6 +2512,10 @@ static int loadOutputFormat(mapObj *map)
           imagemode = MS_IMAGEMODE_RGB;
       else if( strcasecmp(value,"RGBA") == 0)
           imagemode = MS_IMAGEMODE_RGBA;
+      else if( strcasecmp(value,"INT16") == 0)
+          imagemode = MS_IMAGEMODE_INT16;
+      else if( strcasecmp(value,"FLOAT32") == 0)
+          imagemode = MS_IMAGEMODE_FLOAT32;
       else
       {
           msSetError(MS_IDENTERR, "(%s):(%d)", "loadOutputFormat()", 

@@ -143,9 +143,11 @@ extern "C" {
 
 #define MS_RENDER_WITH_GD	1
 #define MS_RENDER_WITH_SWF    	2
+#define MS_RENDER_WITH_RAWDATA 	3
 
 #define MS_RENDERER_GD(format)	((format)->renderer == MS_RENDER_WITH_GD)
 #define MS_RENDERER_SWF(format)	((format)->renderer == MS_RENDER_WITH_SWF)
+#define MS_RENDERER_RAWDATA(format) ((format)->renderer == MS_RENDER_WITH_RAWDATA)
 
 // ok, we'll switch to an UL cell model to make this work with WMS
 #define MS_CELLSIZE(min,max,d)    ((max - min)/d)
@@ -180,7 +182,7 @@ enum MS_CAPS_JOINS_AND_CORNERS {MS_CJC_NONE, MS_CJC_BEVEL, MS_CJC_BUTT, MS_CJC_M
 
 enum MS_RETURN_VALUE {MS_SUCCESS, MS_FAILURE, MS_DONE};
 
-enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_GREY256 };
+enum MS_IMAGEMODE { MS_IMAGEMODE_PC256, MS_IMAGEMODE_RGB, MS_IMAGEMODE_RGBA, MS_IMAGEMODE_INT16, MS_IMAGEMODE_FLOAT32 };
 
 #define MS_FILE_DEFAULT MS_FILE_MAP   
    
@@ -788,6 +790,8 @@ typedef struct {
 #endif
       //PDF       *pdf;
 
+      short       *raw_16bit;
+      float       *raw_float;
   }img;
 
 #endif
@@ -1144,10 +1148,10 @@ void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p,
                          int sy, int fc, int bc, int oc, double sz);
 
 //in mapraster.c
-int msDrawRasterLayerGD(mapObj *map, layerObj *layer, gdImagePtr img);
+int msDrawRasterLayerLow(mapObj *map, layerObj *layer, imageObj *image);
 
 //in mapwmslayer.c
-int msDrawWMSLayerGD(mapObj *map, layerObj *lp, gdImagePtr img); 
+int msDrawWMSLayerLow(mapObj *map, layerObj *lp, imageObj *image);
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */
@@ -1215,6 +1219,7 @@ void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image,
                            pointObj *p, 
                            int sy, int fc, int bc, int oc, double sz);
 int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
+int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj*image);
 
 int msDrawWMSLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 
@@ -1224,6 +1229,10 @@ int msSaveImageSWF(imageObj *image, char *filename);
 
 void msFreeImageSWF(imageObj *image);
 
+int draw_textSWF(imageObj *image, pointObj labelPnt, char *string, 
+                 labelObj *label, fontSetObj *fontset);
+void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
+                         shapeObj *shape);
 #endif
 
 
@@ -1258,8 +1267,7 @@ outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
 /* ==================================================================== */
 /*      prototypes for functions in mapgdal.c                           */
 /* ==================================================================== */
-int msSaveImageGDAL( mapObj *map, gdImagePtr img, char *filename, 
-                     outputFormatObj *format );
+int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename );
 int msInitDefaultGDALOutputFormat( outputFormatObj *format );
 
 /* ==================================================================== */

@@ -36,6 +36,11 @@ imageObj *msDrawMap(mapObj *map)
         if( image != NULL )
             msImageInitGD( image, map->imagecolor );
     }
+    else if( MS_RENDERER_RAWDATA(map->outputformat) )
+    {
+        image = msImageCreate( map->width, map->height, map->outputformat,
+                               map->web.imagepath, map->web.imageurl);
+    }
 #ifdef USE_MING_FLASH
     else if( MS_RENDERER_SWF(map->outputformat) )
     {
@@ -290,11 +295,11 @@ int msDrawVectorLayer(mapObj *map, layerObj *layer, imageObj *image)
 /*      For Flash, we use a metadata called SWFOUTPUT that              */
 /*      is used to render vector layers as rasters.                     */
 /* ==================================================================== */
- #ifdef USE_MING_FLASH
+#ifdef USE_MING_FLASH
     if (image &&  MS_RENDERER_SWF(image->format) && 
         msLookupHashTable(layer->metadata, "SWFOUTPUT") &&
         strcasecmp(msLookupHashTable(layer->metadata, "SWFOUTPUT"), "RASTER")==0)
-      return  msDrawVectorLayerAsRasterSWF(map, layer, image);
+      return msDrawVectorLayerAsRasterSWF(map, layer, image);
 #endif
 
     annotate = msEvalContext(map, layer->labelrequires);
@@ -586,7 +591,9 @@ int msDrawRasterLayer(mapObj *map, layerObj *layer, imageObj *image)
     if (image && map && layer)
     {
         if( MS_RENDERER_GD(image->format) )
-            return msDrawRasterLayerGD(map, layer, image->img.gd);
+            return msDrawRasterLayerLow(map, layer, image);
+        else if( MS_RENDERER_RAWDATA(image->format) )
+            return msDrawRasterLayerLow(map, layer, image);
 #ifdef USE_MING_FLASH
         else if( MS_RENDERER_SWF(image->format) )
             return  msDrawRasterLayerSWF(map, layer, image);
@@ -601,7 +608,10 @@ int msDrawWMSLayer(mapObj *map, layerObj *layer, imageObj *image)
     if (image && map && layer)
     {
         if( MS_RENDERER_GD(image->format) )
-            return msDrawWMSLayerGD(map, layer, image->img.gd) ;
+            return msDrawWMSLayerLow( map, layer, image) ;
+
+        else if( MS_RENDERER_RAWDATA(image->format) )
+            return msDrawWMSLayerLow( map, layer, image) ;
 
 #ifdef USE_MING_FLASH                
         else if( MS_RENDERER_SWF(image->format) )
