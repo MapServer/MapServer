@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.20  2004/05/06 21:06:08  frank
+ * temporary filenames should not be altered with msBuildPath()
+ *
  * Revision 1.19  2004/03/15 05:52:07  frank
  * only call CPLFreeConfig() with recent GDALs
  *
@@ -459,7 +462,7 @@ int msSaveImageGDAL( mapObj *map, imageObj *image, char *filename )
         int bytes_read;
         char szPath[MS_MAXPATHLEN];
 
-        fp = fopen( msBuildPath(szPath, map->mappath, filename), "rb" );
+        fp = fopen( filename, "rb" );
         if( fp == NULL )
         {
             msSetError( MS_MISCERR, 
