@@ -3143,6 +3143,7 @@ int initMap(mapObj *map)
     return(-1);
   }
 
+  map->debug = MS_OFF;
   map->status = MS_ON;
   map->name = strdup("MS");;
   map->extent.minx = map->extent.miny = map->extent.maxx = map->extent.maxy = -1.0;
@@ -3269,6 +3270,9 @@ void msCleanup()
 #ifdef USE_GDAL
     msGDALCleanup();
 #endif    
+#ifdef USE_PROJ
+    pj_deallocate_grids();
+#endif
 }
 
 void msFreeMap(mapObj *map) {
