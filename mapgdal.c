@@ -28,6 +28,9 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.4  2002/06/12 21:20:32  frank
+ * added automatic mimetype and extension setting
+ *
  * Revision 1.3  2002/06/11 20:45:48  frank
  * fixed handling of temp files a bit
  *
@@ -318,6 +321,16 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
         return MS_FAILURE;
     }
 
+#ifdef GDAL_DCAP_CREATE
+    if( GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATE, NULL ) == NULL 
+        && GDALGetMetadataItem( hDriver, GDAL_DCAP_CREATECOPY, NULL ) == NULL )
+    {
+        msSetError( MS_MISCERR, "GDAL `%s' driver does not support output.", 
+                    "msInitGDALOutputFormat()", format->driver+5 );
+        return MS_FAILURE;
+    }
+#endif
+
 /* -------------------------------------------------------------------- */
 /*      Initialize the object.                                          */
 /* -------------------------------------------------------------------- */
@@ -327,15 +340,21 @@ int msInitDefaultGDALOutputFormat( outputFormatObj *format )
     // Eventually we should have a way of deriving the mime type and extension
     // from the driver.
 
+#ifdef GDAL_DMD_MIMETYPE 
+    if( GDALGetMetadataItem( hDriver, GDAL_DMD_MIMETYPE, NULL ) != NULL )
+        format->mimetype = 
+            strdup(GDALGetMetadataItem(hDriver,GDAL_DMD_MIMETYPE,NULL));
+    if( GDALGetMetadataItem( hDriver, GDAL_DMD_EXTENSION, NULL ) != NULL )
+        format->extension = 
+            strdup(GDALGetMetadataItem(hDriver,GDAL_DMD_EXTENSION,NULL));
+
+#else
     if( strcasecmp(format->driver,"GDAL/GTiff") )
     {
         format->mimetype = strdup("image/tiff");
         format->extension = strdup("tif");
     }
-    else if( strcasecmp(format->driver,"GDAL/HFA") )
-    {
-        format->extension = strdup("img");
-    }
+#endif
     
     return MS_SUCCESS;
 }
