@@ -1,25 +1,106 @@
+# $Id$
 
-PYTHON 2.0 OR NEWER
+Python MapScript for MapServer 4.0
 
-Should be easy.
+BUILD
+----------------------------------------------------------------
+Before you begin, it's worth spending a few minutes to read the
+docs about Python disutils:
 
-The setup.py script requires Python 2.0 or newer.  Apologies to the
-die-hard 1.5.2 folks.  This hopefully won't impact too many people since
-distutils is an add-on to 1.5.2 anyway.
+http://www.python.org/doc/current/dist/dist.html
 
-BUILD IT
+Now that you know what disutils does, use it like
+
   python setup.py build
 
-INSTALL IT (usually as root)
+If you want the advanced feature in setup_wnone.py (read the file
+for details):
+
+  python setup_wnone.py build
+
+
+TEST
+----------------------------------------------------------------
+If you have the Itasca demo data on your system, make the
+appropriate edits to tests/test.map and execute
+
+  python tests/testMapScript.py
+
+The tests can (and should) be run before the module is installed.
+
+
+INSTALL
+----------------------------------------------------------------
+As root or superuser
+
   python setup.py install
 
 That's it!
 
 
-PYTHON VERSIONS LESS THAN 2.0
+TROUBLESHOOTING
+----------------------------------------------------------------
+People have been reporting segmentation faults with Python
+MapScript.  The most common cause of this is improperly
+configured map SHAPEPATH and layer DATA.
 
-Need to compile mapscript.c into a shared library called _mapscript.so
-on UNICES/Linux and _mapscript.dll (I think) for MS Windows.  Copy
-_mapscript.(so|dll), mapscript.py, and dbfreader.py to your Python's
-site-packages directory.  That should to it!
+Here's a sample of how to troubleshoot this issue:
+
+Python 2.1.3 (#18, Jun 24 2003, 18:02:42) 
+[GCC 3.1 20020420 (prerelease)] on darwin6
+Type "copyright", "credits" or "license" for more information.
+>>> from mapscript import mapObj
+>>> m = mapObj('tests/test.map')
+>>> m
+<C mapObj instance at _00df2000_p_mapObj>
+>>> import os
+>>> for i in range(m.numlayers):                   
+...     l = m.getLayer(i)
+...     filename = os.path.join(m.shapepath, l.data + '.shp')
+...     try:
+...         fh = open(filename, 'r')
+...         fh.close()
+...     except IOError:
+...         print "Caught IOError trying to read " + filename
+... 
+>>> 
+
+In my case the map file is properly configured and the open()
+call doesn't raise an IOError.  If your SHAPEPATH and DATA are
+bogus, you will see errors raised.
+
+
+LINKS
+----------------------------------------------------------------
+Here are the essential Python and Python MapScript links
+
+Python Language Home
+
+  http://www.python.org
+
+Python MapScript Documentation
+
+  http://mapserver.gis.umn.edu/doc.html
+
+Python MapScript Wiki
+
+  http://mapserver.gis.umn.edu/cgi-bin/wiki.pl?PythonMapScript
+
+Slightly out-of-date MapScript HOWTO
+
+  http://mapserver.gis.umn.edu/doc36/howto-mapscript-python_2.html
+
+Norman Vine's MapScript Page
+
+  http://www.vso.cape.com/~nhv/files/python/mapscript.html
+
+  
+CREDITS
+----------------------------------------------------------------
+Steve Lime (developer)
+Sean Gillies (developer)
+Frank Warmerdam (developer)
+Norman Vine (cygwin and distutils guru)
+Tim Cera (install)
+Michael Schultz (documentation)
 
