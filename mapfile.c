@@ -1922,6 +1922,7 @@ static void writeClass(classObj *class, FILE *stream)
 
   fprintf(stream, "    CLASS\n");
   if(class->name) fprintf(stream, "      NAME \"%s\"\n", class->name);
+  if(class->debug) fprintf(stream, "      DEBUG ON\n");
   if(class->expression.string) {
     fprintf(stream, "      EXPRESSION ");
     writeExpression(&(class->expression), stream);
@@ -2582,6 +2583,7 @@ static void writeLayer(layerObj *layer, FILE *stream)
       fprintf(stream, "    CONNECTIONTYPE WFS\n");
   }
   if(layer->data) fprintf(stream, "    DATA \"%s\"\n", layer->data);
+  if(layer->debug) fprintf(stream, "    DEBUG ON\n");
   if(layer->dump) fprintf(stream, "    DUMP TRUE\n");
 
   if(layer->filter.string) {
@@ -3859,6 +3861,7 @@ int msSaveMap(mapObj *map, char *filename)
 
   fprintf(stream, "  UNITS %s\n", msUnits[map->units]);
   fprintf(stream, "  NAME \"%s\"\n\n", map->name);
+  if(map->debug) fprintf(stream, "  DEBUG ON\n");
 
   // write symbol with INLINE tag in mapfile
   for(i=0; i<map->symbolset.numsymbols; i++)
