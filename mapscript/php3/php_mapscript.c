@@ -30,6 +30,10 @@
  **********************************************************************
  *
  * $Log$
+ * Revision 1.48  2001/08/21 19:09:02  dan
+ * Made map->draw() and drawQuery() produce only a PHP warning so that the map
+ * rendering errors can be trapped by the scripts using the '@' operator.
+ *
  * Revision 1.47  2001/08/01 13:52:59  dan
  * Sync with mapscript.i v1.39: add QueryByAttributes() and take out type arg
  * to getSymbolByName().
@@ -129,7 +133,7 @@
 #include <errno.h>
 #endif
 
-#define PHP3_MS_VERSION "(Aug 1, 2001)"
+#define PHP3_MS_VERSION "(Aug 21, 2001)"
 
 #ifdef PHP4
 #define ZEND_DEBUG 0
@@ -2255,10 +2259,15 @@ DLEXPORT void php3_ms_map_draw(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
     if (self == NULL || (im = mapObj_draw(self)) == NULL)
-      _phpms_report_mapserver_error(E_ERROR);
-
-    /* Return an image object */
-    _phpms_build_img_object(im, &(self->web), list, return_value);
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_FALSE;
+    }
+    else
+    {
+        /* Return an image object */
+        _phpms_build_img_object(im, &(self->web), list, return_value);
+    }
 }
 /* }}} */
 
@@ -2291,10 +2300,15 @@ DLEXPORT void php3_ms_map_drawQuery(INTERNAL_FUNCTION_PARAMETERS)
 
     self = (mapObj *)_phpms_fetch_handle(pThis, le_msmap, list);
     if (self == NULL || (im =  mapObj_drawQuery(self)) == NULL)
-        _phpms_report_mapserver_error(E_ERROR);
-
-    /* Return an image object */
-    _phpms_build_img_object(im, &(self->web), list, return_value);
+    {
+        _phpms_report_mapserver_error(E_WARNING);
+        RETURN_FALSE;
+    }
+    else
+    {
+        /* Return an image object */
+        _phpms_build_img_object(im, &(self->web), list, return_value);
+    }
 }
      
 /* }}} */
