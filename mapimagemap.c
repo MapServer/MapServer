@@ -125,7 +125,7 @@ static const char *makeFmtSafe(const char *fmt, int MAX) {
 /* Append the given printf-style formatted string to the pString 'ps'.
  * This is much cleaner (and faster) than the technique this file
  * used to use! */
-static void iprintf(pString *ps, char *fmt, ...) {
+static void im_iprintf(pString *ps, char *fmt, ...) {
 	int n, remaining;
 	va_list ap;
 	do {
@@ -208,9 +208,9 @@ DEBUG printf("ImageStartLayerIM\n<BR>");
 	else
 		lname = strdup("NONE");
 	if (dxf == 2){
-		iprintf(&layerStr, "LAYER\n%s\n", lname);
+		im_iprintf(&layerStr, "LAYER\n%s\n", lname);
 	} else {
-		iprintf(&layerStr,
+		im_iprintf(&layerStr,
 			"  0\nLAYER\n  2\n%s\n"
 			" 70\n  64\n 6\nCONTINUOUS\n", lname);
 	}
@@ -289,13 +289,13 @@ DEBUG printf("msImageCreateIM<BR>\n");
             image->imageurl = NULL;
 	    if( strcasecmp("ON",msGetOutputFormatOption( format, "DXF", "OFF" )) == 0){
 		    dxf = 1;
-		    iprintf(&layerStr, "  2\nLAYER\n 70\n  10\n");
+		    im_iprintf(&layerStr, "  2\nLAYER\n 70\n  10\n");
 	    } else
 		    dxf = 0;
 
 	    if( strcasecmp("ON",msGetOutputFormatOption( format, "SCRIPT", "OFF" )) == 0){
 		    dxf = 2;
-		    iprintf(&layerStr, "");
+		    im_iprintf(&layerStr, "");
 	    }
 
 	    /* get href formation string options */
@@ -949,31 +949,31 @@ DEBUG printf("msDrawMarkerSymbolIM\n<BR>");
 		
     if (dxf) {
       if (dxf==2)
-	iprintf (&imgStr, "POINT\n%.0f %.0f\n%d\n",
+	im_iprintf (&imgStr, "POINT\n%.0f %.0f\n%d\n",
 		 p->x + ox, p->y + oy, matchdxfcolor(style->color));
       else
-	iprintf (&imgStr, 
+	im_iprintf (&imgStr, 
 		 "  0\nPOINT\n 10\n%f\n 20\n%f\n 30\n0.0\n"
 		 " 62\n%6d\n  8\n%s\n",
 		 p->x + ox, p->y + oy, matchdxfcolor(style->color), lname);
     } else {
-      iprintf (&imgStr, "<area ");
+      im_iprintf (&imgStr, "<area ");
       if (strcmp(symbolHrefFmt,"%.s")!=0) {
-	      iprintf (&imgStr, "href=\"");
-	      iprintf (&imgStr, symbolHrefFmt, lname);
-	      iprintf (&imgStr, "\" ");
+	      im_iprintf (&imgStr, "href=\"");
+	      im_iprintf (&imgStr, symbolHrefFmt, lname);
+	      im_iprintf (&imgStr, "\" ");
       }
       if (strcmp(symbolMOverFmt,"%.s")!=0) {
-	      iprintf (&imgStr, "onMouseOver=\"");
-	      iprintf (&imgStr, symbolMOverFmt, lname);
-	      iprintf (&imgStr, "\" ");
+	      im_iprintf (&imgStr, "onMouseOver=\"");
+	      im_iprintf (&imgStr, symbolMOverFmt, lname);
+	      im_iprintf (&imgStr, "\" ");
       }
       if (strcmp(symbolMOutFmt,"%.s")!=0) {
-	      iprintf (&imgStr, "onMouseOut=\"");
-	      iprintf (&imgStr, symbolMOutFmt, lname);
-	      iprintf (&imgStr, "\" ");
+	      im_iprintf (&imgStr, "onMouseOut=\"");
+	      im_iprintf (&imgStr, symbolMOutFmt, lname);
+	      im_iprintf (&imgStr, "\" ");
       }
-      iprintf (&imgStr, "shape=\"circle\" coords=\"%.0f,%.0f, 3\" />\n",
+      im_iprintf (&imgStr, "shape=\"circle\" coords=\"%.0f,%.0f, 3\" />\n",
 	       p->x + ox, p->y + oy);
     }
 		      
@@ -1147,44 +1147,44 @@ DEBUG printf("msDrawLineSymbolIM<BR>\n");
 //    imagePolyline(img, p, fc, style->offsetx, style->offsety);
 		  for(l=0,j=0; j<p->numlines; j++) {
 		    if (dxf == 2){
-		      iprintf (&imgStr, "LINE\n%d\n", matchdxfcolor(style->color));
+		      im_iprintf (&imgStr, "LINE\n%d\n", matchdxfcolor(style->color));
 		    } else if (dxf){
-		      iprintf (&imgStr, "  0\nPOLYLINE\n 70\n     0\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
+		      im_iprintf (&imgStr, "  0\nPOLYLINE\n 70\n     0\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
 		    } else {
 		      char *title=(p->numvalues) ? p->values[0] : "";
-		      iprintf (&imgStr, "<area ");
+		      im_iprintf (&imgStr, "<area ");
 		      if (strcmp(polyHrefFmt,"%.s")!=0) {
-			iprintf (&imgStr, "href=\"");
-			iprintf (&imgStr, polyHrefFmt, title);
-			iprintf (&imgStr, "\" ");
+			im_iprintf (&imgStr, "href=\"");
+			im_iprintf (&imgStr, polyHrefFmt, title);
+			im_iprintf (&imgStr, "\" ");
 		      }
 		      if (strcmp(polyMOverFmt,"%.s")!=0) {
-			iprintf (&imgStr, "onMouseOver=\"");
-			iprintf (&imgStr, polyMOverFmt, title);
-			iprintf (&imgStr, "\" ");
+			im_iprintf (&imgStr, "onMouseOver=\"");
+			im_iprintf (&imgStr, polyMOverFmt, title);
+			im_iprintf (&imgStr, "\" ");
 		      }
 		      if (strcmp(polyMOutFmt,"%.s")!=0) {
-			iprintf (&imgStr, "onMouseOut=\"");
-			iprintf (&imgStr, polyMOutFmt, title);
-			iprintf (&imgStr, "\" ");
+			im_iprintf (&imgStr, "onMouseOut=\"");
+			im_iprintf (&imgStr, polyMOutFmt, title);
+			im_iprintf (&imgStr, "\" ");
 		      }
-		      iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
+		      im_iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
 		    }
 		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
 				if (dxf == 2){
-					iprintf (&imgStr, "%.0f %.0f\n", p->line[j].point[i].x, p->line[j].point[i].y);
+					im_iprintf (&imgStr, "%.0f %.0f\n", p->line[j].point[i].x, p->line[j].point[i].y);
 				} else if (dxf){
-					iprintf (&imgStr, "  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
+					im_iprintf (&imgStr, "  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
 				} else {
-					iprintf (&imgStr, "%s %.0f,%.0f", first ? "": ",", p->line[j].point[i].x, p->line[j].point[i].y);
+					im_iprintf (&imgStr, "%s %.0f,%.0f", first ? "": ",", p->line[j].point[i].x, p->line[j].point[i].y);
 				}
 				first = 0;
 			      
 		//        point2 = &( p->line[j].point[i] );
 		//        if(point1->y == point2->y) {}
 		      }
-		      iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
+		      im_iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
 
 //	DEBUG printf ("%d, ",strlen(img->img.imagemap) );
@@ -1364,45 +1364,45 @@ DEBUG printf("msDrawShadeSymbolIM\n<BR>");
 	  if(style->symbol == 0) { // simply draw a single pixel of the specified color //    
 		  for(l=0,j=0; j<p->numlines; j++) {
 		    if (dxf == 2){
-		      iprintf (&imgStr, "POLY\n%d\n", matchdxfcolor(style->color));
+		      im_iprintf (&imgStr, "POLY\n%d\n", matchdxfcolor(style->color));
 		    } else if (dxf){
-		      iprintf (&imgStr, "  0\nPOLYLINE\n 73\n     1\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
+		      im_iprintf (&imgStr, "  0\nPOLYLINE\n 73\n     1\n 62\n%6d\n  8\n%s\n", matchdxfcolor(style->color), lname);
 		    } else {
 		      char *title=(p->numvalues) ? p->values[0] : "";
-		      iprintf (&imgStr, "<area ");
+		      im_iprintf (&imgStr, "<area ");
 		      if (strcmp(polyHrefFmt,"%.s")!=0) {
-			iprintf (&imgStr, "href=\"");
-			iprintf (&imgStr, polyHrefFmt, title);
-			iprintf (&imgStr, "\" ");
+			im_iprintf (&imgStr, "href=\"");
+			im_iprintf (&imgStr, polyHrefFmt, title);
+			im_iprintf (&imgStr, "\" ");
 		      }
 		      if (strcmp(polyMOverFmt,"%.s")!=0) {
-			iprintf (&imgStr, "onMouseOver=\"");
-			iprintf (&imgStr, polyMOverFmt, title);
-			iprintf (&imgStr, "\" ");
+			im_iprintf (&imgStr, "onMouseOver=\"");
+			im_iprintf (&imgStr, polyMOverFmt, title);
+			im_iprintf (&imgStr, "\" ");
 		      }
 		      if (strcmp(polyMOutFmt,"%.s")!=0) {
-			iprintf (&imgStr, "onMouseOut=\"");
-			iprintf (&imgStr, polyMOutFmt, title);
-			iprintf (&imgStr, "\" ");
+			im_iprintf (&imgStr, "onMouseOut=\"");
+			im_iprintf (&imgStr, polyMOutFmt, title);
+			im_iprintf (&imgStr, "\" ");
 		      }
-		      iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
+		      im_iprintf (&imgStr, "title=\"%s\" shape=\"poly\" coords=\"", title);
 		    }
 
 		//      point1 = &( p->line[j].point[p->line[j].numpoints-1] );
 		      for(i=0; i < p->line[j].numpoints; i++,l++) {
 				if (dxf == 2){
-					iprintf (&imgStr, "%.0f %.0f\n", p->line[j].point[i].x, p->line[j].point[i].y);
+					im_iprintf (&imgStr, "%.0f %.0f\n", p->line[j].point[i].x, p->line[j].point[i].y);
 				} else if (dxf){
-					iprintf (&imgStr, "  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
+					im_iprintf (&imgStr, "  0\nVERTEX\n 10\n%f\n 20\n%f\n 30\n%f\n", p->line[j].point[i].x, p->line[j].point[i].y, 0.0);
 				} else {
-					iprintf (&imgStr, "%s %.0f,%.0f", first ? "": ",", p->line[j].point[i].x, p->line[j].point[i].y);
+					im_iprintf (&imgStr, "%s %.0f,%.0f", first ? "": ",", p->line[j].point[i].x, p->line[j].point[i].y);
 				}
 				first = 0;
 			      
 		//        point2 = &( p->line[j].point[i] );
 		//        if(point1->y == point2->y) {}
 		      }
-		      iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
+		      im_iprintf (&imgStr, dxf ? (dxf == 2 ? "": "  0\nSEQEND\n") : "\" />\n");
 		  }
   
 //DEBUG printf("AFT%s", img->img.imagemap);
@@ -1618,9 +1618,9 @@ int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label
   y = MS_NINT(labelPnt.y);
 
 	if (dxf == 2) {
-		iprintf (&imgStr, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
+		im_iprintf (&imgStr, "TEXT\n%d\n%s\n%.0f\n%.0f\n%.0f\n" , matchdxfcolor(label->color), string, labelPnt.x, labelPnt.y, -label->angle);
 	} else {
-		iprintf (&imgStr, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
+		im_iprintf (&imgStr, "  0\nTEXT\n  1\n%s\n 10\n%f\n 20\n%f\n 30\n0.0\n 40\n%f\n 50\n%f\n 62\n%6d\n  8\n%s\n 73\n   2\n 72\n   1\n" , string, labelPnt.x, labelPnt.y, label->size * scalefactor *100, -label->angle, matchdxfcolor(label->color), lname);
 	}
 /*
   if(label->color.pen == MS_PEN_UNSET) msImageSetPenIM(img, &(label->color));
