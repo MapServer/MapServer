@@ -29,6 +29,9 @@
  * DEALINGS IN THE SOFTWARE.
  **********************************************************************
  * $Log$
+ * Revision 1.20  2003/09/29 14:18:20  assefa
+ * Support a diffrent was of giving the srs value for the gml Box element.
+ *
  * Revision 1.19  2003/09/26 13:44:40  assefa
  * Add support for gml box with 2 <coord> elements.
  *
@@ -767,6 +770,11 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
         projectionObj sProjTmp;
         char **paszFilter = NULL;
         int bIsBBoxFilter =0;
+        int nEpsgTmp = 0;
+        int nttt = 0;
+        char *sttt = NULL;
+
+        //nttt = strlen(sttt);
 /* -------------------------------------------------------------------- */
 /*      Validate the parameters. When a FILTER parameter is given,      */
 /*      It needs the TYPENAME parameter for the layers. Also Filter     */
@@ -885,8 +893,16 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
 /*      to the map projection.                                          */
 /*      The srs should be a string like                                 */
 /*      srsName="http://www.opengis.net/gml/srs/epsg.xml#4326".         */
-/*      We will just extrcat the value after the # and assume that      */
-/*      It corresponds to the epsg code on the system.                  */
+/*      We will just extract the value after the # and assume that      */
+/*      It corresponds to the epsg code on the system. This syntax      */
+/*      is the one descibed in the GML specification.                   */
+/*                                                                      */
+/*       There is also several servers requesting the box with the      */
+/*      srsName using the following syntax : <Box                       */
+/*      srsName="EPSG:42304">. So we also support this syntax.          */
+/*      (Note that at this point the ESPG ha been stripped and we       */
+/*      should only have 42304 as a value).                             */
+/*                                                                      */
 /* -------------------------------------------------------------------- */
                 if(szEPSG && map->projection.numargs > 0)
                 {
@@ -896,9 +912,22 @@ int msWFSGetFeature(mapObj *map, wfsParamsObj *paramsObj)
                     if (tokens && nTokens == 2)
                     {
                         char szTmp[32];
-                        sprintf(szTmp, "init:epsg:%s",tokens[1]);
+                        sprintf(szTmp, "init=epsg:%s",tokens[1]);
+                        msInitProjection(&sProjTmp);
                         if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
                           msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+                    }
+                    else if (tokens &&  nTokens == 1)
+                    {
+                        nEpsgTmp = atoi(tokens[0]);
+                        if (nEpsgTmp > 0)
+                        {
+                            char szTmp[32];
+                            sprintf(szTmp, "init=epsg:%s",tokens[0]);
+                             msInitProjection(&sProjTmp);
+                            if (msLoadProjectionString(&sProjTmp, szTmp) == 0)
+                              msProjectRect(&map->projection, &sProjTmp, &sQueryRect);
+                        }
                     }
 #endif
                 }
