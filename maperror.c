@@ -439,6 +439,9 @@ char *msGetVersion() {
 #ifdef USE_WFS_LYR
   strcat(version, " SUPPORTS=WFS_CLIENT");
 #endif
+#ifdef USE_WCS_SVR
+  strcat(version, " SUPPORTS=WCS_SERVER");
+#endif
 #ifdef USE_TIFF
   strcat(version, " INPUT=TIFF");
 #endif
