@@ -52,7 +52,6 @@
 
 %{
 PyObject *MSExc_MapServerError;
-PyObject *MSExc_MapServerNotFoundError;
 PyObject *MSExc_MapServerChildError;
 %}
 
@@ -63,11 +62,6 @@ MSExc_MapServerError=PyErr_NewException("_mapscript.MapServerError",NULL,NULL);
 if (MSExc_MapServerError != NULL)
     PyDict_SetItemString(d, "MapServerError", MSExc_MapServerError);
 
-// MapServer query MS_NOTFOUND error
-MSExc_MapServerNotFoundError = PyErr_NewException("_mapscript.MapServerNotFoundError", NULL, NULL);
-if (MSExc_MapServerNotFoundError != NULL)
-    PyDict_SetItemString(d, "MapServerNotFoundError", MSExc_MapServerNotFoundError);
-
 // MapServer query MS_CHILD error
 MSExc_MapServerChildError = PyErr_NewException("_mapscript.MapServerChildError", NULL, NULL);
 if (MSExc_MapServerChildError != NULL)
@@ -76,7 +70,7 @@ if (MSExc_MapServerChildError != NULL)
 %}
 
 %{
-    static void _raise_ms_exception(void) {
+    static void _raise_ms_exception() {
         int errcode;
         errorObj *ms_error;
         ms_error = msGetErrorObj();
@@ -99,11 +93,9 @@ if (MSExc_MapServerChildError != NULL)
             case MS_EOFERR:
                 PyErr_SetString(PyExc_EOFError, msGetErrorString("\n"));
                 break;
-            case MS_NOTFOUND:
-                PyErr_SetString(MSExc_MapServerNotFoundError, msGetErrorString("\n"));
-                break;
             case MS_CHILDERR:
-                PyErr_SetString(MSExc_MapServerChildError, msGetErrorString("\n"));
+                PyErr_SetString(MSExc_MapServerChildError, 
+                                msGetErrorString("\n"));
                 break;
             default:
                 PyErr_SetString(MSExc_MapServerError, msGetErrorString("\n"));
@@ -116,23 +108,32 @@ if (MSExc_MapServerChildError != NULL)
 %exception {
     $action {
         errorObj *ms_error = msGetErrorObj();
-        // Sidestep the annoying MS_IOERR raised by msSearchDiskTree()
-        // in maptree.c when a layer's shapetree index can't be found
-        if ((ms_error->code != MS_NOERR) && (ms_error->code != -1)
-        && !((ms_error->code == MS_IOERR) &&
-             (strcmp(ms_error->routine, "msSearchDiskTree()") == 0)))
-        {
-            _raise_ms_exception();
-            // Clear the error list
-            msResetErrorList();
-            return NULL;
+       
+        /* There are a few bogus errors to dodge, code smell anyone? :( */
+        switch(ms_error->code) {
+            case MS_NOERR:
+                break;
+            case MS_NOTFOUND:
+                break;
+            case -1:
+                break;
+            case MS_IOERR:
+                if (strcmp(ms_error->routine, "msSearchDiskTree()") != 0) {
+                    _raise_ms_exception();
+                    msResetErrorList();
+                    return NULL;
+                }
+            default:
+                _raise_ms_exception();
+                msResetErrorList();
+                return NULL;
         }
+                
     }
 }
          
 %pythoncode %{
 MapServerError = _mapscript.MapServerError
-MapServerNotFoundError = _mapscript.MapServerNotFoundError
 MapServerChildError = _mapscript.MapServerChildError
 %}
 
