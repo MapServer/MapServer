@@ -249,17 +249,6 @@ typedef struct listNode {
 typedef featureListNodeObj * featureListNodeObjPtr;
 #endif
 
-// COLOR OBJECT
-typedef struct {
-  int pen;
-  int red;
-  int green;
-  int blue;
-#if ALPHACOLOR_ENABLED
-  int alpha;
-#endif
-} colorObj;
-
 #ifndef SWIG
 // PALETTE OBJECT - used to hold colors while a map file is read
 typedef struct {
@@ -1273,25 +1262,19 @@ MS_DLL_EXPORT void msDrawEndShape(mapObj *map, layerObj *layer, imageObj *image,
 /* ==================================================================== */
 /*      Prototypes for functions in mapimagemap.c                       */
 /* ==================================================================== */
-MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format,
-                          char *imagepath, char *imageurl);
+MS_DLL_EXPORT imageObj *msImageCreateIM(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 MS_DLL_EXPORT imageObj *msImageLoadIM( const char *filename );
-MS_DLL_EXPORT void      msImageInitIM( imageObj *image );
+MS_DLL_EXPORT void msImageInitIM( imageObj *image );
 MS_DLL_EXPORT void msImageStartLayerIM(mapObj *map, layerObj *layer, imageObj *image);
-
 MS_DLL_EXPORT int msSaveImageIM(imageObj* img, char *filename, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageIM_LL(imageObj* img, char *filename, int type,
-                     int transparent, int interlace, int quality);
-
+MS_DLL_EXPORT int msSaveImageIM_LL(imageObj* img, char *filename, int type, int transparent, int interlace, int quality);
 MS_DLL_EXPORT void msFreeImagexsIM(imageObj* img);
 MS_DLL_EXPORT void msFreeImageIM(imageObj* img);
-
 MS_DLL_EXPORT void msCircleDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msCircleDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, double r, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawMarkerSymbolIM(symbolSetObj *symbolset, imageObj* img, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawLineSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT void msDrawShadeSymbolIM(symbolSetObj *symbolset, imageObj* img, shapeObj *p, styleObj *style, double scalefactor);
-
 MS_DLL_EXPORT int msDrawTextIM(imageObj* img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 /* ==================================================================== */
@@ -1301,18 +1284,16 @@ MS_DLL_EXPORT int msDrawLabelCacheIM(imageObj* img, mapObj *map);
 /* ==================================================================== */
 /*      Prototypes for functions in mapgd.c                             */
 /* ==================================================================== */
-MS_DLL_EXPORT imageObj *msImageCreateGD(int width, int height, outputFormatObj *format,
-                          char *imagepath, char *imageurl);
+MS_DLL_EXPORT int msCompareColors(colorObj *c1, colorObj *c2);
+MS_DLL_EXPORT imageObj *msImageCreateGD(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 MS_DLL_EXPORT imageObj *msImageLoadGD( const char *filename );
-MS_DLL_EXPORT void      msImageInitGD( imageObj *image, colorObj *background );
+MS_DLL_EXPORT void msImageInitGD( imageObj *image, colorObj *background );
 MS_DLL_EXPORT int msImageSetPenGD(gdImagePtr img, colorObj *color);
 
 #define RESOLVE_PEN_GD(img,color) { if( (color).pen == MS_PEN_UNSET ) msImageSetPenGD( img, &(color) ); }
 
 MS_DLL_EXPORT int msSaveImageGD(gdImagePtr img, char *filename, outputFormatObj *format);
-MS_DLL_EXPORT int msSaveImageGD_LL(gdImagePtr img, char *filename, int type,
-                     int transparent, int interlace, int quality);
-
+MS_DLL_EXPORT int msSaveImageGD_LL(gdImagePtr img, char *filename, int type, int transparent, int interlace, int quality);
 MS_DLL_EXPORT void msFreeImageGD(gdImagePtr img);
 
 MS_DLL_EXPORT void msCircleDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, pointObj *p, double r, styleObj *style, double scalefactor);
@@ -1322,12 +1303,9 @@ MS_DLL_EXPORT void msDrawLineSymbolGD(symbolSetObj *symbolset, gdImagePtr img, s
 MS_DLL_EXPORT void msDrawShadeSymbolGD(symbolSetObj *symbolset, gdImagePtr img, shapeObj *p, styleObj *style, double scalefactor);
 
 MS_DLL_EXPORT int msDrawTextGD(gdImagePtr img, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
-
 MS_DLL_EXPORT int msDrawLabelCacheGD(gdImagePtr img, mapObj *map);
 
-MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, 
-                       int dstX, int dstY, int srcX, int srcY, int w, int h,
-                       int pct);
+MS_DLL_EXPORT void msImageCopyMerge (gdImagePtr dst, gdImagePtr src, int dstX, int dstY, int srcX, int srcY, int w, int h, int pct);
 
 // various JOIN functions (in mapjoin.c)
 MS_DLL_EXPORT int msJoinConnect(layerObj *layer, joinObj *join);
@@ -1342,16 +1320,10 @@ MS_DLL_EXPORT int msGetClass(layerObj *layer, colorObj *color);
 MS_DLL_EXPORT int msGetClass_Float(layerObj *layer, float fValue);
 
 //in mapdrawgdal.c
-MS_DLL_EXPORT int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, 
-                          void *hDSVoid );
-
-MS_DLL_EXPORT int msGetGDALGeoTransform(void *hDS, mapObj *map, layerObj *layer,
-                          double *padfGeoTransform );
-
-MS_DLL_EXPORT int *msGetGDALBandList( layerObj *layer, void *hDS, int max_bands, 
-                        int *band_count );
-MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand,
-                             int *pbGotNoData );
+MS_DLL_EXPORT int msDrawRasterLayerGDAL(mapObj *map, layerObj *layer, imageObj *image, void *hDSVoid );
+MS_DLL_EXPORT int msGetGDALGeoTransform(void *hDS, mapObj *map, layerObj *layer, double *padfGeoTransform );
+MS_DLL_EXPORT int *msGetGDALBandList( layerObj *layer, void *hDS, int max_bands, int *band_count );
+MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand, int *pbGotNoData );
 
 /* ==================================================================== */
 /*      End of prototypes for functions in mapgd.c                      */
@@ -1363,14 +1335,12 @@ MS_DLL_EXPORT double msGetGDALNoDataValue( layerObj *layer, void *hBand,
 // For mappdf
 MS_DLL_EXPORT int getRgbColor(mapObj *map,int i,int *r,int *g,int *b); // maputil.c
 MS_DLL_EXPORT int msEvalContext(mapObj *map, char *context);
-MS_DLL_EXPORT int msEvalExpression(expressionObj *expression, int itemindex, char **items, 
-                     int numitems);
+MS_DLL_EXPORT int msEvalExpression(expressionObj *expression, int itemindex, char **items, int numitems);
 MS_DLL_EXPORT int msShapeGetClass(layerObj *layer, shapeObj *shape, double scale);
 MS_DLL_EXPORT char *msShapeGetAnnotation(layerObj *layer, shapeObj *shape);
 MS_DLL_EXPORT int msAdjustImage(rectObj rect, int *width, int *height);
 MS_DLL_EXPORT double msAdjustExtent(rectObj *rect, int width, int height);
 MS_DLL_EXPORT int msConstrainExtent(rectObj *bounds, rectObj *rect, double overlay);
-
 MS_DLL_EXPORT int *msGetLayersIndexByGroup(mapObj *map, char *groupname, int *nCount);
 
 //Functions to chnage the drawing order of the layers.
@@ -1387,8 +1357,6 @@ MS_DLL_EXPORT int msMoveStyleUp(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msMoveStyleDown(classObj *classo, int nStyleIndex);
 MS_DLL_EXPORT int msDeleteStyle(classObj *classo, int iStyleIndex);
 
-
-
 MS_DLL_EXPORT char *msGetProjectionString(projectionObj *proj);
 
 // Measured shape utility functions.   
@@ -1398,8 +1366,7 @@ MS_DLL_EXPORT pointObj *getMeasureUsingPoint(shapeObj *shape, pointObj *point);
 MS_DLL_EXPORT char **msGetAllGroupNames(mapObj* map, int *numTok);
 MS_DLL_EXPORT char *msTmpFile(const char *path, const char *ext);
 
-MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, 
-                        char *imagepath, char *imageurl);
+MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl);
 
 /* ==================================================================== */
 /*      End of prototypes for functions in maputil.c                    */
@@ -1409,42 +1376,21 @@ MS_DLL_EXPORT imageObj *msImageCreate(int width, int height, outputFormatObj *fo
 /*      prototypes for functions in mapswf.c                            */
 /* ==================================================================== */
 #ifdef USE_MING_FLASH
-MS_DLL_EXPORT imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format,
-                           char *imagepath, char *imageurl, mapObj *map);
-
+MS_DLL_EXPORT imageObj *msImageCreateSWF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
 MS_DLL_EXPORT void msImageStartLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
-
-MS_DLL_EXPORT int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string, 
-                   labelObj *label, fontSetObj *fontset, double scalefactor);
-
+MS_DLL_EXPORT int msDrawLabelSWF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawLabelCacheSWF(imageObj *image, mapObj *map);
-
-MS_DLL_EXPORT void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
-                         styleObj *style, double scalefactor);
-
-MS_DLL_EXPORT void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image, 
-                          shapeObj *p, styleObj *style, double scalefactor);
-
-MS_DLL_EXPORT void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image, 
-                           pointObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawLineSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawShadeSymbolSWF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawMarkerSymbolSWF(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT int msDrawRasterLayerSWF(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawVectorLayerAsRasterSWF(mapObj *map, layerObj *layer, imageObj*image);
-
-/*int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, 
-                      int numRequests, 
-                      mapObj *map, layerObj *layer, imageObj *image);
-*/
-
+// int msDrawWMSLayerSWF(int nLayerId, httpRequestObj *pasReqInfo, int numRequests, mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT void msTransformShapeSWF(shapeObj *shape, rectObj extent, double cellsize);
-
 MS_DLL_EXPORT int msSaveImageSWF(imageObj *image, char *filename);
-
 MS_DLL_EXPORT void msFreeImageSWF(imageObj *image);
-
-MS_DLL_EXPORT int draw_textSWF(imageObj *image, pointObj labelPnt, char *string, 
-                 labelObj *label, fontSetObj *fontset, double scalefactor);
-MS_DLL_EXPORT void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image,
-                         shapeObj *shape);
+MS_DLL_EXPORT int draw_textSWF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
 #endif
 
 /* ==================================================================== */
@@ -1458,40 +1404,20 @@ MS_DLL_EXPORT void msDrawStartShapeSWF(mapObj *map, layerObj *layer, imageObj *i
 /* ==================================================================== */
 #ifdef USE_PDF
 MS_DLL_EXPORT PDF *msDrawMapPDF(mapObj *map, PDF *pdf, hashTableObj fontHash);
-
-MS_DLL_EXPORT imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format,
-                           char *imagepath, char *imageurl, mapObj *map);
-
+MS_DLL_EXPORT imageObj *msImageCreatePDF(int width, int height, outputFormatObj *format, char *imagepath, char *imageurl, mapObj *map);
 MS_DLL_EXPORT void msImageStartLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
-
-MS_DLL_EXPORT int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string, 
-                   labelObj *label, fontSetObj *fontset, double scalefactor);
-
+MS_DLL_EXPORT int msDrawLabelPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
 MS_DLL_EXPORT int msDrawLabelCachePDF(imageObj *image, mapObj *map);
-
-MS_DLL_EXPORT void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, 
-                         styleObj *style, double scalefactor);
-
-MS_DLL_EXPORT void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image, 
-                          shapeObj *p, styleObj *style, double scalefactor);
-
-MS_DLL_EXPORT void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image, 
-                           pointObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawLineSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawShadeSymbolPDF(symbolSetObj *symbolset, imageObj *image, shapeObj *p, styleObj *style, double scalefactor);
+MS_DLL_EXPORT void msDrawMarkerSymbolPDF(symbolSetObj *symbolset, imageObj *image, pointObj *p, styleObj *style, double scalefactor);
 MS_DLL_EXPORT int msDrawRasterLayerPDF(mapObj *map, layerObj *layer, imageObj *image);
 MS_DLL_EXPORT int msDrawVectorLayerAsRasterPDF(mapObj *map, layerObj *layer, imageObj*image);
-
 MS_DLL_EXPORT void msTransformShapePDF(shapeObj *shape, rectObj extent, double cellsize);
-
 MS_DLL_EXPORT int msSaveImagePDF(imageObj *image, char *filename);
-
 MS_DLL_EXPORT void msFreeImagePDF(imageObj *image);
-
-MS_DLL_EXPORT int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, 
-                 labelObj *label, fontSetObj *fontset, double scalefactor);
-                 
-MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image,
-                         shapeObj *shape);
-
+MS_DLL_EXPORT int msDrawTextPDF(imageObj *image, pointObj labelPnt, char *string, labelObj *label, fontSetObj *fontset, double scalefactor);
+MS_DLL_EXPORT void msDrawStartShapePDF(mapObj *map, layerObj *layer, imageObj *image, shapeObj *shape);
 #endif
 
 /* ==================================================================== */
@@ -1508,16 +1434,11 @@ MS_DLL_EXPORT int msGetOutputFormatIndex(mapObj *map, const char *imagetype);
 MS_DLL_EXPORT int msRemoveOutputFormat(mapObj *map, const char *imagetype);
 MS_DLL_EXPORT int msAppendOutputFormat(mapObj *map, outputFormatObj *format);
 MS_DLL_EXPORT outputFormatObj *msSelectOutputFormat( mapObj *map, const char *imagetype );
-MS_DLL_EXPORT void msApplyOutputFormat( outputFormatObj **target, outputFormatObj *format,
-                          int transparent, int interlaced, int imagequality );
-MS_DLL_EXPORT const char *msGetOutputFormatOption( outputFormatObj *format, 
-                                     const char *optionkey, 
-                                     const char *defaultresult );
-MS_DLL_EXPORT outputFormatObj *msCreateDefaultOutputFormat( mapObj *map, 
-                                              const char *driver );
+MS_DLL_EXPORT void msApplyOutputFormat( outputFormatObj **target, outputFormatObj *format, int transparent, int interlaced, int imagequality );
+MS_DLL_EXPORT const char *msGetOutputFormatOption( outputFormatObj *format, const char *optionkey, const char *defaultresult );
+MS_DLL_EXPORT outputFormatObj *msCreateDefaultOutputFormat( mapObj *map, const char *driver );
 MS_DLL_EXPORT int msPostMapParseOutputFormatSetup( mapObj *map );
-MS_DLL_EXPORT void msSetOutputFormatOption( outputFormatObj *format, const char *key, 
-                              const char *value );
+MS_DLL_EXPORT void msSetOutputFormatOption( outputFormatObj *format, const char *key, const char *value );
 MS_DLL_EXPORT void msGetOutputFormatMimeList( mapObj *map, char **mime_list, int max_mime );
 MS_DLL_EXPORT outputFormatObj *msCloneOutputFormat( outputFormatObj *format );
 MS_DLL_EXPORT int msOutputFormatValidate( outputFormatObj *format );
@@ -1551,10 +1472,6 @@ MS_DLL_EXPORT int msCopyStyle(styleObj *dst, styleObj *src);
 /* ==================================================================== */
 /*      end prototypes for functions in mapcopy                         */
 /* ==================================================================== */
-
-
-
-
 
 /* ==================================================================== */
 /*      include definitions from mapows.h                               */
