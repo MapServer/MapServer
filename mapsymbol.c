@@ -30,11 +30,9 @@ int getCharacterSize(char *character, int size, char *font, rectObj *rect) {
   int bbox[8];
   char *error=NULL;
 
-#ifdef USE_GD_TTF
-  error = msGDImageStringTTF(NULL, bbox, 0, font, size, 0, 0, 0, character);
-#else
+
   error = gdImageStringFT(NULL, bbox, 0, font, size, 0, 0, 0, character);
-#endif
+
   if(error) {
     msSetError(MS_TTFERR, error, "getCharacterSize()");
     return(-1);
