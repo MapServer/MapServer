@@ -27,6 +27,11 @@
  ******************************************************************************
  *
  * $Log$
+ * Revision 1.51  2005/03/08 19:39:51  assefa
+ * Corrected memeory leak introduced in revision 1.50.
+ * Changes in Revison 1.50 were necessary due to portability issue : the
+ * code as it was did not build on windows using MSVC.
+ *
  * Revision 1.50  2005/03/07 14:55:37  assefa
  * Correct problems when building on Windows.
  *
@@ -1613,7 +1618,9 @@ int msPOSTGISLayerRetrievePGVersion(layerObj *layer, int debug, int *major, int 
         if(debug) {
           msDebug("msPOSTGISLayerRetrievePGVersion: No results returned.\n");
         }
+        free(tmp2);
         return(MS_FAILURE);
+
     }
     if(PQntuples(query_result) < 1) {
         if(debug) {
@@ -1721,7 +1728,9 @@ int msPOSTGISLayerRetrievePK(layerObj *layer, char **urid_name, char* table_name
       strcat(tmp2, tmp1);
       strcat(tmp2, sql);
       msSetError(MS_QUERYERR, tmp2, "msPOSTGISLayerRetrievePK()");
+      free(tmp2);
       return(MS_FAILURE);
+
     }
 
     if(PQntuples(query_result) < 1) 
