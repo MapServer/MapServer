@@ -16,6 +16,8 @@ the CVS logs is updated daily at the following URL:
 Version 3.6.5-dev
 --------------------------
 
+- Fix a little problem with qix files with no depth.
+
 
 
 Version 3.6.4 (2003-01-08)
